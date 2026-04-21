@@ -721,7 +721,7 @@ steps:
 
       Child <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> Parent
 
-      > **⚠ Common mistake (documented in CS education research):** Students often draw the triangle pointing **away** from the parent, from superclass down to subclass. The correct direction is the opposite: the **child points up** to the parent.
+      > **⚠ Common mistake:** Students often draw the triangle pointing **away** from the parent, from superclass down to subclass. The correct direction is the opposite: the **child points up** to the parent.
       >
       > **Memory aid:** Think of the child *reaching up* to say "I am like you." The triangle rests at the parent's door, like a visitor.
       >

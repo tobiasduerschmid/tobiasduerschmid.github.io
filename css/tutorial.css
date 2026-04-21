@@ -754,6 +754,29 @@ html:not(.dark-mode) .tvm-git-graph-container {
 .tvm-diagram-color-btn:hover {
   border-color: #5a5a78;
 }
+.tvm-diagram-color-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  color: #7a8aa0;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  margin-left: 3px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.tvm-diagram-color-reset-btn:hover {
+  background: #35354e;
+  color: #c8d4e4;
+  border-color: #5a5a78;
+}
 .tvm-diagram-color-input {
   width: 18px;
   height: 18px;
@@ -975,6 +998,16 @@ html:not(.dark-mode) .tvm-diagram-color-btn {
   border-color: #cdd0d8;
 }
 html:not(.dark-mode) .tvm-diagram-color-btn:hover {
+  border-color: #b0b6c4;
+}
+html:not(.dark-mode) .tvm-diagram-color-reset-btn {
+  background: #eaecf0;
+  border-color: #cdd0d8;
+  color: #5a6270;
+}
+html:not(.dark-mode) .tvm-diagram-color-reset-btn:hover {
+  background: #d8dce6;
+  color: #222;
   border-color: #b0b6c4;
 }
 html:not(.dark-mode) .tvm-diagram-empty {

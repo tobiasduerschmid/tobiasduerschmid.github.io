@@ -326,6 +326,12 @@
     } catch (e) { }
   };
 
+  TutorialCode.prototype._clearUMLColorCookie = function () {
+    try {
+      document.cookie = 'uml-accent-color=; max-age=0; path=/; SameSite=Lax';
+    } catch (e) { }
+  };
+
   /**
    * Apply the current custom color (or default) to a diagram container by setting
    * CSS custom properties, then re-render by calling the given render function.
@@ -405,6 +411,7 @@
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
         '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
         '</div>';
 
       terminalHtml =
@@ -486,6 +493,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -523,6 +531,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -563,6 +572,7 @@
       '</div>' +
       '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
       '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input"></label>' +
+      '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
@@ -769,14 +779,37 @@
           self2._renderUMLInFullscreen();
         }
       }
-      if (this.root) this.root.addEventListener('change', onColorChange);
-      // Also catch the fs overlay once it's moved to body
+      function onColorReset(e) {
+        var target = e.target && e.target.closest && e.target.closest('.tvm-diagram-color-reset-btn');
+        if (!target) return;
+        self2._umlCustomColor = null;
+        self2._clearUMLColorCookie();
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        if (self2._umlFullscreenEl && self2._umlFullscreenEl.style.display !== 'none') {
+          self2._renderUMLInFullscreen();
+        }
+      }
+      if (this.root) {
+        this.root.addEventListener('change', onColorChange);
+        this.root.addEventListener('click', onColorReset);
+      }
+      // Also catch events from the fs overlay once it's moved to body
       document.addEventListener('change', function (e) {
         if (!e.target || e.target.className.indexOf('tvm-diagram-color-input') === -1) return;
-        // Only handle if the input is outside our root (i.e. moved fullscreen overlay)
         if (self2.root && self2.root.contains(e.target)) return;
         self2._umlCustomColor = e.target.value;
         self2._saveUMLColorCookie(e.target.value);
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        self2._renderUMLInFullscreen();
+      });
+      document.addEventListener('click', function (e) {
+        var target = e.target && e.target.closest && e.target.closest('.tvm-diagram-color-reset-btn');
+        if (!target) return;
+        if (self2.root && self2.root.contains(target)) return;
+        self2._umlCustomColor = null;
+        self2._clearUMLColorCookie();
         self2._syncColorInputs();
         self2._renderCurrentUMLDiagram();
         self2._renderUMLInFullscreen();

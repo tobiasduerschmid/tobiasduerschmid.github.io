@@ -1979,7 +1979,16 @@
     var out = ['@startuml', 'layout landscape'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
-      out.push('participant ' + p.id + ': ' + p.label);
+      // The synthetic "Main" participant represents the module-level entry
+      // code (the `if __name__ == "__main__":` block). It is not a real
+      // object instance the user named — render it as an *anonymous*
+      // instance (": Main") using the `as` form that the renderer treats as
+      // a label-starting-with-colon.
+      if (p.id === 'Main' && p.label === 'Main') {
+        out.push('participant Main as : Main');
+      } else {
+        out.push('participant ' + p.id + ': ' + p.label);
+      }
     }
     out.push('');
     for (var i = 0; i < this.lines.length; i++) out.push(this.lines[i]);

@@ -63,7 +63,7 @@ steps:
       Now let us build one together. Write Python code until the live **Sequence Diagram** panel matches this target:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       create bot
@@ -331,7 +331,7 @@ steps:
       Extend the chat bot from Step 1. Now `DiscordBot` has a method that reports the current member count, and `Main` captures it to decide what to say:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       create bot
@@ -567,7 +567,7 @@ steps:
       Consider an `Order` object whose `checkout()` method calls its own `_validate()` helper:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant order: Order
       Main -> order: checkout()
       order -> order: _validate()
@@ -580,7 +580,7 @@ steps:
       In `chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       create bot
       Main --> bot: <<create>>
@@ -810,7 +810,7 @@ steps:
       A spam filter decides whether to forward a message. Two branches, drawn as two compartments of one `alt` box:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: handle("hi")
@@ -828,7 +828,7 @@ steps:
       Sending a welcome to every member — the message is sent once **per iteration**:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: welcome_all()
@@ -854,7 +854,7 @@ steps:
       - if spam, calls `self._block(msg)`; otherwise, calls `channel.send_to_all(msg)`
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main: Main
+      participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       create bot
