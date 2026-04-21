@@ -1,0 +1,1217 @@
+title: "UML Sequence Diagrams in Python"
+description: "Learn to read and create UML sequence diagrams by writing Python code that matches target diagrams. Starting from a few objects exchanging messages and building up to branches and loops, you will see how sequence diagrams turn invisible runtime behavior into a picture."
+
+backend: pyodide
+uml_diagram: true
+uml_position: right
+uml_default_view: true
+uml_default_type: sequence
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — "Your First Sequence Diagram"
+  # Pedagogy:
+  #   Spiral — introduce a complete-but-simple diagram on day one.
+  #   Toy Box — a chat bot scenario that sophomores recognize instantly.
+  #   Show It Running — the diagram is generated from real Python code.
+  #   Component Skill Isolation — only lifelines and synchronous calls.
+  #   Bloom's — Remember (identify participants), Apply (write the calls).
+  # --------------------------------------------------------------------------
+  - title: "Your First Sequence Diagram"
+    instructions: |
+      ## From Structure to Behavior
+
+      > **Learning objective:** After this step you will be able to **identify** a participant (lifeline) in a sequence diagram and **write** Python calls that produce synchronous messages between two objects.
+
+      ### Where Class Diagrams End, Sequence Diagrams Begin
+
+      You already know class diagrams — they show what *exists*: classes, attributes, methods, relationships. A sequence diagram shows what **happens at runtime**: which object calls which method, and in what order.
+
+      Think of it as the difference between a floor plan (class diagram) and a security camera recording (sequence diagram). Same building, very different question.
+
+      ### Four Pieces of Notation
+
+      | Element | What it looks like | What it means |
+      |---|---|---|
+      | **Participant** (lifeline) | A box at the top, with a dashed line below | A specific **object instance** active during the scenario |
+      | **Synchronous message** | Solid arrow with a **filled** arrowhead → | One object calls a method on another, and **waits** for it to finish |
+      | **Activation box** | A thin rectangle on the lifeline | The object is currently executing — a **call stack frame** in memory |
+      | **Time** | Top-to-bottom | Earlier events are higher up; later events are lower |
+
+      > **Key distinction:** A lifeline is **not** a class. `bot: DiscordBot` means *"this particular bot instance"*. If your code creates two bots, you get two lifelines — even though there is only one `DiscordBot` class.
+
+      ### A Simpler Example First
+
+      Here is a minimal diagram — a `user` object calls `login()` on an `auth` object:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant user: User
+      participant auth: AuthService
+      user -> auth: login(password)
+      @enduml'></div>
+
+      Two lifelines, one synchronous call. That is a complete sequence diagram. Read the arrow as a sentence: *"user calls login(password) on auth, and waits for it to finish."*
+
+      ### Your Target Diagram
+
+      Now let us build one together. Write Python code until the live **Sequence Diagram** panel matches this target:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      create bot
+      Main --> bot: <<create>>
+      create channel
+      Main --> channel: <<create>>
+      Main -> bot: send("Hello, world!")
+      Main -> channel: notify_members("Welcome")
+      @enduml'></div>
+
+      **Reading the target:**
+
+      - `Main` is the script itself — the code inside `if __name__ == "__main__":` becomes a lifeline called *Main*
+      - `bot: DiscordBot` is a specific bot instance created by `bot = DiscordBot()`
+      - `channel: Channel` is a specific channel instance
+      - The two dashed `<<create>>` arrows appear because `Main` constructs each object
+      - The two solid arrows are synchronous calls — `Main` calls `send(...)` on `bot`, then `notify_members(...)` on `channel`
+
+      ### Your Task
+
+      The file `chatbot.py` already defines `DiscordBot` and `Channel`. Your job is to write the `if __name__ == "__main__":` block so it:
+
+      1. Creates a `DiscordBot` instance called `bot`
+      2. Creates a `Channel` instance called `channel`
+      3. Calls `bot.send("Hello, world!")`
+      4. Calls `channel.notify_members("Welcome")`
+
+      Watch the **Sequence Diagram** panel — it updates live as you type!
+
+      > **Heads up:** Variable names become participant names. If you write `dbot = DiscordBot()` instead of `bot = DiscordBot()`, the diagram will show `dbot: DiscordBot`. Pick meaningful names — they end up in the picture.
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class DiscordBot:
+              def send(self, message):
+                  print(f"[BOT] {message}")
+
+
+          class Channel:
+              def notify_members(self, message):
+                  print(f"[CHANNEL] {message}")
+
+
+          if __name__ == "__main__":
+              # Your task: make the diagram match the target.
+              #
+              # 1. Create a DiscordBot called `bot`
+              # 2. Create a Channel called `channel`
+              # 3. Call bot.send("Hello, world!")
+              # 4. Call channel.notify_members("Welcome")
+              pass
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class DiscordBot:
+                def send(self, message):
+                    print(f"[BOT] {message}")
+
+
+            class Channel:
+                def notify_members(self, message):
+                    print(f"[CHANNEL] {message}")
+
+
+            if __name__ == "__main__":
+                bot = DiscordBot()
+                channel = Channel()
+                bot.send("Hello, world!")
+                channel.notify_members("Welcome")
+          language: python
+      explanation: |
+        Each Python line in `__main__` maps directly to a line in the diagram:
+
+        - `bot = DiscordBot()` → new lifeline `bot: DiscordBot`, creation arrow from `Main`
+        - `channel = Channel()` → new lifeline `channel: Channel`, creation arrow from `Main`
+        - `bot.send(...)` → synchronous message `Main -> bot: send(...)`
+        - `channel.notify_members(...)` → synchronous message `Main -> channel: notify_members(...)`
+
+        The `Main` lifeline represents the code inside the `if __name__ == "__main__":` guard. In the next step we will see what happens when a call **returns a value** — the diagram gains a new kind of arrow.
+
+    tests:
+      - description: "bot is a DiscordBot instance"
+        command: |
+          source = open('/tutorial/chatbot.py').read()
+          ns = {}
+          exec(source, ns)
+          # The __main__ block only runs if __name__ == "__main__"; we simulate it.
+          # Instead we check the names assigned at module top level by running the main body.
+          import ast
+          tree = ast.parse(source)
+          main_body = None
+          for node in tree.body:
+              if isinstance(node, ast.If):
+                  main_body = node.body
+          assert main_body is not None, \
+              "Add an `if __name__ == \"__main__\":` block"
+          # Execute just the main body in a fresh namespace that has the classes
+          local_ns = {'DiscordBot': ns['DiscordBot'], 'Channel': ns['Channel']}
+          for stmt in main_body:
+              exec(compile(ast.Module(body=[stmt], type_ignores=[]), '<main>', 'exec'), local_ns)
+          assert 'bot' in local_ns, \
+              "Create a DiscordBot instance named `bot`"
+          assert isinstance(local_ns['bot'], ns['DiscordBot']), \
+              "`bot` must be a DiscordBot — use `bot = DiscordBot()`"
+        hints:
+          - text: "Inside the `if __name__ == \"__main__\":` block, write `bot = DiscordBot()`. Variable names become participant names in the diagram — so `bot` will appear as `bot: DiscordBot`."
+            condition: "default"
+
+      - description: "channel is a Channel instance"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          ns = {}
+          exec(source, ns)
+          main_body = None
+          for node in tree.body:
+              if isinstance(node, ast.If):
+                  main_body = node.body
+          local_ns = {'DiscordBot': ns['DiscordBot'], 'Channel': ns['Channel']}
+          for stmt in main_body:
+              exec(compile(ast.Module(body=[stmt], type_ignores=[]), '<main>', 'exec'), local_ns)
+          assert 'channel' in local_ns, \
+              "Create a Channel instance named `channel`"
+          assert isinstance(local_ns['channel'], ns['Channel']), \
+              "`channel` must be a Channel — use `channel = Channel()`"
+        hints:
+          - text: "Right after creating the bot, add `channel = Channel()`. Two objects, two lifelines."
+            condition: "default"
+
+      - description: "bot.send() and channel.notify_members() are called"
+        command: |
+          source = open('/tutorial/chatbot.py').read()
+          assert 'bot.send(' in source, \
+              "Call bot.send(...) — this produces the `Main -> bot: send(...)` arrow"
+          assert 'channel.notify_members(' in source, \
+              "Call channel.notify_members(...) — this produces the `Main -> channel: notify_members(...)` arrow"
+        hints:
+          - text: "After creating both objects, call `bot.send(\"Hello, world!\")` and then `channel.notify_members(\"Welcome\")`."
+            condition: "default"
+
+    quiz:
+      title: "Lifelines and Messages"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In a sequence diagram, what does a **single lifeline** represent?
+          type: single
+          options:
+            - "A class definition"
+            - "A specific object instance that is alive during the scenario"
+            - "A Python file"
+            - "A function defined in the code"
+          correct_index: 1
+          explanation: |
+            A lifeline represents **one object instance**, not a class. If your code does `a = Dog()` and `b = Dog()`, you get **two** lifelines (`a: Dog` and `b: Dog`) even though there is only one `Dog` class. This is the single most common misconception when switching from class diagrams to sequence diagrams.
+
+        - question: |
+            What does a **solid arrow with a filled arrowhead** (→) mean?
+          type: single
+          options:
+            - "A comment"
+            - "A synchronous call — the caller waits for the callee to finish"
+            - "An asynchronous call that returns immediately"
+            - "A return value"
+          correct_index: 1
+          explanation: |
+            A solid line with a filled arrowhead is a **synchronous message** — a normal method call where the caller blocks until the callee returns. This matches Python's default behavior: every `x.method()` call waits for `method()` to finish before the next line executes.
+
+        - question: |
+            **Predict before you look.** Given this Python `__main__` block, how many lifelines will the sequence diagram show (including `Main`)?
+
+            ```python
+            if __name__ == "__main__":
+                a = DiscordBot()
+                b = DiscordBot()
+                c = Channel()
+                a.send("hi")
+            ```
+          type: single
+          options:
+            - "2 — just DiscordBot and Channel"
+            - "3 — Main, DiscordBot, and Channel"
+            - "4 — Main, a, b, and c"
+            - "1 — only Main"
+          correct_index: 2
+          explanation: |
+            **Four lifelines.** `Main`, plus one for each object that gets created: `a: DiscordBot`, `b: DiscordBot`, `c: Channel`. Even though `a` and `b` are the same class, each instance gets its own lifeline. This is the lifelines-are-instances rule in action.
+
+        - question: |
+            In a sequence diagram, how is **time** represented?
+          type: single
+          options:
+            - "Left to right"
+            - "Top to bottom — earlier events higher, later events lower"
+            - "By arrow numbers"
+            - "By colors (green = first, red = last)"
+          correct_index: 1
+          explanation: |
+            **Top to bottom.** The horizontal axis shows *who* is involved (the lifelines); the vertical axis shows *when*. This means the order of your Python statements directly controls the vertical order of the arrows.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — "Return Values: The Dashed Arrow"
+  # Pedagogy:
+  #   Worked Example — full code with type annotations shown first.
+  #   Constructivism — bridge Python `x = obj.method()` to dashed return arrow.
+  #   Targeted misconception correction — students often assume EVERY call has
+  #     a visible return; actually only captured, non-void returns get drawn
+  #     (Ambler: "Label return messages only when not obvious").
+  #   Bloom's — Apply (add return type + capture), Analyze (when does a return
+  #     arrow appear vs. not).
+  # --------------------------------------------------------------------------
+  - title: "Return Values: The Dashed Arrow"
+    instructions: |
+      ## When Methods Talk Back
+
+      > **Learning objective:** After this step you will be able to **explain** when a return message appears on a sequence diagram and **write** Python code that produces one.
+
+      ### The Two Rules for Return Arrows
+
+      A **return message** is drawn as a **dashed arrow with an open arrowhead** (⇠). It points *back* from the callee to the caller, at the moment the method finishes.
+
+      But here is the catch — sequence diagrams do **not** draw a return arrow for every call. That would be noise. Instead, two things must be true:
+
+      1. The method has a **non-`None` return type** (annotate it: `-> int`, `-> str`, etc.)
+      2. The caller **captures** the return value in a variable (`count = bot.get_count()`)
+
+      If you just write `bot.send("hi")` and ignore any return, no dashed arrow appears — because "the call finished and came back" is already implied by the activation box ending. UML only shows returns when they carry **information the reader cares about**.
+
+      ### Example — With and Without Capture
+
+      **Without capture** — just one solid arrow:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant caller: Main
+      participant api: API
+      caller -> api: log("event")
+      @enduml'></div>
+
+      **With capture** — solid arrow going in, dashed arrow coming back:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant caller: Main
+      participant api: API
+      caller -> api: get_status()
+      api --> caller: str
+      @enduml'></div>
+
+      Read the dashed arrow as *"the method finished and handed back a value of this type."*
+
+      ### Your Target Diagram
+
+      Extend the chat bot from Step 1. Now `DiscordBot` has a method that reports the current member count, and `Main` captures it to decide what to say:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      create bot
+      Main --> bot: <<create>>
+      create channel
+      Main --> channel: <<create>>
+      Main -> bot: get_member_count()
+      bot --> Main: int
+      Main -> channel: notify_members("5 members online")
+      @enduml'></div>
+
+      Notice the new dashed arrow from `bot` back to `Main` labeled `int` — that is the return arrow. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its return type is `None`.
+
+      ### Your Task
+
+      Open `chatbot.py`. The starter code has the method defined, but the `__main__` block:
+
+      1. Does **not** capture the return value of `get_member_count()` — fix that
+      2. Uses a hardcoded string — replace it with an f-string that uses the captured count
+
+      > **Reminder:** For the dashed arrow to appear, two things must be true — the method must have a return type annotation (`-> int` already in the starter), and you must **assign** the return value to a variable.
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class DiscordBot:
+              def send(self, message: str) -> None:
+                  print(f"[BOT] {message}")
+
+              def get_member_count(self) -> int:
+                  return 5
+
+
+          class Channel:
+              def notify_members(self, message: str) -> None:
+                  print(f"[CHANNEL] {message}")
+
+
+          if __name__ == "__main__":
+              bot = DiscordBot()
+              channel = Channel()
+
+              # TODO: capture the return value of bot.get_member_count()
+              bot.get_member_count()
+
+              # TODO: use the captured count in the notify message
+              channel.notify_members("5 members online")
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class DiscordBot:
+                def send(self, message: str) -> None:
+                    print(f"[BOT] {message}")
+
+                def get_member_count(self) -> int:
+                    return 5
+
+
+            class Channel:
+                def notify_members(self, message: str) -> None:
+                    print(f"[CHANNEL] {message}")
+
+
+            if __name__ == "__main__":
+                bot = DiscordBot()
+                channel = Channel()
+                count = bot.get_member_count()
+                channel.notify_members(f"{count} members online")
+          language: python
+      explanation: |
+        Two small changes in the source, one big change in the diagram:
+
+        - `count = bot.get_member_count()` — the assignment makes the **return value "used"**. Combined with the existing `-> int` annotation, this triggers the dashed return arrow.
+        - `f"{count} members online"` — not required for the diagram, but it shows a realistic reason to capture the return.
+
+        Compare the earlier call `bot.send(...)` in Step 1: its return type is `None`, so even if you wrote `x = bot.send("hi")`, no dashed arrow would appear. UML draws a return arrow only when there is a **value** worth showing.
+
+    tests:
+      - description: "get_member_count() has a return type annotation"
+        command: |
+          source = open('/tutorial/chatbot.py').read()
+          assert 'get_member_count(self) -> int' in source.replace(' ', '').replace(')->', ') ->') \
+              or 'get_member_count(self) -> int' in source, \
+              "Keep the `-> int` return type annotation on get_member_count — it is what tells the diagram to draw the return arrow"
+        hints:
+          - text: "Leave the method signature alone: `def get_member_count(self) -> int:`. The return type annotation is what makes the dashed return arrow show up."
+            condition: "default"
+
+      - description: "The return value of get_member_count() is captured"
+        command: |
+          import ast, re
+          source = open('/tutorial/chatbot.py').read()
+          # Find assignments where RHS is bot.get_member_count()
+          tree = ast.parse(source)
+          captured = False
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Assign) or isinstance(node, ast.AnnAssign):
+                  val = node.value
+                  if (isinstance(val, ast.Call)
+                          and isinstance(val.func, ast.Attribute)
+                          and val.func.attr == 'get_member_count'):
+                      captured = True
+          assert captured, \
+              "Assign the result of bot.get_member_count() to a variable — e.g. `count = bot.get_member_count()`. Without an assignment, no return arrow appears."
+        hints:
+          - text: "Change the line to capture the return value: `count = bot.get_member_count()`. The assignment is what makes the return arrow appear."
+            condition: "default"
+
+      - description: "The captured count is used in notify_members()"
+        command: |
+          source = open('/tutorial/chatbot.py').read()
+          assert 'notify_members(' in source, \
+              "notify_members must still be called"
+          # Check that the notify_members call uses a variable (not a hardcoded string)
+          # We accept any variable name, checking that there's an f-string with {varname}
+          import re
+          # Look for f"...{identifier}..." in notify_members call
+          m = re.search(r'notify_members\s*\(\s*(f["\'][^"\']*\{[a-zA-Z_][a-zA-Z_0-9]*\}[^"\']*["\'])\s*\)', source)
+          assert m, \
+              "Use an f-string in notify_members that references your captured variable — e.g. `channel.notify_members(f\"{count} members online\")`"
+        hints:
+          - text: "Replace the hardcoded string with an f-string: `channel.notify_members(f\"{count} members online\")`."
+            condition: "default"
+
+    quiz:
+      title: "Return Messages"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            What does a **dashed arrow with an open arrowhead** mean in a sequence diagram?
+          type: single
+          options:
+            - "An asynchronous message"
+            - "A return message — the callee handing a value back to the caller"
+            - "A deleted object"
+            - "A broken connection"
+          correct_index: 1
+          explanation: |
+            Dashed line + open arrowhead = **return message**. Solid line + filled arrowhead = synchronous call. The two visually distinct styles let you see "went in" vs. "came out" at a glance.
+
+        - question: |
+            Why does **this** call NOT produce a return arrow on the diagram, even though it is syntactically a Python call?
+
+            ```python
+            bot.send("Hello")
+            ```
+          type: single
+          options:
+            - "Because `send` is a void method (returns None), so there is nothing meaningful to show"
+            - "Because the string argument is short"
+            - "Because Python hides all return values"
+            - "Because the arrow would be drawn in a different color"
+          correct_index: 0
+          explanation: |
+            The diagram draws a return arrow only when the return type is **not** `None` **and** the return value is captured. `send` returns `None` (no `-> int` or similar annotation), so there is no "value" to show on the way back — the end of the activation box is enough.
+
+        - question: |
+            **Predict.** Which of these Python snippets produces a dashed return arrow?
+
+            ```python
+            # A
+            bot.get_member_count()
+
+            # B
+            count = bot.get_member_count()  # get_member_count is annotated `-> int`
+
+            # C
+            x = bot.send("hi")              # send is annotated `-> None`
+            ```
+          type: single
+          options:
+            - "Only A"
+            - "Only B"
+            - "Both B and C"
+            - "All three"
+          correct_index: 1
+          explanation: |
+            **Only B.** `A` calls the method but throws the return value away, so no arrow. `C` captures the return, but `-> None` means there is no meaningful value to show. `B` is the one that ticks both boxes — non-`None` return type **and** captured value.
+
+        - question: |
+            In Python, `self` is the first parameter of every instance method. How is `self` drawn in a sequence diagram?
+          type: single
+          options:
+            - "As an extra participant"
+            - "As a thick red arrow"
+            - "It is not drawn — the lifeline itself *is* the self reference"
+            - "It is shown as a dotted arrow pointing at itself"
+          correct_index: 2
+          explanation: |
+            `self` is implicit in the diagram — a lifeline **is** the object, so there is no need to draw `self` separately. You will see `self` again in the next step when an object calls one of its *own* methods — that is when the lifeline points an arrow at itself.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — "Self-Calls and Nested Activation"
+  # Pedagogy:
+  #   Constructivism — leverage students' existing call stack mental model
+  #     (from C / Python debugging) to explain nested activation boxes.
+  #   Threshold concept — activation boxes as stack frames (not decoration).
+  #   Worked Example + light fading — student writes a method that delegates
+  #     to two helpers on the same object.
+  #   Bloom's — Apply (refactor to self-calls), Analyze (why nested activation).
+  # --------------------------------------------------------------------------
+  - title: "Self-Calls and Nested Activation"
+    instructions: |
+      ## When an Object Talks to Itself
+
+      > **Learning objective:** After this step you will be able to **explain** why an activation box represents a call stack frame and **produce** a nested self-call diagram from Python code.
+
+      ### The Call Stack, Drawn
+
+      You already know the call stack from debugging Python: every time a function calls another function, a new **stack frame** is pushed; when the function returns, the frame is popped.
+
+      A sequence diagram's **activation box** is the exact visual of that. When a message arrives at a lifeline, an activation box starts. When the method returns, the box ends.
+
+      > **Mental model:** Activation box = stack frame. A method that takes longer has a taller box. A method that calls another method has a *nested* box stacked on top of its own.
+
+      ### Self-Messages
+
+      When an object calls a method on **itself** (`self.some_method()`), the arrow loops back to the same lifeline — and a **new activation box stacks on top of the current one**. This is exactly how your Python interpreter works: a recursive or internal call pushes a fresh frame.
+
+      ### Example — A Method That Delegates
+
+      Consider an `Order` object whose `checkout()` method calls its own `_validate()` helper:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant order: Order
+      Main -> order: checkout()
+      order -> order: _validate()
+      @enduml'></div>
+
+      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. If the renderer shows activation bars, you will see a small box nested on top of the larger one — that is the stack frame for `_validate()` pushed on top of `checkout()`'s frame.
+
+      ### Your Target Diagram
+
+      In `chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      create bot
+      Main --> bot: <<create>>
+      Main -> bot: handle_message("hi there")
+      bot -> bot: _log("hi there")
+      bot -> bot: send("hi there")
+      @enduml'></div>
+
+      Three arrows — one from `Main` to `bot`, and two from `bot` to **itself**. Visually, the two self-calls are nested inside the `handle_message` activation box because they happen while that method is still running.
+
+      ### Your Task
+
+      The starter file defines `DiscordBot` with `_log()` and `send()` methods, but `handle_message()` is empty. Your job:
+
+      1. Fill in `handle_message()` so it calls `self._log(message)` and then `self.send(message)`
+      2. In `__main__`, call `bot.handle_message("hi there")` — and only that
+
+      > **Watch for this:** `self._log(...)` — not `_log(...)` without the `self.` prefix. Without `self.`, the call goes to a *free function*, not a method, and the sequence diagram will not draw the self-arrow. The `self.` is what tells the analyzer "same object."
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class DiscordBot:
+              def _log(self, message: str) -> None:
+                  print(f"[LOG] received: {message}")
+
+              def send(self, message: str) -> None:
+                  print(f"[BOT] {message}")
+
+              def handle_message(self, message: str) -> None:
+                  # TODO: inside this method, call self._log(message)
+                  #       and then self.send(message).
+                  #       Both calls should appear as self-arrows in the diagram.
+                  pass
+
+
+          if __name__ == "__main__":
+              bot = DiscordBot()
+              # TODO: call bot.handle_message("hi there")
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class DiscordBot:
+                def _log(self, message: str) -> None:
+                    print(f"[LOG] received: {message}")
+
+                def send(self, message: str) -> None:
+                    print(f"[BOT] {message}")
+
+                def handle_message(self, message: str) -> None:
+                    self._log(message)
+                    self.send(message)
+
+
+            if __name__ == "__main__":
+                bot = DiscordBot()
+                bot.handle_message("hi there")
+          language: python
+      explanation: |
+        Three calls, three mappings:
+
+        - `bot.handle_message("hi there")` in `__main__` → `Main -> bot: handle_message(...)`
+        - `self._log(message)` inside `handle_message` → `bot -> bot: _log(...)`
+        - `self.send(message)` inside `handle_message` → `bot -> bot: send(...)`
+
+        The two self-arrows sit **inside** the activation box for `handle_message` because the Python interpreter has not returned from `handle_message` yet when it pushes the `_log` and `send` frames onto the stack. That is why activation boxes nest — they are literal stack frames.
+
+        In the next step we will add **branches and loops** with interaction fragments.
+
+    tests:
+      - description: "handle_message calls self._log and self.send"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          # Find handle_message on DiscordBot
+          handle_body = None
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
+              if cls.name == 'DiscordBot':
+                  for m in cls.body:
+                      if isinstance(m, ast.FunctionDef) and m.name == 'handle_message':
+                          handle_body = m.body
+          assert handle_body is not None, \
+              "DiscordBot must have a handle_message method"
+          # Look for self._log(...) and self.send(...) calls
+          def has_self_call(body, method):
+              for stmt in body:
+                  for node in ast.walk(stmt):
+                      if (isinstance(node, ast.Call)
+                              and isinstance(node.func, ast.Attribute)
+                              and isinstance(node.func.value, ast.Name)
+                              and node.func.value.id == 'self'
+                              and node.func.attr == method):
+                          return True
+              return False
+          assert has_self_call(handle_body, '_log'), \
+              "handle_message must call self._log(message)"
+          assert has_self_call(handle_body, 'send'), \
+              "handle_message must call self.send(message)"
+        hints:
+          - text: "Inside `handle_message`, write two lines: `self._log(message)` then `self.send(message)`. The `self.` prefix is what produces the self-arrows in the diagram."
+            condition: "default"
+
+      - description: "Main calls bot.handle_message(...)"
+        command: |
+          source = open('/tutorial/chatbot.py').read()
+          assert 'bot.handle_message(' in source, \
+              "In __main__, call bot.handle_message(\"hi there\")"
+        hints:
+          - text: "In the `if __name__ == \"__main__\":` block, call `bot.handle_message(\"hi there\")` — this is the single entry point from Main into the bot."
+            condition: "default"
+
+      - description: "Main does NOT call bot._log or bot.send directly"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          main_body = None
+          for node in tree.body:
+              if isinstance(node, ast.If):
+                  main_body = node.body
+          assert main_body is not None
+          for stmt in main_body:
+              for n in ast.walk(stmt):
+                  if (isinstance(n, ast.Call)
+                          and isinstance(n.func, ast.Attribute)
+                          and n.func.attr in ('_log', 'send')):
+                      # Allow if the receiver is self (shouldn't happen in main)
+                      if isinstance(n.func.value, ast.Name) and n.func.value.id == 'bot':
+                          assert False, \
+                              f"Main should not call bot.{n.func.attr}() directly — let handle_message delegate to _log and send internally."
+        hints:
+          - text: "Main should only call `bot.handle_message(\"hi there\")`. `_log` and `send` are *internal* — they are called by `handle_message` via `self._log(...)` and `self.send(...)`."
+            condition: "default"
+
+    quiz:
+      title: "Self-Calls and the Call Stack"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            What does a **nested activation box** (a smaller box stacked on top of a larger one) represent?
+          type: single
+          options:
+            - "An object that contains another object"
+            - "A new stack frame pushed while a previous call is still executing"
+            - "A syntax error"
+            - "A parallel thread"
+          correct_index: 1
+          explanation: |
+            A nested activation is the visual of the Python **call stack**: a method calls another method before returning, so a new frame is pushed on top. When the inner method returns, the inner box ends; when the outer returns, the outer box ends.
+
+        - question: |
+            Which line of Python produces a **self-arrow** (an arrow from a lifeline back to itself)?
+          type: single
+          options:
+            - "`bot.send(\"hi\")`  — called from outside the class"
+            - "`self.send(message)`  — called from inside a method on the same bot"
+            - "`send(message)`  — a call with no receiver"
+            - "`bot = DiscordBot()`  — a constructor"
+          correct_index: 1
+          explanation: |
+            `self.<method>(...)` is what the analyzer recognizes as "same object." The `self.` prefix matters — without it, the call would not be recognized as a method on the current object.
+
+        - question: |
+            **Predict.** Given this code, how many arrows appear in the diagram?
+
+            ```python
+            class Bot:
+                def a(self): self.b()
+                def b(self): pass
+
+            if __name__ == "__main__":
+                bot = Bot()
+                bot.a()
+            ```
+          type: single
+          options:
+            - "1 — just Main to bot"
+            - "2 — Main to bot, and bot to itself"
+            - "3 — including a creation arrow, the outer call, and the self-call"
+            - "0 — pass statements are not drawn"
+          correct_index: 2
+          explanation: |
+            **Three arrows.** (1) The `<<create>>` dashed arrow when `bot = Bot()`. (2) `Main -> bot: a()` for the outer call. (3) `bot -> bot: b()` for the self-call inside `a()`. The `pass` in `b()` is an empty body, so no further arrows come from there.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — "Fragments: Branches and Loops" (Fixer-Upper)
+  # Pedagogy:
+  #   Fixer-Upper pattern — near-complete code with specific missing structure.
+  #   Interleaving — student must recognize two distinct fragment types
+  #     (alt for conditional, loop for iteration).
+  #   Separation of Concerns — warn against deeply nested fragments.
+  #   Bloom's — Apply (write control flow), Analyze (read fragment shapes).
+  # --------------------------------------------------------------------------
+  - title: "Fragments: Branches and Loops"
+    instructions: |
+      ## When Behavior Is Not Always the Same
+
+      > **Learning objective:** After this step you will be able to **recognize** `alt` and `loop` interaction fragments on a diagram, and **write** Python control flow that produces them.
+
+      ### Combined Fragments Are Boxes Around Messages
+
+      So far every diagram has been a straight top-to-bottom trace. But real systems **branch** (sometimes you do X, other times Y) and **iterate** (do X for each element). UML handles this with **combined fragments** — labeled boxes drawn *around* the messages they contain.
+
+      Two you will use constantly:
+
+      | Fragment | Label in the box | Python construct that produces it |
+      |---|---|---|
+      | **alt** | `alt` / `else` | `if` / `elif` / `else` |
+      | **loop** | `loop` | `for` / `while` |
+
+      Both wrap a region of the diagram in a thin rectangle with the keyword in the top-left corner and a guard condition (the Boolean test) in square brackets.
+
+      ### Example — An `alt` Fragment
+
+      A spam filter decides whether to forward a message. Two branches, drawn as two compartments of one `alt` box:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      Main -> bot: handle("hi")
+      alt
+      bot -> channel: broadcast("hi")
+      else
+      bot -> bot: _block()
+      end
+      @enduml'></div>
+
+      The box says: *"exactly one of these branches runs."* The guard tells the reader **which**.
+
+      ### Example — A `loop` Fragment
+
+      Sending a welcome to every member — the message is sent once **per iteration**:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      Main -> bot: welcome_all()
+      loop
+      bot -> channel: notify_members("welcome")
+      end
+      @enduml'></div>
+
+      The loop box says: *"the message(s) inside run once for every item in the collection."*
+
+      ### A Warning — Do NOT Transcribe Every `if` and `for`
+
+      A common mistake is to copy every single branch and loop from your Python code into fragments. The result is a **monolithic** diagram — nested boxes inside nested boxes, unreadable.
+
+      > **Rule of thumb (from Ambler's *UML Style*):** If you find yourself nesting fragments more than two levels deep, you are trying to say too much in one diagram. Split it. Draw the "happy path" as one diagram and the error path as a separate one.
+
+      ### Your Target Diagram
+
+      The bot has a `broadcast_to_members(messages)` method that:
+
+      - loops over each message
+      - checks whether the message is spam
+      - if spam, calls `self._block(msg)`; otherwise, calls `channel.send_to_all(msg)`
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main: Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      create bot
+      Main --> bot: <<create>>
+      create channel
+      Main --> channel: <<create>>
+      Main -> bot: broadcast_to_members(...)
+      loop
+      alt
+      bot -> bot: _block(msg)
+      else
+      bot -> channel: send_to_all(msg)
+      end
+      end
+      @enduml'></div>
+
+      One `loop` on the outside, one `alt` nested one level inside. That is the maximum nesting you should ever want in a single diagram.
+
+      ### Your Task (Fixer-Upper)
+
+      The starter code has `broadcast_to_members` written as a **flat sequence** — no `for`, no `if`. It works, but the sequence diagram shows three bare arrows without fragment boxes. Your job:
+
+      1. Wrap the message handling in a `for msg in messages:` loop — produces the `loop` fragment
+      2. Inside the loop, use `if self._is_spam(msg):` / `else:` to split the two branches — produces the `alt` fragment
+      3. In the `if` branch, call `self._block(msg)`; in the `else` branch, call `channel.send_to_all(msg)`
+
+      > **Note on `_is_spam`:** It is already defined — a trivial classifier. You just need to call it in the `if` condition.
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class Channel:
+              def send_to_all(self, message: str) -> None:
+                  print(f"[CHANNEL] {message}")
+
+
+          class DiscordBot:
+              def _is_spam(self, message: str) -> bool:
+                  return "buy now" in message.lower()
+
+              def _block(self, message: str) -> None:
+                  print(f"[BLOCKED] {message}")
+
+              def broadcast_to_members(self, channel: Channel, messages: list) -> None:
+                  # TODO: rewrite the body of this method so it:
+                  #   1. LOOPS over each msg in messages      → produces a `loop` fragment
+                  #   2. If self._is_spam(msg), calls self._block(msg)
+                  #      else calls channel.send_to_all(msg)   → produces an `alt` fragment
+                  channel.send_to_all(messages[0])
+
+
+          if __name__ == "__main__":
+              bot = DiscordBot()
+              channel = Channel()
+              bot.broadcast_to_members(channel, ["hello", "buy now cheap", "good morning"])
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class Channel:
+                def send_to_all(self, message: str) -> None:
+                    print(f"[CHANNEL] {message}")
+
+
+            class DiscordBot:
+                def _is_spam(self, message: str) -> bool:
+                    return "buy now" in message.lower()
+
+                def _block(self, message: str) -> None:
+                    print(f"[BLOCKED] {message}")
+
+                def broadcast_to_members(self, channel: Channel, messages: list) -> None:
+                    for msg in messages:
+                        if self._is_spam(msg):
+                            self._block(msg)
+                        else:
+                            channel.send_to_all(msg)
+
+
+            if __name__ == "__main__":
+                bot = DiscordBot()
+                channel = Channel()
+                bot.broadcast_to_members(channel, ["hello", "buy now cheap", "good morning"])
+          language: python
+      explanation: |
+        Two Python structures, two fragments:
+
+        - `for msg in messages:` → the **loop** fragment. Everything indented under the `for` goes inside the box.
+        - `if self._is_spam(msg): ... else: ...` → the **alt** fragment with two compartments. The `if`-branch is the first compartment; `else` is the second, separated by the horizontal divider.
+
+        The call to `self._is_spam(msg)` in the `if` condition also produces a tiny self-arrow — it is a real method call. Some diagrams omit guard-evaluation calls to reduce clutter, but the analyzer draws them here so the test predicate is visible.
+
+        **Architectural takeaway:** Your flat version and this nested-fragment version produce different diagrams on purpose. The flat version is a trace of a *single* run (one happy path). The nested version shows the *general* behavior across any inputs. Both are useful — pick whichever one answers the question the reader is asking.
+
+    tests:
+      - description: "broadcast_to_members loops over messages"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          method_body = None
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
+              if cls.name == 'DiscordBot':
+                  for m in cls.body:
+                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
+                          method_body = m.body
+          assert method_body is not None, \
+              "DiscordBot.broadcast_to_members must exist"
+          has_for = any(isinstance(s, (ast.For, ast.While)) for s in method_body)
+          assert has_for, \
+              "broadcast_to_members must iterate over messages using a for loop — that is what produces the `loop` fragment in the diagram."
+        hints:
+          - text: "Start the method body with `for msg in messages:`. The `for` is what produces the `loop` fragment."
+            condition: "default"
+
+      - description: "broadcast_to_members uses if/else for spam check"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          method_body = None
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
+              if cls.name == 'DiscordBot':
+                  for m in cls.body:
+                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
+                          method_body = m.body
+          # Find an If statement anywhere in the method, with a non-empty else
+          def find_if_with_else(body):
+              for s in body:
+                  if isinstance(s, ast.If) and s.orelse:
+                      return s
+                  for child in ast.iter_child_nodes(s):
+                      r = find_if_with_else([child]) if hasattr(child, '_fields') else None
+                      if r: return r
+              return None
+          def has_if_else(body):
+              for s in body:
+                  if isinstance(s, ast.If) and s.orelse:
+                      return True
+                  if hasattr(s, 'body') and has_if_else(getattr(s, 'body', [])):
+                      return True
+                  if hasattr(s, 'orelse') and has_if_else(getattr(s, 'orelse', [])):
+                      return True
+              return False
+          assert has_if_else(method_body), \
+              "Use `if self._is_spam(msg): ... else: ...` inside the loop. The if/else is what produces the `alt` fragment with two branches."
+        hints:
+          - text: "Inside the `for` loop, write `if self._is_spam(msg):` and an `else:` clause. Both branches are required — a plain `if` without `else` would produce an `opt` fragment, not an `alt`."
+            condition: "default"
+
+      - description: "Spam branch blocks, non-spam branch forwards to channel"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          method_body = None
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
+              if cls.name == 'DiscordBot':
+                  for m in cls.body:
+                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
+                          method_body = m.body
+
+          def calls_in(body, recv_name, meth_name):
+              for node in body:
+                  for n in ast.walk(node):
+                      if (isinstance(n, ast.Call)
+                              and isinstance(n.func, ast.Attribute)
+                              and isinstance(n.func.value, ast.Name)
+                              and n.func.value.id == recv_name
+                              and n.func.attr == meth_name):
+                          return True
+              return False
+
+          # Find the if statement inside the for loop
+          if_node = None
+          for s in method_body:
+              if isinstance(s, ast.For):
+                  for inner in s.body:
+                      if isinstance(inner, ast.If):
+                          if_node = inner
+                          break
+          assert if_node is not None, \
+              "Put the if/else inside the for loop"
+          assert calls_in(if_node.body, 'self', '_block'), \
+              "In the spam branch (`if`), call `self._block(msg)`"
+          assert calls_in(if_node.orelse, 'channel', 'send_to_all'), \
+              "In the non-spam branch (`else`), call `channel.send_to_all(msg)`"
+        hints:
+          - text: "In the `if` branch: `self._block(msg)`. In the `else` branch: `channel.send_to_all(msg)`."
+            condition: "default"
+
+    quiz:
+      title: "Fragments"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            An **alt** fragment on a sequence diagram represents what Python construct?
+          type: single
+          options:
+            - "`try` / `except`"
+            - "`if` / `elif` / `else` — exactly one branch runs"
+            - "A for loop"
+            - "A function definition"
+          correct_index: 1
+          explanation: |
+            `alt` is the conditional fragment — one compartment per branch, separated by horizontal lines, with exactly one compartment executing based on its guard condition. It maps directly to Python's `if` / `elif` / `else`.
+
+        - question: |
+            A **loop** fragment on a sequence diagram represents what Python construct?
+          type: single
+          options:
+            - "A recursive function call"
+            - "A try/except block"
+            - "`for` or `while` — the contents run zero or more times"
+            - "Object creation"
+          correct_index: 2
+          explanation: |
+            `loop` wraps messages that repeat. It maps to Python's `for` and `while`. The guard can describe the iteration (e.g., `[for each message]`).
+
+        - question: |
+            You have this (made-up) diagram nesting:
+
+            ```
+            loop
+              alt
+                opt
+                  alt
+                    ...
+                  end
+                end
+              end
+            end
+            ```
+
+            What is the right reaction?
+          type: single
+          options:
+            - "Perfect — this captures the full logic"
+            - "Add more fragments to be thorough"
+            - "Refactor — this diagram is too deeply nested to read; split it into smaller, focused diagrams"
+            - "Use async arrows instead"
+          correct_index: 2
+          explanation: |
+            Deeply nested fragments become unreadable fast. Ambler's *UML Style* rule of thumb: if you are past two levels of nesting, split the diagram. Draw the happy path separately from the error path, and the "normal case" separately from the edge case. Sequence diagrams are for communicating behavior, not for encoding every branch of your code.
+
+        - question: |
+            A sequence diagram should typically focus on **one** scenario at a time. Which is the better choice?
+          type: single
+          options:
+            - "One giant diagram covering every possible execution path"
+            - "Multiple small diagrams, each showing a specific scenario (happy path, error path, rare corner case)"
+            - "A single diagram with many nested alt fragments for every condition"
+            - "Skip the diagram — the code is enough"
+          correct_index: 1
+          explanation: |
+            **Multiple small, focused diagrams.** Each one answers a single question: "What happens when a valid user logs in?" or "What happens when payment fails?" This is a direct application of the Single Responsibility Principle to your diagrams — a principle you already know from classes.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — "Sequence Diagram Reference"
+  # Pedagogy:
+  #   Retrieval practice / summary — consolidates notation learned.
+  #   Serves as a quick-reference card students can revisit.
+  # --------------------------------------------------------------------------
+  - title: "Sequence Diagram Reference"
+    instructions: |
+      ## Congratulations!
+
+      You can now read and write basic UML sequence diagrams — lifelines, synchronous calls, return messages, self-calls with nested activation, and `alt` / `loop` fragments. This page is your cheat sheet.
+
+      ---
+
+      ### The Core Pieces
+
+      | Element | Looks like | Python that produces it |
+      |---|---|---|
+      | **Lifeline** | box on top, dashed line below | any object instance: `bot = DiscordBot()` |
+      | **Activation box** | thin rectangle on the lifeline | a method call — begins when the call arrives, ends when it returns |
+      | **Synchronous message** | solid line, filled arrowhead → | `x.method(...)` — caller waits |
+      | **Return message** | dashed line, open arrowhead ⇠ | `y = x.method()` **and** `method` returns a non-`None` type |
+      | **Self-message** | arrow looping back to the same lifeline | `self.method(...)` inside a method |
+      | **Creation** | dashed arrow with `<<create>>` label to a new lifeline | constructor: `bot = DiscordBot()` |
+
+      ### The Two Fragments You Will Use Most
+
+      | Fragment | Meaning | Python |
+      |---|---|---|
+      | **alt** | choose one branch | `if` / `elif` / `else` |
+      | **loop** | repeat zero or more times | `for` / `while` |
+
+      ### Fragments You May Encounter Later
+
+      - **opt** — zero or one execution (a plain `if` with no `else`)
+      - **par** — parallel branches execute concurrently (e.g., `asyncio.gather`)
+      - **break** — exit the enclosing loop
+      - **ref** — an "interaction use"; a named sub-scenario referenced from another diagram
+      - **critical** — an atomic region
+      - **neg** — an invalid trace (what **must not** happen)
+
+      ---
+
+      ### Arrow Cheat Sheet
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant a: A
+      participant b: B
+      a -> b: sync_call()
+      b --> a: return
+      a ->> b: async_call()
+      a -> a: self_call()
+      @enduml'></div>
+
+      - `->` synchronous (caller blocks)
+      - `-->` return (dashed, open arrow)
+      - `->>` asynchronous (caller keeps going — you will meet this later)
+      - `-> self` self-call
+
+      ---
+
+      ### Guidelines You Should Remember
+
+      1. **Lifelines are instances, not classes.** Two `Dog()` calls → two lifelines.
+      2. **Activation boxes are stack frames.** They start on the way in, end on the way out. Nested activation = nested calls.
+      3. **Do not draw every `if` and `for`.** One or two fragment levels is usually enough — split deeply-branching logic into multiple diagrams.
+      4. **One scenario per diagram.** A sequence diagram answers a single question. Happy path, error path, and edge cases typically belong in separate diagrams.
+      5. **Only draw return arrows when the value matters.** UML is about communication — if the return is `None` or implied by the activation box ending, skip the dashed arrow.
+
+      ---
+
+      ### What Sequence Diagrams Are Good For
+
+      - **Designing an interaction** before you write the code
+      - **Explaining a specific scenario** to a teammate or reviewer (much faster than prose)
+      - **Documenting a protocol** (API handshake, auth flow, publish/subscribe)
+      - **Finding a bug** — draw the diagram of what you *expect* vs. what actually happens
+
+      And what they are **not** good for: showing the complete behavior of a system. Use a *class* diagram for structure and use *multiple small* sequence diagrams for specific runtime scenarios.
+
+      Next up: you now know both halves of UML modeling — structure (class diagrams) and behavior (sequence diagrams). In your software engineering career you will mix and match these constantly, usually on whiteboards, usually for five minutes at a time. That is the sweet spot UML was designed for.
+
+    files:
+      - path: README.md
+        content: |
+          # Sequence Diagram Reference
+
+          Nothing to code in this step — it is a summary page.
+
+          Use it as a cheat sheet when working on future sequence diagrams.
+        language: markdown
+
+    open_file: README.md
