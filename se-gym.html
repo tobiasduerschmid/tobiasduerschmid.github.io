@@ -183,6 +183,67 @@ layout: sebook
         </div>
 
       </div><!-- /#gym-entrance-sections -->
+
+      <!-- ==================== TUTORIAL PROGRESS IMPORT/EXPORT ==================== -->
+      <div id="tutorial-progress-section"
+        style="border-top: 1px solid #e1e4e8; padding-top: 18px; margin-top: 30px;">
+        <h2 style="margin-top: 0;">Tutorial Progress</h2>
+        <p class="gym-subtitle">Back up, transfer, or restore tutorial progress stored in this browser's local storage.
+        </p>
+        <div class="controls-row" style="gap: 10px; flex-wrap: wrap;">
+          <button id="download-tutorial-progress-btn" class="gym-btn secondary">
+            <i class="fa-solid fa-download"></i> Download Tutorial Progress
+          </button>
+          <button id="upload-tutorial-progress-btn" class="gym-btn secondary">
+            <i class="fa-solid fa-upload"></i> Upload Tutorial Progress
+          </button>
+          <input type="file" id="upload-tutorial-progress-input" accept="application/json,.json"
+            style="display:none;" />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TUTORIAL EXPORT MODAL ==================== -->
+    <div id="tutorial-export-modal" role="dialog" aria-modal="true" aria-labelledby="tutorial-export-modal-title"
+      style="display:none;">
+      <div class="confirm-modal-backdrop"></div>
+      <div class="tutorial-io-modal-box">
+        <h3 id="tutorial-export-modal-title" class="tutorial-io-modal-title">Select tutorials to export</h3>
+        <p class="tutorial-io-modal-desc" id="tutorial-export-modal-desc">Check the tutorials whose progress you want to
+          include in the exported JSON file.</p>
+        <div class="tutorial-io-list" id="tutorial-export-list"></div>
+        <p class="tutorial-io-modal-desc" id="tutorial-export-empty-msg"
+          style="display:none; color:#666; font-style: italic;">
+          No tutorial progress found in this browser.
+        </p>
+        <div class="tutorial-io-modal-actions">
+          <button id="tutorial-export-select-all" class="gym-btn secondary">Select all</button>
+          <button id="tutorial-export-select-none" class="gym-btn secondary">Select none</button>
+          <span style="flex: 1;"></span>
+          <button id="tutorial-export-cancel" class="gym-btn secondary">Cancel</button>
+          <button id="tutorial-export-confirm" class="gym-btn primary">Download JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TUTORIAL IMPORT MODAL ==================== -->
+    <div id="tutorial-import-modal" role="dialog" aria-modal="true" aria-labelledby="tutorial-import-modal-title"
+      style="display:none;">
+      <div class="confirm-modal-backdrop"></div>
+      <div class="tutorial-io-modal-box">
+        <h3 id="tutorial-import-modal-title" class="tutorial-io-modal-title">Select tutorials to import</h3>
+        <p class="tutorial-io-modal-desc">Check the tutorials you want to load into this browser's local storage. Any
+          existing progress for the checked tutorials will be overwritten.</p>
+        <div class="tutorial-io-list" id="tutorial-import-list"></div>
+        <div class="tutorial-io-modal-actions">
+          <button id="tutorial-import-select-all" class="gym-btn secondary">Select all</button>
+          <button id="tutorial-import-select-none" class="gym-btn secondary">Select none</button>
+          <span style="flex: 1;"></span>
+          <button id="tutorial-import-cancel" class="gym-btn secondary">Cancel</button>
+          <button id="tutorial-import-confirm" class="gym-btn primary">Import</button>
+        </div>
+      </div>
     </div>
 
     <!-- ==================== WORKOUT VIEW ==================== -->
@@ -1412,6 +1473,118 @@ layout: sebook
       pointer-events: none;
       user-select: none;
     }
+
+    /* Tutorial Progress Import/Export modal */
+    .tutorial-io-modal-box {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 10px;
+      padding: 22px 26px;
+      z-index: 201;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      max-width: 520px;
+      width: 92%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tutorial-io-modal-title {
+      margin: 0 0 8px;
+      color: #2774AE;
+      font-weight: 700;
+      font-size: 1.15em;
+    }
+
+    .tutorial-io-modal-desc {
+      margin: 0 0 14px;
+      font-size: 0.9em;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    .tutorial-io-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      padding: 6px 4px;
+      background: #fafbfc;
+      min-height: 60px;
+      max-height: 45vh;
+    }
+
+    .tutorial-io-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95em;
+      color: #222;
+    }
+
+    .tutorial-io-item:hover {
+      background: #eef3f8;
+    }
+
+    .tutorial-io-item input[type="checkbox"] {
+      margin: 0;
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+    }
+
+    .tutorial-io-item-title {
+      font-weight: 600;
+    }
+
+    .tutorial-io-item-meta {
+      color: #777;
+      font-size: 0.85em;
+      margin-left: 4px;
+    }
+
+    .tutorial-io-modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    html.dark-mode .tutorial-io-modal-box {
+      background: #2a2a2a;
+    }
+
+    html.dark-mode .tutorial-io-modal-title {
+      color: #79b8e3;
+    }
+
+    html.dark-mode .tutorial-io-modal-desc {
+      color: #c8c8c8;
+    }
+
+    html.dark-mode .tutorial-io-list {
+      background: #1f1f1f;
+      border-color: #444;
+    }
+
+    html.dark-mode .tutorial-io-item {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .tutorial-io-item:hover {
+      background: #333;
+    }
+
+    html.dark-mode .tutorial-io-item-meta {
+      color: #aaa;
+    }
   </style>
 
   {% include footer.html %}
@@ -2424,6 +2597,255 @@ layout: sebook
       workoutRestartBtn.addEventListener('click', restartWorkout);
       workoutReviewBtn.addEventListener('click', startReview);
       workoutBackBtn.addEventListener('click', goBackToLibrary);
+
+      // ==================== TUTORIAL PROGRESS IMPORT/EXPORT ====================
+
+      // Known tutorial localStorage keys: tutorial-progress-<id> (from tutorial-code.js),
+      // plus two standalone regex tutorials that predate the shared prefix.
+      var TUTORIAL_PROGRESS_PREFIX = 'tutorial-progress-';
+      var STANDALONE_TUTORIAL_KEYS = {
+        'regex-tutorial-progress': 'RegEx Tutorial: Basics',
+        'regex-tutorial-advanced-progress': 'RegEx Tutorial: Advanced'
+      };
+
+      // Jekyll-emitted map of tutorialId -> human-readable title.
+      var TUTORIAL_TITLES = {
+        {% for t in site.data.tutorials %}{{ t[0] | jsonify }}: {{ t[1].title | default: t[0] | jsonify }}{% unless forloop.last %}, {% endunless %}{% endfor %}
+      };
+
+      function getTitleForStorageKey(key) {
+        if (STANDALONE_TUTORIAL_KEYS[key]) return STANDALONE_TUTORIAL_KEYS[key];
+        if (key.indexOf(TUTORIAL_PROGRESS_PREFIX) === 0) {
+          var id = key.substring(TUTORIAL_PROGRESS_PREFIX.length);
+          return TUTORIAL_TITLES[id] || id;
+        }
+        return key;
+      }
+
+      function collectStoredTutorialKeys() {
+        var keys = [];
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (!k) continue;
+            if (k.indexOf(TUTORIAL_PROGRESS_PREFIX) === 0 || STANDALONE_TUTORIAL_KEYS[k]) {
+              keys.push(k);
+            }
+          }
+        } catch (e) { /* localStorage unavailable */ }
+        keys.sort(function (a, b) {
+          return getTitleForStorageKey(a).localeCompare(getTitleForStorageKey(b));
+        });
+        return keys;
+      }
+
+      function renderTutorialCheckboxList(container, keys, valueFor) {
+        container.innerHTML = '';
+        keys.forEach(function (key) {
+          var label = document.createElement('label');
+          label.className = 'tutorial-io-item';
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = key;
+          cb.checked = true;
+          var titleSpan = document.createElement('span');
+          titleSpan.className = 'tutorial-io-item-title';
+          titleSpan.textContent = getTitleForStorageKey(key);
+          var metaSpan = document.createElement('span');
+          metaSpan.className = 'tutorial-io-item-meta';
+          var meta = valueFor ? valueFor(key) : '';
+          if (meta) metaSpan.textContent = meta;
+          label.appendChild(cb);
+          label.appendChild(titleSpan);
+          if (meta) label.appendChild(metaSpan);
+          container.appendChild(label);
+        });
+      }
+
+      function getCheckedKeys(container) {
+        var out = [];
+        var boxes = container.querySelectorAll('input[type="checkbox"]');
+        for (var i = 0; i < boxes.length; i++) {
+          if (boxes[i].checked) out.push(boxes[i].value);
+        }
+        return out;
+      }
+
+      function setAllChecked(container, checked) {
+        var boxes = container.querySelectorAll('input[type="checkbox"]');
+        for (var i = 0; i < boxes.length; i++) boxes[i].checked = checked;
+      }
+
+      // ---------- Export ----------
+      var exportModal = document.getElementById('tutorial-export-modal');
+      var exportList = document.getElementById('tutorial-export-list');
+      var exportEmptyMsg = document.getElementById('tutorial-export-empty-msg');
+      var exportConfirmBtn = document.getElementById('tutorial-export-confirm');
+      var exportCancelBtn = document.getElementById('tutorial-export-cancel');
+      var exportSelectAllBtn = document.getElementById('tutorial-export-select-all');
+      var exportSelectNoneBtn = document.getElementById('tutorial-export-select-none');
+      var downloadBtn = document.getElementById('download-tutorial-progress-btn');
+
+      function openExportModal() {
+        var keys = collectStoredTutorialKeys();
+        if (keys.length === 0) {
+          exportEmptyMsg.style.display = 'block';
+          exportList.style.display = 'none';
+          exportConfirmBtn.disabled = true;
+          exportSelectAllBtn.disabled = true;
+          exportSelectNoneBtn.disabled = true;
+        } else {
+          exportEmptyMsg.style.display = 'none';
+          exportList.style.display = 'block';
+          exportConfirmBtn.disabled = false;
+          exportSelectAllBtn.disabled = false;
+          exportSelectNoneBtn.disabled = false;
+          renderTutorialCheckboxList(exportList, keys, function (key) {
+            try {
+              var raw = localStorage.getItem(key) || '';
+              var sizeKb = (raw.length / 1024).toFixed(1);
+              return '(' + sizeKb + ' KB)';
+            } catch (e) { return ''; }
+          });
+        }
+        exportModal.style.display = 'block';
+      }
+
+      function closeExportModal() {
+        exportModal.style.display = 'none';
+      }
+
+      function exportSelected() {
+        var selected = getCheckedKeys(exportList);
+        if (selected.length === 0) {
+          closeExportModal();
+          return;
+        }
+        var payload = {
+          format: 'se-gym-tutorial-progress',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          entries: {}
+        };
+        selected.forEach(function (key) {
+          var raw = localStorage.getItem(key);
+          if (raw === null) return;
+          var parsed;
+          try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
+          payload.entries[key] = {
+            title: getTitleForStorageKey(key),
+            value: parsed
+          };
+        });
+
+        var json = JSON.stringify(payload, null, 2);
+        var blob = new Blob([json], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = 'tutorial-progress-' + stamp + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+        closeExportModal();
+      }
+
+      downloadBtn.addEventListener('click', openExportModal);
+      exportCancelBtn.addEventListener('click', closeExportModal);
+      exportConfirmBtn.addEventListener('click', exportSelected);
+      exportSelectAllBtn.addEventListener('click', function () { setAllChecked(exportList, true); });
+      exportSelectNoneBtn.addEventListener('click', function () { setAllChecked(exportList, false); });
+      exportModal.querySelector('.confirm-modal-backdrop').addEventListener('click', closeExportModal);
+
+      // ---------- Import ----------
+      var uploadBtn = document.getElementById('upload-tutorial-progress-btn');
+      var uploadInput = document.getElementById('upload-tutorial-progress-input');
+      var importModal = document.getElementById('tutorial-import-modal');
+      var importList = document.getElementById('tutorial-import-list');
+      var importConfirmBtn = document.getElementById('tutorial-import-confirm');
+      var importCancelBtn = document.getElementById('tutorial-import-cancel');
+      var importSelectAllBtn = document.getElementById('tutorial-import-select-all');
+      var importSelectNoneBtn = document.getElementById('tutorial-import-select-none');
+
+      var pendingImportEntries = null;
+
+      function openImportModal(entries) {
+        pendingImportEntries = entries;
+        var keys = Object.keys(entries).sort(function (a, b) {
+          return getTitleForStorageKey(a).localeCompare(getTitleForStorageKey(b));
+        });
+        renderTutorialCheckboxList(importList, keys, function (key) {
+          var existing = localStorage.getItem(key);
+          return existing !== null ? '(overwrites existing)' : '(new)';
+        });
+        importModal.style.display = 'block';
+      }
+
+      function closeImportModal() {
+        importModal.style.display = 'none';
+        pendingImportEntries = null;
+      }
+
+      function importSelected() {
+        if (!pendingImportEntries) { closeImportModal(); return; }
+        var selected = getCheckedKeys(importList);
+        var imported = 0;
+        selected.forEach(function (key) {
+          var entry = pendingImportEntries[key];
+          if (!entry) return;
+          var value = entry.value;
+          var raw = typeof value === 'string' ? value : JSON.stringify(value);
+          try {
+            localStorage.setItem(key, raw);
+            imported++;
+          } catch (e) {
+            console.warn('Could not import tutorial progress for', key, e);
+          }
+        });
+        closeImportModal();
+        if (imported > 0) {
+          alert('Imported progress for ' + imported + ' tutorial' + (imported === 1 ? '' : 's') + '.');
+        }
+      }
+
+      function handleUploadFile(file) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var text = ev.target.result;
+          var parsed;
+          try { parsed = JSON.parse(text); }
+          catch (e) {
+            alert('Could not read file: invalid JSON.');
+            return;
+          }
+          if (!parsed || typeof parsed !== 'object' || !parsed.entries || typeof parsed.entries !== 'object') {
+            alert('File does not look like a tutorial progress export.');
+            return;
+          }
+          var keys = Object.keys(parsed.entries);
+          if (keys.length === 0) {
+            alert('The uploaded file has no tutorial entries.');
+            return;
+          }
+          openImportModal(parsed.entries);
+        };
+        reader.onerror = function () { alert('Failed to read file.'); };
+        reader.readAsText(file);
+      }
+
+      uploadBtn.addEventListener('click', function () { uploadInput.click(); });
+      uploadInput.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (file) handleUploadFile(file);
+        uploadInput.value = '';
+      });
+      importCancelBtn.addEventListener('click', closeImportModal);
+      importConfirmBtn.addEventListener('click', importSelected);
+      importSelectAllBtn.addEventListener('click', function () { setAllChecked(importList, true); });
+      importSelectNoneBtn.addEventListener('click', function () { setAllChecked(importList, false); });
+      importModal.querySelector('.confirm-modal-backdrop').addEventListener('click', closeImportModal);
 
       // Initialize
       refreshLibrary();
