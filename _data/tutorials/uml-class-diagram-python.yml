@@ -147,6 +147,8 @@ steps:
           assert 'student_id' in params, \
               "__init__ must have a 'student_id' parameter: def __init__(self, name, student_id)"
         hints:
+          - text: "Look at the UML diagram's bottom compartment — it shows `__init__(name, student_id)`. What should your constructor's parameter list look like?"
+            condition: "default"
           - text: "Define the constructor as `def __init__(self, name, student_id):`"
             condition: "default"
 
@@ -165,7 +167,9 @@ steps:
           assert s.student_id == 'S001', \
               "self.student_id should store the student_id passed to __init__"
         hints:
-          - text: "In `__init__`, store both parameters as instance attributes: `self.name = name` and `self.student_id = student_id`"
+          - text: "The UML middle compartment lists `name` and `student_id`. Each one should become a `self.` attribute inside `__init__` — how do you assign a parameter to an instance attribute?"
+            condition: "default"
+          - text: "In `__init__`, assign each parameter to `self`: `self.name = name` and `self.student_id = student_id`"
             condition: "default"
 
       - description: "get_info() returns the correct format"
@@ -177,10 +181,14 @@ steps:
           assert hasattr(s, 'get_info'), \
               "Student needs a get_info() method"
           result = s.get_info()
+          assert result is not None, \
+              "get_info() should return a string — make sure it has a `return` statement"
           assert result == 'Alice (S001)', \
               f"get_info() should return 'Alice (S001)' but got '{result}'"
         hints:
-          - text: "Use an f-string: `return f\"{self.name} ({self.student_id})\"`"
+          - text: "The spec says the output should look like `\"Alice (S001)\"` — the name, a space, then the student_id in parentheses. How would you build that string from the two instance attributes?"
+            condition: "default"
+          - text: "Use an f-string that combines `self.name` and `self.student_id` with the required spacing and parentheses."
             condition: "default"
 
     quiz:
