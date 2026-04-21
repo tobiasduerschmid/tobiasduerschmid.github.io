@@ -14,7 +14,7 @@ setup_commands:
   - "git config --global init.defaultBranch main"
   - "git config --global core.pager cat"
   - "git config --global pull.rebase false"
-  - "git init myproject && cd myproject"
+  - "mkdir myproject && cd myproject"
 
 steps:
   - title: "Build This Git Graph"
@@ -70,6 +70,12 @@ steps:
       @enduml
       ```
 
-      Commit messages and file contents don't have to match exactly — the
-      shape of the graph (branch points, merge, which branch HEAD is on) is
-      what you're aiming for.
+      ## Rules
+      Use only basic git commands: init, add, commit, branch, switch (or checkout), and merge. No rebase, revert, or tags (you’ve not learned these commands in this class yet anyways, so why bother?) 
+      Commit subjects must match exactly (case and punctuation).
+      Every commit must actually change a file. No --allow-empty.
+      File contents, authors, and timestamps do not matter.
+      Two things to watch out for
+      The top merge must be a real merge commit, not a fast-forward. This means you have to commit Add logging support on main before you merge feature/parser. Otherwise git fast-forwards and no merge commit is created.
+      The experiment branch is never merged. Create it, commit to it, and leave it alone. Don’t delete it.
+
