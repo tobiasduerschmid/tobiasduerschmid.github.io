@@ -1049,15 +1049,19 @@ steps:
       - description: "The +1 button and a Reset button are both present"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var buttons = root.querySelectorAll('button');
           assert(buttons.length >= 2,
             'Add at least two buttons (+1 and Reset). Found: ' + buttons.length);
         hints:
-          - text: "Add a second `<Button>` — same shape, just calls `setCount(0)`."
+          - text: "Add a second `<Button>` — same shape as the +1 button, different `onClick`."
             condition: "code_contains: useState"
+          - text: "The Reset button needs an `onClick`. What value should it pass to the setter to restore the starting count?"
+            condition: "code_missing: setCount(0)"
       - description: "A button with 'Reset' text exists"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var buttons = Array.from(root.querySelectorAll('button'));
           var hasReset = buttons.some(function(b) {
             return b.textContent.toLowerCase().includes('reset');
@@ -1075,12 +1079,15 @@ steps:
       - description: "A decrement (−1) button exists"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var buttons = Array.from(root.querySelectorAll('button'));
           assert(buttons.length >= 3,
             'Add a −1 button. Found only ' + buttons.length + ' button(s)');
         hints:
-          - text: "Add a third button. Which `Math` function returns the larger of two numbers? Use it to floor at 0."
+          - text: "Add a third `<Button>` for decrement. Think about whether the count should be allowed to go below zero."
             condition: "code_contains: useState"
+          - text: "Good — decrement is wired. Should the count be able to go negative? There's a one-liner to clamp it."
+            condition: "code_matches: setCount\\s*\\(\\s*count\\s*-\\s*1\\s*\\)"
 
     quiz:
       title: "useState — Knowledge Check"
@@ -2159,6 +2166,7 @@ steps:
       - description: "All ProfileCards are rendered (one avatar per user)"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var cards = root.querySelectorAll('img');
           assert(cards.length >= 4,
             'Render all user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
@@ -2173,6 +2181,7 @@ steps:
       - description: "Avatar images are circular (border-radius applied)"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var imgs = Array.from(root.querySelectorAll('img'));
           var hasRound = imgs.some(function(img) {
             var style = img.style.borderRadius || getComputedStyle(img).borderRadius;
@@ -2182,9 +2191,13 @@ steps:
         hints:
           - text: "Bootstrap has a `rounded-` utility for circles. Which one?"
             condition: "code_missing: rounded-circle"
+          - text: "The styling needs to be on the `<img>` element itself — applying it to a wrapper `<div>` won't affect the image's own border-radius."
+            condition: "code_contains: <img"
       - description: "Usernames are displayed"
         command: |
-          var text = frame.contentDocument.getElementById('root').textContent;
+          var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
+          var text = root.textContent;
           assert(text.includes('barbara-liskov') || text.includes('Barbara Liskov'),
             'Display the username in the Avatar component');
           assert(text.includes('fred-brooks') || text.includes('Fred Brooks'),
@@ -2195,9 +2208,14 @@ steps:
             condition: "code_matches: function\\s+Avatar\\s*\\(\\s*props\\s*\\)[\\s\\S]*\\{username\\}"
           - text: "Render `{username}` somewhere in `Avatar`'s JSX."
             condition: "code_missing: username"
+          - title: "Passed but not rendered"
+            text: "`username` is being passed as a prop — but is it referenced inside `Avatar`'s return? A prop that isn't used in JSX is invisible."
+            condition: "code_contains: username="
       - description: "Stats (repos, followers) are displayed"
         command: |
-          var text = frame.contentDocument.getElementById('root').textContent;
+          var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
+          var text = root.textContent;
           assert(text.includes('12') && text.includes('2048'),
             'Display repo and follower counts using StatBadge. Expected "12" and "2048" in the output.');
         hints:
@@ -2496,15 +2514,21 @@ steps:
             condition: "code_missing: key="
       - description: "Prices are displayed"
         command: |
-          var text = frame.contentDocument.getElementById('root').textContent;
+          var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
+          var text = root.textContent;
           assert(text.includes('29.99') || text.includes('$29.99'),
             'Display product prices');
         hints:
           - text: "Format with `product.price.toFixed(2)`."
             condition: "code_missing: toFixed"
+          - title: "Formatted but invisible"
+            text: "`toFixed(2)` is there — is the result inside `{}` in your JSX so React actually renders it?"
+            condition: "code_contains: toFixed"
       - description: "'Add to Cart' buttons exist"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var buttons = Array.from(root.querySelectorAll('button'));
           var hasAdd = buttons.some(function(b) {
             return b.textContent.toLowerCase().includes('add') || b.textContent.toLowerCase().includes('cart');
@@ -2522,6 +2546,7 @@ steps:
       - description: "Category filter buttons exist"
         command: |
           var root = frame.contentDocument.getElementById('root');
+          assert(root, 'root element not found — did your code throw during render?');
           var buttons = Array.from(root.querySelectorAll('button'));
           var labels = buttons.map(function(b) { return b.textContent.toLowerCase(); });
           assert(labels.some(function(l) { return l.includes('all'); }),
@@ -2533,6 +2558,8 @@ steps:
         hints:
           - text: "Same pattern as Step 6: `<Button onClick={() => setFilter('Tech')}>Tech</Button>`."
             condition: "code_missing: setFilter"
+          - text: "Filter is wired — do the button labels match the category names in the product data? The test checks for those exact strings."
+            condition: "code_contains: setFilter"
       - description: "Uses useState for cart or filter state"
         command: |
           assert(code.includes('useState'),
