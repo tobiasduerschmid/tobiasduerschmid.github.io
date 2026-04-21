@@ -197,6 +197,7 @@
     this._umlDiagramEnabled = options.uml_diagram || false;
     this._umlPositionRight = options.uml_position === 'right'; // diagram in right bottom tab
     this._umlPositionBelow = options.uml_position === 'below'; // diagram below instructions (always visible)
+    this._umlPositionBottomLeft = options.uml_position === 'bottom-left'; // diagram pane below left panel (always visible)
     this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
@@ -475,8 +476,9 @@
         '</div>';
     }
 
-    var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight && !this._umlPositionBelow;
+    var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight && !this._umlPositionBelow && !this._umlPositionBottomLeft;
     var useBelowUml = this._umlDiagramEnabled && this._umlPositionBelow;
+    var useBottomLeftUml = this._umlDiagramEnabled && this._umlPositionBottomLeft;
     this.root.innerHTML =
       '<div class="tvm-loading">' +
       '<div class="tvm-loading-spinner"></div>' +
@@ -550,6 +552,26 @@
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
         : '') +
+      (useBottomLeftUml
+        ? '<div class="tvm-uml-bottom-left-splitter" title="Drag to resize"></div>' +
+          '<div class="tvm-uml-bottom-left-view">' +
+          '<div class="tvm-diagram-toolbar">' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<div class="tvm-diagram-zoom-controls">' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+          '<span class="tvm-diagram-zoom-label">100%</span>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+          '</div>' +
+          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+          '</div>' +
+          '<div class="tvm-diagram-content"></div>' +
+          '</div>'
+        : '') +
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
       '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
@@ -619,7 +641,9 @@
       ? this.root.querySelector('.tvm-uml-right-view')
       : this._umlPositionBelow
         ? this.root.querySelector('.tvm-uml-below-view')
-        : this.root.querySelector('.tvm-uml-left-view');
+        : this._umlPositionBottomLeft
+          ? this.root.querySelector('.tvm-uml-bottom-left-view')
+          : this.root.querySelector('.tvm-uml-left-view');
     this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
     this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
@@ -1041,6 +1065,13 @@
       this.config.useTerminal ? '.tvm-terminal-panel' :
         this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
     this._makeDraggable(vsplitter, 'horizontal', editorPanel, bottomPanel);
+
+    var umlBottomLeftSplitter = this.root.querySelector('.tvm-uml-bottom-left-splitter');
+    if (umlBottomLeftSplitter) {
+      var stepsView = this.root.querySelector('.tvm-steps-view');
+      var umlBottomLeftView = this.root.querySelector('.tvm-uml-bottom-left-view');
+      this._makeDraggable(umlBottomLeftSplitter, 'horizontal', stepsView, umlBottomLeftView);
+    }
   };
 
   TutorialCode.prototype._makeDraggable = function (splitter, direction, beforeEl, afterEl) {
@@ -3001,8 +3032,8 @@
       }
     }
 
-    // Update below-instructions UML view visibility (uml_position: below)
-    if (this._umlPositionBelow && this._umlContainer) {
+    // Update below-instructions UML view visibility (uml_position: below / bottom-left)
+    if ((this._umlPositionBelow || this._umlPositionBottomLeft) && this._umlContainer) {
       var hasFiles = this._umlWatchedFiles.length > 0;
       this._umlContainer.style.display = hasFiles ? '' : 'none';
       if (hasFiles) {
@@ -3058,8 +3089,8 @@
 
   /** Show UML diagram — switches left tab (default) or right tab (uml_position: right) */
   TutorialCode.prototype._showDiagramHideEditor = function () {
-    // Below mode: diagram is always visible inside instructions — nothing to toggle
-    if (this._umlPositionBelow) return;
+    // Below / bottom-left mode: diagram is always visible — nothing to toggle
+    if (this._umlPositionBelow || this._umlPositionBottomLeft) return;
     if (this._umlPositionRight) {
       // Right mode: switch bottom-right tab to UML; steps panel stays visible
       var outputView = this.root.querySelector('.tvm-output-view');

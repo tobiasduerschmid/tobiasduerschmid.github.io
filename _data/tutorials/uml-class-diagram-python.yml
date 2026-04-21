@@ -3,7 +3,7 @@ description: "Learn to read and create UML class diagrams by writing Python code
 
 backend: pyodide
 uml_diagram: true
-uml_position: right
+uml_position: bottom-left
 uml_default_view: true
 uml_class_layout: landscape
 require_tests: true
@@ -72,8 +72,8 @@ steps:
 
       Open `student.py` and create a `Student` class that:
 
-      1. Accepts `name` and `student_id` in `__init__`
-      2. Stores both as instance attributes (`self.name = name`)
+      1. Defines a constructor `__init__(self, name, student_id)`
+      2. Stores both parameters as instance attributes (`self.name = name`)
       3. Has a `get_info()` method returning `"name (student_id)"` — for example `"Alice (S001)"`
 
       Watch the **UML Diagram** panel — it updates live as you type!
@@ -130,6 +130,22 @@ steps:
               "Define a class called Student"
         hints:
           - text: "Start with `class Student:` and add an `__init__` method."
+            condition: "default"
+
+      - description: "__init__ accepts name and student_id"
+        command: |
+          import inspect
+          source = open('/tutorial/student.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Student' in ns, "Define a class called Student first"
+          params = list(inspect.signature(ns['Student'].__init__).parameters.keys())
+          assert 'name' in params, \
+              "__init__ must have a 'name' parameter: def __init__(self, name, student_id)"
+          assert 'student_id' in params, \
+              "__init__ must have a 'student_id' parameter: def __init__(self, name, student_id)"
+        hints:
+          - text: "Define the constructor as `def __init__(self, name, student_id):`"
             condition: "default"
 
       - description: "Student has name and student_id attributes"

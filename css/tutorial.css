@@ -174,6 +174,27 @@ html, body {
   min-height: 0;
 }
 
+.tvm-uml-bottom-left-splitter {
+  flex: 0 0 4px;
+  flex-shrink: 0;
+  background: #2a2a2e;
+  cursor: row-resize;
+  transition: background 0.15s;
+  z-index: 10;
+}
+.tvm-uml-bottom-left-splitter:hover,
+.tvm-uml-bottom-left-splitter.active {
+  background: #0078d4;
+}
+
+.tvm-uml-bottom-left-view {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 42%;
+  min-height: 180px;
+  overflow: hidden;
+}
+
 /* Light mode overrides for left tab bar */
 html:not(.dark-mode) .tvm-left-tab-bar {
   background: #f3f4f6;
@@ -626,12 +647,16 @@ html:not(.dark-mode) .tvm-git-graph-container {
 /* .git-graph-empty and .git-graph-svg light-mode overrides live in git-graph.css */
 
 /* ── UML Diagram panel ── */
+.tvm-uml-left-view,
+.tvm-uml-bottom-left-view {
+  background: #1e1e2e;
+  color: #ccc;
+}
+
 .tvm-uml-left-view {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e2e;
-  color: #ccc;
 }
 .tvm-diagram-toolbar {
   display: flex;
@@ -937,9 +962,14 @@ html:not(.dark-mode) .tvm-git-graph-container {
 }
 
 /* UML diagram light mode */
-html:not(.dark-mode) .tvm-uml-left-view {
+html:not(.dark-mode) .tvm-uml-left-view,
+html:not(.dark-mode) .tvm-uml-bottom-left-view {
   background: #fff;
   color: #333;
+}
+
+html:not(.dark-mode) .tvm-uml-bottom-left-view {
+  border-top-color: #d0d0da;
 }
 html:not(.dark-mode) .tvm-diagram-toolbar {
   background: #f3f4f6;
@@ -1744,7 +1774,7 @@ html:not(.dark-mode) .tvm-http-empty-state {
 ─────────────────────────────────────────── */
 .tvm-step-controls-bar {
   flex-shrink: 0;
-  padding: 10px 20px;
+  padding: 5px 20px;
   background: #141416;
   border-top: 1px solid #2a2a2e;
 }
@@ -1756,7 +1786,7 @@ html:not(.dark-mode) .tvm-http-empty-state {
 }
 
 .tvm-btn {
-  padding: 8px 20px;
+  padding: 5px 20px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
