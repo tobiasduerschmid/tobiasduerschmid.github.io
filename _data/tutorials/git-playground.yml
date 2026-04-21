@@ -1,0 +1,75 @@
+title: "Git Playground"
+description: "An open-ended Git sandbox. Every command you type is recorded into build-git.sh so you can replay, tweak, and step back through your session."
+
+require_tests: false
+autosave_type: commands-and-files
+reset_type: commands
+git_graph: /tutorial/myproject
+
+setup_commands:
+  - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
+  - "echo 'export LESSCHARSET=utf-8' >> ~/.bashrc && export LESSCHARSET=utf-8"
+  - "git config --global user.email 'student@example.com'"
+  - "git config --global user.name 'Git Explorer'"
+  - "git config --global init.defaultBranch main"
+  - "git config --global core.pager cat"
+  - "git config --global pull.rebase false"
+  - "git init myproject && cd myproject"
+
+steps:
+  - title: "Build This Git Graph"
+    user_command_listener: "cat >> /tutorial/build-git.sh"
+    post_fileload_setup:
+      - "cd /tutorial/myproject && bash ../build-git.sh >/dev/null 2>&1 || true"
+    files:
+      - path: "build-git.sh"
+        content: ""
+        language: "shell"
+        persistent: true
+    open_file: "build-git.sh"
+    instructions: |
+      ## Reproduce the target graph
+
+      Every command you run in the terminal is appended to `build-git.sh` (the
+      tab on the left). The script is the single source of truth for your
+      session — re-running it from a clean VM reproduces exactly the state
+      you're in right now.
+
+      - **Start any project**: `git init myproject && cd myproject`.
+      - **Live graph**: switch to the **Git Graph** panel to compare your
+        repository to the target below.
+      - **Undo the last command**: open `build-git.sh`, delete the last line,
+        then click **Reset Current Step** in the top bar. The VM rewinds to
+        post-boot and replays the (shorter) script — a one-command undo
+        without any bespoke button.
+      - **Full restart**: clear `build-git.sh` entirely and click Reset.
+
+      ### Target
+
+      Reproduce the following branch topology inside `myproject`:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        A "Initial commit"
+        B "Add README"
+        C "Release 1.0"
+        D "Add logging support"
+        E merge feature/parser "Merge feature/parser"
+
+      branch feature/parser from C:
+        F "Add tokenizer"
+        G "Add error recovery"
+        H "Wire parser into build"
+
+      branch experiment from C:
+        I "Add experimental optimization"
+        J "Try aggressive inlining"
+
+      head main
+      @enduml
+      ```
+
+      Commit messages and file contents don't have to match exactly — the
+      shape of the graph (branch points, merge, which branch HEAD is on) is
+      what you're aiming for.

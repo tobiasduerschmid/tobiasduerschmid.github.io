@@ -171,6 +171,20 @@
     this._gitGraphHookInstalled = false;
     this._promptDetectBuf = '';
 
+    // User-command listener (git-playground pattern). When configured globally
+    // or per-step, each user-typed terminal command is piped (as stdin) to
+    // the listener shell expression via a PROMPT_COMMAND hook installed in
+    // _setupFilesystem — backend-run commands are excluded by HISTIGNORE so
+    // only real user input flows through.
+    this.userCommandListener = options.userCommandListener || null;
+    this._activeUserCmdListener = null;
+
+    // Post-fileload setup commands. Run silently AFTER a step's files have
+    // been synced to the VM (first-visit, reset, and autosave-restore paths).
+    // Lets a tutorial like git-playground replay a saved script on top of a
+    // freshly-restored VM.
+    this.postFileloadSetupCommands = options.postFileloadSetupCommands || [];
+
     // Per-step VM snapshot cache (v86 only, in-memory for this session).
     // Keyed by step index; value is a v86 save_state() result. Populated
     // whenever we finish producing the "clean entry state" of a step —
@@ -1765,10 +1779,32 @@
     // lines at history-insert time regardless of whether HISTCONTROL is in
     // effect yet — closes the chicken-and-egg gap on the very first boot line.
     var histIgnore = "'*#__SIL_*:*#__VIS_*'";
+    // User-command-listener PROMPT_COMMAND hook. Baked into the boot init so
+    // it's captured by the post-boot snapshot used for "commands" resets.
+    // Stays idle — the function returns immediately — until a step sets
+    // $__USER_CMD_LISTENER via _updateUserCmdListener, so tutorials that
+    // don't use this feature pay nothing. HISTIGNORE above excludes every
+    // _runSilent / _runVisible call (they carry a #__SIL_* marker), so
+    // `history 1` always returns the last USER-typed command.
+    var userCmdHook =
+      '__USER_CMD_LISTENER=""; __LAST_HISTCMD=""; ' +
+      '__record_user_cmd() { ' +
+        '[ -z "$__USER_CMD_LISTENER" ] && return; ' +
+        'local h num cmd; ' +
+        'h=$(HISTTIMEFORMAT= history 1) || return; ' +
+        'num=$(printf "%s" "$h" | sed -n "s/^[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p"); ' +
+        'cmd=$(printf "%s" "$h" | sed "s/^[[:space:]]*[0-9][0-9]*[[:space:]]*//"); ' +
+        '[ -z "$cmd" ] && return; ' +
+        '[ "$num" = "$__LAST_HISTCMD" ] && return; ' +
+        '__LAST_HISTCMD="$num"; ' +
+        'printf "%s\\n" "$cmd" | eval "$__USER_CMD_LISTENER"; ' +
+      '}; ' +
+      'PROMPT_COMMAND="__record_user_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
     var initScript = ['cd /tutorial',
                       'export HISTCONTROL=ignoreboth',
                       'export HISTIGNORE=' + histIgnore,
-                      'stty cols ' + cols + ' rows ' + rows]
+                      'stty cols ' + cols + ' rows ' + rows,
+                      userCmdHook]
                      .concat(self.setupCommands)
                      .join('; ');
     // Stay muted after setup — _refreshPrompt will clear and unmute once
@@ -3872,15 +3908,21 @@
 
   /**
    * Apply saved file contents on top of the currently loaded step.
+   * Returns a Promise that resolves once every file's VM-side write has
+   * landed. Callers that chain VM operations on the restored files
+   * (e.g. running post_fileload_setup that reads them) must await this;
+   * existing non-awaiting callers still behave correctly because the
+   * returned Promise is just ignored.
    */
   TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
-    if (!files) return;
+    if (!files) return Promise.resolve();
     var self = this;
     self._suppressAutoSave = true;
+    var syncs = [];
     for (var name in files) {
       if (files.hasOwnProperty(name)) {
         self.openFile(name, files[name].content, files[name].language);
-        self._syncFileToBackend(name);
+        syncs.push(Promise.resolve(self._syncFileToBackend(name)));
       }
     }
     self._suppressAutoSave = false;
@@ -3892,6 +3934,7 @@
     self._scheduleUMLRefresh(true);
     // React: rebuild preview after restoring autosaved files
     if (self.config.backend === 'react') self._rebuildReactPreview();
+    return Promise.all(syncs);
   };
 
   /**
@@ -3922,21 +3965,21 @@
       return p;
     }
 
-    // Default "files" reset: just reload starter files
+    // Default "files" reset: just reload starter files (persistent files keep
+    // their current editor content and get synced back to the VM).
     if (!step.files) return;
-    self._suppressAutoSave = true;
-    step.files.forEach(function (f) {
-      self.openFile(f.path, f.content, f.language);
-      self._syncFileToBackend(f.path);
-      self._originalContent[f.path] = f.content || '';
+    self._syncStepFiles(step).then(function () {
+      self._renderTabs();
+      // UML: force refresh after resetting files
+      self._scheduleUMLRefresh(true);
+      // React: rebuild preview after resetting files
+      if (self.config.backend === 'react') self._rebuildReactPreview();
+      // Replay post-fileload setup so e.g. build-git.sh is re-applied to the
+      // persistent-file state the student is resetting TO.
+      return self._runPostFileloadSetup(step);
+    }).then(function () {
+      return self._updateUserCmdListener(step);
     });
-    self._suppressAutoSave = false;
-    if (step.open_file) { self._setActiveFile(step.open_file); }
-    self._renderTabs();
-    // UML: force refresh after resetting files
-    self._scheduleUMLRefresh(true);
-    // React: rebuild preview after resetting files
-    if (self.config.backend === 'react') self._rebuildReactPreview();
   };
 
   /**
@@ -3965,25 +4008,28 @@
         // the fallbacks while we've also manually forced it to 0 in the
         // reveal, leaving muteCount stuck at -1 and the terminal muted.
         var curStep = self.steps[targetStep];
-        var syncs = [];
-        if (curStep && curStep.files) {
-          self._suppressAutoSave = true;
-          curStep.files.forEach(function (f) {
-            self.openFile(f.path, f.content, f.language);
-            syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-            self._originalContent[f.path] = f.content || '';
-          });
-          self._suppressAutoSave = false;
-          if (curStep.open_file) { self._setActiveFile(curStep.open_file); }
+        // `persistent: true` on a file makes reset keep the student's current
+        // editor content (synced back to the freshly-restored VM) instead of
+        // overwriting it with the step's starter content. This is what turns
+        // the git-playground into an undo-by-editing-build-git.sh experience.
+        return self._syncStepFiles(curStep).then(function () {
           self._renderTabs();
-        }
         // Await syncs, then quiesce the shell. _restoreStepEntrySnapshot
         // sent a Ctrl-C to clear any stray PS2 continuation; its response
         // (^C plus a fresh prompt) streams in asynchronously. Without the
         // _runSilent(':') the response can arrive after we set muteCount=0
         // and appear in the terminal as a spurious "^C" line.
-        return Promise.all(syncs).then(function () {
           return self._runSilent(':');
+        }).then(function () {
+          // Replay post-fileload setup on the newly-restored VM. The snapshot
+          // already contains the result of running this on the STARTER files
+          // (e.g. `bash build-git.sh` against an empty script — a no-op), so
+          // running it again against persistent editor content is the only
+          // effect students observe. Backends without post-fileload setup
+          // fall through as a resolved no-op.
+          return self._runPostFileloadSetup(curStep);
+        }).then(function () {
+          return self._updateUserCmdListener(curStep);
         }).then(function () {
           self._autoSaveProgress();
           if (self.term) self.term.clear();
@@ -4076,20 +4122,11 @@
       })(i);
     }
 
-    // Apply current step's starter files
+    // Apply current step's starter files (honoring `persistent: true` so the
+    // student's build-git.sh edits survive reset).
     var curStep = self.steps[targetStep];
     if (curStep && curStep.files) {
-      p = p.then(function () {
-        self._suppressAutoSave = true;
-        var syncs = [];
-        curStep.files.forEach(function (f) {
-          self.openFile(f.path, f.content, f.language);
-          syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-          self._originalContent[f.path] = f.content || '';
-        });
-        self._suppressAutoSave = false;
-        return Promise.all(syncs);
-      });
+      p = p.then(function () { return self._syncStepFiles(curStep, { setActive: false }); });
     }
 
     // Accumulate current step's setup_commands
@@ -4106,6 +4143,11 @@
         (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
       p = p.then(function () { return self._runSilent(commandBatch.join('\n')); });
     }
+
+    // Run post_fileload_setup AFTER all setup/solution commands so e.g.
+    // `bash build-git.sh` replays against the final VM state.
+    p = p.then(function () { return self._runPostFileloadSetup(curStep); });
+    p = p.then(function () { return self._updateUserCmdListener(curStep); });
 
     // Quiesce the shell before snapshotting: a no-op silent command forces
     // one more prompt round-trip after the batched replay, guaranteeing the
@@ -4171,18 +4213,22 @@
       return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
         if (!ok) return self._restoreCommandsAndFilesSlow(saved);
         var savedStepObj = self.steps[targetStep];
-        if (savedStepObj && savedStepObj.files) {
-          self._suppressAutoSave = true;
-          savedStepObj.files.forEach(function (f) {
-            self.openFile(f.path, f.content, f.language);
-            self._syncFileToBackend(f.path);
-            self._originalContent[f.path] = f.content || '';
-          });
-          self._suppressAutoSave = false;
-        }
-        self._applySavedFiles(saved.files, saved.activeFile);
-        self._autoSaveProgress();
-        self._hideLoading();
+        return self._syncStepFiles(savedStepObj, { setActive: false }).then(function () {
+          // Await the VM-side writes of the autosaved files BEFORE running
+          // post-fileload setup — otherwise `bash build-git.sh` could read
+          // a stale (empty) script on 9p while the create_file is still
+          // in flight.
+          return self._applySavedFiles(saved.files, saved.activeFile);
+        }).then(function () {
+          // Replay post_fileload_setup against the student's restored files
+          // (e.g. re-run build-git.sh so the VM matches the autosaved script).
+          return self._runPostFileloadSetup(savedStepObj);
+        }).then(function () {
+          return self._updateUserCmdListener(savedStepObj);
+        }).then(function () {
+          self._autoSaveProgress();
+          self._hideLoading();
+        });
       });
     }
 
@@ -4269,20 +4315,10 @@
       })(i);
     }
 
-    // 4. Apply the saved step's starter files
+    // 4. Apply the saved step's starter files (persistent-aware).
     var savedStepObj = self.steps[targetStep];
     if (savedStepObj && savedStepObj.files) {
-      p = p.then(function () {
-        self._suppressAutoSave = true;
-        var syncs = [];
-        savedStepObj.files.forEach(function (f) {
-          self.openFile(f.path, f.content, f.language);
-          syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-          self._originalContent[f.path] = f.content || '';
-        });
-        self._suppressAutoSave = false;
-        return Promise.all(syncs);
-      });
+      p = p.then(function () { return self._syncStepFiles(savedStepObj, { setActive: false }); });
     }
 
     // Flush every accumulated solution command in a single VM round-trip
@@ -4295,15 +4331,21 @@
     p = p.then(function () { return self._runSilent(':'); });
     p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
 
-    // 5. Apply autosaved student file overrides, then reveal the tutorial
+    // 5. Apply autosaved student file overrides (awaited — see
+    //    _applySavedFiles docstring), run post_fileload_setup against the
+    //    final editor state, then reveal the tutorial.
     p = p.then(function () {
-      self._applySavedFiles(saved.files, saved.activeFile);
+      return self._applySavedFiles(saved.files, saved.activeFile);
+    });
+    p = p.then(function () {
       self._suppressAutoSave = false;
       // Persist the correctly-restored state immediately so a crash/reload
       // right after restore doesn't revert to starter-file content.
       self._autoSaveProgress();
-      self._hideLoading();
     });
+    p = p.then(function () { return self._runPostFileloadSetup(savedStepObj); });
+    p = p.then(function () { return self._updateUserCmdListener(savedStepObj); });
+    p = p.then(function () { self._hideLoading(); });
 
     return p;
   };
@@ -4360,25 +4402,45 @@
     }
     if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
-    if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
-      if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        // Run all setup_commands silently in a single shell invocation. The
-        // terminal is covered by a scoped overlay during the run; instructions
-        // and the git-graph panel stay interactive. Bash skips this line at
-        // history-insert time because _runSilent appends a "#__SIL_<id>"
-        // marker that matches the boot-time HISTIGNORE pattern.
+    // Keep the shell-side user-command listener in sync with the current step,
+    // independent of firstVisit vs. revisit.
+    self._updateUserCmdListener(step);
+
+    var hasSetup = firstVisit && step.setup_commands && step.setup_commands.length > 0;
+    var hasPostFileload = firstVisit && (
+      (this.postFileloadSetupCommands && this.postFileloadSetupCommands.length > 0) ||
+      (step.post_fileload_setup && step.post_fileload_setup.length > 0)
+    );
+    if ((hasSetup || hasPostFileload) &&
+        (this.config.backend === 'v86' || this.config.backend === 'webcontainer')) {
+      // Run all setup_commands silently in a single shell invocation. The
+      // terminal is covered by a scoped overlay during the run; instructions
+      // and the git-graph panel stay interactive. Bash skips this line at
+      // history-insert time because _runSilent appends a "#__SIL_<id>"
+      // marker that matches the boot-time HISTIGNORE pattern.
+      self._showTerminalLoading('Preparing step\u2026');
+      var p = Promise.resolve();
+      if (hasSetup) {
         var setupBatch = step.setup_commands
           .map(function (c) { return c.trim(); })
           .join('; ');
-        self._showTerminalLoading('Preparing step\u2026');
-        self._runSilent(setupBatch).then(function () {
-          self._hideTerminalLoading();
-          self._refreshGitGraph && self._refreshGitGraph();
-          // Cache the clean "entry state" of this step so future Reset /
-          // autosave-restore operations can skip replay entirely.
-          self._saveStepEntrySnapshot(index);
-        });
-      } else if (this.config.backend === 'pyodide') {
+        p = p.then(function () { return self._runSilent(setupBatch); });
+      }
+      // post_fileload_setup runs AFTER setup_commands. For git-playground this
+      // is where `bash build-git.sh` replays the just-synced script on top of
+      // the freshly-booted VM.
+      if (hasPostFileload) {
+        p = p.then(function () { return self._runPostFileloadSetup(step); });
+      }
+      p.then(function () {
+        self._hideTerminalLoading();
+        self._refreshGitGraph && self._refreshGitGraph();
+        // Cache the clean "entry state" of this step so future Reset /
+        // autosave-restore operations can skip replay entirely.
+        self._saveStepEntrySnapshot(index);
+      });
+    } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
+      if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       } else if (this.config.backend === 'prolog') {
         this._postWorker({ type: 'runProlog', code: step.setup_commands.join('\n'), silent: true });
@@ -5678,6 +5740,82 @@
       '} > ' + p + '/.git/gitgraph_state 2>/dev/null ); }; ' +
       'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
     this._runSilent(hookCmd);
+  };
+
+  // ---------------------------------------------------------------------------
+  // User-command listener — per-step switch
+  //
+  // The shell-side recording hook (__record_user_cmd) is installed once in
+  // _setupFilesystem as part of the boot init script. Per-step YAML just
+  // switches which shell expression receives the captured commands — we do
+  // that by updating the $__USER_CMD_LISTENER variable. Resetting
+  // $__LAST_HISTCMD="" ensures the first command after the switch is
+  // recorded cleanly even if the history line number hasn't advanced.
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._updateUserCmdListener = function (step) {
+    if (this.config.backend !== 'v86') return Promise.resolve();
+    var listener = (step && step.user_command_listener) || this.userCommandListener || '';
+    if (listener === this._activeUserCmdListener) return Promise.resolve();
+    this._activeUserCmdListener = listener;
+    // Escape the listener for embedding inside a double-quoted bash assignment
+    var esc = String(listener).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+    return this._runSilent('__USER_CMD_LISTENER="' + esc + '"; __LAST_HISTCMD=""');
+  };
+
+  // ---------------------------------------------------------------------------
+  // post_fileload_setup — silent shell commands run AFTER step files are synced
+  //
+  // Global commands run first, then per-step. Used by tutorials that need to
+  // bring the VM into a state derived from freshly-synced files (e.g. the
+  // git-playground replays its build-git.sh here, which means the script's
+  // content is the current editor value — so a student can "undo" the last
+  // recorded command by deleting a line and clicking Reset Current Step).
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._runPostFileloadSetup = function (step) {
+    if (this.config.backend !== 'v86' && this.config.backend !== 'webcontainer') {
+      return Promise.resolve();
+    }
+    var globalCmds = this.postFileloadSetupCommands || [];
+    var stepCmds = (step && step.post_fileload_setup) || [];
+    var all = globalCmds.concat(stepCmds).map(function (c) { return String(c).trim(); }).filter(Boolean);
+    if (all.length === 0) return Promise.resolve();
+    return this._runSilent(all.join('; '));
+  };
+
+  // ---------------------------------------------------------------------------
+  // Persistent step-file sync helper
+  //
+  // `persistent: true` on a step.files entry opts that file out of the usual
+  // reset-overwrites-with-starter behavior: its current EDITOR content is
+  // synced to the freshly-restored VM instead. This is what makes "delete
+  // the last line in build-git.sh + click Reset" act as an undo in the
+  // git-playground without any bespoke undo button.
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._syncStepFiles = function (step, opts) {
+    opts = opts || {};
+    var allowPersist = opts.allowPersist !== false; // default: respect persistent flag
+    var setActive = opts.setActive !== false;
+    if (!step || !step.files) return Promise.resolve();
+    var self = this;
+    var syncs = [];
+    self._suppressAutoSave = true;
+    step.files.forEach(function (f) {
+      if (allowPersist && f.persistent && self.editorModels[f.path]) {
+        // Keep current editor content; sync it back to the VM so the
+        // just-restored filesystem reflects the student's edits.
+        syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+      } else {
+        self.openFile(f.path, f.content, f.language);
+        syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+        self._originalContent[f.path] = f.content || '';
+      }
+    });
+    self._suppressAutoSave = false;
+    if (setActive && step.open_file) self._setActiveFile(step.open_file);
+    return Promise.all(syncs);
   };
 
   /**
