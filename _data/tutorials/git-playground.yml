@@ -19,6 +19,7 @@ setup_commands:
 steps:
   - title: "Build This Git Graph"
     user_command_listener: "cat >> /tutorial/reproduce.sh"
+    view: git_graph
     post_fileload_setup:
       - "cd /tutorial/myproject && bash ../reproduce.sh >/dev/null 2>&1 || true"
     files:
