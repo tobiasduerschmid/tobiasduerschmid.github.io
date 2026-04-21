@@ -552,3 +552,9 @@ Test your knowledge with these retrieval practice exercises. These diagrams are 
 {% include flashcards.html id="uml_sequence_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
+
+## Interactive Tutorials
+
+Master UML sequence diagrams by writing code that matches target diagrams in our interactive tutorials:
+
+* **[UML Sequence Diagrams in Python](/SEBook/tools/uml-sequence-diagram-python.html)**

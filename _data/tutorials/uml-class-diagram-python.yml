@@ -723,8 +723,6 @@ steps:
 
       > **⚠ Common mistake:** Students often draw the triangle pointing **away** from the parent, from superclass down to subclass. The correct direction is the opposite: the **child points up** to the parent.
       >
-      > **Memory aid:** Think of the child *reaching up* to say "I am like you." The triangle rests at the parent's door, like a visitor.
-      >
       > **"Is-a" test:** Before drawing, check the sentence *"A [Child] is a [Parent]"* makes sense. *"A Dog is an Animal"* → yes. *"An Animal is a Dog"* → no. The inheriting class is the subject; the triangle points at the parent.
 
       ### Your Target Diagram
@@ -982,10 +980,10 @@ steps:
             **Review of Step 2.** Given the Shape class `+ color: str` and an inherited subclass `Circle` that needs to read `color` in its `area()` method, which access level is most appropriate for `color` if we want subclasses to read it but external code not to?
           type: single
           options:
-            - "Public (`+`) — let everyone see it"
-            - "Protected (`#`) — accessible to Shape and its subclasses"
-            - "Private (`-`) — only Shape itself can see it"
-            - "Package (`~`) — only same-module access"
+            - "Public (`+`)"
+            - "Protected (`#`)"
+            - "Private (`-`)"
+            - "Package (`~`)"
           correct_index: 1
           explanation: |
             `#` **protected** is the classic "I need subclasses to see this, but not arbitrary outside code" visibility. If `color` were private (`-`), `Circle` could not access it directly. This question reconnects Step 2's visibility markers with Step 4's inheritance — UML concepts are not independent; they interact.

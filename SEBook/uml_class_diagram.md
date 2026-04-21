@@ -778,3 +778,10 @@ Test your knowledge with these retrieval practice exercises. These diagrams are 
 {% include flashcards.html id="uml_class_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
+
+## 7. Interactive Tutorials
+
+Master UML class diagrams by writing code that matches target diagrams in our interactive tutorials:
+
+* **[UML Class Diagrams in Python](/SEBook/tools/uml-class-diagram-python.html)**
+* **[UML Class Diagrams in Java](/SEBook/tools/java-tutorial.html)**

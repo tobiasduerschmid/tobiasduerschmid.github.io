@@ -18,8 +18,12 @@ topics:
         url: /SEBook/uml_use_case_diagram.html
       - name: Class Diagrams
         url: /SEBook/uml_class_diagram.html
+      - name: "UML Class Diagram Tutorial (Python)"
+        url: /SEBook/tools/uml-class-diagram-python.html
       - name: Sequence Diagrams
         url: /SEBook/uml_sequence_diagram.html
+      - name: "UML Sequence Diagram Tutorial (Python)"
+        url: /SEBook/tools/uml-sequence-diagram-python.html
       - name: State Machine Diagrams
         url: /SEBook/uml_state_diagram.html
       - name: Component Diagrams
