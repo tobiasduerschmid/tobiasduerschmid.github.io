@@ -23,7 +23,9 @@ steps:
       - "cd /tutorial/myproject && bash ../reproduce.sh >/dev/null 2>&1 || true"
     files:
       - path: "reproduce.sh"
-        content: ""
+        content: |
+          #!/bin/bash
+          set -e
         language: "shell"
         persistent: true
     open_file: "reproduce.sh"

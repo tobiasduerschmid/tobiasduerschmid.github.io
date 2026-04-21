@@ -1,2 +1,17 @@
 {
+    "antigravity.exclude": [
+        "**/node_modules/**",
+        "**/vendor/**",
+        "**/.git/**",
+        "**/.vscode/**",
+        "**/.antigravityignore",
+        "**/.aiexclude",
+        "**/*.wasm",
+        "**/*.bin",
+        "**/*.cpio",
+        "**/*.zip",
+        "**/*.mp3",
+        "**/*.m4a",
+        "bzImage"
+    ]
 }
