@@ -343,7 +343,7 @@ steps:
       create channel
       Main --> channel: <<create>>
       Main -> bot: get_member_count()
-      bot --> Main: int
+      bot --> Main: count: int
       Main -> channel: notify_members('{count} members ...)
       @enduml"></div>
 
@@ -883,7 +883,7 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: welcome(user)
-      opt [not self._is_subscribed(user)]
+      opt [not bot._is_subscribed(user)]
       bot -> channel: send_welcome(user)
       end
       @enduml'></div>
@@ -899,7 +899,7 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: handle("hi")
-      alt [self._is_spam("hi")]
+      alt [bot._is_spam("hi")]
       bot -> bot: _block()
       else [else]
       bot -> channel: broadcast("hi")
@@ -930,7 +930,7 @@ steps:
       create channel
       Main --> channel: <<create>>
       Main -> bot: handle(channel, 'buy now cheap')
-      alt [self._is_spam(message)]
+      alt [bot._is_spam(message)]
       bot -> bot: _block(message)
       else [else]
       bot -> channel: broadcast(message)
@@ -1040,9 +1040,9 @@ steps:
               and isinstance(test.func.value, ast.Name)
               and test.func.value.id == 'self')
           assert is_spam_call, \
-              "The `if` condition should call `self._is_spam(message)` — that's the guard shown in the alt fragment."
+              "The `if` condition should call `self._is_spam(message)` — that becomes `alt [bot._is_spam(message)]` in the diagram (the generator rewrites `self` to the caller's object name)."
         hints:
-          - text: "The target diagram shows `alt [self._is_spam(message)]`. What Python shape produces `alt` with a matching guard?"
+          - text: "The target diagram shows `alt [bot._is_spam(message)]`. What Python shape produces `alt` with a matching guard? (The generator rewrites `self` to the caller's object name — `bot` here — because the reader is looking at the bot lifeline.)"
             condition: "default"
           - text: "`if/else` with two non-empty branches produces `alt`. A bare `if` would produce `opt`."
             condition: "code_missing: else:"
@@ -1394,10 +1394,10 @@ steps:
       Main --> channel: <<create>>
       Main -> bot: run_digest(channel, posts)
       bot -> channel: get_subscriber_count()
-      channel --> bot: int
+      channel --> bot: count: int
       bot -> bot: _log_start(count)
       loop [for post in posts]
-      alt [self._is_announcement(post)]
+      alt [bot._is_announcement(post)]
       bot -> channel: broadcast(post)
       else [else]
       bot -> bot: _log_skip(post)
@@ -1408,7 +1408,7 @@ steps:
       Notice every concept from Steps 1-5 appears:
 
       - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
-      - **Return value (Step 2):** the dashed arrow labelled `int` from `channel` back to `bot` after `get_subscriber_count()`.
+      - **Return value (Step 2):** the dashed arrow labelled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator includes the bound variable name because `count` is used on the next line.
       - **Self-call with nested activation (Step 3):** `bot -> bot: _log_start` and, inside the loop, `bot -> bot: _log_skip`.
       - **Conditional fragment (Step 4):** one `alt` inside the loop.
       - **Loop fragment (Step 5):** one outer `loop` over `posts`.
@@ -1633,7 +1633,7 @@ steps:
               and isinstance(test.func.value, ast.Name)
               and test.func.value.id == 'self')
           assert ok, \
-              "The if guard should call `self._is_announcement(post)` — that's the guard shown in the `alt` fragment."
+              "The if guard should call `self._is_announcement(post)` — that becomes `alt [bot._is_announcement(post)]` in the diagram (the generator rewrites `self` to the caller's object name)."
         hints:
           - text: "Two fragments nest here: outer `loop` → inner `alt`. What Python indentation produces that order?"
             condition: "default"

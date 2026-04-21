@@ -3279,6 +3279,9 @@
    */
   TutorialCode.prototype._refreshUMLDiagram = function () {
     if (!this._umlDiagramEnabled) return;
+    // Skip while files are being loaded/restored — _applySavedFiles resets this flag
+    // and calls _scheduleUMLRefresh(true) itself once all files are in place.
+    if (this._suppressAutoSave) return;
     var self = this;
     var lang = this._detectUMLLanguage();
 

@@ -1072,45 +1072,67 @@
     return result;
   }
 
-  /** Convert an AST expression back to readable text. */
-  function unparse(node) {
+  /**
+   * Convert an AST expression back to readable text.
+   *
+   * Optional `caller` rewrites `self` references to the given participant id
+   * during unparse. This is the sound, scope-aware analog of the naive
+   * `str.replace('self.', caller + '.')` and avoids its failure modes:
+   *   - identifiers sharing the substring (`myself.x` → `mybot.x`)
+   *   - string-literal corruption (f-strings with `"self.x"` in the constant
+   *     part)
+   *   - bare `self` references (e.g. `isinstance(self, Foo)`) that a textual
+   *     `self.` match would miss entirely
+   *
+   * Scoping: a `Lambda` whose first argument is named `self` shadows the
+   * outer binding, so substitution is disabled for its body. (Python methods
+   * are parsed as FunctionDef — they do not appear in expression context and
+   * so need no handling here.)
+   */
+  function unparse(node, caller) {
     if (!node) return '';
     switch (node.type) {
-      case 'Name': return node.id;
+      case 'Name':
+        return (caller && caller !== 'self' && node.id === 'self') ? caller : node.id;
       case 'Constant':
         if (node.value === true) return 'True';
         if (node.value === false) return 'False';
         if (node.value === null) return 'None';
         if (typeof node.value === 'string') return "'" + node.value + "'";
         return String(node.value);
-      case 'Attribute': return unparse(node.value) + '.' + node.attr;
+      case 'Attribute': return unparse(node.value, caller) + '.' + node.attr;
       case 'Call':
-        var args = (node.args || []).map(unparse);
+        var args = (node.args || []).map(function (a) { return unparse(a, caller); });
         var kws = (node.keywords || []).map(function (kw) {
-          return kw.arg ? kw.arg + '=' + unparse(kw.value) : '**' + unparse(kw.value);
+          return kw.arg ? kw.arg + '=' + unparse(kw.value, caller) : '**' + unparse(kw.value, caller);
         });
-        return unparse(node.func) + '(' + args.concat(kws).join(', ') + ')';
-      case 'Subscript': return unparse(node.value) + '[' + unparse(node.slice) + ']';
-      case 'Tuple': return (node.elts || []).map(unparse).join(', ');
-      case 'List': return '[' + (node.elts || []).map(unparse).join(', ') + ']';
+        return unparse(node.func, caller) + '(' + args.concat(kws).join(', ') + ')';
+      case 'Subscript': return unparse(node.value, caller) + '[' + unparse(node.slice, caller) + ']';
+      case 'Tuple': return (node.elts || []).map(function (e) { return unparse(e, caller); }).join(', ');
+      case 'List': return '[' + (node.elts || []).map(function (e) { return unparse(e, caller); }).join(', ') + ']';
       case 'Dict':
         var items = [];
         for (var i = 0; i < (node.keys || []).length; i++) {
-          items.push(unparse(node.keys[i]) + ': ' + unparse(node.values[i]));
+          items.push(unparse(node.keys[i], caller) + ': ' + unparse(node.values[i], caller));
         }
         return '{' + items.join(', ') + '}';
       case 'Compare':
-        var s = unparse(node.left);
+        var s = unparse(node.left, caller);
         for (var i = 0; i < node.ops.length; i++) {
-          s += ' ' + node.ops[i] + ' ' + unparse(node.comparators[i]);
+          s += ' ' + node.ops[i] + ' ' + unparse(node.comparators[i], caller);
         }
         return s;
-      case 'BoolOp': return (node.values || []).map(unparse).join(' ' + node.op + ' ');
-      case 'BinOp': return unparse(node.left) + ' ' + node.op + ' ' + unparse(node.right);
-      case 'UnaryOp': return node.op + (node.op === 'not' ? ' ' : '') + unparse(node.operand);
-      case 'IfExp': return unparse(node.body) + ' if ' + unparse(node.test) + ' else ' + unparse(node.orelse);
-      case 'Starred': return '*' + unparse(node.value);
-      case 'Lambda': return 'lambda: ' + unparse(node.body);
+      case 'BoolOp':
+        return (node.values || []).map(function (v) { return unparse(v, caller); }).join(' ' + node.op + ' ');
+      case 'BinOp': return unparse(node.left, caller) + ' ' + node.op + ' ' + unparse(node.right, caller);
+      case 'UnaryOp': return node.op + (node.op === 'not' ? ' ' : '') + unparse(node.operand, caller);
+      case 'IfExp':
+        return unparse(node.body, caller) + ' if ' + unparse(node.test, caller) + ' else ' + unparse(node.orelse, caller);
+      case 'Starred': return '*' + unparse(node.value, caller);
+      case 'Lambda':
+        var rebindsSelf = node.args && node.args.args
+            && node.args.args.length > 0 && node.args.args[0].arg === 'self';
+        return 'lambda: ' + unparse(node.body, rebindsSelf ? null : caller);
       default: return '...';
     }
   }
@@ -1835,10 +1857,87 @@
     // Scope tracking
     this.varTypes = {};
     this._callerClass = {};
+    this._referencedVars = {};   // {name: true} for names read in current scope
 
     // Recursion guard
     this._callStack = {};
     this.MAX_DEPTH = 3;
+  }
+
+  /**
+   * Collect Load-context names anywhere in the given statements.
+   *
+   * Used to decide whether a reply arrow should be labeled `var: type` or
+   * bare `type`: if the assignment's target is read somewhere in the scope,
+   * the binding is worth showing.
+   *
+   * Strictly, this is the use side of reaching-definitions — a forward
+   * dataflow analysis that needs a CFG. We instead use a sound
+   * over-approximation: "is the name read anywhere in the scope?". Any
+   * false positives are harmless extra labels; false negatives are
+   * impossible because a genuine use appears as a Name in a non-write
+   * position. Write positions are the slots we deliberately skip below
+   * (the target of Assign / AnnAssign / For, and simple-Name components
+   * of a Tuple target). Everything else is treated as a use.
+   */
+  function collectNameLoads(stmts) {
+    var names = {};
+    function walk(node) {
+      if (!node || typeof node !== 'object') return;
+      if (node.type === 'Assign') {
+        for (var i = 0; i < (node.targets || []).length; i++) {
+          walkAsTarget(node.targets[i]);
+        }
+        walk(node.value);
+        return;
+      }
+      if (node.type === 'AnnAssign') {
+        walkAsTarget(node.target);
+        walk(node.value);
+        walk(node.annotation);
+        return;
+      }
+      if (node.type === 'AugAssign') {
+        // target is both read and written — count as read
+        walk(node.target);
+        walk(node.value);
+        return;
+      }
+      if (node.type === 'For') {
+        walkAsTarget(node.target);
+        walk(node.iter);
+        (node.body || []).forEach(walk);
+        (node.orelse || []).forEach(walk);
+        return;
+      }
+      if (node.type === 'Name') {
+        names[node.id] = true;
+        return;
+      }
+      // Generic recursion into children
+      for (var key in node) {
+        if (!Object.prototype.hasOwnProperty.call(node, key)) continue;
+        var val = node[key];
+        if (!val || typeof val !== 'object') continue;
+        if (Array.isArray(val)) val.forEach(walk);
+        else walk(val);
+      }
+    }
+    function walkAsTarget(node) {
+      if (!node || typeof node !== 'object') return;
+      // Pure-write terminals: a Name or a Tuple of Names on the LHS
+      if (node.type === 'Name') return;
+      if (node.type === 'Tuple') {
+        (node.elts || []).forEach(walkAsTarget);
+        return;
+      }
+      // self.x / x[0] — the base expression IS read even though we're writing
+      if (node.type === 'Attribute') { walk(node.value); return; }
+      if (node.type === 'Subscript') { walk(node.value); walk(node.slice); return; }
+      walk(node);
+    }
+    (stmts || []).forEach(walk);
+    return names;
   }
 
   PythonSequenceDiagramGenerator.prototype._buildLookups = function () {
@@ -1971,6 +2070,7 @@
     var entry = this._collectEntryStmts();
     if (!entry || entry.length === 0) return;
     this._ensureParticipant('Main', 'Main');
+    this._referencedVars = collectNameLoads(entry);
     this._processStmts(entry, 'Main', 0);
   };
 
@@ -2092,12 +2192,19 @@
         }
         // Non-constructor call assigned to a variable — return IS captured
         // (Cheers & Lin 2020: show return arrow when value is used)
-        this._processCall(value, caller, depth, true);
-        // Track the variable's type from the return annotation
+        // If the target variable is read later in the scope, forward its
+        // name as a `returnBinding` so the reply arrow can be labeled
+        // `var: type` rather than a bare `type`.
+        var binding = null;
         if (targets.length === 1 && targets[0].type === 'Name') {
+          var tname = targets[0].id;
+          if (this._referencedVars[tname]) binding = tname;
+          // Track the variable's type from the return annotation for
+          // downstream `tname.method()` resolution.
           var retCls = this._getReturnClassType(clsName, method);
-          if (retCls) this.varTypes[targets[0].id] = retCls;
+          if (retCls) this.varTypes[tname] = retCls;
         }
+        this._processCall(value, caller, depth, true, binding);
         return;
       }
     }
@@ -2138,7 +2245,7 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processIf = function (stmt, caller, depth) {
-    var cond = unparse(stmt.test);
+    var cond = unparse(stmt.test, caller);
 
     if (!stmt.orelse || stmt.orelse.length === 0) {
       var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
@@ -2161,7 +2268,7 @@
       if (orelse.length === 1 && orelse[0].type === 'If') {
         var elifNode = orelse[0];
         var elifLines = this._collectFragmentLines(elifNode.body, caller, depth);
-        branches.push({ header: 'else [' + unparse(elifNode.test) + ']', lines: elifLines });
+        branches.push({ header: 'else [' + unparse(elifNode.test, caller) + ']', lines: elifLines });
         orelse = elifNode.orelse;
       } else {
         var elseLines = this._collectFragmentLines(orelse, caller, depth);
@@ -2188,8 +2295,8 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processFor = function (stmt, caller, depth) {
-    var target = unparse(stmt.target);
-    var iterText = unparse(stmt.iter);
+    var target = unparse(stmt.target, caller);
+    var iterText = unparse(stmt.iter, caller);
     this._inferLoopVarType(stmt, caller);
     var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
     if (this._hasMessages(bodyLines)) {
@@ -2204,7 +2311,7 @@
   PythonSequenceDiagramGenerator.prototype._processWhile = function (stmt, caller, depth) {
     var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
     if (this._hasMessages(bodyLines)) {
-      this.lines.push('loop [while ' + unparse(stmt.test) + ']');
+      this.lines.push('loop [while ' + unparse(stmt.test, caller) + ']');
       this.lines = this.lines.concat(bodyLines);
       this.lines.push('end');
     } else {
@@ -2255,8 +2362,12 @@
    * @param {boolean} returnCaptured — true if the call's return value is assigned
    *   to a variable (Cheers & Lin 2020: only show return arrows when the return
    *   value is consumed by subsequent logic)
+   * @param {string?} returnBinding — when the assignment target is referenced
+   *   later in the scope, the target's variable name. The reply arrow is then
+   *   labeled ``var: type`` so the reader can trace the returned value through
+   *   subsequent messages.
    */
-  PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured) {
+  PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
     // Scan arguments first (they execute before the call)
     for (var i = 0; i < (call.args || []).length; i++) {
       this._scanExprForCalls(call.args[i], caller, depth);
@@ -2280,7 +2391,7 @@
       attrHint = call.func.value.attr;
     }
     var calleeId = this._calleeIdFor(clsName, caller, attrHint);
-    var label = this._buildCallLabel(call, clsName, method);
+    var label = this._buildCallLabel(call, clsName, method, caller);
 
     // Detect super() call
     var isSuper = call.func && call.func.type === 'Attribute'
@@ -2320,17 +2431,18 @@
       if (returnCaptured !== false) {
         var retType = this._getReturnType(clsName, method);
         if (retType) {
-          this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
+          var reply = returnBinding ? (returnBinding + ': ' + retType) : retType;
+          this.lines.push(calleeId + ' --> ' + caller + ': ' + reply);
         }
       }
     }
   };
 
-  PythonSequenceDiagramGenerator.prototype._buildCallLabel = function (call, clsName, method) {
+  PythonSequenceDiagramGenerator.prototype._buildCallLabel = function (call, clsName, method, caller) {
     var argParts = [];
     var args = call.args || [];
     for (var i = 0; i < Math.min(args.length, 3); i++) {
-      var text = unparse(args[i]);
+      var text = unparse(args[i], caller);
       if (text.length > 20) text = text.substring(0, 17) + '...';
       argParts.push(text);
     }
@@ -2389,14 +2501,20 @@
     this._callStack[key] = true;
     var saved = {};
     for (var k in this.varTypes) saved[k] = this.varTypes[k];
+    var savedRefs = this._referencedVars;
     this.varTypes = {};
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
     for (var k in pt) this.varTypes[k] = pt[k];
 
+    // Recompute the use-set for this method body so reply arrows can be
+    // labeled `var: type` only when `var` is actually referenced later.
+    this._referencedVars = collectNameLoads(node.body);
+
     this._processStmts(node.body, calleeId, depth + 1);
 
     this.varTypes = saved;
+    this._referencedVars = savedRefs;
     delete this._callStack[key];
   };
 
