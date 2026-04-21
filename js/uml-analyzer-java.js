@@ -2,7 +2,7 @@
  * Java UML Analyzer — extracts class diagrams and sequence diagrams from
  * Java source code using a lightweight recursive-descent parser.
  *
- * Parallel to uml-analyzer-js.js (JS/TS) and uml-analyzer.py (Python).
+ * Parallel to uml-analyzer-js.js (JS/TS) and uml-analyzer-python.js (Python).
  * No external dependencies — runs synchronously in the browser main thread
  * for sub-10ms latency on tutorial-scale files.
  *

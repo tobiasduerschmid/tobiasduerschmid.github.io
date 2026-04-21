@@ -2,9 +2,10 @@
  * Python UML Analyzer — extracts class diagrams and sequence diagrams from
  * Python source code using a lightweight line-based parser.
  *
- * Replaces the Pyodide-based uml-analyzer.py for ~100x faster analysis.
  * No external dependencies — runs synchronously in the browser main thread
- * for sub-10ms latency on tutorial-scale files.
+ * for sub-10ms latency on tutorial-scale files (a previous Pyodide-based
+ * `uml-analyzer.py` handled this and was ~100x slower; removed in favor
+ * of this native JS analyzer).
  *
  * Produces the same @startuml/@enduml syntax consumed by the SVG renderers
  * in uml-bundle.js.
@@ -466,11 +467,20 @@
       this.advance();
       // Strip quotes to get value
       var s = tok.v;
-      // Remove prefix
-      while (/[fFrRbBuU]/.test(s[0])) s = s.substring(1);
+      // Remove prefix — remember if it was an f-string so downstream code can
+      // see through the interpolations (the value still contains `{name}`
+      // syntax verbatim since this lightweight parser doesn't split f-strings
+      // into JoinedStr/FormattedValue nodes).
+      var isF = false;
+      while (/[fFrRbBuU]/.test(s[0])) {
+        if (s[0] === 'f' || s[0] === 'F') isF = true;
+        s = s.substring(1);
+      }
       if (s.startsWith('"""') || s.startsWith("'''")) s = s.slice(3, -3);
       else s = s.slice(1, -1);
-      return { type: 'Constant', value: s };
+      var node = { type: 'Constant', value: s };
+      if (isF) node.isFString = true;
+      return node;
     }
 
     // Fallback
@@ -1912,6 +1922,22 @@
       }
       if (node.type === 'Name') {
         names[node.id] = true;
+        return;
+      }
+      // f-string Constant: the lightweight parser keeps `{name}` interpolations
+      // as literal text in the Constant value instead of emitting JoinedStr /
+      // FormattedValue nodes. Scan the raw value for `{...}` braces and pull
+      // out the leading identifier of each interpolation so those reads are
+      // counted toward `_referencedVars`. Covers the common case
+      // `f"{count} members"` as well as `f"{obj.attr}"` and `f"{fn(x)}"`.
+      if (node.type === 'Constant' && node.isFString && typeof node.value === 'string') {
+        // Naive but sufficient: find `{…}` groups and extract the first
+        // identifier on the inside. Doubled braces `{{` / `}}` are escapes,
+        // so strip them before scanning.
+        var s = node.value.replace(/\{\{/g, '').replace(/\}\}/g, '');
+        var re = /\{\s*([A-Za-z_][A-Za-z0-9_]*)/g;
+        var m;
+        while ((m = re.exec(s)) !== null) names[m[1]] = true;
         return;
       }
       // Generic recursion into children

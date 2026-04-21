@@ -86,7 +86,7 @@ steps:
 
       ### Your Task
 
-      The file `chatbot.py` already defines `DiscordBot` and `Channel`. Your job is to write the `if __name__ == "__main__":` block so it:
+      The file `step1/chatbot.py` already defines `DiscordBot` and `Channel`. Your job is to write the `if __name__ == "__main__":` block so it:
 
       1. Creates a `DiscordBot` instance called `bot`
       2. Creates a `Channel` instance called `channel`
@@ -98,10 +98,10 @@ steps:
       > **Heads up:** Variable names become participant names. If you write `dbot = DiscordBot()` instead of `bot = DiscordBot()`, the diagram will show `dbot: DiscordBot`. Pick meaningful names — they end up in the picture.
 
     uml_files:
-      - chatbot.py
+      - step1/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step1/chatbot.py
         content: |
           class DiscordBot:
               def send(self, message):
@@ -123,11 +123,11 @@ steps:
               pass
         language: python
 
-    open_file: chatbot.py
+    open_file: step1/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step1/chatbot.py
           content: |
             class DiscordBot:
                 def send(self, message):
@@ -158,7 +158,7 @@ steps:
     tests:
       - description: "bot is a DiscordBot instance"
         command: |
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step1/chatbot.py').read()
           ns = {}
           exec(source, ns)
           # The __main__ block only runs if __name__ == "__main__"; we simulate it.
@@ -186,7 +186,7 @@ steps:
       - description: "channel is a Channel instance"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step1/chatbot.py').read()
           tree = ast.parse(source)
           ns = {}
           exec(source, ns)
@@ -207,7 +207,7 @@ steps:
 
       - description: "bot.send() and channel.notify_members() are called"
         command: |
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step1/chatbot.py').read()
           assert 'bot.send(' in source, \
               "Call bot.send(...) — this produces the `Main -> bot: send(...)` arrow"
           assert 'channel.notify_members(' in source, \
@@ -351,7 +351,7 @@ steps:
 
       ### Your Task
 
-      Open `chatbot.py`. The starter code has the method defined, but the `__main__` block:
+      Open `step2/chatbot.py`. The starter code has the method defined, but the `__main__` block:
 
       1. Does **not** capture the return value of `get_member_count()` — fix that
       2. Uses a hardcoded string — replace it with an f-string that uses the captured count
@@ -359,10 +359,10 @@ steps:
       > **Reminder:** For the dashed arrow to appear, two things must be true — the method must have a return type annotation (`-> int` already in the starter), and you must **assign** the return value to a variable.
 
     uml_files:
-      - chatbot.py
+      - step2/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step2/chatbot.py
         content: |
           class DiscordBot:
               def send(self, message: str) -> None:
@@ -388,11 +388,11 @@ steps:
               channel.notify_members("5 members online")
         language: python
 
-    open_file: chatbot.py
+    open_file: step2/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step2/chatbot.py
           content: |
             class DiscordBot:
                 def send(self, message: str) -> None:
@@ -425,7 +425,7 @@ steps:
       - description: "get_member_count() has a return type annotation"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step2/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           assert bot_cls is not None, "DiscordBot class must exist"
@@ -443,7 +443,7 @@ steps:
       - description: "The return value of get_member_count() is captured"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step2/chatbot.py').read()
           tree = ast.parse(source)
           captured = False
           for node in ast.walk(tree):
@@ -464,7 +464,7 @@ steps:
       - description: "The captured count is used in notify_members()"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step2/chatbot.py').read()
           tree = ast.parse(source)
           main_body = None
           for node in tree.body:
@@ -629,7 +629,7 @@ steps:
 
       ### Your Target Diagram
 
-      In `chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
+      In `step3/chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
       layout landscape
@@ -655,10 +655,10 @@ steps:
       > **Watch for this:** `self._log(...)` — not `_log(...)` without the `self.` prefix. Without `self.`, the call goes to a *free function*, not a method, and the sequence diagram will not draw the self-arrow. The `self.` is what tells the analyzer "same object."
 
     uml_files:
-      - chatbot.py
+      - step3/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step3/chatbot.py
         content: |
           class DiscordBot:
               def _log(self, message: str) -> None:
@@ -679,11 +679,11 @@ steps:
               # TODO: call bot.handle_message("hi there")
         language: python
 
-    open_file: chatbot.py
+    open_file: step3/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step3/chatbot.py
           content: |
             class DiscordBot:
                 def _log(self, message: str) -> None:
@@ -716,7 +716,7 @@ steps:
       - description: "handle_message calls self._log and self.send"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step3/chatbot.py').read()
           tree = ast.parse(source)
           # Find handle_message on DiscordBot
           handle_body = None
@@ -748,7 +748,7 @@ steps:
 
       - description: "Main calls bot.handle_message(...)"
         command: |
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step3/chatbot.py').read()
           assert 'bot.handle_message(' in source, \
               "In __main__, call bot.handle_message(\"hi there\")"
         hints:
@@ -758,7 +758,7 @@ steps:
       - description: "Main does NOT call bot._log or bot.send directly"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step3/chatbot.py').read()
           tree = ast.parse(source)
           main_body = None
           for node in tree.body:
@@ -948,10 +948,10 @@ steps:
       > **Note on `_is_spam`:** It is already defined — a trivial classifier. You just need to call it in the `if` condition. That call itself draws a tiny self-arrow (it's a real method call) — that is expected.
 
     uml_files:
-      - chatbot.py
+      - step4/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step4/chatbot.py
         content: |
           class Channel:
               def broadcast(self, message: str) -> None:
@@ -979,11 +979,11 @@ steps:
               bot.handle(channel, "buy now cheap")
         language: python
 
-    open_file: chatbot.py
+    open_file: step4/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step4/chatbot.py
           content: |
             class Channel:
                 def broadcast(self, message: str) -> None:
@@ -1022,7 +1022,7 @@ steps:
       - description: "handle uses if/else with self._is_spam as the guard"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step4/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           assert bot_cls is not None, "DiscordBot must exist"
@@ -1052,7 +1052,7 @@ steps:
       - description: "Spam branch blocks, non-spam branch broadcasts"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step4/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'handle'), None)
@@ -1189,10 +1189,10 @@ steps:
       2. Inside the loop, call `channel.send_to_all(msg)` once per iteration.
 
     uml_files:
-      - chatbot.py
+      - step5/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step5/chatbot.py
         content: |
           class Channel:
               def send_to_all(self, message: str) -> None:
@@ -1212,11 +1212,11 @@ steps:
               bot.broadcast_all(channel, ["hi", "hello", "good morning"])
         language: python
 
-    open_file: chatbot.py
+    open_file: step5/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step5/chatbot.py
           content: |
             class Channel:
                 def send_to_all(self, message: str) -> None:
@@ -1247,7 +1247,7 @@ steps:
       - description: "broadcast_all iterates over messages with a for loop"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step5/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           assert bot_cls is not None, "DiscordBot must exist"
@@ -1265,7 +1265,7 @@ steps:
       - description: "The loop body calls channel.send_to_all"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step5/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_all'), None)
@@ -1417,7 +1417,7 @@ steps:
 
       ### Your Task
 
-      Open `chatbot.py`. The helper methods are already defined (`Channel.get_subscriber_count`, `_is_announcement`, `_log_start`, `_log_skip`). Your job is to:
+      Open `step6/chatbot.py`. The helper methods are already defined (`Channel.get_subscriber_count`, `_is_announcement`, `_log_start`, `_log_skip`). Your job is to:
 
       1. **Implement `run_digest(channel, posts)`** on `DiscordBot` so it:
          1. Captures the result of `channel.get_subscriber_count()` in a local variable.
@@ -1431,10 +1431,10 @@ steps:
       > **Predict first.** Before you start typing, take 30 seconds and mentally walk the diagram: how many lifelines, how many arrows, which are dashed, where does the `alt` sit relative to the `loop`? Writing the code *after* visualising it is much faster than writing code and hoping the diagram matches.
 
     uml_files:
-      - chatbot.py
+      - step6/chatbot.py
 
     files:
-      - path: chatbot.py
+      - path: step6/chatbot.py
         content: |
           class Channel:
               def broadcast(self, message: str) -> None:
@@ -1476,11 +1476,11 @@ steps:
               # bot.run_digest(channel, posts) exactly once.
         language: python
 
-    open_file: chatbot.py
+    open_file: step6/chatbot.py
 
     solution:
       files:
-        - path: chatbot.py
+        - path: step6/chatbot.py
           content: |
             class Channel:
                 def broadcast(self, message: str) -> None:
@@ -1536,7 +1536,7 @@ steps:
       - description: "run_digest captures channel.get_subscriber_count()"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           assert bot_cls is not None, "DiscordBot must exist"
@@ -1566,7 +1566,7 @@ steps:
       - description: "run_digest passes the captured count to self._log_start"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
@@ -1614,7 +1614,7 @@ steps:
       - description: "run_digest contains a for loop that encloses an if/else"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
@@ -1643,7 +1643,7 @@ steps:
       - description: "Announcement branch broadcasts, else branch logs a skip"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
@@ -1672,7 +1672,7 @@ steps:
       - description: "Main creates bot + channel and calls bot.run_digest once"
         command: |
           import ast
-          source = open('/tutorial/chatbot.py').read()
+          source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           main_body = None
           for node in tree.body:
@@ -1858,7 +1858,7 @@ steps:
       Next up: you now know both halves of UML modeling — structure (class diagrams) and behavior (sequence diagrams). In your software engineering career you will mix and match these constantly, usually on whiteboards, usually for five minutes at a time. That is the sweet spot UML was designed for.
 
     files:
-      - path: README.md
+      - path: step7/README.md
         content: |
           # Sequence Diagram Reference
 
@@ -1867,4 +1867,4 @@ steps:
           Use it as a cheat sheet when working on future sequence diagrams.
         language: markdown
 
-    open_file: README.md
+    open_file: step7/README.md

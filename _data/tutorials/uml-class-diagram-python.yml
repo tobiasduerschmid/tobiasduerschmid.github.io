@@ -431,6 +431,8 @@ steps:
           assert not hasattr(account, 'balance'), \
               "Remove the public self.balance — use self.__balance instead"
         hints:
+          - text: "The UML shows `-` next to `balance`. The visibility table in the instructions maps `-` to a specific Python naming convention — what prefix would you add to `self.balance`?"
+            condition: "default"
           - text: "Replace every `self.balance` with `self.__balance` — the double underscore triggers Python name mangling, which maps to UML private (`-`)."
             condition: "default"
 
@@ -443,7 +445,9 @@ steps:
           assert hasattr(account, '_validate_amount'), \
               "Rename validate_amount to _validate_amount (single underscore = protected)"
         hints:
-          - text: "Rename `def validate_amount` to `def _validate_amount` and update all calls to it."
+          - text: "The UML shows `#` next to `_validate_amount`. Looking at the visibility table in the instructions, what single-character prefix signals 'protected' in Python?"
+            condition: "default"
+          - text: "Rename `def validate_amount` to `def _validate_amount` and update all calls to it inside the other methods."
             condition: "default"
 
       - description: "Public methods still work correctly"
@@ -726,6 +730,8 @@ steps:
           assert params['percent'].annotation == float, \
               "The percent parameter needs a type hint: percent: float"
         hints:
+          - text: "The UML shows `apply_discount(percent: float)`. You have already annotated attribute assignments — how do you write `percent: float` as a Python *parameter* annotation on the `def` line?"
+            condition: "default"
           - text: "Change `def apply_discount(self, percent)` to `def apply_discount(self, percent: float) -> float:`"
             condition: "default"
 
@@ -937,6 +943,8 @@ steps:
           assert issubclass(ns['Circle'], ns['Shape']), \
               "Circle should inherit from Shape: class Circle(Shape):"
         hints:
+          - text: "The UML shows an arrow from `Circle` pointing up to `Shape`. In Python, how do you declare that one class inherits from another?"
+            condition: "default"
           - text: "Change `class Circle:` to `class Circle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
             condition: "default"
 
@@ -948,6 +956,8 @@ steps:
           assert issubclass(ns['Rectangle'], ns['Shape']), \
               "Rectangle should inherit from Shape: class Rectangle(Shape):"
         hints:
+          - text: "The UML shows an arrow from `Rectangle` pointing up to `Shape`. How do you write that inheritance relationship in Python?"
+            condition: "default"
           - text: "Change `class Rectangle:` to `class Rectangle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
             condition: "default"
 
@@ -963,6 +973,8 @@ steps:
           assert '78.5' in result, \
               f"Circle area should be about 78.54 but describe() returned: {result}"
         hints:
+          - text: "`Circle` currently has its own `describe()` that duplicates `Shape`'s. If `Shape` already provides `describe()`, does `Circle` need its own copy — or should it *inherit* it?"
+            condition: "default"
           - text: "Remove the duplicated `describe()` from `Circle` — it should inherit it from `Shape`. The inherited `describe()` calls `self.area()` which uses `Circle`'s override."
             condition: "default"
 
@@ -1201,6 +1213,8 @@ steps:
           assert i.department == 'Computer Science', \
               "Instructor needs a 'department' attribute"
         hints:
+          - text: "The target UML shows a separate `Instructor` class box with `name: str` and `department: str`. What does the code need that it currently doesn't have?"
+            condition: "default"
           - text: "Create a class: `class Instructor:` with `__init__(self, name: str, department: str)` storing both as typed attributes."
             condition: "default"
 
@@ -1216,6 +1230,8 @@ steps:
           assert isinstance(c.instructor, ns['Instructor']), \
               "Course.instructor should be an Instructor object, not a string"
         hints:
+          - text: "The UML shows a `Course --> Instructor` association arrow — that arrow appears only when `Course` stores an `Instructor` *object* as an instance variable. Currently it stores a string. What needs to change?"
+            condition: "default"
           - text: "Change `__init__(self, name: str, instructor_name: str)` to `__init__(self, name: str, instructor: Instructor)` and store it as `self.instructor: Instructor = instructor`."
             condition: "default"
 
@@ -1230,6 +1246,8 @@ steps:
           assert result == 'Dr. Smith', \
               f"get_instructor_name() should return 'Dr. Smith' but got '{result}'"
         hints:
+          - text: "Now that `self.instructor` is an `Instructor` object, `get_instructor_name()` should read the name from that object — not from a string attribute."
+            condition: "default"
           - text: "Update `get_instructor_name()` to return `self.instructor.name` instead of `self.instructor_name`."
             condition: "default"
 

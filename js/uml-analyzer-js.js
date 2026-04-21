@@ -2,8 +2,8 @@
  * JS/TS UML Analyzer — extracts class diagrams and sequence diagrams from
  * JavaScript/TypeScript source code.
  *
- * Parallel to uml-analyzer.py (which handles Python). Requires the TypeScript
- * compiler API (window.ts or passed as parameter) for AST parsing.
+ * Parallel to uml-analyzer-python.js (which handles Python). Requires the
+ * TypeScript compiler API (window.ts or passed as parameter) for AST parsing.
  *
  * Produces the same @startuml/@enduml custom syntax consumed by the SVG
  * renderers in uml-bundle.js.
@@ -172,7 +172,7 @@
   }
 
   /* ===================================================================
-   * ClassInfo — mirrors uml-analyzer.py ClassInfo
+   * ClassInfo — mirrors uml-analyzer-python.js ClassInfo
    * =================================================================== */
 
   function ClassInfo(name, opts) {

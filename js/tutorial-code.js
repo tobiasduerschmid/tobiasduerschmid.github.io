@@ -94,7 +94,6 @@
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview: (backend === 'react'),    // live iframe preview for React tutorials
-      umlAnalyzerPath: options.umlAnalyzerPath || '/js/uml-analyzer.py',
       umlPopupUrl: options.umlPopupUrl || '/uml-popup.html',
     };
 
@@ -204,7 +203,6 @@
     this._umlContainer = null;
     this._umlContentEl = null;
     this._umlRefreshTimer = null;
-    this._umlAnalyzerCode = null;       // Cached Python analyzer source
     this._umlActiveType = options.uml_default_type === 'sequence' ? 'sequence' : 'class'; // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
@@ -3204,23 +3202,6 @@
     }
   };
 
-  /** Lazily load the Python UML analyzer source code (legacy Pyodide fallback) */
-  TutorialCode.prototype._loadUMLAnalyzer = function (callback) {
-    if (this._umlAnalyzerCode) { callback(this._umlAnalyzerCode); return; }
-    var self = this;
-    var path = this.config.umlAnalyzerPath || '/js/uml-analyzer.py';
-    fetch(path)
-      .then(function (r) { return r.text(); })
-      .then(function (code) {
-        self._umlAnalyzerCode = code;
-        callback(code);
-      })
-      .catch(function (err) {
-        console.error('Failed to load UML analyzer:', err);
-        self._showUMLError('Failed to load UML analyzer script.');
-      });
-  };
-
   /** Lazily load the JS-based Python UML analyzer (fast, no Pyodide needed) */
   TutorialCode.prototype._loadPythonJSAnalyzer = function (callback) {
     if (typeof window !== 'undefined' && window.analyzePythonSources) { callback(); return; }
@@ -3346,45 +3327,6 @@
         console.error('Python UML analysis error:', err);
         self._showUMLError('Python analysis failed: ' + err.message);
       }
-    });
-  };
-
-  /** Run the Python analyzer in Pyodide with the collected sources (legacy fallback) */
-  TutorialCode.prototype._runUMLAnalysis = function (sources) {
-    var self = this;
-    this._loadUMLAnalyzer(function (analyzerCode) {
-      // Build Python code: set __uml_sources global, run analyzer,
-      // write JSON result to a temp file (avoids stdout interception issues).
-      var sourcesJson = JSON.stringify(sources);
-      var code =
-        '__uml_sources = ' + sourcesJson + '\n' +
-        analyzerCode + '\n' +
-        'import json as _json\n' +
-        'with open("/tmp/__uml_result.json", "w") as _f:\n' +
-        '    _f.write(_json.dumps(result) if "result" in dir() else "{}")\n';
-
-      // Run silently so nothing leaks to the output panel
-      self._postWorker({ type: 'runCode', code: code, silent: true }, function (msg) {
-        if (msg.exitCode !== 0) {
-          self._showUMLError('Python analysis failed (syntax error in source?).');
-          return;
-        }
-        // Read the result file back
-        self._postWorker({ type: 'read', path: '/tmp/__uml_result.json' }, function (readMsg) {
-          if (readMsg.type !== 'read_ok') {
-            self._showUMLError('Could not read analysis results.');
-            return;
-          }
-          try {
-            var result = JSON.parse(readMsg.content);
-            self._umlLastDiagrams = result;
-            self._renderCurrentUMLDiagram();
-          } catch (err) {
-            console.error('UML JSON parse error:', err);
-            self._showUMLError('Analysis returned invalid JSON.');
-          }
-        });
-      });
     });
   };
 
