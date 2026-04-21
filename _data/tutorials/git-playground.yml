@@ -1,5 +1,5 @@
 title: "Git Playground"
-description: "An open-ended Git sandbox. Every command you type is recorded into build-git.sh so you can replay, tweak, and step back through your session."
+description: "An open-ended Git sandbox. Every command you type is recorded into reproduce.sh so you can replay, tweak, and step back through your session."
 
 require_tests: false
 autosave_type: commands-and-files
@@ -18,19 +18,19 @@ setup_commands:
 
 steps:
   - title: "Build This Git Graph"
-    user_command_listener: "cat >> /tutorial/build-git.sh"
+    user_command_listener: "cat >> /tutorial/reproduce.sh"
     post_fileload_setup:
-      - "cd /tutorial/myproject && bash ../build-git.sh >/dev/null 2>&1 || true"
+      - "cd /tutorial/myproject && bash ../reproduce.sh >/dev/null 2>&1 || true"
     files:
-      - path: "build-git.sh"
+      - path: "reproduce.sh"
         content: ""
         language: "shell"
         persistent: true
-    open_file: "build-git.sh"
+    open_file: "reproduce.sh"
     instructions: |
       ## Reproduce the target graph
 
-      Every command you run in the terminal is appended to `build-git.sh` (the
+      Every command you run in the terminal is appended to `reproduce.sh` (the
       tab on the left). The script is the single source of truth for your
       session — re-running it from a clean VM reproduces exactly the state
       you're in right now.
@@ -38,11 +38,11 @@ steps:
       - **Start any project**: `git init myproject && cd myproject`.
       - **Live graph**: switch to the **Git Graph** panel to compare your
         repository to the target below.
-      - **Undo the last command**: open `build-git.sh`, delete the last line,
+      - **Undo the last command**: open `reproduce.sh`, delete the last line,
         then click **Reset Current Step** in the top bar. The VM rewinds to
         post-boot and replays the (shorter) script — a one-command undo
         without any bespoke button.
-      - **Full restart**: clear `build-git.sh` entirely and click Reset.
+      - **Full restart**: clear `reproduce.sh` entirely and click Reset.
 
       ### Target
 
