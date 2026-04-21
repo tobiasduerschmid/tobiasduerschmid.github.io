@@ -73,11 +73,12 @@ steps:
       ```
 
       ## Rules
-      Use only basic git commands: init, add, commit, branch, switch (or checkout), and merge. No rebase, revert, or tags (you’ve not learned these commands in this class yet anyways, so why bother?) 
-      Commit subjects must match exactly (case and punctuation).
-      Every commit must actually change a file. No --allow-empty.
-      File contents, authors, and timestamps do not matter.
-      Two things to watch out for
-      The top merge must be a real merge commit, not a fast-forward. This means you have to commit Add logging support on main before you merge feature/parser. Otherwise git fast-forwards and no merge commit is created.
-      The experiment branch is never merged. Create it, commit to it, and leave it alone. Don’t delete it.
+      * Use only basic git commands: init, add, commit, branch, switch (or checkout), and merge. No rebase, revert, or tags (you’ve not learned these commands in this class yet anyways, so why bother?) 
+      * Commit subjects must match exactly (case and punctuation).
+      * Every commit must actually change a file. No --allow-empty.
+      * File contents, authors, and timestamps do not matter.
+      
+      Two things to watch out make sure you get right:
+        * The top merge must be a real merge commit, not a fast-forward. This means you have to commit Add logging support on main before you merge feature/parser. Otherwise git fast-forwards and no merge commit is created.
+        * The experiment branch is never merged. Create it, commit to it, and leave it alone. Don’t delete it.
 
