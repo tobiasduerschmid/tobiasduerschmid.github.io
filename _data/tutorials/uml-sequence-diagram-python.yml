@@ -62,17 +62,19 @@ steps:
 
       Now let us build one together. Write Python code until the live **Sequence Diagram** panel matches this target:
 
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
+
       create bot
       Main --> bot: <<create>>
       create channel
       Main --> channel: <<create>>
-      Main -> bot: send("Hello, world!")
-      Main -> channel: notify_members("Welcome")
-      @enduml'></div>
+      Main -> bot: send('Hello, world!')
+      Main -> channel: notify_members('Welcome')
+      @enduml"></div>
 
       **Reading the target:**
 
@@ -330,18 +332,20 @@ steps:
 
       Extend the chat bot from Step 1. Now `DiscordBot` has a method that reports the current member count, and `Main` captures it to decide what to say:
 
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
+
       create bot
       Main --> bot: <<create>>
       create channel
       Main --> channel: <<create>>
       Main -> bot: get_member_count()
       bot --> Main: int
-      Main -> channel: notify_members("5 members online")
-      @enduml'></div>
+      Main -> channel: notify_members('{count} members ...)
+      @enduml"></div>
 
       Notice the new dashed arrow from `bot` back to `Main` labeled `int` — that is the return arrow. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its return type is `None`.
 
@@ -579,15 +583,17 @@ steps:
 
       In `chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
 
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
       participant Main as : Main
       participant bot: DiscordBot
+
       create bot
       Main --> bot: <<create>>
-      Main -> bot: handle_message("hi there")
-      bot -> bot: _log("hi there")
-      bot -> bot: send("hi there")
-      @enduml'></div>
+      Main -> bot: handle_message('hi there')
+      bot -> bot: _log(message)
+      bot -> bot: send(message)
+      @enduml"></div>
 
       Three arrows — one from `Main` to `bot`, and two from `bot` to **itself**. Visually, the two self-calls are nested inside the `handle_message` activation box because they happen while that method is still running.
 
@@ -853,23 +859,25 @@ steps:
       - checks whether the message is spam
       - if spam, calls `self._block(msg)`; otherwise, calls `channel.send_to_all(msg)`
 
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
+
       create bot
       Main --> bot: <<create>>
       create channel
       Main --> channel: <<create>>
-      Main -> bot: broadcast_to_members(...)
-      loop
-      alt
+      Main -> bot: broadcast_to_members(channel, ['hello', 'buy no...)
+      loop [for msg in messages]
+      alt [self._is_spam(msg)]
       bot -> bot: _block(msg)
-      else
+      else [else]
       bot -> channel: send_to_all(msg)
       end
       end
-      @enduml'></div>
+      @enduml"></div>
 
       One `loop` on the outside, one `alt` nested one level inside. That is the maximum nesting you should ever want in a single diagram.
 
