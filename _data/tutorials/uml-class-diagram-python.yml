@@ -1571,10 +1571,10 @@ steps:
       |---|---|---|
       | `1` | Exactly one | |
       | `0..1` | Zero or one (optional) | |
-      | `0..*` or `*` | Zero or more | a collection that may be empty |
+      | `*` (or `0..*`) | Zero or more | a collection that may be empty |
       | `1..*` | One or more | a collection that must have at least one element |
 
-      > **Style tip (Ambler G118):** Prefer `0..*` over bare `*`. Both mean the same thing, but `0..*` is explicit — a reader never has to wonder whether you meant "any number" or "one or more."
+      > **Style tip (Ambler G117):** Prefer `*` over verbose `0..*`. Both mean the same thing, but `*` is concise and universally understood — use `0..*` only when explicitly spelling out the lower bound adds clarity in a specific context.
 
       ### Reading Multiplicity as a Sentence
 
@@ -2529,7 +2529,7 @@ steps:
 
       **Placement:** the number sits next to the class it *quantifies* — it answers "for *one* of the opposite class, how many of **this** class?"
 
-      **Style (Ambler G117/G118):** Show multiplicity on **both ends** of every relationship; prefer `0..*` to bare `*` for clarity.
+      **Style (Ambler G117/G118):** Show multiplicity on **both ends** of every relationship; prefer `*` over verbose `0..*`.
 
       ---
 
