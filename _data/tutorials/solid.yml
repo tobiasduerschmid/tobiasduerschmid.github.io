@@ -4,6 +4,7 @@ description: "Learn the SOLID principles by suffering through rigid code first, 
 backend: pyodide
 
 uml_diagram: true
+uml_position: right
 require_tests: true
 autosave_type: files
 
@@ -258,7 +259,8 @@ steps:
       > *"A class should have only one reason to change."*
       > — Robert C. Martin
 
-      A "reason to change" comes from an **actor** — a person or team that asks for modifications. If a class serves multiple actors, one team's change request can break another team's stuff. That's exactly the mess you just dealt with in Step 1.
+      A "reason to change" comes from an **actor** — a person or team that asks for modifications (e.g., the actor in a user story). 
+      If a class serves multiple actors, one team's change request can break another team's stuff. That's exactly the mess you just dealt with in Step 1.
 
       ### The Scenario
 
