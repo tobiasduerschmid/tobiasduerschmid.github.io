@@ -78,7 +78,7 @@ steps:
 
       **Reading the target:**
 
-      - `Main` is the script itself — the code inside `if __name__ == "__main__":` becomes a lifeline called *Main*
+      - `Main` is the script itself — any code outside a class or function (specifically, the body of `if __name__ == "__main__":`) becomes a synthetic lifeline labelled *Main*. You didn't declare it; the analyzer did, to represent "whoever is starting the scenario."
       - `bot: DiscordBot` is a specific bot instance created by `bot = DiscordBot()`
       - `channel: Channel` is a specific channel instance
       - The two dashed `<<create>>` arrows appear because `Main` constructs each object
@@ -424,48 +424,96 @@ steps:
     tests:
       - description: "get_member_count() has a return type annotation"
         command: |
+          import ast
           source = open('/tutorial/chatbot.py').read()
-          assert 'get_member_count(self) -> int' in source.replace(' ', '').replace(')->', ') ->') \
-              or 'get_member_count(self) -> int' in source, \
-              "Keep the `-> int` return type annotation on get_member_count — it is what tells the diagram to draw the return arrow"
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          assert bot_cls is not None, "DiscordBot class must exist"
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'get_member_count'), None)
+          assert method is not None, "get_member_count method must exist"
+          ret = method.returns
+          assert ret is not None and isinstance(ret, ast.Name) and ret.id == 'int', \
+              "Keep the `-> int` return type annotation on get_member_count — without it, the diagram won't draw the return arrow"
         hints:
+          - text: "Which of the *two rules* for return arrows lives on the method signature itself? That's the one you need to preserve."
+            condition: "default"
           - text: "Leave the method signature alone: `def get_member_count(self) -> int:`. The return type annotation is what makes the dashed return arrow show up."
             condition: "default"
 
       - description: "The return value of get_member_count() is captured"
         command: |
-          import ast, re
+          import ast
           source = open('/tutorial/chatbot.py').read()
-          # Find assignments where RHS is bot.get_member_count()
           tree = ast.parse(source)
           captured = False
           for node in ast.walk(tree):
-              if isinstance(node, ast.Assign) or isinstance(node, ast.AnnAssign):
+              if isinstance(node, (ast.Assign, ast.AnnAssign)):
                   val = node.value
-                  if (isinstance(val, ast.Call)
+                  if (val is not None and isinstance(val, ast.Call)
                           and isinstance(val.func, ast.Attribute)
                           and val.func.attr == 'get_member_count'):
                       captured = True
           assert captured, \
               "Assign the result of bot.get_member_count() to a variable — e.g. `count = bot.get_member_count()`. Without an assignment, no return arrow appears."
         hints:
-          - text: "Change the line to capture the return value: `count = bot.get_member_count()`. The assignment is what makes the return arrow appear."
+          - text: "Right now the starter code *calls* get_member_count but throws the result away. Which of the two rules for return arrows is violated?"
+            condition: "default"
+          - text: "Capture the result in a variable: `count = bot.get_member_count()`. The assignment is what makes the return arrow appear."
             condition: "default"
 
       - description: "The captured count is used in notify_members()"
         command: |
+          import ast
           source = open('/tutorial/chatbot.py').read()
-          assert 'notify_members(' in source, \
+          tree = ast.parse(source)
+          main_body = None
+          for node in tree.body:
+              if isinstance(node, ast.If):
+                  main_body = node.body
+                  break
+          assert main_body is not None, "Add an `if __name__ == \"__main__\":` block"
+
+          def refs_any(node, names):
+              for n in ast.walk(node):
+                  if isinstance(n, ast.Name) and n.id in names:
+                      return True
+              return False
+
+          # Walk main in order, tracking names captured from get_member_count()
+          # and any names transitively assigned from expressions using those.
+          captured = set()
+          notify_with_captured = False
+          notify_any = False
+          for stmt in main_body:
+              targets, val = [], None
+              if isinstance(stmt, ast.Assign):
+                  targets, val = stmt.targets, stmt.value
+              elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
+                  targets, val = [stmt.target], stmt.value
+              if val is not None:
+                  is_gmc = (isinstance(val, ast.Call)
+                      and isinstance(val.func, ast.Attribute)
+                      and val.func.attr == 'get_member_count')
+                  if is_gmc or (captured and refs_any(val, captured)):
+                      for t in targets:
+                          if isinstance(t, ast.Name):
+                              captured.add(t.id)
+              for n in ast.walk(stmt):
+                  if (isinstance(n, ast.Call)
+                          and isinstance(n.func, ast.Attribute)
+                          and n.func.attr == 'notify_members'):
+                      notify_any = True
+                      for arg in n.args:
+                          if captured and refs_any(arg, captured):
+                              notify_with_captured = True
+          assert notify_any, \
               "notify_members must still be called"
-          # Check that the notify_members call uses a variable (not a hardcoded string)
-          # We accept any variable name, checking that there's an f-string with {varname}
-          import re
-          # Look for f"...{identifier}..." in notify_members call
-          m = re.search(r'notify_members\s*\(\s*(f["\'][^"\']*\{[a-zA-Z_][a-zA-Z_0-9]*\}[^"\']*["\'])\s*\)', source)
-          assert m, \
-              "Use an f-string in notify_members that references your captured variable — e.g. `channel.notify_members(f\"{count} members online\")`"
+          assert notify_with_captured, \
+              "Pass the captured count variable into notify_members — a hardcoded string like \"5 members online\" does not show that the returned value flowed into the next call. Any expression that references your captured variable works: f-string, concatenation, `str(count)`, or extracting to an intermediate variable."
         hints:
-          - text: "Replace the hardcoded string with an f-string: `channel.notify_members(f\"{count} members online\")`."
+          - text: "The diagram should show the return value *flowing* from `get_member_count` into the `notify_members` call. What Python change would make that flow visible?"
+            condition: "default"
+          - text: "Any expression referencing the captured variable will do — an f-string is cleanest: `channel.notify_members(f\"{count} members online\")`."
             condition: "default"
 
     quiz:
@@ -560,7 +608,7 @@ steps:
 
       A sequence diagram's **activation box** is the exact visual of that. When a message arrives at a lifeline, an activation box starts. When the method returns, the box ends.
 
-      > **Mental model:** Activation box = stack frame. A method that takes longer has a taller box. A method that calls another method has a *nested* box stacked on top of its own.
+      > **Mental model:** Activation box ≈ stack frame. A method that takes longer has a taller box. A method that calls another method has a *nested* box stacked on top of its own. (The mapping is close but not perfect — generators, async, and coroutines blur the picture. For 99% of the synchronous code you will write as an undergraduate, "stack frame" is the right intuition.)
 
       ### Self-Messages
 
@@ -727,6 +775,8 @@ steps:
                           assert False, \
                               f"Main should not call bot.{n.func.attr}() directly — let handle_message delegate to _log and send internally."
         hints:
+          - text: "The target diagram shows only *one* arrow from Main into bot. If Main also called `bot._log` or `bot.send` directly, you would see extra arrows."
+            condition: "default"
           - text: "Main should only call `bot.handle_message(\"hi there\")`. `_log` and `send` are *internal* — they are called by `handle_message` via `self._log(...)` and `self.send(...)`."
             condition: "default"
 
@@ -782,82 +832,92 @@ steps:
           explanation: |
             **Three arrows.** (1) The `<<create>>` dashed arrow when `bot = Bot()`. (2) `Main -> bot: a()` for the outer call. (3) `bot -> bot: b()` for the self-call inside `a()`. The `pass` in `b()` is an empty body, so no further arrows come from there.
 
+        - question: |
+            **Review of Step 2.** Suppose `b()` had been annotated `def b(self) -> int:` and `a()` had written `x = self.b()`. How many arrows would the diagram now show?
+          type: single
+          options:
+            - "3 — same as before; self-calls don't get return arrows"
+            - "4 — creation, `a()`, `b()`, plus a dashed return arrow from `b` back to `a`"
+            - "2 — the return arrow replaces the call arrow"
+            - "5 — two call arrows and two return arrows"
+          correct_index: 0
+          explanation: |
+            Trick question — and a useful one. The current analyzer draws return arrows **only across different lifelines**. A self-call returning to itself visibly starts and ends via the nested activation box, so no separate dashed arrow is drawn. This is why Step 2's return-arrow examples always had the caller and callee on *different* lifelines. The "two rules" from Step 2 still hold, but there is a third, implicit rule: "caller ≠ callee."
+
 
   # --------------------------------------------------------------------------
-  # STEP 4 — "Fragments: Branches and Loops" (Fixer-Upper)
+  # STEP 4 — "Conditional Fragments: opt and alt"
   # Pedagogy:
-  #   Fixer-Upper pattern — near-complete code with specific missing structure.
-  #   Interleaving — student must recognize two distinct fragment types
-  #     (alt for conditional, loop for iteration).
-  #   Separation of Concerns — warn against deeply nested fragments.
-  #   Bloom's — Apply (write control flow), Analyze (read fragment shapes).
+  #   One-concept-per-step — decide-then-branch is taught alone; iteration
+  #     comes in Step 5. Keeps element interactivity within working-memory
+  #     limits (CLT / Sweller).
+  #   Variation Theory — opt (if only) and alt (if/else) appear side by side;
+  #     the *single* feature that varies is the presence of `else`.
+  #   Bloom's — Apply (write the two forms), Analyze (choose which fits).
   # --------------------------------------------------------------------------
-  - title: "Fragments: Branches and Loops"
+  - title: "Conditional Fragments: opt and alt"
     instructions: |
       ## When Behavior Is Not Always the Same
 
-      > **Learning objective:** After this step you will be able to **recognize** `alt` and `loop` interaction fragments on a diagram, and **write** Python control flow that produces them.
+      > **Learning objective:** After this step you will be able to **recognize** the `opt` and `alt` interaction fragments on a diagram and **write** Python conditionals that produce each one.
 
       ### Combined Fragments Are Boxes Around Messages
 
-      So far every diagram has been a straight top-to-bottom trace. But real systems **branch** (sometimes you do X, other times Y) and **iterate** (do X for each element). UML handles this with **combined fragments** — labeled boxes drawn *around* the messages they contain.
+      So far every diagram has been a straight top-to-bottom trace. But real systems **branch** — sometimes they do X, other times Y. UML handles this with **combined fragments**: labeled boxes drawn *around* the messages they contain.
 
-      Two you will use constantly:
+      There are two conditional fragment types, and the *only* difference between them is whether there's an `else`:
 
-      | Fragment | Label in the box | Python construct that produces it |
-      |---|---|---|
-      | **alt** | `alt` / `else` | `if` / `elif` / `else` |
-      | **loop** | `loop` | `for` / `while` |
+      | Fragment | Label | Python | Meaning |
+      |---|---|---|---|
+      | **opt** | `opt` | `if ...` (no `else`) | *Zero or one* execution — inside runs only if the guard is true |
+      | **alt** | `alt` / `else` | `if ... else ...` | *Exactly one* branch runs — the guard selects which |
 
-      Both wrap a region of the diagram in a thin rectangle with the keyword in the top-left corner and a guard condition (the Boolean test) in square brackets.
+      Both fragments wrap their region of the diagram in a thin rectangle with a guard condition (the Boolean test) in square brackets in the top-left corner.
+
+      ### Example — An `opt` Fragment
+
+      A bot decides whether to welcome a new member — *only* if they are not already subscribed. If they are subscribed, nothing happens:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main as : Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      Main -> bot: welcome(user)
+      opt [not self._is_subscribed(user)]
+      bot -> channel: send_welcome(user)
+      end
+      @enduml'></div>
+
+      The `opt` box says: *"either this message happens, or nothing does — depending on the guard."* There is no second compartment.
 
       ### Example — An `alt` Fragment
 
-      A spam filter decides whether to forward a message. Two branches, drawn as two compartments of one `alt` box:
+      A spam filter: *if* spam, block; *otherwise*, forward. **Two compartments**, exactly one runs:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
       participant Main as : Main
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: handle("hi")
-      alt
-      bot -> channel: broadcast("hi")
-      else
+      alt [self._is_spam("hi")]
       bot -> bot: _block()
+      else [else]
+      bot -> channel: broadcast("hi")
       end
       @enduml'></div>
 
-      The box says: *"exactly one of these branches runs."* The guard tells the reader **which**.
+      The `alt` box says: *"exactly one of these branches runs."* The guard tells you *which*.
 
-      ### Example — A `loop` Fragment
-
-      Sending a welcome to every member — the message is sent once **per iteration**:
-
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant Main as : Main
-      participant bot: DiscordBot
-      participant channel: Channel
-      Main -> bot: welcome_all()
-      loop
-      bot -> channel: notify_members("welcome")
-      end
-      @enduml'></div>
-
-      The loop box says: *"the message(s) inside run once for every item in the collection."*
-
-      ### A Warning — Do NOT Transcribe Every `if` and `for`
-
-      A common mistake is to copy every single branch and loop from your Python code into fragments. The result is a **monolithic** diagram — nested boxes inside nested boxes, unreadable.
-
-      > **Rule of thumb (from Ambler's *UML Style*):** If you find yourself nesting fragments more than two levels deep, you are trying to say too much in one diagram. Split it. Draw the "happy path" as one diagram and the error path as a separate one.
+      > **The choice rule:** `opt` for a single conditional message, `alt` for mutually-exclusive branches. If your `else` would be empty, use `opt`; if both branches do something, use `alt`. The Python code shape decides for you — which is another reason to keep code and diagram in sync.
 
       ### Your Target Diagram
 
-      The bot has a `broadcast_to_members(messages)` method that:
+      The bot has a `handle(channel, message)` method that:
 
-      - loops over each message
-      - checks whether the message is spam
-      - if spam, calls `self._block(msg)`; otherwise, calls `channel.send_to_all(msg)`
+      - **If the message is spam:** blocks it via `self._block(message)`.
+      - **Otherwise:** forwards it to the channel via `channel.broadcast(message)`.
+
+      That's a two-way split — an `alt`.
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
       layout landscape
@@ -869,27 +929,23 @@ steps:
       Main --> bot: <<create>>
       create channel
       Main --> channel: <<create>>
-      Main -> bot: broadcast_to_members(channel, ['hello', 'buy no...)
-      loop [for msg in messages]
-      alt [self._is_spam(msg)]
-      bot -> bot: _block(msg)
+      Main -> bot: handle(channel, 'buy now cheap')
+      alt [self._is_spam(message)]
+      bot -> bot: _block(message)
       else [else]
-      bot -> channel: send_to_all(msg)
-      end
+      bot -> channel: broadcast(message)
       end
       @enduml"></div>
 
-      One `loop` on the outside, one `alt` nested one level inside. That is the maximum nesting you should ever want in a single diagram.
+      ### Your Task
 
-      ### Your Task (Fixer-Upper)
+      The starter code has `handle(channel, message)` written with **no branching** — it unconditionally forwards everything. Your job:
 
-      The starter code has `broadcast_to_members` written as a **flat sequence** — no `for`, no `if`. It works, but the sequence diagram shows three bare arrows without fragment boxes. Your job:
+      1. Replace the body with `if self._is_spam(message):` / `else:` — produces the `alt` fragment with two compartments.
+      2. In the `if` branch: call `self._block(message)`.
+      3. In the `else` branch: call `channel.broadcast(message)`.
 
-      1. Wrap the message handling in a `for msg in messages:` loop — produces the `loop` fragment
-      2. Inside the loop, use `if self._is_spam(msg):` / `else:` to split the two branches — produces the `alt` fragment
-      3. In the `if` branch, call `self._block(msg)`; in the `else` branch, call `channel.send_to_all(msg)`
-
-      > **Note on `_is_spam`:** It is already defined — a trivial classifier. You just need to call it in the `if` condition.
+      > **Note on `_is_spam`:** It is already defined — a trivial classifier. You just need to call it in the `if` condition. That call itself draws a tiny self-arrow (it's a real method call) — that is expected.
 
     uml_files:
       - chatbot.py
@@ -898,7 +954,7 @@ steps:
       - path: chatbot.py
         content: |
           class Channel:
-              def send_to_all(self, message: str) -> None:
+              def broadcast(self, message: str) -> None:
                   print(f"[CHANNEL] {message}")
 
 
@@ -909,18 +965,18 @@ steps:
               def _block(self, message: str) -> None:
                   print(f"[BLOCKED] {message}")
 
-              def broadcast_to_members(self, channel: Channel, messages: list) -> None:
-                  # TODO: rewrite the body of this method so it:
-                  #   1. LOOPS over each msg in messages      → produces a `loop` fragment
-                  #   2. If self._is_spam(msg), calls self._block(msg)
-                  #      else calls channel.send_to_all(msg)   → produces an `alt` fragment
-                  channel.send_to_all(messages[0])
+              def handle(self, channel: Channel, message: str) -> None:
+                  # TODO: rewrite this method so:
+                  #   - if self._is_spam(message): self._block(message)
+                  #   - else:                      channel.broadcast(message)
+                  # That produces the `alt` fragment in the target diagram.
+                  channel.broadcast(message)
 
 
           if __name__ == "__main__":
               bot = DiscordBot()
               channel = Channel()
-              bot.broadcast_to_members(channel, ["hello", "buy now cheap", "good morning"])
+              bot.handle(channel, "buy now cheap")
         language: python
 
     open_file: chatbot.py
@@ -930,7 +986,7 @@ steps:
         - path: chatbot.py
           content: |
             class Channel:
-                def send_to_all(self, message: str) -> None:
+                def broadcast(self, message: str) -> None:
                     print(f"[CHANNEL] {message}")
 
 
@@ -941,128 +997,88 @@ steps:
                 def _block(self, message: str) -> None:
                     print(f"[BLOCKED] {message}")
 
-                def broadcast_to_members(self, channel: Channel, messages: list) -> None:
-                    for msg in messages:
-                        if self._is_spam(msg):
-                            self._block(msg)
-                        else:
-                            channel.send_to_all(msg)
+                def handle(self, channel: Channel, message: str) -> None:
+                    if self._is_spam(message):
+                        self._block(message)
+                    else:
+                        channel.broadcast(message)
 
 
             if __name__ == "__main__":
                 bot = DiscordBot()
                 channel = Channel()
-                bot.broadcast_to_members(channel, ["hello", "buy now cheap", "good morning"])
+                bot.handle(channel, "buy now cheap")
           language: python
       explanation: |
-        Two Python structures, two fragments:
+        One Python structure, one fragment:
 
-        - `for msg in messages:` → the **loop** fragment. Everything indented under the `for` goes inside the box.
-        - `if self._is_spam(msg): ... else: ...` → the **alt** fragment with two compartments. The `if`-branch is the first compartment; `else` is the second, separated by the horizontal divider.
+        - `if self._is_spam(message): ... else: ...` → the **alt** fragment with two compartments. The `if`-branch is the top compartment; `else` is the bottom.
 
-        The call to `self._is_spam(msg)` in the `if` condition also produces a tiny self-arrow — it is a real method call. Some diagrams omit guard-evaluation calls to reduce clutter, but the analyzer draws them here so the test predicate is visible.
+        If you dropped the `else` and let non-spam messages pass silently, the fragment would change from `alt` to `opt` — that is the one-feature contrast between the two fragment types.
 
-        **Architectural takeaway:** Your flat version and this nested-fragment version produce different diagrams on purpose. The flat version is a trace of a *single* run (one happy path). The nested version shows the *general* behavior across any inputs. Both are useful — pick whichever one answers the question the reader is asking.
+        The tiny self-arrow for `_is_spam(message)` is the guard evaluation. Some published diagrams suppress guard calls to reduce clutter; the analyzer here shows them so the predicate inside the `alt`'s guard is visible in the code.
 
     tests:
-      - description: "broadcast_to_members loops over messages"
+      - description: "handle uses if/else with self._is_spam as the guard"
         command: |
           import ast
           source = open('/tutorial/chatbot.py').read()
           tree = ast.parse(source)
-          method_body = None
-          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
-              if cls.name == 'DiscordBot':
-                  for m in cls.body:
-                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
-                          method_body = m.body
-          assert method_body is not None, \
-              "DiscordBot.broadcast_to_members must exist"
-          has_for = any(isinstance(s, (ast.For, ast.While)) for s in method_body)
-          assert has_for, \
-              "broadcast_to_members must iterate over messages using a for loop — that is what produces the `loop` fragment in the diagram."
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          assert bot_cls is not None, "DiscordBot must exist"
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'handle'), None)
+          assert method is not None, "DiscordBot.handle must exist"
+          if_node = next((s for s in method.body if isinstance(s, ast.If)), None)
+          assert if_node is not None, \
+              "handle must contain an `if` statement — that is what produces the alt/opt fragment."
+          assert if_node.orelse, \
+              "Use `if ... else ...` (a bare `if` would produce an `opt`, but the target diagram shows an `alt` with two compartments)."
+          test = if_node.test
+          is_spam_call = (isinstance(test, ast.Call)
+              and isinstance(test.func, ast.Attribute)
+              and test.func.attr == '_is_spam'
+              and isinstance(test.func.value, ast.Name)
+              and test.func.value.id == 'self')
+          assert is_spam_call, \
+              "The `if` condition should call `self._is_spam(message)` — that's the guard shown in the alt fragment."
         hints:
-          - text: "Start the method body with `for msg in messages:`. The `for` is what produces the `loop` fragment."
+          - text: "The target diagram shows `alt [self._is_spam(message)]`. What Python shape produces `alt` with a matching guard?"
+            condition: "default"
+          - text: "`if/else` with two non-empty branches produces `alt`. A bare `if` would produce `opt`."
+            condition: "code_missing: else:"
+          - text: "Use `if self._is_spam(message):` as your `if` line, and add an `else:` clause underneath."
             condition: "default"
 
-      - description: "broadcast_to_members uses if/else for spam check"
+      - description: "Spam branch blocks, non-spam branch broadcasts"
         command: |
           import ast
           source = open('/tutorial/chatbot.py').read()
           tree = ast.parse(source)
-          method_body = None
-          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
-              if cls.name == 'DiscordBot':
-                  for m in cls.body:
-                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
-                          method_body = m.body
-          # Find an If statement anywhere in the method, with a non-empty else
-          def find_if_with_else(body):
-              for s in body:
-                  if isinstance(s, ast.If) and s.orelse:
-                      return s
-                  for child in ast.iter_child_nodes(s):
-                      r = find_if_with_else([child]) if hasattr(child, '_fields') else None
-                      if r: return r
-              return None
-          def has_if_else(body):
-              for s in body:
-                  if isinstance(s, ast.If) and s.orelse:
-                      return True
-                  if hasattr(s, 'body') and has_if_else(getattr(s, 'body', [])):
-                      return True
-                  if hasattr(s, 'orelse') and has_if_else(getattr(s, 'orelse', [])):
-                      return True
-              return False
-          assert has_if_else(method_body), \
-              "Use `if self._is_spam(msg): ... else: ...` inside the loop. The if/else is what produces the `alt` fragment with two branches."
-        hints:
-          - text: "Inside the `for` loop, write `if self._is_spam(msg):` and an `else:` clause. Both branches are required — a plain `if` without `else` would produce an `opt` fragment, not an `alt`."
-            condition: "default"
-
-      - description: "Spam branch blocks, non-spam branch forwards to channel"
-        command: |
-          import ast
-          source = open('/tutorial/chatbot.py').read()
-          tree = ast.parse(source)
-          method_body = None
-          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
-              if cls.name == 'DiscordBot':
-                  for m in cls.body:
-                      if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_to_members':
-                          method_body = m.body
-
-          def calls_in(body, recv_name, meth_name):
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'handle'), None)
+          if_node = next((s for s in method.body if isinstance(s, ast.If)), None)
+          assert if_node is not None and if_node.orelse, \
+              "handle must have an if/else"
+          def calls(body, recv, meth):
               for node in body:
                   for n in ast.walk(node):
                       if (isinstance(n, ast.Call)
                               and isinstance(n.func, ast.Attribute)
                               and isinstance(n.func.value, ast.Name)
-                              and n.func.value.id == recv_name
-                              and n.func.attr == meth_name):
+                              and n.func.value.id == recv
+                              and n.func.attr == meth):
                           return True
               return False
-
-          # Find the if statement inside the for loop
-          if_node = None
-          for s in method_body:
-              if isinstance(s, ast.For):
-                  for inner in s.body:
-                      if isinstance(inner, ast.If):
-                          if_node = inner
-                          break
-          assert if_node is not None, \
-              "Put the if/else inside the for loop"
-          assert calls_in(if_node.body, 'self', '_block'), \
-              "In the spam branch (`if`), call `self._block(msg)`"
-          assert calls_in(if_node.orelse, 'channel', 'send_to_all'), \
-              "In the non-spam branch (`else`), call `channel.send_to_all(msg)`"
+          assert calls(if_node.body, 'self', '_block'), \
+              "In the `if` (spam) branch, call `self._block(message)`."
+          assert calls(if_node.orelse, 'channel', 'broadcast'), \
+              "In the `else` branch, call `channel.broadcast(message)`."
         hints:
-          - text: "In the `if` branch: `self._block(msg)`. In the `else` branch: `channel.send_to_all(msg)`."
+          - text: "`if` branch: `self._block(message)`. `else` branch: `channel.broadcast(message)`."
             condition: "default"
 
     quiz:
-      title: "Fragments"
+      title: "Conditional Fragments"
       min_score: 0.6
       shuffle: true
       questions:
@@ -1077,7 +1093,204 @@ steps:
             - "A function definition"
           correct_index: 1
           explanation: |
-            `alt` is the conditional fragment — one compartment per branch, separated by horizontal lines, with exactly one compartment executing based on its guard condition. It maps directly to Python's `if` / `elif` / `else`.
+            `alt` is the conditional fragment — one compartment per branch, separated by horizontal lines, with exactly one compartment executing based on its guard. It maps directly to Python's `if` / `elif` / `else`.
+
+        - question: |
+            You wrote `if user.is_new: bot.send_welcome(user)` with **no** `else`. Which fragment appears on the diagram?
+          type: single
+          options:
+            - "alt — all `if` statements draw alt"
+            - "opt — a plain `if` with no `else` produces an `opt` fragment"
+            - "loop — because `if` can be skipped"
+            - "No fragment — the renderer only draws `if/else`"
+          correct_index: 1
+          explanation: |
+            `opt` is the fragment for "maybe run this; maybe not." It has one compartment. `alt` is for mutually-exclusive branches (two or more compartments). The only thing that changes between them is whether you wrote `else`.
+
+        - question: |
+            **Review of Step 3.** The `_is_spam` call in the guard produces a tiny self-arrow before the alt box's contents. Why does a self-arrow appear there at all?
+          type: single
+          options:
+            - "Because the analyzer adds decorative arrows for all guards"
+            - "Because `_is_spam` is a method call on the same object — `self._is_spam(...)` is indistinguishable from any other self-call"
+            - "Because spam detection is special"
+            - "Because it is inside the alt fragment"
+          correct_index: 1
+          explanation: |
+            The guard `self._is_spam(message)` is a real Python method call — the activation box for it is stacked on top of `handle`'s activation box, exactly like any other self-call from Step 3. Some published diagrams hide guard-evaluation calls to reduce clutter, but UML semantics say they are there.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — "Loops: Doing the Same Thing Many Times"
+  # Pedagogy:
+  #   Fixer-Upper — starter writes a single call; student wraps it in a for.
+  #   Contrast with Step 4 — same visual grammar (boxed fragment, guard in
+  #     square brackets), different keyword. Variation Theory: the feature
+  #     that varies is "repeats vs. picks."
+  #   Bloom's — Apply (rewrite to iterate), Analyze (when loop vs. alt).
+  # --------------------------------------------------------------------------
+  - title: "Loops: Doing the Same Thing Many Times"
+    instructions: |
+      ## When a Message Runs Many Times
+
+      > **Learning objective:** After this step you will be able to **recognize** a `loop` interaction fragment and **write** Python iteration that produces one.
+
+      ### The `loop` Fragment
+
+      Step 4 taught the two *branching* fragments (`opt` and `alt`). There is one more fragment you will use constantly: **`loop`**, for iteration.
+
+      | Fragment | Label | Python | Meaning |
+      |---|---|---|---|
+      | **loop** | `loop` | `for` / `while` | Contents run *zero or more times* |
+
+      The visual grammar is identical to `opt` and `alt` — a thin rectangle, a keyword in the top-left, a guard in square brackets. The only thing that changes is the keyword and the meaning: *repeat* instead of *pick*.
+
+      ### Example — A `loop` Fragment
+
+      Sending a welcome to every member — the message is sent once *per iteration*:
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant Main as : Main
+      participant bot: DiscordBot
+      participant channel: Channel
+      Main -> bot: welcome_all(members)
+      loop [for member in members]
+      bot -> channel: notify(member)
+      end
+      @enduml'></div>
+
+      The `loop` box says: *"the message(s) inside run once for every item in the collection."* If the collection is empty, the box still appears, but the messages inside run zero times.
+
+      ### Your Target Diagram
+
+      The bot has a `broadcast_all(channel, messages)` method that sends *each* message in the list to the channel.
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
+      participant Main as : Main
+      participant bot: DiscordBot
+      participant channel: Channel
+
+      create bot
+      Main --> bot: <<create>>
+      create channel
+      Main --> channel: <<create>>
+      Main -> bot: broadcast_all(channel, ['hi', 'hello', ...)
+      loop [for msg in messages]
+      bot -> channel: send_to_all(msg)
+      end
+      @enduml"></div>
+
+      ### Your Task (Fixer-Upper)
+
+      The starter code has `broadcast_all` written as a **flat sequence** — one unconditional call. That produces one bare arrow in the diagram. Your job:
+
+      1. Replace the single call with `for msg in messages:` — produces the `loop` fragment.
+      2. Inside the loop, call `channel.send_to_all(msg)` once per iteration.
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class Channel:
+              def send_to_all(self, message: str) -> None:
+                  print(f"[CHANNEL] {message}")
+
+
+          class DiscordBot:
+              def broadcast_all(self, channel: Channel, messages: list) -> None:
+                  # TODO: replace this unconditional call with a loop so the
+                  # diagram shows a `loop` fragment instead of a single arrow.
+                  channel.send_to_all(messages[0])
+
+
+          if __name__ == "__main__":
+              bot = DiscordBot()
+              channel = Channel()
+              bot.broadcast_all(channel, ["hi", "hello", "good morning"])
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class Channel:
+                def send_to_all(self, message: str) -> None:
+                    print(f"[CHANNEL] {message}")
+
+
+            class DiscordBot:
+                def broadcast_all(self, channel: Channel, messages: list) -> None:
+                    for msg in messages:
+                        channel.send_to_all(msg)
+
+
+            if __name__ == "__main__":
+                bot = DiscordBot()
+                channel = Channel()
+                bot.broadcast_all(channel, ["hi", "hello", "good morning"])
+          language: python
+      explanation: |
+        One Python structure, one fragment:
+
+        - `for msg in messages:` → the **loop** fragment. Everything indented under the `for` goes inside the box.
+
+        The diagram still shows only *one* arrow inside the loop (`bot -> channel: send_to_all(msg)`), because the loop body has only one call. That is exactly how a real diagram looks: the visual complexity of a loop comes from *what is inside*, not from repeating the same arrow over and over.
+
+        > **Takeaway:** in a sequence diagram, "this runs many times" is a property of the *box*, not a property you show by drawing many arrows.
+
+    tests:
+      - description: "broadcast_all iterates over messages with a for loop"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          assert bot_cls is not None, "DiscordBot must exist"
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_all'), None)
+          assert method is not None, "DiscordBot.broadcast_all must exist"
+          has_loop = any(isinstance(s, (ast.For, ast.While)) for s in method.body)
+          assert has_loop, \
+              "broadcast_all must iterate over messages using a for (or while) loop — that is what produces the `loop` fragment."
+        hints:
+          - text: "The target diagram shows a `loop` fragment wrapping the one call. What Python construct corresponds to that?"
+            condition: "default"
+          - text: "Wrap the call in `for msg in messages:` so each iteration sends one message."
+            condition: "code_missing: for "
+
+      - description: "The loop body calls channel.send_to_all"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'broadcast_all'), None)
+          loop_node = next((s for s in method.body if isinstance(s, (ast.For, ast.While))), None)
+          assert loop_node is not None
+          called = False
+          for stmt in loop_node.body:
+              for n in ast.walk(stmt):
+                  if (isinstance(n, ast.Call)
+                          and isinstance(n.func, ast.Attribute)
+                          and isinstance(n.func.value, ast.Name)
+                          and n.func.value.id == 'channel'
+                          and n.func.attr == 'send_to_all'):
+                      called = True
+          assert called, \
+              "Inside the loop body, call `channel.send_to_all(msg)` once per iteration."
+        hints:
+          - text: "Inside the `for` body, call `channel.send_to_all(msg)`. That is the single arrow that appears inside the loop box."
+            condition: "default"
+
+    quiz:
+      title: "Loops"
+      min_score: 0.6
+      shuffle: true
+      questions:
 
         - question: |
             A **loop** fragment on a sequence diagram represents what Python construct?
@@ -1090,6 +1303,18 @@ steps:
           correct_index: 2
           explanation: |
             `loop` wraps messages that repeat. It maps to Python's `for` and `while`. The guard can describe the iteration (e.g., `[for each message]`).
+
+        - question: |
+            **Review of Step 4.** Your method body is `for x in items: if x.valid: bot.send(x)`. Which two fragments appear, and in what order?
+          type: single
+          options:
+            - "`opt` outside, `loop` inside"
+            - "`loop` outside, `opt` inside — matching the indentation of the Python code"
+            - "`alt` outside, `loop` inside"
+            - "Only `loop` — a bare `if` does not produce a fragment"
+          correct_index: 1
+          explanation: |
+            The outer construct in Python is `for`, so the outer box is `loop`. Inside, the `if` without `else` produces `opt`. Fragment nesting mirrors the nesting of your Python code — read the indentation to predict the diagram.
 
         - question: |
             You have this (made-up) diagram nesting:
@@ -1115,7 +1340,7 @@ steps:
             - "Use async arrows instead"
           correct_index: 2
           explanation: |
-            Deeply nested fragments become unreadable fast. Ambler's *UML Style* rule of thumb: if you are past two levels of nesting, split the diagram. Draw the happy path separately from the error path, and the "normal case" separately from the edge case. Sequence diagrams are for communicating behavior, not for encoding every branch of your code.
+            Deeply nested fragments become unreadable fast. Ambler's *UML Style* rule of thumb: if you are past two levels of nesting, split the diagram. Sequence diagrams are for communicating behavior, not for encoding every branch of your code.
 
         - question: |
             A sequence diagram should typically focus on **one** scenario at a time. Which is the better choice?
@@ -1127,11 +1352,420 @@ steps:
             - "Skip the diagram — the code is enough"
           correct_index: 1
           explanation: |
-            **Multiple small, focused diagrams.** Each one answers a single question: "What happens when a valid user logs in?" or "What happens when payment fails?" This is a direct application of the Single Responsibility Principle to your diagrams — a principle you already know from classes.
+            **Multiple small, focused diagrams.** Each one answers a single question: "What happens when a valid user logs in?" or "What happens when payment fails?" This is a direct application of the Single Responsibility Principle to your diagrams.
 
 
   # --------------------------------------------------------------------------
-  # STEP 5 — "Sequence Diagram Reference"
+  # STEP 6 — "Putting It All Together: A Moderated Broadcast"
+  # Pedagogy:
+  #   Synthesis (Bloom's Create) — integrates every element from Steps 1-5
+  #     in a single scenario. No step-by-step walkthrough.
+  #   ICAP Constructive — student produces the implementation from a plain-
+  #     English scenario + target diagram.
+  #   Spaced retrieval — quiz reviews every prior step.
+  #   Growth-mindset priming — flags that this step is intentionally harder.
+  # --------------------------------------------------------------------------
+  - title: "Putting It All Together: A Moderated Broadcast"
+    instructions: |
+      ## Putting It All Together
+
+      > **Learning objective:** After this step you will be able to **design** and **implement** a Python method whose sequence diagram combines lifelines, a captured return value, self-calls, and both `alt` and `loop` fragments.
+
+      > **Heads up — this one is harder on purpose.** You have learned every piece already; the difficulty here is *integrating* them. If you stare at the target diagram for a minute before seeing how it maps to code, that is the point. Working developers have the same experience when they first design a real diagram.
+
+      ### The Scenario
+
+      The bot runs a **daily digest** over a list of recent posts. Before the loop starts, it asks the channel how many subscribers it has, so it can log the size of the digest. Then, for each post:
+
+      - **Announcements** (posts starting with `@all`) get broadcast to the channel.
+      - **Everything else** is silently skipped — the bot logs the skip but does not bother the channel.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
+      layout landscape
+      participant Main as : Main
+      participant bot: DiscordBot
+      participant channel: Channel
+
+      create bot
+      Main --> bot: <<create>>
+      create channel
+      Main --> channel: <<create>>
+      Main -> bot: run_digest(channel, posts)
+      bot -> channel: get_subscriber_count()
+      channel --> bot: int
+      bot -> bot: _log_start(count)
+      loop [for post in posts]
+      alt [self._is_announcement(post)]
+      bot -> channel: broadcast(post)
+      else [else]
+      bot -> bot: _log_skip(post)
+      end
+      end
+      @enduml"></div>
+
+      Notice every concept from Steps 1-5 appears:
+
+      - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
+      - **Return value (Step 2):** the dashed arrow labelled `int` from `channel` back to `bot` after `get_subscriber_count()`.
+      - **Self-call with nested activation (Step 3):** `bot -> bot: _log_start` and, inside the loop, `bot -> bot: _log_skip`.
+      - **Conditional fragment (Step 4):** one `alt` inside the loop.
+      - **Loop fragment (Step 5):** one outer `loop` over `posts`.
+
+      One `loop` outside, one `alt` inside — exactly the two-level nesting limit that Step 5's quiz warned you not to exceed.
+
+      ### Your Task
+
+      Open `chatbot.py`. The helper methods are already defined (`Channel.get_subscriber_count`, `_is_announcement`, `_log_start`, `_log_skip`). Your job is to:
+
+      1. **Implement `run_digest(channel, posts)`** on `DiscordBot` so it:
+         1. Captures the result of `channel.get_subscriber_count()` in a local variable.
+         2. Calls `self._log_start(<that variable>)` to announce the digest.
+         3. Iterates over `posts`. For each `post`:
+            - If `self._is_announcement(post)`: call `channel.broadcast(post)`.
+            - Otherwise: call `self._log_skip(post)`.
+
+      2. **In `__main__`**, create one bot, one channel, and call `bot.run_digest(channel, posts)` exactly once.
+
+      > **Predict first.** Before you start typing, take 30 seconds and mentally walk the diagram: how many lifelines, how many arrows, which are dashed, where does the `alt` sit relative to the `loop`? Writing the code *after* visualising it is much faster than writing code and hoping the diagram matches.
+
+    uml_files:
+      - chatbot.py
+
+    files:
+      - path: chatbot.py
+        content: |
+          class Channel:
+              def broadcast(self, message: str) -> None:
+                  print(f"[BROADCAST] {message}")
+
+              def get_subscriber_count(self) -> int:
+                  return 42
+
+
+          class DiscordBot:
+              def _is_announcement(self, post: str) -> bool:
+                  return post.startswith("@all")
+
+              def _log_start(self, count: int) -> None:
+                  print(f"[DIGEST] starting for {count} subscribers")
+
+              def _log_skip(self, post: str) -> None:
+                  print(f"[DIGEST] skipped: {post}")
+
+              def run_digest(self, channel: Channel, posts: list) -> None:
+                  # TODO: implement this method so it matches the target diagram.
+                  #   1. Capture channel.get_subscriber_count() in a local variable
+                  #   2. Call self._log_start(<that variable>)
+                  #   3. for post in posts:
+                  #        if self._is_announcement(post):
+                  #            channel.broadcast(post)
+                  #        else:
+                  #            self._log_skip(post)
+                  pass
+
+
+          if __name__ == "__main__":
+              posts = [
+                  "@all staff meeting at 3pm",
+                  "just saying hi",
+                  "@all remember to stretch",
+              ]
+              # TODO: create `bot` and `channel`, then call
+              # bot.run_digest(channel, posts) exactly once.
+        language: python
+
+    open_file: chatbot.py
+
+    solution:
+      files:
+        - path: chatbot.py
+          content: |
+            class Channel:
+                def broadcast(self, message: str) -> None:
+                    print(f"[BROADCAST] {message}")
+
+                def get_subscriber_count(self) -> int:
+                    return 42
+
+
+            class DiscordBot:
+                def _is_announcement(self, post: str) -> bool:
+                    return post.startswith("@all")
+
+                def _log_start(self, count: int) -> None:
+                    print(f"[DIGEST] starting for {count} subscribers")
+
+                def _log_skip(self, post: str) -> None:
+                    print(f"[DIGEST] skipped: {post}")
+
+                def run_digest(self, channel: Channel, posts: list) -> None:
+                    count = channel.get_subscriber_count()
+                    self._log_start(count)
+                    for post in posts:
+                        if self._is_announcement(post):
+                            channel.broadcast(post)
+                        else:
+                            self._log_skip(post)
+
+
+            if __name__ == "__main__":
+                posts = [
+                    "@all staff meeting at 3pm",
+                    "just saying hi",
+                    "@all remember to stretch",
+                ]
+                bot = DiscordBot()
+                channel = Channel()
+                bot.run_digest(channel, posts)
+          language: python
+      explanation: |
+        Every line of `run_digest` maps to one visual element:
+
+        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labelled `int` back to `bot` (Step 2).
+        - `self._log_start(count)` → self-arrow stacked on top of the outer `run_digest` activation box (Step 3).
+        - `for post in posts:` → `loop` fragment (Step 5).
+        - `if self._is_announcement(post): ... else: ...` → `alt` fragment with two compartments (Step 4).
+        - `channel.broadcast(post)` → sync message to `channel` (Step 1).
+        - `self._log_skip(post)` → another self-arrow (Step 3).
+
+        **Why this step is the capstone:** a sequence diagram is not a list of disconnected pieces — it is a single *scenario* that weaves lifelines, calls, returns, and control-flow fragments together. Most real diagrams look like this: two or three participants, one captured return, a couple of self-calls, one or two fragments. Now that you can produce one, you can produce any of them.
+
+    tests:
+      - description: "run_digest captures channel.get_subscriber_count()"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          assert bot_cls is not None, "DiscordBot must exist"
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
+          assert method is not None, "DiscordBot.run_digest must exist"
+          captured_names = set()
+          for stmt in method.body:
+              targets, val = [], None
+              if isinstance(stmt, ast.Assign):
+                  targets, val = stmt.targets, stmt.value
+              elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
+                  targets, val = [stmt.target], stmt.value
+              if (val is not None and isinstance(val, ast.Call)
+                      and isinstance(val.func, ast.Attribute)
+                      and val.func.attr == 'get_subscriber_count'):
+                  for t in targets:
+                      if isinstance(t, ast.Name):
+                          captured_names.add(t.id)
+          assert captured_names, \
+              "run_digest must capture channel.get_subscriber_count() in a variable — e.g. `count = channel.get_subscriber_count()`. Without the assignment, no dashed return arrow appears."
+        hints:
+          - text: "Which of Step 2's two rules for return arrows is the one you have to enforce in *your* code (the caller), not in the method signature (the callee)?"
+            condition: "default"
+          - text: "The first line of `run_digest` should capture the count: `count = channel.get_subscriber_count()`."
+            condition: "default"
+
+      - description: "run_digest passes the captured count to self._log_start"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
+          assert method is not None
+
+          def refs_any(node, names):
+              for n in ast.walk(node):
+                  if isinstance(n, ast.Name) and n.id in names:
+                      return True
+              return False
+
+          captured = set()
+          log_start_uses_capture = False
+          for stmt in method.body:
+              targets, val = [], None
+              if isinstance(stmt, ast.Assign):
+                  targets, val = stmt.targets, stmt.value
+              elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
+                  targets, val = [stmt.target], stmt.value
+              if val is not None:
+                  is_gsc = (isinstance(val, ast.Call)
+                      and isinstance(val.func, ast.Attribute)
+                      and val.func.attr == 'get_subscriber_count')
+                  if is_gsc or (captured and refs_any(val, captured)):
+                      for t in targets:
+                          if isinstance(t, ast.Name):
+                              captured.add(t.id)
+              for n in ast.walk(stmt):
+                  if (isinstance(n, ast.Call)
+                          and isinstance(n.func, ast.Attribute)
+                          and n.func.attr == '_log_start'
+                          and isinstance(n.func.value, ast.Name)
+                          and n.func.value.id == 'self'):
+                      for arg in n.args:
+                          if captured and refs_any(arg, captured):
+                              log_start_uses_capture = True
+          assert log_start_uses_capture, \
+              "Call self._log_start(<captured_count>) using the variable you captured from get_subscriber_count()."
+        hints:
+          - text: "The second line should feed the captured count into a log call — which self-method takes an `int`?"
+            condition: "default"
+          - text: "Write `self._log_start(count)` right after capturing the count."
+            condition: "default"
+
+      - description: "run_digest contains a for loop that encloses an if/else"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
+          loop = next((s for s in method.body if isinstance(s, ast.For)), None)
+          assert loop is not None, \
+              "run_digest must iterate over posts with a for loop — that is what produces the outer `loop` fragment."
+          inner_if = next((s for s in loop.body if isinstance(s, ast.If)), None)
+          assert inner_if is not None, \
+              "Inside the for loop, add an `if` — that produces the nested `alt` (or `opt`) fragment."
+          assert inner_if.orelse, \
+              "Use `if ... else ...`, not a bare `if`. The target diagram shows an `alt` with two compartments."
+          test = inner_if.test
+          ok = (isinstance(test, ast.Call)
+              and isinstance(test.func, ast.Attribute)
+              and test.func.attr == '_is_announcement'
+              and isinstance(test.func.value, ast.Name)
+              and test.func.value.id == 'self')
+          assert ok, \
+              "The if guard should call `self._is_announcement(post)` — that's the guard shown in the `alt` fragment."
+        hints:
+          - text: "Two fragments nest here: outer `loop` → inner `alt`. What Python indentation produces that order?"
+            condition: "default"
+          - text: "Structure: `for post in posts:` then inside `if self._is_announcement(post): ... else: ...`."
+            condition: "default"
+
+      - description: "Announcement branch broadcasts, else branch logs a skip"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
+          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
+          def calls(body, recv, meth):
+              for node in body:
+                  for n in ast.walk(node):
+                      if (isinstance(n, ast.Call)
+                              and isinstance(n.func, ast.Attribute)
+                              and isinstance(n.func.value, ast.Name)
+                              and n.func.value.id == recv
+                              and n.func.attr == meth):
+                          return True
+              return False
+          loop = next((s for s in method.body if isinstance(s, ast.For)), None)
+          inner_if = next((s for s in loop.body if isinstance(s, ast.If)), None)
+          assert inner_if is not None and inner_if.orelse, \
+              "Put an if/else inside the for loop"
+          assert calls(inner_if.body, 'channel', 'broadcast'), \
+              "In the announcement branch (if), call `channel.broadcast(post)`."
+          assert calls(inner_if.orelse, 'self', '_log_skip'), \
+              "In the else branch, call `self._log_skip(post)`."
+        hints:
+          - text: "`if` branch: `channel.broadcast(post)`. `else` branch: `self._log_skip(post)`."
+            condition: "default"
+
+      - description: "Main creates bot + channel and calls bot.run_digest once"
+        command: |
+          import ast
+          source = open('/tutorial/chatbot.py').read()
+          tree = ast.parse(source)
+          main_body = None
+          for node in tree.body:
+              if isinstance(node, ast.If):
+                  main_body = node.body
+                  break
+          assert main_body is not None, "Add an `if __name__ == \"__main__\":` block"
+          has_bot = has_channel = has_run = False
+          for stmt in main_body:
+              for n in ast.walk(stmt):
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
+                      if n.func.id == 'DiscordBot': has_bot = True
+                      if n.func.id == 'Channel': has_channel = True
+                  if (isinstance(n, ast.Call)
+                          and isinstance(n.func, ast.Attribute)
+                          and n.func.attr == 'run_digest'):
+                      has_run = True
+          assert has_bot, "Main must create a DiscordBot — `bot = DiscordBot()`"
+          assert has_channel, "Main must create a Channel — `channel = Channel()`"
+          assert has_run, "Main must call `bot.run_digest(channel, posts)`"
+        hints:
+          - text: "In `__main__`: create the bot, create the channel, then call `bot.run_digest(channel, posts)` once. That produces the three `<<create>>` arrows and the one entry call in the target diagram."
+            condition: "default"
+
+    quiz:
+      title: "Synthesis: Reading a Full Diagram"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            **Review of Step 1.** Your diagram shows three lifelines: `Main`, `bot: DiscordBot`, and `channel: Channel`. If you changed `__main__` to create **two** bots and one channel, how many lifelines would the diagram show (including `Main`)?
+          type: single
+          options:
+            - "2 — DiscordBot and Channel"
+            - "3 — Main, DiscordBot, Channel"
+            - "4 — Main, both bots, and the channel"
+            - "1 — only Main"
+          correct_index: 2
+          explanation: |
+            Lifelines are **instances**, not classes. Two `DiscordBot()` calls produce two distinct lifelines, plus `Main` and `channel` — four in total. This is the same rule from Step 1; it still applies no matter how complex the rest of the diagram is.
+
+        - question: |
+            **Review of Step 2.** Why does the `channel.get_subscriber_count()` call produce a dashed return arrow, while the `channel.broadcast(post)` call does not?
+          type: single
+          options:
+            - "`broadcast` is longer"
+            - "`get_subscriber_count` has a non-`None` return type AND its value is captured; `broadcast` returns `None`, so there is nothing to show"
+            - "The analyzer only draws return arrows for *get* methods"
+            - "Return arrows are random"
+          correct_index: 1
+          explanation: |
+            Step 2's two rules: the return type must be non-`None` *and* the caller must capture the value. `get_subscriber_count` meets both (`-> int` + `count = ...`); `broadcast` fails the first (`-> None`).
+
+        - question: |
+            **Review of Step 3.** Why do `self._log_start(count)` and `self._log_skip(post)` appear **nested** inside the activation box for `run_digest`?
+          type: single
+          options:
+            - "Because they share the same method name prefix"
+            - "Because Python has not returned from `run_digest` yet when it calls them — so their activation boxes stack on top of the outer one, like stack frames"
+            - "Because they are private (underscore-prefixed)"
+            - "Because they are called from `__main__`"
+          correct_index: 1
+          explanation: |
+            Activation boxes are stack frames. `run_digest` has not returned when it calls `_log_start` or `_log_skip`, so new frames are pushed on top of `run_digest`'s frame. This is Step 3's call-stack intuition, unchanged.
+
+        - question: |
+            **Review of Steps 4 & 5.** The target has a `loop` fragment containing an `alt` fragment. What Python control-flow structure produces this layout?
+          type: single
+          options:
+            - "A `while` loop nested inside an `if`"
+            - "An `if`/`else` nested inside a `for` loop"
+            - "Two separate methods"
+            - "A `try`/`except` block"
+          correct_index: 1
+          explanation: |
+            The outer box is `loop` (a `for`) and the inner box is `alt` (an `if`/`else` with both branches non-empty). Python indentation = fragment nesting: *whichever block is innermost in the code is innermost in the diagram.*
+
+        - question: |
+            **Design judgement.** You want to extend this scenario to also handle a "hold the post for moderator review" case. Which is the better choice?
+          type: single
+          options:
+            - "Add a third branch to the `alt` — three compartments in one diagram"
+            - "Nest more fragments until every edge case is covered"
+            - "Leave the current diagram alone (it shows the *common* path) and draw a separate diagram for the moderation path"
+            - "Stop using sequence diagrams — code is easier"
+          correct_index: 2
+          explanation: |
+            Sequence diagrams are for **one scenario at a time**. If you keep adding branches, you get the unreadable nested-fragment mess Step 5's quiz warned about. Splitting into multiple small diagrams is not a failure — it is the correct application of the Single Responsibility Principle to your diagrams.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — "Sequence Diagram Reference"
   # Pedagogy:
   #   Retrieval practice / summary — consolidates notation learned.
   #   Serves as a quick-reference card students can revisit.
@@ -1140,7 +1774,18 @@ steps:
     instructions: |
       ## Congratulations!
 
-      You can now read and write basic UML sequence diagrams — lifelines, synchronous calls, return messages, self-calls with nested activation, and `alt` / `loop` fragments. This page is your cheat sheet.
+      You can now read and write basic UML sequence diagrams — lifelines, synchronous calls, return messages, self-calls with nested activation, and the `opt` / `alt` / `loop` fragments. Step 6 proved you can weave them together in one scenario. This page is your cheat sheet.
+
+      ### Self-check (close this page first)
+
+      Before you scroll to the tables below, try to answer these from memory. Look back only when you are stuck:
+
+      1. What does a **lifeline** represent — a class, an instance, or a file?
+      2. What two conditions must BOTH be true for a dashed return arrow to appear?
+      3. Why does a self-call produce a *nested* activation box?
+      4. If your Python method is `for x in xs: if x.valid: bot.send(x)` (no `else`), what two fragments appear — and in which order?
+
+      Retrieval before review is the learning — just reading the tables again is not.
 
       ---
 
@@ -1151,20 +1796,20 @@ steps:
       | **Lifeline** | box on top, dashed line below | any object instance: `bot = DiscordBot()` |
       | **Activation box** | thin rectangle on the lifeline | a method call — begins when the call arrives, ends when it returns |
       | **Synchronous message** | solid line, filled arrowhead → | `x.method(...)` — caller waits |
-      | **Return message** | dashed line, open arrowhead ⇠ | `y = x.method()` **and** `method` returns a non-`None` type |
+      | **Return message** | dashed line, open arrowhead ⇠ | `y = x.method()` **and** `method` returns a non-`None` type *and* caller ≠ callee |
       | **Self-message** | arrow looping back to the same lifeline | `self.method(...)` inside a method |
       | **Creation** | dashed arrow with `<<create>>` label to a new lifeline | constructor: `bot = DiscordBot()` |
 
-      ### The Two Fragments You Will Use Most
+      ### The Three Fragments You Will Use Most
 
       | Fragment | Meaning | Python |
       |---|---|---|
-      | **alt** | choose one branch | `if` / `elif` / `else` |
+      | **opt** | zero or one execution | `if ...` (no `else`) |
+      | **alt** | choose exactly one branch | `if ... elif ... else ...` |
       | **loop** | repeat zero or more times | `for` / `while` |
 
       ### Fragments You May Encounter Later
 
-      - **opt** — zero or one execution (a plain `if` with no `else`)
       - **par** — parallel branches execute concurrently (e.g., `asyncio.gather`)
       - **break** — exit the enclosing loop
       - **ref** — an "interaction use"; a named sub-scenario referenced from another diagram
