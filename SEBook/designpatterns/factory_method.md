@@ -42,31 +42,33 @@ The structure involves four key roles:
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
 abstract class Creator {
+    + {abstract} factoryMethod(): Product
     + operation(): void
-    + createProduct(): Product
 }
 interface Product {
-    + use(): void
 }
-class ConcreteCreator
-class ConcreteProduct {
-    + use(): void
+class Creator1 {
+    + factoryMethod(): Product
 }
-ConcreteCreator --|> Creator
-ConcreteProduct ..|> Product
-Creator --> Product : creates and uses >
-ConcreteCreator --> ConcreteProduct : instantiates
+class Product1 {
+}
+Creator1 --|> Creator
+Product1 ..|> Product
+Creator --> Product : product
+Creator1 ..> Product1 : <<create>>
+note right of Creator
+  product =
+  factoryMethod();
+end note
 @enduml'></div>
 
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
 abstract class PizzaStore {
+    + {abstract} createPizza(type: String): Pizza
     + orderPizza(type: String): Pizza
-    + createPizza(type: String): Pizza
 }
 abstract class Pizza {
     + prepare(): void
@@ -74,12 +76,15 @@ abstract class Pizza {
     + cut(): void
     + box(): void
 }
-class NYPizzaStore
-class NYStyleCheesePizza
+class NYPizzaStore {
+    + createPizza(type: String): Pizza
+}
+class NYStyleCheesePizza {
+}
 NYPizzaStore --|> PizzaStore
-NYStyleCheesePizza --|> Pizza
-PizzaStore --> Pizza : prepares >
-NYPizzaStore --> NYStyleCheesePizza : creates
+NYStyleCheesePizza ..|> Pizza
+PizzaStore --> Pizza : product
+NYPizzaStore ..> NYStyleCheesePizza : <<create>>
 @enduml'></div>
 
 ## Sequence Diagram

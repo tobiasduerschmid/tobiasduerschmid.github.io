@@ -23,23 +23,41 @@ The design pattern involves these roles:
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout landscape
 interface AbstractFactory {
-	+ createProductA(): AbstractProductA
-	+ createProductB(): AbstractProductB
+    + CreateProductA(): AbstractProductA
+    + CreateProductB(): AbstractProductB
 }
-interface AbstractProductA
-interface AbstractProductB
-class ConcreteFactory
-class ConcreteProductA
-class ConcreteProductB
-class Client
-ConcreteFactory ..|> AbstractFactory
-ConcreteProductA ..|> AbstractProductA
-ConcreteProductB ..|> AbstractProductB
-Client --> AbstractFactory : uses >
-ConcreteFactory --> ConcreteProductA : creates
-ConcreteFactory --> ConcreteProductB : creates
+interface AbstractProductA {
+}
+interface AbstractProductB {
+}
+class ConcreteFactory1 {
+    + CreateProductA(): AbstractProductA
+    + CreateProductB(): AbstractProductB
+}
+class ConcreteFactory2 {
+    + CreateProductA(): AbstractProductA
+    + CreateProductB(): AbstractProductB
+}
+class ProductA1 {
+}
+class ProductA2 {
+}
+class ProductB1 {
+}
+class ProductB2 {
+}
+class Client {
+}
+Client ..> AbstractFactory
+Client ..> AbstractProductA
+Client ..> AbstractProductB
+ConcreteFactory1 ..|> AbstractFactory
+ConcreteFactory2 ..|> AbstractFactory
+ProductA1 ..|> AbstractProductA
+ProductA2 ..|> AbstractProductA
+ProductB1 ..|> AbstractProductB
+ProductB2 ..|> AbstractProductB
 @enduml'></div>
 
 ## UML Example Diagram

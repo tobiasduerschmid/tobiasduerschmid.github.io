@@ -1736,9 +1736,18 @@ steps:
             }, 400);
           });
         hints:
+          - title: "No `variant` prop"
+            text: "Without `variant`, all react-bootstrap buttons look identical regardless of state. Which prop switches the colour?"
+            condition: "code_missing: variant="
           - title: "Hard-coded variant"
             text: "`variant=\"primary\"` highlights every button. Make it depend on `filter`. Which operator picks between two values?"
             condition: "code_matches: variant=['\"]primary['\"]"
+          - title: "`&&` gives `false`, not a string"
+            text: "When the condition is false, `&&` short-circuits to `false` — but react-bootstrap expects a string like `'outline-secondary'`. A ternary always returns a valid value."
+            condition: "code_matches: variant=\\{filter\\s*===.*&&"
+          - title: "What about the inactive state?"
+            text: "The ternary needs a second branch for when the button is *not* selected. What should unselected buttons look like?"
+            condition: "code_missing: outline-secondary"
           - text: "Use a ternary in `variant` — `filter === 'done' ? 'primary' : 'outline-secondary'`."
             condition: "code_missing: ? 'primary'"
 
