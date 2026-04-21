@@ -19,15 +19,15 @@ setup_commands:
       gpa     REAL
     );
     INSERT INTO students VALUES
-      (1, 'Alice',  2, 'CS',      3.90),
-      (2, 'Bob',    3, 'Math',    3.40),
-      (3, 'Carol',  1, 'CS',      3.70),
-      (4, 'Dan',    4, 'Physics', 2.80),
-      (5, 'Eve',    2, 'CS',      3.50),
-      (6, 'Frank',  3, 'Math',    3.10),
-      (7, 'Grace',  1, 'Physics', 3.60),
-      (8, 'Hank',   4, 'CS',      3.20),
-      (9, 'Iris',   3, NULL,      3.00);
+      (1, 'Mango',      2, 'CS',      3.90),
+      (2, 'Watermelina',3, 'Math',    3.40),
+      (3, 'Bananito',   1, 'CS',      3.70),
+      (4, 'Coconick',   4, 'Physics', 2.80),
+      (5, 'Kiwi',       2, 'CS',      3.50),
+      (6, 'Grapenzo',   3, 'Math',    3.10),
+      (7, 'Cherrita',   1, 'Physics', 3.60),
+      (8, 'Orangelo',   4, 'CS',      3.20),
+      (9, 'Blue Bella', 3, NULL,      3.00);
 
     DROP TABLE IF EXISTS majors;
     CREATE TABLE majors (
@@ -253,7 +253,7 @@ steps:
     instructions: |
       ## JOIN — Combining Tables by a Shared Key
 
-      > **Learning objective:** After this step you will be able to **answer questions that span two tables** — like *"who is Alice's advisor?"* — by combining rows on a shared key, and **recognize** when a query has accidentally paired every row with every row.
+      > **Learning objective:** After this step you will be able to **answer questions that span two tables** — like *"who is Mango's advisor?"* — by combining rows on a shared key, and **recognize** when a query has accidentally paired every row with every row.
 
       Real data is rarely in one table. The `students` table has a `major` column (`'CS'`, `'Math'`, ...), but the *department* and *advisor* for each major live in a separate `majors` table:
 
@@ -264,7 +264,7 @@ steps:
       | Physics       | Sciences            | Dr. Curie        |
       | Bio           | Life Sciences       | Dr. McClintock   |
 
-      To answer *"who is Alice's advisor?"*, you need both tables. `JOIN` combines them on a shared column — here, `students.major = majors.code`.
+      To answer *"who is Mango's advisor?"*, you need both tables. `JOIN` combines them on a shared column — here, `students.major = majors.code`.
 
       ### INNER JOIN syntax
 
@@ -280,7 +280,7 @@ steps:
       - **`ON`** states the relationship. It is a predicate, evaluated per-pair.
       - **`INNER`** is the default and can be omitted, but writing it makes the intent explicit.
 
-      `INNER JOIN` keeps only rows where the `ON` predicate is true for *both* sides. Iris's major is `NULL`, so she has no match in `majors` and drops out. `'Bio'` exists in `majors` but no student has it, so it too drops out. This is a feature, not a bug — but it is easy to forget.
+      `INNER JOIN` keeps only rows where the `ON` predicate is true for *both* sides. Blue Bella's major is `NULL`, so she has no match in `majors` and drops out. `'Bio'` exists in `majors` but no student has it, so it too drops out. This is a feature, not a bug — but it is easy to forget.
 
       ### The Cartesian-product trap
 
@@ -293,18 +293,18 @@ steps:
 
       The old comma-join syntax (`FROM a, b WHERE a.x = b.y`) makes this trap even easier to fall into — delete the `WHERE` during a refactor and silently ship a Cartesian product. Use the explicit `INNER JOIN ... ON ...` form so the relationship and the filter are separate.
 
-      *There are other join types (`LEFT JOIN` keeps unmatched rows from the left side, useful when you want to include Iris even without a major). Mentioning it here so the word rings a bell later — you do not need it for this step.*
+      *There are other join types (`LEFT JOIN` keeps unmatched rows from the left side, useful when you want to include Blue Bella even without a major). Mentioning it here so the word rings a bell later — you do not need it for this step.*
 
       ### Predict → Run → Investigate → Modify
 
-      **Predict.** Before opening the file: if you `INNER JOIN` `students` to `majors` on `major = code`, how many rows come back? Remember Iris (NULL major) and Bio (no students).
+      **Predict.** Before opening the file: if you `INNER JOIN` `students` to `majors` on `major = code`, how many rows come back? Remember Blue Bella (NULL major) and Bio (no students).
 
       **Task — Run and Modify.** `joins.sql` contains two queries — one silently broken, one that runs but leaks too much data.
 
       - **Query 1 — the Cartesian trap.** Runs without error but returns 36 rows instead of the ~8 you expected. Find the missing piece and convert it to explicit `INNER JOIN ... ON ...`.
       - **Query 2 — over-selection.** Works, but returns every column from both tables. Tighten it to project just the student name and their advisor, using aliases.
 
-      **Investigate (optional).** After Query 1 passes, count how many students appear in the result. Is Iris there? Why not? (Write the answer as a one-line comment — forces retrieval.)
+      **Investigate (optional).** After Query 1 passes, count how many students appear in the result. Is Blue Bella there? Why not? (Write the answer as a one-line comment — forces retrieval.)
 
     files:
       - path: "joins.sql"
@@ -341,7 +341,7 @@ steps:
             INNER JOIN majors AS m ON s.major = m.code;
           language: "sql"
       explanation: |
-        Both queries return 8 rows (all students except Iris, whose `major` is NULL and has no match). The explicit `INNER JOIN ... ON` form makes the relationship visible and survives refactors — the old comma-join + `WHERE` form silently becomes a Cartesian product if the `WHERE` is removed.
+        Both queries return 8 rows (all students except Blue Bella, whose `major` is NULL and has no match). The explicit `INNER JOIN ... ON` form makes the relationship visible and survives refactors — the old comma-join + `WHERE` form silently becomes a Cartesian product if the `WHERE` is removed.
 
     tests:
       - description: "joins.sql uses explicit INNER JOIN ... ON syntax"
@@ -381,15 +381,15 @@ steps:
       - description: "Query produces 8 rows (all students with a matching major)"
         command: |
           var rows = __run_query("SELECT s.name, m.advisor FROM students s INNER JOIN majors m ON s.major = m.code");
-          assert(rows.length === 8, "Expected 8 rows — every student except Iris (whose major is NULL). Got " + rows.length);
-      - description: "Iris is excluded because her major is NULL (no match in majors)"
+          assert(rows.length === 8, "Expected 8 rows — every student except Blue Bella (whose major is NULL). Got " + rows.length);
+      - description: "Blue Bella is excluded because her major is NULL (no match in majors)"
         command: |
-          var rows = __run_query("SELECT s.name FROM students s INNER JOIN majors m ON s.major = m.code WHERE s.name = 'Iris'");
-          assert(rows.length === 0, "Iris should NOT appear — INNER JOIN drops rows whose join key has no match");
-      - description: "Alice's advisor is Dr. Hopper (smoke test the relationship)"
+          var rows = __run_query("SELECT s.name FROM students s INNER JOIN majors m ON s.major = m.code WHERE s.name = 'Blue Bella'");
+          assert(rows.length === 0, "Blue Bella should NOT appear — INNER JOIN drops rows whose join key has no match");
+      - description: "Mango's advisor is Dr. Hopper (smoke test the relationship)"
         command: |
-          var rows = __run_query("SELECT m.advisor FROM students s INNER JOIN majors m ON s.major = m.code WHERE s.name = 'Alice'");
-          assert(rows.length === 1 && rows[0].advisor === 'Dr. Hopper', "Alice's advisor should be Dr. Hopper (CS → Dr. Hopper)");
+          var rows = __run_query("SELECT m.advisor FROM students s INNER JOIN majors m ON s.major = m.code WHERE s.name = 'Mango'");
+          assert(rows.length === 1 && rows[0].advisor === 'Dr. Hopper', "Mango's advisor should be Dr. Hopper (CS → Dr. Hopper)");
 
     quiz:
       title: "Joining Tables — Knowledge Check"
@@ -419,7 +419,7 @@ steps:
             - "Aliases hide one row from the output"
           correct_index: 1
           explanation: |
-            `INNER JOIN` keeps only pairs where the `ON` predicate is TRUE for both sides. Iris has `major = NULL`; `NULL = anything` is UNKNOWN, so she has no match and drops.
+            `INNER JOIN` keeps only pairs where the `ON` predicate is TRUE for both sides. Blue Bella has `major = NULL`; `NULL = anything` is UNKNOWN, so she has no match and drops.
 
         - question: |
             **Arrange** the fragments to list each student's name and their department.
@@ -535,7 +535,7 @@ steps:
 
       Logical errors (category 3) are the hardest and most persistent class of SQL mistakes in the research literature. Query 3 is deceptively easy — the bug only appears when you reason about NULL carefully.
 
-      **Investigate.** After Query 3 passes, comment out your `IS NULL` branch and re-run. How many rows now? Where did Iris go? This one-line toggle makes the NULL trap concrete.
+      **Investigate.** After Query 3 passes, comment out your `IS NULL` branch and re-run. How many rows now? Where did Blue Bella go? This one-line toggle makes the NULL trap concrete.
 
     files:
       - path: "filter.sql"
@@ -582,11 +582,11 @@ steps:
             WHERE major != 'CS' OR major IS NULL;
           language: "sql"
       explanation: |
-        **Query 1** returns Alice (3.9) and Carol (3.7). `AND` combines both conditions; `ORDER BY gpa DESC` sorts highest first.
+        **Query 1** returns Mango (3.9) and Bananito (3.7). `AND` combines both conditions; `ORDER BY gpa DESC` sorts highest first.
 
         **Query 2 — the "natural-language AND" trap.** In English, *"in year 1 and year 2"* means *"either"*. In SQL, `AND` requires **both conditions true in the same row** — impossible for a single column. This misconception is the most-cited language-based negative transfer in SQL research (Ahadi et al., 2016; Taipalus et al., 2018). Whenever a filter returns zero rows against a plausible question, check this trap first. You could also write `WHERE year IN (1, 2)`.
 
-        **Query 3** is the NULL trap. Without `OR major IS NULL`, Iris (whose major is NULL) is silently dropped. `NULL != 'CS'` evaluates to UNKNOWN, not TRUE, so WHERE discards her.
+        **Query 3** is the NULL trap. Without `OR major IS NULL`, Blue Bella (whose major is NULL) is silently dropped. `NULL != 'CS'` evaluates to UNKNOWN, not TRUE, so WHERE discards her.
 
     tests:
       - description: "filter.sql uses WHERE clauses"
@@ -605,35 +605,35 @@ steps:
             condition: "code_missing: order by"
           - text: "You have ORDER BY — but the task asks for *highest first*. Check whether you used ASC (the default) or the keyword that means descending."
             condition: "code_contains: order by"
-      - description: "CS + GPA > 3.5 returns exactly Alice (3.9) then Carol (3.7)"
+      - description: "CS + GPA > 3.5 returns exactly Mango (3.9) then Bananito (3.7)"
         command: |
           var rows = __run_query("SELECT name, gpa FROM students WHERE major = 'CS' AND gpa > 3.5 ORDER BY gpa DESC");
-          assert(rows.length === 2, "Expected 2 CS students with GPA > 3.5 (Alice, Carol). Got " + rows.length);
-          assert(rows[0].name === 'Alice' && rows[1].name === 'Carol', "Expected order: Alice then Carol (highest GPA first). Got: " + rows.map(function(r){return r.name;}).join(', '));
+          assert(rows.length === 2, "Expected 2 CS students with GPA > 3.5 (Mango, Bananito). Got " + rows.length);
+          assert(rows[0].name === 'Mango' && rows[1].name === 'Bananito', "Expected order: Mango then Bananito (highest GPA first). Got: " + rows.map(function(r){return r.name;}).join(', '));
         hints:
           - text: "Two conditions must both be true for the same row: the major *and* the GPA threshold. What boolean operator enforces 'both'?"
             condition: "code_missing: and"
           - text: "Got zero rows with AND? Double-check that you did not combine it with an OR that widens the filter, and that the GPA comparison uses `>` on the right column."
             condition: "code_contains: and"
-      - description: "Year 1 or year 2 returns 4 students (Alice, Carol, Eve, Grace)"
+      - description: "Year 1 or year 2 returns 4 students (Bananito, Cherrita, Kiwi, Mango)"
         command: |
           var rows = __run_query("SELECT name FROM students WHERE year = 1 OR year = 2 ORDER BY name");
           assert(rows.length === 4, "Expected 4 students. Got " + rows.length + ". This is the 'natural-language AND' trap — re-read Query 2's comment.");
           var got = rows.map(function(r){return r.name;}).sort().join(',');
-          assert(got === 'Alice,Carol,Eve,Grace', "Expected Alice, Carol, Eve, Grace. Got: " + got);
+          assert(got === 'Bananito,Cherrita,Kiwi,Mango', "Expected Bananito, Cherrita, Kiwi, Mango. Got: " + got);
         hints:
           - text: "English 'and' is not the same as SQL `AND`. A single row cannot have `year = 1` and `year = 2` at the same time. Which operator means 'either condition matches'?"
             condition: "code_contains: and"
           - text: "`WHERE year IN (1, 2)` is a valid alternative if you prefer — both map to the same set-membership idea."
             condition: "code_missing: or"
-      - description: "Non-CS students are returned NULL-safely (5 rows including Iris)"
+      - description: "Non-CS students are returned NULL-safely (5 rows including Blue Bella)"
         command: |
           var src = __read_file('filter.sql').toLowerCase().split('\n').filter(function(l){ return l.trim().indexOf('--') !== 0; }).join('\n');
           assert(/\bis\s+null\b/.test(src), "Query 3 must handle NULL explicitly — `IS NULL` is the only portable test for unknown values");
           var rows = __run_query("SELECT name FROM students WHERE major != 'CS' OR major IS NULL ORDER BY name");
-          assert(rows.length === 5, "Expected 5 non-CS students including Iris (NULL major). Got " + rows.length);
+          assert(rows.length === 5, "Expected 5 non-CS students including Blue Bella (NULL major). Got " + rows.length);
           var names = rows.map(function(r){return r.name;}).sort().join(',');
-          assert(names === 'Bob,Dan,Frank,Grace,Iris', "Expected Bob, Dan, Frank, Grace, Iris. Got: " + names);
+          assert(names === 'Blue Bella,Cherrita,Coconick,Grapenzo,Watermelina', "Expected Blue Bella, Cherrita, Coconick, Grapenzo, Watermelina. Got: " + names);
         hints:
           - text: "Getting 4 rows instead of 5? One student has an unknown major. Comparing NULL to anything yields UNKNOWN, not TRUE — so plain `!=` silently drops that row."
             condition: "code_missing: is null"
@@ -1292,7 +1292,7 @@ steps:
         - question: |
             A student writes:
             ```sql
-            SELECT full_name FROM students WHERE full_name = 'Alice';
+            SELECT full_name FROM students WHERE full_name = 'Mango';
             ```
             The column is actually named `name`, not `full_name`. What *type* of SQL error is this?
           type: single
@@ -1375,7 +1375,7 @@ steps:
       -- Sub-goal: assign new values
       SET    gpa = 3.95
       -- Sub-goal: restrict to the intended rows — NEVER skip this
-      WHERE  name = 'Alice';
+      WHERE  name = 'Mango';
       ```
 
       Without `WHERE`, `UPDATE` modifies **every row**. The safe habit: write and test the equivalent `SELECT ... WHERE ...` first, then convert it.
@@ -1408,7 +1408,7 @@ steps:
 
       | SQL | pandas |
       |-----|--------|
-      | `UPDATE students SET gpa = 3.6 WHERE name = 'Eve'` | `students.loc[students['name'] == 'Eve', 'gpa'] = 3.6` |
+      | `UPDATE students SET gpa = 3.6 WHERE name = 'Kiwi'` | `students.loc[students['name'] == 'Kiwi', 'gpa'] = 3.6` |
       | `DELETE FROM students WHERE year = 4` | `students = students[students['year'] != 4]` |
       | `DROP TABLE courses` | `del courses` |
 
@@ -1428,7 +1428,7 @@ steps:
 
       **Stated intents (verify each against the code):**
 
-      1. Update Eve's GPA from 3.50 to 3.60.
+      1. Update Kiwi's GPA from 3.50 to 3.60.
       2. Delete all year-4 students.
       3. Drop the `courses` table from Step 5.
 
@@ -1436,7 +1436,7 @@ steps:
 
       This tutorial covers the ~90% of SQL that 90% of code needs — but three topics deserve your next hour:
 
-      - **`LEFT JOIN` and the outer-join family.** Step 2 taught `INNER JOIN`, which drops rows with no match (Iris with NULL major). `LEFT JOIN` keeps them and fills the right side with NULL — essential whenever "missing data is data."
+      - **`LEFT JOIN` and the outer-join family.** Step 2 taught `INNER JOIN`, which drops rows with no match (Blue Bella with NULL major). `LEFT JOIN` keeps them and fills the right side with NULL — essential whenever "missing data is data."
       - **Common Table Expressions (`WITH ... AS (...)`) — CTEs.** The declarative equivalent of declaring a local variable. Complex queries collapse from unreadable nested subqueries into top-to-bottom readable pipelines — exactly how you already think in Python.
       - **The N+1 query problem.** The #1 antipattern at the Python/JS ↔ SQL boundary: your application loops over a list, firing one query per element. Learn to batch with `WHERE id IN (...)` or an explicit JOIN. The cost is almost always network latency, not the database.
 
@@ -1446,10 +1446,10 @@ steps:
           -- Step 6 — Review a teammate's destructive PR before it runs in production.
           -- For each statement: predict, preview with a commented SELECT, then fix.
 
-          -- 1. Intended: raise Eve's GPA to 3.6.
+          -- 1. Intended: raise Kiwi's GPA to 3.6.
           --    Targets the wrong student. A second trap hides here too:
           --    drop the WHERE clause and every student ends up at 3.6.
-          UPDATE students SET gpa = 3.6 WHERE name = 'Alice';
+          UPDATE students SET gpa = 3.6 WHERE name = 'Mango';
 
           -- 2. Intended: delete all year-4 students.
           --    Wrong column referenced. Would this even run? If yes, what does it delete?
@@ -1467,19 +1467,19 @@ steps:
       files:
         - path: "cleanup.sql"
           content: |
-            -- 1. Update Eve's GPA to 3.6
-            UPDATE students SET gpa = 3.6 WHERE name = 'Eve';
+            -- 1. Update Kiwi's GPA to 3.6
+            UPDATE students SET gpa = 3.6 WHERE name = 'Kiwi';
 
-            -- 2. Delete all year-4 students
+            -- 2. Delete all year-4 contestants
             DELETE FROM students WHERE year = 4;
 
             -- 3. Drop the courses table
             DROP TABLE IF EXISTS courses;
           language: "sql"
       explanation: |
-        **Task 1:** `UPDATE ... SET ... WHERE` modifies only the rows matching the WHERE clause. Without `WHERE name = 'Eve'`, every student's GPA would become 3.6.
+        **Task 1:** `UPDATE ... SET ... WHERE` modifies only the rows matching the WHERE clause. Without `WHERE name = 'Kiwi'`, every student's GPA would become 3.6.
 
-        **Task 2:** `DELETE FROM ... WHERE year = 4` removes Dan and Hank. Without the `WHERE`, all 9 students would be deleted.
+        **Task 2:** `DELETE FROM ... WHERE year = 4` removes Coconick and Orangelo. Without the `WHERE`, all 9 students would be deleted.
 
         **Task 3:** `DROP TABLE IF EXISTS` is safer than plain `DROP TABLE` — it avoids an error if the table was already dropped or never created. After this, `SELECT * FROM courses` would produce an error (the table no longer exists), while `DELETE FROM courses` without WHERE would leave the table empty but still queryable.
 
@@ -1521,29 +1521,29 @@ steps:
         hints:
           - text: "Plain `DROP TABLE courses` raises an error if `courses` has already been dropped. Two words, inserted between `TABLE` and the name, make the statement idempotent."
             condition: "code_missing: if exists"
-      - description: "Eve's GPA is now exactly 3.6 (and nobody else was disturbed)"
+      - description: "Kiwi's GPA is now exactly 3.6 (and nobody else was disturbed)"
         command: |
-          var rows = __run_query("SELECT name, gpa FROM students WHERE name = 'Eve'");
-          assert(rows.length === 1, "Eve should still be in the table");
-          assert(Math.abs(rows[0].gpa - 3.6) < 0.001, "Eve's GPA should be 3.6 after UPDATE, got " + rows[0].gpa);
+          var rows = __run_query("SELECT name, gpa FROM students WHERE name = 'Kiwi'");
+          assert(rows.length === 1, "Kiwi should still be in the table");
+          assert(Math.abs(rows[0].gpa - 3.6) < 0.001, "Kiwi's GPA should be 3.6 after UPDATE, got " + rows[0].gpa);
           // Safety check: the other CS student GPAs should still be their seed values (not 3.6).
-          var alice = __run_query("SELECT gpa FROM students WHERE name = 'Alice'");
-          assert(Math.abs(alice[0].gpa - 3.9) < 0.001,
-            "Alice's GPA changed from 3.9 to " + alice[0].gpa + " — the original UPDATE targeted the wrong student. Your fix should only touch Eve.");
+          var mango = __run_query("SELECT gpa FROM students WHERE name = 'Mango'");
+          assert(Math.abs(mango[0].gpa - 3.9) < 0.001,
+            "Mango's GPA changed from 3.9 to " + mango[0].gpa + " — the original UPDATE targeted the wrong student. Your fix should only touch Kiwi.");
         hints:
-          - text: "Your UPDATE is there but Eve's GPA isn't 3.6 yet. Check the WHERE clause — are you targeting the right student?"
+          - text: "Your UPDATE is there but Kiwi's GPA isn't 3.6 yet. Check the WHERE clause — are you targeting the right student?"
             condition: "code_contains: update"
-          - text: "Alice's GPA changed when it should not have. The original UPDATE used `name = 'Alice'`. Change the predicate to target Eve."
-            condition: "code_contains: alice"
-      - description: "All year-4 students are gone; no earlier-year students were deleted"
+          - text: "Mango's GPA changed when it should not have. The original UPDATE used `name = 'Mango'`. Change the predicate to target Kiwi."
+            condition: "code_contains: mango"
+      - description: "All year-4 contestants are gone; no earlier-year contestants were deleted"
         command: |
           var year4 = __run_query("SELECT * FROM students WHERE year = 4");
-          assert(year4.length === 0, "Expected no year-4 students. Got " + year4.length);
+          assert(year4.length === 0, "Expected no year-4 contestants. Got " + year4.length);
           // Safety check: the other years should still be intact (year 1..3 counts should sum to 7 = 9 - 2 year-4).
           var remaining = __run_query("SELECT COUNT(*) AS n FROM students");
-          assert(remaining[0].n === 7, "Expected 7 students remaining (9 minus 2 year-4). Got " + remaining[0].n + ". Your DELETE may be matching the wrong column.");
+          assert(remaining[0].n === 7, "Expected 7 contestants remaining (9 minus 2 year-4). Got " + remaining[0].n + ". Your DELETE may be matching the wrong column.");
         hints:
-          - text: "The original DELETE references `gpa` — that is the wrong column. Which column records the student's year?"
+          - text: "The original DELETE references `gpa` — that is the wrong column. Which column records the contestant's year?"
             condition: "code_contains: gpa = 4"
       - description: "courses table has been dropped"
         command: |
@@ -1609,16 +1609,16 @@ steps:
             `DROP TABLE` removes both the data **and the schema**. The table no longer exists in the database at all, so any query referencing it fails with an error. Compare this with `DELETE FROM courses` (no WHERE), which removes all rows but keeps the table structure intact — `SELECT * FROM courses` would return an empty result set, not an error.
 
         - question: |
-            **Arrange** the steps for safely updating Eve's GPA. The professional workflow: preview first, then modify.
+            **Arrange** the steps for safely updating Kiwi's GPA. The professional workflow: preview first, then modify.
           type: parsons
           lines:
             - "-- Step 1: Preview which rows will change"
-            - "SELECT * FROM students WHERE name = 'Eve';"
+            - "SELECT * FROM students WHERE name = 'Kiwi';"
             - "-- Step 2: Modify"
-            - "UPDATE students SET gpa = 3.6 WHERE name = 'Eve';"
+            - "UPDATE students SET gpa = 3.6 WHERE name = 'Kiwi';"
           distractors:
             - "UPDATE students SET gpa = 3.6;"
-            - "DELETE FROM students WHERE name = 'Eve';"
+            - "DELETE FROM students WHERE name = 'Kiwi';"
           explanation: |
             Always preview with SELECT before modifying production data. The distractor `UPDATE students SET gpa = 3.6;` is missing the WHERE clause — it would change *every* student's GPA to 3.6. The DELETE distractor removes the row entirely instead of updating it.
 
