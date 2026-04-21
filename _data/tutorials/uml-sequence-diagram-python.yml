@@ -3,7 +3,7 @@ description: "Learn to read and create UML sequence diagrams by writing Python c
 
 backend: pyodide
 uml_diagram: true
-uml_position: right
+uml_position: bottom-left
 uml_default_view: true
 uml_default_type: sequence
 require_tests: true
