@@ -39,7 +39,9 @@ The name SOLID is an acronym coined by Michael Feathers, collecting five princip
 
 > *A module should have one, and only one, reason to change.* — Robert C. Martin
 
-The most commonly misunderstood principle. Despite its name, SRP is **not** about doing "one thing" — it is about serving one **actor**. An actor is a person, team, or stakeholder group that requests changes to the system. 
+The Single Responsibility Principle is arguably the most misunderstood of the SOLID principles due to its poorly chosen name. It is **not** about a class "doing one thing" or "having only one method". Instead, SRP is fundamentally **about people**.
+
+A more accurate definition is that **a module should be responsible to one, and only one, actor**. An actor is a specific stakeholder, user, or team (like Finance, HR, or Database Administrators) that will request modifications to the software. If a class serves multiple actors, changes requested by one might silently break functionality relied upon by another.
 
 **Why SRP is Important:**
 When a class serves multiple actors, changes requested by one actor may silently break functionality relied upon by another. If you **do not follow SRP**, your codebase becomes a minefield of tangled dependencies; a simple bug fix for the Finance team might inadvertently break the HR team's reporting module. Following SRP leads to better design by ensuring that each module is highly cohesive and immune to changes driven by unrelated business functions.
@@ -50,7 +52,7 @@ When a class serves multiple actors, changes requested by one actor may silently
 
 **Examples of Violations & Fixes:**
 
-* **The Employee God Class:** An `Employee` class calculates pay (Finance actor), reports hours (HR actor), and saves to the database (DBA actor). 
+* **The Employee Class (Actor Violation):** An `Employee` class contains `calculatePay()` (for Accounting), `reportHours()` (for HR), and `save()` (for DBAs). If Accounting tweaks the overtime algorithm, it might accidentally break the HR reports.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Employee {
@@ -59,48 +61,84 @@ class Employee {
   + save()
 }
 note right of Employee
-  Violates SRP: Serves Finance (calculatePay), 
-  HR (reportHours), and Tech (save).
+  Violates SRP: Serves three different actors
+  (Accounting, HR, and DBAs). Changes requested
+  by one actor might unintentionally break logic
+  relied upon by another.
 end note
 @enduml'></div>
 
-  **Fix:** Extract the logic into three separate classes: `PayCalculator`, `HourReporter`, and `EmployeeSaver`, all sharing a simple `EmployeeData` data structure.
+  **Fix:** Extract a plain `EmployeeData` structure and create three separate classes (`PayCalculator`, `HourReporter`, `EmployeeSaver`) that do not know about each other, eliminating merge conflicts and accidental duplication.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class EmployeeData
+class PayCalculator {
+  + calculatePay()
+}
+class HourReporter {
+  + reportHours()
+}
+class EmployeeSaver {
+  + save()
+}
+PayCalculator ..> EmployeeData
+HourReporter ..> EmployeeData
+EmployeeSaver ..> EmployeeData
+note bottom of EmployeeData
+  Fix: Each class serves exactly one actor.
+  A change by Accounting only touches PayCalculator;
+  HR and DBA code is untouched.
+end note
+@enduml'></div>
+
+* **The Report Generator:** A `Report` class that generates, prints, saves, and emails reports. Changing the email format might break the printing logic. **Fix:** Refactor into `ReportGenerator`, `ReportPrinter`, `ReportSaver`, and `EmailSender`.
+
+**Broader Engineering Applications:**
+Applying SRP strategically (only when actual axes of change emerge) maximizes **cohesion** and minimizes **coupling**. Highly cohesive classes are easier to unit test, reuse, and maintain, preventing the growth of "God Classes" and drastically reducing version control merge conflicts across teams.
 
 ## Open/Closed Principle (OCP)
 
-> *Software entities should be open for extension, but closed for modification.* — Bertrand Meyer, later Robert C. Martin
+> *Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.* — Bertrand Meyer, 1988
 
-The goal is to design modules so that *new behavior* can be added by writing *new code* — without editing the existing, tested modules. 
+The Open/Closed Principle dictates that as an application's requirements change, you should be able to extend the behavior of a module with new functionalities **by adding new code**, rather than altering existing, tested code.
 
 **Why OCP is Important:**
 Every time you modify existing, working code, you risk introducing regressions. If you **do not follow OCP**, adding a new feature requires surgically modifying core components, which means re-testing the entire system. By relying on abstraction and polymorphism, OCP allows you to plug in new functionality (extensions) without ever touching the existing router or core logic, making the system incredibly stable and safely extensible.
 
 **Common Misconceptions:**
-* **"Never modify existing code":** OCP is not a prohibition on editing code for bug fixes, refactoring, or performance tweaks. It strictly applies to *adding new features*.
-* **"OCP should be applied everywhere":** Anticipating every conceivable future change leads to "Abstraction Hell." It should be applied strategically where change is actually anticipated.
+* **"Closed for modification means code can never be changed":** This restriction only applies to adding new features. If there is a bug, you must absolutely modify the code to fix it.
+* **"OCP should be applied everywhere":** Anticipating every conceivable future change leads to "Abstraction Hell." Conforming to OCP is expensive. It should be applied strategically where change is actually anticipated.
 
 **Examples of Violations & Fixes:**
 
-* **The Payment Processor Problem:** A `PaymentProcessor` uses complex `switch` or `if/else` statements to handle different payment types.
+* **The Payment Processor Problem:**
+  A `PaymentProcessor` class uses complex `switch` or `if/else` statements to handle different payment types. Adding PayPal requires modifying the existing method.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class PaymentProcessor {
   + processPayment(type: String, amount: Double)
 }
-note right of PaymentProcessor::processPayment
+note right of PaymentProcessor
   Violates OCP: Adding a new payment type
-  requires modifying this method to add a new branch,
+  requires modifying this method to add a new if/else branch,
   risking bugs in existing payment logic.
 end note
 @enduml'></div>
 
   **Fix:** Program against an interface using the Strategy Pattern. Create a `PaymentMethod` interface and separate `CreditCardPayment` and `PayPalPayment` classes.
 
+* **Drawing Shapes Problem:**
+  A `drawAllShapes()` method evaluates a `ShapeType` enum to draw. Adding a `Triangle` forces modification of the loop.
+  **Fix:** Give the `Shape` interface a `draw()` method, relying on polymorphism so the caller never changes.
+
+**Broader Engineering Applications:**
+Abstraction is the key to OCP. By relying on interfaces, higher-level architectural components (like core business rules) are protected from changes in lower-level components (like UI or database plugins). This dramatically reduces the risk of regressions and allows for independent deployability of new features.
+
 ## Liskov Substitution Principle (LSP)
 
 > *Let $\Phi(x)$ be a property provable about objects $x$ of type $T$. Then $\Phi(y)$ should be true for objects $y$ of type $S$ where $S$ is a subtype of $T$.* — Barbara Liskov, 1987
 
-LSP goes beyond standard structural subtyping (matching method signatures) to demand **behavioral substitutability**. A subclass must honor the contract established by its parent.
+LSP goes beyond standard object-oriented structural subtyping (matching method signatures) to demand **behavioral substitutability**. An object of a superclass should be completely replaceable by an object of its subclass without causing unexpected behaviors or breaking the program. A subclass must honor the contract established by its parent.
 
 **Why LSP is Important:**
 LSP is the foundation for safe polymorphism. It empowers the Open/Closed Principle (OCP) by ensuring new subclasses can be plugged in seamlessly. If you **do not follow LSP**, clients are forced to perform defensive type-checking (`if (obj instanceof Square)`) to avoid crashes or unexpected behaviors. Violating LSP pollutes the architecture with legacy bugs and destroys the trustworthiness of abstractions.
@@ -111,11 +149,11 @@ To guarantee behavioral substitutability, subclasses must follow strict Design-b
 3. **Invariants must be preserved:** Core properties of the parent state must remain true.
 
 **Common Misconceptions:**
-* **Treating "Is-A" as Direct Inheritance:** In the real world, a square "is a" rectangle. However, in OOP, this naive taxonomy creates incorrect hierarchies if behavioral substitutability is violated. 
+* **Treating "Is-A" as Direct Inheritance:** In the real world, a square "is a" rectangle, and an ostrich "is a" bird. However, in OOP, this naive taxonomy creates incorrect hierarchies if behavioral substitutability is violated.
+* **Self-Consistent Models are Valid:** A `Square` class might perfectly enforce its own mathematical rules internally, but validity cannot be judged in isolation. It must be judged from the perspective of the *client's expectations* of the parent class.
 
 **Examples of Violations & Fixes:**
-
-* **The Square/Rectangle Problem:** If `Square` inherits from `Rectangle`, overriding `setWidth` to automatically change `height` breaks a client's expectation that a rectangle's dimensions mutate independently. 
+* **The Square/Rectangle Problem:** If `Square` inherits from `Rectangle`, overriding `setWidth` to automatically change `height` breaks a client's expectation that a rectangle's dimensions mutate independently. Passing a `Square` where a `Rectangle` is expected causes area calculation assertions to fail.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Rectangle {
@@ -129,31 +167,59 @@ class Square {
 }
 Square --|> Rectangle
 note right of Square
-  Violates LSP: Overriding setWidth to also 
-  change height breaks the client's behavioral
+  Violates LSP: Overriding setWidth to also
+  change height breaks the client behavioral
   expectation of a Rectangle (that width and
   height mutate independently).
 end note
 @enduml'></div>
 
-  **Fix:** `Square` and `Rectangle` should be siblings implementing a common `Shape` interface.
+  **Fix:** `Square` and `Rectangle` should be siblings implementing a common `Shape` interface — neither inherits the other, so neither can break the other's contract.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Shape {
+  + getArea() : int
+}
+class Rectangle {
+  + setWidth(w: int)
+  + setHeight(h: int)
+  + getArea() : int
+}
+class Square {
+  + setSide(s: int)
+  + getArea() : int
+}
+Rectangle ..|> Shape
+Square ..|> Shape
+note right of Shape
+  Fix: Neither subtype inherits the other.
+  Clients typed to Shape get only getArea();
+  no client can set width independently and
+  be surprised by a Square coupling it to height.
+end note
+@enduml'></div>
+
+* **The Bird/Ostrich Problem:** `Ostrich` inherits `fly()` from `Bird` but overrides it to do nothing or throw an exception. This is a classic *Refused Bequest* code smell. **Fix:** Extract a `FlyingBird` interface rather than forcing `Ostrich` to inherit behaviors it shouldn't have. Avoid overriding non-abstract methods.
+
+**Broader Engineering Applications:**
+LSP is the foundation for safe polymorphism. It empowers the Open/Closed Principle (OCP) by ensuring new subclasses can be plugged in seamlessly without requiring clients to perform defensive type-checking (`instanceof` or long `if/else` chains). Violating LSP leads to architectural pollution and legacy bugs (like Java's `Stack` extending `Vector`, mistakenly exposing random-access array methods that break strict LIFO stack behavior).
 
 ## Interface Segregation Principle (ISP)
 
 > *Clients should not be forced to depend on methods they do not use.* — Robert C. Martin
 
-The Interface Segregation Principle (ISP) dictates that instead of creating large, general-purpose "fat" interfaces, developers should design small, client-specific interfaces tailored to specific roles. 
+The Interface Segregation Principle (ISP) dictates that instead of creating large, general-purpose "fat" interfaces, developers should design small, client-specific interfaces tailored to specific roles.
 
 **Why ISP is Important:**
-When a client depends on a bloated interface, it becomes artificially coupled to all other clients of that interface. If you **do not follow ISP**, a change to an unused method forces recompilation and redeployment of completely unrelated clients (in statically typed languages). Even in dynamic languages, it introduces fragility and unwanted architectural "baggage". Following ISP leads to better design by ensuring modules are highly cohesive, lightweight, and completely isolated from changes they don't care about.
+When a client depends on a bloated interface, it becomes artificially coupled to all other clients of that interface. If you **do not follow ISP**, a change to an unused method forces recompilation and redeployment of completely unrelated clients (in statically typed languages). Even in dynamic languages, it introduces fragility and unwanted architectural "baggage"—if the unused component breaks or requires a heavy dependency, your module crashes or bloats unnecessarily. Following ISP leads to better design by ensuring modules are highly cohesive, lightweight, and completely isolated from changes they don't care about.
 
 **Common Misconceptions:**
-* **"Every method needs its own interface":** Taking ISP to the extreme leads to interface proliferation. ISP should group methods by cohesive client needs.
-* **"ISP is only for statically typed languages":** While dynamic languages don't suffer from forced recompilation, depending on unneeded modules still violates the architectural concept behind ISP.
+* **"Every method needs its own interface":** Taking ISP to the extreme leads to interface proliferation ($2^n-1$ interfaces for $n$ methods). ISP should group methods by cohesive client needs, not just fracture them endlessly.
+* **"ISP is only for statically typed languages":** While dynamic languages don't suffer from forced recompilation, depending on unneeded modules still violates the architectural concept behind ISP (the Common Reuse Principle).
 
 **Examples of Violations & Fixes:**
 
-* **The File Server System:** A `FileServer` interface declares `uploadFile()`, `downloadFile()`, and `changePermissions()`. A `UserClient` only needs upload/download.
+* **The File Server System:** A `FileServer` interface declares `uploadFile()`, `downloadFile()`, and `changePermissions()`. A `UserClient` only needs upload/download but is forced to depend on permissions.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface FileServer {
@@ -168,27 +234,32 @@ AdminClient ..> FileServer : depends on
 note left of UserClient
   Violates ISP: UserClient is forced to depend
   on changePermissions(), which it never uses.
+  A change to permissions forces UserClient to recompile.
 end note
 @enduml'></div>
 
   **Fix:** Split into `FileServerExchange` (upload/download) and `FileServerAdministration` (permissions). `UserClient` only depends on the former.
 
+* **The Generic Operations (OPS) Class:** `User1`, `User2`, and `User3` all depend on a single `OPS` class with `op1()`, `op2()`, and `op3()`.
+  **Fix:** Segregate the operations into `U1Ops`, `U2Ops`, and `U3Ops` interfaces. Let the `OPS` class implement all three, but let each user depend only on the specific interface they need.
+
 ## Dependency Inversion Principle (DIP)
 
 > *High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details; details should depend on abstractions.* — Robert C. Martin
 
-DIP states that source code dependencies should rely on abstract concepts, like interfaces or abstract classes, rather than on concrete implementations. High-level modules (core business rules) should dictate the contract, and low-level modules (UI, database) should conform to it.
+DIP states that source code dependencies should rely on abstract concepts, like interfaces or abstract classes, rather than on concrete implementations. High-level modules (core business rules) should dictate the contract, and low-level modules (UI, database, I/O) should conform to it.
 
 **Why DIP is Important:**
-In traditional programming, high-level policy often directly calls low-level details. If you **do not follow DIP**, the high-level policy becomes strictly tethered to the infrastructure. A change in the database library triggers cascading rewrites in your core business logic, making the system rigid, fragile, and impossible to unit test. By **inverting the dependency**, you decouple the core logic, making business rules infinitely reusable and trivially testable (by swapping the real database for a mock).
+In traditional programming, high-level policy often directly calls low-level details (e.g., `OrderProcessor` calls `MySQLDatabase`). If you **do not follow DIP**, the high-level policy becomes strictly tethered to the infrastructure. A change in the database library or UI framework triggers cascading rewrites in your core business logic, making the system rigid, fragile, and impossible to unit test. By **inverting the dependency**, you decouple the core logic. This leads to better design because business rules become infinitely reusable, independently deployable, and trivially testable (by swapping the real database for a mock).
 
 **Common Misconceptions:**
-* **"DIP is the same as Dependency Injection (DI)":** DIP is a broad architectural strategy. DI is simply a code-level tactic (like passing dependencies via a constructor) to achieve inversion. 
-* **"Interfaces dictated by low-level code":** Creating an interface that exactly mirrors a specific database library does not achieve inversion. **Interface Ownership** is key: the high-level client must declare and own the interface.
+* **"DIP is the same as Dependency Injection (DI)":** DIP is a broad architectural strategy. DI is simply a code-level tactic (like passing dependencies via a constructor) to achieve inversion. Using a DI framework like Spring does not guarantee you are following DIP.
+* **"Interfaces dictated by low-level code":** Creating an interface that exactly mirrors a specific database library does not achieve inversion. **Interface Ownership** is key: the high-level client must declare and own the interface tailored to its specific needs.
+* **"Every class needs an interface":** Dogmatically creating an interface for every single class leads to "abstraction hell" and needless complexity.
 
 **Examples of Violations & Fixes:**
 
-* **The Button and Lamp Scenario:** A smart home `Button` directly turns a `Lamp` on or off. 
+* **The Button and Lamp Scenario:** A smart home `Button` directly turns a `Lamp` on or off.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Button {
@@ -206,7 +277,31 @@ note right of Button
 end note
 @enduml'></div>
 
-  **Fix:** Abstract the concept into a `Switchable` interface with `activate()` and `deactivate()`. The `Button` associates with the interface, and the `Lamp` implements it.
+  **Fix:** Introduce a `Switchable` interface owned by the high-level module. `Button` depends on the abstraction; `Lamp` conforms to it — the dependency arrow now points away from the detail.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Switchable {
+  + activate()
+  + deactivate()
+}
+class Button {
+  + detectPress()
+}
+class Lamp {
+  + activate()
+  + deactivate()
+}
+Button --> Switchable : depends on
+Switchable <|.. Lamp
+note right of Switchable
+  Fix: dependency arrow inverted.
+  Button now works with any Switchable device
+  (Lamp, Fan, Motor) without modification.
+end note
+@enduml'></div>
+
+* **The Calculator and Console Output:** A `Calculator` class uses a hard-wired `System.out.println` to print results.
+  **Fix:** Create a `Printer` interface. Pass a `ConsolePrinter` dependency into the `Calculator` constructor (Dependency Injection). During unit tests, pass a mock printer.
 
 # How the Principles Reinforce Each Other
 
@@ -253,3 +348,17 @@ The judgment of *when to apply* SOLID — and when to stop — is itself the mar
 * Robert C. Martin. *Agile Software Development, Principles, Patterns, and Practices*. Prentice Hall, 2002.
 * Barbara Liskov. "Data Abstraction and Hierarchy." *OOPSLA '87 Addendum to the Proceedings*. 1987.
 * Raimund Krämer. "SOLID Principles: Common Misconceptions." 2024. [raimund-kraemer.dev](https://raimund-kraemer.dev/solid-principles-common-misconceptions/)
+
+# Practice
+
+Test your understanding below. The quiz emphasizes *applying* and *evaluating* SOLID in realistic scenarios — most questions will feel harder than pure recall, and that effortful retrieval is exactly what builds durable judgment.
+
+## Knowledge Quiz
+
+{% include quiz.html id="design_principle_solid" %}
+
+## Retrieval Flashcards
+
+{% include flashcards.html id="design_principle_solid" %}
+
+*Pedagogical tip: Before flipping a card, try to name the principle's core idea, its most common misconception, and one concrete example from memory. That generation effect outperforms passive rereading every time.*
