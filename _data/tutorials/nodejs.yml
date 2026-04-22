@@ -1042,7 +1042,7 @@ steps:
           - text: "Which number method rounds to a fixed number of decimal places?"
             condition: "code_missing: .toFixed("
       - description: "Failing students list contains only Bob and Dave"
-        command: "assert(output.includes('Failing') && output.split('Failing')[1].includes('Bob') && output.split('Failing')[1].includes('Dave') && !output.split('Failing')[1].includes('Alice'), 'Create an array containing only the names of students who are failing (grade < 60)')"
+        command: "assert(output.includes('Failing') && output.split('Failing')[1].includes('Bob') && output.split('Failing')[1].includes('Dave') && !output.split('Failing')[1].includes('Alice') && !output.split('Failing')[1].includes('grade'), 'Create an array of only the *names* (strings) of failing students — you need both .filter() and .map()')"
         hints:
           - text: "Two operations: select below a threshold, then extract the name. Which two methods?"
             condition: "code_missing: .filter("
