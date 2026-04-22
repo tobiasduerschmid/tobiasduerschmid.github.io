@@ -211,7 +211,7 @@ steps:
             The three compartments are: **top** = class name, **middle** = attributes, **bottom** = methods. Relationships are shown as arrows *between* class boxes, not inside them.
 
         - question: |
-            A Python class has `self.x = 10` in `__init__` and a `def calculate(self)` method. How many items appear in the UML class box?
+            A Python class has `self.x = 10` inside a `def calculate(self)` method. How many items appear in the UML class box?
           type: single
           options:
             - "1 — just the class name"
