@@ -13,7 +13,7 @@ The primary challenge arises when a system needs to be independent of how its pr
 *   **Tight Coupling:** If the `Pizza` class directly instantiates concrete ingredient classes, it becomes "intimate" with every regional variation, making it incredibly difficult to add a new region like Los Angeles without modifying existing code.
 
 # Solution
-The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. It essentially acts as a "factory of factories," or more accurately, a single factory that contains multiple **Factory Methods**. 
+The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. *Note: It is a common misconception to refer to this as a "factory of factories." A system where factories produce other factories introduces unnecessary complexity and defeats the purpose of the pattern.* A much better mental model is to think of it as a **"Product Family Factory"** or an **"Ingredients Factory."** Structurally, a single Abstract Factory interface simply contains a collection of multiple **Factory Methods**—one for each product in the family. 
 
 The design pattern involves these roles:
 1.  **Abstract Factory Interface:** Defining an interface (e.g., `PizzaIngredientFactory`) with a creation method for each type of product in the family (e.g., `createDough()`, `createSauce()`).
