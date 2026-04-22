@@ -1106,7 +1106,7 @@
       '<div class="score-display">Your Score: <span class="current-score">0</span>' +
       '<span style="font-size:0.55em;font-weight:400;"> / ' + questions.length + '</span></div>' +
       '<p class="score-summary"></p>' +
-      '<div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>' +
+      '<div class="tvm-quiz-threshold">Your score: <span class="tvm-quiz-user-pct"></span>%</div>' +
       '<div class="results-actions">' +
       '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' \u2192</button>' +
       '<button class="restart-btn">Try Again</button>' +
@@ -1243,6 +1243,9 @@
       var summary = container.querySelector('.score-summary');
       var continueBtn = container.querySelector('.tvm-quiz-continue-btn');
       var restartBtn = container.querySelector('.restart-btn');
+      var userPctEl = container.querySelector('.tvm-quiz-user-pct');
+      var userPct = Math.round((score / totalQuestions) * 100);
+      if (userPctEl) userPctEl.textContent = userPct;
 
       if (passed) {
         if (summary) summary.textContent = 'Great job! You\'re ready for the next step.';
@@ -1250,7 +1253,7 @@
         if (restartBtn) restartBtn.classList.add('hidden');
         if (statusEl) statusEl.textContent = '\u2713 Passed';
       } else {
-        var needed = Math.round(minScore * totalQuestions);
+        var needed = Math.ceil(minScore * totalQuestions);
         if (summary) summary.textContent = 'You scored ' + score + '/' + totalQuestions + '. ' +
           'Need at least ' + needed + ' correct (' + Math.round(minScore * 100) + '%) to continue. Review the step and try again!';
         if (continueBtn) continueBtn.classList.add('hidden');
