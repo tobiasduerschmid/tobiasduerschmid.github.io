@@ -7,6 +7,7 @@ uml_diagram: true
 uml_position: right
 require_tests: true
 autosave_type: files
+instructor_mode: true
 
 setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial'); import abc"
@@ -25,6 +26,17 @@ steps:
       ## When One Change Breaks Everything
 
       > **Learning objective:** After this step you will be able to **identify** the symptoms of rigid, tightly coupled code and **explain** why design principles exist.
+
+      ### Four Words You Need for the Rest of This Tutorial
+
+      Every SOLID principle uses the same four-word lens. Learn them once, then stop guessing.
+
+      - **Actor** — a person or team who asks for changes. Finance, Registrar, Legal, Ops. Actors file tickets; they don't read your code. Different actors want different things for different reasons.
+      - **Reason to change** — a real-world force that makes you edit a file. Tax law shifts → Finance edits. HIPAA update → Legal edits. *Different actors = different reasons to change.*
+      - **Coupling** — how much one chunk of code depends on the **internals** of another. Two classes are tightly coupled when touching one forces you to touch the other. Shared private helpers, reaching into another class's state, and direct `new Database()` calls all create coupling.
+      - **Cohesion** — how much the things **inside** one class belong together. A class is highly cohesive when its methods all serve the same actor for the same reason. Low cohesion = a Swiss-army-knife class where unrelated features are awkward roommates.
+
+      **Good design = low coupling between modules, high cohesion within each module.** SOLID is five specific tactics for hitting that target.
 
       ### The Scenario
 
@@ -46,6 +58,16 @@ steps:
       ### Errors Are the Lesson
 
       You will almost certainly break things. That's not a bug in the exercise — it *is* the exercise. Every developer has inherited code like this. The errors you hit aren't you messing up; they're proof that the original design is the problem. Read the error messages, experiment, and embrace the chaos.
+
+      ### Before You Move On — 60 Seconds of Reflection
+
+      After you've wrestled with both changes, pause and answer in your head:
+
+      1. **Why did editing one private helper break two features?** (Name the coupling.)
+      2. **Which different "teams" (actors) would realistically ask for each of these changes?** (Hint: the Finance Team and the Registrar's Office want different things for different reasons.)
+      3. **If these teams shared this file forever, what would happen on the day both teams ship changes the same week?**
+
+      If you can answer #1 in one sentence, you've already grasped the problem SOLID is built to solve. The next ten steps give you the tools to prevent it.
 
     files:
       - path: "course_manager.py"
@@ -170,6 +192,133 @@ steps:
         language: "python"
 
     open_file: "course_manager.py"
+
+    solution:
+      files:
+        - path: "course_manager.py"
+          content: |
+            from __future__ import annotations
+            import json
+
+
+            class CourseManager:
+                """Monolithic class — patched in place to satisfy both change
+                requests. This 'works', but notice how awkward the patches are:
+                that is the whole point of this step. You felt the friction."""
+
+                def __init__(self) -> None:
+                    self._students = {}
+                    # Finance Team change: grades ARE now numeric on a 4.0 scale.
+                    self._grade_weights = {4.0: 4.0, 3.0: 3.0, 2.0: 2.0, 1.0: 1.0, 0.0: 0.0}
+                    self._email_log = []
+
+                def enroll_student(self, student_id: str, name: str) -> None:
+                    if student_id in self._students:
+                        raise ValueError(f"Student {student_id} is already enrolled")
+                    self._students[student_id] = {"name": name, "courses": {}}
+
+                def add_grade(self, student_id: str, course: str, grade: float) -> None:
+                    if student_id not in self._students:
+                        raise ValueError(f"Student {student_id} not found")
+                    if grade not in self._grade_weights:
+                        raise ValueError(
+                            f"Invalid grade: {grade}. Must be one of {list(self._grade_weights.keys())}"
+                        )
+                    self._students[student_id]["courses"][course] = grade
+
+                def get_student(self, student_id: str) -> dict[str, object]:
+                    if student_id not in self._students:
+                        raise ValueError(f"Student {student_id} not found")
+                    return self._students[student_id]
+
+                def _format_grade(self, grade: float) -> str:
+                    """Shared helper — STILL shared. Notice how we had to make
+                    a careful decision here: change the format string and both
+                    the grade summary AND the report ripple together."""
+                    return f"{grade:.1f}"
+
+                def calculate_gpa(self, student_id: str) -> float:
+                    student = self.get_student(student_id)
+                    courses = student["courses"]
+                    if not courses:
+                        return 0.0
+                    total = sum(self._grade_weights[g] for g in courses.values())
+                    return total / len(courses)
+
+                def get_grade_summary(self, student_id: str) -> str:
+                    student = self.get_student(student_id)
+                    lines = []
+                    for course, grade in student["courses"].items():
+                        lines.append(f"  {course}: {self._format_grade(grade)}")
+                    lines.append(f"  GPA: {self.calculate_gpa(student_id):.2f}")
+                    return "\n".join(lines)
+
+                def format_gpa_for_transcript(self, student_id: str) -> str:
+                    gpa = self.calculate_gpa(student_id)
+                    if gpa >= 3.5:
+                        honors = " (Dean's List)"
+                    elif gpa >= 3.0:
+                        honors = " (Good Standing)"
+                    else:
+                        honors = ""
+                    return f"Cumulative GPA: {gpa:.2f}{honors}"
+
+                # Registrar's Office change: report is now JSON, not HTML.
+                def generate_report(self, student_id: str) -> str:
+                    student = self.get_student(student_id)
+                    return json.dumps({
+                        "name": student["name"],
+                        "courses": [
+                            {"course": c, "grade": self._format_grade(g)}
+                            for c, g in student["courses"].items()
+                        ],
+                        "gpa": round(self.calculate_gpa(student_id), 2),
+                    })
+
+                def send_grade_notification(self, student_id: str, course: str) -> None:
+                    student = self.get_student(student_id)
+                    grade = student["courses"].get(course)
+                    if grade is None:
+                        raise ValueError(f"No grade for {course}")
+                    message = (
+                        f"Dear {student['name']}, your grade for {course} "
+                        f"is {self._format_grade(grade)}."
+                    )
+                    print(f"[EMAIL] To: {student_id} | {message}")
+                    self._email_log.append({"to": student_id, "message": message})
+
+                def get_email_log(self) -> list[dict[str, str]]:
+                    return list(self._email_log)
+
+
+            if __name__ == "__main__":
+                mgr = CourseManager()
+                mgr.enroll_student("S001", "Alice Johnson")
+                mgr.add_grade("S001", "CS 101", 4.0)
+                mgr.add_grade("S001", "MATH 201", 3.0)
+
+                print("=== Grade Summary ===")
+                print(mgr.get_grade_summary("S001"))
+                print("=== JSON Report ===")
+                print(mgr.generate_report("S001"))
+          language: "python"
+      explanation: |
+        **This "solution" deliberately works but smells.** That smell is the whole lesson of Step 1.
+
+        **Two patches landed:**
+
+        1. **Finance's ask:** `_grade_weights` now maps numeric grades (4.0/3.0/…) to their own values, and `add_grade()` accepts numeric values directly.
+        2. **Registrar's ask:** `generate_report()` now returns `json.dumps(...)` instead of HTML.
+
+        **But look at what we couldn't avoid:** `_format_grade()` is still a shared private helper used by `get_grade_summary()`, `generate_report()`, AND `send_grade_notification()`. Every change to its format string still ripples through three different outputs — the academic display, the registrar's report, and the email notification. We also had to pick a formatting style (`f"{grade:.1f}"`) that works acceptably for *all three consumers*, even though each consumer would genuinely prefer a different format.
+
+        **The names you now have for the pain:**
+
+        - **Coupling:** three features share `_format_grade()`'s internals, so they cannot evolve independently.
+        - **Low cohesion:** `CourseManager` serves at least three different actors (admin, academics, registrar) in one class.
+        - **Cross-actor bleed:** the Finance ask touched the same method body the Registrar ask touched.
+
+        The next ten steps give you the tools to stop patching around pain like this and refactor it away for good.
 
     tests:
       - description: "You changed the grading scale (numeric 4.0 scale instead of letter grades)"
@@ -745,745 +894,488 @@ steps:
 
       **Why this is better:** Now Finance can change tax brackets in `PayrollCalculator` without touching pay stubs. HR can change currency display in `PayStubFormatter` without messing up tax calculations. Each class has **one actor** and **one reason to change**. No more surprise side effects.
 
-      ### Your Task: Refactor EventPlanner
+      ### Your Task: Refactor RideRequest
 
-      Open `event_planner.py`. It's got a monolithic `EventPlanner` class that does way too much — four different concerns all crammed into one class:
+      Welcome to **NightOwl**, a fictional rideshare startup. Your colleague just left "to tour with their band" and handed you `ride_request.py`. It's a single `RideRequest` class doing *everything*: driver matching, fare calculation, rider/driver notifications, and fraud detection.
 
-      1. **Venue booking** (Venue Manager actor)
-      2. **Guest list management** (Event Coordinator actor)
-      3. **Budget tracking** (Finance actor)
-      4. **Invitation sending** (Communications actor)
+      Four **genuinely independent** teams own pieces of this class — each with their own org chart, their own tickets, and their own reasons to ask for changes:
 
-      Your job: split it into four focused classes. We've given you **class stubs** with some methods filled in and others marked `TODO` for you to complete. Follow the pattern from the worked example above.
+      1. **Matching Ops** — owns the driver-matching algorithm. Cares about ETA, distance, driver ratings.
+      2. **Pricing** — owns fare calculation, surge rules, platform fee. Reports to the CFO's office. Under audit scrutiny.
+      3. **Communications** — owns SMS/push notification templates. Works with Legal on TCPA anti-spam compliance.
+      4. **Trust & Safety** — owns fraud detection and route-anomaly flags. Reports to the Chief Risk Officer.
 
-      The four classes to complete:
-      - `VenueManager` — handles venue booking and availability
-      - `GuestRegistry` — manages guest list (add, remove, count, list)
-      - `BudgetTracker` — tracks expenses and remaining budget
-      - `InvitationSender` — sends invitations and tracks RSVPs
+      **Why these really are separate actors** (and not one person in four hats like the event-planner trope): each team reports up to a different executive, faces a different external regulator, and ships on its own release cadence. When Matching Ops tweaks the distance formula, that change should never touch Pricing's surge logic — and yet in the current code, it does. That's the SRP violation you're about to fix.
+
+      #### The Shared-Helper Trap (this is the point)
+
+      Two private helpers are wired into methods belonging to *different* actors:
+
+      - `_distance(a, b)` is called by **Matching Ops** (`match_driver`) **and** by **Trust & Safety** (`flag_if_unsafe`).
+      - `_platform_fee(subtotal)` is called by **Pricing** (`compute_fare`) **and** by **Trust & Safety** (`flag_if_unsafe` — it flags abnormally high fees as potential fraud).
+
+      So when Pricing changes `_platform_fee` to a tiered model for a Black Friday promo, Trust & Safety's fraud detector silently drifts. Nobody on Pricing reads T&S code. Nobody on T&S gets pinged about the promo. The bug ships on the biggest-revenue weekend of the year. This is what cross-actor coupling costs.
+
+      #### Your Job
+
+      Split `RideRequest` into **five focused classes**, each owned by exactly one actor (plus a shared data record):
+
+      - `RideData` — the data record (rider, pickup, dropoff, requested time). Shared as input; owned by nobody.
+      - `DriverMatcher` — owns matching logic. **Actor: Matching Ops.**
+      - `FareCalculator` — owns fare math. **Actor: Pricing.**
+      - `RideNotifier` — owns notification templates. **Actor: Communications.**
+      - `SafetyAuditor` — owns fraud + anomaly detection. **Actor: Trust & Safety.**
+
+      Each class gets its own copy of whatever helper it actually needs. `DriverMatcher` has its own `_distance()` for matching (could use euclidean or haversine — Matching Ops' call). `SafetyAuditor` has its own `_distance()` tuned for anomaly detection (maybe haversine, maybe with a jitter tolerance — T&S's call). They're no longer forced to share.
+
+      We've filled in `DriverMatcher` and `RideNotifier` as worked examples. You complete `FareCalculator`, `SafetyAuditor`, and ensure `RideData` holds the right fields. Tests will verify that no cross-actor names leak into the wrong class.
 
     files:
-      - path: "event_planner.py"
+      - path: "ride_request.py"
         content: |
-          # ── Original monolithic class (for reference) ─────────────────
-          class EventPlanner:
-              """Monolithic class handling all event planning operations.
-              This violates SRP — four actors share one class."""
-
-              def __init__(self, event_name, budget: float) -> None:
-                  self.event_name = event_name
-                  self.budget = budget
-                  self.spent = 0.0
-                  self.venue = None
-                  self.venue_cost = 0.0
-                  self.guests = {}       # {name: {"email": str, "dietary": str}}
-                  self.invitations = {}  # {name: "sent" | "accepted" | "declined"}
-
-              # Venue booking
-              def book_venue(self, venue_name, cost) -> None:
-                  if cost > (self.budget - self.spent):
-                      raise ValueError(f"Cannot afford {venue_name}: ${cost:,.2f} exceeds remaining ${self.budget - self.spent:,.2f}")
-                  self.venue = venue_name
-                  self.venue_cost = cost
-                  self.spent += cost
-
-              def get_venue(self) -> str:
-                  return self.venue
-
-              # Guest management
-              def add_guest(self, name: str, email: str, dietary="none") -> None:
-                  self.guests[name] = {"email": email, "dietary": dietary}
-
-              def remove_guest(self, name: str) -> None:
-                  if name not in self.guests:
-                      raise ValueError(f"Guest {name} not found")
-                  del self.guests[name]
-                  if name in self.invitations:
-                      del self.invitations[name]
-
-              def get_guest_count(self) -> dict[str, str]:
-                  return len(self.guests)
-
-              def list_guests(self) -> dict[str, object]:
-                  return list(self.guests.keys())
-
-              # Budget tracking
-              def add_expense(self, description: str, amount: float) -> None:
-                  if amount > (self.budget - self.spent):
-                      raise ValueError(f"Cannot add expense: ${amount:,.2f} exceeds remaining ${self.budget - self.spent:,.2f}")
-                  self.spent += amount
-
-              def get_remaining_budget(self) -> dict[str, str]:
-                  return self.budget - self.spent
-
-              def get_budget_summary(self) -> dict[str, str]:
-                  return {
-                      "total_budget": self.budget,
-                      "spent": self.spent,
-                      "remaining": self.budget - self.spent,
-                  }
-
-              # Invitation sending
-              def send_invitation(self, guest_name) -> None:
-                  if guest_name not in self.guests:
-                      raise ValueError(f"Guest {guest_name} not on the list")
-                  email = self.guests[guest_name]["email"]
-                  print(f"[EMAIL] Invitation to {self.event_name} sent to {guest_name} <{email}>")
-                  self.invitations[guest_name] = "sent"
-
-              def record_rsvp(self, guest_name, status) -> float:
-                  if guest_name not in self.invitations:
-                      raise ValueError(f"No invitation sent to {guest_name}")
-                  if status not in ("accepted", "declined"):
-                      raise ValueError(f"Invalid RSVP status: {status}")
-                  self.invitations[guest_name] = status
-
-              def get_rsvp_summary(self) -> str:
-                  summary = {"sent": 0, "accepted": 0, "declined": 0}
-                  for status in self.invitations.values():
-                      summary[status] += 1
-                  return summary
+          from __future__ import annotations
+          from dataclasses import dataclass, field
+          from typing import Any
 
 
-          # ── Refactored classes (complete the TODOs) ───────────────────
+          # ── Original monolithic class (for reference — do not edit) ────────
+          class RideRequest:
+              """Monolithic class handling an entire NightOwl ride lifecycle.
+              Violates SRP: four distinct actors (Matching Ops, Pricing,
+              Communications, Trust & Safety) all share one class — and one
+              another's helpers. Touching one actor's code routinely breaks
+              another's without warning."""
 
-          class VenueManager:
-              """Handles venue booking and availability. Actor: Venue Manager."""
+              def __init__(self, rider_id: str, pickup: tuple[float, float],
+                           dropoff: tuple[float, float]) -> None:
+                  self.rider_id = rider_id
+                  self.pickup = pickup
+                  self.dropoff = dropoff
+                  self.driver_id: str | None = None
+                  self.fare: float | None = None
+                  self.flags: list[str] = []
 
-              def __init__(self) -> None:
-                  self.venue = None
-                  self.venue_cost = 0.0
+              # ── Matching Ops territory ────────────────────────────────────
+              def match_driver(self, drivers: list[dict[str, Any]]) -> str:
+                  """Pick the nearest driver to the pickup point."""
+                  best = min(drivers, key=lambda d: self._distance(d["loc"], self.pickup))
+                  self.driver_id = best["id"]
+                  return best["id"]
 
-              def book(self, venue_name, cost) -> str:
-                  """Book a venue with the given name and cost.
-                  Sets self.venue and self.venue_cost."""
-                  self.venue = venue_name
-                  self.venue_cost = cost
+              # ── Pricing territory ─────────────────────────────────────────
+              def compute_fare(self, distance_km: float, surge: float = 1.0) -> float:
+                  """Base + per-km, times surge, plus platform fee."""
+                  base, per_km = 2.50, 1.20
+                  subtotal = (base + distance_km * per_km) * surge
+                  self.fare = round(subtotal + self._platform_fee(subtotal), 2)
+                  return self.fare
 
-              def get_venue(self) -> str:
-                  """Return the current venue name (or None if not booked)."""
-                  return self.venue
+              # ── Communications territory ──────────────────────────────────
+              def notify_rider(self, driver_name: str, eta_min: int) -> str:
+                  """Compose the rider-facing arrival message."""
+                  return (f"NightOwl: {driver_name} arrives in {eta_min} min. "
+                          f"Fare est: ${self.fare:.2f}")
 
-              def get_cost(self) -> str:
-                  """Return the venue cost."""
-                  return self.venue_cost
+              # ── Trust & Safety territory ──────────────────────────────────
+              def flag_if_unsafe(self) -> None:
+                  """Fraud & anomaly detection.
+                  Uses _distance to detect absurdly-short rides (fake runs to
+                  farm promos) AND _platform_fee to detect high-fee outliers."""
+                  if self._distance(self.pickup, self.dropoff) < 0.2:
+                      self.flags.append("SUSPICIOUS_SHORT_RIDE")
+                  if self.fare is not None and self._platform_fee(self.fare) > 8.00:
+                      self.flags.append("HIGH_FEE_OUTLIER")
+
+              # ── Private helpers — the trap ────────────────────────────────
+              def _distance(self, a: tuple[float, float], b: tuple[float, float]) -> float:
+                  """Shared by match_driver (Matching Ops) AND flag_if_unsafe (T&S)."""
+                  return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+              def _platform_fee(self, subtotal: float) -> float:
+                  """Shared by compute_fare (Pricing) AND flag_if_unsafe (T&S).
+                  If Pricing tweaks this for a promo, T&S's fraud detector
+                  silently drifts — and nobody notices until post-mortem."""
+                  return subtotal * 0.15
 
 
-          class GuestRegistry:
-              """Manages the guest list. Actor: Event Coordinator."""
+          # ══════════════════════════════════════════════════════════════════
+          # REFACTORED DESIGN — each class owned by exactly one actor
+          # ══════════════════════════════════════════════════════════════════
 
-              def __init__(self) -> None:
-                  self.guests = {}  # {name: {"email": str, "dietary": str}}
+          @dataclass
+          class RideData:
+              """Pure data record. Shared as *input* to actor classes;
+              owned by nobody, so it has no actor's logic."""
+              rider_id: str
+              pickup: tuple[float, float]
+              dropoff: tuple[float, float]
+              driver_id: str | None = None
+              fare: float | None = None
+              flags: list[str] = field(default_factory=list)
 
-              def add(self, name: str, email: str, dietary="none") -> str:
-                  """Add a guest with their email and dietary preference."""
-                  # TODO: Add the guest to self.guests
+
+          # ── Worked example #1 — Matching Ops ──────────────────────────────
+          class DriverMatcher:
+              """Picks the nearest driver for a ride. Actor: Matching Ops.
+              Owns its own distance function — tuned for matching (fast,
+              euclidean is fine for short distances)."""
+
+              def match(self, ride: RideData, drivers: list[dict[str, Any]]) -> str:
+                  best = min(drivers, key=lambda d: self._distance(d["loc"], ride.pickup))
+                  ride.driver_id = best["id"]
+                  return best["id"]
+
+              def _distance(self, a: tuple[float, float], b: tuple[float, float]) -> float:
+                  # Matching Ops: fast euclidean is fine for short city rides.
+                  return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
+          # ── Worked example #2 — Communications ────────────────────────────
+          class RideNotifier:
+              """Formats rider/driver messages. Actor: Communications.
+              Owns template strings. Works with Legal on TCPA compliance."""
+
+              BRAND = "NightOwl"
+
+              def rider_arrival(self, ride: RideData, driver_name: str, eta_min: int) -> str:
+                  fare_str = f"${ride.fare:.2f}" if ride.fare is not None else "TBD"
+                  return (f"{self.BRAND}: {driver_name} arrives in {eta_min} min. "
+                          f"Fare est: {fare_str}")
+
+              def driver_heads_up(self, ride: RideData, rider_name: str) -> str:
+                  return (f"{self.BRAND}: New ride for {rider_name}. "
+                          f"Pickup at {ride.pickup}.")
+
+
+          # ── Your turn #1 — Pricing ────────────────────────────────────────
+          class FareCalculator:
+              """Computes ride fares. Actor: Pricing.
+              Owns ITS OWN platform-fee logic — so T&S's fraud detector
+              is no longer silently coupled to Pricing's experiments."""
+
+              BASE = 2.50
+              PER_KM = 1.20
+
+              def compute(self, ride: RideData, distance_km: float, surge: float = 1.0) -> float:
+                  """Return the total fare and set ride.fare.
+                  Formula: (base + per_km * distance_km) * surge + platform_fee.
+                  Round to 2 decimals."""
+                  # TODO: compute subtotal using BASE, PER_KM, distance_km, surge
+                  # TODO: add self._platform_fee(subtotal)
+                  # TODO: round to 2 decimals, set ride.fare, and return it
                   pass
 
-              def remove(self, name: str) -> str:
-                  """Remove a guest by name. Raise ValueError if not found."""
-                  # TODO: Remove the guest, raise ValueError if name not in self.guests
+              def _platform_fee(self, subtotal: float) -> float:
+                  """Pricing's OWN platform fee. When Pricing changes this for
+                  a promo, nothing else in the system silently shifts."""
+                  return subtotal * 0.15
+
+
+          # ── Your turn #2 — Trust & Safety ─────────────────────────────────
+          class SafetyAuditor:
+              """Flags anomalies on a ride. Actor: Trust & Safety.
+              Owns ITS OWN distance function AND ITS OWN fee threshold —
+              so Matching Ops and Pricing can tune theirs freely."""
+
+              SHORT_RIDE_THRESHOLD_KM = 0.2
+              HIGH_FEE_ABSOLUTE_THRESHOLD = 8.00
+
+              def audit(self, ride: RideData) -> list[str]:
+                  """Populate ride.flags based on anomaly rules, then return them."""
+                  # TODO: if self._distance(ride.pickup, ride.dropoff) is below
+                  #       SHORT_RIDE_THRESHOLD_KM, append "SUSPICIOUS_SHORT_RIDE".
+                  # TODO: if ride.fare is not None and is above
+                  #       HIGH_FEE_ABSOLUTE_THRESHOLD, append "HIGH_FEE_OUTLIER".
+                  # TODO: return ride.flags.
                   pass
 
-              def get(self, name: str) -> str:
-                  """Return guest info dict. Raise ValueError if not found."""
-                  if name not in self.guests:
-                      raise ValueError(f"Guest {name} not found")
-                  return self.guests[name]
-
-              def count(self) -> float:
-                  """Return the number of guests."""
-                  return len(self.guests)
-
-              def list_names(self) -> float:
-                  """Return a list of all guest names."""
-                  return list(self.guests.keys())
+              def _distance(self, a: tuple[float, float], b: tuple[float, float]) -> float:
+                  """T&S's OWN distance function. T&S might swap to haversine
+                  later without asking Matching Ops for permission."""
+                  return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
 
-          class BudgetTracker:
-              """Tracks event budget and expenses. Actor: Finance."""
-
-              def __init__(self, budget: float) -> None:
-                  self.budget = budget
-                  self.spent = 0.0
-
-              def add_expense(self, description: str, amount: float) -> None:
-                  """Add an expense. Raise ValueError if it exceeds remaining budget."""
-                  # TODO: Check if amount exceeds remaining budget, raise ValueError if so
-                  # TODO: Add amount to self.spent
-                  pass
-
-              def get_remaining(self) -> dict[str, str]:
-                  """Return the remaining budget."""
-                  # TODO: Return budget minus spent
-                  pass
-
-              def get_summary(self) -> dict[str, str]:
-                  """Return a dict with total_budget, spent, and remaining."""
-                  return {
-                      "total_budget": self.budget,
-                      "spent": self.spent,
-                      "remaining": self.budget - self.spent,
-                  }
-
-
-          class InvitationSender:
-              """Sends invitations and tracks RSVPs. Actor: Communications."""
-
-              def __init__(self, event_name) -> None:
-                  self.event_name = event_name
-                  self.invitations = {}  # {name: "sent" | "accepted" | "declined"}
-
-              def send(self, guest_name, guest_email) -> dict[str, object]:
-                  """Send an invitation to a guest. Prints a simulated email."""
-                  print(f"[EMAIL] Invitation to {self.event_name} sent to {guest_name} <{guest_email}>")
-                  self.invitations[guest_name] = "sent"
-
-              def record_rsvp(self, guest_name, status) -> dict[str, object]:
-                  """Record an RSVP. Status must be 'accepted' or 'declined'.
-                  Raise ValueError if no invitation was sent or status is invalid."""
-                  # TODO: Check that guest_name is in self.invitations, raise ValueError if not
-                  # TODO: Check that status is "accepted" or "declined", raise ValueError if not
-                  # TODO: Update self.invitations[guest_name] to the new status
-                  pass
-
-              def get_rsvp_summary(self) -> dict[str, str]:
-                  """Return a dict with counts of sent, accepted, and declined."""
-                  # TODO: Count invitations by status and return {"sent": n, "accepted": n, "declined": n}
-                  pass
-
-
-          # ── Demo: using the refactored classes together ────────────────
+          # ── Demo: each actor's class collaborates through RideData ─────────
           if __name__ == "__main__":
-              budget = BudgetTracker(10000)
-              venue = VenueManager()
-              guests = GuestRegistry()
-              invites = InvitationSender("Company Gala")
+              ride = RideData(
+                  rider_id="R-42",
+                  pickup=(0.0, 0.0),
+                  dropoff=(3.0, 4.0),  # 5km euclidean
+              )
 
-              # Book venue
-              venue.book("Grand Ballroom", 3000)
-              budget.add_expense("Venue: Grand Ballroom", venue.get_cost())
+              drivers = [
+                  {"id": "D-1", "loc": (0.1, 0.1)},
+                  {"id": "D-2", "loc": (10.0, 10.0)},
+              ]
 
-              # Add guests
-              guests.add("Alice Johnson", "alice@example.com", "vegetarian")
-              guests.add("Bob Smith", "bob@example.com")
-              guests.add("Carol Davis", "carol@example.com", "gluten-free")
+              matcher = DriverMatcher()
+              pricer = FareCalculator()
+              notifier = RideNotifier()
+              auditor = SafetyAuditor()
 
-              # Send invitations
-              for name in guests.list_names():
-                  guest_info = guests.get(name)
-                  invites.send(name, guest_info["email"])
+              matcher.match(ride, drivers)
+              pricer.compute(ride, distance_km=5.0, surge=1.0)
+              flags = auditor.audit(ride)
 
-              # Record RSVPs
-              invites.record_rsvp("Alice Johnson", "accepted")
-              invites.record_rsvp("Bob Smith", "declined")
-
-              # Budget update
-              budget.add_expense("Catering", 2500)
-              budget.add_expense("Decorations", 800)
-
-              print(f"\nVenue: {venue.get_venue()}")
-              print(f"Guests: {guests.count()}")
-              print(f"Budget: {budget.get_summary()}")
-              print(f"RSVPs: {invites.get_rsvp_summary()}")
+              print(f"Driver: {ride.driver_id}")
+              print(f"Fare:   ${ride.fare:.2f}" if ride.fare else "Fare: (not set)")
+              print(f"Flags:  {flags}")
+              print(notifier.rider_arrival(ride, driver_name="Avery", eta_min=4))
         language: "python"
 
-    open_file: "event_planner.py"
+    open_file: "ride_request.py"
 
     solution:
       files:
-        - path: "event_planner.py"
+        - path: "ride_request.py"
           content: |
-            # ── Original monolithic class (for reference) ─────────────────
-            class EventPlanner:
-                """Monolithic class handling all event planning operations.
-                This violates SRP — four actors share one class."""
-
-                def __init__(self, event_name, budget: float) -> None:
-                    self.event_name = event_name
-                    self.budget = budget
-                    self.spent = 0.0
-                    self.venue = None
-                    self.venue_cost = 0.0
-                    self.guests = {}       # {name: {"email": str, "dietary": str}}
-                    self.invitations = {}  # {name: "sent" | "accepted" | "declined"}
-
-                # Venue booking
-                def book_venue(self, venue_name, cost) -> None:
-                    if cost > (self.budget - self.spent):
-                        raise ValueError(f"Cannot afford {venue_name}: ${cost:,.2f} exceeds remaining ${self.budget - self.spent:,.2f}")
-                    self.venue = venue_name
-                    self.venue_cost = cost
-                    self.spent += cost
-
-                def get_venue(self) -> str:
-                    return self.venue
-
-                # Guest management
-                def add_guest(self, name: str, email: str, dietary="none") -> None:
-                    self.guests[name] = {"email": email, "dietary": dietary}
-
-                def remove_guest(self, name: str) -> None:
-                    if name not in self.guests:
-                        raise ValueError(f"Guest {name} not found")
-                    del self.guests[name]
-                    if name in self.invitations:
-                        del self.invitations[name]
-
-                def get_guest_count(self) -> dict[str, str]:
-                    return len(self.guests)
-
-                def list_guests(self) -> dict[str, object]:
-                    return list(self.guests.keys())
-
-                # Budget tracking
-                def add_expense(self, description: str, amount: float) -> None:
-                    if amount > (self.budget - self.spent):
-                        raise ValueError(f"Cannot add expense: ${amount:,.2f} exceeds remaining ${self.budget - self.spent:,.2f}")
-                    self.spent += amount
-
-                def get_remaining_budget(self) -> dict[str, str]:
-                    return self.budget - self.spent
-
-                def get_budget_summary(self) -> dict[str, str]:
-                    return {
-                        "total_budget": self.budget,
-                        "spent": self.spent,
-                        "remaining": self.budget - self.spent,
-                    }
-
-                # Invitation sending
-                def send_invitation(self, guest_name) -> None:
-                    if guest_name not in self.guests:
-                        raise ValueError(f"Guest {guest_name} not on the list")
-                    email = self.guests[guest_name]["email"]
-                    print(f"[EMAIL] Invitation to {self.event_name} sent to {guest_name} <{email}>")
-                    self.invitations[guest_name] = "sent"
-
-                def record_rsvp(self, guest_name, status) -> float:
-                    if guest_name not in self.invitations:
-                        raise ValueError(f"No invitation sent to {guest_name}")
-                    if status not in ("accepted", "declined"):
-                        raise ValueError(f"Invalid RSVP status: {status}")
-                    self.invitations[guest_name] = status
-
-                def get_rsvp_summary(self) -> str:
-                    summary = {"sent": 0, "accepted": 0, "declined": 0}
-                    for status in self.invitations.values():
-                        summary[status] += 1
-                    return summary
+            from __future__ import annotations
+            from dataclasses import dataclass, field
+            from typing import Any
 
 
-            # ── Refactored classes ──────────────────────────────────────────
+            # Monolithic reference class omitted for brevity — see starter.
 
-            class VenueManager:
-                """Handles venue booking and availability. Actor: Venue Manager."""
-
-                def __init__(self) -> None:
-                    self.venue = None
-                    self.venue_cost = 0.0
-
-                def book(self, venue_name, cost) -> str:
-                    """Book a venue with the given name and cost."""
-                    self.venue = venue_name
-                    self.venue_cost = cost
-
-                def get_venue(self) -> str:
-                    """Return the current venue name (or None if not booked)."""
-                    return self.venue
-
-                def get_cost(self) -> str:
-                    """Return the venue cost."""
-                    return self.venue_cost
+            @dataclass
+            class RideData:
+                rider_id: str
+                pickup: tuple[float, float]
+                dropoff: tuple[float, float]
+                driver_id: str | None = None
+                fare: float | None = None
+                flags: list[str] = field(default_factory=list)
 
 
-            class GuestRegistry:
-                """Manages the guest list. Actor: Event Coordinator."""
+            class DriverMatcher:
+                """Actor: Matching Ops."""
 
-                def __init__(self) -> None:
-                    self.guests = {}  # {name: {"email": str, "dietary": str}}
+                def match(self, ride: RideData, drivers: list[dict[str, Any]]) -> str:
+                    best = min(drivers, key=lambda d: self._distance(d["loc"], ride.pickup))
+                    ride.driver_id = best["id"]
+                    return best["id"]
 
-                def add(self, name: str, email: str, dietary="none") -> str:
-                    """Add a guest with their email and dietary preference."""
-                    self.guests[name] = {"email": email, "dietary": dietary}
-
-                def remove(self, name: str) -> str:
-                    """Remove a guest by name. Raise ValueError if not found."""
-                    if name not in self.guests:
-                        raise ValueError(f"Guest {name} not found")
-                    del self.guests[name]
-
-                def get(self, name: str) -> str:
-                    """Return guest info dict. Raise ValueError if not found."""
-                    if name not in self.guests:
-                        raise ValueError(f"Guest {name} not found")
-                    return self.guests[name]
-
-                def count(self) -> float:
-                    """Return the number of guests."""
-                    return len(self.guests)
-
-                def list_names(self) -> float:
-                    """Return a list of all guest names."""
-                    return list(self.guests.keys())
+                def _distance(self, a, b):
+                    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
 
-            class BudgetTracker:
-                """Tracks event budget and expenses. Actor: Finance."""
+            class FareCalculator:
+                """Actor: Pricing."""
 
-                def __init__(self, budget: float) -> None:
-                    self.budget = budget
-                    self.spent = 0.0
+                BASE = 2.50
+                PER_KM = 1.20
 
-                def add_expense(self, description: str, amount: float) -> None:
-                    """Add an expense. Raise ValueError if it exceeds remaining budget."""
-                    remaining = self.budget - self.spent
-                    if amount > remaining:
-                        raise ValueError(
-                            f"Cannot add expense: ${amount:,.2f} exceeds remaining ${remaining:,.2f}"
-                        )
-                    self.spent += amount
+                def compute(self, ride: RideData, distance_km: float, surge: float = 1.0) -> float:
+                    subtotal = (self.BASE + self.PER_KM * distance_km) * surge
+                    total = subtotal + self._platform_fee(subtotal)
+                    ride.fare = round(total, 2)
+                    return ride.fare
 
-                def get_remaining(self) -> dict[str, str]:
-                    """Return the remaining budget."""
-                    return self.budget - self.spent
-
-                def get_summary(self) -> dict[str, str]:
-                    """Return a dict with total_budget, spent, and remaining."""
-                    return {
-                        "total_budget": self.budget,
-                        "spent": self.spent,
-                        "remaining": self.budget - self.spent,
-                    }
+                def _platform_fee(self, subtotal: float) -> float:
+                    return subtotal * 0.15
 
 
-            class InvitationSender:
-                """Sends invitations and tracks RSVPs. Actor: Communications."""
+            class RideNotifier:
+                """Actor: Communications."""
 
-                def __init__(self, event_name) -> None:
-                    self.event_name = event_name
-                    self.invitations = {}  # {name: "sent" | "accepted" | "declined"}
+                BRAND = "NightOwl"
 
-                def send(self, guest_name, guest_email) -> float:
-                    """Send an invitation to a guest."""
-                    print(f"[EMAIL] Invitation to {self.event_name} sent to {guest_name} <{guest_email}>")
-                    self.invitations[guest_name] = "sent"
+                def rider_arrival(self, ride: RideData, driver_name: str, eta_min: int) -> str:
+                    fare_str = f"${ride.fare:.2f}" if ride.fare is not None else "TBD"
+                    return (f"{self.BRAND}: {driver_name} arrives in {eta_min} min. "
+                            f"Fare est: {fare_str}")
 
-                def record_rsvp(self, guest_name, status) -> float:
-                    """Record an RSVP response."""
-                    if guest_name not in self.invitations:
-                        raise ValueError(f"No invitation sent to {guest_name}")
-                    if status not in ("accepted", "declined"):
-                        raise ValueError(f"Invalid RSVP status: {status}")
-                    self.invitations[guest_name] = status
-
-                def get_rsvp_summary(self) -> str:
-                    """Return counts of sent, accepted, and declined."""
-                    summary = {"sent": 0, "accepted": 0, "declined": 0}
-                    for status in self.invitations.values():
-                        summary[status] += 1
-                    return summary
+                def driver_heads_up(self, ride: RideData, rider_name: str) -> str:
+                    return (f"{self.BRAND}: New ride for {rider_name}. "
+                            f"Pickup at {ride.pickup}.")
 
 
-            # ── Demo: using the refactored classes together ────────────────
+            class SafetyAuditor:
+                """Actor: Trust & Safety."""
+
+                SHORT_RIDE_THRESHOLD_KM = 0.2
+                HIGH_FEE_ABSOLUTE_THRESHOLD = 8.00
+
+                def audit(self, ride: RideData) -> list[str]:
+                    if self._distance(ride.pickup, ride.dropoff) < self.SHORT_RIDE_THRESHOLD_KM:
+                        ride.flags.append("SUSPICIOUS_SHORT_RIDE")
+                    if ride.fare is not None and ride.fare > self.HIGH_FEE_ABSOLUTE_THRESHOLD:
+                        ride.flags.append("HIGH_FEE_OUTLIER")
+                    return ride.flags
+
+                def _distance(self, a, b):
+                    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
             if __name__ == "__main__":
-                budget = BudgetTracker(10000)
-                venue = VenueManager()
-                guests = GuestRegistry()
-                invites = InvitationSender("Company Gala")
-
-                # Book venue
-                venue.book("Grand Ballroom", 3000)
-                budget.add_expense("Venue: Grand Ballroom", venue.get_cost())
-
-                # Add guests
-                guests.add("Alice Johnson", "alice@example.com", "vegetarian")
-                guests.add("Bob Smith", "bob@example.com")
-                guests.add("Carol Davis", "carol@example.com", "gluten-free")
-
-                # Send invitations
-                for name in guests.list_names():
-                    guest_info = guests.get(name)
-                    invites.send(name, guest_info["email"])
-
-                # Record RSVPs
-                invites.record_rsvp("Alice Johnson", "accepted")
-                invites.record_rsvp("Bob Smith", "declined")
-
-                # Budget update
-                budget.add_expense("Catering", 2500)
-                budget.add_expense("Decorations", 800)
-
-                print(f"\nVenue: {venue.get_venue()}")
-                print(f"Guests: {guests.count()}")
-                print(f"Budget: {budget.get_summary()}")
-                print(f"RSVPs: {invites.get_rsvp_summary()}")
+                ride = RideData(rider_id="R-42", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+                drivers = [
+                    {"id": "D-1", "loc": (0.1, 0.1)},
+                    {"id": "D-2", "loc": (10.0, 10.0)},
+                ]
+                DriverMatcher().match(ride, drivers)
+                FareCalculator().compute(ride, distance_km=5.0, surge=1.0)
+                SafetyAuditor().audit(ride)
+                print(RideNotifier().rider_arrival(ride, driver_name="Avery", eta_min=4))
           language: "python"
       explanation: |
-        **The refactoring separates each actor's concern into its own class:**
+        **Each class serves exactly one actor, owns its own private helpers, and can evolve without bleeding into another team's code.**
 
-        - **`VenueManager`** — Already provided. Handles only venue booking.
-        - **`GuestRegistry`** — The `add()` method stores guest data in the dict. The `remove()` method checks for existence before deleting. Each method is straightforward because it only deals with guest data.
-        - **`BudgetTracker`** — `add_expense()` checks the remaining budget before adding. `get_remaining()` returns the simple subtraction. No formatting or display logic leaks in.
-        - **`InvitationSender`** — `record_rsvp()` validates both that an invitation exists and that the status is valid. `get_rsvp_summary()` counts statuses in a simple loop.
+        - **`FareCalculator.compute`** — multiplies `(BASE + PER_KM * distance_km) * surge`, then adds Pricing's **own** `_platform_fee`. If Pricing experiments with tiered fees next week, T&S's fraud detector is untouched.
+        - **`SafetyAuditor.audit`** — uses **its own** `_distance` and **its own** fee threshold. When Matching Ops switches from euclidean to haversine for better matching, T&S keeps its own detection formula stable.
+        - **`RideData`** — a plain data record. No actor owns it, so no actor's logic lives on it. Every class accepts a `RideData` and mutates only the fields relevant to their job (`driver_id`, `fare`, `flags`).
 
-        **Key insight:** Each class can now change independently. The Finance actor can modify `BudgetTracker` without affecting guest management. The Communications actor can change invitation formatting without touching the budget. This is the Single Responsibility Principle in action.
+        **Key insight — the cost of duplication is worth it here.** Yes, both `DriverMatcher._distance` and `SafetyAuditor._distance` implement the same formula today. That's fine: duplication across **actor boundaries** buys independence. One actor can change their formula without asking the other for permission. SRP trades a few lines of duplicated code for the ability to change software without terror — which is almost always the right trade in systems that ship for years.
 
     tests:
-      - description: "VenueManager class exists"
+      - description: "RideData is a data record you can instantiate"
         command: |
-          exec(open('/tutorial/event_planner.py').read())
-          assert 'VenueManager' in dir(), "Class VenueManager not found. Did you define it?"
-      - description: "GuestRegistry class exists"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          assert 'GuestRegistry' in dir(), "Class GuestRegistry not found. Did you define it?"
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(1.0, 1.0))
+          assert r.rider_id == "R-1", "RideData should carry rider_id"
+          assert r.flags == [], "RideData.flags should start as an empty list"
         hints:
-          - text: "Define a `GuestRegistry` class that manages guest data. Move the guest-related methods from `EventPlanner` into this new class."
-            condition: "default"
-      - description: "BudgetTracker class exists"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          assert 'BudgetTracker' in dir(), "Class BudgetTracker not found. Did you define it?"
-        hints:
-          - text: "Define a `BudgetTracker` class that manages budget and expenses. Move the budget-related methods from `EventPlanner` into this new class."
-            condition: "default"
-      - description: "InvitationSender class exists"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          assert 'InvitationSender' in dir(), "Class InvitationSender not found. Did you define it?"
-        hints:
-          - text: "Define an `InvitationSender` class that handles sending invitations and tracking RSVPs. Move the invitation-related methods from `EventPlanner` into this new class."
-            condition: "default"
-      - description: "VenueManager stores the venue name after booking"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          vm = VenueManager()
-          vm.book("Conference Hall", 5000)
-          assert vm.get_venue() == "Conference Hall", \
-              f"Expected venue 'Conference Hall', got {repr(vm.get_venue())}"
-      - description: "VenueManager stores the venue cost after booking"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          vm = VenueManager()
-          vm.book("Conference Hall", 5000)
-          assert vm.get_cost() == 5000, \
-              f"Expected cost 5000, got {vm.get_cost()}"
-      - description: "GuestRegistry counts guests correctly after adding"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          gr = GuestRegistry()
-          gr.add("Alice", "alice@test.com", "vegetarian")
-          gr.add("Bob", "bob@test.com")
-          assert gr.count() == 2, f"Expected 2 guests, got {gr.count()}"
-        hints:
-          - text: "The `add()` method should store the guest in `self.guests` using the name as the key. Look at how `add_guest()` works in the original `EventPlanner` class for the pattern."
-            condition: "default"
-      - description: "GuestRegistry lists guest names"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          gr = GuestRegistry()
-          gr.add("Alice", "alice@test.com", "vegetarian")
-          gr.add("Bob", "bob@test.com")
-          assert "Alice" in gr.list_names(), "Alice should be in the guest list"
-          assert "Bob" in gr.list_names(), "Bob should be in the guest list"
-        hints:
-          - text: "`list_names()` should return the keys of `self.guests` (or a list of them)."
-            condition: "default"
-      - description: "GuestRegistry removes guests correctly"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          gr = GuestRegistry()
-          gr.add("Alice", "alice@test.com")
-          gr.add("Bob", "bob@test.com")
-          gr.remove("Alice")
-          assert gr.count() == 1, f"Expected 1 guest after removal, got {gr.count()}"
-        hints:
-          - text: "The `remove()` method should use `del self.guests[name]` to remove the guest."
-            condition: "default"
-      - description: "GuestRegistry raises error for removing unknown guests"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          gr = GuestRegistry()
-          gr.add("Alice", "alice@test.com")
-          try:
-              gr.remove("Nobody")
-              assert False, "remove() should raise ValueError for unknown guest"
-          except ValueError:
-              pass
-        hints:
-          - text: "Before deleting, check if the name exists in `self.guests`. If not, raise a ValueError."
-            condition: "default"
-      - description: "BudgetTracker tracks remaining budget after expenses"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          bt = BudgetTracker(10000)
-          bt.add_expense("Venue", 3000)
-          bt.add_expense("Catering", 2000)
-          assert bt.get_remaining() == 5000, \
-              f"Expected remaining budget of 5000, got {bt.get_remaining()}"
-        hints:
-          - text: "`add_expense()` should add the amount to `self.spent`. `get_remaining()` should return `self.budget - self.spent`."
-            condition: "default"
-      - description: "BudgetTracker get_summary() returns correct totals"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          bt = BudgetTracker(10000)
-          bt.add_expense("Venue", 3000)
-          bt.add_expense("Catering", 2000)
-          summary = bt.get_summary()
-          assert summary["total_budget"] == 10000, \
-              f"Total budget should be 10000, got {summary.get('total_budget')}"
-          assert summary["spent"] == 5000, \
-              f"Spent should be 5000, got {summary.get('spent')}"
-          assert summary["remaining"] == 5000, \
-              f"Remaining should be 5000, got {summary.get('remaining')}"
-        hints:
-          - text: "`get_summary()` should return a dict with keys 'total_budget', 'spent', and 'remaining'."
-            condition: "default"
-      - description: "BudgetTracker rejects expenses exceeding the budget"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          bt = BudgetTracker(1000)
-          bt.add_expense("Small item", 800)
-          try:
-              bt.add_expense("Too expensive", 500)
-              assert False, "add_expense() should raise ValueError when amount exceeds remaining budget"
-          except ValueError:
-              pass
-        hints:
-          - text: "Before adding the expense, check if `amount > (self.budget - self.spent)`. If so, raise a ValueError with a descriptive message."
-            condition: "default"
-      - description: "InvitationSender sends invitations"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          inv = InvitationSender("Test Event")
-          inv.send("Alice", "alice@test.com")
-          inv.send("Bob", "bob@test.com")
-          summary = inv.get_rsvp_summary()
-          assert summary["sent"] == 2, f"Expected 2 sent invitations, got {summary.get('sent')}"
-        hints:
-          - text: "`send()` should store the invitation in `self.invitations` with status 'sent'. For example: `self.invitations[guest_name] = {'email': email, 'status': 'sent'}`."
-            condition: "default"
-      - description: "InvitationSender tracks accepted RSVPs"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          inv = InvitationSender("Test Event")
-          inv.send("Alice", "alice@test.com")
-          inv.send("Bob", "bob@test.com")
-          inv.record_rsvp("Alice", "accepted")
-          summary = inv.get_rsvp_summary()
-          assert summary["accepted"] == 1, f"Expected 1 accepted, got {summary.get('accepted')}"
-        hints:
-          - text: "`record_rsvp()` should update the invitation's status. `get_rsvp_summary()` should count invitations by status."
-            condition: "default"
-      - description: "InvitationSender tracks declined RSVPs"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          inv = InvitationSender("Test Event")
-          inv.send("Alice", "alice@test.com")
-          inv.send("Bob", "bob@test.com")
-          inv.record_rsvp("Bob", "declined")
-          summary = inv.get_rsvp_summary()
-          assert summary["declined"] == 1, f"Expected 1 declined, got {summary.get('declined')}"
-      - description: "InvitationSender rejects RSVP for uninvited guest"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          inv = InvitationSender("Test Event")
-          inv.send("Alice", "alice@test.com")
-          try:
-              inv.record_rsvp("Nobody", "accepted")
-              assert False, "record_rsvp() should raise ValueError for uninvited guest"
-          except ValueError:
-              pass
-        hints:
-          - text: "Before updating, check that `guest_name` is in `self.invitations`. If not, raise a ValueError."
-            condition: "default"
-      - description: "InvitationSender rejects invalid RSVP status"
-        command: |
-          exec(open('/tutorial/event_planner.py').read())
-          inv = InvitationSender("Test Event")
-          inv.send("Alice", "alice@test.com")
-          try:
-              inv.record_rsvp("Alice", "maybe")
-              assert False, "record_rsvp() should raise ValueError for invalid status (only 'accepted' or 'declined' allowed)"
-          except ValueError:
-              pass
-        hints:
-          - text: "Check that `status` is either 'accepted' or 'declined'. If not, raise a ValueError."
-            condition: "default"
-      - description: "The demo script runs without errors"
-        command: |
-          output = __run_capture('/tutorial/event_planner.py')
-          assert "Venue:" in output, "Demo should print venue information"
-          assert "Guests:" in output, "Demo should print guest count"
-
-      # ── SRP decoupling proof: Finance changes cannot bleed into Guest or Invite logic ──
-      - description: "SRP decoupling proof — BudgetTracker's source does not mention guests, invitations, or venues"
-        command: |
-          import ast
-          source = open('/tutorial/event_planner.py').read()
-          tree = ast.parse(source)
-          # Find BudgetTracker class and check its text for cross-concern leakage
-          for node in ast.walk(tree):
-              if isinstance(node, ast.ClassDef) and node.name == 'BudgetTracker':
-                  body_src = ast.get_source_segment(source, node) or ''
-                  lowered = body_src.lower()
-                  for forbidden in ('guest', 'invitation', 'rsvp', 'email'):
-                      assert forbidden not in lowered, (
-                          f"BudgetTracker references '{forbidden}' — that's a concern belonging "
-                          f"to a different actor. The whole point of SRP is that changes requested "
-                          f"by Finance should not touch guest or communication code, and vice versa. "
-                          f"Remove the reference from BudgetTracker."
-                      )
-                  break
-          else:
-              raise AssertionError("Could not find BudgetTracker class in event_planner.py")
-        hints:
-          - text: "BudgetTracker is owned by the Finance actor. It should know about expenses and budget — nothing about guests, invitations, or emails."
+          - text: "RideData is already provided as a @dataclass. You don't need to change it — just make sure other classes accept and mutate RideData instances."
             condition: "default"
 
-      - description: "SRP decoupling proof — InvitationSender's source does not mention budgets or venues"
+      - description: "DriverMatcher picks the nearest driver (worked example)"
         command: |
-          import ast
-          source = open('/tutorial/event_planner.py').read()
-          tree = ast.parse(source)
-          for node in ast.walk(tree):
-              if isinstance(node, ast.ClassDef) and node.name == 'InvitationSender':
-                  body_src = ast.get_source_segment(source, node) or ''
-                  lowered = body_src.lower()
-                  for forbidden in ('budget', 'expense', 'venue'):
-                      assert forbidden not in lowered, (
-                          f"InvitationSender references '{forbidden}' — that belongs to a "
-                          f"different actor (Finance or Venue Manager). Keep each class "
-                          f"focused on its own actor."
-                      )
-                  break
-          else:
-              raise AssertionError("Could not find InvitationSender class in event_planner.py")
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          drivers = [{"id": "D-far", "loc": (10.0, 10.0)}, {"id": "D-near", "loc": (0.1, 0.1)}]
+          assert DriverMatcher().match(r, drivers) == "D-near"
+          assert r.driver_id == "D-near"
+
+      - description: "FareCalculator.compute returns the right total and sets ride.fare"
+        command: |
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          total = FareCalculator().compute(r, distance_km=5.0, surge=1.0)
+          # (2.50 + 1.20*5.0) * 1.0 = 8.50 ; + 15% platform fee = 9.775 -> rounded 9.77 or 9.78
+          assert total is not None, "compute should return the fare, not None"
+          assert 9.7 < total < 9.9, f"Expected ~9.78, got {total}"
+          assert r.fare == total, "compute() must assign the rounded total to ride.fare"
         hints:
-          - text: "InvitationSender is owned by the Communications actor. Remove any references to budget or venue from it."
+          - text: "subtotal = (BASE + PER_KM * distance_km) * surge. Then total = subtotal + self._platform_fee(subtotal). Round total to 2 decimals and store in ride.fare before returning."
             condition: "default"
 
-      - description: "SRP decoupling proof — changing BudgetTracker's behavior does not alter GuestRegistry state"
+      - description: "FareCalculator applies surge multiplier"
         command: |
-          # Simulate: Finance actor changes the budget policy. The guest list must be unaffected.
-          exec(open('/tutorial/event_planner.py').read(), globals())
-          g = GuestRegistry()
-          g.add("Alice", "alice@example.com")
-          g.add("Bob", "bob@example.com")
-          snapshot_before = list(g.guests.keys())
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          normal = FareCalculator().compute(r, distance_km=5.0, surge=1.0)
+          r2 = RideData(rider_id="R-2", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          surged = FareCalculator().compute(r2, distance_km=5.0, surge=2.0)
+          assert surged > normal * 1.8, f"A 2x surge should roughly double the fare; got {normal} -> {surged}"
+        hints:
+          - text: "Multiply the pre-fee subtotal by `surge` BEFORE adding the platform fee. Surge applies to the ride, not to the fee."
+            condition: "default"
 
-          b = BudgetTracker(10000)
-          b.add_expense("Catering", 5000)
-
-          snapshot_after = list(g.guests.keys())
-          assert snapshot_before == snapshot_after, (
-              "GuestRegistry state changed when BudgetTracker was used — the classes "
-              "should be fully decoupled. Each owns its own state."
+      - description: "SafetyAuditor flags a suspiciously-short ride"
+        command: |
+          exec(open('/tutorial/ride_request.py').read())
+          # 0.1-unit trip — well below the 0.2 threshold
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(0.05, 0.05))
+          flags = SafetyAuditor().audit(r)
+          assert "SUSPICIOUS_SHORT_RIDE" in flags, (
+              "A trip below SHORT_RIDE_THRESHOLD_KM should be flagged as SUSPICIOUS_SHORT_RIDE."
           )
         hints:
-          - text: "Each refactored class should own its own state and not share data with siblings. If BudgetTracker modifies GuestRegistry, something is wrong."
+          - text: "Compute self._distance(ride.pickup, ride.dropoff) and compare to SHORT_RIDE_THRESHOLD_KM. If below, append 'SUSPICIOUS_SHORT_RIDE' to ride.flags."
+            condition: "default"
+
+      - description: "SafetyAuditor flags a high-fee outlier"
+        command: |
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(10.0, 10.0))
+          r.fare = 50.0  # well above the absolute fee threshold
+          flags = SafetyAuditor().audit(r)
+          assert "HIGH_FEE_OUTLIER" in flags, (
+              "A ride with fare above HIGH_FEE_ABSOLUTE_THRESHOLD should be flagged HIGH_FEE_OUTLIER."
+          )
+        hints:
+          - text: "After the distance check, if ride.fare is not None and > HIGH_FEE_ABSOLUTE_THRESHOLD, append 'HIGH_FEE_OUTLIER' to ride.flags."
+            condition: "default"
+
+      - description: "SafetyAuditor does NOT flag a normal ride"
+        command: |
+          exec(open('/tutorial/ride_request.py').read())
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          r.fare = 6.0  # under fee threshold, distance well over short threshold
+          flags = SafetyAuditor().audit(r)
+          assert flags == [], f"A normal ride should have no flags, got {flags}"
+
+      - description: "The demo script runs without errors"
+        command: |
+          output = __run_capture('/tutorial/ride_request.py')
+          assert "NightOwl" in output, "Demo should print a NightOwl rider arrival message"
+
+      # ── SRP decoupling proofs: each actor's class stays in its own lane ──
+      - description: "SRP proof — FareCalculator source does not leak into Matching Ops or T&S territory"
+        command: |
+          import ast
+          source = open('/tutorial/ride_request.py').read()
+          tree = ast.parse(source)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ClassDef) and node.name == 'FareCalculator':
+                  body_src = ast.get_source_segment(source, node) or ''
+                  lowered = body_src.lower()
+                  for forbidden in ('driver', 'match', 'flag', 'fraud', 'suspicious', 'notify', 'message'):
+                      assert forbidden not in lowered, (
+                          f"FareCalculator references '{forbidden}' — that belongs to Matching Ops, "
+                          f"Trust & Safety, or Communications. Pricing should only know about fares. "
+                          f"Cross-actor references are the exact coupling SRP eliminates."
+                      )
+                  break
+          else:
+              raise AssertionError("Could not find FareCalculator class in ride_request.py")
+        hints:
+          - text: "FareCalculator is owned by Pricing. It should mention only fares, subtotals, and platform fees — not drivers, flags, or messages."
+            condition: "default"
+
+      - description: "SRP proof — SafetyAuditor source does not leak into Pricing or Communications territory"
+        command: |
+          import ast
+          source = open('/tutorial/ride_request.py').read()
+          tree = ast.parse(source)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ClassDef) and node.name == 'SafetyAuditor':
+                  body_src = ast.get_source_segment(source, node) or ''
+                  lowered = body_src.lower()
+                  for forbidden in ('surge', 'base', 'per_km', 'notify', 'message', 'template'):
+                      assert forbidden not in lowered, (
+                          f"SafetyAuditor references '{forbidden}' — that belongs to Pricing "
+                          f"or Communications. T&S should own only anomaly-detection logic."
+                      )
+                  break
+          else:
+              raise AssertionError("Could not find SafetyAuditor class in ride_request.py")
+        hints:
+          - text: "SafetyAuditor is owned by Trust & Safety. It should mention thresholds, distance, and flags — not surge rules or notification templates."
+            condition: "default"
+
+      - description: "SRP proof — Pricing's platform-fee change cannot silently drift T&S's detector"
+        command: |
+          # Simulate: Pricing experiments with a tiered platform fee. The prior
+          # monolithic design had T&S using the SAME _platform_fee. After the
+          # refactor, each actor owns their own — so a Pricing change here is
+          # invisible to SafetyAuditor. We verify by monkey-patching Pricing's
+          # helper and confirming SafetyAuditor's behavior is unchanged.
+          exec(open('/tutorial/ride_request.py').read(), globals())
+
+          r = RideData(rider_id="R-1", pickup=(0.0, 0.0), dropoff=(3.0, 4.0))
+          r.fare = 6.0  # safe under T&S's absolute threshold
+
+          # Pricing tweaks its fee to something absurd
+          FareCalculator._platform_fee = lambda self, subtotal: subtotal * 10.0
+
+          flags = SafetyAuditor().audit(r)
+          assert "HIGH_FEE_OUTLIER" not in flags, (
+              "T&S's audit should NOT be affected by Pricing's internal fee formula. "
+              "If it is, you are sharing private helpers across actor boundaries — the "
+              "exact SRP violation this refactor eliminates."
+          )
+        hints:
+          - text: "Give SafetyAuditor its OWN _distance and OWN thresholds. Do not call FareCalculator's helpers from inside SafetyAuditor."
             condition: "default"
 
     quiz:
@@ -1493,40 +1385,52 @@ steps:
       questions:
 
         - question: |
-            After refactoring `EventPlanner` into four classes, the Finance actor wants to change how expenses are validated (e.g., adding category-based limits). Which class do they modify?
+            After the refactor, Pricing wants to add a tiered platform-fee promo: 15% under $20, 10% above. Which class do they modify, and what is the worst thing that could happen to Trust & Safety?
           type: single
           options:
-            - "`VenueManager`"
-            - "`GuestRegistry`"
-            - "`BudgetTracker`"
-            - "`InvitationSender`"
-          correct_index: 2
-          explanation: |
-            With SRP, budget stuff lives in `BudgetTracker` and nowhere else. Finance changes only this class, and nothing else breaks. Before the refactoring, touching the monolithic `EventPlanner` for a budget change could've accidentally messed up venue booking, guest management, or invitation logic.
-
-        - question: |
-            A colleague says: *"SRP means every class should have exactly one method."* Is this correct?
-          type: single
-          options:
-            - "Yes — one responsibility means one method"
-            - "No — SRP means one *reason to change* (one actor), not one method. A class can have many methods that all serve the same actor"
-            - "Yes — if a class has multiple methods, it must have multiple responsibilities"
-            - "No — SRP only applies to abstract classes, not concrete ones"
+            - "`FareCalculator`; T&S's fraud detector silently shifts because it shares the same `_platform_fee`."
+            - "`FareCalculator`; nothing happens to T&S — the two classes each own their own fee logic now."
+            - "`SafetyAuditor`; Pricing has no access to it."
+            - "Both `FareCalculator` and `SafetyAuditor`; they must stay in sync."
           correct_index: 1
           explanation: |
-            SRP is about cohesion around one actor, not about counting methods. `BudgetTracker` has three methods (`add_expense`, `get_remaining`, `get_summary`), but they all serve Finance. Multiple methods working together for one purpose = good design. Splitting them across random classes would actually make things worse.
+            This is the whole point of the refactor. In the monolithic class, `_platform_fee` was shared between Pricing (for fares) and T&S (for high-fee anomaly detection). A promo tweak silently changed T&S's detector — the exact coupling that ships fraud bugs on Black Friday. After the split, `FareCalculator` and `SafetyAuditor` each own their own helpers. Pricing can experiment freely; T&S stays stable.
 
         - question: |
-            Which of the following are benefits of the SRP refactoring you just performed?
+            Your code reviewer complains: *"Both `DriverMatcher` and `SafetyAuditor` have their own `_distance()` method — that's duplicated code! Extract a shared `Geometry` module."* How do you respond?
+          type: single
+          options:
+            - "Agree — duplicated code is always bad. Extract `Geometry` immediately."
+            - "Disagree — duplication **across actor boundaries** is a feature, not a bug. It lets Matching Ops and T&S change their formulas independently. A shared module re-creates the coupling SRP eliminates."
+            - "Disagree — `_distance` is private, so nobody can see the duplication anyway."
+            - "Agree — but only extract if both formulas are exactly identical for the next six months."
+          correct_index: 1
+          explanation: |
+            This is the subtlest SRP lesson: DRY ("Don't Repeat Yourself") and SRP sometimes pull in opposite directions. DRY says "share identical code." SRP says "let actors change independently." When the duplicated code genuinely serves two different actors, SRP wins — because the day Matching Ops switches to haversine for better accuracy, T&S would NOT want to inherit that change. Duplication across actor lines is architectural insurance.
+
+        - question: |
+            A junior engineer says: *"`SafetyAuditor` and `DriverMatcher` both use `_distance`. I'll just give `SafetyAuditor` a reference to a `DriverMatcher` instance so we can reuse the method."* What SRP issue does this create?
+          type: single
+          options:
+            - "None — dependency injection is always good."
+            - "It recreates the original coupling: now a Matching-Ops change to `_distance` silently changes what T&S considers 'short.' The two actors are invisibly chained together again."
+            - "It violates the Open/Closed Principle."
+            - "It violates the Liskov Substitution Principle."
+          correct_index: 1
+          explanation: |
+            Sharing private helpers through indirection is still sharing. The whole point of actor-ownership is that changes by one team cannot surprise another team. Threading `DriverMatcher` into `SafetyAuditor` just to reuse `_distance` smuggles the old coupling back in under a new name. The right answer is: let T&S own its own distance formula, even if it's identical today.
+
+        - question: |
+            Which are genuine benefits of the SRP refactor you just performed? (Select all that apply.)
           type: multiple
           options:
-            - "Each class can be tested independently without setting up the others"
-            - "Changes for one actor cannot accidentally break another actor's functionality"
-            - "The total number of lines of code is always reduced"
-            - "Each class can be reused in different contexts (e.g., `BudgetTracker` for other events)"
+            - "Each class can be unit-tested in isolation without setting up a full ride lifecycle"
+            - "Pricing can ship a promo without asking Trust & Safety to regression-test their detector"
+            - "The total line count always decreases"
+            - "Classes can be reused outside NightOwl (e.g., `SafetyAuditor` dropped into a different rideshare product)"
           correct_indices: [0, 1, 3]
           explanation: |
-            SRP often *increases* total line count slightly (more class definitions and boilerplate), but the payoff is massive: independent testability, isolated changes, and reusability. That `BudgetTracker` could be dropped into any project that needs budget management. And changes for one team can never accidentally break another team's code.
+            SRP often *increases* total line count slightly (more class scaffolding, sometimes duplicated helpers) — and that's fine. The payoff is independent testability, independent release cadence across teams, and reusable focused classes. The only "cost" is a small amount of duplication; the "benefit" is being able to change software without terror. That's the right trade in any system that ships for years.
   # --------------------------------------------------------------------------
   # STEP 4 — OCP: Feel the Friction
   # Pedagogy:
@@ -2668,6 +2572,16 @@ steps:
       ### Code Smell: *Refused Bequest*
 
       The most common LSP violation has a name: **Refused Bequest**. It looks like a subclass that inherits a method it cannot meaningfully implement, so it either throws `NotImplementedError` *or* returns a "success: false" sentinel. Both are violations — and the second is worse because it fails silently.
+
+      ### LSP Is Not Just About Classes
+
+      LSP is about **behavioral contracts**, which show up everywhere a caller depends on a callee's behavior — not only in `class Subclass extends Parent`. A few places LSP bites in the wild:
+
+      - **REST APIs.** Service A's `/users/{id}` returns `{"name": "Ada"}`. A "drop-in compatible" Service B returns `{"full_name": "Ada"}`. Every client breaks on deploy — same URL, same HTTP method, different behavioral contract.
+      - **Message schemas.** A pub/sub topic promises events with a `timestamp` field as an ISO-8601 string. A new producer starts sending Unix epoch integers. Consumers that were "polymorphic over producers" suddenly crash or silently mis-sort events.
+      - **CLI flags.** `grep -l` prints file names. A competing `grep` clone implements `-l` as "list all matches." Pipelines written against the contract explode.
+
+      When you hear "LSP," don't just think inheritance. Think: *"a caller trusted a contract; does the callee really honor it?"*
 
       ### The Payment Processing System
 
@@ -4116,6 +4030,21 @@ steps:
 
       Remember LSP from the previous step? ISP **prevents** LSP violations at the structural level. If `FreeStorage` never inherits a `sync()` method, it can never break the sync contract. Problem eliminated before it starts.
 
+      ### SRP vs. ISP — Don't Conflate Them
+
+      Students routinely confuse SRP and ISP. They're related but ask **different questions**:
+
+      - **SRP** asks: *"Who requests changes to this module?"* — optimize for **actor-aligned cohesion**. A class's internal methods should all serve the same actor.
+      - **ISP** asks: *"Who **depends on** this module, and does each dependent use all of it?"* — optimize for **client-minimal interfaces**. An exposed interface shouldn't force a client to carry methods it never calls.
+
+      A class can obey SRP (one actor owns all its methods) while still exposing a fat interface that violates ISP (its many clients each use different subsets). Both principles apply; they operate on different dimensions.
+
+      ### A Word on Python and Static Languages
+
+      In Java or C++, an ISP violation causes **recompilation cascades**: change a method signature in a fat interface and every unrelated client recompiles and re-deploys. In Python, the recompile pain disappears — there's no compile step to cascade.
+
+      But the **architectural pain remains**: when your module depends on a fat interface, you transitively import every dependency that interface touches. A heavy SDK used by `admin_only_method()` is now a mandatory dependency for your lightweight read-only client. If that SDK has a bug, your read-only client catches it. ISP still matters in Python — the *symptoms* just shift from "recompile time" to "import surface and transitive risk."
+
       ### The Scenario
 
       You're building a cloud storage service with two tiers: **Premium** and **Free**. Here's the current `CloudStorage` abstract base class with six capabilities:
@@ -5156,6 +5085,28 @@ steps:
 
       Example: `OrderService` needs to save orders. It does **not** need to know whether the store is SQL, NoSQL, or an in-memory dict. So the abstraction `OrderRepository` — owned by the order service's module — has a method like `save_order(order_id, items, total)`, shaped by what an order needs, not by what Postgres provides. Then `PostgresOrderRepository` implements that interface. If the interface started looking like `execute_sql(query)`, you'd know the low-level details were leaking up.
 
+      ### "Who Owns the Abstraction?" — A 60-Second Check
+
+      Before you write any code, read these three candidate `WeatherProvider` interfaces. Only **one** is actually inverted — the other two smuggle low-level details up into the high-level module under the disguise of an interface.
+
+      ```python
+      # Candidate A — mirrors the OpenWeatherMap HTTP endpoints
+      class WeatherProvider(ABC):
+          def http_get_current(self, city: str, api_key: str) -> dict: ...
+          def http_get_forecast(self, city: str, api_key: str, units: str) -> dict: ...
+
+      # Candidate B — mirrors a generic REST client
+      class WeatherProvider(ABC):
+          def request(self, method: str, path: str, params: dict) -> dict: ...
+
+      # Candidate C — shaped by what the dashboard actually needs
+      class WeatherProvider(ABC):
+          def current_temp_celsius(self, city: str) -> float: ...
+          def forecast_celsius(self, city: str, days: int) -> list[float]: ...
+      ```
+
+      Only **Candidate C** is inverted. A and B are *indirection without inversion* — the interface speaks HTTP, not weather. Every time OpenWeatherMap changes its URL structure, A and B change with it, and every caller breaks. C doesn't care what provider you swap in; the dashboard only asked about temperatures. **This is what "the high-level module owns the abstraction" means.**
+
       ### Apply DIP to Volatile Dependencies, Not Everything
 
       Not every concrete type needs an abstraction. `int`, `str`, `datetime`, `list` are *stable* — they don't change often, and depending on them is completely fine. DIP targets **volatile** dependencies — the ones that:
@@ -5165,6 +5116,16 @@ steps:
       - **Block testing** (slow, flaky, expensive, or stateful)
 
       Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
+
+      ### The Object-Creation Problem (and the Abstract Factory Pattern)
+
+      There's one stubborn corner of DIP: **creating objects** inherently requires mentioning a concrete class somewhere. If `OrderService` never writes `PostgresDatabase()`, someone has to. The standard fix is the **Abstract Factory** pattern — push the concrete instantiation to a single, isolated module (often the app's `main` or a `wiring.py`), and let the rest of the codebase receive dependencies through abstractions only.
+
+      Concretely: your `WeatherDashboard` never writes `OpenWeatherMapClient()`. A `main()` function (or a test fixture) builds the concrete provider and hands it in. The dashboard speaks only in abstractions; the factory is the one place that knows which concrete class exists today. If you later switch from OpenWeatherMap to a weather API from Google, **only the factory changes**. The rest of the system is already inverted.
+
+      Two DIP maxims that drop out of this:
+      1. **The place that creates concrete objects should be the outermost shell of your program**, not its core.
+      2. **DIP violations cannot be eliminated entirely — but they can be herded into one small concrete corner**, which is where factories, dependency-injection containers, and composition roots earn their keep.
 
       > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will crystallize it in code.
 
@@ -6056,14 +6017,19 @@ steps:
 
       **Hint:** Exactly one of the six classes has no violation. Don't assume everything is broken.
 
-      ### Thinking Checklist
+      ### The Diagnostic Rubric — Use This in Order
 
-      For each class, run through these:
-      - **SRP:** Does this class serve more than one actor?
-      - **OCP:** Would I need to modify this class (not extend it) to add a new variant?
-      - **LSP:** Could a subclass be swapped in for its parent without breaking things?
-      - **ISP:** Are implementers forced to depend on methods they don't use?
-      - **DIP:** Does a high-level module directly depend on a concrete low-level module?
+      For each snippet, walk through these five yes/no questions in order. **The first "yes" is your diagnosis.** If all five are "no," the class is fine.
+
+      | # | Question | If **yes** → |
+      |---|---|---|
+      | 1 | Does any **single team** fail to own every change this class could need? (i.e. would changes come from two or more different actors?) | **SRP** violation |
+      | 2 | Would adding a new **variant** of the behavior here force me to *modify* this class (not extend it)? | **OCP** violation |
+      | 3 | Could a **subclass** of this class realistically break a caller that was written against the parent's contract? | **LSP** violation |
+      | 4 | Is there **any client** of this class/interface that is forced to depend on methods it doesn't call? | **ISP** violation |
+      | 5 | Does a **high-level policy class** directly instantiate, import, or mention a volatile concrete low-level class (DB, HTTP client, file I/O, 3rd-party SDK)? | **DIP** violation |
+
+      **Order matters.** Walk through 1 → 5 and stop at the first yes. Some snippets trip multiple principles; the rubric gives you the most *architecturally significant* one to focus on. If you reach question 5 and everything is "no," the class is genuinely clean — write that and move on.
 
     files:
       - path: "violations_gallery.py"
@@ -6712,6 +6678,20 @@ steps:
       - **Prototypes and spikes:** Favor speed over structure — you're gonna throw it away anyway.
       - **When there's only one variant:** Don't create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
       - **When it obscures intent:** If a 5-line function becomes 50 lines across 4 classes, the cure is worse than the disease.
+
+      ### Where You Go From Here — SOLID Scales Up
+
+      You just learned SOLID at the level of **classes inside one module**. The same reasoning scales up to *components* (packages, services, deployable units) — and when you meet it later in your career, it will sound suspiciously familiar:
+
+      | Class-level (what you learned) | Component/architecture level (next course) | Same underlying idea |
+      |---|---|---|
+      | SRP — one actor per class | **Common Closure Principle** — classes that change together live in the same package | Group by *reason to change* |
+      | ISP — don't depend on methods you don't use | **Common Reuse Principle** — don't depend on packages whose classes you don't use | Don't depend on what you don't need |
+      | DIP — depend on abstractions, not concretions | **Dependency Rule** — source-code dependencies point toward stable, high-level policy | Point dependencies toward what changes least |
+
+      The fancy names (Common Closure, Common Reuse, Dependency Rule) aren't new tricks — they're the principles you just practiced, played at a bigger scale. When you take a software architecture course and meet *clean architecture*, *hexagonal architecture*, or *onion architecture*, the centerpiece is always the Dependency Rule — a direct descendant of the DIP exercise you just did with `OrderService` and `WeatherDashboard`.
+
+      **SOLID is the grammar. Architecture is the sentences.** You have the grammar now. Go write things that last.
 
     files:
       - path: "library_system.py"
