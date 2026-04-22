@@ -13,3 +13,6 @@ decks:
   - design_pattern_observer
   - networking
   - networking_decisions
+  - design_principle_solid
+  - uml_class_diagram_examples
+  - uml_sequence_diagram_examples

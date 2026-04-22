@@ -1,0 +1,182 @@
+title: "SOLID Design Principles Quiz"
+description: "Test your ability to apply and evaluate the five SOLID principles — with an emphasis on the Single Responsibility and Liskov Substitution Principles."
+questions:
+  - id: 1
+    type: single
+    question: |
+      Which of the following best captures Robert C. Martin's **modern** formulation of the Single Responsibility Principle (SRP)?
+    options:
+      - "A class should contain only one public method"
+      - "A module should be responsible to one, and only one, actor — a single stakeholder or group that requests changes"
+      - "A class should be describable in one sentence without using the word 'and'"
+      - "A class should have no more than 200 lines of code"
+    correct_index: 1
+    explanation: "Martin's refined definition centers on **people, not grammar**. SRP is about actors — Accounting, HR, DBAs, compliance, etc. A class serving multiple actors will be pulled in conflicting directions, and a change requested by one actor may silently break another's feature. 'One method', 'no ands', and line-count rules are all folk-theoretic proxies that routinely misfire."
+
+  - id: 2
+    type: single
+    question: |
+      You review this class:
+
+      ```java
+      class Invoice {
+          BigDecimal calculateTax()       // tax logic, changed by Accounting
+          String renderHtml()             // layout, changed by the Web team
+          void saveToDatabase()           // persistence, changed by the DBA team
+      }
+      ```
+
+      What is the BEST refactor, given SRP?
+    options:
+      - "Split methods into three separate classes (`TaxCalculator`, `InvoiceRenderer`, `InvoiceRepository`) that operate on a shared `InvoiceData` structure"
+      - "Mark `calculateTax` and `saveToDatabase` as `private` so only `renderHtml` is public"
+      - "Inline all three methods into a single `process()` method to reduce the surface area"
+      - "Keep the class as-is; SRP is only about classes with a single method"
+    correct_index: 0
+    explanation: "Three different actors (Accounting, Web, DBA) each request changes to `Invoice` for unrelated reasons. The canonical SRP refactor is to extract one class per actor around a shared data record. Visibility modifiers (option B) do not reduce the *axes of change*; inlining (option C) makes the tangle worse; option D is the 'one method per class' misconception the chapter explicitly debunks."
+
+  - id: 3
+    type: single
+    question: |
+      A teammate refactors a 40-line `OrderValidator` class into three micro-classes: `OrderValidator`, `OrderAuditLogger`, and `OrderErrorFormatter`. In practice, all three change **only** when the order business rules change — and always together.
+      Evaluating this refactor against SRP:
+    options:
+      - "It is a good SRP application — more classes always means better SRP compliance"
+      - "It violates SRP because no class has exactly one public method"
+      - "It is a poor SRP application: if the three pieces always change together for the same reason, there is only **one** actor, and the split is artificial abstraction"
+      - "It is neutral: SRP has nothing to say about splits that don't change the set of actors"
+    correct_index: 2
+    explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them doubles maintenance cost with no benefit. This is the 'premature separation' trap. Martin's own guidance: wait for the second actor to appear before extracting."
+
+  - id: 4
+    type: single
+    question: |
+      Which argument for SRP is **strongest** from a team-productivity perspective?
+    options:
+      - "It guarantees that every class fits on one screen"
+      - "It reduces merge conflicts by ensuring that changes requested by different stakeholders edit different files"
+      - "It enforces the use of dependency injection frameworks"
+      - "It prevents the creation of any class with more than one field"
+    correct_index: 1
+    explanation: "The practical team-level payoff of SRP is **merge-conflict reduction and fault isolation**: when Finance requests a tax change, they edit a file that HR never touches, so HR's feature cannot be accidentally broken. The other options confuse SRP with unrelated stylistic rules (screen size, DI tooling, field count)."
+
+  - id: 5
+    type: single
+    question: |
+      According to Liskov's Design-by-Contract formulation, a subclass method must:
+    options:
+      - "Strengthen preconditions and strengthen postconditions relative to the parent"
+      - "Weaken preconditions (accept same-or-wider input) and strengthen postconditions (guarantee same-or-stricter output), while preserving invariants"
+      - "Override every non-abstract method of its parent"
+      - "Throw checked exceptions for all invalid inputs the parent accepted"
+    correct_index: 1
+    explanation: "The classic LSP rules: **preconditions may not be strengthened**, **postconditions may not be weakened**, **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent. Option A inverts both rules; option C encourages the Refused-Bequest smell; option D actively strengthens preconditions (disallowing previously-legal inputs)."
+
+  - id: 6
+    type: single
+    question: |
+      Consider this code:
+
+      ```java
+      class Bird        { void fly() { /* soar */ } }
+      class Ostrich extends Bird {
+          void fly() { throw new UnsupportedOperationException(); }
+      }
+
+      void release(List<Bird> birds) { for (Bird b : birds) b.fly(); }
+      ```
+
+      Which fix best addresses the LSP violation without introducing a new one?
+    options:
+      - "Catch and swallow the exception inside `release()` so the loop continues"
+      - "Add an `isOstrich()` check in `release()` and skip those objects"
+      - "Extract a `FlyingBird` interface; only flying species implement it, and `release()` is typed to `List<FlyingBird>`"
+      - "Make `Bird.fly()` abstract and have `Ostrich.fly()` return `null`"
+    correct_index: 2
+    explanation: "The real problem is the **taxonomy**: `Ostrich` is-a bird but is-not-a flying thing. Segregating `FlyingBird` aligns the type hierarchy with behavior, eliminating the need for clients to defensive-check (which is itself an LSP symptom). Options A and B hide the violation behind `instanceof`-style logic (the 'architectural pollution' the chapter warns about). Option D still lets `Ostrich` appear where flight is expected and makes the contract worse."
+
+  - id: 7
+    type: single
+    question: |
+      You are asked to review this subclass contract:
+
+      ```java
+      class Queue           { void enqueue(Object x) { /* accepts any non-null */ } }
+      class StringQueue extends Queue {
+          @Override void enqueue(Object x) {
+              if (!(x instanceof String)) throw new IllegalArgumentException();
+              // ...
+          }
+      }
+      ```
+
+      Which LSP rule does `StringQueue` violate, and why?
+    options:
+      - "It weakens the precondition — `StringQueue` accepts a wider set of inputs than `Queue`"
+      - "It strengthens the precondition — `StringQueue` rejects inputs that the parent `Queue` accepts, so code written against `Queue` may suddenly fail"
+      - "It weakens the postcondition — the return value is less specific"
+      - "It violates no rule, because Java's generics would catch this at compile time"
+    correct_index: 1
+    explanation: "`Queue.enqueue` accepts any non-null `Object`; `StringQueue.enqueue` narrows that to `String`. A client holding a `Queue` reference that was in fact a `StringQueue` will throw at runtime on previously-legal calls — **strengthened precondition**, the most common LSP violation in practice. This is exactly why Java's `Stack extends Vector` is cited in the chapter as a legacy LSP mistake."
+
+  - id: 8
+    type: single
+    question: |
+      The chapter says a `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
+    options:
+      - "Mathematical squares are not rectangles; the real-world taxonomy is wrong"
+      - "LSP is judged from the perspective of the **client's expectations of the parent type** — if client code relies on width and height mutating independently, any subtype that couples them breaks that expectation"
+      - "`Square` will throw a `NullPointerException` when `setWidth` is called"
+      - "A `Square` class is always slower than a `Rectangle` class at runtime"
+    correct_index: 1
+    explanation: "The Square/Rectangle lesson is subtle: *self-consistency is not enough*. LSP is evaluated by the contracts that **clients of the parent** have implicitly written into their code (e.g., an area-assertion test that assumes setting width leaves height alone). Any subtype that surprises those clients — even if internally coherent — violates LSP. The fix is making `Square` and `Rectangle` siblings of a common `Shape` interface."
+
+  - id: 9
+    type: single
+    question: |
+      A `ShippingCostCalculator` uses a long `switch` on `carrier` (UPS, FedEx, USPS). Management wants to add DHL next week.
+      Which refactor best satisfies the Open/Closed Principle?
+    options:
+      - "Add a `case \"DHL\"` branch — it's just one more line"
+      - "Define a `Carrier` interface with a `cost(order)` method; make UPS, FedEx, USPS, and DHL concrete implementations; the calculator dispatches polymorphically without a switch"
+      - "Copy the class into `ShippingCostCalculatorV2` and modify the new copy"
+      - "Use reflection to invoke carrier-specific methods by string name"
+    correct_index: 1
+    explanation: "OCP = **open for extension, closed for modification**. Strategy/polymorphism lets you add a new `Carrier` without touching calculator code. Option A modifies tested code (the very thing OCP warns against); option C duplicates code; option D replaces a switch with a more fragile mechanism and still doesn't invert the dependency on concrete carriers."
+
+  - id: 10
+    type: single
+    question: |
+      A `Printer` interface exposes `print()`, `scan()`, `fax()`, and `staple()`. A simple home printer class must implement all four but throws `UnsupportedOperationException` on `scan`, `fax`, and `staple`.
+      Which SOLID principle is most directly violated, and what is the correct fix?
+    options:
+      - "LSP — because the home printer returns early; fix by caching the result"
+      - "ISP — clients and implementers are forced to depend on methods they don't use; fix by segregating into role-specific interfaces like `Printable`, `Scannable`, `Faxable`, `Staplable`"
+      - "DIP — because `Printer` is concrete; fix by making it abstract"
+      - "SRP — because the interface has four methods; fix by giving it only one"
+    correct_index: 1
+    explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces means clients depend only on what they need, and simple devices need only implement `Printable`. SRP-as-method-count (option D) is the misconception the chapter debunks; DIP (option C) is about direction of dependencies, not interface size."
+
+  - id: 11
+    type: single
+    question: |
+      Which scenario shows the **correct** application of the Dependency Inversion Principle?
+    options:
+      - "The `OrderService` imports `MySqlOrderRepository` directly so the database can be queried efficiently"
+      - "The `OrderService` defines an `OrderRepository` interface tailored to its needs; `MySqlOrderRepository` implements this interface; in tests, an `InMemoryOrderRepository` is swapped in"
+      - "A Spring `@Autowired` annotation is added to every field in `OrderService`, guaranteeing DIP"
+      - "`MySqlOrderRepository` defines the interface, and `OrderService` conforms to it"
+    correct_index: 1
+    explanation: "DIP requires that **the high-level module owns the abstraction**. Option B shows correct interface ownership: the business logic declares what it needs; infrastructure conforms. Option A has policy depending on detail (the violation DIP names). Option C confuses DIP (architectural strategy) with DI (code-level tactic) — the chapter explicitly distinguishes these. Option D inverts ownership the wrong way; the interface ends up mirroring the database, not the business domain."
+
+  - id: 12
+    type: single
+    question: |
+      The chapter argues SOLID principles **reinforce** each other. Which pairing below best captures a genuine dependency between two principles?
+    options:
+      - "SRP requires DIP: you cannot have one responsibility without dependency injection"
+      - "LSP enables OCP: if subtypes honor their parents' contracts, a router can iterate polymorphically over them without modification when a new subtype is added"
+      - "ISP replaces DIP: segregated interfaces make dependency inversion unnecessary"
+      - "OCP implies SRP: code closed for modification automatically has a single reason to change"
+    correct_index: 1
+    explanation: "LSP → OCP is the cleanest dependency: safe polymorphism is what lets a client stay *closed for modification* while the system remains *open for extension* via new subtypes. Option A confuses architecture with tooling. Option C treats ISP and DIP as substitutes when they address different problems (interface shape vs. dependency direction). Option D mistakes 'closed to change' for 'has one axis of change' — distinct properties."

@@ -16,3 +16,6 @@ decks:
   - react_syntax_generate
   - design_pattern_observer
   - networking_concepts
+  - design_principle_solid
+  - uml_class_diagram_examples
+  - uml_sequence_diagram_examples
