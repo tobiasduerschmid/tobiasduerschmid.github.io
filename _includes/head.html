@@ -105,7 +105,25 @@
     })();
   </script>
 
-  {% seo %}
+  {% if project %}
+    {% assign page_title_text = page.title | default: project.title %}
+    {% assign canonical_url = page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url %}
+    <title>{{ page_title_text }} | {{ project.title }}</title>
+    <meta property="og:title" content="{{ page_title_text }}" />
+    <meta property="og:site_name" content="{{ project.title }}" />
+    <meta name="description" content="{{ project.subtitle }}" />
+    <meta property="og:description" content="{{ project.subtitle }}" />
+    <meta property="twitter:title" content="{{ page_title_text }}" />
+    <meta name="twitter:card" content="summary" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    {% if site.google_site_verification %}
+    <meta name="google-site-verification" content="{{ site.google_site_verification }}" />
+    {% endif %}
+  {% else %}
+    {% seo %}
+  {% endif %}
 
   <!-- Bootstrap Core CSS -->
   <!-- themes (*preferred):

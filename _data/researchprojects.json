@@ -100,7 +100,7 @@
     { "key"       : "sebook",
       "title"     : "SE Book",
       "url"       : "/SEBook/",
-      "subtitle"  : "SE Book",
+      "subtitle"  : "A collection of topics for students in software engineering courses",
       "pages" : 
       [
       

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
+{% assign project = projects.first %}
+
 {% include head.html %}
 
 <style>
@@ -33,9 +36,6 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <article class="post-content">
-
-    {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
-    {% assign project = projects.first %}
 
     <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Main navigation">
       <div class="container-fluid">
