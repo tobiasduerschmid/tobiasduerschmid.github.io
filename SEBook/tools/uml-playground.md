@@ -23,6 +23,8 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="usecase">Use Case</option>
       <option value="activity">Activity</option>
       <option value="gitgraph">Git Graph</option>
+      <option value="venn">Venn</option>
+      <option value="er">ER (Chen)</option>
     </select>
     <label id="uml-pg-layout-label" for="uml-pg-layout">Layout:</label>
     <select id="uml-pg-layout">
@@ -366,6 +368,53 @@ body.dark-mode #uml-pg-status {
       'head main',
       '@enduml'
     ].join('\n'),
+
+    venn: [
+      '@startuml',
+      'title Web Technologies',
+      '',
+      'set Frontend',
+      'set Backend',
+      'set Database',
+      '',
+      'Frontend                      : React, Vue',
+      'Backend                       : Django, Rails',
+      'Database                      : PostgreSQL, Redis',
+      'Frontend & Backend            : Next.js, SvelteKit',
+      'Backend & Database            : Prisma, SQLAlchemy',
+      'Frontend & Database           : PouchDB',
+      'Frontend & Backend & Database : Firebase, Supabase',
+      'outside                       : Docker',
+      '@enduml'
+    ].join('\n'),
+
+    er: [
+      '@startuml',
+      'title Library System',
+      '',
+      'entity Student {',
+      '  # student_id',
+      '  name',
+      '  email',
+      '  / age',
+      '  * phones',
+      '}',
+      '',
+      'entity Book {',
+      '  # isbn',
+      '  title',
+      '  * authors',
+      '}',
+      '',
+      'relationship Borrows {',
+      '  date_out',
+      '  date_due',
+      '}',
+      '',
+      'Student "N" -- Borrows',
+      'Book "M" -- Borrows',
+      '@enduml'
+    ].join('\n'),
   };
 
   var RENDERERS = {
@@ -387,6 +436,8 @@ body.dark-mode #uml-pg-status {
         window.UMLShared.renderAll();
       }
     },
+    venn: function (container, text) { window.UMLVennDiagram.render(container, text); },
+    er: function (container, text) { window.UMLERDiagram.render(container, text); },
   };
 
   function init() {
@@ -437,14 +488,19 @@ body.dark-mode #uml-pg-status {
       return (type || typeSelect.value) === 'gitgraph';
     }
 
+    function ignoresLayout(type) {
+      var t = type || typeSelect.value;
+      return t === 'gitgraph' || t === 'venn' || t === 'er';
+    }
+
     function updateLayoutVisibility() {
-      var hide = isGitgraph();
+      var hide = ignoresLayout();
       if (layoutLabel) layoutLabel.style.display = hide ? 'none' : '';
       layoutSelect.style.display = hide ? 'none' : '';
     }
 
     function exampleText(type, layoutMode) {
-      if (type === 'gitgraph') return EXAMPLES[type] || '';
+      if (ignoresLayout(type)) return EXAMPLES[type] || '';
       return applyLayoutDirective(EXAMPLES[type] || '', layoutMode);
     }
 
@@ -510,7 +566,7 @@ body.dark-mode #uml-pg-status {
     });
 
     layoutSelect.addEventListener('change', function () {
-      if (!isGitgraph()) {
+      if (!ignoresLayout()) {
         textarea.value = applyLayoutDirective(textarea.value, layoutSelect.value);
       }
       renderDiagram();
@@ -564,7 +620,8 @@ body.dark-mode #uml-pg-status {
       if (window.UMLClassDiagram && window.UMLSequenceDiagram &&
           window.UMLStateDiagram && window.UMLComponentDiagram &&
           window.UMLDeploymentDiagram && window.UMLUseCaseDiagram &&
-          window.UMLActivityDiagram && window.UMLShared) {
+          window.UMLActivityDiagram && window.UMLVennDiagram &&
+          window.UMLERDiagram && window.UMLShared) {
         renderDiagram();
       } else {
         setTimeout(tryRender, 100);

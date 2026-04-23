@@ -168,8 +168,14 @@ topics:
         url: /SEBook/tools/make.html
       - name: Makefile Tutorial
         url: /SEBook/tools/makefile-tutorial.html
+  - name: Systems
+    icon: null
+    url: /SEBook/systems/index.html
+    subtopics:
       - name: Networking
         url: /SEBook/tools/networking.html
+      - name: Data Management
+        url: /SEBook/systems/data_management.html
   - name: SE Gym
     icon: null
     url: /se-gym/

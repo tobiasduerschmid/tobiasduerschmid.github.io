@@ -66,12 +66,14 @@ These are the 10 rules a reviewer should check against. Each is tied to a specif
 
 **7. Keep notation consistent with the rest of the book.** Same shape means the same thing everywhere. If a cylinder is a database in the architecture chapter, it cannot be a queue in the state-machine chapter. Check neighboring chapters before inventing notation.
 
-**8. Prefer the most specific diagram type available.** A state machine drawn in freeform is worse than one drawn with `language-uml-state` — the renderer gives you proper initial/final markers, guard syntax, and transition labels for free. Same for commit DAGs (use `diagram-gitgraph`), directory trees (use `diagram-folder-tree`), class hierarchies (use `language-uml-class`).
+**8. Prefer the most specific diagram type available.** A state machine drawn in freeform is worse than one drawn with `language-uml-state` — the renderer gives you proper initial/final markers, guard syntax, and transition labels for free. Same for commit DAGs (use `diagram-gitgraph`), directory trees (use `diagram-folder-tree`), class hierarchies (use `language-uml-class`), set-membership comparisons (use `diagram-venn`, not freeform circles), and database schemas (use `diagram-er` for Chen-notation entities/relationships).
 
 **9. Cap complexity per figure.** Soft caps that have worked in SEBook:
    - Class diagram: ≤ 7 classes visible at once; show only methods/fields relevant to the point (Fowler's "sketch mode").
    - Sequence diagram: ≤ 5 lifelines; if you need more, split by phase.
    - State diagram: ≤ 8 states; collapse related states into a composite state if needed.
+   - Venn: 2–3 sets is comfortable; 4–5 are legible but tight. Never more — for 6+ attributes, use a comparison table or UpSet plot instead.
+   - ER: ≤ 6 entities per figure; if your schema is bigger, split into sub-domains (customers + orders in one figure, catalog + inventory in another).
    - Freeform: ≤ 10 boxes; any more is usually a sign the abstraction is too low.
 
 **10. Prose and diagram do different work.** The diagram shows *structure and relationships*. The prose provides *causality, motivation, edge cases, and the "why"*. If your prose reads like a tour of the boxes ("the Controller connects to the Model, which connects to…"), delete one of them — you're just duplicating.

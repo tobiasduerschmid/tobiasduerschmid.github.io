@@ -17,22 +17,24 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 
 | You want to draw… | Class name | Syntax reference |
 |---|---|---|
-| Classes, interfaces, inheritance, associations | `language-uml-class` | [REFERENCE.md §Class Diagrams (L105)](../../../js/ArchUML/REFERENCE.md) |
-| Interactions / messages between participants over time | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L481)](../../../js/ArchUML/REFERENCE.md) |
-| Named states and transitions (behavioral modeling) | `language-uml-state` | [REFERENCE.md §State Machine Diagrams (L809)](../../../js/ArchUML/REFERENCE.md) |
-| Components, ports, ball-and-socket interfaces | `language-uml-component` | [REFERENCE.md §Component Diagrams (L1002)](../../../js/ArchUML/REFERENCE.md) |
-| Nodes, artifacts, infrastructure topology | `language-uml-deployment` | [REFERENCE.md §Deployment Diagrams (L1157)](../../../js/ArchUML/REFERENCE.md) |
-| Actors and use cases | `language-uml-usecase` | [REFERENCE.md §Use Case Diagrams (L1310)](../../../js/ArchUML/REFERENCE.md) |
-| Workflows, process steps, decisions, fork/join, swimlanes | `language-uml-activity` | [REFERENCE.md §Activity Diagrams (L1406)](../../../js/ArchUML/REFERENCE.md) |
-| Ad-hoc box-and-arrow (memory layouts, conceptual before/after, anything "none of the above") | `diagram-freeform` | [REFERENCE.md §Freeform Diagrams (L1511)](../../../js/ArchUML/REFERENCE.md) |
-| Git commit DAGs — commits, branches, HEAD, merges, cherry-picks | `diagram-gitgraph` | [REFERENCE.md §Git Commit Graphs (L1661)](../../../js/ArchUML/REFERENCE.md) |
+| Classes, interfaces, inheritance, associations | `language-uml-class` | [REFERENCE.md §Class Diagrams (L266)](../../../js/ArchUML/REFERENCE.md) |
+| Interactions / messages between participants over time | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md) |
+| Named states and transitions (behavioral modeling) | `language-uml-state` | [REFERENCE.md §State Machine Diagrams (L974)](../../../js/ArchUML/REFERENCE.md) |
+| Components, ports, ball-and-socket interfaces | `language-uml-component` | [REFERENCE.md §Component Diagrams (L1167)](../../../js/ArchUML/REFERENCE.md) |
+| Nodes, artifacts, infrastructure topology | `language-uml-deployment` | [REFERENCE.md §Deployment Diagrams (L1322)](../../../js/ArchUML/REFERENCE.md) |
+| Actors and use cases | `language-uml-usecase` | [REFERENCE.md §Use Case Diagrams (L1475)](../../../js/ArchUML/REFERENCE.md) |
+| Workflows, process steps, decisions, fork/join, swimlanes | `language-uml-activity` | [REFERENCE.md §Activity Diagrams (L1571)](../../../js/ArchUML/REFERENCE.md) |
+| Ad-hoc box-and-arrow (memory layouts, conceptual before/after, anything "none of the above") | `diagram-freeform` | [REFERENCE.md §Freeform Diagrams (L1676)](../../../js/ArchUML/REFERENCE.md) |
+| Git commit DAGs — commits, branches, HEAD, merges, cherry-picks | `diagram-gitgraph` | [REFERENCE.md §Git Commit Graphs (L1826)](../../../js/ArchUML/REFERENCE.md) |
+| **Set membership / overlaps** (2–5 sets, classifications, taxonomies) | `diagram-venn` | [REFERENCE.md §Venn Diagrams (L1904)](../../../js/ArchUML/REFERENCE.md) |
+| **Entity-Relationship schemas** (Chen notation — entities, attributes, relationships, cardinalities) | `diagram-er` | [REFERENCE.md §ER Diagrams (L2154)](../../../js/ArchUML/REFERENCE.md) |
 | **Directory / folder tree** (filesystem layouts) | `diagram-folder-tree` | See below — not in REFERENCE.md |
 
 ### Notes and annotations on any diagram
-Almost every type supports `note left/right/top/bottom of <id> : …` and multi-line notes. See [REFERENCE.md §Notes & Annotations (L1739)](../../../js/ArchUML/REFERENCE.md).
+Almost every type supports `note left/right/top/bottom of <id> : …` and multi-line notes. See [REFERENCE.md §Notes & Annotations (L2324)](../../../js/ArchUML/REFERENCE.md). Venn supports notes targeting set intersections (e.g. `note right of SetA & SetB : …`); ER supports notes on entities and relationships.
 
 ### Quick reference card
-For a one-page cheat sheet of arrows and operators, see [REFERENCE.md §Quick Reference Card (L2085)](../../../js/ArchUML/REFERENCE.md).
+For a one-page cheat sheet of arrows and operators, see [REFERENCE.md §Quick Reference Card (L2670)](../../../js/ArchUML/REFERENCE.md).
 
 ## Folder-tree (not in REFERENCE.md)
 
@@ -83,7 +85,13 @@ Freeform is the "none of the above" escape hatch. Before reaching for it, check 
 - Before/after conceptual pictures that aren't a DAG, sequence, or state machine.
 - Small annotation-heavy diagrams that don't fit any existing type.
 
-If you find yourself recreating a commit graph, directory tree, or class hierarchy in freeform, you picked the wrong type — switch to the dedicated one.
+If you find yourself recreating a commit graph, directory tree, class hierarchy, Venn diagram, or database schema in freeform, you picked the wrong type — switch to the dedicated one.
+
+A few specific cases where the dedicated type wins:
+
+- **Overlapping categories / "which items have which traits"** (e.g. comparing programming languages on 2–3 axes, classifying things into union/intersection categories) → use `diagram-venn`, not freeform circles that won't actually overlap. The Venn renderer handles circle/ellipse arithmetic, multiply-blend colours, and automatic contrast-aware text colour for you.
+- **Database schemas / data models** (entities, keys, relationships, cardinalities — SQL-table-adjacent thinking) → use `diagram-er` in Chen notation, not a class diagram or freeform. ER gives you the correct Chen conventions (rectangles, diamonds, underlined PKs, double-borders for weak entities) automatically.
+- **A class-like model with behaviour** (methods, stereotypes, inheritance, interfaces) → use `language-uml-class`, not ER. ER is for data-schema thinking only.
 
 ## When in doubt
 

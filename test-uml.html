@@ -1916,6 +1916,341 @@ project-root/
 @enduml
   </code></pre>
 
+  <h1>Venn Diagram Tests</h1>
+
+  <h2>80. Two-Set Venn (Default Palette)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Programming Languages
+
+set Compiled
+set "Memory Safe"
+
+Compiled                 : C, C++
+"Memory Safe"            : Python, Ruby, JavaScript
+Compiled & "Memory Safe" : Rust, Go, Swift
+outside                  : Assembly
+@enduml
+  </code></pre>
+
+  <h2>81. Three-Set Venn (Classic Three-Circle)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Web Technologies
+
+set Frontend
+set Backend
+set Database
+
+Frontend                      : React, Vue
+Backend                       : Django, Rails
+Database                      : PostgreSQL, Redis
+Frontend & Backend            : Next.js, SvelteKit
+Backend & Database            : Prisma, SQLAlchemy
+Frontend & Database           : PouchDB
+Frontend & Backend & Database : Firebase, Supabase
+outside                       : Docker
+@enduml
+  </code></pre>
+
+  <h2>82. Four-Set Venn (All 16 Regions)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Developer Skills
+
+set Frontend
+set Backend
+set DevOps
+set Design
+
+Frontend                                   : React, CSS
+Backend                                    : APIs, SQL
+DevOps                                     : Docker, K8s
+Design                                     : Figma, UX
+Frontend & Design                          : UI libs
+Backend & DevOps                           : SRE
+Frontend & Backend                         : Full-stack
+DevOps & Design                            : Design ops
+Frontend & Backend & DevOps                : Platform eng
+Frontend & Backend & Design                : Product eng
+Frontend & DevOps & Design                 : Frontend infra
+Backend & DevOps & Design                  : Backend infra
+Frontend & Backend & DevOps & Design       : Unicorn
+@enduml
+  </code></pre>
+
+  <h2>83. Five-Set Venn (Grünbaum Ellipses)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Meals
+
+set Breakfast
+set Lunch
+set Dinner
+set Vegetarian
+set Quick
+
+Breakfast                             : Pancakes
+Lunch                                 : Club sandwich
+Dinner                                : Steak
+Vegetarian                            : Tofu
+Quick                                 : Toast
+Breakfast & Quick                     : Cereal
+Lunch & Vegetarian                    : Salad
+Dinner & Vegetarian                   : Risotto
+Breakfast & Vegetarian & Quick        : Yogurt
+Lunch & Dinner & Vegetarian           : Veggie bowl
+Breakfast & Lunch & Dinner & Vegetarian & Quick : Smoothie
+@enduml
+  </code></pre>
+
+  <h2>84. Custom Colors — Contrast Detection</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Biomes
+
+set Ocean #0077be
+set Forest #228b22
+set Desert #edc9af
+
+Ocean                   : whale, kelp
+Forest                  : oak, deer
+Desert                  : cactus, scorpion
+Ocean & Forest          : mangrove
+Forest & Desert         : savanna scrub
+Ocean & Desert          : coastal dunes
+Ocean & Forest & Desert : biosphere
+@enduml
+  </code></pre>
+
+  <h2>85. Custom Colors — CSS Named Colors (Light Fills)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Pastel Palette — Text Should Be Dark
+
+set Alpha lightyellow
+set Beta lightpink
+set Gamma lightblue
+
+Alpha                 : item1, item2
+Beta                  : item3
+Gamma                 : item4
+Alpha & Beta          : shared ab
+Alpha & Gamma         : shared ag
+Beta & Gamma          : shared bg
+Alpha & Beta & Gamma  : all three
+@enduml
+  </code></pre>
+
+  <h2>86. Venn with Notes on Intersections</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Developer Skills
+
+set Frontend
+set Backend
+set DevOps
+
+Frontend                    : React
+Backend                     : Django
+DevOps                      : Docker
+Frontend & Backend          : Next.js
+Backend & DevOps            : Platform
+Frontend & Backend & DevOps : SRE
+
+note left of Frontend : Pure UI\nwork
+note right of Frontend & Backend : Popular full-stack\nframeworks
+note top of Frontend & Backend & DevOps : Rare but valuable
+note bottom of DevOps
+  Infrastructure
+  specialists
+end note
+@enduml
+  </code></pre>
+
+  <h2>87. Venn with Stacked Notes and Outside-Targeted Note</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Notes Stacking
+
+set A
+set B
+set C
+
+A         : item1
+B         : item2
+C         : item3
+A & B     : shared
+outside   : leftover
+
+note right of A     : Alpha stuff
+note right of B     : Beta stuff
+note right of A & B : Combined A+B
+note left of outside : dropped during\ntriage
+@enduml
+  </code></pre>
+
+  <h2>88. Venn with Quoted Set Names (Spaces)</h2>
+  <pre><code class="diagram-venn">
+@startuml
+title Programming Languages
+
+set Compiled
+set "Memory Safe"
+
+Compiled                 : C, C++
+"Memory Safe"            : Python, Ruby, JavaScript
+Compiled & "Memory Safe" : Rust, Go, Swift
+outside                  : Assembly
+@enduml
+  </code></pre>
+
+  <h1>ER Diagram Tests (Chen Notation)</h1>
+
+  <h2>89. Basic ER — Library System</h2>
+  <pre><code class="diagram-er">
+@startuml
+title Library System
+
+entity Student {
+  # student_id
+  name
+  email
+  / age
+  * phones
+}
+
+entity Book {
+  # isbn
+  title
+  * authors
+}
+
+relationship Borrows {
+  date_out
+  date_due
+}
+
+Student "N" -- Borrows
+Book "M" -- Borrows
+@enduml
+  </code></pre>
+
+  <h2>90. Weak Entity with Identifying Relationship</h2>
+  <pre><code class="diagram-er">
+@startuml
+title Employee Dependents
+
+entity Employee {
+  # emp_id
+  name
+  salary
+}
+
+weak entity Dependent {
+  ~ dep_name
+  dob
+  relationship_type
+}
+
+identifying relationship Has
+
+Employee "1" == Has
+Dependent "N" == Has
+@enduml
+  </code></pre>
+
+  <h2>91. Ternary Relationship</h2>
+  <pre><code class="diagram-er">
+@startuml
+title University Enrolment
+
+entity Student {
+  # sid
+  name
+}
+
+entity Course {
+  # cid
+  title
+}
+
+entity Semester {
+  # term
+}
+
+relationship Enrolls {
+  grade
+}
+
+Student "N" -- Enrolls
+Course "M" -- Enrolls
+Semester "1" -- Enrolls
+@enduml
+  </code></pre>
+
+  <h2>92. Multiple Relationships Between Entities</h2>
+  <pre><code class="diagram-er">
+@startuml
+title Hospital
+
+entity Doctor {
+  # doc_id
+  name
+  specialty
+}
+
+entity Patient {
+  # pat_id
+  name
+  / age
+}
+
+relationship Treats {
+  visit_date
+}
+
+relationship PrimaryCareOf
+
+Doctor "N" -- Treats
+Patient "M" -- Treats
+Doctor "1" -- PrimaryCareOf
+Patient "N" -- PrimaryCareOf
+@enduml
+  </code></pre>
+
+  <h2>93. Participation Constraints (Total vs Partial)</h2>
+  <pre><code class="diagram-er">
+@startuml
+title Course System
+
+entity Course {
+  # course_id
+  title
+}
+
+entity Instructor {
+  # inst_id
+  name
+}
+
+entity Student {
+  # sid
+  name
+}
+
+relationship TaughtBy
+
+relationship Takes
+
+Course "1" == TaughtBy
+Instructor "1" -- TaughtBy
+
+Student "N" -- Takes
+Course "M" == Takes
+@enduml
+  </code></pre>
+
   <script src="/js/git-graph.js" defer></script>
   <script src="/js/ArchUML/uml-bundle.js" defer></script>
 </body>
