@@ -817,11 +817,17 @@ steps:
       participant s: Server
 
       c -> s: GET '/'
+      activate s
       s --> c: Single Page App (contains all pages)
+      deactivate s
       c -> s: GET /current_news
+      activate s
       s --> c: JSON data
+      deactivate s
       c -> s: GET /about
+      activate s
       s --> c: JSON data
+      deactivate s
       @enduml
       </code></pre>
 
@@ -837,9 +843,13 @@ steps:
       participant s: Server
 
       c -> s: GET '/'
+      activate s
       s --> c: Main page (fully rendered)
+      deactivate s
       c -> s: GET /current_news
+      activate s
       s --> c: Current news page
+      deactivate s
       @enduml
       </code></pre>
 

@@ -98,19 +98,279 @@ participant factory: NYPizzaIngredientFactory
 participant dough: ThinCrustDough
 participant sauce: MarinaraSauce
 participant cheese: ReggianoCheese
+o-> pizza: prepare()
+activate pizza
 pizza -> factory: createDough()
 activate factory
-factory --> pizza: dough
+create dough
+factory --> dough: <<create>>
+factory --> pizza: Dough
 deactivate factory
 pizza -> factory: createSauce()
 activate factory
-factory --> pizza: sauce
+create sauce
+factory --> sauce: <<create>>
+factory --> pizza: Sauce
 deactivate factory
 pizza -> factory: createCheese()
 activate factory
-factory --> pizza: cheese
+create cheese
+factory --> cheese: <<create>>
+factory --> pizza: Cheese
 deactivate factory
+deactivate pizza
 @enduml'></div>
+
+# Code Example
+
+This example keeps the client (`CheesePizza`) independent of concrete ingredient classes. Switching from New York to Chicago means passing a different factory object, not rewriting the pizza.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Abstract Factory code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface Dough { String name(); }
+interface Sauce { String name(); }
+interface Cheese { String name(); }
+
+final class ThinCrustDough implements Dough {
+    public String name() { return "thin crust dough"; }
+}
+
+final class MarinaraSauce implements Sauce {
+    public String name() { return "marinara sauce"; }
+}
+
+final class ReggianoCheese implements Cheese {
+    public String name() { return "reggiano cheese"; }
+}
+
+interface PizzaIngredientFactory {
+    Dough createDough();
+    Sauce createSauce();
+    Cheese createCheese();
+}
+
+final class NYPizzaIngredientFactory implements PizzaIngredientFactory {
+    public Dough createDough() { return new ThinCrustDough(); }
+    public Sauce createSauce() { return new MarinaraSauce(); }
+    public Cheese createCheese() { return new ReggianoCheese(); }
+}
+
+final class CheesePizza {
+    private final PizzaIngredientFactory factory;
+
+    CheesePizza(PizzaIngredientFactory factory) {
+        this.factory = factory;
+    }
+
+    void prepare() {
+        Dough dough = factory.createDough();
+        Sauce sauce = factory.createSauce();
+        Cheese cheese = factory.createCheese();
+        System.out.println("Preparing pizza with "
+            + dough.name() + ", " + sauce.name() + ", " + cheese.name());
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        CheesePizza pizza = new CheesePizza(new NYPizzaIngredientFactory());
+        pizza.prepare();
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <memory>
+#include <string>
+
+struct Dough { virtual ~Dough() = default; virtual std::string name() const = 0; };
+struct Sauce { virtual ~Sauce() = default; virtual std::string name() const = 0; };
+struct Cheese { virtual ~Cheese() = default; virtual std::string name() const = 0; };
+
+struct ThinCrustDough : Dough {
+    std::string name() const override { return "thin crust dough"; }
+};
+
+struct MarinaraSauce : Sauce {
+    std::string name() const override { return "marinara sauce"; }
+};
+
+struct ReggianoCheese : Cheese {
+    std::string name() const override { return "reggiano cheese"; }
+};
+
+struct PizzaIngredientFactory {
+    virtual ~PizzaIngredientFactory() = default;
+    virtual std::unique_ptr<Dough> createDough() const = 0;
+    virtual std::unique_ptr<Sauce> createSauce() const = 0;
+    virtual std::unique_ptr<Cheese> createCheese() const = 0;
+};
+
+struct NYPizzaIngredientFactory : PizzaIngredientFactory {
+    std::unique_ptr<Dough> createDough() const override {
+        return std::make_unique<ThinCrustDough>();
+    }
+    std::unique_ptr<Sauce> createSauce() const override {
+        return std::make_unique<MarinaraSauce>();
+    }
+    std::unique_ptr<Cheese> createCheese() const override {
+        return std::make_unique<ReggianoCheese>();
+    }
+};
+
+class CheesePizza {
+public:
+    explicit CheesePizza(const PizzaIngredientFactory& factory)
+        : factory_(factory) {}
+
+    void prepare() const {
+        auto dough = factory_.createDough();
+        auto sauce = factory_.createSauce();
+        auto cheese = factory_.createCheese();
+        std::cout << "Preparing pizza with " << dough->name()
+                  << ", " << sauce->name() << ", " << cheese->name() << "\n";
+    }
+
+private:
+    const PizzaIngredientFactory& factory_;
+};
+
+int main() {
+    NYPizzaIngredientFactory factory;
+    CheesePizza pizza(factory);
+    pizza.prepare();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class Dough(ABC):
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+
+class Sauce(ABC):
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+
+class Cheese(ABC):
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+
+class ThinCrustDough(Dough):
+    def name(self) -> str:
+        return "thin crust dough"
+
+
+class MarinaraSauce(Sauce):
+    def name(self) -> str:
+        return "marinara sauce"
+
+
+class ReggianoCheese(Cheese):
+    def name(self) -> str:
+        return "reggiano cheese"
+
+
+class PizzaIngredientFactory(ABC):
+    @abstractmethod
+    def create_dough(self) -> Dough:
+        pass
+
+    @abstractmethod
+    def create_sauce(self) -> Sauce:
+        pass
+
+    @abstractmethod
+    def create_cheese(self) -> Cheese:
+        pass
+
+
+class NYPizzaIngredientFactory(PizzaIngredientFactory):
+    def create_dough(self) -> Dough:
+        return ThinCrustDough()
+
+    def create_sauce(self) -> Sauce:
+        return MarinaraSauce()
+
+    def create_cheese(self) -> Cheese:
+        return ReggianoCheese()
+
+
+class CheesePizza:
+    def __init__(self, factory: PizzaIngredientFactory) -> None:
+        self.factory = factory
+
+    def prepare(self) -> None:
+        dough = self.factory.create_dough()
+        sauce = self.factory.create_sauce()
+        cheese = self.factory.create_cheese()
+        print(f"Preparing pizza with {dough.name()}, {sauce.name()}, {cheese.name()}")
+
+
+pizza = CheesePizza(NYPizzaIngredientFactory())
+pizza.prepare()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class ThinCrustDough {
+  name() { return "thin crust dough"; }
+}
+
+class MarinaraSauce {
+  name() { return "marinara sauce"; }
+}
+
+class ReggianoCheese {
+  name() { return "reggiano cheese"; }
+}
+
+class NYPizzaIngredientFactory {
+  createDough() { return new ThinCrustDough(); }
+  createSauce() { return new MarinaraSauce(); }
+  createCheese() { return new ReggianoCheese(); }
+}
+
+class CheesePizza {
+  constructor(factory) {
+    this.factory = factory;
+  }
+
+  prepare() {
+    const dough = this.factory.createDough();
+    const sauce = this.factory.createSauce();
+    const cheese = this.factory.createCheese();
+    console.log(`Preparing pizza with ${dough.name()}, ${sauce.name()}, ${cheese.name()}`);
+  }
+}
+
+const pizza = new CheesePizza(new NYPizzaIngredientFactory());
+pizza.prepare();
+```
+  </div>
+</div>
 
 # Consequences
 Applying the Abstract Factory pattern results in several significant architectural trade-offs:

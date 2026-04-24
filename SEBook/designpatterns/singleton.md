@@ -73,8 +73,132 @@ activate boiler
 boiler --> cleaner: same instance
 deactivate boiler
 maker -> boiler: fill()
+activate boiler
+deactivate boiler
 cleaner -> boiler: drain()
+activate boiler
+deactivate boiler
 @enduml'></div>
+
+## Code Example
+
+This example models a process-wide configuration/logger object. Each language has a different idiom for enforcing one instance; the intent is the same: clients do not call the constructor directly.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Singleton code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+final class AppConfig {
+    private static final AppConfig INSTANCE = new AppConfig();
+
+    private AppConfig() {}
+
+    static AppConfig getInstance() {
+        return INSTANCE;
+    }
+
+    void log(String message) {
+        System.out.println("[config] " + message);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        AppConfig first = AppConfig.getInstance();
+        AppConfig second = AppConfig.getInstance();
+        first.log("same instance: " + (first == second));
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <string>
+
+class AppConfig {
+public:
+    static AppConfig& instance() {
+        static AppConfig config;
+        return config;
+    }
+
+    AppConfig(const AppConfig&) = delete;
+    AppConfig& operator=(const AppConfig&) = delete;
+
+    void log(const std::string& message) const {
+        std::cout << "[config] " << message << "\n";
+    }
+
+private:
+    AppConfig() = default;
+};
+
+int main() {
+    AppConfig& first = AppConfig::instance();
+    AppConfig& second = AppConfig::instance();
+    first.log(&first == &second ? "same instance" : "different instances");
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from __future__ import annotations
+
+
+class AppConfig:
+    _instance: AppConfig | None = None
+
+    def __new__(cls) -> AppConfig:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def log(self, message: str) -> None:
+        print(f"[config] {message}")
+
+
+first = AppConfig()
+second = AppConfig()
+first.log(f"same instance: {first is second}")
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+const AppConfig = (() => {
+  let instance;
+
+  class Config {
+    log(message) {
+      console.log(`[config] ${message}`);
+    }
+  }
+
+  return {
+    getInstance() {
+      if (!instance) {
+        instance = new Config();
+      }
+      return instance;
+    },
+  };
+})();
+
+const first = AppConfig.getInstance();
+const second = AppConfig.getInstance();
+first.log(`same instance: ${first === second}`);
+```
+  </div>
+</div>
 
 ## Refining the Solution: Thread Safety and Performance
 The "Classic Singleton" implementation uses **lazy instantiation**, checking if the instance is `null` before creating it. However, this is not thread-safe; if two threads call `getInstance()` simultaneously, they might both find the instance to be `null` and create two separate objects. 

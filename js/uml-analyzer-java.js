@@ -1349,7 +1349,12 @@
     if (!mainBody || mainBody.length === 0) return;
 
     this._ensureParticipant('Main', 'Main');
+    var lineStart = this.lines.length;
     this._processTokenBlock(mainBody, 'Main', 0);
+    if (this.lines.length > lineStart) {
+      this.lines.splice(lineStart, 0, 'activate Main');
+      this.lines.push('deactivate Main');
+    }
   };
 
   JavaSequenceDiagramGenerator.prototype.generatePlantUML = function () {
@@ -1357,7 +1362,11 @@
     var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
-      out.push('participant ' + p.id + ': ' + p.label);
+      if (p.id === 'Main' && p.label === 'Main') {
+        out.push('participant Main as : Main');
+      } else {
+        out.push('participant ' + p.id + ': ' + p.label);
+      }
     }
     out.push('');
     out.push.apply(out, this.lines);
@@ -1847,6 +1856,22 @@
 
   JavaSequenceDiagramGenerator.prototype._scanTokensForCalls = function (tokens, caller, depth) {
     for (var i = 0; i < tokens.length; i++) {
+      // Pattern: ClassName.staticMethod(
+      if (i + 2 < tokens.length &&
+          tokens[i].type === 'ident' &&
+          this.allTypeNames.has(tokens[i].value) &&
+          tokens[i + 1].value === '.' &&
+          tokens[i + 2].type === 'ident' &&
+          i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var staticClsName = tokens[i].value;
+        var staticMethod  = tokens[i + 2].value;
+        if (!this._dataClasses.has(staticClsName)) {
+          this._emitCall(caller, staticClsName, staticMethod, tokens, i + 3, depth);
+        }
+        i += 3;
+        continue;
+      }
+
       // Pattern: identifier.method(
       if (i + 2 < tokens.length &&
           tokens[i].type === 'ident' &&
@@ -1893,6 +1918,20 @@
         continue;
       }
 
+      // Pattern: method(  — implicit self-call inside the current class
+      if (i + 1 < tokens.length &&
+          tokens[i].type === 'ident' &&
+          tokens[i + 1].value === '(') {
+        var bareMethod = tokens[i].value;
+        var callerClass = this._classOf(caller);
+        var methodClass = callerClass ? this._findMethodInHierarchy(callerClass, bareMethod) : null;
+        if (methodClass && !this._dataClasses.has(methodClass)) {
+          this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth);
+        }
+        i += 1;
+        continue;
+      }
+
       // Pattern: new ClassName(
       if (tokens[i].value === 'new' &&
           i + 1 < tokens.length && tokens[i + 1].type === 'ident' &&
@@ -1915,27 +1954,14 @@
           this._callerClass[calleeId] = clsName;
           this.lines.push('create ' + calleeId);
           this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+          this.lines.push('activate ' + calleeId);
           this._maybeFollow(clsName, 'constructor', calleeId, depth);
+          this.lines.push('deactivate ' + calleeId);
           i = j;
         }
         continue;
       }
 
-      // Pattern: ClassName.staticMethod(
-      if (i + 2 < tokens.length &&
-          tokens[i].type === 'ident' &&
-          this.allTypeNames.has(tokens[i].value) &&
-          tokens[i + 1].value === '.' &&
-          tokens[i + 2].type === 'ident' &&
-          i + 3 < tokens.length && tokens[i + 3].value === '(') {
-        var clsName = tokens[i].value;
-        var method  = tokens[i + 2].value;
-        if (!this._dataClasses.has(clsName)) {
-          this._emitCall(caller, clsName, method, tokens, i + 3, depth);
-        }
-        i += 3;
-        continue;
-      }
     }
   };
 
@@ -1977,7 +2003,9 @@
     if (calleeId === caller) {
       // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;

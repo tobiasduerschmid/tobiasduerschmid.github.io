@@ -234,13 +234,15 @@ body.dark-mode #uml-pg-status {
 
     sequence: [
       '@startuml',
-      'participant user: User',
+      'actor user: User',
       'participant app: Application',
       'participant db: Database',
       'user -> app: login(username, password)',
       'activate app',
       'app -> db: queryUser(username)',
+      'activate db',
       'db --> app: userData',
+      'deactivate db',
       'alt [valid credentials]',
       '  app --> user: token',
       'else [invalid]',

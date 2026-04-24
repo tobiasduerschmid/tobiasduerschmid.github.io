@@ -92,72 +92,199 @@ AssignmentNode ..|> Node
 VariableRefNode ..|> Node
 @enduml'></div>
 
-## Python Example
+## Code Example
 
+This example adds type-checking behavior to a stable AST node hierarchy. Each node accepts a visitor and calls the overload or method that matches its concrete type.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Visitor code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+import java.util.List;
+
+interface Node {
+    void accept(NodeVisitor visitor);
+}
+
+final class AssignmentNode implements Node {
+    public void accept(NodeVisitor visitor) {
+        visitor.visitAssignment(this);
+    }
+}
+
+final class VariableRefNode implements Node {
+    public void accept(NodeVisitor visitor) {
+        visitor.visitVariableRef(this);
+    }
+}
+
+interface NodeVisitor {
+    void visitAssignment(AssignmentNode node);
+    void visitVariableRef(VariableRefNode node);
+}
+
+final class TypeCheckingVisitor implements NodeVisitor {
+    public void visitAssignment(AssignmentNode node) {
+        System.out.println("Type-check assignment");
+    }
+
+    public void visitVariableRef(VariableRefNode node) {
+        System.out.println("Type-check variable reference");
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        List<Node> ast = List.of(new AssignmentNode(), new VariableRefNode());
+        NodeVisitor typeChecker = new TypeCheckingVisitor();
+        ast.forEach(node -> node.accept(typeChecker));
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <memory>
+#include <vector>
+
+class AssignmentNode;
+class VariableRefNode;
+
+struct NodeVisitor {
+    virtual ~NodeVisitor() = default;
+    virtual void visit(AssignmentNode& node) = 0;
+    virtual void visit(VariableRefNode& node) = 0;
+};
+
+struct Node {
+    virtual ~Node() = default;
+    virtual void accept(NodeVisitor& visitor) = 0;
+};
+
+class AssignmentNode : public Node {
+public:
+    void accept(NodeVisitor& visitor) override {
+        visitor.visit(*this);
+    }
+};
+
+class VariableRefNode : public Node {
+public:
+    void accept(NodeVisitor& visitor) override {
+        visitor.visit(*this);
+    }
+};
+
+class TypeCheckingVisitor : public NodeVisitor {
+public:
+    void visit(AssignmentNode&) override {
+        std::cout << "Type-check assignment\n";
+    }
+
+    void visit(VariableRefNode&) override {
+        std::cout << "Type-check variable reference\n";
+    }
+};
+
+int main() {
+    std::vector<std::unique_ptr<Node>> ast;
+    ast.push_back(std::make_unique<AssignmentNode>());
+    ast.push_back(std::make_unique<VariableRefNode>());
+
+    TypeCheckingVisitor typeChecker;
+    for (const auto& node : ast) {
+        node->accept(typeChecker);
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
-# --- 1. Element Hierarchy ---
+
 class Node(ABC):
     @abstractmethod
-    def accept(self, visitor):
+    def accept(self, visitor: NodeVisitor) -> None:
         pass
 
-class AssignmentNode(Node):
-    def accept(self, visitor):
-        # Double-dispatch: The element passes its specific type to the visitor
-        visitor.visit_assignment_node(self)
 
-class VariableRefNode(Node):
-    def accept(self, visitor):
-        # Double-dispatch
-        visitor.visit_variable_ref_node(self)
-
-
-# --- 2. Visitor Hierarchy ---
 class NodeVisitor(ABC):
     @abstractmethod
-    def visit_assignment_node(self, node: AssignmentNode):
+    def visit_assignment(self, node: AssignmentNode) -> None:
         pass
 
     @abstractmethod
-    def visit_variable_ref_node(self, node: VariableRefNode):
+    def visit_variable_ref(self, node: VariableRefNode) -> None:
         pass
 
-# A ConcreteVisitor that adds new behavior (Type Checking)
+
+class AssignmentNode(Node):
+    def accept(self, visitor: NodeVisitor) -> None:
+        visitor.visit_assignment(self)
+
+
+class VariableRefNode(Node):
+    def accept(self, visitor: NodeVisitor) -> None:
+        visitor.visit_variable_ref(self)
+
+
 class TypeCheckingVisitor(NodeVisitor):
-    def visit_assignment_node(self, node: AssignmentNode):
-        print("Performing type-check on AssignmentNode")
+    def visit_assignment(self, node: AssignmentNode) -> None:
+        print("Type-check assignment")
 
-    def visit_variable_ref_node(self, node: VariableRefNode):
-        print("Performing type-check on VariableRefNode")
-
-# Another ConcreteVisitor adding different behavior (Code Generation)
-class CodeGeneratingVisitor(NodeVisitor):
-    def visit_assignment_node(self, node: AssignmentNode):
-        print("Generating machine code for AssignmentNode")
-
-    def visit_variable_ref_node(self, node: VariableRefNode):
-        print("Generating machine code for VariableRefNode")
+    def visit_variable_ref(self, node: VariableRefNode) -> None:
+        print("Type-check variable reference")
 
 
-# --- 3. Object Structure / Client ---
-if __name__ == "__main__":
-    # Stable Object Structure
-    abstract_syntax_tree = [AssignmentNode(), VariableRefNode(), AssignmentNode()]
-
-    # We can define and apply new operations without touching the Node classes
-    type_checker = TypeCheckingVisitor()
-    code_generator = CodeGeneratingVisitor()
-
-    print("--- Running Type Checker ---")
-    for node in abstract_syntax_tree:
-        node.accept(type_checker)
-
-    print("\n--- Running Code Generator ---")
-    for node in abstract_syntax_tree:
-        node.accept(code_generator)
+ast: list[Node] = [AssignmentNode(), VariableRefNode()]
+type_checker = TypeCheckingVisitor()
+for node in ast:
+    node.accept(type_checker)
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class AssignmentNode {
+  accept(visitor) {
+    visitor.visitAssignment(this);
+  }
+}
+
+class VariableRefNode {
+  accept(visitor) {
+    visitor.visitVariableRef(this);
+  }
+}
+
+class TypeCheckingVisitor {
+  visitAssignment() {
+    console.log("Type-check assignment");
+  }
+
+  visitVariableRef() {
+    console.log("Type-check variable reference");
+  }
+}
+
+const ast = [new AssignmentNode(), new VariableRefNode()];
+const typeChecker = new TypeCheckingVisitor();
+ast.forEach((node) => node.accept(typeChecker));
+```
+  </div>
+</div>
 
 # Consequences
 *   **Adding Operations is Easy:** You can add a new operation over an object structure simply by adding a new visitor class.

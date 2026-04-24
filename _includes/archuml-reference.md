@@ -478,11 +478,17 @@ participant server: AppServer
 participant db: Database
 
 user -> browser: enter credentials
+activate browser
 browser -> server: POST /login
+activate server
 server -> db: findUser(name)
+activate db
 db --> server: userRecord
+deactivate db
 server --> browser: 200 OK + token
+deactivate server
 browser --> user: show dashboard
+deactivate browser
 @enduml
 ```
 
@@ -494,11 +500,17 @@ participant server: AppServer
 participant db: Database
 
 user -> browser: enter credentials
+activate browser
 browser -> server: POST /login
+activate server
 server -> db: findUser(name)
+activate db
 db --> server: userRecord
+deactivate db
 server --> browser: 200 OK + token
+deactivate server
 browser --> user: show dashboard
+deactivate browser
 @enduml
 </code></pre>
 
@@ -524,12 +536,18 @@ participant server: Server
 participant pool: ThreadPool
 
 client -> server: request()
+activate server
 server -> server: validate()
+activate server
+deactivate server
 server ->> pool: submitTask()
+activate pool
 pool --> server: taskQueued
+deactivate pool
 server -->o : timeout
 o-> client: networkEvent
 server --> client: response
+deactivate server
 @enduml
 ```
 
@@ -540,12 +558,18 @@ participant server: Server
 participant pool: ThreadPool
 
 client -> server: request()
+activate server
 server -> server: validate()
+activate server
+deactivate server
 server ->> pool: submitTask()
+activate pool
 pool --> server: taskQueued
+deactivate pool
 server -->o : timeout
 o-> client: networkEvent
 server --> client: response
+deactivate server
 @enduml
 </code></pre>
 
@@ -560,7 +584,7 @@ create ParticipantId        ← show creation message
 destroy ParticipantId       ← terminate lifeline with X
 ```
 
-When `activate` / `deactivate` are omitted, activation bars are inferred automatically from message nesting.
+When `activate` / `deactivate` are omitted, no activation bars are drawn. Add explicit markers when the execution duration matters.
 
 **Example:**
 
@@ -656,19 +680,31 @@ participant cache: Cache
 participant db: Database
 
 c -> s: fetchAll()
+activate s
 loop [for each record]
-  s -> cache: lookup(id)
   alt [cache hit]
+    s -> cache: lookup(id)
+    activate cache
     cache --> s: cachedData
+    deactivate cache
   else [cache miss]
+    s -> cache: lookup(id)
+    activate cache
+    cache --> s: miss
+    deactivate cache
     s -> db: query(id)
+    activate db
     db --> s: record
+    deactivate db
   end
 end
 opt [user has notifications enabled]
   s -> s: sendNotification()
+  activate s
+  deactivate s
 end
 s --> c: results
+deactivate s
 @enduml
 ```
 
@@ -680,19 +716,31 @@ participant cache: Cache
 participant db: Database
 
 c -> s: fetchAll()
+activate s
 loop [for each record]
-  s -> cache: lookup(id)
   alt [cache hit]
+    s -> cache: lookup(id)
+    activate cache
     cache --> s: cachedData
+    deactivate cache
   else [cache miss]
+    s -> cache: lookup(id)
+    activate cache
+    cache --> s: miss
+    deactivate cache
     s -> db: query(id)
+    activate db
     db --> s: record
+    deactivate db
   end
 end
 opt [user has notifications enabled]
   s -> s: sendNotification()
+  activate s
+  deactivate s
 end
 s --> c: results
+deactivate s
 @enduml
 </code></pre>
 
@@ -706,17 +754,25 @@ participant inv: Inventory
 participant pay: Payment
 
 ui -> svc: placeOrder()
+activate svc
 par [parallel processing]
   svc -> inv: reserveItems()
+  activate inv
   inv --> svc: reserved
+  deactivate inv
 else [charge card]
   svc -> pay: chargeCard()
+  activate pay
   pay --> svc: charged
+  deactivate pay
 end
 critical [atomic commit]
   svc -> svc: commitOrder()
+  activate svc
+  deactivate svc
 end
 svc --> ui: orderComplete
+deactivate svc
 @enduml
 ```
 
@@ -728,17 +784,25 @@ participant inv: Inventory
 participant pay: Payment
 
 ui -> svc: placeOrder()
+activate svc
 par [parallel processing]
   svc -> inv: reserveItems()
+  activate inv
   inv --> svc: reserved
+  deactivate inv
 else [charge card]
   svc -> pay: chargeCard()
+  activate pay
   pay --> svc: charged
+  deactivate pay
 end
 critical [atomic commit]
   svc -> svc: commitOrder()
+  activate svc
+  deactivate svc
 end
 svc --> ui: orderComplete
+deactivate svc
 @enduml
 </code></pre>
 
@@ -760,10 +824,14 @@ participant client: Client
 participant server: Server
 
 client -> server: request()
+activate server
 create Handler
 server --> Handler: <<create>>
+activate Handler
 Handler --> server: result
+deactivate Handler
 server --> client: response
+deactivate server
 destroy Handler
 @enduml
 ```
@@ -774,10 +842,14 @@ participant client: Client
 participant server: Server
 
 client -> server: request()
+activate server
 create Handler
 server --> Handler: <<create>>
+activate Handler
 Handler --> server: result
+deactivate Handler
 server --> client: response
+deactivate server
 destroy Handler
 @enduml
 </code></pre>
@@ -1563,15 +1635,19 @@ participant s: Server
 participant db: Database
 
 c -> s: authenticate()
+activate s
 note right of s: Validates JWT token
 s -> db: findUser(token)
+activate db
 note left of db: Lookup by indexed token field
 db --> s: userRecord
+deactivate db
 note over s
   At this point the server has
   verified the user identity.
 end note
 s --> c: authResult
+deactivate s
 @enduml
 ```
 
@@ -1582,15 +1658,19 @@ participant s: Server
 participant db: Database
 
 c -> s: authenticate()
+activate s
 note right of s: Validates JWT token
 s -> db: findUser(token)
+activate db
 note left of db: Lookup by indexed token field
 db --> s: userRecord
+deactivate db
 note over s
   At this point the server has
   verified the user identity.
 end note
 s --> c: authResult
+deactivate s
 @enduml
 </code></pre>
 

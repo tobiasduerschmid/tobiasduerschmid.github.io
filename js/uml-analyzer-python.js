@@ -1966,6 +1966,49 @@
     return names;
   }
 
+  function extractFStringExpressions(value) {
+    var expressions = [];
+    if (typeof value !== 'string') return expressions;
+
+    for (var i = 0; i < value.length; i++) {
+      if (value[i] !== '{') continue;
+      if (value[i + 1] === '{') { i++; continue; }
+
+      var depth = 1;
+      var start = i + 1;
+      var j = start;
+      for (; j < value.length && depth > 0; j++) {
+        if (value[j] === '{') depth++;
+        else if (value[j] === '}') depth--;
+      }
+      if (depth !== 0) break;
+
+      var raw = value.slice(start, j - 1).trim();
+      var expr = stripFStringFormat(raw);
+      if (expr) expressions.push(expr);
+      i = j - 1;
+    }
+
+    return expressions;
+  }
+
+  function stripFStringFormat(raw) {
+    var paren = 0, bracket = 0, brace = 0;
+    for (var i = 0; i < raw.length; i++) {
+      var ch = raw[i];
+      if (ch === '(') paren++;
+      else if (ch === ')') paren = Math.max(0, paren - 1);
+      else if (ch === '[') bracket++;
+      else if (ch === ']') bracket = Math.max(0, bracket - 1);
+      else if (ch === '{') brace++;
+      else if (ch === '}') brace = Math.max(0, brace - 1);
+      else if ((ch === ':' || ch === '!') && paren === 0 && bracket === 0 && brace === 0) {
+        return raw.slice(0, i).trim();
+      }
+    }
+    return raw.trim();
+  }
+
   PythonSequenceDiagramGenerator.prototype._buildLookups = function () {
     var self = this;
     for (var fn in this.parsedFiles) {
@@ -2097,7 +2140,12 @@
     if (!entry || entry.length === 0) return;
     this._ensureParticipant('Main', 'Main');
     this._referencedVars = collectNameLoads(entry);
+    var lineStart = this.lines.length;
     this._processStmts(entry, 'Main', 0);
+    if (this.lines.length > lineStart) {
+      this.lines.splice(lineStart, 0, 'activate Main');
+      this.lines.push('deactivate Main');
+    }
   };
 
   PythonSequenceDiagramGenerator.prototype.generatePlantUML = function () {
@@ -2203,7 +2251,9 @@
             this._ensureParticipant(tgt.id, clsName);
             this.lines.push('create ' + tgt.id);
             this.lines.push(caller + ' --> ' + tgt.id + ': <<create>>');
+            this.lines.push('activate ' + tgt.id);
             this._maybeFollow(clsName, '__init__', tgt.id, depth);
+            this.lines.push('deactivate ' + tgt.id);
             return;
           }
           if (isSelfAttr(tgt)) {
@@ -2213,6 +2263,9 @@
             this._callerClass[pid] = clsName;
             this.lines.push('create ' + pid);
             this.lines.push(caller + ' --> ' + pid + ': <<create>>');
+            this.lines.push('activate ' + pid);
+            this._maybeFollow(clsName, '__init__', pid, depth);
+            this.lines.push('deactivate ' + pid);
             return;
           }
         }
@@ -2425,31 +2478,32 @@
         && call.func.value.func && call.func.value.func.type === 'Name'
         && call.func.value.func.id === 'super';
 
-    // NOTE: we deliberately do NOT emit explicit `activate` / `deactivate`
-    // directives here. The renderer derives activation bars from the call
-    // graph (push on sync, pop on response OR when the caller emits its next
-    // message). Explicit directives would shortcircuit that logic and produce
-    // zero-height bars for body-less calls — which is exactly the problem
-    // the implicit-activation path solves.
     if (method === '__init__' && !isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, '__init__', calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
       // Return/reply message — only when return value is captured AND method has
       // a non-void return type (Cheers & Lin 2020 + Ambler G172: "Label return
@@ -2461,6 +2515,7 @@
           this.lines.push(calleeId + ' --> ' + caller + ': ' + reply);
         }
       }
+      this.lines.push('deactivate ' + calleeId);
     }
   };
 
@@ -2613,6 +2668,13 @@
     if (!node) return;
     if (node.type === 'Call') {
       this._processCall(node, caller, depth);
+      return;
+    }
+    if (node.type === 'Constant' && node.isFString && typeof node.value === 'string') {
+      var expressions = extractFStringExpressions(node.value);
+      for (var ei = 0; ei < expressions.length; ei++) {
+        this._scanExprForCalls(parseExpr(expressions[ei]), caller, depth);
+      }
       return;
     }
     // Walk child expressions

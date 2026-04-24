@@ -462,10 +462,10 @@ end note
 participant client: Client
 participant server: LibraryServer
 
-activate client
 client -> server: GET /book/id
+activate server
 server --> client: responseCode=200, book
-deactivate client
+deactivate server
 @enduml
   </code></pre>
 
@@ -476,31 +476,41 @@ participant client: Client
 participant server: LibraryServer
 
 client -> server: GET /book/id
+activate server
 alt [book found]
   server --> client: responseCode=200, book
 else [else]
   server --> client: responseCode=404
 end
+deactivate server
 @enduml
   </code></pre>
 
   <h2>11. Multiple Participants (Login Flow)</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant user: User
+actor user: User
 participant browser: WebBrowser
 participant login: LoginController
 participant auth: AuthService
 participant db: UserDB
 
 user -> browser: enter credentials
+activate browser
 browser -> login: POST /login
+activate login
 login -> auth: authenticate(user, pass)
+activate auth
 auth -> db: findUser(user)
+activate db
 db --> auth: userRecord
+deactivate db
 auth --> login: authResult
+deactivate auth
 login --> browser: 200 OK + token
+deactivate login
 browser --> user: show dashboard
+deactivate browser
 @enduml
   </code></pre>
 
@@ -512,55 +522,79 @@ participant s: Server
 participant db: Database
 
 c -> s: getItems(page)
+activate s
 loop [for each item in page]
   s -> db: fetchItem(id)
+  activate db
   db --> s: itemData
+  deactivate db
 end
 s --> c: itemList
+deactivate s
 @enduml
   </code></pre>
 
   <h2>13. Opt Fragment (Optional)</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant user: User
+actor user: User
 participant app: App
 participant notif: NotificationService
 
 user -> app: submitOrder()
-app --> user: orderConfirmation
+activate app
 opt [user has notifications enabled]
   app -> notif: sendEmail(user, order)
+  activate notif
   notif --> app: sent
+  deactivate notif
 end
+app --> user: orderConfirmation
+deactivate app
 @enduml
   </code></pre>
 
   <h2>14. Train System Sequence (from Lecture)</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant p: Passenger
+actor p: Passenger
 participant btn: StationButton
 participant sys: TrainSystem
 participant train: Train
 participant doors: Doors
 
 p -> btn: press()
+activate btn
 btn -> sys: requestStop(stationA)
+activate sys
 sys -> train: stopTrain()
+activate train
 train --> sys: stopped
+deactivate train
 sys -> doors: openDoors()
+activate doors
 doors --> sys: doorsOpen
+deactivate doors
+deactivate sys
+deactivate btn
 p -> train: board
 p -> train: pressRequestButton(stationB)
+activate train
 train -> sys: requestStop(stationB)
+activate sys
 sys -> doors: closeDoors()
+activate doors
 doors --> sys: doorsClosed
+deactivate doors
 sys -> train: startTrain(velocity)
+activate train
+deactivate train
+deactivate sys
+deactivate train
 @enduml
   </code></pre>
 
-  <h2>15. Execution Specifications (Auto Activation)</h2>
+  <h2>15. Execution Specifications (Explicit Activation)</h2>
   <pre><code class="language-uml-sequence">
 @startuml
 participant client: Client
@@ -568,26 +602,36 @@ participant server: LibraryServer
 participant db: Database
 
 client -> server: GET /book/id
+activate server
 server -> db: SELECT * FROM books
+activate db
 db --> server: resultSet
+deactivate db
 server --> client: responseCode=200, book
+deactivate server
 @enduml
   </code></pre>
 
   <h2>16. Nested Activations</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant user: User
+actor user: User
 participant app: Application
 participant auth: AuthService
 participant db: UserDB
 
 user -> app: login(credentials)
+activate app
 app -> auth: authenticate(user, pass)
+activate auth
 auth -> db: findUser(user)
+activate db
 db --> auth: userRecord
+deactivate db
 auth --> app: token
+deactivate auth
 app --> user: loginSuccess
+deactivate app
 @enduml
   </code></pre>
 
@@ -598,9 +642,15 @@ participant client: Client
 participant server: Server
 
 client -> server: request()
+activate server
 server -> server: validate()
+activate server
+deactivate server
 server -> server: process()
+activate server
+deactivate server
 server --> client: response
+deactivate server
 @enduml
   </code></pre>
 
@@ -611,15 +661,20 @@ participant client: Client
 participant server: Server
 
 o-> client: networkEvent
+activate client
 client -> server: request()
+activate server
 server ->o : timeout
 server --> client: response
+deactivate server
 client ->o : logEntry
+deactivate client
 @enduml
   </code></pre>
 
   <h2>19. Stacked Execution Specifications (Observer Pattern)</h2>
   <pre><code class="language-uml-sequence">
+@startuml
 participant Observer
 participant Subject
 
@@ -636,10 +691,12 @@ deactivate Subject
 deactivate Observer
 deactivate Subject
 deactivate Subject
+@enduml
   </code></pre>
 
   <h2>19b. Stacked Bars — Deep Nesting</h2>
   <pre><code class="language-uml-sequence">
+@startuml
 participant client: Client
 participant server: Server
 participant db: Database
@@ -656,6 +713,7 @@ db --> server: valid
 deactivate db
 server --> client: session
 deactivate server
+@enduml
   </code></pre>
 
   <h2>20. Nested Fragments (Loop containing Alt)</h2>
@@ -666,17 +724,28 @@ participant s: Server
 participant db: Database
 
 c -> s: fetchAll()
+activate s
 loop [for each record]
-  s -> db: query(id)
   alt [found]
+    s -> db: query(id)
+    activate db
     db --> s: record
+    deactivate db
     s -> s: transform()
+    activate s
+    deactivate s
   else [not found]
+    s -> db: query(id)
+    activate db
     db --> s: null
+    deactivate db
     s -> s: logMissing()
+    activate s
+    deactivate s
   end
 end
 s --> c: results
+deactivate s
 @enduml
   </code></pre>
 
@@ -688,17 +757,29 @@ participant s: Session
 participant db: Database
 
 c -> s: connect()
+activate s
 s -> db: open()
+activate db
 db --> s: connection
+deactivate db
 s --> c: sessionId
+deactivate s
 c -> s: query(sql)
+activate s
 s -> db: execute(sql)
+activate db
 db --> s: resultSet
+deactivate db
 s --> c: results
+deactivate s
 c -> s: disconnect()
+activate s
 s -> db: close()
+activate db
+deactivate db
 destroy db
 s --> c: bye
+deactivate s
 destroy s
 @enduml
   </code></pre>
@@ -711,15 +792,25 @@ participant s: Server
 participant cache: Cache
 
 c -> s: search(query)
+activate s
 loop [for each page]
-  s -> cache: lookup(page)
   break [cache hit]
+    s -> cache: lookup(page)
+    activate cache
     cache --> s: cachedResult
+    deactivate cache
     s --> c: cachedResult
   end
+  s -> cache: lookup(page)
+  activate cache
+  cache --> s: miss
+  deactivate cache
   s -> s: computePage()
+  activate s
+  deactivate s
 end
 s --> c: result
+deactivate s
 @enduml
   </code></pre>
 
@@ -733,36 +824,50 @@ participant pay: PaymentGateway
 participant notif: Notifications
 
 ui -> svc: placeOrder()
+activate svc
 par [parallel processing]
   svc -> inv: reserveItems()
+  activate inv
   inv --> svc: reserved
+  deactivate inv
 else [payment]
   svc -> pay: chargeCard()
+  activate pay
   pay --> svc: charged
+  deactivate pay
 else [notification]
   svc -> notif: sendConfirmation()
+  activate notif
   notif --> svc: sent
+  deactivate notif
 end
 svc --> ui: orderComplete
+deactivate svc
 @enduml
   </code></pre>
 
   <h2>24. Ref (Interaction Use) Fragment</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant user: User
+actor user: User
 participant app: App
 participant auth: AuthService
 participant api: API
 
 user -> app: login()
+activate app
 ref [Authentication Handshake]
   app -> auth: authenticate(credentials)
+  activate auth
   auth --> app: token
+  deactivate auth
 end
 app -> api: getData(token)
+activate api
 api --> app: data
+deactivate api
 app --> user: showDashboard
+deactivate app
 @enduml
   </code></pre>
 
@@ -774,13 +879,19 @@ participant bank: BankServer
 participant acct: Account
 
 atm -> bank: withdraw(amount)
+activate bank
 critical [atomic transaction]
   bank -> acct: debit(amount)
+  activate acct
   acct --> bank: success
+  deactivate acct
   bank -> acct: updateBalance()
+  activate acct
   acct --> bank: newBalance
+  deactivate acct
 end
 bank --> atm: dispenseCash
+deactivate bank
 @enduml
   </code></pre>
 
@@ -791,17 +902,23 @@ participant c: Client
 participant s: Server
 
 c -> s: request(type)
+activate s
 alt [type == GET]
   s --> c: 200 OK + data
 else [type == POST]
   s -> s: validate()
+  activate s
+  deactivate s
   s --> c: 201 Created
 else [type == DELETE]
   s -> s: authorize()
+  activate s
+  deactivate s
   s --> c: 204 No Content
 else [else]
   s --> c: 405 Method Not Allowed
 end
+deactivate s
 @enduml
   </code></pre>
 
@@ -814,35 +931,50 @@ participant svc: Service
 participant db: Database
 
 c -> gw: request()
+activate gw
 opt [authenticated]
   gw -> svc: process()
+  activate svc
   loop [retry up to 3 times]
-    svc -> db: query()
     alt [success]
+      svc -> db: query()
+      activate db
       db --> svc: data
+      deactivate db
     else [timeout]
+      svc -> db: query()
+      activate db
+      deactivate db
       svc -> svc: wait()
+      activate svc
+      deactivate svc
     end
   end
   svc --> gw: result
+  deactivate svc
 end
 gw --> c: response
+deactivate gw
 @enduml
   </code></pre>
 
   <h2>28. Neg (Forbidden/Invalid) Fragment</h2>
   <pre><code class="language-uml-sequence">
 @startuml
-participant user: User
+actor user: User
 participant sys: System
 participant db: Database
 
 user -> sys: deleteAccount()
+activate sys
 neg [must not happen during maintenance]
   sys -> db: DROP TABLE users
+  activate db
   db --> sys: error
+  deactivate db
 end
 sys --> user: maintenanceInProgress
+deactivate sys
 @enduml
   </code></pre>
 
@@ -854,10 +986,16 @@ participant pool: ThreadPool
 participant worker: Worker
 
 client ->> pool: submitTask()
+activate pool
 pool -> worker: create()
+activate worker
+deactivate worker
 pool ->> worker: execute(task)
+activate worker
 worker ->> pool: taskComplete
+deactivate worker
 pool --> client: result
+deactivate pool
 destroy worker
 @enduml
   </code></pre>
@@ -870,16 +1008,20 @@ participant s: Server
 participant db: Database
 
 c -> s: authenticate()
+activate s
 note right of s: Validates JWT token
 s -> db: findUser(token)
+activate db
 note left of db: Lookup by indexed token field
 db --> s: userRecord
+deactivate db
 note over s
   At this point the server has
   verified the user identity and
   can proceed with authorization.
 end note
 s --> c: authResult
+deactivate s
 @enduml
   </code></pre>
 
@@ -1078,6 +1220,48 @@ e_out1 --> c_p2 : GET
 e_out2 --> n_p1 : POST
 n_out1 --> e_p2 : GET
 n_out2 --> u_p3 : POST
+@enduml
+  </code></pre>
+
+  <h2>27b. Component API Back-Edges with Shared Ports</h2>
+  <pre><code class="language-uml-component">
+@startuml
+layout landscape
+!theme plain
+left to right direction
+skinparam componentStyle uml2
+skinparam nodesep 20
+skinparam ranksep 150
+
+' Hidden constraints keep the intended service sequence without rendering edges.
+gateway -[hidden]r- auth
+auth -[hidden]r- users
+users -[hidden]r- clubs
+clubs -[hidden]r- events
+events -[hidden]r- notifications
+
+component users {
+  portin "/users" as users_port
+}
+component clubs {
+  portin "/clubs" as clubs_port
+}
+component events {
+  portin "/events" as events_port
+}
+component notifications {
+  portin "/notifications" as notifications_port
+}
+
+notifications --> users_port : "patch /users/unsubscribe/{userId}"
+notifications --> events_port : "get /events/template-data/{templateId}"
+auth --> clubs_port : "get /clubs/roles/{clubId}/{userId}"
+auth --> users_port : "post /users"
+gateway --> users_port : "get /users"
+gateway --> clubs_port : "get /clubs"
+clubs --> events_port : "post /events"
+events --> notifications_port : "post /notifications/event-update"
+events --> clubs_port : "delete /clubs/event-reference/{eventId}"
 @enduml
   </code></pre>
 
@@ -1329,9 +1513,13 @@ participant app: Application
 participant db: Database
 
 user -> app: login(credentials)
+activate app
 app -> db: findUser(name)
+activate db
 db --> app: userRecord
+deactivate db
 app --> user: welcome screen
+deactivate app
 @enduml
   </code></pre>
 
@@ -1342,11 +1530,15 @@ participant client: Client
 participant server: Server
 
 client -> server: request()
+activate server
 create Handler
 server --> Handler: &lt;&lt;create&gt;&gt;
+activate Handler
 Handler --> server: result
-server --> client: response
+deactivate Handler
 destroy Handler
+server --> client: response
+deactivate server
 @enduml
   </code></pre>
 
@@ -1769,11 +1961,17 @@ participant Gateway #FFEB3B
 participant Service #lightgreen
 participant Database #lightcoral
 Client -> Gateway : request
+activate Gateway
 Gateway -> Service : forward
+activate Service
 Service -> Database : query
+activate Database
 Database --> Service : result
+deactivate Database
 Service --> Gateway : response
+deactivate Service
 Gateway --> Client : reply
+deactivate Gateway
 @enduml
   </code></pre>
 

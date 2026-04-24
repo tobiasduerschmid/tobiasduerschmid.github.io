@@ -26,6 +26,7 @@ The GoF (Gang of Four) design patterns are organized into three categories based
 **Creational Patterns** address the problem of *object creation*—how to instantiate objects in a flexible, decoupled way:
 * [**Factory Method**](/SEBook/designpatterns/factory_method.html): Defines an interface for creating an object but lets subclasses decide which class to instantiate, deferring creation to subclasses.
 * [**Abstract Factory**](/SEBook/designpatterns/abstract_factory.html): Provides an interface for creating families of related objects without specifying their concrete classes.
+* [**Builder**](/SEBook/designpatterns/builder.html): Separates step-by-step construction of a complex object from the representation being built.
 * [**Singleton**](/SEBook/designpatterns/singleton.html): Ensures a class has only one instance while providing a controlled global point of access to it.
 
 **Structural Patterns** address the problem of *class and object composition*—how to assemble objects and classes into larger structures:
@@ -35,10 +36,138 @@ The GoF (Gang of Four) design patterns are organized into three categories based
 
 **Behavioral Patterns** address the problem of *object interaction and responsibility*—how objects communicate and distribute work:
 * [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that dependent objects are automatically notified and updated whenever the subject's state changes.
+* [**Command**](/SEBook/designpatterns/command.html): Encapsulates a request as an object, allowing invokers to be configured with different actions and supporting undo, queuing, logging, and macro commands.
 * [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
 * [**Mediator**](/SEBook/designpatterns/mediator.html): Encapsulates how a set of objects interact by introducing a mediator object that centralizes complex communication logic.
+* [**Visitor**](/SEBook/designpatterns/visitor.html): Represents operations over a stable object structure as separate visitor objects, making new operations easier to add without changing element classes.
 
 These categories help practitioners narrow down which pattern might apply: if the problem is about *creating* objects flexibly, look at creational patterns; if it is about *structuring* relationships between classes, look at structural patterns; if it is about *coordinating behavior* between objects, look at behavioral patterns.
+
+## Code Example: Same Design Shape, Different Syntax
+
+Design patterns are not language features. The same responsibility split can be expressed in Java, C++, Python, or JavaScript, with each language using its own idioms. This tiny action example has the same shape as a request object: a button stores something executable without knowing the concrete operation behind it.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Design patterns overview code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface Action {
+    void execute();
+}
+
+final class SaveAction implements Action {
+    public void execute() {
+        System.out.println("Saving document");
+    }
+}
+
+final class Button {
+    private final Action action;
+
+    Button(Action action) {
+        this.action = action;
+    }
+
+    void click() {
+        action.execute();
+    }
+}
+
+new Button(new SaveAction()).click();
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+
+struct Action {
+    virtual ~Action() = default;
+    virtual void execute() = 0;
+};
+
+class SaveAction : public Action {
+public:
+    void execute() override {
+        std::cout << "Saving document\n";
+    }
+};
+
+class Button {
+public:
+    explicit Button(Action& action) : action_(action) {}
+
+    void click() {
+        action_.execute();
+    }
+
+private:
+    Action& action_;
+};
+
+int main() {
+    SaveAction save;
+    Button(save).click();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class Action(ABC):
+    @abstractmethod
+    def execute(self) -> None:
+        pass
+
+
+class SaveAction(Action):
+    def execute(self) -> None:
+        print("Saving document")
+
+
+class Button:
+    def __init__(self, action: Action) -> None:
+        self._action = action
+
+    def click(self) -> None:
+        self._action.execute()
+
+
+Button(SaveAction()).click()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class SaveAction {
+  execute() {
+    console.log("Saving document");
+  }
+}
+
+class Button {
+  constructor(action) {
+    this.action = action;
+  }
+
+  click() {
+    this.action.execute();
+  }
+}
+
+new Button(new SaveAction()).click();
+```
+  </div>
+</div>
 
 ## Architectural Patterns
 
@@ -129,7 +258,7 @@ This compound yields the emergent properties of **looser coupling between the cl
 ## Managing Operations: The Composite Visitor and Composite Command
 Pattern compounds frequently emerge when scaling behavioral patterns to handle structural complexity:
 *   **Composite Visitor:** If a system requires many custom operations to be defined on a Composite structure without modifying the classes themselves (and no new leaves are expected), a Visitor can be superimposed. This yields the emergent property of **strict separation of concerns**, keeping core structural elements distinct from use-case-specific operations.
-*   **Composite Command:** When a system involves hierarchical actions that require a simple execution API, a Composite Command groups multiple command objects into a unified tree. This allows individual command pieces to be shared and reused, though developers must manage the consequence of execution order ambiguity.
+*   **Composite Command:** When a system involves hierarchical actions that require a simple execution API, a [Composite Command](/SEBook/designpatterns/command.html#macro-command) groups multiple command objects into a unified tree. This allows individual command pieces to be shared and reused, though developers must manage the consequence of execution order ambiguity.
 
 ## Communicating Design Intent and Context Tailoring
 Pattern compounds also naturally arise when tailoring patterns to specific contexts or when communicating highly specific design intents.
@@ -156,6 +285,7 @@ Common code smells that suggest specific patterns:
 |------------|-------------------|-----|
 | Large `if/else` or `switch` on object state | [State](/SEBook/designpatterns/state.html) | Replace conditional logic with polymorphic state objects |
 | Duplicated conditional logic choosing algorithms | Strategy | Extract varying algorithms into interchangeable objects |
+| Large conditional dispatcher routing requests or actions | [Command](/SEBook/designpatterns/command.html) | Replace branch-by-branch dispatch with a configurable map of command objects |
 | Complex object creation with many conditionals | [Factory Method](/SEBook/designpatterns/factory_method.html) or [Abstract Factory](/SEBook/designpatterns/abstract_factory.html) | Separate creation logic from usage logic |
 | Client tightly coupled to incompatible third-party API | [Adapter](/SEBook/designpatterns/adapter.html) | Translate the foreign interface behind a wrapper |
 | Client must orchestrate many subsystem calls | [Façade](/SEBook/designpatterns/facade.html) | Hide coordination behind a simplified interface |

@@ -24,6 +24,11 @@ function inferDiagram(code) {
   return global.analyzePythonSources({ 'test.py': code }).classDiagram;
 }
 
+/** Run the analyzer on a single Python source string and return the sequence diagram. */
+function inferSequence(code) {
+  return global.analyzePythonSources({ 'test.py': code }).sequenceDiagram;
+}
+
 // ---------------------------------------------------------------------------
 // Step 1 — Your First Class Diagram
 // ---------------------------------------------------------------------------
@@ -797,6 +802,109 @@ test.describe('Fix 2: Inline constructor in append', () => {
     expect(diagram).toContain('TaskList *--> "*" Task');
     expect(diagram).not.toContain('o-->');
     expect(diagram).not.toContain('..>');
+  });
+});
+
+test.describe('Sequence diagram execution specifications', () => {
+  test('self-call activations close before and after inferred loop fragments', () => {
+    const code = [
+      'class Worker:',
+      '    def prepare(self):',
+      '        pass',
+      '',
+      '    def process(self):',
+      '        pass',
+      '',
+      '    def finish(self):',
+      '        pass',
+      '',
+      '    def run(self):',
+      '        self.prepare()',
+      '        for item in []:',
+      '            self.process()',
+      '        self.finish()',
+      '',
+      'if __name__ == "__main__":',
+      '    w = Worker()',
+      '    w.run()',
+    ].join('\n');
+
+    const sequence = inferSequence(code);
+    const mainActivateIdx = sequence.indexOf('activate Main');
+    const createIdx = sequence.indexOf('Main --> w: <<create>>');
+    const runIdx = sequence.indexOf('Main -> w: run()');
+    const runActivateIdx = sequence.indexOf('activate w', runIdx);
+    const prepareIdx = sequence.indexOf('w -> w: prepare()', runActivateIdx);
+    const prepareDeactivateIdx = sequence.indexOf('deactivate w', prepareIdx);
+    const loopIdx = sequence.indexOf('loop [for item in []]');
+    const processIdx = sequence.indexOf('w -> w: process()', loopIdx);
+    const processDeactivateIdx = sequence.indexOf('deactivate w', processIdx);
+    const loopEndIdx = sequence.indexOf('end', processDeactivateIdx);
+    const finishIdx = sequence.indexOf('w -> w: finish()', loopEndIdx);
+    const finishDeactivateIdx = sequence.indexOf('deactivate w', finishIdx);
+    const runDeactivateIdx = sequence.indexOf('deactivate w', finishDeactivateIdx + 1);
+    const mainDeactivateIdx = sequence.indexOf('deactivate Main', runDeactivateIdx);
+
+    expect(sequence).toContain('participant Main as : Main');
+    expect(mainActivateIdx).toBeGreaterThan(-1);
+    expect(createIdx).toBeGreaterThan(mainActivateIdx);
+    expect(runActivateIdx).toBeGreaterThan(runIdx);
+    expect(prepareDeactivateIdx).toBeGreaterThan(prepareIdx);
+    expect(prepareDeactivateIdx).toBeLessThan(loopIdx);
+    expect(processIdx).toBeGreaterThan(loopIdx);
+    expect(processDeactivateIdx).toBeGreaterThan(processIdx);
+    expect(processDeactivateIdx).toBeLessThan(loopEndIdx);
+    expect(finishIdx).toBeGreaterThan(loopEndIdx);
+    expect(finishDeactivateIdx).toBeGreaterThan(finishIdx);
+    expect(runDeactivateIdx).toBeGreaterThan(finishDeactivateIdx);
+    expect(mainDeactivateIdx).toBeGreaterThan(runDeactivateIdx);
+  });
+
+  test('main activation spans method calls embedded in f-strings', () => {
+    const code = [
+      'class Product:',
+      '    def __init__(self, name, price, in_stock):',
+      '        self.__name = name',
+      '        self.__price = price',
+      '        self.__in_stock = in_stock',
+      '',
+      '    def get_name(self):',
+      '        return self.__name',
+      '',
+      '    def get_price(self):',
+      '        return self.__price',
+      '',
+      '    def is_available(self):',
+      '        return self.__in_stock',
+      '',
+      '    def apply_discount(self, percent):',
+      '        discount = self.__price * (percent / 100)',
+      '        return self.__price - discount',
+      '',
+      'if __name__ == "__main__":',
+      '    p = Product("Laptop", 999.99, True)',
+      '    print(f"{p.get_name()}: ${p.get_price():.2f}")',
+      '    print(f"After 10% off: ${p.apply_discount(10):.2f}")',
+      '    print(f"In stock: {p.is_available()}")',
+    ].join('\n');
+
+    const sequence = inferSequence(code);
+    const mainActivateIdx = sequence.indexOf('activate Main');
+    const createIdx = sequence.indexOf('Main --> p: <<create>>');
+    const getNameIdx = sequence.indexOf('Main -> p: get_name()');
+    const getPriceIdx = sequence.indexOf('Main -> p: get_price()');
+    const discountIdx = sequence.indexOf('Main -> p: apply_discount(10)');
+    const availableIdx = sequence.indexOf('Main -> p: is_available()');
+    const mainDeactivateIdx = sequence.indexOf('deactivate Main');
+
+    expect(sequence).toContain('participant Main as : Main');
+    expect(mainActivateIdx).toBeGreaterThan(-1);
+    expect(createIdx).toBeGreaterThan(mainActivateIdx);
+    expect(getNameIdx).toBeGreaterThan(createIdx);
+    expect(getPriceIdx).toBeGreaterThan(getNameIdx);
+    expect(discountIdx).toBeGreaterThan(getPriceIdx);
+    expect(availableIdx).toBeGreaterThan(discountIdx);
+    expect(mainDeactivateIdx).toBeGreaterThan(availableIdx);
   });
 });
 

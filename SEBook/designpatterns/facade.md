@@ -78,13 +78,265 @@ participant popper: PopcornPopper
 client -> facade: watchMovie("Raiders")
 activate facade
 facade -> popper: on()
+activate popper
+deactivate popper
 facade -> lights: dim(10)
+activate lights
+deactivate lights
 facade -> screen: down()
+activate screen
+deactivate screen
 facade -> projector: on()
+activate projector
+deactivate projector
 facade -> amp: on()
+activate amp
+deactivate amp
 facade -> player: play("Raiders")
+activate player
+deactivate player
 deactivate facade
 @enduml'></div>
+
+# Code Example
+
+This example gives clients one intention-revealing operation, `watchMovie()`, while the facade coordinates the subsystem calls in the required order.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Facade code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+final class Amplifier {
+    void on() { System.out.println("Amplifier on"); }
+    void setStreamingPlayer(StreamingPlayer player) { }
+}
+
+final class Projector {
+    void on() { System.out.println("Projector on"); }
+    void wideScreenMode() { System.out.println("Projector in widescreen mode"); }
+}
+
+final class TheaterLights {
+    void dim(int level) { System.out.println("Lights dimmed to " + level); }
+}
+
+final class StreamingPlayer {
+    void on() { System.out.println("Player on"); }
+    void play(String title) { System.out.println("Playing " + title); }
+}
+
+final class HomeTheaterFacade {
+    private final Amplifier amp;
+    private final Projector projector;
+    private final TheaterLights lights;
+    private final StreamingPlayer player;
+
+    HomeTheaterFacade(Amplifier amp, Projector projector,
+                      TheaterLights lights, StreamingPlayer player) {
+        this.amp = amp;
+        this.projector = projector;
+        this.lights = lights;
+        this.player = player;
+    }
+
+    void watchMovie(String title) {
+        lights.dim(10);
+        projector.on();
+        projector.wideScreenMode();
+        amp.on();
+        amp.setStreamingPlayer(player);
+        player.on();
+        player.play(title);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        HomeTheaterFacade theater = new HomeTheaterFacade(
+            new Amplifier(), new Projector(), new TheaterLights(), new StreamingPlayer());
+        theater.watchMovie("Raiders");
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <string>
+
+class StreamingPlayer {
+public:
+    void on() const { std::cout << "Player on\n"; }
+    void play(const std::string& title) const { std::cout << "Playing " << title << "\n"; }
+};
+
+class Amplifier {
+public:
+    void on() const { std::cout << "Amplifier on\n"; }
+    void setStreamingPlayer(const StreamingPlayer&) const {}
+};
+
+class Projector {
+public:
+    void on() const { std::cout << "Projector on\n"; }
+    void wideScreenMode() const { std::cout << "Projector in widescreen mode\n"; }
+};
+
+class TheaterLights {
+public:
+    void dim(int level) const { std::cout << "Lights dimmed to " << level << "\n"; }
+};
+
+class HomeTheaterFacade {
+public:
+    HomeTheaterFacade(Amplifier& amp, Projector& projector,
+                      TheaterLights& lights, StreamingPlayer& player)
+        : amp_(amp), projector_(projector), lights_(lights), player_(player) {}
+
+    void watchMovie(const std::string& title) const {
+        lights_.dim(10);
+        projector_.on();
+        projector_.wideScreenMode();
+        amp_.on();
+        amp_.setStreamingPlayer(player_);
+        player_.on();
+        player_.play(title);
+    }
+
+private:
+    Amplifier& amp_;
+    Projector& projector_;
+    TheaterLights& lights_;
+    StreamingPlayer& player_;
+};
+
+int main() {
+    Amplifier amp;
+    Projector projector;
+    TheaterLights lights;
+    StreamingPlayer player;
+    HomeTheaterFacade theater(amp, projector, lights, player);
+    theater.watchMovie("Raiders");
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class Amplifier:
+    def on(self) -> None:
+        print("Amplifier on")
+
+    def set_streaming_player(self, player: "StreamingPlayer") -> None:
+        pass
+
+
+class Projector:
+    def on(self) -> None:
+        print("Projector on")
+
+    def wide_screen_mode(self) -> None:
+        print("Projector in widescreen mode")
+
+
+class TheaterLights:
+    def dim(self, level: int) -> None:
+        print(f"Lights dimmed to {level}")
+
+
+class StreamingPlayer:
+    def on(self) -> None:
+        print("Player on")
+
+    def play(self, title: str) -> None:
+        print(f"Playing {title}")
+
+
+class HomeTheaterFacade:
+    def __init__(
+        self,
+        amp: Amplifier,
+        projector: Projector,
+        lights: TheaterLights,
+        player: StreamingPlayer,
+    ) -> None:
+        self.amp = amp
+        self.projector = projector
+        self.lights = lights
+        self.player = player
+
+    def watch_movie(self, title: str) -> None:
+        self.lights.dim(10)
+        self.projector.on()
+        self.projector.wide_screen_mode()
+        self.amp.on()
+        self.amp.set_streaming_player(self.player)
+        self.player.on()
+        self.player.play(title)
+
+
+theater = HomeTheaterFacade(Amplifier(), Projector(), TheaterLights(), StreamingPlayer())
+theater.watch_movie("Raiders")
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class Amplifier {
+  on() { console.log("Amplifier on"); }
+  setStreamingPlayer() {}
+}
+
+class Projector {
+  on() { console.log("Projector on"); }
+  wideScreenMode() { console.log("Projector in widescreen mode"); }
+}
+
+class TheaterLights {
+  dim(level) { console.log(`Lights dimmed to ${level}`); }
+}
+
+class StreamingPlayer {
+  on() { console.log("Player on"); }
+  play(title) { console.log(`Playing ${title}`); }
+}
+
+class HomeTheaterFacade {
+  constructor(amp, projector, lights, player) {
+    this.amp = amp;
+    this.projector = projector;
+    this.lights = lights;
+    this.player = player;
+  }
+
+  watchMovie(title) {
+    this.lights.dim(10);
+    this.projector.on();
+    this.projector.wideScreenMode();
+    this.amp.on();
+    this.amp.setStreamingPlayer(this.player);
+    this.player.on();
+    this.player.play(title);
+  }
+}
+
+const theater = new HomeTheaterFacade(
+  new Amplifier(),
+  new Projector(),
+  new TheaterLights(),
+  new StreamingPlayer(),
+);
+theater.watchMovie("Raiders");
+```
+  </div>
+</div>
 
 # Consequences
 Applying the Façade pattern leads to several architectural benefits and trade-offs:

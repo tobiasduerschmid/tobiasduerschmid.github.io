@@ -6,7 +6,7 @@ questions:
     question: >
       What type of message is represented by a **solid line with a filled (solid) arrowhead**?
 
-      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: request()"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: request()&#10;activate b&#10;deactivate b"></div>
     options:
       - "Asynchronous message — the sender does not wait for a response."
       - "Synchronous message — the sender waits for a response before continuing."
@@ -20,7 +20,7 @@ questions:
     question: >
       What does the **dashed line** in the diagram below represent?
 
-      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: calculate()&#10;b --> a: result"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: calculate()&#10;activate b&#10;b --> a: result&#10;deactivate b"></div>
     options:
       - "An asynchronous message from Server to Client."
       - "A dependency from Server to Client."
@@ -34,7 +34,7 @@ questions:
     question: >
       Which combined fragment would you use to model an **if-else** decision in a sequence diagram?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant c: Client&#10;participant a: AuthService&#10;c -> a: login(user, pass)&#10;alt [credentials valid]&#10;  a --> c: token&#10;else [credentials invalid]&#10;  a --> c: error&#10;end&#10;@enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant c: Client&#10;participant a: AuthService&#10;c -> a: login(user, pass)&#10;activate a&#10;alt [credentials valid]&#10;  a --> c: token&#10;  deactivate a&#10;else [credentials invalid]&#10;  a --> c: error&#10;  deactivate a&#10;end&#10;@enduml"></div>
     options:
       - "`loop` — repeats messages while a condition is true."
       - "`opt` — executes messages only if a condition is true."
@@ -48,7 +48,7 @@ questions:
     question: >
       Look at this diagram. How many times could the `ping()` message be sent?
 
-      <div data-uml-type="sequence" data-uml-spec="participant app: App&#10;participant server: Server&#10;app -> server: connect()&#10;loop [1, 5]&#10;  app -> server: ping()&#10;  server --> app: ack()&#10;end"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant app: App&#10;participant server: Server&#10;app -> server: connect()&#10;activate server&#10;deactivate server&#10;loop [1, 5]&#10;  app -> server: ping()&#10;  activate server&#10;  server --> app: ack()&#10;  deactivate server&#10;end"></div>
     options:
       - "Exactly 5 times."
       - "Between 1 and 5 times (inclusive)."
@@ -76,7 +76,7 @@ questions:
     question: >
       What does the `opt` fragment in this diagram mean?
 
-      <div data-uml-type="sequence" data-uml-spec="participant c: Checkout&#10;participant p: Pricing Engine&#10;c -> p: calculateTotal()&#10;opt [hasPromoCode == true]&#10;  c -> p: applyDiscount()&#10;  p --> c: discountApplied()&#10;end&#10;p --> c: finalTotal()"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant c: Checkout&#10;participant p: Pricing Engine&#10;c -> p: calculateTotal()&#10;activate p&#10;opt [hasPromoCode == true]&#10;  p -> p: applyDiscount()&#10;  activate p&#10;  p --> p: discountApplied()&#10;  deactivate p&#10;end&#10;p --> c: finalTotal()&#10;deactivate p"></div>
     options:
       - "The discount is always applied after calculating the total."
       - "The discount is applied only if `hasPromoCode` is true; otherwise the messages inside are skipped entirely."
@@ -111,14 +111,14 @@ questions:
     explanation: >
       **An asynchronous message uses a solid line with an open (stick) arrowhead — the sender fires and continues without waiting.** An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks.
 
-      <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()'></div>
+      <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()&#10;activate b&#10;deactivate b'></div>
 
   - id: 9
     type: single
     question: >
       What does an **activation bar** (thin rectangle on a lifeline) represent?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ui: UI&#10;participant os: OrderService&#10;participant db: Database&#10;ui -> os: placeOrder(items)&#10;os -> db: saveOrder(items)&#10;db --> os: orderId&#10;os --> ui: confirmation(orderId)&#10;@enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ui: UI&#10;participant os: OrderService&#10;participant db: Database&#10;ui -> os: placeOrder(items)&#10;activate os&#10;os -> db: saveOrder(items)&#10;activate db&#10;db --> os: orderId&#10;deactivate db&#10;os --> ui: confirmation(orderId)&#10;deactivate os&#10;@enduml"></div>
     options:
       - "The object is waiting for input and doing nothing."
       - "The object is actively performing an action or executing a method."
@@ -132,7 +132,7 @@ questions:
     question: >
       What is the correct lifeline label format for an unnamed instance of class `ShoppingCart`?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant sc: ShoppingCart&#10;participant ch: Checkout&#10;sc -> ch: submit()&#10;ch --> sc: receipt&#10;@enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant sc: ShoppingCart&#10;participant ch: Checkout&#10;sc -> ch: submit()&#10;activate ch&#10;ch --> sc: receipt&#10;deactivate ch&#10;@enduml"></div>
     options:
       - "`ShoppingCart`"
       - "`: ShoppingCart`"
@@ -153,7 +153,7 @@ questions:
       }
       ```
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ch: Checkout&#10;participant p: Payment&#10;ch -> p: new Payment(amount)&#10;ch -> p: authorize()&#10;p --> ch: authorized&#10;@enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ch: Checkout&#10;participant p: Payment&#10;create p&#10;ch --> p: <<create>>&#10;activate p&#10;deactivate p&#10;ch -> p: authorize()&#10;activate p&#10;p --> ch: authorized&#10;deactivate p&#10;@enduml"></div>
     options:
       - "A synchronous message labeled `new Payment(amount)` to an existing Payment lifeline."
       - "A create message to a new Payment lifeline that appears at the point of creation."

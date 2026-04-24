@@ -85,9 +85,242 @@ activate calendar
 calendar --> hub: true
 deactivate calendar
 hub -> coffee: brew()
+activate coffee
+deactivate coffee
 hub -> sprinkler: skipMorningWatering()
+activate sprinkler
+deactivate sprinkler
 deactivate hub
 @enduml'></div>
+
+# Code Example
+
+This example keeps the smart-home devices reusable. The alarm, calendar, coffee maker, and sprinkler do not call each other directly; the hub owns the coordination rule.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Mediator code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface SmartHomeMediator {
+    void notify(Object sender, String event);
+}
+
+final class Calendar {
+    boolean isWeekday() {
+        return true;
+    }
+}
+
+final class CoffeeMaker {
+    void brew() {
+        System.out.println("Brewing coffee");
+    }
+}
+
+final class Sprinkler {
+    void skipMorningWatering() {
+        System.out.println("Skipping sprinklers");
+    }
+}
+
+final class AlarmClock {
+    private final SmartHomeMediator mediator;
+
+    AlarmClock(SmartHomeMediator mediator) {
+        this.mediator = mediator;
+    }
+
+    void ring() {
+        mediator.notify(this, "alarmRang");
+    }
+}
+
+final class SmartHomeHub implements SmartHomeMediator {
+    private final Calendar calendar = new Calendar();
+    private final CoffeeMaker coffeeMaker = new CoffeeMaker();
+    private final Sprinkler sprinkler = new Sprinkler();
+
+    public void notify(Object sender, String event) {
+        if ("alarmRang".equals(event) && calendar.isWeekday()) {
+            coffeeMaker.brew();
+            sprinkler.skipMorningWatering();
+        }
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        SmartHomeHub hub = new SmartHomeHub();
+        AlarmClock alarm = new AlarmClock(hub);
+        alarm.ring();
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <string>
+
+struct SmartHomeMediator {
+    virtual ~SmartHomeMediator() = default;
+    virtual void notify(void* sender, const std::string& event) = 0;
+};
+
+class Calendar {
+public:
+    bool isWeekday() const { return true; }
+};
+
+class CoffeeMaker {
+public:
+    void brew() const { std::cout << "Brewing coffee\n"; }
+};
+
+class Sprinkler {
+public:
+    void skipMorningWatering() const { std::cout << "Skipping sprinklers\n"; }
+};
+
+class AlarmClock {
+public:
+    explicit AlarmClock(SmartHomeMediator& mediator) : mediator_(mediator) {}
+
+    void ring() {
+        mediator_.notify(this, "alarmRang");
+    }
+
+private:
+    SmartHomeMediator& mediator_;
+};
+
+class SmartHomeHub : public SmartHomeMediator {
+public:
+    void notify(void*, const std::string& event) override {
+        if (event == "alarmRang" && calendar_.isWeekday()) {
+            coffeeMaker_.brew();
+            sprinkler_.skipMorningWatering();
+        }
+    }
+
+private:
+    Calendar calendar_;
+    CoffeeMaker coffeeMaker_;
+    Sprinkler sprinkler_;
+};
+
+int main() {
+    SmartHomeHub hub;
+    AlarmClock alarm(hub);
+    alarm.ring();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class SmartHomeMediator(ABC):
+    @abstractmethod
+    def notify(self, sender: object, event: str) -> None:
+        pass
+
+
+class Calendar:
+    def is_weekday(self) -> bool:
+        return True
+
+
+class CoffeeMaker:
+    def brew(self) -> None:
+        print("Brewing coffee")
+
+
+class Sprinkler:
+    def skip_morning_watering(self) -> None:
+        print("Skipping sprinklers")
+
+
+class AlarmClock:
+    def __init__(self, mediator: SmartHomeMediator) -> None:
+        self._mediator = mediator
+
+    def ring(self) -> None:
+        self._mediator.notify(self, "alarmRang")
+
+
+class SmartHomeHub(SmartHomeMediator):
+    def __init__(self) -> None:
+        self.calendar = Calendar()
+        self.coffee_maker = CoffeeMaker()
+        self.sprinkler = Sprinkler()
+
+    def notify(self, sender: object, event: str) -> None:
+        if event == "alarmRang" and self.calendar.is_weekday():
+            self.coffee_maker.brew()
+            self.sprinkler.skip_morning_watering()
+
+
+hub = SmartHomeHub()
+alarm = AlarmClock(hub)
+alarm.ring()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class Calendar {
+  isWeekday() { return true; }
+}
+
+class CoffeeMaker {
+  brew() { console.log("Brewing coffee"); }
+}
+
+class Sprinkler {
+  skipMorningWatering() { console.log("Skipping sprinklers"); }
+}
+
+class AlarmClock {
+  constructor(mediator) {
+    this.mediator = mediator;
+  }
+
+  ring() {
+    this.mediator.notify(this, "alarmRang");
+  }
+}
+
+class SmartHomeHub {
+  constructor() {
+    this.calendar = new Calendar();
+    this.coffeeMaker = new CoffeeMaker();
+    this.sprinkler = new Sprinkler();
+  }
+
+  notify(sender, event) {
+    if (event === "alarmRang" && this.calendar.isWeekday()) {
+      this.coffeeMaker.brew();
+      this.sprinkler.skipMorningWatering();
+    }
+  }
+}
+
+const hub = new SmartHomeHub();
+const alarm = new AlarmClock(hub);
+alarm.ring();
+```
+  </div>
+</div>
 
 # Consequences
 Applying the Mediator pattern involves significant trade-offs:

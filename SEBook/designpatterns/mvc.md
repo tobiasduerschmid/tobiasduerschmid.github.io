@@ -79,7 +79,7 @@ TaskView --> TaskController : delegates commands
 ## Sequence Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant user: User
+actor user: User
 participant controller: TaskController
 participant model: TaskModel
 participant view: TaskView
@@ -90,8 +90,12 @@ activate model
 model -> view: update(model)
 activate view
 view -> model: getTasks()
+activate model
 model --> view: tasks
+deactivate model
 view -> view: showTasks(tasks)
+activate view
+deactivate view
 deactivate view
 deactivate model
 deactivate controller
@@ -134,100 +138,245 @@ While the original MVC concept remains foundational, modern frameworks have evol
 
 Despite these variations, the core principle remains: **separate what the system knows (Model) from how it looks (View) from how the user interacts with it (Controller/ViewModel/Presenter)**.
 
-# Sample Code 
-This sample code shows how MVC could be implemented in Python:
+# Code Example
 
+This example keeps task state in the model, rendering in the view, and user-intent translation in the controller. The model uses Observer-style notifications to refresh the view.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="MVC code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+interface TaskObserver {
+    void update(TaskModel model);
+}
+
+final class TaskModel {
+    private final List<TaskObserver> observers = new ArrayList<>();
+    private final List<String> tasks = new ArrayList<>();
+
+    void attach(TaskObserver observer) {
+        observers.add(observer);
+    }
+
+    void addTask(String task) {
+        tasks.add(task);
+        observers.forEach(observer -> observer.update(this));
+    }
+
+    List<String> getTasks() {
+        return List.copyOf(tasks);
+    }
+}
+
+final class TaskView implements TaskObserver {
+    public void update(TaskModel model) {
+        showTasks(model.getTasks());
+    }
+
+    void showTasks(List<String> tasks) {
+        tasks.forEach(task -> System.out.println("- " + task));
+    }
+}
+
+final class TaskController {
+    private final TaskModel model;
+
+    TaskController(TaskModel model) {
+        this.model = model;
+    }
+
+    void addNewTask(String task) {
+        model.addTask(task);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        TaskModel model = new TaskModel();
+        TaskView view = new TaskView();
+        model.attach(view);
+        new TaskController(model).addNewTask("Combine Observer with MVC");
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+class TaskModel;
+
+struct TaskObserver {
+    virtual ~TaskObserver() = default;
+    virtual void update(const TaskModel& model) = 0;
+};
+
+class TaskModel {
+public:
+    void attach(TaskObserver& observer) {
+        observers_.push_back(&observer);
+    }
+
+    void addTask(std::string task) {
+        tasks_.push_back(std::move(task));
+        for (auto* observer : observers_) {
+            observer->update(*this);
+        }
+    }
+
+    const std::vector<std::string>& tasks() const {
+        return tasks_;
+    }
+
+private:
+    std::vector<TaskObserver*> observers_;
+    std::vector<std::string> tasks_;
+};
+
+class TaskView : public TaskObserver {
+public:
+    void update(const TaskModel& model) override {
+        for (const auto& task : model.tasks()) {
+            std::cout << "- " << task << "\n";
+        }
+    }
+};
+
+class TaskController {
+public:
+    explicit TaskController(TaskModel& model) : model_(model) {}
+
+    void addNewTask(std::string task) {
+        model_.addTask(std::move(task));
+    }
+
+private:
+    TaskModel& model_;
+};
+
+int main() {
+    TaskModel model;
+    TaskView view;
+    model.attach(view);
+    TaskController(model).addNewTask("Combine Observer with MVC");
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
-# ==========================================
-# 0. OBSERVER PATTERN BASE CLASSES
-# ==========================================
-class Subject:
-    """The 'Observable' - broadcasts changes."""
-    def __init__(self):
-        self._observers = []
+from abc import ABC, abstractmethod
 
-    def attach(self, observer):
-        if observer not in self._observers:
-            self._observers.append(observer)
 
-    def detach(self, observer):
-        self._observers.remove(observer)
-
-    def notify(self):
-        """Alerts all observers that a change happened."""
-        for observer in self._observers:
-            observer.update(self)
-
-class Observer:
-    """The 'Watcher' - reacts to changes."""
-    def update(self, subject):
+class TaskObserver(ABC):
+    @abstractmethod
+    def update(self, model: "TaskModel") -> None:
         pass
 
 
-# ==========================================
-# 1. THE MODEL (The Subject)
-# ==========================================
-class TaskModel(Subject):
-    def __init__(self):
-        super().__init__() # Initialize the Subject part
-        self.tasks = []
+class TaskModel:
+    def __init__(self) -> None:
+        self._observers: list[TaskObserver] = []
+        self._tasks: list[str] = []
 
-    def add_task(self, task):
-        self.tasks.append(task)
-        self.notify() 
+    def attach(self, observer: TaskObserver) -> None:
+        self._observers.append(observer)
 
-    def get_tasks(self):
-        return self.tasks
+    def add_task(self, task: str) -> None:
+        self._tasks.append(task)
+        for observer in self._observers:
+            observer.update(self)
 
-
-# ==========================================
-# 2. THE VIEW (The Observer)
-# ==========================================
-class TaskView(Observer):
-    def update(self, subject):
-        # When notified, the view pulls the latest data directly from the model
-        tasks = subject.get_tasks()
-        self.show_tasks(tasks)
-
-    def show_tasks(self, tasks):
-        print("\n--- Live Auto-Updated List ---")
-        for index, task in enumerate(tasks, start=1):
-            print(f"{index}. {task}")
-        print("------------------------------\n")
+    def get_tasks(self) -> list[str]:
+        return list(self._tasks)
 
 
-# ==========================================
-# 3. THE CONTROLLER (The Middleman)
-# ==========================================
+class TaskView(TaskObserver):
+    def update(self, model: TaskModel) -> None:
+        self.show_tasks(model.get_tasks())
+
+    def show_tasks(self, tasks: list[str]) -> None:
+        for task in tasks:
+            print(f"- {task}")
+
+
 class TaskController:
-    def __init__(self, model):
+    def __init__(self, model: TaskModel) -> None:
         self.model = model
 
-    def add_new_task(self, task):
-        print(f"Controller: Adding task '{task}'...")
-        # The controller only updates the model. It trusts the model to handle the rest.
+    def add_new_task(self, task: str) -> None:
         self.model.add_task(task)
 
 
-# ==========================================
-# HOW IT ALL WORKS TOGETHER
-# ==========================================
-if __name__ == "__main__":
-    # 1. Initialize Model and View
-    my_model = TaskModel()
-    my_view = TaskView()
-    
-    # 2. Wire them up (The View subscribes to the Model)
-    my_model.attach(my_view)
-
-    # 3. Initialize Controller (Notice it only needs the Model now)
-    app_controller = TaskController(my_model)
-
-    # 4. Simulate user input. 
-    # Watch how adding a task automatically triggers the View to print!
-    app_controller.add_new_task("Learn the Observer pattern")
-    app_controller.add_new_task("Combine Observer with MVC")
+model = TaskModel()
+view = TaskView()
+model.attach(view)
+TaskController(model).add_new_task("Combine Observer with MVC")
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class TaskModel {
+  constructor() {
+    this.observers = [];
+    this.tasks = [];
+  }
+
+  attach(observer) {
+    this.observers.push(observer);
+  }
+
+  addTask(task) {
+    this.tasks.push(task);
+    this.observers.forEach((observer) => observer.update(this));
+  }
+
+  getTasks() {
+    return [...this.tasks];
+  }
+}
+
+class TaskView {
+  update(model) {
+    this.showTasks(model.getTasks());
+  }
+
+  showTasks(tasks) {
+    tasks.forEach((task) => console.log(`- ${task}`));
+  }
+}
+
+class TaskController {
+  constructor(model) {
+    this.model = model;
+  }
+
+  addNewTask(task) {
+    this.model.addTask(task);
+  }
+}
+
+const model = new TaskModel();
+const view = new TaskView();
+model.attach(view);
+new TaskController(model).addNewTask("Combine Observer with MVC");
+```
+  </div>
+</div>
 
 # Flashcards
 

@@ -903,7 +903,7 @@ steps:
           sensor = ns['TemperatureSensor']()
           notified = []
           class Spy(ns['Observer']):
-              def update(self, subject):
+              def update(self, subject: object) -> None:
                   notified.append(subject.temperature)
           sensor.attach(Spy())
           sensor.temperature = 42
@@ -2252,6 +2252,149 @@ steps:
         observe any Subject.
       end note
       @enduml'></div>
+
+      ### Observer Code in Common Languages
+
+      The interactive tutorial uses Python, but the same roles appear in Java, C++, Python, and JavaScript. The syntax changes; the design responsibility split does not.
+
+      **Java**
+
+      ```java
+      import java.util.ArrayList;
+      import java.util.List;
+
+      interface Observer {
+          void update(WeatherStation station);
+      }
+
+      final class WeatherStation {
+          private final List<Observer> observers = new ArrayList<>();
+          private float temperature;
+
+          void attach(Observer observer) {
+              observers.add(observer);
+          }
+
+          void setTemperature(float temperature) {
+              this.temperature = temperature;
+              observers.forEach(observer -> observer.update(this));
+          }
+
+          float getTemperature() {
+              return temperature;
+          }
+      }
+
+      final class CurrentDisplay implements Observer {
+          public void update(WeatherStation station) {
+              System.out.println("Current: " + station.getTemperature());
+          }
+      }
+      ```
+
+      **C++**
+
+      ```cpp
+      #include <iostream>
+      #include <vector>
+
+      class WeatherStation;
+
+      struct Observer {
+          virtual ~Observer() = default;
+          virtual void update(const WeatherStation& station) = 0;
+      };
+
+      class WeatherStation {
+      public:
+          void attach(Observer& observer) {
+              observers_.push_back(&observer);
+          }
+
+          void setTemperature(float temperature) {
+              temperature_ = temperature;
+              for (auto* observer : observers_) {
+                  observer->update(*this);
+              }
+          }
+
+          float temperature() const {
+              return temperature_;
+          }
+
+      private:
+          std::vector<Observer*> observers_;
+          float temperature_ = 0.0f;
+      };
+
+      class CurrentDisplay : public Observer {
+      public:
+          void update(const WeatherStation& station) override {
+              std::cout << "Current: " << station.temperature() << "\n";
+          }
+      };
+      ```
+
+      **Python**
+
+      ```python
+      from abc import ABC, abstractmethod
+
+
+      class Observer(ABC):
+          @abstractmethod
+          def update(self, station: "WeatherStation") -> None:
+              pass
+
+
+      class WeatherStation:
+          def __init__(self) -> None:
+              self._observers: list[Observer] = []
+              self._temperature = 0.0
+
+          def attach(self, observer: Observer) -> None:
+              self._observers.append(observer)
+
+          def set_temperature(self, temperature: float) -> None:
+              self._temperature = temperature
+              for observer in self._observers:
+                  observer.update(self)
+
+          @property
+          def temperature(self) -> float:
+              return self._temperature
+
+
+      class CurrentDisplay(Observer):
+          def update(self, station: WeatherStation) -> None:
+              print(f"Current: {station.temperature}")
+      ```
+
+      **JavaScript**
+
+      ```javascript
+      class WeatherStation {
+        constructor() {
+          this.observers = [];
+          this.temperature = 0;
+        }
+
+        attach(observer) {
+          this.observers.push(observer);
+        }
+
+        setTemperature(temperature) {
+          this.temperature = temperature;
+          this.observers.forEach((observer) => observer.update(this));
+        }
+      }
+
+      class CurrentDisplay {
+        update(station) {
+          console.log(`Current: ${station.temperature}`);
+        }
+      }
+      ```
 
       ### Key Design Decisions
 

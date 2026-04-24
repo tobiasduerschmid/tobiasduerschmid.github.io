@@ -77,7 +77,7 @@ SoldState --> GumballMachine : setState(...)
 ## Sequence Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant customer: Customer
+actor customer: Customer
 participant machine: GumballMachine
 participant noQuarter: NoQuarterState
 participant hasQuarter: HasQuarterState
@@ -86,15 +86,273 @@ activate machine
 machine -> noQuarter: insertQuarter(machine)
 activate noQuarter
 noQuarter -> machine: setState(hasQuarter)
+activate machine
+deactivate machine
 deactivate noQuarter
+deactivate machine
 customer -> machine: turnCrank()
+activate machine
 machine -> hasQuarter: turnCrank(machine)
 activate hasQuarter
 hasQuarter -> machine: releaseBall()
+activate machine
+deactivate machine
 hasQuarter -> machine: setState(noQuarter)
+activate machine
+deactivate machine
 deactivate hasQuarter
 deactivate machine
 @enduml'></div>
+
+# Code Example
+
+This example removes the conditional state checks from `GumballMachine`. The context delegates each action to the current state object, and the state object performs the transition.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="State code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface State {
+    void insertQuarter(GumballMachine machine);
+    void turnCrank(GumballMachine machine);
+}
+
+final class NoQuarterState implements State {
+    public void insertQuarter(GumballMachine machine) {
+        System.out.println("You inserted a quarter");
+        machine.setState(machine.hasQuarterState());
+    }
+
+    public void turnCrank(GumballMachine machine) {
+        System.out.println("Insert a quarter first");
+    }
+}
+
+final class HasQuarterState implements State {
+    public void insertQuarter(GumballMachine machine) {
+        System.out.println("Quarter already inserted");
+    }
+
+    public void turnCrank(GumballMachine machine) {
+        machine.releaseBall();
+        machine.setState(machine.noQuarterState());
+    }
+}
+
+final class GumballMachine {
+    private final State noQuarter = new NoQuarterState();
+    private final State hasQuarter = new HasQuarterState();
+    private State state = noQuarter;
+
+    void insertQuarter() {
+        state.insertQuarter(this);
+    }
+
+    void turnCrank() {
+        state.turnCrank(this);
+    }
+
+    void setState(State state) {
+        this.state = state;
+    }
+
+    State noQuarterState() { return noQuarter; }
+    State hasQuarterState() { return hasQuarter; }
+
+    void releaseBall() {
+        System.out.println("A gumball comes rolling out");
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        GumballMachine machine = new GumballMachine();
+        machine.insertQuarter();
+        machine.turnCrank();
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+
+class GumballMachine;
+
+struct State {
+    virtual ~State() = default;
+    virtual void insertQuarter(GumballMachine& machine) = 0;
+    virtual void turnCrank(GumballMachine& machine) = 0;
+};
+
+class NoQuarterState : public State {
+public:
+    void insertQuarter(GumballMachine& machine) override;
+    void turnCrank(GumballMachine&) override {
+        std::cout << "Insert a quarter first\n";
+    }
+};
+
+class HasQuarterState : public State {
+public:
+    void insertQuarter(GumballMachine&) override {
+        std::cout << "Quarter already inserted\n";
+    }
+    void turnCrank(GumballMachine& machine) override;
+};
+
+class GumballMachine {
+public:
+    GumballMachine() : state_(&noQuarter_) {}
+
+    void insertQuarter() { state_->insertQuarter(*this); }
+    void turnCrank() { state_->turnCrank(*this); }
+    void setState(State& state) { state_ = &state; }
+    State& noQuarterState() { return noQuarter_; }
+    State& hasQuarterState() { return hasQuarter_; }
+
+    void releaseBall() const {
+        std::cout << "A gumball comes rolling out\n";
+    }
+
+private:
+    NoQuarterState noQuarter_;
+    HasQuarterState hasQuarter_;
+    State* state_;
+};
+
+void NoQuarterState::insertQuarter(GumballMachine& machine) {
+    std::cout << "You inserted a quarter\n";
+    machine.setState(machine.hasQuarterState());
+}
+
+void HasQuarterState::turnCrank(GumballMachine& machine) {
+    machine.releaseBall();
+    machine.setState(machine.noQuarterState());
+}
+
+int main() {
+    GumballMachine machine;
+    machine.insertQuarter();
+    machine.turnCrank();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+
+class State(ABC):
+    @abstractmethod
+    def insert_quarter(self, machine: GumballMachine) -> None:
+        pass
+
+    @abstractmethod
+    def turn_crank(self, machine: GumballMachine) -> None:
+        pass
+
+
+class NoQuarterState(State):
+    def insert_quarter(self, machine: GumballMachine) -> None:
+        print("You inserted a quarter")
+        machine.state = machine.has_quarter
+
+    def turn_crank(self, machine: GumballMachine) -> None:
+        print("Insert a quarter first")
+
+
+class HasQuarterState(State):
+    def insert_quarter(self, machine: GumballMachine) -> None:
+        print("Quarter already inserted")
+
+    def turn_crank(self, machine: GumballMachine) -> None:
+        machine.release_ball()
+        machine.state = machine.no_quarter
+
+
+class GumballMachine:
+    def __init__(self) -> None:
+        self.no_quarter = NoQuarterState()
+        self.has_quarter = HasQuarterState()
+        self.state = self.no_quarter
+
+    def insert_quarter(self) -> None:
+        self.state.insert_quarter(self)
+
+    def turn_crank(self) -> None:
+        self.state.turn_crank(self)
+
+    def release_ball(self) -> None:
+        print("A gumball comes rolling out")
+
+
+machine = GumballMachine()
+machine.insert_quarter()
+machine.turn_crank()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class NoQuarterState {
+  insertQuarter(machine) {
+    console.log("You inserted a quarter");
+    machine.state = machine.hasQuarter;
+  }
+
+  turnCrank() {
+    console.log("Insert a quarter first");
+  }
+}
+
+class HasQuarterState {
+  insertQuarter() {
+    console.log("Quarter already inserted");
+  }
+
+  turnCrank(machine) {
+    machine.releaseBall();
+    machine.state = machine.noQuarter;
+  }
+}
+
+class GumballMachine {
+  constructor() {
+    this.noQuarter = new NoQuarterState();
+    this.hasQuarter = new HasQuarterState();
+    this.state = this.noQuarter;
+  }
+
+  insertQuarter() {
+    this.state.insertQuarter(this);
+  }
+
+  turnCrank() {
+    this.state.turnCrank(this);
+  }
+
+  releaseBall() {
+    console.log("A gumball comes rolling out");
+  }
+}
+
+const machine = new GumballMachine();
+machine.insertQuarter();
+machine.turnCrank();
+```
+  </div>
+</div>
 
 # Design Decisions
 

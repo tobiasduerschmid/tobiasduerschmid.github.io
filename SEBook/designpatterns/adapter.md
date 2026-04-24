@@ -84,14 +84,233 @@ participant turkey: WildTurkey
 simulator -> adapter: quack()
 activate adapter
 adapter -> turkey: gobble()
+activate turkey
+deactivate turkey
 deactivate adapter
 simulator -> adapter: fly()
 activate adapter
 loop 5 short bursts
 adapter -> turkey: flyShort()
+activate turkey
+deactivate turkey
 end
 deactivate adapter
 @enduml'></div>
+
+# Code Example
+
+This example adapts a `Turkey` so client code that expects a `Duck` can keep using the same target interface.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Adapter code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface Duck {
+    void quack();
+    void fly();
+}
+
+interface Turkey {
+    void gobble();
+    void flyShort();
+}
+
+final class WildTurkey implements Turkey {
+    public void gobble() {
+        System.out.println("Gobble gobble");
+    }
+
+    public void flyShort() {
+        System.out.println("Flying a short distance");
+    }
+}
+
+final class TurkeyAdapter implements Duck {
+    private final Turkey turkey;
+
+    TurkeyAdapter(Turkey turkey) {
+        this.turkey = turkey;
+    }
+
+    public void quack() {
+        turkey.gobble();
+    }
+
+    public void fly() {
+        for (int i = 0; i < 5; i++) {
+            turkey.flyShort();
+        }
+    }
+}
+
+public class Demo {
+    static void testDuck(Duck duck) {
+        duck.quack();
+        duck.fly();
+    }
+
+    public static void main(String[] args) {
+        testDuck(new TurkeyAdapter(new WildTurkey()));
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+
+struct Duck {
+    virtual ~Duck() = default;
+    virtual void quack() = 0;
+    virtual void fly() = 0;
+};
+
+struct Turkey {
+    virtual ~Turkey() = default;
+    virtual void gobble() = 0;
+    virtual void flyShort() = 0;
+};
+
+class WildTurkey : public Turkey {
+public:
+    void gobble() override {
+        std::cout << "Gobble gobble\n";
+    }
+
+    void flyShort() override {
+        std::cout << "Flying a short distance\n";
+    }
+};
+
+class TurkeyAdapter : public Duck {
+public:
+    explicit TurkeyAdapter(Turkey& turkey) : turkey_(turkey) {}
+
+    void quack() override {
+        turkey_.gobble();
+    }
+
+    void fly() override {
+        for (int i = 0; i < 5; ++i) {
+            turkey_.flyShort();
+        }
+    }
+
+private:
+    Turkey& turkey_;
+};
+
+void testDuck(Duck& duck) {
+    duck.quack();
+    duck.fly();
+}
+
+int main() {
+    WildTurkey turkey;
+    TurkeyAdapter adapter(turkey);
+    testDuck(adapter);
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class Duck(ABC):
+    @abstractmethod
+    def quack(self) -> None:
+        pass
+
+    @abstractmethod
+    def fly(self) -> None:
+        pass
+
+
+class Turkey(ABC):
+    @abstractmethod
+    def gobble(self) -> None:
+        pass
+
+    @abstractmethod
+    def fly_short(self) -> None:
+        pass
+
+
+class WildTurkey(Turkey):
+    def gobble(self) -> None:
+        print("Gobble gobble")
+
+    def fly_short(self) -> None:
+        print("Flying a short distance")
+
+
+class TurkeyAdapter(Duck):
+    def __init__(self, turkey: Turkey) -> None:
+        self._turkey = turkey
+
+    def quack(self) -> None:
+        self._turkey.gobble()
+
+    def fly(self) -> None:
+        for _ in range(5):
+            self._turkey.fly_short()
+
+
+def test_duck(duck: Duck) -> None:
+    duck.quack()
+    duck.fly()
+
+
+test_duck(TurkeyAdapter(WildTurkey()))
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class WildTurkey {
+  gobble() {
+    console.log("Gobble gobble");
+  }
+
+  flyShort() {
+    console.log("Flying a short distance");
+  }
+}
+
+class TurkeyAdapter {
+  constructor(turkey) {
+    this.turkey = turkey;
+  }
+
+  quack() {
+    this.turkey.gobble();
+  }
+
+  fly() {
+    for (let i = 0; i < 5; i += 1) {
+      this.turkey.flyShort();
+    }
+  }
+}
+
+function testDuck(duck) {
+  duck.quack();
+  duck.fly();
+}
+
+testDuck(new TurkeyAdapter(new WildTurkey()));
+```
+  </div>
+</div>
 
 # Consequences
 Applying the Adapter pattern results in several significant architectural trade-offs:

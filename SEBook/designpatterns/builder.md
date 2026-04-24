@@ -39,7 +39,7 @@ class Director {
 }
 class Product
 
-Director o-> Builder : directs
+Director --> Builder : builder
 ConcreteBuilder ..|> Builder
 ConcreteBuilder --> Product : creates
 @enduml'></div>
@@ -70,75 +70,291 @@ class VacationPlanner {
     + show_plan()
 }
 
-Director o-> AbstractBuilder
+Director --> AbstractBuilder : builder
 PatternslandBuilder ..|> AbstractBuilder
 PatternslandBuilder --> VacationPlanner : creates
 @enduml'></div>
 
-## Python Example
+## Code Example
 
+This example builds a vacation plan through a fixed construction sequence. The director controls the steps; the concrete builder controls the representation of the finished plan.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Builder code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+final class VacationPlanner {
+    private final List<String> itinerary = new ArrayList<>();
+
+    void addItem(String item) {
+        itinerary.add(item);
+    }
+
+    void showPlan() {
+        itinerary.forEach(System.out::println);
+    }
+}
+
+interface VacationBuilder {
+    void buildDay(String date);
+    void addHotel(String date, String hotelName);
+    void addTickets(String eventName);
+    VacationPlanner getVacationPlanner();
+}
+
+final class PatternslandBuilder implements VacationBuilder {
+    private final VacationPlanner planner = new VacationPlanner();
+
+    public void buildDay(String date) {
+        planner.addItem("Day started on " + date);
+    }
+
+    public void addHotel(String date, String hotelName) {
+        planner.addItem("Hotel '" + hotelName + "' booked for " + date);
+    }
+
+    public void addTickets(String eventName) {
+        planner.addItem("Tickets purchased for '" + eventName + "'");
+    }
+
+    public VacationPlanner getVacationPlanner() {
+        return planner;
+    }
+}
+
+final class Director {
+    private final VacationBuilder builder;
+
+    Director(VacationBuilder builder) {
+        this.builder = builder;
+    }
+
+    void constructPlanner() {
+        builder.buildDay("August 10");
+        builder.addHotel("August 10", "Grand Facadian");
+        builder.addTickets("Patterns on Ice");
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        PatternslandBuilder builder = new PatternslandBuilder();
+        new Director(builder).constructPlanner();
+        builder.getVacationPlanner().showPlan();
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+
+class VacationPlanner {
+public:
+    void addItem(const std::string& item) {
+        itinerary_.push_back(item);
+    }
+
+    void showPlan() const {
+        for (const auto& item : itinerary_) {
+            std::cout << item << "\n";
+        }
+    }
+
+private:
+    std::vector<std::string> itinerary_;
+};
+
+class VacationBuilder {
+public:
+    virtual ~VacationBuilder() = default;
+    virtual void buildDay(const std::string& date) = 0;
+    virtual void addHotel(const std::string& date, const std::string& hotelName) = 0;
+    virtual void addTickets(const std::string& eventName) = 0;
+    virtual VacationPlanner& getVacationPlanner() = 0;
+};
+
+class PatternslandBuilder : public VacationBuilder {
+public:
+    void buildDay(const std::string& date) override {
+        planner_.addItem("Day started on " + date);
+    }
+
+    void addHotel(const std::string& date, const std::string& hotelName) override {
+        planner_.addItem("Hotel '" + hotelName + "' booked for " + date);
+    }
+
+    void addTickets(const std::string& eventName) override {
+        planner_.addItem("Tickets purchased for '" + eventName + "'");
+    }
+
+    VacationPlanner& getVacationPlanner() override {
+        return planner_;
+    }
+
+private:
+    VacationPlanner planner_;
+};
+
+class Director {
+public:
+    explicit Director(VacationBuilder& builder) : builder_(builder) {}
+
+    void constructPlanner() {
+        builder_.buildDay("August 10");
+        builder_.addHotel("August 10", "Grand Facadian");
+        builder_.addTickets("Patterns on Ice");
+    }
+
+private:
+    VacationBuilder& builder_;
+};
+
+int main() {
+    PatternslandBuilder builder;
+    Director director(builder);
+    director.constructPlanner();
+    builder.getVacationPlanner().showPlan();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
-# 4. Product: The complex object being built
+from abc import ABC, abstractmethod
+
+
 class VacationPlanner:
-    def __init__(self):
-        self.itinerary = []
-        
-    def add_item(self, item):
+    def __init__(self) -> None:
+        self.itinerary: list[str] = []
+
+    def add_item(self, item: str) -> None:
         self.itinerary.append(item)
-        
-    def show_plan(self):
-        print("Vacation Plan:")
+
+    def show_plan(self) -> None:
         for item in self.itinerary:
-            print(f" - {item}")
+            print(item)
 
-# 1. Builder: Abstract interface for creating parts
-class AbstractBuilder:
-    def build_day(self, date: str): pass
-    def add_hotel(self, date: str, hotel_name: str): pass
-    def add_tickets(self, event_name: str): pass
-    def get_vacation_planner(self) -> VacationPlanner: pass
 
-# 2. ConcreteBuilder: Implements the builder interface
-class PatternslandBuilder(AbstractBuilder):
-    def __init__(self):
+class VacationBuilder(ABC):
+    @abstractmethod
+    def build_day(self, date: str) -> None:
+        pass
+
+    @abstractmethod
+    def add_hotel(self, date: str, hotel_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def add_tickets(self, event_name: str) -> None:
+        pass
+
+    @abstractmethod
+    def get_vacation_planner(self) -> VacationPlanner:
+        pass
+
+
+class PatternslandBuilder(VacationBuilder):
+    def __init__(self) -> None:
         self._planner = VacationPlanner()
-        
-    def build_day(self, date: str):
+
+    def build_day(self, date: str) -> None:
         self._planner.add_item(f"Day started on {date}")
-        
-    def add_hotel(self, date: str, hotel_name: str):
+
+    def add_hotel(self, date: str, hotel_name: str) -> None:
         self._planner.add_item(f"Hotel '{hotel_name}' booked for {date}")
-        
-    def add_tickets(self, event_name: str):
+
+    def add_tickets(self, event_name: str) -> None:
         self._planner.add_item(f"Tickets purchased for '{event_name}'")
-        
+
     def get_vacation_planner(self) -> VacationPlanner:
         return self._planner
 
-# 3. Director: Constructs the object using the Builder interface
+
 class Director:
-    def __init__(self, builder: AbstractBuilder):
+    def __init__(self, builder: VacationBuilder) -> None:
         self._builder = builder
-        
-    def construct_planner(self):
-        # The Director dictates the exact step-by-step construction sequence
+
+    def construct_planner(self) -> None:
         self._builder.build_day("August 10")
         self._builder.add_hotel("August 10", "Grand Facadian")
         self._builder.add_tickets("Patterns on Ice")
 
-# --- Client Code ---
-if __name__ == "__main__":
-    # The client configures the Director with a specific builder
-    builder = PatternslandBuilder()
-    director = Director(builder)
 
-    # The director executes the steps
-    director.construct_planner()
-
-    # The client retrieves the complex product from the builder
-    my_vacation = builder.get_vacation_planner()
-    my_vacation.show_plan()
+builder = PatternslandBuilder()
+Director(builder).construct_planner()
+builder.get_vacation_planner().show_plan()
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class VacationPlanner {
+  constructor() {
+    this.itinerary = [];
+  }
+
+  addItem(item) {
+    this.itinerary.push(item);
+  }
+
+  showPlan() {
+    this.itinerary.forEach((item) => console.log(item));
+  }
+}
+
+class PatternslandBuilder {
+  constructor() {
+    this.planner = new VacationPlanner();
+  }
+
+  buildDay(date) {
+    this.planner.addItem(`Day started on ${date}`);
+  }
+
+  addHotel(date, hotelName) {
+    this.planner.addItem(`Hotel '${hotelName}' booked for ${date}`);
+  }
+
+  addTickets(eventName) {
+    this.planner.addItem(`Tickets purchased for '${eventName}'`);
+  }
+
+  getVacationPlanner() {
+    return this.planner;
+  }
+}
+
+class Director {
+  constructor(builder) {
+    this.builder = builder;
+  }
+
+  constructPlanner() {
+    this.builder.buildDay("August 10");
+    this.builder.addHotel("August 10", "Grand Facadian");
+    this.builder.addTickets("Patterns on Ice");
+  }
+}
+
+const builder = new PatternslandBuilder();
+new Director(builder).constructPlanner();
+builder.getVacationPlanner().showPlan();
+```
+  </div>
+</div>
 
 # Consequences
 *   **Finer Control Over Construction:** Unlike other creational patterns that build products in one shot, Builder lets you construct products step-by-step.

@@ -18,10 +18,14 @@ topics:
     subtopics:
       - name: Observer
         url: /SEBook/designpatterns/observer.html
+      - name: Command
+        url: /SEBook/designpatterns/command.html
       - name: Factory Method
         url: /SEBook/designpatterns/factory_method.html
       - name: Abstract Factory
         url: /SEBook/designpatterns/abstract_factory.html
+      - name: Builder
+        url: /SEBook/designpatterns/builder.html
       - name: Composite
         url: /SEBook/designpatterns/composite.html
       - name: State
@@ -32,6 +36,8 @@ topics:
         url: /SEBook/designpatterns/singleton.html
       - name: Mediator
         url: /SEBook/designpatterns/mediator.html
+      - name: Visitor
+        url: /SEBook/designpatterns/visitor.html
       - name: Facade
         url: /SEBook/designpatterns/facade.html
       - name: Model-View-Controller (MVC)

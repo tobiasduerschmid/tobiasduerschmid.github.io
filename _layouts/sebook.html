@@ -95,6 +95,78 @@
             margin-bottom: 20px;
           }
 
+          .inline-language-switcher {
+            border: 1px solid #d8dee4;
+            border-radius: 6px;
+            margin: 18px 0 24px;
+            overflow: hidden;
+            background: #fff;
+          }
+
+          .inline-language-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px;
+            border-bottom: 1px solid #d8dee4;
+            background: #f6f8fa;
+          }
+
+          .inline-language-tabs button {
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background: transparent;
+            color: #24292f;
+            font-weight: 600;
+            line-height: 1.2;
+            padding: 7px 11px;
+          }
+
+          .inline-language-tabs button:hover,
+          .inline-language-tabs button:focus {
+            border-color: #2774AE;
+            outline: none;
+          }
+
+          .inline-language-tabs button[aria-selected="true"] {
+            background: #2774AE;
+            color: #fff;
+          }
+
+          .inline-language-panel {
+            display: none;
+            padding: 0 12px 12px;
+          }
+
+          .inline-language-panel.is-active {
+            display: block;
+          }
+
+          .inline-language-panel pre {
+            margin-top: 12px;
+            max-height: 680px;
+          }
+
+          html.dark-mode .inline-language-switcher {
+            border-color: #4b5563;
+            background: #111827;
+          }
+
+          html.dark-mode .inline-language-tabs {
+            border-color: #4b5563;
+            background: #1f2937;
+          }
+
+          html.dark-mode .inline-language-tabs button {
+            color: #f9fafb;
+          }
+
+          @media screen and (max-width: 640px) {
+            .inline-language-tabs button {
+              flex: 1 1 44%;
+            }
+          }
+
           /* Ensure sidebar does not get too thin on mid-sized screens */
           #sidebar {
             flex-shrink: 0;
@@ -716,6 +788,99 @@
         initTTS();
       }
     })();
+  </script>
+
+  <!-- Shared inline language switcher for multi-language code samples -->
+  <script>
+  (function () {
+    'use strict';
+
+    function optionValue(button) {
+      return button ? button.getAttribute('data-language-option') : null;
+    }
+
+    function activate(root, language, focusButton) {
+      var buttons = root.querySelectorAll('[data-language-option]');
+      var panels = root.querySelectorAll('[data-language-panel]');
+
+      for (var i = 0; i < buttons.length; i++) {
+        var isActiveButton = optionValue(buttons[i]) === language;
+        buttons[i].setAttribute('aria-selected', isActiveButton ? 'true' : 'false');
+        buttons[i].setAttribute('tabindex', isActiveButton ? '0' : '-1');
+        if (isActiveButton && focusButton) buttons[i].focus();
+      }
+
+      for (var j = 0; j < panels.length; j++) {
+        var isActivePanel = panels[j].getAttribute('data-language-panel') === language;
+        panels[j].classList.toggle('is-active', isActivePanel);
+        panels[j].setAttribute('aria-hidden', isActivePanel ? 'false' : 'true');
+      }
+    }
+
+    function move(root, currentButton, direction) {
+      var buttons = Array.prototype.slice.call(root.querySelectorAll('[data-language-option]'));
+      var index = buttons.indexOf(currentButton);
+      if (index < 0 || buttons.length === 0) return;
+
+      var nextIndex = index;
+      if (direction === 'next') nextIndex = (index + 1) % buttons.length;
+      if (direction === 'previous') nextIndex = (index - 1 + buttons.length) % buttons.length;
+      if (direction === 'first') nextIndex = 0;
+      if (direction === 'last') nextIndex = buttons.length - 1;
+
+      activate(root, optionValue(buttons[nextIndex]), true);
+    }
+
+    function initSwitcher(root) {
+      if (root.getAttribute('data-language-switcher-ready') === 'true') return;
+      root.setAttribute('data-language-switcher-ready', 'true');
+
+      var buttons = root.querySelectorAll('[data-language-option]');
+      if (buttons.length === 0) return;
+
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].addEventListener('click', function () {
+          activate(root, optionValue(this), false);
+        });
+
+        buttons[i].addEventListener('keydown', function (event) {
+          var key = event.key || event.keyCode;
+          if (key === 'ArrowRight' || key === 39) {
+            event.preventDefault();
+            move(root, this, 'next');
+          } else if (key === 'ArrowLeft' || key === 37) {
+            event.preventDefault();
+            move(root, this, 'previous');
+          } else if (key === 'Home' || key === 36) {
+            event.preventDefault();
+            move(root, this, 'first');
+          } else if (key === 'End' || key === 35) {
+            event.preventDefault();
+            move(root, this, 'last');
+          }
+        });
+      }
+
+      var selected = root.querySelector('[data-language-option][aria-selected="true"]');
+      var defaultLanguage = root.getAttribute('data-default-language') || optionValue(selected) || optionValue(buttons[0]);
+      activate(root, defaultLanguage, false);
+    }
+
+    function initAll() {
+      var roots = document.querySelectorAll('[data-language-switcher]');
+      for (var i = 0; i < roots.length; i++) initSwitcher(roots[i]);
+    }
+
+    window.SEBookLanguageSwitcher = {
+      initAll: initAll
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+      initAll();
+    }
+  })();
   </script>
 
   <!-- Bundled UML diagram renderer -->

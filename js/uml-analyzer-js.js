@@ -740,8 +740,13 @@
 
     this._ensureParticipant('Main', 'Main');
 
+    var lineStart = this.lines.length;
     for (var i = 0; i < entry.length; i++) {
       this._processStmt(entry[i].stmt, entry[i].sourceFile, 'Main', 0);
+    }
+    if (this.lines.length > lineStart) {
+      this.lines.splice(lineStart, 0, 'activate Main');
+      this.lines.push('deactivate Main');
     }
   };
 
@@ -750,7 +755,11 @@
     var out = ['@startuml', 'layout landscape'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
-      out.push('participant ' + p.id + ': ' + p.label);
+      if (p.id === 'Main' && p.label === 'Main') {
+        out.push('participant Main as : Main');
+      } else {
+        out.push('participant ' + p.id + ': ' + p.label);
+      }
     }
     out.push('');
     out.push.apply(out, this.lines);
@@ -844,7 +853,9 @@
           this._ensureParticipant(varName, clsName);
           this.lines.push('create ' + varName);
           this.lines.push(caller + ' --> ' + varName + ': <<create>>');
+          this.lines.push('activate ' + varName);
           this._maybeFollow(clsName, 'constructor', varName, depth);
+          this.lines.push('deactivate ' + varName);
           // Scan constructor args
           if (decl.initializer.arguments) {
             for (var a = 0; a < decl.initializer.arguments.length; a++)
@@ -1110,23 +1121,31 @@
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, 'constructor', calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (method === 'constructor' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
+      this.lines.push('activate ' + caller);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
       // Return/reply message (Ambler G172: only when return type is not obvious)
       var retType = this._getReturnType(clsName, method);
       if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
+      this.lines.push('deactivate ' + calleeId);
     }
   };
 
@@ -1258,7 +1277,9 @@
         this._callerClass[calleeId] = clsName;
         this.lines.push('create ' + calleeId);
         this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+        this.lines.push('activate ' + calleeId);
         this._maybeFollow(clsName, 'constructor', calleeId, depth);
+        this.lines.push('deactivate ' + calleeId);
       }
       // Scan constructor arguments
       if (node.arguments) {

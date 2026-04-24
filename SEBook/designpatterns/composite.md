@@ -68,7 +68,7 @@ Waitress --> MenuComponent : traverses
 ## Sequence Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant waitress: Waitress
+actor waitress: Waitress
 participant allMenus: Menu
 participant dessertMenu: Menu
 participant item: MenuItem
@@ -77,6 +77,8 @@ activate allMenus
 allMenus -> dessertMenu: print()
 activate dessertMenu
 dessertMenu -> item: print()
+activate item
+deactivate item
 deactivate dessertMenu
 deactivate allMenus
 @enduml'></div>
@@ -112,6 +114,230 @@ The Composite pattern frequently appears as a building block in larger pattern c
 
 These compounds are so common that recognizing the Composite pattern is often the first step toward identifying a larger architectural pattern at work.
 
+# Code Example
+
+This example uses a transparent composite: both `Menu` and `MenuItem` share the same `print()` operation, while only composite menus do real work in `add()`.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Composite code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+abstract class MenuComponent {
+    void add(MenuComponent component) {
+        throw new UnsupportedOperationException();
+    }
+
+    abstract void print();
+}
+
+final class MenuItem extends MenuComponent {
+    private final String name;
+
+    MenuItem(String name) {
+        this.name = name;
+    }
+
+    void print() {
+        System.out.println(name);
+    }
+}
+
+final class Menu extends MenuComponent {
+    private final String name;
+    private final List<MenuComponent> children = new ArrayList<>();
+
+    Menu(String name) {
+        this.name = name;
+    }
+
+    void add(MenuComponent component) {
+        children.add(component);
+    }
+
+    void print() {
+        System.out.println("\n" + name);
+        children.forEach(MenuComponent::print);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        Menu allMenus = new Menu("All Menus");
+        Menu dessert = new Menu("Dessert Menu");
+        dessert.add(new MenuItem("Apple pie"));
+        allMenus.add(new MenuItem("Pancakes"));
+        allMenus.add(dessert);
+        allMenus.print();
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+class MenuComponent {
+public:
+    virtual ~MenuComponent() = default;
+    virtual void add(std::unique_ptr<MenuComponent> component) {
+        throw std::logic_error("leaf cannot contain children");
+    }
+    virtual void print() const = 0;
+};
+
+class MenuItem : public MenuComponent {
+public:
+    explicit MenuItem(std::string name) : name_(std::move(name)) {}
+
+    void print() const override {
+        std::cout << name_ << "\n";
+    }
+
+private:
+    std::string name_;
+};
+
+class Menu : public MenuComponent {
+public:
+    explicit Menu(std::string name) : name_(std::move(name)) {}
+
+    void add(std::unique_ptr<MenuComponent> component) override {
+        children_.push_back(std::move(component));
+    }
+
+    void print() const override {
+        std::cout << "\n" << name_ << "\n";
+        for (const auto& child : children_) {
+            child->print();
+        }
+    }
+
+private:
+    std::string name_;
+    std::vector<std::unique_ptr<MenuComponent>> children_;
+};
+
+int main() {
+    auto allMenus = std::make_unique<Menu>("All Menus");
+    auto dessert = std::make_unique<Menu>("Dessert Menu");
+    dessert->add(std::make_unique<MenuItem>("Apple pie"));
+    allMenus->add(std::make_unique<MenuItem>("Pancakes"));
+    allMenus->add(std::move(dessert));
+    allMenus->print();
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class MenuComponent(ABC):
+    def add(self, component: "MenuComponent") -> None:
+        raise NotImplementedError("leaf cannot contain children")
+
+    @abstractmethod
+    def print(self) -> None:
+        pass
+
+
+class MenuItem(MenuComponent):
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def print(self) -> None:
+        print(self.name)
+
+
+class Menu(MenuComponent):
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.children: list[MenuComponent] = []
+
+    def add(self, component: MenuComponent) -> None:
+        self.children.append(component)
+
+    def print(self) -> None:
+        print(f"\n{self.name}")
+        for child in self.children:
+            child.print()
+
+
+all_menus = Menu("All Menus")
+dessert = Menu("Dessert Menu")
+dessert.add(MenuItem("Apple pie"))
+all_menus.add(MenuItem("Pancakes"))
+all_menus.add(dessert)
+all_menus.print()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class MenuComponent {
+  add() {
+    throw new Error("leaf cannot contain children");
+  }
+
+  print() {
+    throw new Error("subclass responsibility");
+  }
+}
+
+class MenuItem extends MenuComponent {
+  constructor(name) {
+    super();
+    this.name = name;
+  }
+
+  print() {
+    console.log(this.name);
+  }
+}
+
+class Menu extends MenuComponent {
+  constructor(name) {
+    super();
+    this.name = name;
+    this.children = [];
+  }
+
+  add(component) {
+    this.children.push(component);
+  }
+
+  print() {
+    console.log(`\n${this.name}`);
+    this.children.forEach((child) => child.print());
+  }
+}
+
+const allMenus = new Menu("All Menus");
+const dessert = new Menu("Dessert Menu");
+dessert.add(new MenuItem("Apple pie"));
+allMenus.add(new MenuItem("Pancakes"));
+allMenus.add(dessert);
+allMenus.print();
+```
+  </div>
+</div>
+
 # Flashcards
 
 {% include flashcards.html id="design_pattern_structural" %}
@@ -119,5 +345,3 @@ These compounds are so common that recognizing the Composite pattern is often th
 # Quiz
 
 {% include quiz.html id="design_pattern_structural" %}
-
-# Sample Code

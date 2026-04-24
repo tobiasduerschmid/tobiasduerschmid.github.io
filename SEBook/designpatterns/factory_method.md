@@ -90,22 +90,221 @@ NYPizzaStore ..> NYStyleCheesePizza : <<create>>
 ## Sequence Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant customer: Customer
+actor customer: Customer
 participant store: NYPizzaStore
 participant pizza: NYStyleCheesePizza
 customer -> store: orderPizza("cheese")
 activate store
 store -> store: createPizza("cheese")
+activate store
+deactivate store
 store -> pizza: prepare()
 activate pizza
 pizza --> store
-store -> pizza: bake()
-store -> pizza: cut()
-store -> pizza: box()
-store --> customer: pizza
 deactivate pizza
+store -> pizza: bake()
+activate pizza
+deactivate pizza
+store -> pizza: cut()
+activate pizza
+deactivate pizza
+store -> pizza: box()
+activate pizza
+deactivate pizza
+store --> customer: pizza
 deactivate store
 @enduml'></div>
+
+# Code Example
+
+The base `PizzaStore` owns the stable ordering algorithm. The factory method, `createPizza`, is the one step subclasses vary.
+
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Factory Method code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+interface Pizza {
+    void prepare();
+    void bake();
+}
+
+final class NYStyleCheesePizza implements Pizza {
+    public void prepare() {
+        System.out.println("Preparing NY cheese pizza");
+    }
+
+    public void bake() {
+        System.out.println("Baking thin crust");
+    }
+}
+
+abstract class PizzaStore {
+    public Pizza orderPizza(String type) {
+        Pizza pizza = createPizza(type);
+        pizza.prepare();
+        pizza.bake();
+        return pizza;
+    }
+
+    protected abstract Pizza createPizza(String type);
+}
+
+final class NYPizzaStore extends PizzaStore {
+    protected Pizza createPizza(String type) {
+        if (!type.equals("cheese")) {
+            throw new IllegalArgumentException("Unknown pizza: " + type);
+        }
+        return new NYStyleCheesePizza();
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        PizzaStore store = new NYPizzaStore();
+        store.orderPizza("cheese");
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+
+struct Pizza {
+    virtual ~Pizza() = default;
+    virtual void prepare() = 0;
+    virtual void bake() = 0;
+};
+
+struct NYStyleCheesePizza : Pizza {
+    void prepare() override { std::cout << "Preparing NY cheese pizza\n"; }
+    void bake() override { std::cout << "Baking thin crust\n"; }
+};
+
+class PizzaStore {
+public:
+    virtual ~PizzaStore() = default;
+
+    std::unique_ptr<Pizza> orderPizza(const std::string& type) {
+        auto pizza = createPizza(type);
+        pizza->prepare();
+        pizza->bake();
+        return pizza;
+    }
+
+protected:
+    virtual std::unique_ptr<Pizza> createPizza(const std::string& type) = 0;
+};
+
+class NYPizzaStore : public PizzaStore {
+protected:
+    std::unique_ptr<Pizza> createPizza(const std::string& type) override {
+        if (type != "cheese") throw std::invalid_argument("unknown pizza");
+        return std::make_unique<NYStyleCheesePizza>();
+    }
+};
+
+int main() {
+    NYPizzaStore store;
+    auto pizza = store.orderPizza("cheese");
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from abc import ABC, abstractmethod
+
+
+class Pizza(ABC):
+    @abstractmethod
+    def prepare(self) -> None:
+        pass
+
+    @abstractmethod
+    def bake(self) -> None:
+        pass
+
+
+class NYStyleCheesePizza(Pizza):
+    def prepare(self) -> None:
+        print("Preparing NY cheese pizza")
+
+    def bake(self) -> None:
+        print("Baking thin crust")
+
+
+class PizzaStore(ABC):
+    def order_pizza(self, kind: str) -> Pizza:
+        pizza = self.create_pizza(kind)
+        pizza.prepare()
+        pizza.bake()
+        return pizza
+
+    @abstractmethod
+    def create_pizza(self, kind: str) -> Pizza:
+        pass
+
+
+class NYPizzaStore(PizzaStore):
+    def create_pizza(self, kind: str) -> Pizza:
+        if kind != "cheese":
+            raise ValueError(f"Unknown pizza: {kind}")
+        return NYStyleCheesePizza()
+
+
+store = NYPizzaStore()
+store.order_pizza("cheese")
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class NYStyleCheesePizza {
+  prepare() {
+    console.log("Preparing NY cheese pizza");
+  }
+
+  bake() {
+    console.log("Baking thin crust");
+  }
+}
+
+class PizzaStore {
+  orderPizza(kind) {
+    const pizza = this.createPizza(kind);
+    pizza.prepare();
+    pizza.bake();
+    return pizza;
+  }
+
+  createPizza() {
+    throw new Error("createPizza() must be implemented");
+  }
+}
+
+class NYPizzaStore extends PizzaStore {
+  createPizza(kind) {
+    if (kind !== "cheese") throw new Error(`Unknown pizza: ${kind}`);
+    return new NYStyleCheesePizza();
+  }
+}
+
+const store = new NYPizzaStore();
+store.orderPizza("cheese");
+```
+  </div>
+</div>
 
 # Consequences
 The primary benefit of this pattern is **decoupling**: the high-level "Creator" code is completely oblivious to which "Concrete Product" it is actually using. This allows the system to evolve independently; you can add a `LAPizzaStore` without touching a single line of code in the original `PizzaStore` base class.

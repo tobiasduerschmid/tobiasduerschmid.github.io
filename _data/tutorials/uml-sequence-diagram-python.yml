@@ -54,6 +54,8 @@ steps:
       participant user: User
       participant auth: AuthService
       user -> auth: login(password)
+      activate auth
+      deactivate auth
       @enduml'></div>
 
       Two lifelines, one synchronous call. That is a complete sequence diagram. Read the arrow as a sentence: *"user calls login(password) on auth, and waits for it to finish."*
@@ -68,12 +70,22 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       create channel
       Main --> channel: <<create>>
+      activate channel
+      deactivate channel
       Main -> bot: send('Hello, world!')
+      activate bot
+      deactivate bot
       Main -> channel: notify_members('Welcome')
+      activate channel
+      deactivate channel
+      deactivate Main
       @enduml"></div>
 
       **Reading the target:**
@@ -317,12 +329,14 @@ steps:
 
       ### Example — With and Without Capture
 
-      **Without capture** — just one solid arrow:
+      **Without capture** — a solid call and an activation box, but no dashed return:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
       participant caller: Main
       participant api: API
       caller -> api: log("event")
+      activate api
+      deactivate api
       @enduml'></div>
 
       **With capture** — solid arrow going in, dashed arrow coming back:
@@ -331,7 +345,9 @@ steps:
       participant caller: Main
       participant api: API
       caller -> api: get_status()
+      activate api
       api --> caller: str
+      deactivate api
       @enduml'></div>
 
       Read the dashed arrow as *"the method finished and handed back a value of this type."*
@@ -346,13 +362,23 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       create channel
       Main --> channel: <<create>>
+      activate channel
+      deactivate channel
       Main -> bot: get_member_count()
+      activate bot
       bot --> Main: count: int
+      deactivate bot
       Main -> channel: notify_members('{count} members ...)
+      activate channel
+      deactivate channel
+      deactivate Main
       @enduml"></div>
 
       Notice the new dashed arrow from `bot` back to `Main` labeled `int` — that is the return arrow. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its return type is `None`.
@@ -630,10 +656,14 @@ steps:
       participant Main as : Main
       participant order: Order
       Main -> order: checkout()
+      activate order
       order -> order: _validate()
+      activate order
+      deactivate order
+      deactivate order
       @enduml'></div>
 
-      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. If the renderer shows activation bars, you will see a small box nested on top of the larger one — that is the stack frame for `_validate()` pushed on top of `checkout()`'s frame.
+      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box is the stack frame for `_validate()` pushed on top of `checkout()`'s frame.
 
       ### Your Target Diagram
 
@@ -644,11 +674,21 @@ steps:
       participant Main as : Main
       participant bot: DiscordBot
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       Main -> bot: handle_message('hi there')
+      activate bot
       bot -> bot: _log(message)
+      activate bot
+      deactivate bot
       bot -> bot: send(message)
+      activate bot
+      deactivate bot
+      deactivate bot
+      deactivate Main
       @enduml"></div>
 
       Three arrows — one from `Main` to `bot`, and two from `bot` to **itself**. Visually, the two self-calls are nested inside the `handle_message` activation box because they happen while that method is still running.
@@ -895,9 +935,13 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: welcome(user)
+      activate bot
       opt [not bot._is_subscribed(user)]
       bot -> channel: send_welcome(user)
+      activate channel
+      deactivate channel
       end
+      deactivate bot
       @enduml'></div>
 
       The `opt` box says: *"either this message happens, or nothing does — depending on the guard."* There is no second compartment.
@@ -911,11 +955,17 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: handle("hi")
+      activate bot
       alt [bot._is_spam("hi")]
       bot -> bot: _block()
+      activate bot
+      deactivate bot
       else [else]
       bot -> channel: broadcast("hi")
+      activate channel
+      deactivate channel
       end
+      deactivate bot
       @enduml'></div>
 
       The `alt` box says: *"exactly one of these branches runs."* The guard tells you *which*.
@@ -937,16 +987,28 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       create channel
       Main --> channel: <<create>>
+      activate channel
+      deactivate channel
       Main -> bot: handle(channel, 'buy now cheap')
+      activate bot
       alt [bot._is_spam(message)]
       bot -> bot: _block(message)
+      activate bot
+      deactivate bot
       else [else]
       bot -> channel: broadcast(message)
+      activate channel
+      deactivate channel
       end
+      deactivate bot
+      deactivate Main
       @enduml"></div>
 
       ### Your Task
@@ -1168,9 +1230,13 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
       Main -> bot: welcome_all(members)
+      activate bot
       loop [for member in members]
       bot -> channel: notify(member)
+      activate channel
+      deactivate channel
       end
+      deactivate bot
       @enduml'></div>
 
       The `loop` box says: *"the message(s) inside run once for every item in the collection."* If the collection is empty, the box still appears, but the messages inside run zero times.
@@ -1185,14 +1251,24 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       create channel
       Main --> channel: <<create>>
+      activate channel
+      deactivate channel
       Main -> bot: broadcast_all(channel, ['hi', 'hello', ...)
+      activate bot
       loop [for msg in messages]
       bot -> channel: send_to_all(msg)
+      activate channel
+      deactivate channel
       end
+      deactivate bot
+      deactivate Main
       @enduml"></div>
 
       ### Your Task (Fixer-Upper)
@@ -1404,21 +1480,37 @@ steps:
       participant bot: DiscordBot
       participant channel: Channel
 
+      activate Main
       create bot
       Main --> bot: <<create>>
+      activate bot
+      deactivate bot
       create channel
       Main --> channel: <<create>>
+      activate channel
+      deactivate channel
       Main -> bot: run_digest(channel, posts)
+      activate bot
       bot -> channel: get_subscriber_count()
+      activate channel
       channel --> bot: count: int
+      deactivate channel
       bot -> bot: _log_start(count)
+      activate bot
+      deactivate bot
       loop [for post in posts]
       alt [bot._is_announcement(post)]
       bot -> channel: broadcast(post)
+      activate channel
+      deactivate channel
       else [else]
       bot -> bot: _log_skip(post)
+      activate bot
+      deactivate bot
       end
       end
+      deactivate bot
+      deactivate Main
       @enduml"></div>
 
       Notice every concept from Steps 1-5 appears:
@@ -1844,9 +1936,15 @@ steps:
       participant a: A
       participant b: B
       a -> b: sync_call()
+      activate b
       b --> a: return
+      deactivate b
       a ->> b: async_call()
+      activate b
+      deactivate b
       a -> a: self_call()
+      activate a
+      deactivate a
       @enduml'></div>
 
       - `->` synchronous (caller blocks)

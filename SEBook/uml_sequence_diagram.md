@@ -44,13 +44,17 @@ Messages are the communications between lifelines. They are drawn as horizontal 
 Let's look at the sequence of a user inserting a card into an ATM.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant customer: Customer
+actor customer: Customer
 participant atm: ATM
 participant bank: Bank Server
 customer -> atm: (1) insertCard()
+activate atm
 atm -> bank: (2) verifyCard()
+activate bank
 bank --> atm: (3) cardValid()
+deactivate bank
 atm --> customer: (4) promptPIN()
+deactivate atm
 @enduml'></div>
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
@@ -70,30 +74,34 @@ Now that you understand the basic elements, let's add two important details that
 
 ### Activation Bars (Execution Specifications)
 
-An **activation bar** (also called an execution specification) is a thin rectangle drawn on a lifeline. It represents the period during which an object is **actively performing an action or behavior**---for example, executing a method. Activation bars can be nested across actors and within a single actor (e.g., when an object calls one of its own methods).
+An **activation bar** (also called an execution specification) is a thin rectangle drawn on a lifeline. It represents the period during which a participant is **actively performing an action or behavior**---for example, executing a method. Activation bars can be nested across software lifelines and within a single lifeline (e.g., when an object calls one of its own methods). Human actors are usually shown as initiators or recipients, not as executing software behavior, so they normally do not need activation bars.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant passenger: Passenger
+actor passenger: Passenger
 participant station: Station
 participant train: Train
-passenger -> station: pushButton()
+passenger -> station: requestStop()
 activate station
 station -> train: addStop()
 activate train
+train --> station: stopScheduled
 deactivate train
+station --> passenger: confirmation
 deactivate station
 train -> train: openDoors()
 activate train
-passenger -> station: pushButton(S)
+deactivate train
+passenger -> station: requestClose()
 activate station
 station -> train: closeDoors()
 activate train
+train --> station: doorsClosed
 deactivate train
+station --> passenger: confirmation
 deactivate station
-deactivate train
 @enduml'></div>
 
-The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `pushButton()` until the `Train` finishes processing `addStop()`.
+The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `requestStop()` until it sends the confirmation, and how the `Train` has separate execution bars for `addStop()`, `openDoors()`, and `closeDoors()`.
 
 ### Object Naming Convention
 
@@ -141,11 +149,15 @@ The `opt` fragment is equivalent to an `if` statement without an `else`. The mes
 participant checkout: Checkout System
 participant pricing: Pricing Engine
 checkout -> pricing: calculateTotal()
+activate pricing
+pricing --> checkout: subtotal
+deactivate pricing
 opt [hasLoyaltyAccount == true]
   checkout -> pricing: applyDiscount()
+  activate pricing
   pricing --> checkout: discountApplied()
+  deactivate pricing
 end
-pricing --> checkout: finalTotal()
 @enduml'></div>
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
@@ -159,11 +171,16 @@ The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant system: System
 participant db: Database
-system -> db: checkPassword()
 alt [password is correct]
+  system -> db: checkPassword()
+  activate db
   db --> system: loginSuccess()
+  deactivate db
 else [password is incorrect]
+  system -> db: checkPassword()
+  activate db
   db --> system: loginFailed()
+  deactivate db
 end
 @enduml'></div>
 
@@ -178,7 +195,9 @@ participant app: App
 participant server: Server
 loop [up to 3 times]
   app -> server: ping()
+  activate server
   server --> app: ack()
+  deactivate server
 end
 @enduml'></div>
 
@@ -197,23 +216,31 @@ To truly understand how these elements work, we must view them interacting in a 
 5.  *Optionally* (OPT), if the user has SMS alerts on, it texts them.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant user: User
+actor user: User
 participant hub: Alarm Hub
 participant sensors: Window Sensors
 participant sms: SMS API
 user -> hub: armSystem()
+activate hub
 loop [for each window]
   hub -> sensors: getStatus()
+  activate sensors
   sensors --> hub: statusData()
+  deactivate sensors
   alt [status == "Open"]
     hub --> user: warn()
   else [status == "Closed"]
     hub -> sensors: lock()
+    activate sensors
+    deactivate sensors
   end
 end
 opt [smsEnabled == true]
   hub -> sms: sendText("Armed")
+  activate sms
+  deactivate sms
 end
+deactivate hub
 @enduml'></div>
 
 -----
@@ -262,7 +289,8 @@ participant sale: Sale
 participant payment: Payment
 register -> sale: makePayment(cashTendered)
 activate sale
-sale -> payment: create(cashTendered)
+create payment
+sale --> payment: <<create>>
 activate payment
 deactivate payment
 sale -> payment: authorize()
@@ -294,11 +322,17 @@ public class A {
 participant a: A
 participant b: B
 a -> b: makeNewSale()
+activate b
+deactivate b
 loop [more items]
   a -> b: enterItem(itemID, quantity)
+  activate b
   b --> a: description, total
+  deactivate b
 end
 a -> b: endSale()
+activate b
+deactivate b
 @enduml'></div>
 
 The `for` loop in code maps directly to a `loop` fragment. The guard condition `[more items]` is a Boolean expression that describes when the loop continues.
@@ -312,11 +346,17 @@ participant a: A
 participant b: B
 participant c: C
 a -> a: doX(x)
+activate a
 alt [x < 10]
   a -> b: calculate()
+  activate b
+  deactivate b
 else [else]
   a -> c: calculate()
+  activate c
+  deactivate c
 end
+deactivate a
 @enduml'></div>
 
 The equivalent Java code is:
@@ -355,12 +395,20 @@ public class A {
 > participant inv: Inventory
 > participant order: Order
 > proc -> inv: checkStock(itemId)
+> activate inv
 > inv --> proc: inStock
+> deactivate inv
 > alt [inStock == true]
 >   proc -> inv: reserve(itemId)
+>   activate inv
+>   deactivate inv
 >   proc -> order: confirm()
+>   activate order
+>   deactivate order
 > else [inStock == false]
 >   proc -> order: reject("Out of stock")
+>   activate order
+>   deactivate order
 > end
 > @enduml'></div>
 > </details>
@@ -382,15 +430,25 @@ participant B: Browser
 participant A: AppBackend
 participant G: GoogleOAuth
 B -> A: GET /login
+activate A
 A --> B: 302 redirect to accounts.google.com
+deactivate A
 B -> G: GET /authorize (clientId, scope)
+activate G
 G --> B: 200 auth form
+deactivate G
 B -> G: POST /authorize (credentials)
+activate G
 G --> B: 302 redirect with authCode
+deactivate G
 B -> A: GET /callback?code=authCode
+activate A
 A -> G: POST /token (authCode, clientSecret)
+activate G
 G --> A: accessToken
+deactivate G
 A --> B: 200 session cookie
+deactivate A
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -412,16 +470,25 @@ participant os: OrderService
 participant pg: PaymentGateway
 participant rest: Restaurant
 app -> os: submitOrder(items, paymentInfo)
-os -> pg: charge(amount, card)
+activate os
 alt [payment approved]
+  os -> pg: charge(amount, card)
+  activate pg
   pg --> os: transactionId
+  deactivate pg
   os -> rest: notifyNewOrder(items)
+  activate rest
   rest --> os: estimatedTime
+  deactivate rest
   os --> app: confirmed(orderId, eta)
 else [payment declined]
+  os -> pg: charge(amount, card)
+  activate pg
   pg --> os: declineReason
+  deactivate pg
   os --> app: error(declineReason)
 end
+deactivate os
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -438,19 +505,27 @@ end
 **Scenario:** A developer pushes code, GitHub triggers a build, tests run, and deployment happens only if tests pass. This diagram uses `opt` for conditional deployment and a self-call for internal processing.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant dev: Developer
+actor dev: Developer
 participant gh: GitHub
 participant build: BuildService
 participant deploy: DeployService
 dev -> gh: git push origin main
+activate gh
 gh -> build: triggerBuild(commitSha)
+activate build
 build -> build: runTests()
+activate build
+deactivate build
 build --> gh: testResults
+deactivate build
 opt [all tests passed]
-  build -> deploy: deployToStaging(artifact)
-  deploy --> build: stagingUrl
+  gh -> deploy: deployToStaging(artifact)
+  activate deploy
+  deploy --> gh: stagingUrl
+  deactivate deploy
 end
 gh --> dev: notify(testResults)
+deactivate gh
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -472,16 +547,25 @@ participant match: MatchingService
 participant driver: DriverApp
 participant notif: NotificationService
 rider -> match: requestRide(location, rideType)
+activate match
 loop [no driver accepted]
-  match -> driver: offerRide(request)
   alt [driver accepts]
+    match -> driver: offerRide(request)
+    activate driver
     driver --> match: accepted
+    deactivate driver
   else [driver declines or timeout]
+    match -> driver: offerRide(request)
+    activate driver
     driver --> match: declined
+    deactivate driver
   end
 end
 match -> notif: notifyRider(driverId, eta)
+activate notif
 notif --> rider: driverAssigned(eta)
+deactivate notif
+deactivate match
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -503,14 +587,22 @@ participant ws: WebSocketGateway
 participant msg: MessageService
 participant notif: NotificationService
 client -> ws: sendMessage(channelId, text)
+activate ws
 ws -> msg: persist(channelId, text, userId)
+activate msg
 msg --> ws: messageId
+deactivate msg
 ws -> notif: broadcastToChannel(channelId, message)
+activate notif
 loop [for each online subscriber]
   notif -> ws: deliver(userId, message)
+  activate ws
   ws --> client: messageReceived
+  deactivate ws
 end
+deactivate notif
 ws --> client: ack(messageId)
+deactivate ws
 @enduml'></div>
 
 **What the UML notation captures:**

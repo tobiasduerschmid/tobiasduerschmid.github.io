@@ -109,7 +109,9 @@ participant db: Database
 client -> server: GET /book/42
 activate server
 server -> db: queryBook(42)
+activate db
 db --> server: bookData
+deactivate db
 alt [book found]
   server --> client: 200 OK, book
 else [not found]

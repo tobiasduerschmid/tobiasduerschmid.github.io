@@ -129,122 +129,266 @@ participant channel: NewsChannel
 participant app: MobileApp
 participant email: EmailDigest
 client -> channel: follow(app)
+activate channel
+deactivate channel
 client -> channel: follow(email)
+activate channel
+deactivate channel
 client -> channel: publish_post("New video uploaded!")
 activate channel
 channel -> channel: _notify_subscribers()
+activate channel
 channel -> app: update()
 activate app
 app -> channel: get_latest_post()
+activate channel
 channel --> app: "New video uploaded!"
+deactivate channel
 deactivate app
 channel -> email: update()
 activate email
 email -> channel: get_latest_post()
+activate channel
 channel --> email: "New video uploaded!"
+deactivate channel
 deactivate email
 deactivate channel
+deactivate channel
 client -> channel: unfollow(email)
+activate channel
+deactivate channel
 client -> channel: publish_post("Live stream starting!")
 activate channel
 channel -> channel: _notify_subscribers()
+activate channel
 channel -> app: update()
 activate app
 app -> channel: get_latest_post()
+activate channel
 channel --> app: "Live stream starting!"
+deactivate channel
 deactivate app
+deactivate channel
 deactivate channel
 @enduml'></div>
 
-# Sample Code
+# Code Example
 
-This sample code implements the Observer pattern using the News Channel example from the UML diagrams above:
+This sample implements the pull-style News Channel example from the diagrams. The subject sends a simple notification; each observer asks the subject for the latest post.
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Observer code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+interface Subscriber {
+    void update();
+}
+
+final class NewsChannel {
+    private final List<Subscriber> subscribers = new ArrayList<>();
+    private String latestPost = "";
+
+    void follow(Subscriber subscriber) {
+        subscribers.add(subscriber);
+    }
+
+    void unfollow(Subscriber subscriber) {
+        subscribers.remove(subscriber);
+    }
+
+    void publishPost(String text) {
+        latestPost = text;
+        subscribers.forEach(Subscriber::update);
+    }
+
+    String getLatestPost() {
+        return latestPost;
+    }
+}
+
+final class MobileApp implements Subscriber {
+    private final NewsChannel channel;
+
+    MobileApp(NewsChannel channel) {
+        this.channel = channel;
+    }
+
+    public void update() {
+        System.out.println("[MobileApp] " + channel.getLatestPost());
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        NewsChannel channel = new NewsChannel();
+        Subscriber app = new MobileApp(channel);
+        channel.follow(app);
+        channel.publishPost("New video uploaded!");
+    }
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+struct Subscriber {
+    virtual ~Subscriber() = default;
+    virtual void update() = 0;
+};
+
+class NewsChannel {
+public:
+    void follow(Subscriber& subscriber) {
+        subscribers_.push_back(&subscriber);
+    }
+
+    void unfollow(Subscriber& subscriber) {
+        subscribers_.erase(
+            std::remove(subscribers_.begin(), subscribers_.end(), &subscriber),
+            subscribers_.end());
+    }
+
+    void publishPost(std::string text) {
+        latestPost_ = std::move(text);
+        for (auto* subscriber : subscribers_) {
+            subscriber->update();
+        }
+    }
+
+    const std::string& latestPost() const {
+        return latestPost_;
+    }
+
+private:
+    std::vector<Subscriber*> subscribers_;
+    std::string latestPost_;
+};
+
+class MobileApp : public Subscriber {
+public:
+    explicit MobileApp(const NewsChannel& channel) : channel_(channel) {}
+
+    void update() override {
+        std::cout << "[MobileApp] " << channel_.latestPost() << "\n";
+    }
+
+private:
+    const NewsChannel& channel_;
+};
+
+int main() {
+    NewsChannel channel;
+    MobileApp app(channel);
+    channel.follow(app);
+    channel.publishPost("New video uploaded!");
+}
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
 from abc import ABC, abstractmethod
 
 
-# ==========================================
-# OBSERVER INTERFACE
-# ==========================================
 class Subscriber(ABC):
-    """The Observer interface."""
     @abstractmethod
-    def update(self):
+    def update(self) -> None:
         pass
 
 
-# ==========================================
-# SUBJECT
-# ==========================================
 class NewsChannel:
-    """The Subject that maintains a list of subscribers and notifies them."""
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: list[Subscriber] = []
-        self._latest_post: str = ""
+        self._latest_post = ""
 
-    def follow(self, subscriber: Subscriber):
-        if subscriber not in self._subscribers:
-            self._subscribers.append(subscriber)
+    def follow(self, subscriber: Subscriber) -> None:
+        self._subscribers.append(subscriber)
 
-    def unfollow(self, subscriber: Subscriber):
+    def unfollow(self, subscriber: Subscriber) -> None:
         self._subscribers.remove(subscriber)
 
-    def publish_post(self, text: str):
+    def publish_post(self, text: str) -> None:
         self._latest_post = text
-        self._notify_subscribers()
+        for subscriber in self._subscribers:
+            subscriber.update()
 
     def get_latest_post(self) -> str:
         return self._latest_post
 
-    def _notify_subscribers(self):
-        for subscriber in self._subscribers:
-            subscriber.update()
 
-
-# ==========================================
-# CONCRETE OBSERVERS
-# ==========================================
 class MobileApp(Subscriber):
-    """A concrete observer that pulls state from the channel on update."""
-    def __init__(self, channel: NewsChannel):
+    def __init__(self, channel: NewsChannel) -> None:
         self._channel = channel
 
-    def update(self):
-        post = self._channel.get_latest_post()
-        print(f"[MobileApp] Push notification: {post}")
+    def update(self) -> None:
+        print(f"[MobileApp] {self._channel.get_latest_post()}")
 
 
-class EmailDigest(Subscriber):
-    """Another concrete observer with different behavior."""
-    def __init__(self, channel: NewsChannel):
-        self._channel = channel
-
-    def update(self):
-        post = self._channel.get_latest_post()
-        print(f"[EmailDigest] New email queued: {post}")
-
-
-# ==========================================
-# CLIENT CODE
-# ==========================================
 channel = NewsChannel()
-
 app = MobileApp(channel)
-email = EmailDigest(channel)
-
 channel.follow(app)
-channel.follow(email)
-
 channel.publish_post("New video uploaded!")
-# [MobileApp] Push notification: New video uploaded!
-# [EmailDigest] New email queued: New video uploaded!
-
-channel.unfollow(email)
-
-channel.publish_post("Live stream starting!")
-# [MobileApp] Push notification: Live stream starting!
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
+```javascript
+class NewsChannel {
+  constructor() {
+    this.subscribers = [];
+    this.latestPost = "";
+  }
+
+  follow(subscriber) {
+    this.subscribers.push(subscriber);
+  }
+
+  unfollow(subscriber) {
+    this.subscribers = this.subscribers.filter((item) => item !== subscriber);
+  }
+
+  publishPost(text) {
+    this.latestPost = text;
+    this.subscribers.forEach((subscriber) => subscriber.update());
+  }
+
+  getLatestPost() {
+    return this.latestPost;
+  }
+}
+
+class MobileApp {
+  constructor(channel) {
+    this.channel = channel;
+  }
+
+  update() {
+    console.log(`[MobileApp] ${this.channel.getLatestPost()}`);
+  }
+}
+
+const channel = new NewsChannel();
+const app = new MobileApp(channel);
+channel.follow(app);
+channel.publishPost("New video uploaded!");
+```
+  </div>
+</div>
 
 # Design Decisions
 
@@ -280,4 +424,3 @@ Applying the Observer pattern yields several important consequences:
 * **Broadcast Communication:** When the subject changes, all registered observers are notified—the subject does not need to know who they are.
 * **Unexpected Updates:** Because observers have no knowledge of each other, a change triggered by one observer can cascade through the system in unexpected ways. A notification chain where observer A's update triggers subject B's notification, which updates observer C, can be very difficult to debug.
 * **Inverted Dependency Flow:** An empirical study on reactive programming found that the Observer pattern *inverts the natural dependency flow* in code. Conceptually, data flows from subject to observer, but in the code, observers call the subject to register themselves. This means that when a reader encounters an observer for the first time, there is no sign in the code near the observer of *what* it depends on. This inversion makes program comprehension harder—a critical insight for anyone debugging Observer-based systems.
-

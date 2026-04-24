@@ -25,11 +25,19 @@ steps:
     instructions: |
       ## When One Change Breaks Everything
 
-      > **Learning objective:** After this step you will be able to **identify** the symptoms of rigid, tightly coupled code and **explain** why design principles exist.
+      > **Learning objectives.** After this step you will be able to:
+      > - **Define** (Bloom: *Remember*) four terms — *actor*, *reason to change*, *coupling*, *cohesion* — in your own words.
+      > - **Identify** (Bloom: *Understand*) the coupling that makes a private helper a trap for future change.
+      > - **Predict** (Bloom: *Analyze*) which method(s) a change to one private helper will silently affect.
+      > - **Explain** (Bloom: *Understand*) why two tickets from two different teams collided inside a single file.
+      >
+      > **Time:** ~20 minutes — 5 min reading, 10 min hands-on, 5 min reflection + quiz. The next ten steps build on this one.
+      >
+      > **Prerequisites:** Python classes and methods, `dict` access, f-string formatting, and `json.dumps`. If any of those feel shaky, skim the [Python tutorial](/SEBook/tools/python-tutorial) first — the rest of this tutorial will move fast.
 
-      ### Four Words You Need for the Rest of This Tutorial
+      ### Four Words to Install Before You Debug the Rest of Your Career
 
-      Every SOLID principle uses the same four-word lens. Learn them once, then stop guessing.
+      SOLID is written in these four terms. Learn them once; every step below uses them. Skim now — you'll practice them in the task.
 
       - **Actor** — a person or team who asks for changes. Finance, Registrar, Legal, Ops. Actors file tickets; they don't read your code. Different actors want different things for different reasons.
       - **Reason to change** — a real-world force that makes you edit a file. Tax law shifts → Finance edits. HIPAA update → Legal edits. *Different actors = different reasons to change.*
@@ -38,36 +46,57 @@ steps:
 
       **Good design = low coupling between modules, high cohesion within each module.** SOLID is five specific tactics for hitting that target.
 
+      ### Inherited Code Is Normal. The Stress Is Normal.
+
+      You're about to open a tangled class. That isn't a contrived teaching example — it's week 1 of almost every real engineering job. Every senior developer you'll ever meet has been exactly where you are in the next 20 minutes. If the code feels overwhelming: you're reading it right.
+
       ### The Scenario
 
-      You just inherited a `CourseManager` class from a colleague who left the company. Classic. This thing handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
+      You just inherited a `CourseManager` class from a colleague who left the company. This thing handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
 
       Your manager drops two change requests on you:
 
       1. **Finance Team:** Switch the grading scale from letter grades (A/B/C/D/F) to a **4.0 numeric scale** (4.0/3.0/2.0/1.0/0.0).
       2. **Registrar's Office:** Change the report format from **HTML** to **JSON**.
 
-      Two small changes. Should be easy, right? ...Right?
+      Two small changes from two different teams. Should be easy, right? ...Right?
 
-      ### Your Task
+      ### Predict Before You Type
 
-      Open `course_manager.py` and try to make **both changes**. You'll quickly discover the nightmare: the private helper `_format_grade()` is used by *both* `calculate_gpa()` *and* `generate_report()`. Change it for one purpose and you break the other. It's like trying to update your profile pic on one app and it changes across all your accounts.
+      Before you touch the code, look at `_format_grade()` on line 105. It is a private helper. **Predict which of these will happen when you change it:**
 
-      **This is the point.** You're *supposed* to struggle here. Do your best to make both changes work — any approach counts. There's no single "correct" answer.
+      - **(A)** Only `generate_report()` is affected — `_format_grade()` is used there.
+      - **(B)** Only `calculate_gpa()` is affected — `_format_grade()` is used there.
+      - **(C)** Both `generate_report()` and `calculate_gpa()` change together, whether you want them to or not.
+      - **(D)** Nothing else is affected — it's a private method, so changes stay local.
 
-      ### Errors Are the Lesson
+      Hold your prediction. You'll check it in the quiz.
 
-      You will almost certainly break things. That's not a bug in the exercise — it *is* the exercise. Every developer has inherited code like this. The errors you hit aren't you messing up; they're proof that the original design is the problem. Read the error messages, experiment, and embrace the chaos.
+      ### Your Task — Bounded Success Criteria
 
-      ### Before You Move On — 60 Seconds of Reflection
+      Open `course_manager.py` and make **both** changes.
 
-      After you've wrestled with both changes, pause and answer in your head:
+      **Minimum success criteria (the tests check these):**
 
-      1. **Why did editing one private helper break two features?** (Name the coupling.)
-      2. **Which different "teams" (actors) would realistically ask for each of these changes?** (Hint: the Finance Team and the Registrar's Office want different things for different reasons.)
-      3. **If these teams shared this file forever, what would happen on the day both teams ship changes the same week?**
+      1. `_grade_weights` uses numeric keys `4.0, 3.0, 2.0, 1.0, 0.0` instead of `"A", "B", "C", "D", "F"`, and `add_grade()` accepts those numeric grades.
+      2. `generate_report()` returns a JSON string (built with `json.dumps`) instead of HTML. The JSON should at least contain the student's name, their courses with grades, and the GPA.
+      3. The demo script at the bottom still runs end-to-end without raising.
 
-      If you can answer #1 in one sentence, you've already grasped the problem SOLID is built to solve. The next ten steps give you the tools to prevent it.
+      You are allowed to patch in place or add helpers — there is no "one right refactor" yet. SOLID tools arrive in the next ten steps. For now, **just survive both tickets with a script that still runs.**
+
+      ### The Real Lesson — Watch What Ripples
+
+      As you edit, keep one eye on `_format_grade()`. It is used by **three** other methods: `get_grade_summary()`, `generate_report()`, *and* `send_grade_notification()`. Any format change you make ripples into *all three* outputs simultaneously — even though each one has a different audience (academic display vs. registrar's report vs. student email). **The friction you feel is the point.** SOLID is five ways to defuse exactly this kind of ripple.
+
+      > **Errors are the lesson.** You will almost certainly break something on the first attempt. That's normal — read the message, adjust, re-run. If you want a reference after your attempt, hit the "Solution" button in the top bar to compare. The point isn't to guess the perfect patch; it's to feel how the design resists you.
+
+      ### Reflect → Fill in the Ownership
+
+      Before moving on, take 60 seconds and complete this sentence by filling the three blanks with **concrete names from the code** (method names, helper names, actor names — not "SRP violation"):
+
+      > *"`CourseManager` hurt to change because __________ was shared between __________ and __________, so a ticket from the __________ team rippled into an output owned by the __________ team."*
+
+      If you can fill five blanks with five specific names, you've built the mental model the next ten steps stand on.
 
     files:
       - path: "course_manager.py"
@@ -388,6 +417,30 @@ steps:
           explanation: |
             At least three different groups want different things from this class: (1) **administration** cares about enrollment, (2) the **academic department** cares about grade calculation, and (3) the **registrar** cares about reports and transcripts. When one class tries to make everyone happy, changes from one group break things for another. This is exactly why the Single Responsibility Principle exists — you'll learn it next.
 
+        - question: |
+            **Prediction check.** Before the task, you were asked to predict what would happen when you changed `_format_grade()`. Which option actually turned out to be true as you worked through the code?
+          type: single
+          options:
+            - "(A) Only `generate_report()` was affected"
+            - "(B) Only `calculate_gpa()` was affected"
+            - "(C) Both `generate_report()` and `calculate_gpa()` were affected, plus `send_grade_notification()` — three features rippled from one change to a private helper"
+            - "(D) Nothing else was affected — `_format_grade()` is private, so changes stayed local"
+          correct_index: 2
+          explanation: |
+            Answer **(C)**. `_format_grade()` is called from `get_grade_summary()`, `generate_report()`, AND `send_grade_notification()` — three outputs owned by three different audiences (academics, registrar, students). "Private" only means "not part of the public class API." It says *nothing* about internal coupling. Any ripple you have to hold in your head to be safe is coupling; coupling is what SOLID is designed to dissolve.
+
+        - question: |
+            **Evaluate.** Your manager looks at the patched `CourseManager` and says: *"It works. Let's ship it and move on."* You disagree. Which of the following are the **strongest** reasons to push back **before** the next ticket arrives? Select all that apply.
+          type: multiple
+          options:
+            - "The shared `_format_grade()` means that the next Finance or Registrar ticket will *almost certainly* break the other team's output — we are one ticket away from a bug in production"
+            - "Three different audiences (academics, registrar, students) now depend on one private format string, so nobody can change the format for *their* audience without breaking two others"
+            - "The longer this class stays monolithic, the more tickets will pile up on one file, slowing every team down and making code review a coordination exercise between three teams"
+            - "The code file is over 60 lines long, and files longer than 60 lines are always bad design"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            The first three are substantive architectural arguments — future-change risk, multi-audience coupling, and cross-team coordination cost. These are exactly what you'll hear senior engineers say in code review. The fourth option (line count) is a superficial rule of thumb; SOLID isn't about counting lines, it's about *actors* and *reasons to change*. A 400-line class serving one actor can be fine. A 40-line class serving three actors is a bomb.
+
 
   # --------------------------------------------------------------------------
   # STEP 2 — "SRP — Feel the Friction"
@@ -450,7 +503,9 @@ steps:
 
       ### Reflect → Explain in Your Own Words
 
-      Before you run the code: take 90 seconds. In three sentences or fewer, finish this prompt — *"The `EmployeeManager` class is hard to change because..."* Don't answer "SRP violation" — aim for the concrete mechanism: *which actor's request breaks which other actor's output, and why*. This short self-explanation is the difference between reading about SRP and building the mental model you'll reuse in code review for the rest of your career.
+      ### Reflect → Write the Incident Report
+
+      Before you run the code, imagine that in six months, the HR team files a bug: *"The pay stub started showing the tax rate as `24%` instead of `22%`, but nobody on HR asked for that change."* Write a one-paragraph **incident report** (3–4 sentences) that would land on your team's postmortem channel. Name the specific method that was edited, name the specific method that was affected, and name *which team asked for the original change*. Writing the bug report you'd actually send is a faster path to the schema than writing a textbook definition of SRP — and you'll find yourself reading real incident reports just like this one in your first engineering job.
 
     files:
       - path: "employee_manager.py"
@@ -1485,7 +1540,9 @@ steps:
 
       ### Reflect → Explain in Your Own Words
 
-      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, finish this prompt: *"This `send_notification()` method becomes painful to change because..."* Don't answer "OCP violation" — aim for the concrete mechanism: what breaks when, who feels it, which line of the if/elif chain a junior would accidentally edit. This short self-explanation is what turns reading into schema-building (Chi & Wylie's ICAP framework — Constructive mode).
+      ### Reflect → Draft the PR-Review Comment
+
+      Close the code for a moment. Imagine a teammate opens a pull request that adds Discord support by pasting another `elif channel == "discord":` branch at the bottom of `send_notification()`. You're the reviewer. Draft the **one-sentence review comment** you'd leave on that PR — not "OCP violation" (useless in review), but a concrete call-to-action: *what should the PR actually do differently, and what specific line would you highlight as the danger zone?* PR comments are where principles become habits; practicing the comment is practicing the habit.
 
     files:
       - path: "notification_router.py"
@@ -2635,7 +2692,9 @@ steps:
 
       ### Reflect → Explain in Your Own Words
 
-      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, explain to an imaginary teammate: *"Why is silently returning `success=False` worse than crashing with `NotImplementedError`?"* Use the Happy/Sad mnemonic if it helps — is the subclass's refund contract shaped like a smile or a frown? This self-explanation is what moves "LSP knowledge" from "something I read" to "something I can wield in code review".
+      ### Reflect → Pick a Side and Argue It
+
+      Your team is in a heated Slack debate. **Senior-A** argues: *"`GiftCardProcessor.refund()` returning `{'success': False}` is fine — it's honest about what happened and avoids the scary exception."* **Senior-B** argues: *"It's worse than a crash, because crashes surface the problem. A `success=False` hidden in a dict gets silently ignored until Tuesday's reconciliation report."* In **one or two sentences**, pick a side and cite the LSP contract language (pre/postcondition, Happy/Sad) to back your argument. Being able to argue LSP — not just recognize it — is what separates engineers who enforce contracts in review from ones who merely nod when violations slide by.
 
     files:
       - path: "payments.py"
@@ -4011,7 +4070,14 @@ steps:
     instructions: |
       ## The Interface Segregation Principle
 
-      > **Learning objective:** After this step you will be able to **identify** fat interfaces that force clients to depend on methods they don't use, and **refactor** them into lean, role-based interfaces.
+      > **Learning objectives.** After this step you will be able to:
+      > - **Identify** (Bloom: *Understand*) a fat interface by the `NotImplementedError` stubs it forces on its implementers.
+      > - **Distinguish** (Bloom: *Analyze*) ISP violations from SRP violations using the *who-depends-on-this* vs. *who-asks-for-changes* lens.
+      > - **Refactor** (Bloom: *Create*) a fat ABC into several role-based ABCs so each client only depends on what it actually calls.
+      >
+      > **Time:** ~25 min (7 min reading, 5 min observing the fat-interface crash, 13 min refactoring the Smart Home exercise).
+      >
+      > **Prerequisites:** Comfort with Python ABCs (`from abc import ABC, abstractmethod`) from the OCP and LSP steps. You should also be able to read `isinstance()` checks.
 
       ### The Principle
 
@@ -4019,8 +4085,6 @@ steps:
       > — Robert C. Martin
 
       When an interface gets too bloated, implementers that only need a few of its methods are forced to write stub implementations — methods that do nothing or raise errors. This wastes effort, confuses anyone reading the code, and creates **latent bugs**: code that looks fine but crashes at runtime.
-
-      > **Struggling is the lesson.** ISP violations don't crash the compiler — they quietly plant `NotImplementedError` land mines that blow up at runtime, often far from the class that planted them. If the problem feels subtle, that's because it *is* subtle. The exercise below makes the latent crashes observable.
 
       ### Code Smell: *Fat Interface*
 
@@ -4045,9 +4109,9 @@ steps:
 
       But the **architectural pain remains**: when your module depends on a fat interface, you transitively import every dependency that interface touches. A heavy SDK used by `admin_only_method()` is now a mandatory dependency for your lightweight read-only client. If that SDK has a bug, your read-only client catches it. ISP still matters in Python — the *symptoms* just shift from "recompile time" to "import surface and transitive risk."
 
-      ### The Scenario
+      ### The Scenario — Fat-Interface Cloud Storage
 
-      You're building a cloud storage service with two tiers: **Premium** and **Free**. Here's the current `CloudStorage` abstract base class with six capabilities:
+      You're working on a cloud storage service with two tiers: **Premium** and **Free**. The current `CloudStorage` abstract base class has six capabilities:
 
       | Method | Premium | Free |
       |---|---|---|
@@ -4058,17 +4122,31 @@ steps:
       | `encrypt(file_id)` | Yes | **No** |
       | `get_version_history(file_id)` | Yes | **No** |
 
-      `PremiumStorage` implements all six. Your task is to create a `FreeStorage` class that extends `CloudStorage`. But Free users can only upload and download — no sync, share, encrypt, or version history.
+      `PremiumStorage` implements all six. `FreeStorage` can only honestly implement two — but because `CloudStorage` is a fat ABC, `FreeStorage` is **forced** to provide stubs for `sync()`, `share()`, `encrypt()`, and `get_version_history()` just so Python will let it instantiate. Those stubs raise `NotImplementedError("Upgrade to Premium")`.
 
-      ### Your Task
+      ### Task 1 (Observation, not Writing) — Watch the Fat Interface Crash
 
-      Open `cloud_storage.py`. Implement `FreeStorage` so it inherits from `CloudStorage` and:
+      Open `cloud_storage.py`. **The `FreeStorage` class is already written** — including the four `NotImplementedError` stubs. **Do not rewrite them.** Writing stubs like this is *exactly* the anti-pattern ISP exists to eliminate, and practicing the anti-pattern is the last thing we want.
 
-      1. Implements `upload()` to store the file and return `True`.
-      2. Implements `download()` to return the stored file name.
-      3. Implements `sync()`, `share()`, `encrypt()`, and `get_version_history()` to raise `NotImplementedError("Upgrade to Premium")`.
+      Instead, do three things and then answer a question in the quiz:
 
-      After the tests pass, think about what happens if someone calls `backup_service(FreeStorage())`. The backup service **expects** any `CloudStorage` to support `sync()`, but `FreeStorage` explodes at runtime. That's what a fat interface does to you.
+      1. **Run** `cloud_storage.py`. Watch the demo section. The last thing it prints is a line where `backup_service(free)` calls `sync()` on a `FreeStorage` and crashes with a `NotImplementedError`.
+      2. **Read** the `backup_service()` function at the bottom. Its type signature is `storage: CloudStorage`. Python's type system *says this is a valid call*. The runtime disagrees. The gap between those two is an ISP violation made visible.
+      3. **Diagnose — in your own words** — what went wrong. Not "ISP violation" — the concrete mechanism: *a function expected method X on an abstraction, but the abstraction promised more than one of its implementations could honor.*
+
+      > **Why aren't we having you write the stubs?** Because writing `raise NotImplementedError` four times is how you install this anti-pattern into your muscle memory. "Feeling the pain" should mean *observing* the crash, not *practicing* the crash. The active exercise is Task 2.
+
+      ### Task 2 (Active Refactor) — Segregate the Smart Home
+
+      Open `smart_home.py`. This file has the same shape as `cloud_storage.py`: a fat `SmartDevice` ABC with four abstract methods (`play_music`, `set_temperature`, `lock_door`, `dim_lights`) and a `SmartLightBad` that is forced to stub three of them.
+
+      **Your job** is to eliminate the stubs by splitting the one fat interface into four role-based ones:
+
+      1. Define `Dimmable(ABC)`, `Playable(ABC)`, `TemperatureControllable(ABC)`, `Lockable(ABC)` — each with exactly one `@abstractmethod` and a `__init__(self, name: str)`.
+      2. Implement `SmartLight(Dimmable)`, `SmartSpeaker(Playable)`, `SmartThermostat(TemperatureControllable)`, `SmartLock(Lockable)` — each class extends **exactly one** role interface and implements **only** its one method.
+      3. Do **not** retain `SmartDevice`, `SmartLightBad`, or any `raise NotImplementedError` stubs in your final `smart_home.py` besides the pre-existing reference copies of `SmartDevice`/`SmartLightBad` at the top.
+
+      Tests confirm two things: (a) each device *implements* its own role interface (`isinstance(light, Dimmable)` is True) and (b) each device does **not** implement the role interfaces it doesn't need (`isinstance(light, Playable)` is False). The second half is what prevents the fat-interface disease from coming back.
 
       ### What ISP Would Look Like
 
@@ -4296,21 +4374,49 @@ steps:
                   return list(self._versions[file_id])
 
 
-          # ── Free tier — TODO: implement this class ───────────────────────
+          # ── Free tier — PRE-WRITTEN (anti-pattern shown, not asked for) ──
+          #
+          # READ THIS class — DO NOT modify it. Four of these methods are
+          # stubs that raise NotImplementedError. That is exactly the ISP
+          # violation this step exists to make visible. Writing stubs like
+          # this is how you install the anti-pattern into your muscle memory.
+          # Your task is to OBSERVE the crash in the demo below, then do
+          # the ACTIVE refactor over in smart_home.py.
           class FreeStorage(CloudStorage):
               """Free cloud storage — upload and download only.
-              sync, share, encrypt, and version history are NOT available."""
+              sync/share/encrypt/version are STUBS because the fat ABC
+              forces every subclass to implement every method."""
 
               def __init__(self) -> None:
                   self._files: Dict[str, str] = {}
                   self._next_id: int = 1
 
-              # TODO: Implement upload() — store file in self._files, return True
-              # TODO: Implement download() — return file name from self._files
-              # TODO: Implement sync() — raise NotImplementedError("Upgrade to Premium")
-              # TODO: Implement share() — raise NotImplementedError("Upgrade to Premium")
-              # TODO: Implement encrypt() — raise NotImplementedError("Upgrade to Premium")
-              # TODO: Implement get_version_history() — raise NotImplementedError("Upgrade to Premium")
+              def upload(self, file: str) -> bool:
+                  file_id: str = f"file_{self._next_id}"
+                  self._next_id += 1
+                  self._files[file_id] = file
+                  print(f"[FREE] Uploaded '{file}' as {file_id}")
+                  return True
+
+              def download(self, file_id: str) -> str:
+                  if file_id not in self._files:
+                      raise ValueError(f"File {file_id} not found")
+                  print(f"[FREE] Downloaded {file_id}")
+                  return self._files[file_id]
+
+              # Forced stubs — the fat ABC demanded these. Each one is a
+              # latent crash waiting for any client that trusts the ABC.
+              def sync(self, device: str) -> bool:
+                  raise NotImplementedError("Upgrade to Premium")
+
+              def share(self, file_id: str, user: str) -> str:
+                  raise NotImplementedError("Upgrade to Premium")
+
+              def encrypt(self, file_id: str) -> bool:
+                  raise NotImplementedError("Upgrade to Premium")
+
+              def get_version_history(self, file_id: str) -> List[str]:
+                  raise NotImplementedError("Upgrade to Premium")
 
 
           # ── A function that depends on the fat interface ──────────────────
@@ -4968,6 +5074,18 @@ steps:
       min_score: 0.6
       shuffle: true
       questions:
+
+        - question: |
+            **Observation check (Task 1).** In `cloud_storage.py`, `backup_service(free)` crashes on a `FreeStorage` instance. Its type signature is `storage: CloudStorage`. Where does the violation originate?
+          type: single
+          options:
+            - "The crash is `FreeStorage`'s fault — it should have implemented `sync()` properly instead of raising `NotImplementedError`"
+            - "The crash is `backup_service`'s fault — it should type-check its argument with `isinstance()` before calling `sync()`"
+            - "The crash originates in `CloudStorage` itself — the fat ABC promised every subclass could sync, but that promise cannot honestly be honored by a free tier. The wrong thing is the interface, not either party trying to use it"
+            - "The crash is Python's fault — a statically typed language would have caught this"
+          correct_index: 2
+          explanation: |
+            Both implementations *honestly tried to satisfy the ABC*. `FreeStorage` raised `NotImplementedError` because it couldn't really sync; `backup_service` trusted the `CloudStorage` contract that said every subclass could sync. The **interface itself** is the bug: it promised capabilities that not every implementer can honestly provide. ISP prescribes the structural fix — split the fat ABC so only implementers that *can* sync are allowed to claim they can, via a separate `Syncable` interface that `FreeStorage` never extends.
 
         - question: |
             What is the difference between the Interface Segregation Principle (ISP) and the Single Responsibility Principle (SRP)?
@@ -6575,6 +6693,18 @@ steps:
 
             Recognizing well-designed code is just as important as spotting violations — otherwise you'll "refactor" things that are already correct, which is just creating problems where there were none.
 
+        - question: |
+            **Spaced retrieval — back to Step 1.** Across all six snippets in this step, the violations had different surface symptoms (an `if/elif` chain, a raised exception, a fat ABC, a direct `new` keyword call). But the same *two* underlying failures from Step 1's vocabulary show up every time. Which two?
+          type: single
+          options:
+            - "Premature optimization and global state"
+            - "High coupling (between things that should be independent) and low cohesion (things that belong together are scattered)"
+            - "Missing docstrings and inconsistent naming"
+            - "Poor performance and memory leaks"
+          correct_index: 1
+          explanation: |
+            Every SOLID violation you've studied reduces to the **same two forces from Step 1**: things that shouldn't be connected got tangled together (coupling too high), or things that belong together got scattered across files (cohesion too low). The five principles are five specific diagnoses for one underlying disease. That's why the capstone insight matters — they're a system, not a checklist.
+
 
   # --------------------------------------------------------------------------
   # STEP 11 — "Capstone — The Real World"
@@ -6589,36 +6719,97 @@ steps:
     instructions: |
       ## Final Boss: Library Management System
 
-      > **Learning objective:** After this step you will be able to **identify** multiple simultaneous SOLID violations in a realistic system, **refactor** it to follow all five principles, and **recognize** when SOLID is being applied excessively.
+      > **Learning objectives.** After this step you will be able to:
+      > - **Identify** (Bloom: *Analyze*) multiple simultaneous SOLID violations in a realistic system by name and location.
+      > - **Refactor** (Bloom: *Create*) a monolithic class into a SOLID-compliant design in **three disciplined phases**, not one heroic rewrite.
+      > - **Recognize** (Bloom: *Evaluate*) when SOLID is being over-applied and the cure has become worse than the disease.
+      >
+      > **Time:** ~40–60 min (10 min annotation, 10 min/phase × 3 phases, 10 min reflection).
+      >
+      > **Prerequisites:** All five principles from steps 2–9 of this tutorial. You should be able to spot a code smell and name the principle (Step 10 exercise) before you begin.
 
       ### The Challenge
 
-      Here's `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your mission:
+      Here's `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your mission has two halves:
 
-      1. **Identify** every violation and label it with a comment (e.g., `# VIOLATION: OCP — ...`).
-      2. **Refactor** the system into well-designed classes that follow SOLID.
+      1. **Annotate** — label every violation you find with a comment starting `# VIOLATION: <principle> — <reason>`. (There are at least four: one each of SRP, OCP, LSP, and DIP.)
+      2. **Refactor** — in three ordered phases, described below. Each phase has its own success criteria and tests. **Do not attempt all three at once** — that's the mistake every first-timer makes with a capstone this size.
 
-      ### Violations to Find
+      > **Why phases?** Refactoring a 120-line monolith into 8+ SOLID-compliant classes in one pass will exceed your working memory and your patience. Engineers don't do that either — real refactors land in small, reviewable commits, each of which leaves the system working. You're going to practice the same discipline.
 
-      There are at least four violations hiding in here — one each of SRP, OCP, LSP, and DIP. Read every method carefully before you start refactoring.
+      ### Step-Zero: Annotate the Violations
 
-      ### Refactoring Guidelines
+      Before you change any code, open `library_system.py` and read it top to bottom. As you read, **add a comment** at the top of each offending method or line:
 
-      Your refactored system should include:
-      - A `BookRepository` class for managing books (adding, looking up, updating copies).
-      - A `MemberRegistry` class for managing members (registering, looking up).
-      - A `NotificationService` class (or protocol/ABC) for sending overdue notices.
-      - A `CheckoutService` class that orchestrates checkouts by using the above classes.
-      - Book subtypes that handle checkout logic polymorphically (physical copies, ebooks, audiobooks) — so `CheckoutService` does not need `if/elif` on book format.
-      - A `ReferenceBook` that is handled properly without violating LSP (hint: separate the type hierarchy so reference books are not forced into a checkout interface they cannot fulfill).
-      - Dependency injection for the logger and report writer — `CheckoutService` should accept abstractions, not instantiate `FileLogger()` or `CsvReportWriter()` directly.
+      ```python
+      # VIOLATION: DIP — __init__ directly instantiates FileLogger() and CsvReportWriter()
+      # VIOLATION: OCP — checkout() uses if/elif on book.format; adding a format requires modifying this method
+      # VIOLATION: LSP — reference books raise NotImplementedError from checkout()
+      # VIOLATION: SRP — LibrarySystem handles books, members, notifications, and reports — four actors in one class
+      ```
 
-      ### How the Principles Connect
+      This annotation pass is **fast** (5–10 min) and it's what senior engineers do *before* any refactor — understand the shape of the problem before touching the code. Your tests in this step won't check your comments verbatim (they check the final design), but writing them costs very little and pays off when you get stuck mid-refactor and need to remember *why* you were refactoring.
 
-      As you refactor, notice how these principles back each other up:
-      - **LSP enables OCP:** Every `Book` subtype fulfills the same checkout contract, so `CheckoutService` handles new book types without modification.
-      - **DIP enables OCP:** `CheckoutService` depends on abstractions (logger, report writer), so you can swap implementations without touching it.
-      - **ISP reduces coupling:** Small interfaces (one ABC per concern) mean each class only depends on what it actually uses.
+      ### Phase 1 — DIP: Inject the Side-Effect Dependencies
+
+      **Goal:** Break `LibrarySystem`'s hard-coded `FileLogger()` and `CsvReportWriter()` so you can test it without writing to real files.
+
+      **What to do:**
+      1. Define two ABCs at the top of `library_system.py`: `Logger` (with abstract `log(message)`) and `ReportWriter` (with abstract `write(title, rows)`).
+      2. Make the existing concrete classes extend them: `class FileLogger(Logger): ...` and `class CsvReportWriter(ReportWriter): ...` — bodies unchanged.
+      3. Change `LibrarySystem.__init__()` to accept `logger: Logger` and `report_writer: ReportWriter` as constructor parameters, storing them. **Do not instantiate them inside `LibrarySystem`.**
+      4. Update the `if __name__ == "__main__":` demo to build a `FileLogger` and `CsvReportWriter` explicitly and pass them in.
+
+      **Done when:** the demo still runs, and `LibrarySystem`'s source no longer contains the strings `FileLogger()` or `CsvReportWriter()` — a test confirms this.
+
+      **Why this phase is first:** it's the smallest mechanical change, and it lets you test each subsequent phase without hitting a real file system.
+
+      ### Phase 2 — LSP + OCP: Polymorphic Books
+
+      **Goal:** Eliminate the `if/elif` chain on `book.format` by making checkout behavior live on each book subtype.
+
+      **What to do:**
+      1. Convert the single `Book` dataclass into an ABC with abstract methods `checkout(self) -> str` and `is_available(self) -> bool`.
+      2. Create three concrete subclasses: `PhysicalBook(Book)`, `EBook(Book)`, `AudioBook(Book)`. Each one carries its format-specific fields (`copies`, `download_link`, `drm_license`) and implements its own `checkout()` — move the respective arm of the old `if/elif` into the appropriate class.
+      3. Introduce a `BookRepository` class that stores `Book` instances by ISBN (replaces the `self.books` dict inside `LibrarySystem`). Give it `add_book`, `get_book`, and `get_all_books`.
+      4. Replace `LibrarySystem.checkout()`'s `if/elif` with a single line: `result = book.checkout()`. No format branches.
+
+      **Done when:** `LibrarySystem.checkout()` contains **no** `if/elif` on `book.format`. A test confirms this by AST inspection. The demo still runs for physical, ebook, and audiobook.
+
+      **Principle link:** This is where **LSP enables OCP**. Because every `Book` subtype fulfills the same `checkout()` contract, adding a `PodcastBook` later would require a new class but *zero* changes to `LibrarySystem`.
+
+      ### Phase 3 — LSP Structural Fix: ReferenceBook Is Not a Book
+
+      **Goal:** Stop `ReferenceBook` from lying about the checkout contract by removing it from the `Book` hierarchy entirely.
+
+      **What to do:**
+      1. Create a **separate** `ReferenceBook` class that does **not** inherit from `Book`. It has a `browse()` method instead of `checkout()`.
+      2. Add `add_reference_book` and `get_reference_book` methods to `BookRepository` (reference books live in a parallel dict).
+      3. Verify: `CheckoutService` (or `LibrarySystem.checkout`) cannot be accidentally called with a `ReferenceBook` — it simply isn't a `Book`. The static type now prevents the runtime error entirely.
+
+      **Done when:** `ReferenceBook` has no `checkout()` method (a test confirms this). Reference books can be `browse()`d but not checked out. A test tries both paths and verifies neither raises `NotImplementedError`.
+
+      **Principle link:** This is the LSP **structural fix** from Step 7. A subclass that cannot honor the contract should not be a subclass.
+
+      ### Phase 4 (Optional Stretch) — SRP: Split the Services
+
+      If you still have energy, split `LibrarySystem` into focused services:
+      - `MemberRegistry` (member add/lookup — was `register_member` + `get_member`)
+      - `NotificationService` (send overdue notices — was `send_overdue_notice`)
+      - `CheckoutService` (orchestrate checkouts using the above)
+      - `InventoryReporter` (generate inventory reports — was `generate_inventory_report`)
+
+      Each new class has one actor and takes its dependencies through the constructor. The solution file at the end shows one reasonable split. If you skip this phase, the tests that check for named service classes will *fall back* to accepting the single `LibrarySystem` — the core design lesson is already complete after Phase 3.
+
+      ### How the Principles Reinforce Each Other — Your Capstone Insight
+
+      Look at the three phases as a cascade. Each one *enabled* the next:
+
+      - **Phase 1 (DIP)** let you test phases 2 and 3 without hitting the file system.
+      - **Phase 2 (LSP + OCP)** let you kill the `if/elif` — which was only possible because every book type honored the same contract.
+      - **Phase 3 (LSP structural fix)** eliminated the one subclass that couldn't honor the contract — which in turn made Phase 2's polymorphism *honest*.
+
+      **This is what "the principles work together" actually means in code**: not five separate rules you satisfy in parallel, but a chain where each principle removes the obstacle that made the next one impractical. Senior developers don't remember the acronym; they remember the chain.
 
       ### Don't Over-Engineer
 
@@ -7688,3 +7879,399 @@ steps:
           correct_index: 1
           explanation: |
             **DIP enables OCP:** By depending on `Logger` (abstraction) instead of `FileLogger` (concretion), `CheckoutService` is open for extension — inject a `DatabaseLogger`, `TestLogger`, or whatever future implementation you need — without touching `CheckoutService`. Same mechanism that makes the book hierarchy work: depend on abstractions, extend by adding new implementations, never modify existing code.
+
+  # --------------------------------------------------------------------------
+  # STEP 12 — "Consolidation — What Survives"
+  # Pedagogy:
+  #   Spaced Retrieval     — re-derive the 5 principles a day+ after first contact.
+  #   Self-explanation     — student writes each principle in their own words.
+  #   Interleaving quiz    — mixed-principle Qs force discrimination (not recognition).
+  #   Generation effect    — students produce, not recognize.
+  #   When-NOT-to-apply    — guards against over-engineering (Step 11's cautionary tale).
+  #   Bloom's level        — Understand / Analyze / Evaluate (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Consolidation — What Survives"
+    instructions: |
+      ## Consolidation: What Survives in a Year
+
+      > **Learning objectives.** After this step you will be able to:
+      > - **Recall** (Bloom: *Remember*) each SOLID principle from memory, in your own words, without looking at the earlier steps.
+      > - **Discriminate** (Bloom: *Analyze*) between similar-looking violations under interleaved pressure.
+      > - **Judge** (Bloom: *Evaluate*) when SOLID should **not** be applied and name three concrete signs of over-engineering.
+      >
+      > **Time:** ~15 min (no new code concepts — all retrieval, explanation, and reflection). Ideally done **at least 24 hours** after the capstone to get the full spacing benefit.
+      >
+      > **Prerequisites:** Steps 1–11 completed. This step has no new material — it is a disciplined retrieval pass designed to move what you learned from short-term into long-term memory.
+
+      ### Why One More Step?
+
+      Research on human memory is blunt about this: material you *read* decays within days, but material you **actively retrieved** from your own head survives for months. You just finished the hardest step of the tutorial. This one is short on purpose, and it is the step that will decide whether your SOLID knowledge is still alive in six months.
+
+      You will do three things:
+
+      1. **Re-derive** all five principles *without re-reading earlier steps*. Write each one in your own words.
+      2. **Discriminate** under interleaving: the quiz below mixes all five principles in random order so you can't coast on step-by-step recency.
+      3. **Reflect** on when *not* to apply SOLID — because the second most common SOLID failure (after violating it) is over-applying it.
+
+      ### Task — Fill the `PRINCIPLES` Dictionary From Memory
+
+      Open `principle_match.py`. You'll see a Python dict `PRINCIPLES` with five empty-string values — one per principle. Your task: **without scrolling back to earlier steps**, write a one-sentence definition of each principle in your own words.
+
+      Guidance:
+      - Aim for 20–200 characters per definition.
+      - Use the vocabulary from Step 1: **actor**, **reason to change**, **coupling**, **cohesion**, **abstraction**, **contract**.
+      - Avoid empty rewordings like "SRP means single responsibility." Say *what single responsibility actually means* — *one actor, one reason to change, one audience for the class's output*.
+      - The tests are forgiving about exact wording but check that each principle's definition touches its unique anchor concept (e.g., SRP must mention actors/reasons/responsibility, OCP must mention extension/modification, etc.).
+
+      > **If a principle escapes you**: write what you remember, then scroll back if you must — but write first. The *attempt to retrieve* is what strengthens memory, even when it fails. Reading the definition again before you've tried feels comfortable and *measurably hurts* long-term retention.
+
+      ### Task — List Three Reasons NOT to Apply SOLID
+
+      In the same file, you'll see a list `REASONS_TO_SKIP_SOLID = []`. Populate it with **at least three** strings — each one a concrete situation where applying SOLID would be over-engineering. Step 11's cautionary example is a starting point; good answers include signs like "only one variant today and no concrete plan for a second," "prototype code with a horizon of under a week," "a five-line function that would become fifty across four classes."
+
+      Recognizing when *not* to apply a principle is what separates engineers who use SOLID as a tool from ones who use it as a cudgel. Put the guardrails in words you'll remember.
+
+      ### Reflection — Teach It Back
+
+      Before you take the quiz, pick **one** of the five principles and, in 3–5 sentences, write a teach-back for an imaginary junior engineer on your team. Use a concrete code smell from the tutorial (e.g., *God Class*, *Switch Statement Smell*, *Refused Bequest*, *Fat Interface*, *Hardcoded Dependency*) as your hook. This step has no test — it's for you. Research on the [protégé effect](https://en.wikipedia.org/wiki/Protégé_effect) shows that preparing to teach material produces deeper encoding than preparing to be tested on it.
+
+    files:
+      - path: "principle_match.py"
+        content: |
+          """Consolidation exercise: re-derive the five SOLID principles
+          from memory, then list three situations where SOLID should NOT
+          be applied.
+
+          RULES:
+            1. Fill in PRINCIPLES with your own-words definitions
+               (20-200 chars each). Use the Step 1 vocabulary — actor,
+               reason to change, coupling, cohesion, abstraction.
+            2. Fill in REASONS_TO_SKIP_SOLID with at least 3 concrete
+               situations where applying SOLID is over-engineering.
+            3. Do NOT scroll back to earlier steps until you've written
+               at least one attempt at each definition. The point is to
+               retrieve, not to transcribe.
+          """
+
+          PRINCIPLES: dict[str, str] = {
+              # Single Responsibility Principle
+              "SRP": "",
+
+              # Open/Closed Principle
+              "OCP": "",
+
+              # Liskov Substitution Principle
+              "LSP": "",
+
+              # Interface Segregation Principle
+              "ISP": "",
+
+              # Dependency Inversion Principle
+              "DIP": "",
+          }
+
+
+          REASONS_TO_SKIP_SOLID: list[str] = [
+              # TODO: Add at least 3 concrete signs that applying SOLID
+              # would be over-engineering. Examples to inspire you (use
+              # your own wording — don't just copy):
+              #   - "Only one variant of the behavior exists today, and
+              #      there is no concrete plan for a second one."
+              #   - "Prototype / spike code with a horizon of under a week."
+              #   - "A 5-line function would become 50 lines across 4
+              #      classes — the cure is worse than the disease."
+          ]
+
+
+          # ── Self-check (run the file to see your summary) ───────────────
+          if __name__ == "__main__":
+              print("Your SOLID summary:\n")
+              for key, defn in PRINCIPLES.items():
+                  status = "OK" if 20 <= len(defn) <= 200 else "NEEDS WORK"
+                  print(f"  [{status:<10}] {key}: {defn or '(empty)'}")
+              print(f"\nReasons to skip SOLID ({len(REASONS_TO_SKIP_SOLID)}):")
+              for i, reason in enumerate(REASONS_TO_SKIP_SOLID, 1):
+                  print(f"  {i}. {reason}")
+        language: "python"
+
+    open_file: "principle_match.py"
+
+    solution:
+      files:
+        - path: "principle_match.py"
+          content: |
+            """Consolidation — reference definitions.
+
+            These are ONE reasonable phrasing each. Yours will differ;
+            that's fine as long as your words name the right concept.
+            """
+
+            PRINCIPLES: dict[str, str] = {
+                "SRP": (
+                    "A class should serve exactly one actor and have "
+                    "one reason to change — group methods by who asks "
+                    "for the change, not by what the code technically does."
+                ),
+                "OCP": (
+                    "Modules should be open for extension by new code "
+                    "(a new class, a new plug-in) but closed for "
+                    "modification — don't edit existing, tested logic "
+                    "to add a variant."
+                ),
+                "LSP": (
+                    "A subtype must honor the contract of its supertype: "
+                    "accept at least what the parent accepts (weaker "
+                    "preconditions) and guarantee at least what the "
+                    "parent guarantees (stronger postconditions)."
+                ),
+                "ISP": (
+                    "No client should be forced to depend on methods "
+                    "it does not use. Split fat interfaces into "
+                    "role-based ones so each implementer only commits "
+                    "to what it can honestly honor."
+                ),
+                "DIP": (
+                    "High-level policy should depend on abstractions "
+                    "it owns — shaped by the caller's needs, not the "
+                    "low-level library's API. Depend on abstractions, "
+                    "not concretions."
+                ),
+            }
+
+
+            REASONS_TO_SKIP_SOLID: list[str] = [
+                "Only one variant of the behavior exists today, and "
+                "there is no concrete second variant on the roadmap. "
+                "An ABC with one implementation is premature abstraction.",
+                "Prototype or spike code that will be thrown away within "
+                "a week — investing in extension points is wasted effort.",
+                "A five-line function would become fifty lines across "
+                "four classes if 'SOLID-ified.' The cure is worse than "
+                "the disease; simple code is fine.",
+                "The collaborator being 'abstracted' is a stable standard-"
+                "library type (datetime, math, str) — wrapping it adds "
+                "indirection without buying swappability.",
+            ]
+
+
+            if __name__ == "__main__":
+                print("Your SOLID summary:\n")
+                for key, defn in PRINCIPLES.items():
+                    status = "OK" if 20 <= len(defn) <= 200 else "NEEDS WORK"
+                    print(f"  [{status:<10}] {key}: {defn}")
+                print(
+                    f"\nReasons to skip SOLID ({len(REASONS_TO_SKIP_SOLID)}):"
+                )
+                for i, reason in enumerate(REASONS_TO_SKIP_SOLID, 1):
+                    print(f"  {i}. {reason}")
+          language: "python"
+      explanation: |
+        **Your definitions don't need to match mine word-for-word.** They need to name the right concept:
+
+        | Principle | Anchor words your definition should touch |
+        |---|---|
+        | **SRP** | actor, reason to change, cohesion, one audience |
+        | **OCP** | extend, modify, new variant, closed |
+        | **LSP** | subtype, substitute, contract, pre/postcondition |
+        | **ISP** | depend, interface, not used, role-based, fat |
+        | **DIP** | abstraction, high-level, low-level, own the interface |
+
+        If you had to scroll back to get one of these, **that's fine** — the attempted retrieval is what mattered. The principle you had to look up is the one you'll forget fastest without the tutorial in front of you, and now you know which one to space-review next week.
+
+        **The "when NOT to apply" list is doing work too.** Over-engineering is the sneakier failure mode: it *looks* like good design to the junior engineer, and it takes a senior developer to recognize that ten abstractions for one use case is just ten new places for bugs to live. Naming the skip conditions in your own words makes you harder to persuade into writing a `CalculationStrategyFactory` for `2 + 3`.
+
+    tests:
+      - description: "principle_match.py runs without errors"
+        command: |
+          exec(open('/tutorial/principle_match.py').read())
+
+      - description: "PRINCIPLES dict has all five keys (SRP, OCP, LSP, ISP, DIP)"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          expected = {"SRP", "OCP", "LSP", "ISP", "DIP"}
+          actual = set(g['PRINCIPLES'].keys())
+          missing = expected - actual
+          assert not missing, f"Missing keys: {missing}. PRINCIPLES must have all five: SRP, OCP, LSP, ISP, DIP."
+
+      - description: "Every principle has a non-trivial definition (20–200 characters)"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          too_short: list[str] = []
+          too_long: list[str] = []
+          for key, defn in g['PRINCIPLES'].items():
+              if len(defn) < 20:
+                  too_short.append(key)
+              elif len(defn) > 200:
+                  too_long.append(key)
+          assert not too_short, f"Too short (under 20 chars): {too_short}. Write a real sentence."
+          assert not too_long, f"Too long (over 200 chars): {too_long}. One concise sentence is enough."
+        hints:
+          - text: "Each definition should be one tight sentence — long enough to name the concept (~30+ chars), short enough to remember (~200 chars max)."
+            condition: "default"
+
+      - description: "SRP definition names actors, responsibility, or reasons to change"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          srp = g['PRINCIPLES']['SRP'].lower()
+          anchors = ('actor', 'reason', 'responsib', 'one purpose', 'one audience', 'cohesion')
+          assert any(a in srp for a in anchors), (
+              f"Your SRP definition should mention at least one of: "
+              f"actor / reason to change / responsibility / cohesion. "
+              f"Got: {srp!r}"
+          )
+        hints:
+          - text: "SRP is about *who asks for changes* (actors) and *why the class changes* (reasons). Don't define SRP as 'one thing' — that's too vague."
+            condition: "default"
+
+      - description: "OCP definition names extension and/or modification"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          ocp = g['PRINCIPLES']['OCP'].lower()
+          anchors = ('extend', 'extension', 'modif', 'new variant', 'closed', 'new code')
+          assert any(a in ocp for a in anchors), (
+              f"Your OCP definition should mention extension and/or "
+              f"modification (e.g., 'open for extension, closed for "
+              f"modification'). Got: {ocp!r}"
+          )
+
+      - description: "LSP definition names subtypes, substitution, or contracts"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          lsp = g['PRINCIPLES']['LSP'].lower()
+          anchors = ('subtype', 'subclass', 'substitut', 'contract', 'precondition', 'postcondition', 'behavior')
+          assert any(a in lsp for a in anchors), (
+              f"Your LSP definition should mention subtypes, "
+              f"substitutability, or contracts. Got: {lsp!r}"
+          )
+
+      - description: "ISP definition names clients, dependencies, or interfaces"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          isp = g['PRINCIPLES']['ISP'].lower()
+          anchors = ('client', 'depend', 'interface', 'role', 'fat', 'not use', 'unused', 'smaller')
+          assert any(a in isp for a in anchors), (
+              f"Your ISP definition should mention clients, "
+              f"dependencies, or interface size. Got: {isp!r}"
+          )
+
+      - description: "DIP definition names abstractions, high-level, or concrete dependencies"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          dip = g['PRINCIPLES']['DIP'].lower()
+          anchors = ('abstract', 'high-level', 'high level', 'low-level', 'low level', 'concret', 'interface', 'invert')
+          assert any(a in dip for a in anchors), (
+              f"Your DIP definition should mention abstractions "
+              f"and/or the high-level/low-level split. Got: {dip!r}"
+          )
+
+      - description: "REASONS_TO_SKIP_SOLID has at least 3 entries"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          reasons = g['REASONS_TO_SKIP_SOLID']
+          assert len(reasons) >= 3, (
+              f"List at least 3 concrete situations where SOLID is "
+              f"over-engineering. Got {len(reasons)}."
+          )
+        hints:
+          - text: "Look at Step 11's cautionary example. Common skip-conditions: only one variant, prototype code, cure worse than disease, stable stdlib collaborators."
+            condition: "default"
+
+      - description: "Each skip-reason is a real sentence (at least 15 characters)"
+        command: |
+          g: dict = {}
+          exec(open('/tutorial/principle_match.py').read(), g)
+          short = [r for r in g['REASONS_TO_SKIP_SOLID'] if len(r) < 15]
+          assert not short, (
+              f"These skip-reasons are too short to be useful: {short}. "
+              f"Aim for a concrete, memorable sentence."
+          )
+
+    quiz:
+      title: "Consolidation — Mixed Retrieval"
+      min_score: 0.75
+      shuffle: true
+      questions:
+
+        - question: |
+            **Interleaved retrieval.** A teammate's `OrderService` has a method `dispatch(order, carrier_type)` with an `if/elif` chain for `"ups"`, `"fedex"`, and `"dhl"`. Adding `"usps"` means editing this method. Which principle is primarily violated?
+          type: single
+          options:
+            - "SRP — the class handles too many carriers"
+            - "OCP — adding a new carrier requires modifying existing, tested code instead of extending via a new class"
+            - "LSP — carriers cannot be substituted for each other"
+            - "DIP — OrderService depends on concrete carrier strings"
+          correct_index: 1
+          explanation: |
+            This is the canonical **OCP** smell — the Switch Statement Smell from Step 4. Each new carrier forces surgery on `dispatch()`, putting every existing carrier at risk of regression. Fix: a `Carrier` ABC with one `dispatch(order)` method, concrete `UpsCarrier`/`FedexCarrier`/etc., and a registry/dictionary in `OrderService` that maps carrier name → `Carrier` instance.
+
+        - question: |
+            **Interleaved retrieval.** A `StreamingService` ABC declares `play()`, `pause()`, and `download_offline()`. A new `LivePodcastStreamer` subclass overrides `download_offline()` to `raise NotImplementedError("Live streams cannot be downloaded")`. Which principle(s) are in play?
+          type: multiple
+          options:
+            - "LSP — LivePodcastStreamer cannot be substituted wherever a StreamingService is expected without risking a crash"
+            - "ISP — the ABC forces implementers to depend on a method they cannot honor; splitting into StreamingService + DownloadableStreamingService fixes it structurally"
+            - "OCP — the existing ABC is being modified by LivePodcastStreamer"
+            - "SRP — LivePodcastStreamer has too many responsibilities"
+          correct_indices: [0, 1]
+          explanation: |
+            Both **LSP** and **ISP** are violated here, and they're the same Step-7/Step-8 pairing: an ABC promised capabilities some implementers can't deliver, so a subclass tries to fake it via `NotImplementedError`. The structural fix is ISP (split the ABC); the LSP violation is what the ISP violation causes. Recognizing both at once is the mark of someone who has internalized the principles as a connected system, not five separate rules.
+
+        - question: |
+            **Vocabulary retrieval (from Step 1).** In a well-designed module, **coupling** should be __________ and **cohesion** should be __________.
+          type: single
+          options:
+            - "high / high"
+            - "low / high"
+            - "high / low"
+            - "low / low"
+          correct_index: 1
+          explanation: |
+            **Low coupling between modules, high cohesion within each module.** That's the two-sentence summary the whole tutorial was building toward. SOLID is five specific tactics for achieving exactly that target.
+
+        - question: |
+            **Discrimination.** Your colleague's `PDFReportGenerator.__init__` does `self.storage = S3Storage()`. They say: *"I'm going to fix this with Dependency Injection — I'll pass `S3Storage` into the constructor instead."* Is this actually a DIP fix?
+          type: single
+          options:
+            - "Yes — passing dependencies through the constructor is Dependency Inversion"
+            - "Only partially — they've applied DI (a mechanism) but not DIP (the architectural shift). To invert the dependency, the parameter should be typed as an abstraction (`CloudStorage` or similar), not as the concrete `S3Storage`. Otherwise the class still depends on a specific low-level implementation"
+            - "No — DIP can only be achieved with a dependency-injection framework"
+            - "Yes, once they add a type hint it becomes DIP"
+          correct_index: 1
+          explanation: |
+            The Step 9 trap — DI without DIP. Injecting a concrete `S3Storage` through the constructor makes the coupling **later** (at construction time) but doesn't make it **looser**. To invert, type the parameter as an abstraction the high-level module owns (a `CloudStorage` ABC shaped by what `PDFReportGenerator` needs), so a `LocalFileStorage` or `FakeStorage` could be substituted without any change to the high-level class.
+
+        - question: |
+            **Evaluate — when NOT to apply SOLID.** Which of the following would be **over-engineering**? Select all that apply.
+          type: multiple
+          options:
+            - "A one-off data-migration script you will run once and delete next week. You extract a `MigrationStrategy` ABC with one concrete subclass"
+            - "A 10-line utility function that computes a checksum. You wrap it in an `IChecksumCalculator` interface and a `ChecksumFactory`"
+            - "A class used by three different teams, each of which ships tickets on different cadences. You split it into three smaller classes owned by one team each"
+            - "A production payment system with five tightly coupled classes. You introduce abstractions so unit tests can run without hitting Stripe"
+          correct_indices: [0, 1]
+          explanation: |
+            **Over-engineering examples (options A and B):** one-shot scripts and trivial utilities don't benefit from abstractions — you'll throw them away or never modify them. Writing ABCs for a disposable migration is pure ceremony.
+
+            **Legitimate SOLID applications (options C and D):** multiple actors (option C) is SRP's textbook trigger. Unit-testable payment logic (option D) is DIP's textbook payoff.
+
+            The judgment is always: *does the domain complexity justify the indirection?* For a one-hour script, no. For a payment system that runs for years, absolutely.
+
+        - question: |
+            **Synthesis.** Which statement best captures how the five principles relate?
+          type: single
+          options:
+            - "They're five independent rules — you satisfy each one separately"
+            - "They form a chain where each principle removes the obstacle that would make the next one impractical: LSP lets polymorphism be safe, which lets OCP work; ISP prevents LSP violations structurally; DIP is what makes the whole chain swappable and testable"
+            - "They're ordered from most important (SRP) to least important (DIP)"
+            - "They apply only to object-oriented languages with inheritance"
+          correct_index: 1
+          explanation: |
+            The capstone insight. The five principles aren't a checklist — they're a system where each one *enables* the next. This is also why people who learn SOLID as "five rules to memorize" tend to apply it robotically. People who learn it as a chain of design moves apply it judgmentally, which is what lets them also know when to *not* apply it. You now have the chain. Go write things that last.
