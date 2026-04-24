@@ -226,8 +226,160 @@ end
       return result;
     });
 
-    expect(stats.activationHeight).toBeGreaterThanOrEqual(12);
+    expect(stats.activationHeight).toBeGreaterThanOrEqual(6);
+    expect(stats.activationHeight).toBeLessThanOrEqual(10);
     expect(stats.activationBottom).toBeLessThan(stats.fragmentTop);
+  });
+
+  test('nested self-message activation before loop closes before the loop frame', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLSequenceDiagram
+      ).render(host, `@startuml
+layout landscape
+participant Main as : Main
+participant bot: DiscordBot
+participant channel: Channel
+
+activate Main
+Main -> bot: run_digest(channel, posts)
+activate bot
+bot -> channel: get_subscriber_count()
+activate channel
+channel --> bot: count: int
+deactivate channel
+bot -> bot: _log_start(count)
+activate bot
+deactivate bot
+loop [for post in posts]
+  alt [bot._is_announcement(post)]
+    bot -> channel: broadcast(post)
+    activate channel
+    deactivate channel
+  else [else]
+    bot -> bot: _log_skip(post)
+    activate bot
+    deactivate bot
+  end
+end
+deactivate bot
+deactivate Main
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { innerBottom: null, innerHeight: null, loopTop: null, outerBottom: null };
+      }
+
+      const rects = Array.from(svg.querySelectorAll('rect'));
+      const activations = rects
+        .filter((rect) => Math.abs(Number(rect.getAttribute('width')) - 12) < 0.1 && Number(rect.getAttribute('height')) > 1)
+        .map((rect) => ({
+          x: Number(rect.getAttribute('x')),
+          y: Number(rect.getAttribute('y')),
+          height: Number(rect.getAttribute('height')),
+        }));
+      const fragmentFrames = rects
+        .filter((rect) => rect.getAttribute('fill') === 'none' && Number(rect.getAttribute('width')) > 80)
+        .map((rect) => ({ y: Number(rect.getAttribute('y')), height: Number(rect.getAttribute('height')) }))
+        .sort((a, b) => a.y - b.y);
+      const loopFrame = fragmentFrames[0];
+
+      const logText = Array.from(svg.querySelectorAll('text')).find((text) => text.textContent.trim() === '_log_start(count)');
+      const logBox = logText ? /** @type {SVGGraphicsElement} */ (logText).getBBox() : null;
+      const loopTop = loopFrame ? loopFrame.y : null;
+      const candidates = activations
+        .filter((activation) => logBox && activation.y >= logBox.y - 4 && loopTop != null && activation.y < loopTop)
+        .sort((a, b) => b.x - a.x);
+      const inner = candidates[0];
+      const outer = activations
+        .filter((activation) => loopTop != null && activation.y < loopTop && activation.y + activation.height > loopTop)
+        .sort((a, b) => b.height - a.height)[0];
+
+      const result = {
+        innerBottom: inner ? inner.y + inner.height : null,
+        innerHeight: inner ? inner.height : null,
+        loopTop,
+        outerBottom: outer ? outer.y + outer.height : null,
+      };
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.innerBottom).not.toBeNull();
+    expect(stats.loopTop).not.toBeNull();
+    expect(stats.innerHeight).toBeLessThanOrEqual(10);
+    expect(stats.innerBottom).toBeLessThan(stats.loopTop);
+    expect(stats.outerBottom).toBeGreaterThan(stats.loopTop);
+  });
+
+  test('activations started inside opt fragments end inside the opt frame', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '800px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLSequenceDiagram
+      ).render(host, `@startuml
+participant Main as : Main
+participant bot: DiscordBot
+participant channel: Channel
+Main -> bot: welcome(user)
+activate bot
+opt [not bot._is_subscribed(user)]
+  bot -> channel: send_welcome(user)
+  activate channel
+  deactivate channel
+end
+deactivate bot
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { innerBottom: null, optBottom: null };
+      }
+
+      const rects = Array.from(svg.querySelectorAll('rect'));
+      const activations = rects
+        .filter((rect) => Math.abs(Number(rect.getAttribute('width')) - 12) < 0.1 && Number(rect.getAttribute('height')) > 1)
+        .map((rect) => ({
+          y: Number(rect.getAttribute('y')),
+          height: Number(rect.getAttribute('height')),
+        }))
+        .sort((a, b) => a.y - b.y);
+      const frame = rects
+        .filter((rect) => rect.getAttribute('fill') === 'none' && Number(rect.getAttribute('width')) > 80)
+        .map((rect) => ({ y: Number(rect.getAttribute('y')), height: Number(rect.getAttribute('height')) }))
+        .sort((a, b) => a.y - b.y)[0];
+      const inner = activations[1];
+      const result = {
+        innerBottom: inner ? inner.y + inner.height : null,
+        optBottom: frame ? frame.y + frame.height : null,
+      };
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.innerBottom).not.toBeNull();
+    expect(stats.optBottom).not.toBeNull();
+    expect(stats.innerBottom).toBeLessThan(stats.optBottom);
   });
 
   test('free class nudging keeps neighboring class boxes separated', async ({ page }) => {
