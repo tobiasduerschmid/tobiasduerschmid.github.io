@@ -192,6 +192,8 @@ This is not just "remove a switch statement." It changes the design from "the di
 
 The same remote-control design appears below in Java, C++, Python, and TypeScript. The class names stay intentionally parallel so you can compare the shape of the pattern rather than the syntax of each language.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Command pattern code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>

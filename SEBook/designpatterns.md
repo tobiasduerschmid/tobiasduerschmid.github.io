@@ -47,6 +47,8 @@ These categories help practitioners narrow down which pattern might apply: if th
 
 Design patterns are not language features. The same responsibility split can be expressed in Java, C++, Python, or TypeScript, with each language using its own idioms. This tiny action example has the same shape as a request object: a button stores something executable without knowing the concrete operation behind it.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Design patterns overview code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
@@ -79,7 +81,11 @@ final class Button {
     }
 }
 
-new Button(new SaveAction()).click();
+public class Demo {
+    public static void main(String[] args) {
+        new Button(new SaveAction()).click();
+    }
+}
 ```
   </div>
 

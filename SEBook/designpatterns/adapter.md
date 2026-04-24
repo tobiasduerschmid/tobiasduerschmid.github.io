@@ -101,6 +101,8 @@ deactivate adapter
 
 This example adapts a `Turkey` so client code that expects a `Duck` can keep using the same target interface.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Adapter code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>

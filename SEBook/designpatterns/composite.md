@@ -118,6 +118,8 @@ These compounds are so common that recognizing the Composite pattern is often th
 
 This example uses a transparent composite: both `Menu` and `MenuItem` share the same `print()` operation, while only composite menus do real work in `add()`.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Composite code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
@@ -194,7 +196,7 @@ public class Demo {
 class MenuComponent {
 public:
     virtual ~MenuComponent() = default;
-    virtual void add(std::unique_ptr<MenuComponent> component) {
+    virtual void add(std::unique_ptr<MenuComponent>) {
         throw std::logic_error("leaf cannot contain children");
     }
     virtual void print() const = 0;

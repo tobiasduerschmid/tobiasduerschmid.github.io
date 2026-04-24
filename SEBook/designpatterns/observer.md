@@ -176,6 +176,8 @@ deactivate channel
 
 This sample implements the pull-style News Channel example from the diagrams. The subject sends a simple notification; each observer asks the subject for the latest post.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Observer code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>

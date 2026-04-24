@@ -19,6 +19,8 @@ public Pizza orderPizza(String type) {
     // ... more if-else blocks ...
     pizza.prepare();
     pizza.bake();
+    pizza.cut();
+    pizza.box();
     return pizza;
 }
 ```
@@ -119,6 +121,8 @@ deactivate store
 
 The base `PizzaStore` owns the stable ordering algorithm. The factory method, `createPizza`, is the one step subclasses vary.
 
+> **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Factory Method code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
@@ -132,6 +136,8 @@ The base `PizzaStore` owns the stable ordering algorithm. The factory method, `c
 interface Pizza {
     void prepare();
     void bake();
+    void cut();
+    void box();
 }
 
 final class NYStyleCheesePizza implements Pizza {
@@ -142,6 +148,14 @@ final class NYStyleCheesePizza implements Pizza {
     public void bake() {
         System.out.println("Baking thin crust");
     }
+
+    public void cut() {
+        System.out.println("Cutting into diagonal slices");
+    }
+
+    public void box() {
+        System.out.println("Boxing in NY PizzaStore box");
+    }
 }
 
 abstract class PizzaStore {
@@ -149,6 +163,8 @@ abstract class PizzaStore {
         Pizza pizza = createPizza(type);
         pizza.prepare();
         pizza.bake();
+        pizza.cut();
+        pizza.box();
         return pizza;
     }
 
@@ -184,11 +200,15 @@ struct Pizza {
     virtual ~Pizza() = default;
     virtual void prepare() = 0;
     virtual void bake() = 0;
+    virtual void cut() = 0;
+    virtual void box() = 0;
 };
 
 struct NYStyleCheesePizza : Pizza {
     void prepare() override { std::cout << "Preparing NY cheese pizza\n"; }
     void bake() override { std::cout << "Baking thin crust\n"; }
+    void cut() override { std::cout << "Cutting into diagonal slices\n"; }
+    void box() override { std::cout << "Boxing in NY PizzaStore box\n"; }
 };
 
 class PizzaStore {
@@ -199,6 +219,8 @@ public:
         auto pizza = createPizza(type);
         pizza->prepare();
         pizza->bake();
+        pizza->cut();
+        pizza->box();
         return pizza;
     }
 
@@ -235,6 +257,14 @@ class Pizza(ABC):
     def bake(self) -> None:
         pass
 
+    @abstractmethod
+    def cut(self) -> None:
+        pass
+
+    @abstractmethod
+    def box(self) -> None:
+        pass
+
 
 class NYStyleCheesePizza(Pizza):
     def prepare(self) -> None:
@@ -243,12 +273,20 @@ class NYStyleCheesePizza(Pizza):
     def bake(self) -> None:
         print("Baking thin crust")
 
+    def cut(self) -> None:
+        print("Cutting into diagonal slices")
+
+    def box(self) -> None:
+        print("Boxing in NY PizzaStore box")
+
 
 class PizzaStore(ABC):
     def order_pizza(self, kind: str) -> Pizza:
         pizza = self.create_pizza(kind)
         pizza.prepare()
         pizza.bake()
+        pizza.cut()
+        pizza.box()
         return pizza
 
     @abstractmethod
@@ -273,6 +311,8 @@ store.order_pizza("cheese")
 interface Pizza {
   prepare(): void;
   bake(): void;
+  cut(): void;
+  box(): void;
 }
 
 class NYStyleCheesePizza implements Pizza {
@@ -283,6 +323,14 @@ class NYStyleCheesePizza implements Pizza {
   bake(): void {
     console.log("Baking thin crust");
   }
+
+  cut(): void {
+    console.log("Cutting into diagonal slices");
+  }
+
+  box(): void {
+    console.log("Boxing in NY PizzaStore box");
+  }
 }
 
 abstract class PizzaStore {
@@ -290,6 +338,8 @@ abstract class PizzaStore {
     const pizza = this.createPizza(kind);
     pizza.prepare();
     pizza.bake();
+    pizza.cut();
+    pizza.box();
     return pizza;
   }
 
