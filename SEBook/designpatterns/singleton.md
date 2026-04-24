@@ -89,7 +89,7 @@ This example models a process-wide configuration/logger object. Each language ha
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -172,26 +172,22 @@ first.log(f"same instance: {first is second}")
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-const AppConfig = (() => {
-  let instance;
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class AppConfig {
+  private static instance: AppConfig | undefined;
 
-  class Config {
-    log(message) {
-      console.log(`[config] ${message}`);
-    }
+  private constructor() {}
+
+  static getInstance(): AppConfig {
+    AppConfig.instance ??= new AppConfig();
+    return AppConfig.instance;
   }
 
-  return {
-    getInstance() {
-      if (!instance) {
-        instance = new Config();
-      }
-      return instance;
-    },
-  };
-})();
+  log(message: string): void {
+    console.log(`[config] ${message}`);
+  }
+}
 
 const first = AppConfig.getInstance();
 const second = AppConfig.getInstance();

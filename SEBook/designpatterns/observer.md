@@ -181,7 +181,7 @@ This sample implements the pull-style News Channel example from the diagrams. Th
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -346,38 +346,38 @@ channel.publish_post("New video uploaded!")
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class NewsChannel {
-  constructor() {
-    this.subscribers = [];
-    this.latestPost = "";
-  }
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Subscriber {
+  update(): void;
+}
 
-  follow(subscriber) {
+class NewsChannel {
+  private subscribers: Subscriber[] = [];
+  private latestPost = "";
+
+  follow(subscriber: Subscriber): void {
     this.subscribers.push(subscriber);
   }
 
-  unfollow(subscriber) {
+  unfollow(subscriber: Subscriber): void {
     this.subscribers = this.subscribers.filter((item) => item !== subscriber);
   }
 
-  publishPost(text) {
+  publishPost(text: string): void {
     this.latestPost = text;
     this.subscribers.forEach((subscriber) => subscriber.update());
   }
 
-  getLatestPost() {
+  getLatestPost(): string {
     return this.latestPost;
   }
 }
 
-class MobileApp {
-  constructor(channel) {
-    this.channel = channel;
-  }
+class MobileApp implements Subscriber {
+  constructor(private readonly channel: NewsChannel) {}
 
-  update() {
+  update(): void {
     console.log(`[MobileApp] ${this.channel.getLatestPost()}`);
   }
 }

@@ -113,7 +113,7 @@ This example removes the conditional state checks from `GumballMachine`. The con
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -303,46 +303,61 @@ machine.turn_crank()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class NoQuarterState {
-  insertQuarter(machine) {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface State {
+  insertQuarter(machine: GumballMachine): void;
+  turnCrank(machine: GumballMachine): void;
+}
+
+class NoQuarterState implements State {
+  insertQuarter(machine: GumballMachine): void {
     console.log("You inserted a quarter");
-    machine.state = machine.hasQuarter;
+    machine.setState(machine.hasQuarterState());
   }
 
-  turnCrank() {
+  turnCrank(): void {
     console.log("Insert a quarter first");
   }
 }
 
-class HasQuarterState {
-  insertQuarter() {
+class HasQuarterState implements State {
+  insertQuarter(): void {
     console.log("Quarter already inserted");
   }
 
-  turnCrank(machine) {
+  turnCrank(machine: GumballMachine): void {
     machine.releaseBall();
-    machine.state = machine.noQuarter;
+    machine.setState(machine.noQuarterState());
   }
 }
 
 class GumballMachine {
-  constructor() {
-    this.noQuarter = new NoQuarterState();
-    this.hasQuarter = new HasQuarterState();
-    this.state = this.noQuarter;
-  }
+  private readonly noQuarter = new NoQuarterState();
+  private readonly hasQuarter = new HasQuarterState();
+  private state: State = this.noQuarter;
 
-  insertQuarter() {
+  insertQuarter(): void {
     this.state.insertQuarter(this);
   }
 
-  turnCrank() {
+  turnCrank(): void {
     this.state.turnCrank(this);
   }
 
-  releaseBall() {
+  setState(state: State): void {
+    this.state = state;
+  }
+
+  noQuarterState(): State {
+    return this.noQuarter;
+  }
+
+  hasQuarterState(): State {
+    return this.hasQuarter;
+  }
+
+  releaseBall(): void {
     console.log("A gumball comes rolling out");
   }
 }

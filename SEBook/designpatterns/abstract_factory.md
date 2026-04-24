@@ -130,7 +130,7 @@ This example keeps the client (`CheesePizza`) independent of concrete ingredient
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -333,32 +333,40 @@ pizza.prepare()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class ThinCrustDough {
-  name() { return "thin crust dough"; }
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Dough { name(): string; }
+interface Sauce { name(): string; }
+interface Cheese { name(): string; }
+
+class ThinCrustDough implements Dough {
+  name(): string { return "thin crust dough"; }
 }
 
-class MarinaraSauce {
-  name() { return "marinara sauce"; }
+class MarinaraSauce implements Sauce {
+  name(): string { return "marinara sauce"; }
 }
 
-class ReggianoCheese {
-  name() { return "reggiano cheese"; }
+class ReggianoCheese implements Cheese {
+  name(): string { return "reggiano cheese"; }
 }
 
-class NYPizzaIngredientFactory {
-  createDough() { return new ThinCrustDough(); }
-  createSauce() { return new MarinaraSauce(); }
-  createCheese() { return new ReggianoCheese(); }
+interface PizzaIngredientFactory {
+  createDough(): Dough;
+  createSauce(): Sauce;
+  createCheese(): Cheese;
+}
+
+class NYPizzaIngredientFactory implements PizzaIngredientFactory {
+  createDough(): Dough { return new ThinCrustDough(); }
+  createSauce(): Sauce { return new MarinaraSauce(); }
+  createCheese(): Cheese { return new ReggianoCheese(); }
 }
 
 class CheesePizza {
-  constructor(factory) {
-    this.factory = factory;
-  }
+  constructor(private readonly factory: PizzaIngredientFactory) {}
 
-  prepare() {
+  prepare(): void {
     const dough = this.factory.createDough();
     const sauce = this.factory.createSauce();
     const cheese = this.factory.createCheese();

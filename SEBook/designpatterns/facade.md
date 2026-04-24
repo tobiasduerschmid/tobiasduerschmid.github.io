@@ -107,7 +107,7 @@ This example gives clients one intention-revealing operation, `watchMovie()`, wh
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -287,36 +287,36 @@ theater.watch_movie("Raiders")
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
 class Amplifier {
-  on() { console.log("Amplifier on"); }
-  setStreamingPlayer() {}
+  on(): void { console.log("Amplifier on"); }
+  setStreamingPlayer(player: StreamingPlayer): void {}
 }
 
 class Projector {
-  on() { console.log("Projector on"); }
-  wideScreenMode() { console.log("Projector in widescreen mode"); }
+  on(): void { console.log("Projector on"); }
+  wideScreenMode(): void { console.log("Projector in widescreen mode"); }
 }
 
 class TheaterLights {
-  dim(level) { console.log(`Lights dimmed to ${level}`); }
+  dim(level: number): void { console.log(`Lights dimmed to ${level}`); }
 }
 
 class StreamingPlayer {
-  on() { console.log("Player on"); }
-  play(title) { console.log(`Playing ${title}`); }
+  on(): void { console.log("Player on"); }
+  play(title: string): void { console.log(`Playing ${title}`); }
 }
 
 class HomeTheaterFacade {
-  constructor(amp, projector, lights, player) {
-    this.amp = amp;
-    this.projector = projector;
-    this.lights = lights;
-    this.player = player;
-  }
+  constructor(
+    private readonly amp: Amplifier,
+    private readonly projector: Projector,
+    private readonly lights: TheaterLights,
+    private readonly player: StreamingPlayer,
+  ) {}
 
-  watchMovie(title) {
+  watchMovie(title: string): void {
     this.lights.dim(10);
     this.projector.on();
     this.projector.wideScreenMode();

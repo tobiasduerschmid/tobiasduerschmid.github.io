@@ -102,7 +102,7 @@ This example keeps the smart-home devices reusable. The alarm, calendar, coffee 
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -276,39 +276,43 @@ alarm.ring()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+enum SmartHomeEvent {
+  AlarmRang = "alarmRang",
+}
+
+interface SmartHomeMediator {
+  notify(sender: object, event: SmartHomeEvent): void;
+}
+
 class Calendar {
-  isWeekday() { return true; }
+  isWeekday(): boolean { return true; }
 }
 
 class CoffeeMaker {
-  brew() { console.log("Brewing coffee"); }
+  brew(): void { console.log("Brewing coffee"); }
 }
 
 class Sprinkler {
-  skipMorningWatering() { console.log("Skipping sprinklers"); }
+  skipMorningWatering(): void { console.log("Skipping sprinklers"); }
 }
 
 class AlarmClock {
-  constructor(mediator) {
-    this.mediator = mediator;
-  }
+  constructor(private readonly mediator: SmartHomeMediator) {}
 
-  ring() {
-    this.mediator.notify(this, "alarmRang");
+  ring(): void {
+    this.mediator.notify(this, SmartHomeEvent.AlarmRang);
   }
 }
 
-class SmartHomeHub {
-  constructor() {
-    this.calendar = new Calendar();
-    this.coffeeMaker = new CoffeeMaker();
-    this.sprinkler = new Sprinkler();
-  }
+class SmartHomeHub implements SmartHomeMediator {
+  private readonly calendar = new Calendar();
+  private readonly coffeeMaker = new CoffeeMaker();
+  private readonly sprinkler = new Sprinkler();
 
-  notify(sender, event) {
-    if (event === "alarmRang" && this.calendar.isWeekday()) {
+  notify(sender: object, event: SmartHomeEvent): void {
+    if (event === SmartHomeEvent.AlarmRang && this.calendar.isWeekday()) {
       this.coffeeMaker.brew();
       this.sprinkler.skipMorningWatering();
     }

@@ -106,7 +106,7 @@ This example adapts a `Turkey` so client code that expects a `Duck` can keep usi
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -274,35 +274,43 @@ test_duck(TurkeyAdapter(WildTurkey()))
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class WildTurkey {
-  gobble() {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Duck {
+  quack(): void;
+  fly(): void;
+}
+
+interface Turkey {
+  gobble(): void;
+  flyShort(): void;
+}
+
+class WildTurkey implements Turkey {
+  gobble(): void {
     console.log("Gobble gobble");
   }
 
-  flyShort() {
+  flyShort(): void {
     console.log("Flying a short distance");
   }
 }
 
-class TurkeyAdapter {
-  constructor(turkey) {
-    this.turkey = turkey;
-  }
+class TurkeyAdapter implements Duck {
+  constructor(private readonly turkey: Turkey) {}
 
-  quack() {
+  quack(): void {
     this.turkey.gobble();
   }
 
-  fly() {
+  fly(): void {
     for (let i = 0; i < 5; i += 1) {
       this.turkey.flyShort();
     }
   }
 }
 
-function testDuck(duck) {
+function testDuck(duck: Duck): void {
   duck.quack();
   duck.fly();
 }

@@ -45,14 +45,14 @@ These categories help practitioners narrow down which pattern might apply: if th
 
 ## Code Example: Same Design Shape, Different Syntax
 
-Design patterns are not language features. The same responsibility split can be expressed in Java, C++, Python, or JavaScript, with each language using its own idioms. This tiny action example has the same shape as a request object: a button stores something executable without knowing the concrete operation behind it.
+Design patterns are not language features. The same responsibility split can be expressed in Java, C++, Python, or TypeScript, with each language using its own idioms. This tiny action example has the same shape as a request object: a button stores something executable without knowing the concrete operation behind it.
 
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Design patterns overview code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -146,20 +146,22 @@ Button(SaveAction()).click()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class SaveAction {
-  execute() {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Action {
+  execute(): void;
+}
+
+class SaveAction implements Action {
+  execute(): void {
     console.log("Saving document");
   }
 }
 
 class Button {
-  constructor(action) {
-    this.action = action;
-  }
+  constructor(private readonly action: Action) {}
 
-  click() {
+  click(): void {
     this.action.execute();
   }
 }

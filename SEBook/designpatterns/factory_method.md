@@ -124,7 +124,7 @@ The base `PizzaStore` owns the stable ordering algorithm. The factory method, `c
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -268,33 +268,36 @@ store.order_pizza("cheese")
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class NYStyleCheesePizza {
-  prepare() {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Pizza {
+  prepare(): void;
+  bake(): void;
+}
+
+class NYStyleCheesePizza implements Pizza {
+  prepare(): void {
     console.log("Preparing NY cheese pizza");
   }
 
-  bake() {
+  bake(): void {
     console.log("Baking thin crust");
   }
 }
 
-class PizzaStore {
-  orderPizza(kind) {
+abstract class PizzaStore {
+  orderPizza(kind: string): Pizza {
     const pizza = this.createPizza(kind);
     pizza.prepare();
     pizza.bake();
     return pizza;
   }
 
-  createPizza() {
-    throw new Error("createPizza() must be implemented");
-  }
+  protected abstract createPizza(kind: string): Pizza;
 }
 
 class NYPizzaStore extends PizzaStore {
-  createPizza(kind) {
+  protected createPizza(kind: string): Pizza {
     if (kind !== "cheese") throw new Error(`Unknown pizza: ${kind}`);
     return new NYStyleCheesePizza();
   }

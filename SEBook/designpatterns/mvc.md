@@ -147,7 +147,7 @@ This example keeps task state in the model, rendering in the view, and user-inte
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -328,44 +328,44 @@ TaskController(model).add_new_task("Combine Observer with MVC")
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class TaskModel {
-  constructor() {
-    this.observers = [];
-    this.tasks = [];
-  }
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface TaskObserver {
+  update(model: TaskModel): void;
+}
 
-  attach(observer) {
+class TaskModel {
+  private readonly observers: TaskObserver[] = [];
+  private readonly tasks: string[] = [];
+
+  attach(observer: TaskObserver): void {
     this.observers.push(observer);
   }
 
-  addTask(task) {
+  addTask(task: string): void {
     this.tasks.push(task);
     this.observers.forEach((observer) => observer.update(this));
   }
 
-  getTasks() {
+  getTasks(): readonly string[] {
     return [...this.tasks];
   }
 }
 
-class TaskView {
-  update(model) {
+class TaskView implements TaskObserver {
+  update(model: TaskModel): void {
     this.showTasks(model.getTasks());
   }
 
-  showTasks(tasks) {
+  showTasks(tasks: readonly string[]): void {
     tasks.forEach((task) => console.log(`- ${task}`));
   }
 }
 
 class TaskController {
-  constructor(model) {
-    this.model = model;
-  }
+  constructor(private readonly model: TaskModel) {}
 
-  addNewTask(task) {
+  addNewTask(task: string): void {
     this.model.addTask(task);
   }
 }

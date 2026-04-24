@@ -101,7 +101,7 @@ This example adds type-checking behavior to a stable AST node hierarchy. Each no
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -255,31 +255,40 @@ for node in ast:
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class AssignmentNode {
-  accept(visitor) {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface AstNode {
+  accept(visitor: NodeVisitor): void;
+}
+
+interface NodeVisitor {
+  visitAssignment(node: AssignmentNode): void;
+  visitVariableRef(node: VariableRefNode): void;
+}
+
+class AssignmentNode implements AstNode {
+  accept(visitor: NodeVisitor): void {
     visitor.visitAssignment(this);
   }
 }
 
-class VariableRefNode {
-  accept(visitor) {
+class VariableRefNode implements AstNode {
+  accept(visitor: NodeVisitor): void {
     visitor.visitVariableRef(this);
   }
 }
 
-class TypeCheckingVisitor {
-  visitAssignment() {
+class TypeCheckingVisitor implements NodeVisitor {
+  visitAssignment(node: AssignmentNode): void {
     console.log("Type-check assignment");
   }
 
-  visitVariableRef() {
+  visitVariableRef(node: VariableRefNode): void {
     console.log("Type-check variable reference");
   }
 }
 
-const ast = [new AssignmentNode(), new VariableRefNode()];
+const ast: AstNode[] = [new AssignmentNode(), new VariableRefNode()];
 const typeChecker = new TypeCheckingVisitor();
 ast.forEach((node) => node.accept(typeChecker));
 ```

@@ -190,14 +190,14 @@ This is not just "remove a switch statement." It changes the design from "the di
 
 # Code Example
 
-The same remote-control design appears below in Java, C++, Python, and JavaScript. The class names stay intentionally parallel so you can compare the shape of the pattern rather than the syntax of each language.
+The same remote-control design appears below in Java, C++, Python, and TypeScript. The class names stay intentionally parallel so you can compare the shape of the pattern rather than the syntax of each language.
 
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="Command pattern code language">
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -491,86 +491,73 @@ remote.press_undo()  # Light is off
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class Command {
-  execute() {
-    throw new Error("execute() must be implemented");
-  }
-
-  undo() {
-    throw new Error("undo() must be implemented");
-  }
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+interface Command {
+  execute(): void;
+  undo(): void;
 }
 
 class Light {
-  on() {
+  on(): void {
     console.log("Light is on");
   }
 
-  off() {
+  off(): void {
     console.log("Light is off");
   }
 }
 
-class NoCommand extends Command {
-  execute() {}
-  undo() {}
+class NoCommand implements Command {
+  execute(): void {}
+  undo(): void {}
 }
 
-class LightOnCommand extends Command {
-  constructor(light) {
-    super();
-    this.light = light;
-  }
+class LightOnCommand implements Command {
+  constructor(private readonly light: Light) {}
 
-  execute() {
+  execute(): void {
     this.light.on();
   }
 
-  undo() {
+  undo(): void {
     this.light.off();
   }
 }
 
-class LightOffCommand extends Command {
-  constructor(light) {
-    super();
-    this.light = light;
-  }
+class LightOffCommand implements Command {
+  constructor(private readonly light: Light) {}
 
-  execute() {
+  execute(): void {
     this.light.off();
   }
 
-  undo() {
+  undo(): void {
     this.light.on();
   }
 }
 
 class RemoteControl {
-  constructor() {
-    this.onCommand = new NoCommand();
-    this.offCommand = new NoCommand();
-    this.undoCommand = new NoCommand();
-  }
+  private onCommand: Command = new NoCommand();
+  private offCommand: Command = new NoCommand();
+  private undoCommand: Command = new NoCommand();
 
-  setCommands(onCommand, offCommand) {
+  setCommands(onCommand: Command, offCommand: Command): void {
     this.onCommand = onCommand;
     this.offCommand = offCommand;
   }
 
-  pressOn() {
+  pressOn(): void {
     this.onCommand.execute();
     this.undoCommand = this.onCommand;
   }
 
-  pressOff() {
+  pressOff(): void {
     this.offCommand.execute();
     this.undoCommand = this.offCommand;
   }
 
-  pressUndo() {
+  pressUndo(): void {
     this.undoCommand.undo();
   }
 }

@@ -84,7 +84,7 @@ This example builds a vacation plan through a fixed construction sequence. The d
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -299,50 +299,51 @@ builder.get_vacation_planner().show_plan()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
 class VacationPlanner {
-  constructor() {
-    this.itinerary = [];
-  }
+  private readonly itinerary: string[] = [];
 
-  addItem(item) {
+  addItem(item: string): void {
     this.itinerary.push(item);
   }
 
-  showPlan() {
+  showPlan(): void {
     this.itinerary.forEach((item) => console.log(item));
   }
 }
 
-class PatternslandBuilder {
-  constructor() {
-    this.planner = new VacationPlanner();
-  }
+interface VacationBuilder {
+  buildDay(date: string): void;
+  addHotel(date: string, hotelName: string): void;
+  addTickets(eventName: string): void;
+  getVacationPlanner(): VacationPlanner;
+}
 
-  buildDay(date) {
+class PatternslandBuilder implements VacationBuilder {
+  private readonly planner = new VacationPlanner();
+
+  buildDay(date: string): void {
     this.planner.addItem(`Day started on ${date}`);
   }
 
-  addHotel(date, hotelName) {
+  addHotel(date: string, hotelName: string): void {
     this.planner.addItem(`Hotel '${hotelName}' booked for ${date}`);
   }
 
-  addTickets(eventName) {
+  addTickets(eventName: string): void {
     this.planner.addItem(`Tickets purchased for '${eventName}'`);
   }
 
-  getVacationPlanner() {
+  getVacationPlanner(): VacationPlanner {
     return this.planner;
   }
 }
 
 class Director {
-  constructor(builder) {
-    this.builder = builder;
-  }
+  constructor(private readonly builder: VacationBuilder) {}
 
-  constructPlanner() {
+  constructPlanner(): void {
     this.builder.buildDay("August 10");
     this.builder.addHotel("August 10", "Grand Facadian");
     this.builder.addTickets("Patterns on Ice");

@@ -123,7 +123,7 @@ This example uses a transparent composite: both `Menu` and `MenuItem` share the 
     <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
     <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
     <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
-    <button type="button" role="tab" data-language-option="js" aria-selected="false">JavaScript</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
   </div>
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
@@ -288,41 +288,38 @@ all_menus.print()
 ```
   </div>
 
-  <div class="inline-language-panel" data-language-panel="js" role="tabpanel" markdown="1">
-```javascript
-class MenuComponent {
-  add() {
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+abstract class MenuComponent {
+  add(component: MenuComponent): void {
     throw new Error("leaf cannot contain children");
   }
 
-  print() {
-    throw new Error("subclass responsibility");
-  }
+  abstract print(): void;
 }
 
 class MenuItem extends MenuComponent {
-  constructor(name) {
+  constructor(private readonly name: string) {
     super();
-    this.name = name;
   }
 
-  print() {
+  print(): void {
     console.log(this.name);
   }
 }
 
 class Menu extends MenuComponent {
-  constructor(name) {
+  private readonly children: MenuComponent[] = [];
+
+  constructor(private readonly name: string) {
     super();
-    this.name = name;
-    this.children = [];
   }
 
-  add(component) {
+  add(component: MenuComponent): void {
     this.children.push(component);
   }
 
-  print() {
+  print(): void {
     console.log(`\n${this.name}`);
     this.children.forEach((child) => child.print());
   }
