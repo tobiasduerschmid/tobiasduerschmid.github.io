@@ -1,0 +1,62 @@
+title: "Command Pattern Flashcards"
+description: "Key roles, refactoring triggers, undo mechanics, and trade-offs of the Command design pattern."
+cards:
+  - id: 1
+    question: "What problem does the Command pattern solve?"
+    answer: "It turns a request into an object so invokers can execute actions without knowing the receiver, method, arguments, or timing details."
+    explanation: "This decouples the object that asks for work from the object that performs the work. It also makes requests easier to queue, log, undo, compose, and configure at runtime."
+
+  - id: 2
+    question: "What are the core roles in the Command pattern?"
+    answer: "Command, ConcreteCommand, Invoker, Receiver, and Client."
+    explanation: "The Client builds a ConcreteCommand with a Receiver. The Invoker stores and executes the Command. The Receiver performs the actual domain work."
+
+  - id: 3
+    question: "When does Refactoring to Patterns recommend moving from a conditional dispatcher to Command?"
+    answer: "When the dispatcher is bloated or needs runtime flexibility that hard-coded branches cannot provide."
+    explanation: "A small stable conditional can stay simple. Command earns its keep when actions need to be added, removed, configured, queued, logged, or tested independently."
+
+  - id: 4
+    question: "How does Command support undo?"
+    answer: "Each command stores enough information to reverse its own effect, either by calling an inverse operation or restoring previous state."
+    explanation: "Undo is not automatic. The command object must deliberately capture old state, know the inverse action, or reject undo when reversing would be unsafe."
+
+  - id: 5
+    question: "What is a Null Command?"
+    answer: "A command object whose `execute()` and `undo()` methods intentionally do nothing."
+    explanation: "It applies the Null Object pattern so invokers do not need repeated null checks before executing a slot, hook, or optional command."
+
+  - id: 6
+    question: "How is Command different from Strategy?"
+    answer: "Strategy represents an interchangeable algorithm. Command represents a request with a lifecycle, such as execute, undo, queue, log, replay, or compose."
+    explanation: "Both use polymorphism, but their intent differs. Strategy is about choosing how to compute something; Command is about packaging an action to be invoked later or managed uniformly."
+
+  - id: 7
+    question: "What does the Receiver do in Command?"
+    answer: "The Receiver owns the real domain operation that the command invokes."
+    explanation: "A `LightOnCommand` is not the light. It stores a reference to a `Light` receiver and calls `light.on()` when executed. This keeps the command focused on request packaging."
+
+  - id: 8
+    question: "What does the Invoker know about a command?"
+    answer: "Only the command interface, usually `execute()` and sometimes `undo()`."
+    explanation: "A button, menu item, scheduler, queue worker, or remote-control slot can invoke commands uniformly without depending on concrete receiver classes."
+
+  - id: 9
+    question: "What is a Macro Command?"
+    answer: "A command that contains and executes a sequence of other commands."
+    explanation: "Macro commands are useful when a single user action should trigger several operations while still looking like one command to the invoker."
+
+  - id: 10
+    question: "When is a closure or function enough instead of a command object?"
+    answer: "When the request only needs simple execute-only callback behavior."
+    explanation: "Use an explicit command object when the request needs identity, undo state, validation, serialization, metadata, authorization, logging, or composition."
+
+  - id: 11
+    question: "What is the constructor-argument style of Command?"
+    answer: "The command receives its receiver and request data when it is created."
+    explanation: "This makes the command self-contained, which is useful for queuing, logging, retrying, and executing later without additional context."
+
+  - id: 12
+    question: "What is the main cost of Command?"
+    answer: "Extra indirection and extra types around what may otherwise be a simple method call."
+    explanation: "Command is a strong fit when request lifecycle matters. If no queuing, undo, logging, runtime configuration, or extension pressure exists, simpler code may be better."

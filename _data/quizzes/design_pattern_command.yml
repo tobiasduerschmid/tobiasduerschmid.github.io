@@ -1,0 +1,137 @@
+title: "Command Pattern Quiz"
+description: "Test your understanding of Command roles, refactoring triggers, undo, macro commands, null commands, and appropriate use."
+questions:
+  - id: 1
+    type: single
+    question: |
+      A toolbar button should be configurable with Save, Export, Print, or Upload behavior without changing the toolbar class. Which Command role does the toolbar play?
+    options:
+      - "Receiver"
+      - "Invoker"
+      - "ConcreteCommand"
+      - "Client"
+    correct_index: 1
+    explanation: "**The toolbar is the Invoker.** It stores a command and calls `execute()` when the user clicks, but it does not know which receiver or receiver method performs the work."
+
+  - id: 2
+    type: single
+    question: |
+      A web controller has a 300-line `if/else` block dispatching action names to request handlers. Product now wants new actions loaded from configuration. Which refactoring is the best fit?
+    options:
+      - "Replace Conditional Dispatcher with Command"
+      - "Introduce Null Object"
+      - "Replace State-Altering Conditionals with State"
+      - "Extract Adapter"
+    correct_index: 0
+    explanation: "**Replace Conditional Dispatcher with Command fits because the code routes requests and now needs runtime flexibility.** Each action can become a command object stored in a map keyed by action name."
+
+  - id: 3
+    type: single
+    question: |
+      A `LightOnCommand` supports undo by calling `light.off()`. What must a `SetThermostatCommand` usually store to undo safely?
+    options:
+      - "Only the new target temperature"
+      - "The previous temperature before executing"
+      - "A reference to the remote control"
+      - "A list of every command in the application"
+    correct_index: 1
+    explanation: "**It needs the previous temperature.** Some undo operations are simple inverse calls, but value-changing commands usually must capture old receiver state before they execute."
+
+  - id: 4
+    type: single
+    question: |
+      A "party mode" button turns on lights, starts music, and lowers blinds. The button should still look like one command to the remote. Which variation is this?
+    options:
+      - "Null Command"
+      - "Macro Command"
+      - "Memento"
+      - "Factory Method"
+    correct_index: 1
+    explanation: "**This is a Macro Command.** It implements the same command interface while holding and executing a sequence of child commands."
+
+  - id: 5
+    type: single
+    question: |
+      When is Command probably over-engineering?
+    options:
+      - "A text editor needs undo and redo for user edits"
+      - "A job queue needs to serialize and retry work"
+      - "A remote control needs runtime-configurable button slots"
+      - "A method has two stable branches and no need for undo, logging, queuing, or runtime configuration"
+    correct_index: 3
+    explanation: "**A tiny stable conditional can stay simple.** Command adds indirection and extra types, so it should be introduced when the request lifecycle or evolution pressure justifies that cost."
+
+  - id: 6
+    type: single
+    question: |
+      In `LightOnCommand`, the command stores a `Light` object and calls `light.on()` in `execute()`. Which role does `Light` play?
+    options:
+      - "Invoker"
+      - "Receiver"
+      - "Client"
+      - "Macro Command"
+    correct_index: 1
+    explanation: "**The light is the Receiver.** It owns the real operation. The command packages that operation so an invoker can trigger it without knowing the receiver API."
+
+  - id: 7
+    type: multiple
+    question: |
+      Which requirements are good evidence that Command may be worth introducing?
+    options:
+      - "Requests must be queued, retried, or scheduled."
+      - "Requests need undo or redo behavior."
+      - "A button should be configured with different actions at runtime."
+      - "A private helper method is called from only one stable location."
+    correct_indices: [0, 1, 2]
+    explanation: "**Queuing, undo, and runtime action configuration are Command-shaped forces.** A private helper used in one stable place does not justify the pattern by itself."
+
+  - id: 8
+    type: single
+    question: |
+      A remote-control slot has not been configured yet, but the remote should still be able to call `execute()` without checking for `null`. What should the slot contain?
+    options:
+      - "A Null Command"
+      - "A Receiver"
+      - "A Singleton"
+      - "A Visitor"
+    correct_index: 0
+    explanation: "**A Null Command intentionally does nothing.** It lets invokers keep the same execution flow without repeated null checks."
+
+  - id: 9
+    type: single
+    question: |
+      A job queue serializes work items to disk, restarts, then replays unfinished work. Which Command design decision matters most?
+    options:
+      - "The command must carry enough request data to execute later."
+      - "The invoker should know every concrete receiver class."
+      - "The receiver should inherit from the invoker."
+      - "The command should always be implemented as a lambda."
+    correct_index: 0
+    explanation: "**Queued commands need self-contained request data or a durable reference to it.** Otherwise the queue can store the command object but not safely replay the work."
+
+  - id: 10
+    type: single
+    question: |
+      In a small script, a menu option only calls one function immediately and will never need undo, logging, queuing, or runtime reconfiguration. What is the most pragmatic choice?
+    options:
+      - "Use a direct function call."
+      - "Create a command hierarchy immediately."
+      - "Create a macro command with one child."
+      - "Replace the function with a visitor."
+    correct_index: 0
+    explanation: "**A direct call is clearer when the request has no lifecycle.** Command should pay for itself by solving a real coupling, extension, or lifecycle problem."
+
+  - id: 11
+    type: parsons
+    question: |
+      Put the refactoring path from a conditional dispatcher toward Command in a reasonable order.
+    lines:
+      - "Find a dispatcher whose branches represent separate requests."
+      - "Extract each branch's behavior behind a consistent execution method."
+      - "Move each request into a concrete command object."
+      - "Store commands behind the common command interface."
+      - "Replace the dispatcher branches with command lookup and `execute()`."
+    distractors:
+      - "Make the invoker call receiver methods directly again."
+      - "Add a new branch for every new request type."
+    explanation: "**The direction is from branch-specific behavior to uniform command execution.** The final dispatcher should look up a command and invoke the common interface, not keep growing branches."
