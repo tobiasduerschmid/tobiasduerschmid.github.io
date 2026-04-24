@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-title: "TDD & Testing Tutorial"
+title: "TDD Tutorial"
 tutorial: tdd
 permalink: /SEBook/tools/tdd-tutorial
 ---

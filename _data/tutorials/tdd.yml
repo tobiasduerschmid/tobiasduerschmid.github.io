@@ -1,4 +1,4 @@
-title: "TDD & Testing with pytest"
+title: "TDD with pytest"
 description: "Learn Test-Driven Development hands-on: write failing tests first, make them pass with minimal code, then refactor. Build the TDD mindset — testing as a design tool, not just verification."
 
 backend: pyodide
@@ -17,7 +17,7 @@ setup_commands:
         _sysmod = _sys
         def _patched(*a, **kw):
             for m in list(_sysmod.modules):
-                if m.startswith('test_') or m in ('password','fizzbuzz','word_counter','temperature','grades','shopping_cart'):
+                if m.startswith('test_') or m in ('password','fizzbuzz','word_counter','bank_account'):
                     del _sysmod.modules[m]
             return _orig(*a, **kw)
         return _patched
@@ -26,460 +26,18 @@ setup_commands:
 steps:
 
   # --------------------------------------------------------------------------
-  # STEP 1 — Why Test? The Bug That Got Away
-  # Pedagogy:
-  #   Lay of the Land   — macro overview: why testing matters.
-  #   Generation Effect  — predict the bug before running.
-  #   Growth Mindset     — normalize errors and debugging.
-  #   Ratchet metaphor   — tests lock in progress (from Percival).
-  #   Bloom's level      — Remember / Understand / Analyze (quiz).
-  # --------------------------------------------------------------------------
-  - title: "Why Test? The Bug That Got Away"
-    instructions: |
-      ## The Lay of the Land
-
-      > **Learning objective:** After this step you will be able to **explain** why automated tests are valuable and **use** `assert` to verify function behavior.
-
-      You write Python code that works... until someone changes it and breaks something you did not expect. Testing is the safety net that catches those breaks *before* they reach users.
-
-      ### A Common Misconception
-
-      Many students think testing is about **finding bugs after you write code**. That is only half the story. Tests also:
-
-      - **Specify behavior** — a test says *"this function should do X"* before you write it
-      - **Prevent regressions** — once a bug is fixed, a test ensures it never comes back
-      - **Enable fearless refactoring** — change code confidently because tests catch breakage
-
-      Think of tests as a **ratchet**: once a test passes, your progress is locked in. You can never accidentally slip backward.
-
-      ### A Note Before We Begin
-
-      TDD asks you to write a test *before* the code exists. This feels backward at first — and that is completely normal. Every developer who learns TDD goes through an uncomfortable adjustment period. If TDD feels strange or slow, you are doing it right. Stick with the process; it gets natural with practice.
-
-      ### Predict Before You Run
-
-      The function below is supposed to convert a numeric score (0–100) to a letter grade. **Before running it**, read the code carefully and predict: what will `calculate_grade(85)` return? What about `calculate_grade(90)`?
-
-      Write your predictions down, then click **Run** to see if you were right.
-
-      ### Task
-
-      1. Run `grades.py` and observe the output. Was your prediction correct?
-      2. Find and fix the bug in `calculate_grade()`.
-      3. Add three `assert` statements at the bottom of the file to verify:
-         - `calculate_grade(95)` returns `"A"`
-         - `calculate_grade(85)` returns `"B"`
-         - `calculate_grade(72)` returns `"C"`
-
-      An `assert` works like this:
-      ```python
-      assert calculate_grade(95) == "A", "95 should be an A"
-      ```
-      If the condition is `False`, Python raises an `AssertionError` with the message.
-
-    files:
-      - path: "grades.py"
-        content: |
-          def calculate_grade(score):
-              """Convert a numeric score (0-100) to a letter grade."""
-              if score > 90:
-                  return "A"
-              if score >= 80:
-                  return "B"
-              if score >= 70:
-                  return "C"
-              if score >= 60:
-                  return "D"
-              return "F"
-
-
-          # Try it out — predict the output before running!
-          print("grade(95) =", calculate_grade(95))
-          print("grade(85) =", calculate_grade(85))
-          print("grade(90) =", calculate_grade(90))
-          print("grade(45) =", calculate_grade(45))
-
-          # TODO: Add three assert statements below to verify:
-          #   calculate_grade(95) == "A"
-          #   calculate_grade(85) == "B"
-          #   calculate_grade(72) == "C"
-        language: "python"
-
-    open_file: "grades.py"
-
-    solution:
-      files:
-        - path: "grades.py"
-          content: |
-            def calculate_grade(score):
-                """Convert a numeric score (0-100) to a letter grade."""
-                if score > 90:
-                    return "A"
-                if score >= 80:
-                    return "B"
-                if score >= 70:
-                    return "C"
-                if score >= 60:
-                    return "D"
-                return "F"
-
-
-            # Try it out — predict the output before running!
-            print("grade(95) =", calculate_grade(95))
-            print("grade(85) =", calculate_grade(85))
-            print("grade(90) =", calculate_grade(90))
-            print("grade(45) =", calculate_grade(45))
-
-            assert calculate_grade(95) == "A"
-            assert calculate_grade(85) == "B"
-            assert calculate_grade(72) == "C"
-          language: "python"
-      explanation: |
-        Add three assert statements to verify calculate_grade works correctly.
-        The asserts check that 95 → "A", 85 → "B", and 72 → "C".
-
-    tests:
-      - description: "Script runs without errors"
-        command: |
-          output = __run_capture('/tutorial/grades.py')
-      - description: "Contains assert for grade 95 == 'A'"
-        command: |
-          source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '95' in source, \
-              "Add an assert statement that checks calculate_grade(95) == 'A'"
-      - description: "Contains assert for grade 85 == 'B'"
-        command: |
-          source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '85' in source, \
-              "Add an assert statement that checks calculate_grade(85) == 'B'"
-      - description: "Contains assert for grade 72 == 'C'"
-        command: |
-          source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '72' in source, \
-              "Add an assert statement that checks calculate_grade(72) == 'C'"
-      - description: "All assertions pass (function is correct)"
-        command: |
-          output = __run_capture('/tutorial/grades.py')
-          assert 'AssertionError' not in output and 'Error' not in output, \
-              f"Your assertions failed — is the function correct? Output: {output}"
-
-    quiz:
-      title: "Why Test? — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-
-        - question: |
-            A teammate says: *"I only write tests after I finish all my code, to check for bugs."*
-
-            What is the main limitation of this approach?
-          type: single
-          options:
-            - "There is no real limitation — writing tests after code is the industry standard, and the test suite ends up identical either way since you cover the same behaviors"
-            - "Post-hoc tests verify what you *think* the code does, not what it *should* do. They also can't guide your design during development"
-            - "Writing tests afterward is fine as long as you achieve 100% coverage, which ensures all behavior is verified"
-            - "The main problem is that it takes slightly longer because you have to context-switch back to code you already wrote"
-          correct_index: 1
-          explanation: |
-            Post-hoc tests verify *your implementation* rather than *intended behavior*.
-            They also cannot serve as a safety net during development because they don't exist yet.
-            TDD flips this: tests are written first to specify behavior, then code is written to satisfy them.
-
-        - question: |
-            What does this code do?
-            ```python
-            assert len(result) == 3, "Expected 3 items"
-            ```
-          type: single
-          options:
-            - "It prints 'Expected 3 items' to the console, then continues execution normally"
-            - "It checks that `result` has 3 elements; if not, it raises an `AssertionError` with the message"
-            - "It creates a new list called `result` and populates it with exactly 3 items"
-            - "It evaluates the condition but silently continues even if the condition is `False`"
-          correct_index: 1
-          explanation: |
-            `assert condition, message` evaluates the condition. If `True`, nothing happens and
-            execution continues. If `False`, Python raises an `AssertionError` with the message.
-            This is the simplest form of automated testing in Python.
-
-        - question: |
-            Which of the following is **not** a benefit of automated tests?
-          type: single
-          options:
-            - "They prevent regressions — bugs that were fixed from coming back"
-            - "They enable fearless refactoring by catching breakage immediately"
-            - "They guarantee your code has zero bugs"
-            - "They specify expected behavior as executable documentation"
-          correct_index: 2
-          explanation: |
-            Tests **reduce** bugs and catch **regressions**, but they cannot guarantee zero bugs.
-            A test suite is only as good as the scenarios it covers. Dijkstra famously said:
-            "Testing can show the presence of bugs, but never their absence."
-
-        - question: |
-            The "ratchet metaphor" for testing means:
-          type: single
-          options:
-            - "Tests should be run frequently and automatically, like a ratchet clicking on every code change"
-            - "Once a test passes, it locks in that progress — you can never accidentally slip backward on that behavior"
-            - "You should ratchet up test coverage incrementally, aiming for 100% before each release"
-            - "Tests should be written in a strict mechanical order: unit tests first, then integration, then end-to-end"
-          correct_index: 1
-          explanation: |
-            The ratchet metaphor (from Harry Percival's "Obey the Testing Goat") captures the key
-            psychological benefit of TDD: each passing test is a permanent checkpoint. Even if you
-            are stuck on a new feature, you know everything that passed before still works.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 2 — Your First pytest Test
-  # Pedagogy:
-  #   Guide-and-Release  — explain conventions, then immediate hands-on.
-  #   Component Skills    — isolate test-writing from TDD cycle.
-  #   Bloom's level       — Remember / Apply (quiz).
-  # --------------------------------------------------------------------------
-  - title: "Your First pytest Test"
-    instructions: |
-      > **Learning objective:** After this step you will be able to **write** pytest test functions and **interpret** pytest output.
-
-      ## From `assert` to pytest
-
-      Raw `assert` statements work, but they give minimal feedback when things fail. **pytest** is Python's most popular testing framework. It discovers and runs your tests automatically, gives clear failure output, and scales from tiny scripts to enormous projects.
-
-      ### pytest Conventions
-
-      pytest uses simple naming conventions — no classes, no boilerplate:
-
-      | Convention | Rule | Example |
-      |---|---|---|
-      | **File name** | Must start with `test_` | `test_temperature.py` |
-      | **Function name** | Must start with `test_` | `def test_freezing_point():` |
-      | **Assertions** | Plain `assert` — same as before | `assert celsius_to_fahrenheit(0) == 32` |
-
-      That is it. No `import unittest`, no `class TestSomething(unittest.TestCase)`, no `self.assertEqual()`. Just functions and `assert`.
-
-      ### Running Tests
-
-      In this tutorial, clicking **Run** on a test file will execute pytest automatically.
-      You will see output like:
-
-      ```
-      test_temperature.py::test_freezing_point PASSED
-      test_temperature.py::test_boiling_point PASSED
-      ```
-
-      A **PASSED** test means the assertion held. A **FAILED** test shows you exactly what went wrong.
-
-      ### Predict Before You Run
-
-      Before writing any code, predict: what will pytest print if a test function only has `pass` and no `assert`? Will it PASS or FAIL? Click **Run** on `test_temperature.py` now — before changing anything — and see if your prediction is correct.
-
-      ### Task
-
-      The `temperature.py` module is provided and working. Your job is to complete `test_temperature.py`:
-
-      1. Fill in `test_freezing_point` — assert that `celsius_to_fahrenheit(0)` returns `32.0`
-      2. Fill in `test_boiling_point` — assert that `celsius_to_fahrenheit(100)` returns `212.0`
-      3. Write `test_negative_forty` from scratch — assert that `celsius_to_fahrenheit(-40)` returns `-40.0` (the unique crossover point where Celsius equals Fahrenheit!)
-
-      Click **Run** on `test_temperature.py` after each change to see your tests execute.
-
-    files:
-      - path: "temperature.py"
-        content: |
-          """Temperature conversion utilities."""
-
-
-          def celsius_to_fahrenheit(celsius):
-              """Convert Celsius to Fahrenheit."""
-              return celsius * 9 / 5 + 32
-
-
-          def fahrenheit_to_celsius(fahrenheit):
-              """Convert Fahrenheit to Celsius."""
-              return (fahrenheit - 32) * 5 / 9
-        language: "python"
-
-      - path: "test_temperature.py"
-        content: |
-          """Tests for the temperature module."""
-          import pytest
-          from temperature import celsius_to_fahrenheit, fahrenheit_to_celsius
-
-
-          def test_freezing_point():
-              # TODO: assert that celsius_to_fahrenheit(0) returns 32.0
-              pass
-
-
-          def test_boiling_point():
-              # TODO: assert that celsius_to_fahrenheit(100) returns 212.0
-              pass
-
-
-          # TODO: Write a test_negative_forty function from scratch.
-          # Assert that celsius_to_fahrenheit(-40) returns -40.0
-
-
-          if __name__ == "__main__":
-              pytest.main(["-v"])
-        language: "python"
-
-    open_file: "test_temperature.py"
-
-    solution:
-      files:
-        - path: "test_temperature.py"
-          content: |
-            """Tests for the temperature module."""
-            import pytest
-            from temperature import celsius_to_fahrenheit, fahrenheit_to_celsius
-
-
-            def test_freezing_point():
-                assert celsius_to_fahrenheit(0) == 32.0
-
-
-            def test_boiling_point():
-                assert celsius_to_fahrenheit(100) == 212.0
-
-
-            def test_negative_forty():
-                assert celsius_to_fahrenheit(-40) == -40.0
-
-
-            if __name__ == "__main__":
-                pytest.main(["-v"])
-          language: "python"
-      explanation: |
-        Replace each `pass` with a real assertion, then add test_negative_forty.
-        -40°C equals -40°F — the one temperature where both scales agree.
-
-    tests:
-      - description: "test_temperature.py runs without errors"
-        command: |
-          output = __run_capture('/tutorial/test_temperature.py')
-      - description: "test_freezing_point has a real assertion (not just pass)"
-        command: |
-          source = open('/tutorial/test_temperature.py').read()
-          # Find the test_freezing_point function body
-          assert 'assert' in source.split('test_freezing_point')[1].split('def ')[0], \
-              "test_freezing_point still has 'pass' — replace it with an assert statement"
-      - description: "test_boiling_point has a real assertion"
-        command: |
-          source = open('/tutorial/test_temperature.py').read()
-          assert 'assert' in source.split('test_boiling_point')[1].split('def ')[0], \
-              "test_boiling_point still has 'pass' — replace it with an assert statement"
-      - description: "test_negative_forty function exists"
-        command: |
-          source = open('/tutorial/test_temperature.py').read()
-          assert 'def test_negative_forty' in source, \
-              "Write a new function called test_negative_forty"
-      - description: "All tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_temperature.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
-
-    quiz:
-      title: "pytest Basics — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-
-        - question: |
-            Which file name will pytest **automatically discover** as a test file?
-          type: single
-          options:
-            - "`testing_temperature.py`"
-            - "`test_temperature.py`"
-            - "`check_temperature.py`"
-            - "`temperature_tests.py`"
-          correct_index: 1
-          explanation: |
-            pytest discovers files whose names start with `test_` or end with `_test.py`.
-            `test_temperature.py` matches the `test_` prefix. The others do not match either pattern.
-            Functions inside must also start with `test_`.
-
-        - question: |
-            What does this pytest output mean?
-            ```
-            test_math.py::test_addition PASSED
-            test_math.py::test_division FAILED
-            ```
-          type: single
-          options:
-            - "Both tests ran and produced output, but only `test_addition` returned the value pytest expected as a success signal"
-            - "The assertions in `test_addition` all held; at least one assertion in `test_division` did not"
-            - "The test file has a syntax error in `test_division` that prevented it from being collected by the test runner"
-            - "`test_division` was skipped because it depends on `test_addition` completing first and pytest enforces execution order"
-          correct_index: 1
-          explanation: |
-            PASSED means the assertions in that test function all held (no `AssertionError`).
-            FAILED means at least one assertion in `test_division` was `False`. pytest will
-            show the exact line and values that caused the failure.
-
-        - question: |
-            Which is a valid pytest test function?
-          type: single
-          options:
-            - |
-              ```python
-              class TestMath(unittest.TestCase):
-                  def test_add(self):
-                      self.assertEqual(add(1, 2), 3)
-              ```
-            - |
-              ```python
-              def test_add():
-                  assert add(1, 2) == 3
-              ```
-            - |
-              ```python
-              def check_add():
-                  assert add(1, 2) == 3
-              ```
-            - |
-              ```python
-              def test_add():
-                  return add(1, 2) == 3
-              ```
-          correct_index: 1
-          explanation: |
-            pytest uses plain functions (no class needed) that start with `test_` and use `assert`.
-            Option A is the older `unittest` style — it works but is verbose. Option C won't be
-            discovered (wrong prefix). Option D returns a boolean but never asserts — it would
-            always "pass" even if the result is wrong.
-
-        - question: |
-            **(Spaced review — Step 1)** A developer finishes a feature and deletes the tests because "the feature is done and working." What principle does this violate?
-          type: single
-          options:
-            - "The DRY principle — tests duplicate the code's logic unnecessarily"
-            - "The ratchet principle — passing tests are permanent safety nets that prevent regression, not disposable scaffolding"
-            - "The YAGNI principle — tests are speculative code that may not be needed"
-            - "No principle — deleting tests after a feature ships is standard practice"
-          correct_index: 1
-          explanation: |
-            The ratchet metaphor means tests lock in progress permanently. Deleting passing
-            tests removes the safety net: if someone later modifies the code and introduces
-            a regression, there is no test to catch it. Tests are living documentation, not
-            temporary scaffolding.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 3 — The Red-Green-Refactor Rhythm
+  # STEP 1 — The Red-Green-Refactor Rhythm
   # Pedagogy:
   #   Worked Example     — full R-G-R cycle with sub-goal labels.
   #   PRIMM              — predict before running.
-  #   Threshold concept  — TDD is design, not verification (from PDF).
+  #   Threshold concept  — TDD is design, not verification.
   #   Fading begins      — first test given, second scaffolded, third TODO.
-  #   Bloom's level      — Understand / Apply / Analyze (quiz).
+  #   Bloom's level      — Understand / Apply / Analyze.
   # --------------------------------------------------------------------------
   - title: "The Red-Green-Refactor Rhythm"
     instructions: |
+      > **Prerequisite:** This tutorial assumes you have completed the [**Testing Foundations**](/SEBook/tools/testing-foundations-tutorial) tutorial — writing pytest tests, choosing inputs with partitions and boundaries, and testing behavior instead of implementation. If those ideas feel unfamiliar, do that tutorial first.
+
       > **Learning objective:** After this step you will be able to **execute** a complete Red-Green-Refactor TDD cycle and **explain** why TDD is a design technique, not just testing.
 
       ## The Core Insight
@@ -494,6 +52,10 @@ steps:
       - What are the **edge cases**? (empty input, negative numbers, etc.)
 
       You answer all these design questions *before writing a single line of implementation*. The tests are a byproduct — the real value is the design thinking.
+
+      ### A Note Before We Begin
+
+      TDD asks you to write a test *before* the code exists. This feels backward at first — and that is completely normal. Every developer who learns TDD goes through an uncomfortable adjustment period. If TDD feels strange or slow, you are doing it right. Stick with the process; it gets natural with practice.
 
       ## The Three Phases
 
@@ -549,6 +111,13 @@ steps:
       5. **Cycle 3:** Write `test_count_empty_string` entirely on your own. What should `count("")` return? Decide, write the test, see it fail, then make it pass.
 
       **Important:** Always run the tests and see RED before writing implementation. If you skip this step, you cannot be sure your test is actually testing something.
+
+      ### Before You Move On (retrieval practice)
+
+      Close this page. Without looking, answer in one sentence each:
+
+      - What does each of the three TDD phases do, and why is it important to *see RED first*?
+      - Why is TDD called a "design technique" rather than a "testing technique"?
 
     files:
       - path: "word_counter.py"
@@ -745,14 +314,29 @@ steps:
             If a test passes immediately, it is not testing new behavior — this is the "Success Against
             All Odds" anti-pattern.
 
+        - question: |
+            **(Spaced review — Foundations Step 4)** A refactor breaks two of your tests, but the function's inputs and outputs are unchanged. What is the most likely diagnosis?
+          type: single
+          options:
+            - "The refactor introduced a subtle output bug — revert it and investigate"
+            - "The broken tests are coupled to implementation details (e.g., private attributes). They should be rewritten to assert on observable behavior"
+            - "You should lower the assertion precision to accommodate the refactor"
+            - "Refactoring is incompatible with TDD — only add new code, never restructure existing code"
+          correct_index: 1
+          explanation: |
+            If behavior is unchanged but tests break, the tests were testing *how* the function
+            works (implementation details) rather than *what* it produces (behavior). This is
+            the *Refactoring Litmus Test* from Foundations: robust tests survive pure
+            refactorings; brittle tests don't.
+
 
   # --------------------------------------------------------------------------
-  # STEP 4 — TDD Kata: FizzBuzz
+  # STEP 2 — TDD Kata: FizzBuzz
   # Pedagogy:
-  #   PPP Framework     — Presentation → Practice → Production via fading.
-  #   Fading            — 4 cycles with decreasing scaffolding.
-  #   Component → Integration — combine test-writing + implementation.
-  #   Bloom's level     — Apply / Analyze (quiz).
+  #   PPP Framework      — Presentation → Practice → Production via fading.
+  #   Fading             — 4 cycles with decreasing scaffolding.
+  #   Refactoring Litmus — refactor with alternative implementation; tests still pass.
+  #   Bloom's level      — Apply / Analyze.
   # --------------------------------------------------------------------------
   - title: "TDD Kata: FizzBuzz"
     instructions: |
@@ -797,7 +381,30 @@ steps:
 
       Write `test_fizzbuzz_for_multiples_of_15` and the corresponding implementation entirely on your own. Full TDD cycle, no scaffolding. **Start with the test. See RED. Then go GREEN.**
 
+      ### Bonus Refactor: The Litmus Test
+
+      Once all four cycles pass, try a **different implementation** of the same function — for example, string concatenation instead of `if/elif`:
+
+      ```python
+      def fizzbuzz(number):
+          result = ""
+          if number % 3 == 0:
+              result += "Fizz"
+          if number % 5 == 0:
+              result += "Buzz"
+          return result or str(number)
+      ```
+
+      Replace your implementation with this one and re-run the tests. **All four tests should still pass.** This is the *Refactoring Litmus Test* from Foundations Step 4: robust tests verify behavior, so they survive a full rewrite of the internals. If your tests had asserted on anything specific to the `if/elif` implementation, they would have broken.
+
       **Remember the rhythm:** RED (see it fail) → GREEN (make it pass) → REFACTOR (clean up).
+
+      ### Before You Move On (retrieval practice)
+
+      Without looking, explain in one sentence each:
+
+      - Why do we check divisibility by 15 *before* 3 or 5 in the `if/elif` version?
+      - What does it mean if a pure refactor (same behavior, different code) breaks a test?
 
     files:
       - path: "fizzbuzz.py"
@@ -1005,11 +612,9 @@ steps:
             With `if/elif`, the first matching branch executes and the rest are skipped. Since
             15 is divisible by both 3 and 5, checking `if number % 3 == 0` first would return
             "Fizz" and never reach the 15 check. The most specific condition must come first.
-            (Note: the string-concatenation approach from Step 5 avoids this issue entirely
-            because it uses two separate `if` statements instead of `elif`.)
 
         - question: |
-            **(Spaced review — Step 2)** A test function is named `def check_fizzbuzz():`. Will pytest discover and run it?
+            **(Spaced review — Foundations Step 2)** A test function is named `def check_fizzbuzz():`. Will pytest discover and run it?
           type: single
           options:
             - "Yes — pytest runs all functions in test files"
@@ -1024,328 +629,17 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 5 — Test Behavior, Not Implementation
-  # Pedagogy:
-  #   Negative Transfer   — CS1 instinct to test line-by-line.
-  #   Anti-pattern        — The Nitpicker (from PDF taxonomy).
-  #   Bloom's level       — Analyze / Evaluate (quiz).
-  # --------------------------------------------------------------------------
-  - title: "Test Behavior, Not Implementation"
-    instructions: |
-      > **Learning objective:** After this step you will be able to **distinguish** between brittle (implementation-coupled) and robust (behavior-focused) tests, and **explain** why this matters for refactoring.
-
-      ## The Key Principle
-
-      > **Test what a function DOES, not how it does it.**
-
-      A **brittle test** breaks when you change the internal implementation, even if the behavior is unchanged. A **robust test** only breaks when the actual behavior changes.
-
-      ### Example: Two Ways to Test the Same Function
-
-      Consider testing a function that sorts a list of students by GPA:
-
-      ```python
-      # BRITTLE — tests implementation details
-      def test_sort_brittle():
-          sorter = StudentSorter()
-          sorter.sort(students)
-          # Checks internal state — breaks if we rename the field
-          assert sorter._sorted_list[0].name == "Alice"
-          assert sorter._comparison_count == 3  # Why do we care?
-
-      # ROBUST — tests behavior
-      def test_sort_robust():
-          sorter = StudentSorter()
-          result = sorter.sort(students)
-          # Checks what the function RETURNS — the observable behavior
-          assert result[0].gpa >= result[1].gpa  # Sorted descending
-          assert len(result) == len(students)     # No items lost
-      ```
-
-      The brittle test will break if you rename `_sorted_list` or change the sort algorithm (even to a faster one). The robust test only cares about the result.
-
-      ### Structuring Robust Tests: The AAA Pattern
-
-      Behavior-focused tests almost always fall into a clean three-part structure called **Arrange-Act-Assert (AAA)** — a convention used in industrial Python testing and recognized by test-smell detectors like PyNose:
-
-      ```python
-      def test_total_sums_prices():
-          # Arrange — set up the world the test needs
-          cart = ShoppingCart()
-          cart.add("Apple", 1.50)
-          cart.add("Bread", 2.00)
-
-          # Act — invoke the ONE behavior under test
-          result = cart.total()
-
-          # Assert — verify the observable outcome
-          assert result == 3.50
-      ```
-
-      AAA is more than tidiness. It is a **diagnostic structure**: if you cannot cleanly separate Arrange from Act, the function under test probably has too many responsibilities (a Single Responsibility Principle violation). If your Arrange section is gigantic, that is the *Excessive Setup* test smell — refactor the production code, not the test.
-
-      A test with two unrelated Acts is an *Eager Test* (it tests too many behaviors). Split it.
-
-      ### The Refactoring Litmus Test
-
-      Here is a simple rule: **if you refactor the internals of a function and all tests still pass, your tests are robust.** If tests break after a pure refactoring (no behavior change), they are testing implementation.
-
-      ### Task 1: Spot the Brittle Tests
-
-      Open `test_brittle_audit.py`. It contains four tests for a simple `ShoppingCart` class. **Two tests are brittle** (they test implementation details) and **two are robust** (they test behavior). Your job:
-
-      1. Read each test carefully
-      2. Identify which two are brittle and which two are robust
-      3. Fix the two brittle tests by rewriting them to test behavior instead of implementation
-      4. Run the tests to confirm they all pass
-
-      ### Task 2: The Refactoring Litmus Test
-
-      Now refactor your FizzBuzz from Step 4 using a different approach — for example, string concatenation instead of `if/elif`:
-      ```python
-      def fizzbuzz(number):
-          result = ""
-          if number % 3 == 0:
-              result += "Fizz"
-          if number % 5 == 0:
-              result += "Buzz"
-          return result or str(number)
-      ```
-      Run `test_fizzbuzz.py` — all tests should still pass, proving they test *behavior*, not *implementation*.
-
-    files:
-      - path: "shopping_cart.py"
-        content: |
-          class ShoppingCart:
-              def __init__(self):
-                  self._items = []
-
-              def add(self, name, price):
-                  self._items.append({"name": name, "price": price})
-
-              def total(self):
-                  return sum(item["price"] for item in self._items)
-
-              def item_count(self):
-                  return len(self._items)
-
-              def items(self):
-                  return [item["name"] for item in self._items]
-        language: "python"
-
-      - path: "test_brittle_audit.py"
-        content: |
-          """AUDIT: Two of these tests are brittle. Find and fix them."""
-          import pytest
-          from shopping_cart import ShoppingCart
-
-
-          # Test 1
-          def test_add_item_updates_count():
-              cart = ShoppingCart()
-              cart.add("Apple", 1.50)
-              assert cart.item_count() == 1
-
-
-          # Test 2 — BRITTLE? Check if this tests behavior or implementation.
-          def test_add_item_internal_list():
-              cart = ShoppingCart()
-              cart.add("Apple", 1.50)
-              # Accesses private attribute directly
-              assert cart._items[0]["name"] == "Apple"
-              assert cart._items[0]["price"] == 1.50
-
-
-          # Test 3
-          def test_total_sums_prices():
-              cart = ShoppingCart()
-              cart.add("Apple", 1.50)
-              cart.add("Bread", 2.00)
-              assert cart.total() == 3.50
-
-
-          # Test 4 — BRITTLE? Check if this tests behavior or implementation.
-          def test_internal_list_length():
-              cart = ShoppingCart()
-              cart.add("Apple", 1.50)
-              cart.add("Bread", 2.00)
-              # Accesses private attribute directly
-              assert len(cart._items) == 2
-
-
-          if __name__ == "__main__":
-              pytest.main(["-v"])
-        language: "python"
-
-    open_file: "test_brittle_audit.py"
-
-    solution:
-      files:
-        - path: "test_brittle_audit.py"
-          content: |
-            """AUDIT: Fixed brittle tests — behavior not implementation."""
-            import pytest
-            from shopping_cart import ShoppingCart
-
-
-            def test_add_item_updates_count():
-                cart = ShoppingCart()
-                cart.add("Apple", 1.50)
-                assert cart.item_count() == 1
-
-
-            def test_add_item_via_public_api():
-                cart = ShoppingCart()
-                cart.add("Apple", 1.50)
-                assert "Apple" in cart.items()
-
-
-            def test_total_sums_prices():
-                cart = ShoppingCart()
-                cart.add("Apple", 1.50)
-                cart.add("Bread", 2.00)
-                assert cart.total() == 3.50
-
-
-            def test_item_count_via_public_api():
-                cart = ShoppingCart()
-                cart.add("Apple", 1.50)
-                cart.add("Bread", 2.00)
-                assert cart.item_count() == 2
-          language: "python"
-        - path: "fizzbuzz.py"
-          content: |
-            def fizzbuzz(number):
-                """Return FizzBuzz result — refactored using string concatenation."""
-                result = ""
-                if number % 3 == 0:
-                    result += "Fizz"
-                if number % 5 == 0:
-                    result += "Buzz"
-                return result if result else str(number)
-          language: "python"
-      explanation: |
-        Replace direct `._items` access with public API calls (items(), item_count()).
-        Refactor fizzbuzz.py to use string concatenation — all existing tests still pass.
-
-    tests:
-      - description: "Brittle tests have been fixed (no private attribute access)"
-        command: |
-          source = open('/tutorial/test_brittle_audit.py').read()
-          assert '._items' not in source, \
-              "Your tests still access the private attribute `_items`. Rewrite them to use public methods like item_count(), total(), or items() instead."
-      - description: "All audit tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_brittle_audit.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
-      - description: "FizzBuzz has been refactored"
-        command: |
-          source = open('/tutorial/fizzbuzz.py').read()
-          assert 'Fizz' in source, \
-              "Refactor your fizzbuzz.py using a different approach (e.g., string concatenation)"
-      - description: "All FizzBuzz tests still pass after refactoring"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Tests broke after refactoring — your tests may be too brittle:\n{output}"
-
-    quiz:
-      title: "Behavior vs. Implementation — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-
-        - question: |
-            Which test is **more robust**?
-
-            **Test A:**
-            ```python
-            def test_sort_a():
-                result = sort_names(["Charlie", "Alice", "Bob"])
-                assert result == ["Alice", "Bob", "Charlie"]
-            ```
-
-            **Test B:**
-            ```python
-            def test_sort_b():
-                result = sort_names(["Charlie", "Alice", "Bob"])
-                assert result[0] < result[1] < result[2]
-                assert len(result) == 3
-            ```
-          type: single
-          options:
-            - "Test A — checking the exact output is the most thorough way to verify correctness, and any deviation from the expected list reveals a bug immediately"
-            - "Test B — it verifies the behavioral property (sorted order) without hard-coding values, making it resilient to input changes"
-            - "Both are equally robust since they both test the same function with the same input data and would catch the same bugs"
-            - "Neither is robust — both tests should use mock objects to isolate the sort implementation from the comparison logic"
-          correct_index: 1
-          explanation: |
-            Test A is fine for this specific input, but Test B expresses the *property* that matters:
-            the output is sorted and the same length. If you add a fourth name to the input,
-            Test A breaks but Test B still works. Robust tests verify behavioral properties.
-
-        - question: |
-            You refactor a function's internal algorithm (from bubble sort to quicksort) without changing its return value. Two of your tests break. What does this tell you?
-          type: single
-          options:
-            - "The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way"
-            - "The broken tests are testing implementation details rather than behavior. They should be rewritten to assert on outputs"
-            - "You should revert the refactoring since passing tests must never be broken, even temporarily"
-            - "The tests are too strict — you should lower the assertion precision or add tolerance margins"
-          correct_index: 1
-          explanation: |
-            If the function's behavior (inputs → outputs) is unchanged but tests break,
-            those tests are coupled to the implementation. This is the "Nitpicker" anti-pattern.
-            The fix is to rewrite the tests to assert on observable behavior, not internal details.
-
-        - question: |
-            **(Spaced review — Step 3)** A developer writes a test, sees it fail, then writes code to make it pass. Now she renames a variable for clarity and re-runs the tests. Which TDD phase is she in?
-          type: single
-          options:
-            - "RED — she is writing a new failing test"
-            - "GREEN — she is making the test pass with new logic"
-            - "REFACTOR — she is improving code structure without changing behavior, while keeping tests passing"
-            - "She is not following TDD — renaming is not part of the cycle"
-          correct_index: 2
-          explanation: |
-            Renaming a variable for clarity without changing behavior is a textbook REFACTOR.
-            The key: all tests still pass before and after. RED (failing test) → GREEN (pass) →
-            REFACTOR (clean up, tests still pass). She completed GREEN and is now in REFACTOR.
-
-        - question: |
-            A test you wrote needs **40 lines of setup code** before the single `assert` statement. What is this test telling you?
-          type: single
-          options:
-            - "Nothing — large setups are fine as long as the assertion verifies the right thing in the end"
-            - "The Arrange section is too big — this is the *Excessive Setup* smell, signaling that the production code has too many dependencies. Refactor the design"
-            - "You should move the setup into a helper function so the test file looks shorter; the underlying design is fine"
-            - "You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines of arrangement"
-          correct_index: 1
-          explanation: |
-            *Excessive Setup* is a documented test smell. When Arrange dominates a test, the
-            function under test is usually too tightly coupled to its dependencies. The fix is
-            to refactor the production code (e.g., dependency injection, smaller classes), not
-            to hide the pain inside a helper. The test is acting as architectural feedback —
-            "listen to the test."
-
-
-  # --------------------------------------------------------------------------
-  # STEP 6 — TDD Kata: Password Validator
+  # STEP 3 — TDD Kata: Password Validator
   # Pedagogy:
   #   Production phase    — PPP framework, full scaffolding removal.
   #   Generation Effect   — desirable difficulty, blank slate.
-  #   Anti-pattern fix    — copy-paste tests → @pytest.mark.parametrize.
-  #   "Listen to the test" — duplication in tests reveals refactoring opportunity.
-  #   Bloom's level       — Apply / Create / Evaluate (quiz).
+  #   Invalid-input       — explicit requirement for non-string test (boundary hygiene).
+  #   parametrize         — refactor duplication as "listen to the test".
+  #   Bloom's level       — Apply / Create / Evaluate.
   # --------------------------------------------------------------------------
   - title: "TDD Kata: Password Validator"
     instructions: |
-      > **Learning objective:** After this step you will be able to **independently apply** the full TDD cycle — writing tests first, then implementation — for a new problem.
+      > **Learning objective:** After this step you will be able to **independently apply** the full TDD cycle — writing tests first, then implementation — for a new problem, including boundary and invalid-input cases.
 
       ## The Production Phase
 
@@ -1369,9 +663,11 @@ steps:
 
       The first test (`test_valid_password`) is provided as scaffolding. Your job:
 
-      1. **Write at least 3 more test functions** in `test_password.py` — one for each rule (too short, missing uppercase, missing digit). The function signatures are suggested in the comments.
+      1. **Write at least 4 more test functions** in `test_password.py`:
+         - One per validation rule (too-short, missing-uppercase, missing-digit) — **3 tests**
+         - At least **one test for an invalid input type** — e.g., `None`, an integer, or a non-string. This is the "invalid-input partition" from Foundations Step 3.
       2. **Run tests** — they should all FAIL (RED) since `password.py` only has a stub
-      3. **Implement `validate_password()`** in `password.py` to make tests pass (GREEN)
+      3. **Implement `validate_password()`** in `password.py` to make tests pass (GREEN). You will need to decide how `validate_password` should behave when given a non-string input — either return `(False, "Invalid input")` or raise a `TypeError`. Be consistent.
       4. **Refactor** if needed
 
       ### If You Feel Stuck
@@ -1382,7 +678,7 @@ steps:
 
       ### Bonus Refactor: Listen to the Test
 
-      Once your 4+ tests pass, look at them. Do they all look nearly identical — same shape, only the input string and expected outcome differ? That **duplication in your test file is itself diagnostic feedback**: it is the *Copy-Paste Programming* anti-pattern, and pytest gives you a one-liner fix called `@pytest.mark.parametrize`:
+      Once your 5+ tests pass, look at them. Do the *rule* tests (too-short, missing-uppercase, missing-digit, extra valid examples) all look nearly identical — same shape, only the input string and expected outcome differ? That **duplication in your test file is itself diagnostic feedback**: it is the *Copy-Paste Programming* anti-pattern, and pytest gives you a one-liner fix called `@pytest.mark.parametrize`:
 
       ```python
       @pytest.mark.parametrize("password, expected_valid", [
@@ -1398,7 +694,11 @@ steps:
 
       One test function now covers four cases, each one reported separately by pytest. Adding a fifth rule means adding *one row*, not copy-pasting an entire function. **This is a refactor of the test code — the production code does not change, and your existing tests should still pass after the rewrite.**
 
-      Try it once your hand-written tests pass. If both versions assert the same behavior, you have just experienced the *Refactoring Litmus Test* applied to test code itself.
+      Keep the invalid-input test as a separate function — it has a different shape (different assertion structure if it uses `pytest.raises`) and parametrizing it together with the rule tests would just muddle both.
+
+      ### Before You Move On (retrieval practice)
+
+      Without looking: why is the invalid-input partition important to test even when your user-facing form would never send that kind of data? What kind of bug are you hunting for?
 
     files:
       - path: "password.py"
@@ -1411,7 +711,7 @@ steps:
                   (False, "reason") if a rule is violated.
               """
               # TODO: Replace this stub with real validation logic.
-              # The stub returns a failing tuple so tests show clean RED.
+              # Remember: decide what should happen for non-string inputs.
               return (False, "Not implemented")
         language: "python"
 
@@ -1429,17 +729,13 @@ steps:
               assert message == "Valid"
 
 
-          # TODO: Write at least 3 more test functions below.
-          # Each test should check ONE validation rule:
+          # TODO: Write at least 4 more test functions below.
+          # Each test should check ONE rule or invalid case:
           #
-          # def test_rejects_short_password():
-          #     ...
-          #
-          # def test_rejects_missing_uppercase():
-          #     ...
-          #
-          # def test_rejects_missing_digit():
-          #     ...
+          # def test_rejects_short_password():   ...
+          # def test_rejects_missing_uppercase(): ...
+          # def test_rejects_missing_digit():    ...
+          # def test_rejects_invalid_type():     # e.g., None, 42, ["Password1"]
 
 
           if __name__ == "__main__":
@@ -1457,8 +753,10 @@ steps:
 
                 Returns:
                     (True, "Valid") if all rules pass.
-                    (False, "reason") if a rule is violated.
+                    (False, "reason") if a rule is violated or input is not a string.
                 """
+                if not isinstance(password, str):
+                    return (False, "Invalid input: password must be a string")
                 if len(password) < 8:
                     return (False, "Too short")
                 if not any(c.isupper() for c in password):
@@ -1495,20 +793,35 @@ steps:
                 assert is_valid is False
 
 
+            def test_rejects_invalid_type():
+                is_valid, _ = validate_password(None)
+                assert is_valid is False
+
+
             if __name__ == "__main__":
                 pytest.main(["-v"])
           language: "python"
       explanation: |
-        Implement each validation rule in sequence: length ≥ 8, at least one uppercase,
-        at least one digit. Write the 3 additional test functions before implementing.
+        Guard against non-string inputs first with `isinstance`, then check length, uppercase,
+        and digit rules in order. Write all 4 additional test functions (including the
+        invalid-type test) before implementing — that is the TDD discipline.
 
     tests:
-      - description: "test_password.py contains at least 4 test functions"
+      - description: "test_password.py contains at least 5 test functions (rules + invalid input)"
         command: |
           source = open('/tutorial/test_password.py').read()
           test_count = source.count('def test_')
-          assert test_count >= 4, \
-              f"Write at least 4 test functions (found {test_count}). Test valid passwords, too-short, missing uppercase, and missing digit."
+          assert test_count >= 5, \
+              f"Write at least 5 test functions (found {test_count}). You need: valid password, too-short, missing uppercase, missing digit, AND one invalid-input type test."
+      - description: "At least one test exercises a non-string (invalid-input partition)"
+        command: |
+          source = open('/tutorial/test_password.py').read()
+          import re
+          # Strip comments so `validate_password(None)` in a `#` comment doesn't count.
+          code_only = re.sub(r'#.*', '', source)
+          non_string_args = ['(None', '(42', '(123', '([', '({', '(b"', "(b'"]
+          assert any(arg in code_only for arg in non_string_args), \
+              "Add a test that calls validate_password with a non-string argument (e.g., None, 42, or a list)"
       - description: "validate_password function exists"
         command: |
           source = open('/tutorial/password.py').read()
@@ -1541,6 +854,15 @@ steps:
           exec(open('/tutorial/password.py').read())
           result = validate_password("Password")
           assert result[0] is False, f"Expected (False, ...) for 'Password', got {result}"
+      - description: "Non-string input is handled (returns False or raises)"
+        command: |
+          exec(open('/tutorial/password.py').read())
+          try:
+              result = validate_password(None)
+              assert result[0] is False, \
+                  f"Expected (False, ...) or a raised exception for None, got {result}"
+          except (TypeError, ValueError, AttributeError):
+              pass  # raising is also an acceptable contract
 
     quiz:
       title: "Independent TDD — Knowledge Check"
@@ -1568,7 +890,7 @@ steps:
           explanation: |
             Each `assert` should be in its own test function so you can see exactly which
             rule failed. If `test_password()` fails on line 2, you don't know if lines 3 and 4
-            would also fail. Separate test functions give you precise, independent feedback.
+            would also fail.
 
         - question: |
             You are writing a test for a new feature, but you find it very difficult to set up the test — you need to create five objects and configure them just to call one function. What does this difficulty tell you?
@@ -1581,12 +903,27 @@ steps:
           correct_index: 1
           explanation: |
             This is the "listen to the test" principle. When a test is hard to write, the
-            function's design is often the problem. A function that requires complex setup
-            usually has too many responsibilities or hidden dependencies. TDD uses this
-            pain as architectural feedback — simplify the design, and the test becomes easy.
+            function's design is often the problem. TDD uses this pain as architectural
+            feedback — simplify the design, and the test becomes easy.
 
         - question: |
-            **(Spaced review — Step 1)** A PM says: *"We have 95% test coverage, so we can skip manual QA for this release."* What is wrong with this reasoning?
+            Why should an "invalid input type" test (e.g., `validate_password(None)`) be part of your suite, even if your form's UI would never pass a non-string?
+          type: single
+          options:
+            - "It should not be — testing inputs that the UI would never send is a waste of time and bloats the suite"
+            - "Because the function is a public API: callers other than the form (future endpoints, admin scripts, test helpers) may pass non-strings, and the function's contract must be defensive"
+            - "Because pytest requires every function to have an edge-case test for the linter to pass"
+            - "Because non-string inputs are the only way to hit the 100% coverage threshold Python enforces"
+          correct_index: 1
+          explanation: |
+            A validator is a reusable component. Its callers change over time — today it is
+            wired to one HTML form, tomorrow it is imported by a new REST endpoint or a CLI
+            tool. The test pins down the *contract* for invalid inputs so future callers
+            cannot assume string-ness is pre-validated. This is the "invalid-input partition"
+            from Foundations Step 3 applied to API design.
+
+        - question: |
+            **(Spaced review — Foundations Step 1)** A PM says: *"We have 95% test coverage, so we can skip manual QA for this release."* What is wrong with this reasoning?
           type: single
           options:
             - "95% is too low — you need 100% line coverage to have confidence that every behavior is verified and QA can be skipped"
@@ -1596,9 +933,8 @@ steps:
           correct_index: 1
           explanation: |
             High coverage does not mean high quality. A test that executes a function but
-            only asserts `True` covers the code but verifies nothing. Coverage is a
-            necessary but not sufficient condition for quality. This connects to Step 1:
-            tests show the presence of bugs, never their absence.
+            only asserts `True` covers the code but verifies nothing. Tests show the
+            presence of bugs, never their absence.
 
         - question: |
             A student has six tests for `validate_password` that look like this:
@@ -1622,12 +958,11 @@ steps:
             `@pytest.mark.parametrize` is the idiomatic Python solution to *Copy-Paste*
             test code. Each row still produces a separate pytest result, so a failure on row 3
             tells you exactly which input broke — unlike a single test with a `for` loop, where
-            the first failure stops the rest. Combining into one giant function reintroduces the
-            *Eager Test* / *Assertion Roulette* smell you learned to avoid in Step 5.
+            the first failure stops the rest.
 
 
   # --------------------------------------------------------------------------
-  # STEP 7 — TDD with AI Assistants
+  # STEP 4 — TDD with AI Assistants
   # Pedagogy:
   #   AI-Critical Pedagogy — students must AUDIT, not accept, AI-generated tests.
   #   Generation Effect    — analyze flawed code before being told what is wrong.
@@ -1666,7 +1001,7 @@ steps:
           assert tax == tax            # tautology — always True
           assert isinstance(tax, (int, float))  # type check, not behavior
       ```
-      This passes. It tests nothing. The fix is the same as Step 5: assert on the **observable behavior** (`assert tax == 10.0`), not on shape or self-equality.
+      This passes. It tests nothing. The fix is the same as Foundations Step 2: assert on the **observable behavior** (`assert tax == 10.0`), not on shape or self-equality.
 
       ## Your Task: Audit and Refactor
 
@@ -1686,6 +1021,10 @@ steps:
       ## The Prompt Problem (Optional Reflection)
 
       Researchers Denny et al. propose a new exercise type: writing a *prompt* so precisely that an AI generates the right test for you. After you finish the audit, write a one-paragraph "prompt" in a comment at the top of `test_bank_account.py` that — given to an AI — would have produced your refactored test suite directly. This is the new core skill: **specifying behavior is now more valuable than typing it.**
+
+      ### Before You Move On (retrieval practice)
+
+      Without looking: name the two AI-specific anti-patterns introduced in this step and describe one strategy for each that keeps you in control of the test's contract.
 
     files:
       - path: "bank_account.py"
@@ -1897,8 +1236,7 @@ steps:
             This is the *Modify-the-Test* anti-pattern documented in industrial case studies of
             agentic AI. Both the implementation AND the test are now produced by the AI, so the
             "passing" signal is meaningless — the AI has rewritten the contract instead of meeting
-            it. The human's job is to own the test specification: the AI may write code, but the
-            test must originate from a human-defined behavior.
+            it. The human's job is to own the test specification.
 
         - question: |
             Which of these AI-generated tests is **least useful** as a behavior check?
@@ -1932,8 +1270,7 @@ steps:
           explanation: |
             Asserting only `isinstance(result, int)` is a *Liar test*: `add(2, 3)` returning
             `0`, `99`, or even `5` would all pass. AI assistants sometimes default to type
-            checks because they always succeed — making the AI look productive while testing
-            nothing. The other three express real behavioral expectations.
+            checks because they always succeed.
 
         - question: |
             **Evaluate:** Why does the empirical evidence suggest TDD becomes *more* important when working with AI, not less?
@@ -1948,12 +1285,10 @@ steps:
             Observational research on undergraduates using GenAI for testing found novices ran
             AI-generated tests roughly *one third* as often as their own manual tests, with
             documented concerns about an *illusion of competence*. TDD's strict Red-Green
-            discipline (see it fail, then see it pass) re-introduces the verification step the
-            AI workflow tends to skip. The human becomes the *navigator*; the AI becomes the
-            implementer.
+            discipline re-introduces the verification step the AI workflow tends to skip.
 
         - question: |
-            **(Spaced review — Step 5)** You ask an AI to generate tests and it produces a test where Arrange takes 30 lines, Act takes 1 line, and Assert takes 1 line. What is the most likely diagnosis?
+            **(Spaced review — Foundations Step 4)** You ask an AI to generate tests and it produces a test where Arrange takes 30 lines, Act takes 1 line, and Assert takes 1 line. What is the most likely diagnosis?
           type: single
           options:
             - "The AI is correctly mocking every dependency to keep the test isolated — this is the recommended modern practice"
@@ -1965,18 +1300,18 @@ steps:
             *Excessive Setup* and *Mockery* both signal architectural problems in the production
             code, not the test. AI assistants will happily generate hundreds of lines of mock
             scaffolding to make a test pass — but the test then verifies the mocks, not the
-            system. The fix is the same as in Step 5: listen to the test. Refactor the
-            production code to reduce coupling, and the test will shrink naturally.
+            system. Listen to the test.
 
 
   # --------------------------------------------------------------------------
-  # STEP 8 — The Big Picture
+  # STEP 5 — The Big Picture
   # Pedagogy:
-  #   Empirical grounding — concrete citations replace vague "research shows".
-  #   Anti-pattern taxonomy — Level I-IV maturity model (Aniche, Codurance).
-  #   Metaphor pair        — Ratchet + Boiled Frog for psychological scaffolding.
-  #   Spaced review        — questions from earlier steps including AI-Critical.
-  #   Bloom's level        — Evaluate / Create.
+  #   Empirical grounding   — concrete citations, not vague "research shows".
+  #   Anti-pattern taxonomy — Level I-IV maturity model.
+  #   Test-levels quiz item — connects unit to integration/system pyramid.
+  #   Metaphor pair         — Ratchet + Boiled Frog for psychological scaffolding.
+  #   Spaced review         — questions from earlier TDD + Foundations content.
+  #   Bloom's level         — Evaluate / Create.
   # --------------------------------------------------------------------------
   - title: "The Big Picture"
     instructions: |
@@ -2000,6 +1335,18 @@ steps:
 
       Even in these cases, *some* tests are almost always valuable. The question is whether to write them *first*.
 
+      ## Unit Is Not the Only Level
+
+      The tests you have written are **unit tests** — they exercise one function or class in isolation. That is one rung of the *testing pyramid*:
+
+      | Level | What's under test | Runs in... | Typical cost |
+      |---|---|---|---|
+      | **Unit** | One function or class, no I/O | Milliseconds | Cheap — run on every save |
+      | **Component / Integration** | A few modules wired together (still in-process) | Tens of ms | Moderate |
+      | **System / End-to-end** | The deployed application, real DB, real network | Seconds to minutes | Expensive — run in CI |
+
+      TDD is almost always practiced at the unit level because the feedback loop has to fit inside a Red-Green-Refactor cycle of minutes. Higher levels catch integration bugs that unit tests cannot, but the feedback is too slow to drive minute-by-minute design. A robust project uses all three levels — many unit tests, fewer integration tests, a handful of end-to-end tests.
+
       ## The Empirical Case for TDD
 
       Industrial case studies provide concrete numbers:
@@ -2018,7 +1365,7 @@ steps:
 
       ## Two Metaphors That Matter
 
-      You met the **Ratchet** in Step 1: each passing test locks in progress; you can never accidentally slip backward. Its companion is the **Boiled Frog**:
+      You met the **Ratchet** in Foundations Step 1: each passing test locks in progress; you can never accidentally slip backward. Its companion is the **Boiled Frog**:
 
       > Software complexity sneaks up gradually. You add a small mock here, an `if` branch there, a global flag. No single change feels alarming — but six months later the codebase is unmaintainable. By writing tiny tests from the very first feature, TDD plants psychological *placeholders* that lower the barrier to adding more tests as the project grows. The frog notices the water heating because the thermometer is always running.
 
@@ -2035,7 +1382,7 @@ steps:
       | **II — TDD Cycle** | *Hidden Dependency* | Tests pass or fail based on test ordering, environment, or external state | Production code has hidden global coupling |
       | **III — Design** | *The Giant* (God Object test) | One test function with hundreds of lines and dozens of assertions | The class under test violates the Single Responsibility Principle |
       | **III — Design** | *Excessive Setup* | 30+ lines of Arrange before a single Act/Assert | Production code is too tightly coupled to its dependencies |
-      | **III — Design** | *The Liar* | Test passes but does not actually verify the intended behavior (tautology, type-only check) | Often introduced by AI assistants or copy-paste; see Step 7 |
+      | **III — Design** | *The Liar* | Test passes but does not actually verify the intended behavior (tautology, type-only check) | Often introduced by AI assistants or copy-paste; see Step 4 |
       | **IV — Advanced** | *The Mockery* | More mock setup than test logic; the test verifies the mocks, not the system | Business logic is tangled with infrastructure; redraw the abstraction boundaries |
 
       Notice the pattern: the higher the level, the more the test smell is really an *architectural* smell. **Listen to the test** — when a test is hard to write, the production code is usually the problem.
@@ -2044,9 +1391,9 @@ steps:
 
       1. **TDD is a design technique**, not a testing technique — tests are a valuable byproduct
       2. **Red-Green-Refactor** — one test at a time, in short iterations
-      3. **Test behavior via the public API**, structured as Arrange-Act-Assert (Step 5)
-      4. **Use parametrize** to kill copy-paste duplication (Step 6)
-      5. **Audit AI-generated tests** — the AI may modify the test instead of fixing the code (Step 7)
+      3. **Test behavior via the public API**, structured as Arrange-Act-Assert (from Foundations Step 4)
+      4. **Use parametrize** to kill copy-paste duplication (Step 3)
+      5. **Audit AI-generated tests** — the AI may modify the test instead of fixing the code (Step 4)
       6. **Listen to the test** — difficulty writing a test is diagnostic feedback about your design
       7. **The Ratchet preserves; the Boiled Frog warns**
 
@@ -2060,6 +1407,14 @@ steps:
       ### Final Exercise: Diagnose This Test Suite
 
       Open `test_diagnose.py`. It contains a test suite written by a junior developer. Read each test and identify which **anti-pattern from the taxonomy table above** it exhibits (if any). Add a `# VERDICT:` comment to each test function explaining your analysis. This is not graded — it is a reflection exercise.
+
+      ### Before You Move On (retrieval practice)
+
+      Without looking, answer:
+
+      - Name one scenario where TDD pays off and one where it is overkill.
+      - Describe the Ratchet and the Boiled Frog metaphors, and what each warns about.
+      - Why is *The Mockery* classified at the highest maturity level of the taxonomy?
 
     files:
       - path: "test_diagnose.py"
@@ -2118,8 +1473,7 @@ steps:
           explanation: |
             Payment processing has complex logic, strict correctness requirements, and is
             modified by multiple developers over time. TDD excels here because the tests
-            specify exact behavior and prevent regressions. The other scenarios are either
-            too exploratory or too visual for TDD to add significant value.
+            specify exact behavior and prevent regressions.
 
         - question: |
             A student's test file contains a single function with 20 assertions testing five different behaviors. Another student has five functions with four assertions each. Which approach is better, and why?
@@ -2132,9 +1486,23 @@ steps:
           correct_index: 1
           explanation: |
             Test isolation is a core TDD principle. One test function = one behavior = one
-            potential failure point. When `test_valid_password` fails but `test_missing_digit`
-            passes, you know exactly where the problem is. A monolithic test function hides
-            this information behind the first failure.
+            potential failure point.
+
+        - question: |
+            A test that spawns a subprocess, hits a real Postgres database, and asserts on HTTP status codes from a running API is best classified as which level of the testing pyramid?
+          type: single
+          options:
+            - "A unit test — any test that asserts on the behavior of one function is a unit test, regardless of what that function calls"
+            - "A component test — it exercises one module plus its nearest collaborators, which is the definition of a component"
+            - "An integration or system/end-to-end test — it exercises multiple components together with real infrastructure, so it belongs near the top of the pyramid"
+            - "Not a test at all — anything that uses real infrastructure is a manual check, not an automated test"
+          correct_index: 2
+          explanation: |
+            Real DB + subprocess + network puts this firmly at the system / end-to-end
+            level. Unit tests are fast and in-process; integration tests wire a few modules
+            together but stay in-process; system tests exercise the deployed stack. TDD is
+            almost always practiced at the unit level because only that level gives you the
+            minute-scale feedback loop the Red-Green-Refactor cycle needs.
 
         - question: |
             **(Anti-pattern identification)** A developer writes this test:
@@ -2155,12 +1523,10 @@ steps:
           correct_index: 1
           explanation: |
             This is the "Nitpicker" anti-pattern. The test is coupled to the internal
-            representation (private attributes) rather than the public interface. A robust
-            test would check `user.name` (public property) or `str(user)` or whatever the
-            class exposes publicly. Internal details should be free to change without breaking tests.
+            representation rather than the public interface.
 
         - question: |
-            **(Spaced review — Step 3)** Two developers are arguing. Dev A says: *"I wrote the function first, then added tests — same result."* Dev B says: *"No, writing the test first changes the design."* Who is right, and why?
+            **(Spaced review — Step 1)** Two developers are arguing. Dev A says: *"I wrote the function first, then added tests — same result."* Dev B says: *"No, writing the test first changes the design."* Who is right, and why?
           type: single
           options:
             - "Dev A — the final code is identical either way. The only difference is workflow preference, not the quality of the resulting design"
@@ -2171,8 +1537,7 @@ steps:
           explanation: |
             Dev B is correct. Writing the test first means you must decide the function's name,
             parameters, and return value BEFORE writing any implementation. This forces you to
-            think as a *caller* (API consumer) rather than an *implementer*. Research shows
-            TDD code tends to be more modular with smaller, more cohesive functions.
+            think as a *caller* (API consumer) rather than an *implementer*.
 
         - question: |
             **(Anti-pattern taxonomy)** A test method has a single line: `account.transfer_and_log_and_email_and_audit(...)` followed by 25 assertions checking every side effect. Which anti-pattern is this?
@@ -2187,10 +1552,10 @@ steps:
             *The Giant* is the test-side fingerprint of a *God Object*. When one method does
             transfer + log + email + audit, the only way to test it is a giant test. The fix
             is in the production code: split the responsibilities into separate classes or
-            methods, each tested independently. The test smell is architectural feedback.
+            methods, each tested independently.
 
         - question: |
-            **(Spaced review — Step 7)** A teammate brags: *"I have Copilot generate every test for me — I get 100% coverage in minutes."* Based on the empirical evidence you saw in this tutorial, what is the most accurate response?
+            **(Spaced review — Step 4)** A teammate brags: *"I have Copilot generate every test for me — I get 100% coverage in minutes."* Based on the empirical evidence you saw in this tutorial, what is the most accurate response?
           type: single
           options:
             - "Excellent — AI-generated tests are objectively higher quality than hand-written ones, and 100% coverage proves the suite is complete"
@@ -2199,9 +1564,8 @@ steps:
             - "100% coverage is unsafe regardless of who wrote it — modern testing has moved away from coverage as a metric, in favor of mutation testing exclusively"
           correct_index: 1
           explanation: |
-            This combines two earlier lessons. From Step 6: coverage ≠ behavior verification.
-            From Step 7: empirical research shows novices run AI tests one-third as often as
-            their own and miss subtle anti-patterns (Liar, Mockery, Modify-the-Test). The right
-            workflow is *collaborative*: human writes the test as a behavioral specification, AI
-            implements the production code, human verifies that the test still represents real
-            behavior after the AI's edits.
+            Coverage ≠ behavior verification. Empirical research shows novices run AI tests
+            one-third as often as their own and miss subtle anti-patterns (Liar, Mockery,
+            Modify-the-Test). The right workflow is *collaborative*: human writes the test
+            as a behavioral specification, AI implements the production code, human verifies
+            that the test still represents real behavior after the AI's edits.

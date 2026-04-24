@@ -93,6 +93,10 @@ topics:
     icon: null
     url: /SEBook/testing.html
     subtopics:
+      - name: Test Design
+        url: /SEBook/testing/test-design.html
+      - name: Test Quality
+        url: /SEBook/testing/test-quality.html
       - name: Test-Driven Development (TDD)
         url: /SEBook/testing/tdd.html
       - name: Test Doubles

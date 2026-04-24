@@ -8,28 +8,22 @@ const {
 } = require('./tutorial-helpers');
 
 /**
- * Tests: TDD with pytest Tutorial (Pyodide backend)
+ * Tests: Testing Foundations with pytest Tutorial (Pyodide backend)
  *
- * Two serial describe blocks share one page each — Pyodide loads only twice
- * per run (instead of once per test).
+ * Prerequisite tutorial for the TDD tutorial. Covers:
+ *   1-Why Test, 2-pytest + oracle-strength drill, 3-Partitions & Boundaries,
+ *   4-Test Behavior Not Implementation (+ AAA + coverage ≠ quality).
  *
  * Block 1 – Structure, navigation, run/clear, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
- *
- * Note: The final step ("The Big Picture") has no tests — it is a reflection
- * step with no automated verification. No YAML-driven test is generated for it.
- * Tutorial has 5 TDD steps (prerequisite content lives in the Testing
- * Foundations tutorial): 1-Red-Green-Refactor, 2-FizzBuzz Kata, 3-Password
- * Validator (+ invalid-input + parametrize), 4-TDD with AI Assistants,
- * 5-Big Picture.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/tdd-tutorial';
+const TUTORIAL_URL     = '/SEBook/tools/testing-foundations-tutorial';
 const BOOT_TIMEOUT     = 60_000;
 const TEST_RUN_TIMEOUT = 90_000;
 
-const config = loadTutorialConfig('tdd');
+const config = loadTutorialConfig('testing-foundations');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
@@ -47,17 +41,15 @@ async function clickRun(page) {
 
 /**
  * Pyodide: running the active file before clicking Test triggers
- * loadPackagesFromImports() on the file content, which loads pytest (and any
- * other needed packages) into the Pyodide runtime.  Without this, test commands
- * that use __run_capture() → exec() → import pytest fail with ModuleNotFoundError
- * because exec() bypasses Pyodide's package-loading mechanism.
+ * loadPackagesFromImports() on the file content, which loads pytest into the
+ * Pyodide runtime. Without this, test commands that import pytest through
+ * exec() fail with ModuleNotFoundError.
  */
-async function passCurrentStepTestsTDD(page, timeout = TEST_RUN_TIMEOUT) {
+async function passCurrentStepTestsFoundations(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
   await page.waitForTimeout(1_000);
-  // Run the active file to trigger loadPackagesFromImports (loads pytest etc.)
   await clickRun(page);
   await page.waitForTimeout(500);
   await page.locator('.tvm-btn-test').click();
@@ -67,7 +59,7 @@ async function passCurrentStepTestsTDD(page, timeout = TEST_RUN_TIMEOUT) {
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
-test.describe.serial('TDD Tutorial', () => {
+test.describe.serial('Testing Foundations Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -113,31 +105,19 @@ test.describe.serial('TDD Tutorial', () => {
   test('clicking run executes Python and shows output', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, 'print("Hello TDD!")');
+    await setEditorContent(page, 'print("Hello Foundations!")');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
     await page.waitForTimeout(500);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello TDD!', { timeout: TEST_RUN_TIMEOUT });
+      .toContainText('Hello Foundations!', { timeout: TEST_RUN_TIMEOUT });
   });
 
   test('clear button empties the output panel', async () => {
     await page.locator('.tvm-clear-btn').click();
     const text = await page.locator('.tvm-output-pre').textContent();
     expect(text?.trim() ?? '').toBe('');
-  });
-
-  test('syntax errors appear in output', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    await setEditorContent(page, 'def broken(:');
-    await page.locator('.tvm-editor-container').click();
-    await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
-    await clickRun(page);
-    await expect(page.locator('.tvm-output-pre'))
-      .toContainText(/Error|error|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   // --- Editor ---
@@ -182,7 +162,7 @@ test.describe.serial('TDD Tutorial', () => {
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
 // =============================================================================
-test.describe.serial('TDD Tutorial — step-by-step', () => {
+test.describe.serial('Testing Foundations Tutorial — step-by-step', () => {
   test.setTimeout(200_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -205,7 +185,7 @@ test.describe.serial('TDD Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTestsTDD(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsFoundations(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }

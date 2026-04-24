@@ -23,4 +23,15 @@ These levels include:
 * **Integration Testing**: The combined execution of multiple classes or packages to ensure they work correctly in collaboration.
 * **System Testing**: The execution of the software in its final configuration, including all hardware and external software integrations.
 
+# Deeper Reading
+
+Running a test is easy; *designing* a good one is where most of the skill lives. The following pages go deeper:
+
+* **[Test Design](/SEBook/testing/test-design.html)** — equivalence partitioning, boundary value analysis, and oracle strength. How to pick a small set of inputs that catches a large number of real bugs.
+* **[Test Quality](/SEBook/testing/test-quality.html)** — behavior vs. implementation, the Arrange-Act-Assert pattern, coverage vs. adequacy, and the most common test smells.
+* **[Test-Driven Development](/SEBook/testing/tdd.html)** — writing the test before the code as a design discipline, not just a verification step.
+* **[Test Doubles](/SEBook/testing/testdoubles.html)** — stubs, spies, and mocks for controlling and observing dependencies.
+
+For hands-on practice, the [Testing Foundations tutorial](/SEBook/tools/testing-foundations-tutorial) covers test design and quality interactively, and the [TDD tutorial](/SEBook/tools/tdd-tutorial) builds on it.
+
 # Testability
