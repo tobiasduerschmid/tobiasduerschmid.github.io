@@ -63,6 +63,9 @@
   var LABEL_OFFSET_X = 34;
   var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
+  var GRAPH_TRANSITION_MS = 720;
+  var PERF_LITE_TRANSITION_MS = 220;
+  var DIMENSION_SHRINK_PAD_MS = 40;
 
   // Lateral separation (in user pixels) between arrow landing points when
   // multiple children share a parent. Wide enough that the 13×12 filled
@@ -886,6 +889,21 @@
     var svg = this._svgRoot;
     if (!svg) return;
     this._cancelDimAnim();
+    var currentHeight = parseFloat(svg.getAttribute('height')) || newDims.height;
+    var shrinkDelay = (this._perfLite ? PERF_LITE_TRANSITION_MS : GRAPH_TRANSITION_MS) + DIMENSION_SHRINK_PAD_MS;
+
+    if (!prefersReducedMotion() && newDims.height < currentHeight) {
+      // Nodes, labels, and edges still animate inside the old canvas for
+      // the duration of the transition. If the SVG height snaps smaller
+      // immediately, the graph host's overflow clips those in-flight parts.
+      this._setSvgSize(newDims.width, currentHeight);
+      var self = this;
+      this._dimFallback = setTimeout(function () {
+        self._dimFallback = null;
+        if (self._svgRoot === svg) self._setSvgSize(newDims.width, newDims.height);
+      }, shrinkDelay);
+      return;
+    }
     this._setSvgSize(newDims.width, newDims.height);
   };
 
