@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.print_title | default: page.title }} — Print View</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -725,6 +727,24 @@
   {% endfor %}
 
   </main>
+
+  <script>
+    (function () {
+      function renderUmlDiagrams() {
+        if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
+          window.UMLShared.renderAll();
+        } else {
+          setTimeout(renderUmlDiagrams, 80);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderUmlDiagrams);
+      } else {
+        renderUmlDiagrams();
+      }
+    })();
+  </script>
 
 </body>
 </html>

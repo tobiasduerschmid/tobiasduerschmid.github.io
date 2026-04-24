@@ -1353,12 +1353,30 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
       let componentHits = 0;
       let crossings = 0;
       let trackOverlap = 0;
+      let longBackEdgeTopDetours = 0;
+      let maxLongBackEdgeExtra = 0;
       const segments = [];
+      const componentTop = Math.min(...componentBoxes.map((rect) => rect.t));
       for (let ri = 0; ri < routes.length; ri++) {
         const points = routes[ri];
+        const first = points[0];
+        const last = points[points.length - 1];
+        const longBackEdge = first.x - last.x > 600;
+        if (longBackEdge) {
+          let routeLen = 0;
+          for (let pi = 0; pi < points.length - 1; pi++) {
+            routeLen += Math.abs(points[pi + 1].x - points[pi].x) + Math.abs(points[pi + 1].y - points[pi].y);
+          }
+          const directLen = Math.abs(first.x - last.x) + Math.abs(first.y - last.y);
+          maxLongBackEdgeExtra = Math.max(maxLongBackEdgeExtra, routeLen - directLen);
+        }
         for (let pi = 0; pi < points.length - 1; pi++) {
           for (const rect of componentBoxes) {
             if (segmentHitsRectInterior(points[pi], points[pi + 1], rect)) componentHits++;
+          }
+          if (longBackEdge && Math.abs(points[pi].y - points[pi + 1].y) < 1) {
+            const span = Math.abs(points[pi + 1].x - points[pi].x);
+            if (points[pi].y < componentTop - 1 && span > 40) longBackEdgeTopDetours++;
           }
           segments.push({ ri, p0: points[pi], p1: points[pi + 1] });
         }
@@ -1403,6 +1421,8 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
         componentHits,
         crossings,
         trackOverlap,
+        longBackEdgeTopDetours,
+        maxLongBackEdgeExtra,
         labelOverlaps,
         width: viewBox[2],
         height: viewBox[3],
@@ -1413,8 +1433,11 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
     expect(stats.componentHits).toBe(0);
     expect(stats.crossings).toBe(0);
     expect(stats.trackOverlap).toBeLessThanOrEqual(80);
+    expect(stats.longBackEdgeTopDetours).toBe(0);
+    expect(stats.maxLongBackEdgeExtra).toBeLessThanOrEqual(220);
     expect(stats.labelOverlaps).toBe(0);
     expect(stats.width).toBeLessThan(2100);
+    expect(stats.height).toBeLessThan(520);
   });
 
   test('component connector labels stay readable for parallel edges and interface pairs', async ({ page }) => {
@@ -1499,11 +1522,59 @@ db_ds ..> wa_ds : JDBC
       });
       document.body.removeChild(ifaceHost);
 
+      const microHost = render(`@startuml
+component APIGateway
+component UserService
+component OrderService
+component PaymentService
+component NotificationService
+
+APIGateway --> UserService : /api/users
+APIGateway --> OrderService : /api/orders
+OrderService --> PaymentService : processPayment
+OrderService ..> NotificationService : sendConfirmation
+PaymentService ..> NotificationService : sendReceipt
+@enduml`);
+      const microSvg = microHost.querySelector('svg');
+      const microTexts = Array.from(microSvg.querySelectorAll('text'));
+      const microRects = Array.from(microSvg.querySelectorAll('rect.uml-component-box')).map((rect) => ({ rect, box: box(rect) }));
+      function componentBox(label) {
+        const text = microTexts.find((node) => node.textContent.trim() === label);
+        if (!text) return null;
+        const tb = box(text);
+        const candidates = microRects.filter((item) =>
+          tb.l >= item.box.l - 1 &&
+          tb.r <= item.box.r + 1 &&
+          tb.t >= item.box.t - 24 &&
+          tb.b <= item.box.b + 24
+        );
+        return candidates.sort((a, b) => (a.box.r - a.box.l) * (a.box.b - a.box.t) - (b.box.r - b.box.l) * (b.box.b - b.box.t))[0]?.box || null;
+      }
+      const apiUsersLabel = microTexts.find((text) => text.textContent.trim() === '/api/users');
+      const apiOrdersLabel = microTexts.find((text) => text.textContent.trim() === '/api/orders');
+      const sendConfirmationLabel = microTexts.find((text) => text.textContent.trim() === 'sendConfirmation');
+      const gatewayBox = componentBox('APIGateway');
+      const userServiceBox = componentBox('UserService');
+      const orderServiceBox = componentBox('OrderService');
+      const apiUsersBox = apiUsersLabel ? box(apiUsersLabel) : null;
+      const apiOrdersBox = apiOrdersLabel ? box(apiOrdersLabel) : null;
+      const microLabelsClear = !!gatewayBox && !!userServiceBox && !!orderServiceBox && !!apiUsersBox && !!apiOrdersBox &&
+        apiUsersBox.l > gatewayBox.r + 10 &&
+        apiUsersBox.r < userServiceBox.l - 10 &&
+        apiOrdersBox.l > gatewayBox.r + 10 &&
+        apiOrdersBox.r < orderServiceBox.l - 10;
+      const sendConfirmationSingleLine = !!sendConfirmationLabel &&
+        sendConfirmationLabel.querySelectorAll('tspan').length === 0 &&
+        sendConfirmationLabel.textContent.trim() === 'sendConfirmation';
+      document.body.removeChild(microHost);
+
       return {
         parallelOk,
         userApiCount: userApiLabels.length,
         dataStoreCount: dataStoreLabels.length,
         ifaceLabelsClearSymbols,
+        microLabelsClear,
+        sendConfirmationSingleLine,
       };
     });
 
@@ -1511,6 +1582,8 @@ db_ds ..> wa_ds : JDBC
     expect(stats.userApiCount).toBe(1);
     expect(stats.dataStoreCount).toBe(1);
     expect(stats.ifaceLabelsClearSymbols).toBe(true);
+    expect(stats.microLabelsClear).toBe(true);
+    expect(stats.sendConfirmationSingleLine).toBe(true);
   });
 
   test('component port routing avoids unnecessary empty U-loops between neighboring ports', async ({ page }) => {
@@ -1657,6 +1730,71 @@ t_out2 --> n_in : POST
       expect(result.hasSvg, `${name} rendered`).toBe(true);
       expect(result.loops, `${name} unnecessary loops`).toEqual([]);
     }
+  });
+
+  test('component side anchors straighten when a legal side shift removes corners', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '1200px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLComponentDiagram
+      ).render(host, `@startuml
+left to right direction
+component "Legacy Module" #FF8888 crosshatch as Legacy
+component "Deprecated API" #EEEEEE dotted as Deprecated
+component "Active Service" #AADDFF grid as Active
+component "New Module" #88DD88 as New
+Legacy --> Active
+Deprecated --> Active
+Active --> New
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, straightIncoming: 0, tinyDoglegs: 0 };
+      }
+
+      function parsePoints(polyline) {
+        return (polyline.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      const routes = Array.from(svg.querySelectorAll('polyline'))
+        .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
+        .filter((points) => points.length >= 2);
+      let straightIncoming = 0;
+      let tinyDoglegs = 0;
+      for (const points of routes) {
+        const first = points[0];
+        const last = points[points.length - 1];
+        if (first.x < last.x && points.length === 2 && Math.abs(first.y - last.y) < 1) straightIncoming++;
+        if (points.length === 4 &&
+            Math.abs(points[0].y - points[1].y) < 1 &&
+            Math.abs(points[1].x - points[2].x) < 1 &&
+            Math.abs(points[2].y - points[3].y) < 1 &&
+            Math.abs(points[1].y - points[2].y) <= 8) {
+          tinyDoglegs++;
+        }
+      }
+
+      document.body.removeChild(host);
+      return { hasSvg: true, straightIncoming, tinyDoglegs };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.straightIncoming).toBeGreaterThanOrEqual(2);
+    expect(stats.tinyDoglegs).toBe(0);
   });
 
   test('component interface labels do not overlap component boxes', async ({ page }) => {
@@ -2315,6 +2453,82 @@ Refunded --> [*]
       expect(result.noteRouteHits, `${name} notes on transition routes`).toBe(0);
       expect(result.noteLabelHits, `${name} notes on labels`).toBe(0);
     }
+  });
+
+  test('state transitions from different sources do not merge at target stems', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!(/** @type {any} */ (window)).UMLStateDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '760px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLStateDiagram
+      ).render(host, `@startuml
+layout portrait
+[*] --> Idle
+Failed --> Idle : reset
+Done --> [*]
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, sharedTargetStems: 0, targetStemXs: [] };
+      }
+
+      function parsePoints(polyline) {
+        return (polyline.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      const idleText = Array.from(svg.querySelectorAll('text')).find((text) => text.textContent.trim() === 'Idle');
+      const idleBox = idleText ? /** @type {SVGGraphicsElement} */ (idleText).getBBox() : null;
+      const stateRects = Array.from(svg.querySelectorAll('rect'))
+        .filter((rect) => !rect.classList.contains('uml-note-box'))
+        .map((rect) => {
+          const box = /** @type {SVGGraphicsElement} */ (rect).getBBox();
+          return { l: box.x, r: box.x + box.width, t: box.y, b: box.y + box.height };
+        });
+      const idleRect = idleBox
+        ? stateRects.find((rect) => idleBox.x >= rect.l && idleBox.x + idleBox.width <= rect.r && idleBox.y >= rect.t && idleBox.y + idleBox.height <= rect.b)
+        : null;
+      const targetStemXs = [];
+      if (idleRect) {
+        const routes = Array.from(svg.querySelectorAll('polyline'))
+          .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
+          .filter((points) => points.length >= 2);
+        for (const points of routes) {
+          const last = points[points.length - 1];
+          const prev = points[points.length - 2];
+          const entersIdleTop = Math.abs(last.y - idleRect.t) < 1 &&
+            last.x >= idleRect.l - 1 && last.x <= idleRect.r + 1 &&
+            Math.abs(last.x - prev.x) < 1;
+          if (entersIdleTop) targetStemXs.push(Math.round(last.x));
+        }
+      }
+
+      let sharedTargetStems = 0;
+      for (let i = 0; i < targetStemXs.length; i++) {
+        for (let j = i + 1; j < targetStemXs.length; j++) {
+          if (Math.abs(targetStemXs[i] - targetStemXs[j]) < 12) sharedTargetStems++;
+        }
+      }
+
+      document.body.removeChild(host);
+      return { hasSvg: true, sharedTargetStems, targetStemXs };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.targetStemXs.length).toBeGreaterThanOrEqual(2);
+    expect(stats.sharedTargetStems).toBe(0);
   });
 
   test('state example keeps the context, interface, and center state visually aligned', async ({ page }) => {
