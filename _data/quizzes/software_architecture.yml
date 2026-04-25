@@ -9,6 +9,16 @@ questions:
       - "The Allocation Paradigm"
       - "The Module Paradigm"
     correct_index: 1
+    option_feedback:
+      0: |
+        The structural view emphasizes components and connectors. The question asks for the view that
+        centers architecture on consequential decisions.
+      2: |
+        Allocation concerns map software to hardware, teams, or files. That is narrower than defining
+        architecture as principal decisions.
+      3: |
+        The module view is one architectural view, not the paradigm that defines architecture as
+        decisions and rationale.
     explanation: "**The decision-based paradigm defines architecture as the set of principal design decisions, not just structural elements — championed by Taylor et al. as an alternative to the box-and-line view.** The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
 
   - id: 2
@@ -19,6 +29,16 @@ questions:
       - "Architecture = {Modules, Layers, Interfaces}"
       - "Architecture = {Structure, Behavior, Constraints}"
     correct_index: 1
+    option_feedback:
+      0: |
+        Components, connectors, and style are associated with later structural definitions. Perry and
+        Wolf’s formulation explicitly included rationale.
+      2: |
+        Modules, layers, and interfaces are useful structures, but they are not Perry and Wolf’s
+        three-part formula.
+      3: |
+        Structure, behavior, and constraints are plausible architectural concerns, but the Perry and
+        Wolf formula is elements, form, and rationale.
     explanation: "**Perry and Wolf's 1992 formula defines architecture as Elements + Form + Rationale — not components/connectors (Bass) or modules/layers alone.** Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
 
   - id: 3
@@ -29,6 +49,16 @@ questions:
       - "Drift involves new decisions that don't violate rules; erosion involves direct violations of the intended architecture."
       - "Drift is structural, whereas erosion is decision-based."
     correct_index: 2
+    option_feedback:
+      0: |
+        Drift is not necessarily intentional. The distinction is whether the new choices violate the
+        intended architecture.
+      1: |
+        Both terms describe divergence between intended and realized architecture. Erosion is the more
+        direct rule-breaking form.
+      3: |
+        The difference is not structural versus decision-based. Both are about how implementation
+        choices relate to architectural intent.
     explanation: "**Drift adds decisions not in the plan without breaking it, while erosion explicitly violates the intended architectural rules — erosion is more damaging because it creates direct contradictions.** **Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
 
   - id: 4
@@ -39,6 +69,16 @@ questions:
       - "Descriptive Architecture"
       - "Conceptual Architecture"
     correct_index: 2
+    option_feedback:
+      0: |
+        Prescriptive architecture is the intended or planned architecture. The question asks for what
+        actually exists in code and artifacts.
+      1: |
+        Target architecture is another way to talk about intended direction. It is not the observed
+        as-built architecture.
+      3: |
+        Conceptual architecture is an abstraction used for reasoning. Descriptive architecture is the
+        realized system.
     explanation: "**Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts — it describes what was built, not what was intended.** **Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
 
   - id: 5
@@ -49,6 +89,16 @@ questions:
       - "The descriptive architecture becomes the new prescription."
       - "The system's performance improves through ad-hoc optimizations."
     correct_index: 1
+    option_feedback:
+      0: |
+        Complete divergence usually reduces coherence rather than increasing flexibility. Flexibility
+        comes from intentional structure, not accidental inconsistency.
+      2: |
+        The built system can inform a new plan, but divergence alone does not automatically create a
+        healthy new prescription.
+      3: |
+        Ad-hoc optimizations may improve one local metric, but total loss of conceptual integrity is a
+        maintainability failure, not an architectural success.
     explanation: "**When descriptive and prescriptive architectures diverge completely, the system loses conceptual integrity and accumulates technical debt until it becomes a 'Big Ball of Mud' — unmaintainable and unstructured.** Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
 
   - id: 6
@@ -59,4 +109,14 @@ questions:
       - "Strict adherence to layered architecture."
       - "Switching from structural to decision-based modeling."
     correct_index: 1
+    option_feedback:
+      0: |
+        Diagrams can reveal architectural problems, but the JackTrip issue was not caused by having too
+        many descriptive diagrams.
+      2: |
+        Strict layering would constrain links. Link overload smells arise when dependencies spread
+        without the intended control.
+      3: |
+        Changing modeling paradigms is not the reported root cause. The erosion came from unmanaged
+        recurring changes under project pressure.
     explanation: "**In JackTrip, time constraints and recurring unmanaged changes were the primary drivers of architectural erosion and link overload smells — not diagramming choices or adherence to a layered style.** The JackTrip case study showed that time constraints, funding issues, and undocumented changes drove architectural erosion symptoms like link overload."

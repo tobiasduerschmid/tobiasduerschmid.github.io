@@ -394,6 +394,10 @@ steps:
             - "Using inheritance instead of composition"
             - "Having too many classes in a project"
           correct_index: 1
+          option_feedback:
+            0: "Coupling is a *dependency* property, not a *layout* property. Two files in different directories can be tightly coupled (one imports the other's internals); two methods in the same file can be loosely coupled (talk only through small interfaces). Where the code lives doesn't determine how tangled it is."
+            2: "Inheritance is one *cause* of high coupling (subclasses see the parent's internals), but the term coupling itself just measures the dependency strength — composition can be tightly coupled too if you reach into the composed object's internals."
+            3: "Class count is independent of coupling. A monolith with 1 class and a dozen God-objects can both be tightly coupled; a 50-class system with narrow interfaces can be loosely coupled. The relevant question is *what depends on what*, not *how many*."
           explanation: |
             Coupling measures how tangled your components are with each other's internals. High coupling = change one thing, break five others. The `CourseManager` is a coupling disaster — its methods share helpers and data in ways that make independent changes basically impossible.
 
@@ -406,6 +410,10 @@ steps:
             - "At least 3 — enrollment/administration, grading/academics, and reporting/registrar"
             - "5 — one per method"
           correct_index: 2
+          option_feedback:
+            0: "Actors are a property of the *requirements*, not the code — a single class can (and often does) accidentally serve many actors. That's exactly the SRP violation in this scenario: one class, many change-requesters."
+            1: "Students and instructors are *users* (consumers of the system's outputs); actors are *change-requesters* (the people who file tickets that mutate this code). Here the change-requesters are administration, academics, and the registrar — three distinct departments who file independent tickets."
+            3: "Methods aren't actors. A class can have 20 methods all answering to one stakeholder (one actor) or 3 methods answering to three (three actors). Counting methods is a folk-rule proxy that misfires both ways."
           explanation: |
             At least three different groups want different things from this class: (1) **administration** cares about enrollment, (2) the **academic department** cares about grade calculation, and (3) the **registrar** cares about reports and transcripts. When one class tries to make everyone happy, changes from one group break things for another. This is exactly why the Single Responsibility Principle exists — you'll learn it next.
 
@@ -430,6 +438,8 @@ steps:
             - "The longer this class stays monolithic, the more tickets will pile up on one file, slowing every team down and making code review a coordination exercise between three teams"
             - "The code file is over 60 lines long, and files longer than 60 lines are always bad design"
           correct_indices: [0, 1, 2]
+          option_feedback:
+            3: "SOLID is about *axes of change* — who requests changes and why — not file size. A 400-line class serving one actor is fine; a 40-line class serving three actors is the real problem. Folk rules like \"≤60 lines per class\" *correlate* with good design but don't *cause* it; using them as the argument confuses symptom with cause."
           explanation: |
             The first three are substantive architectural arguments — future-change risk, multi-audience coupling, and cross-team coordination cost. These are exactly what you'll hear senior engineers say in code review. The fourth option (line count) is a superficial rule of thumb; SOLID isn't about counting lines, it's about *actors* and *reasons to change*. A 400-line class serving one actor can be fine. A 40-line class serving three actors is a bomb.
 

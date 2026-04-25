@@ -11,6 +11,13 @@ questions:
       - "The loop makes the adapter too slow for production use"
       - "The adapter violates the Liskov Substitution Principle"
     correct_index: 1
+    option_feedback:
+      0: |
+        Composition is a normal and often preferred way to implement an adapter. The concern is not inheritance; it is that the adapter is starting to contain nontrivial behavior.
+      2: |
+        A five-iteration loop may or may not be a performance issue. The more general design signal is that the adapter is simulating behavior rather than just translating an interface.
+      3: |
+        LSP would be a concern if clients relying on the `Duck` contract were broken. The prompt points instead to adapter thickness: logic accumulating inside the wrapper.
     explanation: "**The loop in `fly()` is behavioral adaptation beyond simple interface translation, which is a warning sign that the adapter is taking on too much responsibility.** Simple interface translation (renaming `quack()` to `gobble()`) is low-risk. But the `fly()` mapping introduces **behavioral adaptation** — the adapter contains logic (a loop) that goes beyond translating signatures. As adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. This is a warning sign that the adapter may be taking on too much responsibility."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "Use a Facade instead — it simplifies complex subsystems"
       - "Use a Mediator instead — it coordinates between components"
     correct_index: 1
+    option_feedback:
+      0: |
+        An adapter can improve decoupling when an interface mismatch cannot be changed directly, especially with legacy or third-party code. When the team owns both sides, an extra wrapper may just preserve a mismatch.
+      2: |
+        A facade simplifies a complicated subsystem for clients. It is not the direct answer to two team-owned interfaces that can simply be aligned.
+      3: |
+        A mediator coordinates peer objects with interaction rules. A service and database layer with mismatched interfaces is not automatically a many-to-many coordination problem.
     explanation: "**Using an Adapter when you control both interfaces is unnecessary — simply refactor one to match the other directly.** The Adapter pattern is designed for **after-the-fact** interface mismatches — typically with third-party or legacy code you **cannot modify**. If you control both interfaces, there is no mismatch to adapt around. Simply **refactor** one interface to match the other. Adding an Adapter here would introduce unnecessary indirection. If you anticipate the interfaces diverging in the future (e.g., the database layer will be replaced), **Bridge** is the upfront solution."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "A compile-time error prevents the call"
       - "The item silently ignores the call with no error"
     correct_index: 1
+    option_feedback:
+      0: |
+        Composite lets clients treat leaves and containers uniformly for shared operations, but leaves are still leaves. A `MenuItem` containing children would contradict its role in the structure.
+      2: |
+        Because `add()` is declared on the abstract component, the call type-checks. The failure is deferred to runtime in the transparent version.
+      3: |
+        Some implementations could choose to ignore unsupported operations, but that hides an invalid call. The quiz's transparent composite design expects the leaf to reject it explicitly.
     explanation: "**This is the Transparent Composite trade-off — a runtime exception is thrown because leaves inherit child-management methods that are meaningless for them.** This is the **Transparent Composite** trade-off. By putting `add()`/`remove()` on the abstract `Component`, clients get a uniform interface (any component can be treated the same), but **leaves inherit methods that are semantically meaningless**. The leaf must handle this — typically by throwing `UnsupportedOperationException`. The **Safe Composite** alternative puts these methods only on `Composite`, preventing the call at compile time but requiring clients to downcast."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "Adapter is structural; Facade is behavioral; Decorator is creational"
       - "They are interchangeable — the choice depends only on team preference"
     correct_index: 1
+    option_feedback:
+      0: |
+        Object count is not reliable enough to define the patterns. A facade often covers several objects, but the real distinction is whether the wrapper converts, simplifies, or extends behavior.
+      2: |
+        Adapter, Facade, and Decorator are all structural patterns in the GoF classification. The difference is their design intent.
+      3: |
+        The wrappers may look similar in code, but they answer different questions. Choosing the wrong intent can preserve the wrong dependency or put behavior in the wrong place.
     explanation: "**The key distinction is intent: Adapter converts an interface, Facade simplifies a set of interfaces, and Decorator adds behavior through the same interface.** The distinction is **intent**: **Adapter** changes *what* the interface looks like (converts incompatible to compatible). **Facade** changes *how much* of the interface you see (simplifies a complex subsystem). **Decorator** changes *what the object does* through the same interface (adds behavior). Understanding intent is what separates correct pattern application from cargo-cult pattern usage."
 
   - id: 5
@@ -59,6 +87,13 @@ questions:
       - "Add an Adapter between the Facade and each subsystem"
       - "Convert to a Singleton so there is only one Facade instance"
     correct_index: 1
+    option_feedback:
+      0: |
+        Mediator is for coordinating colleagues that communicate through it. A large facade is still a simplification layer; it usually needs narrower interfaces, not bidirectional coordination.
+      2: |
+        Adapters help with incompatible interfaces. They would add wrappers around subsystem calls without addressing the facade's growing responsibility.
+      3: |
+        Singleton controls instance count. It does not make a broad interface more cohesive or easier to maintain.
     explanation: "**A growing Facade should be split into multiple focused Facades, each responsible for one coherent aspect of the subsystem.** A single Facade wrapping a large subsystem risks becoming a **god class**. The solution is to create **multiple focused Facades**, each responsible for a different aspect of the subsystem. `PlaybackFacade` handles movie/music playback, `SetupFacade` handles karaoke and game setup, and `CalibrationFacade` handles system tuning. Each Facade remains cohesive and manageable."
 
   - id: 6
@@ -71,4 +106,11 @@ questions:
       - "Facades can only be used with structural patterns; Mediators with behavioral patterns"
       - "There is no practical difference — both achieve decoupling"
     correct_index: 1
+    option_feedback:
+      0: |
+        Direction of dependency is an architectural property, not a reliable speed rule. The important effect is whether subsystem objects know about the coordination layer.
+      2: |
+        Facade and Mediator come from different pattern categories, but category labels do not explain the dependency consequence. The key is optional simplification layer versus required coordination channel.
+      3: |
+        Both can reduce direct client coupling, but they do so differently. A subsystem that does not know its facade can be used without it; mediator colleagues are designed to communicate through the mediator.
     explanation: "**One-directional communication means the subsystem can be used and tested independently of the Facade, while Mediator colleagues cannot operate without the mediator.** Because the subsystem **does not know** about the Facade, it remains fully independent — usable and testable without the Facade present. In contrast, Mediator colleagues **depend on the Mediator interface** to communicate — they cannot function independently. This is why Facade is a *convenience layer* (optional), while Mediator is a *coordination layer* (required for the objects to interact)."

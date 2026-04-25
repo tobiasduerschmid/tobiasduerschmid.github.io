@@ -17,6 +17,16 @@ questions:
       - "Arrow functions cannot access variables from the outer scope"
       - "The `onClick` handler needs to be a named function, not an anonymous arrow function"
     correct_index: 1
+    option_feedback:
+      0: |
+        The arrow function is valid JavaScript; the problem is that changing a local variable does not
+        persist state or request a React render.
+      2: |
+        Arrow functions do close over surrounding variables; the issue is that the variable is recreated
+        on each render.
+      3: |
+        A named function would still mutate a throwaway local; the fix is to put persistent UI data in
+        state.
     explanation: "**Mutating a local variable does not trigger a re-render because React re-runs the entire function on every render, resetting `count` to 0 — `useState` is required to persist values across renders.** React's model is fundamentally different from C++ member variables. A component function is re-invoked on every render, destroying all local variables. `useState` stores values in React's internal data structure that persists across renders. The setter function is the ONLY way to signal React that state changed."
 
   - id: 2
@@ -27,6 +37,15 @@ questions:
       - "This is correct — React requires all displayed data to be in state"
       - "The only problem is naming — `filteredTasks` should be called `visibleTasks`"
     correct_index: 1
+    option_feedback:
+      0: |
+        Storing a filtered copy creates a second source of truth that can drift from the original list.
+      2: |
+        React can render values derived from props and state during render; only data that changes
+        independently needs state.
+      3: |
+        A clearer variable name does not remove the bug-prone obligation to update two related states
+        together.
     explanation: "**Storing derived data as separate state violates the minimal state principle and creates sync bugs — the filtered list should be derived from `allTasks` and a filter string, not stored independently.** React's principle: store the MINIMAL state and DERIVE everything else. The filtered list is computable from (allTasks + filter), so it should not be separate state. Two pieces of state that must be kept in sync is a recipe for bugs — the data becomes inconsistent the moment one is updated without the other."
 
   - id: 3
@@ -37,6 +56,15 @@ questions:
       - "Keys are optional — React works fine without them, just slower"
       - "Array indices are not valid as React keys — React requires string keys only"
     correct_index: 1
+    option_feedback:
+      0: |
+        React keys are for reconciliation identity, not CSS selection or animation by themselves.
+      2: |
+        Bad or missing keys can attach component state to the wrong item, not merely make rendering
+        slower.
+      3: |
+        Index keys are allowed, but they are unsafe when list items can be inserted, deleted, or
+        reordered.
     explanation: "**Stable keys let React identify which item is which across re-renders — index keys break this because deleting an item shifts all subsequent indices, causing React to associate state with the wrong items.** React uses keys to match elements between the old and new virtual DOM trees. If keys are stable (like database IDs), React knows item #42 is the same item #42 even if its position changed. With index keys, React thinks 'the item at index 2' is always the same item — but after a deletion, a different item now sits at index 2, inheriting the wrong state."
 
   - id: 4
@@ -47,6 +75,16 @@ questions:
       - "State is slow — building without state first ensures optimal performance"
       - "It is just a convention — there is no technical reason to build static first"
     correct_index: 1
+    option_feedback:
+      0: |
+        React components can use both; the teaching sequence is about reducing design complexity, not
+        satisfying a compiler limit.
+      2: |
+        The static-first pass is mainly about finding the minimal state model, not avoiding state
+        because it is inherently slow.
+      3: |
+        Building the static version first exposes component boundaries and data flow before
+        interactivity makes the design harder to reason about.
     explanation: "**Building static first separates the concerns of 'what the UI looks like' from 'how it changes', making it easier to identify minimal state and avoid over-engineering.** Building static first forces you to think about data flow (which component gets which props) before worrying about interactivity. This naturally reveals the component hierarchy and makes it easy to identify the minimal state: any data that (a) changes over time and (b) can't be computed from other state or props."
 
   - id: 5
@@ -61,6 +99,15 @@ questions:
       - "`<Badge count={0} />` renders normally"
       - "A React error about invalid node type"
     correct_index: 1
+    option_feedback:
+      0: |
+        React suppresses `false`, `null`, and `undefined`, but the number `0` is valid text and will
+        render.
+      2: |
+        JavaScript `&&` returns the left operand when it is falsy, so React receives `0`, not `<Badge
+        />`.
+      3: |
+        `0` is not an invalid React child; it is exactly the kind of primitive React renders as text.
     explanation: "**The number `0` IS a valid React node — unlike `false`, `null`, and `undefined` — so `{count && ...}` renders the literal `0` as text when count is zero, not nothing.** JavaScript's `&&` returns the first falsy value. `0 && <Badge />` evaluates to `0`. React renders `false`, `null`, and `undefined` as nothing, but renders `0` as the text '0'. This is a subtle and common bug. The fix: ensure the left operand is always a boolean."
 
   - id: 6
@@ -71,6 +118,16 @@ questions:
       - "In their common ancestor — both components need `filterText` (one for display, one for filtering). State should live in the lowest common ancestor that needs it, passed down as props with a callback for updates"
       - "In a global variable — both can access it without prop passing"
     correct_index: 2
+    option_feedback:
+      0: |
+        `SearchBar` owns the event source, but the state must live where every dependent sibling can
+        receive the same value.
+      1: |
+        `ProductTable` uses the filter, but putting state there would leave the input sibling unable to
+        display and update the shared value.
+      3: |
+        A global avoids prop passing by creating hidden shared state that React cannot track through the
+        component tree.
     explanation: "**State must be lifted to the lowest common ancestor because both siblings need `filterText` — the parent owns it and passes it down as props, with a callback for inverse data flow.** This is 'lifting state up'. `SearchBar` needs `filterText` to show the current value. `ProductTable` needs it to filter rows. Their parent owns the state and passes it down: `<SearchBar value={text} onChange={setText} />` and `<ResultsList filter={text} />`. The child calls `onChange(newValue)` to notify the parent — this is inverse data flow."
 
   - id: 7
@@ -82,6 +139,15 @@ questions:
       - "Inheritance is slower at runtime in React's virtual DOM"
       - "React does not support class components at all"
     correct_index: 1
+    option_feedback:
+      0: |
+        JavaScript supports class inheritance; React discourages it because composition fits UI
+        variation better.
+      2: |
+        The main issue is coupling and fragile reuse, not virtual-DOM speed.
+      3: |
+        React still understands class components, but composition is preferred over inheritance for
+        sharing UI structure.
     explanation: "**React prefers composition because deep inheritance hierarchies are fragile — modifying a parent class can unexpectedly break subclasses, while composition via `children` is flexible and non-breaking.** The 'fragile base class' problem: modifying a parent class can unexpectedly break subclasses. React's composition model avoids this — a `Card` component that accepts `children` can wrap ANY content without knowing what it is. This gives more flexibility than inheritance and follows the same 'prefer composition over inheritance' principle from OOP courses."
 
   - id: 8
@@ -156,6 +222,14 @@ questions:
       - "`setCount(count + 1)` executes immediately during render (not on click). This updates state, which triggers another render, which calls `setCount` again — an infinite loop. Fix: `onClick={() => setCount(count + 1)}` or extract `handleClick` as a named function"
       - "The component renders fine but clicking does nothing because the handler returns `undefined`"
     correct_index: 2
+    option_feedback:
+      0: |
+        `onClick={setCount(count + 1)}` calls the setter during render instead of passing React a
+        function to call later.
+      1: |
+        Setters can be used from handlers; the bug is invoking the setter while JSX is being evaluated.
+      3: |
+        The code never waits for a click because the function call has already happened during render.
     explanation: "**`setCount(count + 1)` executes immediately during render rather than on click, triggering a state update that causes another render, creating an infinite loop — always pass a function reference, not a call.** onClick expects a *function reference*, not a function call result. `setCount(count + 1)` calls the function right away and passes its return value (`undefined`) to onClick. Since `setCount` triggers a re-render, and it fires on every render, the component loops infinitely. This is one of the most common React bugs for beginners — always pass the function, never call it: `onClick={fn}` not `onClick={fn()}`."
 
   - id: 12
@@ -175,6 +249,16 @@ questions:
       - "`useEffect` cannot read props — `userId` is undefined inside the callback"
       - "The `.then()` chain should be replaced with `async/await`"
     correct_index: 1
+    option_feedback:
+      0: |
+        Fetching in an effect is common; the missing dependency is what prevents the effect from
+        following prop changes.
+      2: |
+        Effects close over props from a render; the dependency array tells React when to create a fresh
+        effect with new prop values.
+      3: |
+        `async/await` would not change when the effect runs; `[userId]` is the needed data-flow
+        correction.
     explanation: "**`[]` means the effect runs only on mount and never re-runs — adding `[userId]` to the dependency array is required so the fetch re-runs whenever the userId prop changes.** The dependency array controls *when* an effect re-runs. `[]` = run once on mount and never again. `[userId]` = run on mount, then re-run whenever `userId` changes. Omitting `userId` from the array creates a stale closure — the callback captures the `userId` value from the first render and never updates. React's linting rule `react-hooks/exhaustive-deps` catches exactly this mistake."
 
   - id: 13
@@ -186,6 +270,16 @@ questions:
       - "`setUser({ ...user, name: 'Bob' });`"
       - "`setUser(prev => { prev.name = 'Bob'; return prev; });`"
     correct_index: 2
+    option_feedback:
+      0: |
+        Mutating the same object and passing it back gives React the same reference, so change detection
+        and rerendering can be skipped.
+      1: |
+        Replacing the whole object with `{ name: 'Bob' }` loses `age`; object spread preserves unchanged
+        fields.
+      3: |
+        The functional form gives the previous value safely, but returning that same mutated object
+        still violates React's immutability model.
     explanation: "**`setUser({ ...user, name: 'Bob' })` is correct because it creates a new object reference (triggering re-render) while preserving all other fields — mutating in-place passes the same reference and React skips the re-render.** Option A mutates the existing object — React detects changes by reference, so passing the same object reference means no re-render. Option B replaces the whole object, dropping `age`. Option D mutates `prev` in-place and returns the same reference — same problem as A. Option C spreads the existing object into a *new* object (new reference), then overrides only `name`. React sees a new reference, re-renders, and `age` is preserved."
 
   - id: 14
@@ -203,6 +297,15 @@ questions:
       - "(a) keys, (b) JSX rules, (c) state, (d) props"
       - "(a) JSX rules, (b) keys, (c) props, (d) state"
     correct_index: 1
+    option_feedback:
+      0: |
+        Incoming data changes are a props problem, while a counter that should change over time needs
+        state.
+      2: |
+        Keys diagnose identity moving between list items; they do not explain why incoming product data
+        fails to update.
+      3: |
+        JSX rules explain `className`, but they do not explain persistent counters or sibling data flow.
     explanation: "**The correct mapping is: (a) props, (b) useState, (c) stable keys, (d) JSX className — each symptom points to a distinct React concept.** (a) Data passed in not rendering = **props** issue. (b) Counter stuck at 0 = **state** issue (using `let` not `useState`). (c) State jumping after delete = **keys** issue (index keys instead of stable IDs). (d) `class` without effect = **JSX** issue (`class` → `className`). This tests your ability to diagnose which concept applies to each symptom."
 
   - id: 15

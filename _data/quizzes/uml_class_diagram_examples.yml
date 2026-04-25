@@ -13,6 +13,13 @@ questions:
       - "Composition: An Order is a part of a Customer and cannot exist without it."
       - "Generalization: Order is a subclass of Customer."
     correct_index: 1
+    option_feedback:
+      0: |
+        The multiplicity near `Order` tells how many orders one customer can be linked to. It does not mean one order has many customers.
+      2: |
+        Composition would use a filled diamond and would imply lifecycle ownership. This diagram shows a directed association, not part-whole ownership.
+      3: |
+        Generalization uses a hollow triangle arrowhead. A plain directed association does not mean `Order` inherits from `Customer`.
     explanation: "**This is an association from Customer to Order — the multiplicity `1` to `*` means one customer can place many orders.** The arrow indicates a directed association from **Customer** to **Order**. The multiplicity `1` on Customer and `*` on Order means one customer can be associated with any number of orders."
 
   - id: 2
@@ -29,6 +36,19 @@ questions:
       - "id"
       - "resetInternal()"
     correct_indices: [0, 3, 5]
+    option_feedback:
+      0: |
+        `serialNumber` has the `-` visibility marker, so it is private. Omitting it usually means reading names instead of the UML visibility symbols.
+      1: |
+        `#` means protected, not private. Protected members are visible to the class and its subclasses.
+      2: |
+        `+` means public. Public members are not private even when they are fields.
+      3: |
+        `isRunning` has the `-` marker, so it is private. The same visibility notation applies to fields and methods.
+      4: |
+        `~` means package/internal visibility in UML notation. It is not the same as private.
+      5: |
+        `resetInternal()` has the `-` marker, so the method is private. Parentheses do not change the visibility rule.
     explanation: "**The `-` prefix marks private members, so `serialNumber`, `isRunning`, and `resetInternal()` are the private ones.** In UML, `-` denotes **private**, `+` denotes **public**, `#` denotes **protected**, and `~` denotes **package/internal**. The private members are `serialNumber`, `isRunning`, and `resetInternal()`."
 
   - id: 3
@@ -43,6 +63,13 @@ questions:
       - "Generalization (Inheritance): Circle is a subclass of Graphic."
       - "Dependency: Circle uses Graphic."
     correct_index: 2
+    option_feedback:
+      0: |
+        Aggregation would use a hollow diamond and express a whole-part relationship. The hollow triangle means inheritance.
+      1: |
+        Realization uses a dashed line with a hollow triangle and is used for implementing an interface. `Graphic` is shown as an abstract class, and the line is solid.
+      3: |
+        Dependency uses a dashed arrow and means temporary use. The solid hollow-triangle arrow points to the superclass.
     explanation: "**This is Generalization (Inheritance) — the hollow triangle arrowhead pointing to the parent `Graphic` abstract class indicates Circle inherits from it.** The hollow arrowhead (empty triangle) pointing to the parent indicates **Generalization** (Inheritance). Since Graphic is an `abstract class`, Circle is inheriting from it."
 
   - id: 4
@@ -57,6 +84,13 @@ questions:
       - "Composition"
       - "Inheritance"
     correct_index: 2
+    option_feedback:
+      0: |
+        A plain association would be drawn without a filled diamond. The filled diamond adds strong whole-part ownership semantics.
+      1: |
+        Aggregation uses a hollow diamond. A filled diamond is the composition notation.
+      3: |
+        Inheritance uses a hollow triangle arrowhead. The diamond notation is about ownership, not subclassing.
     explanation: "**The filled diamond represents Composition, indicating Engine cannot exist independently of Car.** The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents **Composition** — a strong ownership where `Engine` cannot exist independently of `Car`."
 
   - id: 5
@@ -71,6 +105,13 @@ questions:
       - "Realization: Payment implements the Processable interface."
       - "Dependency: Payment depends on Processable."
     correct_index: 2
+    option_feedback:
+      0: |
+        Generalization would be a solid line with a hollow triangle. The dashed hollow-triangle line marks realization of an interface.
+      1: |
+        Association is a structural link between instances. Here the notation says `Payment` fulfills the `Processable` interface contract.
+      3: |
+        A dependency is a dashed arrow with an open arrowhead, not a hollow triangle. Realization is stronger: it means implementation of the interface.
     explanation: "**This is Realization — the dashed line with a hollow arrowhead shows Payment commits to implementing all methods in the Processable interface.** The **dashed line with a hollow arrowhead** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..|>\"></span>) represents **Realization** — the class commits to implementing all methods defined in the interface. Generalization (inheritance) uses a **solid line** with a hollow arrowhead instead."
 
   - id: 6
@@ -85,6 +126,13 @@ questions:
       - "An Order can belong to zero or more Customers."
       - "There are no constraints on the number of Orders."
     correct_index: 1
+    option_feedback:
+      0: |
+        `0..*` explicitly allows zero. A minimum of one would be written `1..*`.
+      2: |
+        The multiplicity shown on the `Order` end is read as how many orders one customer may be associated with. It is not the multiplicity of customers per order.
+      3: |
+        `0..*` is still a constraint: the lower bound is zero and the upper bound is unbounded. It is not the same as leaving multiplicity unspecified.
     explanation: "**`0..*` means zero or more — a Customer can have any number of Orders, including none.** The multiplicity `0..*` means **zero or more**. Reading from the Customer side: one Customer is associated with zero or more Orders. This means a Customer can exist without any Orders, or have as many as needed."
 
   - id: 7
@@ -100,6 +148,17 @@ questions:
       - "Each LineItem must reference exactly one Product."
       - "A Product cannot exist without a LineItem."
     correct_indices: [0, 2, 3]
+    option_feedback:
+      0: |
+        The filled diamond at `Order` indicates composition: `LineItem` is part of the order's lifecycle. Omitting this misses the ownership meaning of the diamond.
+      1: |
+        Composition says the part's lifecycle is tied to the whole in this model. A `LineItem` is not modeled as independently existing without its `Order`.
+      2: |
+        The dashed hollow-triangle arrow to `Billable` is realization. That means `Order` implements the interface.
+      3: |
+        The `1` multiplicity at the `Product` end means each `LineItem` is associated with exactly one product. Omitting this loses a business rule encoded in the diagram.
+      4: |
+        The `Product` relationship is a plain association with `0..*` line items. A product may be referenced by zero line items and still exist.
     explanation: "**Composition means LineItems are destroyed with their Order; Order realizes Billable; and each LineItem must reference exactly one Product while Products can exist independently.** The **filled diamond** (composition) between Order and LineItem means LineItems **cannot exist independently** — deleting the Order destroys them too. The **dashed arrow** shows Order **realizes** Billable. The multiplicity `1` on Product means each LineItem references exactly **one** Product. The association between LineItem and Product is a plain association (not composition), so Products **can** exist without LineItems."
 
   - id: 8
@@ -114,6 +173,13 @@ questions:
       - "Protected — accessible within the class and its subclasses."
       - "Package — accessible by classes in the same package."
     correct_index: 2
+    option_feedback:
+      0: |
+        Public visibility is marked with `+`. The `#` symbol is protected.
+      1: |
+        Private visibility is marked with `-`. The `#` symbol allows subclass access in the UML visibility convention.
+      3: |
+        Package visibility is marked with `~`. It is distinct from protected visibility.
     explanation: "**`#` means protected — accessible within the class and its subclasses, but not from unrelated classes.** The `#` symbol means **protected** — the member is accessible within the class itself and any of its subclasses, but not from unrelated classes. The full set: `+` (public), `-` (private), `#` (protected), `~` (package)."
 
   - id: 9
@@ -128,6 +194,13 @@ questions:
       - "Dependency — Formatter temporarily uses IOException (e.g., throws it)."
       - "Generalization — Formatter inherits from IOException."
     correct_index: 2
+    option_feedback:
+      0: |
+        Association would imply a structural reference, usually drawn with a solid line. The dashed arrow means temporary use.
+      1: |
+        Composition would use a filled diamond and whole-part ownership. An exception type is not shown as part of `Formatter`.
+      3: |
+        Generalization uses a solid hollow-triangle arrowhead. Throwing or mentioning an exception type is a dependency, not inheritance.
     explanation: "**This is a Dependency — the dashed arrow shows Formatter temporarily uses IOException without holding a permanent reference.** The **dashed arrow** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) represents a **Dependency** — the weakest class relationship. Formatter uses IOException (e.g., as a thrown exception) but does not hold a permanent reference to it."
 
   - id: 10
@@ -149,6 +222,13 @@ questions:
       - "Student has a composition with Roster (filled diamond)."
       - "Student inherits from Roster (hollow triangle)."
     correct_index: 0
+    option_feedback:
+      1: |
+        A dependency would fit a parameter or local variable used temporarily. Here `Roster roster;` stores a field, so the relationship is structural.
+      2: |
+        A field alone does not prove composition. Composition would require whole-part lifecycle ownership, not just a stored reference assigned from outside.
+      3: |
+        There is no `extends Roster` relationship in the code. Storing a `Roster` field is not inheritance.
     explanation: "**This is an association with `~` (package) visibility because the field stores a permanent reference and has no explicit Java access modifier.** Since `Student` stores a **permanent reference** to `Roster` as a field, this is an **association** (not a dependency). The field has no explicit Java access modifier, so in Java it defaults to **package-private**, which maps to `~` visibility in UML."
 
   - id: 11
@@ -163,6 +243,13 @@ questions:
       - "By using the <<interface>> stereotype."
       - "By placing a # symbol before the class name."
     correct_index: 1
+    option_feedback:
+      0: |
+        Underlining is used in UML for static features, not abstract classes. Abstract classifiers are shown with italics or `{abstract}`.
+      2: |
+        `<<interface>>` marks an interface. An abstract class is still a class and can be marked abstract without becoming an interface.
+      3: |
+        `#` is protected visibility for members. It does not mark a class as abstract.
     explanation: "**An abstract class is shown by italicizing the class name or adding `{abstract}` — not by using `<<interface>>`, which is reserved for interfaces.** An abstract class is indicated by **italicizing** the class name or annotating it with `{abstract}`. Abstract operations (methods without implementation) are also italicized. The `<<interface>>` stereotype is used for interfaces, not abstract classes."
 
   - id: 12
@@ -177,6 +264,15 @@ questions:
       - "A class catches an exception of another class type."
       - "A class creates a local variable of another class type inside a method."
     correct_indices: [0, 2, 3]
+    option_feedback:
+      0: |
+        A parameter type is temporary use in the operation signature, so it is a dependency rather than a stored structural relationship.
+      1: |
+        A field stores a longer-lived reference. That is modeled as an association, aggregation, or composition depending on ownership, not a mere dependency.
+      2: |
+        Catching another type is temporary use inside behavior. That is a dependency, since no permanent reference is stored.
+      3: |
+        A local variable exists only inside a method call. UML models that kind of use as a dependency.
     explanation: "**A dependency arises from temporary usage (parameter, local variable, exception) — storing as an instance field creates an association instead.** A **dependency** is a temporary \"uses\" relationship — it occurs when one class references another only as a method parameter, local variable, return type, or exception. Storing a reference as an instance **field** creates a permanent structural link, making it an **association** (or aggregation/composition) rather than a dependency."
 
   - id: 13
@@ -191,6 +287,13 @@ questions:
       - "Boss holds a reference to Employee."
       - "Employee depends on Boss temporarily (like a method parameter)."
     correct_index: 1
+    option_feedback:
+      0: |
+        Inheritance would use a hollow triangle arrowhead. This open arrowhead on a solid association means navigability.
+      2: |
+        The arrow is read from tail to head: `Employee` can navigate to `Boss`. It does not show `Boss` holding the reference back.
+      3: |
+        A dependency would be dashed. This solid association means a structural link, commonly a field or reference.
     explanation: "**The open arrowhead indicates navigability — Employee holds a reference to Boss, meaning Employee can navigate to Boss but not necessarily vice versa.** An open arrowhead on an association (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) indicates **navigability** — the class at the tail (Employee) can navigate to the class at the head (Boss). In code, this means Employee has a field or attribute referencing Boss. This is different from generalization (hollow triangle) and dependency (dashed arrow)."
 
   - id: 14
@@ -205,4 +308,11 @@ questions:
       - "In design-level diagrams, to show which class stores the reference — this maps directly to a field in code."
       - "Never — navigability is not part of UML."
     correct_index: 2
+    option_feedback:
+      0: |
+        Early domain diagrams often leave navigability undecided. Adding arrowheads everywhere too soon can imply design decisions the team has not made.
+      1: |
+        This reverses the usual guidance. Analysis models often avoid navigability; design models add it when deciding which class stores references.
+      3: |
+        Navigability is part of UML association notation. It is optional, but it is real and useful at design level.
     explanation: "**Add navigability arrowheads at the design level to show which class holds the reference — in early analysis models, plain associations are preferred.** Navigability is a **design-level** detail. In early analysis or domain models, plain associations (no arrowheads) are preferred because you haven't decided which class holds the reference yet. Once you move to detailed design, adding navigability arrowheads shows exactly which class has a field referencing the other — this maps directly to code."

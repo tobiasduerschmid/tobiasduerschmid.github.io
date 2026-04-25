@@ -841,6 +841,10 @@ steps:
             - "`git reset --hard`"
             - "`git rm --cached config.py`"
           correct_index: 1
+          option_feedback:
+            0: "Without `--staged`, `git restore` operates on the *working directory*, overwriting your file with the last committed version — your edits would be **gone**. The `--staged` flag is what redirects the operation to the staging area instead. Same command name, very different effect."
+            2: "`--hard` doesn't surgically unstage one file; it discards every uncommitted change in the entire working directory and staging area. Loud, irreversible, and not what the question asked for."
+            3: "`git rm --cached` removes the file from Git's tracking entirely (and stages a deletion), as if you had never added it. That's a different operation — used for files that should never have been tracked (like `.env`), not for routine unstaging."
           explanation: "`git restore --staged <file>` unstages the file — it moves it off the post editor back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
 
         - question: "**[Interleaved: Revisit Step 2]** You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
@@ -871,6 +875,9 @@ steps:
           correct_indices:
             - 0
             - 2
+          option_feedback:
+            1: "`git revert` creates a new commit that undoes a previous one (safe for shared branches). `git reset --hard` is a different command: it *moves* the branch pointer backwards and silently discards everything past it — no audit trail, no recovery for collaborators who already pulled the discarded commits."
+            3: "The `--hard` flag means \"reset working directory **too**\" — it adds destruction on top of the default behavior, it doesn't restrict it. `git reset` with no flag (the default `--mixed`) is the one that touches the staging area but spares your working-directory edits; `--hard` is strictly more destructive than the default."
           explanation: "`git reset --hard` discards all uncommitted changes in both the working directory and staging area. It is the 'nuclear option' — any work that was never committed is permanently lost. It does **not** create a revert commit (that's a different tool you'll learn later), and it affects **both** the staging area and the working directory."
 
   # --------------------------------------------------------------------------
@@ -1232,6 +1239,10 @@ steps:
             - "The second file changed in the latest commit"
             - "The commit with index 2 in the log"
           correct_index: 1
+          option_feedback:
+            0: "`HEAD` is a single pointer to the *current* commit (usually via the current branch), not a list of branches. Branch names are separate references; `git branch` lists those."
+            2: "Git references commits, not files. There is no per-file index inside a commit reference — `HEAD~N` walks back through history, not through the file list."
+            3: "`HEAD~N` walks the parent chain *backwards* (HEAD → parent → grandparent), not a numeric index into log output. The numbering is by ancestry, not by display order — they coincide for linear history but diverge after merges."
           explanation: "`HEAD` points to the latest commit. `HEAD~1` is one commit before it, `HEAD~2` is two commits back, and so on. This relative notation lets you reference commits without copying their hash."
 
         - question: "**[Interleaved: Revisit Step 5]** You staged `config.py` and `app.py`. You then realise `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"

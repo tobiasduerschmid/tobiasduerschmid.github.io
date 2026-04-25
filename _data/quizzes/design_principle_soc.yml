@@ -11,6 +11,15 @@ questions:
       - "David Parnas, in his 1972 paper on criteria for decomposing systems into modules"
       - "Erich Gamma et al., in the 1994 'Design Patterns' book"
     correct_index: 1
+    option_feedback:
+      0: |
+        Martin popularized SOLID, but the phrase separation of concerns predates SOLID by decades.
+      2: |
+        Parnas introduced information hiding, a related modularity criterion. Dijkstra coined separation
+        of concerns in a broader thinking context.
+      3: |
+        The GoF catalog documents design patterns. It did not introduce the phrase separation of
+        concerns.
     explanation: "Dijkstra coined the phrase in EWD 447 (1974), describing it as 'the only available technique for effective ordering of one's thoughts'. He framed SoC first as a *thinking* technique, and the software-engineering usage followed. Parnas's 1972 paper is about **information hiding** — a related but distinct principle that tells you *how* to encapsulate one of those concerns."
 
   - id: 2
@@ -30,6 +39,15 @@ questions:
       - "It violates the Liskov Substitution Principle"
       - "It has no SoC violation — the function does exactly one thing: 'render a user profile'"
     correct_index: 1
+    option_feedback:
+      0: |
+        The code may also be hard to extend, but the clearest issue is mixed responsibilities inside one
+        function.
+      2: |
+        LSP concerns substituting subtypes safely. This snippet has no subtype contract problem.
+      3: |
+        The function name hides three reasons to change. Rendering, querying, and database connection
+        logic are separate concerns even if the function has one high-level label.
     explanation: "The function name sounds like one concern, but the body mixes **three**: connecting to a database, issuing a SQL query, and emitting HTML. If the database schema changes, this code breaks. If the HTML changes, this code breaks. A well-separated version would have a `user_service` for data and a `renderer` for presentation, each with its own interface."
 
   - id: 3
@@ -42,6 +60,15 @@ questions:
       - "Callbacks for state changes, e.g., onBalanceChanged(...)"
       - "Direct calls into the UI's render function, e.g., updateUI(balance)"
     correct_index: 3
+    option_feedback:
+      0: |
+        Getters are part of the application-layer interface to presentation. They let the UI read state
+        without owning game rules.
+      1: |
+        Commands are part of the boundary: the UI asks the application layer to perform domain actions.
+      2: |
+        Callbacks let presentation learn that state changed without the application layer rendering UI
+        directly.
     explanation: "The whole point of the separation is that the Application Layer **doesn't know a UI exists**. Calling into the UI directly would destroy the separation — you'd no longer be able to run the same game engine in a terminal, on mobile, and in a 3D live-stream simultaneously. Instead, the Application Layer exposes getters, commands, and callbacks; the Presentation Layer does the rendering itself."
 
   - id: 4
@@ -54,6 +81,16 @@ questions:
       - "Because logging requires network access, which cuts across the application boundary"
       - "Because logs must be written in a specific format that crosses language boundaries"
     correct_index: 1
+    option_feedback:
+      0: |
+        Logging can affect performance, but that is not why it is crosscutting. It appears across many
+        modules regardless of the main decomposition.
+      2: |
+        Some logging may use a network sink, but crosscutting is about scattering across module
+        boundaries, not network access.
+      3: |
+        A log format can be standardized, but the concern cuts across the system because many unrelated
+        modules need to log.
     explanation: "A crosscutting concern is one that **does not fit** within a single module in the main decomposition of the system. Logging is the textbook example: every service, every handler, every data layer wants to log something. If you put logging calls directly inside each of these, you get **tangling** (business code mixed with logging) and **scattering** (the same pattern copy-pasted everywhere). AOP, decorators, and middleware are common mechanisms to pull logging out into one place *(Marin et al., 2009)*."
 
   - id: 5
@@ -67,6 +104,16 @@ questions:
       - "Whenever the business logic is simpler than 100 lines of code"
       - "Never — separation is always worth the cost"
     correct_index: 1
+    option_feedback:
+      0: |
+        YAGNI warns against unnecessary structure, but it does not forbid layering when code will live,
+        grow, or be reused.
+      2: |
+        Line count alone is not the deciding factor. A short rule can still become important domain
+        logic that deserves a stable home.
+      3: |
+        Separation has costs. For genuinely throwaway trivial code, a full layered design can be more
+        ceremony than value.
     explanation: "SoC is a *judgment call*, not a law. For a true throwaway — a 30-line automation script, a one-off data cleanup — the cost of a full layered architecture exceeds the benefit, and 'rules inside buttons' is fine. But the argument fails as soon as the code outlives its expected lifetime, multiple people touch it, or a second UI/API surface is requested. In practice, 'we'll never need another UI' is one of the most commonly falsified predictions in software engineering."
 
   - id: 6
@@ -79,6 +126,16 @@ questions:
       - "A correct implementation of MVC that simply needs more RAM"
       - "A violation of Information Hiding because controller fields are public"
     correct_index: 1
+    option_feedback:
+      0: |
+        There is no substitution contract issue in the description. The controller has simply absorbed
+        too many unrelated responsibilities.
+      2: |
+        More RAM does not fix a class that mixes networking, parsing, navigation, validation, and
+        layout.
+      3: |
+        Public fields are not the stated problem. The issue is collapsed concerns, even if all fields
+        were private.
     explanation: "Massive View Controller is the canonical mobile-development SoC failure *(Dobrean & Dioşan, 2019)*. MVC is supposed to *separate* Model, View, and Controller, but when developers treat 'Controller' as a dumping ground for everything not-obviously-Model-or-View, the Controller re-absorbs all the concerns MVC was designed to split apart. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern."
 
   - id: 7
@@ -91,6 +148,16 @@ questions:
       - "Information Hiding is a 1972 principle and SoC is a 2000s principle; Information Hiding has been deprecated"
       - "SoC applies to code, Information Hiding applies only to data"
     correct_index: 1
+    option_feedback:
+      0: |
+        They are related, but not synonyms. Separating modules is not enough if their interfaces still
+        expose volatile decisions.
+      2: |
+        Information hiding is not deprecated. It is still the mechanism that keeps separated concerns
+        from leaking implementation details into each other.
+      3: |
+        Both principles apply to data, functions, modules, APIs, and architecture. The distinction is
+        about separation versus hiding decisions.
     explanation: "They are complementary, not the same. SoC is about **identifying and separating** distinct aspects (data access vs. rules vs. UI). Information Hiding is about **protecting** each separated decision: the module's interface should only expose what is unlikely to change, and its secret (storage format, algorithm, library choice) stays inside. SoC without Information Hiding gives you separate modules that still break each other when details change."
 
   - id: 8
@@ -103,6 +170,16 @@ questions:
       - "One module per file, where each file contains exactly one function, no matter how trivial"
       - "Split by file type: all `.py` files in one module, all `.js` files in another, all `.sql` in a third"
     correct_index: 1
+    option_feedback:
+      0: |
+        This is a broad user module with several unrelated reasons to change. It would become a
+        bottleneck for security, profile, order, and reporting changes.
+      2: |
+        One function per file optimizes a surface metric, not concern boundaries. It can destroy
+        cohesion and make simple changes span many files.
+      3: |
+        Programming language or file type is rarely the domain reason code changes. Splitting `.py`,
+        `.js`, and `.sql` does not separate business concerns.
     explanation: "Option B separates concerns along axes that plausibly change for different reasons (security rules, UX, business rules, analytics) — each with a narrow interface to the others. Option A is the God Module. Option C is hyper-decomposition that destroys cohesion. Option D splits on the wrong axis (programming language has nothing to do with the domain concern)."
 
   - id: 9
@@ -115,6 +192,16 @@ questions:
       - "Because Python does not support inheritance well"
       - "Because SRP explicitly forbids extracting classes"
     correct_index: 1
+    option_feedback:
+      0: |
+        Smaller classes are not inherently harder to optimize, and performance is not the main risk. The
+        risk is an artificial boundary with no independent reason to change.
+      2: |
+        The language is irrelevant here. The same over-extraction problem can happen in Python, Java, or
+        any language.
+      3: |
+        SRP does not forbid extracting classes. It asks whether the extracted responsibility has its own
+        reason to change.
     explanation: "A split is only valuable if the separated pieces change **independently**, for different reasons, on different timelines. If they always change together, the boundary is a fiction that doubles maintenance cost with no benefit. This is the 'premature abstraction' trap — SoC is a *direction*, not a target score on a file-count metric."
 
   - id: 10
@@ -127,6 +214,16 @@ questions:
       - "Performance — separated code runs faster"
       - "Security — developers cannot see each other's code"
     correct_index: 1
+    option_feedback:
+      0: |
+        Testability is a benefit, but parallel team work depends more directly on independent areas with
+        stable contracts.
+      2: |
+        Separated code is not automatically faster. The benefit here is coordination and local
+        reasoning, not runtime speed.
+      3: |
+        Separation does not mean developers cannot see each other’s code. It means they can work through
+        narrow contracts instead of shared tangles.
     explanation: "Parallel work is really a consequence of *local reasoning* plus *narrow interfaces*. When concerns are separated, Alice working on the UI doesn't need to understand Bob's database optimizer, because their code only meets at a small, well-defined contract. This is SoC's biggest practical payoff in teams — and it's why **Conway's Law** says team structure and system architecture tend to mirror each other."
 
   - id: 11
@@ -157,6 +254,16 @@ questions:
       - "The fetch call should be a POST, not a GET"
       - "The <ul> tag should be a <div>"
     correct_index: 0
+    option_feedback:
+      1: |
+        Hooks are normal in React. The problem is not that state and effects both appear; it is that a
+        domain rule is embedded in presentation code.
+      2: |
+        HTTP method choice is not the important design issue here. The question is where the score rule
+        belongs.
+      3: |
+        Changing HTML tags would not address the hidden business rule. Markup choice is a presentation
+        detail.
     explanation: "The dangerous violation is the hidden **business rule**. If marketing asks 'what counts as a top-scoring row?', no one will look inside a React component to find the answer. The rule should live in a domain service (or an API endpoint) that both the UI and any other consumer share. Otherwise, six months from now two different components will disagree on what 'top-scoring' means."
 
   - id: 12
@@ -169,4 +276,13 @@ questions:
       - "A feature that is behind a feature flag"
       - "A class with private fields"
     correct_index: 1
+    option_feedback:
+      0: |
+        A customer complaint may point to a concern, but the concern is the aspect of the system that
+        may need reasoning or change.
+      2: |
+        Feature flags are one possible concern, not the definition. Many concerns are not
+        feature-flagged.
+      3: |
+        Private fields can help encapsulate a concern, but a concern is broader than a class structure.
     explanation: "A concern is a *unit of reasoning and change*: rendering, validation, authorization, caching, logging, the billing rule, the retry policy. SoC asks you to give each such aspect its own place in the code, so that thinking about, changing, or testing any one of them does not require entangling with the others."

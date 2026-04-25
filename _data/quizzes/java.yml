@@ -17,6 +17,16 @@ questions:
       - "false, false"
       - "true, false — == uses the interned pool so it's true, but equals() checks identity"
     correct_index: 1
+    option_feedback:
+      0: |
+        `new String("hello")` creates two separate objects, so reference equality is false even though
+        the characters match.
+      2: |
+        The two objects have the same character content. `.equals()` is designed to compare that content
+        for `String`.
+      3: |
+        `==` compares references for objects; it does not use string interning to make two explicit `new
+        String(...)` objects equal. `.equals()` is the content comparison.
     explanation: "**`new String()` bypasses the intern pool, so `==` returns `false` (different references) while `.equals()` returns `true` (same content) — never use `==` to compare strings.** `new String(\"hello\")` forces Java to create a fresh object on the heap each time, bypassing the string intern pool. So `a` and `b` are different objects — `==` compares references and returns `false`. `.equals()` compares character content and returns `true`. The lesson: never use `==` to compare strings. Always use `.equals()`."
 
   - id: 2
@@ -34,6 +44,16 @@ questions:
       - "Compile error — == cannot be applied to Integer"
       - "true, false — == compares values for boxed integers"
     correct_index: 1
+    option_feedback:
+      0: |
+        Autoboxing reuses some boxed integers, but not all of them. The standard cache covers small
+        values such as `-128` through `127`, not `200`.
+      2: |
+        `==` can be applied to `Integer` references. The dangerous part is that it compares object
+        identity rather than numeric value.
+      3: |
+        `==` does not generally compare boxed integer values. `.equals()` gives the numeric value
+        comparison here.
     explanation: "**Java only caches Integer values from -128 to 127, so 200 creates two separate heap objects — `==` returns `false` but `.equals()` returns `true`.** Java maintains an Integer cache for values −128 to 127. Outside this range, autoboxing calls `Integer.valueOf(200)` which creates a new object each time. So `x` and `y` point to different objects — `==` returns `false`. `.equals()` compares the values and returns `true`. This is why you must always use `.equals()` for wrapper types, not `==`."
 
   - id: 3
@@ -49,6 +69,16 @@ questions:
       - "Compile error — you cannot assign Integer to int"
       - "n is assigned -1 — Java uses -1 as a null sentinel for int"
     correct_index: 1
+    option_feedback:
+      0: |
+        Java does not use `0` as the value of a null boxed integer. Unboxing needs an actual `Integer`
+        object to call.
+      2: |
+        Assigning an `Integer` to an `int` is allowed through auto-unboxing. It fails at runtime here
+        because the reference is `null`.
+      3: |
+        Java has no `-1` null sentinel for primitive `int`. The unboxing operation throws before any
+        primitive value can be assigned.
     explanation: "**Auto-unboxing calls `.intValue()` on the Integer, so assigning `null` to `int` throws NullPointerException — always check for null before unboxing.** Auto-unboxing is syntactic sugar for `.intValue()`. When `count` is `null`, calling `.intValue()` on it throws `NullPointerException`. This is a common production bug — it works fine in testing (where counts are small non-null numbers) and explodes in production when a database returns null. Always check for null before unboxing."
 
   - id: 4
@@ -67,6 +97,16 @@ questions:
       - "Integer is 64-bit but int is 32-bit, so int is faster for addition"
       - "Integer does not support the `+=` compound operator"
     correct_index: 1
+    option_feedback:
+      0: |
+        The JIT may optimize some cases, but relying on it hides the real cost model. `Integer`
+        arithmetic can create boxing and unboxing overhead that primitive `int` avoids.
+      2: |
+        `Integer` wraps a 32-bit `int`, not a 64-bit value. The performance issue is boxing, not integer
+        width.
+      3: |
+        The compound operator is legal with `Integer` because Java unboxes and reboxes. That automatic
+        conversion is exactly the cost being avoided.
     explanation: "**Each `+=` on an `Integer` causes an unbox, add, and rebox — one heap allocation per iteration, creating enormous GC pressure that `int` avoids entirely.** `sum += i` expands to `sum = Integer.valueOf(sum.intValue() + i)` — two method calls and one object allocation per iteration. In a tight loop this creates enormous garbage-collector pressure. Use primitive `int` for accumulators, counters, and any variable that is never put into a generic container."
 
   - id: 5
@@ -77,6 +117,15 @@ questions:
       - "public — accessible from anywhere"
       - "protected — accessible to subclasses and the same package"
     correct_index: 1
+    option_feedback:
+      0: |
+        This is a C++ transfer error. Java’s no-modifier access is package-private, not private.
+      2: |
+        Java does not make unmarked members public. Public access requires the explicit `public`
+        modifier.
+      3: |
+        Protected access includes subclasses and package access, but default Java access is
+        package-private only.
     explanation: "**Unlike C++ where the default is `private`, Java's default is package-private — any class in the same package can access the member without an explicit modifier.** This is a key false friend from C++. In a C++ `class`, the default access is `private`. In Java, the default is **package-private** — any class in the same package can read or write the member without any access modifier. This is a common source of accidental data exposure when transitioning from C++. Always be explicit with Java access modifiers."
 
   - id: 6
@@ -92,6 +141,16 @@ questions:
       - "Yes — information hiding and encapsulation are the same concept"
       - "Partially — the ArrayList is hidden, but the Integer type is exposed"
     correct_index: 1
+    option_feedback:
+      0: |
+        Private fields are only part of the story. Returning `ArrayList<Integer>` exposes the
+        representation choice through the public API.
+      2: |
+        Encapsulation and information hiding are related but not identical. A field can be private while
+        the design decision behind it is still exposed.
+      3: |
+        The `ArrayList` itself is not hidden when it appears in the method signature. Callers can now
+        depend on list-specific behavior.
     explanation: "**Information hiding is NOT achieved because the return type `ArrayList<Integer>` exposes the storage decision — switching to `int[]` or a database would break every caller.** Encapsulation (private fields) and information hiding are orthogonal. The field is encapsulated, but the method signature exposes the *secret* — the choice of `ArrayList<Integer>`. When storage changes, every caller breaks. A properly hidden design exposes behavior instead: `getAverage()`, `getLetterGrade(int score)`, `formatReport()`. Callers never see how scores are stored."
 
   - id: 7
@@ -103,6 +162,16 @@ questions:
       - "A concrete base class `Serializable` with a default serialize() body that each class can override"
       - "Generics — `class Serializable<T>` allows serialize() to be parameterized"
     correct_index: 1
+    option_feedback:
+      0: |
+        An abstract class is best when related classes share implementation or state. These classes only
+        share a capability.
+      2: |
+        A concrete base class would create an artificial inheritance relationship among unrelated types.
+        The shared idea is a contract, not a common ancestor with state.
+      3: |
+        Generics parameterize types; they do not by themselves define a shared method contract for
+        unrelated classes.
     explanation: "**An interface is correct here because the three classes are unrelated and share a behavioral contract only — an abstract class would be appropriate only if they also shared state or implementation.** Interfaces define contracts for unrelated classes that share behavior but no state. Abstract classes make sense when related classes share both fields and some concrete methods. `Dog`, `Car`, and `Printer` are completely unrelated — an interface is correct. This matches Java's own `java.io.Serializable`. If the three classes *also* shared a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
 
   - id: 8
@@ -113,6 +182,16 @@ questions:
       - "You need to import `java.util.primitives` to use int with generics"
       - "ArrayList<int> is valid — it is equivalent to ArrayList<Integer>"
     correct_index: 1
+    option_feedback:
+      0: |
+        `ArrayList` can store any reference type, not only `String` and `Object`. The problem is that
+        `int` is primitive, not a reference type.
+      2: |
+        There is no import that makes Java generics accept primitives directly. Use wrapper types such
+        as `Integer`.
+      3: |
+        Java does not silently rewrite `ArrayList<int>` into `ArrayList<Integer>`. The source type
+        argument must already be a reference type.
     explanation: "**Java generics use type erasure and erase to `Object`, so primitives like `int` — which are not `Object` subtypes — cannot be used as type parameters; use `Integer` instead.** C++ templates generate separate code for each instantiation — `vector<int>` and `vector<string>` are distinct compiled types. Java uses type erasure: there is **one** compiled `ArrayList` class, and generic type parameters become `Object` after compilation. Since `int` is not a subtype of `Object`, it cannot be used as a type parameter. Wrap it with `Integer` (autoboxing handles the conversion automatically)."
 
   - id: 9
@@ -129,6 +208,16 @@ questions:
       - "You need a cast before using instanceof on a generic type"
       - "instanceof doesn't work on interface types like List"
     correct_index: 1
+    option_feedback:
+      0: |
+        `instanceof` works with classes and interfaces. The rejected part is the parameterized type
+        `List<String>` after erasure.
+      2: |
+        A cast cannot recover erased generic element types. The JVM still cannot know whether a runtime
+        `List` was intended as `List<String>`.
+      3: |
+        `instanceof List<?>` is valid. The issue is asking about the erased element type, not checking
+        an interface.
     explanation: "**Type erasure makes `List<String>` and `List<Integer>` identical at runtime, so the compiler rejects `instanceof List<String>` as a meaningless check.** After type erasure, the JVM cannot distinguish `List<String>` from `List<Integer>` — both are just `List`. So `instanceof List<String>` would be an unsound check, and the compiler rejects it. You can write `instanceof List<?>` (unbounded wildcard) to test whether something is *any* list, but you lose the type information."
 
   - id: 10
@@ -143,6 +232,16 @@ questions:
       - "A: HashMap, B: ArrayList, C: HashSet"
       - "A: HashSet, B: ArrayList, C: HashMap"
     correct_index: 0
+    option_feedback:
+      1: |
+        `ArrayList` preserves order, but membership checks are linear and duplicates need manual
+        prevention. That does not fit fast lookup with no duplicates.
+      2: |
+        A `HashMap` maps keys to values; it is not the natural representation for task A’s set
+        membership or task C’s ordered history.
+      3: |
+        A `HashMap` does not preserve an ordered grade-submission history by index. It is for
+        key-to-value lookup.
     explanation: "**HashSet gives O(1) deduplication lookup, HashMap gives key-to-value mapping, and ArrayList gives ordered index access — each matches its task's requirement precisely.** `HashSet<String>` gives O(1) `contains()` and automatic deduplication. `HashMap<Integer, Double>` maps student IDs (keys) to grades (values). `ArrayList<Double>` maintains insertion order with O(1) index access. Using `ArrayList` for the submission tracker would require O(n) `contains()` checks and manual duplicate prevention."
 
   - id: 11
@@ -159,6 +258,16 @@ questions:
       - "Compile error — `get()` returns `Object`, which cannot be assigned to `int`"
       - "Nothing — the default value `0` is returned for missing keys"
     correct_index: 1
+    option_feedback:
+      0: |
+        `HashMap` fully supports `String` keys. The failure happens when a missing key produces `null`
+        and Java tries to unbox it.
+      2: |
+        With generics, `scores.get("Bob")` has type `Integer`, not raw `Object`. Auto-unboxing is
+        allowed but fails on `null`.
+      3: |
+        `HashMap.get()` returns `null` for a missing key, not `0`. A default value requires
+        `getOrDefault()` or explicit handling.
     explanation: "**`HashMap.get()` returns `null` for missing keys, and auto-unboxing that `null` to `int` throws NullPointerException — use `getOrDefault()` or check `containsKey()` first.** `HashMap.get()` returns `null` when the key is not present. Auto-unboxing calls `.intValue()` on `null`, throwing `NullPointerException`. Fix: use `scores.getOrDefault(\"Bob\", 0)`, or check `scores.containsKey(\"Bob\")` before calling `get()`. This is one of the most common Java bugs in production code."
 
   - id: 12
@@ -169,6 +278,16 @@ questions:
       - "Unchecked exceptions — `RuntimeException` and its subclasses (e.g., `NullPointerException`)"
       - "Only exceptions you define yourself"
     correct_index: 1
+    option_feedback:
+      0: |
+        Java does not force handling for every exception. Unchecked runtime exceptions are not
+        compiler-enforced.
+      2: |
+        Unchecked exceptions can be caught, but the compiler does not force callers to catch or declare
+        them.
+      3: |
+        Compiler enforcement is based on exception type hierarchy, not whether the exception was
+        user-defined.
     explanation: "**Java forces you to handle only checked exceptions (subclasses of `Exception` excluding `RuntimeException`) because they model recoverable external failures — unchecked exceptions model programming errors.** Java divides exceptions into checked (`IOException`, `SQLException` — compiler-enforced) and unchecked (`NullPointerException`, `IllegalArgumentException` — no enforcement). Checked exceptions model **recoverable external failures** where the caller must make a decision. Unchecked exceptions model **programming errors** that should not normally occur if code is correct."
 
   - id: 13
@@ -180,6 +299,16 @@ questions:
       - "After field initializations (`this.field = value`) so the parent doesn't overwrite them"
       - "`super()` is optional and only needed if you want to pass arguments to the parent"
     correct_index: 1
+    option_feedback:
+      0: |
+        Java requires constructor chaining before the subclass body runs. It cannot insert `super()`
+        after other statements.
+      2: |
+        Parent construction must happen before subclass field setup in the constructor body.
+        `super(...)` or `this(...)` must come first.
+      3: |
+        A superclass constructor is always invoked. If no explicit call is written, Java tries to insert
+        `super()`, which can fail if no no-arg constructor exists.
     explanation: "**`super()` must be the first statement; if omitted Java inserts `super()` automatically, but if the parent has no no-arg constructor this causes a compile error.** Java requires `super()` or `this()` to be the first statement of any constructor. If you omit `super()`, Java inserts a no-arg `super()` call automatically. If the parent class has no no-arg constructor (because it only defines parameterized constructors), the implicit call fails and you get a compile error. In C++, you'd use initializer lists: `Car(args) : Vehicle(make, year) { }`."
 
   - id: 14
@@ -196,6 +325,16 @@ questions:
       - "Compile error — you cannot call an abstract method through a reference"
       - "A `ClassCastException` at runtime — the abstract method cannot be invoked"
     correct_index: 1
+    option_feedback:
+      0: |
+        The reference type controls what methods are legal to call, but the runtime object type controls
+        which overridden implementation runs.
+      2: |
+        Calling an abstract method through a superclass reference is legal when the actual object is a
+        concrete subclass implementing it.
+      3: |
+        No cast is needed to dispatch an overridden method. Dynamic dispatch is the normal Java method
+        call behavior.
     explanation: "**Java dispatches methods based on the runtime type, not the reference type — unlike C++ where you must explicitly mark methods `virtual` to get this behavior.** Java's method dispatch is **virtual by default** — unlike C++ where you must add the `virtual` keyword. The JVM looks at the actual object type (`Car`) at runtime, not the declared reference type (`Vehicle`). This is polymorphism: one line of code (`v.describe()`) calls the right implementation for each object in a heterogeneous collection. `@Override` confirms this intent at compile time."
 
   - id: 15
@@ -279,4 +418,14 @@ questions:
       - "Use `HashMap<String, Student>` internally; make all fields `public` since that simplifies the API"
       - "Use `ArrayList<Student>` internally and expose a `getStudents()` getter returning the full list"
     correct_index: 1
+    option_feedback:
+      0: |
+        Exposing `getStudents()` leaks the storage decision and makes duplicate prevention a caller
+        problem. It also gives `List` lookup costs.
+      2: |
+        A `HashMap` may support lookup, but public fields destroy the information-hiding requirement and
+        expose representation directly.
+      3: |
+        Returning the full `ArrayList` makes callers depend on the internal collection and gives linear
+        lookup plus manual duplicate checks.
     explanation: "**An `Enrollable` interface hides the storage decision, and `LinkedHashSet` provides O(1) lookup, deduplication, and insertion order — fulfilling all three requirements at once.** The interface (`Enrollable`) decouples the contract from the implementation — callers depend on behavior, not on how students are stored (information hiding). `LinkedHashSet<Student>` gives O(1) `contains()`, automatic deduplication, and insertion-order iteration. `ArrayList` would require O(n) duplicate checks. Exposing `getStudents()` leaks the storage decision — if you switch collections, callers break."

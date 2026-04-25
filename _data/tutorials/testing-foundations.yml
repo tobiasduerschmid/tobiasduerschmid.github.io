@@ -53,6 +53,7 @@ steps:
       > 📣 **The kind of bug that ships.** Imagine you've kept your Duolingo streak alive for **100 days straight**. You open the app expecting the 💯 badge — and it shows you 🔥 instead. One missing `=` sign in the badge logic, and the milestone you actually earned silently disappeared. The code runs cleanly, prints no error, and a million 100-day-streakers feel slightly betrayed. *That* is what tests prevent.
 
       > 🎯 **Goal:** Find the bug in `streak_badge`, watch a real test catch it, then fix the code so the test passes.
+      > 🧠 **Bloom's level:** *Apply* — fix production code so a pre-written test passes.
 
       > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
 
@@ -300,7 +301,7 @@ steps:
             2: "The safety-net image isn't about a coverage number. A test suite with 100% line coverage but weak oracles is full of holes; a smaller suite with strong oracles on the critical paths is a tighter net. Coverage and the safety-net principle are different ideas (more in Step 4)."
             3: "This describes the *testing pyramid* (a way of layering test types), not the safety-net metaphor. The safety net is about *passing tests as permanent guards against regression*, regardless of what level of the pyramid they sit at."
           explanation: |
-            The safety-net metaphor (popular in Harry Percival's "Obey the Testing Goat") captures
+            The safety-net metaphor captures
             the key psychological benefit of testing: each passing test stays in place to catch
             regressions you might otherwise introduce. With a thick safety net of tests, you can
             refactor and add features fearlessly — if you break something, the net catches it
@@ -319,6 +320,7 @@ steps:
   - title: "Your First pytest Test"
     instructions: |
       > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
+      > 🧠 **Bloom's level:** *Apply* (write your first pytest tests) and *Analyze* (judge oracle strength).
 
       🔍 **Read first** (don't write yet). Open `test_leveling.py`. For each test stub, predict in your head: *what behavior is this test claiming?* Run it once to see pytest's output format.
 
@@ -708,6 +710,7 @@ steps:
   - title: "Choosing What to Test: Partitions & Boundaries"
     instructions: |
       > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
+      > 🧠 **Bloom's level:** *Analyze* — decompose a spec into partitions, then identify the boundaries between them.
 
       💡 **The principle**: an **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
 
@@ -726,7 +729,7 @@ steps:
           classDef neutral fill:#fafafa,stroke:#bdbdbd,color:#757575
       ```
 
-      Notice how the 4 critical tests pin down both transitions; the *middle* of the valid partition isn't covered by these — and doesn't need to be (one representative is enough there). Why this works:
+      Notice how the 4 critical tests pin down both transitions; the *middle* of the valid partition isn't covered by these — and doesn't need to be (one representative is enough there). The same heuristic works for **any** range you'll meet — usernames, ages, HTTP response codes, prices, retry counts. Pick the last invalid value before each transition and the first valid value after; the off-by-one bugs live exactly there. Why this works:
 
       | Length | Expected | What this catches |
       |---|---|---|
@@ -755,6 +758,19 @@ steps:
       - Then write the assertion.
 
       💡 **Strong oracles on a Boolean return**: `squad_name_valid` returns `True`/`False`. `assert squad_name_valid("epic") is True` is strong (identity comparison — only `True` itself passes). `assert squad_name_valid("epic")` with no comparison is weak — `1`, `"yes"`, or any truthy value would slip through.
+
+      <details markdown="1"><summary>📖 Quick aside: <code>is True</code> vs <code>== True</code></summary>
+
+      `is` checks **object identity** (same object in memory); `==` checks **equality** (same value). For Booleans these almost always agree, but `is True` is *strictly stricter* — only the literal `True` object passes. If a function were (incorrectly) refactored to return `1` or `"yes"` instead of `True`:
+
+      | Assertion | Result |
+      |---|---|
+      | `assert result is True` | ✗ fails — `1 is True` is `False` |
+      | `assert result == True` | ✓ passes — `1 == True` is `True` |
+      | `assert result` (no comparison) | ✓ passes — `1` is truthy |
+
+      For a function whose contract says "returns a Boolean", use `is True` / `is False` — the test then catches *both* wrong values *and* wrong types. (For non-Boolean returns, prefer `==` with the exact expected value.)
+      </details>
 
       <details markdown="1"><summary>📖 Equivalence partitioning — the deeper "why"</summary>
 
@@ -1011,7 +1027,7 @@ steps:
             - "A regression — the function worked correctly before someone introduced the bug"
           correct_index: 1
           option_feedback:
-            0: "There's no type confusion here — `days` is being compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator, not the type."
+            0: "The type is not the issue here: `days` is compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator."
             2: "It's tempting to call any wrong-`if` bug a logic error, but that's too coarse. Boundary bug is the more precise classification: this bug only manifests at *one specific value* (100), which is the diagnostic signature of a `>` vs `>=` mistake. That precision is what Step 3 is about."
             3: "*Regression* describes how a bug enters a codebase (re-introducing something previously fixed), not what kind of bug it is. The bug here might or might not be a regression — but its *type* is a boundary bug."
           explanation: |
@@ -1033,6 +1049,7 @@ steps:
   - title: "Test Behavior, Not Implementation"
     instructions: |
       > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
+      > 🧠 **Bloom's level:** *Analyze* (spot brittle tests) and *Evaluate* (judge them against the public-API contract).
 
       💡 **Brittle vs robust** — *same observable behavior, two ways to verify it.* Imagine a `Leaderboard` class for a game. Both tests below check the exact same thing: *after recording two scores, alice is the top player.* They differ only in **how** they verify it:
 
@@ -1351,8 +1368,8 @@ steps:
             2: "The two suites do *not* catch the same bugs. Suite A passes for any non-`None` return — a bug that flips a return value from `42` to `0` slips through silently. Suite B catches that same bug because the value differs from the asserted expected one. Same lines exercised, vastly different bug-catching power."
             3: "Mutation testing is a great deeper technique, but the question isn't asking which *industry* metric is best — it's asking which of *these two suites* is stronger. Suite B answers that even before mutation testing enters the picture, because it exposes the foundational issue: weak oracles on full coverage verify nothing."
           explanation: |
-            This is the coverage misconception: a suite can run every line and still verify
-            nothing if its assertions are weak. Coverage is a necessary ceiling (you cannot
+            A suite can run every line and still verify nothing if its assertions are weak.
+            Coverage is a necessary ceiling (you cannot
             test what you never ran) but it is not sufficient for quality. Strong oracles
             on the critical paths beat weak oracles everywhere.
 
@@ -1405,6 +1422,7 @@ steps:
   - title: "Putting It All Together"
     instructions: |
       > 🎯 **Goal:** Design a complete test suite **from scratch** — combining everything from Steps 1–4.
+      > 🧠 **Bloom's level:** *Create* — synthesize partitions, oracle strength, and behavior-vs-implementation into a working suite.
 
       ✍️ **Before reading on, write your own recap.** In one or two sentences each, answer from memory (no scrolling back):
 
@@ -1446,6 +1464,8 @@ steps:
       3. For each input, **compute** the expected return value and write a test with a **strong oracle** (an exact `==` on the computed value, not an `is not None` check).
 
       You are now applying everything from Steps 1–4: behavior specification (1), pytest + oracle strength (2), partitions (3), and testing through the public function rather than internals (4).
+
+      💡 **No numeric range, no boundaries — just categorical partitions.** Step 3's heuristic (test the values just on each side of every transition) needed an *ordered* domain: lengths, ages, scores. Here `plan` is a categorical input — `"student"`, `"family"`, anything else — with no numeric ordering, so there are no "off-by-one" boundary values to pin down. **Partitioning still applies**: you test one representative per equivalence class. Boundaries are a *special case* of partitioning that only kicks in when the input space is ordered.
 
       🪞 **Recalibrate**: At the start of Step 1 you rated your confidence (1–10) for designing a test suite from scratch. Re-rate yourself now. The gap between those numbers is what you actually learned — the *feeling* of progress is unreliable; the gap is data.
 
@@ -1512,6 +1532,23 @@ steps:
       ```
 
       Then write tests that match the shape of the chosen function. The test-quality checks (strong oracles, multiple partitions, ≥ 3 functions, all pass) still apply.
+      </details>
+
+      <details markdown="1"><summary>🚀 What's next — pytest features you'll meet in your next project</summary>
+
+      You now have the *foundations* of testing. The pytest features below build on what you've learned — they don't replace it. None of them are needed for what you just did, but you'll see them everywhere in real codebases:
+
+      | Feature | What it solves | When you'll want it |
+      |---|---|---|
+      | **`@pytest.fixture`** + `conftest.py` | Repeated Arrange logic across many tests (e.g. database connection, sample objects, mock services) | When two tests start with the same 5 lines of setup. |
+      | **`@pytest.mark.parametrize`** | A family of similar tests on different inputs — *one function, many cases* | When you'd otherwise copy-paste the same test for `test_age_18`, `test_age_19`, `test_age_20`. The boundary-and-partition logic from Step 3 fits this perfectly. |
+      | **`unittest.mock` / `pytest-mock`** | Testing code that calls external services (HTTP, database, file I/O) without actually hitting them | When the function under test would otherwise require network or disk to run. |
+      | **`pytest-cov`** (coverage) | Measuring *which* lines of production code your tests execute | When you suspect a partition is missing — coverage shows untested branches. (Reminder from Step 4: coverage ≠ quality.) |
+      | **Property-based testing** (`hypothesis`) | Auto-generating thousands of inputs to find edge cases your boundary tests missed | When the input space is too large for case-by-case enumeration. |
+
+      Next pedagogical step: the **Test-Driven Development (TDD)** tutorial — where you write the test *before* the production code, and let failing tests drive the design. Everything from this tutorial (oracle strength, partitions, behavior testing) becomes a foundation that TDD layers a discipline on top of.
+
+      Where to apply these in your own work: every new function you write deserves at least one boundary test and one partition representative test, with a strong oracle, through the public API. That's the four skills of this tutorial in 30 seconds per function — and it pays for itself the first time a refactor would have shipped a regression.
       </details>
 
 
@@ -1667,7 +1704,7 @@ steps:
           option_feedback:
             0: "$25 and $200 are deep inside their partitions. They both behave correctly under either `>= 50` or `> 50`, since 25 clearly charges and 200 clearly ships free. Boundary bugs *only* surface at the boundary itself."
             2: "$0 and $1,000,000 catch a different category of bugs (representation issues, overflow). They miss the dominant off-by-one risk at $50, which is where 99% of bugs in this kind of spec live. Boundary tests come first; extreme-value tests come second."
-            3: "One boundary test isn't enough — you need two values *straddling* the boundary to detect `>` vs `>=` confusion. With only `order = $50`, you can't tell whether the function is using the right operator: it might return either pass-or-charge depending on how the bug shakes out, but you can't disambiguate from one data point."
+            3: "One boundary test isn't enough; two values straddling the boundary are what expose `>` versus `>=`. With only `order = $50`, the test cannot tell whether the function is using the right operator because it observes only one side of the threshold."
           explanation: |
             The boundary is $50. Testing $49.99 (just below) and $50 (exactly at) catches the
             classic `>=` vs `>` off-by-one bug — the same family as the streak_badge bug
@@ -1700,9 +1737,9 @@ steps:
             - "Tests are an academic exercise that doesn't apply in real projects."
           correct_index: 1
           option_feedback:
-            0: "This is the *pre-tutorial* mindset — the one you started with. If you still feel this way, revisit Step 1 and Step 5's threshold-check prompts. Tests-as-after-the-fact-checks miss the design-feedback role tests play during development."
+            0: "That keeps tests in the after-the-fact role from the start of the tutorial. Step 1 and Step 5's threshold-check prompts show why tests also guide design during development, not just verify code after it is finished."
             2: "Coverage is a metric, not a mindset. You can have 100% coverage and still ship bugs (Step 4 showed exactly this with weak oracles). Coverage is at most a floor — what *moves the needle* is treating tests as specifications."
-            3: "This is the cynical version of the *post-hoc* misconception. The streak-badge bug at the start of Step 1 was a real-world example of why tests matter; the discount task in Step 5 was a real-world example of how to design them. If those felt academic, that's worth a second pass through the tutorial — the framing is meant to land *because* these are the kinds of functions students actually ship."
+            3: "That treats the examples as academic rather than transferable. The streak-badge bug at the start of Step 1 showed why tests matter; the discount task in Step 5 showed how to design them. These are the kinds of boundary-heavy functions students actually ship."
           explanation: |
             This is the threshold concept. Once tests become **specifications of behavior**
             (rather than after-the-fact correctness checks), you start writing them earlier

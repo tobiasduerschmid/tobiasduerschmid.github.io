@@ -11,6 +11,13 @@ questions:
       - "The String parameter should be replaced with an enum"
       - "The factory method should return an interface instead of a concrete class"
     correct_index: 1
+    option_feedback:
+      0: |
+        Length is a symptom, but the design issue is the reason the method keeps changing. Splitting the branches into smaller helper methods still leaves the same factory method modified for every new product type.
+      2: |
+        An enum can make the valid types explicit, but it does not remove the modification point. Adding BBQ Chicken would still require changing the enum and the conditional creation logic.
+      3: |
+        Returning an interface can reduce coupling to concrete products, but it does not solve the growing `if/else` that chooses which concrete product to instantiate.
     explanation: "**This violates the Open/Closed Principle because adding a new pizza type requires modifying the existing if/else chain rather than adding a new subclass.** A **parameterized factory method** uses conditional logic to decide which product to create. Every new product type requires modifying this conditional — violating the **Open/Closed Principle**. The true Factory Method pattern solves this by using **subclass override**: each concrete creator implements `createPizza()` to return its specific product. Adding a new pizza type means adding a new subclass, not changing existing code."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "Builder — construct UI components step by step"
       - "Singleton — ensure only one theme factory exists"
     correct_index: 1
+    option_feedback:
+      0: |
+        Factory Method is usually centered on one product type at a time. The requirement is stronger: several related product types must be created as a consistent family.
+      2: |
+        Builder is for assembling one complex object through steps. A theme factory is selecting compatible products across several classes, not gradually constructing one component.
+      3: |
+        Singleton answers "how many factory objects may exist," not "how do we create a consistent family of products." A theme might be implemented with one factory instance, but that is not the pattern solving compatibility.
     explanation: "**Abstract Factory is correct here because it creates families of related components that must stay visually consistent within the same theme.** This is the classic **Abstract Factory** scenario: multiple product types (Button, TextField, Checkbox) that must belong to the same family (theme). Abstract Factory ensures that MaterialButton is always paired with MaterialTextField — preventing inconsistent combinations. Factory Method handles only one product type; Builder handles step-by-step construction."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "Factory Method is simpler because it doesn't use interfaces"
       - "Abstract Factory can only create one product type; Factory Method can create multiple"
     correct_index: 1
+    option_feedback:
+      0: |
+        Neither pattern creates classes at runtime in the usual object-oriented sense. Both create objects; the difference is whether creation is varied by subclassing a creator or by passing around a factory object.
+      2: |
+        Factory Method often uses an abstract creator method or product interface. Its defining feature is subclass override, not the absence of interfaces.
+      3: |
+        This reverses the usual distinction. Abstract Factory groups several creation methods for a product family, while Factory Method is often presented around one factory method.
     explanation: "**Factory Method relies on inheritance (subclass overrides a method) while Abstract Factory relies on object composition (client holds and calls a factory object).** This is a key structural distinction from the GoF. **Factory Method** uses **inheritance**: you extend a Creator class and override the factory method. **Abstract Factory** uses **object composition**: the client receives a factory object and calls its creation methods. Composition provides more runtime flexibility (factory objects can be swapped), while inheritance is simpler for single-product scenarios."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "Only the client code needs to be updated"
       - "The new product can be added without changing any existing code"
     correct_index: 1
+    option_feedback:
+      0: |
+        Adding a new concrete factory is the easy case when a new family is added. Adding a new product type changes the shared factory interface, so every existing family has to supply that product.
+      2: |
+        Client code may need to call the new method, but the first ripple is in the factory abstraction and all concrete factories. Otherwise the interface cannot promise that every family can create the new product.
+      3: |
+        Abstract Factory is open to new families more than to new product kinds. A new product kind changes the contract all factories implement.
     explanation: "**Adding a new product type to Abstract Factory forces a change to the interface and every concrete factory — the rigid interface drawback.** This is the **Rigid Interface drawback** — the fundamental asymmetry of Abstract Factory. Adding new **families** (a new concrete factory + products) is a pure addition. But adding new **product types** requires changing the interface and modifying **every** concrete factory. At 12+ product types, this ripple effect becomes a serious maintenance burden."
 
   - id: 5
@@ -59,4 +87,11 @@ questions:
       - "They are Builder steps, not factory methods"
       - "They are Strategy methods for selecting ingredients"
     correct_index: 1
+    option_feedback:
+      0: |
+        The patterns solve different scales of creation, but they are related structurally. An Abstract Factory commonly exposes several creation methods, each overridden by concrete factories.
+      2: |
+        Builder steps gradually assemble one product. These methods each create a product object from a related family, so they are creation methods rather than construction steps for one object.
+      3: |
+        Strategy varies behavior behind a common interface. These methods vary which product object is created, not an algorithm applied to an existing object.
     explanation: "**Each creation method in an Abstract Factory IS a Factory Method — Abstract Factory is essentially composed of multiple Factory Methods.** This is a crucial insight: **factory methods lurk inside Abstract Factories**. Each creation method in the Abstract Factory interface (e.g., `createDough()`) is declared abstract and overridden by concrete factory subclasses — which is exactly the Factory Method pattern. Abstract Factory orchestrates multiple Factory Methods to ensure family consistency."

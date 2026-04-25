@@ -618,6 +618,12 @@ steps:
 
     `git stash` is the escape hatch.
 
+    ### 🤔 Predict first
+
+    After `git stash`, where does your in-progress work end up — in the
+    index, in the working tree, in a private commit, or deleted? And what
+    will `git status` say about your working tree?
+
     ### Task 1: See the dirty tree
 
     A half-finished `power` function is already sitting in `calculator.py`:
@@ -886,6 +892,12 @@ steps:
 
     Lead: *"The `absolute` helper on `experimental` is useful on `main` too.
     Bring that one commit over — leave the half-baked multiply behind."*
+
+    ### 🤔 Predict first
+
+    Cherry-pick produces a new commit with a new SHA. What happens to the
+    **original** commit on `experimental` — does it move, get rewritten,
+    vanish, or stay put unchanged?
 
     `cherry-pick <sha>` replays one commit's patch on top of HEAD as a
     **new commit** (new parent → new SHA, same message + diff).
@@ -2026,6 +2038,12 @@ steps:
     Run it only on commits that (a) are unpushed, or (b) live on a feature
     branch **only you** use. For public history, use `git revert` (next).
 
+    ### 🤔 Predict first
+
+    After `rebase -i` collapses four messy commits into one clean commit,
+    do the original four still exist anywhere — and could you recover one
+    of them with `git reflog`?
+
     > 💡 **Schema check.** Same pattern as Steps 5 & 8: every rewriting verb
     > here (`squash`, `drop`, `reword`, `edit`) creates new commit objects
     > and moves the branch pointer. The "old" commits don't disappear —
@@ -2096,7 +2114,7 @@ steps:
     | `drop` | Remove commit |
     | `reword` | Edit message only |
 
-    <details markdown="1"><summary>📋 All eight verbs (`fixup`, `edit`, `break`, `exec`)</summary>
+    <details markdown="1"><summary>📋 All six core verbs (`fixup`, `edit`)</summary>
 
     | Verb | Effect |
     |---|---|
@@ -2106,8 +2124,11 @@ steps:
     | `squash` | Meld into previous; combine messages |
     | `fixup` | Like squash, drop this commit's message |
     | `drop` | Remove commit |
-    | `break` | Pause; resume with `rebase --continue` |
-    | `exec <cmd>` | Run a shell command between steps (e.g. `exec pytest`) |
+
+    Two more verbs exist for advanced workflows: `break` (pause mid-rebase
+    so you can poke around, then `git rebase --continue`) and `exec <cmd>`
+    (run a shell command after each replayed commit, e.g. `exec pytest`).
+    See `git help rebase` if you need them.
 
     </details>
 
@@ -2225,7 +2246,7 @@ steps:
     # Add the reworded final commit
     - "echo '# done iterating' >> calculator.py && git add calculator.py && git commit -m 'Refactor: cleanup notes and placeholder'"
     explanation: |
-      - **`git rebase -i HEAD~N`:** opens the todo list for the last N commits. You mark each with `pick`, `reword`, `squash`, `fixup`, `edit`, `drop`, `break`, or `exec`.
+      - **`git rebase -i HEAD~N`:** opens the todo list for the last N commits. You mark each with one of six core verbs (`pick`, `reword`, `squash`, `fixup`, `edit`, `drop`); two more (`break`, `exec`) exist for advanced workflows — see `git help rebase`.
       - **`squash` vs `fixup`:** both meld with the previous commit. `squash` combines messages (editor opens); `fixup` silently drops the squashed commit's message. Use `fixup` for tiny typos, `squash` when the message has information worth keeping.
       - **`drop`:** deletes the commit from history. Useful for removing accidentally-committed secrets, debug prints, or experiments that did not pan out. The dropped commit remains in reflog for recovery.
       - **`reword`:** edits the message without touching content. Fixes typos in commit messages retroactively.
@@ -2378,6 +2399,12 @@ steps:
 
     `git merge --squash <branch>` collapses a multi-commit feature into **one
     new commit** on `main`. The feature branch is untouched.
+
+    ### 🤔 Predict first
+
+    After `git merge --squash feature` followed by `git commit`, how many
+    parents does the new commit on `main` have — one, two, or three? And
+    what does that imply for `git bisect` later?
 
     <details markdown="1"><summary>📋 Three merge strategies side by side (Steps 8 + 10 unified)</summary>
 
@@ -2810,21 +2837,22 @@ steps:
     - **Recognize** the gitlink (mode `160000`) + `.gitmodules` as the two structural differences from a regular file.
     - **Pick** submodules vs. package manager vs. monorepo based on the actual problem.
 
-    <details markdown="1"><summary>📖 Five terms you'll meet (open before reading further)</summary>
+    ### 🤔 Predict first
 
-    Submodules introduce vocabulary all at once. Skim this once before the
-    main material so each term doesn't compete for working memory:
+    When you `git submodule add` a 200-MB repo, how much storage does the
+    *outer* repo's tracked tree gain — a few hundred megabytes, or a few
+    hundred bytes?
+
+    <details markdown="1"><summary>📖 Three core terms (open before reading further)</summary>
 
     | Term | What it is |
     |---|---|
     | **Submodule** | A nested Git repo inside an outer Git repo |
     | **`.gitmodules`** | Plain-text config file in the outer repo listing each submodule's path + URL |
     | **Gitlink** | A tree entry with mode `160000` whose "content" is a 40-char commit SHA (instead of file bytes) |
-    | **Pinned SHA** | The exact commit of the submodule the outer repo wants checked out |
-    | **`--recursive`** | Clone flag that fetches submodules at clone-time (otherwise the folder is empty) |
 
-    Mayer's *pre-training* principle: knowing terminology before the main
-    explanation frees working memory for the explanation itself.
+    Two more terms (`Pinned SHA`, `--recursive`) are introduced inline as
+    they come up; the full glossary is at the bottom of this step.
 
     </details>
 
@@ -2915,6 +2943,18 @@ steps:
 
     **No:** third-party deps (use a package manager — npm, pip, cargo),
     or single config files (use config management).
+
+    </details>
+
+    <details markdown="1"><summary>📋 Submodule glossary (full)</summary>
+
+    | Term | What it is |
+    |---|---|
+    | **Submodule** | A nested Git repo inside an outer Git repo |
+    | **`.gitmodules`** | Plain-text config file in the outer repo listing each submodule's path + URL |
+    | **Gitlink** | A tree entry with mode `160000` whose "content" is a 40-char commit SHA (instead of file bytes) |
+    | **Pinned SHA** | The exact commit of the submodule the outer repo wants checked out at the gitlink path |
+    | **`--recursive`** | Clone flag that fetches submodules at clone-time (otherwise the folder is empty) |
 
     </details>
   setup_commands:
@@ -3038,6 +3078,12 @@ steps:
     - **Upgrade** a submodule to new upstream work via the two-step dance (fetch/checkout inside, `add`/`commit` outside).
     - **Diagnose and fix** the "teammate forgot `submodule update`" trap — muscle memory for post-pull.
     - **Force-resync** any drifted submodule back to the pinned SHA with one deterministic command.
+
+    ### 🤔 Predict first
+
+    Upstream publishes new commits. After you `git pull` the outer repo,
+    will your local submodule's working directory show the new content
+    automatically — or do you have to do something extra?
 
     ### Task 1: Upstream publishes v0.2
 
@@ -3245,6 +3291,13 @@ steps:
     - **Execute the six-step publish ceremony** without falling into the detached-HEAD trap.
     - **Resync** any weird submodule state deterministically with one command.
     - **Reason from first principles** — outer repo tracks one SHA; inner repo is a full Git repo; they're independent.
+
+    ### 🤔 Predict first
+
+    You edit `vendor/math-utils/utils.py` directly without `cd`-ing into
+    the submodule. What does the *outer* repo's `git status` say about
+    `vendor/math-utils` — `modified content`, `new commits`, both, or
+    nothing?
 
     ### The mental model
 

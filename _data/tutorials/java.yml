@@ -434,6 +434,10 @@ steps:
             - "Calls the .equals() method automatically"
             - "Compares their hash codes"
           correct_index: 1
+          option_feedback:
+            0: "Java's `==` is hardwired to reference identity for *every* object, including String — the class CANNOT change this, which is why `.equals()` is a separate method. C++ (`operator==` overloading) and Python (`__eq__`) made the opposite design choice and let `==` compare contents; Java did not."
+            2: "Java's `==` for objects is a low-level pointer comparison the compiler emits directly — there is no method call for the class to override. Languages where `==` *does* dispatch to a value-equality method (Python, Ruby) work differently from Java in this regard."
+            3: "Hash codes can collide (two unequal objects can hash the same), so `==` can't be a hash comparison or it would lie. Hash codes are used by `HashMap` *after* an `.equals()` check, never as a substitute for it."
           explanation: "In Java, `==` on objects always checks reference identity — whether two variables point to the same object. Use `.equals()` for value comparison."
         - question: "`Integer x = 100; Integer y = 100; System.out.println(x == y);` prints `true`. What happens if you change 100 to 200?"
           options:
@@ -442,6 +446,10 @@ steps:
             - "Compile error — you can't use == on Integer"
             - "Throws NullPointerException"
           correct_index: 1
+          option_feedback:
+            0: "Even though `Integer x = 100` *looks* like a primitive assignment, autoboxing creates an `Integer` *object* — and `==` on objects is reference identity, not value comparison. The fact that 100 happens to work is the `IntegerCache` returning the same cached object for both; outside −128..127 the same code returns `false` because two distinct `Integer` objects are created."
+            2: "Both `int` and `Integer` accept `==`; the compiler is permissive. Java's `==` is *type-specific*: between two primitives it compares values, between two objects it compares references, and between an `int` and an `Integer` it auto-unboxes the wrapper to do a value comparison. The hazard is when both operands are `Integer` and the comparison silently uses reference equality."
+            3: "NullPointerException happens on auto-unboxing of `null`, not on `Integer == Integer` between non-null wrappers. Both `x` and `y` are valid objects — the comparison just doesn't do what beginners expect."
           explanation: "Java caches Integer objects for -128 to 127 (the Integer cache). Outside this range, `new` objects are created, so `==` returns false. This is why you must always use `.equals()` for wrapper types."
         - question: "In Python, `'hello' == 'hello'` compares values. Which Java expression achieves the same thing?"
           options:
@@ -695,6 +703,10 @@ steps:
             - "Compile error — you can't assign Integer to int"
             - "y is assigned null"
           correct_index: 1
+          option_feedback:
+            0: "Java only assigns a default (`0` for `int`) at *declaration* time for class fields — never as a fallback when an actual null reference is dereferenced. Auto-unboxing is `null.intValue()` in disguise, and that's exactly the call that throws NPE."
+            2: "The compiler can't see runtime nullness — it sees `Integer → int` and quietly inserts the auto-unbox call. The error is unboxing-at-runtime, not type-mismatch-at-compile-time."
+            3: "Primitive `int` cannot hold null at all (it's not a reference type). The runtime crashes *before* the assignment to `y`, during the unbox attempt."
           explanation: "Auto-unboxing calls `.intValue()` on the Integer object. If the object is null, this throws NullPointerException. This is a common production bug."
         - question: "Why is `Integer sum = 0;` in a loop slower than `int sum = 0;`?"
           options:
@@ -2198,6 +2210,10 @@ steps:
             - "`Pair<String, Integer> p = new Pair<>(\"a\", 1);`"
             - "`public static <T> T identity(T x) { return x; }`"
           correct_index: 1
+          option_feedback:
+            0: "The diamond operator `<>` and parameterized variable types are *compile-time* features — the compiler checks them and then erases them. By runtime there is just `ArrayList`, which is fine."
+            2: "Multi-parameter generic instantiation works exactly like single-parameter: each `<T>` is checked at compile time and erased at runtime. The `\"a\"` and `1` are passed as `Object`s after erasure."
+            3: "Generic methods are also a compile-time feature; `<T>` is erased and `T` becomes `Object` in the bytecode. The trick is that we never *invoke* a constructor on `T` here — we just receive and return it."
           explanation: "After type erasure, `T` becomes `Object` at runtime — Java doesn't know which constructor to call. `new T()` is illegal. All other options work because the compiler inserts the right casts."
         - question: "**[Spaced Practice: Step 3]** Why can't you write `ArrayList<int>` in Java?"
           options:

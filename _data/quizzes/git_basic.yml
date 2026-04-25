@@ -9,6 +9,16 @@ questions:
       - "Centralized systems are generally considered the best practice for massive, globally distributed open-source projects."
       - "Centralized systems make branching and merging faster than distributed systems because there is only one source of truth."
     correct_index: 1
+    option_feedback:
+      0: |
+        Git can commit and inspect history locally because each clone has the repository history, even
+        if teams later share through a remote.
+      2: |
+        A single source of truth can be useful, but distributed history is precisely what made large
+        open-source collaboration practical.
+      3: |
+        Git branching is cheap because branches are lightweight refs to commits, not because a central
+        server serializes all work.
     explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
 
   - id: 2
@@ -19,6 +29,16 @@ questions:
       - "Working Directory, Staging Area, and Local Repository"
       - "Uploaded, Downloaded, and Synced"
     correct_index: 2
+    option_feedback:
+      0: |
+        Untracked, tracked, and ignored describe how Git classifies files; they are not the three places
+        changes move through before a commit.
+      1: |
+        Branches and remotes name histories and sharing locations; they are not local areas holding a
+        file version.
+      3: |
+        Git's local workflow is about working tree, index, and committed snapshots, not upload/download
+        status.
     explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area (prepped for commit), and the Local Repository (committed history).** Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
 
   - id: 3
@@ -29,6 +49,15 @@ questions:
       - "The latest commit to the commit immediately before it."
       - "The working directory to the latest commit."
     correct_index: 3
+    option_feedback:
+      0: |
+        `git diff` without `HEAD` compares working tree to the index; adding `HEAD` compares against the
+        latest commit snapshot.
+      1: |
+        `HEAD` is local; comparing to a remote requires naming a remote ref such as `origin/main`.
+      2: |
+        Comparing the latest commit to its parent is a history inspection task, not what `git diff HEAD`
+        does to uncommitted work.
     explanation: "**`git diff HEAD` compares the current working directory (including staged changes) against the latest commit.** Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
 
   - id: 4
@@ -39,7 +68,17 @@ questions:
       - "`git push -f`"
       - "`git merge --squash`"
     correct_index: 2
-    explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote history, permanently deleting collaborators' commits.** Force-pushing overwrites the remote repository's history to exactly match yours, which will permanently delete any new commits made by your collaborators."
+    option_feedback:
+      0: |
+        `git pull` can create conflicts or merge commits, but it does not overwrite shared history the
+        way a force push can.
+      1: |
+        `git fetch` downloads remote objects and updates remote-tracking refs locally; it does not
+        publish or delete teammates' commits.
+      3: |
+        Squashing changes commit shape during integration, but it is not the command that overwrites an
+        existing remote branch ref.
+    explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote branch history and can hide or orphan collaborators' commits.** Force-pushing makes the remote branch match your local history, which can remove teammates' commits from that branch and disrupt anyone who based work on them. Those commits may still be recoverable from another clone or reflog, but the shared branch has been rewritten."
 
   - id: 5
     type: multiple
@@ -51,6 +90,22 @@ questions:
       - "It strictly relies on a single central server to store all file metadata."
       - "It is generally better suited for massive, globally distributed open-source projects."
     correct_indices: [0, 1, 4]
+    option_feedback:
+      0: |
+        Offline commits and history inspection are central benefits of a distributed repository, not
+        conveniences added by hosting services.
+      1: |
+        A full local history is what lets developers branch, inspect, and recover work without constant
+        server access.
+      2: |
+        Distribution changes where history lives; conflicting edits to the same lines can still happen
+        and still require resolution.
+      3: |
+        Git teams often use a central remote socially, but the VCS model does not strictly rely on one
+        server for all metadata.
+      4: |
+        Large open-source projects benefit because contributors can work independently and exchange
+        history without a single write bottleneck.
     explanation: "**Git's distributed model enables offline work and removes the single point of failure, making it ideal for large distributed teams — but it does not prevent merge conflicts.** In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
 
   - id: 6
@@ -63,6 +118,19 @@ questions:
       - "Local Repository"
       - "Detached Head"
     correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        The working directory is where editable files live before Git snapshots them.
+      1: |
+        The staging area is Git's proposed next snapshot, which is why staging can differ from both disk
+        and the last commit.
+      2: |
+        A remote server may store repository history, but it is not one of the three local areas on the
+        developer's machine.
+      3: |
+        The local repository is where committed snapshots and refs are stored.
+      4: |
+        Detached HEAD describes what `HEAD` points to, not a place where file contents reside.
     explanation: "**The three local areas are Working Directory, Staging Area, and Local Repository — the remote server and Detached HEAD are not file areas.** The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
 
   - id: 7
@@ -75,6 +143,17 @@ questions:
       - "`git push`"
       - "`git init`"
     correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        `git log` answers what happened in the commit graph, so omitting it misses a core review tool.
+      1: |
+        `git diff` is the command for comparing file content across Git states.
+      2: |
+        `git show` displays the content and metadata of a particular object such as a commit.
+      3: |
+        `git push` publishes local history to a remote; it is not primarily a review command.
+      4: |
+        `git init` creates repository metadata; it does not review existing changes or history.
     explanation: "**`git log`, `git diff`, and `git show` are the review/inspection commands — `git push` uploads data and `git init` creates repos.** `git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
 
   - id: 8
@@ -85,6 +164,15 @@ questions:
       - "`git revert` deletes the bad commit from the remote server without affecting local copies."
       - "`git revert` creates a new commit with the exact inverse changes, preserving the shared history for all collaborators."
     correct_index: 3
+    option_feedback:
+      0: |
+        `git revert` may still need conflict resolution; its safety comes from preserving shared
+        history.
+      1: |
+        Revert creates a new inverse commit rather than moving old changes back into the index for
+        editing.
+      2: |
+        Revert does not remove the bad commit; it records a later commit that cancels its changes.
     explanation: "**`git revert` is safe on shared branches because it adds a new undo commit without rewriting history, while `reset --hard` + force-push would destroy teammates' synced work.** `git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
 
   - id: 9
@@ -95,6 +183,15 @@ questions:
       - "When there are conflicting changes on the same lines in both branches."
       - "When you explicitly pass the `--squash` flag to `git merge`."
     correct_index: 1
+    option_feedback:
+      0: |
+        Squashing changes the number of commits being integrated; fast-forward depends on whether the
+        target branch has diverged.
+      2: |
+        Conflicting edits indicate divergent work; a fast-forward has no merge to reconcile.
+      3: |
+        `--squash` stages a combined change for a new commit; it is not the condition that lets Git
+        slide a branch pointer forward.
     explanation: "**A fast-forward merge is only possible when the base branch has received no new commits since the feature branch was created, allowing Git to slide its pointer forward linearly.** A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
 
   - id: 10

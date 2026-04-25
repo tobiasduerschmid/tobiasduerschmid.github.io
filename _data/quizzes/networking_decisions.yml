@@ -9,6 +9,16 @@ questions:
       - "Either TCP or UDP — the app can re-sort messages by timestamp."
       - "UDP with custom sequence numbers added to your own message headers."
     correct_index: 1
+    option_feedback:
+      0: |
+        Text chat is real-time, but message meaning depends on order and delivery. Speed alone is not
+        enough when a missing or reordered sentence changes the conversation.
+      2: |
+        Timestamps can help display, but they do not guarantee delivery or handle all ordering and retry
+        cases. TCP already provides the needed transport guarantee.
+      3: |
+        Custom sequence numbers are possible, but then the application must reimplement ordering,
+        retransmission, duplicate handling, and edge cases that TCP already solves.
     explanation: "**TCP is required because out-of-order or missing messages cause real misunderstandings.** While you *could* bolt reliability onto UDP yourself (option D), that means re-implementing TCP, which is error-prone and wasteful. TCP's overhead is negligible for the small payloads of a text message, making it the right tool here."
 
   - id: 2
@@ -19,6 +29,16 @@ questions:
       - "TCP — because TCP is always preferable since it guarantees reliability."
       - "Neither — live video bypasses the transport layer entirely."
     correct_index: 1
+    option_feedback:
+      0: |
+        For live video, waiting for every lost frame can be worse than dropping it. TCP reliability can
+        turn packet loss into visible stalls.
+      2: |
+        TCP is not always preferable. Reliability is valuable for files and messages, but real-time
+        media often values low latency over perfect delivery.
+      3: |
+        Video still uses the transport layer. UDP-based protocols are common because they fit real-time
+        media tradeoffs.
     explanation: "**UDP is correct because a late packet is worse than no packet.** A single dropped frame is virtually unnoticeable — the decoder skips ahead to the next frame, which arrives within milliseconds. TCP's retransmission mechanism would cause visible stutter: the stream pauses to wait for a stale packet that describes video the viewer has already missed. This is why platforms like Zoom and Discord use UDP (via WebRTC) for video calls."
 
   - id: 3
@@ -29,6 +49,16 @@ questions:
       - "UDP for unit position and health updates; TCP for build commands, tech upgrades, and game-over events."
       - "HTTP for all game communication, since it is the standard application-layer protocol."
     correct_index: 2
+    option_feedback:
+      0: |
+        Reliable transport for every position update can create lag because stale snapshots block newer
+        ones. Some game data is better replaced than recovered.
+      1: |
+        Some game events must never be lost, such as tech upgrades or match-ending records. UDP for
+        everything would risk corrupting authoritative state.
+      3: |
+        HTTP is an application protocol and is usually a poor fit for high-frequency real-time game
+        state. The transport strategy should match each data type.
     explanation: "**A hybrid is correct because the two data types have opposite requirements.** Unit positions update 30 times per second with absolute values, so a missed snapshot is replaced within 33ms — UDP is ideal. But a dropped 'tech upgrade' or 'game over' event would corrupt match state — TCP is essential for those. This hybrid approach mirrors how real-time strategy games actually implement their networking."
 
   - id: 4
@@ -39,6 +69,16 @@ questions:
       - "UDP — source code is just text, so a few missing characters are acceptable."
       - "It depends on repository size — use UDP for small repos and TCP for large ones."
     correct_index: 1
+    option_feedback:
+      0: |
+        Large transfer speed does not matter if bytes can be missing or reordered. Source repositories
+        require exact byte-for-byte delivery.
+      2: |
+        Source code being text does not make corruption acceptable. One missing character can break a
+        build or silently change program behavior.
+      3: |
+        Repository size does not change the need for correctness. Both small and large pushes require
+        ordered, reliable delivery.
     explanation: "**TCP is required because source code cannot tolerate missing or corrupted data.** A single flipped byte can make a file unparseable, cause a silent build failure, or introduce a subtle bug. TCP's guarantees (delivery, ordering, error detection) are non-negotiable here, and the overhead is trivial compared to the cost of pushing corrupted code. This is why Git uses HTTPS (TCP port 443) and SSH (TCP port 22)."
 
   - id: 5
@@ -49,6 +89,16 @@ questions:
       - "Peer-to-peer — to eliminate the cost of running backend servers."
       - "It doesn't matter — either architecture works equally well for this use case."
     correct_index: 1
+    option_feedback:
+      0: |
+        Direct negotiation cannot provide the platform-level trust needed for payments, matching, fraud
+        handling, and dispute resolution.
+      2: |
+        Avoiding backend cost would remove the authority the product relies on. Payments and
+        accountability need a trusted coordinating service.
+      3: |
+        The architecture matters because the requirements include central matching, payments, and
+        accountability. P2P and client-server do not support those equally well.
     explanation: "**Client-server is required because the platform needs a central authority for trust and accountability.** A food delivery app must match orders, process payments, verify identities, and resolve disputes — none of which are possible without a trusted coordinator. P2P would make payments and accountability nearly impossible to implement reliably."
 
   - id: 6
@@ -59,6 +109,16 @@ questions:
       - "Peer-to-peer — decentralization is a core requirement; every participant is both a storage provider and a consumer."
       - "Hybrid — use a single central server for the chunk index and P2P only for raw data transfer."
     correct_index: 2
+    option_feedback:
+      0: |
+        A central index server may simplify tracking, but it reintroduces a company-controlled point of
+        failure or control.
+      1: |
+        Simplicity is not the top requirement here. The prompt explicitly values decentralization and
+        survival despite many offline nodes.
+      3: |
+        A single central chunk index still violates the no-central-owner requirement. Hybrid designs can
+        be useful, but not when the central piece becomes the control point.
     explanation: "**P2P is correct because decentralization is an explicit design requirement, not just a preference.** Any central server (options A and D) creates a single point of control or failure, violating the requirements. True P2P systems like IPFS use a Distributed Hash Table (DHT) so peers discover each other without any central coordinator — the same principle behind BitTorrent's trackerless mode."
 
   - id: 7
@@ -69,6 +129,16 @@ questions:
       - "TCP — because TCP's ordering guarantees prevent audio from sounding garbled."
       - "Neither — voice data operates at the Application Layer without using the Transport Layer."
     correct_index: 1
+    option_feedback:
+      0: |
+        Losing a tiny slice of live audio is usually less harmful than waiting for retransmission. TCP
+        can turn packet loss into audible delay and jitter.
+      2: |
+        Ordering old audio perfectly is not helpful after its playback time has passed. Real-time voice
+        prefers timely packets over late perfect packets.
+      3: |
+        Voice data still travels using transport protocols. RTP over UDP is a common example, not a
+        bypass of the transport layer.
     explanation: "**UDP is correct because in real-time voice, a retransmitted packet arrives too late to be useful.** TCP's retransmission delay causes audible jitter — the stream stalls waiting for a packet describing audio the listener has already missed. A tiny gap from a dropped UDP packet lasts only milliseconds and is largely imperceptible. This is why all major VoIP systems (WhatsApp, FaceTime, Skype) use UDP, or protocols like RTP built on top of UDP."
 
   - id: 8
@@ -79,6 +149,16 @@ questions:
       - "Client-server — the nurses' station (client) requests updated readings from the central server, which responds with the latest sensor data."
       - "P2P — because bedside sensors share readings directly with every nurses' station."
     correct_index: 2
+    option_feedback:
+      0: |
+        Sending and receiving data does not automatically make a system peer-to-peer. The key question
+        is whether peers coordinate directly or through a central service.
+      1: |
+        Polling is an interaction pattern within client-server. A client requesting every two seconds
+        does not make the architecture hybrid by itself.
+      3: |
+        The sensors are not sharing readings directly with every nurses’ station in the scenario. The
+        central data server mediates access.
     explanation: "**Client-server is correct — polling does not change the architecture.** The nurses' station (client) initiates every request; the central server responds. The 2-second interval is just polling frequency, not a P2P arrangement. The client always initiates; the server always only responds."
 
   - id: 9
@@ -93,4 +173,17 @@ questions:
       - 0
       - 2
       - 3
+    option_feedback:
+      0: |
+        An SSH session needs ordered reliable bytes; dropped or reordered shell input would be
+        dangerous.
+      1: |
+        Fresh GPS readings replace old ones quickly. A missed coordinate is often less harmful than
+        delaying the stream to recover it.
+      2: |
+        A bank transfer must be recorded exactly once and acknowledged reliably. Transport loss or
+        reordering would be unacceptable at this boundary.
+      3: |
+        Software package downloads need exact bytes. A single corrupted package byte can break
+        installation or verification.
     explanation: "**SSH** requires every keystroke and every line of output to arrive in order — a dropped character would produce a garbled or dangerous command. **Bank transfers** must not be lost or corrupted — a missing confirmation message could charge a customer without recording it. **`apt-get`** downloads binary packages where a single corrupted byte can break the installation. By contrast, **live GPS coordinates** are real-time positional data: a missed reading is harmless since the next one arrives a second later with a fresh position, making UDP the better fit."

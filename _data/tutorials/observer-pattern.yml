@@ -546,6 +546,9 @@ steps:
             - "A base class that all patterns must inherit from"
             - "The main() function that starts the program"
           correct_index: 1
+          option_feedback:
+            0: "The watcher/reactor is the **Observer**, not the Subject — the names are reversed from how everyday English uses them. In the pattern's vocabulary the Subject is the source of state changes; the Observer is the receiver. Think YouTube: the channel is the Subject, the subscribers are Observers."
+            2: "Patterns aren't a class hierarchy you inherit from — they're a *vocabulary* for naming recurring solution shapes. There's no `BasePattern` class anywhere; \"Subject\" is just the role name for one participant in the Observer collaboration."
           explanation: |
             The **Subject** holds state. When its state changes, it notifies all registered observers. In the YouTube analogy, it is the channel creator. In the UML diagram, the Subject has `attach()`, `detach()`, and `notify()` methods and maintains a list of Observer references.
 
@@ -570,6 +573,9 @@ steps:
             - "A Python library you install with pip"
             - "A type of unit test"
           correct_index: 1
+          option_feedback:
+            0: "A pattern is a *named shape*, not a literal code block — every implementation looks different because the languages, contexts, and constraints differ. The GoF book is full of *examples* of each pattern, not template code to copy."
+            2: "Patterns are language-agnostic *concepts*, not packages. You can implement Observer in Python, Java, C++, Lisp — without installing anything. (Some libraries provide *helpers* for patterns, like `Observable` in RxJS, but the pattern exists independent of any library.)"
           explanation: |
             Design patterns are **not** copy-paste code or libraries. They are reusable solution blueprints — named, documented approaches to recurring design problems. You adapt them to your specific context. The GoF catalog describes 23 such patterns.
 
@@ -582,6 +588,10 @@ steps:
             - "ConcreteObserverA contains an Observer"
             - "ConcreteObserverA deletes Observer objects"
           correct_index: 1
+          option_feedback:
+            0: "Object creation in UML uses a **dashed arrow with an open arrowhead** labeled `«create»` — no triangle. Triangles always indicate type relationships (inheritance/realization), never construction."
+            2: "Containment ('has-a') is a **solid line with a diamond** at the container end — composition (filled diamond) or aggregation (open diamond). The triangle/no-triangle distinction is about *type*, the diamond/no-diamond distinction is about *containment*."
+            3: "UML has no standard symbol for object destruction in class diagrams (it's a runtime concept, modeled in sequence diagrams as a vertical bar ending with `X`). Class diagrams describe static structure, not lifecycle."
           explanation: |
             In UML, a **dashed arrow with an open triangle** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> means "implements" or "realizes" an interface. `ConcreteObserverA` promises to provide the `update()` method declared in the `Observer` abstract class. A **solid** arrow with open triangle <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> means direct inheritance.
 

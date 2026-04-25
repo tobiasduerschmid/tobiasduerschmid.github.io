@@ -9,6 +9,16 @@ questions:
       - "HTML tags contain special characters like `<` and `>` that cannot be properly escaped in modern RegEx." 
       - "The RegEx engine will inevitably suffer from catastrophic backtracking when encountering the forward slash in closing tags." 
     correct_index: 1 
+    option_feedback:
+      0: |
+        The problem is not scan direction. Arbitrarily nested tags require memory for matching open and
+        close levels, which regular expressions do not provide.
+      2: |
+        `<` and `>` can be matched literally. Escaping characters does not turn a regular expression
+        into a parser for nested structure.
+      3: |
+        Catastrophic backtracking is a performance problem in some regexes, but the deeper issue here is
+        language shape: nested HTML is not regular.
     explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)."
   
   - id: 2 
@@ -19,6 +29,16 @@ questions:
       - "The `.*` is lazy; it pauses execution at every single character to check for the word 'error'." 
       - "The `.*` command forces the regex engine to cache the entire file into memory before evaluating the line." 
     correct_index: 1 
+    option_feedback:
+      0: |
+        The engine is not slow because it starts at the end. The expensive behavior is greedy
+        consumption followed by backtracking.
+      2: |
+        `.*` is greedy by default. A lazy version would be written `.*?`, and it changes how much the
+        quantifier initially consumes.
+      3: |
+        The engine does not need to cache the entire file because of `.*`. The waste is repeated trial
+        and backtracking within the candidate line.
     explanation: "**`.*` is greedy — it consumes the whole string first, then backtracks character by character, which is expensive on long lines.** Greedy quantifiers (like `*` and `+`) match as much as possible right away. `.*` consumes the whole string, realizes it missed 'error', and has to backtrack (step backwards) one character at a time to find a match, which is computationally expensive on long strings."
   
   - id: 3 
@@ -29,6 +49,16 @@ questions:
       - "Lookarounds (e.g., Lookaheads `(?=...)`)" 
       - "Word boundaries `\\b`" 
     correct_index: 2 
+    option_feedback:
+      0: |
+        A non-capturing group organizes syntax, but it still consumes the characters it matches. It does
+        not assert an independent condition at the same position.
+      1: |
+        Possessive quantifiers control backtracking after a match attempt. They do not express unordered
+        requirements such as "has a digit and has a symbol."
+      3: |
+        Word boundaries assert positions around word characters. They do not test for multiple required
+        character categories.
     explanation: "**Lookaheads are the right tool because they assert conditions without consuming characters, enabling multiple requirements to be chained at the same position.** Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement."
   
   - id: 4
@@ -39,6 +69,16 @@ questions:
       - "By either its name (e.g., `match.group('month')`) or its positional index (e.g., `match.group(2)`), because named groups also receive a numeric index."
       - "By referencing the original regex string at runtime, since named groups are not stored in the match object."
     correct_index: 2
+    option_feedback:
+      0: |
+        Named groups still receive numeric positions. The name adds a readable access path; it does not
+        remove positional access.
+      1: |
+        The group can be accessed by name, but not only by name. It is still the second capturing group
+        in the pattern.
+      3: |
+        The captured month is stored in the match object. Inspecting the original regex string cannot
+        recover what the input matched.
     explanation: "**Named groups can be accessed by both name and positional index because they are a strict superset of numbered groups.** Named groups are assigned both a name and a positional index. You can retrieve the match using either `match.group('month')` or `match.group(2)`. This dual-access design means named groups are a strict superset of numbered groups — they add readability without removing any existing functionality."
 
   - id: 5
@@ -49,6 +89,16 @@ questions:
       - "Use a named group `(?<areaCode>...)` so you can access it via `match.groups.areaCode`."
       - "Escape the parentheses `\\( \\)` to tell the engine to ignore them."
     correct_index: 2
+    option_feedback:
+      0: |
+        Lookaheads are for checking conditions without consuming text. They are not the right mechanism
+        when the goal is to capture and later read the area code.
+      1: |
+        Removing parentheses would make it unclear what the `?` applies to. Parentheses are how a
+        multi-token area code becomes one optional unit.
+      3: |
+        Escaped parentheses match literal `(` and `)` characters. They no longer group or capture
+        pattern text.
     explanation: "**A named group `(?<areaCode>...)` is best because it both enables the quantifier and provides a readable name for accessing the captured value.** Standard parentheses `(...)` create groups that can be accessed by index (e.g., `match[1]`). Named groups `(?<name>...)` let you assign a meaningful label, so you can access the matched value by name (e.g., `match.groups.areaCode`) — making your code self-documenting and easier to maintain."
 
   - id: 6 
@@ -59,6 +109,16 @@ questions:
       - "You failed to use start `^` and end `$` anchors, allowing the regex to simply match the 'admin' portion and ignore the rest." 
       - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed." 
     correct_index: 2 
+    option_feedback:
+      0: |
+        A character class is exactly the right syntax for "one alphanumeric character." The bug is that
+        the whole input was not anchored.
+      1: |
+        `+` repeats only alphanumeric characters from the class. The punctuation is accepted because the
+        unanchored regex can stop after matching `admin`.
+      3: |
+        Case-insensitive matching affects letter case, not punctuation. Symbols are ignored here because
+        they sit outside the unanchored substring match.
     explanation: "**Without `^` and `$` anchors, the regex matches any valid substring and ignores the rest of the input.** Without positional anchors (`^` for the start, `$` for the end), a regex will search for *any* substring that satisfies the pattern. It found 'admin', considered it a successful match, and ignored the trailing invalid characters. Anchors are mandatory for strict input validation."
 
   - id: 7 
@@ -71,6 +131,21 @@ questions:
       - "Sanitizing HTML input to prevent XSS attacks by perfectly stripping all `<script>` tags regardless of formatting." 
       - "Performing a bulk find-and-replace operation to change US date formats to European date formats in a text document." 
     correct_indices: [0, 2, 4] 
+    option_feedback:
+      0: |
+        IPv4-like text is a bounded, mostly flat pattern, so regex can describe useful candidates well.
+      1: |
+        Deep JSON has nested structure and escaping rules that need a parser. Regex may find snippets,
+        but it should not be trusted to parse the payload.
+      2: |
+        A strict date shape such as `YYYY-MM-DD` is a good regex-sized constraint, especially before
+        deeper date validation.
+      3: |
+        HTML sanitization is security-sensitive and context-dependent. A parser plus context-aware
+        escaping is safer than trying to strip tags with regex.
+      4: |
+        Capture groups are well suited for rearranging flat text formats, such as swapping date fields
+        in a document.
     explanation: "**RegEx is appropriate for flat pattern matching and format validation, but not for tree-structured data like JSON or HTML.** RegEx excels at pattern matching flat strings, validating strict formats, and doing structural find-and-replace operations. It should NOT be used to parse complex, tree-like structures like JSON or HTML, as it cannot handle infinite nesting and is prone to security bypasses."
 
   - id: 8 
@@ -82,6 +157,19 @@ questions:
       - "A False Negative occurs when the regex does not match text that it was actually supposed to find." 
       - "A False Positive occurs when the regex engine throws a syntax error." 
     correct_indices: [0, 2] 
+    option_feedback:
+      0: |
+        A false positive is a match that should have been rejected. It usually means the pattern is too
+        permissive.
+      1: |
+        Rejecting invalid text is a true negative, not a false negative. The pattern did the right thing
+        in that case.
+      2: |
+        A false negative is valid target text that the regex failed to match. It usually means the
+        pattern is too strict or misses a valid variant.
+      3: |
+        A syntax error means the pattern did not execute. False positives and false negatives describe
+        outcomes of a running matcher.
     explanation: "**A False Positive is an unwanted match (regex too loose) and a False Negative is a missed match (regex too strict).** A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns."
 
   - id: 9
@@ -92,6 +180,16 @@ questions:
       - "Wrap the dot in a group: `<(.)*>`."
       - "Add the `g` flag to enable global matching."
     correct_index: 1
+    option_feedback:
+      0: |
+        `.+` still uses a greedy quantifier, so it can still consume through the last `>`. Requiring one
+        character does not make the match shorter.
+      2: |
+        Parentheses group or capture; they do not change greediness. The `*` would still try to consume
+        as much as possible.
+      3: |
+        The global flag finds multiple matches, but each individual match can still be too large. The
+        quantifier needs to be lazy or more specific.
     explanation: "**Adding `?` makes the quantifier lazy so it stops at the first `>` rather than greedily consuming everything.** By default, `*` is **greedy** — it matches as many characters as possible, consuming everything from the first `<` to the last `>`. Adding `?` makes it **lazy** (`*?`), so it matches as *few* characters as possible and stops at the first `>` it encounters."
 
   - id: 10 
@@ -103,6 +201,19 @@ questions:
       - "They are natively supported by basic POSIX standard utilities like standard `grep` or `sed`." 
       - "They allow you to validate logical 'AND' requirements (e.g., must have a letter AND a number)." 
     correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        A lookahead checks what follows while leaving the main match position unchanged. That is why it
+        can enforce conditions without adding to the result.
+      1: |
+        Multiple lookaheads can be placed at the same position to test independent requirements over the
+        same input.
+      2: |
+        Lookaheads are not part of basic POSIX regular expressions. Support depends on the regex engine,
+        so standard `grep` and `sed` cannot be assumed to handle them.
+      3: |
+        Chained lookaheads are a common way to express "must contain A and B" when the order is not
+        fixed.
     explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require PCRE and are not supported by basic POSIX tools.** Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."
 
   - id: 11

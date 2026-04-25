@@ -10,6 +10,15 @@ questions:
       - "Experiencing the negative effects of a growth mindset."
       - "Applying too many desirable difficulties at once."
     correct_index: 1
+    option_feedback:
+      0: |
+        Working memory limits matter during active problem solving, but rereading a familiar chapter usually creates the opposite feeling: it feels easy. The failure point is mistaking that ease for durable recall.
+      2: |
+        Blocked practice often feels smoother in the short term, but it is not the missing ingredient here. The student reread passively instead of checking whether they could retrieve or apply the ideas.
+      3: |
+        A growth mindset is about treating ability as improvable. The problem in the scenario is overconfidence from familiarity, not harm caused by believing improvement is possible.
+      4: |
+        Desirable difficulties include effortful strategies such as retrieval, spacing, and interleaving. Repeating the same reading three times is usually a low-friction activity, not too much productive difficulty.
     explanation: "**This is the 'illusion of knowing' — rereading creates familiarity that feels like mastery but isn't.** The text references Bjork & Bjork's **'illusion of knowing'**, where rereading creates perceptual fluency (familiarity) that students mistake for actual mastery."
   - id: 2
     question: "According to the science of learning, why should you intentionally make your study sessions feel harder?"
@@ -19,7 +28,14 @@ questions:
       - "To weed out the concepts you aren't naturally gifted at understanding."
       - "Because studying for longer hours is the only way to prove your dedication to the material."
     correct_index: 1
-    explanation: "**Struggle is the signal of learning because it triggers the biological processes that forge durable neural pathways.** It is incredibly common to mistake the feeling of 'easy' studying (like rereading highlighted notes) for actual learning. However, that smooth, effortless feeling usually just means the material is familiar, not that you have mastered it. When you introduce **'desirable difficulties'**—like forcing yourself to recall information without looking—the mental friction you feel is actually the biological process of your brain forging stronger, more permanent neural pathways!"
+    option_feedback:
+      0: |
+        Productive difficulty is not the same as high stress. The goal is effortful retrieval or discrimination under manageable conditions, not recreating panic.
+      2: |
+        Difficulty during learning is not evidence that a student lacks talent. It can be a sign that the task is requiring recall, comparison, or transfer rather than recognition.
+      3: |
+        More hours are not automatically better hours. A shorter session that makes the learner retrieve, space, or discriminate can build more durable learning than a long passive review session.
+    explanation: "**Productive struggle can be a sign that learning-relevant retrieval and encoding processes are being engaged.** It is incredibly common to mistake the feeling of 'easy' studying (like rereading highlighted notes) for actual learning. However, that smooth, effortless feeling usually just means the material is familiar, not that you have mastered it. When you introduce **'desirable difficulties'**—like forcing yourself to recall information without looking—the friction can support more durable and flexible memory than passive review, provided the task is still achievable."
   - id: 3
     question: "Why do evidence-based study techniques often feel slower, clumsier, and more frustrating to the learner?"
     options:
@@ -28,6 +44,13 @@ questions:
       - "Because working memory is infinite and requires massive amounts of data to be challenged."
       - "Because they rely heavily on creating an illusion of competence."
     correct_index: 0
+    option_feedback:
+      1: |
+        Evidence-based strategies can help beginners too, but the difficulty must be calibrated. If the learner has no foothold at all, the difficulty becomes unproductive rather than desirable.
+      2: |
+        Working memory is sharply limited. Effective study design works with that limit by choosing challenges that require effort without overwhelming the learner.
+      3: |
+        Illusions of competence usually come from fluent passive review, such as rereading or recognizing highlighted text. Retrieval and spacing can feel worse in the moment precisely because they expose what is not yet secure.
     explanation: "**Effective strategies feel slower because the short-term friction they create is exactly what drives long-term retention.** This describes **desirable difficulties** (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
@@ -37,7 +60,14 @@ questions:
       - "It prevents you from accidentally plagiarizing open-source code and failing the class."
       - "It helps you type faster, which is the most important skill for a computer science student."
     correct_index: 0
-    explanation: "**Turning off AI removes cognitive offloading, forcing the manual struggle that cements syntax and logic into long-term memory.** **Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task. While AI auto-complete tools are fantastic for workplace efficiency, they are terrible for initial learning because they do the heavy cognitive lifting for you. By turning them off, you force yourself to struggle through the logic, manually track down missing brackets, and figure out the syntax from scratch. That exact frustration is what cements the knowledge in your long-term memory, ensuring you won't need the AI to do it for you on the final exam."
+    option_feedback:
+      1: |
+        Code quality and performance are separate review questions. The learning benefit here is that the student has to retrieve syntax and reasoning instead of immediately accepting a suggested solution.
+      2: |
+        Academic integrity can matter, but it is not the learning-science mechanism being tested. Turning off assistance helps because it reduces cognitive offloading during initial practice.
+      3: |
+        Typing speed is not the core bottleneck in learning to program. The useful challenge is deciding what code should be written and recalling how to express it.
+    explanation: "**Turning off AI reduces cognitive offloading, forcing more manual recall of syntax and logic.** **Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task. AI autocomplete tools can be excellent for workplace efficiency, but they can also short-circuit initial learning if they supply the next step before the learner has tried to retrieve it. By turning them off during practice, you create more opportunities to struggle through the logic, track down missing brackets, and reconstruct syntax from memory."
   - id: 5
     question: "A junior developer wants to master a new web framework. Which of the following approaches represents the most effective memory-strengthening technique?"
     options:
@@ -47,7 +77,16 @@ questions:
       - "Copying and pasting expert code snippets repeatedly until they look familiar."
       - "Reading the framework's source code line-by-line before writing any code."
     correct_index: 2
-    explanation: "**Attempting to produce code from memory is retrieval practice, which physically strengthens memory traces far better than passive review.** This represents **retrieval practice**. Roediger and Karpicke's research demonstrates that actively retrieving information from memory (without looking at the source) physically strengthens memory traces far better than passive review."
+    option_feedback:
+      0: |
+        Highlighting can guide attention, but by itself it often builds recognition rather than recall. The stronger memory move is trying to produce the idea without the text visible.
+      1: |
+        Watching a tutorial can introduce concepts, but replaying it is still mostly passive. Mastery requires attempts to retrieve and use the material.
+      3: |
+        Copying code can make patterns look familiar without proving that the learner can reconstruct or adapt them. Retrieval practice asks the learner to generate the next step.
+      4: |
+        Reading source code can be valuable once a learner has enough structure to interpret it. As a first memory-strengthening move, it is usually less targeted than producing a small working example from recall.
+    explanation: "**Attempting to produce code from memory is retrieval practice, which typically supports long-term retention better than passive review.** This represents **retrieval practice**. Roediger and Karpicke's research demonstrates that actively retrieving information from memory can improve later retention more than simply restudying the same material."
   - id: 6
     question: "A project team must pass a rigorous cybersecurity certification in one month. How should they schedule their preparation to ensure the knowledge remains accessible long after the test is over?"
     options:
@@ -56,7 +95,14 @@ questions:
       - "Schedule shorter, periodic review sessions that force them to recall slightly degraded memories."
       - "Focus only on the most difficult topics the day before the exam."
     correct_index: 2
-    explanation: "**Shorter periodic review sessions exploit spacing, forcing the brain to reload degraded memories and trigger deeper reconsolidation.** This represents **distributed practice (spacing)**. Cepeda et al. showed that allowing a little forgetting to set in forces the brain to 'reload' the information, triggering reconsolidation and deeper learning."
+    option_feedback:
+      0: |
+        Cramming can raise short-term familiarity, but it is a poor plan for knowledge that should remain accessible after the test. Spacing creates repeated retrieval opportunities over time.
+      1: |
+        Moving only forward leaves earlier material to decay. Spaced review deliberately returns to older material after some forgetting has occurred.
+      3: |
+        The hardest topics may deserve extra attention, but saving them for the day before compresses practice into one massed session. Long-term access is better served by repeated shorter returns.
+    explanation: "**Shorter periodic review sessions exploit spacing by returning to material after some forgetting has occurred.** This represents **distributed practice (spacing)**. Spacing creates repeated opportunities to retrieve or relearn the material over time, which supports longer-term retention better than one massed session for many learning tasks."
   - id: 7
     question: "A data structures student is practicing graph algorithms. Instead of doing all the shortest-path problems, followed by all the minimum-spanning-tree problems, she shuffles them together. What specific cognitive capability does this heavily cultivate?"
     options:
@@ -66,6 +112,15 @@ questions:
       - "The stabilization of short-term memory traces."
       - "The creation of perceptual fluency."
     correct_index: 1
+    option_feedback:
+      0: |
+        Interleaving is less about memorizing surface syntax and more about choosing among approaches. The learner practices recognizing which algorithm fits a problem.
+      2: |
+        Interleaving often feels harder at first because it removes the cue of "we are doing only shortest-path problems now." That short-term difficulty is part of why it builds discrimination.
+      3: |
+        The target is durable strategy selection, not keeping a short-term trace active. Short-term ease can actually be misleading here.
+      4: |
+        Perceptual fluency is the feeling that something looks familiar. Interleaving works by making the learner compare problem types rather than coasting on familiarity.
     explanation: "**Shuffling problem types builds the critical skill of discriminating which strategy applies — something blocked practice cannot develop.** This represents **interleaving**. Rohrer and Taylor note that while blocked practice teaches you how to do a problem, interleaving improves your ability to discriminate between problem types and know when to apply specific solutions."
   - id: 8
     question: "Before attending a lecture on building neural networks, a software engineering student tries to sketch out the math for backpropagation, making several fundamental logic errors. Pedagogically speaking, how should we view this attempt?"
@@ -75,7 +130,14 @@ questions:
       - "Highly beneficial, as the initial struggle primes the brain to better encode the correct mechanism later."
       - "Irrelevant, as only the final compiling code matters in computer science."
     correct_index: 2
-    explanation: "**Pre-lecture struggle exemplifies the generation effect, which primes the brain to encode the correct answer far more deeply when it arrives.** This represents **generation**. Jacoby's work shows that struggling with a problem before seeing the solution (even if errors are made) makes the mind far more receptive to the correct answer when provided."
+    option_feedback:
+      0: |
+        Errors are not automatically harmful when they are followed by timely correction. Attempting first can make the later explanation more meaningful because the learner has a question to resolve.
+      1: |
+        A summary can be useful, but reading it first keeps the learner mostly on the input side. A generation attempt creates a stronger need to understand the eventual explanation.
+      3: |
+        Compiling code is not the only learning outcome in computer science. Building a mental model before seeing the solution helps later debugging and transfer.
+    explanation: "**Pre-lecture struggle can exemplify the generation effect: trying to produce an answer before seeing it can improve later memory for the correct answer.** This represents **generation**. Work on the generation effect shows that producing or attempting to produce material can improve later memory compared with simply reading it, especially when errors are followed by correction."
   - id: 9
     question: "A student is completely overwhelmed trying to combine Git, shell scripting, and learning a new programming language all at the same time. What should they do to optimize their cognitive architecture?"
     options:
@@ -85,6 +147,15 @@ questions:
       - "Reread the Git documentation from start to finish to ensure nothing was missed."
       - "Rely entirely on massed practice to finish the application in one sitting."
     correct_index: 2
+    option_feedback:
+      0: |
+        Persistence helps only if the task is structured within the learner's capacity. When too many unfamiliar elements must be coordinated at once, pushing harder can just overload working memory.
+      1: |
+        Interleaving is useful after the learner can recognize and attempt the component skills. Mixing several not-yet-formed skills immediately can turn productive difficulty into overload.
+      3: |
+        Reading documentation front to back may feel thorough, but it is a passive and high-load response. The better move is to isolate a small skill and practice it actively.
+      4: |
+        Massed practice can produce short-term progress, but one long session is a poor match for building stable skill across several domains. The learner needs decomposition and later recombination.
     explanation: "**Isolating component skills first is the correct response because working memory is limited and simultaneous complexity overwhelms the learner.** This represents managing cognitive load. Sweller's research dictates that working memory is highly limited; complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
   - id: 10
     question: "A student struggles heavily with their first algorithms assignment and decides, 'I'm just not wired for complex math and logic.' This reaction is a classic example of:"
@@ -95,6 +166,15 @@ questions:
       - "An appropriate response to undesirable difficulties."
       - "The generation effect."
     correct_index: 1
+    option_feedback:
+      0: |
+        A growth orientation treats struggle as information for practice and strategy, not as proof of a fixed limit. The statement says the ability itself is not there.
+      2: |
+        Cognitive load management would change the task structure or supports. The student's conclusion is about innate ability, not load design.
+      3: |
+        Some difficulties really are undesirable, but the statement goes further: it interprets struggle as evidence of being unable to learn the domain.
+      4: |
+        Generation is attempting to produce an answer before seeing it. The scenario is about an attribution the student makes after struggling.
     explanation: "**Attributing struggle to fixed innate ability is a fixed mindset, which rejects the possibility of improvement through effort.** This references Carol Dweck's research on growth mindset. Believing abilities are innate and unchangeable is a fixed mindset, whereas a growth mindset embraces the fact that abilities can be improved through effort."
   - id: 11
     type: multiple
@@ -106,4 +186,15 @@ questions:
       - "Studying in a quiet, familiar environment every time."
       - "Studying while experiencing severe test anxiety."
     correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        Self-testing is desirable when it creates effortful retrieval with a reasonable chance of success and feedback. It strengthens access more than simply seeing the answer again.
+      1: |
+        Spacing is desirable because returning after some forgetting makes retrieval effortful. The gap is doing useful work, as long as the learner can still recover or relearn the material.
+      2: |
+        Interleaving is desirable when the topics are related enough to compare and the learner has enough basics to attempt them. It builds discrimination among strategies.
+      3: |
+        A quiet environment can help attention, but using the exact same familiar setup every time is not the difficulty being named here. The evidence-based difficulties are retrieval, spacing, and interleaving.
+      4: |
+        Severe anxiety is an undesirable difficulty: it consumes attention and can impair retrieval. Desirable difficulties are challenging in ways that support learning, not distress that overwhelms it.
     explanation: "**Testing, spacing, and interleaving are empirically validated desirable difficulties; same-environment studying and test anxiety are not.** Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context. Test anxiety is also harmful for learning."

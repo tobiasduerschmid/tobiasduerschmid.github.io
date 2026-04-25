@@ -9,6 +9,16 @@ questions:
       - "It queries the git commit history to see if any tracked files were modified." 
       - "It recompiles everything by default unless explicitly told to skip a file." 
     correct_index: 1 
+    option_feedback:
+      0: |
+        Make's default rebuild decision is timestamp-based, not content-hash-based. Some newer build
+        tools use hashes, but classic Make compares modification times.
+      2: |
+        Make does not ask Git which tracked files changed. It compares targets and prerequisites in the
+        filesystem.
+      3: |
+        Make is valuable because it avoids rebuilding work that is already up to date. Recompiling
+        everything is the fallback Make helps prevent.
     explanation: "**`make` rebuilds targets by comparing file modification timestamps, not hashes.** `make` looks at the file modification timestamps. If a prerequisite (like a .c file) has a newer timestamp than the target (like a .o file), `make` knows the source code has changed and recompiles the target. This enables efficient incremental builds."
   
   - id: 2 
@@ -19,6 +29,16 @@ questions:
       - "A Tab character" 
       - "A newline character followed by a colon" 
     correct_index: 2 
+    option_feedback:
+      0: |
+        Spaces may look like indentation in an editor, but traditional Make syntax requires a tab for
+        recipe lines.
+      1: |
+        Four spaces are still spaces. Make is looking for a tab character, not a particular visual
+        indent width.
+      3: |
+        The colon belongs on the target/prerequisite line. Recipe lines are identified by tab
+        indentation on the following lines.
     explanation: "**A Tab character is strictly required; spaces cause a 'missing separator' error.** Makefile syntax strictly requires command lines (recipes) to be indented with a single Tab character. Using spaces will result in a 'missing separator' error."
   
   - id: 3 
@@ -29,6 +49,14 @@ questions:
       - "The name of the target of the rule." 
       - "The default compiler (e.g., gcc or clang)." 
     correct_index: 2 
+    option_feedback:
+      0: |
+        `$<` is the first prerequisite. `$@` is the target currently being built.
+      1: |
+        `$^` expands to all prerequisites. `$@` is just the output target name.
+      3: |
+        The compiler convention is usually `CC`. `$@` is an automatic variable whose value changes for
+        each rule invocation.
     explanation: "**`$@` represents the target name of the current rule.** `$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name."
   
   - id: 4 
@@ -39,6 +67,16 @@ questions:
       - "To tell the compiler to ignore syntax errors during the build step." 
       - "To automatically generate a list of object files from source files." 
     correct_index: 1 
+    option_feedback:
+      0: |
+        Suppressing command echo uses recipe syntax such as a leading `@`. `.PHONY` changes whether Make
+        treats a target name as a real file.
+      2: |
+        `.PHONY` does not tell the compiler to ignore errors. Recipe commands still succeed or fail
+        through their exit statuses.
+      3: |
+        `.PHONY` declares named actions such as `clean`. It does not discover source files or generate
+        object-file lists.
     explanation: "**`.PHONY` declares a target as a command, not a file, so `make` always runs its recipe.** If you have a rule named `clean`, and a file literally named `clean` is accidentally created in the directory, `make clean` will say 'clean is up to date' and do nothing. `.PHONY: clean` forces `make` to execute the recipe regardless of whether a file named `clean` exists."
 
   - id: 5 
@@ -49,6 +87,15 @@ questions:
       - "It will automatically build the very first target defined in the Makefile." 
       - "It will throw an error asking the user to specify a target." 
     correct_index: 2 
+    option_feedback:
+      0: |
+        `all` is a convention, not a built-in default. It becomes the default only when it is the first
+        target.
+      1: |
+        Make does not choose the target with the most prerequisites. With no command-line target, it
+        starts from the first target in the file.
+      3: |
+        Running `make` without a target is valid. Make uses the first target as the default goal.
     explanation: "**`make` without arguments builds the very first target defined in the Makefile.** By default, `make` begins execution with the first target it encounters in the file. By convention, developers often make the first target `all` (which depends on the main executables) so that running `make` builds the entire project."
 
   - id: 6 
@@ -59,6 +106,16 @@ questions:
       - "It substitutes the current working directory path into the command." 
       - "It performs an integer modulo operation on the file timestamps." 
     correct_index: 0 
+    option_feedback:
+      1: |
+        Silencing commands is controlled in recipe syntax, not by `%`. In a pattern rule, `%` matches
+        the shared filename stem.
+      2: |
+        `%` is not the current directory. It is the wildcard part that lets `foo.o` correspond to
+        `foo.c`.
+      3: |
+        In Make pattern rules, `%` is not modulo. It matches a filename stem so one rule can cover many
+        files.
     explanation: "**`%` is a wildcard that creates a generic pattern rule matching any `.c` file to its corresponding `.o` file.** The `%` symbol is a wildcard in pattern rules. `%.o: %.c` acts as a generic template, avoiding the need to write individual rules for every single source file in a project."
 
   - id: 7 
@@ -71,6 +128,22 @@ questions:
       - "Makefiles standardize workflows across teams (e.g., `make test`, `make clean`)." 
       - "Makefiles automatically write the correct C code if dependencies are missing." 
     correct_indices: [0, 2, 3] 
+    option_feedback:
+      0: |
+        Incremental builds are the central benefit: unchanged targets can be skipped because Make knows
+        their prerequisites.
+      1: |
+        Make still runs shell commands and compilers. It saves time by running fewer commands, not by
+        making the compiler intrinsically faster.
+      2: |
+        The dependency graph lets Make derive a correct build order from prerequisites instead of
+        relying on a hand-written sequence.
+      3: |
+        Named targets such as `make test` and `make clean` give a team a shared command interface,
+        independent of each developer remembering the underlying commands.
+      4: |
+        Make orchestrates commands; it does not synthesize missing C or C++ code. Missing dependencies
+        are build inputs, not source-generation instructions by default.
     explanation: "**Makefiles win over shell scripts by providing incremental builds, automatic dependency ordering, and standardized commands.** Makefiles save time via incremental compilation, manage complex dependency graphs automatically (declarative vs procedural), and provide standardized commands. They do not run the compiler faster, nor do they write code for you."
 
   - id: 8 
@@ -83,6 +156,19 @@ questions:
       - "`$^` (All prerequisites, space-separated)" 
       - "`$$` (The process ID of the make instance)" 
     correct_indices: [0, 1, 3] 
+    option_feedback:
+      0: |
+        `$@` is useful because the same recipe can refer to whichever target is being built.
+      1: |
+        `$<` is the first prerequisite, which is why it is common in one-source-to-one-object compile
+        rules.
+      2: |
+        `$#` is a shell positional-parameter count, not a Make automatic variable.
+      3: |
+        `$^` expands to the prerequisite list, which keeps generic compile and link recipes concise.
+      4: |
+        `$$` is how Make emits a literal dollar sign for the shell. It is not Make's process ID
+        variable.
     explanation: "**`$@`, `$<`, and `$^` are valid Make automatic variables; `$#` and `$$` are Bash constructs, not Make.** `$@`, `$<`, and `$^` are standard automatic variables used to make Makefile rules concise and dynamic. `$#` and `$$` are Bash variables, not Make automatic variables."
 
   - id: 9 
@@ -94,6 +180,17 @@ questions:
       - "`LDFLAGS` (To define linker flags)" 
       - "`MAKE_IT_FAST` (To automatically apply the `-O3` optimization flag globally)" 
     correct_indices: [0, 1, 2] 
+    option_feedback:
+      0: |
+        `CC` is the standard hook for choosing the C compiler without editing the recipe body.
+      1: |
+        `CFLAGS` separates compile options from the rule structure, making warnings, debug flags, and
+        optimization settings easy to override.
+      2: |
+        `LDFLAGS` captures link-time options separately from compile-time options.
+      3: |
+        `MAKE_IT_FAST` has no standard meaning. A Make variable matters only if rules or included
+        makefiles actually use it.
     explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** `CC`, `CFLAGS`, and `LDFLAGS` are universal conventions in Makefiles. Using them allows developers to easily swap compilers or add flags via command line arguments (e.g., `make CC=clang`) without editing the actual Makefile. `MAKE_IT_FAST` is not a standard convention."
 
   - id: 10 
@@ -105,4 +202,17 @@ questions:
       - "Makefiles use top-down planning to build a dependency graph, and then execute commands bottom-up." 
       - "`make` evaluates all rules blindly, even if the target is already up to date." 
     correct_indices: [0, 2] 
+    option_feedback:
+      0: |
+        Make describes desired targets and dependencies, then decides which commands are necessary to
+        reach the requested goal.
+      1: |
+        A Makefile is not executed top to bottom like a shell script. Rule order mostly affects the
+        default target and when definitions are read.
+      2: |
+        Make plans from the requested goal down to prerequisites, then builds prerequisites before the
+        targets that depend on them.
+      3: |
+        Make does not run every rule blindly. Timestamp checks are specifically how it skips up-to-date
+        targets.
     explanation: "**Makefiles are declarative and build a dependency graph top-down, executing only necessary commands bottom-up.** Makefiles are declarative, not procedural. They do not execute top-to-bottom sequentially, nor do they execute blindly. They build a dependency graph from the top-down (starting at the target), and then execute the necessary commands from the bottom-up, skipping anything that is already up to date."

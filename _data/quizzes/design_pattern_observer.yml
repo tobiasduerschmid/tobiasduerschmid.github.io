@@ -11,6 +11,13 @@ questions:
       - "The Push model creates tighter coupling than the Pull model"
       - "The Push model prevents adding new observers at runtime"
     correct_index: 1
+    option_feedback:
+      0: |
+        Push does not inherently block extension; new observers can still register. The pressure here is runtime cost from sending every observer more data than it needs.
+      2: |
+        Push can reduce coupling in one sense because observers do not need to query the subject for details. The performance problem comes from broad data transfer, not necessarily tighter type coupling.
+      3: |
+        Observer still supports adding observers at runtime in both push and pull variants. The issue is what each observer receives once it is registered.
     explanation: "**The Push model causes unnecessary data transfer because every observer receives the full data set on every update, even when they only need a small subset.** In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "The lapsed listener problem"
       - "The god class problem"
     correct_index: 2
+    option_feedback:
+      0: |
+        Notification storms happen when many observers receive too many updates. Here the gradual slowdown comes from observers that should have gone away but remain registered.
+      1: |
+        Inverted dependency flow is about how registration code can hide the runtime data path. The symptom here is lifecycle leakage: the subject keeps references to observers after their useful life.
+      3: |
+        A god class has too many responsibilities concentrated in one class. This case is about retained subscriptions and object lifetime, not a single class owning too much logic.
     explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "The subject must be created before any observers, inverting the normal object creation order"
       - "The Pull model inverts the Push model's data flow direction"
     correct_index: 1
+    option_feedback:
+      0: |
+        A subject normally depends only on an observer interface, not on concrete observers. The hard-to-trace part is that registration appears in one place while later data updates arrive from the opposite direction.
+      2: |
+        Creation order is not the main issue; many systems can create subjects and observers in different orders. The term points to how dependency evidence in code differs from the runtime flow of updates.
+      3: |
+        Pull changes how much data is sent with a notification, but the subject still triggers observers. The "inverted" part is about code navigation and registration, not push versus pull payload style.
     explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "When the observer uses the Pull model instead of the Push model"
       - "When the subject and observer are in the same package"
     correct_index: 1
+    option_feedback:
+      0: |
+        Observer is not a mandatory wrapper around every callback. It earns its complexity when there is a real one-to-many or dynamically changing dependency.
+      2: |
+        Push versus pull decides how notification data is delivered. It does not determine whether a subscription mechanism is justified in the first place.
+      3: |
+        Package placement does not decide the design force. A direct call can still be better when the relationship is stable, and Observer can still be useful across classes in the same package if the dependency is dynamic.
     explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
 
   - id: 5
@@ -59,4 +87,11 @@ questions:
       - "Batched — notifications are deferred and sent at a synchronization point"
       - "It depends on whether Push or Pull model is used"
     correct_index: 1
+    option_feedback:
+      0: |
+        Client-triggered notification would make the controller responsible for remembering to notify after each model change. In the described MVC flow, the model itself calls `update()` on registered views after changing.
+      2: |
+        Batched notification waits and sends fewer grouped updates later. The prompt says the model notifies whenever its state changes, so notification is immediate and internal to mutation.
+      3: |
+        Push and pull describe the payload strategy: whether data is sent or queried. The trigger strategy is separate: who decides when observers are notified.
     explanation: "**This is automatic notification — the Model's setter methods call `notifyObservers()` internally after every state change, without requiring the Controller to do so.** In the standard MVC implementation, the Model's data-mutation methods (like `addTask()`) internally call `notify()` after modifying state. This is **automatic notification** — the Model itself triggers the update. The alternative, **client-triggered**, would require the Controller to explicitly call `notifyObservers()` after making changes, which is more efficient for batch updates but places the burden on the caller."

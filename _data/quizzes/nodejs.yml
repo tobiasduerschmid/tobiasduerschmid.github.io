@@ -9,6 +9,16 @@ questions:
       - "Single-threaded is slower, but Node.js compensates with a faster garbage collector"
       - "The flaw is that Node.js compiles to C++ before running, so it actually uses threads internally"
     correct_index: 1
+    option_feedback:
+      0: |
+        Node has worker resources under the hood, but JavaScript request callbacks are not assigned one
+        OS thread each.
+      2: |
+        Garbage-collector speed does not solve the architectural point: non-blocking I/O keeps the event
+        loop available.
+      3: |
+        V8 executes JavaScript with native machinery, but Node's concurrency model is still event-loop
+        driven rather than one C++ thread per request.
     explanation: "**Node.js is single-threaded but its Event Loop delegates I/O to the OS, keeping the thread free to handle other requests — making it highly efficient for I/O-bound work despite having only one thread.** The key insight is that most server work is I/O-bound (waiting for databases, files, network), not CPU-bound. While the Chef (call stack) can only do one thing at a time, the Appliances (OS) handle I/O in the background. The Chef stays free to serve other requests. This model is efficient for I/O workloads but unsuitable for CPU-heavy tasks like video encoding."
 
   - id: 2
@@ -26,6 +36,16 @@ questions:
       - "`console.log` is asynchronous in Node.js, so the order is random"
       - "Arrow functions execute after regular functions by design"
     correct_index: 1
+    option_feedback:
+      0: |
+        The important rule is not the exact minimum delay; queued callbacks wait until synchronous code
+        leaves the call stack.
+      2: |
+        The order is deterministic here because `console.log("A")` and `console.log("C")` run
+        synchronously before the timer callback.
+      3: |
+        Arrow syntax does not delay execution; the callback is delayed because `setTimeout` schedules
+        it.
     explanation: "**`setTimeout(() => ..., 0)` queues the callback in the Task Queue, but the Event Loop only dequeues it after the Call Stack is empty — so synchronous code always runs first.** The 0ms delay means 'as soon as possible', NOT 'immediately'. The callback waits in the Task Queue. The Event Loop's rule: never interrupt the Call Stack. Synchronous code runs to completion first. This is why blocking the main thread (e.g., with a long loop) prevents ALL callbacks from firing."
 
   - id: 3
@@ -36,6 +56,14 @@ questions:
       - "`==` is deprecated and will be removed in future JavaScript versions"
       - "There is no strong argument — `==` and `===` are interchangeable when types match"
     correct_index: 1
+    option_feedback:
+      0: |
+        The main reason for `===` is semantic safety against coercion bugs, not speed.
+      2: |
+        `==` still exists; the review concern is that implicit coercion can hide type mismatches.
+      3: |
+        `==` and `===` agree only while operands stay the same type, so tests can miss the future
+        mismatch.
     explanation: "**`==` silently coerces types and hides fragile assumptions — `===` fails loudly when types diverge, catching latent bugs before they reach production.** The danger isn't that `==` fails now — it's that it hides a fragile assumption. When requirements change (e.g., user ID becomes a string UUID instead of a number), `==` comparisons silently coerce and produce wrong results with no error. `===` is defensive coding — it fails loudly when types don't match."
 
   - id: 4
@@ -60,6 +88,16 @@ questions:
       - "Only when the server supports HTTP/2 multiplexing"
       - "Never — `Promise.all` is harder to debug and should be avoided"
     correct_index: 1
+    option_feedback:
+      0: |
+        Parallelizing dependent operations can fail or waste work when the second result needs data from
+        the first.
+      2: |
+        `Promise.all` is about JavaScript scheduling of independent promises, not specifically about
+        HTTP/2 support.
+      3: |
+        Avoiding `Promise.all` for independent work preserves no semantic benefit and can double
+        avoidable wait time.
     explanation: "**`Promise.all` should be preferred when the two operations are independent — it takes `max(A, B)` time instead of `A + B`, cutting wall-clock time significantly.** Sequential `await` is correct when operations depend on each other (fetch user, then fetch that user's posts). For independent operations, `Promise.all` cuts wall-clock time significantly. Example: if each fetch takes 200ms, sequential = 400ms, parallel = 200ms."
 
   - id: 5
@@ -70,6 +108,14 @@ questions:
       - "JavaScript does not have any form of block scoping"
       - "`for` loops in JavaScript are macros that expand inline, so there is no inner scope"
     correct_index: 0
+    option_feedback:
+      1: |
+        `var` is scoped to the enclosing function; it becomes global only when declared at top level in
+        the relevant environment.
+      2: |
+        `let` and `const` are block-scoped; the confusing legacy behavior belongs to `var`.
+      3: |
+        The loop is not macro-expanded; the observed lifetime follows JavaScript's `var` scoping rule.
     explanation: "**`var` uses function scope and ignores block boundaries — unlike C++ and Python — so it remains accessible after the `for` loop closes; use `let` or `const` for block scope.** `var` hoists to the enclosing function scope and ignores block boundaries (`if`, `for`, `while`). This is one of JavaScript's most confusing legacy features. `let` and `const` (introduced in ES6) use block scope — matching the behavior you expect from C++ and Python. Always use `let`/`const`."
 
   - id: 6
@@ -80,6 +126,16 @@ questions:
       - "Callbacks are required by the V8 engine's garbage collector"
       - "Callbacks are only used in legacy Node.js — modern versions use a different mechanism"
     correct_index: 1
+    option_feedback:
+      0: |
+        JavaScript has many ways to define functions; callbacks matter because async APIs need a
+        function to call later.
+      2: |
+        V8 garbage collection is not why callbacks are used; the event loop needs a continuation for
+        completed async work.
+      3: |
+        Promises and `async/await` improve syntax, but they still represent work that resumes through
+        scheduled continuations.
     explanation: "**Callbacks are fundamental to Node.js because the single-threaded Event Loop has no other mechanism to notify your code when an async operation completes — every async API is built on this pattern.** Every async API in Node.js follows the pattern: 'start this operation and call this function when done.' `fs.readFile(path, callback)`, `setTimeout(callback, ms)`, `fetch(url).then(callback)` — they all accept functions. Even `async/await` is syntactic sugar over Promises, which are themselves built on callbacks. Understanding this chain is essential."
 
   - id: 7
@@ -100,6 +156,16 @@ questions:
       - "`processItem` must return a string, not a Promise"
       - "There is no bug — `.forEach()` correctly awaits each callback"
     correct_index: 0
+    option_feedback:
+      1: |
+        Marking the callback `async` makes each callback return a promise, but `.forEach()` does not
+        collect or await those promises.
+      2: |
+        The bug is not the eventual value returned by `processItem`; it is that the surrounding loop
+        ignores the promise lifecycle.
+      3: |
+        Most array iteration helpers are synchronous; `await` inside their callbacks does not make the
+        helper itself wait.
     explanation: "**`.forEach()` ignores async callbacks — it fires them all and returns immediately, so `'All done!'` prints before any item finishes; use `for...of` with `await` or `Promise.all` instead.** `.forEach()` does not await the async callbacks it spawns — it fires them all and returns immediately. The `await` inside each callback works, but `.forEach` itself doesn't wait for them. Fix: `for (const item of items) { await processItem(item); }` (sequential) or `await Promise.all(items.map(item => processItem(item)))` (parallel)."
 
   - id: 8
@@ -165,6 +231,15 @@ questions:
       - "A: `.reduce()`, B: `.map()`, C: `.filter()`"
       - "A: `.filter()`, B: `.reduce()`, C: `.map()`"
     correct_index: 1
+    option_feedback:
+      0: |
+        `.map()` keeps the same cardinality and transforms each item; it does not remove seen videos.
+      2: |
+        `.reduce()` can implement many things, but using it to select unseen videos hides the simpler
+        operation: filtering.
+      3: |
+        `.reduce()` collapses to one accumulated value, so it is the wrong fit for rendering one
+        component per video.
     explanation: "**`.filter()` selects, `.map()` transforms, and `.reduce()` aggregates — matching unseen-video removal, component rendering, and total-time calculation respectively.** `.filter()` selects elements matching a condition (unseen videos). `.map()` transforms each element into something new (video → component). `.reduce()` combines all elements into a single value (total time). Knowing *which* method to reach for — not just how each works — is the critical skill."
 
   - id: 12
@@ -176,6 +251,16 @@ questions:
       - "No problems — `==` correctly handles string-to-number comparison"
       - "The only problem is that the API should return a number, not a string"
     correct_index: 1
+    option_feedback:
+      0: |
+        The dangerous part is not merely using the wrong operator; the operator hides an API type
+        mismatch that should be made explicit.
+      2: |
+        `==` makes this example pass by accident, which is exactly why the bug can survive until a less
+        friendly value appears.
+      3: |
+        Even if the API should return a number, client code still needs explicit conversion or strict
+        comparison at the boundary.
     explanation: "**`==` accidentally coerces the string `\"42\"` to match the number `42`, hiding a type mismatch that `===` would catch — use `Number(count) === 42` to make the conversion explicit.** This question interleaves async concepts (API fetch) with the `===` trap from earlier. The `==` coercion makes the check work *accidentally*, but it hides a fragile assumption. Using `===` with explicit `Number(count) === 42` makes the type conversion intentional and visible."
 
   - id: 13
@@ -201,6 +286,15 @@ questions:
       - "An `AsyncIterator` object that must be consumed with `for await...of`"
       - "`undefined` — async functions cannot return values directly"
     correct_index: 1
+    option_feedback:
+      0: |
+        The `async` keyword always wraps the function result in a Promise, even when the body has no
+        `await`.
+      2: |
+        `async` functions return Promises; `for await...of` is for async iterables, a different
+        protocol.
+      3: |
+        They can return values, but callers receive those values through the returned Promise.
     explanation: "**Every `async` function always returns a Promise — even `return 42` wraps the value in `Promise.resolve(42)`, so you must `await` the call to get the plain value.** Every `async` function returns a Promise — always. `async function answer() { return 42; }` is equivalent to `function answer() { return Promise.resolve(42); }`. This is why `const result = someAsyncFunction()` without `await` gives you a Promise object, not the value. Forgetting this is one of the most common async bugs."
 
   - id: 15
@@ -232,6 +326,14 @@ questions:
         }
         ```
     correct_index: 2
+    option_feedback:
+      0: |
+        `setTimeout` returns an identifier for canceling the timer, not a Promise that resolves later.
+      1: |
+        `await ms` immediately yields the same number because `ms` is not a Promise tied to a timer.
+      3: |
+        Wrapping the timer ID with `Promise.resolve` resolves immediately with the ID; it does not wait
+        for the callback.
     explanation: "**`new Promise(resolve => setTimeout(resolve, ms))` is correct because it resolves when the timer fires — the other options return a timer ID, await a number immediately, or fail to return the Promise.** `new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called. Passing `resolve` directly to `setTimeout` means: 'call `resolve` after `ms` milliseconds.' Option A returns a numeric timer ID, not a Promise. Option B `await`s the number `ms` directly — awaiting a non-Promise resolves immediately, so there is no delay. Option D calls `Promise.resolve` with a timer ID and doesn't `return` the Promise."
 
   - id: 16
@@ -282,6 +384,16 @@ questions:
       - "The problem is that `res.json()` is slow — use `res.send()` instead for faster responses"
       - "Nothing is wrong — 2 seconds is an acceptable response time for game servers"
     correct_index: 1
+    option_feedback:
+      0: |
+        `async` changes how waiting is expressed, but a synchronous two-second computation still
+        occupies the event loop thread.
+      2: |
+        The lag comes before `res.json()`, while the server is unable to handle other callbacks during
+        CPU work.
+      3: |
+        In an event-loop server, one slow CPU-bound request harms every other request waiting for a
+        turn.
     explanation: "**`computeAIResponse` is CPU-intensive and blocks the Event Loop for 2 seconds, freezing all other requests — `async/await` cannot fix CPU-bound work; a Worker Thread is required.** This connects the Event Loop (Restaurant metaphor) to a real scenario. The Chef is stuck computing AI moves for 2 seconds — during which EVERY other player's request sits in the queue. `async/await` alone won't help because the computation is CPU-bound, not I/O-bound. Worker Threads move the heavy computation off the main thread."
 
   - id: 19
@@ -328,6 +440,15 @@ questions:
       - "The code throws a `ReferenceError` because `x` has no value"
       - "`x` is `0` — JavaScript auto-initializes numeric variables to zero"
     correct_index: 1
+    option_feedback:
+      0: |
+        `undefined` means no value has been assigned; `null` is an explicit empty value chosen by the
+        program.
+      2: |
+        A declared `let x;` exists in scope; a `ReferenceError` would come from using a name that was
+        never declared.
+      3: |
+        JavaScript does not infer that an unassigned variable should be numeric zero.
     explanation: "**A declared variable with no value assigned is `undefined`, not `null` — `undefined` means 'not yet assigned' while `null` means 'intentionally empty'.** In JavaScript, `undefined` means 'declared but no value assigned.' This is different from Python (which raises `NameError` for uninitialized variables) and from `null` (which means 'intentionally empty'). `typeof undefined` is `\"undefined\"`. Confusingly, `typeof null` is `\"object\"` — a famous JS bug."
 
   - id: 22

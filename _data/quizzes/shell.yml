@@ -9,6 +9,16 @@ questions:
       - "Because `awk` and `sort` are built-in OS functions that completely bypass the system's kernel."
       - "It prevents the operating system from allocating memory to background processes."
     correct_index: 1
+    option_feedback:
+      0: |
+        The UNIX benefit here is composability, not a guarantee that shell pipelines are faster than
+        compiled programs. The pipeline works because each tool accepts and emits a simple stream.
+      2: |
+        `awk` and `sort` are ordinary programs using OS services. The design win is the shared
+        text-stream interface, not bypassing the kernel.
+      3: |
+        Pipelines can avoid temporary files and stream data between processes, but they do not prevent
+        the OS from allocating memory. The core idea is composition through standard streams.
     explanation: "**This pipeline is preferred because it follows the UNIX philosophy of combining single-purpose tools that communicate via text streams.** The UNIX design philosophy revolves around writing programs that 'do one thing and do it well', and having them work together by handling text streams. Pipelines allow complex tasks to be solved elegantly by chaining these simple tools together."
   - id: 2
     question: "A script runs a command that generates both useful output and a flood of permission error messages. The user runs `script.sh > output.txt`, but the errors still clutter the terminal screen while the useful data goes to the file. What underlying concept explains this behavior?"
@@ -18,6 +28,16 @@ questions:
       - "The script is missing the `#!/bin/bash` shebang, causing it to execute in a fallback compatibility mode."
       - "Standard Error cannot be redirected in UNIX systems and must always be printed to the screen to alert the user."
     correct_index: 1
+    option_feedback:
+      0: |
+        The terminal is showing stderr because only stdout was redirected. There is no security rule
+        that mirrors redirected output back to the screen.
+      2: |
+        The shebang controls which interpreter runs the script, not which stream `>` redirects. This
+        behavior comes from stdout and stderr being separate file descriptors.
+      3: |
+        Stderr can be redirected explicitly, for example with `2> errors.txt`. It stays on the terminal
+        here only because the command redirected stdout alone.
     explanation: "**Errors still appear in the terminal because stdout and stderr are separate streams, and `>` only redirects stdout.** In UNIX, processes have three default streams: stdin, stdout, and stderr. Redirection with `>` only captures stdout. To capture the errors, you would need to redirect stderr specifically (e.g., using `2>`)."
   - id: 3
     question: "A C++ developer writes a Bash script with a `for` loop. Inside the loop, they declare a variable `temp_val`. After the loop finishes, they try to print `temp_val` expecting it to be undefined or empty, but it prints the last value assigned in the loop. Why did this happen?"
@@ -27,6 +47,16 @@ questions:
       - "Unlike C++, Bash lacks strict block-level scoping (like `{}` blocks), meaning variables set within loops or if-statements remain accessible in the script's global scope."
       - "The script was executed with `sudo` privileges, which ignores standard scoping rules."
     correct_index: 2
+    option_feedback:
+      0: |
+        Assignment in Bash creates a shell variable, not an exported environment variable. `export` is
+        needed before child processes inherit it.
+      1: |
+        `let` performs arithmetic evaluation; it does not declare a C++-style block-local variable. Bash
+        loop bodies do not create a new lexical scope.
+      3: |
+        Privilege does not change Bash scoping rules. `sudo` affects permissions and identity, not
+        whether loop variables remain visible after the loop.
     explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Bash does not use block-level scoping. Unless explicitly declared as `local` inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
   - id: 4
     question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
@@ -36,6 +66,16 @@ questions:
       - "I/O Redirection; it overwrites the standard input of the `diff` command with standard error."
       - "Arithmetic expansion; it mathematically evaluates the commands and returns their integer exit codes."
     correct_index: 1
+    option_feedback:
+      0: |
+        A pipe gives one command a single stdin stream. `diff` needs two file-like inputs, so process
+        substitution is the better fit.
+      2: |
+        Redirection changes stdin, stdout, or stderr for a process. Process substitution creates a
+        filename-like handle that a command can open as an input file.
+      3: |
+        `<(command)` does not evaluate arithmetic or return exit codes. It exposes the command output
+        through a temporary file descriptor.
     explanation: "**This is process substitution — it lets the OS present a command's output as a temporary file descriptor without writing to disk.** Process substitution `<()` allows the standard output of a command to be treated as a file. The operating system creates a temporary file descriptor (like `/dev/fd/63`) that the consuming command can read from as if it were a physical file."
   - id: 5
     question: "A script contains entirely valid Python code, but the file is named `script.sh` and has `#!/bin/bash` at the very top. When executed via `./script.sh`, the terminal throws dozens of 'command not found' and syntax errors. What is the fundamental misunderstanding here?"
@@ -45,6 +85,16 @@ questions:
       - "Python scripts cannot be made executable via `chmod +x` and must always be run using the 'python' keyword."
       - "The script requires the `set -e` flag to switch the shell into a dynamic Python compatibility mode."
     correct_index: 1
+    option_feedback:
+      0: |
+        UNIX does not execute a file based on the `.sh` extension. The executable bit and the shebang
+        determine how `./script.sh` is launched.
+      2: |
+        Python scripts can be executable when they have execute permission and a Python shebang. They do
+        not have to be invoked with the `python` command every time.
+      3: |
+        `set -e` changes failure handling; it cannot make Bash understand Python syntax. The interpreter
+        selection is wrong before that option would help.
     explanation: "**The shebang `#!` dictates the interpreter, completely overriding the file extension — which the OS treats as superficial.** In UNIX systems, file extensions are largely superficial. The shebang (`#!`) on the first line is what tells the operating system's program loader which interpreter program (e.g., Bash, Python, Node) to use to parse the rest of the file."
   - id: 6
     question: "A developer uses the regular expression `[0-9]{4}` to validate that a user's input is exactly a four-digit PIN. However, the system incorrectly accepts '12345' and 'A1234'. What crucial RegEx concept did the developer omit?"
@@ -54,6 +104,16 @@ questions:
       - "Anchors (`^` and `$`) to strictly bind the match to the start and end of the string."
       - "Named groups to extract the exact digits into memory."
     correct_index: 2
+    option_feedback:
+      0: |
+        Digits in `[0-9]` are already being matched intentionally. The missing piece is requiring the
+        match to cover the whole input.
+      1: |
+        `*` repeats the previous atom; it is not a general instruction to validate the entire string.
+        Anchors are what bind a pattern to the input boundaries.
+      3: |
+        Named groups help retrieve parts of a match after it succeeds. They do not prevent extra
+        characters from appearing before or after the match.
     explanation: "**Anchors were omitted, so the regex matches the valid substring inside the input and ignores the surrounding characters.** Without anchors, a regular expression looks for a match *anywhere* within the string. Because '12345' contains '1234', the pattern matches. Adding `^` (start) and `$` (end) ensures the pattern must account for the entire string."
   - id: 7
     type: multiple
@@ -65,6 +125,22 @@ questions:
       - "The `<` operator is used to redirect standard input, allowing a command to read from a file instead of the keyboard."
       - "The `>!` operator is fundamentally required to redirect both stdout and stderr simultaneously in modern Bash."
     correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        One process writes stdout, and the next process reads that same data as stdin. That stream
+        connection is the core pipe model.
+      1: |
+        `>>` matters because it appends stdout instead of replacing the file. That is a different
+        operation from ordinary `>` redirection.
+      2: |
+        A pipe carries stdout by default, not stderr. Error text needs explicit redirection if it should
+        join the pipeline.
+      3: |
+        `< file` is the input-side counterpart to output redirection. It lets a command read stdin from
+        a file rather than from the keyboard or previous pipe.
+      4: |
+        `>!` is not the Bash mechanism for redirecting both stdout and stderr. In Bash, common forms are
+        `&>` or explicit descriptor redirection such as `>out 2>err`.
     explanation: "**`|` links stdout to stdin, `>>` appends, and `<` redirects stdin — but pipes do NOT carry stderr and `>!` is not standard Bash.** Pipes (`|`) link stdout to stdin, `>>` appends stdout to a file, and `<` feeds a file into stdin. By default, pipes do NOT pass stderr (errors will still print to the screen). `>!` is not the standard way to redirect both streams in Bash (typically `>&` or `&>` is used)."
   - id: 8
     type: multiple
@@ -75,6 +151,19 @@ questions:
       - "The script should start with a valid shebang (e.g., `#!/bin/bash`) to inform the OS which interpreter to invoke."
       - "The script's directory must be permanently added to the `$PATH` variable in order to run it using the `./` prefix."
     correct_indices: [0, 2]
+    option_feedback:
+      0: |
+        `./deploy.sh` asks the OS to execute that file, so execute permission must be present. Read
+        permission alone is not enough for direct execution.
+      1: |
+        Shell scripts are interpreted text, not C/C++ source. Compiling with `gcc` is unrelated to
+        running a Bash script.
+      2: |
+        The shebang is how the OS knows which interpreter should read the script. Without it, direct
+        execution may use the wrong shell or fail.
+      3: |
+        `./deploy.sh` already gives a path to the file. `$PATH` is only searched when the command name
+        has no slash.
     explanation: "**A script needs execute permissions (`chmod +x`) and a valid shebang — it is interpreted, not compiled, and `./` bypasses `$PATH`.** Scripts require execute permissions (`chmod +x`) to be run as programs, and a shebang tells the OS how to interpret the text. They are interpreted, not compiled. The `./` explicitly tells the OS to look in the current directory, bypassing the need for the directory to be in the `$PATH`."
   - id: 9
     type: multiple
@@ -85,6 +174,19 @@ questions:
       - "An exit status of '1' universally indicates complete, bug-free success in UNIX shell scripting."
       - "Control structures like `if` statements evaluate the underlying exit code of a command, rather than looking for a boolean literal like 'true' or 'false'."
     correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        `false` is useful precisely because it does no work except return a failing status. It is a tiny
+        command for testing shell control flow.
+      1: |
+        `set -e` changes the script into fail-fast mode for many unhandled nonzero statuses. That is why
+        it is often used in deployment scripts.
+      2: |
+        Shell success is exit status `0`; nonzero values indicate failure. That is the reverse of
+        treating `1` as boolean true.
+      3: |
+        Bash `if` runs a command and checks its exit status. It is not looking for a boolean object
+        named `true` or `false`.
     explanation: "**Exit code 0 means success; `if` tests exit codes not booleans; and `set -e` aborts on any non-zero exit.** In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is a common safety mechanism to fail fast if an error occurs."
   - id: 10
     type: multiple
@@ -95,6 +197,19 @@ questions:
       - "To make a `$PATH` modification permanent, you must append the export command to a shell startup script, such as `~/.bashrc` or `~/.zshrc`."
       - "`$PATH` automatically crawls every single folder on your hard drive in real-time, which is why system commands are discovered so rapidly."
     correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        `$PATH` is an explicit ordered list of directories. The shell searches those directories in
+        order until it finds an executable name.
+      1: |
+        Changing `$PATH` in a terminal affects that shell session and child processes. A new terminal
+        will not inherit it unless startup files recreate the change.
+      2: |
+        Startup files such as `~/.bashrc` or `~/.zshrc` are how a user makes the path change happen
+        again in future shells.
+      3: |
+        The shell does not crawl the whole disk for commands. That would be slow, unpredictable, and
+        unsafe compared with an explicit path list.
     explanation: "**`$PATH` is an explicit ordered directory list, not a global crawler — session changes are temporary unless saved to a startup file.** `$PATH` is an explicit list of directories, not a global search crawler (which would be extremely slow). The OS checks these directories in order. Modifications in the terminal are bound to that specific session unless saved in a configuration file like `.bashrc`."
   - id: 11
     question: "A developer writes `LOGFILE=\"access errors.log\"` and then runs `wc -l $LOGFILE`. The command fails with 'No such file or directory' errors for both 'access' and 'errors.log'. What is the root cause?"
@@ -104,6 +219,16 @@ questions:
       - "The shell performs word splitting on the unquoted variable expansion, breaking the value into two separate arguments at the space boundary."
       - "The `.log` extension is not recognized as a text file by `wc -l`."
     correct_index: 2
+    option_feedback:
+      0: |
+        `wc` can process files whose names contain spaces. The shell split the unquoted variable before
+        `wc` received the arguments.
+      1: |
+        Variable case did not cause this failure. The problem is unquoted expansion followed by word
+        splitting on the embedded space.
+      3: |
+        `wc -l` does not care that the file ends in `.log`. The command failed because one intended
+        filename became two arguments.
     explanation: "**The shell word-splits the unquoted variable at the space, turning one filename into two separate arguments.** When a variable is expanded without double quotes, the shell splits the result on whitespace. `wc -l $LOGFILE` is interpreted as `wc -l access errors.log` — two separate arguments. The fix is to always quote variable expansions: `wc -l \"$LOGFILE\"`."
   - id: 12
     question: "A script is invoked with `./deploy.sh production 8080 myapp`. Inside the script, which variable holds the value `8080`?"
@@ -113,6 +238,15 @@ questions:
       - "`$2`"
       - "`$#`"
     correct_index: 2
+    option_feedback:
+      0: |
+        `$0` is the script path or command name. User-supplied positional arguments start at `$1`.
+      1: |
+        `$1` is `production` in this invocation. `8080` is the second user-supplied argument, so it is
+        `$2`.
+      3: |
+        `$#` is the argument count, which would be `3` here. It does not hold the value of any
+        particular argument.
     explanation: "**`$2` holds the value `8080` because `$0` is the script name, `$1` is the first argument, and `$2` is the second.** `$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
   - id: 13
     question: "A script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
@@ -122,6 +256,16 @@ questions:
       - "`echo 'All tests passed!'` does not run, because `&&` short-circuits when the preceding command fails."
       - "The shell re-tries `./run_tests.sh` once before giving up."
     correct_index: 2
+    option_feedback:
+      0: |
+        `&&` skips later commands after a failure, but it does not by itself mean the whole script must
+        exit in every context. It is a short-circuit operator.
+      1: |
+        The last command in an `&&` chain only runs if every earlier command succeeded. A failing test
+        command prevents the success message.
+      3: |
+        Shell control operators do not retry commands automatically. Retrying requires an explicit loop
+        or retry command in the script.
     explanation: "**`&&` short-circuits when `./run_tests.sh` fails, so `echo 'All tests passed!'` is never executed.** The `&&` operator short-circuits on failure. Since `./run_tests.sh` returned a non-zero exit code, the shell skips all remaining `&&`-linked commands. Only if every command in the chain succeeds does `echo 'All tests passed!'` execute."
   - id: 14
     type: multiple
@@ -133,6 +277,22 @@ questions:
       - "Single quotes and double quotes are completely interchangeable in all Bash contexts."
       - "The `$(command)` syntax runs the command in a subshell and replaces itself with the command's standard output."
     correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        Single quotes are the strongest ordinary quoting form: the content is taken literally, including
+        `$` and `$(...)`.
+      1: |
+        Double quotes preserve spaces while still allowing variable and command substitution. That
+        combination is why they are common around variable expansions.
+      2: |
+        Quoting `"$FILE"` keeps a filename with spaces as one argument. Without the quotes, the shell
+        performs word splitting.
+      3: |
+        Single and double quotes are not interchangeable when expansion is involved. Single quotes
+        suppress `$...`; double quotes allow it.
+      4: |
+        `$(command)` runs the command and substitutes its stdout into the surrounding command line.
+        Stderr is not captured unless redirected.
     explanation: "**Single quotes suppress all expansion, double quotes allow substitution while protecting spaces, and `$(command)` captures output — single and double quotes are not interchangeable.** Single quotes suppress all expansion; double quotes allow variable and command substitution while protecting spaces. Quoting `\"$VARIABLE\"` is essential to prevent word splitting on values containing spaces. Single and double quotes are NOT interchangeable when variable expansion is needed. `$(command)` is command substitution — the standard way to capture command output into a variable."
 
   - id: 15
@@ -251,6 +411,16 @@ questions:
       - "Fails with an error — `src/components/` does not exist, and no directories are created."
       - "Creates `src/components/ui/` directly, skipping the intermediate `components/` directory."
     correct_index: 2
+    option_feedback:
+      0: |
+        Plain `mkdir` does not create missing parents. Use `mkdir -p src/components/ui` when
+        intermediate directories may be absent.
+      1: |
+        Without `-p`, `mkdir` fails before creating the missing intermediate directory. It does not
+        create only the first missing parent.
+      3: |
+        A filesystem path cannot skip the intermediate `components` directory. The parent path must
+        exist before `ui` can be created inside it.
     explanation: "**Without `-p`, `mkdir` requires every parent to already exist — `src/components/` is missing so the whole command errors out and nothing is created.** `mkdir` only creates the *final* segment of the path; all intermediate parents must already exist. Since `src/components/` is absent, the shell prints `mkdir: cannot create directory 'src/components/ui': No such file or directory` and leaves the filesystem unchanged. Adding `-p` (`mkdir -p src/components/ui`) creates all missing parents in one idempotent operation."
 
   - id: 22
@@ -276,4 +446,14 @@ questions:
       - "Fails with an error — `rm` requires `-r` (or `-rf`) to remove a directory."
       - "Moves `build/` to `/tmp` as a safety measure instead of deleting it."
     correct_index: 2
+    option_feedback:
+      0: |
+        Plain `rm` refuses to remove directories. Recursive deletion requires `-r`, which is
+        intentionally explicit because it can delete many files.
+      1: |
+        `rm build/` does not partially empty the directory. Without `-r`, it fails at the directory
+        argument.
+      3: |
+        `rm` is not a trash command. When deletion is allowed, it removes directly rather than moving
+        files to `/tmp`.
     explanation: "**`rm` without `-r` refuses to remove directories — it only deletes regular files.** Passing a directory path to plain `rm` causes it to print `rm: cannot remove 'build/': Is a directory` and exit without touching the filesystem. To remove a directory and all its contents you need `rm -r build/`. Adding `-f` (`rm -rf build/`) additionally suppresses any prompts and ignores missing-file errors — making it the silent, forceful variant used in scripts."

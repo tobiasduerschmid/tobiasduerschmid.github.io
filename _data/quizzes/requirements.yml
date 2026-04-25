@@ -9,6 +9,16 @@ questions:
       - "A specific architectural implementation strategy."
       - "A concrete algorithmic choice for data caching."
     correct_index: 1
+    option_feedback:
+      0: |
+        A constraint would restrict the solution choices, such as requiring a specific CDN or audio
+        buffer size. This statement describes an experience the system should provide.
+      2: |
+        No architecture has been chosen yet. The sentence says what quality the user should perceive,
+        not how components should be arranged.
+      3: |
+        Caching might be one possible design, but the requirement does not name an algorithm. Treating
+        the first possible solution as the requirement would narrow the design too early.
     explanation: "**This is a quality attribute requirement because it states what the system must achieve (seamless transitions) without dictating any implementation — though 'perceivable' needs a concrete definition to be measurable.** The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**. To make it more specific, the definition of 'perceivable loading delays' needs to be included in the requirement."
 
   - id: 2
@@ -19,6 +29,16 @@ questions:
       - "Establishing verifiable traceability."
       - "Delegating design choices to the QA team."
     correct_index: 2
+    option_feedback:
+      0: |
+        Mapping tests back to requests does the opposite of over-constraining architecture. It checks
+        that implementation work remains tied to stated needs.
+      1: |
+        Performance optimization may be a separate concern, but traceable tests are about evidence that
+        requirements were satisfied.
+      3: |
+        QA is verifying the requested behavior, not taking ownership of design mechanics. Traceability
+        connects tests to stakeholder intent.
     explanation: "**Mapping every test to a stakeholder request demonstrates verifiable traceability — a core benefit of defining the problem space before building solutions.** Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement via **verifiable traceability**."
 
   - id: 3
@@ -29,6 +49,16 @@ questions:
       - "It makes it impossible to write automated acceptance tests."
       - "It requires the use of unproven, experimental technologies."
     correct_index: 1
+    option_feedback:
+      0: |
+        The dashboard may have functional value, but the phrasing jumps straight to a database choice.
+        The objection is premature solution detail.
+      2: |
+        A graph database requirement could still be tested by inspecting the stack. Testability is not
+        the problem; unnecessary constraint is.
+      3: |
+        A graph database is not inherently experimental. The issue is that the client named a technology
+        before the team established that it is the right solution.
     explanation: "**Specifying a 'graph database' is a design decision, not a user need — including it in the requirement prematurely constrains the engineering team from exploring better solutions.** Specifying a 'graph database' is a design decision. Including it in the requirement prematurely constrains the engineering team from exploring potentially better data persistence options."
 
   - id: 4
@@ -39,6 +69,16 @@ questions:
       - "The project manager dictates both expectations and mechanics to ensure alignment."
       - "End-users define mechanics; quality assurance engineers dictate expectations."
     correct_index: 1
+    option_feedback:
+      0: |
+        This reverses the usual responsibilities. Engineers should not invent stakeholder expectations,
+        and product managers should not normally dictate implementation mechanics.
+      2: |
+        A project manager can coordinate, but making one role dictate both problem and solution removes
+        the negotiation that requirements are meant to support.
+      3: |
+        End users are the source of needs and expectations, not the designers of internal mechanics. QA
+        helps verify expectations but should not replace stakeholders.
     explanation: "**Customers and product representatives define what the system must do, while software engineers decide how to build it — mixing these roles leads to over-constrained or poorly understood requirements.** Requirements (expectations) should be negotiated with the customer/product manager, while design decisions (mechanics) belong to the software engineers and architects."
 
   - id: 5
@@ -49,6 +89,16 @@ questions:
       - "The application will utilize an in-memory Redis store to temporarily hold the user's unpurchased items."
       - "Consumers must receive an email notification immediately after a successful transaction."
     correct_index: 2
+    option_feedback:
+      0: |
+        Readable display across device sizes is a required quality of the interface. It states an
+        outcome without choosing the layout technology.
+      1: |
+        Alphabetical ordering is required behavior visible to users. It does not prescribe the data
+        structure or query implementation.
+      3: |
+        Sending an email after a transaction is required system behavior. It says what must happen, not
+        which messaging provider or architecture must be used.
     explanation: "**'Embed a Redis store' is a solution-space statement because it names a specific technology — the other options describe required system behavior without dictating the implementation.** Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
 
   - id: 6
@@ -59,6 +109,16 @@ questions:
       - "It was discarded because iterative teams do not use specifications."
       - "It was expanded to mandate the new indexing engine for all future company projects."
     correct_index: 1
+    option_feedback:
+      0: |
+        A technology migration should not force a rewrite of a requirement that was stated at the
+        user-need level. Only the design changed.
+      2: |
+        Iterative teams still use requirements; they try to keep them focused on stable needs while
+        designs evolve.
+      3: |
+        Mandating the new indexing engine would turn a flexible requirement into a solution constraint.
+        The migration is an implementation choice, not the user need itself.
     explanation: "**A well-written requirement focused on the 'what' remains unchanged even when the implementation is completely replaced — it stayed valid through the migration because it never named a specific technology.** Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
 
   - id: 7
@@ -70,6 +130,19 @@ questions:
       - "An Operational Transformation matrix."
       - "A long user story."
     correct_index: 1
+    option_feedback:
+      0: |
+        A persona explains who the users are, but it does not capture a measurable performance condition
+        like simultaneous logins within two seconds.
+      2: |
+        A database schema is a design artifact. It would not by itself express the required performance
+        response under load.
+      3: |
+        Operational Transformation is a collaboration algorithm family, not a requirements format for
+        performance qualities.
+      4: |
+        A long user story would likely bury the measurable quality attribute. A quality attribute
+        scenario captures stimulus, environment, response, and measure more directly.
     explanation: "**A concrete, measurable performance target like this is best captured as a Quality Attribute Scenario — it makes the requirement testable rather than vague.** Quality attribute requirements (performance, security, availability) are best captured via **Quality Attribute Scenarios** to make them concrete and measurable."
 
   - id: 8
@@ -80,4 +153,14 @@ questions:
       - "The application embeds a local database to cache schedule data directly on the device."
       - "The app must notify the user with a banner that they are viewing offline data."
     correct_index: 2
+    option_feedback:
+      0: |
+        Viewing a ticket barcode offline describes required user-visible behavior. It does not say how
+        the app stores the barcode.
+      1: |
+        Showing the last known schedule offline is still a behavioral requirement. The storage mechanism
+        is left open.
+      3: |
+        Displaying an offline-data banner is user-visible behavior. It can be required without deciding
+        whether data comes from a local database, file cache, or another mechanism.
     explanation: "**'Embeds a local database to cache data' is the 'how' because it names a specific implementation technique — the other options describe the required offline behavior without specifying the mechanism.** Embedding a local database to cache data is the design decision (the **'how'**). The other options describe the required offline capabilities (the **'what'**)."

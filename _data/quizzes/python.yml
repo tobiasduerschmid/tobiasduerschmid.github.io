@@ -9,6 +9,16 @@ questions:
       - "Strong typing means Python is faster because the interpreter can optimize known types"
       - "Weak typing means JavaScript variables can change type, while Python variables cannot"
     correct_index: 1
+    option_feedback:
+      0: |
+        Strong and weak typing show up in real bug behavior: Python refuses `"5" + 3`, while JavaScript
+        coerces and keeps running.
+      2: |
+        Strong typing is about whether incompatible operations are coerced, not whether the interpreter
+        knows all types early enough to optimize them.
+      3: |
+        Both Python and JavaScript names can be rebound to values of different types; the difference
+        here is coercion between incompatible values.
     explanation: "**Python is strongly typed because it refuses implicit coercion between incompatible types (`\"5\" + 3` raises TypeError), while JavaScript's weak typing silently coerces and produces surprising results.** Dynamic typing = types are checked at runtime (not compile time). Strong typing = no implicit coercion between incompatible types. Python's `TypeError` on `\"5\" + 3` is a feature, not a limitation — it prevents an entire class of silent bugs that plague JavaScript code."
 
   - id: 2
@@ -19,6 +29,15 @@ questions:
       - "No — single quotes create byte strings, while double quotes create Unicode strings"
       - "Yes — while both work, single-quoted strings are immutable and double-quoted strings are mutable"
     correct_index: 1
+    option_feedback:
+      0: |
+        Python quote style does not choose between character arrays and strings; both quote styles
+        create `str` objects.
+      2: |
+        Python 3 byte strings require a `b` prefix such as `b'Alice'`; ordinary single and double quotes
+        both create Unicode `str` values.
+      3: |
+        Python strings are immutable regardless of whether single or double quotes were used.
     explanation: "**Python has no `char` type — both single and double quotes create identical `str` objects, so the choice is purely about avoiding backslash escaping.** Python has no `char` type — this is one of the cleanest simplifications over C++. `'Alice'` and `\"Alice\"` produce identical `str` objects. The practical benefit is that you can choose the quote style that avoids backslash escaping: use double quotes when the string contains an apostrophe (`\"It's easy\"`), and single quotes when it contains double quotes (`'<div class=\"box\">'`). PEP 8 accepts either style but recommends consistency."
 
   - id: 3
@@ -29,6 +48,16 @@ questions:
       - "The `len()` function returns a float in Python 3"
       - "Python rounds up by default — use `math.floor()` to get integer results"
     correct_index: 1
+    option_feedback:
+      0: |
+        The float comes from the `/` operator in Python 3, not from `sum()` changing integer lists into
+        floats.
+      2: |
+        `len()` returns an integer count; division semantics decide whether the final average is a float
+        or an integer.
+      3: |
+        Python did not round the result up; `/` produced a floating-point quotient, while `//` is the
+        operator for integer floor division.
     explanation: "**Python 3's `/` always returns a float — unlike C++ where `int / int` truncates — so use `//` for integer (floor) division.** This is one of the most common negative-transfer traps from C++. In C++, `int / int` gives an `int`. In Python 3, `/` ALWAYS gives a `float`. The `//` operator performs floor division and returns an `int` when both operands are `int`. This change was intentional in Python 3 to prevent a whole class of bugs where integer division silently truncated results."
 
   - id: 4
@@ -39,6 +68,16 @@ questions:
       - "Not valid — Python files are always auto-closed when the variable goes out of scope"
       - "Valid, but there is no Python equivalent of RAII — you must always use try/finally"
     correct_index: 1
+    option_feedback:
+      0: |
+        Python may eventually close the file, but correctness for files, locks, and sockets needs
+        deterministic cleanup at block exit.
+      2: |
+        Python variables going out of scope is not the portable cleanup guarantee; context managers
+        provide the RAII-like boundary.
+      3: |
+        `with` is the standard Python abstraction for `try/finally` cleanup, and it keeps the resource
+        protocol local and readable.
     explanation: "**The concern is valid because 'eventually' from the GC may be too late — the `with` statement is Python's RAII equivalent, guaranteeing cleanup even if an exception occurs.** Python's GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
 
   - id: 5
@@ -49,6 +88,16 @@ questions:
       - "`text.count()` only works on single characters, not multi-character strings"
       - "They are always interchangeable — use whichever you prefer"
     correct_index: 1
+    option_feedback:
+      0: |
+        Regex carries pattern-matching overhead and complexity; for a fixed literal, `text.count()`
+        communicates the intent better.
+      2: |
+        Python's `str.count()` counts substrings too, so `"ERROR"` is a perfectly valid literal search
+        target.
+      3: |
+        A regex pattern language can mean more than the literal characters typed, so it is not
+        interchangeable with substring search.
     explanation: "**`re.findall()` is better when you need pattern matching like timestamps or IP addresses — `text.count()` is simpler and faster for literal string matching.** For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` shines when the target is a **pattern** — 'any sequence of digits', 'an IP address', 'a timestamp in HH:MM:SS format'. Use the simplest tool that works."
 
   - id: 6
@@ -59,6 +108,16 @@ questions:
       - "`print()` is too slow for pipelines — use `sys.stdout.write()` instead"
       - "Pipelines only work with Bash scripts, not Python"
     correct_index: 1
+    option_feedback:
+      0: |
+        `print()` writes to stdout unless told otherwise, so diagnostics need `file=sys.stderr` to stay
+        out of pipeline data.
+      2: |
+        The bug is not the speed of `print()`; it is sending diagnostic text down the same channel as
+        machine-readable output.
+      3: |
+        Pipelines connect processes through standard streams, so Python programs participate just like
+        Bash, C, or any other executable.
     explanation: "**Sending everything to `print()` mixes diagnostic messages into stdout, contaminating the data file — use `file=sys.stderr` for diagnostics because `>` redirects only stdout.** UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` only redirects stdout. If errors go to stdout, they contaminate the data. This is why C++ has both `std::cout` and `std::cerr`, and Python has `file=sys.stderr`."
 
   - id: 7
@@ -74,6 +133,16 @@ questions:
       - "Generators don't exist in Python — the student should use `itertools.imap()` instead"
       - "There is no memory difference — Python automatically optimizes large comprehensions into generators"
     correct_index: 0
+    option_feedback:
+      1: |
+        `list(...)` forces eager materialization; replacing brackets with parentheses is what creates a
+        lazy generator expression.
+      2: |
+        Generator expressions are built into modern Python; `itertools.imap()` is a Python 2 era false
+        trail.
+      3: |
+        Python does not silently turn list comprehensions into generators; brackets mean a list is
+        allocated.
     explanation: "**Replacing `[...]` with `(...)` creates a generator that produces values lazily one at a time, using constant memory instead of building a 500,000-element list upfront.** Replacing `[...]` with `(...)` creates a generator expression. It produces values lazily — one at a time — instead of building a 500,000-element list in memory. For large datasets or when you only need to iterate once (not store the full list), generators are dramatically more memory-efficient."
 
   - id: 8
@@ -90,6 +159,16 @@ questions:
       - "Bug: `append()` doesn't work on lists — you should use `items + [item]`"
       - "Bug: default arguments must be `None` in Python — `[]` causes a SyntaxError"
     correct_index: 1
+    option_feedback:
+      0: |
+        Python evaluates default arguments once when the function is defined, so the same list is reused
+        on later calls.
+      2: |
+        `append()` mutates lists correctly; the problem is which list object is being mutated across
+        calls.
+      3: |
+        Mutable defaults are legal Python; they are dangerous because their shared lifetime is easy to
+        miss.
     explanation: "**Mutable default arguments are created once when the function is defined, not per call — subsequent calls mutate the same list, so use `None` as the default and create a new list inside.** This is one of Python's most notorious gotchas. Mutable default arguments (`list`, `dict`, `set`) are shared across all calls. The fix: use `None` as the default and create a new list inside the function: `def add_item(item, items=None): if items is None: items = []; ...`"
 
   - id: 9

@@ -11,6 +11,15 @@ questions:
       - "Robert C. Martin, in *Clean Architecture*, 2017"
       - "John Ousterhout, in *A Philosophy of Software Design*, 2018"
     correct_index: 1
+    option_feedback:
+      0: |
+        Dijkstra coined separation of concerns, not the information-hiding principle introduced through
+        the KWIC module-decomposition argument.
+      2: |
+        Martin built on earlier modularity principles. He did not introduce information hiding in 2017.
+      3: |
+        Ousterhout explains deep modules and modern design practice, but the original information-hiding
+        paper is Parnas 1972.
     explanation: "Parnas's 1972 *CACM* paper introduced the principle, four years after the 1968 NATO Software Crisis conference. Dijkstra coined *Separation of Concerns* (a related but broader principle); Martin and Ousterhout build on Parnas's ideas in modern form."
 
   - id: 2
@@ -23,6 +32,15 @@ questions:
       - "It used inheritance instead of composition"
       - "It violated the Liskov Substitution Principle"
     correct_index: 1
+    option_feedback:
+      0: |
+        The problem was not simply speed or number of modules. The harmful part was that many modules
+        knew the same representation detail.
+      2: |
+        The KWIC example is about modular decomposition, not inheritance versus composition.
+      3: |
+        LSP is about subtype substitution. The KWIC issue was shared knowledge of a data structure
+        across modules.
     explanation: "Both decompositions worked, but in the conventional one almost every module *knew* the shared data structure. The information-hiding decomposition kept that decision in one module — only that module changed when the structure was redesigned. Parnas's argument was that step-by-step decomposition uses the wrong criterion: it splits along the processing sequence, not along design decisions."
 
   - id: 3
@@ -47,6 +65,16 @@ questions:
       - "No — Information Hiding requires inheritance, which this class doesn't use"
       - "Yes — Java visibility modifiers always guarantee Information Hiding"
     correct_index: 1
+    option_feedback:
+      0: |
+        Private fields do not help if the public method signature exposes PayPal-specific types. Callers
+        are still coupled to the vendor decision.
+      2: |
+        Information hiding does not require inheritance. It requires keeping volatile design decisions
+        behind stable interfaces.
+      3: |
+        Visibility modifiers are useful but insufficient. Public signatures, exceptions, data formats,
+        and protocols can all leak hidden decisions.
     explanation: "`private` controls access to fields, but the *public method signatures* expose `PayPalClient`, `PayPalAccount`, and `PayPalCharge`. Every caller of `checkout` now compiles against PayPal. The fix is to introduce a `PaymentGateway` abstraction that exposes only neutral types like `PaymentDetails` and `ChargeResult`."
 
   - id: 4
@@ -59,6 +87,16 @@ questions:
       - "A module placed deep inside the directory structure"
       - "A module that uses recursion heavily"
     correct_index: 1
+    option_feedback:
+      0: |
+        Deep modules are not about inheritance depth. They are about how much complexity is hidden
+        behind a small interface.
+      2: |
+        Directory nesting says little about abstraction value. A deeply nested file can still expose a
+        shallow interface.
+      3: |
+        Recursion is an implementation technique. A module can be deep without recursion, or recursive
+        without hiding much.
     explanation: "A deep module hides a *lot* of internal complexity behind a *small* interface — the file system (`open/read/write/close`), TCP, garbage collection. Deep modules are the goal of Information Hiding. Shallow modules — those whose interface is nearly as large as their implementation — add vocabulary without buying any abstraction."
 
   - id: 5
@@ -71,6 +109,16 @@ questions:
       - "Never — extracting a class is always good Information Hiding"
       - "When the helper is over 100 lines"
     correct_index: 1
+    option_feedback:
+      0: |
+        If the helper hides a likely-to-change decision used by several modules, extraction may be
+        exactly the right move.
+      2: |
+        Extracting a class is not automatically beneficial. A new interface has to hide enough
+        complexity or variation to pay for itself.
+      3: |
+        Line count alone does not decide whether an abstraction is useful. A 30-line helper may hide an
+        important policy, and a 100-line helper may still be one coherent detail.
     explanation: "This is the **shallow module** trap (Ousterhout). If the new 'module' has nothing meaningful to hide and no plausible second variant, you have added an interface and a file without buying any abstraction value. Information Hiding pays off when there is a real secret worth hiding; otherwise, it just adds vocabulary the reader must learn."
 
   - id: 6
@@ -83,6 +131,16 @@ questions:
       - "Whether `sortItems` uses quicksort or mergesort"
       - "Whether passwords are hashed with bcrypt or argon2"
     correct_index: 1
+    option_feedback:
+      0: |
+        Storage technology is usually a secret. Clients should ask for users, not know whether MySQL or
+        MongoDB was queried.
+      2: |
+        Sorting algorithm choice is normally hidden behind the sorting operation unless clients depend
+        on algorithm-specific behavior.
+      3: |
+        Password hashing choice is a security-sensitive implementation decision that should be
+        centralized and hidden behind an authentication boundary.
     explanation: "Statefulness changes how clients **must** interact with the server (do they reconnect? carry a session token? retransmit on disconnect?). Clients cannot ignore it, so it belongs in the contract. The other three are textbook secrets — clients neither know nor care, and the choice can change without breaking callers."
 
   - id: 7
@@ -95,6 +153,16 @@ questions:
       - "Information Hiding is a deprecated 1972 idea; SoC replaced it"
       - "SoC applies to data; Information Hiding applies only to functions"
     correct_index: 1
+    option_feedback:
+      0: |
+        They complement each other, but they answer different design questions. Separating concerns does
+        not automatically hide each module’s volatile choices.
+      2: |
+        Information hiding remains relevant because implementation decisions still change. SoC did not
+        replace the need for stable interfaces.
+      3: |
+        Both apply broadly. Data representation, functions, protocols, and module APIs can all be
+        separated and hidden.
     explanation: "They are complementary. SoC is about *identifying* distinct aspects (data access vs. business rules vs. UI). Information Hiding is about *protecting* each one — the interface should expose only what is unlikely to change. SoC without Information Hiding gives you separate modules that still rip apart when details change."
 
   - id: 8
@@ -107,6 +175,16 @@ questions:
       - "Rewrite the entire system because vendor changes always cascade"
       - "Add a `try/catch` block in every payment-related method"
     correct_index: 1
+    option_feedback:
+      0: |
+        If every payment-using service changes, the PayPal decision was not hidden. Vendor-specific
+        knowledge escaped the gateway boundary.
+      2: |
+        A vendor swap should not force a whole-system rewrite when the payment boundary was designed
+        well.
+      3: |
+        Adding try/catch blocks everywhere treats symptoms at call sites. It does not replace the
+        vendor-specific implementation behind a stable gateway.
     explanation: "If the secret 'we use PayPal' lives in exactly one module behind a stable interface, the swap is bounded: write a new implementation, change the wiring, redeploy. None of the services that *use* `PaymentGateway` need to be touched. This is the canonical Information Hiding payoff — local, low-risk change instead of cross-cutting rework."
 
   - id: 9
@@ -119,6 +197,16 @@ questions:
       - "It uses generics or templates"
       - "It is in its own file"
     correct_index: 0
+    option_feedback:
+      1: |
+        Line count does not determine module depth. A long module can hide substantial complexity behind
+        a small API.
+      2: |
+        Generics or templates do not by themselves make a module shallow. The question is whether the
+        interface hides meaningful complexity.
+      3: |
+        Being in its own file says nothing about abstraction depth. A separate file can still be just a
+        pass-through.
     explanation: "Shallowness is about the *ratio* of interface to implementation. If almost every public method is a thin pass-through, the module hides nothing — readers pay the cost of learning a new API and gain no abstraction. The fix is usually to inline the shallow module back into its caller, or to deepen it by absorbing real responsibilities."
 
   - id: 10
@@ -131,6 +219,16 @@ questions:
       - "Strict syntactic coupling, easy to detect with `grep`"
       - "An example of good Information Hiding because the assumption is implicit"
     correct_index: 1
+    option_feedback:
+      0: |
+        Duplicating a hidden assumption is risky, not healthy. If the phone-number rule changes, the two
+        modules can silently diverge.
+      2: |
+        Syntactic coupling would show up through direct references or imports. Here the dependency is
+        shared meaning that tools may not detect.
+      3: |
+        Implicit assumptions are the opposite of good information hiding. The rule should live behind
+        one explicit normalization or value-object boundary.
     explanation: "Semantic coupling is the dangerous cousin of syntactic coupling: tools cannot see it, but if you change the assumption in one place, the other silently breaks. Information Hiding fights it by ensuring that the assumption (here, a `PhoneNumber` value object or a single normalization function) lives in exactly one module."
 
   - id: 11
@@ -143,6 +241,16 @@ questions:
       - "Because `findByEmail` should return a list, not a single row"
       - "Because Python doesn't allow returning custom types"
     correct_index: 1
+    option_feedback:
+      0: |
+        Speed is not the design problem. The issue is that a storage-specific type escaped the
+        repository boundary.
+      2: |
+        Whether a lookup returns one user or many depends on the domain. The storage leak is the more
+        fundamental information-hiding failure.
+      3: |
+        Python can return many custom types. The problem is returning a database-library type instead of
+        a domain type.
     explanation: "The repository's *job* is to hide the storage decision. Returning a SQLite-specific type undoes that job: every caller now compiles against SQLite. Map the row to a domain `User` object before returning. The interface should mention only domain types — never storage-specific ones."
 
   - id: 12
@@ -155,6 +263,15 @@ questions:
       - "The system is too small for Information Hiding to matter"
       - "The team is following SRP correctly"
     correct_index: 1
+    option_feedback:
+      0: |
+        Wide change impact is evidence the decision was not hidden. A well-hidden wire format would be
+        localized behind a boundary.
+      2: |
+        Small systems can still suffer from leaked decisions. Size changes the cost, not the principle.
+      3: |
+        SRP might separate responsibilities, but it does not guarantee the wire-format decision is
+        hidden from all of them.
     explanation: "Change impact analysis falsifies bad designs. If 'one decision' touches dozens of modules, that decision is not really hidden — it is a *de facto* shared secret encoded in many places. The right response is to redesign so the decision lives in one module behind a stable interface."
 
   - id: 13
@@ -167,6 +284,16 @@ questions:
       - "A globally accessible singleton with a long list of public mutator methods"
       - "Repository / Gateway pattern"
     correct_index: 2
+    option_feedback:
+      0: |
+        An abstract interface is a common way to keep clients dependent on a stable contract rather than
+        volatile implementation details.
+      1: |
+        A Facade can hide subsystem complexity behind a smaller API, which is a classic
+        information-hiding mechanism.
+      3: |
+        Repository and Gateway patterns exist largely to hide storage or external-service details behind
+        domain-facing operations.
     explanation: "A globally accessible singleton with many public mutators is the *opposite* of Information Hiding — it gives every module access to internal state with no insulation. The other three (interfaces, Facade, Repository/Gateway) are standard mechanisms for hiding decisions behind stable contracts."
 
   - id: 14
@@ -179,6 +306,16 @@ questions:
       - "It enforces shorter variable names"
       - "It uses fewer files, so navigation is easier"
     correct_index: 1
+    option_feedback:
+      0: |
+        Removing comments does not reduce the essential design knowledge a reader needs. It may make
+        code harder to understand.
+      2: |
+        Shorter names do not hide complexity. They can actually increase cognitive load if they remove
+        useful meaning.
+      3: |
+        Information hiding can use more files or fewer files depending on the design. The benefit is a
+        smaller interface to reason about, not file count.
     explanation: "Field studies of professional developers find that **program comprehension consumes ~58% of their time** *(Xia et al., 2017, IEEE TSE)*. A well-hidden module lets a reader load only the interface — not the entire implementation tree — into working memory. This is one of the most underrated practical benefits of the principle."
 
   - id: 15
@@ -191,4 +328,14 @@ questions:
       - "Whenever the database is SQL — only NoSQL deserves a repository"
       - "Never — predictions of stability are usually wrong"
     correct_index: 1
+    option_feedback:
+      0: |
+        Abstractions are not forbidden until a second implementation appears. Testability,
+        comprehension, and risk containment can justify one earlier.
+      2: |
+        SQL versus NoSQL is not the deciding factor. The question is whether hiding the persistence
+        decision buys enough value for this system.
+      3: |
+        Predictions of stability are often wrong, but abstractions still have costs. For genuinely
+        throwaway stable code, skipping the boundary can be reasonable.
     explanation: "Information Hiding has real costs: indirection, file count, vocabulary. Spending those costs on a decision that genuinely will never change is wasted ceremony. But 'we'll never need another database' is one of the most commonly falsified predictions in software, so the argument earns scrutiny — and is usually weakest in long-lived systems with multiple teams."

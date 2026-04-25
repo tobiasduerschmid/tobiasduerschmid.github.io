@@ -11,6 +11,13 @@ questions:
       - "ConcreteCommand"
       - "Client"
     correct_index: 1
+    option_feedback:
+      0: |
+        The receiver is the object that performs the real work, such as a file service saving or exporting. The toolbar triggers work but should not own the operation itself.
+      2: |
+        A concrete command would be a specific object such as `SaveCommand` or `PrintCommand`. The toolbar stays generic by holding one of those commands rather than being one.
+      3: |
+        The client wires the invoker, command, and receiver together. After configuration, the toolbar's job is just to invoke the command when clicked.
     explanation: "**The toolbar is the Invoker.** It stores a command and calls `execute()` when the user clicks, but it does not know which receiver or receiver method performs the work."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "Replace State-Altering Conditionals with State"
       - "Extract Adapter"
     correct_index: 0
+    option_feedback:
+      1: |
+        Null Object removes special-case checks for missing behavior. Here the problem is a growing dispatcher whose request handlers need to become configurable objects.
+      2: |
+        State is a fit when one object's behavior changes because of its internal state. This controller is selecting among different requests, so reifying each request as a command is the closer match.
+      3: |
+        Adapter is for making an incompatible interface usable through the interface the client expects. The controller's problem is not an interface mismatch; it is dispatch logic that keeps growing.
     explanation: "**Replace Conditional Dispatcher with Command fits because the code routes requests and now needs runtime flexibility.** Each action can become a command object stored in a map keyed by action name."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "A reference to the remote control"
       - "A list of every command in the application"
     correct_index: 1
+    option_feedback:
+      0: |
+        The new target tells the command what to do, but undo needs the value to restore. For value-setting operations, the command usually snapshots the receiver's old state before changing it.
+      2: |
+        The remote control is the invoker, not the source of the thermostat's old value. Undo should depend on receiver state, not on the UI object that triggered the command.
+      3: |
+        A command history can store commands for undo/redo, but each command still needs enough local information to reverse its own effect. The whole application's command list does not tell this thermostat what its previous setting was.
     explanation: "**It needs the previous temperature.** Some undo operations are simple inverse calls, but value-changing commands usually must capture old receiver state before they execute."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "Memento"
       - "Factory Method"
     correct_index: 1
+    option_feedback:
+      0: |
+        A Null Command intentionally does nothing so invokers can avoid null checks. Party mode needs one command object that performs several real actions.
+      2: |
+        Memento captures object state so it can be restored later. It does not package several independent operations behind one `execute()` call.
+      3: |
+        Factory Method decides which object to create. The issue here is not object creation; it is treating a sequence of commands as one command.
     explanation: "**This is a Macro Command.** It implements the same command interface while holding and executing a sequence of child commands."
 
   - id: 5
@@ -59,6 +87,13 @@ questions:
       - "A remote control needs runtime-configurable button slots"
       - "A method has two stable branches and no need for undo, logging, queuing, or runtime configuration"
     correct_index: 3
+    option_feedback:
+      0: |
+        Undo and redo are classic reasons to capture user actions as command objects. The extra type usually earns its keep when actions must be stored, replayed, or inverted.
+      1: |
+        A job queue needs requests to outlive the immediate method call. Command is useful because it packages the work and its data so the queue can retry or schedule it.
+      2: |
+        Runtime-configurable slots are exactly what Command supports: the remote holds a command reference and calls the same interface regardless of the concrete action.
     explanation: "**A tiny stable conditional can stay simple.** Command adds indirection and extra types, so it should be introduced when the request lifecycle or evolution pressure justifies that cost."
 
   - id: 6
@@ -71,6 +106,13 @@ questions:
       - "Client"
       - "Macro Command"
     correct_index: 1
+    option_feedback:
+      0: |
+        The invoker stores and triggers the command, such as a button or remote slot. `Light` is the object that actually knows how to turn itself on.
+      2: |
+        The client usually creates the command and connects it to the receiver and invoker. `Light` is not doing that wiring; it is receiving the operation.
+      3: |
+        A macro command contains several child commands. Here `Light` is a concrete domain object used by one command.
     explanation: "**The light is the Receiver.** It owns the real operation. The command packages that operation so an invoker can trigger it without knowing the receiver API."
 
   - id: 7
@@ -84,10 +126,22 @@ questions:
       - "A private helper method is called from only one stable location."
     correct_indices: [0, 1, 2]
     option_feedback:
-      0: "You missed this — queueing a request **requires reifying it as an object**, which is exactly what Command does. Without Command, you can't store a method call in a list to retry or schedule later."
-      1: "You missed this — undo/redo needs each operation captured so it can be replayed or inverted. A Command object can carry both `execute()` and `undo()`, turning history into a list of Commands. Canonical motivation for the pattern."
-      2: "You missed this — a button whose action is swappable at runtime is the textbook *Invoker* role. It holds a Command reference and calls `execute()`; swapping the Command swaps the behavior without subclassing the button."
-      3: "This option is **not** evidence for Command. A private helper called from one stable place is just a method — no second invoker, no queueing, no undo. Reify into a Command only when there's a real force pulling that direction; otherwise you pay the indirection tax for nothing."
+      0: |
+        Queueing a request requires capturing enough information to run the request later. Command is
+        the design-pattern version of that idea: package the request behind a uniform `execute()` API so
+        an invoker or worker can store, schedule, and retry it.
+      1: |
+        Undo/redo needs each operation captured so it can be replayed or inverted. A Command object can
+        carry both `execute()` and `undo()`, turning history into a list of Commands. Canonical
+        motivation for the pattern.
+      2: |
+        A button whose action is swappable at runtime is the textbook *Invoker* role. It holds a Command
+        reference and calls `execute()`; swapping the Command swaps the behavior without subclassing the
+        button.
+      3: |
+        This option is **not** evidence for Command. A private helper called from one stable place is
+        just a method — no second invoker, no queueing, no undo. Reify into a Command only when there's
+        a real force pulling that direction; otherwise you pay the indirection tax for nothing.
     explanation: "**Queuing, undo, and runtime action configuration are Command-shaped forces.** A private helper used in one stable place does not justify the pattern by itself."
 
   - id: 8
@@ -100,6 +154,13 @@ questions:
       - "A Singleton"
       - "A Visitor"
     correct_index: 0
+    option_feedback:
+      1: |
+        A receiver is the object that performs real work after a command calls it. An empty slot needs a command-shaped object with harmless behavior, not a device object.
+      2: |
+        Singleton controls how many instances of a class exist. It does not provide a no-op replacement for a missing command.
+      3: |
+        Visitor separates operations from object structures. The remote needs a safe default command so it can call `execute()` uniformly.
     explanation: "**A Null Command intentionally does nothing.** It lets invokers keep the same execution flow without repeated null checks."
 
   - id: 9
@@ -112,6 +173,13 @@ questions:
       - "The receiver should inherit from the invoker."
       - "The command should always be implemented as a lambda."
     correct_index: 0
+    option_feedback:
+      1: |
+        If the invoker knows every receiver class, the command boundary has collapsed back into a dispatcher. The invoker should depend on the command interface, while the command knows how to reach its receiver.
+      2: |
+        Command does not require an inheritance relationship between receiver and invoker. Their separation is the point: the invoker triggers a request without depending on the receiver API.
+      3: |
+        A lambda can be a lightweight command when the work is immediate and context is simple. Durable queues often need serializable request data, versioning, and enough information to replay after restart.
     explanation: "**Queued commands need self-contained request data or a durable reference to it.** Otherwise the queue can store the command object but not safely replay the work."
 
   - id: 10
@@ -124,6 +192,13 @@ questions:
       - "Create a macro command with one child."
       - "Replace the function with a visitor."
     correct_index: 0
+    option_feedback:
+      1: |
+        A command hierarchy adds indirection that should buy something: undo, queuing, logging, scheduling, or runtime swapping. Without those forces, a direct call is easier to read and maintain.
+      2: |
+        A macro command is useful when several commands need to look like one command. A one-child macro adds ceremony without changing the design pressure.
+      3: |
+        Visitor is for adding operations over an object structure without modifying the element classes. A menu item that calls one function has no object traversal problem to solve.
     explanation: "**A direct call is clearer when the request has no lifecycle.** Command should pay for itself by solving a real coupling, extension, or lifecycle problem."
 
   - id: 11

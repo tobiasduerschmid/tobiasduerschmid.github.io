@@ -11,6 +11,13 @@ questions:
       - "State (model states), Mediator (controller mediates), Facade (view simplifies display)"
       - "Iterator (traverse model data), Command (controller commands), Decorator (view decorates output)"
     correct_index: 0
+    option_feedback:
+      1: |
+        MVC does not require one model, nor is its main structure about creating views or adapting input. The classic compound explanation is about notification, delegated input behavior, and nested UI components.
+      2: |
+        Controllers can coordinate some interaction, but MVC's controller role is not the same as a Mediator owning all colleague coordination. MVC is usually taught as Observer plus Strategy plus Composite.
+      3: |
+        Commands may appear in some UI architectures, but this is not the classic compound structure of MVC. MVC's central split is model state, view presentation, and controller input handling.
     explanation: "**MVC combines Observer (model→view sync), Strategy (swappable controller), and Composite (view as a component tree) to achieve clean three-way separation.** MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "It prevents the Model from becoming a god class"
       - "It makes the View easier to implement"
     correct_index: 1
+    option_feedback:
+      0: |
+        A model can still be large if the domain is large. MVC's main benefit is not size reduction; it is keeping domain logic independent of presentation and input mechanisms.
+      2: |
+        Separating the model from the UI helps with responsibilities, but it does not automatically prevent the model from accumulating too much domain behavior. A model can still need its own internal design.
+      3: |
+        A view may become easier to replace, but MVC's deeper value is that the domain model survives view changes. The architecture protects the core logic from UI churn.
     explanation: "**The Model's independence is MVC's most powerful property because it allows the core domain logic to be reused, tested, and ported without modification.** The Model's independence is MVC's most powerful property. Because the Model knows nothing about Views or Controllers, the **core domain logic** can be: (1) **reused** across different applications, (2) **tested** without any UI framework, and (3) **ported** to a completely different platform by only rewriting the View and Controller. This is why MVC says 'the Model is blind to how it is displayed.'"
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "No — MVC is necessary for any application that handles user input"
       - "Yes — but only because CRUD forms should use the State pattern instead"
     correct_index: 1
+    option_feedback:
+      0: |
+        Patterns are trade-offs, not universal upgrades. If there is one stable screen and little domain complexity, the extra separation may cost more than it returns.
+      2: |
+        Handling user input alone does not require full MVC. MVC is more justified when domain logic, presentation, and interaction are likely to evolve independently.
+      3: |
+        State is useful when behavior changes with an object's internal state. A simple CRUD form may need neither full MVC nor State; the issue is proportional design.
     explanation: "**This criticism is valid — MVC's three-way division adds complexity that is not justified for a simple CRUD form with a single view.** As Bass, Clements, and Kazman note: *'The complexity may not be worth it for simple user interfaces.'* MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "The inverted dependency problem"
       - "The god class problem"
     correct_index: 1
+    option_feedback:
+      0: |
+        Lapsed listeners are observers that stay registered after they should be removed, often causing leaks or stale updates. This scenario is about too many active observers being notified on each change.
+      2: |
+        Inverted dependency flow is about code-level registration pointing one way while runtime data flows the other. The performance problem here comes from broad notification fan-out.
+      3: |
+        A god class centralizes too many responsibilities in one class. Here the issue is broadcast behavior inherited from Observer, not one class doing everything.
     explanation: "**MVC inherits the notification storm from Observer — every model change broadcasts to all 50 views even if most don't need to update.** MVC inherits the **notification storm** problem directly from the Observer pattern. When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. Solutions include: **batched/deferred notifications** (collect changes, notify once), **granular event types** (views subscribe only to relevant changes), and **smart change detection** (views compare old vs. new data before re-rendering)."
 
   - id: 5
@@ -59,4 +87,11 @@ questions:
       - "The Composite pattern for UI tree structure"
       - "The use of explicit Subject and Observer base classes"
     correct_index: 1
+    option_feedback:
+      0: |
+        Some frameworks do not expose controllers as swappable Strategy objects. The durable MVC idea is broader: separate state, presentation, and interaction even when the mechanism changes.
+      2: |
+        UI trees are common in modern frameworks, but the question asks for the core MVC principle. A component tree helps structure views; it is not the whole architectural separation.
+      3: |
+        Modern reactive systems often replace explicit Subject and Observer classes with hooks, signals, or data binding. The mechanism changes while the separation of state, UI, and events remains useful.
     explanation: "**Modern frameworks still preserve MVC's core principle of separating domain state from presentation from interaction handling, even as the mechanisms evolve.** While modern frameworks have evolved beyond explicit Observer/Subject classes, the **core principle** of MVC remains: separate **domain state** from **presentation** from **interaction handling**. React components combine View + Controller but still separate state management (Model) from rendering (View). The mechanisms change (reactive bindings replace Observer), but the architectural principle — separation of concerns between data, display, and input — endures."

@@ -126,6 +126,10 @@ steps:
             - "Python is actually compiled, it just hides the main() function internally"
             - "The programmer is correct — Python requires semicolons in production code"
           correct_index: 1
+          option_feedback:
+            0: "Scripting languages (Python, Ruby, Bash) execute the file top-to-bottom — there is no inferred entry point. The `if __name__ == '__main__'` idiom is a *convention* for when a file is also imported as a module, not a required entry point. The C/C++/Java requirement of a `main()` is a language-design choice, not a property of all languages."
+            2: "CPython does compile each script to `.pyc` bytecode at runtime, but transparently — the programmer never invokes a compiler, no `main()` is generated, and there is no separate build artifact to ship. C++ requires an explicit, ahead-of-time compile step that produces a native binary; Python does not."
+            3: "There is no production-vs-script Python. Python's grammar accepts an optional `;` to put two statements on one line, but it is never *required*. A teammate insisting otherwise is recalling a different language (likely C, Java, or JavaScript)."
           explanation: |
             Python is an interpreted scripting language. Like Bash, it executes statements from top to bottom.
             There is no required `main()` entry point (though you can simulate one with `if __name__ == '__main__': ...`).
@@ -140,6 +144,8 @@ steps:
             - "Python must be **compiled** before running, just like C++"
             - "Python is strong at **rapid prototyping**, **automation**, and **data processing**"
           correct_indices: [0,1,3]
+          option_feedback:
+            2: "CPython does produce `.pyc` bytecode, but transparently and at runtime — the programmer never invokes a compiler and there is no separate build artifact to ship. C++ requires an explicit, ahead-of-time compile step that produces a native binary; Python does not."
           explanation: |
             Python is an **interpreted** language — you run it directly with `python3 script.py` with no separate compile step.
             Behind the scenes CPython does compile to bytecode (`.pyc`), but this is invisible to the programmer.
@@ -170,6 +176,10 @@ steps:
             - "C++ is better for the real-time core due to speed, but Python is ideal for prototyping and non-latency-critical parts like config and visualization"
             - "They should use Bash — piping data between Unix tools is faster than either Python or C++ for data processing"
           correct_index: 2
+          option_feedback:
+            0: "Real systems are layered: a slow glue layer driving a fast hot path is the standard pattern (NumPy in Python wraps C; PyTorch wraps CUDA). Choosing C++ for *every* line because the hot path needs it picks the wrong scope for the decision — most code in any project isn't latency-critical."
+            1: "CPython is roughly 30–100× slower than C++ for tight numeric loops; that gap is *intrinsic* to the interpreter, not something hardware closes over time. Real-time latency budgets (sub-millisecond) cannot absorb a 30× constant factor regardless of how fast the CPU gets."
+            3: "Pipes are great for line-oriented text streams, but a 10 GB sensor stream with strict latency needs zero-copy buffer management, fixed-rate scheduling, and concurrency primitives — none of which `cat | awk | grep` provides. Unix tools shine when the data is text and the timing is loose; that's the opposite of this scenario."
           explanation: |
             This is a real-world trade-off. Python's strength is rapid development; C++'s strength is
             raw performance. For strict latency requirements, C++ is likely needed for the hot path.
@@ -400,6 +410,9 @@ steps:
             - "The error happens because `x` was already declared as a string elsewhere, and Python does not allow reassignment to a different type"
             - "Python only allows concatenation through the explicit `concat()` function, not the `+` operator which is reserved for numbers"
           correct_index: 1
+          option_feedback:
+            0: "*Dynamic* and *weak* are independent properties: dynamic describes WHEN types are checked (runtime); weak describes HOW aggressively the language coerces between them. JavaScript is dynamic + weak (`\"5\" + 3` gives `\"53\"`); Python is dynamic + strong on purpose — silent coercion is a famous bug source."
+            2: "In Python, types live on *values*, not on names — `x = \"5\"` then `x = 3` is fine. The error here is purely about the `+` operator's two operands at the moment of evaluation. Languages where a variable's type is fixed at declaration (C/C++/Java) make this rule look stricter than it actually is."
           explanation: |
             This is a critical distinction: **dynamic** typing (types checked at runtime, not compile time) is
             different from **weak** typing (implicit type coercion). Python is dynamic *and* strong.
@@ -581,6 +594,10 @@ steps:
             - "Python raises a `TabError` or `IndentationError`"
             - "Only the lines with tabs produce output"
           correct_index: 2
+          option_feedback:
+            0: "Python 3's parser refuses to *guess* whether a tab counts as 1, 4, or 8 spaces, because every guess could change the program's meaning. Auto-conversion would silently re-bind code to a different block — the language designers chose loud failure over silent miscompilation. (Editor settings can enforce a convention, but the parser still won't second-guess what's on disk.)"
+            1: "Python halts on any indentation inconsistency at parse time, before *any* code runs — there is no partial execution where some blocks are skipped. The runtime never sees a half-broken program; it sees the SyntaxError instead."
+            3: "Python parses the whole file before running anything; there is no per-line execution where some lines succeed and others fail. The whole script either parses or doesn't."
           explanation: |
             Mixing tabs and spaces is a syntax error in Python 3. Python raises `TabError: inconsistent use
             of tabs and spaces in indentation`. Always use 4 spaces (the universal Python convention) and
@@ -1127,6 +1144,9 @@ steps:
             - "It raises a TypeError because both operands are integers"
             - "It returns the fraction object `fractions.Fraction(6, 2)` — Python automatically converts integer division to a rational number"
           correct_index: 1
+          option_feedback:
+            0: "Python 3 deliberately split the operator: `/` is *always* float division, `//` is *always* floor division — regardless of whether the operands are int or float. C/C++/Java pick the operator's behavior based on the operand types, but PEP 238 broke that link in Python 3 precisely because too many learners were surprised by integer truncation."
+            2: "Python is happy to mix `int` and `float`; the result is just promoted to `float`. The TypeError pattern shows up for non-numeric mixing (`\"5\" + 3`), not for arithmetic between two numbers."
           explanation: |
             In Python 3, `/` is **always** float division: `6 / 2` → `3.0`.
             For integer (floor) division like C++, use `//`: `7 // 2` → `3`.

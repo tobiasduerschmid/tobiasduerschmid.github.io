@@ -21,6 +21,25 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [0]
+    option_feedback:
+      0: |
+        The payment story depends on registration and cart stories that are still unfinished. That
+        dependency means the team cannot deliver or reorder the payment story independently.
+      1: |
+        The story does not lock the team into a specific implementation. It describes credit-card
+        payment behavior and leaves design choices open.
+      2: |
+        Completing a purchase is direct customer and business value. The problem is dependency on other
+        stories, not lack of value.
+      3: |
+        The acceptance criteria are concrete enough to estimate payment processing work. Missing
+        registration and cart work affects independence, not whether this story can be sized.
+      4: |
+        The payment behavior described here is reasonably focused. It is not combining unrelated
+        workflows into a large epic.
+      5: |
+        The valid-card and expired-card cases are observable pass/fail checks. That makes the story
+        testable.
     explanation: "**This violates Independent because the payment story cannot be completed without the unimplemented user registration and cart management stories.** This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
   - id: 2
     type: multiple
@@ -41,6 +60,25 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [1, 2]
+    option_feedback:
+      0: |
+        Nothing in the wording says this profile story depends on another unfinished story. The deeper
+        issue is that the story dictates technology and weakens user value.
+      1: |
+        Naming React, Node, PostgreSQL, REST, and component mounting turns the story into an
+        implementation prescription. A negotiable story should leave room to choose the design.
+      2: |
+        The user wants to view a profile, not to experience a particular stack. The stack may matter to
+        engineers, but it is not the user-visible value.
+      3: |
+        The work may still be estimable because the requested implementation is overly specific.
+        Specificity can make estimating possible while still making the story poor.
+      4: |
+        The story is not necessarily too large; a profile page could be small. The violations come from
+        implementation detail and weak user value.
+      5: |
+        The stated route and update behavior can be tested. The issue is not absence of pass/fail
+        checks.
     explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because the tech stack choice provides no direct business value to the user).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
   - id: 3
     type: multiple
@@ -61,6 +99,25 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [1, 2]
+    option_feedback:
+      0: |
+        The story may be independently executable as a migration. Independence is not the main failure
+        when the work has no useful outcome.
+      1: |
+        The story already prescribes a hidden database column. That leaves almost no room to discuss
+        better ways to satisfy an actual need.
+      2: |
+        A hidden column that is never queried, displayed, or used creates no return for a user or
+        business process. Technical work still needs a reason to matter.
+      3: |
+        A tiny migration can be estimated even if it is a bad idea. Estimability is not the same as
+        usefulness.
+      4: |
+        The described change is small in scope. The problem is that it is prescribed and valueless, not
+        that it is too large.
+      5: |
+        The migration can be checked by inspecting the schema. Testability does not rescue work that has
+        no value.
     explanation: "**This violates Valuable (work with no utility produces no return on investment) and Negotiable (it prescribes a specific database change rather than expressing a user need).** This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
   - id: 4
     type: multiple
@@ -83,6 +140,25 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [4]
+    option_feedback:
+      0: |
+        The scenario does not describe dependency on another story. It describes many unrelated hospital
+        capabilities bundled into one oversized story.
+      1: |
+        The story is broad, but it does not prescribe a particular technical implementation.
+        Negotiability is not the clearest failure here.
+      2: |
+        Running hospital operations is valuable. The issue is that too much value is bundled into one
+        story.
+      3: |
+        The broad epic would be hard to estimate precisely, but the INVEST criterion most directly
+        violated by the listed acceptance criteria is size.
+      4: |
+        Patient records, payroll, inventory, and scheduling are separate product areas. Keeping them in
+        one story makes the work too large to deliver and validate as one slice.
+      5: |
+        Each listed behavior has a plausible acceptance check. The problem is scope, not the complete
+        absence of tests.
     explanation: "**This violates Small because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one story that would take months to build.** This violates **Small** because it is a massive 'Epic' (with many user stories combined into one) that would take months or years to build. Even though 'run the entire hospital effectively' is broad and subjective it is not part of the requirement (since it is in the 'so that' clause) so it does not impact testable or estimable."
   - id: 5
     type: multiple
@@ -104,4 +180,20 @@ questions:
       - "Testable"
     correct_indices: [3, 5]
     optional_indices: [4]
+    option_feedback:
+      0: |
+        The story can be worked on independently of other stories. The problem is that the success
+        standard is too subjective.
+      1: |
+        The story leaves implementation open; it does not dictate a specific frontend framework or
+        optimization technique.
+      2: |
+        A fast, pleasant homepage can be valuable to visitors. The issue is that the words do not define
+        measurable success.
+      3: |
+        Developers cannot estimate reliably from phrases like "blazing fast" and "extremely modern"
+        until those are turned into concrete thresholds or examples.
+      5: |
+        A test needs an observable expected result. "Blazing fast" and "pleasant" need measurable
+        targets, such as load time and design acceptance criteria, before they can be verified.
     explanation: "**This violates Testable (subjective terms like 'blazing fast' and 'extremely modern' cannot be verified) and consequently Estimable (you cannot estimate effort for undefined standards).** This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'. Whether we consider it 'small' or not is subjective and either answer would be consdier correct."

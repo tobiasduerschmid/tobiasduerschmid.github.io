@@ -11,6 +11,13 @@ questions:
       - "Higher — component diagrams show deployable modules and their interfaces, not individual classes."
       - "Component diagrams are only used for hardware, not software."
     correct_index: 2
+    option_feedback:
+      0: |
+        Component diagrams intentionally hide class-level detail. They are for larger architectural units such as services, libraries, modules, and databases.
+      1: |
+        Class diagrams and component diagrams answer different questions. A class diagram shows internal types and relationships; a component diagram shows deployable pieces and their interface connections.
+      3: |
+        UML component diagrams are very much for software architecture. Hardware placement belongs more naturally in deployment diagrams.
     explanation: "**Component diagrams operate at a higher level of abstraction, showing deployable modules and their interfaces rather than internal class-level details.** Component diagrams operate at a **higher level of abstraction** than class diagrams. They show deployable units (services, libraries, subsystems) and how they connect through well-defined interfaces, while class diagrams show the internal code-level structure (attributes, methods, inheritance)."
 
   - id: 2
@@ -25,6 +32,13 @@ questions:
       - "The component has a dependency on this interface."
       - "The interface is optional and may not be implemented."
     correct_index: 1
+    option_feedback:
+      0: |
+        A required interface is shown with the socket notation. The lollipop/ball means the component provides the service to others.
+      2: |
+        A dependency says one element uses another. A provided interface is stronger and more specific: the component offers an interface that clients may connect to.
+      3: |
+        "Provided" does not mean optional. It means this component is responsible for implementing and offering that interface.
     explanation: "**A provided interface (lollipop) means the component implements and offers this service to others; a required interface (socket) means it needs the service from elsewhere.** A **provided interface** (lollipop/ball) means the component **implements and offers** this service. Other components can connect to it. The opposite --- a **required interface** (socket) --- means the component needs this service from someone else."
 
   - id: 3
@@ -39,6 +53,13 @@ questions:
       - "They indicate that the component is abstract and cannot be deployed."
       - "They show the number of instances of the component."
     correct_index: 1
+    option_feedback:
+      0: |
+        A port can expose or group interfaces, but it is not a single method. It marks a named interaction point on the component boundary.
+      2: |
+        Abstractness is a classifier property, not the purpose of a port. Ports describe where communication enters or leaves the component.
+      3: |
+        Multiplicity or deployment notation would be used for instance counts. Ports organize interaction surfaces, not how many component instances exist.
     explanation: "**Ports are named interaction points on a component's boundary that organize interfaces into logical incoming and outgoing groups.** **Ports** are named interaction points on a component's boundary. They organize interfaces into logical groups. An incoming port (**portin**) receives requests on the left edge; an outgoing port (**portout**) sends requests on the right edge."
 
   - id: 4
@@ -51,6 +72,13 @@ questions:
       - "When you need to show the high-level deployable modules of a system and how they communicate."
       - "When you need to model the lifecycle states of a single object."
     correct_index: 2
+    option_feedback:
+      0: |
+        Inheritance hierarchies belong in class diagrams. Component diagrams stay at the module or service level.
+      1: |
+        Attributes and method signatures are class-level details. A component diagram should keep attention on architectural pieces and interfaces.
+      3: |
+        Lifecycle behavior belongs in a state machine diagram. Component diagrams describe structural architecture, not state transitions of one object.
     explanation: "**Use a component diagram when you need to show high-level deployable modules and their interfaces — not for class-level details or object lifecycles.** Component diagrams are for **architecture-level** modeling — showing the major deployable parts (services, libraries, databases) and their connections through interfaces. Class diagrams are for **code-level** details (attributes, methods, inheritance). State machines model **object lifecycles**."
 
   - id: 5
@@ -65,6 +93,13 @@ questions:
       - "A generalization — one component inherits from another."
       - "A bidirectional communication link."
     correct_index: 1
+    option_feedback:
+      0: |
+        Assembly connectors connect required and provided interfaces, often with ball-and-socket or a solid connector. The dashed arrow is the weaker "uses" dependency notation.
+      2: |
+        Generalization uses a hollow triangle arrowhead. A dashed dependency arrow does not mean inheritance.
+      3: |
+        A dashed arrow is directed from the dependent element toward what it uses. It does not by itself mean two-way communication.
     explanation: "**A dashed arrow represents a dependency — a weaker 'uses' relationship, as opposed to solid assembly connectors for primary interface connections.** A **dashed arrow** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) represents a **dependency** — a weaker relationship where one component uses another (e.g., for logging, metrics). This is the same notation as class diagram dependencies. Solid arrows (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) represent assembly connectors for primary communication pathways."
 
   - id: 6
@@ -79,6 +114,19 @@ questions:
       - "Lifelines (dashed vertical lines)"
       - "Assembly connectors (solid arrows between interfaces)"
     correct_indices: [0, 1, 2, 3, 5]
+    option_feedback:
+      0: |
+        Components are the central element of a component diagram: they represent larger replaceable or deployable software units.
+      1: |
+        Provided interfaces are valid component-diagram elements; they show services a component offers.
+      2: |
+        Required interfaces are valid component-diagram elements; they show services a component needs from elsewhere.
+      3: |
+        Ports are valid when the diagram needs named interaction points on a component boundary.
+      4: |
+        Lifelines are sequence-diagram elements. They show participants over time, not component-level architecture.
+      5: |
+        Assembly connectors are valid; they show a required interface being connected to a compatible provided interface.
     explanation: "**Component diagrams contain components, provided/required interfaces, ports, and assembly connectors — lifelines belong in sequence diagrams, not here.** Component diagrams contain **components**, **provided interfaces** (ball), **required interfaces** (socket), **ports** (squares), and **assembly connectors** (arrows). **Lifelines** belong in sequence diagrams, not component diagrams."
 
   - id: 7
@@ -93,6 +141,13 @@ questions:
       - "Two components share the same database."
       - "A component is deployed on a specific server."
     correct_index: 1
+    option_feedback:
+      0: |
+        Inheritance is shown with generalization notation, not ball-and-socket. Ball-and-socket connects needed and offered interfaces.
+      2: |
+        Sharing a database might be shown as both components depending on or connecting to a database component. The ball-and-socket specifically means a required interface is satisfied.
+      3: |
+        Deployment on servers is modeled with deployment diagrams and nodes. This connector is about interface compatibility between components.
     explanation: "**The ball-and-socket connector links a required interface to a matching provided interface, showing the dependency is satisfied through loose coupling.** The **ball-and-socket** (assembly connector) links a component's **required interface** (socket) to another component's **provided interface** (ball). This shows the dependency is satisfied and enables **loose coupling** — components depend on interfaces, not specific implementations."
 
   - id: 8
@@ -107,4 +162,11 @@ questions:
       - "Dependency — add a dashed arrow from ShoppingCart to PayPalGateway."
       - "Composition — embed PayPalGateway inside ShoppingCart."
     correct_index: 1
+    option_feedback:
+      0: |
+        Substitutability here does not require payment gateways to inherit from each other. They can be separate components that provide the same required interface.
+      2: |
+        A dependency arrow would show that one component uses another, but it would tie the cart to a particular provider. Depending on `IPayment` keeps the provider replaceable.
+      3: |
+        Embedding a gateway inside the cart would make replacement harder and blur component boundaries. The point is to depend on an interface supplied by an external component.
     explanation: "**Provided/required interfaces enable substitutability — any component providing `IPayment` can replace StripeGateway without changing ShoppingCart.** The **provided/required interface** pattern enables substitutability. If `ShoppingCart` requires `IPayment` and `StripeGateway` provides it, any other component that provides `IPayment` (like `PayPalGateway`) can be substituted without changing `ShoppingCart`. This is the key architectural benefit of component diagrams."

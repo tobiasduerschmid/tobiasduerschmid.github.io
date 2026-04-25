@@ -10,6 +10,19 @@ questions:
       - "The prioritization duties of the Value Navigator"
       - "The daily synchronization meeting"
     correct_index: 1
+    option_feedback:
+      0: |
+        The team is not following a fixed predictive plan; it is changing course because inspection
+        produced new evidence.
+      2: |
+        Adaptation is not arbitrary scope expansion. It is a deliberate response to evidence that the
+        current product direction is not working.
+      3: |
+        Backlog ordering matters in Scrum, but this scenario is about changing the plan after inspecting
+        user data.
+      4: |
+        A Daily Scrum is a specific event. The scenario describes the broader empirical habit of
+        adapting when evidence demands it.
     explanation: "**Halting the plan to respond to new user data illustrates the empirical pillar of adaptation — adjusting course as soon as inspection reveals something isn't working.** Scrum is founded on **empiricism**, and **adaptation** requires adjusting the process or product as soon as possible if aspects deviate outside acceptable limits."
 
   - id: 2
@@ -20,6 +33,16 @@ questions:
       - "A hierarchy of junior and senior engineers reporting directly to external stakeholders."
       - "A temporary task force assembled only for the duration of a single specific feature."
     correct_index: 1
+    option_feedback:
+      0: |
+        Waiting for detailed instructions conflicts with self-management. Scrum expects the people doing
+        the work to decide how to deliver the Sprint Goal.
+      2: |
+        A reporting hierarchy is not the defining structure of a Scrum Team. The team should organize
+        around delivering value, not around seniority levels.
+      3: |
+        Scrum Teams are stable enough to learn and improve together across work, not disposable groups
+        assembled for one feature only.
     explanation: "**Scrum Teams must be cross-functional (all skills needed to deliver value) and self-managing (deciding internally who does what, when, and how) — not siloed or manager-directed.** Scrum Teams are **cross-functional** (possessing all necessary skills) and **self-managing** (deciding internally who does what, when, and how)."
 
   - id: 3
@@ -30,6 +53,16 @@ questions:
       - "The Scrum Master, by causing the removal of the impediment."
       - "The external stakeholders, by extending the iteration's deadline."
     correct_index: 2
+    option_feedback:
+      0: |
+        Developers may help diagnose the blocker, but simply pausing does not remove the organizational
+        impediment.
+      1: |
+        The Product Owner can clarify value and ordering, but rewriting the requirement to avoid every
+        outside dependency is not the primary Scrum Master service here.
+      3: |
+        Stakeholders do not solve the impediment by stretching the iteration. The blocker should be made
+        visible and removed.
     explanation: "**Removing impediments to the team's progress is the Scrum Master's responsibility — not the Developers', the Product Owner's, or external stakeholders'.** The **Scrum Master** serves the team by causing the removal of **impediments** to their progress."
 
   - id: 4
@@ -41,6 +74,19 @@ questions:
       - "A consensus vote among all stakeholders during the review session."
       - "The users submitting bug reports."
     correct_index: 1
+    option_feedback:
+      0: |
+        Developers decide how to do the work and can advise on technical risk, but the Product Owner
+        orders the Product Backlog by value.
+      2: |
+        The Scrum Master facilitates Scrum and helps remove impediments. That is different from owning
+        product priority.
+      3: |
+        Stakeholder input is valuable, but Product Backlog ordering is accountable to one Product Owner
+        rather than a vote.
+      4: |
+        User reports are inputs to prioritization. They do not themselves hold accountability for
+        ordering the backlog.
     explanation: "**Ordering the Product Backlog to maximize value is the Product Owner's sole responsibility — the Scrum Master facilitates process, and Developers own technical decisions.** The **Product Owner** is the one who orders the work for a complex problem into a **Product Backlog** to maximize value."
 
   - id: 5
@@ -51,6 +97,16 @@ questions:
       - "It must be deployed to the live production environment for end-users."
       - "It must be previewed in a slide deck for corporate stakeholders."
     correct_index: 1
+    option_feedback:
+      0: |
+        Scrum does not make the Scrum Master a sign-off gate for completed work. Completion is judged
+        against the Definition of Done.
+      2: |
+        Deployment can be part of a team’s Definition of Done, but Scrum does not require production
+        deployment for every item to count as done.
+      3: |
+        A presentation can communicate progress, but it does not prove the increment met the agreed
+        quality bar.
     explanation: "**A feature is considered done only when it meets the team's agreed-upon Definition of Done — not when it is approved by a role, deployed, or presented in a slide deck.** The **Scrum Master** helps the team focus on creating high-value **Increments** that specifically meet the **Definition of Done** (the quality measures checklist)."
 
   - id: 6
@@ -62,6 +118,18 @@ questions:
       - "To reflect on long-term team friction and interpersonal conflicts."
       - "To refine and estimate future work items."
     correct_index: 1
+    option_feedback:
+      0: |
+        The Daily Scrum is for Developers to inspect progress and adapt their plan. It is not a
+        reporting ceremony for upper management.
+      2: |
+        Demonstrating completed work to stakeholders belongs to the Sprint Review, not the Daily Scrum.
+      3: |
+        Longer-term collaboration issues are better handled in the Sprint Retrospective. The Daily Scrum
+        is about the Sprint Goal and near-term plan.
+      4: |
+        Future backlog refinement is separate from the Daily Scrum. The Daily Scrum focuses on current
+        Sprint progress.
     explanation: "**The Daily Scrum's purpose is to inspect progress toward the Sprint Goal and adapt the plan for the next day — it is not a status report for management or a backlog refinement session.** The **Daily Scrum** focuses on progress toward the **Sprint Goal** and produces an actionable plan for the next day of work."
 
   - id: 7
@@ -72,6 +140,16 @@ questions:
       - "The Sprint Review."
       - "The Sprint Retrospective."
     correct_index: 3
+    option_feedback:
+      0: |
+        Sprint Planning sets up the next Sprint. The event described is about improving the team’s
+        process after a Sprint.
+      1: |
+        The Daily Scrum adapts the next day’s plan. It is too frequent and too narrow for the full-cycle
+        improvement discussion described here.
+      2: |
+        The Sprint Review inspects the product increment with stakeholders. Internal collaboration and
+        technical-practice improvement is the Retrospective.
     explanation: "**The Sprint Retrospective is for inspecting and improving the team's internal process — distinct from the Sprint Review which examines the product increment with stakeholders.** The **Sprint Retrospective** is an event for the team to inspect their process, reflect on it, and adjust for the next Sprint to continuously improve."
 
   - id: 8
@@ -83,4 +161,17 @@ questions:
       - "It removes the need for any formal quality checklists or verification."
       - "It requires all developers to become management professionals."
     correct_index: 1
+    option_feedback:
+      0: |
+        Scaled coordination does not eliminate business goals. It usually adds mechanisms for aligning
+        many teams around them.
+      2: |
+        The critique is not that cycles become daily chaos. It is that heavy synchronization can reduce
+        local decision-making freedom.
+      3: |
+        Scaling frameworks do not remove quality expectations. Teams still need clear definitions of
+        done and verification practices.
+      4: |
+        Developers do not need to become managers simply because a scaled process coordinates many
+        teams. The concern is planning overhead and autonomy.
     explanation: "**A key critique of scaled frameworks like SAFe is that extensive cross-team planning and synchronization reduces individual team autonomy — the opposite of Scrum's self-managing principle.** Common critiques of frameworks like SAFe suggest they can reduce individual team autonomy through heavy planning and synchronization requirements."

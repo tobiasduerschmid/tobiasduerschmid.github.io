@@ -1,5 +1,5 @@
 title: "TDD with pytest — Dragon Dice Battle"
-description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — twelve tiny tests, one design pressure at a time. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
+description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — twelve tiny tests, one design pressure at a time, plus a final transfer cycle (FizzBuzz) that proves the rhythm carries to a brand-new problem. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
 
 backend: pyodide
 
@@ -121,7 +121,7 @@ steps:
       | Triple 5 | Lightning Storm | 500 |
       | Triple 6 | Demon Strike | 600 |
 
-      Triples consume three dice; leftover 1s and 5s still score as singles. Dice are integers 1–6. **Today you implement only the empty-roll case.** Eleven more cycles add the rest.
+      Triples consume three dice; leftover 1s and 5s still score as singles. Dice are integers 1–6. **Today you implement only the empty-roll case.** Eleven more cycles add the rest, and a final **transfer cycle** (a different problem entirely) proves the rhythm carries.
 
       ## Your test list (Canon TDD step 1)
 
@@ -129,18 +129,18 @@ steps:
 
       Here is the list this tutorial works through, *in the order the cycles will tackle them*:
 
-      - [ ] Cycle 1 — Empty roll → no damage, no events
-      - [ ] Cycle 2 — A single 1 → one Dragon Flame event
-      - [ ] Cycle 3 — A single 5 → one Lightning Spark event
-      - [ ] Cycle 4 — Multiple singles → one event per die (forces a loop)
-      - [ ] Cycle 5 — Mixed dice (`[1, 5]`) → both events appear (free pass — verify with mutation move)
-      - [ ] Cycle 6 — Three 1s → one Dragon Blast (not three Flames) — *design-breaking test*
-      - [ ] Cycle 7 — Triple 1s + a leftover 5 → Dragon Blast + Lightning Spark
-      - [ ] Cycle 8 — Three 2s → Goblin Swarm — *the rule-objects refactor*
-      - [ ] Cycle 9 — Triples 3, 4, 6 → Orc Charge / Troll Smash / Demon Strike (data only, no `score()` edit)
-      - [ ] Cycle 10 — *Six* 1s → *two* Dragon Blasts (hidden bug)
-      - [ ] Cycle 11 — Invalid dice (`0`, `7`, `"x"`) → `ValueError`
-      - [ ] Cycle 12 — `report.summary()` returns a human-readable string
+      - ☐ Cycle 1 — Empty roll → no damage, no events
+      - ☐ Cycle 2 — A single 1 → one Dragon Flame event
+      - ☐ Cycle 3 — A single 5 → one Lightning Spark event
+      - ☐ Cycle 4 — Multiple singles → one event per die (forces a loop)
+      - ☐ Cycle 5 — Mixed dice (`[1, 5]`) → both events appear (free pass — verify with mutation move)
+      - ☐ Cycle 6 — Three 1s → one Dragon Blast (not three Flames) — *design-breaking test*
+      - ☐ Cycle 7 — Triple 1s + a leftover 5 → Dragon Blast + Lightning Spark
+      - ☐ Cycle 8 — Three 2s → Goblin Swarm — *the rule-objects refactor*
+      - ☐ Cycle 9 — Triples 3, 4, 6 → Orc Charge / Troll Smash / Demon Strike (data only, no `score()` edit)
+      - ☐ Cycle 10 — *Six* 1s → *two* Dragon Blasts (hidden bug)
+      - ☐ Cycle 11 — Invalid dice (`0`, `7`, `"x"`) → `ValueError`
+      - ☐ Cycle 12 — `report.summary()` returns a human-readable string
 
       Beck's discipline is to *one-test-at-a-time*: pick the next list item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He warns explicitly against converting all list items to tests up front ("leads to rework and depression") and against mixing refactor into making a test pass ("wearing two hats simultaneously"). The platform's step-by-step structure enforces both disciplines for you — so you can focus on the rhythm itself.
 
@@ -312,13 +312,14 @@ steps:
 
       Four obligations. Anything you write that does not contribute to one of those four is speculative design — it has no test demanding it, so it has no test guarding it, so it has no business being there yet.
 
-      ## Three Python tools the scaffold uses
+      ## Three Python tools, in this *new context*
 
-      Three building blocks you'll need. None are TDD-specific — they're standard Python tools you'll reach for many times.
+      You already know these — what's new is *why this test forces you to reach for them*:
 
-      - **`@dataclass`** auto-writes `__init__`, `__repr__`, and `__eq__` from your field declarations. You write the field names and types; Python writes the bookkeeping. The auto-generated `__eq__` is what makes `assert report.events == (...)` work field-by-field. ([docs](https://docs.python.org/3/library/dataclasses.html))
-      - **`frozen=True`** added to `@dataclass(frozen=True)` makes instances immutable — fields can't be reassigned after construction. Frozen dataclasses are also hashable. We rely on this in cycle 2, where test assertions compare tuples of `ScoringEvent` instances. ([docs](https://docs.python.org/3/library/dataclasses.html#frozen-instances))
-      - **`@property`** turns a method into an attribute read. Calling sites use `report.total_damage` (no parens) but Python runs the function body each time. The test reads `total_damage` like a field; the `@property` decorator keeps that grammar consistent. ([docs](https://docs.python.org/3/library/functions.html#property))
+      - `@dataclass(frozen=True)` — gets you free `__init__` / `__eq__` / `__repr__`, *and* the per-field structural `__eq__` is exactly what makes `report.events == (...)` work in cycle 2. (Also hashable, which we lean on later.)
+      - `@property` — needed because the test reads `report.total_damage` *as an attribute*, not `report.total_damage()`. The test's grammar is the constraint; `@property` is the tool that fits it.
+
+      That's it. The test wrote the spec for you; these tools are the smallest Python primitives that satisfy it. ([dataclasses](https://docs.python.org/3/library/dataclasses.html) · [property](https://docs.python.org/3/library/functions.html#property) if you want a refresher.)
 
       ## The Transformation Priority Premise — why "smallest" beats "best"
 
@@ -664,7 +665,7 @@ steps:
             - "It does not matter — both choices satisfy the test, and the difference is purely stylistic"
           correct_index: 1
           option_feedback:
-            0: "This is the **code-first reflex** dressed up as efficiency. \"Saves work later\" assumes you know what the next test will need — that's speculation, not design. A speculative loop is also code with no failing test motivating it; if it's wrong, no test will catch the mistake."
+            0: "Writing the loop early assumes you already know what the next test will require. That is speculation, not design pressure from a failing test. A speculative loop is also code with no test motivating it; if it is wrong, no test will catch the mistake."
             2: "REFACTOR is for cleaning *passing* code, not introducing new logic. New logic without a failing test demanding it is the antithesis of TDD — and a refactor that adds behavior breaks the rule that REFACTOR preserves observable behavior."
             3: "Stylistic equivalence misses the **Transformation Priority Premise**. Both choices pass the *current* test, but only the simpler one keeps the code under genuine test pressure. The generic loop is a guess; the hardcoded version forces a future test to *earn* the loop."
           explanation: |
@@ -2275,27 +2276,163 @@ steps:
   #   Open-Closed Principle  — new behavior = new data, not new branches.
   #   Quiz                   — checks "listen to the test" interpretation.
   # --------------------------------------------------------------------------
-  - title: "Cycle 8 — Goblin Swarm → Rule Objects (Big Refactor)"
+  - title: "Cycle 8 — Goblin Swarm → Discover Rule Objects (Big Refactor)"
     instructions: |
       > **Spec:** three 2s combine into a *Goblin Swarm* (200 damage).
 
-      Before writing anything, imagine where `if counts[2] >= 3:` would go. Now imagine *six more triple combos* (cycles 9–14) each adding their own if-and-subtract block. Painful? **That pain is the design pressure.** Cycle 8 is when the structure has to change.
+      Cycle 8 is structurally the most important cycle in this tutorial. The current code handles **one** combo (Dragon Blast) with a hardcoded `if counts[1] >= 3:` block. Cycle 8 will give you a **second** combo — and the design pressure of having two will *teach you the right abstraction*. Don't skip ahead. **You're going to invent it, not look it up.**
 
-      ## Your task
+      The cycle has three phases. Do them in order — don't compress them.
 
-      1. **🔴 RED** — add `test_three_twos_create_goblin_swarm`, structured like cycle 6's test. Run; the existing code knows nothing about 2s.
-      2. **🟢 GREEN** — you have two choices:
-         - *Option A*: another `if counts[2] >= 3:` block. Local minimum, multiplies the pain five-fold across cycles 9–14.
-         - *Option B*: extract the rule shape into data. Pull combo-rule logic into a `ComboRule` class with an `apply(counts)` method; same for `SingleRule`. Then drive `score` from two registries.
-      3. **🔵 REFACTOR** — option B *is* the refactor. Re-run; the seven prior tests are your safety net.
+      ---
 
-      ### Listening to the test & the Open-Closed Principle
+      ## Phase 1 — 🔴 RED (≈ 1 min)
 
-      The discipline of *listening to the test*: the difficulty of imagining six more if-blocks was a signal — the structure no longer fit. The cure is structural extraction.
+      Add `test_three_twos_create_goblin_swarm` to `test_scorer.py`. Mirror the shape of `test_three_ones_create_dragon_blast_instead_of_three_flames` — only the dice value, the event name, and the damage change.
 
-      You just applied the **Open-Closed Principle**: `score` is now *closed for modification* (you won't edit it again) but *open for extension* (cycle 9 will add four rules by appending data). Adding behavior = adding data, not editing code.
+      Run pytest. Expect RED for the right reason: an assertion failure on the events tuple. (The current code knows nothing about a *2s* rule, so triple 2s currently produces no events — `Counter` happily counts them but no rule consumes them.)
 
-      Refactor *toward* duplication, not before. Two data points (Dragon Blast + Goblin Swarm) are now enough to see the right shape; with one, you'd be guessing.
+      ---
+
+      ## Phase 2 — 🟢 GREEN (the *deliberately ugly* version)
+
+      **Apply TPP directly.** What is the smallest code change that turns this test green?
+
+      The simplest GREEN is to **mirror the existing Dragon Blast block**: add a second `if counts[2] >= 3:` block right next to the first, with the right name, dice, and damage.
+
+      Type that out — *don't refactor yet.* TDD's discipline says GREEN first, REFACTOR second. (Yes, you can already see the duplication. That's the whole point.)
+
+      Run pytest. All eight tests should pass. Now look at `score()` and **notice what just happened to your file.**
+
+      ---
+
+      ## Phase 3 — 🔵 REFACTOR (the discovery)
+
+      Look at the two combo blocks side by side:
+
+      ```python
+      if counts[1] >= 3:
+          events.append(ScoringEvent("Dragon Blast", (1, 1, 1), 1000))
+          counts[1] -= 3
+
+      if counts[2] >= 3:
+          events.append(ScoringEvent("Goblin Swarm", (2, 2, 2), 200))
+          counts[2] -= 3
+      ```
+
+      ### A — Identify what varies
+
+      Before reading on, write down (mental notes are fine): **what is the same and what is different** between the two blocks?
+
+      <details markdown="1"><summary>Reveal — what varies</summary>
+
+      *Same*: the **shape** — `if counts[X] >= N: emit one event with X repeated N times; counts[X] -= N`.
+
+      *Different*: four things. The die value (`1` vs `2`), the count threshold (both `3` here, but cycle 9 will introduce other thresholds — keep it as a field), the event name (`"Dragon Blast"` vs `"Goblin Swarm"`), and the damage (`1000` vs `200`).
+      </details>
+
+      ### B — Name the entity
+
+      Two examples is the **minimum** needed to see a pattern. With one, any abstraction is a guess; you have two now. The four things that vary are *fields of an entity that doesn't yet have a name*. **What would you call that entity?** (One that holds: a die value, a count, a name, a damage.)
+
+      Pick a name that fits your intuition. For the rest of these instructions we'll use `ComboRule` — but if you picked something else and your tests pass, your name is fine.
+
+      ### C — Sketch the entity
+
+      A `ComboRule` carries the four fields and **does the work** the if-block currently does. In Python, your reach for fields-with-equality should already be `@dataclass(frozen=True)` (you used it for `ScoringEvent` and `BattleReport`).
+
+      The *behavior* the if-block does is: **detect the combo, emit one event, decrement the counts.** Move that into a method on the entity. What should the method's signature be? (Hint: it has to read *and* mutate the `Counter`, and return the events it produced — possibly an empty list.)
+
+      Write the class header before reading on. Pick a method name that describes *what it does to the counts*.
+
+      <details markdown="1"><summary>Reveal — one shape that works</summary>
+
+      ```python
+      @dataclass(frozen=True)
+      class ComboRule:
+          die: int
+          count: int
+          name: str
+          damage: int
+
+          def apply(self, counts):
+              events = []
+              if counts[self.die] >= self.count:
+                  dice_used = tuple([self.die] * self.count)
+                  events.append(ScoringEvent(self.name, dice_used, self.damage))
+                  counts[self.die] -= self.count
+              return events
+      ```
+
+      The method is called `apply` because it *applies* the rule to a counter and returns whichever events that produces. Returning a *list* (possibly empty) is the right shape — cycle 10 will need a single `apply()` call to emit *zero or more* events from one input. Don't over-fit cycle 8's needs; the list-return generalises cleanly.
+      </details>
+
+      ### D — Replace the blocks with data
+
+      Now: declare the two combo rules as **data** outside `score()`. Replace the two if-blocks inside `score()` with a single iteration over the tuple. The combos are now *configuration*, not *code*.
+
+      <details markdown="1"><summary>Reveal — what `score()` looks like after</summary>
+
+      ```python
+      COMBO_RULES = (
+          ComboRule(1, 3, "Dragon Blast", 1000),
+          ComboRule(2, 3, "Goblin Swarm", 200),
+      )
+
+
+      def score(dice):
+          counts = Counter(dice)
+          events = []
+
+          for rule in COMBO_RULES:
+              events.extend(rule.apply(counts))
+
+          # ... singles loops still here for now ...
+
+          return BattleReport(tuple(events))
+      ```
+
+      Run pytest. **All eight tests still pass** — the refactor preserved every observable behavior. That's the *Refactoring Litmus Test* in action: behavior-level tests survive structural rewrites.
+      </details>
+
+      ### E — Apply the same recognition to singles
+
+      Look at the two for-loops at the bottom of `score()` (the Dragon Flame loop and the Lightning Spark loop). The same kind of duplication, just one field shorter: same shape, three fields varying (die, name, damage). Apply the same recognition you just used on combos — extract a `SingleRule` with its own `apply(counts)` method, declare a `SINGLE_RULES` tuple, and replace both for-loops with one iteration.
+
+      <details markdown="1"><summary>Reveal — the parallel SingleRule shape</summary>
+
+      ```python
+      @dataclass(frozen=True)
+      class SingleRule:
+          die: int
+          name: str
+          damage: int
+
+          def apply(self, counts):
+              events = []
+              for _ in range(counts[self.die]):
+                  events.append(ScoringEvent(self.name, (self.die,), self.damage))
+              return events
+
+
+      SINGLE_RULES = (
+          SingleRule(1, "Dragon Flame", 100),
+          SingleRule(5, "Lightning Spark", 50),
+      )
+      ```
+
+      And `score()` becomes two parallel loops — one over each rule registry. **`score()` will not change again for the rest of the tutorial.** Cycle 9 will prove it by adding *four* new combos with zero edits to `score()`.
+      </details>
+
+      ---
+
+      ## Why this matters
+
+      What you just did has a name: **listening to the test**. The pain of imagining six more hardcoded combo branches (cycles 9–14 each adding their own) was a *design signal* — the structure no longer fit the problem. The cure was *structural extraction*: pull the varying parts into data, leave the constant shape as code.
+
+      You also just applied the **Open-Closed Principle**: `score()` is now *closed for modification* (you'll never edit it again) but *open for extension* (cycle 9 adds four new combos by appending four rows to `COMBO_RULES`). New behavior arrives as data, not as new branches.
+
+      And you discovered the right abstraction at the **right moment** — *two examples* (Dragon Blast + Goblin Swarm). One example would have been a guess; six examples would have been six branches you'd have to delete. **Refactor toward duplication, not before it, and not after it has rotted.** Two is the sweet spot, and now you've felt why.
 
     files:
       - path: "scorer.py"
@@ -2593,7 +2730,7 @@ steps:
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'class ComboRule' in source, \
-              "Cycle 8's refactor introduces a `ComboRule` dataclass with an `apply(self, counts)` method. See the worked example."
+              "You're stuck somewhere before Phase 3C. After the deliberately-ugly GREEN (Phase 2), there are TWO combo blocks visible — Dragon Blast and Goblin Swarm. Phase 3 asks you to spot what varies between them and extract it into a `ComboRule` dataclass with an `apply(self, counts)` method. The reveal block in the instructions has one possible shape if you're truly stuck."
 
       - description: "SingleRule class is defined"
         command: |
@@ -3703,7 +3840,7 @@ steps:
           option_feedback:
             0: "Pytest doesn't cache test results between runs. Every `pytest` invocation re-executes every selected test from scratch. Made-up framework behavior — the explanation needs to come from the code's semantics."
             2: "Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason cycle 7 still passes is *mathematical* (the two operations agree on 4), not framework-related."
-            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* (cycle 10 added a new passing test). Mistaking refactor for test deletion is a common Liar-test-adjacent confusion: it's the *code* that's restructured, never the tests."
+            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* because cycle 10 added a new passing test. The code is what gets restructured during refactoring; the tests remain as guards."
           explanation: |
             This is a subtle but important point: a refactor does not have to *change every
             output*. The two implementations of `apply` produce the same answer for any
@@ -3721,7 +3858,7 @@ steps:
             - "Yes — Python's `Counter` class re-orders subtraction operations under the hood when used with dataclasses"
           correct_index: 1
           option_feedback:
-            0: "This is the **\"refactoring caused the bug\" misattribution**. Trace the cycle-6 inline code on six 1s by hand: `if counts[1] >= 3: ... counts[1] -= 3` runs once, leaves 3, then SingleRule emits 3 Flames. *Same bug, different file*. The defect was always in the algorithm; the abstraction is innocent."
+            0: "Trace the cycle-6 inline code on six 1s by hand: `if counts[1] >= 3: ... counts[1] -= 3` runs once, leaves 3, then SingleRule emits 3 Flames. The same defect existed before the refactor, just in a different file. The algorithm needed a loop over complete triples; the abstraction did not create that bug."
             2: "Python doesn't rewrite `if` statements; that's invented language behavior. (And version-blame is a common dodge for design questions — the language is rarely the actual culprit.) The bug is in the *algorithm*, which Python executes faithfully on every version."
             3: "Counter doesn't re-order operations. (Made-up implementation detail, again.) The actual lesson here is that abstractions don't introduce algorithmic bugs — they at most *relocate* them. The fix has to be in the algorithm, no matter where the algorithm lives."
           explanation: |
@@ -4784,13 +4921,13 @@ steps:
 
       A natural ordering, simplest first:
 
-      - [ ] `fizzbuzz(0) == []`  *(empty case — parallel to Cycle 1)*
-      - [ ] `fizzbuzz(1) == ["1"]`  *(single regular number — parallel to Cycle 2's first concrete return)*
-      - [ ] `fizzbuzz(2) == ["1", "2"]`  *(forces a loop — parallel to Cycle 4)*
-      - [ ] `fizzbuzz(3)[-1] == "Fizz"`  *(first conditional rule — parallel to Cycle 2's first event)*
-      - [ ] `fizzbuzz(5)[-1] == "Buzz"`  *(second conditional rule — parallel to Cycle 3)*
-      - [ ] `fizzbuzz(15)[-1] == "FizzBuzz"`  *(combined rule — **the design-breaking moment**, parallel to Cycle 6)*
-      - [ ] `fizzbuzz(-1)` raises `ValueError`  *(invalid input — parallel to Cycle 11)*
+      - ☐ `fizzbuzz(0) == []`  *(empty case — parallel to Cycle 1)*
+      - ☐ `fizzbuzz(1) == ["1"]`  *(single regular number — parallel to Cycle 2's first concrete return)*
+      - ☐ `fizzbuzz(2) == ["1", "2"]`  *(forces a loop — parallel to Cycle 4)*
+      - ☐ `fizzbuzz(3)[-1] == "Fizz"`  *(first conditional rule — parallel to Cycle 2's first event)*
+      - ☐ `fizzbuzz(5)[-1] == "Buzz"`  *(second conditional rule — parallel to Cycle 3)*
+      - ☐ `fizzbuzz(15)[-1] == "FizzBuzz"`  *(combined rule — **the design-breaking moment**, parallel to Cycle 6)*
+      - ☐ `fizzbuzz(-1)` raises `ValueError`  *(invalid input — parallel to Cycle 11)*
 
       Compare with your list. Did you have the same items? In the same order? **The "FizzBuzz" case is the design-breaking moment** — the parallel of Cycle 6's Triple 1s. Notice how the same shape of cycle ordering recurs even in a different domain.
       </details>
@@ -5013,7 +5150,7 @@ steps:
           correct_index: 0
           option_feedback:
             1: "Speed-by-parallelism is a fabricated technical justification. Pytest parallelism (with `pytest-xdist`) saves seconds on large suites — nowhere near the order of magnitude that would make TDD net-faster than typing. The argument has to stand on *durable design value*, not on runtime tricks."
-            2: "Tests *don't catch all bugs* — that's the **\"100% confidence\" misconception**. Cycle 10 of this very tutorial showed a bug surviving four cycles of green tests. The honest claim is that tests catch *the bugs they're written to catch* — which is much weaker than \"all bugs,\" and is still enormously valuable for regression."
+            2: "Tests don't catch all bugs. Cycle 10 of this tutorial showed a defect surviving four cycles of green tests. The honest claim is that tests catch the behaviors they actually check, which is narrower than \"all bugs\" and still enormously valuable for regression."
             3: "Dismissing the question avoids the engineering tradeoff. TDD's case is empirical (Microsoft/IBM, Erdogmus, Janzen & Saiedian — all measured studies), not faith-based. A teammate who hears \"it's a religion\" walks away thinking the practice has no defense; that's the opposite of what the evidence supports."
           explanation: |
             The honest answer combines two things: (a) for *small* problems with experienced devs, the time cost of TDD is roughly the same as ad-hoc coding — the same number of tests get written either way, just in a different order; (b) the *durable* benefit is the test suite as a regression net plus the rhythm of small steps preventing speculative complexity. On a toy, the gain is small. On long-lived code modified by multiple people it's the difference between a 39–91% drop in pre-release defects (Microsoft/IBM, Williams et al. 2008) and not. TDD isn't a religion — it's a tradeoff with strong empirical evidence in specific contexts (long-lived, multi-author, behavior-rich domains). FizzBuzz lets you *practice* the rhythm cheaply, where the stakes are low.
@@ -5044,7 +5181,7 @@ steps:
   # earlier cycles with new application questions at Bloom's Analyze/Evaluate
   # levels.
   # ==========================================================================
-  - title: "The Big Picture — Lessons from Twelve Cycles"
+  - title: "The Big Picture — Twelve Cycles and a Transfer"
     instructions: |
       Twelve Dragon-Dice cycles. Then a thirteenth on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*. **The tests are the byproduct; the design is the primary product. And the rhythm is portable.**
 
@@ -5525,9 +5662,9 @@ steps:
             - "A coverage technique ensuring every line is exercised before release"
           correct_index: 1
           option_feedback:
-            0: "**Coverage-first misconception.** TDD doesn't *target* coverage; coverage is a side effect. A line written under test pressure usually does end up covered, but framing TDD as a coverage technique inverts the causation and misses the design role tests play."
+            0: "TDD does not primarily target coverage; coverage is a side effect. A line written under test pressure usually does end up covered, but framing TDD as a coverage technique inverts the causation and misses the design role tests play."
             2: "Speed-of-shipping isn't the case for TDD on small features (initial development is 15–35% *slower* per Microsoft/IBM). The case is on **long-lived code with multiple authors**, where the regression net pays back many-fold. \"Faster shipping\" oversells; the honest claim is *defect reduction over time*."
-            3: "Same coverage-misconception as option A, framed slightly differently. The lesson the tutorial built across 12+1 cycles is *design pressure*, not coverage. Cycle 10 specifically showed how 100%-covered code can still be wrong."
+            3: "This frames the same issue around coverage from a different angle. The lesson the tutorial built across 12+1 cycles is design pressure, not coverage. Cycle 10 specifically showed how 100%-covered code can still be wrong."
           explanation: |
             The threshold concept of the tutorial: TDD is design, not testing. Cycle 8's
             rule-object refactor *emerged* under cycle-8's test pressure, not from a
@@ -5565,12 +5702,12 @@ steps:
             - "*Excessive Setup* — too many asserts"
             - "*The Nitpicker* — asserts on private attributes (`_name`, `_email`), coupling the test to implementation details"
             - "*The Mockery* — the test verifies the User constructor"
-            - "*Skip-the-Refactor* — should be split into smaller tests"
+            - "*Skip-the-Refactor* — the cycle's REFACTOR phase was never entered, so the test was never tightened"
           correct_index: 1
           option_feedback:
             0: "**Definition mismatch.** Excessive Setup is about *Arrange* code dominating the test (30+ lines of fixture before one assertion); two assertions is normal. The smell here is *which* attributes the assertions touch, not *how many* there are."
             2: "**Mockery misclassification.** The Mockery is about over-mocking (more mock setup than test logic). This test uses a real `User` instance with no mocks at all. The smell here is the leading-underscore reach into private state."
-            3: "**Skip-the-Refactor mislabel.** Skip-the-Refactor refers to never entering the REFACTOR phase of the cycle. \"Should be split into smaller tests\" is also not the right diagnosis — testing two attributes of one creation event is a single-behavior test. The actual smell is reaching into `_name`/`_email`."
+            3: "**Smell-of-process versus smell-of-test.** Skip-the-Refactor is a *workflow* smell — \"the author never entered REFACTOR\" — and as a diagnosis it's unfalsifiable from the test code alone (you'd need to see the author's process). The smell *visible in this snippet* is a *test-design* problem: assertions on private attributes (`_name`, `_email`). That's the Nitpicker."
           explanation: |
             *The Nitpicker.* Leading underscores signal "private — implementation detail."
             Tests that touch private state break on every refactor. Assert on observable
@@ -5595,4 +5732,39 @@ steps:
             is the discipline that catches it. Coverage is a *locator of under-tested
             code*, not a measure of correctness.
 
+        - question: |
+            **(Bloom's Create — design a test list from a spec.)** A teammate hands you this spec for a function `is_valid_password(password: str) -> bool`:
+
+            > Returns `True` iff **all** of these hold: length is at least 8 *and* at most 64; contains at least one digit (`0`–`9`); contains at least one symbol from `!@#$%`; otherwise returns `False`. The empty string is invalid.
+
+            Apply Canon TDD step 1 — **write a test list, in the order you'd implement it**. Which list below best honours TDD discipline (simplest-first, boundary-aware, behavior-named)?
+          type: single
+          options:
+            - "(1) test_long_string_with_digit_and_symbol_is_valid (2) test_short_string_is_invalid (3) test_no_digit_is_invalid (4) test_no_symbol_is_invalid (5) test_length_8_with_digit_and_symbol_is_valid (6) test_length_7_with_digit_and_symbol_is_invalid (7) test_length_64_with_digit_and_symbol_is_valid (8) test_length_65_is_invalid (9) test_empty_string_is_invalid"
+            - "Just one parametrized test that tries 50 random strings and checks `is_valid_password` returns the right answer for each."
+            - "(1) test_returns_a_bool (2) test_handles_unicode (3) test_is_thread_safe (4) test_is_not_None (5) test_does_not_raise"
+            - "(1) test_password_validation — all the rules in one test with multiple assertions covering length, digit, symbol, and empty-string cases."
+          correct_index: 0
+          option_feedback:
+            1: "Random testing belongs more naturally to property-based testing; Hypothesis is great for that. It does not substitute for a behaviorally named test list. With 50 random strings there is no record of which behaviors are pinned down, no boundary discipline, and no readable test names that double as documentation; the boundary `len == 8` may even be missed by chance."
+            2: "None of these tests come from the password spec; they check ambient properties like `is not None` and `returns a bool`. \"Returns a bool\" is implicit in the type annotation, and `is not None` passes for almost any non-None return. The test list must come from the rules the function implements, not from generic Python-correctness checks."
+            3: "One test asserting all four rules at once is exactly the Giant antipattern from the Step 16 taxonomy. When it fails, it is hard to tell which rule is broken, and the failure message has to cover every assertion. The TDD discipline is one test per behavior, so the test name itself documents which rule that test pins down."
+          explanation: |
+            **Why option A wins**: it follows the same shape as Dragon Dice's twelve cycles —
+            simplest case first (typical valid input), then *each rule rejected* in isolation
+            (no digit, no symbol, too short), then *boundaries on the length range* (7 invalid,
+            8 valid, 64 valid, 65 invalid — the same `>` vs `>=` discipline as cycle 1's
+            grade bug), then the *empty-string* edge. Each test name reads like a one-line
+            bug report. Notice how the boundary-pair pattern (7/8 and 64/65) matches the
+            cycle-3 lesson on partition transitions.
+
+            **Why this is a Bloom's Create item, not Apply**: there's no single canonical
+            answer (your *exact* ordering may differ, e.g., empty-string first as the
+            simplest-of-all). The skill being tested is *generating* a structured plan from
+            a spec — the same skill you'll use on every function you TDD outside this
+            tutorial. The four candidate lists above contrast different wrong-answer patterns:
+            random-instead-of-systematic, wrong-rules, and the Giant antipattern.
+
+            If you found yourself drafting your own list before scrolling to the options —
+            even better. That's exactly Canon TDD step 1 in your hands.
 

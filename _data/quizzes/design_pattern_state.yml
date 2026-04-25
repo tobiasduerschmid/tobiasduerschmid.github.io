@@ -11,6 +11,13 @@ questions:
       - "Client-driven transitions — the client selects which state to switch to"
       - "Null-state transitions — transitions are handled by the Null Object pattern"
     correct_index: 1
+    option_feedback:
+      0: |
+        Context-driven transition logic would put the state-change rules in `GumballMachine` itself. Here the concrete state method decides the successor and calls `setState()`.
+      2: |
+        The client asks the machine to perform an operation such as `insertQuarter()`. It should not choose the next internal state directly.
+      3: |
+        A Null Object can represent harmless do-nothing behavior. It is not the mechanism choosing the next real state in this example.
     explanation: "**This is state-driven transitions — each state knows its successors and triggers the transition itself, encapsulating its own logic at the cost of inter-state coupling.** This is **state-driven transitions**: each Concrete State knows its successor(s) and calls `context.setState()` to trigger the transition. The advantage is that each state encapsulates its own transition logic. The disadvantage is that it's harder to see the complete state machine at a glance, and state classes become coupled to each other."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "Information Hiding — use the Facade pattern to wrap the boolean matrix"
       - "Don't Repeat Yourself — use the Template Method pattern"
     correct_index: 1
+    option_feedback:
+      0: |
+        Object creation is not the main pain in the snippet. The repeated `if` checks show behavior branching on cell state, which is what polymorphic state objects address.
+      2: |
+        Hiding the matrix behind a facade may protect representation details, but the behavioral branching would still exist somewhere. State is about moving state-specific behavior into separate implementations.
+      3: |
+        Template Method factors a fixed algorithm skeleton into a base class. The problem here is behavior changing according to a cell's current state.
     explanation: "**This violates polymorphism over conditions — the State pattern replaces the boolean-driven if/else with `AliveState` and `DeadState` objects that each carry their own behavior.** The boolean representation forces **conditional logic** everywhere a cell's behavior differs based on its state. The State pattern replaces this with **polymorphism**: `AliveState` and `DeadState` each implement the behavior for their respective states. Adding a new state (e.g., `DyingState`) becomes a matter of adding a new class, not modifying every conditional throughout the codebase."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "Strategy supports more concrete implementations than State"
       - "State is only for GUI applications; Strategy is general-purpose"
     correct_index: 1
+    option_feedback:
+      0: |
+        Either pattern can be implemented with an interface or an abstract class. The structural choice is less important than whether implementations transition internally or are selected by a client.
+      2: |
+        The number of concrete classes does not separate the patterns. Both can have many implementations.
+      3: |
+        State is not limited to GUIs; it is useful for protocols, workflows, documents, games, and other objects whose behavior depends on lifecycle state.
     explanation: "**State involves implicit internal transitions that the client does not control; Strategy involves the client explicitly selecting which algorithm to use — same structure, different intent.** The difference is entirely in **intent and behavior**. In State, the concrete implementations **transition between each other** based on internal logic — the client doesn't choose which state is active. In Strategy, the client **explicitly selects** which algorithm to use, and there are no automatic transitions. Same structure, fundamentally different dynamics."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "Neither — the State pattern cannot accommodate new states without major refactoring"
       - "Both handle it equally well"
     correct_index: 1
+    option_feedback:
+      0: |
+        Centralizing transitions can make the whole state machine visible, but it also means editing the context's transition logic. The prompt asks which approach localizes this particular change.
+      2: |
+        State is specifically meant to make state-dependent behavior extensible. A new state still requires design work, but it does not imply a major rewrite.
+      3: |
+        The approaches trade off visibility against locality. When only `Review` can transition to `Rejected`, state-driven transitions can keep the change close to the affected state.
     explanation: "**State-driven transitions handle the new Rejected state more gracefully because only the ReviewState and the new class need to change — not the Context or all other states.** With **state-driven transitions**, you only need to: (1) create the new `RejectedState` class, and (2) modify `ReviewState` to add a transition to `RejectedState`. The `RejectedState` itself transitions back to `DraftState`. No other states need to change. With context-driven transitions, you'd modify the Context's centralized logic — potentially touching code for all states."
 
   - id: 5
@@ -55,8 +83,15 @@ questions:
       State objects in a `GumballMachine` carry no instance data — they only contain behavior methods. A developer proposes making all state objects Singletons to save memory. What is the **key risk** of this approach?
     options:
       - "Singletons are always an anti-pattern and should never be used"
-      - "It permanently removes the ability to add per-context data to states in the future"
+      - "It removes the ability to add per-context data while continuing to share one state instance"
       - "It makes state transitions slower due to synchronization overhead"
       - "The Null Object pattern cannot be combined with Singleton"
     correct_index: 1
-    explanation: "**Singleton states permanently remove the ability to add per-context data in the future because all contexts would share the same instance.** If states are Singletons, they cannot store a reference back to their Context (because many contexts would share the same state instance). This **permanently couples the design** by removing the ability to ever add per-context state data in the future. This is an example of a **Singleton State** compound — memory-efficient but inflexible. It's only safe if you are certain the states will remain purely behavioral."
+    option_feedback:
+      0: |
+        Stateless shared state objects can be a reasonable optimization. The risk is not that Singleton is forbidden; it is that the optimization locks in a no-per-context-data assumption.
+      2: |
+        Shared stateless objects do not necessarily require synchronization during every transition. The design risk is future flexibility, not inherent transition speed.
+      3: |
+        A Null Object can be shared as a singleton when it is truly stateless. The compatibility of those patterns is not the issue here.
+    explanation: "**Singleton states remove the ability to add per-context data while continuing to share one state instance.** If states are Singletons, they cannot store per-context fields or a per-context reference back to their Context, because many contexts would share the same state instance. This is an example of a **Singleton State** compound — memory-efficient but inflexible. It's only safe if you are confident the states will remain purely behavioral, or you are willing to refactor away from shared instances later."

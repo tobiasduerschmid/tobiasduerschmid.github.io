@@ -13,6 +13,13 @@ questions:
       - "A class that implements system behavior."
       - "A database that stores user information."
     correct_index: 1
+    option_feedback:
+      0: |
+        Actors abstract away from individuals. The same person can act as different roles in different scenarios, and many people can share one actor role.
+      2: |
+        Classes belong inside design models such as class diagrams. A use case actor is external to the system being modeled.
+      3: |
+        A database can be an external system actor if it interacts with the subject, but an actor is not defined as a data store. It represents a role or external system participating in a use case.
     explanation: "**An actor represents a role, not a specific person — one person can hold multiple roles and multiple people can share the same role.** An actor represents a **role**, not a specific person. One person can play multiple roles (e.g., a professor who is also a student), and multiple people can share the same role."
 
   - id: 2
@@ -27,6 +34,13 @@ questions:
       - "Purchase Item is a specialized version of Login."
       - "Login extends the Purchase Item behavior with additional steps."
     correct_index: 1
+    option_feedback:
+      0: |
+        Optional behavior is modeled with `<<extend>>`, not `<<include>>`. Include means the base use case always uses the included behavior.
+      2: |
+        Specialization would use generalization notation. Include is about factoring mandatory shared behavior into a separate use case.
+      3: |
+        That describes `<<extend>>`, where optional behavior supplements a base flow. Here `Purchase Item` includes `Login`.
     explanation: "**`<<include>>` means Login always occurs as a mandatory part of Purchase Item — it is not optional.** The `<<include>>` relationship means the included behavior **always** occurs. Whenever a customer purchases an item, they always go through the login process. This is mandatory, not optional."
 
   - id: 3
@@ -41,6 +55,13 @@ questions:
       - "Include means the behavior always happens; extend means it sometimes happens."
       - "Include arrows point to the base; extend arrows point to the extension."
     correct_index: 2
+    option_feedback:
+      0: |
+        Both include and extend are shown as dashed dependency arrows with stereotypes. The distinction is mandatory shared behavior versus optional extension behavior.
+      1: |
+        Include and extend are relationships between use cases. Actor associations are the lines between actors and use cases.
+      3: |
+        The arrow directions are easy to reverse: include points from the base use case to the included use case, while extend points from the extension to the base.
     explanation: "**`<<include>>` is mandatory (always happens) while `<<extend>>` is optional or conditional — both use dashed arrows but point in opposite directions.** `<<include>>` models **mandatory** shared behavior (always happens). `<<extend>>` models **optional** or conditional behavior (sometimes happens). Both use dashed arrows, but they point in opposite directions."
 
   - id: 4
@@ -55,6 +76,13 @@ questions:
       - "Apply Coupon always occurs as part of Place Order."
       - "Place Order is optional behavior that may supplement the basic Apply Coupon flow."
     correct_index: 0
+    option_feedback:
+      1: |
+        Specialization uses generalization notation with a hollow triangle. `<<extend>>` means optional or conditional additional behavior.
+      2: |
+        Mandatory shared behavior would be `<<include>>`. Applying a coupon is conditional, so it extends the base order flow only sometimes.
+      3: |
+        The arrow points from the extension to the base. `Apply Coupon` extends `Place Order`, not the other way around.
     explanation: "**`<<extend>>` means Apply Coupon is optional behavior that may supplement Place Order — the arrow points from the extension to the base.** The `<<extend>>` arrow points **from the extending use case to the base use case** --- from 'Apply Coupon' to 'Place Order.' This indicates that 'Apply Coupon' is optional behavior that may extend the 'Place Order' flow."
 
   - id: 5
@@ -69,6 +97,13 @@ questions:
       - "A composite state containing substates."
       - "A container for related sequence diagrams."
     correct_index: 1
+    option_feedback:
+      0: |
+        Packages and classes are class-diagram concepts. In a use case diagram, the rectangle marks what functionality is inside the system being described.
+      2: |
+        Composite states belong to state machine diagrams. The use case boundary separates system functionality from external actors.
+      3: |
+        Sequence diagrams can elaborate use case flows elsewhere, but the boundary rectangle is not a sequence-diagram container. It defines system scope.
     explanation: "**The rectangle defines the system boundary — use cases go inside (system functionality) and actors go outside (external roles).** The system boundary rectangle defines the **scope of the system**. Use cases (the functionality the system provides) are placed inside, while actors (external users/roles) are placed outside. The system name appears at the top."
 
   - id: 6
@@ -83,6 +118,19 @@ questions:
       - "Lifelines (dashed vertical lines)"
       - "Associations (lines between actors and use cases)"
     correct_indices: [0, 1, 2, 5]
+    option_feedback:
+      0: |
+        Actors are valid use case elements; they represent external roles or systems interacting with the subject.
+      1: |
+        Use cases are valid and are usually drawn as ovals naming user-visible goals or services.
+      2: |
+        The system boundary is valid when the diagram needs to show what is inside the subject system and what remains external.
+      3: |
+        Three-compartment class boxes belong in class diagrams. Use case diagrams stay at the requirements and interaction-scope level.
+      4: |
+        Lifelines belong in sequence diagrams, where they show participants over time.
+      5: |
+        Associations between actors and use cases are valid; they show which external roles participate in which system functions.
     explanation: "**Use case diagrams contain actors, use cases, system boundaries, and associations — classes and lifelines belong in other diagram types.** Use case diagrams contain **actors** (stick figures), **use cases** (ovals), **system boundaries** (rectangles), and **associations** (lines). Classes belong in class diagrams, and lifelines belong in sequence diagrams."
 
   - id: 7
@@ -97,6 +145,13 @@ questions:
       - "A dotted line with no arrowhead."
       - "A solid line with a filled diamond."
     correct_index: 1
+    option_feedback:
+      0: |
+        Generalization is not shown with the same dashed dependency arrow style as include and extend. It uses the hollow triangle notation.
+      2: |
+        A dotted line without an arrowhead does not communicate parent-child specialization. The hollow triangle points to the more general use case.
+      3: |
+        A filled diamond is composition notation in class-style structural diagrams. Use case generalization uses a hollow triangle.
     explanation: "**Use case generalization uses the same solid line with hollow triangle as class generalization, pointing to the parent use case.** Use case generalization uses the same notation as class generalization: a **solid line with a hollow triangle** pointing to the general (parent) use case. A specialized use case can replace or enhance the parent's behavior."
 
   - id: 8
@@ -111,4 +166,11 @@ questions:
       - "Verify Identity is a specialized version of both Enroll and Drop."
       - "No relationship needed --- just connect the actor to all three use cases."
     correct_index: 1
+    option_feedback:
+      0: |
+        The shared behavior is mandatory, not optional. Also, the enrolling and dropping use cases include `Verify Identity`; `Verify Identity` does not include them.
+      2: |
+        Identity verification is shared sub-behavior, not a specialized kind of enrollment or drop. Generalization would say "is a kind of," which does not fit.
+      3: |
+        Connecting the actor to `Verify Identity` would make it look like a separate user goal. In this scenario it is reused internally by both top-level use cases.
     explanation: "**Because identity verification always happens, it is modeled as `<<include>>` from both Enroll and Drop toward Verify Identity.** Since identity verification **always** happens (mandatory), this is an `<<include>>` relationship. Both 'Enroll in Course' and 'Drop Course' include 'Verify Identity.' The include arrows point from the including use cases toward Verify Identity."

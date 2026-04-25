@@ -11,6 +11,13 @@ questions:
       - "In the Calendar — it would filter notifications"
       - "Nowhere — Observer cannot implement conditional rules"
     correct_index: 1
+    option_feedback:
+      0: |
+        If the alarm clock checks weekdays before notifying, it now knows about calendar policy and coffee behavior. That pushes coordination knowledge into a device that should only announce its own event.
+      2: |
+        The calendar can answer questions about dates, but it is not naturally in the path of an alarm notification. Making it filter notifications turns it into a coordinator without naming that responsibility.
+      3: |
+        Observer can implement conditional behavior; the issue is where that condition lives. Without a mediator, observers tend to pull in the extra collaborators they need to decide how to react.
     explanation: "**With Observer, the CoffeeMaker would have to check the Calendar itself, creating the tight coupling that Mediator was designed to prevent.** With Observer, each observer **independently decides** how to react. The CoffeeMaker would need to check the Calendar itself to know if it's a weekday — meaning the CoffeeMaker now **depends on** the Calendar, creating exactly the tight coupling that the Mediator was meant to prevent. The Mediator **centralizes** this rule: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
 
   - id: 2
@@ -23,6 +30,13 @@ questions:
       - "Observer uses interfaces; Mediator uses abstract classes"
       - "Observer is for UI patterns; Mediator is for backend patterns"
     correct_index: 1
+    option_feedback:
+      0: |
+        Cardinality is a helpful surface clue, but it is not the core design distinction. The more important question is whether reaction rules live in each observer or in a central coordinator.
+      2: |
+        Either pattern can be implemented with interfaces, abstract classes, or language-specific callbacks. The implementation mechanism does not define the pattern's intent.
+      3: |
+        Both patterns can appear in UI code, backend code, or embedded systems. The domain matters less than whether objects should react independently or be coordinated centrally.
     explanation: "**Observer distributes intelligence across independent observers; Mediator centralizes all coordination rules in one place.** The key distinction is **where the intelligence lives**. In Observer, intelligence is **distributed**: each observer contains its own reaction logic, and observers are independent of each other. In Mediator, intelligence is **centralized**: the mediator contains all coordination rules and tells objects how to respond. Observer excels at **extensibility** (adding observers); Mediator excels at **changeability** (modifying coordination rules)."
 
   - id: 3
@@ -35,6 +49,13 @@ questions:
       - "Replace the Mediator with a Facade"
       - "Replace the Mediator with Observer to distribute the logic"
     correct_index: 0
+    option_feedback:
+      1: |
+        Centralized coordination can be legitimate, but size by itself can become a design smell. A mediator should make coordination easier to understand, not become an unbounded home for every rule.
+      2: |
+        A Facade simplifies access to a subsystem; it does not coordinate peer objects reacting to each other's events. Replacing a bloated mediator with a facade usually changes the problem rather than solving the bloat.
+      3: |
+        Observer may spread the same coordination rules across many observers. That can make each class smaller while making the overall behavior harder to trace.
     explanation: "**A 2,000-line Mediator has become a god class — split it into multiple focused mediators for different subsystem concerns.** The Mediator does not **remove** complexity — it **displaces** it into a central location. If the coordination logic is genuinely complex, the Mediator becomes a genuinely complex **god class**. The remedy is to split it into multiple focused mediators, each handling a different aspect of coordination (e.g., a `MorningRoutineMediator` and a `SecurityMediator`). Simply replacing with Observer would scatter the logic without reducing complexity."
 
   - id: 4
@@ -47,6 +68,13 @@ questions:
       - "It makes the Mediator unnecessary"
       - "It allows observers to communicate with each other directly"
     correct_index: 1
+    option_feedback:
+      0: |
+        A managed observer may still use an observer-style notification contract. The value is not eliminating the interface; it is routing notifications through a coordinator that owns the rules.
+      2: |
+        The mediator is the part that manages the reaction rules. Removing it would leave observers to coordinate with each other or duplicate policy locally.
+      3: |
+        Direct observer-to-observer communication would recreate the peer coupling the mediator is meant to avoid. The compound keeps colleagues decoupled while still letting their changes trigger coordinated responses.
     explanation: "**The Managed Observer compound provides both loose coupling (Observer-style notifications) and centralized coordination (Mediator-style rules) — neither pattern alone offers both.** In a Managed Observer, colleagues use **Observer-style notifications** to inform the mediator ('I changed'), and the mediator uses **direct method calls** to coordinate the response ('You should update'). This gives you the **loose coupling** of Observer (colleagues don't know about each other) combined with the **centralized intelligence** of Mediator (complex rules live in one place). Neither pattern alone provides both properties."
 
   - id: 5
@@ -59,4 +87,11 @@ questions:
       - "Because the Mediator introduces new dependencies between colleagues"
       - "Because N-to-1 creates more coupling than N-to-N"
     correct_index: 1
+    option_feedback:
+      0: |
+        N-to-1 often reduces direct coupling between colleagues. The remaining issue is that the coordination rules still have to live somewhere, and the mediator can become dense.
+      2: |
+        A mediator normally reduces colleague-to-colleague dependencies by making colleagues depend on the mediator abstraction instead. The trade-off is concentrated coordination logic, not new peer dependencies.
+      3: |
+        N-to-1 can be less tangled than N-to-N because each colleague has fewer direct relationships. The cost is that the central object may now carry a lot of behavior.
     explanation: "**Mediator displaces complexity into one central location rather than eliminating it — the same logic still exists, just concentrated instead of scattered.** This is the principle of **complexity displacement**. If five objects each have complex interactions, that complexity exists regardless of the pattern. Without Mediator, it's **scattered** across five classes (hard to find, but each piece is small). With Mediator, it's **concentrated** in one class (easy to find, but potentially overwhelming). The Mediator provides **structure** for managing the complexity, but it cannot make inherent complexity disappear."

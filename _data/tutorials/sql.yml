@@ -410,6 +410,10 @@ steps:
             - "Every student paired with every major (36 rows)"
             - "An empty result set"
           correct_index: 2
+          option_feedback:
+            0: "SQL is happy to silently produce a Cartesian product — the comma syntax is a *valid join* (a CROSS JOIN), just rarely the one you wanted. The DBMS has no way to know your intent, so it gives you what you literally asked for."
+            1: "Plain SQL never infers a join condition; you must spell out `ON s.major = m.code` (or `WHERE s.major = m.code`). ORMs that auto-join on declared relationships add this convenience on top — but the SQL standard itself does no such inference."
+            3: "Cross-product is the algebraic *default*, not an empty set. An empty result would require all rows to fail some predicate — but here there is no predicate to fail."
           explanation: |
             With no join predicate, SQL pairs every row from `students` with every row from `majors`: 9 × 4 = 36 rows. This is the #1 accidental bug in multi-table queries.
 
@@ -422,6 +426,10 @@ steps:
             - "One major has no students — and that row drops"
             - "Aliases hide one row from the output"
           correct_index: 1
+          option_feedback:
+            0: "JOINs don't have a fixed-cost arithmetic; they keep every pair where `ON` is TRUE. The number of rows lost depends on the data, not on a constant rule."
+            2: "An *inner* JOIN is symmetric — a major with zero students does drop, but that doesn't change the *student* count on the left side. The 9 students you started with stay unless their predicate fails."
+            3: "Aliases (`AS s`, `AS m`) are syntactic shorthand only — they rename tables for the rest of the query, but never filter rows. They do not affect cardinality."
           explanation: |
             `JOIN` keeps only pairs where the `ON` predicate is TRUE for both sides. Blue Bella has `major = NULL`; `NULL = anything` is UNKNOWN, so she has no match and drops.
 
@@ -938,6 +946,10 @@ steps:
             - "GROUP BY must appear before SELECT in the written query"
             - "Non-aggregate columns and aggregates cannot mix in one SELECT"
           correct_index: 1
+          option_feedback:
+            0: "`COUNT(*)` is the canonical row-count aggregate — it appears in every SQL textbook and is the *most* widely-supported function in SQL. The problem isn't that aggregate; it's the bare column next to it."
+            2: "Clauses *appear* in a fixed order in the written query (SELECT → FROM → WHERE → GROUP BY), but they are *evaluated* in a different order: FROM → WHERE → GROUP BY → SELECT. This question is about a semantic violation, not a syntactic one."
+            3: "Aggregates and non-aggregates *can* mix — that's the whole point of GROUP BY. The rule is: every non-aggregate column must appear in GROUP BY so the database knows it has one value per group. Here `name` doesn't, so the database has multiple names per major and no rule for which to pick."
           explanation: |
             The **grouping rule**: every column in `SELECT` must either appear in `GROUP BY` or be wrapped in an aggregate. `name` is neither — there are multiple names per major, so it's undefined which one to return. SQLite may pick an arbitrary name; PostgreSQL and strict-mode MySQL reject this entirely.
 
@@ -963,6 +975,10 @@ steps:
             - "`COUNT(*)` returns 10; `COUNT(gpa)` returns 7"
             - "`COUNT(*)` returns 7; `COUNT(gpa)` returns 10"
           correct_index: 2
+          option_feedback:
+            0: "`COUNT(*)` does count every row, but `COUNT(column)` is a *different aggregate* that filters NULLs. The two forms exist precisely to give you a choice between \"how many rows in the group?\" and \"how many known values in this column?\""
+            1: "This collapses the two forms into one. The distinction is intentional: when the column is the *answer* (\"how many students have a known GPA?\") use `COUNT(column)`; when you want the group's size regardless of nullness use `COUNT(*)`."
+            3: "Backwards. `COUNT(*)` always sees the row even if every column is NULL — only the *row's existence* matters. `COUNT(gpa)` is the one that drops the NULLs."
           explanation: |
             `COUNT(*)` counts every row regardless of NULLs. `COUNT(column)` counts only rows where that column is **not NULL**. The distinction is critical whenever a column is optional — use the right one depending on whether you want to count the group size or the number of known values.
 
@@ -975,6 +991,10 @@ steps:
             - "No — `NULL > 2` is UNKNOWN, and WHERE discards UNKNOWN rows"
             - "It depends on the database engine"
           correct_index: 2
+          option_feedback:
+            0: "SQL treats NULL as *unknown*, not *zero*: `NULL > 2`, `NULL = 0`, `NULL = NULL` all evaluate to UNKNOWN — never TRUE, never FALSE. Spreadsheets coerce blank cells to 0, which sets up the wrong intuition for SQL."
+            1: "WHERE applies its predicate to *every* row, including NULL ones. There is no \"pass-through\" rule; the predicate just gets a NULL operand and produces UNKNOWN, which WHERE then drops."
+            3: "NULL handling in WHERE is one of the *most* consistent parts of SQL across engines — three-valued logic (TRUE/FALSE/UNKNOWN) is in the ANSI standard and every major database implements it the same way. Other things vary; this doesn't."
           explanation: |
             From Step 3: `NULL > 2` evaluates to UNKNOWN, and `WHERE` discards UNKNOWN rows before grouping even begins. Always check whether NULLs in filtered columns are affecting your aggregates.
 

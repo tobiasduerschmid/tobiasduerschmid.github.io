@@ -9,6 +9,10 @@ questions:
       - "Turning off your brain while watching educational videos."
       - "A technique to increase memory capacity through brain exercises."
     correct_index: 1
+    option_feedback:
+      0: "Generating an entire essay is one possible use of an external tool, but cognitive offloading is broader than AI-written work. The key idea is shifting part of a task's mental demand onto an external aid."
+      2: "Offloading is active use of a tool or representation to reduce a specific mental demand. Passive disengagement does not provide the same support for a task."
+      3: "External tools do not increase biological memory capacity. They reduce what must be held or processed mentally by putting some of the work outside the mind."
     explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
     question: "According to research, who benefits more from using AI for technical tasks?"
@@ -18,6 +22,10 @@ questions:
       - "Skilled developers with strong foundational knowledge."
       - "Everyone benefits equally regardless of skill level."
     correct_index: 2
+    option_feedback:
+      0: "Novices can get help from AI, but they often have less background knowledge for judging whether an answer is correct or appropriate. The benefit depends heavily on being able to guide and verify the output."
+      1: "Skipping productive practice can make the work look easier while weakening learning. AI is most useful when it removes peripheral friction, not when it replaces the reasoning the student is trying to develop."
+      3: "AI support is not equally useful in every learner's hands. People with stronger foundations are usually better able to ask precise questions, detect errors, and adapt the result."
     explanation: "**Skilled developers benefit more from AI because it amplifies their existing ability to guide and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
     question: "Which of these is an example of **'Beneficial Offloading'** for a CS student?"
@@ -27,6 +35,10 @@ questions:
       - "Letting AI decide the architecture and edge cases of a system."
       - "Copying AI code without understanding how it works."
     correct_index: 1
+    option_feedback:
+      0: "The core algorithm is usually the part of the assignment meant to build understanding. Offloading it removes the very practice that makes the concept stick."
+      2: "Architecture and edge cases are central design reasoning, not just busywork. AI can help surface possibilities, but the student still needs to make and justify those decisions."
+      3: "Copying code without understanding can create a false sense of fluency and hide defects. Beneficial offloading should leave the learner able to explain, test, and revise the result."
     explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
   - id: 4
     question: "What is the **'desirable difficulty'** in the context of learning?"
@@ -36,6 +48,10 @@ questions:
       - "The difficulty of finding a good internet connection."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
+    option_feedback:
+      0: "Difficulty is only desirable when it remains productive and connected to the learning goal. Overload, discouragement, or impossible tasks can block learning instead of deepening it."
+      2: "An external obstacle is not automatically useful for learning. Desirable difficulties create effortful processing of the material itself."
+      3: "An unresolved stuck state is not the goal. Productive challenge helps when it leads to retrieval, discrimination, explanation, or other deeper processing."
     explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
   - id: 5
     type: multiple
@@ -46,4 +62,9 @@ questions:
       - "Mixing up different topics within a single session."
       - "Studying in a quiet, familiar environment every time."
     correct_indices: [0, 1, 2]
-    explanation: "**Testing, spacing, and interleaving are the validated desirable difficulties; familiar-environment studying is not.** Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context."
+    option_feedback:
+      0: "Retrieval practice can feel harder than re-reading because it requires producing the answer from memory. That effort is exactly why it strengthens later recall."
+      1: "Spacing often feels less efficient than cramming because some forgetting happens between sessions. Reconstructing the material after a delay is what makes it more durable."
+      2: "Interleaving can feel messier than studying one topic at a time, but it helps learners choose between ideas instead of only repeating a known procedure."
+      3: "A quiet, familiar place can help attention, but it is not one of the core desirable difficulties here. The learning benefit comes from effortful retrieval, spacing, or discrimination among related ideas."
+    explanation: "**Testing, spacing, and interleaving are the validated desirable difficulties; familiar-environment studying is not.** Testing (retrieval practice), spacing, and interleaving (mixing topics) are well-supported examples of desirable difficulties that can improve long-term learning. A quiet, familiar study environment may be useful for focus, but it is not the source of the learning effect targeted by this question."
