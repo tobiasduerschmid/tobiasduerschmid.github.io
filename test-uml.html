@@ -1170,7 +1170,7 @@ component Database {
 component EventBus {
   portin "eventIn" as eb_in
 }
-f_out --> b_in : REST / JSON
+f_out --> b_in : HTTP / JSON
 b_dbout --> db_in : SQL
 b_eventout --> eb_in : publish
 @enduml
