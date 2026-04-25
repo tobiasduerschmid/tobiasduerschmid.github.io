@@ -80,61 +80,30 @@ test.describe.serial('Advanced Git Tutorial — step-by-step', () => {
 
   test.afterAll(async () => { await page?.close(); });
 
-  // Steps 5-15 have `solution.commands` that don't reach all-pass when applied
-  // via the automated harness — typically because they rely on stash/merge/
-  // cherry-pick dances combined with sed-based conflict resolution that
-  // collide with the harness's apply-files-then-commands order. The
-  // interactive student flow handles these because the student edits the
-  // file inline; the YAML solution can't replicate that mid-flow.
-  //
-  // Coverage today: steps 1-4 are fully verified by this spec. Steps 5-15
-  // are skipped pending follow-up PRs to make their solutions deterministic
-  // (the same shape of fix already applied to step 4).
-  //
-  // Why not just run them with partial-pass tolerated? After step 5's
-  // sed-based conflict resolution leaves git in mid-cherry-pick state, the
-  // v86 terminal can hang on subsequent commands and corrupt /tutorial/
-  // state — making downstream test results meaningless. Cleanest is to
-  // stop after step 4 and re-enable as solutions are fixed.
-  const COVERAGE_END_IDX = 3;  // last step (0-based) to run end-to-end
-
   for (let i = 0; i < steps.length; i++) {
     const step   = steps[i];
     const isLast = i === steps.length - 1;
-    const skip   = i > COVERAGE_END_IDX;
 
     if (step.tests?.length > 0) {
-      const title = `step ${i + 1} "${step.title}": solution passes all ${step.tests.length} tests`;
-      if (skip) {
-        test.skip(`${title} [pending solution.commands fix]`, async () => {});
-      } else {
-        test(title, async () => {
-          if (!step.solution) {
-            throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
-          }
-          await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
-          expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
-        });
-      }
+      test(`step ${i + 1} "${step.title}": solution passes all ${step.tests.length} tests`, async () => {
+        if (!step.solution) {
+          throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
+        }
+        await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
+        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+      });
     }
 
     if (step.quiz?.questions?.length > 0 && !isLast) {
-      const title = `step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`;
-      if (skip || i === COVERAGE_END_IDX) {
-        // Skip the quiz gate at the boundary too — there's no next-step
-        // test that would validate having advanced.
-        test.skip(`${title} [pending solution.commands fix for downstream steps]`, async () => {});
-      } else {
-        test(title, async () => {
-          await page.locator('.tvm-btn-next').click();
-          await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
-          await answerQuizCorrectly(page);
-          await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
-          await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
-          await page.locator('.tvm-quiz-continue-btn').click();
-          await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
-        });
-      }
+      test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
+        await page.locator('.tvm-btn-next').click();
+        await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
+        await answerQuizCorrectly(page);
+        await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
+        await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
+        await page.locator('.tvm-quiz-continue-btn').click();
+        await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
+      });
     }
   }
 });
