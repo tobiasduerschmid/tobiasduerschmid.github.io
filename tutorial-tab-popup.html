@@ -79,8 +79,9 @@
     var overlayEl  = document.getElementById('overlayEl');
     var orphanEl   = document.getElementById('orphanEl');
     var closeBtn   = document.getElementById('closeBtn');
+    var tutorialTitle = params.get('title') || 'Tutorial';
     filenameEl.textContent = filename;
-    document.title = filename + ' — Tutorial';
+    document.title = filename + ' — ' + tutorialTitle;
 
     closeBtn.addEventListener('click', function () { window.close(); });
 

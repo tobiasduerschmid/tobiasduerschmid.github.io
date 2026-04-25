@@ -70,8 +70,9 @@
     var statusEl   = document.getElementById('statusEl');
     var overlayEl  = document.getElementById('overlayEl');
     var tabBarEl   = document.getElementById('tabBar');
+    var tutorialTitle = params.get('title') || 'Tutorial';
     paneNameEl.textContent = pane === 'left' ? 'Code' : (pane === 'right' ? 'Tests' : pane);
-    document.title = paneNameEl.textContent + ' — Tutorial';
+    document.title = paneNameEl.textContent + ' — ' + tutorialTitle;
 
     var monacoReady = false;
     var editor = null;

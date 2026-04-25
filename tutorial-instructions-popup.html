@@ -70,6 +70,8 @@
     var sourceId = 'instr-' + Math.random().toString(36).slice(2, 10);
     var role     = 'instructions';
     var channel  = new BroadcastChannel(chName);
+    var tutorialTitle = params.get('title') || 'Tutorial';
+    document.title = 'Instructions — ' + tutorialTitle;
 
     var stepNavEl      = document.getElementById('stepNavEl');
     var stepContentEl  = document.getElementById('stepContentEl');

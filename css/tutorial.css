@@ -812,11 +812,11 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
 .tvm-preview-panel.tvm-output-detached {
   flex: 0 0 auto !important;
 }
+/* When detached, the main window collapses to a (DETACHED) ↩ indicator —
+   all controls live in the popup window from now on. */
 .tvm-output-panel.tvm-output-detached .tvm-output-container,
-.tvm-output-panel.tvm-output-detached .tvm-output-actions > :not(.tvm-output-popout-btn):not(.tvm-output-detached-indicator),
-.tvm-output-panel.tvm-output-detached .tvm-output-popout-btn,
+.tvm-output-panel.tvm-output-detached .tvm-output-actions > :not(.tvm-output-detached-indicator),
 .tvm-terminal-panel.tvm-output-detached .tvm-terminal-container,
-.tvm-terminal-panel.tvm-output-detached .tvm-output-popout-btn,
 .tvm-preview-panel.tvm-output-detached .tvm-preview-container,
 .tvm-preview-panel.tvm-output-detached .tvm-preview-actions > :not(.tvm-output-detached-indicator) {
   display: none !important;

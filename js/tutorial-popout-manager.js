@@ -46,6 +46,7 @@
     this.instructionsPopupUrl = opts.instructionsPopupUrl || '/tutorial-instructions-popup.html';
     this.panePopupUrl = opts.panePopupUrl || '/tutorial-pane-popup.html';
     this.outputPopupUrl = opts.outputPopupUrl || '/tutorial-output-popup.html';
+    this.tutorialTitle = opts.tutorialTitle || '';
     this.hooks = opts.hooks || {};
 
     this.sourceId = 'main-' + uid();
@@ -113,7 +114,8 @@
     var url = this.tabPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
       + '&filename=' + encodeURIComponent(filename)
-      + '&dark=' + (darkMode ? '1' : '0');
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=900,height=700,resizable=yes,scrollbars=yes');
     if (!w) return null;
     this._popups[role] = { window: w, openedAt: Date.now() };
@@ -143,7 +145,8 @@
     var url = this.panePopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
       + '&pane=' + encodeURIComponent(pane)
-      + '&dark=' + (darkMode ? '1' : '0');
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=1000,height=720,resizable=yes,scrollbars=yes');
     if (!w) return null;
     this._popups[role] = { window: w, openedAt: Date.now(), pane: pane };
@@ -195,7 +198,8 @@
     var url = this.outputPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
       + '&kind=' + encodeURIComponent((meta && meta.kind) || 'output')
-      + '&dark=' + (darkMode ? '1' : '0');
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=900,height=600,resizable=yes,scrollbars=yes');
     if (!w) return null;
     this._popups[role] = { window: w, openedAt: Date.now() };
@@ -219,6 +223,10 @@
     this._post('output-update', payload || {});
   };
 
+  TutorialPopoutManager.prototype.broadcastOutputControlsState = function (controls) {
+    this._post('controls-state', { controls: controls || {} });
+  };
+
   // ---------------------------------------------------------------------------
   // Detach: instructions
   // ---------------------------------------------------------------------------
@@ -237,7 +245,8 @@
     var darkMode = document.documentElement.classList.contains('dark-mode');
     var url = this.instructionsPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
-      + '&dark=' + (darkMode ? '1' : '0');
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var winName = 'tinstr-' + this.pathname;
     var w = window.open(url, winName, 'width=720,height=820,resizable=yes,scrollbars=yes');
     if (!w) return null;
@@ -312,6 +321,12 @@
       case 'request-prev-step': this._safeHook('onPrevStepRequest'); break;
       case 'request-next-step': this._safeHook('onNextStepRequest'); break;
       case 'request-run-tests': this._safeHook('onRunTestsRequest'); break;
+      case 'request-run': this._safeHook('onRunOutputRequest', msg.args || ''); break;
+      case 'request-stop': this._safeHook('onStopOutputRequest'); break;
+      case 'request-clear': this._safeHook('onClearOutputRequest'); break;
+      case 'request-refresh': this._safeHook('onRefreshOutputRequest'); break;
+      case 'args-change': this._safeHook('onArgsChange', msg.args || ''); break;
+      case 'stream-filter-change': this._safeHook('onStreamFilterChange', msg.filter || 'all'); break;
       case 'popup-closing': this._handlePopupClosing(msg); break;
       case 'heartbeat-ack': /* informational */ break;
       default: break;

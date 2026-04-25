@@ -18,7 +18,7 @@
     body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
     html:not(.dark-mode) body { background: #fff; color: #222; }
     .top-bar {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 8px;
       padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
       flex-shrink: 0; font-size: 12.5px;
     }
@@ -30,6 +30,34 @@
     .stat.ok { color: #4caf50; }
     .stat.warn { color: #d4a017; }
     .stat.bad { color: #c0392b; }
+    .actions { display: flex; align-items: center; gap: 6px; }
+    .actions button {
+      padding: 3px 10px; border: 1px solid #3a3a52; border-radius: 3px;
+      background: #1f1f2a; color: #c8d4e4; font-size: 12px; line-height: 1.3;
+      cursor: pointer; font-family: inherit;
+    }
+    .actions button.primary { background: #0078d4; color: #fff; border-color: #0078d4; }
+    .actions button.primary:hover { background: #1a8be0; }
+    .actions button:hover { background: #303046; border-color: #5a5a78; }
+    .actions input.args {
+      padding: 3px 8px; border: 1px solid #3a3a52; border-radius: 3px;
+      background: #1f1f2a; color: #c8d4e4; font-family: 'Fira Code','Cascadia Code',Menlo,monospace;
+      font-size: 12px; width: 200px;
+    }
+    .actions select {
+      padding: 3px 6px; border: 1px solid #3a3a52; border-radius: 3px;
+      background: #1f1f2a; color: #c8d4e4; font-size: 11.5px; font-family: inherit;
+    }
+    html:not(.dark-mode) .actions button {
+      background: #fff; color: #333; border-color: #c8c8d0;
+    }
+    html:not(.dark-mode) .actions button:hover {
+      background: #e8edf3; border-color: #8a96a8;
+    }
+    html:not(.dark-mode) .actions input.args,
+    html:not(.dark-mode) .actions select {
+      background: #fff; color: #333; border-color: #c8c8d0;
+    }
     .wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
     .overlay {
       position: absolute; inset: 0; background: rgba(20,20,28,0.86); color: #ddd;
@@ -49,6 +77,18 @@
 <body>
   <div class="top-bar">
     <span class="kind-name" id="kindEl">&hellip;</span>
+    <div class="actions" id="actionsEl">
+      <input type="text" class="args" id="argsEl" placeholder="Program args…" style="display:none">
+      <select id="streamFilterEl" style="display:none">
+        <option value="all">All Output</option>
+        <option value="stdout">Stdout Only</option>
+        <option value="stderr">Stderr Only</option>
+      </select>
+      <button id="runBtn" class="primary" title="Run current file">▶ Run</button>
+      <button id="stopBtn" style="display:none" title="Stop execution">◼ Stop</button>
+      <button id="clearBtn" title="Clear output">Clear</button>
+      <button id="refreshBtn" style="display:none" title="Rebuild preview">↻ Refresh</button>
+    </div>
     <span class="stat" id="statusEl">Connecting&hellip;</span>
   </div>
   <div class="wrap">
@@ -76,9 +116,30 @@
     var overlayEl = document.getElementById('overlayEl');
     var outEl     = document.getElementById('outEl');
     var frameEl   = document.getElementById('frameEl');
+    var argsEl    = document.getElementById('argsEl');
+    var streamEl  = document.getElementById('streamFilterEl');
+    var runBtn    = document.getElementById('runBtn');
+    var stopBtn   = document.getElementById('stopBtn');
+    var clearBtn  = document.getElementById('clearBtn');
+    var refreshBtn = document.getElementById('refreshBtn');
     var lastHeartbeat = 0;
     var booted = false;
     var lastFrameSrc = null;
+
+    runBtn.addEventListener('click', function () {
+      post('request-run', { args: argsEl.value || '' });
+    });
+    stopBtn.addEventListener('click', function () { post('request-stop', {}); });
+    clearBtn.addEventListener('click', function () { post('request-clear', {}); });
+    refreshBtn.addEventListener('click', function () { post('request-refresh', {}); });
+    argsEl.addEventListener('input', function () {
+      post('args-change', { args: argsEl.value || '' });
+    });
+    streamEl.addEventListener('change', function () {
+      post('stream-filter-change', { filter: streamEl.value });
+    });
+
+    var tutorialTitle = params.get('title') || 'Tutorial';
 
     function setKind(k) {
       kind = k;
@@ -86,7 +147,25 @@
                 : k === 'preview' ? 'LIVE PREVIEW'
                 : 'OUTPUT';
       kindEl.textContent = label;
-      document.title = label + ' — Tutorial';
+      document.title = label + ' — ' + tutorialTitle;
+      // Show/hide controls per kind. Run/Stop/Clear are output-only; Refresh
+      // is preview-only; terminal has no header controls in main, so we
+      // suppress them here too.
+      if (k === 'preview') {
+        runBtn.style.display = 'none';
+        stopBtn.style.display = 'none';
+        clearBtn.style.display = 'none';
+        refreshBtn.style.display = '';
+      } else if (k === 'terminal') {
+        runBtn.style.display = 'none';
+        stopBtn.style.display = 'none';
+        clearBtn.style.display = 'none';
+        refreshBtn.style.display = 'none';
+      } else {
+        runBtn.style.display = '';
+        clearBtn.style.display = '';
+        refreshBtn.style.display = 'none';
+      }
     }
     setKind(kind);
 
@@ -105,10 +184,21 @@
       document.documentElement.classList.toggle('dark-mode', !!enabled);
     }
 
+    function applyControlsState(c) {
+      if (!c) return;
+      if (typeof c.argsVisible === 'boolean') argsEl.style.display = c.argsVisible ? '' : 'none';
+      if (typeof c.streamFilterVisible === 'boolean') streamEl.style.display = c.streamFilterVisible ? '' : 'none';
+      if (typeof c.runDisabled === 'boolean') runBtn.disabled = c.runDisabled;
+      if (typeof c.stopVisible === 'boolean') stopBtn.style.display = c.stopVisible ? '' : 'none';
+      if (typeof c.args === 'string' && document.activeElement !== argsEl) argsEl.value = c.args;
+      if (typeof c.streamFilter === 'string') streamEl.value = c.streamFilter;
+    }
+
     function applySnapshot(snap) {
       if (!snap) return;
       if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
       setKind(snap.kind || 'output');
+      if (snap.controls) applyControlsState(snap.controls);
       if (kind === 'preview') {
         outEl.style.display = 'none';
         frameEl.style.display = '';
@@ -149,6 +239,9 @@
           break;
         case 'output-update':
           applySnapshot(msg);
+          break;
+        case 'controls-state':
+          applyControlsState(msg.controls);
           break;
         case 'dark-mode':
           applyDarkMode(msg.enabled);

@@ -3650,6 +3650,22 @@
     this._installOutputObserver();
   };
 
+  TutorialCode.prototype._collectOutputControlsState = function () {
+    if (!this.root) return {};
+    var argsInput = this.root.querySelector('.tvm-args-input');
+    var streamSel = this.root.querySelector('.tvm-stream-filter');
+    var runBtn = this.root.querySelector('.tvm-run-btn');
+    var stopBtn = this.root.querySelector('.tvm-stop-btn');
+    return {
+      argsVisible: !!(argsInput && argsInput.style.display !== 'none'),
+      args: argsInput ? argsInput.value : '',
+      streamFilterVisible: !!(streamSel && streamSel.style.display !== 'none'),
+      streamFilter: streamSel ? streamSel.value : 'all',
+      runDisabled: !!(runBtn && runBtn.disabled),
+      stopVisible: !!(stopBtn && stopBtn.style.display !== 'none'),
+    };
+  };
+
   TutorialCode.prototype._outputMeta = function () {
     var pre = this.root && this.root.querySelector('.tvm-output-pre');
     var termContainer = this.root && this.root.querySelector('.tvm-terminal-container');
@@ -3716,6 +3732,7 @@
               kind: 'output',
               content: pre.innerHTML,
             });
+            self._popoutManager.broadcastOutputControlsState(self._collectOutputControlsState());
           }
         }, 60);
       });
@@ -4067,6 +4084,15 @@
     }
   };
 
+  TutorialCode.prototype._deriveTutorialTitle = function () {
+    // Prefer the navbar's tutorial title (cleanest, no "| SE Book" suffix);
+    // fall back to splitting <title> on the " | " separator.
+    var navTitle = document.querySelector('.navbar-brand[style*="font-weight: 600"]');
+    if (navTitle && navTitle.textContent.trim()) return navTitle.textContent.trim();
+    var t = (document.title || '').split(' | ')[0];
+    return t || '';
+  };
+
   TutorialCode.prototype._initPopoutManager = function () {
     if (!window.TutorialPopoutManager || !window.BroadcastChannel) return;
     var self = this;
@@ -4077,6 +4103,7 @@
       instructionsPopupUrl: this.config.instructionsPopupUrl || '/tutorial-instructions-popup.html',
       panePopupUrl: this.config.panePopupUrl || '/tutorial-pane-popup.html',
       outputPopupUrl: this.config.outputPopupUrl || '/tutorial-output-popup.html',
+      tutorialTitle: this.config.tutorialTitle || this._deriveTutorialTitle(),
       hooks: {
         onStepChangeRequest: function (idx) {
           if (typeof idx === 'number') self.loadStep(idx);
@@ -4112,7 +4139,47 @@
         getFileMeta: function (filename) { return self._fileMeta(filename); },
         getInstructionsSnapshot: function () { return self._buildInstructionsSnapshot(); },
         getPaneMeta: function (pane) { return self._paneMeta(pane); },
-        getOutputMeta: function () { return self._outputMeta(); },
+        getOutputMeta: function () {
+          var m = self._outputMeta();
+          if (m) m.controls = self._collectOutputControlsState();
+          return m;
+        },
+        onRunOutputRequest: function (args) {
+          if (typeof args === 'string') {
+            var argsInput = self.root && self.root.querySelector('.tvm-args-input');
+            if (argsInput) argsInput.value = args;
+          }
+          if (typeof self._runCurrentFile === 'function') self._runCurrentFile();
+          else {
+            // Fallback: click the in-DOM Run button
+            var runBtn = self.root && self.root.querySelector('.tvm-run-btn');
+            if (runBtn) runBtn.click();
+          }
+        },
+        onStopOutputRequest: function () {
+          var stopBtn = self.root && self.root.querySelector('.tvm-stop-btn');
+          if (stopBtn) stopBtn.click();
+        },
+        onClearOutputRequest: function () {
+          var clearBtn = self.root && self.root.querySelector('.tvm-clear-btn');
+          if (clearBtn) clearBtn.click();
+          else {
+            var pre = self.root && self.root.querySelector('.tvm-output-pre');
+            if (pre) pre.innerHTML = '';
+          }
+        },
+        onRefreshOutputRequest: function () {
+          var rb = self.root && self.root.querySelector('.tvm-refresh-btn');
+          if (rb) rb.click();
+        },
+        onArgsChange: function (args) {
+          var argsInput = self.root && self.root.querySelector('.tvm-args-input');
+          if (argsInput) argsInput.value = args;
+        },
+        onStreamFilterChange: function (filter) {
+          var sel = self.root && self.root.querySelector('.tvm-stream-filter');
+          if (sel) { sel.value = filter; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+        },
       },
     });
     this._popoutManager.init();
