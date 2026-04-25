@@ -3177,14 +3177,8 @@
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
-        // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke
-        // React: hot-patch the live preview on every change so edits in any
-        // window (main editor or popped-out tab) re-render in any preview
-        // window (main panel or popped-out preview) within ~150 ms.
-        if (self.config.backend === 'react') {
-          clearTimeout(self._reactPatchTimer);
-          self._reactPatchTimer = setTimeout(function () { self._patchReactPreview(); }, 150);
-        }
+        // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
+        // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
     } else if (content !== undefined) {
       this.editorModels[filename].model.setValue(content);
@@ -4148,6 +4142,15 @@
           self.loadStep(self.currentStep + 1);
         },
         onRunTestsRequest: function () { self._runTests(); },
+        onSaveFileRequest: function (filename) {
+          // Save the file the popup tells us about — temporarily make it the
+          // active file so _saveCurrentFile triggers the right side effects
+          // (sync, autosave, react patch, UML refresh).
+          var prev = self.activeFileName;
+          if (filename && self.editorModels[filename]) self.activeFileName = filename;
+          if (typeof self._saveCurrentFile === 'function') self._saveCurrentFile();
+          self.activeFileName = prev;
+        },
         onFileEditFromPopup: function (filename, content) {
           self._applyFileEditFromPopup(filename, content);
         },

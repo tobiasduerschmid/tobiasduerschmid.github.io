@@ -140,20 +140,30 @@
         });
         // Wire content change → broadcast file-edit for the active file
         var debounceTimer;
-        editor.onDidChangeModelContent(function () {
-          if (suppressEditEvents) return;
+        function flushEdit() {
           if (!activeFile) return;
           var entry = models[activeFile];
           if (!entry) return;
           clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(function () {
-            entry.version = (entry.version || 0) + 1;
-            post('file-edit', {
-              filename: activeFile,
-              content: entry.model.getValue(),
-              version: entry.version,
-            });
-          }, 30);
+          entry.version = (entry.version || 0) + 1;
+          post('file-edit', {
+            filename: activeFile,
+            content: entry.model.getValue(),
+            version: entry.version,
+          });
+        }
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+          function () {
+            flushEdit();
+            if (activeFile) post('request-save', { filename: activeFile });
+          }
+        );
+        editor.onDidChangeModelContent(function () {
+          if (suppressEditEvents) return;
+          if (!activeFile) return;
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(flushEdit, 100);
         });
         cb();
       });

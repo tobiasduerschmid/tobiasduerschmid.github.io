@@ -139,23 +139,30 @@
           wordWrap: 'on',
           padding: { top: 8 },
         });
+        var debounceTimer;
+        function flushEdit() {
+          clearTimeout(debounceTimer);
+          currentVersion++;
+          post('file-edit', {
+            filename: filename,
+            content: monacoModel.getValue(),
+            version: currentVersion,
+          });
+        }
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-          function () { /* save signal already implicit via change events */ }
+          function () {
+            // Flush latest edit immediately so main has the freshest content
+            // before it runs save side effects (autosave, React preview patch,
+            // UML refresh). Then ask main to save this file.
+            flushEdit();
+            post('request-save', { filename: filename });
+          }
         );
-        var debounceTimer;
         monacoModel.onDidChangeContent(function () {
           if (suppressEditEvents) return;
           clearTimeout(debounceTimer);
-          // Tight debounce so React preview hot-patch in main feels instant.
-          debounceTimer = setTimeout(function () {
-            currentVersion++;
-            post('file-edit', {
-              filename: filename,
-              content: monacoModel.getValue(),
-              version: currentVersion,
-            });
-          }, 30);
+          debounceTimer = setTimeout(flushEdit, 100);
         });
         overlayEl.style.display = 'none';
         setStatus('Connected', 'ok');
