@@ -54,6 +54,22 @@ layout shadows on      ← enable drop shadows
 layout shadows off     ← disable drop shadows
 ```
 
+### Label Direction Cues
+
+On labelled edges, connectors, transitions, messages, and guards, a standalone
+`>` or `<` at the start or end of the label is rendered as a small direction
+triangle instead of text:
+
+```
+A --> B : sends >
+A --> B : < receives
+(*) --> [approved >] "Ship"
+```
+
+The triangle follows the physical source-to-target direction of the rendered
+line. The typed cue only requests a triangle; it does not force the triangle to
+point left or right.
+
 **Example — explicit landscape layout:**
 
 ```

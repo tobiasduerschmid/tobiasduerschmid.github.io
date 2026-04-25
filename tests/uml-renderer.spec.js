@@ -1225,6 +1225,110 @@ Source -- Target : reads <
     expect(stats.triangleDirection).toBe(stats.routeDirection);
   });
 
+  test('label direction cues render as triangles across diagram renderers', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      const cases = [
+        {
+          renderer: 'UMLSequenceDiagram',
+          label: 'sequence',
+          source: `@startuml
+participant A
+participant B
+A -> B : sends <
+@enduml`
+        },
+        {
+          renderer: 'UMLStateDiagram',
+          label: 'state',
+          source: `@startuml
+state A
+state B
+A --> B : moves >
+@enduml`
+        },
+        {
+          renderer: 'UMLComponentDiagram',
+          label: 'component',
+          source: `@startuml
+component A
+component B
+A --> B : calls <
+@enduml`
+        },
+        {
+          renderer: 'UMLDeploymentDiagram',
+          label: 'deployment',
+          source: `@startuml
+node A
+node B
+A --> B : ships >
+@enduml`
+        },
+        {
+          renderer: 'UMLUseCaseDiagram',
+          label: 'usecase',
+          source: `@startuml
+actor User
+usecase "Login"
+User -- Login : starts <
+@enduml`
+        },
+        {
+          renderer: 'UMLActivityDiagram',
+          label: 'activity',
+          source: `@startuml
+(*) --> [go >] "Run"
+"Run" --> (*)
+@enduml`
+        },
+        {
+          renderer: 'UMLFreeformDiagram',
+          label: 'freeform',
+          source: `@startuml
+box "A" as A
+box "B" as B
+A --> B : flows <
+@enduml`
+        }
+      ];
+
+      return cases.map((item) => {
+        const host = document.createElement('div');
+        host.style.width = '900px';
+        host.style.position = 'absolute';
+        host.style.left = '-10000px';
+        document.body.appendChild(host);
+
+        /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+          /** @type {any} */ (window)[item.renderer]
+        ).render(host, item.source);
+
+        const svg = host.querySelector('svg');
+        if (!svg) {
+          document.body.removeChild(host);
+          return { label: item.label, hasSvg: false };
+        }
+
+        const texts = Array.from(svg.querySelectorAll('text')).map((node) => (node.textContent || '').trim());
+        const triangleCount = svg.querySelectorAll('polygon.uml-label-direction, polygon.uml-association-label-direction').length;
+        document.body.removeChild(host);
+        return {
+          label: item.label,
+          hasSvg: true,
+          triangleCount,
+          hasTextMarker: texts.some((text) => text.includes('<') || text.includes('>'))
+        };
+      });
+    });
+
+    expect(stats.every((item) => item.hasSvg), JSON.stringify(stats)).toBe(true);
+    expect(stats.every((item) => item.triangleCount >= 1), JSON.stringify(stats)).toBe(true);
+    expect(stats.every((item) => !item.hasTextMarker), JSON.stringify(stats)).toBe(true);
+  });
+
   test('targeted diagrams avoid tiny avoidable endpoint doglegs', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForSelector('div[class$="diagram-container"] > svg');

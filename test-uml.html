@@ -1792,6 +1792,62 @@ Observer -- Source : &lt; publishes
 @enduml
   </code></pre>
 
+  <h2>61c. Label Direction Cues Across Diagram Types</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant Client
+participant Server
+Client -> Server : request &lt;
+@enduml
+  </code></pre>
+
+  <pre><code class="language-uml-state">
+@startuml
+state Ready
+state Running
+Ready --> Running : start &gt;
+@enduml
+  </code></pre>
+
+  <pre><code class="language-uml-component">
+@startuml
+component Client
+component Gateway
+Client --> Gateway : call &lt;
+@enduml
+  </code></pre>
+
+  <pre><code class="language-uml-deployment">
+@startuml
+node Browser
+node Server
+Browser --> Server : deploy &gt;
+@enduml
+  </code></pre>
+
+  <pre><code class="language-uml-usecase">
+@startuml
+actor User
+usecase "Login"
+User -- Login : starts &lt;
+@enduml
+  </code></pre>
+
+  <pre><code class="language-uml-activity">
+@startuml
+(*) --> [go &gt;] "Run"
+"Run" --> (*)
+@enduml
+  </code></pre>
+
+  <pre><code class="diagram-freeform">
+@startuml
+box "A" as A
+box "B" as B
+A --> B : flows &lt;
+@enduml
+  </code></pre>
+
   <h2>62. Composition Behind Class Test (Order System)</h2>
   <pre><code class="language-uml-class">
     @startuml
