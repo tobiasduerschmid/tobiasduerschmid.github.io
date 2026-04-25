@@ -51,6 +51,7 @@
     <div class="tpp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
 
+  <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
   (function () {
@@ -94,21 +95,16 @@
 
     function applyDarkMode(enabled) {
       document.documentElement.classList.toggle('dark-mode', !!enabled);
-      if (window.monaco) monaco.editor.setTheme(enabled ? 'vs-dark' : 'vs');
+      if (window.monaco) {
+        var themed = window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
+          : (enabled ? 'vs-dark' : 'vs');
+        monaco.editor.setTheme(themed);
+      }
     }
 
-    function detectLanguageFromFilename(name) {
-      var ext = (name.split('.').pop() || '').toLowerCase();
-      var map = {
-        py: 'python', js: 'javascript', mjs: 'javascript', ts: 'typescript',
-        jsx: 'javascript', tsx: 'typescript', java: 'java', c: 'c', cpp: 'cpp',
-        h: 'cpp', hpp: 'cpp', cs: 'csharp', go: 'go', rs: 'rust', rb: 'ruby',
-        php: 'php', swift: 'swift', kt: 'kotlin', sh: 'shell', bash: 'shell',
-        sql: 'sql', md: 'markdown', json: 'json', yml: 'yaml', yaml: 'yaml',
-        html: 'html', css: 'css', xml: 'xml', toml: 'ini', ini: 'ini',
-        pl: 'prolog'
-      };
-      return map[ext] || 'plaintext';
+    function languageForFile(fn, requested) {
+      if (window.SebookMonacoLangs) return window.SebookMonacoLangs.languageForFile(fn, requested);
+      return requested || 'plaintext';
     }
 
     function renderTabs() {
@@ -128,7 +124,10 @@
       require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
       require(['vs/editor/editor.main'], function () {
         monacoReady = true;
-        var theme = document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs';
+        if (window.SebookMonacoLangs) window.SebookMonacoLangs.register(monaco);
+        var dark = document.documentElement.classList.contains('dark-mode');
+        var theme = window.SebookMonacoLangs ? (dark ? 'sebook-dark' : 'sebook-light')
+          : (dark ? 'vs-dark' : 'vs');
         editor = monaco.editor.create(document.getElementById('editorRoot'), {
           theme: theme,
           fontSize: 14,
@@ -154,7 +153,7 @@
               content: entry.model.getValue(),
               version: entry.version,
             });
-          }, 100);
+          }, 30);
         });
         cb();
       });
@@ -179,7 +178,7 @@
         Object.keys(snapFiles).forEach(function (fn) {
           seen[fn] = true;
           var sf = snapFiles[fn];
-          var lang = sf.language || detectLanguageFromFilename(fn);
+          var lang = languageForFile(fn, sf.language);
           if (!models[fn]) {
             models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
           } else {

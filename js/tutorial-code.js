@@ -1292,7 +1292,14 @@
   };
 
   TutorialCode.prototype._registerMonacoLanguages = function () {
-    // Custom shell language (same as tutorial-vm.js)
+    // Delegated to js/monaco-sebook-langs.js so popup windows can register
+    // the same languages/themes against their own Monaco instance.
+    if (window.SebookMonacoLangs) {
+      window.SebookMonacoLangs.register(monaco);
+      return;
+    }
+    // Fallback: keep the inline registration below if the shared file
+    // didn't load for some reason.
     monaco.languages.register({ id: 'shell-sebook' });
     monaco.languages.setLanguageConfiguration('shell-sebook', {
       brackets: [['{', '}'], ['[', ']']],
@@ -2952,7 +2959,13 @@
       ' padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
       customStyles;
 
-    fw.postMessage({ type: 'react-hot-reload', files: files, css: css, appAlias: appAlias }, '*');
+    var payload = { type: 'react-hot-reload', files: files, css: css, appAlias: appAlias };
+    fw.postMessage(payload, '*');
+    // If a preview popout is open, forward the patch over BroadcastChannel
+    // so the popup's iframe re-renders too — same hot-reload, near-instant.
+    if (this._popoutManager && this._popoutManager.isDetached('output')) {
+      this._popoutManager.broadcastReactPatch(payload);
+    }
   };
 
   TutorialCode.prototype._buildReactSrcdoc = function (step) {
@@ -3165,6 +3178,13 @@
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
         // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke
+        // React: hot-patch the live preview on every change so edits in any
+        // window (main editor or popped-out tab) re-render in any preview
+        // window (main panel or popped-out preview) within ~150 ms.
+        if (self.config.backend === 'react') {
+          clearTimeout(self._reactPatchTimer);
+          self._reactPatchTimer = setTimeout(function () { self._patchReactPreview(); }, 150);
+        }
       });
     } else if (content !== undefined) {
       this.editorModels[filename].model.setValue(content);
@@ -4000,10 +4020,10 @@
     var entry = this.editorModels[filename];
     if (!entry) return;
     if (entry.model.getValue() === content) return;
-    this._suppressAutoSave = true;
-    var prev = this._suppressAutoSave;
-    try { entry.model.setValue(content); }
-    finally { this._suppressAutoSave = prev; }
+    // Apply normally so the model's onDidChangeContent fires — drives the
+    // standard syncFileToBackend / autosave / React-patch chain (which then
+    // re-broadcasts the rebuilt preview srcdoc to any preview popouts).
+    entry.model.setValue(content);
     if (this.autoSaveEnabled) this._autoSaveProgress();
   };
 

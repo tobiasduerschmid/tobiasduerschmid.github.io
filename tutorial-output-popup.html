@@ -254,6 +254,15 @@
         case 'controls-state':
           applyControlsState(msg.controls);
           break;
+        case 'react-patch':
+          // Forward the hot-reload payload into our iframe — its srcdoc
+          // registered the same `react-hot-reload` message listener, so
+          // this re-renders without a full srcdoc swap.
+          if (msg.payload && frameEl && frameEl.contentWindow) {
+            try { frameEl.contentWindow.postMessage(msg.payload, '*'); }
+            catch (e) { /* ignore */ }
+          }
+          break;
         case 'dark-mode':
           applyDarkMode(msg.enabled);
           break;

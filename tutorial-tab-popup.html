@@ -58,6 +58,9 @@
     </div>
   </div>
 
+  <!-- Shared SE Book Monaco language + theme registry (jsx, shell-sebook,
+       prolog, python f-strings, sebook-light/dark themes) -->
+  <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
   <!-- Monaco editor (same CDN/version as main tutorial) -->
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
@@ -106,29 +109,24 @@
     function applyDarkMode(enabled) {
       document.documentElement.classList.toggle('dark-mode', !!enabled);
       if (window.monaco) {
-        monaco.editor.setTheme(enabled ? 'vs-dark' : 'vs');
+        // Prefer the SE Book themes so JSX / shell-sebook tokens get colored.
+        var themed = window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
+          : (enabled ? 'vs-dark' : 'vs');
+        monaco.editor.setTheme(themed);
       }
-    }
-
-    function detectLanguageFromFilename(name) {
-      var ext = (name.split('.').pop() || '').toLowerCase();
-      var map = {
-        py: 'python', js: 'javascript', mjs: 'javascript', ts: 'typescript',
-        jsx: 'javascript', tsx: 'typescript', java: 'java', c: 'c', cpp: 'cpp',
-        h: 'cpp', hpp: 'cpp', cs: 'csharp', go: 'go', rs: 'rust', rb: 'ruby',
-        php: 'php', swift: 'swift', kt: 'kotlin', sh: 'shell', bash: 'shell',
-        sql: 'sql', md: 'markdown', json: 'json', yml: 'yaml', yaml: 'yaml',
-        html: 'html', css: 'css', xml: 'xml', toml: 'ini', ini: 'ini',
-        pl: 'prolog'
-      };
-      return map[ext] || 'plaintext';
     }
 
     function bootMonaco(content, language) {
       require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
       require(['vs/editor/editor.main'], function () {
-        var lang = language || detectLanguageFromFilename(filename);
-        var theme = document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs';
+        // Register shared SE Book languages/themes against this popup's
+        // Monaco instance so jsx/shell-sebook/prolog/python all highlight.
+        if (window.SebookMonacoLangs) window.SebookMonacoLangs.register(monaco);
+        var lang = window.SebookMonacoLangs
+          ? window.SebookMonacoLangs.languageForFile(filename, language)
+          : (language || 'plaintext');
+        var dark = document.documentElement.classList.contains('dark-mode');
+        var theme = dark ? 'sebook-dark' : 'sebook-light';
         monacoModel = monaco.editor.createModel(content || '', lang);
         editor = monaco.editor.create(document.getElementById('editorRoot'), {
           model: monacoModel,
@@ -149,6 +147,7 @@
         monacoModel.onDidChangeContent(function () {
           if (suppressEditEvents) return;
           clearTimeout(debounceTimer);
+          // Tight debounce so React preview hot-patch in main feels instant.
           debounceTimer = setTimeout(function () {
             currentVersion++;
             post('file-edit', {
@@ -156,7 +155,7 @@
               content: monacoModel.getValue(),
               version: currentVersion,
             });
-          }, 100);
+          }, 30);
         });
         overlayEl.style.display = 'none';
         setStatus('Connected', 'ok');

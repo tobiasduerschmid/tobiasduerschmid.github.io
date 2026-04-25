@@ -227,6 +227,16 @@
     this._post('controls-state', { controls: controls || {} });
   };
 
+  /**
+   * Forward a React hot-reload patch to any preview popout. The popup's
+   * iframe registered the same `react-hot-reload` postMessage listener
+   * (via the original srcdoc), so re-posting the patch into the popup's
+   * contentWindow re-renders without a full srcdoc swap.
+   */
+  TutorialPopoutManager.prototype.broadcastReactPatch = function (payload) {
+    this._post('react-patch', { payload: payload });
+  };
+
   // ---------------------------------------------------------------------------
   // Detach: instructions
   // ---------------------------------------------------------------------------
