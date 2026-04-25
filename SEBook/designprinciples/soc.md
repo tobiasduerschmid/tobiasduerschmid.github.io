@@ -70,26 +70,37 @@ A page is easier to restyle (swap CSS file) than to rewrite. A page is easier to
 
 From the lecture's motivating example, the fix for the Monopoly tangle is to split into two distinct layers:
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
-skinparam componentStyle rectangle
-package "Presentation Layer" {
-  [TerminalUI]
-  [WebUI]
-  [3DCasinoUI]
-}
-package "Application Layer (Domain Logic)" {
-  [Game]
-  [Board]
-  [Player]
-  [PropertyCard]
-}
-[TerminalUI] --> [Game] : getCurrentBalance()\nbuyProperty()
-[WebUI] --> [Game] : getCurrentBalance()\nbuyProperty()
-[3DCasinoUI] --> [Game] : getCurrentBalance()\nbuyProperty()
-note right of [Game]
-Has no idea a UI exists.
-Exposes: getters, commands,
-and change-callbacks.
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout portrait
+class TerminalUI <<presentation>>
+class WebUI <<presentation>>
+class Casino3DUI <<presentation>>
+
+class Game <<application>>
+class Board <<domain>>
+class Player <<domain>>
+class PropertyCard <<domain>>
+
+TerminalUI --> Game : calls
+WebUI --> Game : calls
+Casino3DUI --> Game : calls
+
+Game *-- Board : owns
+Game *-- Player : manages
+Board *-- PropertyCard : contains
+
+note top of TerminalUI
+  Presentation layer:
+  displays state and collects input.
+end note
+
+note right of Game
+  Application layer:
+  implements the rules.
+
+  Has no idea which UI exists.
+  Exposes getters, commands,
+  and change-callbacks.
 end note
 @enduml'></div>
 
@@ -185,23 +196,41 @@ The Model does not know who is rendering it. The View does not know where the da
 
 Classical enterprise systems separate by layer:
 
-```
-   +----------------------------+
-   |     Presentation Layer     |   ← UI / API endpoints
-   +----------------------------+
-                │
-   +----------------------------+
-   |     Business Logic Layer    |   ← Rules, workflows
-   +----------------------------+
-                │
-   +----------------------------+
-   |     Data Access Layer       |   ← SQL, ORM, caching
-   +----------------------------+
-                │
-   +----------------------------+
-   |         Database            |
-   +----------------------------+
-```
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout portrait
+class PresentationLayer <<layer>>
+class BusinessLogicLayer <<layer>>
+class DataAccessLayer <<layer>>
+class Database <<storage>>
+
+PresentationLayer --> BusinessLogicLayer : uses
+BusinessLogicLayer --> DataAccessLayer : uses
+DataAccessLayer --> Database : reads and writes
+
+note right of PresentationLayer
+  UI screens and API endpoints.
+  It translates user requests into
+  application operations.
+end note
+
+note right of BusinessLogicLayer
+  Rules, policies, and workflows.
+  This layer decides what the
+  system is allowed to do.
+end note
+
+note right of DataAccessLayer
+  SQL, ORM mapping, caching,
+  and repository logic.
+end note
+
+note right of Database
+  Persistent data store.
+  Postgres, MongoDB, or another
+  database can sit behind the
+  data-access interface.
+end note
+@enduml'></div>
 
 Each layer depends only on the one below it. This means you can swap Postgres for MongoDB by rewriting only the Data Access Layer, provided its *interface* (the methods the Business Logic calls) stays the same.
 

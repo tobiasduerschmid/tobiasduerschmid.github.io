@@ -45,53 +45,60 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Why Test? The Bug That Got Away"
     instructions: |
-      ## The Lay of the Land
+      > 📣 **The kind of bug that ships.** Imagine a grade calculator that silently gives a `B` to anyone scoring *exactly* `90`. One missing `=` sign — and a student who earned an `A` doesn't get one. The bug runs cleanly, prints no error, and lurks until someone notices. *That* is what tests prevent.
 
-      > **Learning objective:** After this step you will be able to **explain** why automated tests are valuable and **use** `assert` to verify function behavior.
+      > 🎯 **Goal:** Find that bug in `calculate_grade`, fix it, and lock the fix in with `assert` so it can never sneak back.
 
-      You write Python code that works... until someone changes it and breaks something you did not expect. Testing is the safety net that catches those breaks *before* they reach users.
+      > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
 
-      ### A Common Misconception
+      ### 💡 Why test?
 
-      Many students think testing is about **finding bugs after you write code**. That is only half the story. Tests also:
+      Many students think testing is about **finding bugs after you write code**. That's half the story. Tests also:
 
-      - **Specify behavior** — a test says *"this function should do X"* before you write it
-      - **Prevent regressions** — once a bug is fixed, a test ensures it never comes back
+      - **Specify behavior** — a test says *"this function should do X"*
+      - **Prevent regressions** — once a bug is fixed, a test ensures it never returns
       - **Enable fearless refactoring** — change code confidently because tests catch breakage
 
       Think of tests as a **ratchet**: once a test passes, your progress is locked in. You can never accidentally slip backward.
 
-      ### Predict Before You Run
+      ### 📖 Vocabulary you'll meet across this tutorial
 
-      The function below is supposed to convert a numeric score (0–100) to a letter grade. **Before running it**, read the code carefully and predict: what will `calculate_grade(85)` return? What about `calculate_grade(90)`?
+      | Term | Meaning |
+      |---|---|
+      | **Oracle** | the assertion that decides pass vs fail |
+      | **Boundary** | the exact value where behavior changes (e.g., `90` between B and A) |
+      | **Partition** | a set of inputs that should all behave the same |
+      | **Brittle test** | breaks when *implementation* changes (bad) |
+      | **Robust test** | only breaks when *behavior* changes (good) |
+      | **Regression** | a bug that comes back after being fixed |
 
-      Write your predictions down, then click **Run** to see if you were right.
+      ### 🔍 Predict first
 
-      ### Task
+      Don't run yet. Read `grades.py`. What will `calculate_grade(90)` return? What about `calculate_grade(85)`?
 
-      1. Run `grades.py` and observe the output. Was your prediction correct?
-      2. Find and fix the bug in `calculate_grade()`.
-      3. Add three `assert` statements at the bottom of the file to verify:
+      ⚙️ **Task**:
+      1. **Run** `grades.py`. Was your prediction right?
+      2. **Add 3 `assert` statements** at the bottom of the file, one per line, verifying:
          - `calculate_grade(95)` returns `"A"`
          - `calculate_grade(85)` returns `"B"`
          - `calculate_grade(72)` returns `"C"`
+      3. **Run again.** Your asserts should fail. That's a *win* 🎯 — your test just caught the bug.
+      4. **Fix** `calculate_grade()` so all three asserts pass.
 
-      An `assert` works like this:
+      An `assert` looks like this:
+
       ```python
       assert calculate_grade(95) == "A", "95 should be an A"
       ```
-      If the condition is `False`, Python raises an `AssertionError` with the message.
 
-      > **Looking ahead:** Notice *where* the bug lives — at the value `90`, right on the line between a B and an A. That is no coincidence. Bugs love *boundaries* (the exact values where behavior changes). You will learn to hunt them systematically in **Step 3: Partitions & Boundaries**.
+      If the condition is `True`, Python continues silently. If `False`, it raises an `AssertionError` with the message.
 
-      ### Before You Move On (retrieval practice)
+      🪞 **Calibrate yourself** (1 second, mental note): On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Remember the number — you'll re-check at the end.
 
-      Close this page and, from memory, answer in one sentence each:
+      <details markdown="1"><summary>🎯 Why this bug matters (read after solving)</summary>
 
-      - Name *two* things a test does besides "find bugs."
-      - What does Python do when `assert condition` evaluates to `False`?
-
-      Rereading feels productive, but retrieval is what actually builds durable memory.
+      The bug lives at *exactly* `90` — the line between a B and an A. That's no coincidence. Bugs love **boundaries** (the values where behavior changes). You'll hunt them systematically in **Step 3**.
+      </details>
 
     files:
       - path: "grades.py"
@@ -123,6 +130,7 @@ steps:
         language: "python"
 
     open_file: "grades.py"
+    run_file: "grades.py"
 
     solution:
       files:
@@ -159,26 +167,39 @@ steps:
       - description: "Script runs without errors"
         command: |
           output = __run_capture('/tutorial/grades.py')
-      - description: "Contains assert for grade 95 == 'A'"
+      - description: "Contains assert: calculate_grade(95) == 'A'"
         command: |
+          import re
           source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '95' in source, \
-              "Add an assert statement that checks calculate_grade(95) == 'A'"
-      - description: "Contains assert for grade 85 == 'B'"
+          pattern = r'assert\s+calculate_grade\s*\(\s*95\s*\)\s*==\s*[\'"][Aa][\'"]'
+          assert re.search(pattern, source), \
+              "Add: assert calculate_grade(95) == \"A\". This is the *strong oracle* — it pins the exact expected return. A weaker form like `assert calculate_grade(95)` would pass for any truthy return."
+      - description: "Contains assert: calculate_grade(85) == 'B'"
         command: |
+          import re
           source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '85' in source, \
-              "Add an assert statement that checks calculate_grade(85) == 'B'"
-      - description: "Contains assert for grade 72 == 'C'"
+          pattern = r'assert\s+calculate_grade\s*\(\s*85\s*\)\s*==\s*[\'"][Bb][\'"]'
+          assert re.search(pattern, source), \
+              "Add: assert calculate_grade(85) == \"B\". Same shape as the previous assert — pin the exact expected value."
+      - description: "Contains assert: calculate_grade(72) == 'C'"
         command: |
+          import re
           source = open('/tutorial/grades.py').read()
-          assert 'assert' in source and '72' in source, \
-              "Add an assert statement that checks calculate_grade(72) == 'C'"
+          pattern = r'assert\s+calculate_grade\s*\(\s*72\s*\)\s*==\s*[\'"][Cc][\'"]'
+          assert re.search(pattern, source), \
+              "Add: assert calculate_grade(72) == \"C\". Three asserts total — one per grade letter you're verifying."
       - description: "All assertions pass (function is correct)"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'AssertionError' not in output and 'Error' not in output, \
-              f"Your assertions failed — is the function correct? Output: {output}"
+              f"AssertionError raised — your test is doing its job and *catching the bug* (this is a win, not a failure). Now go fix `calculate_grade`: change `score > 90` on line 3 to `score >= 90`, then re-run.\n\nFull output:\n{output}"
+        hints:
+          - title: "Small nudge"
+            text: "Look at the comparison operators on each `if`. What happens at *exactly* `90`?"
+          - title: "Strategic hint"
+            text: "Trace `calculate_grade(90)` by hand. Which `if` branch does it enter, and which one *should* it enter?"
+          - title: "Spoiler — full fix"
+            text: "Change `score > 90` to `score >= 90` on line 3. The bug excluded `90` itself from grade A."
 
     quiz:
       title: "Why Test? — Knowledge Check"
@@ -255,66 +276,58 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Your First pytest Test"
     instructions: |
-      > **Learning objective:** After this step you will be able to **write** pytest test functions and **judge** whether an assertion is strong enough to catch real bugs.
+      > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
 
-      ## From `assert` to pytest
+      🔍 **Read first** (don't write yet). Open `test_temperature.py`. For each test stub, predict in your head: *what behavior is this test claiming?* Run it once to see pytest's output format.
 
-      Raw `assert` statements work, but they give minimal feedback when things fail. **pytest** is Python's most popular testing framework. It discovers and runs your tests automatically, gives clear failure output, and scales from tiny scripts to enormous projects.
+      ⚙️ **Task 1 — write the assertions** (file: `test_temperature.py`):
 
-      ### pytest Conventions
+      A pytest test is just a function whose name starts with `test_`, containing a plain `assert`. Like this:
 
-      pytest uses simple naming conventions — no classes, no boilerplate:
-
-      | Convention | Rule | Example |
-      |---|---|---|
-      | **File name** | Must start with `test_` | `test_temperature.py` |
-      | **Function name** | Must start with `test_` | `def test_freezing_point():` |
-      | **Assertions** | Plain `assert` — same as before | `assert celsius_to_fahrenheit(0) == 32` |
-
-      That is it. No `import unittest`, no `class TestSomething(unittest.TestCase)`, no `self.assertEqual()`. Just functions and `assert`.
-
-      ### Running Tests
-
-      In this tutorial, clicking **Run** on a test file will execute pytest automatically.
-      You will see output like:
-
-      ```
-      test_temperature.py::test_freezing_point PASSED
-      test_temperature.py::test_boiling_point PASSED
+      ```python
+      def test_freezing_point():
+          assert celsius_to_fahrenheit(0) == 32.0
       ```
 
-      A **PASSED** test means the assertion held. A **FAILED** test shows you exactly what went wrong.
+      Now you do it:
+      1. Fill in `test_freezing_point` — assert `celsius_to_fahrenheit(0) == 32.0`
+      2. Fill in `test_boiling_point` — assert `celsius_to_fahrenheit(100) == 212.0`
+      3. Write `test_negative_forty` from scratch — assert `celsius_to_fahrenheit(-40) == -40.0` *(the unique crossover where °C = °F)*
 
-      ### Task 1: Complete the Basic Tests
+      **pytest convention**: both the **file name** and **function names** must start with `test_`.
 
-      The `temperature.py` module is provided and working. Complete `test_temperature.py`:
+      ### 💡 Oracle strength — the central idea of Task 2
 
-      1. Fill in `test_freezing_point` — assert that `celsius_to_fahrenheit(0)` returns `32.0`
-      2. Fill in `test_boiling_point` — assert that `celsius_to_fahrenheit(100)` returns `212.0`
-      3. Write `test_negative_forty` from scratch — assert that `celsius_to_fahrenheit(-40)` returns `-40.0` (the unique crossover point where Celsius equals Fahrenheit!)
-
-      ## Not All Assertions Are Equal
-
-      A test only catches bugs if its **oracle** (the assertion that decides pass/fail) is strong enough. Compare these three assertions for the *same* function call:
+      The **oracle** is the assertion that decides pass/fail. The same function call can be checked with a *weak*, *medium*, or *strong* oracle — and weakness is invisible until a bug slips through:
 
       | Strength | Assertion | What breaks it? |
       |---|---|---|
-      | **Weak** | `assert result is not None` | Almost nothing — `42`, `"hello"`, and `32.0` all pass |
-      | **Medium** | `assert isinstance(result, (int, float))` | Type errors only — wrong numeric values slip through |
-      | **Strong** | `assert result == 32.0` | Any incorrect value at all |
+      | **Weak** | `assert result is not None` | Almost nothing — `42`, `"hi"`, `32.0` all pass |
+      | **Medium** | `assert isinstance(result, float)` | Type errors only — wrong numbers slip through |
+      | **Strong** | `assert result == 32.0` | *Any* incorrect value |
 
-      A weak oracle lets most bugs through. Students under time pressure (or AI assistants trying to "make the test pass") often default to weak oracles because they almost always succeed — making the test look productive while testing nothing. You will meet these as the *Liar test* anti-pattern later in the TDD tutorial.
+      Weak oracles look productive but verify nothing. Rushed students and AI assistants default to them because they almost always succeed — the *Liar test* anti-pattern.
 
-      ### Task 2: Fill in the Oracle
+      ⚙️ **Task 2 — make the oracle strong** (file: `test_oracle_drill.py`):
 
-      Open `test_oracle_drill.py`. Each function has **Arrange** and **Act** already written. Your job is to write the **strongest possible assertion** for the result — one that would fail if the function returned the wrong value.
+      Each test has `result = celsius_to_fahrenheit(...)` already done. Replace the **weak** `assert isinstance(result, float)` with the **strongest** possible assertion (one that fails for *any* wrong value).
 
-      - `test_oracle_strong_freeze` — for `celsius_to_fahrenheit(0)`
-      - `test_oracle_strong_boil` — for `celsius_to_fahrenheit(100)`
+      💬 **Articulate it**: Before fixing each weak oracle, add a Python comment above explaining *what bug the weak version would miss*. Writing this out beats just thinking it.
 
-      ### Before You Move On (retrieval practice)
+      <details markdown="1"><summary>📖 Test names ARE documentation</summary>
 
-      Without looking: what is the rule for pytest's file-name and function-name conventions, and why does `assert isinstance(result, float)` count as a *weak* oracle?
+      Notice that good test names *describe the behavior they verify*: `test_freezing_point`, `test_negative_forty`, `test_oracle_strong_boil`. A failing test should read like a one-line bug report: *"freezing_point FAILED — assert 31.0 == 32.0"*. If you can read your test names without opening the code and still know what the suite covers, your tests double as documentation.
+
+      Anti-example: `test_1`, `test_temp`, `test_works`. These tell the next reader nothing.
+      </details>
+
+      <details markdown="1"><summary>📖 Why pytest beats raw `assert`</summary>
+
+      Raw `assert` halts at the first failure; you only learn about one bug at a time. pytest discovers all tests, runs them all, names each one, and shows the *exact* mismatched value when one fails — e.g. `assert 4 == 5  where 4 = func(3)`.
+
+      No classes, no boilerplate — just functions starting with `test_`.
+      </details>
+
 
     files:
       - path: "temperature.py"
@@ -457,18 +470,20 @@ steps:
       - description: "test_freezing_point has a real assertion (not just pass)"
         command: |
           source = open('/tutorial/test_temperature.py').read()
-          assert 'assert' in source.split('test_freezing_point')[1].split('def ')[0], \
-              "test_freezing_point still has 'pass' — replace it with an assert statement"
+          body = source.split('test_freezing_point')[1].split('def ')[0]
+          assert 'assert' in body, \
+              "test_freezing_point still has 'pass'. A test with no assertion can never fail — meaning it can never catch a bug. Replace 'pass' with: assert celsius_to_fahrenheit(0) == 32.0"
       - description: "test_boiling_point has a real assertion"
         command: |
           source = open('/tutorial/test_temperature.py').read()
-          assert 'assert' in source.split('test_boiling_point')[1].split('def ')[0], \
-              "test_boiling_point still has 'pass' — replace it with an assert statement"
+          body = source.split('test_boiling_point')[1].split('def ')[0]
+          assert 'assert' in body, \
+              "test_boiling_point still has 'pass'. Replace it with: assert celsius_to_fahrenheit(100) == 212.0"
       - description: "test_negative_forty function exists"
         command: |
           source = open('/tutorial/test_temperature.py').read()
           assert 'def test_negative_forty' in source, \
-              "Write a new function called test_negative_forty"
+              "Write a new function `def test_negative_forty():` — it tests the unique crossover point where °C == °F. Hint: the expected value is -40.0."
       - description: "All temperature tests pass"
         command: |
           import pytest, io, sys
@@ -476,6 +491,13 @@ steps:
           code = pytest.main(['/tutorial/test_temperature.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some temperature tests failed:\n{output}"
+        hints:
+          - title: "Small nudge"
+            text: "Inside each test function, write `assert <function call> == <expected value>`. The function is `celsius_to_fahrenheit`."
+          - title: "Strategic hint"
+            text: "Mirror this pattern:\n```python\ndef test_freezing_point():\n    assert celsius_to_fahrenheit(0) == 32.0\n```\n`test_negative_forty` needs a `def` line too."
+          - title: "Spoiler — full answer"
+            text: "All three: `assert celsius_to_fahrenheit(0) == 32.0`, `assert celsius_to_fahrenheit(100) == 212.0`, `assert celsius_to_fahrenheit(-40) == -40.0`."
       - description: "Oracle drill — strong freeze oracle replaces the weak isinstance check"
         command: |
           source = open('/tutorial/test_oracle_drill.py').read()
@@ -495,6 +517,11 @@ steps:
           code = pytest.main(['/tutorial/test_oracle_drill.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Oracle drill tests failed:\n{output}"
+        hints:
+          - title: "Strong-oracle nudge"
+            text: "A *strong* oracle pins the result to one exact value. `isinstance(result, float)` accepts any float — what does it *not* check?"
+          - title: "Spoiler — full answer"
+            text: "Replace `assert isinstance(result, float)` with `assert result == 32.0` (freeze) and `assert result == 212.0` (boil)."
 
     quiz:
       title: "pytest Basics — Knowledge Check"
@@ -558,9 +585,8 @@ steps:
           correct_index: 1
           explanation: |
             A is a **weak oracle**: `add(2, 3)` returning `0`, `42`, or `5` all pass. B is a
-            **strong oracle**: only the correct value `5` satisfies it. AI assistants often
-            default to weak oracles because they always succeed — the test looks green but
-            verifies nothing. You will see this anti-pattern again (the "Liar test") in the TDD tutorial.
+            **strong oracle**: only `5` satisfies it. Weak oracles look green but verify
+            nothing — the *Liar test* anti-pattern.
 
         - question: |
             **(Spaced review — Step 1)** A developer finishes a feature and deletes the tests because "the feature is done and working." What principle does this violate?
@@ -589,79 +615,69 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Choosing What to Test: Partitions & Boundaries"
     instructions: |
-      > **Learning objective:** After this step you will be able to **derive** equivalence partitions and **identify** boundary values from a specification, and use them to choose a small but thorough set of test inputs.
+      > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
 
-      ## The Problem with "Try Some Inputs"
+      💡 **The principle**: an **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 90` vs `>= 90` bug from Step 1).
 
-      In Step 1 you fixed a bug in `calculate_grade`. Here is what the buggy version looked like:
+      For `validate_username` with rule `3 ≤ len ≤ 12`, the **4 boundary points** sit *exactly* where partitions transition:
 
-      ```python
-      if score > 90:   # BUG: missed the boundary at exactly 90
-          return "A"
+      ```mermaid
+      flowchart LR
+          L2["len 2<br/>❌ reject"]:::bad
+          L3["len 3<br/>✅ accept"]:::good
+          Mid["...middle of valid<br/>partition..."]:::neutral
+          L12["len 12<br/>✅ accept"]:::good
+          L13["len 13<br/>❌ reject"]:::bad
+          L2 --> L3 --> Mid --> L12 --> L13
+          classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+          classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
+          classDef neutral fill:#fafafa,stroke:#bdbdbd,color:#757575
       ```
 
-      The bug did *not* cause wrong output for 91, 95, or 100. It only showed up at one exact value: **90**. This is not a coincidence — most off-by-one bugs live on the **boundary** between partitions of the input space. That is why "just try some numbers" is not a reliable test-design strategy.
+      Notice how the 4 critical tests pin down both transitions; the *middle* of the valid partition isn't covered by these — and doesn't need to be (one representative is enough there). Why this works:
 
-      ## Equivalence Partitioning
-
-      An **equivalence partition** is a set of inputs that should all behave the same way. A function that validates usernames of length 3–12 has three partitions:
-
-      ```
-      ┌──────────────┬────────────────────┬──────────────┐
-      │  too short   │       valid        │  too long    │
-      │  len 0, 1, 2 │  len 3, 4, ..., 12 │  len 13+     │
-      └──────────────┴────────────────────┴──────────────┘
-      ```
-
-      **The principle:** if `"a"` (length 1) is rejected, `"ab"` (length 2) will probably be rejected too — they are in the same partition. You do not need to test every value; **one representative per partition** is usually enough *for the middle of the partition*.
-
-      ## Boundary Value Analysis
-
-      But the ends of each partition — the **boundaries** — deserve special attention because that is where off-by-one bugs hide. For the username rule `3 ≤ len ≤ 12`, the boundaries are:
-
-      | Input length | Expected | Why test this? |
+      | Length | Expected | What this catches |
       |---|---|---|
-      | 2 | reject | Just **below** the valid minimum |
-      | 3 | accept | Exactly the valid minimum |
-      | 12 | accept | Exactly the valid maximum |
-      | 13 | reject | Just **above** the valid maximum |
+      | **2** | reject | A `< 3` written as `<= 3` (off-by-one below) |
+      | **3** | accept | A `<= 3` written as `< 3` |
+      | **12** | accept | A `<= 12` written as `< 12` |
+      | **13** | reject | A `< 13` written as `<= 13` (off-by-one above) |
 
-      These four tests together catch every common off-by-one error. Compare that to "try length 1, length 5, length 100" — all in the middle of partitions, none on boundaries. You could pass all three and still have the `> 12` vs `>= 12` kind of bug that bit us in Step 1.
+      ⚙️ **Task** (`test_username.py`): Two worked tests are provided.
 
-      ### The Heuristic
+      💬 **Self-explain first** (do this *before* writing): Read the two provided tests carefully. *Why* does the first one assert `is True` and the second `is False`? *Why* did the author pick length `5` for "valid representative" and `2` for "just below min"? Articulating the design choices primes you to make your own.
 
-      For a function with a numeric input range `[min, max]`:
+      Now **write four more**, one per remaining boundary:
 
-      1. **Partition** the input space into regions that should behave the same.
-      2. **Pick one representative** from each partition.
-      3. **Test every boundary** — the last invalid value before each partition change and the first valid value after it.
+      - `test_boundary_min_valid` — length 3 is accepted
+      - `test_boundary_max_valid` — length 12 is accepted
+      - `test_too_long_just_above_max` — length 13 is rejected
+      - `test_empty_string` — length 0 is rejected
 
-      ## Task: Test `validate_username`
+      🔁 **Interleaved recall** (don't skip): Before writing your tests, recall from **Step 2**: what makes an oracle *strong*? Apply it here — `assert validate_username("abc") is True` is strong, `assert validate_username("abc")` (no comparison) is weak.
 
-      Open `username.py`. The function `validate_username` is provided and correct:
+      <details markdown="1"><summary>📖 Equivalence partitioning — the deeper "why"</summary>
 
-      ```python
-      def validate_username(username):
-          """Return True iff 3 <= len(username) <= 12."""
-          return 3 <= len(username) <= 12
+      The input space splits into three regions, each with the **same expected behavior**:
+
+      ```mermaid
+      flowchart LR
+          A["<b>too short</b><br/>len 0, 1, 2<br/>↦ reject"]:::bad
+          B["<b>valid</b><br/>len 3 ... 12<br/>↦ accept"]:::good
+          C["<b>too long</b><br/>len 13+<br/>↦ reject"]:::bad
+          A --- B --- C
+          classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+          classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
       ```
 
-      Your job in `test_username.py`:
+      If `"a"` (length 1) is rejected, `"ab"` (length 2) probably is too — same partition, same expected behavior. So **one representative per partition** is enough for the *middle* of the partition. Spend your test budget on the **boundaries** instead — that's where `> 12` vs `>= 12` bugs hide.
 
-      - Two tests are **provided** as worked examples:
-        - `test_valid_representative` — a typical valid username
-        - `test_too_short_just_below_min` — length 2, just below the valid minimum
-      - **You write four more tests**, one per remaining boundary:
-        - `test_boundary_min_valid` — length 3 is accepted
-        - `test_boundary_max_valid` — length 12 is accepted
-        - `test_too_long_just_above_max` — length 13 is rejected
-        - `test_empty_string` — length 0 is rejected
+      **Heuristic for any range `[min, max]`**:
+      1. *Partition* the input space.
+      2. *Pick one representative* per partition.
+      3. *Test every boundary* — last invalid before each transition, first valid after.
+      </details>
 
-      Run `test_username.py` after each test you add. All six should pass when you're done.
-
-      ### Before You Move On (retrieval practice)
-
-      Without looking: name the four boundary values you would test for *any* range `[a, b]`, and explain in one sentence why testing only the middle of each partition is not enough.
 
     files:
       - path: "username.py"
@@ -761,34 +777,34 @@ steps:
         command: |
           source = open('/tutorial/test_username.py').read()
           assert 'def test_boundary_min_valid' in source, \
-              "Write a test function called test_boundary_min_valid for length-3 usernames"
+              "Write `def test_boundary_min_valid():` for the smallest valid length (3). The boundary `min` is the FIRST value that should be accepted — that's where '< min' vs '<= min' bugs show up."
           body = source.split('test_boundary_min_valid')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_boundary_min_valid needs an assert statement"
+              "test_boundary_min_valid is empty. Add: assert validate_username(\"abc\") is True  # length 3"
       - description: "test_boundary_max_valid exists and asserts length 12 is valid"
         command: |
           source = open('/tutorial/test_username.py').read()
           assert 'def test_boundary_max_valid' in source, \
-              "Write a test function called test_boundary_max_valid for length-12 usernames"
+              "Write `def test_boundary_max_valid():` for the largest valid length (12). This boundary catches '<= max' vs '< max' bugs."
           body = source.split('test_boundary_max_valid')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_boundary_max_valid needs an assert statement"
+              "test_boundary_max_valid is empty. Add: assert validate_username(\"abcdefghijkl\") is True  # length 12"
       - description: "test_too_long_just_above_max exists and asserts length 13 is rejected"
         command: |
           source = open('/tutorial/test_username.py').read()
           assert 'def test_too_long_just_above_max' in source, \
-              "Write a test function called test_too_long_just_above_max for length-13 usernames"
+              "Write `def test_too_long_just_above_max():` for length 13 — one past the maximum. This is the partner of the max-valid test; together they pin the upper boundary."
           body = source.split('test_too_long_just_above_max')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_too_long_just_above_max needs an assert statement"
+              "test_too_long_just_above_max is empty. Add: assert validate_username(\"abcdefghijklm\") is False  # length 13"
       - description: "test_empty_string exists"
         command: |
           source = open('/tutorial/test_username.py').read()
           assert 'def test_empty_string' in source, \
-              "Write a test function called test_empty_string for the empty-string case"
+              "Write `def test_empty_string():`. The empty string is a special case worth its own test — empty is a common edge that often gets missed by ad-hoc testing."
           body = source.split('test_empty_string')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_empty_string needs an assert statement"
+              "test_empty_string is empty. Add: assert validate_username(\"\") is False  # length 0"
       - description: "All six partition/boundary tests pass"
         command: |
           import pytest, io, sys
@@ -796,6 +812,13 @@ steps:
           code = pytest.main(['/tutorial/test_username.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - title: "Small nudge"
+            text: "Mirror the two provided tests. Each new test is `def test_...():` with one `assert validate_username(\"...\") is True` (or `is False`)."
+          - title: "Strategic hint"
+            text: "Length 3 → `\"abc\"`. Length 12 → `\"abcdefghijkl\"`. Length 13 → add one more char. Empty → `\"\"`."
+          - title: "Spoiler — full answers"
+            text: "```python\ndef test_boundary_min_valid():\n    assert validate_username(\"abc\") is True\n\ndef test_boundary_max_valid():\n    assert validate_username(\"abcdefghijkl\") is True\n\ndef test_too_long_just_above_max():\n    assert validate_username(\"abcdefghijklm\") is False\n\ndef test_empty_string():\n    assert validate_username(\"\") is False\n```"
 
     quiz:
       title: "Partitions & Boundaries — Knowledge Check"
@@ -815,10 +838,8 @@ steps:
             - "$49.99, $50.01, $499.99, $500.01 — cents around each boundary to check decimal precision"
           correct_index: 1
           explanation: |
-            Boundary Value Analysis says: test the values *just on each side* of every boundary.
-            For `strictly > 50 and ≤ 500`, the boundaries are 50/51 (where `> 50` flips) and
-            500/501 (where `≤ 500` flips). Exactly this pattern catches the canonical off-by-one
-            bug — writing `>= 50` instead of `> 50`, or `< 500` instead of `<= 500`.
+            Test *just on each side* of every boundary: 50/51 (where `> 50` flips) and 500/501
+            (where `≤ 500` flips). Catches the canonical off-by-one (`>= 50` vs `> 50`).
 
         - question: |
             A developer's test suite has 12 tests. Every test uses a valid username of length 5, 6, 7, or 8. All tests pass. Can you trust the suite?
@@ -844,11 +865,9 @@ steps:
             - "A sub-range of inputs created by dividing the domain into equal-sized chunks"
           correct_index: 1
           explanation: |
-            Equivalence partitioning groups inputs by *expected behavior*, not by value. All
-            valid usernames (length 3–12) form one partition; all too-short usernames form
-            another. The point: if `"abc"` is accepted, `"abcd"` almost certainly is too —
-            so you do not need to test them both. Spend your test budget on *boundaries*
-            between partitions instead.
+            Equivalence partitions group inputs by *expected behavior*, not by value. If `"abc"`
+            is accepted, `"abcd"` almost certainly is too — same partition. Spend your test
+            budget on the *boundaries between* partitions, not the middles.
 
         - question: |
             **(Spaced review — Step 1)** Recall the bug in `calculate_grade`: `score > 90` instead of `score >= 90`. Classify this bug.
@@ -877,45 +896,42 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Test Behavior, Not Implementation"
     instructions: |
-      > **Learning objective:** After this step you will be able to **distinguish** between brittle (implementation-coupled) and robust (behavior-focused) tests, **structure** tests using the Arrange-Act-Assert pattern, and **judge** why coverage numbers are not the same as test quality.
+      > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
 
-      ## The Key Principle
-
-      > **Test what a function DOES, not how it does it.**
-
-      A **brittle test** breaks when you change the internal implementation, even if the behavior is unchanged. A **robust test** only breaks when the actual behavior changes.
-
-      ### Example: Two Ways to Test the Same Function
-
-      Consider testing a function that sorts a list of students by GPA:
+      💡 **Brittle vs robust** — same function, two ways to test it:
 
       ```python
-      # BRITTLE — tests implementation details
-      def test_sort_brittle():
-          sorter = StudentSorter()
-          sorter.sort(students)
-          # Checks internal state — breaks if we rename the field
-          assert sorter._sorted_list[0].name == "Alice"
-          assert sorter._comparison_count == 3  # Why do we care?
+      # 🚨 BRITTLE — tests internals (breaks on a rename)
+      assert sorter._sorted_list[0].name == "Alice"
 
-      # ROBUST — tests behavior
-      def test_sort_robust():
-          sorter = StudentSorter()
-          result = sorter.sort(students)
-          # Checks what the function RETURNS — the observable behavior
-          assert result[0].gpa >= result[1].gpa  # Sorted descending
-          assert len(result) == len(students)     # No items lost
+      # ✅ ROBUST — tests observable behavior
+      result = sorter.sort(students)
+      assert result[0].gpa >= result[1].gpa
       ```
 
-      The brittle test will break if you rename `_sorted_list` or change the sort algorithm (even to a faster one). The robust test only cares about the result.
+      The brittle test breaks if you rename `_sorted_list` or swap algorithms. The robust test only breaks when the *behavior* changes.
 
-      ### Structuring Robust Tests: The AAA Pattern
+      ### 🔬 The Refactoring Litmus Test
 
-      Behavior-focused tests almost always fall into a clean three-part structure called **Arrange-Act-Assert (AAA)**:
+      > **If you refactor the internals of a function and all tests still pass → your tests are robust.**
+      > **If tests break after a pure refactoring (no behavior change) → they're testing implementation.**
+
+      That breakage is the symptom; the fix is to rewrite the tests, not to revert the refactor.
+
+      ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `ShoppingCart`. **Two are brittle** (they reach into `cart._items`); two are robust.
+
+      1. **Predict the breakage first** (Constructive): Before fixing anything, write a Python comment above each brittle test answering *"what implementation change would falsely break this test even though behavior didn't change?"* (e.g., renaming `_items` to `_inventory`). This is the test smell in your own words.
+      2. Identify which two are brittle.
+      3. **Rewrite the brittle ones** using the *public API* — `cart.items()`, `cart.item_count()`, `cart.total()` — instead of `cart._items`.
+      4. Run and confirm all four pass.
+
+      🔁 **Interleaved recall**: From **Step 2**, what makes an oracle weak vs strong? From **Step 3**, what are partitions? You'll combine all of this in Step 5.
+
+      <details markdown="1"><summary>📖 Arrange-Act-Assert (AAA) — the structure of a clean test</summary>
 
       ```python
       def test_total_sums_prices():
-          # Arrange — set up the world the test needs
+          # Arrange — set up the world
           cart = ShoppingCart()
           cart.add("Apple", 1.50)
           cart.add("Bread", 2.00)
@@ -927,57 +943,28 @@ steps:
           assert result == 3.50
       ```
 
-      AAA is more than tidiness. It is a **diagnostic structure**: if you cannot cleanly separate Arrange from Act, the function under test probably has too many responsibilities. A gigantic Arrange section is the *Excessive Setup* smell — that pain is architectural feedback, telling you to refactor the production code rather than hide the setup in a helper.
+      Every robust test fits this shape. If you can't separate Arrange from Act cleanly, the function under test is doing too much.
+      </details>
 
-      ### The Refactoring Litmus Test
+      <details markdown="1"><summary>🎓 Going deeper: Coverage ≠ quality</summary>
 
-      **If you refactor the internals of a function and all tests still pass, your tests are robust.** If tests break after a pure refactoring (no behavior change), they are testing implementation.
-
-      ## Coverage ≠ Quality
-
-      Before the task, a cautionary contrast. Which test suite is stronger?
-
-      **Suite A — 100% line coverage**
-
+      **Suite A — 100% line coverage, weak oracle:**
       ```python
       def test_total_runs():
-          cart = ShoppingCart()
-          cart.add("Apple", 1.50)
-          cart.add("Bread", 2.00)
-          total = cart.total()
-          assert total is not None   # weak oracle — passes for any non-None return
+          cart = ShoppingCart(); cart.add("Apple", 1.50); cart.add("Bread", 2.00)
+          assert cart.total() is not None   # passes for any non-None return
       ```
 
-      **Suite B — 80% line coverage**
-
+      **Suite B — 80% coverage, strong oracle:**
       ```python
       def test_total_sums_prices():
-          cart = ShoppingCart()
-          cart.add("Apple", 1.50)
-          cart.add("Bread", 2.00)
-          assert cart.total() == 3.50   # strong oracle — exact expected value
+          cart = ShoppingCart(); cart.add("Apple", 1.50); cart.add("Bread", 2.00)
+          assert cart.total() == 3.50
       ```
 
-      Suite A executes every line of `total()` but asserts nothing meaningful. If you introduced a bug that made `total()` return `0.0`, Suite A would still pass (because `0.0 is not None`). Suite B, with *less* coverage, actually catches the bug.
+      If a bug makes `total()` return `0.0`, **Suite A still passes** (`0.0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior.
+      </details>
 
-      **Coverage measures which lines *ran*, not whether you *checked* their behavior.** It is a useful diagnostic ceiling (you cannot test what you never ran), but not a measure of adequacy.
-
-      ## Task: Spot and Fix the Brittle Tests
-
-      Open `test_brittle_audit.py`. It contains four tests for a simple `ShoppingCart` class. **Two tests are brittle** (they test implementation details via the private `_items` attribute) and **two are robust** (they test behavior). Your job:
-
-      1. Read each test carefully.
-      2. Identify which two are brittle and which two are robust.
-      3. **Fix the two brittle tests** by rewriting them to test behavior through the public API (`items()`, `item_count()`, `total()`) instead of the private `_items` attribute.
-      4. Run the tests to confirm they all pass.
-
-      ### Before You Move On (retrieval practice)
-
-      Without looking, answer in one sentence each:
-
-      - Why is a test that accesses `obj._private_field` more fragile than one that calls `obj.public_method()`?
-      - What does the AAA pattern give you *besides* tidy structure?
-      - If one suite has 100% coverage and another has 70%, which is stronger?
 
     files:
       - path: "shopping_cart.py"
@@ -1090,13 +1077,20 @@ steps:
         command: |
           source = open('/tutorial/test_brittle_audit.py').read()
           assert '._items' not in source, \
-              "Your tests still access the private attribute `_items`. Rewrite them to use public methods like item_count(), total(), or items() instead."
+              "Your tests still touch `_items` (the private attribute). The leading underscore is Python's signal: 'this is internal — could be renamed any day'. Use the public methods instead: cart.items() returns names, cart.item_count() returns the count, cart.total() returns the total."
+        hints:
+          - title: "Small nudge"
+            text: "Search the file for `._items`. Each line that has it is in a brittle test. There are exactly two such tests."
+          - title: "Strategic hint"
+            text: "Replace `cart._items[0][\"name\"]` with a public-method call:\n- check what's inside → `cart.items()` (returns list of names)\n- check the count → `cart.item_count()`\n- check the total → `cart.total()`"
+          - title: "Spoiler — one example fix"
+            text: "`test_add_item_internal_list` becomes:\n```python\ndef test_add_item_via_public_api():\n    cart = ShoppingCart()\n    cart.add(\"Apple\", 1.50)\n    assert \"Apple\" in cart.items()\n```\nApply the same shape to `test_internal_list_length` using `cart.item_count()`."
       - description: "Test file still contains at least 4 test functions"
         command: |
           source = open('/tutorial/test_brittle_audit.py').read()
           test_count = source.count('def test_')
           assert test_count >= 4, \
-              f"Keep at least 4 test functions (found {test_count}) — refactor each, do not delete them"
+              f"Keep at least 4 test functions (found {test_count}). The fix is to *rewrite* each brittle test to use the public API — not to delete it. Each behavior still deserves its own test."
       - description: "All audit tests pass"
         command: |
           import pytest, io, sys
@@ -1164,10 +1158,9 @@ steps:
             - "You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines of arrangement"
           correct_index: 1
           explanation: |
-            *Excessive Setup* is a documented test smell. When Arrange dominates a test, the
-            function under test is usually too tightly coupled to its dependencies. The fix is
-            to refactor the production code, not to hide the pain inside a helper. The test is
-            acting as architectural feedback — *listen to the test*.
+            *Excessive Setup* is a test smell. When Arrange dominates, the function under test
+            is too coupled. Fix the *production code*, not the test — the test is architectural
+            feedback. Hiding it in a helper just hides the pain.
 
         - question: |
             Two suites test the same function. Suite A has **100% line coverage** but every assertion is `assert result is not None`. Suite B has **80% line coverage** but every assertion checks an exact expected value. Which statement is correct?
@@ -1197,3 +1190,272 @@ steps:
             The boundary is at 100. Testing 99 and 100 catches the canonical off-by-one
             (`> 100` vs `>= 100`). Picking values far from the boundary misses exactly
             the bugs that Boundary Value Analysis is designed to expose.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Putting It All Together
+  # Pedagogy:
+  #   Variation Theory FUSION  — partitions + oracles + behavior in one task.
+  #   Bloom's Create level     — design a suite from scratch.
+  #   Dehaene Pillar 4         — consolidation: name what changed.
+  #   Transfer test            — novel domain forces generalization.
+  #   Metacognitive prompt     — self-monitoring of skill gaps.
+  # --------------------------------------------------------------------------
+  - title: "Putting It All Together"
+    instructions: |
+      > 🎯 **Goal:** Design a complete test suite **from scratch** — combining everything from Steps 1–4.
+
+      💡 **You now know how to**:
+
+      - **Specify behavior** with `assert` *(Step 1)*
+      - Use **pytest's structure** and write **strong oracles** *(Step 2)*
+      - **Partition** the input space and test **boundaries** *(Step 3)*
+      - Test through the **public API**, not internals *(Step 4)*
+
+      The skill underneath all four: *making the gap between what code does and what it should do visible and automatic*.
+
+      ⚙️ **Final challenge** — `discount.py` defines `apply_discount(price, member_status)`:
+
+      | `member_status` | Discount |
+      |---|---|
+      | `"platinum"` | 10% off |
+      | `"gold"` | 5% off |
+      | anything else | none |
+
+      In `test_discount.py`, **design a test suite from scratch**:
+
+      1. Identify the **partitions** of `member_status`.
+      2. Write **≥ 3 tests** with **strong oracles** (specific expected values).
+      3. Cover all three partitions: platinum, gold, and *other*.
+
+      🪞 **Recalibrate**: At the start of Step 1 you rated your confidence (1–10) for designing a test suite from scratch. Re-rate yourself now. The gap between those numbers is what you actually learned — the *feeling* of progress is unreliable; the gap is data.
+
+      🧭 **Threshold check** — what shifted: At the start, "tests" probably felt like *checking your own homework*. If by now they feel more like **executable specifications** of behavior — *what the code is supposed to do, written in code so it can never silently rot* — you've crossed the threshold this tutorial was built for.
+
+      <details markdown="1"><summary>🪞 Two independent dimensions of test design (separation)</summary>
+
+      Across this tutorial, two *separate* dimensions of test design have been mixed together. Naming them apart makes both clearer:
+
+      ```mermaid
+      flowchart LR
+          subgraph Dim1["DIMENSION 1 — what to test (input choice)"]
+              direction TB
+              D1A["Boundaries<br/>partition transitions"]
+              D1B["Representative<br/>middle of partition"]
+              D1C["Special cases<br/>empty, None, zero"]
+          end
+          subgraph Dim2["DIMENSION 2 — how strong the assertion (oracle)"]
+              direction TB
+              D2A["Strong<br/>== exact value"]
+              D2B["Medium<br/>type / range check"]
+              D2C["Weak<br/>is not None"]
+          end
+          Dim1 -.->|"a good test<br/>gets BOTH right"| Dim2
+      ```
+
+      A test can be *strong on input choice* (boundary-aware) but *weak on oracle* (`is not None`) — and vice versa. **Excellence is the cross-product**: pick a meaningful input *and* assert the precise expected outcome. That's why the discount task above checks both partitions covered AND oracles strong.
+      </details>
+
+      <details markdown="1"><summary>🧰 When to reach for which technique (a quick decision guide)</summary>
+
+      You'll meet new functions in the wild. Use this to decide which testing tool to pull out:
+
+      | If the function… | Reach for… | Pattern from |
+      |---|---|---|
+      | Takes a numeric input with a valid range (`min ≤ x ≤ max`) | **Boundary value analysis** — test `min-1, min, max, max+1` | Step 3 |
+      | Takes an input from a small set of categories (`"gold"`, `"plat"`, …) | **Equivalence partitioning** — one test per category | Step 3 + Step 5 |
+      | Returns a value (vs. mutates state) | **Strong-oracle equality** — `assert result == expected` | Step 2 |
+      | Mutates an object's state | **Public API behavior tests** — `obj.observable() == expected` | Step 4 |
+      | Has internal state you're tempted to peek at | **Don't.** Add a public method instead, then test through it | Step 4 |
+      | Is "trivial" and you think it doesn't need a test | It does. *Today's* trivial is *tomorrow's* surprise dependency | from research |
+
+      Most real functions hit several rows at once. Apply them all.
+      </details>
+
+      <details markdown="1"><summary>🎲 Want a different problem? (autonomy / choice)</summary>
+
+      The `apply_discount` task is the recommended path. If you'd rather practice on a different shape of function, edit `discount.py` and replace the function with **one** of:
+
+      ```python
+      # Option A — numeric boundaries (more like Step 3)
+      def shipping_fee(weight_kg):
+          """Free if 0 < weight <= 1; $5 if 1 < weight <= 10; $20 above."""
+          if weight_kg <= 0: return 0
+          if weight_kg <= 1: return 0
+          if weight_kg <= 10: return 5
+          return 20
+
+      # Option B — state-changing (more like Step 4)
+      class Counter:
+          def __init__(self): self._n = 0
+          def increment(self): self._n += 1
+          def value(self): return self._n
+      ```
+
+      Then write tests that match the shape of the chosen function. The test-quality checks (strong oracles, multiple partitions, ≥ 3 functions, all pass) still apply.
+      </details>
+
+
+    files:
+      - path: "discount.py"
+        content: |
+          def apply_discount(price, member_status):
+              """Apply a member discount.
+
+              platinum -> 10% off
+              gold     -> 5% off
+              other    -> no discount
+              """
+              if member_status == "platinum":
+                  return price * 0.90
+              if member_status == "gold":
+                  return price * 0.95
+              return price
+        language: "python"
+
+      - path: "test_discount.py"
+        content: |
+          """Design your own test suite for apply_discount.
+
+          Apply what you've learned:
+            - pytest conventions (function names start with test_)
+            - strong oracles (assert exact expected values, not 'is not None')
+            - partition the input space (platinum / gold / other)
+          """
+          import pytest
+          from discount import apply_discount
+
+          # TODO: Write at least 3 tests covering all three partitions of member_status.
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_discount.py"
+    run_file: "test_discount.py"
+
+    solution:
+      files:
+        - path: "test_discount.py"
+          content: |
+            import pytest
+            from discount import apply_discount
+
+
+            def test_platinum_gets_10_percent_off():
+                assert apply_discount(100, "platinum") == 90.0
+
+
+            def test_gold_gets_5_percent_off():
+                assert apply_discount(100, "gold") == 95.0
+
+
+            def test_no_membership_no_discount():
+                assert apply_discount(100, "regular") == 100.0
+
+
+            def test_empty_string_no_discount():
+                assert apply_discount(100, "") == 100.0
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        Three partitions: platinum, gold, other. One test per partition gets you to 3.
+        Strong oracles pin the exact expected value (90.0, 95.0, 100.0). The empty string
+        is an extra edge case inside the "other" partition.
+
+    tests:
+      - description: "At least 3 test functions defined"
+        command: |
+          source = open('/tutorial/test_discount.py').read()
+          count = source.count('def test_')
+          assert count >= 3, \
+              f"Write at least 3 test functions (found {count}). The function has 3 partitions of `member_status` — one test per partition is the floor. Each partition deserves its own named function so a failure tells you exactly which case broke."
+      - description: "Tests cover the 'platinum' partition"
+        command: |
+          source = open('/tutorial/test_discount.py').read()
+          assert 'platinum' in source, \
+              "No test references 'platinum'. The 10%-off branch is one of the three partitions — leaving it untested means a regression in that branch ships silently."
+      - description: "Tests cover the 'gold' partition"
+        command: |
+          source = open('/tutorial/test_discount.py').read()
+          assert 'gold' in source, \
+              "No test references 'gold'. The 5%-off branch needs at least one test — same reasoning as platinum."
+      - description: "Tests cover the 'other' (no-discount) partition"
+        command: |
+          import re
+          source = open('/tutorial/test_discount.py').read()
+          pattern = r'apply_discount\s*\([^)]*,\s*[\'"](?!platinum|gold)[^\'"]*[\'"]\s*\)'
+          has_other = bool(re.search(pattern, source))
+          assert has_other, \
+              "All your tests use 'platinum' or 'gold'. The third partition is *everything else* (\"\", \"silver\", \"regular\", None-stringified, …). One representative is enough — try \"regular\" with expected `== price`."
+      - description: "Tests use strong oracles (no weak 'is not None' / isinstance)"
+        command: |
+          source = open('/tutorial/test_discount.py').read()
+          weak = 'is not None' in source or 'isinstance(' in source
+          assert not weak, \
+              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 2 warned about. Replace with the precise expected number: 100*0.90 == 90.0 for platinum, 100*0.95 == 95.0 for gold, and == price for 'other'."
+      - description: "All tests pass against the reference implementation"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_discount.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - title: "What partitions?"
+            text: "Three: `\"platinum\"`, `\"gold\"`, and *everything else*. Each deserves at least one test. `\"\"` is a nice extra edge case."
+          - title: "Strong-oracle reminder"
+            text: "Don't write `assert apply_discount(100, \"gold\") is not None`. Write `apply_discount(100, \"gold\") == 95.0` — pin the *exact* value. (10% off 100 = 90.0; 5% off 100 = 95.0; no discount = 100.)"
+          - title: "Spoiler — full passing suite"
+            text: "```python\nfrom discount import apply_discount\n\ndef test_platinum_gets_10_percent_off():\n    assert apply_discount(100, \"platinum\") == 90.0\n\ndef test_gold_gets_5_percent_off():\n    assert apply_discount(100, \"gold\") == 95.0\n\ndef test_no_membership_no_discount():\n    assert apply_discount(100, \"regular\") == 100.0\n\ndef test_empty_string_no_discount():\n    assert apply_discount(100, \"\") == 100.0\n```"
+
+    quiz:
+      title: "Wrap-up — Knowledge Check"
+      min_score: 0.75
+      shuffle: true
+      questions:
+
+        - question: |
+            **(Spaced review — all steps)** A function ships free for orders **≥ $50** and charges $5 otherwise. Which test pair is the *single most important*?
+          type: single
+          options:
+            - "`order = $25` and `order = $200` — one in the middle of each partition"
+            - "`order = $49.99` and `order = $50` — one just below the boundary, one exactly at it"
+            - "`order = $0` and `order = $1,000,000` — the extreme edges"
+            - "`order = $50` only — one boundary test is enough"
+          correct_index: 1
+          explanation: |
+            The boundary is $50. Testing $49.99 (just below) and $50 (exactly at) catches the
+            classic `>=` vs `>` off-by-one bug — the same family as the calculate_grade bug
+            from Step 1.
+
+        - question: |
+            A teammate adds `assert result is not None` for `calculate_total()` and says, "Great — the function works." What's the right response?
+          type: single
+          options:
+            - "Agree — passing tests prove the function works."
+            - "That's a *weak oracle*. It passes for any non-`None` value (including `0.0` or `\"banana\"`). Replace with `assert result == <expected_value>`."
+            - "Disagree because we don't have 100% line coverage yet."
+            - "Disagree — the test is fine but the function name should change."
+          correct_index: 1
+          explanation: |
+            Weak oracles look productive but verify nothing. The fix is the *strong oracle*:
+            pin the exact expected value.
+
+        - question: |
+            What is the **single most important shift** in how you now think about testing, compared to before this tutorial?
+          type: single
+          options:
+            - "Tests are something you write *after* code is done, to check it works."
+            - "Tests *specify behavior* — they describe what the code should do, lock in progress, and let you change code without fear."
+            - "Tests are mainly about hitting 100% line coverage."
+            - "Tests are an academic exercise that doesn't apply in real projects."
+          correct_index: 1
+          explanation: |
+            This is the threshold concept. Once tests become **specifications of behavior**
+            (rather than after-the-fact correctness checks), you start writing them earlier
+            and treating them as design artifacts.

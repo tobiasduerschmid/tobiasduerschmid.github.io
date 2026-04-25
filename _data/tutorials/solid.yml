@@ -25,19 +25,11 @@ steps:
     instructions: |
       ## When One Change Breaks Everything
 
-      > **Learning objectives.** After this step you will be able to:
-      > - **Define** (Bloom: *Remember*) four terms — *actor*, *reason to change*, *coupling*, *cohesion* — in your own words.
-      > - **Identify** (Bloom: *Understand*) the coupling that makes a private helper a trap for future change.
-      > - **Predict** (Bloom: *Analyze*) which method(s) a change to one private helper will silently affect.
-      > - **Explain** (Bloom: *Understand*) why two tickets from two different teams collided inside a single file.
-      >
-      > **Time:** ~20 minutes — 5 min reading, 10 min hands-on, 5 min reflection + quiz. The next ten steps build on this one.
-      >
-      > **Prerequisites:** Python classes and methods, `dict` access, f-string formatting, and `json.dumps`. If any of those feel shaky, skim the [Python tutorial](/SEBook/tools/python-tutorial) first — the rest of this tutorial will move fast.
+      > **Goal:** Feel how a single private helper, shared across teams, makes simple change requests collide. (~20 min. Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
 
-      ### Four Words to Install Before You Debug the Rest of Your Career
+      ### Four Key Words
 
-      SOLID is written in these four terms. Learn them once; every step below uses them. Skim now — you'll practice them in the task.
+      SOLID is written in these four terms — every step below uses them.
 
       - **Actor** — a person or team who asks for changes. Finance, Registrar, Legal, Ops. Actors file tickets; they don't read your code. Different actors want different things for different reasons.
       - **Reason to change** — a real-world force that makes you edit a file. Tax law shifts → Finance edits. HIPAA update → Legal edits. *Different actors = different reasons to change.*
@@ -92,11 +84,11 @@ steps:
 
       ### Reflect → Fill in the Ownership
 
-      Before moving on, take 60 seconds and complete this sentence by filling the three blanks with **concrete names from the code** (method names, helper names, actor names — not "SRP violation"):
+      Before moving on, take 60 seconds and complete this sentence by filling the five blanks with **concrete names from the code** (method names, helper names, actor names — not "SRP violation"):
 
       > *"`CourseManager` hurt to change because __________ was shared between __________ and __________, so a ticket from the __________ team rippled into an output owned by the __________ team."*
 
-      If you can fill five blanks with five specific names, you've built the mental model the next ten steps stand on.
+      If you can fill all five blanks with specific names from the code, you've built the mental model the next ten steps stand on.
 
     files:
       - path: "course_manager.py"
@@ -454,7 +446,7 @@ steps:
     instructions: |
       ## The Single Responsibility Principle
 
-      > **Learning objective:** After this step you will be able to **define** the Single Responsibility Principle in terms of actors and **identify** SRP violations in existing code.
+      > **Goal:** Define SRP in terms of *actors* and spot SRP violations in existing code.
 
       ### The Principle
 
@@ -500,8 +492,6 @@ steps:
       Knowing these names is useful: your IDE, static analysis tools (SonarQube, PyLint), and senior developers in code review will all reach for this vocabulary. (See the code smells reference in [`SEBook/development_practices/code_smells`](/SEBook/development_practices/code_smells.html) for more.)
 
       > **Struggle is the lesson.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
-
-      ### Reflect → Explain in Your Own Words
 
       ### Reflect → Write the Incident Report
 
@@ -869,11 +859,12 @@ steps:
     instructions: |
       ## Applying SRP: From One Class to Four
 
-      > **Learning objective:** After this step you will be able to **refactor** a monolithic class into multiple classes, each serving a single actor.
+      > **Goal:** Refactor a monolithic class into multiple classes, each serving one actor.
 
-      ### Worked Example: Refactoring EmployeeManager
+      <details markdown="1">
+      <summary><strong>Worked example (expand): how we'd split <code>EmployeeManager</code> from Step 2 into four focused classes.</strong> Open this if you want a fully-worked reference before you tackle the task below; skip it if you're ready to apply SRP directly.</summary>
 
-      Here is how we would refactor the `EmployeeManager` from Step 2 into four focused classes. Study each sub-goal label in the comments — they show the reasoning behind each separation.
+      Study each sub-goal label in the comments — they show the reasoning behind each separation.
 
       ```python
       # Sub-goal 1: Isolate data storage (serves all actors as a shared dependency)
@@ -949,6 +940,8 @@ steps:
 
       **Why this is better:** Now Finance can change tax brackets in `PayrollCalculator` without touching pay stubs. HR can change currency display in `PayStubFormatter` without messing up tax calculations. Each class has **one actor** and **one reason to change**. No more surprise side effects.
 
+      </details>
+
       ### Your Task: Refactor RideRequest
 
       Welcome to **NightOwl**, a fictional rideshare startup. Your colleague just left "to tour with their band" and handed you `ride_request.py`. It's a single `RideRequest` class doing *everything*: driver matching, fare calculation, rider/driver notifications, and fraud detection.
@@ -970,6 +963,53 @@ steps:
       - `_platform_fee(subtotal)` is called by **Pricing** (`compute_fare`) **and** by **Trust & Safety** (`flag_if_unsafe` — it flags abnormally high fees as potential fraud).
 
       So when Pricing changes `_platform_fee` to a tiered model for a Black Friday promo, Trust & Safety's fraud detector silently drifts. Nobody on Pricing reads T&S code. Nobody on T&S gets pinged about the promo. The bug ships on the biggest-revenue weekend of the year. This is what cross-actor coupling costs.
+
+      #### The Structural Move
+
+      **Before (one class, four actors share private helpers):**
+
+      ```uml-class
+      @startuml
+      class RideRequest {
+        + match_driver()
+        + compute_fare()
+        + notify_rider()
+        + flag_if_unsafe()
+        - _distance()
+        - _platform_fee()
+      }
+      @enduml
+      ```
+
+      **After (one class per actor; each owns its own helpers):**
+
+      ```uml-class
+      @startuml
+      class RideData
+      class DriverMatcher {
+        + match()
+        - _distance()
+      }
+      class FareCalculator {
+        + compute()
+        - _platform_fee()
+      }
+      class RideNotifier {
+        + rider_arrival()
+        + driver_heads_up()
+      }
+      class SafetyAuditor {
+        + audit()
+        - _distance()
+      }
+      DriverMatcher ..> RideData
+      FareCalculator ..> RideData
+      RideNotifier ..> RideData
+      SafetyAuditor ..> RideData
+      @enduml
+      ```
+
+      Notice what shifted: `_distance()` now appears in **two** classes (DriverMatcher *and* SafetyAuditor) — and that "duplication" is the point. Each actor owns its own copy and can change it without asking the other team.
 
       #### Your Job
 
@@ -1498,7 +1538,7 @@ steps:
     instructions: |
       ## The Open/Closed Principle — Part 1: Feel the Pain
 
-      > **Learning objective:** After this step you will be able to **identify** code that violates the Open/Closed Principle and **explain** why adding features to if/elif chains is risky.
+      > **Goal:** Spot OCP violations and feel why if/elif chains turn every new feature into a regression risk.
 
       ### The Scenario
 
@@ -1537,8 +1577,6 @@ steps:
       This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
 
       > **Struggling is the lesson.** OCP feels counter-intuitive at first — your instinct says "just add another `elif`, the code works, ship it." The point of this step is to *feel* what happens when that instinct scales to 20 channels, so that polymorphism in Step 5 arrives as relief, not academic theory.
-
-      ### Reflect → Explain in Your Own Words
 
       ### Reflect → Draft the PR-Review Comment
 
@@ -1868,10 +1906,10 @@ steps:
             - "They must read and understand hundreds of lines of unrelated channel code to find the right place to insert their branch"
             - "A typo or indentation error in the new branch could break an existing channel that was previously working"
             - "Testing requires running the entire method, since all channels share a single code path and cannot be tested independently"
-            - "The class will run out of memory because Python limits elif chains to 20 branches"
+            - "Performance will degrade significantly because each new elif adds runtime overhead to every notification"
           correct_indices: [0, 1, 2]
           explanation: |
-            Python doesn't limit elif chains (option 4 is made up). But the other three problems are real and they all come from the same root cause: **all channel logic is stuffed into one method**. Reading hundreds of lines to add a feature is painful. Editing shared code risks breaking stuff. And you can't test one channel without loading all the others.
+            The first three are real consequences of the if/elif design — they all trace to the same root cause: **all channel logic is stuffed into one method**. Reading hundreds of lines to add a feature is painful. Editing shared code risks breaking stuff. And you can't test one channel without loading all the others. Option 4 confuses *design* problems with *performance* problems — adding an elif adds essentially no runtime cost at typical scale, so a junior dev shouldn't reach for it as their reason to refactor. OCP is about **maintainability and safety**, not raw speed.
 
         - question: |
             The Open/Closed Principle says a module should be **"open for extension, closed for modification."**
@@ -1915,17 +1953,16 @@ steps:
     instructions: |
       ## The Open/Closed Principle — Part 2: The Fix
 
-      > **Learning objective:** After this step you will be able to **refactor** an if/elif chain into a polymorphic design using abstract base classes, making the code open for extension and closed for modification.
-
-      ### Worked Example: Refactoring NotificationRouter
+      > **Goal:** Refactor an if/elif chain into a polymorphic ABC + concrete-class family — open for extension, closed for modification.
 
       In Step 4 you felt the pain of that if/elif chain. Now let's fix it properly using **polymorphism** and **abstract base classes**.
 
-      > **Check your prediction from Step 4.** You predicted how long `send_notification()` would grow if 10 more channels were added to the if/elif design. After the refactor below, look at how long `NotificationRouter.send_notification()` is in the new design. (Spoiler: it doesn't grow at all — each channel is its own class.)
+      > **Check your prediction from Step 4.** You predicted how long `send_notification()` would grow if 10 more channels were added to the if/elif design. After the refactor, `NotificationRouter.send_notification()` doesn't grow at all — each channel is its own class.
 
       The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each handle themselves. The router just iterates over whatever channels it has — it literally never needs to change when a new channel shows up. New channel? Just write a new class. Done.
 
-      Here's the refactored design. Read it carefully and check out the **sub-goal labels** in the comments:
+      <details markdown="1">
+      <summary><strong>Worked example (expand): the full refactored <code>NotificationRouter</code>.</strong> Open this for a complete reference with sub-goal labels; skip it if you're ready to apply the same pattern to <code>report_exporter.py</code> below.</summary>
 
       ```python
       from __future__ import annotations
@@ -2072,6 +2109,35 @@ steps:
       ```
 
       **Notice:** `NotificationRouter.send_notification()` has **zero if/elif branches** for specific channels. Want to add Discord, Teams, or WhatsApp? Write a new class and pass it to the router. The router code itself never changes. That's the whole point.
+
+      </details>
+
+      ### The Structural Move
+
+      The if/elif chain doesn't visualize as a class diagram — it's just one bloated method. The fix does:
+
+      ```uml-class
+      @startuml
+      abstract class ExportFormat {
+        + name
+        + format_report(title, headers, rows)
+      }
+      class CsvFormat
+      class JsonFormat
+      class TextFormat
+      class ReportExporter {
+        - formats[]
+        + register_format(fmt)
+        + export(title, headers, rows, fmt_name)
+      }
+      CsvFormat --|> ExportFormat
+      JsonFormat --|> ExportFormat
+      TextFormat --|> ExportFormat
+      ReportExporter o-- ExportFormat
+      @enduml
+      ```
+
+      `ReportExporter` no longer mentions any specific format. To add `XmlFormat` or `MarkdownFormat`, write a new class and register it — `ReportExporter` itself never reopens.
 
       ### Your Turn
 
@@ -2593,7 +2659,7 @@ steps:
     instructions: |
       ## The Liskov Substitution Principle — Part 1: Feel the Broken Promise
 
-      > **Learning objective:** After this step you will be able to **identify** LSP violations caused by strengthened preconditions or weakened postconditions, **write** pre/postconditions as executable assertions, and **explain** why returning a "success: false" sentinel still violates the contract.
+      > **Goal:** Spot LSP violations caused by strengthened preconditions or weakened postconditions — and write the contract as executable `assert`s.
 
       ### The Principle
 
@@ -2630,7 +2696,8 @@ steps:
 
       The most common LSP violation has a name: **Refused Bequest**. It looks like a subclass that inherits a method it cannot meaningfully implement, so it either throws `NotImplementedError` *or* returns a "success: false" sentinel. Both are violations — and the second is worse because it fails silently.
 
-      ### LSP Is Not Just About Classes
+      <details markdown="1">
+      <summary><strong>Sidebar (expand): LSP isn't just about classes — it bites REST APIs, message schemas, and CLI flags too.</strong></summary>
 
       LSP is about **behavioral contracts**, which show up everywhere a caller depends on a callee's behavior — not only in `class Subclass extends Parent`. A few places LSP bites in the wild:
 
@@ -2639,6 +2706,8 @@ steps:
       - **CLI flags.** `grep -l` prints file names. A competing `grep` clone implements `-l` as "list all matches." Pipelines written against the contract explode.
 
       When you hear "LSP," don't just think inheritance. Think: *"a caller trusted a contract; does the callee really honor it?"*
+
+      </details>
 
       ### The Payment Processing System
 
@@ -2689,8 +2758,6 @@ steps:
       The postcondition of `refund()` isn't just "return a dict." It's **"actually refund the transaction and return the refunded amount."** Callers depend on that guarantee. A function that silently fails while wearing the same interface is *more dangerous* than one that crashes — because the caller has zero reason to suspect anything went wrong. Money has already moved. The customer is gone. You'll find out next Tuesday during reconciliation.
 
       **The fix is structural** — splitting the hierarchy so `GiftCardProcessor` never inherits a `refund()` method it can't honor. That's the next step.
-
-      ### Reflect → Explain in Your Own Words
 
       ### Reflect → Pick a Side and Argue It
 
@@ -3269,11 +3336,11 @@ steps:
           options:
             - "Accept at least what the parent accepts (equal or weaker preconditions)"
             - "Guarantee at least what the parent guarantees (equal or stronger postconditions)"
-            - "Override every method of the parent class"
-            - "Add new methods that the parent does not have"
+            - "Restrict what inputs are accepted, since a more specific subtype should naturally accept fewer inputs than the general parent"
+            - "Be allowed to throw a new exception type that the parent's contract didn't declare, as long as it's documented in the subclass's docstring"
           correct_indices: [0, 1]
           explanation: |
-            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions) and can't break guarantees the parent makes (no weakening postconditions). Overriding every method or adding new methods are completely unrelated to LSP.
+            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions — option 3 is the *opposite* of what LSP requires; the smile-vs-frown picture says preconditions get *weaker* in subtypes, not stronger) and can't surprise callers with exceptions the parent never declared (option 4 is the classic Refused-Bequest dressed up as documentation). Both options 3 and 4 are misconceptions students arrive with from intuition — "specific subtypes should be stricter" and "documenting an exception makes it OK." Neither survives contact with the contract: callers wrote against the parent's promises, not the subclass's footnotes.
 
         - question: |
             A `PaymentProcessor` base class defines `refund(txn_id)` with the postcondition "returns `{"success": True, "amount": <float>}`." A `GiftCardProcessor` subclass returns `{"success": False, "error": "non-refundable"}` instead. A teammate argues: *"It still returns a dict with the right keys, so it follows the contract."*
@@ -3350,13 +3417,12 @@ steps:
     instructions: |
       ## The Liskov Substitution Principle — Part 2: The Structural Fix
 
-      > **Learning objective:** After this step you will be able to **refactor** a broken inheritance hierarchy by splitting it into smaller, role-specific abstractions so that no subclass inherits a method it cannot honor.
-
-      ### Worked Example — Splitting `PaymentProcessor`
+      > **Goal:** Split a broken hierarchy so no subclass inherits a method it can't honor.
 
       In the previous step you watched `GiftCardProcessor` shred the `refund()` contract. Now the fix. The *root* cause isn't that the gift card was coded poorly — it's that the **hierarchy is wrong**. `refund()` doesn't belong on every payment processor, only on those that can actually refund.
 
-      Here's the fix, broken down by sub-goal:
+      <details markdown="1">
+      <summary><strong>Worked example (expand): how we'd split <code>PaymentProcessor</code> by sub-goal.</strong> Open this if you want a fully-worked reference for the structural fix; skip it if you're ready to apply the same split to the media player below.</summary>
 
       ```python
       from __future__ import annotations
@@ -3434,7 +3500,57 @@ steps:
 
       **The structural insight:** `GiftCardProcessor` used to *lie* about refunds. After the split, it *literally cannot be passed* to a function that needs refunds — a type checker or a simple `isinstance()` check catches the misuse at the boundary, not deep inside business logic after money has already moved.
 
-      **LSP ↔ ISP:** splitting one fat interface into two smaller ones is exactly the **Interface Segregation Principle** (ISP) — which you'll see head-on in the next step.
+      </details>
+
+      **LSP ↔ ISP bridge:** splitting one fat interface into two smaller ones is exactly the **Interface Segregation Principle** (ISP) — which you'll see head-on in the next step.
+
+      ### The Structural Move
+
+      **Before (one fat hierarchy; LiveStream lies about `seek()` and `get_duration()`):**
+
+      ```uml-class
+      @startuml
+      abstract class MediaPlayer {
+        + play()
+        + stop()
+        + seek(position)
+        + get_duration()
+      }
+      class AudioFilePlayer
+      class VideoFilePlayer
+      class LiveStreamPlayer {
+        + seek() : raises NotImplementedError
+        + get_duration() : raises NotImplementedError
+      }
+      AudioFilePlayer --|> MediaPlayer
+      VideoFilePlayer --|> MediaPlayer
+      LiveStreamPlayer --|> MediaPlayer
+      @enduml
+      ```
+
+      **After (split: `LiveStream` doesn't inherit what it can't honor):**
+
+      ```uml-class
+      @startuml
+      abstract class MediaPlayer {
+        + play()
+        + stop()
+      }
+      abstract class SeekablePlayer {
+        + seek(position)
+        + get_duration()
+      }
+      class AudioFilePlayer
+      class VideoFilePlayer
+      class LiveStreamPlayer
+      SeekablePlayer --|> MediaPlayer
+      AudioFilePlayer --|> SeekablePlayer
+      VideoFilePlayer --|> SeekablePlayer
+      LiveStreamPlayer --|> MediaPlayer
+      @enduml
+      ```
+
+      A function that needs seeking takes `list[SeekablePlayer]`. `LiveStreamPlayer` literally cannot be passed — the type system catches the mismatch at the call site, not at runtime after the player has already started.
 
       ### Your Turn — The Media Player Hierarchy
 
@@ -4070,14 +4186,7 @@ steps:
     instructions: |
       ## The Interface Segregation Principle
 
-      > **Learning objectives.** After this step you will be able to:
-      > - **Identify** (Bloom: *Understand*) a fat interface by the `NotImplementedError` stubs it forces on its implementers.
-      > - **Distinguish** (Bloom: *Analyze*) ISP violations from SRP violations using the *who-depends-on-this* vs. *who-asks-for-changes* lens.
-      > - **Refactor** (Bloom: *Create*) a fat ABC into several role-based ABCs so each client only depends on what it actually calls.
-      >
-      > **Time:** ~25 min (7 min reading, 5 min observing the fat-interface crash, 13 min refactoring the Smart Home exercise).
-      >
-      > **Prerequisites:** Comfort with Python ABCs (`from abc import ABC, abstractmethod`) from the OCP and LSP steps. You should also be able to read `isinstance()` checks.
+      > **Goal:** Split a fat ABC into role-based ABCs so each client only depends on what it actually calls.
 
       ### The Principle
 
@@ -4103,11 +4212,14 @@ steps:
 
       A class can obey SRP (one actor owns all its methods) while still exposing a fat interface that violates ISP (its many clients each use different subsets). Both principles apply; they operate on different dimensions.
 
-      ### A Word on Python and Static Languages
+      <details markdown="1">
+      <summary><strong>Sidebar (expand): does ISP matter in Python?</strong></summary>
 
       In Java or C++, an ISP violation causes **recompilation cascades**: change a method signature in a fat interface and every unrelated client recompiles and re-deploys. In Python, the recompile pain disappears — there's no compile step to cascade.
 
       But the **architectural pain remains**: when your module depends on a fat interface, you transitively import every dependency that interface touches. A heavy SDK used by `admin_only_method()` is now a mandatory dependency for your lightweight read-only client. If that SDK has a bug, your read-only client catches it. ISP still matters in Python — the *symptoms* just shift from "recompile time" to "import surface and transitive risk."
+
+      </details>
 
       ### The Scenario — Fat-Interface Cloud Storage
 
@@ -4133,8 +4245,6 @@ steps:
       1. **Run** `cloud_storage.py`. Watch the demo section. The last thing it prints is a line where `backup_service(free)` calls `sync()` on a `FreeStorage` and crashes with a `NotImplementedError`.
       2. **Read** the `backup_service()` function at the bottom. Its type signature is `storage: CloudStorage`. Python's type system *says this is a valid call*. The runtime disagrees. The gap between those two is an ISP violation made visible.
       3. **Diagnose — in your own words** — what went wrong. Not "ISP violation" — the concrete mechanism: *a function expected method X on an abstraction, but the abstraction promised more than one of its implementations could honor.*
-
-      > **Why aren't we having you write the stubs?** Because writing `raise NotImplementedError` four times is how you install this anti-pattern into your muscle memory. "Feeling the pain" should mean *observing* the crash, not *practicing* the crash. The active exercise is Task 2.
 
       ### Task 2 (Active Refactor) — Segregate the Smart Home
 
@@ -4225,9 +4335,10 @@ steps:
       - **SRP** = what a class does *internally* (one reason to change, one actor).
       - **ISP** = what a class exposes to its *clients* (no client should depend on methods it does not use).
 
-      ### Discrimination Exercise — Which Principle?
+      <details markdown="1">
+      <summary><strong>Discrimination drill (expand): which principle does each sketch violate?</strong> Try this if you want extra practice telling SRP and ISP apart before moving on.</summary>
 
-      Study these two code sketches. Both look "wrong" at first glance, but they violate *different* principles. Before reading the answers below, think about each one.
+      Study these two code sketches. Both look "wrong" at first glance, but they violate *different* principles. Think about each one before reading the diagnoses.
 
       **Class A:**
 
@@ -4277,6 +4388,8 @@ steps:
       - If the *class has multiple reasons to change* (multiple actors) → **SRP** violation.
       - If an *implementer is forced to stub or `NotImplementedError`* a method it doesn't need → **ISP** violation.
       - A single class can violate both. Fixing ISP often exposes an SRP violation underneath, and vice versa.
+
+      </details>
 
     files:
       - path: "cloud_storage.py"
@@ -5130,15 +5243,15 @@ steps:
             Which principle does each violate?
           type: single
           options:
-            - "Both violate SRP"
-            - "Class A violates SRP (three actors); Class B violates ISP (a client forced to stub methods it cannot implement)"
-            - "Class A violates ISP; Class B violates SRP"
-            - "Both violate ISP"
+            - "Class A: SRP. Class B: SRP."
+            - "Class A: SRP. Class B: ISP."
+            - "Class A: ISP. Class B: SRP."
+            - "Class A: ISP. Class B: ISP."
           correct_index: 1
           explanation: |
-            **Class A** serves three actors (Finance, UX, Ops) that each drive change to the same class — that's an **SRP** violation. Every method is used, so there's no ISP problem.
+            **Class A** serves three actors (Finance, UX, Ops) that each drive change to the same class — **SRP** violation. Every method is used, so there's no ISP problem.
 
-            **Class B** has a single actor (text editing) but is forced to implement video and image methods with `raise NotImplementedError` — that's the classic **ISP** violation. Fix by splitting into `TextEditable`, `ImageEditable`, `VideoEditable` interfaces. No SRP problem: the class has one cohesive responsibility (edit text), it just depends on too-wide an interface.
+            **Class B** has a single actor (text editing) but is forced to implement video and image methods with `raise NotImplementedError` — classic **ISP** violation. Fix by splitting into `TextEditable`, `ImageEditable`, `VideoEditable` interfaces. No SRP problem: the class has one cohesive responsibility (edit text), it just depends on too-wide an interface.
 
             The discrimination rule: **multiple actors → SRP; forced-to-stub methods → ISP**.
 
@@ -5180,7 +5293,7 @@ steps:
     instructions: |
       ## The Dependency Inversion Principle
 
-      > **Learning objective:** After this step you will be able to **distinguish** the Dependency Inversion Principle from Dependency Injection, **design** abstractions owned by the high-level module (not inherited from low-level library interfaces), and **write** unit tests using fake implementations that never touch external services.
+      > **Goal:** Tell DIP apart from Dependency Injection, design abstractions *owned by the caller* (not the library), and unit-test without hitting external services.
 
       ### The Principle
 
@@ -5235,7 +5348,8 @@ steps:
 
       Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
 
-      ### The Object-Creation Problem (and the Abstract Factory Pattern)
+      <details markdown="1">
+      <summary><strong>Advanced (expand): the object-creation problem and the Abstract Factory pattern.</strong> Open this when you start building larger DIP-compliant systems and need to know where the concrete instantiation should live.</summary>
 
       There's one stubborn corner of DIP: **creating objects** inherently requires mentioning a concrete class somewhere. If `OrderService` never writes `PostgresDatabase()`, someone has to. The standard fix is the **Abstract Factory** pattern — push the concrete instantiation to a single, isolated module (often the app's `main` or a `wiring.py`), and let the rest of the codebase receive dependencies through abstractions only.
 
@@ -5245,7 +5359,9 @@ steps:
       1. **The place that creates concrete objects should be the outermost shell of your program**, not its core.
       2. **DIP violations cannot be eliminated entirely — but they can be herded into one small concrete corner**, which is where factories, dependency-injection containers, and composition roots earn their keep.
 
-      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will crystallize it in code.
+      </details>
+
+      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery, that's normal. The Task 2 refactor will crystallize it in code.
 
       ### The Scenario — Feel the Friction
 
@@ -5270,6 +5386,50 @@ steps:
       ### Code Smell: *Hardcoded Dependency*
 
       This specific violation has a name: **Hardcoded Dependency** (sometimes called *New-keyword coupling* in Java, or *tight coupling*). The tell: a high-level class's `__init__` contains `self.db = PostgresDatabase()` or similar direct instantiation of concrete collaborators. When you see this pattern, ask: *"Can I unit-test this class without the real database?"* If no, you've found a DIP violation.
+
+      ### The Structural Move — Watch the Arrows Reverse
+
+      **Before (high-level points down to concrete; low-level libraries are baked in):**
+
+      ```uml-class
+      @startuml
+      class OrderService
+      class PostgresDatabase
+      class StripePaymentGateway
+      class SendGridEmailer
+      OrderService --> PostgresDatabase
+      OrderService --> StripePaymentGateway
+      OrderService --> SendGridEmailer
+      @enduml
+      ```
+
+      **After (high-level depends on abstractions; low-level *implements* them — arrows now meet in the middle):**
+
+      ```uml-class
+      @startuml
+      class OrderService
+      abstract class OrderRepository
+      abstract class PaymentGateway
+      abstract class OrderNotifier
+      class PostgresDatabase
+      class StripePaymentGateway
+      class SendGridEmailer
+      class FakeRepository
+      class FakeGateway
+      class FakeNotifier
+      OrderService --> OrderRepository
+      OrderService --> PaymentGateway
+      OrderService --> OrderNotifier
+      PostgresDatabase --|> OrderRepository
+      StripePaymentGateway --|> PaymentGateway
+      SendGridEmailer --|> OrderNotifier
+      FakeRepository --|> OrderRepository
+      FakeGateway --|> PaymentGateway
+      FakeNotifier --|> OrderNotifier
+      @enduml
+      ```
+
+      **The inversion lives in the arrows.** Before the refactor, every dependency arrow points from `OrderService` *down* to a concrete class. After the refactor, `OrderService` arrows point *down* to abstractions, and concrete classes arrow *up* to those same abstractions. The two halves of the system depend on a **shared contract in the middle**, not on each other directly. That's why fakes drop in for free and unit tests stop hitting Stripe.
 
       ### Task 2 — Design the Abstractions Yourself
 
@@ -6108,7 +6268,7 @@ steps:
     instructions: |
       ## Can You Spot the Violation?
 
-      > **Learning objective:** After this step you will be able to **identify** which SOLID principle (if any) a given code snippet violates, and **justify** your diagnosis.
+      > **Goal:** Diagnose which SOLID principle (if any) a code snippet violates — and justify it in one sentence.
 
       ### Why This Matters
 
@@ -6719,14 +6879,7 @@ steps:
     instructions: |
       ## Final Boss: Library Management System
 
-      > **Learning objectives.** After this step you will be able to:
-      > - **Identify** (Bloom: *Analyze*) multiple simultaneous SOLID violations in a realistic system by name and location.
-      > - **Refactor** (Bloom: *Create*) a monolithic class into a SOLID-compliant design in **three disciplined phases**, not one heroic rewrite.
-      > - **Recognize** (Bloom: *Evaluate*) when SOLID is being over-applied and the cure has become worse than the disease.
-      >
-      > **Time:** ~40–60 min (10 min annotation, 10 min/phase × 3 phases, 10 min reflection).
-      >
-      > **Prerequisites:** All five principles from steps 2–9 of this tutorial. You should be able to spot a code smell and name the principle (Step 10 exercise) before you begin.
+      > **Goal:** Refactor a system with simultaneous SOLID violations in **three disciplined phases** — and recognize when SOLID is being over-applied.
 
       ### The Challenge
 
@@ -6791,15 +6944,18 @@ steps:
 
       **Principle link:** This is the LSP **structural fix** from Step 7. A subclass that cannot honor the contract should not be a subclass.
 
-      ### Phase 4 (Optional Stretch) — SRP: Split the Services
+      <details markdown="1">
+      <summary><strong>Phase 4 (Optional Stretch, expand): SRP — split the services.</strong> The core design lesson is already complete after Phase 3 — tests fall back if you skip this. Open if you want to push the SRP split further.</summary>
 
-      If you still have energy, split `LibrarySystem` into focused services:
+      Split `LibrarySystem` into focused services:
       - `MemberRegistry` (member add/lookup — was `register_member` + `get_member`)
       - `NotificationService` (send overdue notices — was `send_overdue_notice`)
       - `CheckoutService` (orchestrate checkouts using the above)
       - `InventoryReporter` (generate inventory reports — was `generate_inventory_report`)
 
-      Each new class has one actor and takes its dependencies through the constructor. The solution file at the end shows one reasonable split. If you skip this phase, the tests that check for named service classes will *fall back* to accepting the single `LibrarySystem` — the core design lesson is already complete after Phase 3.
+      Each new class has one actor and takes its dependencies through the constructor. The solution file at the end shows one reasonable split.
+
+      </details>
 
       ### How the Principles Reinforce Each Other — Your Capstone Insight
 
@@ -6813,7 +6969,12 @@ steps:
 
       ### Don't Over-Engineer
 
-      After refactoring, check out this cautionary example. This is what happens when SOLID is applied **without judgment** — when you treat principles as rules to maximize instead of tools to apply thoughtfully:
+      **SOLID is a tool, not a religion.** Apply it when the complexity of the domain justifies it. Don't be that person who architects a to-do app like it's a distributed system.
+
+      <details markdown="1">
+      <summary><strong>Cautionary example (expand): four interfaces, a factory, and a result wrapper — all for <code>2 + 3</code>.</strong></summary>
+
+      This is what happens when SOLID is applied **without judgment** — when you treat principles as rules to maximize instead of tools to apply thoughtfully:
 
       ```python
       # over_engineered.py — DO NOT DO THIS
@@ -6861,7 +7022,9 @@ steps:
       result = engine.add(2, 3)
       ```
 
-      Four interfaces, a factory, and a result wrapper — all for `2 + 3`. The original code was already perfectly clear. **SOLID is a tool, not a religion.** Apply it when the complexity of the domain justifies it. Don't be that person who architects a to-do app like it's a distributed system.
+      The original `2 + 3` was already perfectly clear. The "principled" version added four interfaces and a factory for zero benefit.
+
+      </details>
 
       ### When NOT to Apply SOLID
 
@@ -6870,7 +7033,10 @@ steps:
       - **When there's only one variant:** Don't create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
       - **When it obscures intent:** If a 5-line function becomes 50 lines across 4 classes, the cure is worse than the disease.
 
-      ### Where You Go From Here — SOLID Scales Up
+      **SOLID is the grammar. Architecture is the sentences.** You have the grammar now. Go write things that last.
+
+      <details markdown="1">
+      <summary><strong>Optional (expand): SOLID scales up to architecture.</strong> A short forward-pointer to where you'll meet these principles again at the package and service level.</summary>
 
       You just learned SOLID at the level of **classes inside one module**. The same reasoning scales up to *components* (packages, services, deployable units) — and when you meet it later in your career, it will sound suspiciously familiar:
 
@@ -6882,7 +7048,7 @@ steps:
 
       The fancy names (Common Closure, Common Reuse, Dependency Rule) aren't new tricks — they're the principles you just practiced, played at a bigger scale. When you take a software architecture course and meet *clean architecture*, *hexagonal architecture*, or *onion architecture*, the centerpiece is always the Dependency Rule — a direct descendant of the DIP exercise you just did with `OrderService` and `WeatherDashboard`.
 
-      **SOLID is the grammar. Architecture is the sentences.** You have the grammar now. Go write things that last.
+      </details>
 
     files:
       - path: "library_system.py"
@@ -7894,14 +8060,7 @@ steps:
     instructions: |
       ## Consolidation: What Survives in a Year
 
-      > **Learning objectives.** After this step you will be able to:
-      > - **Recall** (Bloom: *Remember*) each SOLID principle from memory, in your own words, without looking at the earlier steps.
-      > - **Discriminate** (Bloom: *Analyze*) between similar-looking violations under interleaved pressure.
-      > - **Judge** (Bloom: *Evaluate*) when SOLID should **not** be applied and name three concrete signs of over-engineering.
-      >
-      > **Time:** ~15 min (no new code concepts — all retrieval, explanation, and reflection). Ideally done **at least 24 hours** after the capstone to get the full spacing benefit.
-      >
-      > **Prerequisites:** Steps 1–11 completed. This step has no new material — it is a disciplined retrieval pass designed to move what you learned from short-term into long-term memory.
+      > **Goal:** Re-derive the five principles from memory and name three signs of over-engineering. *Best done at least 24 hours after the capstone* — the spacing is the point.
 
       ### Why One More Step?
 
@@ -7931,9 +8090,12 @@ steps:
 
       Recognizing when *not* to apply a principle is what separates engineers who use SOLID as a tool from ones who use it as a cudgel. Put the guardrails in words you'll remember.
 
-      ### Reflection — Teach It Back
+      <details markdown="1">
+      <summary><strong>Optional but powerful (expand): Teach it back.</strong> A 3-minute exercise that exploits the protégé effect — preparing to teach produces deeper encoding than preparing to be tested.</summary>
 
       Before you take the quiz, pick **one** of the five principles and, in 3–5 sentences, write a teach-back for an imaginary junior engineer on your team. Use a concrete code smell from the tutorial (e.g., *God Class*, *Switch Statement Smell*, *Refused Bequest*, *Fat Interface*, *Hardcoded Dependency*) as your hook. This step has no test — it's for you. Research on the [protégé effect](https://en.wikipedia.org/wiki/Protégé_effect) shows that preparing to teach material produces deeper encoding than preparing to be tested on it.
+
+      </details>
 
     files:
       - path: "principle_match.py"
