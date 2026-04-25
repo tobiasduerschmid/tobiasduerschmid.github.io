@@ -3185,13 +3185,23 @@
     }
     this._setActiveFile(filename);
     this._renderTabs();
-    // If this file routes to a detached pane, push a fresh snapshot so the
-    // pane popup picks up the new file/content.
-    if (this._popoutManager && this._splitActive) {
-      var pane = this._paneForFile(filename);
-      if (this._isPaneDetached(pane)) {
-        var meta = this._paneMeta(pane);
-        if (meta) this._popoutManager._sendPaneSnapshot(pane, meta);
+    // Push fresh snapshots to any popups that reference this file. Covers
+    // step-load, Reset Step, Apply Solution, autosave-restore — without
+    // this, a popup would keep displaying stale content after the user
+    // resets a step in main.
+    if (this._popoutManager) {
+      // Tab popup: deterministic role 'tab:<filename>'.
+      if (this._popoutManager.isDetached('tab:' + filename)) {
+        var fmeta = this._fileMeta(filename);
+        if (fmeta) this._popoutManager._sendFileSnapshot(filename, fmeta);
+      }
+      // Pane popup: split-mode tutorials only.
+      if (this._splitActive) {
+        var pane = this._paneForFile(filename);
+        if (this._isPaneDetached(pane)) {
+          var meta = this._paneMeta(pane);
+          if (meta) this._popoutManager._sendPaneSnapshot(pane, meta);
+        }
       }
     }
   };
@@ -4146,10 +4156,19 @@
           // Save the file the popup tells us about — temporarily make it the
           // active file so _saveCurrentFile triggers the right side effects
           // (sync, autosave, react patch, UML refresh).
+          if (!filename || !self.editorModels[filename]) {
+            console.warn('[popout] request-save for unknown file:', filename);
+            return;
+          }
           var prev = self.activeFileName;
-          if (filename && self.editorModels[filename]) self.activeFileName = filename;
-          if (typeof self._saveCurrentFile === 'function') self._saveCurrentFile();
-          self.activeFileName = prev;
+          self.activeFileName = filename;
+          try {
+            self._saveCurrentFile();
+          } finally {
+            self.activeFileName = prev;
+          }
+          // Confirm back to popups so they can flash a "Saved ✓" indicator.
+          self._popoutManager._post('save-confirmed', { filename: filename });
         },
         onFileEditFromPopup: function (filename, content) {
           self._applyFileEditFromPopup(filename, content);

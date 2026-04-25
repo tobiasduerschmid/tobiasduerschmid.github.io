@@ -241,6 +241,12 @@
             setTimeout(function () { window.close(); }, 30);
           }
           break;
+        case 'save-confirmed':
+          if (msg.filename === filename) {
+            setStatus('Saved ✓', 'ok');
+            setTimeout(function () { setStatus('Connected', 'ok'); }, 1500);
+          }
+          break;
       }
     });
 

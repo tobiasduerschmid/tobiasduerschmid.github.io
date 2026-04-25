@@ -254,6 +254,12 @@
             sendClosingThenClose();
           }
           break;
+        case 'save-confirmed':
+          if (msg.filename && models[msg.filename]) {
+            setStatus('Saved ✓', 'ok');
+            setTimeout(function () { setStatus('Connected', 'ok'); }, 1500);
+          }
+          break;
       }
     });
 
