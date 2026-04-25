@@ -33,6 +33,10 @@ questions:
       - "Inline all three methods into a single `process()` method to reduce the surface area"
       - "Keep the class as-is; SRP is only about classes with a single method"
     correct_index: 0
+    option_feedback:
+      1: "Visibility modifiers don't change the *axes of change*. The Accounting team's tax logic still lives in the same file the Web team edits — they'll still collide in merges, and a tax fix can still break rendering. SRP is about who requests changes, not which methods are exposed."
+      2: "Inlining makes the tangle worse, not better. You now have one giant method that three different teams (Accounting, Web, DBA) all need to edit — every change risks breaking the other two stakeholders' features."
+      3: "This is the 'one method per class' misconception. SRP is not a method count — a class can have many methods as long as they all answer to the **same actor**. Here, three different actors request changes for unrelated reasons; that's the SRP violation."
     explanation: "Three different actors (Accounting, Web, DBA) each request changes to `Invoice` for unrelated reasons. The canonical SRP refactor is to extract one class per actor around a shared data record. Visibility modifiers (option B) do not reduce the *axes of change*; inlining (option C) makes the tangle worse; option D is the 'one method per class' misconception the chapter explicitly debunks."
 
   - id: 3

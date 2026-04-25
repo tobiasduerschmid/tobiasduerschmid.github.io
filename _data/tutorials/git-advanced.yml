@@ -156,6 +156,10 @@ steps:
       - A separate network connection to a remote server
       - A compressed archive of your working directory
       correct_index: 1
+      option_feedback:
+        0: This answer treats a branch like a folder copy — branch creation never duplicates files; only one ref file is written.
+        2: This answer confuses a branch with a remote; branches are local refs in `.git/refs/heads/`, not network connections.
+        3: This answer treats a branch like a backup archive rather than a single-line pointer file.
       explanation: A branch is just a tiny file holding a 40-character SHA. That is why `git switch -c new-branch` is instantaneous — Git does not copy files, it writes one line of text.
     - question: Which statements about **Detached HEAD** state are true? (Select all that apply)
       type: multiple
@@ -168,6 +172,8 @@ steps:
       - 0
       - 2
       - 3
+      option_feedback:
+        1: This answer assumes Git auto-anchors detached-HEAD commits to a branch — it doesn't, which is the whole reason orphans happen.
       explanation: Detached HEAD stores a raw SHA in `.git/HEAD`. No branch tracks commits made here. Before leaving, create a branch (`git switch -c rescue`) — otherwise the commits become orphaned and the next step's reflog is your recovery path.
     - question: Why can `HEAD` point to a branch name rather than a commit SHA?
       options:
@@ -176,6 +182,10 @@ steps:
       - Git requires it for compatibility with GitHub
       - It prevents you from committing on the wrong branch
       correct_index: 1
+      option_feedback:
+        0: This answer mistakes ergonomics for mechanism — the indirection exists so commits can update the branch ref without rewriting HEAD.
+        2: This answer assumes a remote constraint drives a local design decision; symbolic refs predate any hosting service.
+        3: This answer treats indirection as a safety feature; it's actually a mechanism for cheap commits, not a guard rail.
       explanation: The pointer chain is `HEAD → refs/heads/branch → commit`. A commit only needs to rewrite the branch file — HEAD dereferences through it. This indirection is the engineering reason branches are cheap.
     - question: You want to inspect a commit from last week without risking any accidental edits. Which is the safest approach?
       options:
@@ -184,6 +194,10 @@ steps:
       - '`git checkout <old-sha> .` — overwrite files in working directory'
       - '`rm -rf .git && git clone <old-sha>` — start fresh'
       correct_index: 0
+      option_feedback:
+        1: This answer confuses inspection with rewinding — `reset --hard` mutates the current branch's pointer, the opposite of read-only inspection.
+        2: This answer overwrites working-tree files without moving HEAD; not destructive to history but stomps your editor state.
+        3: This answer is the "burning down the repo" antipattern — far more destructive than the read-only detached HEAD it replaces.
       explanation: '`git switch --detach` enters read-only-feeling detached HEAD at any commit. You can look around freely; `git switch main` returns you unchanged. `git reset --hard` would rewrite your current branch — destructive. `git checkout <sha> .` overwrites files without moving HEAD.'
     - question: Put in order the steps to safely inspect an old commit and return to normal operation.
       type: parsons
@@ -295,6 +309,10 @@ steps:
       - Git automatically migrated them to the `main` branch when we switched
       - They are stored in a hidden recovery folder we can copy from
       correct_index: 1
+      option_feedback:
+        0: This answer assumes `git switch` deletes data — it only moves HEAD; the commit objects stay in `.git/objects/` until `git gc` decides to prune them.
+        2: This answer assumes Git auto-attaches detached commits to a branch on switch — it doesn't, which is exactly why we need the rescue.
+        3: This answer invents a recovery folder that doesn't exist; orphans live in the same `.git/objects/` as every other commit.
       explanation: Orphaned commits remain in `.git/objects/` until `git gc` prunes them. `git reflog` shows every position HEAD has been at, including the orphaned one. `git branch rescue <sha>` rescues the work.
     - question: In one sentence, why can `git reflog` show commits that `git log --all` cannot?
       options:
@@ -303,6 +321,10 @@ steps:
       - '`git log --all` is broken by default'
       - '`git reflog` reads from the remote server; `git log` only from local'
       correct_index: 0
+      option_feedback:
+        1: This answer treats reflog as "log v2" — they're different tools answering different questions (graph traversal vs. HEAD-position diary).
+        2: This answer assumes a default tool is broken; both work correctly, they differ only in *what* they walk.
+        3: This answer confuses reflog with remote history; reflog is purely local, while `log --all` walks any ref including remote-tracking ones.
       explanation: This is the load-bearing distinction. `git log --all` is a graph traversal starting at refs; an unreachable commit is invisible to it. `git reflog` is a literal diary of HEAD positions — reachability is irrelevant. Internalize this or later destructive commands will feel unpredictable.
     - question: What does `HEAD@{2}` mean?
       options:
@@ -311,6 +333,10 @@ steps:
       - The second parent of HEAD (like `HEAD^2`)
       - A tag named `HEAD@{2}`
       correct_index: 1
+      option_feedback:
+        0: This answer confuses `HEAD@{2}` (a reflog position) with `HEAD~2` (a parent walk along commit history).
+        2: This answer confuses `HEAD@{2}` with `HEAD^2` — three similar-looking suffixes (`~`, `^`, `@{}`) all mean different things.
+        3: This answer treats `@{n}` as part of a name rather than reflog syntax.
       explanation: '`HEAD@{n}` is reflog syntax — n movements back in the HEAD-position log. Different from `HEAD~n` (n commits back along first-parent chain) and `HEAD^n` (nth parent of HEAD). Three similar-looking but semantically different suffixes — get them wrong and you will end up at a different commit than you intended.'
     - question: Reflog is **local only**. Which of these destroys your reflog and the rescue path with it? (Select all that apply)
       type: multiple
@@ -323,6 +349,8 @@ steps:
       - 0
       - 1
       - 3
+      option_feedback:
+        2: This answer confuses remote history with local reflog; force-pushing rewrites the *remote* branch but leaves your local `.git/logs/` (and its rescue path) untouched.
       explanation: Reflog lives in `.git/logs/`. Destroying `.git/` (option 1) takes the reflog with it. A fresh clone (option 2) starts with an empty reflog of *that* clone. Expiry (option 4) is configurable via `gc.reflogExpire`. A force-push (option 3) rewrites the remote's *branch* but doesn't touch your local reflog — your local rescue path is still intact.
     - question: Put these steps in the correct order to rescue an orphaned commit you just made in detached HEAD.
       type: parsons
@@ -344,13 +372,17 @@ steps:
       - It rewrites the commit's SHA so it becomes reachable
       - It restores the commit from a backup
       correct_index: 1
+      option_feedback:
+        0: This answer treats `git branch` as a copy operation; it only writes a 41-byte ref file — the commit object itself never moves.
+        2: This answer assumes Git mutates commits to make them reachable; SHAs are content-addressable and immutable, so any rewrite would be a *different* commit.
+        3: This answer invents a backup mechanism; the commit was never deleted, only unreferenced.
       explanation: Same mechanic you learned in the previous step. Creating a branch is one `fwrite()` of 41 bytes. Rescue doesn't move commits; it makes them reachable. This is why rescue is instantaneous regardless of commit size — a concept the next step formalizes as Git's object model.
 - title: Relative Commit Addresses & Git's Object Database
   view: git_graph
   instructions: |
     ### 🎯 You will learn to
     - **Name any commit without a SHA** using `HEAD~n`, `BRANCH^`, and `rev-parse`.
-    - **Prove Git stores snapshots, not deltas** by hashing bytes directly.
+    - **Prove Git's history model is snapshot-based** — commits point to trees that point to blobs holding full file bytes — by hashing content directly.
     - **Predict** that a single trailing space changes the entire SHA chain — and say why that matters for `blame` later.
 
     ### 🚪 This is the threshold step
@@ -428,21 +460,34 @@ steps:
     new commit SHA. That's why reformatter commits (Step 6) mask real
     authorship: every whitespace tweak rewrites the entire hash chain.
 
-    ### ✍️ Before moving on (the unifying schema)
+    ### ✍️ Before moving on (the unifying invariant)
 
-    Close this and finish the sentence in your own words:
+    Close this and answer from memory:
 
-    > *"Every Git command either ___________ or ___________ — never both, never edit-in-place."*
+    > *"What's the one property of existing commit objects that lets every later step in this tutorial work?"*
 
-    <details markdown="1"><summary>The schema (peek only after attempting)</summary>
+    <details markdown="1"><summary>The invariant (peek only after attempting)</summary>
 
-    Every Git command either **moves one or more pointers** across the immutable
-    object graph, OR **creates new immutable objects** (commits/trees/blobs)
-    and then moves a pointer to the new one. Never both. Never edit-in-place.
+    **Existing commit objects are immutable.** Git changes history by
+    creating new objects and/or moving references — never by editing old
+    commits in place.
 
-    Internalize this and nothing in Steps 4–15 will be mysterious. Whenever
-    a later step feels confusing, ask: *what objects is this creating? what
-    pointers is this moving?*
+    Every Git command falls into one of these operation categories:
+
+    | Operation type | Examples | What changes |
+    |---|---|---|
+    | **Create immutable objects** | `hash-object`, `commit`, `stash`, `cherry-pick`, `revert` | New blob / tree / commit objects |
+    | **Move refs** | `branch`, `reset`, fast-forward `merge`, finalizing a successful `rebase` | Branch / ref points to a different commit |
+    | **Update index** | `add`, conflicted-resolution staging, `merge --squash` | Staging area changes |
+    | **Update working tree** | `switch`, `restore`, `checkout`, `stash pop`, `submodule update` | Files on disk change |
+    | **Transfer objects/refs** | `fetch`, `push`, `pull` | Local/remote object/ref sets change |
+
+    Most everyday commands combine categories (e.g., `commit` creates a
+    commit object **and** moves a branch ref **and** clears the index).
+    The point isn't that operations are pure — it's that *no operation
+    rewrites existing commit objects*. Whenever a later step feels
+    confusing, ask: *what objects is this creating? what refs is it
+    moving? what's still in `.git/objects` that I could recover?*
 
     </details>
   setup_commands:
@@ -476,6 +521,10 @@ steps:
       - '`main-2`'
       - '`main..2`'
       correct_index: 1
+      option_feedback:
+        0: This answer confuses `^2` (the second parent of a merge) with `~2` (two commits back along the first-parent chain).
+        2: This answer invents a syntax — Git uses `~` and `^`, never `-` for relative addressing.
+        3: This answer confuses `..` (a range expression) with single-commit addressing.
       explanation: '`main~2` walks back 2 commits along the first-parent chain. `main^2` means the *second parent* of a merge commit — completely different. `main-2` and `main..2` are not valid syntax.'
     - question: What does `git hash-object` do?
       options:
@@ -484,6 +533,10 @@ steps:
       - Encrypts the file with a cryptographic hash
       - Compresses the file for storage
       correct_index: 1
+      option_feedback:
+        0: This answer confuses a local plumbing command with a network operation; `hash-object` never touches a remote.
+        2: This answer confuses cryptographic hashing (one-way fingerprint) with encryption (reversible).
+        3: This answer confuses content hashing (identity) with compression (size reduction).
       explanation: '`git hash-object` is the low-level plumbing that every commit uses internally. Because identical content always yields the same SHA, Git deduplicates identical files across the entire history for free.'
     - question: Which statements about Git objects are true? (Select all that apply)
       type: multiple
@@ -496,7 +549,9 @@ steps:
       - 0
       - 1
       - 2
-      explanation: Git stores **full snapshots** as blobs, not deltas. (Pack files compress with delta encoding later, but the logical model is snapshot-based.) Filenames live in tree objects, not in blobs — so two files with identical content share one blob.
+      option_feedback:
+        3: This answer confuses Git's snapshot-based history *model* with its later pack-file *storage* layer; delta compression is a storage optimization, not the model.
+      explanation: 'Git''s **history model is snapshot-based**: each commit points to a tree, which points to blobs holding full file content. Storage may later be packed and delta-compressed (`git gc` produces pack files using delta encoding) without changing the model — the abstraction commits expose is always whole snapshots. Filenames live in tree objects, not in blobs, so two files with identical content share one blob.'
     - question: '**[Revisit Step 1]** You are in detached HEAD at a commit that is 4 back from `main`. Which command prints that SHA without copying it from `git log`?'
       options:
       - '`git rev-parse main~4`'
@@ -504,6 +559,10 @@ steps:
       - '`git checkout main~4`'
       - '`git show main~4`'
       correct_index: 0
+      option_feedback:
+        1: This answer invents a flag — `git log` uses `-n` or `--max-count`, not `--limit`.
+        2: This answer moves HEAD instead of just printing the SHA; the prompt asked for the SHA without checkout.
+        3: This answer prints the full commit diff; `git show` is overkill when you only need the resolved SHA.
       explanation: '`git rev-parse` is the universal ''ref → SHA'' translator. It accepts relative (`main~4`), symbolic (`main`), short (`a73f`), or branch/tag references. `git show` displays the full commit diff, not just the SHA. `git log --limit` is not valid syntax.'
     - question: Why does `git branch feature` complete in milliseconds even on a 10-GB repo?
       options:
@@ -512,6 +571,10 @@ steps:
       - Branches are stored on the remote server, not locally
       - Git skips adding the branch until you commit to it
       correct_index: 1
+      option_feedback:
+        0: This answer assumes branch creation involves heavyweight work; it's just a `fwrite()` of 41 bytes — no traversal, no compression.
+        2: This answer confuses local branches with remote refs; local branch creation is purely local and offline-capable.
+        3: This answer assumes lazy initialization; the branch is created and ready immediately, no commit required.
       explanation: A branch creation is a single `fwrite()` of 41 bytes. No copying, no traversal, no network. Once you see branches as tiny pointer files, their speed and cheapness stops being mysterious.
     - question: '**[Revisit Steps 1-2]** You enter detached HEAD at an old commit, make one exploratory commit, and switch away without creating a branch. In terms of Git objects, what happens to that commit?'
       options:
@@ -520,6 +583,10 @@ steps:
       - The commit is moved into the `.git/orphans` directory
       - The commit is converted into a blob
       correct_index: 1
+      option_feedback:
+        0: This answer assumes Git is eager about cleanup; objects survive until `git gc` decides to prune unreachable ones.
+        2: This answer invents a `.git/orphans` directory; orphans live in the same `.git/objects/` as everything else.
+        3: This answer assumes Git mutates the object type; commits stay commits, they just lose their refs.
       explanation: 'Objects in Git live until garbage collection. An orphaned commit is not ''deleted'' — it is just unreachable from any ref. `git reflog` still records HEAD''s path through it, which is how `git branch rescue <sha>` can rescue it. This links Step 2''s reflog safety net to Step 3''s object-model view: unreachable ≠ deleted.'
     - question: Put in order the commands that prove Git is content-addressable (same bytes → same SHA, across unrelated repos).
       type: parsons
@@ -650,7 +717,7 @@ steps:
   - myproject/calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\ngit switch -q main 2>/dev/null\nwhile git stash list | grep -q '.'; do git stash drop -q 2>/dev/null || break; done\nif ! grep -q 'def power' calculator.py; then\n  printf '\\ndef power(a, b):\\n    # TODO: add input validation\\n    return a ** b\\n' >> calculator.py\nfi\n"
+  - "cd /tutorial/myproject\ngit switch -q main 2>/dev/null\n! git stash list 2>/dev/null | grep -q . && grep -q 'def power' calculator.py && exit 0\ngit stash clear -q 2>/dev/null\nif ! grep -q 'def power' calculator.py; then\n  printf '\\ndef power(a, b):\\n    # TODO: add input validation\\n    return a ** b\\n' >> calculator.py\nfi\n"
   solution:
     files:
     - path: myproject/calculator.py
@@ -714,6 +781,10 @@ steps:
       - '`git stash` — saves modifications to a temporary holding area and cleans the tree'
       - '`git reset --hard` — resets everything so you can restart later'
       correct_index: 2
+      option_feedback:
+        0: This answer destroys the in-progress work the question wants to preserve.
+        1: This answer pollutes shared history if pushed; the prompt asks to keep the tree clean *without* losing work.
+        3: This answer wipes the in-progress changes entirely — the opposite of preserving them.
       explanation: '`git stash` is built for this: save tracked modifications and staged changes to a private stack, reset the tree, let you context-switch cleanly. Recovered with `git stash pop`.'
     - question: What does `git status` report immediately after `git stash`?
       options:
@@ -722,6 +793,10 @@ steps:
       - '`nothing to commit, working tree clean`'
       - An error, because `git status` cannot be run after stashing
       correct_index: 2
+      option_feedback:
+        0: This answer confuses stash with staging — stash moves changes to a private commit at `refs/stash`, not the index.
+        1: This answer assumes Git forgets the changes; they're safe in a stash commit, the working tree just matches HEAD.
+        3: This answer assumes stash breaks `git status`; status works fine after stashing.
       explanation: '`git stash` resets the working tree to match HEAD — so `git status` reports clean. Your changes are safe in the stash commit at `refs/stash`.'
     - question: Difference between `git stash pop` and `git stash apply`?
       options:
@@ -730,6 +805,10 @@ steps:
       - '`apply` creates a new commit; `pop` does not'
       - They are identical
       correct_index: 0
+      option_feedback:
+        1: This answer reverses the constraint; both verbs work on any entry, the difference is whether the entry is removed afterward.
+        2: This answer confuses applying a stash with creating a commit; neither pop nor apply produces a new commit.
+        3: This answer ignores the actual difference (whether the entry survives or is dropped).
       explanation: Use `pop` for the usual workflow. Use `apply` when you want the same stash on multiple branches — the entry stays in the list until you manually `git stash drop`.
     - question: You ran `git stash` but your brand-new file `feature.py` (never `git add`-ed) is still there. Why?
       options:
@@ -738,6 +817,10 @@ steps:
       - '`git stash` needs a message for untracked files; use `git stash push -m`'
       - Git ignores files starting with `.`
       correct_index: 1
+      option_feedback:
+        0: This answer invents a size restriction — stash has no size limit; the issue is tracked vs. untracked.
+        2: This answer confuses message annotation with the inclusion of untracked files; `-u` is the relevant flag, not `-m`.
+        3: This answer confuses `.gitignore` rules with stash's tracked-files default; dot-files aren't ignored by default.
       explanation: Plain `git stash` only captures what Git is tracking — modified tracked files and staged changes. For brand-new files, use `git stash -u` (`--include-untracked`).
     - question: '**[Evaluate]** A teammate says: ''I never use stash — I just commit with `WIP` and squash later.'' Best evaluation?'
       options:
@@ -746,6 +829,10 @@ steps:
       - Both work; WIP pollutes shared history if pushed and requires disciplined squash, stash stays private/local. Mature teams have conventions for both
       - WIP is wrong — Git rejects commits with that message
       correct_index: 2
+      option_feedback:
+        0: This answer ignores the cost of WIP commits polluting shared history if pushed.
+        1: This answer flattens a real distinction (private/local stash vs. potentially-pushed WIP commits) into mere preference.
+        3: This answer assumes Git rejects messages — it doesn't; the practice is just discouraged, not blocked.
       explanation: Both preserve work. The difference is visibility. Pushed WIP commits enter shared history and degrade `git log`, `git bisect`, and code review. Stash is private — no pollution, but you can forget it. Neither is universally right.
     - question: '**[Revisit Step 1]** You stashed on `main`, then switched to a commit with `git switch --detach HEAD~2` to inspect old code. What is the safe way to recover the stash?'
       options:
@@ -754,6 +841,10 @@ steps:
       - The stash is lost — it was tied to `main`
       - Run `git stash apply detached` to redirect it
       correct_index: 1
+      option_feedback:
+        0: This answer ignores the conflict-on-pop risk in detached HEAD where there's no branch to anchor unresolved changes.
+        2: This answer assumes stashes are tied to the branch where they were created; they aren't — `refs/stash` is independent.
+        3: This answer invents a syntax — `git stash apply` takes a stash ref, not a branch state name.
       explanation: Stashes are not tied to a branch — but a conflicting pop in detached HEAD leaves you with unresolved changes and nothing anchoring them. Always return to a named branch before popping.
     - question: '**[Revisit Step 3]** Where does Git physically store a stash entry?'
       options:
@@ -762,6 +853,10 @@ steps:
       - In RAM only; restarting the shell loses it
       - In the remote repository
       correct_index: 1
+      option_feedback:
+        0: This answer invents a `stash.txt` file; stash uses the regular Git object database, not a separate text store.
+        2: This answer assumes stash is volatile; it survives reboots because it's a real commit anchored at `refs/stash`.
+        3: This answer confuses local stash with remote sync; stash is local-only by design.
       explanation: A stash is a proper commit in the object database, anchored by `refs/stash`. This is why `git stash` survives across terminals and reboots, and why `git stash apply <sha>` works with any historical stash. Same object model as Step 3 — stash is not a special case.
     - question: Put in order the complete "stash → hotfix → resume" workflow from Task 3 of this step.
       type: parsons
@@ -921,15 +1016,15 @@ steps:
   - myproject/calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\ngit cherry-pick --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log experimental --oneline 2>/dev/null | grep -q 'Add absolute value function'; then\n  exit 0\nfi\ngit branch -D experimental 2>/dev/null\ngit switch -qc experimental\nprintf '\\ndef experimental_multiply(a, b):\\n    # half-baked — uses addition in a loop\\n    result = 0\\n    for _ in range(b):\\n        result += a\\n    return result\\n' >> calculator.py\ngit commit -qam 'Add experimental multiply (not ready)'\nprintf '\\ndef absolute(x):\\n    \"\"\"Return |x| — handles negatives, zero, and positives.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\ngit commit -qam 'Add absolute value function'\ngit switch -q main\n"
+  - "cd /tutorial/myproject\n[ -e .git/CHERRY_PICK_HEAD ] && git cherry-pick --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log experimental --oneline 2>/dev/null | grep -q 'Add absolute value function'; then\n  exit 0\nfi\ngit branch -D experimental 2>/dev/null\ngit switch -qc experimental\nprintf '\\ndef experimental_multiply(a, b):\\n    # half-baked — uses addition in a loop\\n    result = 0\\n    for _ in range(b):\\n        result += a\\n    return result\\n' >> calculator.py\ngit commit -qam 'Add experimental multiply (not ready)'\nprintf '\\ndef absolute(x):\\n    \"\"\"Return |x| — handles negatives, zero, and positives.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\ngit commit -qam 'Add absolute value function'\ngit switch -q main\n"
   solution:
     # The interactive instructions teach cherry-pick + a deliberate conflict
     # resolved via sed. The automated solution rebuilds the same end state
     # deterministically (the harness can't replicate mid-flow conflict edits).
     commands:
     - cd /tutorial/myproject && git switch main
-    - git cherry-pick --abort 2>/dev/null; true
-    - git merge --abort 2>/dev/null; true
+    - '[ -e .git/CHERRY_PICK_HEAD ] && git cherry-pick --abort 2>/dev/null'
+    - '[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null'
     - git reset --hard HEAD
     - git clean -fdq
     # Ensure def divide is on main (downstream steps' tests import it)
@@ -984,6 +1079,10 @@ steps:
       - Merges the entire branch containing that commit
       - Renames the commit on the current branch
       correct_index: 1
+      option_feedback:
+        0: This answer assumes cherry-pick mutates the source branch; it's a copy, not a move — the source commit is untouched.
+        2: This answer confuses single-commit cherry-pick with whole-branch merge.
+        3: This answer treats cherry-pick as a metadata edit; it actually creates a new commit object with a new SHA.
       explanation: Cherry-pick replays one commit as a *new* commit on HEAD. The source commit is unchanged. The new commit has the same patch and message but a new parent and therefore a new SHA.
     - question: You cherry-pick commit `abc123` from `experimental` onto `main`. Afterwards, what is on `experimental`?
       options:
@@ -992,6 +1091,10 @@ steps:
       - '`experimental` now points to `main`'
       - '`experimental` has been deleted'
       correct_index: 1
+      option_feedback:
+        0: This answer assumes cherry-pick removes the source commit; cherry-pick is purely additive and doesn't touch the source.
+        2: This answer assumes branches got rewired; cherry-pick only adds to the current branch.
+        3: This answer assumes cherry-pick is destructive on the source; it isn't.
       explanation: Cherry-pick is a copy operation. The source commit stays where it is. Two commits with the same patch now live in two branches with different SHAs.
     - question: During a cherry-pick, Git reports a conflict. Which sequence correctly completes it?
       options:
@@ -1000,6 +1103,10 @@ steps:
       - Run `git cherry-pick --force` to override the conflict
       - Run `git commit --amend` to finalize the cherry-pick
       correct_index: 1
+      option_feedback:
+        0: This answer destroys the work instead of resolving the conflict.
+        2: This answer invents a flag; Git has no `--force` option for cherry-pick.
+        3: This answer breaks the cherry-pick flow — `--amend` rewrites the previous commit, not the cherry-pick in progress.
       explanation: 'Standard conflict resolution: edit the file to remove `<<<<<<<` markers, `git add` to mark as resolved, `git cherry-pick --continue` (commits silently with the original message; pass `-e`/`--edit` if you want the editor). `--abort` bails and restores HEAD.'
     - question: '**[Revisit Step 3]** After a cherry-pick, the new commit has a different SHA from the source. Why?'
       options:
@@ -1008,6 +1115,10 @@ steps:
       - Git randomly regenerates SHAs for safety
       - The new commit has no parent at all
       correct_index: 1
+      option_feedback:
+        0: This answer assumes cherry-pick rewrites content; the patch is identical, only the parent differs.
+        2: This answer assumes randomness; SHAs are deterministic hashes of (tree + parents + metadata).
+        3: This answer assumes the new commit is parentless; it has the current HEAD as its parent.
       explanation: A commit's SHA is `SHA-1(tree + parent(s) + author + committer + message)`. Same patch on a different parent → different tree (possibly) and definitely different parent reference → different SHA. Chapter 2's object-model lesson makes this inevitable.
     - question: Which scenario is a **bad** fit for cherry-pick?
       options:
@@ -1016,6 +1127,10 @@ steps:
       - Integrating all 50 commits of a long-running feature branch into main
       - Applying the same emergency patch to three parallel maintenance branches
       correct_index: 2
+      option_feedback:
+        0: This answer rejects cherry-pick's canonical use case; one-commit backports are exactly what it's for.
+        1: This answer rejects cherry-pick's other canonical use case (surgical extraction from a partial branch).
+        3: This answer rejects another canonical use case; cherry-picking the same fix into multiple maintenance branches is standard practice.
       explanation: For integrating many commits, use `git merge` or `git rebase` — cherry-picking 50 commits by hand is laborious and loses merge base information, which complicates future merges. Cherry-pick is surgical — reserve it for one or a few commits.
     - question: '**[Revisit Step 4]** Mid-cherry-pick, a conflict pauses Git. You realize you need to check something on another branch first. Which sequence safely preserves your conflict-resolution progress so far?'
       options:
@@ -1024,6 +1139,10 @@ steps:
       - Just `git switch other-branch` — Git will remember the cherry-pick
       - '`git commit -m ''WIP conflict'' --allow-empty` to save the mid-state'
       correct_index: 1
+      option_feedback:
+        0: This answer assumes stash captures Git's internal cherry-pick state (CHERRY_PICK_HEAD, conflicted index); it doesn't.
+        2: This answer assumes Git tolerates mid-cherry-pick switches; it doesn't, the index is in an unmergeable state.
+        3: This answer corrupts the cherry-pick state by inserting a foreign commit into its in-progress flow.
       explanation: You cannot cleanly stash or switch with an in-progress cherry-pick — Git's internal state (MERGE_MSG, CHERRY_PICK_HEAD, conflicted index) is not stash-compatible. Abort, switch, do the other task, come back, and re-start the cherry-pick. The abort is cheap and restores a clean state.
     - question: Put in order the commands that resolve a conflicted cherry-pick end-to-end.
       type: parsons
@@ -1100,6 +1219,32 @@ steps:
 
     GitHub's web blame UI honors this file too.
 
+    ### Task 3: Default blame vs. `HEAD --` blame
+
+    **Predict first:** if your working tree has uncommitted edits to a
+    file, will plain `git blame <file>` show those uncommitted lines or
+    hide them?
+
+    ```bash
+    echo "# uncommitted note" >> calculator.py
+    git blame calculator.py | tail        # the uncommitted line is shown — with a zero SHA "Not Committed Yet"
+    git blame HEAD -- calculator.py | tail # only what's committed at HEAD
+    git restore calculator.py             # discard the experimental edit
+    ```
+
+    **The distinction.** Default `git blame <file>` annotates the **file
+    as it currently is on disk** — uncommitted lines included, marked
+    with the zero SHA `00000000` and the author "Not Committed Yet".
+    `git blame HEAD -- <file>` instead asks "who last touched this line
+    in the version recorded at HEAD?" Different question, different
+    answer when the working tree is dirty.
+
+    **Still a real blind spot, though.** Blame can only attribute *existing*
+    lines (in either mode). A bug caused by a *deleted* line is invisible.
+    For deletions, reach for `git log -p`, `git log -S` (pickaxe search),
+    or `git bisect` (next step) — the official Git docs are explicit that
+    deleted/replaced lines require diff- or pickaxe-style history search.
+
     <details markdown="1"><summary>📋 Full flag cheat sheet (`-C`, `-M`, `ignoreRevsFile`)</summary>
 
     | Flag | Use when |
@@ -1122,11 +1267,21 @@ steps:
 
     </details>
   setup_commands:
-  - cd /tutorial/myproject && git switch main 2>/dev/null; true
-  - cd /tutorial/myproject && (git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize' || grep -q 'def clip' calculator.py) || printf '\ndef clip(x, lo, hi):    \n    """Clip x to [lo, hi]."""    \n    if x < lo:\n        return lo\n    if x > hi:\n        return hi\n    return x\n' >> calculator.py
-  - cd /tutorial/myproject && git diff --quiet calculator.py || GIT_AUTHOR_NAME=Bob GIT_AUTHOR_EMAIL=bob@example.com GIT_COMMITTER_NAME=Bob GIT_COMMITTER_EMAIL=bob@example.com git commit -qam 'feat: add clip function'
-  - cd /tutorial/myproject && git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize' || sed -i 's/ *$//' calculator.py
-  - cd /tutorial/myproject && git diff --quiet calculator.py || GIT_AUTHOR_NAME=CI-Bot GIT_AUTHOR_EMAIL=ci@example.com GIT_COMMITTER_NAME=CI-Bot GIT_COMMITTER_EMAIL=ci@example.com git commit -qam 'CI: auto-format via whitespace-normalize'
+  - |
+    cd /tutorial/myproject
+    git switch main 2>/dev/null || true
+    if ! git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize'; then
+      if ! grep -q 'def clip' calculator.py; then
+        printf '\ndef clip(x, lo, hi):    \n    """Clip x to [lo, hi]."""    \n    if x < lo:\n        return lo\n    if x > hi:\n        return hi\n    return x\n' >> calculator.py
+      fi
+      if ! git diff --quiet calculator.py; then
+        GIT_AUTHOR_NAME=Bob GIT_AUTHOR_EMAIL=bob@example.com GIT_COMMITTER_NAME=Bob GIT_COMMITTER_EMAIL=bob@example.com git commit -qam 'feat: add clip function'
+      fi
+      sed -i 's/ *$//' calculator.py
+      if ! git diff --quiet calculator.py; then
+        GIT_AUTHOR_NAME=CI-Bot GIT_AUTHOR_EMAIL=ci@example.com GIT_COMMITTER_NAME=CI-Bot GIT_COMMITTER_EMAIL=ci@example.com git commit -qam 'CI: auto-format via whitespace-normalize'
+      fi
+    fi
   solution:
     commands:
     - cd /tutorial/myproject
@@ -1169,6 +1324,10 @@ steps:
       - The remote collaborators who have access to the file
       - The diff of the most recent commit that touched the file
       correct_index: 1
+      option_feedback:
+        0: This answer treats `git blame` as static analysis; blame is purely about line provenance, not bug detection.
+        2: This answer confuses authorship-of-lines with access-control of the file.
+        3: This answer confuses blame's per-line view with `git show`'s per-commit view.
       explanation: 'Blame gives per-line provenance — the last-touching commit and author. Combined with `git show <sha>`, you see the full context: why the line was written this way.'
     - question: You need to know the commit message for line 42's last modification. Which sequence gets you there fastest?
       options:
@@ -1177,6 +1336,10 @@ steps:
       - '`git diff calculator.py` to see what changed'
       - '`git status calculator.py`'
       correct_index: 1
+      option_feedback:
+        0: This answer treats line numbers as a search string; `git log` doesn't index by line number, only `blame` does.
+        2: This answer shows uncommitted changes, not authorship of committed lines.
+        3: This answer reports working-tree state, not historical authorship.
       explanation: '`git blame -L 42,42` restricts output to line 42 only — instant. The first column is the SHA; pipe that SHA into `git show` for the full message. This two-step recipe is idiomatic.'
     - question: A colleague recently ran `black` across the whole repository. Now `git blame` shows them as the author of every line. How do you see the *real* last-meaningful author?
       options:
@@ -1185,6 +1348,10 @@ steps:
       - Git has no way to recover this information
       - Use `git reflog` to rewind blame
       correct_index: 1
+      option_feedback:
+        0: This answer is needlessly destructive; `-w` and `blame.ignoreRevsFile` solve this without rewriting history.
+        2: This answer assumes the reformatter has masked the data permanently; it hasn't, blame just needs the right flags.
+        3: This answer confuses reflog (HEAD-position diary) with blame's commit-by-line attribution.
       explanation: '`-w` ignores whitespace-only changes, hiding pure reformatting from blame. For recurring formatters, add the reformat commit SHAs to a file referenced by `blame.ignoreRevsFile` — now everyone skips them consistently.'
     - question: '**[Revisit Step 3]** When `git blame` prints a SHA for a line, what kind of object does that SHA refer to?'
       options:
@@ -1193,6 +1360,10 @@ steps:
       - A commit object — the last one that modified that line
       - A stash entry
       correct_index: 2
+      option_feedback:
+        0: This answer confuses commit objects with blob objects; blame attributes to commits, not blobs.
+        1: This answer confuses commit objects with tree objects; blame's SHAs are commit SHAs.
+        3: This answer confuses commits with stash entries; blame doesn't reference stashes.
       explanation: Blame attributes lines to commits. The SHA printed is a commit SHA — run `git cat-file -t <sha>` to confirm it reports `commit`. You then use `git show <sha>` to read it.
     - question: When is `git blame` the **wrong** tool for finding a bug?
       options:
@@ -1201,6 +1372,10 @@ steps:
       - When you need the timestamp of a line
       - When you need the commit message behind a line
       correct_index: 0
+      option_feedback:
+        1: This answer states blame's *core use case* — the question asked when blame is the *wrong* tool.
+        2: This answer states another core blame use case; blame prints timestamps for every line.
+        3: This answer describes the standard blame → show chain; it's blame's strength, not its weakness.
       explanation: Blame only tells you about *existing* lines. A bug caused by an *absent* line (e.g., forgetting to call `validate()`) leaves blame blind. For regressions introduced by a missing line, use `git bisect` (next step) or `git log -p` to scan history.
     - question: '**[Analyze]** Give a concrete bug where `git blame` would mislead you even though the culprit line IS in the file. Which of the following fits best?'
       options:
@@ -1209,15 +1384,23 @@ steps:
       - A commit that was cherry-picked to `main` from `experimental`
       - A commit that was merged via a merge commit
       correct_index: 1
+      option_feedback:
+        0: This answer assumes blame keeps showing the original typo; once fixed, blame attributes the line to the fixer.
+        2: This answer assumes cherry-pick fools blame; the new commit has its own SHA but blame still attributes correctly.
+        3: This answer assumes merge commits mask authorship; standard merges leave per-line history intact.
       explanation: 'Reformatter commits are the classic blame-mislead scenario. The CI bot''s commit ''last touched'' every line, so blame attributes all lines to the bot — hiding the real author who introduced the logic bug. Defense: `git blame -w` to skip whitespace-only changes, or `blame.ignoreRevsFile` to skip known reformat commits.'
-    - question: '**[Revisit Step 4]** You are about to run `git blame` on a file. Your working directory has uncommitted changes to that file. Will blame show you the committed lines or your uncommitted edits?'
+    - question: '**[Revisit Step 4]** Your working tree has an uncommitted edit to `calculator.py`. You run plain `git blame calculator.py`. What do you see for the modified line?'
       options:
-      - Your uncommitted edits — blame always reflects the current working tree
-      - The committed lines — blame operates on the file's most recent committed state, so your unstaged edits are invisible to it
-      - Both, merged together with conflict markers
-      - Git refuses to run blame until changes are committed or stashed
+      - Nothing — Git refuses to run blame on a dirty file
+      - The line appears with a zero SHA labeled "Not Committed Yet" — default blame annotates the working-tree copy of the file, including uncommitted lines
+      - The line appears with the SHA of the last commit that touched the file — uncommitted edits are invisible to blame
+      - An error about a detached working tree
       correct_index: 1
-      explanation: Blame operates on committed history. Your uncommitted edits are invisible to blame — which is usually what you want (you are trying to find who wrote the *committed* version of a line). If you want to clear uncommitted changes first to compare cleanly, `git stash` (Step 4) is a non-destructive option.
+      option_feedback:
+        0: This answer assumes Git refuses dirty trees; blame works fine, it just shows the uncommitted line specially.
+        2: This answer assumes blame ignores the working tree; default blame uses the working-tree copy, only `blame HEAD --` restricts to committed lines.
+        3: This answer invents an error condition; "detached" applies to HEAD, not to working trees.
+      explanation: Default `git blame <file>` annotates the **file as it currently is** — so an uncommitted line appears with the zero SHA `00000000` and author "Not Committed Yet". To restrict to the committed version of the file, use `git blame HEAD -- <file>`. Two different questions ("who touched what I'm reading right now?" vs. "who touched what's recorded at HEAD?"); two different commands. Note this is separate from the *deletion* blind spot — a line that no longer exists in the file is invisible to either mode of blame.
     - question: Put in order the "forensic chain" for understanding why a specific line in `parser.py` exists.
       type: parsons
       display: block
@@ -1412,7 +1595,7 @@ steps:
   - myproject/test_calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\ngit bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log main --oneline 2>/dev/null | grep -q 'Simplify absolute (BUG'; then\n  exit 0\nfi\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: add absolute function' 2>/dev/null\nfi\nprintf 'from calculator import add, divide, absolute\\nassert add(2, 3) == 5\\nassert divide(10, 2) == 5\\nassert absolute(-4) == 4\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Add regression tests'\necho '# commit A: refactor docstring' >> calculator.py\ngit commit -qam 'Refactor: tidy docstring'\necho '# commit B: new helper' >> calculator.py\ngit commit -qam 'Add unused helper comment'\nsed -i 's/return x if x >= 0 else -x/return x/' calculator.py\nif git diff --quiet calculator.py; then\n  sed -i 's/def absolute(x):/def absolute(x):\\n    return x  # BUG\\n    pass  # unreachable/' calculator.py\nfi\ngit commit -qam 'Simplify absolute (BUG: removes negation!)'\necho '# commit D: later tweak' >> calculator.py\ngit commit -qam 'Later tweak'\necho '# commit E: even later' >> calculator.py\ngit commit -qam 'Even later tweak'\n"
+  - "cd /tutorial/myproject\n[ -e .git/BISECT_START ] && git bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log main --oneline 2>/dev/null | grep -q 'Simplify absolute (BUG'; then\n  exit 0\nfi\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: add absolute function' 2>/dev/null\nfi\nprintf 'from calculator import add, divide, absolute\\nassert add(2, 3) == 5\\nassert divide(10, 2) == 5\\nassert absolute(-4) == 4\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Add regression tests'\necho '# commit A: refactor docstring' >> calculator.py\ngit commit -qam 'Refactor: tidy docstring'\necho '# commit B: new helper' >> calculator.py\ngit commit -qam 'Add unused helper comment'\nsed -i 's/return x if x >= 0 else -x/return x/' calculator.py\nif git diff --quiet calculator.py; then\n  sed -i 's/def absolute(x):/def absolute(x):\\n    return x  # BUG\\n    pass  # unreachable/' calculator.py\nfi\ngit commit -qam 'Simplify absolute (BUG: removes negation!)'\necho '# commit D: later tweak' >> calculator.py\ngit commit -qam 'Later tweak'\necho '# commit E: even later' >> calculator.py\ngit commit -qam 'Even later tweak'\n"
   solution:
     # Interactive instructions teach bisect + sed-fix. Automated solution
     # reverses the setup's planted bug via sed (the inverse substitution).
@@ -1457,6 +1640,10 @@ steps:
       - ~6 — `log₂(50) ≈ 6`
       - 1 — bisect inspects all commits at once
       correct_index: 2
+      option_feedback:
+        0: This answer assumes linear search; bisect halves candidates each step (log₂(50) ≈ 6, not 50).
+        1: This answer halves only once; bisect halves repeatedly until one commit remains.
+        3: This answer assumes a single oracle; bisect needs one test per midpoint to drive the search.
       explanation: 'Binary search halves the range each test: 50 → 25 → 13 → 7 → 4 → 2 → 1. About 6 iterations. For 1000 commits, ~10 tests. This scaling is why bisect is irreplaceable on long-running projects.'
     - question: Which sequence correctly runs an automated bisect?
       options:
@@ -1465,6 +1652,10 @@ steps:
       - '`git bisect run <cmd> HEAD HEAD~50`'
       - '`git bisect <cmd>`'
       correct_index: 1
+      option_feedback:
+        0: This answer skips the boundary-marking step; without `bad`/`good` markers, bisect can't binary-search.
+        2: This answer puts boundaries in the wrong place; `start` takes them, `run` takes a command.
+        3: This answer omits both `start` and `run`; bisect needs both for automation.
       explanation: You must tell bisect the boundaries first — `bad` (usually HEAD) and a known-good earlier commit. Only then can `run` automate. The command's exit code (0 = good, nonzero = bad) drives the search.
     - question: You ran `git bisect run` successfully. What must you do afterwards?
       options:
@@ -1473,6 +1664,10 @@ steps:
       - '`git stash` to preserve bisect state'
       - Push the result to the remote
       correct_index: 1
+      option_feedback:
+        0: This answer assumes auto-cleanup; HEAD stays at the last midpoint until you `bisect reset`.
+        2: This answer confuses stash (working-tree shelving) with bisect cleanup.
+        3: This answer assumes the bisect result needs to be shared via push; the result is local diagnostic info.
       explanation: '`git bisect reset` is non-negotiable. It restores HEAD to where you started and removes bisect''s temporary refs. Skipping it leaves HEAD on a random historical commit — a common cause of ''why is my code weird?'' panic.'
     - question: Which test property is **required** for `git bisect run` to work?
       options:
@@ -1481,6 +1676,10 @@ steps:
       - The test must be written in Python
       - The test must only exist in the latest commit
       correct_index: 1
+      option_feedback:
+        0: This answer invents an output-format requirement; bisect cares about exit codes, not output format.
+        2: This answer invents a language requirement; bisect runs any executable.
+        3: This answer is backwards; the test must work at *every* commit in the range, not just the latest.
       explanation: 'Bisect uses the exit code as its oracle. Also critical: the test must actually run at every historical commit — if the test file was added mid-range, older commits will fail to even find the test, confusing bisect. Use `git bisect run -- bash -c ''cp /tmp/test.py . && python3 test.py''` to work around this.'
     - question: '**[Revisit Step 1]** In the middle of a manual bisect, Git leaves HEAD at a historical commit while you decide good/bad. What HEAD state are you in, and why is that OK?'
       options:
@@ -1489,6 +1688,10 @@ steps:
       - Detached HEAD — and any `git commit` you make here will corrupt history
       - Attached to `main` — bisect only moves the working tree, not HEAD
       correct_index: 0
+      option_feedback:
+        1: This answer invents a `bisect/working` branch; bisect uses internal refs (`refs/bisect/*`), not a magic branch.
+        2: This answer assumes detached-HEAD commits are dangerous; bisect's transient state is safe and `reset` undoes it.
+        3: This answer assumes HEAD doesn't move; bisect explicitly checks out historical commits at each midpoint.
       explanation: During bisect, HEAD is detached at whichever historical commit Git picked as midpoint. That is fine because bisect's internal refs (`BISECT_HEAD`, `refs/bisect/*`) track progress. `git bisect reset` restores the pre-bisect HEAD. Same detached-HEAD concept as Step 1 — just used in service of a search.
     - question: '**[Revisit Step 6]** A bug appears because a line that *used to exist* was deleted. Which tool finds the deletion commit?'
       options:
@@ -1497,6 +1700,10 @@ steps:
       - '`git log --grep=''delete''` — it finds commits with ''delete'' in the message'
       - '`git cherry-pick --find-deletion`'
       correct_index: 1
+      option_feedback:
+        0: This answer ignores blame's deletion blind spot; absent lines are invisible to blame regardless of mode.
+        2: This answer assumes the commit message contains "delete"; commit messages don't reliably announce deletions.
+        3: This answer invents a flag that doesn't exist on cherry-pick.
       explanation: 'Blame only attributes *existing* lines. A deletion is invisible to blame (the line isn''t there!). Bisect operates on *behavior*, not lines: if the test failed after commit X and passed at commit X-1, X is the culprit, regardless of whether X added, modified, or deleted code.'
     - question: Put in order the commands for an automated bisect that finds a regression in the last 100 commits and returns HEAD to normal.
       type: parsons
@@ -1623,15 +1830,15 @@ steps:
     | Long-lived or already-pushed branch used by teammates | **Merge** |
     | Cardinal rule | Never rebase **shared** history |
   setup_commands:
-  - "cd /tutorial/myproject\ngit rebase --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nHAS_SQRT=0\nHAS_IDENTITY=0\ngit log feature-sqrt --oneline 2>/dev/null | grep -q 'Add square_root function' && HAS_SQRT=1\ngit log main --oneline 2>/dev/null | grep -q 'Add identity helper' && HAS_IDENTITY=1\nif [ $HAS_SQRT = 1 ] && [ $HAS_IDENTITY = 1 ]; then\n  exit 0\nfi\ngit branch -D feature-sqrt 2>/dev/null\nif git log main --oneline | grep -q 'Add identity helper'; then\n  git reset --hard HEAD~2 2>/dev/null\nfi\ngit switch -qc feature-sqrt\nprintf '\\nimport math\\ndef square_root(x):\\n    \"\"\"Return the square root of x; raises ValueError if negative.\"\"\"\\n    if x < 0:\\n        raise ValueError(\"Cannot take sqrt of negative\")\\n    return math.sqrt(x)\\n' >> calculator.py\ngit commit -qam 'Add square_root function'\ngit switch -q main\necho '# version 1.1 notes' >> calculator.py\ngit commit -qam 'Bump version notes'\necho 'def identity(x): return x' >> calculator.py\ngit commit -qam 'Add identity helper'\n"
+  - "cd /tutorial/myproject\n{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nn=$(git log --all --oneline 2>/dev/null | grep -cE 'Add square_root function|Add identity helper')\nif [ $n -ge 2 ]; then\n  exit 0\nfi\ngit branch -D feature-sqrt 2>/dev/null\nif git log main --oneline | grep -q 'Add identity helper'; then\n  git reset --hard HEAD~2 2>/dev/null\nfi\ngit switch -qc feature-sqrt\nprintf '\\nimport math\\ndef square_root(x):\\n    \"\"\"Return the square root of x; raises ValueError if negative.\"\"\"\\n    if x < 0:\\n        raise ValueError(\"Cannot take sqrt of negative\")\\n    return math.sqrt(x)\\n' >> calculator.py\ngit commit -qam 'Add square_root function'\ngit switch -q main\necho '# version 1.1 notes' >> calculator.py\ngit commit -qam 'Bump version notes'\necho 'def identity(x): return x' >> calculator.py\ngit commit -qam 'Add identity helper'\n"
   solution:
     # The interactive instructions teach rebase + ff-merge + rebase-through-conflict.
     # The automated solution rebuilds the same end state deterministically:
     # square_root on main without a feature-sqrt merge commit.
     commands:
     - cd /tutorial/myproject && git switch main
-    - git rebase --abort 2>/dev/null; true
-    - git merge --abort 2>/dev/null; true
+    - '{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null'
+    - '[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null'
     - git reset --hard HEAD
     - git clean -fdq
     - git branch -D feature-sqrt 2>/dev/null; true
@@ -1678,6 +1885,10 @@ steps:
       - Merges `main` into `feature-sqrt` with a merge commit
       - Deletes `main` and renames `feature-sqrt` to `main`
       correct_index: 1
+      option_feedback:
+        0: This answer reverses the direction; running `rebase main` on feature-sqrt rebases *feature-sqrt*, not main.
+        2: This answer confuses rebase with merge; rebase is the linearizing alternative, no merge commit involved.
+        3: This answer assumes destructive renaming; rebase moves the current branch's commits, never deletes other branches.
       explanation: 'Rebase rewrites the branch: feature-sqrt''s unique commits become *new* commits on top of main. This linearizes history but changes SHAs — so never rebase pushed branches others are using.'
     - question: After rebasing, why does the rebased commit have a **different SHA** than before?
       options:
@@ -1686,6 +1897,10 @@ steps:
       - Rebase encrypts the commit
       - Rebase changes the commit message
       correct_index: 1
+      option_feedback:
+        0: This answer treats SHAs as cosmetic choices; they're deterministic content hashes, not chosen for clarity.
+        2: This answer confuses content hashing with encryption.
+        3: This answer assumes rebase rewrites text; the message is preserved, only the parent (and thus the SHA) changes.
       explanation: 'Step 3 again: `SHA(commit) = SHA-1(tree + parent(s) + author + committer + message)`. Change the parent → new SHA. Same patch, new identity.'
     - question: When is `git rebase` a **bad** idea?
       options:
@@ -1694,6 +1909,10 @@ steps:
       - On a public/shared branch that teammates have already pulled
       - To linearize history before a fast-forward merge
       correct_index: 2
+      option_feedback:
+        0: This answer rejects rebase's canonical safe use case (private feature branch).
+        1: This answer rejects another canonical safe use case (short-lived local branch before PR).
+        3: This answer rejects rebase's exact intended workflow (linearize then ff-merge).
       explanation: Rebase rewrites history. If others have the old SHAs, their branches will diverge and they will get ugly conflicts. Stick to merge for anything pushed and shared, rebase for local linearization.
     - question: '**[Revisit Step 2]** You rebased `feature-sqrt` and realized it broke everything. Before pushing. How do you recover the pre-rebase state?'
       options:
@@ -1702,6 +1921,10 @@ steps:
       - '`git stash pop` to retrieve the old commits'
       - '`git clone` a fresh copy of the repo'
       correct_index: 1
+      option_feedback:
+        0: This answer ignores reflog's safety net; rebase only abandons refs, the old commits are still in `.git/objects/`.
+        2: This answer confuses stash (working-tree shelving) with reflog (HEAD-position history).
+        3: This answer is the "burning down the repo" antipattern when reflog can rescue locally.
       explanation: Rebase is only 'destructive' in the sense of changing branch pointers — the original commits remain in `.git/objects` until garbage collection. `git reflog` records every HEAD position including the pre-rebase tip; `git reset --hard` restores it. Your safety net, earned in Step 2.
     - question: After rebasing a feature onto `main`, you run `git merge feature` on `main`. What happens?
       options:
@@ -1710,6 +1933,10 @@ steps:
       - The rebase is reversed
       - Git reports an error
       correct_index: 1
+      option_feedback:
+        0: This answer ignores that rebase made feature a strict extension of main, so merge fast-forwards instead of creating a merge commit.
+        2: This answer assumes merge undoes rebase; they compose, they don't reverse.
+        3: This answer assumes Git rejects this; it's actually the canonical "rebase + ff merge" workflow.
       explanation: 'After rebase, feature is a strict linear extension of main. The merge reduces to just advancing the main pointer (fast-forward). This is the whole reason many teams rebase before merging: clean, linear history.'
     - question: Which statements about rebase are true? (Select all that apply)
       type: multiple
@@ -1722,6 +1949,8 @@ steps:
       - 0
       - 1
       - 3
+      option_feedback:
+        2: This answer confuses local rewriting with publication; push is always a separate step from rebase.
       explanation: Rebase applies each patch in turn and can conflict at any of them — you resolve, `git add`, `git rebase --continue`. `--abort` restores the pre-rebase state. Rebase does **not** push anything; that is a separate `git push` step (often needing `--force-with-lease` on rebased branches, which is where collaborator pain happens).
     - question: '**[Revisit Step 5]** You had two choices for bringing a colleague''s single fix into `main`: cherry-pick or rebase. Both create new commits with new SHAs. What is the key difference in intent?'
       options:
@@ -1730,6 +1959,10 @@ steps:
       - Cherry-pick requires the commit to be on a branch; rebase does not
       - They are identical aliases
       correct_index: 0
+      option_feedback:
+        1: This answer assumes cherry-pick mutates the source; it's purely additive, just like rebase's commit creation.
+        2: This answer invents a constraint; cherry-pick takes any commit-ish, branch or not.
+        3: This answer ignores the scope difference (one commit vs. a series).
       explanation: 'Under the hood they use the same machinery — patch out, replay on new parent, new SHA. The difference is *scope*: cherry-pick = one commit, rebase = a series. Step 5''s cherry-pick and Step 8''s rebase are the same technique at different scales.'
     - question: '**[Revisit Step 3]** During rebase, a conflict halts you mid-stream. `git reflog` at this moment shows many entries. Which entry do you want to `git reset --hard` to if you decide to abort manually instead of using `git rebase --abort`?'
       options:
@@ -1738,6 +1971,10 @@ steps:
       - The very oldest reflog entry
       - Any entry — they all point to the same commit
       correct_index: 1
+      option_feedback:
+        0: This answer points at the *current* (post-rebase) state; you want the entry from *before* the rebase.
+        2: This answer ignores the relevant time range; the pre-rebase entry is recent, not the oldest.
+        3: This answer ignores that reflog entries each refer to a different historical HEAD position.
       explanation: Reflog logs every HEAD movement. The pre-rebase position is typically labeled `checkout` or the last `commit` before the `rebase` entries. That SHA is the pre-rebase branch tip — the safe rescue point. This is the Step 2 reflog safety net applied to rebase.
     - question: '**[Revisit basic tutorial Step 11]** You edit a conflicted file during a `git rebase`, remove the `<<<<<<<` / `=======` / `>>>>>>>` markers, and run `git add`. What is the **next** command to finalize this one commit of the rebase?'
       options:
@@ -1746,6 +1983,10 @@ steps:
       - '`git merge --continue`'
       - '`git push`'
       correct_index: 1
+      option_feedback:
+        0: This answer treats a rebase conflict like a merge conflict's final step; rebase needs `--continue`, not `commit`.
+        2: This answer uses the wrong verb; this is a rebase, not a merge.
+        3: This answer skips finalizing the rebase entirely.
       explanation: A rebase conflict uses the *same* markers and the *same* `git add` step as a merge conflict (basic tutorial Step 11). The *only* difference is the final verb — `git rebase --continue` tells Git to replay the remaining commits, which `git commit` would not. Running `git commit` by reflex here often leaves the rebase half-done. `git rebase --abort` at any point restores the pre-rebase state.
     - question: Put in order the commands to rebase a private 3-commit `feature` branch onto the latest `main` and fast-forward merge, with nothing leftover on disk.
       type: parsons
@@ -1960,7 +2201,7 @@ steps:
   - myproject/calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\ngit rebase --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log refactor-power --oneline 2>/dev/null | grep -q 'More typo fixes'; then\n  git switch -q refactor-power 2>/dev/null\n  exit 0\nfi\ngit branch -D refactor-power 2>/dev/null\ngit switch -qc refactor-power\necho '# WIP: try new power approach' >> calculator.py\ngit commit -qam 'WIP'\nsed -i 's/# WIP: try new power approach/# starting refactor/' calculator.py\ngit diff --quiet calculator.py && echo '# starting refactor' >> calculator.py\ngit commit -qam 'Fix typo'\necho '# TODO: edge cases' >> calculator.py\ngit commit -qam 'Fix typo again'\necho '# done iterating' >> calculator.py\ngit commit -qam 'More typo fixes'\n"
+  - "cd /tutorial/myproject\n{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log refactor-power --oneline 2>/dev/null | grep -q 'More typo fixes'; then\n  git switch -q refactor-power 2>/dev/null\n  exit 0\nfi\ngit branch -D refactor-power 2>/dev/null\ngit switch -qc refactor-power\necho '# WIP: try new power approach' >> calculator.py\ngit commit -qam 'WIP'\nsed -i 's/# WIP: try new power approach/# starting refactor/' calculator.py\ngit commit -qam 'Fix typo'\necho '# TODO: edge cases' >> calculator.py\ngit commit -qam 'Fix typo again'\necho '# done iterating' >> calculator.py\ngit commit -qam 'More typo fixes'\n"
   solution:
     # The interactive instructions teach `rebase -i` with squash, drop, and
     # reword. The automated solution rebuilds the same end state directly:
@@ -1968,8 +2209,8 @@ steps:
     # secret-backup branch points to a 'Accidentally add secret' commit.
     commands:
     - cd /tutorial/myproject
-    - git rebase --abort 2>/dev/null; true
-    - git cherry-pick --abort 2>/dev/null; true
+    - '{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null'
+    - '[ -e .git/CHERRY_PICK_HEAD ] && git cherry-pick --abort 2>/dev/null'
     - git switch -q main 2>/dev/null
     - git reset --hard HEAD
     - git clean -fdq
@@ -2023,6 +2264,10 @@ steps:
       - '`squash`'
       - '`drop`'
       correct_index: 1
+      option_feedback:
+        0: This answer doesn't change anything; `pick` is a no-op that uses the commit as-is.
+        2: This answer melds two commits; the question asks for a message-only edit on one commit.
+        3: This answer deletes the commit instead of editing it.
       explanation: '`reword` keeps the commit content identical but opens the editor to change the message. `pick` is no-op, `squash` melds into the previous commit, `drop` deletes it.'
     - question: What is the difference between `squash` and `fixup`?
       options:
@@ -2031,6 +2276,10 @@ steps:
       - '`fixup` can only be used on merge commits'
       - They are identical
       correct_index: 0
+      option_feedback:
+        1: This answer confuses 'rewrites the SHA' (both do, all rebase verbs do) with the actual difference (message handling).
+        2: This answer invents a constraint; fixup works on any commit, not just merges.
+        3: This answer ignores the actual difference (whether the editor opens for the squashed message).
       explanation: Both meld into the previous commit. `squash` opens the editor so you can combine messages; `fixup` just drops the squashed commit's message. Use `fixup` for trivial typos, `squash` when both messages are meaningful.
     - question: You just ran `git rebase -i HEAD~3` and realized you dropped a commit you needed. Can you recover it?
       options:
@@ -2039,6 +2288,10 @@ steps:
       - Only by running `git rebase --undo`
       - Only if you had pushed the commit
       correct_index: 1
+      option_feedback:
+        0: This answer ignores reflog's safety net; the dropped commit is unreferenced, not deleted.
+        2: This answer invents a subcommand; `git rebase` has no `--undo`.
+        3: This answer reverses the rule; pushing makes recovery harder, not easier (because teammates also have the old SHAs to reconcile).
       explanation: Dropped commits remain in `.git/objects` until garbage collection prunes them. `git reflog` is the bookmark that lets you find them. `git reset --hard <reflog-sha>` restores the exact pre-rebase state. **This is the safety net.** Always verify it works once before a high-stakes rebase.
     - question: '**[Revisit Step 3]** After an interactive rebase, the rewritten commits have new SHAs even if their patches are identical. Why?'
       options:
@@ -2047,6 +2300,10 @@ steps:
       - Interactive rebase encrypts commits
       - Git renames the commits for clarity
       correct_index: 1
+      option_feedback:
+        0: This answer assumes randomness; SHAs are deterministic content + parent hashes.
+        2: This answer confuses hashing with encryption.
+        3: This answer treats SHAs as cosmetic; they're determined by content + parents, not chosen for clarity.
       explanation: 'Same answer as for simple rebase: different parent → different SHA. The object model does not allow ''editing'' a commit — all that changes is which commit the branch pointer references.'
     - question: Which of these is the **most dangerous** use of interactive rebase?
       options:
@@ -2055,6 +2312,10 @@ steps:
       - On `main` of a shared repository used by 10 teammates, to drop a week-old commit
       - On a personal experiment branch that nobody else has cloned
       correct_index: 2
+      option_feedback:
+        0: This answer rejects interactive rebase's canonical safe use case (local WIP cleanup before PR).
+        1: This answer flags a safe-zone use; rewriting unpushed history is the right context for `drop`.
+        3: This answer flags another safe-zone use; nobody else holds the old SHAs on a personal experiment branch.
       explanation: Rewriting shared history is the nuclear option. Everyone who fetched the old commits now has a conflicting local copy of main; their pulls fail spectacularly. For public history, use `git revert` (which creates a new *anti-matter* commit) instead. Reserve interactive rebase for local cleanup.
     - question: You want to split one giant commit into three smaller ones during interactive rebase. Which action lets you do that?
       options:
@@ -2063,6 +2324,10 @@ steps:
       - '`edit` — pauses at the commit so you can `git reset HEAD~`, stage smaller pieces, and commit each separately'
       - '`reword`'
       correct_index: 2
+      option_feedback:
+        0: This answer keeps the commit as-is; splitting requires pausing and recomposing.
+        1: This answer merges commits; splitting goes the other direction.
+        3: This answer changes the message; splitting changes the commit count.
       explanation: '`edit` pauses rebase at that commit with HEAD there. You then `git reset HEAD~` (un-commit but keep changes staged/unstaged), split the changes into multiple `git add` + `git commit` cycles, and finally `git rebase --continue`. The original one commit is replaced by your new sequence.'
     - question: '**[Revisit Step 2]** In Task 3b you ''rescued'' a dropped commit. In terms of the object database, what did `git branch secret-backup <sha>` actually do?'
       options:
@@ -2071,6 +2336,10 @@ steps:
       - It recreated the commit from the reflog's textual record
       - It undid the rebase
       correct_index: 1
+      option_feedback:
+        0: This answer invents a `.git/trash` directory; Git has none — nothing was ever moved out of `.git/objects/`.
+        2: This answer assumes reflog reconstructs commits from text; the commits were never gone, only unreachable.
+        3: This answer assumes branch creation is a global undo; it only adds one ref (no rebase reversal).
       explanation: Same mechanic as Step 2's rescued-work branch. The dropped commit was never deleted — only unreferenced. Creating a branch (one 41-byte file) re-anchors it as reachable. Now `git gc` won't prune it. This is the same reflog + branch recipe, applied to a different scenario (rebase-drop vs detached-HEAD-orphan).
     - question: '**[Revisit Step 5]** You are about to interactive-rebase a branch. You have uncommitted edits you want to keep but not carry through the rebase. Safest workflow?'
       options:
@@ -2079,6 +2348,10 @@ steps:
       - Run rebase with `--ignore-uncommitted`
       - Git rebase will refuse to start if you have uncommitted changes, so nothing to worry about
       correct_index: 1
+      option_feedback:
+        0: This answer pollutes history; the question explicitly says "keep but not carry through" — WIP commits get carried through.
+        2: This answer invents a flag; rebase has no `--ignore-uncommitted` option.
+        3: This answer is half-true (rebase does refuse) but doesn't address how to handle the uncommitted work the question wants preserved.
       explanation: 'Rebase refuses to start with dirty working tree — so Git is already stopping you. Stash is the clean pattern: preserve the work-in-progress (Step 4), do the rebase, pop the stash onto the rebased branch. This composes tools across steps — recognizing when two tools work together is the mark of Git fluency.'
     - question: Put in order the steps to squash 4 messy commits on a local branch into one clean commit (assuming you're using the scripted VM editor).
       type: parsons
@@ -2175,12 +2448,12 @@ steps:
 
     </details>
   setup_commands:
-  - "cd /tutorial/myproject\ngit merge --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log feature-stats --oneline 2>/dev/null | grep -q 'Add stddev function'; then\n  exit 0\nfi\ngit branch -D feature-stats 2>/dev/null\ngit switch -qc feature-stats\nprintf '\\ndef mean(values):\\n    return sum(values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add mean function'\nprintf '\\ndef variance(values):\\n    m = mean(values)\\n    return sum((x - m) ** 2 for x in values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add variance function'\nprintf '\\nimport math as _math\\ndef stddev(values):\\n    return _math.sqrt(variance(values))\\n' >> calculator.py\ngit commit -qam 'Add stddev function'\ngit switch -q main\n"
+  - "cd /tutorial/myproject\n[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log feature-stats --oneline 2>/dev/null | grep -q 'Add stddev function'; then\n  exit 0\nfi\ngit branch -D feature-stats 2>/dev/null\ngit switch -qc feature-stats\nprintf '\\ndef mean(values):\\n    return sum(values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add mean function'\nprintf '\\ndef variance(values):\\n    m = mean(values)\\n    return sum((x - m) ** 2 for x in values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add variance function'\nprintf '\\nimport math as _math\\ndef stddev(values):\\n    return _math.sqrt(variance(values))\\n' >> calculator.py\ngit commit -qam 'Add stddev function'\ngit switch -q main\n"
   solution:
     commands:
     - cd /tutorial/myproject
-    - git rebase --abort 2>/dev/null; true
-    - git merge --abort 2>/dev/null; true
+    - '{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null'
+    - '[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null'
     - git switch -q main 2>/dev/null
     - git reset --hard HEAD
     - git clean -fdq
@@ -2220,6 +2493,10 @@ steps:
       - Deletes the feature branch
       - Rebases the feature onto main
       correct_index: 1
+      option_feedback:
+        0: This answer confuses regular merge with squash-merge; squash deliberately *avoids* the second parent.
+        2: This answer assumes squash-merge cleans up the source; the feature branch is untouched.
+        3: This answer confuses squash (one combined commit) with rebase (replays each commit).
       explanation: Squash stages a combined patch but does not commit — you supply the message. The result is *one* new commit on main containing all of the feature's changes; the feature's individual commits never appear on main.
     - question: After `git merge --squash feature; git commit`, what is true of the feature branch?
       options:
@@ -2228,6 +2505,10 @@ steps:
       - It points at the new squash commit on main
       - Its commits have been rewritten
       correct_index: 1
+      option_feedback:
+        0: This answer assumes squash deletes the source branch; squash leaves it intact.
+        2: This answer assumes branches got rewired; squash only adds a commit to the *current* branch.
+        3: This answer assumes squash modifies the feature's history; only the current branch gets a new commit.
       explanation: Squash merge does not touch the feature branch. It is still there with its full history. To delete it after squashing, use `git branch -D feature` (force, because it is not ff-merged by Git's definition).
     - question: '**[Compare with Step 8]** You have a 3-commit feature. You merge it three ways. Which output is correct?'
       options:
@@ -2236,6 +2517,10 @@ steps:
       - plain `merge` → 1 merge commit with 2 parents; `rebase + merge` → 3 replayed commits on main (linear, ff); `--squash + commit` → 1 new commit on main
       - All three approaches produce identical history
       correct_index: 2
+      option_feedback:
+        0: This answer gets squash backwards (squash produces 1 commit, not 3) and confuses plain merge's parent count.
+        1: This answer invents a 3-parent merge commit; standard merges have exactly 2 parents.
+        3: This answer ignores the actual differences between strategies — they produce visibly different histories.
       explanation: Plain merge = 1 merge commit (2 parents). Rebase linearizes so merge ff-forwards 3 commits. Squash collapses the 3 into 1 new commit. Team preference decides which is right for the project.
     - question: Why might a team **reject** squash merge as a default policy?
       options:
@@ -2244,6 +2529,10 @@ steps:
       - Git rejects squash merges on `main`
       - It requires a paid GitHub subscription
       correct_index: 1
+      option_feedback:
+        0: This answer is backwards; squash *avoids* merge commits.
+        2: This answer invents a Git restriction; squash works on any branch.
+        3: This answer confuses Git mechanics with hosting service pricing.
       explanation: With squash, `git bisect` can only narrow to 'this whole feature', not to which intermediate commit caused the regression. Intermediate authors also disappear from main's history. Some teams prefer rebase/merge for richer history.
     - question: You squash-merged `feature-stats` into main. The next day you discover one of the three internal commits had a bug. How do you fix only that part?
       options:
@@ -2252,6 +2541,10 @@ steps:
       - Use `git bisect run` to revert automatically
       - Delete main and re-merge with `git merge --no-squash`
       correct_index: 1
+      option_feedback:
+        0: This answer invents a flag; revert has no `--internal`, and Git doesn't track squash-internal commits on main.
+        2: This answer combines two unrelated tools; bisect doesn't auto-fix or auto-revert.
+        3: This answer ignores that the squashed commit is already on main; you can't unmerge a commit.
       explanation: Squash hides internal granularity on main. But the original commits still exist where the feature branch was (or via reflog). You can cherry-pick a fix or write a small revert patch on main. This is the classic squash trade-off — convenience on main, less surgical control later.
     - question: '**[Revisit Step 7]** A regression is reported on `main` three months after a feature was **squash-merged** in. `git bisect` on `main` narrows the culprit to the squash commit. What is your next move?'
       options:
@@ -2260,6 +2553,10 @@ steps:
       - Bisect is unreliable after squash — read every line of the squash commit's diff
       - Re-run bisect with `--squash-aware`
       correct_index: 1
+      option_feedback:
+        0: This answer is too broad; the question asks for fine-grained resolution, not whole-feature reversion.
+        2: This answer ignores the available finer-grained source on the feature branch.
+        3: This answer invents a bisect flag; bisect operates on commits, and the feature branch already has the granularity.
       explanation: Squash flattens *main's* history, not the feature branch's. The fine-grained commits are still preserved on the feature branch (assuming you didn't delete it) and in reflog. Bisect on the feature branch pinpoints the exact internal commit. This is the strongest argument for keeping merged feature branches for a while, not deleting them immediately.
     - question: '**[Revisit Step 3]** After `git merge --squash feature; git commit`, the new squash commit on main is a Git commit object like any other. What are its **parents**?'
       options:
@@ -2268,6 +2565,10 @@ steps:
       - 'One parent: the tip of main (before the squash). The feature branch tip is NOT a parent — that is what makes it a squash rather than a merge'
       - Zero parents — squash commits are parentless root commits
       correct_index: 2
+      option_feedback:
+        0: This answer treats squash as a merge; squash deliberately gives only one parent (the prior HEAD), not two.
+        1: This answer invents a three-parent commit type; standard merges are 2-parent and squash is 1-parent.
+        3: This answer treats squash as a root commit; it has the prior HEAD as parent.
       explanation: 'A squash commit has exactly one parent: the prior HEAD of the branch you ran `merge --squash` on. The feature branch tip is not referenced as a parent — which is why `git log main` shows a clean linear history and why `git bisect` on main cannot drill into the feature. Same object-model: the commit records exactly the parents it was given, nothing more.'
     - question: Put in order the commands to squash-merge a 3-commit `feature-stats` branch into main, then clean up.
       type: parsons
@@ -2395,13 +2696,13 @@ steps:
 
     </details>
   setup_commands:
-  - "cd /tutorial/myproject\ngit revert --abort 2>/dev/null\ngit switch -q main 2>/dev/null\n# Plant the buggy rename if missing.\nif ! git log main --oneline 2>/dev/null | grep -q 'rename divide'; then\n  # Rename divide -> div in file to simulate a bad refactor.\n  sed -i 's/def divide/def div/' calculator.py 2>/dev/null\n  git diff --quiet calculator.py || git commit -qam 'Refactor: rename divide → div (BROKE imports)'\nfi\n"
+  - "cd /tutorial/myproject\n[ -e .git/REVERT_HEAD ] && git revert --abort 2>/dev/null\ngit switch -q main 2>/dev/null\n# Plant the buggy rename if missing.\nif ! git log main --oneline 2>/dev/null | grep -q 'rename divide'; then\n  # Rename divide -> div in file to simulate a bad refactor.\n  sed -i 's/def divide/def div/' calculator.py 2>/dev/null\n  git diff --quiet calculator.py || git commit -qam 'Refactor: rename divide → div (BROKE imports)'\nfi\n"
   solution:
     commands:
     - cd /tutorial/myproject
-    - git revert --abort 2>/dev/null; true
-    - git rebase --abort 2>/dev/null; true
-    - git merge --abort 2>/dev/null; true
+    - '[ -e .git/REVERT_HEAD ] && git revert --abort 2>/dev/null'
+    - '{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null'
+    - '[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null'
     - git switch -q main 2>/dev/null
     - git reset --hard HEAD
     - git clean -fdq
@@ -2433,15 +2734,23 @@ steps:
       - Revert is encrypted
       - GitHub blocks force-push by default
       correct_index: 1
+      option_feedback:
+        0: This answer is too strong; revert *does* change history (adds a new commit), it just doesn't *rewrite* existing SHAs.
+        2: This answer invents encryption; revert is plain commit semantics.
+        3: This answer relies on remote-side enforcement; the safety property is intrinsic to revert vs. reset, not a platform policy.
       explanation: 'The rule compresses to one property: *does this operation change existing SHAs?* Revert — no. Reset/rebase/amend — yes. Changed SHAs break anyone who already fetched the old ones. Revert is the only undo that preserves shared-history safety.'
     - question: What does `git revert <sha>` physically add to history?
       options:
       - Nothing — it just hides the commit
-      - A new commit whose patch is the **inverse** of `<sha>`'s patch, with its own new SHA and `<sha>` as parent
+      - A new commit on the current branch whose patch reverses `<sha>`'s patch (every `+` becomes `-` and vice versa). The revert's parent is the prior HEAD — *not necessarily* `<sha>`, since you can revert any historical commit.
       - A deletion marker
       - A tag named `revert/<sha>`
       correct_index: 1
-      explanation: Revert computes the inverse diff and creates a regular commit object recording it. `git log` shows both the bad commit and its undo — which is the honest story of what happened.
+      option_feedback:
+        0: This answer treats revert as visibility-only; revert adds a real commit that changes the working tree.
+        2: This answer invents a "tombstone" object type; Git has none — revert is a regular commit.
+        3: This answer confuses commits with tags; revert produces a commit on the branch, not a tag ref.
+      explanation: Revert computes the inverse diff of `<sha>` and lands it as a regular commit on the current branch. The new commit's parent is whatever HEAD was when you ran the command — when you revert HEAD, that happens to be `<sha>`, but when you revert an older commit it isn't. `git log` shows both the bad commit and its undo, which is the honest story of what happened.
     - question: You accidentally pushed a bad commit to `main`. Three teammates have pulled. Best move?
       options:
       - '`git reset --hard HEAD~1` + `git push --force` (or `--force-with-lease`)'
@@ -2449,6 +2758,10 @@ steps:
       - '`git rebase -i HEAD~1` with `drop`, then force-push'
       - Delete the whole repository and re-clone
       correct_index: 1
+      option_feedback:
+        0: This answer rewrites shared history; teammates with the old SHAs will see divergence and their pulls will fail.
+        2: This answer also rewrites shared history (rebase-drop is a rewrite); same breakage as reset + force.
+        3: This answer is the "burning down the repo" antipattern — needlessly destructive.
       explanation: Shared history was already distributed. Revert appends an undo; teammates' next `pull` fast-forwards cleanly. Force-pushing after reset or rebase makes teammates' branches diverge and their pulls fail — exactly what we avoid.
     - question: '**[Revisit Step 9]** Rebase-drop and revert both "undo" a commit. Which is correct about their effect on SHAs?'
       options:
@@ -2457,6 +2770,10 @@ steps:
       - Both are non-destructive
       - Revert rewrites SHAs; rebase-drop doesn't
       correct_index: 1
+      option_feedback:
+        0: This answer ignores that revert leaves all existing commits' SHAs unchanged; only one new commit is added.
+        2: This answer ignores rebase-drop's rewriting of every subsequent commit's SHA.
+        3: This answer reverses the additive/destructive distinction — revert is the additive one.
       explanation: The destructive/additive distinction is the heart of this step. Rebase-drop replays every commit after the dropped one on a new parent — new SHAs cascading. Revert just appends one new commit. Same apparent outcome (the bad change is gone); completely different impact on collaborators.
     - question: You want to revert a **merge commit** (one with two parents). What additional flag do you need?
       options:
@@ -2465,6 +2782,10 @@ steps:
       - '`--force`'
       - None — it just works
       correct_index: 1
+      option_feedback:
+        0: This answer invents a flag; revert has no `--merge` option.
+        2: This answer invents a flag; revert has no `--force` option.
+        3: This answer ignores that merge commits have two parents and revert needs to know which side is mainline.
       explanation: 'Merge commits have two parents; revert needs to know which side is "mainline" (the version you want to keep). `-m 1` means "first parent is mainline; undo the second-parent branch." Getting this wrong reverts the wrong side.'
     - question: Put in order the safe public-undo workflow after discovering a bad commit on shared `main`. Distractors rewrite history.
       type: parsons
@@ -2641,6 +2962,10 @@ steps:
       - Nothing — submodules are purely a runtime concept
       - A symbolic link to the submodule's directory
       correct_index: 1
+      option_feedback:
+        0: This answer confuses submodule working tree content with outer-repo gitlink state; the outer repo only stores a SHA + URL, never the files.
+        2: This answer assumes submodules are runtime-only; the outer repo records the gitlink and `.gitmodules` persistently.
+        3: This answer confuses a gitlink (mode `160000`) with a filesystem symlink — the gitlink is a tree entry, not a symlink.
       explanation: The outer repo stores ONE SHA per submodule (the pinned commit) plus a `.gitmodules` entry for the URL. The submodule's working files are checked out in the submodule path; its git data (objects, refs, HEAD) lives in the outer repo's `.git/modules/<name>/` — the submodule directory itself contains only a `.git` text file (a "gitfile") pointing there, NOT a full `.git/` directory.
     - question: A teammate clones your repo normally with `git clone <url>`. What do they see at the submodule path?
       options:
@@ -2649,6 +2974,10 @@ steps:
       - An error preventing the clone from finishing
       - A warning but the content downloads lazily on first access
       correct_index: 1
+      option_feedback:
+        0: This answer assumes plain `git clone` fetches submodules; it doesn't, by default — only `--recursive` (or a follow-up `submodule update`) populates them.
+        2: This answer assumes the clone fails; plain clone succeeds, the submodule folder is just empty.
+        3: This answer invents lazy fetching; submodule content fetches require explicit `submodule update`.
       explanation: Plain `git clone` records the submodule entries but does not fetch their content. The folder exists but is empty. `git clone --recursive <url>` or `git submodule update --init --recursive` after the fact populates it.
     - question: Which statements about submodules are true? (Select all that apply)
       type: multiple
@@ -2661,6 +2990,8 @@ steps:
       - 0
       - 1
       - 3
+      option_feedback:
+        2: This answer confuses submodule working tree content with outer-repo gitlink state; the outer repo only stores the SHA pin, not file copies.
       explanation: The outer repo stores only a pinned SHA (gitlink, mode 160000) and a `.gitmodules` entry — not file copies. The submodule is a genuine nested repo.
     - question: '**[Synthesis — revisits Steps 1, 3]** Why is it internally consistent that a submodule is ''just a pinned commit SHA''?'
       options:
@@ -2669,6 +3000,10 @@ steps:
       - Because submodules are always read-only
       - Because Git stores submodules separately in a proprietary database
       correct_index: 0
+      option_feedback:
+        1: This answer is irrelevant — submodules can have branches; the question is about content addressing.
+        2: This answer invents a constraint; submodules can be edited and committed to like any nested repo.
+        3: This answer invents a separate database; submodules use the same Git object format as everything else.
       explanation: Back to the object model (Step 3). A commit SHA uniquely identifies a whole-project snapshot (commit → tree → blobs). Pinning a commit SHA is enough to reconstruct the submodule's entire content. No file duplication is necessary — exactly the same property that makes branches cheap (Step 1).
     - question: '**[Revisit Step 8]** A submodule''s pinned SHA is 40 characters, just like a regular commit SHA. In terms of Git objects, what kind of object does it point to?'
       options:
@@ -2677,6 +3012,10 @@ steps:
       - A commit object — in the submodule's separate repository's object database
       - A tag object
       correct_index: 2
+      option_feedback:
+        0: This answer confuses commit objects with blob objects; gitlinks pin commits, which then resolve to trees and blobs.
+        1: This answer confuses commit objects with tree objects; only a commit captures parents, author, and message.
+        3: This answer confuses commit objects with tag objects; tags reference commits, they aren't stored in gitlinks.
       explanation: A gitlink pins a *commit* SHA — which (via the commit's tree and blobs) uniquely determines the submodule's entire file state. The commit lives in the submodule's `.git/objects/`, not the outer repo's. This is exactly the same commit-SHA-as-snapshot-identity property rebase relies on (Step 8) and that makes the whole object model coherent.
     - question: Put in order the commands a teammate runs to add a submodule, commit it, and set up a colleague's workstation so the submodule files appear. Distractors are verb-variants that look right but fail.
       type: parsons
@@ -2817,6 +3156,10 @@ steps:
       - Their Git is too old
       - The `.gitmodules` file is corrupt
       correct_index: 1
+      option_feedback:
+        0: This answer blames infrastructure; the submodule's pinned SHA is fine, the working tree just needs `submodule update`.
+        2: This answer blames version; standard `pull` semantics have always required explicit submodule sync.
+        3: This answer assumes file corruption; the symptom is normal post-pull behavior, not corruption.
       explanation: Classic trap. `git pull` on the outer repo updates the **pinned SHA in the tree** but does NOT touch the submodule working directory. They need `git submodule update --init --recursive` to actually reflect the new SHA on disk. Configure `git config submodule.recurse true` to make pull do this automatically.
     - question: Upgrading a submodule requires how many `git commit` calls in total (inside + outside)?
       options:
@@ -2825,6 +3168,10 @@ steps:
       - Two — if the submodule itself needed new commits (e.g., you wrote a patch inside it), commit there first; then the outer repo commit bumps the SHA. If the new upstream commit already exists, only the outer commit is needed.
       - Three — submodule, `.gitmodules`, and outer tree
       correct_index: 2
+      option_feedback:
+        0: This answer assumes `submodule update` commits for you; it only resets working state, never commits.
+        1: This answer omits the inner-commit case (when you're authoring upstream changes yourself before bumping the pin).
+        3: This answer adds a `.gitmodules` commit; that file changes only when adding/removing a submodule, not when updating one.
       explanation: The answer depends on whether *you* are authoring the upgrade (write code inside submodule → commit inside → push → commit outside) or just pulling in upstream work (checkout new commit inside → commit outside). In either case the outer commit is mandatory — that is the SHA bump.
     - question: '`git status` in the outer repo shows `modified: vendor/math-utils (new commits)`. What does it mean?'
       options:
@@ -2833,6 +3180,10 @@ steps:
       - The submodule is broken
       - Git is about to garbage-collect the submodule
       correct_index: 1
+      option_feedback:
+        0: This answer confuses submodule SHA changes with `.gitmodules` config edits.
+        2: This answer assumes corruption; `new commits` is normal divergence between pinned and actual HEAD.
+        3: This answer invents a GC warning; `git status` doesn't report on `gc` operations.
       explanation: 'The outer repo compares the pinned SHA with the submodule''s actual HEAD. Mismatch → `new commits`. Fix: `git add <path>` + commit to pin the new SHA, or `git submodule update` to snap the submodule back to the pinned SHA.'
     - question: '**[Revisit Step 1]** Why doesn''t `git pull` automatically update submodule working directories — what Git principle is respected by this design?'
       options:
@@ -2841,6 +3192,10 @@ steps:
       - Pull is always read-only
       - It would violate the SHA-1 collision resistance guarantee
       correct_index: 1
+      option_feedback:
+        0: This answer assumes a tool defect; the design is intentional separation between outer and inner repos.
+        2: This answer is wrong on its face — `pull` writes to local refs and the working tree.
+        3: This answer invents a cryptographic justification; the design is about repo-boundary respect, not hash collisions.
       explanation: 'Git keeps the outer/inner repo boundary strict: an outer `pull` updates the pinned SHA (a fact about the outer tree) but does not reach into the inner repo and rewrite its HEAD. You must explicitly say `git submodule update`. Same conservative-HEAD-movement philosophy that makes detached-HEAD-with-uncommitted-changes impossible.'
     - question: '**[Revisit Step 3]** The outer repo''s diff for a submodule change is always just one line: `-Subproject commit <old>` / `+Subproject commit <new>`. Why is that enough?'
       options:
@@ -2849,6 +3204,10 @@ steps:
       - Because Git compresses submodule diffs
       - Because submodules don't actually change content
       correct_index: 1
+      option_feedback:
+        0: This answer treats minimal diff as laziness; it's the maximally accurate representation given that a SHA is equivalent to a full snapshot.
+        2: This answer invents compression; the diff is genuinely a one-line SHA bump, not compressed-then-expanded.
+        3: This answer ignores that the SHA pin's change *is* equivalent to a content change.
       explanation: Step 3's object-model insight applied again. A commit SHA resolves to a deterministic snapshot. Pinning a new SHA is, by construction, equivalent to changing the entire content — no further diff data is needed in the outer commit. Minimum information, maximum fidelity.
     - question: '**[Evaluate]** A teammate says: ''After every `git pull` I always run `git submodule update --init --recursive`, even on repos without submodules. Paranoia, or sensible?'''
       options:
@@ -2857,6 +3216,10 @@ steps:
       - Harmful — it can corrupt non-submodule repos
       - Only useful on teams larger than 10 people
       correct_index: 1
+      option_feedback:
+        0: This answer assumes the command fails or churns on non-submodule repos; it's a fast no-op.
+        2: This answer assumes the command is dangerous; it's strictly safe on any repo.
+        3: This answer scopes the command to team size; it works regardless of how many collaborators are involved.
       explanation: 'The command is safe on any repo. Running it unconditionally is a cheap habit that prevents the most common submodule bug (stale working dir). Equivalent hardening: `git config --global submodule.recurse true` to make pull/checkout do it automatically.'
     - question: Upstream publishes a v0.2 commit. Put in order the commands that land it as a pinned version bump in your outer repo. Distractors are verb-variants that look right but fail or do the wrong thing.
       type: parsons
@@ -3046,6 +3409,10 @@ steps:
       - The `.gitmodules` file was edited
       - The submodule's remote has new commits
       correct_index: 1
+      option_feedback:
+        0: This answer confuses "modified content" (dirty inner working tree) with "new commits" (HEAD/pin divergence).
+        2: This answer confuses submodule status messages with `.gitmodules` file edits.
+        3: This answer requires a fetch first; remote state isn't reflected without one, and even then status would show "new commits", not "modified content".
       explanation: '`modified content` specifically means: the submodule working tree is dirty — files inside are unstaged or untracked. The HEAD may still match the pinned SHA. Running `git status` *inside* the submodule will show the dirty files.'
     - question: 'You see `modified: vendor/math-utils (new commits)` in the outer `git status`. What caused it?'
       options:
@@ -3054,6 +3421,10 @@ steps:
       - The outer repo's branch pointer moved
       - The submodule is corrupted
       correct_index: 1
+      option_feedback:
+        0: This answer describes "modified content" (dirty inner working tree), not "new commits" (HEAD/pin divergence).
+        2: This answer is irrelevant; this status compares pinned SHA vs. submodule HEAD, not the outer branch pointer.
+        3: This answer assumes corruption; the symptom is normal pin-divergence, not a broken repo.
       explanation: '`new commits` means: inside the submodule, HEAD advanced (someone committed, or checked out a different SHA). The outer repo still records the OLD pinned SHA, so it flags the divergence. Fix: `git add <path>` + commit to bump the pinned SHA, or `git submodule update` to reset the submodule back to the pinned SHA.'
     - question: You run `git diff vendor/math-utils` in the outer repo after making and committing a change in the submodule. What do you see?
       options:
@@ -3062,6 +3433,10 @@ steps:
       - An error message
       - The diff of `.gitmodules`
       correct_index: 1
+      option_feedback:
+        0: This answer assumes the outer repo can show inner content diffs; it can't — the inner repo owns those diffs.
+        2: This answer assumes failure; outer diff works, it's just minimal (one SHA-bump line).
+        3: This answer confuses the gitlink-SHA diff with config-file edits.
       explanation: The outer repo's diff for a submodule path is always the gitlink SHA change — one line. To see content-level diffs, `cd` into the submodule and run plain `git diff` there. Two repos, two diff domains.
     - question: Which commands reset a submodule's working directory and HEAD to exactly the SHA the outer repo pins?
       options:
@@ -3070,6 +3445,10 @@ steps:
       - '`git reset --hard` in the outer repo'
       - '`rm -rf vendor/math-utils && git clone`'
       correct_index: 0
+      option_feedback:
+        1: This answer updates the pinned SHA but doesn't touch the submodule working tree.
+        2: This answer resets the outer tree but doesn't reach into submodule HEADs (Git keeps the boundary strict).
+        3: This answer is destructive when `submodule update` does the same job non-destructively.
       explanation: '`git submodule update --init --recursive` is the deterministic reset. It clones missing submodules and checks out each one at the outer tree''s pinned SHA. `git reset --hard` in the outer repo does NOT affect submodule working directories — Git treats them as separate repos.'
     - question: '**[Revisit Step 3]** Why is it consistent that the outer repo records ONLY a pinned SHA for each submodule — not the submodule''s files?'
       options:
@@ -3078,6 +3457,10 @@ steps:
       - Because submodules are always read-only
       - Because Git uses a separate database for submodules
       correct_index: 1
+      option_feedback:
+        0: This answer assumes a privacy reason; the design is about deduplication, not confidentiality.
+        2: This answer invents a constraint; submodules are read-write like any nested repo.
+        3: This answer invents a separate storage system; submodules use the same Git object format.
       explanation: Same object-model insight as Step 3. A commit SHA points at a tree that points at blobs — one SHA resolves to a deterministic snapshot. Storing the SHA is equivalent to storing the files. No duplication is needed.
     - question: '**[Evaluate]** You edited `vendor/math-utils/utils.py` and saved. Your teammate pulls your branch and sees a clean `git status`. Why didn''t your edit get to them?'
       options:
@@ -3086,6 +3469,10 @@ steps:
       - Your teammate's Git is out of date
       - Submodules never sync changes between collaborators
       correct_index: 1
+      option_feedback:
+        0: This answer assumes Git silently drops submodule edits; it doesn't, you just have to publish them via the two-step ceremony.
+        2: This answer blames version; the issue is missing publish steps, not tooling.
+        3: This answer overstates the problem; submodule changes do sync once properly published.
       explanation: 'An edit to a submodule file affects only your working tree until you perform the two-step commit: (1) commit inside the submodule and push its new commit to the submodule''s remote, (2) `git add <path>` + commit in the outer repo to bump the pinned SHA. Skip either step and the change never reaches teammates.'
     - question: '**[Revisit Step 1]** You edit a file inside a submodule, run `git add && git commit` inside the submodule, then `git push`. Git errors with something like `fatal: You are not currently on a branch`. What Step-1 concept explains this?'
       options:
@@ -3094,6 +3481,10 @@ steps:
       - Missing upstream
       - Submodules are read-only by default
       correct_index: 0
+      option_feedback:
+        1: This answer invents a conflict; the issue is detached-HEAD's lack of branch context for push.
+        2: This answer is partial; even with an upstream, detached HEAD can't push without a branch.
+        3: This answer invents a permission model; submodules are writable.
       explanation: 'After `git submodule update`, submodules are in detached HEAD at the pinned SHA (because that''s what the outer tree specified — no branch context). Any commit you make there is anchored to nothing. Fix: `git switch -c <branch>` inside the submodule **before** committing. Same detached-HEAD pattern as Step 1, encountered in a submodule setting.'
     - question: '**[Revisit Step 8]** You ran `git rebase main` inside a submodule and rewrote three of its commits. The outer repo''s `git status` says `modified: vendor/math-utils (new commits)`. Is anything wrong with this?'
       options:
@@ -3102,6 +3493,10 @@ steps:
       - Git prevents rebase inside submodules
       - Rebase deletes the submodule
       correct_index: 1
+      option_feedback:
+        0: This answer ignores that the outer repo may still pin pre-rebase SHAs that need pushing for teammates' historical clones to work.
+        2: This answer assumes Git blocks rebase in submodules; it doesn't.
+        3: This answer invents destructive semantics; rebase doesn't delete repos.
       explanation: 'A submodule is a real Git repo — rebase works there exactly as in Step 8/9. The complication is that the outer repo may still pin the pre-rebase SHAs; if those weren''t pushed, teammates checking out old outer-repo commits will fail to fetch them (`fatal: reference is not a tree`). Same cardinal rule: rebase only unpushed/local history.'
     - question: The full "publish a submodule change" ceremony. Put the six required commands in order. Distractors are verb-variants that break one or more of the ceremony's causal invariants.
       type: parsons
@@ -3286,14 +3681,14 @@ steps:
   - myproject/test_calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\ngit rebase --abort 2>/dev/null\ngit cherry-pick --abort 2>/dev/null\ngit merge --abort 2>/dev/null\ngit bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\n# Clean up any leftover capstone branches from a previous attempt.\nfor br in capstone-fix capstone-wip; do git branch -D $br 2>/dev/null; done\n# Drop any leftover stashes from previous capstone attempts.\nwhile git stash list | grep -q 'capstone'; do git stash drop -q 2>/dev/null || break; done\n# If the capstone has already been completed successfully, don't rebuild.\nif git log main --oneline -1 2>/dev/null | grep -qi 'capstone.*fix\\|fix.*absolute.*capstone'; then\n  exit 0\nfi\n# Ensure calculator.py has a working absolute() baseline before we plant the bug.\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: restore absolute baseline for capstone' 2>/dev/null\nfi\n# Install the regression test if missing.\nprintf 'from calculator import absolute\\nassert absolute(-4) == 4, f\"expected 4, got {absolute(-4)}\"\\nassert absolute(3) == 3\\nassert absolute(0) == 0\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Capstone: add regression tests'\n# Plant 5 commits, one of which silently breaks absolute().\necho '# refactor: formatting pass' >> calculator.py\ngit commit -qam 'Capstone: formatting pass'\necho '# refactor: docstring cleanup' >> calculator.py\ngit commit -qam 'Capstone: docstring cleanup'\n# Plant the bug: replace `return x if x >= 0 else -x` with a broken version.\nif grep -q 'return x if x >= 0 else -x' calculator.py; then\n  sed -i 's|return x if x >= 0 else -x|return x  # simplification|' calculator.py\nfi\ngit commit -qam 'Capstone: simplify absolute return path'\necho '# refactor: trailing whitespace' >> calculator.py\ngit commit -qam 'Capstone: tidy trailing whitespace'\necho '# refactor: reorder helpers' >> calculator.py\ngit commit -qam 'Capstone: reorder helper comments'\n# Dirty the working tree with an unrelated uncommitted note.\nif ! grep -q 'TODO: add clamp helper' calculator.py; then\n  echo '# TODO: add clamp helper' >> calculator.py\nfi\n"
+  - "cd /tutorial/myproject\n{ [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null\n[ -e .git/CHERRY_PICK_HEAD ] && git cherry-pick --abort 2>/dev/null\n[ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null\n[ -e .git/BISECT_START ] && git bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\n# Clean up any leftover capstone branches from a previous attempt.\nfor br in capstone-fix capstone-wip; do git branch -D $br 2>/dev/null; done\n# Drop any leftover stashes from previous capstone attempts.\nwhile git stash list | grep -q 'capstone'; do git stash drop -q 2>/dev/null || break; done\n# If the capstone has already been completed successfully, don't rebuild.\nif git log main --oneline -1 2>/dev/null | grep -qi 'capstone.*fix\\|fix.*absolute.*capstone'; then\n  exit 0\nfi\n# Ensure calculator.py has a working absolute() baseline before we plant the bug.\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: restore absolute baseline for capstone' 2>/dev/null\nfi\n# Install the regression test if missing.\nprintf 'from calculator import absolute\\nassert absolute(-4) == 4, f\"expected 4, got {absolute(-4)}\"\\nassert absolute(3) == 3\\nassert absolute(0) == 0\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Capstone: add regression tests'\n# Plant 5 commits, one of which silently breaks absolute().\necho '# refactor: formatting pass' >> calculator.py\ngit commit -qam 'Capstone: formatting pass'\necho '# refactor: docstring cleanup' >> calculator.py\ngit commit -qam 'Capstone: docstring cleanup'\n# Plant the bug: replace `return x if x >= 0 else -x` with a broken version.\nif grep -q 'return x if x >= 0 else -x' calculator.py; then\n  sed -i 's|return x if x >= 0 else -x|return x  # simplification|' calculator.py\nfi\ngit commit -qam 'Capstone: simplify absolute return path'\necho '# refactor: trailing whitespace' >> calculator.py\ngit commit -qam 'Capstone: tidy trailing whitespace'\necho '# refactor: reorder helpers' >> calculator.py\ngit commit -qam 'Capstone: reorder helper comments'\n# Dirty the working tree with an unrelated uncommitted note.\nif ! grep -q 'TODO: add clamp helper' calculator.py; then\n  echo '# TODO: add clamp helper' >> calculator.py\nfi\n"
   solution:
     # Interactive scenario teaches the FULL composition: stash → bisect → fix
     # on dedicated branch → rebase-fixup → merge → stash-pop. Automated
     # solution rebuilds the same end state directly. Single batched command
     # to fit the v86 _runVisible 30s prompt timeout.
     commands:
-    - "cd /tutorial/myproject; git rebase --abort 2>/dev/null; git bisect reset 2>/dev/null; git merge --abort 2>/dev/null; git switch -q main 2>/dev/null; git reset --hard HEAD; while git stash list 2>/dev/null | grep -q .; do git stash drop -q 2>/dev/null || break; done; git branch -D capstone-fix 2>/dev/null; sed -i 's|return x  # simplification|return x if x >= 0 else -x|' calculator.py; git diff --quiet || (git add calculator.py && git commit -m 'Capstone fix: restore negation in absolute'); echo '# TODO: add clamp helper' >> calculator.py"
+    - "cd /tutorial/myproject; { [ -e .git/rebase-merge ] || [ -e .git/rebase-apply ]; } && git rebase --abort 2>/dev/null; [ -e .git/BISECT_START ] && git bisect reset 2>/dev/null; [ -e .git/MERGE_HEAD ] && git merge --abort 2>/dev/null; git switch -q main 2>/dev/null; git reset --hard HEAD; git stash clear -q 2>/dev/null; git branch -D capstone-fix 2>/dev/null; sed -i 's|return x  # simplification|return x if x >= 0 else -x|' calculator.py; git diff --quiet || (git add calculator.py && git commit -m 'Capstone fix: restore negation in absolute'); echo '# TODO: add clamp helper' >> calculator.py"
     explanation: |
       - **Tool choices (many right answers).** The solution shown uses stash → automated bisect → branch + two WIP commits → interactive-rebase fixup → regular merge → stash pop → reflog check. An equally valid path: stash → manual bisect → fix with one commit directly → squash-merge to main → stash pop → reflog check. The tests only verify the end state, not the path.
       - **Why stash first, always.** Bisect moves HEAD across historical commits; a dirty working tree would either block bisect or carry uncommitted edits across arbitrary commits. Same principle as Step 4's "clean tree for context switch."
@@ -3345,6 +3740,10 @@ steps:
       - '(a) All four → `git merge`'
       - '(a) Backport → `git rebase`; (b) Feature integration → `git cherry-pick`; (c) WIP cleanup → `git merge`; (d) One-commit landing → `git rebase`'
       correct_index: 1
+      option_feedback:
+        0: This answer rejects cherry-pick's canonical use case (one-commit backports) and uses merge for WIP cleanup, which doesn't collapse history.
+        2: This answer collapses all distinctions into one tool; the four scenarios genuinely call for different verbs.
+        3: This answer reverses the typical scope-to-tool mapping (rebase for surgery, cherry-pick for bulk).
       explanation: Cherry-pick is surgical (one commit), merge is bulk (many commits), interactive rebase is for history cleanup, squash-merge collapses a branch into one commit. Steps 5, 8, 9, 10 each framed this table; this question just asks you to recognize when to use which. The others mis-apply cherry-pick (wrong for 50 commits) or merge (doesn't clean WIP).
     - question: '**[Interleaves Steps 3, 5, 8, 9, 10]** Which of these operations create commits with **new SHAs** even when the patch is identical to an earlier commit? Select all that apply.'
       type: multiple
@@ -3360,6 +3759,9 @@ steps:
       - 1
       - 2
       - 3
+      option_feedback:
+        4: This answer treats fast-forward merge as creating commits; it only advances a ref pointer — no new SHAs.
+        5: This answer treats `git branch` as creating commits; it only writes a 41-byte ref file — no new SHAs.
       explanation: 'A commit''s SHA hashes its tree + parent(s) + author + committer + message. **Change any of those and the SHA changes.** Cherry-pick, rebase, interactive-rebase, and squash-merge all create new commit objects with different parents or combined trees. Fast-forward merge and `git branch` do NOT create commits — they only move pointers (Step 1''s whole point). This is the deep schema: commits are immutable; "moving" a commit is always "copy + move pointer to copy."'
     - question: '**[Interleaves Steps 2, 9, 1]** You performed three destructive-feeling operations in sequence: `git reset --hard HEAD~3`, then `git rebase -i` dropping a commit, then entering detached HEAD and making a throwaway commit. Which **single** tool can recover commits lost in all three cases?'
       options:
@@ -3368,6 +3770,10 @@ steps:
       - '`git stash pop` — stash tracks destructive operations automatically'
       - 'Nothing — destructive operations are final'
       correct_index: 1
+      option_feedback:
+        0: This answer ignores that revert applies to one commit's *effects*, not arbitrary HEAD movements; reflog is the cross-cutting tool.
+        2: This answer confuses stash (working-tree shelving) with reflog (HEAD-position history).
+        3: This answer ignores reflog's universal HEAD-position record; "destructive" only means refs moved, not data deleted.
       explanation: Reflog is the universal safety net because it records HEAD's position history, not the cause. Whether HEAD moved via reset, rebase drop, or leaving detached HEAD, the SHA it was at is recorded. Branch that SHA back into reachability and the "lost" work is found. This is the Step 2 lesson cashed in on a composite workflow — and the reason the tutorial framed destructive commands as "less scary than they sound."
     - question: '**[Interleaves basic tutorial Step 11 + advanced Step 8]** You hit a conflict during `git rebase main`. You edit the file, remove all `<<<<<<<` / `=======` / `>>>>>>>` markers, and run `git add`. Which command finishes **this one commit''s** resolution?'
       options:
@@ -3376,6 +3782,10 @@ steps:
       - '`git merge --continue`'
       - '`git push --force`'
       correct_index: 1
+      option_feedback:
+        0: This answer treats rebase like merge; rebase needs `--continue`, not `commit` — `commit` would leave the rebase half-done.
+        2: This answer uses the wrong verb; this is a rebase, not a merge.
+        3: This answer skips finalizing the rebase entirely.
       explanation: A rebase conflict is identical in mechanics to a merge conflict — same markers, same `git add` to mark resolved — but the final verb differs because rebase is *replaying*, not *merging*. Reflex-typing `git commit` here is the single most common mistake; it leaves the rebase half-done. `git rebase --abort` at any point restores the pre-rebase state.
     - question: '**[Interleaves Steps 6, 7]** A bug appeared because someone **removed** a line of validation that used to prevent it. Which investigation tool finds the commit that introduced the bug?'
       options:
@@ -3384,6 +3794,10 @@ steps:
       - '`git log --grep="delete"` — it finds commits with "delete" in the message'
       - '`git show HEAD` — it shows the most recent commit'
       correct_index: 1
+      option_feedback:
+        0: This answer ignores blame's deletion blind spot; absent lines are invisible to blame.
+        2: This answer assumes the commit message reliably announces deletions; messages don't index by content.
+        3: This answer shows only the most recent commit, not the historical regression spanning many commits.
       explanation: Blame attributes *existing* lines only — a missing line is invisible to it. Bisect operates on behavioral outcomes (did the test pass or fail?) regardless of whether the change was an addition, modification, or deletion. This is why the capstone you just finished started with bisect, not blame — the bug could just as easily have been a deletion, and starting with bisect generalizes.
     - question: '**[Interleaves Steps 3, 11, 13]** A submodule is stored in the outer repo as a gitlink entry (mode `160000`) containing a 40-character SHA. That SHA references which kind of Git object?'
       options:
@@ -3392,6 +3806,10 @@ steps:
       - A commit object in the submodule's own object database
       - A tag object
       correct_index: 2
+      option_feedback:
+        0: This answer confuses commit objects with blob objects; gitlinks pin commits, which then resolve to trees and blobs.
+        1: This answer confuses commit objects with tree objects; only a commit captures the snapshot identity.
+        3: This answer confuses commit objects with tag objects; tags reference commits but aren't stored in gitlinks.
       explanation: 'The gitlink pins a *commit* SHA (in the submodule''s repo). That commit deterministically resolves to a tree, which resolves to blobs — so one SHA is equivalent to a full content snapshot. Same object-model reasoning as Step 3 — snapshot-identity is carried by the commit SHA, which is why "one 40-char pin" is enough information to reconstruct the entire submodule''s state.'
     - question: '**[Interleaves Steps 8, 9, 10]** Which of these operations are **forbidden** on a branch that has been pushed and is shared with teammates? Select all that apply.'
       type: multiple
@@ -3407,6 +3825,9 @@ steps:
       - 1
       - 2
       - 3
+      option_feedback:
+        4: This answer correctly classifies revert as additive; selecting it would overstate revert's risk on shared branches.
+        5: This answer correctly classifies merge as additive; selecting it would conflate adding history with rewriting it.
       explanation: 'The cardinal rule — anything that **rewrites** published commits is forbidden on shared branches, because teammates holding the old SHAs will diverge. That rules out rebase (any flavor), amend, and force-push. Revert and merge are *additive* (they only append new commits without changing existing history), so they are safe. Same rule, different commands. Memorize the property (rewrite = dangerous), not the per-command list.'
     - question: '**[Interleaves Steps 2, 8]** You rebased `feature` locally, then `git push` was rejected because teammate Alice had pushed to `feature` in the meantime. What is the safe recovery sequence?'
       type: parsons
@@ -3429,6 +3850,10 @@ steps:
       - '`git restore .` then `git bisect` — discards your WIP so bisect has a clean tree'
       - '`git bisect` then `git stash` — stash shelves the bisect state'
       correct_index: 1
+      option_feedback:
+        0: This answer pollutes history if pushed; the question prefers a private alternative for in-progress work.
+        2: This answer destroys the WIP that the question wants to preserve.
+        3: This answer reverses the order; stash must come before bisect to give it a clean tree to walk.
       explanation: Bisect moves HEAD across arbitrary historical commits — a dirty working tree either blocks it or carries your edits into commits they don't belong in. Stash is designed exactly for this — private, local, temporary. Committing WIP pollutes history if pushed; `git restore .` destroys your work. Recognize the compose-two-tools pattern — most real Git tasks chain more than one command.
     - question: '**[Interleaves Steps 7, 10]** Three months ago your team squash-merged the `feature-stats` branch into `main`. A regression has surfaced that bisect on `main` narrows down to the squash commit. The squash commit changed 800 lines. What is your next move?'
       options:
@@ -3437,15 +3862,23 @@ steps:
       - '`git bisect` on the (still-existing) `feature-stats` branch — its internal commits were preserved, giving fine-grained resolution that the squash on main destroyed'
       - Give up — squash merge permanently discards internal commits
       correct_index: 2
+      option_feedback:
+        0: This answer is too broad; the question asks for fine-grained resolution, not whole-feature reversion.
+        1: This answer ignores the available finer-grained source on the feature branch's preserved commits.
+        3: This answer assumes squash discards internal commits; it only flattens *main's* history, the feature branch keeps them.
       explanation: Squash-merge collapses *main's* history, not the feature branch's. The feature branch's commits still exist (and its reflog too) if it wasn't deleted. Bisect there pinpoints the exact internal commit. This is the strongest pragmatic argument for keeping merged feature branches around for a while, not deleting them the day they merge. Step 10's quiz framed this; this question checks that you can *reach* for the recovery without being reminded.
     - question: '**[The unifying insight]** After working through the whole advanced tutorial, which statement best captures what every command you learned actually does?'
       options:
       - Git commands either delete old state or create new state; they never do both
-      - Every command either **moves one or more pointers** across the immutable object graph, or **creates new immutable objects** (commits/trees/blobs) and then moves a pointer to the new one — never both, never edit-in-place
+      - Existing commit objects are immutable. Every command either creates new immutable objects (commits/trees/blobs), moves one or more refs, updates the index, updates the working tree, or transfers objects/refs to a remote — usually some combination of these. Nothing rewrites old commits in place; "destructive" commands only abandon refs, leaving the objects in `.git/objects` for `reflog` to find.
       - Git commands are magical; the best strategy is to memorize the most common ones
       - Commands behave unpredictably depending on remote configuration
       correct_index: 1
-      explanation: 'This is the one-sentence schema from Step 3 that every subsequent step cashed in. Branch creation is pointer-only. Commit creates an object + moves a pointer. Rebase creates new objects + moves a pointer. Cherry-pick creates one new object + moves a pointer. Merge creates at most one new object (the merge commit) + moves a pointer. Squash creates one new object + moves a pointer. Even the "destructive" commands (reset, rebase drop) only move pointers — the old objects remain in `.git/objects` and reflog keeps their addresses. If you internalize this, nothing in Git is mysterious.'
+      option_feedback:
+        0: This answer is the old "either creates or moves, never both" simplification; most operations *do* both, the real invariant is that existing commits aren't rewritten.
+        2: This answer abandons the underlying invariant for rote learning; the schema is what makes Git predictable.
+        3: This answer mistakes per-command behavior for a remote-config sensitivity that doesn't exist.
+      explanation: 'This is the load-bearing invariant from Step 3 cashed in across all 15 steps. Branch creation moves a ref. Commit creates an object + moves a ref + clears the index. Rebase creates a *series* of new objects + moves a ref. Cherry-pick creates one new object + moves a ref. Squash-merge creates one new object + moves a ref. Even the "destructive" commands (reset, rebase drop) only move refs — the old objects remain in `.git/objects` and reflog keeps their addresses. If you internalize *immutability of existing commits*, nothing in Git is mysterious.'
     - question: '**[Evaluate — meta]** A junior teammate says: "Destructive Git commands like rebase and reset are too dangerous to use; I''ll stick with merge and revert only." Evaluate this position.'
       options:
       - Correct — rebase and reset should be avoided by anyone who isn't a Git expert
@@ -3453,4 +3886,8 @@ steps:
       - Incorrect — there is no difference between local and shared branches
       - Incorrect — reflog auto-recovers destructive operations immediately in all cases
       correct_index: 1
+      option_feedback:
+        0: This answer absolutizes a context-dependent rule; rebase/reset are routine on local branches.
+        2: This answer denies the very local/shared distinction that resolves the safety question.
+        3: This answer overstates reflog's reach; it works within retention windows on local repos, not as a universal undo.
       explanation: 'Conditional knowledge is the mark of an expert (Ambrose et al. 2010). The cardinal rule is not "rebase = bad" — it is "rebase rewrites history, which is dangerous on shared branches and safe on local ones." The junior''s heuristic is safer *and* less effective; teaching them *when* each tool is appropriate is the goal. The same tool, on the same commits, is either routine or catastrophic depending on one thing — has this history been pushed and pulled by others? This is the single most important distinction the advanced tutorial taught.'

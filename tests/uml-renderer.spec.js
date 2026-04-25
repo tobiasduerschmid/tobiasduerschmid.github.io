@@ -1585,6 +1585,13 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
 
       const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map(box);
       const labels = Array.from(svg.querySelectorAll('text.uml-component-connector-label')).map(box);
+      const componentOrderNames = ['gateway', 'auth', 'users', 'clubs', 'events', 'notifications'];
+      const componentLabelCenters = {};
+      for (const labelBox of Array.from(svg.querySelectorAll('text')).map(box)) {
+        if (componentOrderNames.includes(labelBox.text)) {
+          componentLabelCenters[labelBox.text] = (labelBox.l + labelBox.r) / 2;
+        }
+      }
       const routes = Array.from(svg.querySelectorAll('polyline'))
         .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
         .filter((points) => points.length >= 2);
@@ -1694,6 +1701,21 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
       }
 
       const viewBox = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+      const sourceOrderViolations = [];
+      for (let i = 0; i < componentOrderNames.length - 1; i++) {
+        const left = componentOrderNames[i];
+        const right = componentOrderNames[i + 1];
+        if (Number.isFinite(componentLabelCenters[left]) &&
+            Number.isFinite(componentLabelCenters[right]) &&
+            componentLabelCenters[left] >= componentLabelCenters[right]) {
+          sourceOrderViolations.push({
+            left,
+            right,
+            leftX: Math.round(componentLabelCenters[left]),
+            rightX: Math.round(componentLabelCenters[right]),
+          });
+        }
+      }
       document.body.removeChild(host);
       return {
         hasSvg: true,
@@ -1705,6 +1727,7 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
         labelOverlaps,
         labelRouteHits,
         diagonalSegments,
+        sourceOrderViolations,
         width: viewBox[2],
         height: viewBox[3],
       };
@@ -1713,12 +1736,13 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
     expect(stats.hasSvg).toBe(true);
     expect(stats.diagonalSegments).toBe(0);
     expect(stats.componentHits).toBe(0);
-    expect(stats.crossings).toBeLessThanOrEqual(1);
+    expect(stats.crossings).toBe(0);
     expect(stats.trackOverlap).toBe(0);
     expect(stats.longBackEdgeTopDetours).toBeLessThanOrEqual(1);
     expect(stats.maxLongBackEdgeExtra).toBeLessThanOrEqual(380);
     expect(stats.labelOverlaps).toBe(0);
     expect(stats.labelRouteHits).toEqual([]);
+    expect(stats.sourceOrderViolations).toEqual([]);
     expect(stats.width).toBeLessThan(2100);
     expect(stats.height).toBeLessThan(650);
   });
@@ -1921,6 +1945,10 @@ PaymentService ..> NotificationService : sendReceipt
         const loops = [];
         const avoidableEndpointDoglegs = [];
         const terminalRailCrowding = [];
+        const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map((rect, index) => {
+          const b = /** @type {SVGGraphicsElement} */ (rect).getBBox();
+          return { index, l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
+        });
         const portSquares = Array.from(svg.querySelectorAll('rect'))
           .filter((rect) =>
             !rect.classList.contains('uml-component-box') &&
@@ -1932,16 +1960,117 @@ PaymentService ..> NotificationService : sendReceipt
             return { l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
           });
         const detachedEndpoints = [];
+        const wrongPortSideAttachments = [];
+        const routeComplexityViolations = [];
+        const outerLoopViolations = [];
 
         /** @param {{x:number,y:number}} point */
-        function endpointTouchesPort(point) {
+        function touchingPort(point) {
           const pad = 8;
-          return portSquares.some((rect) =>
+          return portSquares.find((rect) =>
             point.x >= rect.l - pad &&
             point.x <= rect.r + pad &&
             point.y >= rect.t - pad &&
             point.y <= rect.b + pad
-          );
+          ) || null;
+        }
+
+        /** @param {{x:number,y:number}} point */
+        function endpointTouchesPort(point) {
+          return !!touchingPort(point);
+        }
+
+        /** @param {{l:number,r:number,t:number,b:number}} port */
+        function semanticPortSide(port) {
+          const pad = 2.5;
+          for (const componentBox of componentBoxes) {
+            if (Math.abs(port.l - componentBox.l) <= pad &&
+                port.b >= componentBox.t - pad &&
+                port.t <= componentBox.b + pad) return 'left';
+            if (Math.abs(port.r - componentBox.r) <= pad &&
+                port.b >= componentBox.t - pad &&
+                port.t <= componentBox.b + pad) return 'right';
+          }
+          return null;
+        }
+
+        /** @param {{x:number,y:number}} point @param {number} routeIndex @param {'first'|'last'} end */
+        function recordWrongPortSideAttachment(point, routeIndex, end) {
+          const port = touchingPort(point);
+          if (!port) return;
+          const side = semanticPortSide(port);
+          if (!side) return;
+          const expectedX = side === 'left' ? port.l : port.r;
+          const onDeclaredSide = Math.abs(point.x - expectedX) <= 2.5 &&
+            point.y >= port.t - 2 &&
+            point.y <= port.b + 2;
+          if (!onDeclaredSide) {
+            wrongPortSideAttachments.push({
+              route: routeIndex,
+              end,
+              side,
+              point: { x: Math.round(point.x), y: Math.round(point.y) },
+              port: {
+                l: Math.round(port.l),
+                r: Math.round(port.r),
+                t: Math.round(port.t),
+                b: Math.round(port.b),
+              },
+            });
+          }
+        }
+
+        /** @param {{x:number,y:number}} a0 @param {{x:number,y:number}} a1 @param {{x:number,y:number}} b0 @param {{x:number,y:number}} b1 */
+        function segmentsCross(a0, a1, b0, b1) {
+          const ah = Math.abs(a0.y - a1.y) < 1;
+          const av = Math.abs(a0.x - a1.x) < 1;
+          const bh = Math.abs(b0.y - b1.y) < 1;
+          const bv = Math.abs(b0.x - b1.x) < 1;
+          if (ah && bv) {
+            return b0.x > Math.min(a0.x, a1.x) + 2 &&
+              b0.x < Math.max(a0.x, a1.x) - 2 &&
+              a0.y > Math.min(b0.y, b1.y) + 2 &&
+              a0.y < Math.max(b0.y, b1.y) - 2;
+          }
+          if (av && bh) {
+            return a0.x > Math.min(b0.x, b1.x) + 2 &&
+              a0.x < Math.max(b0.x, b1.x) - 2 &&
+              b0.y > Math.min(a0.y, a1.y) + 2 &&
+              b0.y < Math.max(a0.y, a1.y) - 2;
+          }
+          return false;
+        }
+
+        /** @param {{index:number,points:{x:number,y:number}[]}[]} routes */
+        function routeCrossingCount(routes) {
+          let crossings = 0;
+          for (let i = 0; i < routes.length; i++) {
+            for (let j = i + 1; j < routes.length; j++) {
+              for (let ai = 0; ai < routes[i].points.length - 1; ai++) {
+                for (let bi = 0; bi < routes[j].points.length - 1; bi++) {
+                  if (segmentsCross(routes[i].points[ai], routes[i].points[ai + 1], routes[j].points[bi], routes[j].points[bi + 1])) {
+                    crossings++;
+                  }
+                }
+              }
+            }
+          }
+          return crossings;
+        }
+
+        /** @param {{x:number,y:number}[]} points */
+        function bendCount(points) {
+          let bends = 0;
+          let last = '';
+          for (let i = 0; i < points.length - 1; i++) {
+            const dx = Math.abs(points[i + 1].x - points[i].x);
+            const dy = Math.abs(points[i + 1].y - points[i].y);
+            const dir = dx >= dy ? 'h' : 'v';
+            if (dx < 1 && dy < 1) continue;
+            if (last && dir !== last) bends++;
+            last = dir;
+          }
+          return bends;
         }
 
         /** @param {{x:number,y:number}[]} points @param {'source'|'target'} end */
@@ -1994,6 +2123,37 @@ PaymentService ..> NotificationService : sendReceipt
             };
           }
           return null;
+        }
+
+        /** @param {{x:number,y:number}} p0 @param {{x:number,y:number}} p1 @param {{l:number,r:number,t:number,b:number}} rect */
+        function segmentDistanceToRect(p0, p1, rect) {
+          let dx = 0;
+          let dy = 0;
+          if (Math.abs(p0.y - p1.y) < 1) {
+            const x1 = Math.min(p0.x, p1.x);
+            const x2 = Math.max(p0.x, p1.x);
+            dx = x2 < rect.l ? rect.l - x2 : (x1 > rect.r ? x1 - rect.r : 0);
+            dy = p0.y < rect.t ? rect.t - p0.y : (p0.y > rect.b ? p0.y - rect.b : 0);
+          } else if (Math.abs(p0.x - p1.x) < 1) {
+            const y1 = Math.min(p0.y, p1.y);
+            const y2 = Math.max(p0.y, p1.y);
+            dx = p0.x < rect.l ? rect.l - p0.x : (p0.x > rect.r ? p0.x - rect.r : 0);
+            dy = y2 < rect.t ? rect.t - y2 : (y1 > rect.b ? y1 - rect.b : 0);
+          }
+          if (dx === 0 && dy === 0) return 0;
+          if (dx === 0) return dy;
+          if (dy === 0) return dx;
+          return Math.hypot(dx, dy);
+        }
+
+        /** @param {{x:number,y:number}} point @param {{l:number,r:number,t:number,b:number}} rect */
+        function pointTouchesComponent(point, rect) {
+          const pad = 10;
+          const onVertical = Math.abs(point.x - rect.l) <= pad || Math.abs(point.x - rect.r) <= pad;
+          const inY = point.y >= rect.t - pad && point.y <= rect.b + pad;
+          const onHorizontal = Math.abs(point.y - rect.t) <= pad || Math.abs(point.y - rect.b) <= pad;
+          const inX = point.x >= rect.l - pad && point.x <= rect.r + pad;
+          return (onVertical && inY) || (onHorizontal && inX);
         }
 
         /** @param {{index:number,points:{x:number,y:number}[]}[]} routes */
@@ -2053,11 +2213,16 @@ PaymentService ..> NotificationService : sendReceipt
           return violations;
         }
 
+        const componentClearanceViolations = [];
+        const componentTop = Math.min(...componentBoxes.map((rect) => rect.t));
+        const componentBottom = Math.max(...componentBoxes.map((rect) => rect.b));
         for (const route of routes) {
           const first = route.points[0];
           const last = route.points[route.points.length - 1];
           if (!endpointTouchesPort(first)) detachedEndpoints.push({ index: route.index, end: 'first' });
           if (!endpointTouchesPort(last)) detachedEndpoints.push({ index: route.index, end: 'last' });
+          recordWrongPortSideAttachment(first, route.index, 'first');
+          recordWrongPortSideAttachment(last, route.index, 'last');
           const sourceDogleg = endpointDogleg(route.points, 'source');
           if (sourceDogleg) avoidableEndpointDoglegs.push({ index: route.index, end: 'source', ...sourceDogleg });
           const targetDogleg = endpointDogleg(route.points, 'target');
@@ -2071,9 +2236,15 @@ PaymentService ..> NotificationService : sendReceipt
           const length = routeLength(route.points);
           const direct = Math.abs(first.x - last.x) + Math.abs(first.y - last.y);
           const extra = length - direct;
+          const bends = bendCount(route.points);
+          const longBackEdge = Math.abs(first.x - last.x) > 650;
           const runaway = Math.max(
             Math.max(...ys) - Math.max(first.y, last.y),
             Math.min(first.y, last.y) - Math.min(...ys)
+          );
+          const componentFieldEscape = Math.max(
+            componentTop - Math.min(...ys),
+            Math.max(...ys) - componentBottom
           );
           const localConnection = Math.abs(first.x - last.x) < 260 && direct < 300;
           if (localConnection && extra > 160 && runaway > 90) {
@@ -2085,6 +2256,43 @@ PaymentService ..> NotificationService : sendReceipt
               routeWidth: Math.round(Math.max(...xs) - Math.min(...xs)),
             });
           }
+          if ((!longBackEdge && bends > 4) ||
+              (longBackEdge && bends > 6) ||
+              (!longBackEdge && route.points.length > 6) ||
+              (longBackEdge && route.points.length > 8) ||
+              (!longBackEdge && extra > 280) ||
+              (longBackEdge && extra > 420)) {
+            routeComplexityViolations.push({
+              index: route.index,
+              points: route.points.length,
+              bends,
+              extra: Math.round(extra),
+              longBackEdge,
+            });
+          }
+          if (!longBackEdge && componentFieldEscape > 110) {
+            outerLoopViolations.push({
+              index: route.index,
+              escape: Math.round(componentFieldEscape),
+              minY: Math.round(Math.min(...ys)),
+              maxY: Math.round(Math.max(...ys)),
+            });
+          }
+          for (let pi = 0; pi < route.points.length - 1; pi++) {
+            for (const rect of componentBoxes) {
+              const endpointBox = pointTouchesComponent(first, rect) || pointTouchesComponent(last, rect);
+              if (endpointBox) continue;
+              const distance = segmentDistanceToRect(route.points[pi], route.points[pi + 1], rect);
+              if (distance < 16) {
+                componentClearanceViolations.push({
+                  route: route.index,
+                  segment: pi,
+                  component: rect.index,
+                  distance: Math.round(distance),
+                });
+              }
+            }
+          }
         }
 
         document.body.removeChild(host);
@@ -2092,8 +2300,13 @@ PaymentService ..> NotificationService : sendReceipt
           hasSvg: true,
           loops,
           detachedEndpoints,
+          wrongPortSideAttachments,
           avoidableEndpointDoglegs,
           terminalRailCrowding,
+          crossings: routeCrossingCount(routes),
+          routeComplexityViolations,
+          outerLoopViolations,
+          componentClearanceViolations,
           wireHaloViolations: wireHaloViolations(routes),
         };
       }
@@ -2163,8 +2376,13 @@ t_out2 --> n_in : POST
       expect(result.hasSvg, `${name} rendered`).toBe(true);
       expect(result.loops, `${name} unnecessary loops`).toEqual([]);
       expect(result.detachedEndpoints, `${name} port endpoints`).toEqual([]);
+      expect(result.wrongPortSideAttachments, `${name} declared port side attachments`).toEqual([]);
       expect(result.avoidableEndpointDoglegs, `${name} avoidable endpoint doglegs`).toEqual([]);
       expect(result.terminalRailCrowding, `${name} terminal rail crowding`).toEqual([]);
+      expect(result.crossings, `${name} avoidable route crossings`).toBe(0);
+      expect(result.routeComplexityViolations, `${name} route complexity`).toEqual([]);
+      expect(result.outerLoopViolations, `${name} outer loop escapes`).toEqual([]);
+      expect(result.componentClearanceViolations, `${name} component clearance`).toEqual([]);
       expect(result.wireHaloViolations, `${name} wire halo violations`).toEqual([]);
     }
   });
@@ -2362,6 +2580,11 @@ b_eventout --> eb_in : publish
         )
         .map((label) => label.text);
 
+      /** @param {{l:number,r:number,t:number,b:number}} a @param {{l:number,r:number,t:number,b:number}} b @param {number} pad */
+      function rectsOverlap(a, b, pad) {
+        return a.r + pad > b.l && a.l - pad < b.r && a.b + pad > b.t && a.t - pad < b.b;
+      }
+
       const routes = Array.from(svg.querySelectorAll('polyline'))
         .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
         .filter((points) => points.length >= 2);
@@ -2371,6 +2594,15 @@ b_eventout --> eb_in : publish
       const maxRoutePoints = Math.max(...routes.map((points) => points.length));
 
       const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map((rect) => box(rect));
+      const connectorLabelBoxHits = [];
+      const connectorLabels = Array.from(svg.querySelectorAll('text.uml-component-connector-label'))
+        .map((text) => ({ text: (text.textContent || '').trim(), ...box(text) }));
+      for (const label of connectorLabels) {
+        for (const rect of componentBoxes) {
+          if (rectsOverlap(label, rect, 2)) connectorLabelBoxHits.push(label.text);
+        }
+      }
+
       let closeNonEndpointSegments = 0;
       for (const points of routes) {
         for (let i = 0; i < points.length - 1; i++) {
@@ -2389,6 +2621,7 @@ b_eventout --> eb_in : publish
         routeCount: routes.length,
         straightHorizontalRoutes,
         maxRoutePoints,
+        connectorLabelBoxHits,
         closeNonEndpointSegments,
         width: viewBox[2],
         height: viewBox[3],
@@ -2400,7 +2633,98 @@ b_eventout --> eb_in : publish
     expect(stats.routeCount).toBe(3);
     expect(stats.straightHorizontalRoutes).toBeGreaterThanOrEqual(2);
     expect(stats.maxRoutePoints).toBeLessThanOrEqual(4);
+    expect(stats.connectorLabelBoxHits).toEqual([]);
     expect(stats.closeNonEndpointSegments).toBe(0);
+  });
+
+  test('component routing keeps clear facing-port links short and corner-free', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '1000px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLComponentDiagram
+      ).render(host, `@startuml
+left to right direction
+component Auth {
+  portout "out1" as auth_out1
+  portout "out2" as auth_out2
+}
+component Users {
+  portin "/users" as users_in
+  portin "/sessions" as sessions_in
+}
+auth_out1 --> users_in : GET /users
+auth_out2 --> sessions_in : POST /sessions
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false };
+      }
+
+      function parsePoints(polyline) {
+        return (polyline.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      function routeLength(points) {
+        let length = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+          length += Math.abs(points[i + 1].x - points[i].x) + Math.abs(points[i + 1].y - points[i].y);
+        }
+        return length;
+      }
+
+      function bends(points) {
+        let total = 0;
+        for (let i = 1; i < points.length - 1; i++) {
+          const prev = points[i - 1];
+          const cur = points[i];
+          const next = points[i + 1];
+          const incomingHorizontal = Math.abs(prev.y - cur.y) < 1;
+          const outgoingHorizontal = Math.abs(cur.y - next.y) < 1;
+          if (incomingHorizontal !== outgoingHorizontal) total++;
+        }
+        return total;
+      }
+
+      const routes = Array.from(svg.querySelectorAll('polyline'))
+        .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
+        .filter((points) => points.length >= 2);
+
+      const summaries = routes.map((points) => {
+        const first = points[0];
+        const last = points[points.length - 1];
+        const direct = Math.abs(first.x - last.x) + Math.abs(first.y - last.y);
+        return {
+          points: points.length,
+          bends: bends(points),
+          extra: Math.round(routeLength(points) - direct),
+          horizontal: Math.abs(first.y - last.y) < 1,
+        };
+      });
+
+      document.body.removeChild(host);
+      return { hasSvg: true, routeCount: routes.length, summaries };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.routeCount).toBe(2);
+    expect(stats.summaries).toEqual([
+      { points: 2, bends: 0, extra: 0, horizontal: true },
+      { points: 2, bends: 0, extra: 0, horizontal: true },
+    ]);
   });
 
   test('component side anchors straighten when a legal side shift removes corners', async ({ page }) => {
@@ -2532,6 +2856,168 @@ o_cust --> crm_cust
     expect(stats.hasSvg).toBe(true);
     expect(stats.labelCount).toBe(2);
     expect(stats.hits).toEqual([]);
+  });
+
+  test('component joined assembly notation stays on component interfaces instead of mid-wire', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLComponentDiagram
+      ).render(host, `@startuml
+component Order {
+  provide "OrderItems" as o_items
+  provide "CustomerInfo" as o_cust
+}
+component Warehouse {
+  require "OrderItems" as w_items
+}
+component CRM {
+  require "CustomerInfo" as crm_cust
+}
+o_items --> w_items
+o_cust --> crm_cust
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false };
+      }
+
+      /** @param {Element} el */
+      function box(el) {
+        const b = /** @type {SVGGraphicsElement} */ (el).getBBox();
+        return { l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
+      }
+
+      /** @param {SVGPolylineElement} polyline */
+      function parsePoints(polyline) {
+        return (polyline.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      /** @param {{x:number,y:number}} p @param {{l:number,r:number,t:number,b:number}} rect */
+      function distanceToRect(p, rect) {
+        const dx = p.x < rect.l ? rect.l - p.x : (p.x > rect.r ? p.x - rect.r : 0);
+        const dy = p.y < rect.t ? rect.t - p.y : (p.y > rect.b ? p.y - rect.b : 0);
+        return Math.hypot(dx, dy);
+      }
+
+      /** @param {{x:number,y:number}} p @param {{x:number,y:number}} a @param {{x:number,y:number}} b */
+      function distanceToSegment(p, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const len2 = dx * dx + dy * dy;
+        if (!len2) return Math.hypot(p.x - a.x, p.y - a.y);
+        const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+        return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+      }
+
+      /** @param {{x:number,y:number}} a @param {{x:number,y:number}} b */
+      function pointDistance(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map(box);
+      const providedBalls = Array.from(svg.querySelectorAll('circle'))
+        .map((circle) => ({
+          x: Number(circle.getAttribute('cx')),
+          y: Number(circle.getAttribute('cy')),
+          r: Number(circle.getAttribute('r')),
+        }))
+        .filter((circle) => circle.r >= 8 && circle.r <= 18);
+      const requiredSockets = Array.from(svg.querySelectorAll('path'))
+        .filter((path) => /A\d+(?:\.\d+)?,\d+(?:\.\d+)?/.test(path.getAttribute('d') || ''))
+        .map((path) => {
+          const b = box(path);
+          return { ...b, x: (b.l + b.r) / 2, y: (b.t + b.b) / 2 };
+        });
+      const rawPolylines = Array.from(svg.querySelectorAll('polyline'))
+        .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
+        .filter((points) => points.length >= 2);
+      const routes = rawPolylines.filter((points) => {
+        const xs = points.map((point) => point.x);
+        const ys = points.map((point) => point.y);
+        return Math.max(...xs) - Math.min(...xs) > 30 || Math.max(...ys) - Math.min(...ys) > 30;
+      });
+      const routeEndpoints = routes.flatMap((points) => [points[0], points[points.length - 1]]);
+
+      const floatingBalls = providedBalls.filter((ball) =>
+        Math.min(...componentBoxes.map((componentBox) => distanceToRect(ball, componentBox))) > 48
+      );
+      const floatingSockets = requiredSockets.filter((socket) =>
+        Math.min(...componentBoxes.map((componentBox) => distanceToRect(socket, componentBox))) > 48
+      );
+
+      const midWireBalls = providedBalls.filter((ball) => {
+        const onRoute = routes.some((points) =>
+          points.slice(0, -1).some((point, index) => distanceToSegment(ball, point, points[index + 1]) <= ball.r + 2)
+        );
+        const endpointDistance = Math.min(...routeEndpoints.map((endpoint) => pointDistance(ball, endpoint)));
+        return onRoute && endpointDistance > 48;
+      });
+      const midWireSockets = requiredSockets.filter((socket) => {
+        const onRoute = routes.some((points) =>
+          points.slice(0, -1).some((point, index) => distanceToSegment(socket, point, points[index + 1]) <= 14)
+        );
+        const endpointDistance = Math.min(...routeEndpoints.map((endpoint) => pointDistance(socket, endpoint)));
+        return onRoute && endpointDistance > 48;
+      });
+
+      const endpointSymbolMisses = routeEndpoints.filter((endpoint) => {
+        const touchesBall = providedBalls.some((ball) => pointDistance(endpoint, ball) <= ball.r + 4);
+        const touchesSocket = requiredSockets.some((socket) =>
+          endpoint.x >= socket.l - 4 &&
+          endpoint.x <= socket.r + 4 &&
+          endpoint.y >= socket.t - 4 &&
+          endpoint.y <= socket.b + 4
+        );
+        return !touchesBall && !touchesSocket;
+      }).map((endpoint) => ({ x: Math.round(endpoint.x), y: Math.round(endpoint.y) }));
+
+      const openPolylineArrowheads = rawPolylines.filter((points) => {
+        if (points.length !== 3) return false;
+        const xs = points.map((point) => point.x);
+        const ys = points.map((point) => point.y);
+        return Math.max(...xs) - Math.min(...xs) <= 24 && Math.max(...ys) - Math.min(...ys) <= 24;
+      }).length;
+      const arrowheads = Array.from(svg.querySelectorAll('polygon')).length + openPolylineArrowheads;
+      document.body.removeChild(host);
+      return {
+        hasSvg: true,
+        routeCount: routes.length,
+        providedBallCount: providedBalls.length,
+        requiredSocketCount: requiredSockets.length,
+        arrowheads,
+        floatingBalls: floatingBalls.map((ball) => ({ x: Math.round(ball.x), y: Math.round(ball.y) })),
+        floatingSockets: floatingSockets.map((socket) => ({ x: Math.round(socket.x), y: Math.round(socket.y) })),
+        midWireBalls: midWireBalls.map((ball) => ({ x: Math.round(ball.x), y: Math.round(ball.y) })),
+        midWireSockets: midWireSockets.map((socket) => ({ x: Math.round(socket.x), y: Math.round(socket.y) })),
+        endpointSymbolMisses,
+      };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.routeCount).toBeGreaterThanOrEqual(2);
+    expect(stats.providedBallCount).toBe(2);
+    expect(stats.requiredSocketCount).toBe(2);
+    expect(stats.arrowheads).toBe(0);
+    expect(stats.floatingBalls).toEqual([]);
+    expect(stats.floatingSockets).toEqual([]);
+    expect(stats.midWireBalls).toEqual([]);
+    expect(stats.midWireSockets).toEqual([]);
+    expect(stats.endpointSymbolMisses).toEqual([]);
   });
 
   test('component dashed style applies to components, ports, connectors, and standalone ports', async ({ page }) => {

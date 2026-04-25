@@ -30,4 +30,11 @@ Two browser-based tutorials let you practice these ideas on live code:
 * **[Testing Foundations](/SEBook/tools/testing-foundations-tutorial)** — assertions, equivalence partitions, boundary values, oracle strength, and testing behavior rather than implementation.
 * **[TDD](/SEBook/tools/tdd-tutorial)** — Red-Green-Refactor with pytest, katas, and AI-assisted TDD. Builds on Testing Foundations.
 
+# Test Quality and Test Design
+
+Before choosing a tool or chasing a coverage number, ask whether the tests are good evidence. The new pages in this chapter separate two questions:
+
+* **[Test Quality](/SEBook/testing/testquality.html)** explains how to evaluate a whole suite: oracle strength, fault-revealing power, coverage limits, mutation testing, flakiness, and maintainability.
+* **[Writing Good Tests](/SEBook/testing/goodtests.html)** gives a practical recipe for individual tests: behavior-focused names, small fixtures, strong assertions, systematic input selection, deterministic execution, and TDD as a rhythm of small verified steps.
+
 # Testability

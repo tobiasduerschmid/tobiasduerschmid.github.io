@@ -17,7 +17,8 @@ autosave_type: files
 # Global setup: install pytest, expose /tutorial on sys.path, and patch the
 # pytest module cache so each `pytest.main(...)` call sees the latest source
 # rather than a stale import. The module name list MUST include every project
-# module the student edits — for this tutorial that is just `scorer`.
+# module the student edits — `scorer` for cycles 1-12, `fizzbuzz` for the
+# transfer cycle.
 setup_commands:
   - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
   - "import sys; sys.path.insert(0, '/tutorial')"
@@ -28,7 +29,7 @@ setup_commands:
         _sysmod = _sys
         def _patched(*a, **kw):
             for m in list(_sysmod.modules):
-                if m.startswith('test_') or m == 'scorer':
+                if m.startswith('test_') or m in ('scorer', 'fizzbuzz'):
                     del _sysmod.modules[m]
             return _orig(*a, **kw)
         return _patched
@@ -81,6 +82,19 @@ steps:
 
       Students commonly delete a failing test to make the bar green. We're leaning into that discomfort instead. **Learning to read the failure** is what TDD trains.
 
+      <details markdown="1"><summary>🤔 But why <em>test-first</em>? Why not just write the code, then test it?</summary>
+
+      The honest answer: most developers' instinct is to write the code first. *That* is the habit TDD is replacing — and it deserves a real argument, not just a style claim.
+
+      **A small concrete scenario.** Suppose you skip the test and just write `score()` directly. You're confident it's right; you eyeball-check it in a REPL with `score([1])` and `score([1, 5])`, see plausible numbers, ship. Two weeks later your teammate adds a `triple 1s = Dragon Blast` rule by inserting an `elif` branch that *fires before* the per-die loop. The `elif` only matches *exactly* `[1, 1, 1]`; rolls like `[1, 1, 1, 5]` silently fall through and score wrong.
+
+      *With* a test-first cycle, the `triple 1s` test would have run against an empty `score()` and forced the question "what does the spec say happens with leftover singles?" *before* the elif was written. Without the test, the bug ships and surfaces only when a player notices their score is off — if they notice at all.
+
+      **The general pattern.** Code-first writes a function and *then* asks "what should it do?" Test-first writes a behavioral commitment and *then* asks "what's the simplest code that delivers that?" The first habit lets implementation choices smuggle themselves into your sense of what the spec was. The second prevents that — the spec is on disk, in code, before any implementation can pollute it. (Janzen & Saiedian's ICSE 2007 study of 230+ programmers: even programmers who tried test-first once kept reverting to code-first afterward; the habit is *that* sticky. Naming it here, so you can notice it in yourself, is half the work.)
+
+      So you might still resist test-first today. Notice the resistance. The goal of these twelve cycles is to give you the *felt experience* of small-step rhythm — after which you'll be choosing test-first because it works, not because we said so. (And per Fucci et al. 2017: even if you sometimes write the code an instant before the test, the *granularity* and *rhythm* are where TDD's measured benefits come from. So don't worry about being a purist; worry about being incremental.)
+      </details>
+
       ## The shape of every pytest test
 
       Every pytest test you write has the same four-part structure:
@@ -108,6 +122,27 @@ steps:
       | Triple 6 | Demon Strike | 600 |
 
       Triples consume three dice; leftover 1s and 5s still score as singles. Dice are integers 1–6. **Today you implement only the empty-roll case.** Eleven more cycles add the rest.
+
+      ## Your test list (Canon TDD step 1)
+
+      Kent Beck's *Canon TDD* (December 2023) starts with **a written list of behaviors you want the code to have** — *before* writing any tests. The list isn't a contract; it's a thinking tool. New behaviors get appended as they occur to you; ones you finish get struck through; ones that turn out to be already-implemented (cycle 5, cycle 7) get a checkmark with no code change.
+
+      Here is the list this tutorial works through, *in the order the cycles will tackle them*:
+
+      - [ ] Cycle 1 — Empty roll → no damage, no events
+      - [ ] Cycle 2 — A single 1 → one Dragon Flame event
+      - [ ] Cycle 3 — A single 5 → one Lightning Spark event
+      - [ ] Cycle 4 — Multiple singles → one event per die (forces a loop)
+      - [ ] Cycle 5 — Mixed dice (`[1, 5]`) → both events appear (free pass — verify with mutation move)
+      - [ ] Cycle 6 — Three 1s → one Dragon Blast (not three Flames) — *design-breaking test*
+      - [ ] Cycle 7 — Triple 1s + a leftover 5 → Dragon Blast + Lightning Spark
+      - [ ] Cycle 8 — Three 2s → Goblin Swarm — *the rule-objects refactor*
+      - [ ] Cycle 9 — Triples 3, 4, 6 → Orc Charge / Troll Smash / Demon Strike (data only, no `score()` edit)
+      - [ ] Cycle 10 — *Six* 1s → *two* Dragon Blasts (hidden bug)
+      - [ ] Cycle 11 — Invalid dice (`0`, `7`, `"x"`) → `ValueError`
+      - [ ] Cycle 12 — `report.summary()` returns a human-readable string
+
+      Beck's discipline is to *one-test-at-a-time*: pick the next list item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He warns explicitly against converting all list items to tests up front ("leads to rework and depression") and against mixing refactor into making a test pass ("wearing two hats simultaneously"). The platform's step-by-step structure enforces both disciplines for you — so you can focus on the rhythm itself.
 
       ## Cycle 1's spec
 
@@ -590,6 +625,10 @@ steps:
             - "RED → REFACTOR → GREEN — write a failing test, design the right structure first, then make the test pass"
             - "REFACTOR → RED → GREEN — clean up old code first, then write a test for the new behavior, then implement it"
           correct_index: 1
+          option_feedback:
+            0: "This is **test-after development**, not TDD. Writing code first means you've already committed to a design before the test gets a chance to challenge it — the test becomes a rubber stamp. RED-first forces the design to emerge under the pressure of \"how do I want to call this?\""
+            2: "REFACTOR before GREEN means refactoring code that doesn't yet make the new test pass — there's nothing to refactor *toward* and no safety net. The rule is: only refactor when **all** tests are green, so any regression is caught immediately."
+            3: "Refactoring before RED means changing structure without a failing test motivating the change. You lose the link between *why* the design changed and *what* behavior demanded it. New behavior should drive new structure, not the other way around."
           explanation: |
             RED → GREEN → REFACTOR. The order is load-bearing. RED proves the test reveals
             missing behavior. GREEN proves the code now satisfies that behavior. REFACTOR
@@ -604,6 +643,10 @@ steps:
             - "Delete the test — a test that passes immediately is redundant and only adds runtime cost"
             - "Rewrite the test until it fails, since the rule is `RED → GREEN → REFACTOR` and you cannot enter GREEN without first being RED"
           correct_index: 1
+          option_feedback:
+            0: "Premature celebration. A test that passes immediately could be a *Liar* — vacuously true and would pass against any code. Without verifying (the mutation move), you have no evidence the test catches anything. Cycle 5 of this tutorial is built specifically around this trap."
+            2: "Deleting passing tests cuts holes in your safety net. The test documents *intended* behavior, even when current code already provides it; future refactors might break that behavior, and only the test will catch it. Runtime cost on a passing assertion is microseconds — not a real reason to remove documentation of a contract."
+            3: "Forcing artificial RED breaks the test/spec relationship. The test should describe the behavior the spec demands, not the failure your sequence rule expects. If the spec is already implemented, a *deliberately* failing test would be testing the wrong thing on purpose."
           explanation: |
             Both halves matter. Sometimes a test passes immediately because a prior refactor
             generalised behavior — that is a *positive* outcome, and the test still earns its
@@ -620,6 +663,10 @@ steps:
             - "Skip GREEN entirely and design the loop as part of REFACTOR — the cycle is flexible about which phase contains the new logic"
             - "It does not matter — both choices satisfy the test, and the difference is purely stylistic"
           correct_index: 1
+          option_feedback:
+            0: "This is the **code-first reflex** dressed up as efficiency. \"Saves work later\" assumes you know what the next test will need — that's speculation, not design. A speculative loop is also code with no failing test motivating it; if it's wrong, no test will catch the mistake."
+            2: "REFACTOR is for cleaning *passing* code, not introducing new logic. New logic without a failing test demanding it is the antithesis of TDD — and a refactor that adds behavior breaks the rule that REFACTOR preserves observable behavior."
+            3: "Stylistic equivalence misses the **Transformation Priority Premise**. Both choices pass the *current* test, but only the simpler one keeps the code under genuine test pressure. The generic loop is a guess; the hardcoded version forces a future test to *earn* the loop."
           explanation: |
             This is the Transformation Priority Premise in action: prefer simpler
             transformations. The hardcoded version is fine as long as a future test will
@@ -635,6 +682,10 @@ steps:
             - "Because REFACTOR is the only phase where you can add new tests without breaking the cycle's contract"
             - "Because the GREEN code is always wrong on the first attempt and must be revised before moving on"
           correct_index: 1
+          option_feedback:
+            0: "pytest has no opinion about TDD phases — it just runs whatever tests it finds. If a tool were enforcing the cycle, the discipline wouldn't be about you. The cycle is a *practitioner* discipline, not a framework requirement."
+            2: "New tests belong to the **next** cycle's RED, never to REFACTOR. Adding tests during REFACTOR mixes the two-hats Beck explicitly warns against (Canon TDD: never add behavior during refactor; never restructure during GREEN)."
+            3: "Saying GREEN is \"always wrong\" misframes TPP. GREEN is *deliberately* simple — that's the point. It isn't wrong; it's *unfinished*, and it stays unfinished until a future test demands more. Refactor exists to clean accumulated structure, not to repair a defective GREEN."
           explanation: |
             Field studies report that "skip refactor when it looks fine" is exactly how
             test-driven discipline degrades into test-after over a few weeks. Every cycle is
@@ -650,6 +701,10 @@ steps:
             - "TDD is primarily a refactoring technique, and the tests exist only as a regression safety net for the refactoring"
             - "TDD requires writing all tests for a feature first, then all the code at once — which is the opposite of unit testing's incremental style"
           correct_index: 1
+          option_feedback:
+            0: "This misses the **threshold concept**. Test-first changes which questions you ask first (\"how should this be called?\") and what pressure shapes the design. The resulting code is often *very* different — typically more decoupled, with interfaces that didn't exist before the test demanded them."
+            2: "Refactoring is *one* phase; framing TDD as primarily-refactoring inverts the order. The tests do far more than catch regressions: they specify behavior, drive interface decisions, and force you to decompose problems incrementally. Calling them just a safety net misses the design pressure they exert."
+            3: "This describes **upfront test design** (which Beck explicitly warns against in Canon TDD: \"converting all list items to tests before making any pass leads to rework and depression\"). TDD is *one test at a time* — granular and incremental, the opposite of all-at-once."
           explanation: |
             This is the threshold concept: TDD is design first, testing second. The test
             forces you to decide the public interface (function name, parameters, return
@@ -692,6 +747,8 @@ steps:
       The instinct is to extract a rule, write a loop, build the abstraction now. TDD asks you to wait for the test that *demands* it. A speculative loop is a guess at the right shape; a loop refactor pulled by cycle 4's test is a *discovery*. **Refactor toward duplication, not before it.**
 
       If you're genuinely stuck, click **Show Solution** below the editor.
+
+      🪞 **Cycle-2 reflection (10 seconds):** before you click Run, articulate to yourself: *what did the test force you to **name** before any code existed?* That naming-pressure is the design move you just made — and you'll see it again every cycle.
 
     files:
       - path: "scorer.py"
@@ -862,6 +919,8 @@ steps:
       You can clearly see duplication. Refactoring it now would be *guessing* at the right shape with one too few data points. Cycle 4's test will provide the second data point — and the loop refactor it earns is a discovery, not a guess. **Refactor toward duplication, not before it.**
 
       Click **Show Solution** below the editor if you need one form of the test + GREEN code.
+
+      🪞 **Cycle-3 reflection (10 seconds):** the discomfort you may feel right now ("this is obviously duplicated, just *fix it*") is the **most important pedagogical moment of cycle 3**. Notice the urge. Don't act on it. Cycle 4 will reward the patience.
 
     files:
       - path: "scorer.py"
@@ -1255,11 +1314,10 @@ steps:
             - "Python performance is better when you delay extracting loops, because the interpreter optimises hardcoded branches differently from iterative ones"
             - "It is purely a style choice — the resulting code in either order is identical, so the order of operations does not matter"
           correct_index: 1
-          explanation: |
-            The test that demands the refactor is also the test that confirms the refactor
-            preserved behavior. Refactoring on aesthetic instinct alone is gambling — you
-            might pick a shape that the next test makes ugly anyway. The discipline is:
-            *let the tests speak first, then change the structure.*
+          option_feedback:
+            0: "*\"Refactor on first sight of duplication\"* sounds disciplined, but with one example, you're guessing the abstraction's shape. Two examples reveal the *common* parts; one is just a special case dressed as a pattern. Beck's *Rule of Three* (popularised by Fowler) is the same idea — refactor toward duplication, not before it."
+            2: "Performance is not the reason. Python's interpreter compiles both forms to similar bytecode, and the difference is microseconds at most. Confusing a *design* discipline with a *performance* concern muddles two unrelated questions."
+            3: "Order *is* the lesson. Refactor-before-test gives you no safety net during the structural change; refactor-after-test gives you green checkmarks proving behavior was preserved. The same final code is reached, but only one path *guarantees* the path was safe."
 
         - question: |
             You replaced the hardcoded branches with a `for` loop and ran pytest. All four tests passed. What did the test suite just do for you that you would otherwise have had to do manually?
@@ -1270,6 +1328,10 @@ steps:
             - "It rewrote your code to be more efficient — the suite optimises the implementation as a side effect of being run"
             - "It logged the change so a future code reviewer can audit it — the suite acts as a versioned history of refactor decisions"
           correct_index: 1
+          option_feedback:
+            0: "Manual inspection scales to one developer reviewing a few lines once. Automated tests scale to *every change forever*, by *every* developer, with no fatigue. The measurable industrial benefit of TDD (Microsoft/IBM: 39–91% defect reduction) comes specifically from this asymmetry — humans can't replicate the per-change verification cost the suite absorbs for free."
+            2: "Tests don't change your code. They run it and observe the result. (You may be confusing the test suite with mutation testing tools or auto-formatters — those are *different* tools running *outside* the suite.)"
+            3: "Git history logs changes. The test suite *enforces* behavior. Conflating the two means you lose the live regression-catching property — a log doesn't fail a build when you break something; a test does."
           explanation: |
             *Tests enable change.* The four green checkmarks are not just "tests passed" —
             they are "the empty case still works, single 1 still works, single 5 still
@@ -1285,6 +1347,10 @@ steps:
             - "The teammate is right and you should rewrite — TDD always prefers the smallest change, and one new `if` is smaller than rewriting the function"
             - "It does not matter — both approaches produce the same byte code after Python compiles them"
           correct_index: 0
+          option_feedback:
+            1: "pytest has no opinion about your control flow. Made-up rules like \"one `if` per function\" sound TDD-flavored but aren't real — and inventing them tells you you're searching for *external* discipline instead of *internal* design judgment. The discipline lives in *why* you choose one shape over another."
+            2: "\"Smallest change\" needs a time horizon. Locally smallest (one new `if`) is globally largest (you'll throw it away across cycles 5–6). TDD prefers the smallest *durable* change — which here is the loop, because it survives the next several tests."
+            3: "Bytecode equivalence (which isn't even quite true here — Python doesn't auto-optimise hardcoded branch chains into loops) is a runtime concern, not a design one. The question is what the code *says* and what the next developer *sees*, not what CPython executes."
           explanation: |
             The TDD GREEN rule is "smallest code that passes the failing test" *given the
             current direction of the design*. A third hardcoded branch is locally minimal
@@ -1300,6 +1366,10 @@ steps:
             - "Because pytest will only run new tests after old ones have failed at least once"
             - "Because every cycle must produce both a red bar and an import error or it will be rejected by the test runner"
           correct_index: 1
+          option_feedback:
+            0: "RED-for-the-right-reason is a *cycle invariant*, not a cycle-1 special case. Every cycle's first run of a new test should fail because the *behavior* doesn't yet exist — never because of a typo, missing import, or syntax error. The shape of the right-reason failure changes (ImportError in cycle 1, AssertionError later), but the principle is constant."
+            2: "pytest's run order is independent of TDD discipline. Tests run, period. Confusing tool behavior with TDD principle is a category error — TDD is *your* practice, not pytest's."
+            3: "ImportError-as-RED only made sense in cycle 1 when nothing was imported yet. Demanding it for every cycle would be enforcing form over function — you'd be looking for the *wrong* failure mode in cycles 2+, missing real bugs that surface as AssertionErrors instead."
           explanation: |
             "RED for the right reason" applies to every cycle. In cycle 1 the right reason is
             usually `ImportError`. In later cycles it is typically an assertion failure
@@ -1542,7 +1612,43 @@ steps:
           assert '[1, 5]' not in source and '[1,5]' not in source.replace(' ', ''), \
               "Cycle 5's `score([1, 5])` is handled by the existing per-die loop. You should not have added a `[1, 5]` special case — that would undo cycle 4's refactor."
 
-    # NO QUIZ — instructional emphasis is in the prose.
+    quiz:
+      title: "Cycle 5 — The Mutation Move (Liar-Test Defense)"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            You finished cycle 5 and your new test passed *with no production code change* — the cycle-4 loop already handles mixed dice. Did you do the mutation move described in the instructions? What did it prove?
+          type: single
+          options:
+            - "Yes — I temporarily broke the production code (e.g., changed `if die == 1` to `if die == 99`), reran pytest, watched cycle 5's test fail, then reverted. That proved the test isn't a *Liar* — it actually depends on the production behavior."
+            - "No need — pytest reported PASSED, and a passing test is a passing test."
+            - "Yes — I deleted the test, reran pytest, and confirmed nothing failed. That proved the test was running."
+            - "No — the mutation move only matters when a test fails for the wrong reason."
+          correct_index: 0
+          option_feedback:
+            1: "PASSED is a necessary but not sufficient signal. A test that passes against the current code might also pass against *broken* code — that's the **Liar** test smell. Without verifying that *changes to production* break the test, you have no evidence the test is doing any work. Cycle 5 was engineered specifically to expose this trap on a small example."
+            2: "Deleting the test and watching nothing fail proves the test *exists*, not that it *catches* anything. The mutation move is the inverse: keep the test, change the production code, and confirm the test now fails. Same idea (\"is the test connected to behavior?\") but the mutation direction matters — you're proving the *test* fires, not just that you can see its absence."
+            3: "RED-for-wrong-reason and the mutation move are different defenses. Wrong-reason is about *the failure you saw* (typo vs. behavior). The mutation move is about *the success you saw* — could it be vacuous? Both matter; cycle 5's free-pass is precisely the case where wrong-reason logic doesn't apply and the mutation move does."
+          explanation: |
+            A test that passes *immediately* on a behavior it has never been forced to verify is a **Liar suspect** (Codurance test-smell taxonomy). The 10-second mutation move — break the production code, watch the test fail, revert — is the cheap, durable defense. Without it, a "free pass" test could pass because the code was already correct, OR because the test is vacuous and would pass against *any* code. Cycle 5 specifically engineers a free-pass moment so you build the habit on a small example before it matters on a large one.
+
+        - question: |
+            **(Spaced review — Step 2)** Cycle 5's test passing on existing code feels like a victory, but TDD's Transformation Priority Premise warns against one specific reaction. Which?
+          type: single
+          options:
+            - "Don't add a special-case `if dice == [1, 5]:` branch even though it would also pass — that would *undo* cycle 4's loop refactor and step backwards on TPP."
+            - "Don't refactor; the code is already correct, so REFACTOR is optional this cycle."
+            - "Don't write any more tests for mixed dice; one is enough."
+            - "Don't run the test suite again — it already passed."
+          correct_index: 0
+          option_feedback:
+            1: "REFACTOR isn't optional — and that's the *whole point* of cycle 5. Treating REFACTOR as skippable when the diff is empty is precisely how the discipline degrades. The discipline is *to look* every cycle, not *to find* something every cycle. (Fowler called skipping refactor \"the most common way to screw up TDD\" for exactly this reason.)"
+            2: "Number of tests isn't the lesson here. The lesson is that TPP forbids regressing toward special-case branches when a general one already works. The question is about *what* you write, not *how many*."
+            3: "Re-running the suite is cheap and confirms you didn't break anything during REFACTOR (even an \"empty\" REFACTOR involves looking at code, which sometimes leads to small accidental edits). The TDD habit is: any time you've considered changing structure, re-run."
+          explanation: |
+            TPP says: prefer the simplest transformation that passes. The cycle-4 loop is *already* the right shape; a special-case branch for `[1, 5]` is more complex *and* less general — a regression toward the cycle-3 hardcoded style. (The validator for this step actively rejects a `[1, 5]` special case for exactly that reason.) Cycle 5 is also a chance to enter REFACTOR even when the diff is empty: the discipline is the lesson.
 
 
   # --------------------------------------------------------------------------
@@ -1817,6 +1923,10 @@ steps:
             - "It uses pytest.raises, which forces the implementation to add exception handling"
             - "It tests three dice instead of one or two, and pytest internally requires a different runner for tests that exceed two arguments"
           correct_index: 1
+          option_feedback:
+            0: "Assertion length isn't the diagnostic. A test can have a one-line assertion and still be design-breaking; another test can be huge but locally satisfiable. The diagnostic is whether the *current structure* can be patched, or whether the structure itself has to change."
+            2: "Cycle 6 doesn't use `pytest.raises` — that's cycle 11. The design-breaking property here has nothing to do with exception handling. (You may be confusing two different cycles' lessons.)"
+            3: "Pytest has no special runner for any number of dice. This is invented machinery. The structural-pressure phenomenon is about *your code*'s shape, not pytest's internals — those are entirely separate concerns."
           explanation: |
             A *design-breaking* test is one no local edit can satisfy. The cycle-4 loop is
             fundamentally per-die; combos are fundamentally per-face-count. You cannot
@@ -1832,6 +1942,10 @@ steps:
             - "That pytest silently re-imports the previous implementation if the new one breaks them, so the green bar in this case is misleading"
             - "That the previous tests were duplicates of each other and could be deleted to simplify the suite"
           correct_index: 1
+          option_feedback:
+            0: "Inverts the meaning. Surviving a structural rewrite is *evidence the tests are well-designed*, not evidence they're useless. The right reading: behavior-level tests are *exactly* the ones you want, and structural rewrites are *exactly* when their value shows up."
+            2: "Pytest doesn't import \"the previous implementation\" — it imports whatever's on disk now. The green bar reflects the *new* implementation passing the old behavioral assertions. (If pytest silently swapped implementations, the test suite would be unfalsifiable, which would defeat its entire purpose.)"
+            3: "Different tests pin different behaviors (empty roll, single 1, single 5, two-1s). Each is unique evidence. Deletion would shrink the safety net every cycle 6+ refactor relies on. Confusing \"all green\" with \"all redundant\" is a category error — you couldn't *prove* the rewrite preserved each behavior without each test."
           explanation: |
             This is the *Refactoring Litmus Test* concept. Robust tests assert on what the
             unit *does* (`report.total_damage == 100`, `report.events == (event,)`), not
@@ -1847,6 +1961,10 @@ steps:
             - "Because Python's Counter requires explicit decrement after every read; otherwise it caches stale values"
             - "It is a stylistic choice — `counts[1] = 0` and `del counts[1]` would also work and produce the same behavior"
           correct_index: 1
+          option_feedback:
+            0: "The next cycle isn't the reason. Cycle 6's GREEN should be motivated by the *spec* (\"combos consume dice; leftovers score as singles\"), not by speculative future tests. Forward-anticipation is exactly the speculation TDD asks you to avoid."
+            2: "Counter has no caching. Reads are pure dict lookups; values aren't stale unless you change them. This invents machinery to explain a code line whose real motivation is *domain semantics*, not a Python quirk."
+            3: "These produce *different* behavior at scale. With six 1s, `counts[1] -= 3` after the first Blast leaves 3 for a *second* Blast (that's cycle 10's hidden bug, foreshadowed). `counts[1] = 0` would emit only one Blast and silently drop the second. The difference is the cycle-10 lesson — it's not stylistic at all."
           explanation: |
             "Combos consume dice, leftovers still score as singles" is one of the rules. The
             subtraction isn't a Python quirk — it is the domain rule made explicit in the
@@ -1861,6 +1979,10 @@ steps:
             - "It would not work in Python — `Counter` cannot be called inside a `for` loop body"
             - "Pytest would refuse to run it because the test runner forbids mixing iteration styles"
           correct_index: 0
+          option_feedback:
+            1: "Performance isn't the lesson. Cycle 6's restructuring isn't about speed (it's negligibly different); it's about *which model of the input the code commits to*. Two competing models is the structural smell, regardless of microbenchmarks."
+            2: "`Counter` works fine inside loops — it's just a dict subclass. This invents a Python constraint that doesn't exist. The real reason against the hybrid approach is design coherence, not language mechanics."
+            3: "Pytest has no opinion on iteration styles. (As with earlier questions, made-up framework rules are a sign you're searching for *external* enforcement of discipline that has to come from your own design judgment.)"
           explanation: |
             The refactor is not "add Counter on top of the existing loop." It is "*replace*
             the per-die view with the per-face-count view." Mixing both is the worst of
@@ -1890,6 +2012,8 @@ steps:
       ### Why guardrail tests matter
 
       The most common way a TDD suite degrades over time is *implicit correctness silently rotting into implicit incorrectness*. A behavior the code does today, but no test asserts, can disappear in a refactor — and nobody notices until a customer reports the bug. The discipline: when you spot behavior that "just works," ask if a future refactor could break it. If yes, write the test that protects it.
+
+      🪞 **Cycle-7 reflection (10 seconds, no peeking back):** before you implement the test, recall — *which earlier cycle taught you the move you're about to repeat now?* (Hint: it was the first cycle where the test passed without a production change.) Naming the parallel out loud is what makes the rhythm portable.
 
     files:
       - path: "scorer.py"
@@ -2524,6 +2648,10 @@ steps:
             - "Use only test names that the codebase's audit log specifically asks for, ignoring the developer's own intuition about what to call them"
             - "Run pytest with `--log-cli-level=DEBUG` and inspect the trace, since that output reveals the next refactor"
           correct_index: 1
+          option_feedback:
+            0: "This is a literal-reading of \"listen.\" The phrase is a metaphor — it means *let the felt difficulty of writing and maintaining tests be a diagnostic signal*. Reading aloud catches typos but says nothing about design pressure, which is the point."
+            2: "There's no \"audit log\" of approved test names. This treats TDD like a compliance procedure rather than a design discipline. The whole skill is *your* judgment about what to test and what to call it — that's where the design happens."
+            3: "DEBUG logs are runtime diagnostics, not design diagnostics. The signal you're listening for is in *your own experience* of writing the code: pain in adding a branch, awkwardness in the test setup, repetition in the assertions. Logs tell you nothing about your own friction."
           explanation: |
             "Listen to the test" is a foundational TDD heuristic: when adding a test or a
             branch hurts disproportionately, the structure is telling you something. In
@@ -2539,6 +2667,10 @@ steps:
             - "Tuples are faster than lists in Python, so the rule-object form is a performance optimisation"
             - "Python's import system caches tuples but not function bodies, so subsequent test runs are quicker"
           correct_index: 1
+          option_feedback:
+            0: "Bytecode is irrelevant — design is about *who has to change what when*. Cycle 9 will give you concrete evidence: with the rule-object form, four new combos cost zero edits to `score()`. With the if-branch form, four new combos cost four edits. That's the OCP win, not a stylistic flourish."
+            2: "Tuple-vs-list performance differences are nanoseconds and never the design driver. (You may be remembering that tuples are immutable; that matters for *correctness* in some contexts, not for the OCP win at issue here.)"
+            3: "Python's import system has no such asymmetric caching policy. Made-up runtime mechanism. The actual win is structural: `score()` doesn't have to change when behaviors are added — and that property has nothing to do with import caching."
           explanation: |
             The Open-Closed Principle (OCP) says modules should be open for extension and
             closed for modification. The rule-object refactor is the OCP in five lines:
@@ -2554,6 +2686,10 @@ steps:
             - "It is a stylistic preference — both orderings produce identical code in the end and one is not measurably better than the other"
             - "Earlier refactoring is always better; the tutorial's order is artificial and you should always do the biggest refactor as soon as you can"
           correct_index: 0
+          option_feedback:
+            1: "Pytest supports dataclasses (and has for years), and pytest support wouldn't dictate when to refactor anyway. This invents history to dodge the design question. The answer has to be about *information available to the designer*, not tooling availability."
+            2: "Order matters because *what you knew when* matters. With one combo (cycle 6), the abstraction is a guess; with two (cycle 8), the common shape is *visible*. Refactoring at cycle 6 picks the shape based on speculation; refactoring at cycle 8 picks it based on evidence. Same final code, very different epistemic standing."
+            3: "\"Earlier is always better\" is the universal-rule trap. With one example you can't see the shape; refactoring early commits you to a guess that the next cycle may invalidate. The TDD discipline is *refactor toward duplication*, not before it — which is the Rule of Three (or Two, in this tutorial), not \"as soon as possible.\""
           explanation: |
             Two data points are the minimum for seeing the right *shape* of an abstraction.
             With only `Dragon Blast` (cycle 6), you'd be guessing whether the variation is
@@ -2571,6 +2707,10 @@ steps:
             - "It is expected because pytest skips tests whose names contain numbers — and several of the previous tests do"
             - "It is unexpected because Python's import order changed, so most tests should have failed to import"
           correct_index: 1
+          option_feedback:
+            0: "Inverted heuristic. Tests *staying green* during a refactor is the *good* outcome: it proves observable behavior was preserved. If tests broke, you'd suspect either a real regression OR brittle (implementation-coupled) tests. Survival is evidence of robustness, not weakness."
+            2: "Pytest doesn't skip tests by name pattern (the only name-based discovery rule is the `test_` prefix). This invents framework behavior to explain a green bar — but the green bar means what it says: every test ran and passed."
+            3: "Python's import order didn't change in any way that would affect imports. The refactor added new classes but didn't move anything that breaks `from scorer import score`. (And if imports *had* broken, you'd see ImportError, not a green bar.)"
           explanation: |
             The seven previous tests asserted on `report.total_damage`, `report.events`,
             and `ScoringEvent` instances. None of them asserted on internal structure.
@@ -2996,7 +3136,57 @@ steps:
           assert 'Orc Charge' not in source.split('def score(')[1] if 'def score(' in source else True, \
               "score() should not directly mention any combo name — the rules live in COMBO_RULES. New behaviors are added as data, not by editing the function."
 
-    # NO QUIZ — the payoff itself is the lesson.
+    quiz:
+      title: "Cycle 9 — The Open-Closed Payoff"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            You just added **four** new behaviors (`triple 2s`, `triple 3s`, `triple 4s`, `triple 6s`). How many lines did you change inside the body of `score()`?
+          type: single
+          options:
+            - "Zero — every new behavior was a row appended to `COMBO_RULES`. `score()` is **closed for modification, open for extension via data**."
+            - "Four — one branch per combo inside `score()`."
+            - "Eight — two lines per combo (one to detect, one to wire up)."
+            - "It depends on the implementation — there is no single right answer."
+          correct_index: 0
+          option_feedback:
+            1: "If you needed four edits, your cycle-8 refactor isn't quite finished — `score()` is still doing the dispatching by hand. Go back: the goal is for *new combos* to require *no* edits inside `score()`. The dispatching should happen via iteration over `COMBO_RULES`, not via per-combo branches."
+            2: "Even worse if you needed eight. The whole point of cycle 8's refactor was to push *all* per-combo logic into the `ComboRule` class. If you're touching two lines per combo, the rule data and the dispatching have leaked apart. Re-look at `score()`'s body and the `apply` method."
+            3: "There is a single right answer for OCP-correct implementations: zero. \"It depends\" is a way of avoiding the OCP claim; if your code passes cycle 8's tests *and* honors the rule-object pattern, the count of `score()` edits in cycle 9 is exactly zero. If yours isn't, that's a signal to revisit cycle 8."
+
+        - question: |
+            **(Spaced review — Cycle 8.)** Cycle 8's refactor extracted `ComboRule` *between* introducing the second combo (Goblin Swarm) and the third (Orc Charge). Why was extracting at the second combo the right moment, rather than refactoring earlier (after Dragon Blast alone) or later (after all three combos were hardcoded)?
+          type: single
+          options:
+            - "**Two examples are the minimum to see the shape of an abstraction.** With one (Dragon Blast alone), any abstraction is a guess. With three or more, the duplication has metastasised and the refactor is risky. Two is the sweet spot — *refactor toward duplication, not before it, and not after it has rotted.*"
+            - "Refactoring earlier would have made the test fail, breaking the discipline."
+            - "Python's `dataclass` decorator can only be introduced after at least two `dataclass`es exist."
+            - "Cycle 8 was where the YAML scaffold provided `ComboRule`; the timing is arbitrary."
+          correct_index: 0
+          option_feedback:
+            1: "Refactoring at cycle 6 wouldn't have *broken* tests — refactor on green is always safe. The reason against early refactor isn't that the test would have failed; it's that you wouldn't have known *which* abstraction to extract with only one example to look at."
+            2: "There's no Python rule like that — you can put `@dataclass` on any class. (And confusing language mechanics with design timing is the same category error from earlier questions.) The real constraint is *epistemic*: you can't see a pattern with one data point."
+            3: "Tutorial-as-arbitrary view dodges the design lesson. The scaffold's timing reflects a real principle: two examples is the minimum for visible commonality. Treating it as a tutorial accident misses the transfer-to-other-projects lesson — *you'll face this same timing question when you're refactoring code outside this tutorial*."
+          explanation: |
+            This is a hinge insight from cycle 8 — it's worth recalling now precisely *because* cycle 9 just rewarded the timing. One example doesn't show you the shape: any abstraction designed against a single case is speculation. Three or more, and you've paid duplication tax twice or thrice while waiting. Two is the reveal moment. (Kent Beck's *Rule of Three*, popularised by Fowler, is the same idea with one more data point of caution; for *forced abstractions* — where you can't ship without one — two is enough.)
+
+        - question: |
+            Which of the following would *most* threaten the OCP property your `score()` function now has?
+          type: single
+          options:
+            - "Adding a new rule type whose `apply()` signature is different from `ComboRule.apply` and `SingleRule.apply` — `score()` would have to learn about the new shape, breaking the closed-for-modification property."
+            - "Adding a fifth combo rule with a new die value (e.g., triples of 6) by appending one row to `COMBO_RULES`."
+            - "Renaming `Dragon Blast` to `Dragon Burst` in the rule data."
+            - "Changing the damage value of an existing rule."
+          correct_index: 0
+          option_feedback:
+            1: "Appending a row is *exactly* the OCP-friendly move. The whole point of cycle 9 was demonstrating that adding rules of the same shape costs nothing in `score()`. This is the case OCP *protects*, not the case that threatens it."
+            2: "Renaming a string in the rule data has zero effect on `score()`'s structure. The rule-object pattern is exactly what makes this kind of edit safe — `score()` doesn't care about the human-readable name, only the protocol. (You might break user-visible expectations, but that's a *spec* concern, not an OCP concern.)"
+            3: "Changing damage values is data, not structure. `score()` will continue to work without modification because the protocol (\"call apply, get events\") doesn't depend on what's *inside* each rule's fields. OCP is about the dispatch interface, not the rule contents."
+          explanation: |
+            OCP is a property of **shape contracts**, not of *adding rows*. As long as every rule honors the same `apply(counts) -> list[ScoringEvent]` interface, `score()` stays closed. The moment a new rule type needs different parameters or a different return shape, `score()` has to special-case it — and you're back to editing the function for every new behavior. The interface (the *protocol* `apply` describes) is the load-bearing piece; that's why cycle 8's refactor designed the protocol first, then both `ComboRule` and `SingleRule` conformed to it.
 
 
   # --------------------------------------------------------------------------
@@ -3470,6 +3660,10 @@ steps:
             - "The bug only manifests on Tuesdays, and the previous test runs happened on other days"
             - "Cycle 6's `if counts[1] >= 3:` is correct — there was no bug; cycle 10 changed the requirement"
           correct_index: 1
+          option_feedback:
+            0: "There is no such pytest issue. Bugs aren't \"deferred\" by the collection algorithm — they exist or don't based on whether a test exercises the buggy input. The reason this bug hid for four cycles is *purely about which inputs got tested*, not about pytest internals."
+            2: "Bugs are deterministic functions of input, not of date. (Time-dependent bugs do exist — e.g., daylight savings — but the cycle-10 bug isn't one of them; it depends only on the dice list.)"
+            3: "Cycle 10 didn't change the rule. The spec was \"three 1s = one Dragon Blast, leftovers score as singles\" all along. The bug is that for six 1s, the *cycle-6 code* emits 1 Blast + 3 Flames, when the spec says 2 Blasts + 0 Flames. The defect was always there; only cycle 10's test surfaced it."
           explanation: |
             Boundary thinking. Every previous combo test gave the rule *exactly* `count`
             dice. The bug was on the boundary where `counts[X] >= 2 * count`. Without a test
@@ -3486,6 +3680,10 @@ steps:
             - "Never use floor-division and modulo in production code — they are too easy to get wrong"
             - "TDD is unreliable; this bug proves that even careful test-first development can miss things, so we should add manual QA after every cycle"
           correct_index: 1
+          option_feedback:
+            0: "Combinatorial coverage is **infeasible** for any nontrivial input space (six 1–6 dice already gives `6^6 = 46656` possibilities; ten dice would be 60 million). The lesson isn't \"test more,\" it's \"test *the right boundaries*.\" One well-chosen test on `2N` catches the bug; thousands of random inputs in the same partition don't."
+            2: "This blames the operator instead of the test design. `//` and `%` are correct primitives for this exact problem — a *cycle-10 test* would catch a wrong implementation just as readily as a wrong subtraction. The remedy is more careful test-input selection, not avoiding correct Python features."
+            3: "Inverts the lesson. The bug *was caught*, in cycle 10, by a TDD-style test. The takeaway isn't \"TDD is unreliable\" — it's \"TDD's effectiveness depends on which inputs your tests probe.\" Adding manual QA on top of a test suite that misses boundaries doesn't fix the root cause; better boundary-value test selection does."
           explanation: |
             *Coverage* told us we executed the line. It did not tell us whether the line
             was right *for all relevant inputs*. Boundary-value analysis (the partition
@@ -3502,6 +3700,10 @@ steps:
             - "Because cycle 7's test is parameterized, and pytest reruns parameterized tests with looser tolerances"
             - "Because cycle 7's test has been deleted by the cycle 10 refactor — the green count went down, not up"
           correct_index: 1
+          option_feedback:
+            0: "Pytest doesn't cache test results between runs. Every `pytest` invocation re-executes every selected test from scratch. Made-up framework behavior — the explanation needs to come from the code's semantics."
+            2: "Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason cycle 7 still passes is *mathematical* (the two operations agree on 4), not framework-related."
+            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* (cycle 10 added a new passing test). Mistaking refactor for test deletion is a common Liar-test-adjacent confusion: it's the *code* that's restructured, never the tests."
           explanation: |
             This is a subtle but important point: a refactor does not have to *change every
             output*. The two implementations of `apply` produce the same answer for any
@@ -3518,6 +3720,10 @@ steps:
             - "It depends on Python version — Python 3.10+ silently rewrites `if` to a multi-iteration form for combos, which is why old Python had the bug"
             - "Yes — Python's `Counter` class re-orders subtraction operations under the hood when used with dataclasses"
           correct_index: 1
+          option_feedback:
+            0: "This is the **\"refactoring caused the bug\" misattribution**. Trace the cycle-6 inline code on six 1s by hand: `if counts[1] >= 3: ... counts[1] -= 3` runs once, leaves 3, then SingleRule emits 3 Flames. *Same bug, different file*. The defect was always in the algorithm; the abstraction is innocent."
+            2: "Python doesn't rewrite `if` statements; that's invented language behavior. (And version-blame is a common dodge for design questions — the language is rarely the actual culprit.) The bug is in the *algorithm*, which Python executes faithfully on every version."
+            3: "Counter doesn't re-order operations. (Made-up implementation detail, again.) The actual lesson here is that abstractions don't introduce algorithmic bugs — they at most *relocate* them. The fix has to be in the algorithm, no matter where the algorithm lives."
           explanation: |
             The bug is the algorithm's bug, not the abstraction's. Whether the `if`/`-=`
             sits in `score()` or in `ComboRule.apply` makes no difference to its behavior.
@@ -3550,6 +3756,8 @@ steps:
       Without `match=`, the test would accept *any* `ValueError` — even one with no message, or the wrong message. With it, the test pins down the *contract*: the function raises and explains *why*. That's an oracle for the error case, not just for success.
 
       The deeper lesson: line coverage doesn't catch missing error handling. A function that silently processes invalid input passes every happy-path assertion. Only an invalid-input test asks "does the boundary actually error?"
+
+      🪞 **Cycle-11 reflection (10 seconds):** validation is *typically* what students reach for first when starting on a new function — yet here it arrives in cycle 11, not cycle 1. *Why was leaving validation out of cycle 1 the right move?* (Hint: revisit cycle 1's test list — was "invalid input" on it?) The answer is a TDD discipline you'll re-apply on every project.
 
     files:
       - path: "scorer.py"
@@ -4038,6 +4246,8 @@ steps:
       ### A small design choice: method vs. property?
 
       Properties signal *cheap, side-effect-free derived values*. `summary()` is cheap, but the empty-case branch and the f-string assembly do nontrivial work. Convention: methods for derived strings; properties for derived numbers and booleans. We chose a method. (Either would work — but be consistent within a project.)
+
+      🪞 **Cycle-12 reflection (15 seconds, the last one before the synthesis step):** before you implement, sketch in your head — *where does `summary()` live: on `BattleReport`, on `ScoringEvent`, or as a free function?* What does the test you're about to write commit you to about that choice? This is the last cycle where the design decision is *yours* to make consciously rather than inherited from earlier cycles — savor it.
 
     files:
       - path: "scorer.py"
@@ -4528,16 +4738,335 @@ steps:
 
 
   # ==========================================================================
-  # STEP 15 — THE BIG PICTURE
+  # STEP 15 — TRANSFER CYCLE: TDD on FizzBuzz (different domain, same rhythm)
   #
-  # Synthesizes the twelve-cycle journey: when TDD shines vs. when it doesn't,
-  # the anti-pattern taxonomy, the empirical case for TDD, and a final quiz
-  # that mixes spaced retrieval across earlier cycles with new application
-  # questions at Bloom's Analyze/Evaluate levels.
+  # Pedagogy:
+  #   Variation Theory     — same TDD pattern applied to a *totally* different
+  #                          domain. The Dragon Dice cycles teach the rhythm;
+  #                          this step proves it transfers (Marton & Booth's
+  #                          "generalization" pattern of variation).
+  #   Faded scaffolding    — the most-faded cycle in the tutorial. No
+  #                          instructor-provided RED test, no GREEN scaffold,
+  #                          no REFACTOR checklist. Student drives.
+  #   Canon TDD step 1     — student is now responsible for writing the test
+  #                          list themselves (they saw the discipline modeled
+  #                          in Step 1; here they apply it).
+  #   Compression          — twelve Dragon-Dice cycles condensed to roughly
+  #                          four FizzBuzz mini-cycles in one step. The
+  #                          condensation is itself the test of mastery.
+  #   Threshold check      — Janzen & Saiedian's "residual effect": this
+  #                          step is where students discover the rhythm now
+  #                          feels natural — earned, not preached.
+  #   Quiz                 — explicit Variation-Theory comparison: which
+  #                          Dragon-Dice cycle does each FizzBuzz move
+  #                          parallel? Surfaces the structural invariants.
+  # ==========================================================================
+  - title: "Transfer Cycle — TDD on FizzBuzz (Different Domain, Same Rhythm)"
+    instructions: |
+      You've completed twelve cycles of TDD on dice scoring. The risk: *"TDD only works because Dragon Dice is a naturally compositional domain."* The way to disprove that risk is to apply the same rhythm to a completely unrelated problem — right now, in compressed form.
+
+      ## The classic spec — FizzBuzz
+
+      `fizzbuzz(n)` returns a list of strings of length `n`. For each integer `i` from `1` to `n`:
+
+      - If `i` is a multiple of **15** → `"FizzBuzz"`
+      - else if `i` is a multiple of **3** → `"Fizz"`
+      - else if `i` is a multiple of **5** → `"Buzz"`
+      - else → `str(i)`
+
+      So `fizzbuzz(5) == ["1", "2", "Fizz", "4", "Buzz"]`.
+
+      ## Canon TDD step 1 — write your own test list
+
+      Before reading any further, take 60 seconds and **write your own test list**. What behaviors does the spec define? Order them from *simplest* to *most design-breaking* — the way the Dragon Dice tutorial implicitly did across cycles 1–12. **You did this implicitly throughout — now you do it explicitly.**
+
+      <details markdown="1"><summary>📋 Click for one possible test list (try yours first)</summary>
+
+      A natural ordering, simplest first:
+
+      - [ ] `fizzbuzz(0) == []`  *(empty case — parallel to Cycle 1)*
+      - [ ] `fizzbuzz(1) == ["1"]`  *(single regular number — parallel to Cycle 2's first concrete return)*
+      - [ ] `fizzbuzz(2) == ["1", "2"]`  *(forces a loop — parallel to Cycle 4)*
+      - [ ] `fizzbuzz(3)[-1] == "Fizz"`  *(first conditional rule — parallel to Cycle 2's first event)*
+      - [ ] `fizzbuzz(5)[-1] == "Buzz"`  *(second conditional rule — parallel to Cycle 3)*
+      - [ ] `fizzbuzz(15)[-1] == "FizzBuzz"`  *(combined rule — **the design-breaking moment**, parallel to Cycle 6)*
+      - [ ] `fizzbuzz(-1)` raises `ValueError`  *(invalid input — parallel to Cycle 11)*
+
+      Compare with your list. Did you have the same items? In the same order? **The "FizzBuzz" case is the design-breaking moment** — the parallel of Cycle 6's Triple 1s. Notice how the same shape of cycle ordering recurs even in a different domain.
+      </details>
+
+      ## Your task — drive the cycles yourself (~10–15 minutes)
+
+      Pick the **simplest unimplemented item** from your list. Convert *only that one item* into a runnable test in `test_fizzbuzz.py`. Make it pass with the **simplest** code (TPP — start with constants, not loops; the *tests* will force the loop when ready). Refactor on green. Pick the next item. Repeat.
+
+      **Don't try to handle all rules at once. One test at a time.** (Beck's Canon TDD is explicit on this — converting all list items to tests up-front "leads to rework and depression.")
+
+      ## What you're doing here
+
+      You are *applying* what you learned. There is no instructor-provided RED test, no GREEN scaffold, no REFACTOR checklist. **The cycle discipline is now yours.** If the rhythm feels familiar — that's the threshold concept doing its work.
+
+      <details markdown="1"><summary>🛟 Stuck on FizzBuzz's design-breaking move?</summary>
+
+      The hard one is making `multiple of 15` produce `"FizzBuzz"` *without* a special-case branch added at the end after the `% 3` and `% 5` branches already exist. Two well-known TDD answers:
+
+      - **Order matters**: check `i % 15 == 0` *first*, then `% 3`, then `% 5`. The `15` branch claims the "both" case before the others can. Simplest TPP move.
+      - **String concatenation**: build up the result — start empty; if divisible by `3`, append `"Fizz"`; if by `5`, append `"Buzz"`; if still empty, use `str(i)`. The compositional version is the cleaner *eventual* design but it isn't the *simplest* GREEN — and TPP says don't reach for it until a test demands it.
+
+      Either passes the test list. Pick one; if a future requirement makes the other fit better, you'll refactor *toward* it.
+      </details>
+
+      ## Reflection (after green — this is the heart of the step)
+
+      Compare the FizzBuzz cycles you just did with the Dragon Dice arc:
+
+      1. Which Dragon-Dice cycle's RED moment does FizzBuzz's *"multiple of 3"* test echo? (The shape: first non-trivial conditional rule on top of a working loop.)
+      2. Which Dragon-Dice cycle does FizzBuzz's *`multiple of 15`* test parallel? (The shape: a test the previous structure can't satisfy with a local edit.)
+      3. What was *different*? (Domain language, value types, validation shape.)
+      4. What was *the same*? (Everything that mattered: rhythm, test list, RED-as-success, refactor-toward-duplication, TPP, allow-the-ugly-first-GREEN.)
+
+      If your answer to (4) is "everything that mattered" — congratulations. The threshold concept has crossed. **TDD is a rhythm, not a problem-specific technique.** That sentence is the entire point of the tutorial; you just earned the right to believe it.
+
+    files:
+      - path: "fizzbuzz.py"
+        content: |
+          # Empty by design — TDD says: write a failing test first.
+          # Build this file up, one test cycle at a time.
+        language: "python"
+
+      - path: "test_fizzbuzz.py"
+        content: |
+          """Your TDD cycles for FizzBuzz.
+
+          Pick the simplest test case from your test list. Write it.
+          Watch it fail. Make it pass with the simplest code (TPP).
+          Refactor on green. Pick the next one. Repeat.
+
+          Suggested first test: fizzbuzz(0) == []
+          """
+          import pytest
+          from fizzbuzz import fizzbuzz
+
+
+          # Write your tests below — one per behavior in your list.
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_fizzbuzz.py"
+    run_file: "test_fizzbuzz.py"
+
+    solution:
+      files:
+        - path: "fizzbuzz.py"
+          content: |
+            def fizzbuzz(n):
+                if n < 0:
+                    raise ValueError(f"n must be non-negative, got {n}")
+                result = []
+                for i in range(1, n + 1):
+                    if i % 15 == 0:
+                        result.append("FizzBuzz")
+                    elif i % 3 == 0:
+                        result.append("Fizz")
+                    elif i % 5 == 0:
+                        result.append("Buzz")
+                    else:
+                        result.append(str(i))
+                return result
+          language: "python"
+        - path: "test_fizzbuzz.py"
+          content: |
+            """One full TDD-driven test list for FizzBuzz."""
+            import pytest
+            from fizzbuzz import fizzbuzz
+
+
+            def test_empty_returns_empty_list():
+                assert fizzbuzz(0) == []
+
+
+            def test_single_number_is_stringified():
+                assert fizzbuzz(1) == ["1"]
+
+
+            def test_regular_numbers_become_strings():
+                assert fizzbuzz(2) == ["1", "2"]
+
+
+            def test_multiple_of_three_is_fizz():
+                assert fizzbuzz(3) == ["1", "2", "Fizz"]
+
+
+            def test_multiple_of_five_is_buzz():
+                assert fizzbuzz(5) == ["1", "2", "Fizz", "4", "Buzz"]
+
+
+            def test_multiple_of_fifteen_is_fizzbuzz():
+                # The design-breaking moment: 15 is divisible by BOTH 3 and 5.
+                # Without the right ordering or composition, "Fizz" wins (or
+                # "Buzz" wins), not "FizzBuzz".
+                assert fizzbuzz(15)[-1] == "FizzBuzz"
+
+
+            def test_negative_n_raises():
+                with pytest.raises(ValueError, match="non-negative"):
+                    fizzbuzz(-1)
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        One disciplined path through the FizzBuzz spec. The order is
+        simple-to-design-breaking: empty → single → regular → multiple
+        of 3 → multiple of 5 → multiple of 15 → invalid input.
+
+        The `multiple of 15` test is the design-breaking moment. The
+        simplest fix is *ordering*: check `% 15` before `% 3` or `% 5`.
+        A more compositional implementation (build the string from
+        "Fizz" and "Buzz" parts) is *eventually* nicer, but it isn't the
+        *simplest* GREEN — and TPP says don't reach for it until a test
+        demands it. None does, so the ordered conditional stays.
+
+        You followed the same rhythm you used on Dragon Dice — that's
+        the proof the rhythm transfers.
+
+    tests:
+      - description: "fizzbuzz function exists and produces correct output for n=15"
+        command: |
+          import sys, importlib
+          sys.modules.pop('fizzbuzz', None)
+          fz = importlib.import_module('fizzbuzz')
+          assert hasattr(fz, 'fizzbuzz'), \
+              "Define a function called `fizzbuzz(n)` in fizzbuzz.py."
+          result = fz.fizzbuzz(15)
+          expected = ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8",
+                      "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"]
+          assert result == expected, \
+              f"fizzbuzz(15) returned {result!r}; expected {expected!r}.\n\n" \
+              "Check your multiple-of-15 case — the 'FizzBuzz' must win " \
+              "over plain 'Fizz' or 'Buzz' at i=15. (Ordering: check % 15 first.)"
+        hints:
+          - title: "Small nudge"
+            text: "What does your code return for i=15? Trace it by hand. Which `if` branch claims it first?"
+          - title: "Strategic hint"
+            text: "If the `% 3` branch fires before `% 15`, the result at i=15 will be 'Fizz', not 'FizzBuzz'. Either reorder so `% 15` is checked first, or build the result by composing 'Fizz'+'Buzz'."
+          - title: "Spoiler — full ordering"
+            text: "```python\nif i % 15 == 0:\n    result.append('FizzBuzz')\nelif i % 3 == 0:\n    result.append('Fizz')\nelif i % 5 == 0:\n    result.append('Buzz')\nelse:\n    result.append(str(i))\n```"
+
+      - description: "At least 4 tests written (test-list discipline)"
+        command: |
+          import re
+          source = open('/tutorial/test_fizzbuzz.py').read()
+          test_count = len(re.findall(r'^def test_', source, re.MULTILINE))
+          assert test_count >= 4, \
+              f"You have {test_count} test function(s). The TDD discipline " \
+              "is one-test-per-behavior. Aim for at least 4 from your test " \
+              "list — for example: empty, regular numbers, multiple of 3, " \
+              "multiple of 15. (Multiple of 5 and invalid input are bonus.)"
+
+      - description: "All your tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, \
+              f"Some of your FizzBuzz tests fail — fix fizzbuzz.py until " \
+              f"all pass:\n\n{output}"
+
+    quiz:
+      title: "Transfer Cycle — Did the Rhythm Carry?"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            FizzBuzz's `multiple of 15` test most directly parallels which Dragon-Dice cycle — and why?
+          type: single
+          options:
+            - "Cycle 6 (Triple 1s = Dragon Blast). Both are *design-breaking tests* — the simplest code that passed earlier tests cannot be tweaked locally to satisfy the new test; the structure has to acknowledge a combined case before earlier cases."
+            - "Cycle 1 (Empty roll). Both are the simplest case anyone could write."
+            - "Cycle 11 (Invalid dice). Both involve special-case error handling."
+            - "Cycle 12 (Summary). Both produce formatted string output."
+          correct_index: 0
+          option_feedback:
+            1: "Cycle 1 was the *simplest* case (the empty input), not a structural pivot. FizzBuzz's empty-list test (`fizzbuzz(0) == []`) is the cycle-1 parallel — but `multiple of 15` is structurally hard, not trivially simple. The match here is on *structural pressure*, not on \"first cycle of the tutorial.\""
+            2: "Cycle 11 is about robustness (raise on bad input). FizzBuzz's `multiple of 15` doesn't raise; it returns a *correct value the prior code couldn't produce*. That's a different kind of design moment — error handling versus structural restructuring."
+            3: "Cycle 12 was about *adding behavior to the existing object* (a `summary()` method). FizzBuzz's `% 15` test isn't about adding a new method; it's about the previous code being structurally unable to produce the right answer for an input it already accepts."
+          explanation: |
+            Cycle 6 is the right parallel. The signature of a design-breaking test: previous cycles produced code that looks correct, but the *new* test cannot be satisfied by a local edit — the structure has to change. For Dragon Dice that meant moving from per-die iteration to count-then-emit. For FizzBuzz that meant either reordering the conditionals (so `% 15` is checked first) or switching to a compositional string builder. Either way, the existing structure had to accept a behavior the previous tests didn't anticipate. **That feeling — "I can't tweak this; I have to restructure" — is a TDD rhythm invariant, not a Dragon-Dice quirk.**
+
+        - question: |
+            A teammate, who has never done TDD, pushes back: *"FizzBuzz is just trivia — the real work is the algorithm. Why did you spend 12 minutes on the cycles instead of 30 seconds typing the obvious solution?"* Pick the strongest reply.
+          type: single
+          options:
+            - "**On a one-shot toy problem the time is comparable, but the cycles produced a regression-proof test suite and a record of every design choice.** The 'obvious' solution often hides the design-breaking moment (FizzBuzz at 15) until a refactor exposes it later — at which point there's no test to catch the slip. Erdogmus et al. (2005) found test-first students wrote *more* tests AND were *more* productive per test."
+            - "TDD is faster than typing the obvious solution because pytest's parallelism speeds up small test runs."
+            - "The 'obvious' solution might be wrong; TDD is more correct because tests catch all bugs."
+            - "TDD is a religious commitment — the question isn't worth answering."
+          correct_index: 0
+          option_feedback:
+            1: "Speed-by-parallelism is a fabricated technical justification. Pytest parallelism (with `pytest-xdist`) saves seconds on large suites — nowhere near the order of magnitude that would make TDD net-faster than typing. The argument has to stand on *durable design value*, not on runtime tricks."
+            2: "Tests *don't catch all bugs* — that's the **\"100% confidence\" misconception**. Cycle 10 of this very tutorial showed a bug surviving four cycles of green tests. The honest claim is that tests catch *the bugs they're written to catch* — which is much weaker than \"all bugs,\" and is still enormously valuable for regression."
+            3: "Dismissing the question avoids the engineering tradeoff. TDD's case is empirical (Microsoft/IBM, Erdogmus, Janzen & Saiedian — all measured studies), not faith-based. A teammate who hears \"it's a religion\" walks away thinking the practice has no defense; that's the opposite of what the evidence supports."
+          explanation: |
+            The honest answer combines two things: (a) for *small* problems with experienced devs, the time cost of TDD is roughly the same as ad-hoc coding — the same number of tests get written either way, just in a different order; (b) the *durable* benefit is the test suite as a regression net plus the rhythm of small steps preventing speculative complexity. On a toy, the gain is small. On long-lived code modified by multiple people it's the difference between a 39–91% drop in pre-release defects (Microsoft/IBM, Williams et al. 2008) and not. TDD isn't a religion — it's a tradeoff with strong empirical evidence in specific contexts (long-lived, multi-author, behavior-rich domains). FizzBuzz lets you *practice* the rhythm cheaply, where the stakes are low.
+
+        - question: |
+            Compare doing FizzBuzz now to what doing it *before* the Dragon Dice tutorial would have been like. What's the most likely difference?
+          type: single
+          options:
+            - "**You no longer fight the rhythm.** RED-as-success, the discipline of one-test-at-a-time, the patience for two examples before refactoring, the pull of TPP toward simple constants — all of these now feel natural. That's the *residual effect* Janzen & Saiedian (ICSE 2007) measured: programmers who actually practiced TDD prefer it afterward, even ones who initially resisted."
+            - "FizzBuzz is harder now because dice scoring uses different syntax than number sequences."
+            - "There is no difference. TDD is a procedure; anyone can follow the steps once they're listed."
+            - "FizzBuzz is now slower because the Dragon-Dice habits (`@dataclass`, `Counter`) don't apply here."
+          correct_index: 0
+          option_feedback:
+            1: "Inverts the transfer claim. Familiarity *with the rhythm* is what should make the second problem easier — even when the *domain* is unrelated. If FizzBuzz felt harder, you might be transferring *Dragon-Dice tools* (looking for a `Counter` use that isn't there) instead of *the rhythm*. Notice the difference; the rhythm is what transfers."
+            2: "TDD-as-procedure underestimates what changed. Anyone *can* follow the steps once listed — but doing it *naturally*, with the right pacing and the right small-step instinct, is a different skill. Janzen & Saiedian's measured residual effect is exactly the gap between \"can follow\" and \"prefers,\" and it only appears after lived practice."
+            3: "Over-transferring tools to a new domain is a real risk, but slowness from \"`@dataclass` doesn't apply\" misframes the issue: those tools were *never the lesson*. The lesson is the rhythm; the tools were Dragon-Dice-specific. If FizzBuzz felt slow, look at *which* habit you tried to carry over — odds are it was a Dragon-Dice tool, not the cycle structure."
+          explanation: |
+            The Janzen & Saiedian study (230+ programmers): the *residual effect* of having actually practiced TDD is preference for it afterward — not because it was preached, but because the rhythm came to feel natural. A FizzBuzz attempt today should feel categorically different from a same-instructions attempt before this tutorial: not just because you know what to type, but because the *rhythm itself* — pause for the test, allow the ugly first GREEN, wait for two examples — now has a felt naturalness. **That felt naturalness is the threshold concept stuck in your hands, not just your head.** The Dragon-Dice-specific tools (`@dataclass`, `Counter`) didn't transfer; they were never the lesson. The rhythm transferred — that's the *whole* lesson.
+
+
+  # ==========================================================================
+  # STEP 16 — THE BIG PICTURE
+  #
+  # Synthesizes the journey: twelve Dragon-Dice cycles plus the FizzBuzz
+  # transfer. When TDD shines vs. when it doesn't, the anti-pattern taxonomy,
+  # the empirical case, and a final quiz that mixes spaced retrieval across
+  # earlier cycles with new application questions at Bloom's Analyze/Evaluate
+  # levels.
   # ==========================================================================
   - title: "The Big Picture — Lessons from Twelve Cycles"
     instructions: |
-      Twelve cycles. Twelve tests. One small domain model with combos, leftovers, validation, and a summary method. Scroll through your final `scorer.py` — every line is justified by a test. No speculative code, no dead branch. **The tests are the byproduct; the design is the primary product.**
+      Twelve Dragon-Dice cycles. Then a thirteenth on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*. **The tests are the byproduct; the design is the primary product. And the rhythm is portable.**
+
+      ---
+
+      ### 🪞 Before you scroll: synthesise *yourself* (≈5 min)
+
+      The next sections — the takeaways, the journey table, the empirical case — are a recap *you'll be able to look at any time*. You only get one shot at synthesising while it's still fresh in your hands. **Do this part with your editor scrolled away from `scorer.py`** and don't peek ahead.
+
+      Open a scratch note (mental or written) and answer:
+
+      **(1) Recall three design moves, by memory.** Name three cycles and, for each, the design move the test forced. Don't say "the loop refactor" — say *which test broke the previous structure and why*. If you can articulate three, the threshold concept ("tests are design pressure, not verification") has stuck.
+
+      **(2) Pick the cycle that surprised you.** Which cycle's RED moment changed how you thought about a structural choice? *Why?* (One sentence.) The tutorial repeats this pattern across twelve cycles precisely so each student catches the *aha* on a different one — the one that hits you is yours.
+
+      **(3) Confidence recalibration.** On a 1–5 scale: *"I could apply Red-Green-Refactor to a problem I haven't seen before, this week, without this tutorial open."* Pick a number. Hold it. We'll re-check after the quiz.
+
+      **(4) Transfer probe — the most important question in this step.** Name **one specific piece of code or project of yours** — a class assignment, a side project, a past bug — where the rhythm you just learned would have helped, and *what specifically* it would have prevented. ("It would have caught X" is concrete; "I'd write more tests" is not.) If nothing comes to mind, the tutorial hasn't transferred yet — the next "What to learn next" section gives you a path.
+
+      ---
+
+      ### Now read on — but as *review*, not as new material
 
       ## The takeaways that travel
 
@@ -4565,6 +5094,7 @@ steps:
       | 10 | Six 1s | `//` and `%=` | Hidden edge case; boundary > coverage |
       | 11 | Invalid dice | `pytest.raises` | Robustness is first-class |
       | 12 | Summary | Method on `BattleReport` | Behavior on the existing object |
+      | 13 | **FizzBuzz transfer** | (different domain) | The rhythm transfers — TDD isn't problem-specific |
 
       ### When TDD shines, when it's overkill
 
@@ -4610,6 +5140,14 @@ steps:
       - **The Outside-In / Double-Loop pattern** (Percival, *Obey the Testing Goat*) — high-level acceptance tests drive unit tests
 
       Each lives inside the same Red-Green-Refactor rhythm you just internalised. They scale the discipline; they don't replace it.
+
+      ---
+
+      ### 🪞 Recalibrate (after the quiz)
+
+      Re-rate confidence on the same 1–5 prompt: *"I could apply Red-Green-Refactor to a problem I haven't seen before, this week, without this tutorial open."* Compare to the number you held earlier. The *gap* between those two numbers is what you actually learned in this step — feelings of progress are unreliable; the gap is data.
+
+      And revisit your transfer probe answer: is the code you named *still* the right next place to apply this, or did the quiz/recap shift it? Whichever piece of code you end up picking — start it RED.
 
     files:
       - path: "scorer.py"
@@ -4986,6 +5524,10 @@ steps:
             - "A workflow optimisation that ships features faster than test-after development"
             - "A coverage technique ensuring every line is exercised before release"
           correct_index: 1
+          option_feedback:
+            0: "**Coverage-first misconception.** TDD doesn't *target* coverage; coverage is a side effect. A line written under test pressure usually does end up covered, but framing TDD as a coverage technique inverts the causation and misses the design role tests play."
+            2: "Speed-of-shipping isn't the case for TDD on small features (initial development is 15–35% *slower* per Microsoft/IBM). The case is on **long-lived code with multiple authors**, where the regression net pays back many-fold. \"Faster shipping\" oversells; the honest claim is *defect reduction over time*."
+            3: "Same coverage-misconception as option A, framed slightly differently. The lesson the tutorial built across 12+1 cycles is *design pressure*, not coverage. Cycle 10 specifically showed how 100%-covered code can still be wrong."
           explanation: |
             The threshold concept of the tutorial: TDD is design, not testing. Cycle 8's
             rule-object refactor *emerged* under cycle-8's test pressure, not from a
@@ -5000,6 +5542,10 @@ steps:
             - "A Jupyter notebook exploring a new dataset"
             - "Hand-written CSS for a landing page judged visually"
           correct_index: 1
+          option_feedback:
+            0: "**TDD-everywhere overcorrection.** Beck himself said \"the discipline of working strictly test-first is valuable but not necessarily something you want to do all the time.\" One-shot scripts have low cost of failure and short life — TDD's payoff (regression net, multi-author safety) doesn't materialise."
+            2: "**Notebook misfit.** Exploratory data analysis is *defining the problem*; you can't write a test for a behavior you haven't decided on. TDD assumes the spec is at least partially knowable. Notebooks live before that assumption holds."
+            3: "**Visual-correctness misfit.** CSS layouts are judged by humans looking at pixels. Automated assertions on visual correctness are notoriously brittle (screenshot-diff testing exists but is fragile). TDD applies to behavior describable in code; visual judgment isn't."
           explanation: |
             Payment processing has every property TDD rewards: complex logic, strict
             correctness, multiple developers, long life. Microsoft/IBM measured 39–91%
@@ -5021,6 +5567,10 @@ steps:
             - "*The Mockery* — the test verifies the User constructor"
             - "*Skip-the-Refactor* — should be split into smaller tests"
           correct_index: 1
+          option_feedback:
+            0: "**Definition mismatch.** Excessive Setup is about *Arrange* code dominating the test (30+ lines of fixture before one assertion); two assertions is normal. The smell here is *which* attributes the assertions touch, not *how many* there are."
+            2: "**Mockery misclassification.** The Mockery is about over-mocking (more mock setup than test logic). This test uses a real `User` instance with no mocks at all. The smell here is the leading-underscore reach into private state."
+            3: "**Skip-the-Refactor mislabel.** Skip-the-Refactor refers to never entering the REFACTOR phase of the cycle. \"Should be split into smaller tests\" is also not the right diagnosis — testing two attributes of one creation event is a single-behavior test. The actual smell is reaching into `_name`/`_email`."
           explanation: |
             *The Nitpicker.* Leading underscores signal "private — implementation detail."
             Tests that touch private state break on every refactor. Assert on observable
@@ -5035,6 +5585,10 @@ steps:
             - "Coverage requires the `--strict` flag we didn't enable"
             - "Coverage can't measure exception-raising code"
           correct_index: 1
+          option_feedback:
+            0: "Coverage tools don't \"catch bugs\" — they measure which lines were exercised. There's no \"warning\" to ignore. The bug went undetected because no test gave the buggy line an *input that would trigger the wrong output*, not because pytest filtered something out."
+            2: "There's no `--strict` mode for coverage that would have caught this. Even 100% line + branch + path coverage would have missed cycle-10's bug, because *every line ran* on every prior test — the *input space* is what the suite under-explored, and no coverage flag changes that."
+            3: "Coverage tools do measure exception code; that's not the limit at issue. The actual limit is conceptual: coverage measures *line execution*, not *correctness across the input space*. That's why boundary thinking complements coverage rather than being subsumed by it."
           explanation: |
             Coverage tells you the line *ran*, not that it was *right*. Every prior combo
             test used exactly `count` dice; nothing probed `2 × count`. Boundary thinking
