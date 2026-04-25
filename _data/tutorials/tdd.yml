@@ -171,6 +171,7 @@ steps:
         language: "python"
 
     open_file: "test_word_counter.py"
+    run_file: "test_word_counter.py"
 
     solution:
       files:
@@ -472,6 +473,7 @@ steps:
         language: "python"
 
     open_file: "test_fizzbuzz.py"
+    run_file: "test_fizzbuzz.py"
 
     solution:
       files:
@@ -752,6 +754,7 @@ steps:
         language: "python"
 
     open_file: "test_password.py"
+    run_file: "test_password.py"
 
     solution:
       files:
@@ -1112,6 +1115,7 @@ steps:
         language: "python"
 
     open_file: "test_bank_account.py"
+    run_file: "test_bank_account.py"
 
     solution:
       files:
