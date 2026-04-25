@@ -1090,6 +1090,141 @@ Controller --> Model : updates
     expect(stats.hits).toEqual([]);
   });
 
+  test('class association label markers render as route-oriented triangles', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLClassDiagram
+      ).render(host, `@startuml
+layout landscape
+class Source
+class Target
+Source -- Target : reads <
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false };
+      }
+
+      /** @param {SVGPolylineElement} polyline */
+      function parsePolyline(polyline) {
+        return (polyline.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      /** @param {SVGPolygonElement} polygon */
+      function parsePolygon(polygon) {
+        return (polygon.getAttribute('points') || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      /** @param {{x:number,y:number}[]} points @param {{x:number,y:number}} placement */
+      function routeDirectionAt(points, placement) {
+        let best = null;
+        let bestDist = Infinity;
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = points[i];
+          const p1 = points[i + 1];
+          const len = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y);
+          if (len < 1) continue;
+
+          let closestX;
+          let closestY;
+          let dir;
+          if (Math.abs(p1.y - p0.y) < 1) {
+            closestX = Math.max(Math.min(p0.x, p1.x), Math.min(Math.max(p0.x, p1.x), placement.x));
+            closestY = p0.y;
+            dir = p1.x >= p0.x ? 'right' : 'left';
+          } else {
+            closestX = p0.x;
+            closestY = Math.max(Math.min(p0.y, p1.y), Math.min(Math.max(p0.y, p1.y), placement.y));
+            dir = p1.y >= p0.y ? 'down' : 'up';
+          }
+
+          const dist = Math.abs(placement.x - closestX) + Math.abs(placement.y - closestY) - len * 0.001;
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = dir;
+          }
+        }
+        return best;
+      }
+
+      /** @param {{x:number,y:number}[]} points */
+      function triangleDirection(points) {
+        const minX = Math.min(...points.map((p) => p.x));
+        const maxX = Math.max(...points.map((p) => p.x));
+        const minY = Math.min(...points.map((p) => p.y));
+        const maxY = Math.max(...points.map((p) => p.y));
+        const xRange = maxX - minX;
+        const yRange = maxY - minY;
+        if (xRange >= yRange) {
+          const maxCount = points.filter((p) => Math.abs(p.x - maxX) < 0.1).length;
+          return maxCount === 1 ? 'right' : 'left';
+        }
+        const maxCount = points.filter((p) => Math.abs(p.y - maxY) < 0.1).length;
+        return maxCount === 1 ? 'down' : 'up';
+      }
+
+      const texts = Array.from(svg.querySelectorAll('text')).map((node) => (node.textContent || '').trim());
+      const label = Array.from(svg.querySelectorAll('text')).find((node) => (node.textContent || '').trim() === 'reads');
+      const triangle = svg.querySelector('polygon.uml-association-label-direction');
+      const route = svg.querySelector('polyline');
+
+      if (!label || !triangle || !route) {
+        document.body.removeChild(host);
+        return {
+          hasSvg: true,
+          hasLabel: !!label,
+          hasTriangle: !!triangle,
+          hasRoute: !!route,
+          hasTextMarker: texts.some((text) => text.includes('<') || text.includes('>'))
+        };
+      }
+
+      const labelBox = /** @type {SVGGraphicsElement} */ (label).getBBox();
+      const routePoints = parsePolyline(/** @type {SVGPolylineElement} */ (route));
+      const trianglePoints = parsePolygon(/** @type {SVGPolygonElement} */ (triangle));
+      const labelCenter = { x: labelBox.x + labelBox.width / 2, y: labelBox.y + labelBox.height / 2 };
+
+      document.body.removeChild(host);
+      return {
+        hasSvg: true,
+        hasLabel: true,
+        hasTriangle: true,
+        hasRoute: true,
+        hasTextMarker: texts.some((text) => text.includes('<') || text.includes('>')),
+        routeDirection: routeDirectionAt(routePoints, labelCenter),
+        triangleDirection: triangleDirection(trianglePoints)
+      };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.hasLabel).toBe(true);
+    expect(stats.hasTriangle).toBe(true);
+    expect(stats.hasRoute).toBe(true);
+    expect(stats.hasTextMarker).toBe(false);
+    expect(stats.triangleDirection).toBe(stats.routeDirection);
+  });
+
   test('targeted diagrams avoid tiny avoidable endpoint doglegs', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForSelector('div[class$="diagram-container"] > svg');
@@ -1861,6 +1996,69 @@ o_cust --> crm_cust
     expect(stats.hasSvg).toBe(true);
     expect(stats.labelCount).toBe(2);
     expect(stats.hits).toEqual([]);
+  });
+
+  test('component dashed style applies to components, ports, connectors, and standalone ports', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLComponentDiagram
+      ).render(host, `@startuml
+component Source dashed {
+  portout "events" as events dashed
+}
+component Target
+port "External Topic" as external dashed
+
+events --> external dashed : publish
+Source --> Target dashed : sync
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false };
+      }
+
+      const isDashed = (el) => el.getAttribute('stroke-dasharray') === '8,4';
+      const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box'));
+      const dashedComponentBoxes = componentBoxes.filter(isDashed).length;
+      const dashedPortSquares = Array.from(svg.querySelectorAll('rect'))
+        .filter((rect) =>
+          !rect.classList.contains('uml-component-box') &&
+          Math.abs(Number(rect.getAttribute('width')) - 10) < 0.1 &&
+          Math.abs(Number(rect.getAttribute('height')) - 10) < 0.1 &&
+          isDashed(rect)
+        ).length;
+      const dashedRoutes = Array.from(svg.querySelectorAll('polyline'))
+        .filter((polyline) => polyline.getAttribute('stroke') === '#444' && isDashed(polyline))
+        .length;
+      const labels = Array.from(svg.querySelectorAll('text')).map((text) => text.textContent.trim());
+
+      document.body.removeChild(host);
+      return {
+        hasSvg: true,
+        componentBoxCount: componentBoxes.length,
+        dashedComponentBoxes,
+        dashedPortSquares,
+        dashedRoutes,
+        hasStandalonePortLabel: labels.includes('External Topic'),
+      };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.componentBoxCount).toBe(2);
+    expect(stats.dashedComponentBoxes).toBeGreaterThanOrEqual(1);
+    expect(stats.dashedPortSquares).toBeGreaterThanOrEqual(2);
+    expect(stats.dashedRoutes).toBeGreaterThanOrEqual(2);
+    expect(stats.hasStandalonePortLabel).toBe(true);
   });
 
   test('UMLLayoutCore exposes the new staged primitives', async ({ page }) => {

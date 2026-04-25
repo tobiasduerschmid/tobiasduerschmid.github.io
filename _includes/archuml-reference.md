@@ -244,7 +244,13 @@ ConcreteService ..> Request : depends on
 A "multiplicity" -- "multiplicity" B : label
 A "1" -- "0..*" B : label
 A "1" *-- "1..*" B
+A -- B : reads >       label direction cue
+A -- B : < writes      leading cue also works
 ```
+
+Standalone `>` and `<` label cues are rendered as small triangles, not text. The
+triangle follows the physical source-to-target direction of the routed
+association, even when the cue itself is written as `<`.
 
 **Example:**
 
@@ -1058,8 +1064,10 @@ Default layout is left-to-right. Supports `layout horizontal` / `layout vertical
 ```
 component ComponentName
 component ComponentName { ... }
+component ComponentName dashed       ← dashed component outline and icon
 
 A --> B : label          ← assembly/usage connector (solid arrow)
+A --> B dashed : label   ← assembly/usage connector with dashed line
 A ..> B : label          ← dependency (dashed arrow)
 A -- B : label           ← plain link
 ```
@@ -1099,6 +1107,7 @@ Ports are declared inside component `{ }` blocks:
 ```
 portin "PortName" as alias       ← input port (square on left)
 portout "PortName" as alias      ← output port (square on right)
+portout "PortName" as alias dashed
 ```
 
 Connect via port aliases:
@@ -1106,6 +1115,13 @@ Connect via port aliases:
 ```
 sourcePort --> targetPort : label
 sourcePort -down-> targetPort    ← directional hint (up/down/left/right)
+```
+
+Standalone labelled ports can be declared at the top level and targeted by connectors:
+
+```
+port "External API" as external_api dashed
+ComponentA --> external_api dashed : publish
 ```
 
 **Example:**

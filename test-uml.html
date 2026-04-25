@@ -1265,6 +1265,41 @@ events --> clubs_port : "delete /clubs/event-reference/{eventId}"
 @enduml
   </code></pre>
 
+  <h2>27c. Component Dashed Visual Style</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Source dashed {
+  portout "events" as events dashed
+}
+component Worker {
+  portin "jobs" as jobs
+  portout "status" as status dashed
+}
+component Monitor
+port "External Topic" as external_topic dashed
+
+events --> jobs dashed : publish
+status --> external_topic dashed : report
+Worker --> Monitor dashed : observe
+@enduml
+  </code></pre>
+
+  <h2>27d. Standalone Labelled Ports</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Publisher {
+  portout "out" as pub_out
+}
+component Subscriber {
+  portin "in" as sub_in
+}
+port "Kafka Topic" as topic dashed
+
+pub_out --> topic dashed : produce
+topic --> sub_in dashed : consume
+@enduml
+  </code></pre>
+
   <h2>28. Joined Assembly Interfaces (Ball-and-Socket)</h2>
   <pre><code class="language-uml-component">
 @startuml
@@ -1741,6 +1776,19 @@ Leaf --|&gt; Component
 Composite --|&gt; Component
 Composite &quot;1&quot; *--&gt; &quot;0..*&quot; Component
 Client --&gt; Component : treats uniformly &gt;
+@enduml
+  </code></pre>
+
+  <h2>61b. Association Label Direction Cues</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout landscape
+class Source
+class Target
+class Observer
+
+Source -- Target : reads &gt;
+Observer -- Source : &lt; publishes
 @enduml
   </code></pre>
 
