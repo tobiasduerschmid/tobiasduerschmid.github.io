@@ -361,11 +361,47 @@ A key skill is translating between code and UML class diagrams. Let's work throu
 
 ### Example 1: A Simple Class
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Simple class code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 public class BaseSynchronizer {
     public void synchronizationStarted() { }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class BaseSynchronizer {
+public:
+    void synchronizationStarted() { }
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class BaseSynchronizer:
+    def synchronization_started(self) -> None:
+        pass
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class BaseSynchronizer {
+  synchronizationStarted(): void { }
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -381,14 +417,73 @@ Each public method becomes a `+` operation in the bottom compartment. The return
 
 When a class holds a reference to another class, you can show it either as an attribute *or* as an association line (but be consistent throughout your diagram).
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Association code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 public class Student {
     Roster roster;
+
     public void storeRoster(Roster r) {
         roster = r;
     }
 }
+
+class Roster { }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class Roster { };
+
+class Student {
+public:
+    void storeRoster(Roster& r) {
+        roster = &r;
+    }
+
+private:
+    Roster* roster = nullptr;
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class Roster:
+    pass
+
+
+class Student:
+    def __init__(self) -> None:
+        self._roster: Roster | None = None
+
+    def store_roster(self, roster: Roster) -> None:
+        self._roster = roster
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class Roster { }
+
+class Student {
+  private roster?: Roster;
+
+  storeRoster(roster: Roster): void {
+    this.roster = roster;
+  }
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -401,10 +496,19 @@ class Roster
 Student --> Roster
 @enduml'></div>
 
-Notice: the `roster` field has package visibility (`~`) because no access modifier was specified in the Java code (Java default is package-private).
+Notice: in the Java version, the `roster` field has package visibility (`~`) because no access modifier was specified (Java default is package-private). Other languages express visibility differently, but the relationship is the same: `Student` holds a reference to a `Roster`.
 
 ### Example 3: Dependency from Exception Handling
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Exception dependency code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 public class ChecksumValidator {
     public boolean execute() {
@@ -417,7 +521,73 @@ public class ChecksumValidator {
     }
     public void validate() throws InvalidChecksumException { }
 }
+
+class InvalidChecksumException extends Exception { }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <exception>
+
+class InvalidChecksumException : public std::exception { };
+
+class ChecksumValidator {
+public:
+    bool execute() {
+        try {
+            validate();
+        } catch (const InvalidChecksumException&) {
+            // handle error
+        }
+        return true;
+    }
+
+    void validate() { }
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class InvalidChecksumException(Exception):
+    pass
+
+
+class ChecksumValidator:
+    def execute(self) -> bool:
+        try:
+            self.validate()
+        except InvalidChecksumException:
+            # handle error
+            pass
+        return True
+
+    def validate(self) -> None:
+        pass
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class InvalidChecksumException extends Error { }
+
+class ChecksumValidator {
+  execute(): boolean {
+    try {
+      this.validate();
+    } catch (error) {
+      if (!(error instanceof InvalidChecksumException)) throw error;
+      // handle error
+    }
+    return true;
+  }
+
+  validate(): void { }
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -434,13 +604,59 @@ The `ChecksumValidator` *depends on* `InvalidChecksumException` (it uses it in a
 
 ### Example 4: Composition from Inner Classes
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Composition code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 public class MotherBoard {
     private class IDEBus { }
-    IDEBus primaryIDE;
-    IDEBus secondaryIDE;
+
+    private final IDEBus primaryIDE = new IDEBus();
+    private final IDEBus secondaryIDE = new IDEBus();
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class MotherBoard {
+    class IDEBus { };
+
+    IDEBus primaryIDE;
+    IDEBus secondaryIDE;
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class MotherBoard:
+    class _IDEBus:
+        pass
+
+    def __init__(self) -> None:
+        self._primary_ide = MotherBoard._IDEBus()
+        self._secondary_ide = MotherBoard._IDEBus()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class IDEBus { }
+
+class MotherBoard {
+  private readonly primaryIDE = new IDEBus();
+  private readonly secondaryIDE = new IDEBus();
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -453,7 +669,7 @@ class IDEBus
 MotherBoard *-- "2" IDEBus
 @enduml'></div>
 
-The inner class pattern in Java typically indicates composition---the `IDEBus` instances cannot exist without the `MotherBoard`.
+The private part type plus owned fields indicate composition: the `IDEBus` instances are created and controlled by the `MotherBoard`.
 
 > **Concept Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
 > ```java

@@ -9,11 +9,50 @@ layout: sebook
 
 Imagine you joined a team building an online store. The first sprint went well: you shipped checkout, refunds, and a wallet. But you used PayPal directly everywhere — `OrderService`, `RefundService`, and `WalletService` each call `PayPal.charge(...)`, `PayPal.refund(...)`, `paypal.authenticate(...)`, and so on. Every service knows that **PayPal exists**, knows how to authenticate to PayPal, and constructs PayPal-specific objects like `PayPalCharge`.
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Leaky PayPal services code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
+class Order {
+    int total() { return 0; }
+}
+
+class PayPalAccount {
+    void authenticate() { }
+    String accountToken() { return ""; }
+}
+
+class PayPalCharge {
+    boolean wasSuccessful() { return true; }
+}
+
+class PayPalRefund { }
+class PayPalPaymentMethod { }
+
+class PayPal {
+    static PayPalCharge charge(String token, int amount) {
+        return new PayPalCharge();
+    }
+
+    static PayPalRefund refund(String token, int amount) {
+        return new PayPalRefund();
+    }
+
+    static PayPalPaymentMethod createPaymentMethod(String token) {
+        return new PayPalPaymentMethod();
+    }
+}
+
 class OrderService {
     public void checkout(Order order, PayPalAccount paypal) {
-        paypal.authenticate(...);
-        PayPalCharge charge = PayPal.charge(paypal.getAccountToken(), order.getTotal());
+        paypal.authenticate();
+        PayPalCharge charge = PayPal.charge(paypal.accountToken(), order.total());
         if (charge.wasSuccessful()) {
             // more business logic that depends on the 'charge' object ...
         } else { /* error handling */ }
@@ -22,20 +61,227 @@ class OrderService {
 
 class RefundService {
     public void refund(Order order, PayPalAccount paypal) {
-        paypal.authenticate(...);
-        PayPalRefund refund = PayPal.refund(paypal.getAccountToken(), order.getTotal());
+        paypal.authenticate();
+        PayPalRefund refund = PayPal.refund(paypal.accountToken(), order.total());
         // more business logic that depends on the 'refund' object ...
     }
 }
 
 class WalletService {
     public void addPaymentMethod(PayPalAccount paypal) {
-        paypal.authenticate(...);
-        PayPalPaymentMethod payment = PayPal.createPaymentMethod(paypal.getAccountToken());
+        paypal.authenticate();
+        PayPalPaymentMethod payment = PayPal.createPaymentMethod(paypal.accountToken());
         // more business logic that depends on the 'payment' object ...
     }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <string>
+
+class Order {
+public:
+    int total() const { return 0; }
+};
+
+class PayPalAccount {
+public:
+    void authenticate() { }
+    std::string accountToken() const { return ""; }
+};
+
+class PayPalCharge {
+public:
+    bool wasSuccessful() const { return true; }
+};
+
+class PayPalRefund { };
+class PayPalPaymentMethod { };
+
+class PayPal {
+public:
+    static PayPalCharge charge(const std::string& token, int amount) {
+        return {};
+    }
+
+    static PayPalRefund refund(const std::string& token, int amount) {
+        return {};
+    }
+
+    static PayPalPaymentMethod createPaymentMethod(const std::string& token) {
+        return {};
+    }
+};
+
+class OrderService {
+public:
+    void checkout(const Order& order, PayPalAccount& paypal) {
+        paypal.authenticate();
+        PayPalCharge charge = PayPal::charge(paypal.accountToken(), order.total());
+        if (charge.wasSuccessful()) {
+            // more business logic that depends on the charge object ...
+        } else { /* error handling */ }
+    }
+};
+
+class RefundService {
+public:
+    void refund(const Order& order, PayPalAccount& paypal) {
+        paypal.authenticate();
+        PayPalRefund refund = PayPal::refund(paypal.accountToken(), order.total());
+        // more business logic that depends on the refund object ...
+    }
+};
+
+class WalletService {
+public:
+    void addPaymentMethod(PayPalAccount& paypal) {
+        paypal.authenticate();
+        PayPalPaymentMethod payment = PayPal::createPaymentMethod(paypal.accountToken());
+        // more business logic that depends on the payment object ...
+    }
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class Order:
+    def total(self) -> int:
+        return 0
+
+
+class PayPalAccount:
+    def authenticate(self) -> None:
+        pass
+
+    def account_token(self) -> str:
+        return ""
+
+
+class PayPalCharge:
+    def was_successful(self) -> bool:
+        return True
+
+
+class PayPalRefund:
+    pass
+
+
+class PayPalPaymentMethod:
+    pass
+
+
+class PayPal:
+    @staticmethod
+    def charge(token: str, amount: int) -> PayPalCharge:
+        return PayPalCharge()
+
+    @staticmethod
+    def refund(token: str, amount: int) -> PayPalRefund:
+        return PayPalRefund()
+
+    @staticmethod
+    def create_payment_method(token: str) -> PayPalPaymentMethod:
+        return PayPalPaymentMethod()
+
+
+class OrderService:
+    def checkout(self, order: Order, paypal: PayPalAccount) -> None:
+        paypal.authenticate()
+        charge = PayPal.charge(paypal.account_token(), order.total())
+        if charge.was_successful():
+            # more business logic that depends on the charge object ...
+            pass
+        else:
+            # error handling
+            pass
+
+
+class RefundService:
+    def refund(self, order: Order, paypal: PayPalAccount) -> None:
+        paypal.authenticate()
+        refund = PayPal.refund(paypal.account_token(), order.total())
+        # more business logic that depends on the refund object ...
+
+
+class WalletService:
+    def add_payment_method(self, paypal: PayPalAccount) -> None:
+        paypal.authenticate()
+        payment = PayPal.create_payment_method(paypal.account_token())
+        # more business logic that depends on the payment object ...
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class Order {
+  total(): number {
+    return 0;
+  }
+}
+
+class PayPalAccount {
+  authenticate(): void { }
+
+  accountToken(): string {
+    return "";
+  }
+}
+
+class PayPalCharge {
+  wasSuccessful(): boolean {
+    return true;
+  }
+}
+
+class PayPalRefund { }
+class PayPalPaymentMethod { }
+
+class PayPal {
+  static charge(token: string, amount: number): PayPalCharge {
+    return new PayPalCharge();
+  }
+
+  static refund(token: string, amount: number): PayPalRefund {
+    return new PayPalRefund();
+  }
+
+  static createPaymentMethod(token: string): PayPalPaymentMethod {
+    return new PayPalPaymentMethod();
+  }
+}
+
+class OrderService {
+  checkout(order: Order, paypal: PayPalAccount): void {
+    paypal.authenticate();
+    const charge = PayPal.charge(paypal.accountToken(), order.total());
+    if (charge.wasSuccessful()) {
+      // more business logic that depends on the charge object ...
+    } else { /* error handling */ }
+  }
+}
+
+class RefundService {
+  refund(order: Order, paypal: PayPalAccount): void {
+    paypal.authenticate();
+    const refund = PayPal.refund(paypal.accountToken(), order.total());
+    // more business logic that depends on the refund object ...
+  }
+}
+
+class WalletService {
+  addPaymentMethod(paypal: PayPalAccount): void {
+    paypal.authenticate();
+    const payment = PayPal.createPaymentMethod(paypal.accountToken());
+    // more business logic that depends on the payment object ...
+  }
+}
+```
+  </div>
+</div>
 
 The PayPal **decision** is duplicated across all three services. Each service authenticates to PayPal, calls a PayPal-specific function, and consumes a PayPal-specific result type. Visually, the dependencies look like this:
 
@@ -75,7 +321,22 @@ This is not a *coding problem*. This is a **design problem**. The team violated 
 
 The principle that fixes this is called **Information Hiding**. The fix looks like this:
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Hidden payment gateway code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
+class Order { }
+class PaymentDetails { }
+class ChargeResult { }
+class RefundResult { }
+class PaymentMethod { }
+
 // 1. Define a vendor-neutral interface — the only contract clients see.
 interface PaymentGateway {
     ChargeResult charge(Order order, PaymentDetails payment);
@@ -86,31 +347,272 @@ interface PaymentGateway {
 // 2. ONE module hides the PayPal decision.
 class PayPalGateway implements PaymentGateway {
     // PayPalDecision lives here — and ONLY here.
-    /* implementation of the methods using the PayPal SDK */
+    public ChargeResult charge(Order order, PaymentDetails payment) {
+        return new ChargeResult();
+    }
+
+    public RefundResult refund(Order order, PaymentDetails payment) {
+        return new RefundResult();
+    }
+
+    public PaymentMethod createPaymentMethod(PaymentDetails payment) {
+        return new PaymentMethod();
+    }
 }
 
 // 3. Services depend on the abstraction, never on PayPal.
 class OrderService {
+    private final PaymentGateway gateway;
+
+    OrderService(PaymentGateway gateway) {
+        this.gateway = gateway;
+    }
+
     public void checkout(Order order, PaymentDetails payment) {
-        getPaymentGateway().charge(order, payment);
+        gateway.charge(order, payment);
         // more business logic ...
     }
 }
 
 class RefundService {
+    private final PaymentGateway gateway;
+
+    RefundService(PaymentGateway gateway) {
+        this.gateway = gateway;
+    }
+
     public void refund(Order order, PaymentDetails payment) {
-        getPaymentGateway().refund(order, payment);
+        gateway.refund(order, payment);
         // more business logic ...
     }
 }
 
 class WalletService {
+    private final PaymentGateway gateway;
+
+    WalletService(PaymentGateway gateway) {
+        this.gateway = gateway;
+    }
+
     public void addPaymentMethod(PaymentDetails payment) {
-        getPaymentGateway().createPaymentMethod(payment);
+        gateway.createPaymentMethod(payment);
         // more business logic ...
     }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class Order { };
+class PaymentDetails { };
+class ChargeResult { };
+class RefundResult { };
+class PaymentMethod { };
+
+// 1. Define a vendor-neutral interface — the only contract clients see.
+class PaymentGateway {
+public:
+    virtual ~PaymentGateway() = default;
+    virtual ChargeResult charge(const Order& order, const PaymentDetails& payment) = 0;
+    virtual RefundResult refund(const Order& order, const PaymentDetails& payment) = 0;
+    virtual PaymentMethod createPaymentMethod(const PaymentDetails& payment) = 0;
+};
+
+// 2. ONE module hides the PayPal decision.
+class PayPalGateway : public PaymentGateway {
+public:
+    // PayPalDecision lives here — and ONLY here.
+    ChargeResult charge(const Order& order, const PaymentDetails& payment) override {
+        return {};
+    }
+
+    RefundResult refund(const Order& order, const PaymentDetails& payment) override {
+        return {};
+    }
+
+    PaymentMethod createPaymentMethod(const PaymentDetails& payment) override {
+        return {};
+    }
+};
+
+// 3. Services depend on the abstraction, never on PayPal.
+class OrderService {
+public:
+    explicit OrderService(PaymentGateway& gateway) : gateway(gateway) { }
+
+    void checkout(const Order& order, const PaymentDetails& payment) {
+        gateway.charge(order, payment);
+        // more business logic ...
+    }
+
+private:
+    PaymentGateway& gateway;
+};
+
+class RefundService {
+public:
+    explicit RefundService(PaymentGateway& gateway) : gateway(gateway) { }
+
+    void refund(const Order& order, const PaymentDetails& payment) {
+        gateway.refund(order, payment);
+        // more business logic ...
+    }
+
+private:
+    PaymentGateway& gateway;
+};
+
+class WalletService {
+public:
+    explicit WalletService(PaymentGateway& gateway) : gateway(gateway) { }
+
+    void addPaymentMethod(const PaymentDetails& payment) {
+        gateway.createPaymentMethod(payment);
+        // more business logic ...
+    }
+
+private:
+    PaymentGateway& gateway;
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from typing import Protocol
+
+
+class Order:
+    pass
+
+
+class PaymentDetails:
+    pass
+
+
+class ChargeResult:
+    pass
+
+
+class RefundResult:
+    pass
+
+
+class PaymentMethod:
+    pass
+
+
+# 1. Define a vendor-neutral interface — the only contract clients see.
+class PaymentGateway(Protocol):
+    def charge(self, order: Order, payment: PaymentDetails) -> ChargeResult: ...
+    def refund(self, order: Order, payment: PaymentDetails) -> RefundResult: ...
+    def create_payment_method(self, payment: PaymentDetails) -> PaymentMethod: ...
+
+
+# 2. ONE module hides the PayPal decision.
+class PayPalGateway:
+    # PayPalDecision lives here — and ONLY here.
+    def charge(self, order: Order, payment: PaymentDetails) -> ChargeResult:
+        return ChargeResult()
+
+    def refund(self, order: Order, payment: PaymentDetails) -> RefundResult:
+        return RefundResult()
+
+    def create_payment_method(self, payment: PaymentDetails) -> PaymentMethod:
+        return PaymentMethod()
+
+
+# 3. Services depend on the abstraction, never on PayPal.
+class OrderService:
+    def __init__(self, gateway: PaymentGateway) -> None:
+        self._gateway = gateway
+
+    def checkout(self, order: Order, payment: PaymentDetails) -> None:
+        self._gateway.charge(order, payment)
+        # more business logic ...
+
+
+class RefundService:
+    def __init__(self, gateway: PaymentGateway) -> None:
+        self._gateway = gateway
+
+    def refund(self, order: Order, payment: PaymentDetails) -> None:
+        self._gateway.refund(order, payment)
+        # more business logic ...
+
+
+class WalletService:
+    def __init__(self, gateway: PaymentGateway) -> None:
+        self._gateway = gateway
+
+    def add_payment_method(self, payment: PaymentDetails) -> None:
+        self._gateway.create_payment_method(payment)
+        # more business logic ...
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class Order { }
+class PaymentDetails { }
+class ChargeResult { }
+class RefundResult { }
+class PaymentMethod { }
+
+// 1. Define a vendor-neutral interface — the only contract clients see.
+interface PaymentGateway {
+  charge(order: Order, payment: PaymentDetails): ChargeResult;
+  refund(order: Order, payment: PaymentDetails): RefundResult;
+  createPaymentMethod(payment: PaymentDetails): PaymentMethod;
+}
+
+// 2. ONE module hides the PayPal decision.
+class PayPalGateway implements PaymentGateway {
+  // PayPalDecision lives here — and ONLY here.
+  charge(order: Order, payment: PaymentDetails): ChargeResult {
+    return new ChargeResult();
+  }
+
+  refund(order: Order, payment: PaymentDetails): RefundResult {
+    return new RefundResult();
+  }
+
+  createPaymentMethod(payment: PaymentDetails): PaymentMethod {
+    return new PaymentMethod();
+  }
+}
+
+// 3. Services depend on the abstraction, never on PayPal.
+class OrderService {
+  constructor(private readonly gateway: PaymentGateway) { }
+
+  checkout(order: Order, payment: PaymentDetails): void {
+    this.gateway.charge(order, payment);
+    // more business logic ...
+  }
+}
+
+class RefundService {
+  constructor(private readonly gateway: PaymentGateway) { }
+
+  refund(order: Order, payment: PaymentDetails): void {
+    this.gateway.refund(order, payment);
+    // more business logic ...
+  }
+}
+
+class WalletService {
+  constructor(private readonly gateway: PaymentGateway) { }
+
+  addPaymentMethod(payment: PaymentDetails): void {
+    this.gateway.createPaymentMethod(payment);
+    // more business logic ...
+  }
+}
+```
+  </div>
+</div>
 
 The **decision** to use PayPal is hidden in one module (`PayPalGateway`). Other services don't know that PayPal exists — they only know `PaymentGateway`. The class diagram below makes the new structure obvious:
 
@@ -355,17 +857,86 @@ This is the most common misconception about Information Hiding, and it is worth 
 
 No. *Visibility modifiers* (`private`, `protected`, `public`) are a small **language tool** that *helps you* hide things. **Information Hiding is the broader design principle** of choosing what should be hidden in the first place. You can violate Information Hiding while having no `public` fields anywhere:
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Private fields still leak vendor code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 // Every field is private. The class is still leaking PayPal as a "secret".
-public class OrderService {
+class OrderService {
     private final PayPalClient paypal;          // <-- the secret is in the field type
     private PayPalAuthToken token;              // <-- and in this type
-    public PayPalCharge checkout(Order o, ...) {  // <-- and in the return type
-        token = paypal.authenticate(...);
-        return paypal.charge(o.total(), token);
+
+    OrderService(PayPalClient paypal) {
+        this.paypal = paypal;
+    }
+
+    public PayPalCharge checkout(Order order, PayPalAccount account) {
+        token = paypal.authenticate(account);
+        return paypal.charge(order.total(), token);
     }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+// Every field is private. The class is still leaking PayPal as a "secret".
+class OrderService {
+public:
+    explicit OrderService(PayPalClient& paypal) : paypal(paypal) { }
+
+    PayPalCharge checkout(const Order& order, const PayPalAccount& account) {
+        token = paypal.authenticate(account);
+        return paypal.charge(order.total(), token);
+    }
+
+private:
+    PayPalClient& paypal;   // <-- the secret is in the field type
+    PayPalAuthToken token;  // <-- and in this type
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+# Naming a field with a leading underscore is only a convention.
+# The class is still leaking PayPal as a "secret".
+class OrderService:
+    def __init__(self, paypal: "PayPalClient") -> None:
+        self._paypal = paypal          # <-- the secret is in the field type
+        self._token: "PayPalAuthToken | None" = None
+
+    def checkout(self, order: "Order", account: "PayPalAccount") -> "PayPalCharge":
+        self._token = self._paypal.authenticate(account)
+        return self._paypal.charge(order.total(), self._token)
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+// Every field is private. The class is still leaking PayPal as a "secret".
+class OrderService {
+  private token?: PayPalAuthToken; // <-- the secret is in this type
+
+  constructor(
+    private readonly paypal: PayPalClient, // <-- and in the field type
+  ) { }
+
+  checkout(order: Order, account: PayPalAccount): PayPalCharge {
+    const token = this.paypal.authenticate(account);
+    this.token = token;
+    return this.paypal.charge(order.total(), token);
+  }
+}
+```
+  </div>
+</div>
 
 `private` did not save us. The PayPal decision is still woven into `OrderService`'s **interface** — the parameter types and return types of its public methods. Anyone who calls `checkout` learns that PayPal exists. The fix is to invent a `PaymentGateway` abstraction and let the *interface* of `OrderService` mention only that abstraction.
 
@@ -466,34 +1037,50 @@ For each snippet, silently identify *which secret is leaking* before reading the
 
 **Snippet A — "private" is not enough**
 ```java
-public class OrderService {
+class OrderService {
     private final PayPalClient paypal;
+    private PayPalAuthToken token;
+
+    OrderService(PayPalClient paypal) {
+        this.paypal = paypal;
+    }
+
     public PayPalCharge checkout(Order o, PayPalAccount acc) {
-        paypal.authenticate(acc);
-        return paypal.charge(acc.getAccountToken(), o.getTotal());
+        token = paypal.authenticate(acc);
+        return paypal.charge(o.getTotal(), token);
     }
 }
 ```
-> *Analysis:* The fields are `private`, but the **interface** (parameter and return types) names `PayPalClient`, `PayPalAccount`, and `PayPalCharge`. The PayPal decision has leaked into the contract — every caller of `checkout` now compiles against PayPal. Replace with a `PaymentGateway` abstraction that exposes only neutral types.
+> *Analysis:* The fields are `private`, but the field type and the public method signature still name `PayPalClient`, `PayPalAccount`, and `PayPalCharge`. The PayPal decision has leaked into the contract — every caller of `checkout` now compiles against PayPal. Replace with a `PaymentGateway` abstraction that exposes only neutral types.
 
 **Snippet B — leaky storage**
 ```python
+import sqlite3
+
+
 class UserRepository:
-    def find_by_email(self, email):
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self.connection = connection
+        self.connection.row_factory = sqlite3.Row
+
+    def find_by_email(self, email: str) -> list[sqlite3.Row]:
         return self.connection.execute(
-            "SELECT * FROM users WHERE email="?, (email,)
+            "SELECT * FROM users WHERE email=?", (email,)
         ).fetchall()  # returns a list of sqlite3.Row
 ```
 > *Analysis:* The method signature looks abstract, but the *return value* is a `sqlite3.Row` — a SQLite-specific type. Every caller is now coupled to SQLite. Map to a domain object (`User`) before returning.
 
 **Snippet C — clean**
 ```python
+from typing import Protocol
+
+
 class PaymentGateway(Protocol):
     def charge(self, order: Order, payment: PaymentDetails) -> ChargeResult: ...
     def refund(self, charge_id: ChargeId) -> RefundResult: ...
 
 class OrderService:
-    def __init__(self, gateway: PaymentGateway):
+    def __init__(self, gateway: PaymentGateway) -> None:
         self._gateway = gateway
     def checkout(self, order: Order, payment: PaymentDetails) -> ChargeResult:
         return self._gateway.charge(order, payment)

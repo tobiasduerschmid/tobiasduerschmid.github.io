@@ -269,19 +269,108 @@ Translating between code and sequence diagrams is a critical skill. Let's work t
 
 ### Example 1: Simple Method Calls
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Simple method calls code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
-public class Register {
-    public void method(Sale s) {
-        s.makePayment(cashTendered);
+class Register {
+    public void method(Sale sale, int cashTendered) {
+        sale.makePayment(cashTendered);
     }
 }
-public class Sale {
+
+class Sale {
     public void makePayment(int amount) {
-        Payment p = new Payment(amount);
-        p.authorize();
+        Payment payment = new Payment(amount);
+        payment.authorize();
     }
+}
+
+class Payment {
+    Payment(int amount) { }
+
+    void authorize() { }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class Payment {
+public:
+    explicit Payment(int amount) { }
+
+    void authorize() { }
+};
+
+class Sale {
+public:
+    void makePayment(int amount) {
+        Payment payment(amount);
+        payment.authorize();
+    }
+};
+
+class Register {
+public:
+    void method(Sale& sale, int cashTendered) {
+        sale.makePayment(cashTendered);
+    }
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class Payment:
+    def __init__(self, amount: int) -> None:
+        pass
+
+    def authorize(self) -> None:
+        pass
+
+
+class Sale:
+    def make_payment(self, amount: int) -> None:
+        payment = Payment(amount)
+        payment.authorize()
+
+
+class Register:
+    def method(self, sale: Sale, cash_tendered: int) -> None:
+        sale.make_payment(cash_tendered)
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class Payment {
+  constructor(amount: number) { }
+
+  authorize(): void { }
+}
+
+class Sale {
+  makePayment(amount: number): void {
+    const payment = new Payment(amount);
+    payment.authorize();
+  }
+}
+
+class Register {
+  method(sale: Sale, cashTendered: number): void {
+    sale.makePayment(cashTendered);
+  }
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant register: Register
@@ -299,24 +388,216 @@ deactivate payment
 deactivate sale
 @enduml'></div>
 
-Notice how the `new Payment(amount)` constructor call in Java becomes a `create` message in the sequence diagram. The `Payment` object appears at the point in the timeline when it is created.
+Notice how the `Payment` constructor call becomes a `create` message in the sequence diagram. The `Payment` object appears at the point in the timeline when it is created.
 
 ### Example 2: Loops in Code and Diagrams
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Loop code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
-public class A {
-    List items = null;
-    public void noName(B b) {
+import java.util.List;
+
+class Item {
+    int getID() { return 0; }
+}
+
+class SaleLine {
+    final String description;
+    final int total;
+
+    SaleLine(String description, int total) {
+        this.description = description;
+        this.total = total;
+    }
+}
+
+class B {
+    void makeNewSale() { }
+
+    SaleLine enterItem(int itemId, int quantity) {
+        return new SaleLine("", 0);
+    }
+
+    void endSale() { }
+}
+
+class A {
+    private final List<Item> items;
+    private int total;
+    private String description = "";
+
+    A(List<Item> items) {
+        this.items = items;
+    }
+
+    public void noName(B b, int quantity) {
         b.makeNewSale();
         for (Item item : getItems()) {
-            b.enterItem(item.getID(), quantity);
-            total = total + b.total;
-            description = b.desc;
+            SaleLine line = b.enterItem(item.getID(), quantity);
+            total = total + line.total;
+            description = line.description;
         }
         b.endSale();
     }
+
+    private List<Item> getItems() {
+        return items;
+    }
 }
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+#include <string>
+#include <vector>
+
+class Item {
+public:
+    int getID() const { return 0; }
+};
+
+struct SaleLine {
+    std::string description;
+    int total;
+};
+
+class B {
+public:
+    void makeNewSale() { }
+
+    SaleLine enterItem(int itemId, int quantity) {
+        return {"", 0};
+    }
+
+    void endSale() { }
+};
+
+class A {
+public:
+    explicit A(std::vector<Item> items) : items(items) { }
+
+    void noName(B& b, int quantity) {
+        b.makeNewSale();
+        for (const Item& item : getItems()) {
+            SaleLine line = b.enterItem(item.getID(), quantity);
+            total = total + line.total;
+            description = line.description;
+        }
+        b.endSale();
+    }
+
+private:
+    const std::vector<Item>& getItems() const {
+        return items;
+    }
+
+    std::vector<Item> items;
+    int total = 0;
+    std::string description;
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+from dataclasses import dataclass
+
+
+class Item:
+    def get_id(self) -> int:
+        return 0
+
+
+@dataclass
+class SaleLine:
+    description: str
+    total: int
+
+
+class B:
+    def make_new_sale(self) -> None:
+        pass
+
+    def enter_item(self, item_id: int, quantity: int) -> SaleLine:
+        return SaleLine(description="", total=0)
+
+    def end_sale(self) -> None:
+        pass
+
+
+class A:
+    def __init__(self, items: list[Item]) -> None:
+        self._items = items
+        self._total = 0
+        self._description = ""
+
+    def no_name(self, b: B, quantity: int) -> None:
+        b.make_new_sale()
+        for item in self._get_items():
+            line = b.enter_item(item.get_id(), quantity)
+            self._total = self._total + line.total
+            self._description = line.description
+        b.end_sale()
+
+    def _get_items(self) -> list[Item]:
+        return self._items
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class Item {
+  getID(): number {
+    return 0;
+  }
+}
+
+type SaleLine = {
+  description: string;
+  total: number;
+};
+
+class B {
+  makeNewSale(): void { }
+
+  enterItem(itemId: number, quantity: number): SaleLine {
+    return { description: "", total: 0 };
+  }
+
+  endSale(): void { }
+}
+
+class A {
+  private total = 0;
+  private description = "";
+
+  constructor(private readonly items: Item[]) { }
+
+  noName(b: B, quantity: number): void {
+    b.makeNewSale();
+    for (const item of this.getItems()) {
+      const line = b.enterItem(item.getID(), quantity);
+      this.total = this.total + line.total;
+      this.description = line.description;
+    }
+    b.endSale();
+  }
+
+  private getItems(): Item[] {
+    return this.items;
+  }
+}
+```
+  </div>
+</div>
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant a: A
@@ -359,10 +640,27 @@ end
 deactivate a
 @enduml'></div>
 
-The equivalent Java code is:
+Equivalent code in four languages:
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Alt fragment code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
-public class A {
+class A {
+    private final B b;
+    private final C c;
+
+    A(B b, C c) {
+        this.b = b;
+        this.c = c;
+    }
+
     public void doX(int x) {
         if (x < 10) {
             b.calculate();
@@ -371,7 +669,100 @@ public class A {
         }
     }
 }
+
+class B {
+    void calculate() { }
+}
+
+class C {
+    void calculate() { }
+}
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+class B {
+public:
+    void calculate() { }
+};
+
+class C {
+public:
+    void calculate() { }
+};
+
+class A {
+public:
+    A(B& b, C& c) : b(b), c(c) { }
+
+    void doX(int x) {
+        if (x < 10) {
+            b.calculate();
+        } else {
+            c.calculate();
+        }
+    }
+
+private:
+    B& b;
+    C& c;
+};
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
+```python
+class B:
+    def calculate(self) -> None:
+        pass
+
+
+class C:
+    def calculate(self) -> None:
+        pass
+
+
+class A:
+    def __init__(self, b: B, c: C) -> None:
+        self._b = b
+        self._c = c
+
+    def do_x(self, x: int) -> None:
+        if x < 10:
+            self._b.calculate()
+        else:
+            self._c.calculate()
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+class B {
+  calculate(): void { }
+}
+
+class C {
+  calculate(): void { }
+}
+
+class A {
+  constructor(
+    private readonly b: B,
+    private readonly c: C,
+  ) { }
+
+  doX(x: number): void {
+    if (x < 10) {
+      this.b.calculate();
+    } else {
+      this.c.calculate();
+    }
+  }
+}
+```
+  </div>
+</div>
 
 > **Concept Check (Generation):** Try translating this code into a sequence diagram before checking the answer:
 > ```java

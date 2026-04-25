@@ -98,6 +98,45 @@ end note
 
 The Application Layer **doesn't even know a UI exists**. It just exposes three kinds of interaction:
 
+<div class="inline-language-switcher" data-language-switcher data-default-language="java">
+  <div class="inline-language-tabs" role="tablist" aria-label="Application layer interaction code language">
+    <button type="button" role="tab" data-language-option="java" aria-selected="true">Java</button>
+    <button type="button" role="tab" data-language-option="cpp" aria-selected="false">C++</button>
+    <button type="button" role="tab" data-language-option="python" aria-selected="false">Python</button>
+    <button type="button" role="tab" data-language-option="ts" aria-selected="false">TypeScript</button>
+  </div>
+
+  <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
+```java
+// 1) Getters: pull current state
+game.getCurrentBalance(player);
+
+// 2) Commands: forward user intent
+game.buyProperty("Royce Hall", mohamed);
+
+// 3) Callbacks: push state changes back
+game.onBalanceChanged((player, newBalance) ->
+    ui.updateBalance(player, newBalance)
+);
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="cpp" role="tabpanel" markdown="1">
+```cpp
+// 1) Getters: pull current state
+game.getCurrentBalance(player);
+
+// 2) Commands: forward user intent
+game.buyProperty("Royce Hall", mohamed);
+
+// 3) Callbacks: push state changes back
+game.onBalanceChanged([&ui](const Player& player, int newBalance) {
+    ui.updateBalance(player, newBalance);
+});
+```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
 # 1) Getters: pull current state
 game.get_current_balance(player)
@@ -108,6 +147,23 @@ game.buy_property(name="Royce Hall", player=mohamed)
 # 3) Callbacks: push state changes back
 game.on_balance_changed(lambda p, new: ui.update_balance(p, new))
 ```
+  </div>
+
+  <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
+```typescript
+// 1) Getters: pull current state
+game.getCurrentBalance(player);
+
+// 2) Commands: forward user intent
+game.buyProperty("Royce Hall", mohamed);
+
+// 3) Callbacks: push state changes back
+game.onBalanceChanged((player, newBalance) => {
+  ui.updateBalance(player, newBalance);
+});
+```
+  </div>
+</div>
 
 With this split, three UIs can drive the *same* engine. And a headless test suite can drive the engine too — by registering a fake "UI" that records what it was told. The payoff is enormous.
 
@@ -226,6 +282,9 @@ Before reading the analysis, look at each snippet below and silently answer: *wh
 
 **Snippet A:**
 ```python
+import sqlite3
+
+
 def render_user_profile(user_id):
     conn = sqlite3.connect("users.db")
     row = conn.execute("SELECT name, email FROM users WHERE id=?", (user_id,)).fetchone()
@@ -234,15 +293,21 @@ def render_user_profile(user_id):
 > *Analysis:* Data-access (`sqlite3`), domain rules (none, but there should be), and presentation (`<h1>`, `print`) are all in one function. Three concerns, zero separation.
 
 **Snippet B:**
-```javascript
-button.addEventListener("click", async () => {
+```typescript
+type User = { name: string };
+
+const button = document.querySelector<HTMLButtonElement>("#load-users");
+button?.addEventListener("click", async () => {
   const res = await fetch("/api/users");
-  const users = await res.json();
+  const users = await res.json() as User[];
   if (users.length > 100 && localStorage.getItem("premium") !== "true") {
     alert("Upgrade to premium!");
     return;
   }
-  document.getElementById("list").innerHTML = users.map(u => `<li>${u.name}</li>`).join("");
+  const list = document.getElementById("list");
+  if (list) {
+    list.innerHTML = users.map(user => `<li>${user.name}</li>`).join("");
+  }
 });
 ```
 > *Analysis:* This click handler does networking, a business rule ("premium users can see >100"), and DOM rendering. Three concerns. If tomorrow the rule changes to "premium users can see >200", you have to find this click handler — it is not where anyone would look.
