@@ -3097,25 +3097,36 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   background: rgba(180, 40, 40, 0.15);
   color: #f09090;
 }
+/* Light-mode default — dark text on light amber */
 .tvm-quiz-panel .option-feedback {
   margin: 4px 0 8px 28px;
   padding: 8px 10px;
-  border-left: 3px solid #ea8a14;
-  background: rgba(217, 119, 6, 0.12);
+  border-left: 3px solid #d97706;
+  background: #fff7ed;
   border-radius: 4px;
   font-size: 0.9em;
   line-height: 1.4;
-  color: #fed7aa;
+  color: #7c2d12;
 }
 .tvm-quiz-panel .option-feedback p { margin: 0; }
 .tvm-quiz-panel .option-feedback p + p { margin-top: 4px; }
 .tvm-quiz-panel .option-feedback code {
-  background: rgba(217, 119, 6, 0.25);
+  background: rgba(217, 119, 6, 0.18);
   padding: 1px 4px;
   border-radius: 3px;
-  color: #fde9c8;
+  color: #7c2d12;
 }
 .tvm-quiz-panel .option-feedback.is-hidden { display: none; }
+/* Dark-mode override — light text on translucent amber */
+html.dark-mode .tvm-quiz-panel .option-feedback {
+  background: rgba(217, 119, 6, 0.12);
+  color: #fed7aa;
+  border-left-color: #ea8a14;
+}
+html.dark-mode .tvm-quiz-panel .option-feedback code {
+  background: rgba(217, 119, 6, 0.25);
+  color: #fde9c8;
+}
 .tvm-quiz-panel .option-checkbox {
   display: none;
   width: 14px;

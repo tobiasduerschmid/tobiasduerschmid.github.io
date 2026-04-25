@@ -28,7 +28,7 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
   option_feedback:
     0: "This counts the inner work as constant. The inner loop runs `n` times for *each* of the `n` outer iterations — `n × n = n²`, not `n + constant`."
     1: "`O(n log n)` shows up for divide-and-conquer (mergesort, balanced trees). There's no halving here — both loops do a full pass."
-    3: "This is the *constant-multiplier-vs-exponent* misconception. Two nested loops aren't `2 × n` work, they're `n × n` work. Big-O cares about the *shape* of growth (linear, quadratic, exponential), not the number of loops."
+    3: "Two nested loops aren't `2 × n` work, they're `n × n` work. Big-O cares about the *shape* of growth (linear, quadratic, exponential), not the count of loops — `O(2n)` and `O(n)` are the same shape, but `O(n²)` is a different shape entirely."
   explanation: "Two nested loops over the same `n`-element collection give **O(n²)**. A useful sanity check: doubling `n` should roughly *quadruple* the runtime — that's the signature of quadratic."
 ```
 
@@ -45,7 +45,7 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
     - "Returns a Promise that the next line must `.then()` to receive"
   correct_index: 1
   option_feedback:
-    0: "This is the *await-blocks-everything* misconception, often imported from synchronous languages. JavaScript is single-threaded but **non-blocking** — `await` only suspends the *current* async function. The event loop continues running other tasks (other timers, UI events, other promises) while this one is waiting."
+    0: "JavaScript is single-threaded but **non-blocking** — `await` only suspends the *current* async function. The event loop continues running other tasks (other timers, UI events, other promises) while this one is waiting. Synchronous languages give the impression that pausing one task pauses the whole program; the event loop model breaks that assumption."
     2: "JavaScript is single-threaded — `await` doesn't spawn threads. The illusion of concurrency comes from the event loop interleaving tasks at await points, not from parallelism."
     3: "`await` *is* the `.then()` — it unwraps the Promise so the next line gets the resolved value directly. That's the whole point of `async/await` over raw Promises."
   explanation: "`await` suspends *one* async function and registers a callback on the Promise. Control returns to the event loop, which is free to run other code. When the Promise resolves, the suspended function resumes."
@@ -74,9 +74,9 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
   correct_index: 1
   option_feedback:
     0: "This assumes the default `lst=[]` creates a fresh list on every call. Python evaluates default arguments **once at function definition**, not on each call — the same list object is reused across calls."
-    2: "This is the *late-binding-defaults* confusion in reverse. The list does mutate across calls, but each call returns the list as it stands *at that moment* — not the final state."
+    2: "The list *does* mutate across calls, but each call returns the list as it stands *at that moment* — not the final state. Reading both prints to be `[1, 2]` would require Python to retroactively update the first one, which it doesn't."
     3: "Mutable defaults are legal Python. They're a *gotcha*, not a syntax error — the language doesn't warn you. (PEP 8 / lint tools do.)"
-  explanation: "This is the **mutable default argument** trap. Python evaluates `lst=[]` once when `def` runs, then reuses the same list across calls. The fix: use `lst=None` and create the list inside the function (`if lst is None: lst = []`)."
+  explanation: "This is the **mutable default argument** behavior. Python evaluates `lst=[]` once when `def` runs, then reuses the same list across calls. The fix: use `lst=None` and create the list inside the function (`if lst is None: lst = []`)."
 ```
 
 ## Design patterns — multi-choice with omission, where Strategy fits
@@ -96,7 +96,7 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
     0: "Runtime selection between interchangeable algorithms is the canonical Strategy use case — that's the force the pattern was designed for."
     1: "An if-else chain over algorithm choices is the *unrolled* form of Strategy. Refactoring to Strategy turns each branch into a class with a shared interface; the conditional disappears."
     2: "Strategy gives you a seam for test doubles. If your sort algorithm is a Strategy, your test can pass in a `RecordingSortStrategy` to inspect calls — without subclassing the unit under test."
-    3: "This is the *pattern-fishing* trap — applying patterns to stable single-use code adds indirection without benefit. Strategy is for code that *will* vary, not code that *might*. If it doesn't vary, the if-else (or single function) is fine."
+    3: "Applying a pattern to stable single-use code adds indirection without benefit. Strategy is for code that *will* vary — across runtime, environments, or tests — not code that *might* someday. If it doesn't vary, the if-else (or a single function) is fine."
     4: "Strategy *increases* the class count (one per algorithm). The pattern's value is decoupling, not minimalism. If you're optimizing for fewer classes, Strategy is the wrong tool."
   explanation: "Strategy decouples *what* (the task) from *how* (the algorithm). It earns its place when the algorithm varies — at runtime, across deployment environments, or across tests. It pays no dividends for stable, single-use code."
 ```
@@ -114,7 +114,7 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
     - "ORDER BY SUM(salary) DESC LIMIT 1"
   correct_index: 1
   option_feedback:
-    0: "This is the *WHERE-on-aggregates* misconception. `WHERE` is evaluated **before** `GROUP BY`, on individual rows — the aggregate doesn't exist yet at that point. Use `HAVING` for filters that depend on aggregates."
+    0: "`WHERE` is evaluated **before** `GROUP BY`, on individual rows — the aggregate doesn't exist yet at that point of the query plan. `HAVING` is the clause that runs *after* aggregation, where filters can reference `SUM(salary)` and other aggregates."
     2: "`GROUP BY` partitions rows into groups; it doesn't accept conditions. The condition belongs in `HAVING` (post-aggregation) or `WHERE` (pre-aggregation)."
     3: "This sorts and returns only the top department. The question asks for *every* department over the threshold — that's a filter (HAVING), not a top-N query."
   explanation: "SQL evaluates clauses in this order: `FROM` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `ORDER BY` → `LIMIT`. `WHERE` runs before grouping (filters individual rows); `HAVING` runs after grouping (filters group results)."
@@ -127,8 +127,8 @@ When you sit down to draft `option_feedback` for a question:
 1. **List the wrong options.** For each, finish the sentence: "Students who pick this are probably thinking…"
 2. If you can't finish that sentence crisply for an option, *don't* write feedback for it. Move on.
 3. For the ones you can answer:
-   - Name the misconception with a label if one exists ("the off-by-one error", "*expert blind spot*", "the *late-binding-defaults* confusion").
    - State the proximate distinction in one sentence ("X is in C++; C uses Y").
-   - If room remains within the 3-sentence budget, gesture at the *real* model — what's actually going on.
-4. Read it back. Did you accidentally start with "you"? Did you repeat what `explanation:` says? If yes, rewrite.
-5. Compare to the question's general `explanation:`. The two should be doing different jobs — the explanation lays out canonical reasoning; the feedback corrects a specific misconception.
+   - Then describe what's *actually* true — the corrective contrast.
+   - If room remains within the 3-sentence budget, gesture at why the wrong reasoning is plausible. Do **not** label the error ("this is the *X*-misconception" / "*X* trap"); just clarify.
+4. Read it back. Did you accidentally start with "you"? Did you slip in "this is the *X* misconception" labeling? Did you repeat what `explanation:` says? If any yes, rewrite.
+5. Compare to the question's general `explanation:`. The two should be doing different jobs — the explanation lays out canonical reasoning; the feedback corrects the specific wrong reasoning that this option encodes.

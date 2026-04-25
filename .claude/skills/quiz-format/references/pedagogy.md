@@ -88,37 +88,38 @@ What this demonstrates:
     0: "A unit test that asserts on multiple unrelated behaviors fails in ways that obscure WHICH behavior broke. One concept per test makes failures diagnostic, not vague — that's why this is a property of a good unit test."
     1: "Slow tests get skipped. The CI runs that protect you only happen if developers actually run the suite — and they only run it if it returns in seconds, not minutes. Fast is non-negotiable for unit tests."
     2: "A name like `test_user_login_returns_token_when_credentials_valid` tells you exactly what broke at a glance. `test_login_1` does not. The name is the diagnostic."
-    3: "This is the *integration-test masquerading as unit-test* misconception. Hitting the real DB makes the test slow, flaky (state pollution), and dependent on external infrastructure. Use unit tests for logic, integration tests for I/O — separately."
-    4: "This is the *fidelity-over-isolation* trap. A 'closely simulated workflow' is an end-to-end test, not a unit test. Unit tests isolate ONE unit so failures pinpoint root cause; e2e tests verify the system works overall — different jobs, different layers."
+    3: "Hitting the real DB makes the test slow, flaky (state pollution), and dependent on external infrastructure — that's an integration test, not a unit test. Unit tests cover logic in isolation; integration tests cover I/O. Different layers, different jobs."
+    4: "A closely simulated workflow is an end-to-end test, not a unit test. Unit tests isolate ONE unit so failures pinpoint root cause; e2e tests verify the system works overall. Both are valuable, but conflating them costs you the diagnostic precision unit tests are *for*."
   explanation: "Good unit tests are **F.I.R.S.T.**: Fast, Isolated, Repeatable, Self-checking, Timely. The first three options reflect those qualities. The last two describe **integration** or **end-to-end** tests — both valuable, but at different layers of the testing pyramid."
 ```
 
 What this demonstrates:
 
 - Omission feedback (options 0, 1, 2) explains *why this trait matters*, helping the student internalize the property they missed.
-- Commission feedback (options 3, 4) names the named-misconception ("integration-test masquerading", "fidelity-over-isolation trap") and points at the proximate distinction.
+- Commission feedback (options 3, 4) clarifies the proximate distinction (unit vs integration vs e2e) without labeling the wrong reasoning.
 - The general `explanation:` carries the framework (F.I.R.S.T.) and the testing-pyramid context.
 
 ## When NOT to write option_feedback
 
 Sometimes leaving it out is the right call:
 
-- **Trivially-wrong distractors.** If an option is wrong because it's syntactically malformed, contains a made-up keyword, or is obviously off-topic, there's no misconception to correct — just a bad option that exists for difficulty calibration. Don't add feedback that says "this isn't valid syntax"; the student knows.
-- **Options where you can't name the misconception.** If you can't crisply finish the sentence "students who pick this are probably thinking…", the feedback you'd write is going to be vague filler. Skip it.
-- **Pure factual recall.** "What year was Python first released?" doesn't have a misconception structure — wrong years are just wrong, not the result of confused mental models. Use `explanation:` for the answer and call it done.
+- **Trivially-wrong distractors.** If an option is wrong because it's syntactically malformed, contains a made-up keyword, or is obviously off-topic, there's no real reasoning to correct — just a bad option that exists for difficulty calibration. Don't add feedback that says "this isn't valid syntax"; the student knows.
+- **Options where you can't articulate the wrong reasoning.** If you can't crisply finish the sentence "students who pick this are probably thinking…", the feedback you'd write is going to be vague filler. Skip it.
+- **Pure factual recall.** "What year was Python first released?" doesn't have a wrong-reasoning structure — wrong years are just wrong, not the result of confused mental models. Use `explanation:` for the answer and call it done.
 - **Optional indices in multi-choice.** Feedback assigned to `optional_indices` never fires — it's wasted work. The whole point of `optional_indices` is "either choice is fine".
 
 ## Diagnosing a feedback string
 
 Quick test: read the feedback aloud. Does it…
 
-1. **Name something the student was probably thinking** when they picked this option? (If it just says "this is wrong because of X", you're in verification-only territory — push it toward the misconception.)
+1. **Clarify what's actually true** in a way that addresses the wrong reasoning behind this specific option? (If it just says "this is wrong because of X" without correcting the model, you're in verification-only territory — push it toward the corrective contrast.)
 2. **Tell the student what's true instead**, in a way they can act on next time? (If not, it's not corrective.)
 3. **Stay under three sentences**? (If not, trim or move to `explanation:`.)
-4. **Avoid second-person blame**? (If you wrote "you confused…", reframe as "this is the *X* misconception".)
-5. **Differ from `explanation:`**? (If a student would learn nothing extra from the feedback that the general explanation doesn't say, delete it.)
+4. **Avoid second-person blame**? (If you wrote "you confused…", reframe so the *idea* is the subject, not the student.)
+5. **Avoid labeling phrases**? (If the string contains "this is the *X*-misconception / X conflation / X confusion / X trap / X fallacy", rewrite to clarify directly. Just describe what's actually true.)
+6. **Differ from `explanation:`**? (If a student would learn nothing extra from the feedback that the general explanation doesn't say, delete it.)
 
-If all five answers are yes, ship it.
+If all answers are yes, ship it.
 
 ## References
 
