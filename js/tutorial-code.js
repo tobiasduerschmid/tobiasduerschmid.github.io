@@ -143,6 +143,29 @@
     this.activeFileName = null;
     this._suppressAutoSave = false;
 
+    // Split-editor state (two Monaco editors side-by-side: tests left, code right).
+    // Enabled per-tutorial via `editor_split: true` in YAML. Students can toggle
+    // between split and unified-tabs view; the preference is persisted per tutorial.
+    this.editorSplitSupported = !!options.editorSplit;
+    this._splitActive = this.editorSplitSupported;
+    if (this.editorSplitSupported) {
+      try {
+        var _splitPref = localStorage.getItem('tutorial-editor-split-' + this.tutorialId);
+        if (_splitPref === 'true') this._splitActive = true;
+        else if (_splitPref === 'false') this._splitActive = false;
+      } catch (e) { /* localStorage unavailable — keep default */ }
+    }
+    this.editor2 = null;                // secondary Monaco editor (right pane)
+    this._leftActiveFile = null;         // file shown in left pane
+    this._rightActiveFile = null;        // file shown in right pane
+    this._filePaneOverrides = {};        // filename → 'left'|'right' (from YAML `pane:`)
+
+    // Per-tutorial override for the output/terminal panel's height (e.g. "40%",
+    // "320px"). When set, the bottom panel uses this as its flex-basis and the
+    // editor panel fills the rest. Tutorials that want more runtime output
+    // visible (like TDD, which shows multiple passing/failing tests) opt in.
+    this.outputHeight = options.outputHeight || null;
+
     // Reverse sync (v86 / webcontainer)
     this._reverseSyncTimer = null;
     this._reverseSyncBusy = false;
@@ -318,6 +341,7 @@
     if (this._worker) { this._worker.terminate(); this._worker = null; }
     if (this._shellProcess) { this._shellProcess = null; }
     if (this.editor) { this.editor.dispose(); this.editor = null; }
+    if (this.editor2) { this.editor2.dispose(); this.editor2 = null; }
     for (var n in this.editorModels) {
       if (this.editorModels.hasOwnProperty(n)) this.editorModels[n].model.dispose();
     }
@@ -396,6 +420,9 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._buildUI = function () {
     this.root.classList.add('tvm-root');
+    if (this.editorSplitSupported && this._splitActive) {
+      this.root.classList.add('tvm-split-layout-three-col');
+    }
 
     var terminalHtml;
     if (this.config.useTerminal) {
@@ -598,9 +625,40 @@
           ' Git Graph</button>' +
           '</div>'
         : '') +
-      '<div class="tvm-editor-panel">' +
-      '<div class="tvm-editor-tabs"></div>' +
+      '<div class="tvm-editor-panel' +
+        (this.editorSplitSupported ? ' tvm-editor-split-supported' : '') +
+        (this.editorSplitSupported && this._splitActive ? ' tvm-editor-split-active' : '') + '">' +
+      '<div class="tvm-editor-body">' +
+      '<div class="tvm-editor-pane tvm-editor-pane-left">' +
+      (this.editorSplitSupported
+        ? '<div class="tvm-editor-pane-tab-row">' +
+          '<div class="tvm-editor-pane-label" data-pane="left">Code</div>' +
+          '<div class="tvm-editor-tabs"></div>' +
+          '</div>'
+        : '<div class="tvm-editor-tabs"></div>') +
       '<div class="tvm-editor-container"></div>' +
+      '</div>' +
+      (this.editorSplitSupported
+        ? '<div class="tvm-editor-pane-divider" title="Drag to resize"></div>' +
+          '<div class="tvm-editor-pane tvm-editor-pane-right">' +
+          '<div class="tvm-editor-pane-tab-row">' +
+          '<div class="tvm-editor-pane-label" data-pane="right">Tests</div>' +
+          '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
+          '</div>' +
+          '<div class="tvm-editor-container tvm-editor-container-right"></div>' +
+          '</div>'
+        : '') +
+      '</div>' +
+      (this.editorSplitSupported
+        ? '<div class="tvm-editor-mode-toggle" role="group" aria-label="Editor layout">' +
+          '<button class="tvm-editor-mode-btn' + (!this._splitActive ? ' active' : '') +
+            '" data-mode="tabs" title="Tab view — single editor, tabs for every file">' +
+            '<i class="fa fa-window-maximize"></i> Tabs</button>' +
+          '<button class="tvm-editor-mode-btn' + (this._splitActive ? ' active' : '') +
+            '" data-mode="split" title="Split view — code on the left, tests on the right">' +
+            '<i class="fa fa-columns"></i> Split</button>' +
+          '</div>'
+        : '') +
       '</div>' +
       '<div class="tvm-diagram-fullscreen-overlay" style="display:none">' +
       '<div class="tvm-diagram-fs-toolbar">' +
@@ -641,6 +699,9 @@
     this.stepControlsEl = this.root.querySelector('.tvm-step-controls');
     this.editorTabsEl = this.root.querySelector('.tvm-editor-tabs');
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
+    this.editorPanelEl = this.root.querySelector('.tvm-editor-panel');
+    this.editorTabsElRight = this.root.querySelector('.tvm-editor-tabs-right');
+    this.editorContainerElRight = this.root.querySelector('.tvm-editor-container-right');
     this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
     this._umlContainer = this._umlPositionRight
@@ -921,6 +982,19 @@
       }
     }
 
+    // Editor layout mode toggle (Tabs ↔ Split) — only when editor_split is enabled
+    if (this.editorSplitSupported) {
+      var modeBtns = this.root.querySelectorAll('.tvm-editor-mode-btn');
+      for (var mi = 0; mi < modeBtns.length; mi++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            var mode = btn.getAttribute('data-mode');
+            self._setSplitActive(mode === 'split');
+          });
+        })(modeBtns[mi]);
+      }
+    }
+
     // Git graph toggle buttons
     var viewBtns = this.root.querySelectorAll('.tvm-view-btn');
     for (var vi = 0; vi < viewBtns.length; vi++) {
@@ -1085,6 +1159,25 @@
       this._makeDraggable(umlBottomLeftSplitter, 'horizontal', stepsView, umlBottomLeftView);
     }
 
+    // Split-editor divider — drag to resize the two panes
+    var editorPaneDivider = this.root.querySelector('.tvm-editor-pane-divider');
+    if (editorPaneDivider) {
+      var leftPane = this.root.querySelector('.tvm-editor-pane-left');
+      var rightPane = this.root.querySelector('.tvm-editor-pane-right');
+      this._makeDraggable(editorPaneDivider, 'vertical', leftPane, rightPane);
+    }
+
+    // Per-tutorial output-panel height override (YAML `output_height: "50%"`).
+    // Set the bottom panel's flex-basis and let the editor panel absorb the rest.
+    if (this.outputHeight) {
+      var bottomPanel = this.root.querySelector(
+        this.config.useTerminal ? '.tvm-terminal-panel' :
+          this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
+      var editorPanelEl = this.root.querySelector('.tvm-editor-panel');
+      if (bottomPanel) bottomPanel.style.flex = '0 0 ' + this.outputHeight;
+      if (editorPanelEl) editorPanelEl.style.flex = '1 1 auto';
+    }
+
     this._initUMLBroadcastChannel();
   };
 
@@ -1128,6 +1221,7 @@
       
       if (self.fitAddon) self.fitAddon.fit();
       if (self.editor) self.editor.layout();
+      if (self.editor2) self.editor2.layout();
     }
     function onMouseUp() {
       document.removeEventListener('mousemove', onMouseMove);
@@ -2950,10 +3044,8 @@
   // ---------------------------------------------------------------------------
   // Monaco Editor
   // ---------------------------------------------------------------------------
-  TutorialCode.prototype._initEditor = function () {
-    var self = this;
-    this.editor = monaco.editor.create(this.editorContainerEl, {
-      value: '// Follow the tutorial steps on the left.\n',
+  TutorialCode.prototype._monacoEditorOptions = function () {
+    return {
       language: this.config.backend === 'pyodide' ? 'python' :
         this.config.backend === 'react' ? 'jsx' :
           this.config.backend === 'browser' ? 'javascript' :
@@ -2969,31 +3061,77 @@
       tabSize: 2,
       wordWrap: 'on',
       padding: { top: 8 },
+    };
+  };
+
+  TutorialCode.prototype._initEditor = function () {
+    var self = this;
+    var opts = this._monacoEditorOptions();
+    opts.value = '// Follow the tutorial steps on the left.\n';
+    this.editor = monaco.editor.create(this.editorContainerEl, opts);
+    this._attachEditorCommands(this.editor);
+
+    // Clicking/focusing inside the left editor promotes its file to "active" —
+    // this drives Run, Save, and test-runner actions on the focused pane.
+    this.editor.onDidFocusEditorText(function () {
+      if (self._leftActiveFile) self.activeFileName = self._leftActiveFile;
     });
 
-    // Ctrl/Cmd+S — save
-    this.editor.addCommand(
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-      function () { self._saveCurrentFile(); }
-    );
-
-    // Ctrl/Cmd+Enter — run (Python, browser JS, and Java)
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
-      this.editor.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-        function () { self._runCurrentFile(); }
-      );
+    if (this.editorSplitSupported) {
+      var opts2 = this._monacoEditorOptions();
+      opts2.value = '';
+      this.editor2 = monaco.editor.create(this.editorContainerElRight, opts2);
+      this._attachEditorCommands(this.editor2);
+      this.editor2.onDidFocusEditorText(function () {
+        if (self._rightActiveFile) self.activeFileName = self._rightActiveFile;
+      });
     }
 
     return Promise.resolve();
   };
 
-  TutorialCode.prototype.openFile = function (filename, content, language) {
+  TutorialCode.prototype._attachEditorCommands = function (editor) {
+    var self = this;
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+      function () { self._saveCurrentFile(); }
+    );
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
+      editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        function () { self._runCurrentFile(); }
+      );
+    }
+  };
+
+  /**
+   * Classify a file as 'left' (code / implementation) or 'right' (tests).
+   * Explicit `pane:` overrides from YAML file specs take precedence; otherwise
+   * match common test-file naming conventions across Python, JS/TS, and Java.
+   */
+  TutorialCode.prototype._paneForFile = function (filename) {
+    if (this._filePaneOverrides && this._filePaneOverrides[filename]) {
+      return this._filePaneOverrides[filename];
+    }
+    if (/(?:^|\/)test_[^\/]+\.[a-z]+$/i.test(filename)) return 'right';
+    if (/_test\.[a-z]+$/i.test(filename)) return 'right';
+    if (/\.test\.[a-z]+$/i.test(filename)) return 'right';
+    if (/\.spec\.[a-z]+$/i.test(filename)) return 'right';
+    if (/Test\.java$/i.test(filename)) return 'right';
+    if (/(?:^|\/)tests?\//i.test(filename)) return 'right';
+    return 'left';
+  };
+
+  TutorialCode.prototype.openFile = function (filename, content, language, fileSpec) {
     // If a JSX/TSX file is explicitly tagged "javascript"/"typescript", use the
     // JSX Monarch tokenizer so tags like <div> get proper syntax highlighting.
     if (language === 'javascript' && /\.jsx$/i.test(filename)) language = 'jsx';
     if ((language === 'javascript' || language === 'typescript') && /\.tsx$/i.test(filename)) language = 'jsx';
     language = language || detectLanguage(filename);
+    // Record per-file pane override (e.g. YAML: `pane: left`) before classification
+    if (fileSpec && fileSpec.pane && (fileSpec.pane === 'left' || fileSpec.pane === 'right')) {
+      this._filePaneOverrides[filename] = fileSpec.pane;
+    }
     if (!this.editorModels[filename]) {
       var uri = monaco.Uri.parse('file:///' + filename);
       var existing = monaco.editor.getModel(uri);
@@ -3017,15 +3155,32 @@
 
   TutorialCode.prototype._setActiveFile = function (filename) {
     var entry = this.editorModels[filename];
-    if (entry) { this.activeFileName = filename; this.editor.setModel(entry.model); }
+    if (!entry) return;
+    this.activeFileName = filename;
+    if (this._splitActive && this.editor2) {
+      var pane = this._paneForFile(filename);
+      if (pane === 'left') {
+        this._leftActiveFile = filename;
+        this.editor.setModel(entry.model);
+      } else {
+        this._rightActiveFile = filename;
+        this.editor2.setModel(entry.model);
+      }
+    } else {
+      // Tabs mode: single editor hosts every file
+      this._leftActiveFile = filename;
+      this.editor.setModel(entry.model);
+    }
   };
 
   TutorialCode.prototype._renderTabs = function () {
     var self = this;
     this.editorTabsEl.innerHTML = '';
-    Object.keys(this.editorModels).forEach(function (filename) {
+    if (this.editorTabsElRight) this.editorTabsElRight.innerHTML = '';
+
+    function makeTab(filename, isActive) {
       var tab = document.createElement('div');
-      tab.className = 'tvm-tab' + (filename === self.activeFileName ? ' active' : '');
+      tab.className = 'tvm-tab' + (isActive ? ' active' : '');
       tab.textContent = filename;
       tab.addEventListener('click', function () {
         self._setActiveFile(filename);
@@ -3035,7 +3190,18 @@
       x.className = 'tvm-tab-close'; x.textContent = '\u00d7';
       x.addEventListener('click', function (e) { e.stopPropagation(); self._closeFile(filename); });
       tab.appendChild(x);
-      self.editorTabsEl.appendChild(tab);
+      return tab;
+    }
+
+    Object.keys(this.editorModels).forEach(function (filename) {
+      if (self._splitActive && self.editor2) {
+        var pane = self._paneForFile(filename);
+        var active = filename === (pane === 'left' ? self._leftActiveFile : self._rightActiveFile);
+        var target = pane === 'left' ? self.editorTabsEl : self.editorTabsElRight;
+        if (target) target.appendChild(makeTab(filename, active));
+      } else {
+        self.editorTabsEl.appendChild(makeTab(filename, filename === self.activeFileName));
+      }
     });
 
     // Update left-panel UML tab visibility based on whether files are being watched
@@ -3069,6 +3235,82 @@
     // without affecting page-level vertical scroll (block: 'nearest').
     var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (this.editorTabsElRight) {
+      var activeTabRight = this.editorTabsElRight.querySelector('.tvm-tab.active');
+      if (activeTabRight) activeTabRight.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  };
+
+  /**
+   * Switch between unified-tabs view (one editor) and split view (tests left,
+   * code right). Persists the preference and re-syncs both Monaco editors so
+   * each pane shows the right file.
+   */
+  TutorialCode.prototype._setSplitActive = function (active) {
+    if (!this.editorSplitSupported) return;
+    if (!!active === this._splitActive) return;
+    this._splitActive = !!active;
+
+    if (this.editorPanelEl) {
+      this.editorPanelEl.classList.toggle('tvm-editor-split-active', this._splitActive);
+    }
+    // Three-column layout (instructions | tests | code) only in split mode.
+    // In tabs mode the existing instructions/workspace ratio is preserved.
+    if (this.root) {
+      this.root.classList.toggle('tvm-split-layout-three-col', this._splitActive);
+      // Clear any pixel-based inline flex set by prior splitter drags so the
+      // CSS defaults for the new layout take effect.
+      var instrPanel = this.root.querySelector('.tvm-instructions-panel');
+      if (instrPanel) instrPanel.style.flex = '';
+      var leftPane = this.root.querySelector('.tvm-editor-pane-left');
+      var rightPane = this.root.querySelector('.tvm-editor-pane-right');
+      if (leftPane) leftPane.style.flex = '';
+      if (rightPane) rightPane.style.flex = '';
+    }
+    var btns = this.root.querySelectorAll('.tvm-editor-mode-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-mode') === (this._splitActive ? 'split' : 'tabs'));
+    }
+
+    try {
+      localStorage.setItem('tutorial-editor-split-' + this.tutorialId, this._splitActive ? 'true' : 'false');
+    } catch (e) { /* ignore */ }
+
+    if (this._splitActive && this.editor2) {
+      // Route the most-recently-active file into its natural pane, then pick a
+      // sensible default for the other pane from any already-open files.
+      var seed = this.activeFileName;
+      var names = Object.keys(this.editorModels);
+      var leftPick = null, rightPick = null;
+      for (var j = 0; j < names.length; j++) {
+        var p = this._paneForFile(names[j]);
+        if (p === 'left' && !leftPick) leftPick = names[j];
+        else if (p === 'right' && !rightPick) rightPick = names[j];
+      }
+      if (seed) {
+        if (this._paneForFile(seed) === 'left') leftPick = seed;
+        else rightPick = seed;
+      }
+      if (leftPick && this.editorModels[leftPick]) {
+        this._leftActiveFile = leftPick;
+        this.editor.setModel(this.editorModels[leftPick].model);
+      }
+      if (rightPick && this.editorModels[rightPick]) {
+        this._rightActiveFile = rightPick;
+        this.editor2.setModel(this.editorModels[rightPick].model);
+      }
+    } else if (!this._splitActive) {
+      // Back to unified view — show whichever file was most recently active.
+      var keep = this.activeFileName || this._leftActiveFile || this._rightActiveFile;
+      if (keep && this.editorModels[keep]) {
+        this.activeFileName = keep;
+        this.editor.setModel(this.editorModels[keep].model);
+      }
+    }
+
+    this._renderTabs();
+    if (this.editor) this.editor.layout();
+    if (this.editor2) this.editor2.layout();
   };
 
   TutorialCode.prototype._closeFile = function (filename) {
@@ -3076,6 +3318,8 @@
     if (!entry) return;
     entry.model.dispose();
     delete this.editorModels[filename];
+    if (this._leftActiveFile === filename) this._leftActiveFile = null;
+    if (this._rightActiveFile === filename) this._rightActiveFile = null;
     if (this.activeFileName === filename) {
       var remaining = Object.keys(this.editorModels);
       if (remaining.length > 0) this._setActiveFile(remaining[0]);
@@ -3088,6 +3332,7 @@
     if (!this.activeFileName) return;
     this._syncFileToBackend(this.activeFileName);
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
+    if (!tab && this.editorTabsElRight) tab = this.editorTabsElRight.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
     if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
     if (this.config.backend === 'react') this._patchReactPreview();
@@ -3767,7 +4012,7 @@
     if (solution.files) {
       self._suppressAutoSave = true;
       solution.files.forEach(function (f) {
-        self.openFile(f.path, f.content, f.language);
+        self.openFile(f.path, f.content, f.language, f);
         p = p.then(function () { return self._syncFileToBackend(f.path); });
       });
       self._suppressAutoSave = false;
@@ -4122,7 +4367,7 @@
             self._suppressAutoSave = true;
             var syncs = [];
             st.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language);
+              self.openFile(f.path, f.content, f.language, f);
               syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
               self._originalContent[f.path] = f.content || '';
             });
@@ -4137,7 +4382,7 @@
             self._suppressAutoSave = true;
             var syncs = [];
             st.solution.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language);
+              self.openFile(f.path, f.content, f.language, f);
               syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
             });
             self._suppressAutoSave = false;
@@ -4315,7 +4560,7 @@
             self._suppressAutoSave = true;
             var syncs = [];
             step.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language);
+              self.openFile(f.path, f.content, f.language, f);
               syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
               self._originalContent[f.path] = f.content || '';
             });
@@ -4330,7 +4575,7 @@
             self._suppressAutoSave = true;
             var syncs = [];
             step.solution.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language);
+              self.openFile(f.path, f.content, f.language, f);
               syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
             });
             self._suppressAutoSave = false;
@@ -4427,7 +4672,7 @@
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
         if (firstVisit || !self.editorModels[f.path]) {
-          self.openFile(f.path, f.content, f.language);
+          self.openFile(f.path, f.content, f.language, f);
           self._syncFileToBackend(f.path);
           self._originalContent[f.path] = f.content || '';
         }
@@ -5842,7 +6087,7 @@
         // just-restored filesystem reflects the student's edits.
         syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
       } else {
-        self.openFile(f.path, f.content, f.language);
+        self.openFile(f.path, f.content, f.language, f);
         syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
         self._originalContent[f.path] = f.content || '';
       }

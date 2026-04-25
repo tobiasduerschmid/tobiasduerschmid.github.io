@@ -502,6 +502,210 @@ html:not(.dark-mode) .tvm-left-tab.active {
   min-height: 0;
 }
 
+/* ───────────────────────────────────────────
+   Split-editor view (code left, tests right)
+
+   DOM: each pane has a [tab-row] containing [label][tabs]; the mode toggle is
+   positioned absolutely at the top-right of the editor panel so its placement
+   is independent of the pane widths.
+─────────────────────────────────────────── */
+
+.tvm-editor-panel { position: relative; }
+
+/* Pane tab row — one per pane, flex row, merges label + file tabs. Uses the
+   same visual treatment as the stand-alone .tvm-editor-tabs (so the pane
+   label appears to live inside the tab bar itself). */
+.tvm-editor-pane-tab-row {
+  display: flex;
+  align-items: stretch;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.tvm-editor-pane-tab-row > .tvm-editor-tabs {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;   /* border handled by the row wrapper */
+  background: transparent;
+}
+
+.tvm-editor-pane-label {
+  padding: 0 14px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-right: 1px solid #2a2a2e;
+}
+
+.tvm-editor-pane-label[data-pane="left"]  { color: #8fd19e; }  /* Code  = green (GREEN phase) */
+.tvm-editor-pane-label[data-pane="right"] { color: #ff8a8a; }  /* Tests = red   (RED phase)   */
+
+/* Mode toggle — floats over the top-right corner of the panel. The rightmost
+   visible tab row reserves padding-right so tabs don't slide under it. */
+.tvm-editor-mode-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  border-left: 1px solid #2a2a2e;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
+.tvm-editor-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tvm-editor-mode-btn i { font-size: 11px; }
+
+.tvm-editor-mode-btn:hover:not(.active) {
+  color: #c0c0d0;
+  background: #222228;
+}
+
+.tvm-editor-mode-btn.active {
+  color: #fff;
+  background: #0078d4;
+}
+
+/* Reserve space for the floating toggle in whichever pane sits on the right.
+   In tabs mode that's the left pane (full-width); in split mode the right pane.
+   Applied to the tab-row wrapper only so the padding isn't doubled. */
+.tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-left  .tvm-editor-pane-tab-row,
+.tvm-editor-split-supported.tvm-editor-split-active        .tvm-editor-pane-right .tvm-editor-pane-tab-row {
+  padding-right: 160px;
+}
+
+/* Body wraps the pane(s). Row layout; left pane fills when split is inactive. */
+.tvm-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.tvm-editor-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tvm-editor-pane-left { flex: 1 1 50%; }
+
+/* Tabs mode: hide right pane, divider, and the pane label in the left pane.
+   The mode toggle stays visible (in the top-right overlay). */
+.tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-right,
+.tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-divider,
+.tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-label {
+  display: none;
+}
+
+.tvm-editor-split-supported:not(.tvm-editor-split-active) .tvm-editor-pane-left {
+  flex: 1 1 100%;
+}
+
+/* Split active: both panes visible side-by-side, divider between */
+.tvm-editor-split-active .tvm-editor-pane-left,
+.tvm-editor-split-active .tvm-editor-pane-right {
+  flex: 1 1 50%;
+}
+
+.tvm-editor-pane-divider {
+  flex: 0 0 4px;
+  background: #2a2a2e;
+  cursor: col-resize;
+  transition: background 0.15s;
+}
+
+.tvm-editor-pane-divider:hover,
+.tvm-editor-pane-divider.active {
+  background: #0078d4;
+}
+
+/* Three-column layout: instructions | code | tests (each ~1/3 of viewport).
+   Only applied when split view is active — tabs view keeps the existing
+   instructions/workspace 50/50 default. */
+.tvm-split-layout-three-col .tvm-instructions-panel {
+  flex: 0 0 33.3333%;
+}
+
+/* Light-mode overrides. Keep the pane-tab row, mode toggle, and divider in
+   sync with the rest of the light-mode editor palette. */
+html:not(.dark-mode) .tvm-editor-pane-tab-row {
+  background: #f3f3f3;
+  border-bottom-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-editor-pane-label {
+  border-right-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-editor-pane-label[data-pane="left"]  { color: #3b8f55; }
+html:not(.dark-mode) .tvm-editor-pane-label[data-pane="right"] { color: #b45050; }
+
+html:not(.dark-mode) .tvm-editor-mode-toggle {
+  background: #f3f3f3;
+  border-bottom-color: #d4d4d4;
+  border-left-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-editor-mode-btn {
+  color: #6e6e6e;
+}
+
+html:not(.dark-mode) .tvm-editor-mode-btn:hover:not(.active) {
+  color: #333;
+  background: #e8e8e8;
+}
+
+html:not(.dark-mode) .tvm-editor-mode-btn.active {
+  color: #fff;
+  background: #0078d4;
+}
+
+html:not(.dark-mode) .tvm-editor-pane-divider {
+  background: #d4d4d4;
+}
+
+/* Stack vertically on narrow viewports so both editors stay usable */
+@media (max-width: 900px) {
+  .tvm-editor-split-active .tvm-editor-body { flex-direction: column; }
+  .tvm-editor-split-active .tvm-editor-pane-divider {
+    flex: 0 0 4px;
+    width: 100%;
+    cursor: row-resize;
+  }
+  /* On narrow screens, drop the three-col split and let instructions take their default width */
+  .tvm-split-layout-three-col .tvm-instructions-panel { flex: 0 0 45%; }
+}
+
 /* View Toggle Bar (Editor ↔ Git Graph switch) */
 .tvm-view-toggle {
   display: flex;

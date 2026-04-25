@@ -3,6 +3,15 @@ description: "Learn Test-Driven Development hands-on: write failing tests first,
 
 backend: pyodide
 
+# Show code (left) and tests (right) side by side — students can toggle back
+# to tabbed view with the button above the editors. Files prefixed `test_`
+# route to the right pane automatically; everything else lands on the left.
+editor_split: true
+
+# Keep the output panel compact — most TDD interaction happens in the editors,
+# and students only need a short strip to skim pytest's pass/fail summary.
+output_height: "25%"
+
 require_tests: true
 autosave_type: files
 
@@ -162,6 +171,7 @@ steps:
         language: "python"
 
     open_file: "test_word_counter.py"
+    run_file: "test_word_counter.py"
 
     solution:
       files:
@@ -463,6 +473,7 @@ steps:
         language: "python"
 
     open_file: "test_fizzbuzz.py"
+    run_file: "test_fizzbuzz.py"
 
     solution:
       files:
@@ -743,6 +754,7 @@ steps:
         language: "python"
 
     open_file: "test_password.py"
+    run_file: "test_password.py"
 
     solution:
       files:
@@ -1103,6 +1115,7 @@ steps:
         language: "python"
 
     open_file: "test_bank_account.py"
+    run_file: "test_bank_account.py"
 
     solution:
       files:
