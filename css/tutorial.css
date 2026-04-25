@@ -431,6 +431,8 @@ html:not(.dark-mode) .tvm-left-tab.active {
   min-height: 0;
   overflow: hidden;
   background: #141414;
+  /* Anchor for the floating .tvm-output-detached-chip. */
+  position: relative;
 }
 
 /* Editor Panel */
@@ -805,21 +807,77 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
   background: #e8edf3; color: #1f2530; border-color: #8a96a8;
 }
 
-/* Output / terminal / preview detached state — collapse the panel to its
-   header strip; output panel gets `flex: 0 0 auto` so the editor area expands. */
+/* Output / terminal / preview detached state — fully remove the bottom
+   panel from the main view (and its splitter) so the editor area
+   reclaims the entire vertical space. A floating chip in the corner of
+   the workspace replaces the panel and lets the user reattach without
+   hunting down the popup window. */
 .tvm-output-panel.tvm-output-detached,
 .tvm-terminal-panel.tvm-output-detached,
 .tvm-preview-panel.tvm-output-detached {
-  flex: 0 0 auto !important;
-}
-/* When detached, the main window collapses to a (DETACHED) ↩ indicator —
-   all controls live in the popup window from now on. */
-.tvm-output-panel.tvm-output-detached .tvm-output-container,
-.tvm-output-panel.tvm-output-detached .tvm-output-actions > :not(.tvm-output-detached-indicator),
-.tvm-terminal-panel.tvm-output-detached .tvm-terminal-container,
-.tvm-preview-panel.tvm-output-detached .tvm-preview-container,
-.tvm-preview-panel.tvm-output-detached .tvm-preview-actions > :not(.tvm-output-detached-indicator) {
   display: none !important;
+}
+.tvm-workspace.tvm-workspace-output-detached > .tvm-vsplitter {
+  display: none !important;
+}
+
+/* Floating reattach chip — anchored to the bottom-right of the workspace
+   when the bottom panel is detached. Same visual language as the other
+   (DETACHED) ↩ indicators. */
+.tvm-output-detached-chip {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #20202c;
+  border: 1px solid #3a3a52;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #aab4c5;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.tvm-output-detached-chip .tvm-tab-detached-badge {
+  background: #2a2a3a;
+  color: #c8d4e4;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tvm-output-detached-chip .tvm-tab-reattach {
+  border: 1px solid #3a3a52;
+  border-radius: 4px;
+  background: #1f1f2a;
+  color: #c8d4e4;
+  padding: 2px 9px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tvm-output-detached-chip .tvm-tab-reattach:hover {
+  background: #303046; border-color: #5a5a78; color: #fff;
+}
+html:not(.dark-mode) .tvm-output-detached-chip {
+  background: #ffffff;
+  border-color: #c8c8d0;
+  color: #555;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+html:not(.dark-mode) .tvm-output-detached-chip .tvm-tab-detached-badge {
+  background: #f3f3f3; color: #444;
+}
+html:not(.dark-mode) .tvm-output-detached-chip .tvm-tab-reattach {
+  background: #ffffff; color: #4a5566; border-color: #c8c8d0;
+}
+html:not(.dark-mode) .tvm-output-detached-chip .tvm-tab-reattach:hover {
+  background: #e8edf3; color: #1f2530; border-color: #8a96a8;
 }
 .tvm-output-detached-indicator {
   display: inline-flex;

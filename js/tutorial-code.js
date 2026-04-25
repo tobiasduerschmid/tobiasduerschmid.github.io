@@ -3806,24 +3806,30 @@
     );
     if (!panel) return;
     panel.classList.toggle('tvm-output-detached', !!detached);
-    var header = panel.querySelector('.tvm-output-header, .tvm-terminal-header, .tvm-preview-header');
-    if (!header) return;
-    var existing = header.querySelector('.tvm-output-detached-indicator');
+    var workspace = this.root.querySelector('.tvm-workspace');
+    if (workspace) workspace.classList.toggle('tvm-workspace-output-detached', !!detached);
+
+    // Floating reattach chip — anchored to the workspace corner. Replaces
+    // the in-panel indicator since the panel itself is now display: none.
+    var chip = workspace && workspace.querySelector(':scope > .tvm-output-detached-chip');
     if (detached) {
-      if (!existing) {
-        var ind = document.createElement('span');
-        ind.className = 'tvm-output-detached-indicator';
-        ind.innerHTML = '<span class="tvm-tab-detached-badge">(detached)</span>'
-          + '<button class="tvm-tab-reattach" type="button" title="Bring output back to the main view">↩</button>';
-        header.appendChild(ind);
+      if (workspace && !chip) {
+        chip = document.createElement('div');
+        chip.className = 'tvm-output-detached-chip';
+        var label = panel.classList.contains('tvm-preview-panel') ? 'Live preview'
+          : panel.classList.contains('tvm-terminal-panel') ? 'Terminal'
+          : 'Output';
+        chip.innerHTML = '<span class="tvm-tab-detached-badge">' + label + ' detached</span>'
+          + '<button class="tvm-tab-reattach" type="button" title="Bring it back to the main view">↩</button>';
+        workspace.appendChild(chip);
         var self = this;
-        ind.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
+        chip.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
           e.stopPropagation();
           self._popoutManager.requestPopupClose('output');
         });
       }
-    } else if (existing) {
-      existing.parentNode.removeChild(existing);
+    } else if (chip) {
+      chip.parentNode.removeChild(chip);
     }
   };
 
