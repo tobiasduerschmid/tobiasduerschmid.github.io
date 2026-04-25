@@ -427,7 +427,10 @@
     var terminalHtml;
     if (this.config.useTerminal) {
       terminalHtml = '<div class="tvm-terminal-panel">' +
-        '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+        '<div class="tvm-terminal-header">' +
+          '<span>Terminal</span>' +
+          '<button class="tvm-output-popout-btn" title="Open terminal output in separate window">⧉</button>' +
+        '</div>' +
         '<div class="tvm-terminal-container"></div>' +
         '</div>';
     } else if (this.config.usePreview) {
@@ -436,6 +439,7 @@
         '<span>Live Preview</span>' +
         '<div class="tvm-preview-actions">' +
         '<button class="tvm-refresh-btn" title="Rebuild preview">\u21bb Refresh</button>' +
+        '<button class="tvm-output-popout-btn" title="Open preview in separate window">\u29c9</button>' +
         '</div></div>' +
         '<div class="tvm-preview-container">' +
         '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
@@ -478,6 +482,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
         '</div>' +
@@ -501,6 +506,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
         '</div>';
@@ -523,7 +529,10 @@
           '</div>'
         : '') +
       '<div class="tvm-steps-view">' +
-      '<div class="tvm-step-nav-bar"><div class="tvm-step-nav"></div></div>' +
+      '<div class="tvm-step-nav-bar">' +
+      '<div class="tvm-step-nav"></div>' +
+      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window">⧉</button>' +
+      '</div>' +
       '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
       (useBelowUml
         ? '<div class="tvm-uml-below-view">' +
@@ -632,7 +641,10 @@
       '<div class="tvm-editor-pane tvm-editor-pane-left">' +
       (this.editorSplitSupported
         ? '<div class="tvm-editor-pane-tab-row">' +
-          '<div class="tvm-editor-pane-label" data-pane="left">Code</div>' +
+          '<div class="tvm-editor-pane-label" data-pane="left">' +
+            '<span class="tvm-editor-pane-label-text">Code</span>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window">⧉</button>' +
+          '</div>' +
           '<div class="tvm-editor-tabs"></div>' +
           '</div>'
         : '<div class="tvm-editor-tabs"></div>') +
@@ -642,7 +654,10 @@
         ? '<div class="tvm-editor-pane-divider" title="Drag to resize"></div>' +
           '<div class="tvm-editor-pane tvm-editor-pane-right">' +
           '<div class="tvm-editor-pane-tab-row">' +
-          '<div class="tvm-editor-pane-label" data-pane="right">Tests</div>' +
+          '<div class="tvm-editor-pane-label" data-pane="right">' +
+            '<span class="tvm-editor-pane-label-text">Tests</span>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window">⧉</button>' +
+          '</div>' +
           '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
           '</div>' +
           '<div class="tvm-editor-container tvm-editor-container-right"></div>' +
@@ -1179,6 +1194,10 @@
     }
 
     this._initUMLBroadcastChannel();
+    this._initPopoutManager();
+    this._wireInstructionsPopoutButton();
+    this._wirePanePopoutButtons();
+    this._wireOutputPopoutButton();
   };
 
   TutorialCode.prototype._makeDraggable = function (splitter, direction, beforeEl, afterEl) {
@@ -3151,6 +3170,15 @@
     }
     this._setActiveFile(filename);
     this._renderTabs();
+    // If this file routes to a detached pane, push a fresh snapshot so the
+    // pane popup picks up the new file/content.
+    if (this._popoutManager && this._splitActive) {
+      var pane = this._paneForFile(filename);
+      if (this._isPaneDetached(pane)) {
+        var meta = this._paneMeta(pane);
+        if (meta) this._popoutManager._sendPaneSnapshot(pane, meta);
+      }
+    }
   };
 
   TutorialCode.prototype._setActiveFile = function (filename) {
@@ -3178,24 +3206,104 @@
     this.editorTabsEl.innerHTML = '';
     if (this.editorTabsElRight) this.editorTabsElRight.innerHTML = '';
 
+    var splitMode = !!(this._splitActive && this.editor2);
+
     function makeTab(filename, isActive) {
+      var detached = self._popoutManager && self._popoutManager.isDetached('tab:' + filename);
       var tab = document.createElement('div');
-      tab.className = 'tvm-tab' + (isActive ? ' active' : '');
-      tab.textContent = filename;
+      tab.className = 'tvm-tab'
+        + (isActive && !detached ? ' active' : '')
+        + (detached ? ' detached' : '');
+      tab.title = detached ? filename + ' (open in popup window \u2014 click to focus)' : filename;
+      var label = document.createElement('span');
+      label.className = 'tvm-tab-label';
+      label.textContent = detached ? (filename + ' \u2937') : filename;
+      tab.appendChild(label);
+
       tab.addEventListener('click', function () {
+        if (detached) {
+          // Focus the popup window
+          var entry = self._popoutManager._popups['tab:' + filename];
+          if (entry && entry.window && !entry.window.closed) {
+            try { entry.window.focus(); } catch (e) { /* ignore */ }
+          }
+          return;
+        }
         self._setActiveFile(filename);
         self._renderTabs();
       });
-      var x = document.createElement('span');
-      x.className = 'tvm-tab-close'; x.textContent = '\u00d7';
-      x.addEventListener('click', function (e) { e.stopPropagation(); self._closeFile(filename); });
-      tab.appendChild(x);
+
+      // In split mode, the pane-level \u29c9 button replaces per-tab popout \u2014 the
+      // user pops out the whole pane, not individual files. Three cases below:
+      //   detached \u2192 badge + reattach
+      //   non-detached + non-split \u2192 popout button + drag handlers
+      //   non-detached + split \u2192 no extra controls (pane button handles it)
+      if (detached) {
+        var badgeOnly = document.createElement('span');
+        badgeOnly.className = 'tvm-tab-detached-badge';
+        badgeOnly.textContent = '(detached)';
+        tab.appendChild(badgeOnly);
+        var reattachOnly = document.createElement('span');
+        reattachOnly.className = 'tvm-tab-reattach';
+        reattachOnly.textContent = '\u21a9';
+        reattachOnly.title = 'Bring file back to this window';
+        reattachOnly.addEventListener('click', function (e) {
+          e.stopPropagation();
+          self._popoutManager.requestPopupClose('tab:' + filename);
+        });
+        tab.appendChild(reattachOnly);
+      } else if (!splitMode) {
+        // Pop-out button (mirrors UML's \u29c9 control)
+        var pop = document.createElement('span');
+        pop.className = 'tvm-tab-popout';
+        pop.textContent = '\u29c9';
+        pop.title = 'Open file in separate window';
+        pop.addEventListener('click', function (e) {
+          e.stopPropagation();
+          self._popoutFile(filename);
+        });
+        tab.appendChild(pop);
+
+        // Drag-out detach: dragend with no drop target outside the window
+        tab.draggable = true;
+        tab.addEventListener('dragstart', function (e) {
+          try { e.dataTransfer.setData('text/plain', filename); } catch (e2) { /* ignore */ }
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+          tab.classList.add('drag-source');
+          self._tabDragState = {
+            filename: filename,
+            startX: e.clientX,
+            startY: e.clientY,
+            winW: window.innerWidth,
+            winH: window.innerHeight,
+          };
+        });
+        tab.addEventListener('dragend', function (e) {
+          tab.classList.remove('drag-source');
+          var ds = self._tabDragState;
+          self._tabDragState = null;
+          if (!ds) return;
+          var x = e.clientX, y = e.clientY;
+          var outside = (x <= 0 || y <= 0 || x >= ds.winW || y >= ds.winH);
+          var dropEffect = e.dataTransfer && e.dataTransfer.dropEffect;
+          // Some browsers report 0,0 when drop happens outside the window. Treat
+          // a "none" dropEffect with a sufficiently long drag as also outside.
+          var dragDist = Math.abs(x - ds.startX) + Math.abs(y - ds.startY);
+          if (!outside && dropEffect === 'none' && dragDist > 60) {
+            // ambiguous \u2014 only detach if clearly off the tab bar (mouseY above/below)
+            outside = (y < 0) || (y > ds.winH - 20);
+          }
+          if (outside) self._popoutFile(ds.filename);
+        });
+      }
       return tab;
     }
 
     Object.keys(this.editorModels).forEach(function (filename) {
       if (self._splitActive && self.editor2) {
         var pane = self._paneForFile(filename);
+        // Skip files whose pane is currently detached into a popup window
+        if (self._isPaneDetached(pane)) return;
         var active = filename === (pane === 'left' ? self._leftActiveFile : self._rightActiveFile);
         var target = pane === 'left' ? self.editorTabsEl : self.editorTabsElRight;
         if (target) target.appendChild(makeTab(filename, active));
@@ -3203,6 +3311,58 @@
         self.editorTabsEl.appendChild(makeTab(filename, filename === self.activeFileName));
       }
     });
+
+    // Update editor-panel CSS classes for pane-detached state and surface a
+    // "(detached) ↩" indicator inside the pane label so the user can click to
+    // reattach without finding the popup window.
+    var panel = this.root && this.root.querySelector('.tvm-editor-panel');
+    var leftDet = this._isPaneDetached('left');
+    var rightDet = this._isPaneDetached('right');
+    if (panel) {
+      panel.classList.toggle('tvm-editor-pane-detached-left', leftDet);
+      panel.classList.toggle('tvm-editor-pane-detached-right', rightDet);
+      // Both panes detached → editor area shrinks to its labels so the
+      // output panel below can use the freed vertical space.
+      panel.classList.toggle('tvm-editor-pane-detached-all', leftDet && rightDet);
+    }
+    ['left', 'right'].forEach(function (p) {
+      var paneEl = self.root && self.root.querySelector('.tvm-editor-pane-' + p);
+      if (!paneEl) return;
+      var label = paneEl.querySelector('.tvm-editor-pane-label');
+      if (!label) return;
+      var detached = self._isPaneDetached(p);
+      // Clear any inline flex/width set by a prior splitter drag so the
+      // detached/reattached pane sizes from CSS, not from stale pixels.
+      paneEl.style.flex = '';
+      paneEl.style.width = '';
+      var existing = label.querySelector('.tvm-pane-detached-indicator');
+      if (detached) {
+        if (!existing) {
+          var ind = document.createElement('span');
+          ind.className = 'tvm-pane-detached-indicator';
+          ind.innerHTML = '<span class="tvm-tab-detached-badge">(detached)</span>'
+            + '<button class="tvm-tab-reattach" type="button" title="Bring this pane back to the main view">↩</button>';
+          label.appendChild(ind);
+          ind.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
+            e.stopPropagation();
+            self._popoutManager.requestPopupClose('pane:' + p);
+          });
+        }
+      } else if (existing) {
+        existing.parentNode.removeChild(existing);
+      }
+    });
+    // After any detach state change, re-fit Monaco / xterm so they pick up the
+    // new available size.
+    if ((leftDet || rightDet) && this.editor && this.editor.layout) {
+      try { this.editor.layout(); } catch (e) { /* ignore */ }
+    }
+    if ((leftDet || rightDet) && this.editor2 && this.editor2.layout) {
+      try { this.editor2.layout(); } catch (e) { /* ignore */ }
+    }
+    if (this.fitAddon && this.fitAddon.fit) {
+      try { this.fitAddon.fit(); } catch (e) { /* ignore */ }
+    }
 
     // Update left-panel UML tab visibility based on whether files are being watched
     if (this._leftTabBarEl) {
@@ -3249,6 +3409,9 @@
   TutorialCode.prototype._setSplitActive = function (active) {
     if (!this.editorSplitSupported) return;
     if (!!active === this._splitActive) return;
+    // Pulled-out tabs and panes belong to the previous layout — close them
+    // so the new layout starts with a clean, consistent view of every file.
+    if (this._popoutManager) this._popoutManager.closeEditorPopups();
     this._splitActive = !!active;
 
     if (this.editorPanelEl) {
@@ -3381,6 +3544,591 @@
     }
     this._umlPopupWindow = window.open(fullUrl, 'uml-popup',
       'width=900,height=700,resizable=yes,scrollbars=yes');
+  };
+
+  // ---------------------------------------------------------------------------
+  // Tab / Instructions Pop-Out (TutorialPopoutManager bridge)
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._popoutFile = function (filename) {
+    if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
+    var meta = this._fileMeta(filename);
+    if (!meta) return;
+    var win = this._popoutManager.detachFile(filename, meta);
+    if (!win) {
+      this._showPopupBlockedToast('Popup blocked — click to detach ' + filename, (function (self) {
+        return function () { self._popoutFile(filename); };
+      })(this));
+      return;
+    }
+    this._renderTabs();
+    if (this._splitActive) {
+      // If the detached file was the active file in its pane, swap to another file
+      var pane = this._paneForFile(filename);
+      if (pane === 'left' && this._leftActiveFile === filename) this._pickPaneActive('left');
+      if (pane === 'right' && this._rightActiveFile === filename) this._pickPaneActive('right');
+    } else if (this.activeFileName === filename) {
+      var rest = Object.keys(this.editorModels).filter(function (f) {
+        return f !== filename;
+      });
+      if (rest.length) this._setActiveFile(rest[0]);
+    }
+  };
+
+  TutorialCode.prototype._isPaneDetached = function (pane) {
+    if (!this._popoutManager) return false;
+    return this._popoutManager.isDetached('pane:' + pane);
+  };
+
+  TutorialCode.prototype._popoutPane = function (pane) {
+    if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
+    if (!this._splitActive) return;
+    var self = this;
+    var files = Object.keys(this.editorModels)
+      .filter(function (f) { return self._paneForFile(f) === pane; });
+    if (!files.length) return;
+    var meta = files.map(function (f) {
+      var entry = self.editorModels[f];
+      return {
+        filename: f,
+        content: entry.model.getValue(),
+        language: entry.model.getLanguageId
+          ? entry.model.getLanguageId()
+          : (entry.model._languageId || ''),
+      };
+    });
+    var activeFile = pane === 'left' ? this._leftActiveFile : this._rightActiveFile;
+    if (!activeFile || files.indexOf(activeFile) === -1) activeFile = files[0];
+    var win = this._popoutManager.detachPane(pane, {
+      files: meta,
+      activeFile: activeFile,
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+    });
+    if (!win) {
+      this._showPopupBlockedToast('Popup blocked — click to detach ' + pane + ' pane',
+        (function (s, p) { return function () { s._popoutPane(p); }; })(this, pane));
+      return;
+    }
+    this._renderTabs();
+    // Layout the remaining pane to fill the freed width
+    if (this.editor && this.editor.layout) try { this.editor.layout(); } catch (e) {/*ignore*/}
+    if (this.editor2 && this.editor2.layout) try { this.editor2.layout(); } catch (e) {/*ignore*/}
+  };
+
+  TutorialCode.prototype._wirePanePopoutButtons = function () {
+    if (!this.root) return;
+    var self = this;
+    var btns = this.root.querySelectorAll('.tvm-editor-pane-popout-btn');
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pane = btn.getAttribute('data-pane');
+        if (pane) self._popoutPane(pane);
+      });
+    });
+  };
+
+  TutorialCode.prototype._wireOutputPopoutButton = function () {
+    if (!this.root) return;
+    var self = this;
+    var btns = this.root.querySelectorAll('.tvm-output-popout-btn');
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () { self._popoutOutput(); });
+    });
+  };
+
+  TutorialCode.prototype._popoutOutput = function () {
+    if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
+    var meta = this._outputMeta();
+    if (!meta) return;
+    var win = this._popoutManager.detachOutput(meta);
+    if (!win) {
+      this._showPopupBlockedToast('Popup blocked — click to detach output',
+        this._popoutOutput.bind(this));
+      return;
+    }
+    this._refreshOutputDetachedState();
+    this._installOutputObserver();
+  };
+
+  TutorialCode.prototype._outputMeta = function () {
+    var pre = this.root && this.root.querySelector('.tvm-output-pre');
+    var termContainer = this.root && this.root.querySelector('.tvm-terminal-container');
+    var previewFrame = this.root && this.root.querySelector('.tvm-preview-frame');
+    var kind, content;
+    if (previewFrame) {
+      // Live preview (react / browser iframe): the popup hosts its own iframe
+      // pointed at the same URL. Inputs and refreshes are independent in the
+      // popup, but content stays in sync because both iframes hit the same
+      // origin/server.
+      kind = 'preview';
+      content = previewFrame.src || '';
+    } else if (pre) {
+      kind = 'output';
+      content = pre.innerHTML;
+    } else if (termContainer && this.term && this.term.buffer) {
+      kind = 'terminal';
+      content = this._serializeTerminal();
+    } else {
+      return null;
+    }
+    return {
+      kind: kind,
+      content: content,
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+    };
+  };
+
+  TutorialCode.prototype._serializeTerminal = function () {
+    if (!this.term || !this.term.buffer || !this.term.buffer.active) return '';
+    var buf = this.term.buffer.active;
+    var lines = [];
+    for (var i = 0; i < buf.length; i++) {
+      var line = buf.getLine(i);
+      if (line) lines.push(line.translateToString(true));
+    }
+    return lines.join('\n');
+  };
+
+  TutorialCode.prototype._installOutputObserver = function () {
+    if (this._outputObserver || this._termRenderDispose || this._previewFrameSync) return;
+    var self = this;
+    var pre = this.root && this.root.querySelector('.tvm-output-pre');
+    var previewFrame = this.root && this.root.querySelector('.tvm-preview-frame');
+    if (previewFrame) {
+      // Preview: re-broadcast the iframe URL whenever it changes (refresh / nav).
+      this._previewFrameSync = function () {
+        if (self._popoutManager && self._popoutManager.isDetached('output')) {
+          self._popoutManager.broadcastOutputUpdate({
+            kind: 'preview',
+            content: previewFrame.src || '',
+          });
+        }
+      };
+      previewFrame.addEventListener('load', this._previewFrameSync);
+    }
+    if (pre) {
+      var debounced;
+      this._outputObserver = new MutationObserver(function () {
+        clearTimeout(debounced);
+        debounced = setTimeout(function () {
+          if (self._popoutManager && self._popoutManager.isDetached('output')) {
+            self._popoutManager.broadcastOutputUpdate({
+              kind: 'output',
+              content: pre.innerHTML,
+            });
+          }
+        }, 60);
+      });
+      this._outputObserver.observe(pre, { childList: true, characterData: true, subtree: true });
+    }
+    if (this.term && this.term.onRender) {
+      // Terminal: re-serialize on every refresh tick (xterm fires onRender).
+      var termDebounced;
+      this._termRenderDispose = this.term.onRender(function () {
+        clearTimeout(termDebounced);
+        termDebounced = setTimeout(function () {
+          if (self._popoutManager && self._popoutManager.isDetached('output')) {
+            self._popoutManager.broadcastOutputUpdate({
+              kind: 'terminal',
+              content: self._serializeTerminal(),
+            });
+          }
+        }, 60);
+      });
+    }
+  };
+
+  TutorialCode.prototype._uninstallOutputObserver = function () {
+    if (this._outputObserver) {
+      this._outputObserver.disconnect();
+      this._outputObserver = null;
+    }
+    if (this._termRenderDispose && this._termRenderDispose.dispose) {
+      try { this._termRenderDispose.dispose(); } catch (e) { /* ignore */ }
+      this._termRenderDispose = null;
+    }
+    if (this._previewFrameSync) {
+      var pf = this.root && this.root.querySelector('.tvm-preview-frame');
+      if (pf) try { pf.removeEventListener('load', this._previewFrameSync); } catch (e) {/*ignore*/}
+      this._previewFrameSync = null;
+    }
+  };
+
+  TutorialCode.prototype._refreshOutputDetachedState = function () {
+    var detached = this._popoutManager && this._popoutManager.isDetached('output');
+    var panel = this.root && (
+      this.root.querySelector('.tvm-output-panel')
+      || this.root.querySelector('.tvm-terminal-panel')
+      || this.root.querySelector('.tvm-preview-panel')
+    );
+    if (!panel) return;
+    panel.classList.toggle('tvm-output-detached', !!detached);
+    var header = panel.querySelector('.tvm-output-header, .tvm-terminal-header, .tvm-preview-header');
+    if (!header) return;
+    var existing = header.querySelector('.tvm-output-detached-indicator');
+    if (detached) {
+      if (!existing) {
+        var ind = document.createElement('span');
+        ind.className = 'tvm-output-detached-indicator';
+        ind.innerHTML = '<span class="tvm-tab-detached-badge">(detached)</span>'
+          + '<button class="tvm-tab-reattach" type="button" title="Bring output back to the main view">↩</button>';
+        header.appendChild(ind);
+        var self = this;
+        ind.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
+          e.stopPropagation();
+          self._popoutManager.requestPopupClose('output');
+        });
+      }
+    } else if (existing) {
+      existing.parentNode.removeChild(existing);
+    }
+  };
+
+  TutorialCode.prototype._popoutInstructions = function () {
+    if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
+    var win = this._popoutManager.detachInstructions();
+    if (!win) {
+      this._showPopupBlockedToast('Popup blocked — click to detach instructions',
+        this._popoutInstructions.bind(this));
+      return;
+    }
+    this._refreshInstructionsDetachedState();
+  };
+
+  TutorialCode.prototype._paneMeta = function (pane) {
+    var self = this;
+    var files = Object.keys(this.editorModels)
+      .filter(function (f) { return self._paneForFile(f) === pane; })
+      .map(function (f) {
+        var entry = self.editorModels[f];
+        return {
+          filename: f,
+          content: entry.model.getValue(),
+          language: entry.model.getLanguageId
+            ? entry.model.getLanguageId()
+            : (entry.model._languageId || ''),
+        };
+      });
+    if (!files.length) return null;
+    var activeFile = pane === 'left' ? this._leftActiveFile : this._rightActiveFile;
+    if (!activeFile || !files.find(function (f) { return f.filename === activeFile; })) {
+      activeFile = files[0].filename;
+    }
+    return {
+      pane: pane,
+      files: files,
+      activeFile: activeFile,
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+    };
+  };
+
+  TutorialCode.prototype._fileMeta = function (filename) {
+    var entry = this.editorModels[filename];
+    if (!entry) return null;
+    return {
+      content: entry.model.getValue(),
+      language: entry.model.getLanguageId ? entry.model.getLanguageId()
+              : (entry.model._languageId || ''),
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+    };
+  };
+
+  TutorialCode.prototype._pickPaneActive = function (pane) {
+    var self = this;
+    var candidates = Object.keys(this.editorModels).filter(function (f) {
+      if (self._popoutManager && self._popoutManager.isDetached('tab:' + f)) return false;
+      return self._paneForFile(f) === pane;
+    });
+    if (pane === 'left') {
+      this._leftActiveFile = candidates[0] || null;
+      if (this.editor && candidates[0]) this.editor.setModel(this.editorModels[candidates[0]].model);
+      else if (this.editor) this.editor.setModel(monaco.editor.createModel(''));
+    } else {
+      this._rightActiveFile = candidates[0] || null;
+      if (this.editor2 && candidates[0]) this.editor2.setModel(this.editorModels[candidates[0]].model);
+      else if (this.editor2) this.editor2.setModel(monaco.editor.createModel(''));
+    }
+    this._renderTabs();
+  };
+
+  TutorialCode.prototype._showPopupBlockedToast = function (msg, retry) {
+    if (this._popupBlockedToast) {
+      try { document.body.removeChild(this._popupBlockedToast); } catch (e) { /* ignore */ }
+      this._popupBlockedToast = null;
+    }
+    var toast = document.createElement('div');
+    toast.className = 'tvm-popup-blocked-toast';
+    toast.textContent = msg;
+    toast.addEventListener('click', function () {
+      try { document.body.removeChild(toast); } catch (e) { /* ignore */ }
+      retry();
+    });
+    document.body.appendChild(toast);
+    this._popupBlockedToast = toast;
+    setTimeout(function () {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 8000);
+  };
+
+  TutorialCode.prototype._buildInstructionsSnapshot = function () {
+    var self = this;
+    return {
+      currentStep: this.currentStep,
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+      stepsUnlocked: Array.from(this._stepsUnlocked || []),
+      hasTests: !!(this.steps[this.currentStep]
+                   && this.steps[this.currentStep].tests
+                   && this.steps[this.currentStep].tests.length),
+      nextLocked: this._isNextStepLocked(),
+      steps: this.steps.map(function (step) {
+        return {
+          title: step.title || '',
+          instructionsHTML: step.instructionsHTML
+            || self._renderMarkdown(step.instructions || ''),
+        };
+      }),
+    };
+  };
+
+  TutorialCode.prototype._isNextStepLocked = function () {
+    var idx = this.currentStep;
+    var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(idx + 1);
+    return !nextStepUnlocked;
+  };
+
+  TutorialCode.prototype._broadcastStepState = function () {
+    if (!this._popoutManager) return;
+    var step = this.steps[this.currentStep];
+    if (!step) return;
+    var fileList = (step.files || []).map(function (f) { return f.path; });
+    this._popoutManager.broadcastStepChange({
+      stepIndex: this.currentStep,
+      stepData: {
+        title: step.title || '',
+        instructionsHTML: step.instructionsHTML
+          || this._renderMarkdown(step.instructions || ''),
+      },
+      stepsUnlocked: Array.from(this._stepsUnlocked || []),
+      hasTests: !!(step.tests && step.tests.length),
+      nextLocked: this._isNextStepLocked(),
+      fileList: fileList,
+    });
+    // Detached pane popups need a fresh file list / contents whenever the
+    // step changes — otherwise they show stale files from the previous step.
+    this._rebroadcastDetachedPanes();
+  };
+
+  TutorialCode.prototype._rebroadcastDetachedPanes = function () {
+    if (!this._popoutManager) return;
+    var self = this;
+    ['left', 'right'].forEach(function (p) {
+      if (!self._isPaneDetached(p)) return;
+      var meta = self._paneMeta(p);
+      if (meta) self._popoutManager._sendPaneSnapshot(p, meta);
+    });
+  };
+
+  TutorialCode.prototype._broadcastNavState = function () {
+    if (!this._popoutManager) return;
+    this._popoutManager.broadcastNavState({
+      stepsUnlocked: Array.from(this._stepsUnlocked || []),
+      nextLocked: this._isNextStepLocked(),
+    });
+  };
+
+  TutorialCode.prototype._refreshInstructionsDetachedState = function () {
+    var detached = this._popoutManager && this._popoutManager.isDetached('instructions');
+    var panel = this.root && this.root.querySelector('.tvm-instructions-panel');
+    if (!panel) return;
+    // When a UML view is stacked below instructions, the panel's outer dimension
+    // is still width but the steps-view shares that column with UML. Shrink the
+    // steps-view height instead, so UML below expands. Otherwise shrink the
+    // whole panel's width to a thin strip.
+    var verticalShrink = !!(this._umlPositionBelow || this._umlPositionBottomLeft);
+    if (detached) {
+      if (!panel.querySelector('.tvm-instructions-detached-placeholder')) {
+        var placeholder = document.createElement('div');
+        placeholder.className = 'tvm-instructions-detached-placeholder';
+        placeholder.innerHTML = '<button class="tvm-btn tvm-btn-reattach" title="Bring instructions back to this window">↩</button>'
+          + '<div class="tvm-detached-msg">Instructions popped out</div>';
+        // Insert before the steps-view so the placeholder stays visible while
+        // steps-view is hidden by CSS in the detached state.
+        var stepsView = panel.querySelector('.tvm-steps-view');
+        if (stepsView) panel.insertBefore(placeholder, stepsView);
+        else panel.appendChild(placeholder);
+        var self = this;
+        placeholder.querySelector('.tvm-btn-reattach').addEventListener('click', function () {
+          self._popoutManager.requestPopupClose('instructions');
+        });
+      }
+      panel.classList.add('tvm-instructions-detached');
+      panel.classList.toggle('tvm-instructions-detached-vertical', verticalShrink);
+      panel.classList.toggle('tvm-instructions-detached-horizontal', !verticalShrink);
+    } else {
+      panel.classList.remove('tvm-instructions-detached');
+      panel.classList.remove('tvm-instructions-detached-vertical');
+      panel.classList.remove('tvm-instructions-detached-horizontal');
+      var ph = panel.querySelector('.tvm-instructions-detached-placeholder');
+      if (ph) ph.parentNode.removeChild(ph);
+    }
+    // Re-fit Monaco / xterm after a size change
+    if (this.editor && this.editor.layout) try { this.editor.layout(); } catch (e) { /* ignore */ }
+    if (this.editor2 && this.editor2.layout) try { this.editor2.layout(); } catch (e) { /* ignore */ }
+    if (this.fitAddon && this.fitAddon.fit) try { this.fitAddon.fit(); } catch (e) { /* ignore */ }
+  };
+
+  TutorialCode.prototype._applyFileEditFromPopup = function (filename, content, version) {
+    var entry = this.editorModels[filename];
+    if (!entry) return;
+    if (entry.model.getValue() === content) return;
+    this._suppressAutoSave = true;
+    var prev = this._suppressAutoSave;
+    try { entry.model.setValue(content); }
+    finally { this._suppressAutoSave = prev; }
+    if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
+  TutorialCode.prototype._handlePopupClosed = function (role, finalContent) {
+    if (role && role.indexOf('pane:') === 0) {
+      // Pane popup closed — finalContent is a {filename: content} map
+      if (finalContent && typeof finalContent === 'object') {
+        var self = this;
+        Object.keys(finalContent).forEach(function (fn) {
+          self._applyFileEditFromPopup(fn, finalContent[fn]);
+        });
+      }
+      this._renderTabs();
+      // Restore active files in the now-visible pane
+      var pane = role.slice(5);
+      if (pane === 'left') this._pickPaneActive('left');
+      else if (pane === 'right') this._pickPaneActive('right');
+      if (this.editor && this.editor.layout) try { this.editor.layout(); } catch (e) {/*ignore*/}
+      if (this.editor2 && this.editor2.layout) try { this.editor2.layout(); } catch (e) {/*ignore*/}
+      return;
+    }
+    if (role && role.indexOf('tab:') === 0) {
+      var filename = role.slice(4);
+      if (typeof finalContent === 'string') {
+        this._applyFileEditFromPopup(filename, finalContent, null);
+      }
+      this._renderTabs();
+      var entry = this.editorModels[filename];
+      if (entry) {
+        if (this._splitActive && this.editor2) {
+          var pane = this._paneForFile(filename);
+          if (pane === 'left' && !this._leftActiveFile) {
+            this._leftActiveFile = filename;
+            this.editor.setModel(entry.model);
+          } else if (pane === 'right' && !this._rightActiveFile) {
+            this._rightActiveFile = filename;
+            this.editor2.setModel(entry.model);
+          }
+        } else if (!this.activeFileName) {
+          this._setActiveFile(filename);
+        }
+      }
+    } else if (role === 'instructions') {
+      this._refreshInstructionsDetachedState();
+    } else if (role === 'output') {
+      this._uninstallOutputObserver();
+      this._refreshOutputDetachedState();
+    }
+  };
+
+  TutorialCode.prototype._wireInstructionsPopoutButton = function () {
+    if (!this.root) return;
+    var btn = this.root.querySelector('.tvm-instructions-popout-btn');
+    if (!btn) return;
+    var self = this;
+    btn.addEventListener('click', function () { self._popoutInstructions(); });
+
+    // Drag-out detach on the step-nav-bar (the strip above instructions)
+    var bar = this.root.querySelector('.tvm-step-nav-bar');
+    if (bar && !bar.draggable) {
+      bar.draggable = true;
+      bar.addEventListener('dragstart', function (e) {
+        // Only initiate if drag started on the bar itself (not on a step button)
+        if (e.target.closest('.tvm-step-btn')) { e.preventDefault(); return; }
+        try { e.dataTransfer.setData('text/plain', 'instructions'); } catch (e2) { /* ignore */ }
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+        self._instrDragState = {
+          startX: e.clientX, startY: e.clientY,
+          winW: window.innerWidth, winH: window.innerHeight,
+        };
+      });
+      bar.addEventListener('dragend', function (e) {
+        var ds = self._instrDragState;
+        self._instrDragState = null;
+        if (!ds) return;
+        var x = e.clientX, y = e.clientY;
+        var outside = (x <= 0 || y <= 0 || x >= ds.winW || y >= ds.winH);
+        if (outside) self._popoutInstructions();
+      });
+    }
+  };
+
+  TutorialCode.prototype._initPopoutManager = function () {
+    if (!window.TutorialPopoutManager || !window.BroadcastChannel) return;
+    var self = this;
+    this._popoutManager = new TutorialPopoutManager({
+      tutorialId: this.tutorialId,
+      pathname: window.location.pathname,
+      tabPopupUrl: this.config.tabPopupUrl || '/tutorial-tab-popup.html',
+      instructionsPopupUrl: this.config.instructionsPopupUrl || '/tutorial-instructions-popup.html',
+      panePopupUrl: this.config.panePopupUrl || '/tutorial-pane-popup.html',
+      outputPopupUrl: this.config.outputPopupUrl || '/tutorial-output-popup.html',
+      hooks: {
+        onStepChangeRequest: function (idx) {
+          if (typeof idx === 'number') self.loadStep(idx);
+        },
+        onPrevStepRequest: function () {
+          if (self.currentStep > 0) self.loadStep(self.currentStep - 1);
+        },
+        onNextStepRequest: function () {
+          // Mirror Next button behavior — only advance if not locked
+          if (self._isNextStepLocked()) return;
+          var step = self.steps[self.currentStep];
+          var hasQuiz = !self.disableQuiz && step && step.quiz
+            && step.quiz.questions && step.quiz.questions.length > 0;
+          if (hasQuiz && !self._quizPassed.has(self.currentStep)) {
+            self._showStepQuiz(self.currentStep);
+            return;
+          }
+          self._stepsUnlocked.add(self.currentStep + 1);
+          if (self.autoSaveEnabled) self._autoSaveProgress();
+          self.loadStep(self.currentStep + 1);
+        },
+        onRunTestsRequest: function () { self._runTests(); },
+        onFileEditFromPopup: function (filename, content) {
+          self._applyFileEditFromPopup(filename, content);
+        },
+        onPopupOpened: function (role) {
+          if (role === 'instructions') self._refreshInstructionsDetachedState();
+          else self._renderTabs();
+        },
+        onPopupClosed: function (role, finalContent) {
+          self._handlePopupClosed(role, finalContent);
+        },
+        getFileMeta: function (filename) { return self._fileMeta(filename); },
+        getInstructionsSnapshot: function () { return self._buildInstructionsSnapshot(); },
+        getPaneMeta: function (pane) { return self._paneMeta(pane); },
+        getOutputMeta: function () { return self._outputMeta(); },
+      },
+    });
+    this._popoutManager.init();
+
+    // Mirror dark-mode changes to popups by watching the html class attribute
+    if (window.MutationObserver) {
+      var lastDark = document.documentElement.classList.contains('dark-mode');
+      var mo = new MutationObserver(function () {
+        var d = document.documentElement.classList.contains('dark-mode');
+        if (d !== lastDark) {
+          lastDark = d;
+          self._popoutManager.broadcastDarkMode(d);
+        }
+      });
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -4681,6 +5429,10 @@
     }
     if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
+    // Broadcast step change to any open popups (instructions popup updates content,
+    // tab popups detect orphaned files via fileList).
+    self._broadcastStepState();
+
     // Keep the shell-side user-command listener in sync with the current step,
     // independent of firstVisit vs. revisit.
     self._updateUserCmdListener(step);
@@ -5402,6 +6154,7 @@
   // Test Runner — dispatches per backend
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._runTests = function () {
+    if (this._popoutManager) this._popoutManager.broadcastTestStarted();
     var backend = this.config.backend;
     if (backend === 'v86') this._runTestsV86();
     else if (backend === 'pyodide') this._runTestsPyodide();
@@ -5900,6 +6653,15 @@
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
       if (this.autoSaveEnabled) this._autoSaveProgress();
+    }
+    if (this._popoutManager) {
+      this._popoutManager.broadcastTestResult({
+        resultsHTML: html,
+        results: results,
+        allPassed: allPass,
+        stepIndex: this.currentStep,
+      });
+      this._broadcastNavState();
     }
   };
 

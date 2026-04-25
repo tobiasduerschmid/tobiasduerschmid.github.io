@@ -190,6 +190,7 @@
   <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}">
   <script src="{{ '/js/git-command-lab.js' | relative_url }}"></script>
   <link rel="stylesheet" href="{{ '/css/git-command-lab.css' | relative_url }}">
+  <script src="{{ '/js/tutorial-popout-manager.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
   <script src="{{ '/js/tutor-chat.js' | relative_url }}"></script>
 
@@ -287,6 +288,10 @@
         uml_default_view: config.uml_default_view || false,
         uml_default_type: config.uml_default_type || 'class',
         umlPopupUrl: '{{ "/uml-popup.html" | relative_url }}',
+        tabPopupUrl: '{{ "/tutorial-tab-popup.html" | relative_url }}',
+        instructionsPopupUrl: '{{ "/tutorial-instructions-popup.html" | relative_url }}',
+        panePopupUrl: '{{ "/tutorial-pane-popup.html" | relative_url }}',
+        outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
         editorSplit: config.editor_split || false,
         outputHeight: config.output_height || null,
       });

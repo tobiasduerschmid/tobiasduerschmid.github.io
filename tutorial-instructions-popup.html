@@ -1,0 +1,268 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instructions &mdash; Tutorial</title>
+  <script>
+    (function () {
+      var p = new URLSearchParams(location.search);
+      if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; }
+    .tip-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
+      flex-shrink: 0; font-size: 12.5px; color: #aaa;
+    }
+    html:not(.dark-mode) .tip-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; color: #555; }
+    .tip-status { margin-left: auto; }
+    .tip-status.ok { color: #4caf50; }
+    .tip-status.warn { color: #d4a017; }
+    .tip-status.bad { color: #c0392b; }
+    .tvm-instructions-panel {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      background: var(--instr-bg, #14141c); width: 100%; max-width: 100%; min-width: 0;
+    }
+    html:not(.dark-mode) .tvm-instructions-panel { background: #fafafa; }
+    .tip-overlay {
+      position: absolute; inset: 0; background: rgba(20,20,28,0.86);
+      color: #ddd; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; z-index: 999;
+    }
+    html:not(.dark-mode) .tip-overlay { background: rgba(255,255,255,0.92); color: #333; }
+    .tip-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="tip-bar">
+    <span>Instructions</span>
+    <span class="tip-status" id="statusEl">Connecting&hellip;</span>
+  </div>
+  <div class="tip-wrap">
+    <div class="tvm-instructions-panel" id="panelRoot">
+      <div class="tvm-steps-view" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+        <div class="tvm-step-nav-bar"><div class="tvm-step-nav" id="stepNavEl"></div></div>
+        <div class="tvm-step-content-wrap" style="flex:1; min-height:0; overflow:auto;">
+          <div class="tvm-step-content" id="stepContentEl"></div>
+        </div>
+        <div class="tvm-step-controls-bar"><div class="tvm-step-controls" id="stepControlsEl"></div></div>
+      </div>
+    </div>
+    <div class="tip-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
+  </div>
+
+  <script>
+  (function () {
+    var params  = new URLSearchParams(location.search);
+    var chName  = params.get('channel');
+    if (!chName) {
+      document.getElementById('overlayEl').textContent = 'Invalid popup URL.';
+      return;
+    }
+
+    var sourceId = 'instr-' + Math.random().toString(36).slice(2, 10);
+    var role     = 'instructions';
+    var channel  = new BroadcastChannel(chName);
+
+    var stepNavEl      = document.getElementById('stepNavEl');
+    var stepContentEl  = document.getElementById('stepContentEl');
+    var stepControlsEl = document.getElementById('stepControlsEl');
+    var overlayEl      = document.getElementById('overlayEl');
+    var statusEl       = document.getElementById('statusEl');
+
+    // Mirror of the most recent state snapshot
+    var snapshot = null;
+    var lastHeartbeat = 0;
+
+    function post(type, payload) {
+      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
+      if (payload) for (var k in payload) msg[k] = payload[k];
+      try { channel.postMessage(msg); } catch (e) { /* ignore */ }
+    }
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = 'tip-status' + (cls ? ' ' + cls : '');
+    }
+
+    function applyDarkMode(enabled) {
+      document.documentElement.classList.toggle('dark-mode', !!enabled);
+    }
+
+    function escapeHtml(str) {
+      var d = document.createElement('div'); d.textContent = str || '';
+      return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderNav(steps, currentStep, unlocked) {
+      stepNavEl.innerHTML = '';
+      (steps || []).forEach(function (step, i) {
+        var btn = document.createElement('button');
+        var isUnlocked = unlocked && unlocked.indexOf(i) !== -1;
+        btn.className = 'tvm-step-btn' + (i === currentStep ? ' active' : '') + (isUnlocked ? '' : ' locked');
+        btn.textContent = (i + 1);
+        btn.title = isUnlocked ? (step.title || '') : ((step.title || '') + ' (locked)');
+        if (isUnlocked) {
+          btn.addEventListener('click', function () {
+            post('request-step-change', { stepIndex: i });
+          });
+        } else {
+          btn.disabled = true;
+        }
+        stepNavEl.appendChild(btn);
+      });
+    }
+
+    function renderControls(currentStep, totalSteps, hasTests, hasPrev, hasNext, nextLocked) {
+      var html = '';
+      html += hasPrev
+        ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>'
+        : '<span></span>';
+      html += hasTests
+        ? '<button class="tvm-btn tvm-btn-test">✓ Test My Work</button>'
+        : '<span></span>';
+      html += hasNext
+        ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next →</button>'
+        : '<span></span>';
+      stepControlsEl.innerHTML = html;
+
+      var prev = stepControlsEl.querySelector('.tvm-btn-prev');
+      var next = stepControlsEl.querySelector('.tvm-btn-next');
+      var test = stepControlsEl.querySelector('.tvm-btn-test');
+      if (prev) prev.addEventListener('click', function () { post('request-prev-step', {}); });
+      if (next) next.addEventListener('click', function () {
+        if (next.disabled) return;
+        post('request-next-step', {});
+      });
+      if (test) test.addEventListener('click', function () { post('request-run-tests', {}); });
+    }
+
+    function renderContent(stepData) {
+      if (!stepData) { stepContentEl.innerHTML = ''; return; }
+      var html = '<h2>' + escapeHtml(stepData.title || '') + '</h2>';
+      html += '<div class="tvm-step-instructions">' + (stepData.instructionsHTML || '') + '</div>';
+      stepContentEl.innerHTML = html;
+      stepContentEl.scrollTop = 0;
+      // Re-attach test panel container if last test result was already broadcast.
+      if (snapshot && snapshot.lastTestResultHTML) {
+        showTestPanel(snapshot.lastTestResultHTML);
+      }
+    }
+
+    function showTestPanel(innerHtml) {
+      var panel = stepContentEl.querySelector('.tvm-test-panel');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'tvm-test-panel';
+        stepContentEl.appendChild(panel);
+      }
+      panel.innerHTML = innerHtml;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderAll(snap) {
+      if (!snap) return;
+      snapshot = snap;
+      if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
+      renderNav(snap.steps || [], snap.currentStep, snap.stepsUnlocked || []);
+      renderContent((snap.steps || [])[snap.currentStep]);
+      renderControls(
+        snap.currentStep,
+        (snap.steps || []).length,
+        !!snap.hasTests,
+        snap.currentStep > 0,
+        snap.currentStep < (snap.steps || []).length - 1,
+        !!snap.nextLocked
+      );
+      overlayEl.style.display = 'none';
+      setStatus('Connected', 'ok');
+    }
+
+    function applyStepChange(msg) {
+      if (!snapshot) snapshot = { steps: [] };
+      snapshot.currentStep = msg.stepIndex;
+      if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
+      if (msg.stepData && Array.isArray(snapshot.steps)) {
+        snapshot.steps[msg.stepIndex] = Object.assign({}, snapshot.steps[msg.stepIndex] || {}, msg.stepData);
+      }
+      // Clear any previous test result panel — new step starts fresh
+      snapshot.lastTestResultHTML = null;
+      renderAll(snapshot);
+    }
+
+    channel.addEventListener('message', function (e) {
+      var msg = e.data || {};
+      if (msg.sourceId === sourceId) return;
+      switch (msg.type) {
+        case 'heartbeat':
+          lastHeartbeat = Date.now();
+          setStatus('Connected', 'ok');
+          post('heartbeat-ack', { role: role });
+          break;
+        case 'state-snapshot':
+          if (msg.instructions) renderAll(msg.instructions);
+          if (typeof msg.darkMode === 'boolean') applyDarkMode(msg.darkMode);
+          break;
+        case 'step-change':
+          applyStepChange(msg);
+          break;
+        case 'nav-state':
+          if (snapshot) {
+            if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
+            if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
+            renderAll(snapshot);
+          }
+          break;
+        case 'test-started':
+          showTestPanel('<div class="tvm-test-running">Running tests&hellip;</div>');
+          break;
+        case 'test-result':
+          if (msg.resultsHTML) {
+            if (snapshot) snapshot.lastTestResultHTML = msg.resultsHTML;
+            showTestPanel(msg.resultsHTML);
+          }
+          break;
+        case 'dark-mode':
+          applyDarkMode(msg.enabled);
+          break;
+        case 'force-close':
+          if (msg.targetRole === role) {
+            post('popup-closing', { role: role });
+            setTimeout(function () { window.close(); }, 30);
+          }
+          break;
+      }
+    });
+
+    window.addEventListener('beforeunload', function () {
+      post('popup-closing', { role: role });
+    });
+
+    // Heartbeat watcher
+    setInterval(function () {
+      if (!lastHeartbeat) return;
+      var age = Date.now() - lastHeartbeat;
+      if (age > 12000) setStatus('Disconnected', 'bad');
+      else if (age > 6000) setStatus('Reconnecting…', 'warn');
+    }, 1500);
+
+    // Announce + retry
+    post('hello', { role: role });
+    setTimeout(function () { if (!snapshot) post('hello', { role: role }); }, 400);
+    setTimeout(function () {
+      if (!snapshot) {
+        overlayEl.textContent = 'Reconnecting to tutorial…';
+        setStatus('Reconnecting…', 'warn');
+      }
+    }, 2000);
+  })();
+  </script>
+</body>
+</html>

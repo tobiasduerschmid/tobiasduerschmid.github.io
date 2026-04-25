@@ -1,0 +1,263 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Code &mdash; Tutorial</title>
+  <script>
+    // Apply dark/light theme from URL before any paint to avoid a flash.
+    (function () {
+      var p = new URLSearchParams(location.search);
+      if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
+    html:not(.dark-mode) body { background: #fff; color: #222; }
+    .ttp-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
+      flex-shrink: 0; font-size: 12.5px;
+    }
+    html:not(.dark-mode) .ttp-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; }
+    .ttp-filename { font-weight: 600; color: #e8e8f0; }
+    html:not(.dark-mode) .ttp-filename { color: #333; }
+    .ttp-status { color: #888; font-size: 11.5px; margin-left: auto; }
+    .ttp-status.ok { color: #4caf50; }
+    .ttp-status.warn { color: #d4a017; }
+    .ttp-status.bad { color: #c0392b; }
+    .ttp-orphan {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: #888; font-size: 13px; text-align: center; padding: 24px; line-height: 1.5;
+    }
+    #editorRoot { flex: 1; min-height: 0; }
+    .ttp-overlay {
+      position: absolute; inset: 0; background: rgba(20,20,28,0.86); color: #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; z-index: 999; backdrop-filter: blur(2px);
+    }
+    html:not(.dark-mode) .ttp-overlay { background: rgba(255,255,255,0.92); color: #333; }
+    .ttp-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="ttp-bar">
+    <span class="ttp-filename" id="filenameEl">&hellip;</span>
+    <span class="ttp-status" id="statusEl">Connecting&hellip;</span>
+  </div>
+  <div class="ttp-wrap">
+    <div id="editorRoot"></div>
+    <div class="ttp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
+    <div class="ttp-orphan" id="orphanEl" style="display:none">
+      This file isn&rsquo;t part of the current step.<br>
+      <button class="tvm-btn" id="closeBtn" style="margin-top:14px">Close window</button>
+    </div>
+  </div>
+
+  <!-- Monaco editor (same CDN/version as main tutorial) -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
+  <script>
+  (function () {
+    var params   = new URLSearchParams(location.search);
+    var chName   = params.get('channel');
+    var filename = params.get('filename') || '';
+    if (!chName || !filename) {
+      document.getElementById('overlayEl').textContent = 'Invalid popup URL.';
+      return;
+    }
+
+    var sourceId = 'tab-' + Math.random().toString(36).slice(2, 10);
+    var role     = 'tab:' + filename;
+    var channel  = new BroadcastChannel(chName);
+
+    var filenameEl = document.getElementById('filenameEl');
+    var statusEl   = document.getElementById('statusEl');
+    var overlayEl  = document.getElementById('overlayEl');
+    var orphanEl   = document.getElementById('orphanEl');
+    var closeBtn   = document.getElementById('closeBtn');
+    filenameEl.textContent = filename;
+    document.title = filename + ' — Tutorial';
+
+    closeBtn.addEventListener('click', function () { window.close(); });
+
+    var editor = null;
+    var monacoModel = null;
+    var currentVersion = 0;
+    var suppressEditEvents = false;
+    var lastHeartbeat = 0;
+    var heartbeatTimer = null;
+
+    function post(type, payload) {
+      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
+      if (payload) for (var k in payload) msg[k] = payload[k];
+      try { channel.postMessage(msg); } catch (e) { /* ignore */ }
+    }
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = 'ttp-status' + (cls ? ' ' + cls : '');
+    }
+
+    function applyDarkMode(enabled) {
+      document.documentElement.classList.toggle('dark-mode', !!enabled);
+      if (window.monaco) {
+        monaco.editor.setTheme(enabled ? 'vs-dark' : 'vs');
+      }
+    }
+
+    function detectLanguageFromFilename(name) {
+      var ext = (name.split('.').pop() || '').toLowerCase();
+      var map = {
+        py: 'python', js: 'javascript', mjs: 'javascript', ts: 'typescript',
+        jsx: 'javascript', tsx: 'typescript', java: 'java', c: 'c', cpp: 'cpp',
+        h: 'cpp', hpp: 'cpp', cs: 'csharp', go: 'go', rs: 'rust', rb: 'ruby',
+        php: 'php', swift: 'swift', kt: 'kotlin', sh: 'shell', bash: 'shell',
+        sql: 'sql', md: 'markdown', json: 'json', yml: 'yaml', yaml: 'yaml',
+        html: 'html', css: 'css', xml: 'xml', toml: 'ini', ini: 'ini',
+        pl: 'prolog'
+      };
+      return map[ext] || 'plaintext';
+    }
+
+    function bootMonaco(content, language) {
+      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
+      require(['vs/editor/editor.main'], function () {
+        var lang = language || detectLanguageFromFilename(filename);
+        var theme = document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs';
+        monacoModel = monaco.editor.createModel(content || '', lang);
+        editor = monaco.editor.create(document.getElementById('editorRoot'), {
+          model: monacoModel,
+          theme: theme,
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          tabSize: 2,
+          wordWrap: 'on',
+          padding: { top: 8 },
+        });
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+          function () { /* save signal already implicit via change events */ }
+        );
+        var debounceTimer;
+        monacoModel.onDidChangeContent(function () {
+          if (suppressEditEvents) return;
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(function () {
+            currentVersion++;
+            post('file-edit', {
+              filename: filename,
+              content: monacoModel.getValue(),
+              version: currentVersion,
+            });
+          }, 100);
+        });
+        overlayEl.style.display = 'none';
+        setStatus('Connected', 'ok');
+      });
+    }
+
+    function applySnapshot(snap) {
+      if (!snap || snap.filename !== filename) return;
+      if (typeof snap.version === 'number') currentVersion = snap.version;
+      // Apply dark/light theme BEFORE booting Monaco so the editor picks up the
+      // right Monaco theme on first paint (no light->dark flash).
+      if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
+      if (!editor) {
+        bootMonaco(snap.content || '', snap.language || '');
+      } else {
+        var current = monacoModel.getValue();
+        if (current !== snap.content) {
+          suppressEditEvents = true;
+          try { monacoModel.setValue(snap.content || ''); }
+          finally { suppressEditEvents = false; }
+        }
+      }
+      overlayEl.style.display = 'none';
+      orphanEl.style.display = 'none';
+      document.getElementById('editorRoot').style.display = '';
+      setStatus('Connected', 'ok');
+    }
+
+    function showOrphaned() {
+      orphanEl.style.display = '';
+      document.getElementById('editorRoot').style.display = 'none';
+      setStatus('File not in current step', 'warn');
+    }
+
+    function startHeartbeatWatch() {
+      lastHeartbeat = Date.now();
+      heartbeatTimer = setInterval(function () {
+        var age = Date.now() - lastHeartbeat;
+        if (age > 6000) setStatus('Reconnecting…', 'warn');
+        else if (age > 12000) setStatus('Disconnected', 'bad');
+      }, 1500);
+    }
+
+    channel.addEventListener('message', function (e) {
+      var msg = e.data || {};
+      if (msg.sourceId === sourceId) return;
+      switch (msg.type) {
+        case 'heartbeat':
+          lastHeartbeat = Date.now();
+          setStatus('Connected', 'ok');
+          post('heartbeat-ack', { role: role });
+          break;
+        case 'file-snapshot':
+          if (msg.filename === filename) applySnapshot(msg);
+          break;
+        case 'state-snapshot':
+          if (msg.files && msg.files[filename]) applySnapshot(msg.files[filename]);
+          if (typeof msg.darkMode === 'boolean') applyDarkMode(msg.darkMode);
+          break;
+        case 'step-change':
+          // If our file is no longer in the new step's file list, mark orphaned.
+          if (msg.fileList && Array.isArray(msg.fileList) && msg.fileList.indexOf(filename) === -1) {
+            showOrphaned();
+          }
+          break;
+        case 'dark-mode':
+          applyDarkMode(msg.enabled);
+          break;
+        case 'force-close':
+          if (msg.targetRole === role) {
+            // Send graceful goodbye then close.
+            try {
+              var finalContent = monacoModel ? monacoModel.getValue() : null;
+              post('popup-closing', { role: role, finalContent: finalContent });
+            } catch (e2) { /* ignore */ }
+            setTimeout(function () { window.close(); }, 30);
+          }
+          break;
+      }
+    });
+
+    window.addEventListener('beforeunload', function () {
+      try {
+        var finalContent = monacoModel ? monacoModel.getValue() : null;
+        post('popup-closing', { role: role, finalContent: finalContent });
+      } catch (e) { /* ignore */ }
+    });
+
+    // Announce ourselves and ask for state. Retry once in case main wasn't ready.
+    post('hello', { role: role });
+    setTimeout(function () {
+      if (!editor) post('hello', { role: role });
+    }, 400);
+    setTimeout(function () {
+      if (!editor) {
+        overlayEl.textContent = 'Reconnecting to tutorial…';
+        setStatus('Reconnecting…', 'warn');
+      }
+    }, 2000);
+
+    startHeartbeatWatch();
+  })();
+  </script>
+</body>
+</html>

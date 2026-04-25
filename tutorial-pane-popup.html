@@ -1,0 +1,290 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pane &mdash; Tutorial</title>
+  <script>
+    // Apply theme from URL before any paint to avoid a flash.
+    (function () {
+      var p = new URLSearchParams(location.search);
+      if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
+    html:not(.dark-mode) body { background: #fff; color: #222; }
+    .tpp-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
+      flex-shrink: 0; font-size: 12.5px;
+    }
+    html:not(.dark-mode) .tpp-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; }
+    .tpp-pane-name { font-weight: 600; color: #e8e8f0; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11.5px; }
+    html:not(.dark-mode) .tpp-pane-name { color: #333; }
+    .tpp-status { color: #888; font-size: 11.5px; margin-left: auto; }
+    .tpp-status.ok { color: #4caf50; }
+    .tpp-status.warn { color: #d4a017; }
+    .tpp-status.bad { color: #c0392b; }
+    #editorRoot { flex: 1; min-height: 0; }
+    .tpp-overlay {
+      position: absolute; inset: 0; background: rgba(20,20,28,0.86); color: #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; z-index: 999;
+    }
+    html:not(.dark-mode) .tpp-overlay { background: rgba(255,255,255,0.92); color: #333; }
+    .tpp-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="tpp-bar">
+    <span class="tpp-pane-name" id="paneNameEl">&hellip;</span>
+    <span class="tpp-status" id="statusEl">Connecting&hellip;</span>
+  </div>
+  <div class="tvm-editor-tabs" id="tabBar"></div>
+  <div class="tpp-wrap">
+    <div id="editorRoot"></div>
+    <div class="tpp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var chName = params.get('channel');
+    var pane   = params.get('pane');
+    if (!chName || !pane) {
+      document.getElementById('overlayEl').textContent = 'Invalid popup URL.';
+      return;
+    }
+
+    var sourceId = 'pane-' + Math.random().toString(36).slice(2, 10);
+    var role     = 'pane:' + pane;
+    var channel  = new BroadcastChannel(chName);
+
+    var paneNameEl = document.getElementById('paneNameEl');
+    var statusEl   = document.getElementById('statusEl');
+    var overlayEl  = document.getElementById('overlayEl');
+    var tabBarEl   = document.getElementById('tabBar');
+    paneNameEl.textContent = pane === 'left' ? 'Code' : (pane === 'right' ? 'Tests' : pane);
+    document.title = paneNameEl.textContent + ' — Tutorial';
+
+    var monacoReady = false;
+    var editor = null;
+    var models = {};                 // filename -> { model, version }
+    var activeFile = null;
+    var suppressEditEvents = false;
+    var lastHeartbeat = 0;
+
+    function post(type, payload) {
+      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
+      if (payload) for (var k in payload) msg[k] = payload[k];
+      try { channel.postMessage(msg); } catch (e) { /* ignore */ }
+    }
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = 'tpp-status' + (cls ? ' ' + cls : '');
+    }
+
+    function applyDarkMode(enabled) {
+      document.documentElement.classList.toggle('dark-mode', !!enabled);
+      if (window.monaco) monaco.editor.setTheme(enabled ? 'vs-dark' : 'vs');
+    }
+
+    function detectLanguageFromFilename(name) {
+      var ext = (name.split('.').pop() || '').toLowerCase();
+      var map = {
+        py: 'python', js: 'javascript', mjs: 'javascript', ts: 'typescript',
+        jsx: 'javascript', tsx: 'typescript', java: 'java', c: 'c', cpp: 'cpp',
+        h: 'cpp', hpp: 'cpp', cs: 'csharp', go: 'go', rs: 'rust', rb: 'ruby',
+        php: 'php', swift: 'swift', kt: 'kotlin', sh: 'shell', bash: 'shell',
+        sql: 'sql', md: 'markdown', json: 'json', yml: 'yaml', yaml: 'yaml',
+        html: 'html', css: 'css', xml: 'xml', toml: 'ini', ini: 'ini',
+        pl: 'prolog'
+      };
+      return map[ext] || 'plaintext';
+    }
+
+    function renderTabs() {
+      tabBarEl.innerHTML = '';
+      Object.keys(models).forEach(function (filename) {
+        var tab = document.createElement('div');
+        tab.className = 'tvm-tab' + (filename === activeFile ? ' active' : '');
+        tab.textContent = filename;
+        tab.title = filename;
+        tab.addEventListener('click', function () { setActiveFile(filename); });
+        tabBarEl.appendChild(tab);
+      });
+    }
+
+    function ensureMonacoLoaded(cb) {
+      if (monacoReady) { cb(); return; }
+      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
+      require(['vs/editor/editor.main'], function () {
+        monacoReady = true;
+        var theme = document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs';
+        editor = monaco.editor.create(document.getElementById('editorRoot'), {
+          theme: theme,
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          tabSize: 2,
+          wordWrap: 'on',
+          padding: { top: 8 },
+        });
+        // Wire content change → broadcast file-edit for the active file
+        var debounceTimer;
+        editor.onDidChangeModelContent(function () {
+          if (suppressEditEvents) return;
+          if (!activeFile) return;
+          var entry = models[activeFile];
+          if (!entry) return;
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(function () {
+            entry.version = (entry.version || 0) + 1;
+            post('file-edit', {
+              filename: activeFile,
+              content: entry.model.getValue(),
+              version: entry.version,
+            });
+          }, 100);
+        });
+        cb();
+      });
+    }
+
+    function setActiveFile(filename) {
+      if (!models[filename]) return;
+      activeFile = filename;
+      ensureMonacoLoaded(function () {
+        editor.setModel(models[filename].model);
+        renderTabs();
+      });
+    }
+
+    function applyPaneSnapshot(snap) {
+      if (!snap) return;
+      if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
+      ensureMonacoLoaded(function () {
+        // Build/update models
+        var seen = {};
+        var snapFiles = snap.files || {};
+        Object.keys(snapFiles).forEach(function (fn) {
+          seen[fn] = true;
+          var sf = snapFiles[fn];
+          var lang = sf.language || detectLanguageFromFilename(fn);
+          if (!models[fn]) {
+            models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
+          } else {
+            var current = models[fn].model.getValue();
+            if (current !== (sf.content || '')) {
+              suppressEditEvents = true;
+              try { models[fn].model.setValue(sf.content || ''); }
+              finally { suppressEditEvents = false; }
+            }
+            if (typeof sf.version === 'number') models[fn].version = sf.version;
+          }
+        });
+        // Drop models for filenames no longer in the pane
+        Object.keys(models).forEach(function (fn) {
+          if (!seen[fn]) {
+            try { models[fn].model.dispose(); } catch (e) { /* ignore */ }
+            delete models[fn];
+          }
+        });
+        // Set active file
+        var prefer = snap.activeFile || Object.keys(models)[0];
+        if (prefer && models[prefer]) {
+          activeFile = prefer;
+          editor.setModel(models[activeFile].model);
+        }
+        renderTabs();
+        overlayEl.style.display = 'none';
+        setStatus('Connected', 'ok');
+      });
+    }
+
+    channel.addEventListener('message', function (e) {
+      var msg = e.data || {};
+      if (msg.sourceId === sourceId) return;
+      switch (msg.type) {
+        case 'heartbeat':
+          lastHeartbeat = Date.now();
+          setStatus('Connected', 'ok');
+          post('heartbeat-ack', { role: role });
+          break;
+        case 'pane-snapshot':
+          if (msg.pane === pane) applyPaneSnapshot(msg);
+          break;
+        case 'state-snapshot':
+          if (typeof msg.darkMode === 'boolean') applyDarkMode(msg.darkMode);
+          break;
+        case 'step-change':
+          // If the new step's file list shares no files with our pane, mark
+          // ourselves as disconnected. Main also re-broadcasts pane-snapshot
+          // when the pane is re-detached after step change.
+          if (msg.fileList && Array.isArray(msg.fileList)) {
+            var anyKept = Object.keys(models).some(function (fn) {
+              return msg.fileList.indexOf(fn) !== -1;
+            });
+            if (!anyKept) setStatus('Step changed — close to reattach', 'warn');
+          }
+          break;
+        case 'dark-mode':
+          applyDarkMode(msg.enabled);
+          break;
+        case 'force-close':
+          if (msg.targetRole === role) {
+            sendClosingThenClose();
+          }
+          break;
+      }
+    });
+
+    function sendClosingThenClose() {
+      try {
+        var finalContents = {};
+        Object.keys(models).forEach(function (fn) {
+          finalContents[fn] = models[fn].model.getValue();
+        });
+        post('popup-closing', { role: role, finalContents: finalContents });
+      } catch (e) { /* ignore */ }
+      setTimeout(function () { window.close(); }, 30);
+    }
+
+    window.addEventListener('beforeunload', function () {
+      try {
+        var finalContents = {};
+        Object.keys(models).forEach(function (fn) {
+          finalContents[fn] = models[fn].model.getValue();
+        });
+        post('popup-closing', { role: role, finalContents: finalContents });
+      } catch (e) { /* ignore */ }
+    });
+
+    // Heartbeat watcher
+    setInterval(function () {
+      if (!lastHeartbeat) return;
+      var age = Date.now() - lastHeartbeat;
+      if (age > 12000) setStatus('Disconnected', 'bad');
+      else if (age > 6000) setStatus('Reconnecting…', 'warn');
+    }, 1500);
+
+    post('hello', { role: role });
+    setTimeout(function () { if (!Object.keys(models).length) post('hello', { role: role }); }, 400);
+    setTimeout(function () {
+      if (!Object.keys(models).length) {
+        overlayEl.textContent = 'Reconnecting to tutorial…';
+        setStatus('Reconnecting…', 'warn');
+      }
+    }, 2000);
+  })();
+  </script>
+</body>
+</html>

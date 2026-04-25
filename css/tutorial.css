@@ -482,20 +482,162 @@ html:not(.dark-mode) .tvm-left-tab.active {
   background: #222228;
 }
 
-.tvm-tab-close {
-  font-size: 14px;
+.tvm-tab-popout,
+.tvm-tab-reattach {
+  font-size: 13px;
   line-height: 1;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
   cursor: pointer;
-  padding: 0 2px;
+  padding: 1px 4px;
   border-radius: 3px;
+  color: #888;
 }
+.tvm-tab:hover .tvm-tab-popout,
+.tvm-tab.detached .tvm-tab-reattach { opacity: 0.6; }
+.tvm-tab-popout:hover,
+.tvm-tab-reattach:hover { opacity: 1 !important; color: #e0e0f0; background: #383848; }
 
-.tvm-tab:hover .tvm-tab-close { opacity: 0.5; }
-.tvm-tab-close:hover { opacity: 1 !important; color: #e0e0f0; background: #383848; }
+.tvm-tab.detached {
+  font-style: italic;
+  color: #777;
+  cursor: pointer;
+  background: repeating-linear-gradient(
+    -45deg, transparent, transparent 6px,
+    rgba(255,255,255,0.025) 6px, rgba(255,255,255,0.025) 12px);
+}
+.tvm-tab.detached .tvm-tab-label { opacity: 0.7; }
+.tvm-tab-detached-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6a7a90;
+  background: #20202c;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tvm-tab.drag-source { opacity: 0.5; }
 
 .tvm-tab.saved { border-bottom-color: #4caf50 !important; }
+
+.tvm-instructions-popout-btn {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  color: #7a8aa0;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1.3;
+  transition: background 0.1s, color 0.1s;
+}
+.tvm-instructions-popout-btn:hover {
+  background: #35354e;
+  color: #c8d4e4;
+  border-color: #5a5a78;
+}
+.tvm-step-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tvm-instructions-detached-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 6px;
+  color: #888;
+  font-size: 11.5px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
+}
+.tvm-instructions-detached-placeholder .tvm-btn-reattach {
+  padding: 3px 8px;
+  border: 1px solid #3a3a52;
+  border-radius: 4px;
+  background: #252538;
+  color: #c8d4e4;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.1s, color 0.1s;
+}
+.tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+  background: #35354e; border-color: #5a5a78;
+}
+.tvm-instructions-panel.tvm-instructions-detached .tvm-steps-view { display: none; }
+
+/* Width-shrink (default): collapse the whole panel to a thin vertical strip. */
+.tvm-instructions-panel.tvm-instructions-detached.tvm-instructions-detached-horizontal {
+  flex: 0 0 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  overflow: hidden;
+}
+.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-detached-placeholder {
+  flex-direction: column;
+  height: 100%;
+  padding: 14px 4px;
+  gap: 10px;
+  writing-mode: horizontal-tb;
+}
+.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  font-size: 10.5px;
+  color: #777;
+}
+.tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-instructions-popout-btn {
+  display: none;
+}
+
+/* Height-shrink (UML below variants): keep panel width, collapse the
+   instructions strip so the UML region below expands to fill the column. */
+.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+  flex-direction: row;
+  padding: 6px 12px;
+  border-bottom: 1px solid #2a2a2e;
+}
+.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-below-view,
+.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-uml-bottom-left-view {
+  flex: 1 1 auto;
+}
+.tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-popout-btn {
+  display: none;
+}
+
+.tvm-popup-blocked-toast {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 3000;
+  background: #2a2a3a;
+  color: #ffd277;
+  border: 1px solid #5a5a78;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  animation: tvm-toast-fade-in 0.2s ease-out;
+}
+.tvm-popup-blocked-toast:hover {
+  background: #34344a;
+  color: #ffe9b0;
+}
+@keyframes tvm-toast-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .tvm-editor-container {
   flex: 1;
@@ -545,6 +687,197 @@ html:not(.dark-mode) .tvm-left-tab.active {
 
 .tvm-editor-pane-label[data-pane="left"]  { color: #8fd19e; }  /* Code  = green (GREEN phase) */
 .tvm-editor-pane-label[data-pane="right"] { color: #ff8a8a; }  /* Tests = red   (RED phase)   */
+
+.tvm-editor-pane-label-text { display: inline-flex; align-items: center; }
+
+.tvm-editor-pane-popout-btn {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #9ba8c0;
+  font-size: 12px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
+  opacity: 0.55;
+  font-family: inherit;
+}
+.tvm-editor-pane-tab-row:hover .tvm-editor-pane-popout-btn { opacity: 1; }
+.tvm-editor-pane-popout-btn:hover {
+  background: #303046;
+  color: #e0e8f0;
+  border-color: #5a5a78;
+  opacity: 1 !important;
+}
+
+/* Detached-pane state: switch the editor body to COLUMN layout so the
+   detached pane becomes a thin label-only strip at the TOP, and the
+   visible pane fills the entire freed height + width below it.
+   This avoids the "tall empty side strip" wasted-space problem. */
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-body,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-body {
+  flex-direction: column !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  /* Always pin the detached strip to the top of the column flex, regardless
+     of DOM order — without this a detached RIGHT pane would appear below
+     the visible LEFT pane. */
+  order: -1 !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-divider,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-divider {
+  order: -1 !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-right,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-left {
+  flex: 1 1 auto !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left .tvm-editor-tabs,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right .tvm-editor-tabs,
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left .tvm-editor-container,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right .tvm-editor-container,
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left .tvm-editor-pane-popout-btn,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right .tvm-editor-pane-popout-btn {
+  display: none !important;
+}
+/* Reserve room for the floating mode-toggle (top-right) on the topmost row
+   of the editor body — that's the detached pane's label row in column mode. */
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-left .tvm-editor-pane-tab-row,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-right .tvm-editor-pane-tab-row {
+  padding-right: 160px !important;
+}
+/* Divider becomes a horizontal line in column mode */
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-divider,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-divider {
+  cursor: row-resize;
+}
+
+/* Both panes detached → editor-panel collapses to label-strip height so
+   the bottom panel (terminal/output/preview) takes the vertical space. */
+.tvm-editor-panel.tvm-editor-pane-detached-all {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-all .tvm-editor-body {
+  flex: 0 0 auto !important;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-all .tvm-editor-container,
+.tvm-editor-panel.tvm-editor-pane-detached-all .tvm-editor-container-right {
+  display: none !important;
+}
+.tvm-workspace:has(.tvm-editor-panel.tvm-editor-pane-detached-all)
+  .tvm-output-panel,
+.tvm-workspace:has(.tvm-editor-panel.tvm-editor-pane-detached-all)
+  .tvm-terminal-panel,
+.tvm-workspace:has(.tvm-editor-panel.tvm-editor-pane-detached-all)
+  .tvm-preview-panel {
+  flex: 1 1 auto !important;
+}
+
+/* Output / Terminal / Preview popout button — mirrors pane button styling */
+.tvm-output-popout-btn {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #9ba8c0;
+  font-size: 12px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  font-family: inherit;
+}
+.tvm-output-popout-btn:hover {
+  background: #303046; color: #e0e8f0; border-color: #5a5a78;
+}
+html:not(.dark-mode) .tvm-output-popout-btn {
+  background: #ffffff; color: #4a5566; border-color: #c8c8d0;
+}
+html:not(.dark-mode) .tvm-output-popout-btn:hover {
+  background: #e8edf3; color: #1f2530; border-color: #8a96a8;
+}
+
+/* Output / terminal / preview detached state — collapse the panel to its
+   header strip; output panel gets `flex: 0 0 auto` so the editor area expands. */
+.tvm-output-panel.tvm-output-detached,
+.tvm-terminal-panel.tvm-output-detached,
+.tvm-preview-panel.tvm-output-detached {
+  flex: 0 0 auto !important;
+}
+.tvm-output-panel.tvm-output-detached .tvm-output-container,
+.tvm-output-panel.tvm-output-detached .tvm-output-actions > :not(.tvm-output-popout-btn):not(.tvm-output-detached-indicator),
+.tvm-output-panel.tvm-output-detached .tvm-output-popout-btn,
+.tvm-terminal-panel.tvm-output-detached .tvm-terminal-container,
+.tvm-terminal-panel.tvm-output-detached .tvm-output-popout-btn,
+.tvm-preview-panel.tvm-output-detached .tvm-preview-container,
+.tvm-preview-panel.tvm-output-detached .tvm-preview-actions > :not(.tvm-output-detached-indicator) {
+  display: none !important;
+}
+.tvm-output-detached-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+.tvm-output-detached-indicator .tvm-tab-detached-badge { opacity: 0.85; }
+.tvm-output-detached-indicator .tvm-tab-reattach {
+  opacity: 1;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #c8d4e4;
+  padding: 1px 7px;
+  font-size: 12px;
+  line-height: 1.3;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tvm-output-detached-indicator .tvm-tab-reattach:hover {
+  background: #303046; border-color: #5a5a78; color: #fff;
+}
+html:not(.dark-mode) .tvm-output-detached-indicator .tvm-tab-reattach {
+  background: #ffffff; color: #4a5566; border-color: #c8c8d0;
+}
+html:not(.dark-mode) .tvm-output-detached-indicator .tvm-tab-reattach:hover {
+  background: #e8edf3; color: #1f2530; border-color: #8a96a8;
+}
+
+.tvm-pane-detached-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+.tvm-pane-detached-indicator .tvm-tab-detached-badge { opacity: 0.85; }
+.tvm-pane-detached-indicator .tvm-tab-reattach {
+  opacity: 1;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #c8d4e4;
+  padding: 1px 7px;
+  font-size: 12px;
+  line-height: 1.3;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tvm-pane-detached-indicator .tvm-tab-reattach:hover {
+  background: #303046; border-color: #5a5a78; color: #fff;
+}
+html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach {
+  background: #ffffff; color: #4a5566; border-color: #c8c8d0;
+}
+html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
+  background: #e8edf3; color: #1f2530; border-color: #8a96a8;
+}
 
 /* Mode toggle — floats over the top-right corner of the panel. The rightmost
    visible tab row reserves padding-right so tabs don't slide under it. */
@@ -669,6 +1002,17 @@ html:not(.dark-mode) .tvm-editor-pane-label {
 
 html:not(.dark-mode) .tvm-editor-pane-label[data-pane="left"]  { color: #3b8f55; }
 html:not(.dark-mode) .tvm-editor-pane-label[data-pane="right"] { color: #b45050; }
+
+html:not(.dark-mode) .tvm-editor-pane-popout-btn {
+  background: #ffffff;
+  color: #4a5566;
+  border-color: #c8c8d0;
+}
+html:not(.dark-mode) .tvm-editor-pane-popout-btn:hover {
+  background: #e8edf3;
+  color: #1f2530;
+  border-color: #8a96a8;
+}
 
 html:not(.dark-mode) .tvm-editor-mode-toggle {
   background: #f3f3f3;
@@ -2401,9 +2745,53 @@ html:not(.dark-mode) .tvm-tab:hover:not(.active) {
   background: #e8e8e8;
 }
 
-html:not(.dark-mode) .tvm-tab-close:hover {
-  background: #d0d0d0;
+html:not(.dark-mode) .tvm-tab-popout,
+html:not(.dark-mode) .tvm-tab-reattach { color: #888; }
+html:not(.dark-mode) .tvm-tab-popout:hover,
+html:not(.dark-mode) .tvm-tab-reattach:hover {
+  background: #e0e0e0;
   color: #333;
+}
+html:not(.dark-mode) .tvm-tab.detached {
+  color: #888;
+  background: repeating-linear-gradient(
+    -45deg, transparent, transparent 6px,
+    rgba(0,0,0,0.025) 6px, rgba(0,0,0,0.025) 12px);
+}
+html:not(.dark-mode) .tvm-tab-detached-badge {
+  background: #e8e8e8;
+  color: #666;
+}
+html:not(.dark-mode) .tvm-instructions-popout-btn {
+  background: #f3f3f3;
+  border-color: #ccc;
+  color: #555;
+}
+html:not(.dark-mode) .tvm-instructions-popout-btn:hover {
+  background: #e8e8e8;
+  color: #333;
+  border-color: #999;
+}
+html:not(.dark-mode) .tvm-instructions-detached-placeholder {
+  color: #555;
+  background: rgba(0, 0, 0, 0.02);
+}
+html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach {
+  background: #f3f3f3; border-color: #ccc; color: #333;
+}
+html:not(.dark-mode) .tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+  background: #e8e8e8; border-color: #999;
+}
+html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-horizontal .tvm-detached-msg {
+  color: #666;
+}
+html:not(.dark-mode) .tvm-instructions-panel.tvm-instructions-detached-vertical .tvm-instructions-detached-placeholder {
+  border-bottom-color: #d4d4d4;
+}
+html:not(.dark-mode) .tvm-popup-blocked-toast {
+  background: #fffbe5;
+  color: #5a4a18;
+  border-color: #d8c47a;
 }
 
 html:not(.dark-mode) .tvm-terminal-header {
