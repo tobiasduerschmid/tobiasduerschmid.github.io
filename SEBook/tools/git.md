@@ -394,7 +394,7 @@ The canonical local workflow is the same every day:
 
 Git tracks files through the **three trees** you met in Core Concepts: the **working directory** (files on disk), the **index/staging area** (what your next commit will contain), and the **repository** (committed history). The strip above each graph below mirrors what `git status` prints — **Untracked**, **Not staged**, and **Staged**. `git add` moves files into Staged; `git commit` turns Staged into the next node in the graph.
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo: a new file moves through the working directory, staging area, and a commit, showing how git add and git commit each change visible state.">
 <script type="application/json">
 {
   "description": "Typing a new file doesn't involve Git yet \u2014 it lives only in your **working directory**. `git add` copies the current contents into the **staging area** (the index), marking them for the next commit. `git commit` then turns whatever is staged into a new, immutable node in the graph.\n\nClick through to see each step: a fresh `login.js` appears untracked, moves to staged with `git add`, then folds into commit **C** when you commit.",
@@ -461,7 +461,7 @@ Before turning staged changes into a permanent snapshot, *look at them*. `git di
 
 Typing `git add <file>` for every modified file gets tedious. Two shortcuts stage multiple files at once, but they differ in one critical way: **whether they touch untracked files**.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git add -A stages every change in the working tree (modifications, deletions, and new files) before committing.">
 <script type="application/json">
 {
   "command": "git add -A",
@@ -496,7 +496,7 @@ Typing `git add <file>` for every modified file gets tedious. Two shortcuts stag
 </script>
 </div>
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git commit -am auto-stages tracked-file modifications and commits in one step, leaving untracked files alone.">
 <script type="application/json">
 {
   "command": "git commit -am \"Update utils\"",
@@ -591,7 +591,7 @@ Typical uses:
 - **Fix the message:** `git commit --amend -m "Correct subject line"`.
 - **Include a forgotten file:** `git add forgotten.py && git commit --amend --no-edit` (keeps the original message).
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git commit --amend replaces the most recent commit with a new one having a different SHA, rewriting history.">
 <script type="application/json">
 {
   "command": "git commit --amend",
@@ -679,7 +679,7 @@ The ref `refs/stash` (exposed as `stash@{0}`) points at `w`. Neither `main` nor 
 
 </details>
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo: git stash saves uncommitted work, lets you switch branches for a hotfix, and pop the stash to restore it on return.">
 <script type="application/json">
 {
   "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The shelf on the right is just a friendlier view of the same data.",
@@ -779,7 +779,7 @@ git branch -d feature        # delete (refuses if unmerged; safe)
 git branch -D feature        # force-delete (no safety check)
 ```
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git switch -c creates a new branch pointer at the current commit and moves HEAD onto it in one step.">
 <script type="application/json">
 {
   "command": "git switch -c feature",
@@ -798,7 +798,7 @@ git branch -D feature        # force-delete (no safety check)
 </script>
 </div>
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git switch repoints HEAD from one branch to another with no new commits — pure pointer movement.">
 <script type="application/json">
 {
   "command": "git switch feature",
@@ -821,7 +821,7 @@ git branch -D feature        # force-delete (no safety check)
 
 Where a commit lands depends entirely on where `HEAD` is pointing when you run `git commit`. A very common beginner mistake is running `git branch <name>` and then immediately starting work — `git branch` creates the pointer but leaves `HEAD` on the current branch, so all new commits continue landing there. The two labs below show this side-by-side.
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo of a common mistake: git branch creates the pointer but does not move HEAD, so the next commit lands on the wrong branch.">
 <script type="application/json">
 {
   "description": "**Common mistake: `git branch` without switching.** `git branch feature` creates the pointer but does **not** move `HEAD` — commits keep landing on `main`.\n\nWatch `HEAD` carefully: it never leaves `main`.",
@@ -854,7 +854,7 @@ Where a commit lands depends entirely on where `HEAD` is pointing when you run `
 </script>
 </div>
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo of the correct approach: git switch moves HEAD onto the new branch first, so the next commit lands on the intended branch.">
 <script type="application/json">
 {
   "description": "**Correct approach: switch first, then commit.** `git switch feature` moves `HEAD` onto the branch before you start working. Commits then land exactly where you intended.",
@@ -910,7 +910,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 
 ## Fast-Forward Merge
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: a fast-forward merge — main has not advanced since feature branched, so merge just slides main forward, no merge commit.">
 <script type="application/json">
 {
   "command": "git merge feature",
@@ -931,7 +931,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 
 ## Three-Way Merge
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: a three-way merge — both branches have unique commits, so merge creates a merge commit with two parents to reconcile them.">
 <script type="application/json">
 {
   "command": "git merge feature",
@@ -962,7 +962,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 
 ## Forcing a Merge Commit: `--no-ff`
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git merge --no-ff forces a merge commit even when fast-forward would have worked, preserving the topology of the feature branch.">
 <script type="application/json">
 {
   "command": "git merge --no-ff feature",
@@ -994,7 +994,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 
 > ⚠️ **This variant rewrites history** in the sense that it produces one new commit whose parent is `main`'s previous tip — not `feature`'s tip. The feature branch's individual commits are **not** recorded on `main`.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git merge --squash collapses every commit on the feature branch into one new commit on main; the feature branch is unchanged.">
 <script type="application/json">
 {
   "command": "git merge --squash feature  &&  git commit -m \"Squashed C+D\"",
@@ -1040,7 +1040,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
 
 > **Your editor probably has a nicer UI for this.** VS Code, JetBrains IDEs, and most other editors surface conflicts inline with *"Accept Current"* / *"Accept Incoming"* / *"Accept Both"* buttons above each conflict block — you click rather than hand-edit the markers. The underlying command sequence is identical (`git add` then `git commit` to finalise); the buttons are just a friendlier way to produce the same resolved file.
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo: a merge conflict pauses the merge; you edit the conflicted file, git add it, then git commit to finish.">
 <script type="application/json">
 {
   "description": "**Resolving a merge conflict step by step.** When `git merge` cannot automatically reconcile changes it pauses and leaves conflict markers in the affected files. The graph does not change until you complete or abort the merge.",
@@ -1296,7 +1296,7 @@ git diff main origin/main              # content differences between the two
 - **`git fetch`** — downloads new commits and updates remote-tracking branches only. Your local branches and working tree are untouched. Safe to run any time.
 - **`git pull`** — shorthand for `git fetch` followed by `git merge` (or `git rebase` if configured). Downloads *and* integrates into your current branch.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git fetch downloads new commits into the remote-tracking branch origin/main without touching the local branch or working tree.">
 <script type="application/json">
 {
   "command": "git fetch",
@@ -1315,7 +1315,7 @@ git diff main origin/main              # content differences between the two
 </script>
 </div>
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git pull fetches the remote commits and fast-forwards the local branch in one step when no local commits diverge.">
 <script type="application/json">
 {
   "command": "git pull",
@@ -1351,7 +1351,7 @@ The fast-forward case above is the lucky path — your local branch had no new c
 
 `git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with auto-generated "Merge remote-tracking branch 'origin/main'" commits:
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git pull on diverged branches creates a merge commit reconciling local and remote work.">
 <script type="application/json">
 {
   "command": "git pull",
@@ -1372,7 +1372,7 @@ The fast-forward case above is the lucky path — your local branch had no new c
 
 `git pull --rebase` is the antidote. Instead of merging, it **replays** your local commits on top of the fetched remote tip, producing a linear history with no merge commit. Your local **B** becomes **B′** with a new hash, parented on the remote's **C** instead of the shared ancestor **A**:
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git pull --rebase replays local commits on top of the fetched remote tip, producing linear history with no merge commit.">
 <script type="application/json">
 {
   "command": "git pull --rebase",
@@ -1397,7 +1397,7 @@ You can make `--rebase` the default for a branch (`git config branch.main.rebase
 
 `git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the grey dashed label slides forward to catch up with your local `main`:
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git push uploads two local commits to the remote, fast-forwarding the remote branch pointer.">
 <script type="application/json">
 {
   "command": "git push",
@@ -1563,7 +1563,7 @@ Three concrete situations where people reach for `rebase`:
 
 The cost: because replayed commits have *different hashes* from the originals, rebasing a branch you've already pushed breaks everyone else's clone of it. That's why rebase is safe locally and dangerous after pushing — the same rule that governs every other "rewrites history" operation.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git rebase replays the feature branch's unique commits onto main's current tip as new commits with new SHAs.">
 <script type="application/json">
 {
   "command": "git rebase main",
@@ -1594,7 +1594,7 @@ The cost: because replayed commits have *different hashes* from the originals, r
 
 The single-step card above shows rebase as a finished magic trick — two commits appear on top of `main` with new hashes. The multi-step walkthrough below pulls the trick apart: you build up the divergence yourself, pause to see the fork, and only *then* ask Git to replay history. Watch the graph, not the commands — the whole point is to replace "commands I memorised" with "pointer moves I can picture".
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo starting from an empty repository: each commit adds a new node, building the DAG one step at a time.">
 <script type="application/json">
 {
   "description": "Start from an empty repo. We'll build up a two-branch divergence commit by commit, pause to observe the fork, and then use `git rebase` to flatten it — watching commit **C** vanish and a brand-new **C′** appear on top of **D**.\n\nThree ideas to hold in your head as you click through:\n\n1. **Commands are pointer moves.** Branches are lightweight labels; `checkout` and `commit` just slide those labels along a DAG.\n2. **Parallel universes are real.** Once `main` and `feature` both have commits the other lacks, history is *not* a single timeline anymore.\n3. **Commits are immutable.** Rebase never *moves* C — it copies its changes onto a new parent, producing a different commit object (**C′**) with a different hash.",
@@ -1676,7 +1676,7 @@ The single-step card above shows rebase as a finished magic trick — two commit
 | `fixup` | Like `squash`, but discard this commit's message |
 | `drop` | Remove the commit entirely |
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git rebase -i with squash combines a range of commits into one cleaner commit, rewriting branch history.">
 <script type="application/json">
 {
   "command": "git rebase -i HEAD~3  (squash)",
@@ -1704,7 +1704,7 @@ The single-step card above shows rebase as a finished magic trick — two commit
 </script>
 </div>
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git rebase -i with drop removes a commit entirely from branch history; the commit lives on in .git/objects until garbage collection.">
 <script type="application/json">
 {
   "command": "git rebase -i HEAD~3  (drop)",
@@ -1735,7 +1735,7 @@ The single-step card above shows rebase as a finished magic trick — two commit
 
 `git cherry-pick <hash>` copies a single commit from another branch onto the current branch as a new commit (new hash, same changes). Useful to grab a specific fix without merging an entire branch:
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git cherry-pick copies the changes from a single commit onto the current branch as a brand-new commit with a new SHA.">
 <script type="application/json">
 {
   "command": "git cherry-pick H",
@@ -1866,7 +1866,7 @@ The pin itself is stored in the superproject's tree as a **"gitlink"** entry —
 
 The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree on the left; changed rows get a yellow burst so you can see exactly what the command touched.
 
-<div data-fs-command-lab-multi>
+<div data-fs-command-lab-multi role="region" aria-label="Interactive multi-step filesystem demo: git submodule add nests an external repository inside a superproject, recording it as a gitlink in the parent.">
 <script type="application/json">
 {
   "description": "A superproject `myproject/` starts with just its own source. We'll add two submodules, commit the result, then see what happens on a fresh clone.",
@@ -2001,7 +2001,7 @@ git blame -w src/auth.py          # ignore whitespace-only changes (skip reforma
 
 The workflow for `git bisect` is always the same six-step ritual — start a session, mark bad, mark good, then let Git drive. Click through the demo below to see each command and its effect on the graph.
 
-<div data-git-command-lab-multi>
+<div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo: git bisect performs binary search across six commits to find the one that introduced a regression.">
 <script type="application/json">
 {
   "description": "Our repository has 6 commits on `main`. A bug appeared recently — we know commit **B** (`Initial setup`) was clean. We'll use `git bisect` to binary-search the history and pinpoint the exact bad commit.\n\n`git bisect` eliminates *half* the remaining candidates on each step, so even a repo with 1,000 commits needs at most **10 tests**.",
@@ -2137,7 +2137,7 @@ The rule of thumb: **`reset` for private mistakes, `revert` for public mistakes.
 
 `git revert <sha>` creates a **new commit** whose changes are the exact inverse of the target commit. The original commit stays in history; the revert commit cancels its effect. Because no existing commits are modified, revert is safe even on branches that teammates have already pulled.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git revert appends a new anti-matter commit that negates a problematic commit; the original commit stays in history (additive, safe on shared branches).">
 <script type="application/json">
 {
   "command": "git revert HEAD",
@@ -2183,7 +2183,7 @@ Most common uses:
 - `git reset HEAD~1` — un-commit and un-stage (changes stay as unstaged edits).
 - `git reset --hard HEAD~1` — discard the commit *and* the changes entirely.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git reset --hard rewinds the branch pointer one commit, abandoning what was on top (rewriting — dangerous on shared branches).">
 <script type="application/json">
 {
   "command": "git reset --hard HEAD~1",
@@ -2232,7 +2232,7 @@ Force-pushing a rewritten shared branch after `git reset` is how teams accidenta
 
 `HEAD` normally points at a branch (e.g. `ref: refs/heads/main`). If you point `HEAD` directly at a commit — `git switch --detach <sha>`, checking out a tag, or mid-bisect — you are in **detached HEAD** state. No branch is "following" your commits.
 
-<div data-git-command-lab>
+<div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git switch --detach points HEAD directly at a specific commit instead of a branch, entering detached HEAD state for safe inspection.">
 <script type="application/json">
 {
   "command": "git switch --detach HEAD~1",

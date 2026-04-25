@@ -58,7 +58,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `ls` — list directory contents
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: ls -la lists the contents of the current directory, including hidden files and detailed metadata for each entry.">
 <script type="application/json">
 {
   "command": "ls -la",
@@ -78,7 +78,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `cd` — change working directory
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: cd src changes the current working directory into src, moving the shell's location pointer.">
 <script type="application/json">
 {
   "command": "cd src",
@@ -97,7 +97,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `pwd` — print current path
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: pwd prints the absolute path of the current working directory without changing any state.">
 <script type="application/json">
 {
   "command": "pwd",
@@ -117,7 +117,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `mkdir` — create a directory
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: mkdir -p creates a new directory along with any missing parent directories in the chain.">
 <script type="application/json">
 {
   "command": "mkdir -p docs/api",
@@ -136,7 +136,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `mkdir` without `-p` — missing parent
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: mkdir without -p fails if any parent directory in the path does not already exist.">
 <script type="application/json">
 {
   "command": "mkdir docs/api",
@@ -157,7 +157,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `cp` — copy files and directories
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: cp -r recursively copies a directory and all its contents to a new location, leaving the original in place.">
 <script type="application/json">
 {
   "command": "cp -r src/ backup/",
@@ -176,7 +176,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `cp` without `-r` — directory requires the flag
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: cp without -r refuses to copy a directory; -r is mandatory whenever the source is a directory.">
 <script type="application/json">
 {
   "command": "cp src/ backup/",
@@ -197,7 +197,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `mv` — move or rename
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: mv moves a file from one location to another, removing it from the source path.">
 <script type="application/json">
 {
   "command": "mv notes.txt archive/",
@@ -216,7 +216,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `rm` — remove files and directories
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: rm -rf recursively removes a directory and everything inside it; this operation is permanent and dangerous.">
 <script type="application/json">
 {
   "command": "rm -rf tmp/",
@@ -235,7 +235,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `rmdir` — remove an empty directory
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: rmdir removes an empty directory; the directory disappears from the parent listing.">
 <script type="application/json">
 {
   "command": "rmdir build/",
@@ -254,7 +254,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `rmdir` on a non-empty directory
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: rmdir refuses to remove a non-empty directory; you must clear contents first or use rm -r.">
 <script type="application/json">
 {
   "command": "rmdir src/",
@@ -275,7 +275,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### `touch` — create an empty file / bump timestamps
 
-<div data-fs-command-lab>
+<div data-fs-command-lab role="region" aria-label="Interactive folder-tree demo: touch creates a new empty file if it does not exist, or updates timestamps of an existing file.">
 <script type="application/json">
 {
   "command": "touch .env",
@@ -296,7 +296,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 Step through a realistic session to see each command's effect on the directory tree. New or changed rows get a yellow burst; the `(you are here)` marker tracks the current working directory.
 
-<div data-fs-command-lab-multi>
+<div data-fs-command-lab-multi role="region" aria-label="Interactive multi-step folder-tree demo: starting from an empty project directory, each step adds files and subdirectories to build up a typical project layout.">
 <script type="application/json">
 {
   "description": "Start in an empty `project/` directory. Each step runs one command; the tree and `ls` output update to match what you would see in a real shell.",
