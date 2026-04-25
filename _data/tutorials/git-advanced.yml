@@ -657,19 +657,23 @@ steps:
       content: "\"\"\"A simple calculator module.\"\"\"\ndef add(a, b): return a + b\n\ndef divide(a, b): return a / b\n\ndef safe_divide(a, b):\n    \"\"\"Divide a by b, raising ValueError on zero denominator.\"\"\"\n    if b == 0:\n        raise ValueError(\"Cannot divide by zero\")\n    return a / b\n\ndef power(a, b):\n    \"\"\"Return a raised to the power of b.\"\"\"\n    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):\n        raise TypeError(\"Arguments must be numbers\")\n    return a ** b\n"
       language: python
     commands:
+    # The interactive instructions above teach the stash → hotfix → pop dance.
+    # The automated solution below rebuilds the same end state deterministically:
+    # the harness applies solution.files BEFORE these commands, so a literal
+    # stash/pop sequence collides on conflicting end-of-file diffs (the manual
+    # student flow doesn't see this because the student edits the file inline
+    # instead of having it pre-set to final state).
     - cd /tutorial/myproject && git switch main
-    - 'grep -q ''def power'' calculator.py || printf ''\ndef power(a, b):\n    # TODO: add input validation\n    return a ** b\n'' >> calculator.py'
-    - git diff --quiet || git stash
+    - git reset --hard HEAD
+    - git clean -fdq
+    - while git stash list 2>/dev/null | grep -q .; do git stash drop -q 2>/dev/null || break; done
     - (git branch -D hotfix-divide-zero 2>/dev/null; true) && git switch -c hotfix-divide-zero
-    - grep -q 'def safe_divide' calculator.py || printf '\ndef safe_divide(a, b):\n    if b == 0:\n        raise ValueError("Cannot divide by zero")\n    return a / b\n' >> calculator.py
-    - git add calculator.py
-    - 'git diff --cached --quiet || git commit -m ''Hotfix: add safe_divide to prevent zero-division errors'''
-    - git switch main
-    - grep -q 'def safe_divide' calculator.py || git merge hotfix-divide-zero --no-edit
+    - printf '\ndef safe_divide(a, b):\n    """Divide a by b, raising ValueError on zero denominator."""\n    if b == 0:\n        raise ValueError("Cannot divide by zero")\n    return a / b\n' >> calculator.py
+    - "git add calculator.py && git commit -m 'Hotfix: add safe_divide to prevent zero-division errors'"
+    - git switch main && git merge hotfix-divide-zero --no-edit
     - git branch -D hotfix-divide-zero 2>/dev/null; true
-    - git stash pop
-    - git add calculator.py
-    - git diff --cached --quiet || git commit -m 'Add power function with input validation'
+    - printf '\ndef power(a, b):\n    """Return a raised to the power of b."""\n    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):\n        raise TypeError("Arguments must be numbers")\n    return a ** b\n' >> calculator.py
+    - git add calculator.py && git commit -m 'Add power function with input validation'
     explanation: |
       - **`git stash`:** snapshots tracked modifications and staged changes into a stash commit in `.git/refs/stash`, then resets the working tree to match HEAD. Untracked files are **not** included unless you use `git stash -u`.
       - **`git stash pop`:** applies the top stash and removes it. Conflicts surface exactly like merge conflicts — resolve them, then `git add` and commit (or drop the stash manually).
