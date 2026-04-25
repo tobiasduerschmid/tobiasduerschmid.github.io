@@ -202,9 +202,20 @@
       if (kind === 'preview') {
         outEl.style.display = 'none';
         frameEl.style.display = '';
-        if (snap.content && snap.content !== lastFrameSrc) {
-          lastFrameSrc = snap.content;
-          frameEl.src = snap.content;
+        // Detect URL vs srcdoc heuristically: URLs are short, start with
+        // a scheme. Anything else (typically an HTML doc) goes into srcdoc.
+        var content = snap.content || '';
+        var isUrl = /^(https?:|blob:|data:|\/)/.test(content) && content.length < 2048;
+        var key = (isUrl ? 'src:' : 'srcdoc:') + content;
+        if (key !== lastFrameSrc) {
+          lastFrameSrc = key;
+          if (isUrl) {
+            frameEl.removeAttribute('srcdoc');
+            frameEl.src = content;
+          } else {
+            frameEl.removeAttribute('src');
+            frameEl.srcdoc = content;
+          }
         }
       } else {
         // terminal + output both render to <pre>

@@ -3673,12 +3673,12 @@
     var previewFrame = this.root && this.root.querySelector('.tvm-preview-frame');
     var kind, content;
     if (previewFrame) {
-      // Live preview (react / browser iframe): the popup hosts its own iframe
-      // pointed at the same URL. Inputs and refreshes are independent in the
-      // popup, but content stays in sync because both iframes hit the same
-      // origin/server.
+      // Live preview (react): main renders into iframe.srcdoc (not .src).
+      // Broadcast the srcdoc string so the popup's iframe can mount the same
+      // bundled HTML. Refreshes/edits in main re-fire the iframe's load
+      // event, which re-broadcasts the latest srcdoc to the popup.
       kind = 'preview';
-      content = previewFrame.src || '';
+      content = previewFrame.srcdoc || previewFrame.src || '';
     } else if (pre) {
       kind = 'output';
       content = pre.innerHTML;
@@ -3712,12 +3712,13 @@
     var pre = this.root && this.root.querySelector('.tvm-output-pre');
     var previewFrame = this.root && this.root.querySelector('.tvm-preview-frame');
     if (previewFrame) {
-      // Preview: re-broadcast the iframe URL whenever it changes (refresh / nav).
+      // Preview: re-broadcast the iframe srcdoc whenever it loads (build /
+      // hot-patch / refresh).
       this._previewFrameSync = function () {
         if (self._popoutManager && self._popoutManager.isDetached('output')) {
           self._popoutManager.broadcastOutputUpdate({
             kind: 'preview',
-            content: previewFrame.src || '',
+            content: previewFrame.srcdoc || previewFrame.src || '',
           });
         }
       };
