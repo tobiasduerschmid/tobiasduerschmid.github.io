@@ -426,11 +426,12 @@
 
     var terminalHtml;
     if (this.config.useTerminal) {
+      // Terminal (xterm-backed: v86 / webcontainer) is intentionally NOT
+      // popout-able — a true detach would require routing keystrokes back to
+      // main and replicating xterm's escape-sequence handling in the popup.
+      // Skipping for now; pop the output PRE for non-xterm backends instead.
       terminalHtml = '<div class="tvm-terminal-panel">' +
-        '<div class="tvm-terminal-header">' +
-          '<span>Terminal</span>' +
-          '<button class="tvm-output-popout-btn" title="Open terminal output in separate window">⧉</button>' +
-        '</div>' +
+        '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
         '<div class="tvm-terminal-container"></div>' +
         '</div>';
     } else if (this.config.usePreview) {
