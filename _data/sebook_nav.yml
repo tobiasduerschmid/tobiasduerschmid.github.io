@@ -174,10 +174,6 @@ topics:
         url: /SEBook/tools/make.html
       - name: Makefile Tutorial
         url: /SEBook/tools/makefile-tutorial.html
-      - name: Testing Foundations Tutorial
-        url: /SEBook/tools/testing-foundations-tutorial.html
-      - name: TDD Tutorial
-        url: /SEBook/tools/tdd-tutorial.html
   - name: Systems
     icon: null
     url: /SEBook/systems/index.html
