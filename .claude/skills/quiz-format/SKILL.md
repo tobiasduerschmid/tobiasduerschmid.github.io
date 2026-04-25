@@ -10,7 +10,7 @@ This SEBook project has a custom YAML quiz format used in three places — SEBoo
 If you only remember three things:
 
 1. **`option_feedback` is a sparse hash, not an array.** Keys are integer indices into `options`. Only add entries for options where you can name an actual misconception. Don't fill in entries for trivially-wrong distractors.
-2. **Per-option feedback corrects the mental model.** It is *not* a second copy of the general `explanation`. Name the misconception, point at the proximate distinction, stay under three sentences.
+2. **Per-option feedback corrects the mental model.** It is *not* a second copy of the general `explanation`. Clarify the wrong reasoning directly, point at the proximate distinction, stay under three sentences. Do not use the word "misconception" or label the error — just clarify.
 3. **Triggering rules are asymmetric.** `option_feedback[i]` only fires when option `i` was *answered* wrongly — selected when wrong (commission) or unselected when correct in multi-choice (omission). It never fires for `optional_indices` entries, and it never fires when the question is fully right.
 
 For longer-form material:
@@ -66,16 +66,17 @@ In print views (`_layouts/print-tutorial.html` for tutorials; `@media print` of 
 ## DO / DON'T for option_feedback
 
 DO:
-- Name the misconception by its diagnostic label if one exists (*"the off-by-one error"*, *"the one-method-per-class misconception"*, *"the integration-test-masquerading-as-unit-test trap"*).
-- Correct the **mental model** — say what the student was probably thinking and what's actually true.
-- Reference the **proximate distinction** — "that's C++, not C — `cout` is from `<iostream>`" beats "this is wrong."
+- **Clarify** what's wrong directly — lead with the fact, the proximate distinction, or what's really happening. "That's C++, not C — `cout` is from `<iostream>`" beats "this is wrong."
+- Correct the **mental model** — explain what's actually true and, if useful, gesture at why the wrong reasoning was plausible ("Spreadsheets coerce blank cells to 0, which sets up the wrong intuition for SQL NULL").
+- Stay short and concrete.
 
 DON'T:
-- Repeat the general `explanation:`. The general explanation carries canonical reasoning; option_feedback does surgical misconception correction.
+- **Use the word "misconception"** in the feedback content, or label the error with phrases like "This is the *X* misconception / trap / fallacy / conflation". Just clarify the wrong reasoning. Labeling reads as a template tic when repeated across many questions and shifts attention from the correction to the vocabulary.
+- Repeat the general `explanation:`. The general explanation carries canonical reasoning; option_feedback gives surgical correction.
 - Write more than ~3 sentences. Anything longer belongs in `explanation:`.
-- Use accusatory second-person framing — "*you* confused X with Y" pins the misconception on the learner. Frame it in the third person: "this is the *X* misconception".
+- Use accusatory second-person framing — "*you* confused X with Y" pins the error on the learner. Frame it in the third person around the *idea*, not the student.
 - Add option_feedback to `optional_indices` options — it never fires there.
-- Add option_feedback to options whose wrongness is obvious from the question text alone (a syntactically malformed distractor, a year that's clearly wrong) — there's no real misconception to correct.
+- Add option_feedback to options whose wrongness is obvious from the question text alone (a syntactically malformed distractor, a year that's clearly wrong) — there's no real reasoning to correct.
 
 ## Authoring checklist
 

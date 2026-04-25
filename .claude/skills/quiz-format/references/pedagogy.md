@@ -1,16 +1,18 @@
-# Pedagogy of per-option misconception feedback
+# Pedagogy of per-option feedback
 
-Read this when you're stuck on whether a feedback string is good enough, or when you're drafting feedback for a question whose wrong answers don't have an obvious misconception attached.
+Read this when you're stuck on whether a feedback string is good enough, or when you're drafting feedback for a question whose wrong answers don't have an obvious error mode attached.
 
 The goal of `option_feedback` is **to land surgical correction at the moment the student's wrong mental model is most active**. It's not a substitute for the general `explanation:` — it complements it.
+
+**House style: clarify, don't label.** Do not use the word "misconception" in feedback content, and do not write phrases like *"This is the X-misconception / X conflation / X confusion / X trap / X fallacy / X tautology"*. The label-and-correct pattern reads as a template tic when repeated across many questions and shifts attention from the corrective content to the diagnostic vocabulary. Just clarify the wrong reasoning directly — lead with the actual fact, the proximate distinction, or what's really happening.
 
 ## The five principles
 
 ### 1. Variation Theory (Marton & Booth, 1997)
 
-Concepts are learned by **contrast** — students grasp what something *is* by encountering what it *is not*. Per-option misconception feedback is built for this: each wrong option encodes a distinct neighboring concept, and the feedback names the contrast.
+Concepts are learned by **contrast** — students grasp what something *is* by encountering what it *is not*. Per-option feedback is built for this: each wrong option encodes a distinct neighboring concept, and the feedback should clarify the contrast.
 
-**Rule:** Write feedback that *names what the student was probably thinking* and *shows what's true instead*. Don't just say "this is wrong"; say "this is the *<concept that looks similar>*; the difference is *<load-bearing distinction>*."
+**Rule:** Lead with the contrast — *what's actually true* and the *load-bearing distinction* that separates it from the wrong reasoning. Optionally gesture at why the wrong reasoning is plausible, but do not label the error ("this is the *X*-misconception", "the *X* trap"); just clarify.
 
 ### 2. Corrective Feedback (Hattie & Timperley, 2007; Shute, 2008)
 
@@ -24,21 +26,21 @@ Hattie's meta-analyses put elaborated corrective feedback at d ≈ 0.7 — one o
 
 ### 3. Generation Effect & Desirable Difficulties (Bjork & Bjork, 2011)
 
-Misconception feedback is most powerful when it lands **after** the student has actively committed to a wrong answer. The wrongness is what activates the misconception; the correction then lands on a "live" belief rather than a hypothetical one. This is why option_feedback fires inline at the moment of selection, not pre-emptively in the question stem.
+Wrong-answer feedback is most powerful when it lands **after** the student has actively committed to a wrong answer. The commitment is what makes the wrong reasoning *active*; the correction then lands on a "live" belief rather than a hypothetical one. This is why option_feedback fires inline at the moment of selection, not pre-emptively in the question stem.
 
-**Rule:** Don't telegraph the misconception in the question (e.g., "Some students think X — which option avoids that mistake?"). Let the student commit, then correct.
+**Rule:** Don't telegraph the error in the question (e.g., "Some students think X — which option avoids that mistake?"). Let the student commit, then correct.
 
 ### 4. Cognitive Load Theory (Sweller; Mayer's coherence principle)
 
-Per-option feedback should target only the specific misconception. Anything longer than ~3 sentences duplicates the general `explanation:` and creates extraneous load. The student is reading the feedback at the moment their working memory is already loaded with their failed reasoning — keep it focused.
+Per-option feedback should target only the specific wrong reasoning at hand. Anything longer than ~3 sentences duplicates the general `explanation:` and creates extraneous load. The student is reading the feedback at the moment their working memory is already loaded with their failed reasoning — keep it focused.
 
 **Rule:** If the feedback would be longer than 3 sentences, the rest belongs in `explanation:`. The general explanation is for canonical reasoning; option_feedback is for surgical correction.
 
 ### 5. Growth-Mindset Framing (Dweck, 1999)
 
-Wrong-answer feedback is a high-stakes moment for the learner's identity. Second-person accusations — "you confused X with Y", "you forgot that…" — pin the misconception on the student. Third-person framing — "this is the *X* misconception; it confuses Y with Z" — names the misconception as a thing in the world that lots of people fall into.
+Wrong-answer feedback is a high-stakes moment for the learner's identity. Second-person accusations — "you confused X with Y", "you forgot that…" — pin the error on the student. Third-person framing keeps the focus on the *idea*: describe what's actually true, what trap is sitting under the wrong reasoning, and why it's plausible — without making the student the protagonist of the mistake.
 
-**Rule:** Frame the misconception, not the student. "The off-by-one error" is universal; "*you* made the off-by-one error" is personal.
+**Rule:** Talk about the *idea*, not the student. "Two nested loops aren't `2 × n` work, they're `n × n` work" is universal; "*you* miscounted the loops" is personal. Also: do not label the error ("this is the *X*-misconception"); just clarify.
 
 ## Two complete examples
 
@@ -58,15 +60,15 @@ These show the principles in action. Use them as reference quality bars when dra
   correct_index: 1
   option_feedback:
     0: "This catches negative inputs but never terminates the recursion for positive `n` — `factorial(5) → factorial(4) → … → factorial(0)` still has nothing telling it to stop. The recursion needs a stopping condition at the smallest valid input, not just an error guard."
-    2: "This is the *terminator-vs-step* confusion — mistaking the **direction of progress** for the **stopping condition**. `n > 0` means we should keep recursing toward `0`; the base case fires *at* `0`, not before it."
-    3: "This is the recursive STEP, not the base case. Without a base case to terminate, this line creates infinite recursion and a stack overflow."
+    2: "`n > 0` is the **direction of progress**, not the **stopping condition**. The recursion runs *while* `n` is positive; the base case is what fires once `n` hits `0` — the opposite end of the loop."
+    3: "This line is the recursive *step* — it's how the call tree expands. Without a base case to terminate, the chain runs forever and the stack overflows."
   explanation: "A recursive function needs a **base case** that returns *without* recursing. For `factorial`, that's `n == 0` returning `1` (since `0! = 1` mathematically). Every other call decreases `n` until it hits `0`."
 ```
 
 What this demonstrates:
 
-- Each wrong option has a different misconception (error-guard vs terminator, direction-vs-stopping, step-vs-base-case).
-- Each feedback names the misconception in the third person.
+- Each wrong option targets a different error mode (error-guard vs terminator, direction-vs-stopping, step-vs-base-case) — but the feedback **clarifies** rather than labels.
+- Third-person framing: the *idea* is the subject, not the student.
 - Each feedback contains *just* the corrective contrast — the canonical reasoning lives in `explanation:`.
 
 ### Example 2 — multi-choice with omission, unit testing properties
