@@ -1168,7 +1168,14 @@ html:not(.dark-mode) .tvm-editor-pane-divider {
   letter-spacing: 0.03em;
 }
 
-.tvm-git-graph-refresh {
+.tvm-git-graph-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tvm-git-graph-refresh,
+.tvm-git-graph-popout-btn {
   background: transparent;
   border: 1px solid #444;
   color: #aaa;
@@ -1178,7 +1185,13 @@ html:not(.dark-mode) .tvm-editor-pane-divider {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.tvm-git-graph-refresh:hover {
+.tvm-git-graph-popout-btn {
+  padding: 2px 8px;
+  font-size: 13px;
+  line-height: 1;
+}
+.tvm-git-graph-refresh:hover,
+.tvm-git-graph-popout-btn:hover {
   background: #333;
   color: #eee;
 }
@@ -1239,11 +1252,13 @@ html:not(.dark-mode) .tvm-git-graph-header {
   border-bottom-color: #d4d4d4;
   color: #444;
 }
-html:not(.dark-mode) .tvm-git-graph-refresh {
+html:not(.dark-mode) .tvm-git-graph-refresh,
+html:not(.dark-mode) .tvm-git-graph-popout-btn {
   border-color: #bbb;
   color: #555;
 }
-html:not(.dark-mode) .tvm-git-graph-refresh:hover {
+html:not(.dark-mode) .tvm-git-graph-refresh:hover,
+html:not(.dark-mode) .tvm-git-graph-popout-btn:hover {
   background: #e0e1e5;
   color: #222;
 }
@@ -3082,6 +3097,25 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   background: rgba(180, 40, 40, 0.15);
   color: #f09090;
 }
+.tvm-quiz-panel .option-feedback {
+  margin: 4px 0 8px 28px;
+  padding: 8px 10px;
+  border-left: 3px solid #ea8a14;
+  background: rgba(217, 119, 6, 0.12);
+  border-radius: 4px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: #fed7aa;
+}
+.tvm-quiz-panel .option-feedback p { margin: 0; }
+.tvm-quiz-panel .option-feedback p + p { margin-top: 4px; }
+.tvm-quiz-panel .option-feedback code {
+  background: rgba(217, 119, 6, 0.25);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #fde9c8;
+}
+.tvm-quiz-panel .option-feedback.is-hidden { display: none; }
 .tvm-quiz-panel .option-checkbox {
   display: none;
   width: 14px;
@@ -3540,6 +3574,27 @@ body.lecture-mode .tutorial-page {
   /* Hide explanations and correct-answer reveals — save space */
   .quiz-explanation { display: none !important; }
   .quiz-correct-answers { display: none !important; }
+
+  /* Always show every option's feedback in print, regardless of student state */
+  .option-feedback,
+  .option-feedback.is-hidden {
+    display: block !important;
+    margin: 1px 0 2px 16px;
+    padding: 2px 6px;
+    border-left: 2px solid #d97706;
+    background: #fff7ed !important;
+    color: #7c2d12 !important;
+    font-size: 0.7em;
+    line-height: 1.25;
+    page-break-inside: avoid;
+  }
+  .option-feedback p { margin: 0; }
+  .option-feedback code {
+    background: rgba(217, 119, 6, 0.15) !important;
+    color: #7c2d12 !important;
+    padding: 0 3px;
+    border-radius: 2px;
+  }
 
   /* Parsons compact */
   .parsons-label { font-size: 0.72em; margin-bottom: 2px; }

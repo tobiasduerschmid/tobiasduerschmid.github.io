@@ -59,6 +59,8 @@
     <div class="tip-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script>
@@ -136,6 +138,9 @@
       els.stepContent.innerHTML = '<h2>' + escapeHtml(stepData.title || '') + '</h2>'
         + '<div class="tvm-step-instructions">' + (stepData.instructionsHTML || '') + '</div>';
       els.stepContent.scrollTop = 0;
+      // Render inline ```mermaid blocks via the shared SebookMermaid theme
+      // (same renderer as the main page — visual parity with ArchUML diagrams).
+      if (window.SebookMermaid) window.SebookMermaid.render(els.stepContent);
       // Re-attach last test result panel if one was broadcast on this step.
       if (snapshot && snapshot.lastTestResultHTML) showTestPanel(snapshot.lastTestResultHTML);
     }

@@ -1,0 +1,129 @@
+# Pedagogy of per-option misconception feedback
+
+Read this when you're stuck on whether a feedback string is good enough, or when you're drafting feedback for a question whose wrong answers don't have an obvious misconception attached.
+
+The goal of `option_feedback` is **to land surgical correction at the moment the student's wrong mental model is most active**. It's not a substitute for the general `explanation:` — it complements it.
+
+## The five principles
+
+### 1. Variation Theory (Marton & Booth, 1997)
+
+Concepts are learned by **contrast** — students grasp what something *is* by encountering what it *is not*. Per-option misconception feedback is built for this: each wrong option encodes a distinct neighboring concept, and the feedback names the contrast.
+
+**Rule:** Write feedback that *names what the student was probably thinking* and *shows what's true instead*. Don't just say "this is wrong"; say "this is the *<concept that looks similar>*; the difference is *<load-bearing distinction>*."
+
+### 2. Corrective Feedback (Hattie & Timperley, 2007; Shute, 2008)
+
+Hattie's meta-analyses put elaborated corrective feedback at d ≈ 0.7 — one of the strongest interventions in education. Verification-only feedback ("incorrect") sits near zero. Effective corrective feedback answers three implicit questions:
+
+- *Where am I going?* (the goal)
+- *How am I going?* (the gap)
+- *Where to next?* (the corrective)
+
+**Rule:** Every feedback string should *correct the mental model*, not just label the answer wrong. Bare verification ("this is incorrect") wastes the moment.
+
+### 3. Generation Effect & Desirable Difficulties (Bjork & Bjork, 2011)
+
+Misconception feedback is most powerful when it lands **after** the student has actively committed to a wrong answer. The wrongness is what activates the misconception; the correction then lands on a "live" belief rather than a hypothetical one. This is why option_feedback fires inline at the moment of selection, not pre-emptively in the question stem.
+
+**Rule:** Don't telegraph the misconception in the question (e.g., "Some students think X — which option avoids that mistake?"). Let the student commit, then correct.
+
+### 4. Cognitive Load Theory (Sweller; Mayer's coherence principle)
+
+Per-option feedback should target only the specific misconception. Anything longer than ~3 sentences duplicates the general `explanation:` and creates extraneous load. The student is reading the feedback at the moment their working memory is already loaded with their failed reasoning — keep it focused.
+
+**Rule:** If the feedback would be longer than 3 sentences, the rest belongs in `explanation:`. The general explanation is for canonical reasoning; option_feedback is for surgical correction.
+
+### 5. Growth-Mindset Framing (Dweck, 1999)
+
+Wrong-answer feedback is a high-stakes moment for the learner's identity. Second-person accusations — "you confused X with Y", "you forgot that…" — pin the misconception on the student. Third-person framing — "this is the *X* misconception; it confuses Y with Z" — names the misconception as a thing in the world that lots of people fall into.
+
+**Rule:** Frame the misconception, not the student. "The off-by-one error" is universal; "*you* made the off-by-one error" is personal.
+
+## Two complete examples
+
+These show the principles in action. Use them as reference quality bars when drafting your own.
+
+### Example 1 — single-choice, recursion base case
+
+```yaml
+- question: |
+    The recursive function `factorial(n)` calls itself with `factorial(n - 1)`. It does not return for any negative `n`. Which line is the missing **base case**?
+  type: single
+  options:
+    - "`if n < 0: return 0`"
+    - "`if n == 0: return 1`"
+    - "`if n > 0: return n`"
+    - "`return n * factorial(n - 1)`"
+  correct_index: 1
+  option_feedback:
+    0: "This catches negative inputs but never terminates the recursion for positive `n` — `factorial(5) → factorial(4) → … → factorial(0)` still has nothing telling it to stop. The recursion needs a stopping condition at the smallest valid input, not just an error guard."
+    2: "This is the *terminator-vs-step* confusion — mistaking the **direction of progress** for the **stopping condition**. `n > 0` means we should keep recursing toward `0`; the base case fires *at* `0`, not before it."
+    3: "This is the recursive STEP, not the base case. Without a base case to terminate, this line creates infinite recursion and a stack overflow."
+  explanation: "A recursive function needs a **base case** that returns *without* recursing. For `factorial`, that's `n == 0` returning `1` (since `0! = 1` mathematically). Every other call decreases `n` until it hits `0`."
+```
+
+What this demonstrates:
+
+- Each wrong option has a different misconception (error-guard vs terminator, direction-vs-stopping, step-vs-base-case).
+- Each feedback names the misconception in the third person.
+- Each feedback contains *just* the corrective contrast — the canonical reasoning lives in `explanation:`.
+
+### Example 2 — multi-choice with omission, unit testing properties
+
+```yaml
+- question: |
+    Which of the following are characteristics of a **good unit test**?
+  type: multiple
+  options:
+    - "It tests one specific behavior, with one logical assertion focus"
+    - "It is fast — under a few milliseconds"
+    - "It has a name that describes the scenario AND the expected outcome"
+    - "It hits the real database to verify production behavior"
+    - "It uses many setup steps to closely simulate end-user workflows"
+  correct_indices: [0, 1, 2]
+  option_feedback:
+    0: "A unit test that asserts on multiple unrelated behaviors fails in ways that obscure WHICH behavior broke. One concept per test makes failures diagnostic, not vague — that's why this is a property of a good unit test."
+    1: "Slow tests get skipped. The CI runs that protect you only happen if developers actually run the suite — and they only run it if it returns in seconds, not minutes. Fast is non-negotiable for unit tests."
+    2: "A name like `test_user_login_returns_token_when_credentials_valid` tells you exactly what broke at a glance. `test_login_1` does not. The name is the diagnostic."
+    3: "This is the *integration-test masquerading as unit-test* misconception. Hitting the real DB makes the test slow, flaky (state pollution), and dependent on external infrastructure. Use unit tests for logic, integration tests for I/O — separately."
+    4: "This is the *fidelity-over-isolation* trap. A 'closely simulated workflow' is an end-to-end test, not a unit test. Unit tests isolate ONE unit so failures pinpoint root cause; e2e tests verify the system works overall — different jobs, different layers."
+  explanation: "Good unit tests are **F.I.R.S.T.**: Fast, Isolated, Repeatable, Self-checking, Timely. The first three options reflect those qualities. The last two describe **integration** or **end-to-end** tests — both valuable, but at different layers of the testing pyramid."
+```
+
+What this demonstrates:
+
+- Omission feedback (options 0, 1, 2) explains *why this trait matters*, helping the student internalize the property they missed.
+- Commission feedback (options 3, 4) names the named-misconception ("integration-test masquerading", "fidelity-over-isolation trap") and points at the proximate distinction.
+- The general `explanation:` carries the framework (F.I.R.S.T.) and the testing-pyramid context.
+
+## When NOT to write option_feedback
+
+Sometimes leaving it out is the right call:
+
+- **Trivially-wrong distractors.** If an option is wrong because it's syntactically malformed, contains a made-up keyword, or is obviously off-topic, there's no misconception to correct — just a bad option that exists for difficulty calibration. Don't add feedback that says "this isn't valid syntax"; the student knows.
+- **Options where you can't name the misconception.** If you can't crisply finish the sentence "students who pick this are probably thinking…", the feedback you'd write is going to be vague filler. Skip it.
+- **Pure factual recall.** "What year was Python first released?" doesn't have a misconception structure — wrong years are just wrong, not the result of confused mental models. Use `explanation:` for the answer and call it done.
+- **Optional indices in multi-choice.** Feedback assigned to `optional_indices` never fires — it's wasted work. The whole point of `optional_indices` is "either choice is fine".
+
+## Diagnosing a feedback string
+
+Quick test: read the feedback aloud. Does it…
+
+1. **Name something the student was probably thinking** when they picked this option? (If it just says "this is wrong because of X", you're in verification-only territory — push it toward the misconception.)
+2. **Tell the student what's true instead**, in a way they can act on next time? (If not, it's not corrective.)
+3. **Stay under three sentences**? (If not, trim or move to `explanation:`.)
+4. **Avoid second-person blame**? (If you wrote "you confused…", reframe as "this is the *X* misconception".)
+5. **Differ from `explanation:`**? (If a student would learn nothing extra from the feedback that the general explanation doesn't say, delete it.)
+
+If all five answers are yes, ship it.
+
+## References
+
+- Bjork, R. A. & Bjork, E. L. (2011). Making things hard on yourself, but in a good way: Creating desirable difficulties to enhance learning. *Psychology and the Real World*, 56–64.
+- Dweck, C. S. (1999). *Self-Theories: Their Role in Motivation, Personality, and Development.* Psychology Press.
+- Hattie, J. & Timperley, H. (2007). The power of feedback. *Review of Educational Research*, 77(1), 81–112.
+- Marton, F. & Booth, S. (1997). *Learning and Awareness.* Routledge.
+- Mayer, R. E. (2009). *Multimedia Learning* (2nd ed.). Cambridge University Press.
+- Shute, V. J. (2008). Focus on formative feedback. *Review of Educational Research*, 78(1), 153–189.
+- Sweller, J., van Merriënboer, J. J. G. & Paas, F. (1998). Cognitive architecture and instructional design. *Educational Psychology Review*, 10, 251–296.

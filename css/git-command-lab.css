@@ -192,7 +192,7 @@
 .git-command-lab__btn code.git-command-lab__cmd {
   background: transparent !important;
   background-color: transparent !important;
-  color: inherit;
+  color: inherit !important;
   padding: 0;
   margin: 0;
   border: none;

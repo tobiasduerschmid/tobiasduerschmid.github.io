@@ -96,6 +96,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
           <span class="option-label" aria-hidden="true">{{ alphabet | slice: forloop.index0 }}</span>
           <span class="option-content">{{ option | markdownify }}</span>
         </button>
+        {% if q.option_feedback %}
+        {% assign fb = q.option_feedback[forloop.index0] %}
+        {% unless fb %}{% assign fb_key = forloop.index0 | append: '' %}{% assign fb = q.option_feedback[fb_key] %}{% endunless %}
+        {% if fb %}
+        <div class="option-feedback is-hidden" role="note" data-for-index="{{ forloop.index0 }}">{{ fb | markdownify }}</div>
+        {% endif %}
+        {% endif %}
         {% endfor %}
       </div>
       {% if q.type == 'multiple' %}
@@ -273,6 +280,35 @@ Data source: _data/quizzes/{{ include.id }}.yml
     border-color: #dc3545;
     background: #ffeef0;
     color: #721c24;
+  }
+
+  /* Per-option misconception feedback (hidden by default; revealed on validation) */
+  .option-feedback {
+    margin: 4px 0 8px 28px;
+    padding: 8px 10px;
+    border-left: 3px solid #d97706;
+    background: #fff7ed;
+    border-radius: 4px;
+    font-size: 0.92em;
+    line-height: 1.35;
+    color: #7c2d12;
+  }
+  .option-feedback p { margin: 0; }
+  .option-feedback p + p { margin-top: 4px; }
+  .option-feedback code {
+    background: rgba(217, 119, 6, 0.15);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  .option-feedback.is-hidden { display: none; }
+  html.dark-mode .option-feedback {
+    background: rgba(217, 119, 6, 0.12);
+    color: #fed7aa;
+    border-left-color: #ea8a14;
+  }
+  html.dark-mode .option-feedback code {
+    background: rgba(217, 119, 6, 0.25);
+    color: #fde9c8;
   }
 
   .option-checkbox {
@@ -519,6 +555,31 @@ Data source: _data/quizzes/{{ include.id }}.yml
     font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
     background: #f0f0f5; padding: 1px 4px; border-radius: 2px;
   }
+
+  /* ── Print: show all questions and all option feedback ───────────────── */
+  @media print {
+    .quiz-progress-bar,
+    .quiz-header p,
+    .submit-answer-btn,
+    .next-btn,
+    .restart-btn,
+    .review-btn,
+    .parsons-actions,
+    .se-gym-toggle,
+    .quiz-results { display: none !important; }
+    .quiz-question-card { display: block !important; animation: none !important; }
+    .quiz-container {
+      padding: 4px 8px;
+      margin: 6px 0;
+      box-shadow: none;
+      border-radius: 4px;
+      page-break-inside: avoid;
+    }
+    .quiz-explanation { display: block !important; background: transparent; padding: 4px 0; }
+    /* Always show every option's feedback in print, regardless of student state */
+    .option-feedback,
+    .option-feedback.is-hidden { display: block !important; page-break-inside: avoid; }
+  }
 </style>
 
 <script>
@@ -624,6 +685,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       options.forEach((opt, idx) => {
         optionsContainer.appendChild(opt);
+        // Keep each option's feedback div as its immediate sibling after shuffle
+        const fb = optionsContainer.querySelector('.option-feedback[data-for-index="' + opt.dataset.index + '"]');
+        if (fb) optionsContainer.appendChild(fb);
         const label = alphabet[idx];
         const labelElem = opt.querySelector('.option-label');
         if (labelElem) labelElem.textContent = label;
@@ -746,6 +810,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
     }
 
+    function revealOptionFeedback(card, idx) {
+      const fb = card.querySelector('.option-feedback[data-for-index="' + idx + '"]');
+      if (fb) fb.classList.remove('is-hidden');
+    }
+
     function validateSingleChoice(option, card) {
       const options = card.querySelectorAll('.quiz-option');
       const explanation = card.querySelector('.quiz-explanation');
@@ -760,6 +829,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         option.classList.add('incorrect');
         const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
         if (correctOption) correctOption.classList.add('correct');
+        revealOptionFeedback(card, option.dataset.index);
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
 
@@ -799,10 +869,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
       } else {
         options.forEach(opt => {
           const isSelected = opt.classList.contains('selected');
+          const commissionErr = isSelected && !allowedSet.has(opt.dataset.index);
+          const omissionErr = !isSelected && correctSet.has(opt.dataset.index);
           if (correctSet.has(opt.dataset.index) || (isSelected && optionalSet.has(opt.dataset.index))) {
             opt.classList.add('correct');
-          } else if (isSelected && !allowedSet.has(opt.dataset.index)) {
+          } else if (commissionErr) {
             opt.classList.add('incorrect');
+          }
+          if (commissionErr || omissionErr) {
+            revealOptionFeedback(card, opt.dataset.index);
           }
         });
 
@@ -863,6 +938,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         opt.removeAttribute('disabled');
         if (opt.hasAttribute('aria-checked')) opt.setAttribute('aria-checked', 'false');
       });
+      card.querySelectorAll('.option-feedback').forEach(el => el.classList.add('is-hidden'));
       explanation.classList.add('hidden');
       if (submitBtn) {
         submitBtn.classList.remove('hidden');

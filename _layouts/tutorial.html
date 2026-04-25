@@ -176,9 +176,9 @@
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutor-chat.css' | relative_url }}">
 
-  <!-- Mermaid.js for UML sequence diagram rendering -->
+  <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language. -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-  <script>if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'default' });</script>
+  <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
 
   <!-- Custom UML diagram renderers -->
   <!-- Bundled UML diagram renderer -->

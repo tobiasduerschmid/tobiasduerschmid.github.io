@@ -46,6 +46,7 @@
     this.instructionsPopupUrl = opts.instructionsPopupUrl || '/tutorial-instructions-popup.html';
     this.panePopupUrl = opts.panePopupUrl || '/tutorial-pane-popup.html';
     this.outputPopupUrl = opts.outputPopupUrl || '/tutorial-output-popup.html';
+    this.graphPopupUrl = opts.graphPopupUrl || '/tutorial-graph-popup.html';
     this.tutorialTitle = opts.tutorialTitle || '';
     this.hooks = opts.hooks || {};
 
@@ -238,6 +239,47 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Detach: git graph
+  // ---------------------------------------------------------------------------
+  TutorialPopoutManager.prototype.detachGraph = function (meta) {
+    if (!this._available) return null;
+    var role = 'graph';
+    var existing = this._popups[role];
+    if (existing && existing.window && !existing.window.closed) {
+      existing.window.focus();
+      this._sendGraphSnapshot(meta);
+      return existing.window;
+    }
+    var winName = 'tgraph-' + this.pathname;
+    var darkMode = (meta && meta.darkMode)
+      || document.documentElement.classList.contains('dark-mode');
+    var url = this.graphPopupUrl
+      + '?channel=' + encodeURIComponent(this.channelName)
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
+    var w = window.open(url, winName, 'width=900,height=720,resizable=yes,scrollbars=yes');
+    if (!w) return null;
+    this._popups[role] = { window: w, openedAt: Date.now() };
+    var self = this;
+    setTimeout(function () { self._sendGraphSnapshot(meta); }, 50);
+    this._notifyPopupOpened(role);
+    this._writeStateMirror();
+    return w;
+  };
+
+  TutorialPopoutManager.prototype._sendGraphSnapshot = function (meta) {
+    if (!meta) return;
+    this._post('graph-snapshot', {
+      html: meta.html || '',
+      darkMode: !!meta.darkMode,
+    });
+  };
+
+  TutorialPopoutManager.prototype.broadcastGraphUpdate = function (payload) {
+    this._post('graph-update', payload || {});
+  };
+
+  // ---------------------------------------------------------------------------
   // Detach: instructions
   // ---------------------------------------------------------------------------
   TutorialPopoutManager.prototype.detachInstructions = function () {
@@ -369,6 +411,11 @@
       if (this.hooks.getOutputMeta) {
         var ometa = this.hooks.getOutputMeta();
         if (ometa) this._sendOutputSnapshot(ometa);
+      }
+    } else if (role === 'graph') {
+      if (this.hooks.getGraphMeta) {
+        var gmeta = this.hooks.getGraphMeta();
+        if (gmeta) this._sendGraphSnapshot(gmeta);
       }
     } else if (role === 'instructions') {
       if (this.hooks.getInstructionsSnapshot) {

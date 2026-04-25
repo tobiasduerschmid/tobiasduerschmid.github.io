@@ -1,0 +1,102 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Git Graph &mdash; Tutorial</title>
+  <script>
+    (function () {
+      var p = new URLSearchParams(location.search);
+      if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; background: #fff; color: #222; }
+    html.dark-mode body { background: #1e1e1e; color: #e8e8f0; }
+    .top-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; background: #f3f3f3; border-bottom: 1px solid #d4d4d4;
+      flex-shrink: 0; font-size: 12.5px; color: #555;
+    }
+    html.dark-mode .top-bar { background: #161618; border-bottom-color: #2a2a2e; color: #aaa; }
+    .kind-name { font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; font-size: 11.5px; color: #333; }
+    html.dark-mode .kind-name { color: #e8e8f0; }
+    .stat { color: #888; font-size: 11.5px; margin-left: auto; }
+    .stat.ok { color: #4caf50; }
+    .stat.warn { color: #d4a017; }
+    .stat.bad { color: #c0392b; }
+    .wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+    .overlay {
+      position: absolute; inset: 0; background: rgba(255,255,255,0.92); color: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; z-index: 999;
+    }
+    html.dark-mode .overlay { background: rgba(20,20,28,0.86); color: #ddd; }
+    .graph-host {
+      flex: 1; min-height: 0; overflow: auto; padding: 12px;
+    }
+    /* The popup container reuses the same class as the in-tutorial container
+       so the existing git-graph.css rules style the SVG identically. */
+    .graph-host .tvm-git-graph-container {
+      width: 100%;
+      min-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <span class="kind-name">Git Graph</span>
+    <span class="stat" id="statusEl">Connecting&hellip;</span>
+  </div>
+  <div class="wrap">
+    <div class="graph-host">
+      <div class="tvm-git-graph-container" id="graphEl"></div>
+    </div>
+    <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
+  </div>
+
+  <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
+  <script>
+  (function () {
+    var graphEl = document.getElementById('graphEl');
+    var overlayEl = document.getElementById('overlayEl');
+    var statusEl = document.getElementById('statusEl');
+
+    var client = SebookPopoutClient.connect({
+      role: 'graph',
+      statusEl: statusEl,
+      statusClass: 'stat',
+      overlayEl: overlayEl,
+      onMessage: handleMessage,
+    });
+
+    document.title = 'Git Graph — ' + client.tutorialTitle;
+
+    function applyHTML(html) {
+      graphEl.innerHTML = html || '';
+      client.markConnected();
+    }
+
+    function handleMessage(msg) {
+      switch (msg.type) {
+        case 'graph-snapshot':
+          if (typeof msg.darkMode === 'boolean') {
+            document.documentElement.classList.toggle('dark-mode', msg.darkMode);
+          }
+          applyHTML(msg.html);
+          break;
+        case 'graph-update':
+          applyHTML(msg.html);
+          break;
+      }
+    }
+  })();
+  </script>
+</body>
+</html>

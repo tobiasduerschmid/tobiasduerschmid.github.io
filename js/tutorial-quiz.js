@@ -96,6 +96,7 @@
         question: q.question || '', type: q.type || 'single', explanation: q.explanation || '',
         options: opts2, correctOriginals: correctOriginals, optionalOriginals: optionalOriginals,
         correctLabels: correctLabels, optionalLabels: optionalLabels,
+        option_feedback: q.option_feedback || null,
       };
     });
     if (doShuffle) shuffle(questions);
@@ -139,6 +140,7 @@
           + q.correctOrder.map(function (l) { return escapeHtml(l); }).join('</code><br><code>')
           + '</code></span></div>';
       } else {
+        var optionFeedback = q.option_feedback || {};
         html += '<div class="quiz-options">';
         q.options.forEach(function (opt, oi) {
           html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"'
@@ -147,6 +149,12 @@
             + ' data-optional-indices="' + q.optionalOriginals.join(',') + '">'
             + '<span class="option-checkbox"></span><span class="option-label">' + ALPHABET[oi] + '</span>'
             + '<span class="option-content">' + renderMarkdown(opt.text) + '</span></button>';
+          var fb = optionFeedback[opt.originalIndex];
+          if (fb == null) fb = optionFeedback[String(opt.originalIndex)];
+          if (fb) {
+            html += '<div class="option-feedback is-hidden" role="note" data-for-index="'
+              + String(opt.originalIndex) + '">' + renderMarkdown(fb) + '</div>';
+          }
         });
         html += '</div>';
         if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
@@ -217,6 +225,10 @@
       updateProgress();
       if (hostEl) hostEl.scrollTop = 0;
     }
+    function revealOptionFeedback(card, idx) {
+      var fb = card.querySelector('.option-feedback[data-for-index="' + idx + '"]');
+      if (fb) fb.classList.remove('is-hidden');
+    }
     function validateSingle(opt, card) {
       var optionsEls = card.querySelectorAll('.quiz-option');
       var exp = card.querySelector('.quiz-explanation');
@@ -231,6 +243,7 @@
           if (optionsEls[i].dataset.index === opt.dataset.correct) { correct = optionsEls[i]; break; }
         }
         if (correct) correct.classList.add('correct');
+        revealOptionFeedback(card, opt.dataset.index);
       }
       if (ca) ca.style.display = 'flex';
       if (exp) exp.classList.remove('hidden');
@@ -268,10 +281,15 @@
       } else {
         optionsEls.forEach(function (o) {
           var isSel = o.classList.contains('selected');
+          var commissionErr = isSel && !allowedSet.has(o.dataset.index);
+          var omissionErr = !isSel && correctSet.has(o.dataset.index);
           if (correctSet.has(o.dataset.index) || (isSel && optionalSet.has(o.dataset.index))) {
             o.classList.add('correct');
-          } else if (isSel && !allowedSet.has(o.dataset.index)) {
+          } else if (commissionErr) {
             o.classList.add('incorrect');
+          }
+          if (commissionErr || omissionErr) {
+            revealOptionFeedback(card, o.dataset.index);
           }
         });
       }
@@ -315,6 +333,9 @@
         optionsEls.forEach(function (o) {
           o.classList.remove('correct', 'incorrect', 'selected');
           o.removeAttribute('disabled');
+        });
+        card.querySelectorAll('.option-feedback').forEach(function (el) {
+          el.classList.add('is-hidden');
         });
         if (exp) exp.classList.add('hidden');
         if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }

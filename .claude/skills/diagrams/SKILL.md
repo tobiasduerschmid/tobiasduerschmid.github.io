@@ -1,15 +1,17 @@
 ---
 name: diagrams
-description: Rules and type catalog for drawing diagrams in this SEBook project. USE THIS SKILL EVERY SINGLE TIME you are about to draw any diagram, chart, tree, graph, architecture sketch, flow, state machine, DAG, directory listing, memory layout, or any other visual — AND every time you are even tempted to produce ASCII art (including `├──` box-drawing trees, `+---+` ASCII boxes, indented text diagrams, or Unicode line-art). ASCII art is never correct here — the project has a dedicated ArchUML renderer plus interactive git/filesystem widgets, and this skill tells you which type to pick and where to find the syntax. Trigger even when the user says "just sketch it", "show the structure", "draw a tree", "visualize X", "diagram of Y", or when you are about to include a fenced code block whose content looks like a figure rather than code.
+description: Rules and type catalog for drawing diagrams in this SEBook project. USE THIS SKILL EVERY SINGLE TIME you are about to draw any diagram, chart, tree, graph, architecture sketch, flow, state machine, DAG, directory listing, memory layout, or any other visual — AND every time you are even tempted to produce ASCII art (including `├──` box-drawing trees, `+---+` ASCII boxes, indented text diagrams, or Unicode line-art) — AND every time you are about to write a `mermaid` diagram or fenced ` ```mermaid` block, edit a page that contains one, or call `mermaid.initialize` (you must not — the project's `SebookMermaid` theme owns initialization). ASCII art is never correct here — the project has a dedicated ArchUML renderer plus interactive git/filesystem widgets, and this skill tells you which type to pick and where to find the syntax. Trigger even when the user says "just sketch it", "show the structure", "draw a tree", "visualize X", "diagram of Y", "render this flowchart", or when you are about to include a fenced code block whose content looks like a figure rather than code.
 ---
 
 # Drawing diagrams in SEBook
 
-## The one rule
+## The two rules
 
-**Never produce ASCII art.** Not for directory trees, not for architecture sketches, not for "quick" before/after pictures, not for memory layouts. If you catch yourself typing `├──`, `┌─┐`, `+---+`, or a chain of indented labels meant to look structural — stop. Pick an ArchUML type from the table below instead.
+**Rule 1 — Never produce ASCII art.** Not for directory trees, not for architecture sketches, not for "quick" before/after pictures, not for memory layouts. If you catch yourself typing `├──`, `┌─┐`, `+---+`, or a chain of indented labels meant to look structural — stop. Pick an ArchUML type from the table below instead.
 
 This rule exists because the project ships a custom renderer (`js/ArchUML/uml-bundle.js`) that turns text specs into real SVG with proper icons, connectors, and theme-aware colors. ASCII art looks broken next to that rendering, doesn't respect dark mode, doesn't scale, and can't carry annotations cleanly.
+
+**Rule 2 — If you use mermaid, go through `SebookMermaid`.** Mermaid is an *acceptable fallback* (see the Mermaid section near the end of this file for when it's appropriate), but every page that contains a mermaid diagram must load `js/mermaid-theme.js` after the mermaid CDN script, and **you must never call `mermaid.initialize` yourself**. The `SebookMermaid` theme makes mermaid output match the ArchUML visual language (palette, font, drop-shadow, dark-mode behavior) so a page mixing both reads as one figure set. Skipping the theme means the diagram lands with mermaid's pastel default styling, which clashes with every ArchUML diagram on the page.
 
 ## Pick a type
 
@@ -106,3 +108,40 @@ When you're drawing a **UML** diagram (class, sequence, state machine, component
 **Availability is not guaranteed.** The `uml-diagramming` skill is installed via a plugin and may or may not be present. If it's listed in your available skills, invoke it. If it isn't, just proceed with this skill alone — don't block on it and don't mention its absence to the user.
 
 **Do not** invoke `uml-diagramming` for the non-UML types: `diagram-freeform`, `diagram-gitgraph`, `diagram-folder-tree`, or the interactive command-lab widgets. Those aren't UML and the advisor's guidance doesn't apply.
+
+## Mermaid — REQUIRED: load `SebookMermaid`, never call `mermaid.initialize` directly
+
+ArchUML is the default for everything in the table above. **Mermaid is the only acceptable fallback** when:
+
+- You need a diagram type not in the ArchUML catalog (mind maps, timelines, journey diagrams, quadrant charts, sankey, XY plots).
+- You're embedding a diagram authored in another mermaid-using context (lecture slides, an external doc) and want it to render in-place without re-typing.
+- The diagram is simple enough that mermaid's text syntax is genuinely faster than ArchUML's, *and* the visual result will sit alongside ArchUML diagrams without a style mismatch.
+
+Anything that *is* in the ArchUML catalog (class, sequence, state, component, deployment, use case, activity, freeform, gitgraph, folder-tree, venn, ER) — use ArchUML. Don't introduce a parallel mermaid version of an ArchUML-supported type; readers experience the page as one figure set and the inconsistency is jarring.
+
+### Required: load and use SebookMermaid
+
+Every page that contains a mermaid block **must** load both scripts in this order, after the page's main content scripts:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="/js/mermaid-theme.js"></script>
+```
+
+The second script defines `window.SebookMermaid` and immediately calls `mermaid.initialize(...)` with theme variables, font, and colors that mirror the ArchUML palette in [css/uml-diagram.css](../../../css/uml-diagram.css) and [js/ArchUML/uml-bundle.js](../../../js/ArchUML/uml-bundle.js):
+
+- Stroke `#4060a0`, fill `#fdfcf8`, header fill `#d0ddef`, text `#222`, edge `#444`
+- Font: `'Segoe UI', system-ui, -apple-system, sans-serif` at `14px`
+- Dark mode: SVG `filter: invert(1) hue-rotate(180deg)` (matches the rule ArchUML applies)
+
+**Never call `mermaid.initialize` yourself** — it would override the project palette and produce a diagram that visually disagrees with adjacent ArchUML figures. The whole point of `mermaid-theme.js` is to make every mermaid diagram in the project look like it belongs next to an ArchUML diagram.
+
+### Inline ` ```mermaid` blocks in markdown
+
+Mermaid blocks inside markdown render through `SebookMermaid.render(rootEl)`. Pages that already render markdown after page-load (e.g. tutorials, the popout instructions panel) call this for you — see the call sites in [js/tutorial-code.js](../../../js/tutorial-code.js) (`_renderInlineMermaid`) and [tutorial-instructions-popup.html](../../../tutorial-instructions-popup.html) (`renderContent`). New pages that re-render markdown dynamically must call `SebookMermaid.render(rootEl)` after each `innerHTML` update.
+
+For static markdown (rendered once at build time), no call is needed — the auto-initialize in `mermaid-theme.js` covers blocks that exist on first paint.
+
+### What you write as a mermaid author
+
+A `<pre><code class="language-mermaid">…</code></pre>` block (or a fenced ` ```mermaid` block in markdown that converts to that). Keep node and edge labels short — mermaid's HTML labels can wrap, but boxes get sized at 14px font, so very long labels still need `<br/>` breaks or shorter wording. Don't set inline `style:` overrides on individual nodes that conflict with the theme palette (red/green for "good/bad" semantic accents are fine; arbitrary brand colors break the visual unity).

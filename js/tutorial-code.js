@@ -696,7 +696,10 @@
         ? '<div class="tvm-git-graph-panel" style="display:none">' +
           '<div class="tvm-git-graph-header">' +
           '<span>Git Graph</span>' +
+          '<div class="tvm-git-graph-header-actions">' +
           '<button class="tvm-git-graph-refresh" title="Refresh graph">&#x21bb; Refresh</button>' +
+          '<button class="tvm-git-graph-popout-btn" title="Pop out git graph to a new window">&#x29c9;</button>' +
+          '</div>' +
           '</div>' +
           '<div class="tvm-git-graph-container"></div>' +
           '</div>'
@@ -1024,6 +1027,8 @@
     // Git graph refresh button
     var gitRefreshBtn = this.root.querySelector('.tvm-git-graph-refresh');
     if (gitRefreshBtn) gitRefreshBtn.addEventListener('click', function () { self._refreshGitGraph(); });
+    var gitGraphPopoutBtn = this.root.querySelector('.tvm-git-graph-popout-btn');
+    if (gitGraphPopoutBtn) gitGraphPopoutBtn.addEventListener('click', function () { self._popoutGraph(); });
 
     if (this.config.useTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
@@ -3675,6 +3680,33 @@
     this._installOutputObserver();
   };
 
+  TutorialCode.prototype._graphMeta = function () {
+    if (!this.gitGraphContainerEl) return null;
+    return {
+      html: this.gitGraphContainerEl.innerHTML || '',
+      darkMode: document.documentElement.classList.contains('dark-mode'),
+    };
+  };
+
+  TutorialCode.prototype._isGraphDetached = function () {
+    return !!(this._popoutManager && this._popoutManager.isDetached('graph'));
+  };
+
+  TutorialCode.prototype._popoutGraph = function () {
+    if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
+    var meta = this._graphMeta();
+    if (!meta) return;
+    var win = this._popoutManager.detachGraph(meta);
+    if (!win) {
+      this._showPopupBlockedToast('Popup blocked — click to detach git graph',
+        this._popoutGraph.bind(this));
+      return;
+    }
+    // Trigger a fresh render so the popup gets the latest state, even if
+    // nothing has changed since the last refresh.
+    if (this._refreshGitGraph) this._refreshGitGraph();
+  };
+
   TutorialCode.prototype._collectOutputControlsState = function () {
     if (!this.root) return {};
     var argsInput = this.root.querySelector('.tvm-args-input');
@@ -4135,6 +4167,7 @@
       instructionsPopupUrl: this.config.instructionsPopupUrl || '/tutorial-instructions-popup.html',
       panePopupUrl: this.config.panePopupUrl || '/tutorial-pane-popup.html',
       outputPopupUrl: this.config.outputPopupUrl || '/tutorial-output-popup.html',
+      graphPopupUrl: this.config.graphPopupUrl || '/tutorial-graph-popup.html',
       tutorialTitle: this.config.tutorialTitle || this._deriveTutorialTitle(),
       hooks: {
         onStepChangeRequest: function (idx) {
@@ -4206,6 +4239,7 @@
           if (m) m.controls = self._collectOutputControlsState();
           return m;
         },
+        getGraphMeta: function () { return self._graphMeta(); },
         onRunOutputRequest: function (args) {
           if (typeof args === 'string') {
             var argsInput = self.root && self.root.querySelector('.tvm-args-input');
@@ -5534,6 +5568,7 @@
 
     // Render any inline UML diagrams embedded in the instructions markdown
     if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
+    this._renderInlineMermaid(this.stepContentEl);
     // Initialize any inline GitCommandLab widgets embedded in the instructions
     if (window.GitCommandLab) {
       if (GitCommandLab.initFrom) GitCommandLab.initFrom(this.stepContentEl);
@@ -5899,6 +5934,15 @@
     if (!text) return '';
     return window.marked ? window.marked.parse(text)
       : text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '<br><br>');
+  };
+
+  // Convert ```mermaid fences embedded in instruction markdown into rendered SVG.
+  // Delegates to SebookMermaid (js/mermaid-theme.js), which centralizes the
+  // theme + renderer used across every page that displays mermaid.
+  TutorialCode.prototype._renderInlineMermaid = function (rootEl) {
+    if (window.SebookMermaid && window.SebookMermaid.render) {
+      window.SebookMermaid.render(rootEl);
+    }
   };
 
   TutorialCode.prototype._escapeHtml = function (str) {
@@ -6658,6 +6702,11 @@
       this._gitGraph = new GitGraph(this.gitGraphContainerEl);
     }
     this._gitGraph.render(data);
+    if (this._isGraphDetached && this._isGraphDetached()) {
+      this._popoutManager.broadcastGraphUpdate({
+        html: this.gitGraphContainerEl.innerHTML || '',
+      });
+    }
   };
 
   // Map `git status --porcelain=v1` two-column status codes to the workbench's

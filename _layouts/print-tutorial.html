@@ -412,6 +412,7 @@
 
     .print-quiz-option {
       display: flex;
+      flex-wrap: wrap;
       align-items: flex-start;
       gap: 6px;
       padding: 2px 6px;
@@ -425,6 +426,25 @@
       background: #e8f5e9;
       color: #1a472a;
       font-weight: 600;
+    }
+
+    .print-quiz-option-feedback {
+      flex: 0 0 100%;
+      margin: 2px 0 2px 20px;
+      padding: 2px 6px;
+      border-left: 2px solid #d97706;
+      background: #fff7ed;
+      color: #7c2d12;
+      font-size: 0.95em;
+      font-weight: 400;
+      line-height: 1.3;
+      page-break-inside: avoid;
+    }
+    .print-quiz-option-feedback p { margin: 0; }
+    .print-quiz-option-feedback code {
+      background: rgba(217, 119, 6, 0.12);
+      padding: 0 3px;
+      border-radius: 2px;
     }
 
     .print-quiz-option-marker {
@@ -708,9 +728,17 @@
                 {% assign is_correct = false %}
               {% endif %}
             {% endif %}
+            {% assign opt_fb = nil %}
+            {% if q.option_feedback %}
+              {% assign opt_fb = q.option_feedback[opt_index] %}
+              {% unless opt_fb %}{% assign opt_fb_key = opt_index | append: '' %}{% assign opt_fb = q.option_feedback[opt_fb_key] %}{% endunless %}
+            {% endif %}
             <li class="print-quiz-option{% if is_correct %} correct{% endif %}">
               <span class="print-quiz-option-marker{% if q.type == 'multiple' %} multi{% endif %}"></span>
               <span>{{ opt | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span>
+              {% if opt_fb %}
+              <div class="print-quiz-option-feedback">{{ opt_fb | markdownify }}</div>
+              {% endif %}
             </li>
             {% endfor %}
           </ul>
