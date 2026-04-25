@@ -191,6 +191,11 @@
       if (!snapshot) snapshot = { steps: [] };
       snapshot.currentStep = msg.stepIndex;
       if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
+      // CRITICAL: hasTests + nextLocked must follow the new step. Without
+      // this, the popup keeps the previous step's enable/disable state and
+      // the user can click a now-stale Next button that main then no-ops.
+      if (typeof msg.hasTests === 'boolean') snapshot.hasTests = msg.hasTests;
+      if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
       if (msg.stepData && Array.isArray(snapshot.steps)) {
         snapshot.steps[msg.stepIndex] = Object.assign({}, snapshot.steps[msg.stepIndex] || {}, msg.stepData);
       }
@@ -230,6 +235,13 @@
             if (snapshot) snapshot.lastTestResultHTML = msg.resultsHTML;
             showTestPanel(msg.resultsHTML);
           }
+          break;
+        case 'quiz-required':
+          // Main is showing a quiz; the popup can't host the quiz UI, so
+          // surface a notice directing the user to the main window.
+          showTestPanel('<div class="tvm-test-results"><div class="tvm-test-summary partial">'
+            + 'Complete the quiz in the main tutorial window to advance to the next step.'
+            + '</div></div>');
           break;
         case 'dark-mode':
           applyDarkMode(msg.enabled);

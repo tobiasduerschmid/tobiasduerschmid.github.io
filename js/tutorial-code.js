@@ -4145,12 +4145,21 @@
         },
         onNextStepRequest: function () {
           // Mirror Next button behavior — only advance if not locked
-          if (self._isNextStepLocked()) return;
+          if (self._isNextStepLocked()) {
+            // Tell popups Next was a no-op so they can re-sync (in case
+            // their lock state was stale). The popup will pull the latest
+            // nav-state and disable the button accordingly.
+            self._broadcastNavState();
+            return;
+          }
           var step = self.steps[self.currentStep];
           var hasQuiz = !self.disableQuiz && step && step.quiz
             && step.quiz.questions && step.quiz.questions.length > 0;
           if (hasQuiz && !self._quizPassed.has(self.currentStep)) {
             self._showStepQuiz(self.currentStep);
+            // The quiz is shown in main only — let popups surface a notice
+            // pointing the user at the main window to complete it.
+            self._popoutManager._post('quiz-required', { stepIndex: self.currentStep });
             return;
           }
           self._stepsUnlocked.add(self.currentStep + 1);
