@@ -98,156 +98,111 @@
     <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
 
+  <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script>
   (function () {
-    var params  = new URLSearchParams(location.search);
-    var chName  = params.get('channel');
-    var kind    = params.get('kind') || 'output';
-    if (!chName) {
-      document.getElementById('overlayEl').textContent = 'Invalid popup URL.';
-      return;
+    var els = {
+      kind:       document.getElementById('kindEl'),
+      status:     document.getElementById('statusEl'),
+      overlay:    document.getElementById('overlayEl'),
+      out:        document.getElementById('outEl'),
+      frame:      document.getElementById('frameEl'),
+      args:       document.getElementById('argsEl'),
+      stream:     document.getElementById('streamFilterEl'),
+      run:        document.getElementById('runBtn'),
+      stop:       document.getElementById('stopBtn'),
+      clear:      document.getElementById('clearBtn'),
+      refresh:    document.getElementById('refreshBtn'),
+    };
+
+    var kind = new URLSearchParams(location.search).get('kind') || 'output';
+    var lastFrameContent = null;
+
+    var client = SebookPopoutClient.connect({
+      role: 'output',
+      statusEl: els.status,
+      statusClass: 'stat',
+      overlayEl: els.overlay,
+      onMessage: handleMessage,
+    });
+
+    setKind(kind);
+    document.title = labelForKind(kind) + ' — ' + client.tutorialTitle;
+
+    // ── Header control wiring (button → request main) ────────────────────
+    els.run.addEventListener('click', function () { client.post('request-run', { args: els.args.value || '' }); });
+    els.stop.addEventListener('click', function () { client.post('request-stop'); });
+    els.clear.addEventListener('click', function () { client.post('request-clear'); });
+    els.refresh.addEventListener('click', function () { client.post('request-refresh'); });
+    els.args.addEventListener('input', function () { client.post('args-change', { args: els.args.value || '' }); });
+    els.stream.addEventListener('change', function () { client.post('stream-filter-change', { filter: els.stream.value }); });
+
+    // ── View-mode helpers ────────────────────────────────────────────────
+    function labelForKind(k) {
+      return k === 'terminal' ? 'TERMINAL' : k === 'preview' ? 'LIVE PREVIEW' : 'OUTPUT';
     }
-    var sourceId = 'out-' + Math.random().toString(36).slice(2, 10);
-    var role     = 'output';
-    var channel  = new BroadcastChannel(chName);
-
-    var kindEl    = document.getElementById('kindEl');
-    var statusEl  = document.getElementById('statusEl');
-    var overlayEl = document.getElementById('overlayEl');
-    var outEl     = document.getElementById('outEl');
-    var frameEl   = document.getElementById('frameEl');
-    var argsEl    = document.getElementById('argsEl');
-    var streamEl  = document.getElementById('streamFilterEl');
-    var runBtn    = document.getElementById('runBtn');
-    var stopBtn   = document.getElementById('stopBtn');
-    var clearBtn  = document.getElementById('clearBtn');
-    var refreshBtn = document.getElementById('refreshBtn');
-    var lastHeartbeat = 0;
-    var booted = false;
-    var lastFrameSrc = null;
-
-    runBtn.addEventListener('click', function () {
-      post('request-run', { args: argsEl.value || '' });
-    });
-    stopBtn.addEventListener('click', function () { post('request-stop', {}); });
-    clearBtn.addEventListener('click', function () { post('request-clear', {}); });
-    refreshBtn.addEventListener('click', function () { post('request-refresh', {}); });
-    argsEl.addEventListener('input', function () {
-      post('args-change', { args: argsEl.value || '' });
-    });
-    streamEl.addEventListener('change', function () {
-      post('stream-filter-change', { filter: streamEl.value });
-    });
-
-    var tutorialTitle = params.get('title') || 'Tutorial';
-
     function setKind(k) {
       kind = k;
-      var label = k === 'terminal' ? 'TERMINAL'
-                : k === 'preview' ? 'LIVE PREVIEW'
-                : 'OUTPUT';
-      kindEl.textContent = label;
-      document.title = label + ' — ' + tutorialTitle;
-      // Show/hide controls per kind. Run/Stop/Clear are output-only; Refresh
-      // is preview-only; terminal has no header controls in main, so we
-      // suppress them here too.
-      if (k === 'preview') {
-        runBtn.style.display = 'none';
-        stopBtn.style.display = 'none';
-        clearBtn.style.display = 'none';
-        refreshBtn.style.display = '';
-      } else if (k === 'terminal') {
-        runBtn.style.display = 'none';
-        stopBtn.style.display = 'none';
-        clearBtn.style.display = 'none';
-        refreshBtn.style.display = 'none';
-      } else {
-        runBtn.style.display = '';
-        clearBtn.style.display = '';
-        refreshBtn.style.display = 'none';
-      }
+      els.kind.textContent = labelForKind(k);
+      document.title = labelForKind(k) + ' — ' + client.tutorialTitle;
+      // Run/Stop/Clear are output-only; Refresh is preview-only; terminal
+      // has no header controls (matches main's terminal panel).
+      var preview = k === 'preview';
+      var terminal = k === 'terminal';
+      els.run.style.display = preview || terminal ? 'none' : '';
+      els.stop.style.display = preview || terminal ? 'none' : els.stop.style.display;
+      els.clear.style.display = preview || terminal ? 'none' : '';
+      els.refresh.style.display = preview ? '' : 'none';
     }
-    setKind(kind);
-
-    function post(type, payload) {
-      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
-      if (payload) for (var k in payload) msg[k] = payload[k];
-      try { channel.postMessage(msg); } catch (e) { /* ignore */ }
-    }
-
-    function setStatus(text, cls) {
-      statusEl.textContent = text;
-      statusEl.className = 'stat' + (cls ? ' ' + cls : '');
-    }
-
-    function applyDarkMode(enabled) {
-      document.documentElement.classList.toggle('dark-mode', !!enabled);
-    }
-
     function applyControlsState(c) {
       if (!c) return;
-      if (typeof c.argsVisible === 'boolean') argsEl.style.display = c.argsVisible ? '' : 'none';
-      if (typeof c.streamFilterVisible === 'boolean') streamEl.style.display = c.streamFilterVisible ? '' : 'none';
-      if (typeof c.runDisabled === 'boolean') runBtn.disabled = c.runDisabled;
-      if (typeof c.stopVisible === 'boolean') stopBtn.style.display = c.stopVisible ? '' : 'none';
-      if (typeof c.args === 'string' && document.activeElement !== argsEl) argsEl.value = c.args;
-      if (typeof c.streamFilter === 'string') streamEl.value = c.streamFilter;
+      if (typeof c.argsVisible === 'boolean') els.args.style.display = c.argsVisible ? '' : 'none';
+      if (typeof c.streamFilterVisible === 'boolean') els.stream.style.display = c.streamFilterVisible ? '' : 'none';
+      if (typeof c.runDisabled === 'boolean') els.run.disabled = c.runDisabled;
+      if (typeof c.stopVisible === 'boolean') els.stop.style.display = c.stopVisible ? '' : 'none';
+      if (typeof c.args === 'string' && document.activeElement !== els.args) els.args.value = c.args;
+      if (typeof c.streamFilter === 'string') els.stream.value = c.streamFilter;
     }
 
     function applySnapshot(snap) {
       if (!snap) return;
-      if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
+      if (typeof snap.darkMode === 'boolean') {
+        document.documentElement.classList.toggle('dark-mode', snap.darkMode);
+      }
       setKind(snap.kind || 'output');
       if (snap.controls) applyControlsState(snap.controls);
       if (kind === 'preview') {
-        outEl.style.display = 'none';
-        frameEl.style.display = '';
-        // Detect URL vs srcdoc heuristically: URLs are short, start with
-        // a scheme. Anything else (typically an HTML doc) goes into srcdoc.
+        els.out.style.display = 'none';
+        els.frame.style.display = '';
+        // URL vs srcdoc: short content starting with a URL scheme → src,
+        // anything else (typically a full HTML doc) → srcdoc.
         var content = snap.content || '';
         var isUrl = /^(https?:|blob:|data:|\/)/.test(content) && content.length < 2048;
         var key = (isUrl ? 'src:' : 'srcdoc:') + content;
-        if (key !== lastFrameSrc) {
-          lastFrameSrc = key;
+        if (key !== lastFrameContent) {
+          lastFrameContent = key;
           if (isUrl) {
-            frameEl.removeAttribute('srcdoc');
-            frameEl.src = content;
+            els.frame.removeAttribute('srcdoc');
+            els.frame.src = content;
           } else {
-            frameEl.removeAttribute('src');
-            frameEl.srcdoc = content;
+            els.frame.removeAttribute('src');
+            els.frame.srcdoc = content;
           }
         }
       } else {
-        // terminal + output both render to <pre>
-        frameEl.style.display = 'none';
-        outEl.style.display = '';
-        if (kind === 'terminal') {
-          // Terminal serialized as plain text — render as textContent
-          outEl.textContent = snap.content || '';
-        } else {
-          // Output is HTML (may contain colored stdout/stderr spans)
-          outEl.innerHTML = snap.content || '';
-        }
-        // Auto-scroll to bottom
-        outEl.scrollTop = outEl.scrollHeight;
+        els.frame.style.display = 'none';
+        els.out.style.display = '';
+        if (kind === 'terminal') els.out.textContent = snap.content || '';
+        else els.out.innerHTML = snap.content || '';
+        els.out.scrollTop = els.out.scrollHeight;
       }
-      booted = true;
-      overlayEl.style.display = 'none';
-      setStatus('Connected', 'ok');
+      client.markConnected();
     }
 
-    channel.addEventListener('message', function (e) {
-      var msg = e.data || {};
-      if (msg.sourceId === sourceId) return;
+    // ── Role-specific message routing ────────────────────────────────────
+    function handleMessage(msg) {
       switch (msg.type) {
-        case 'heartbeat':
-          lastHeartbeat = Date.now();
-          setStatus('Connected', 'ok');
-          post('heartbeat-ack', { role: role });
-          break;
         case 'output-snapshot':
-          applySnapshot(msg);
-          break;
         case 'output-update':
           applySnapshot(msg);
           break;
@@ -255,45 +210,16 @@
           applyControlsState(msg.controls);
           break;
         case 'react-patch':
-          // Forward the hot-reload payload into our iframe — its srcdoc
-          // registered the same `react-hot-reload` message listener, so
-          // this re-renders without a full srcdoc swap.
-          if (msg.payload && frameEl && frameEl.contentWindow) {
-            try { frameEl.contentWindow.postMessage(msg.payload, '*'); }
+          // Forward hot-reload payload into our iframe — its srcdoc
+          // registered the same react-hot-reload listener, so this
+          // re-renders without a full srcdoc swap.
+          if (msg.payload && els.frame && els.frame.contentWindow) {
+            try { els.frame.contentWindow.postMessage(msg.payload, '*'); }
             catch (e) { /* ignore */ }
           }
           break;
-        case 'dark-mode':
-          applyDarkMode(msg.enabled);
-          break;
-        case 'force-close':
-          if (msg.targetRole === role) {
-            post('popup-closing', { role: role });
-            setTimeout(function () { window.close(); }, 30);
-          }
-          break;
       }
-    });
-
-    window.addEventListener('beforeunload', function () {
-      post('popup-closing', { role: role });
-    });
-
-    setInterval(function () {
-      if (!lastHeartbeat) return;
-      var age = Date.now() - lastHeartbeat;
-      if (age > 12000) setStatus('Disconnected', 'bad');
-      else if (age > 6000) setStatus('Reconnecting…', 'warn');
-    }, 1500);
-
-    post('hello', { role: role });
-    setTimeout(function () { if (!booted) post('hello', { role: role }); }, 400);
-    setTimeout(function () {
-      if (!booted) {
-        overlayEl.textContent = 'Reconnecting to tutorial…';
-        setStatus('Reconnecting…', 'warn');
-      }
-    }, 2000);
+    }
   })();
   </script>
 </body>

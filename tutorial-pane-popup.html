@@ -6,7 +6,6 @@
   <meta charset="utf-8">
   <title>Pane &mdash; Tutorial</title>
   <script>
-    // Apply theme from URL before any paint to avoid a flash.
     (function () {
       var p = new URLSearchParams(location.search);
       if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
@@ -51,94 +50,71 @@
     <div class="tpp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
 
+  <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
   (function () {
-    var params = new URLSearchParams(location.search);
-    var chName = params.get('channel');
-    var pane   = params.get('pane');
-    if (!chName || !pane) {
-      document.getElementById('overlayEl').textContent = 'Invalid popup URL.';
+    var pane = new URLSearchParams(location.search).get('pane');
+    if (!pane) {
+      document.getElementById('overlayEl').textContent = 'Invalid popup URL (missing pane).';
       return;
     }
 
-    var sourceId = 'pane-' + Math.random().toString(36).slice(2, 10);
-    var role     = 'pane:' + pane;
-    var channel  = new BroadcastChannel(chName);
+    var els = {
+      paneName: document.getElementById('paneNameEl'),
+      status:   document.getElementById('statusEl'),
+      overlay:  document.getElementById('overlayEl'),
+      tabBar:   document.getElementById('tabBar'),
+      editor:   document.getElementById('editorRoot'),
+    };
 
-    var paneNameEl = document.getElementById('paneNameEl');
-    var statusEl   = document.getElementById('statusEl');
-    var overlayEl  = document.getElementById('overlayEl');
-    var tabBarEl   = document.getElementById('tabBar');
-    var tutorialTitle = params.get('title') || 'Tutorial';
-    paneNameEl.textContent = pane === 'left' ? 'Code' : (pane === 'right' ? 'Tests' : pane);
-    document.title = paneNameEl.textContent + ' — ' + tutorialTitle;
-
+    // Editor / model state
     var monacoReady = false;
     var editor = null;
-    var models = {};                 // filename -> { model, version }
+    var models = {};         // filename → { model, version }
     var activeFile = null;
     var suppressEditEvents = false;
-    var lastHeartbeat = 0;
 
-    function post(type, payload) {
-      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
-      if (payload) for (var k in payload) msg[k] = payload[k];
-      try { channel.postMessage(msg); } catch (e) { /* ignore */ }
-    }
+    var client = SebookPopoutClient.connect({
+      role: 'pane:' + pane,
+      statusEl: els.status,
+      statusClass: 'tpp-status',
+      overlayEl: els.overlay,
+      onMessage: handleMessage,
+      onDarkModeChange: function (enabled) {
+        if (window.monaco) {
+          monaco.editor.setTheme(window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
+                                  : (enabled ? 'vs-dark' : 'vs'));
+        }
+      },
+      getFinalState: function () {
+        var finalContents = {};
+        Object.keys(models).forEach(function (fn) { finalContents[fn] = models[fn].model.getValue(); });
+        return { finalContents: finalContents };
+      },
+    });
 
-    function setStatus(text, cls) {
-      statusEl.textContent = text;
-      statusEl.className = 'tpp-status' + (cls ? ' ' + cls : '');
-    }
+    var paneLabel = pane === 'left' ? 'Code' : pane === 'right' ? 'Tests' : pane;
+    els.paneName.textContent = paneLabel;
+    document.title = paneLabel + ' — ' + client.tutorialTitle;
 
-    function applyDarkMode(enabled) {
-      document.documentElement.classList.toggle('dark-mode', !!enabled);
-      if (window.monaco) {
-        var themed = window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
-          : (enabled ? 'vs-dark' : 'vs');
-        monaco.editor.setTheme(themed);
-      }
-    }
-
-    function languageForFile(fn, requested) {
-      if (window.SebookMonacoLangs) return window.SebookMonacoLangs.languageForFile(fn, requested);
-      return requested || 'plaintext';
-    }
-
-    function renderTabs() {
-      tabBarEl.innerHTML = '';
-      Object.keys(models).forEach(function (filename) {
-        var tab = document.createElement('div');
-        tab.className = 'tvm-tab' + (filename === activeFile ? ' active' : '');
-        tab.textContent = filename;
-        tab.title = filename;
-        tab.addEventListener('click', function () { setActiveFile(filename); });
-        tabBarEl.appendChild(tab);
-      });
-    }
-
+    // ── Editor lifecycle ─────────────────────────────────────────────────
     function ensureMonacoLoaded(cb) {
-      if (monacoReady) { cb(); return; }
+      if (monacoReady) return cb();
       require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
       require(['vs/editor/editor.main'], function () {
         monacoReady = true;
         if (window.SebookMonacoLangs) window.SebookMonacoLangs.register(monaco);
         var dark = document.documentElement.classList.contains('dark-mode');
         var theme = window.SebookMonacoLangs ? (dark ? 'sebook-dark' : 'sebook-light')
-          : (dark ? 'vs-dark' : 'vs');
-        editor = monaco.editor.create(document.getElementById('editorRoot'), {
-          theme: theme,
-          fontSize: 14,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          tabSize: 2,
-          wordWrap: 'on',
-          padding: { top: 8 },
+                                              : (dark ? 'vs-dark' : 'vs');
+        editor = monaco.editor.create(els.editor, {
+          theme: theme, fontSize: 14, minimap: { enabled: false },
+          scrollBeyondLastLine: false, automaticLayout: true,
+          tabSize: 2, wordWrap: 'on', padding: { top: 8 },
         });
-        // Wire content change → broadcast file-edit for the active file
+
         var debounceTimer;
         function flushEdit() {
           if (!activeFile) return;
@@ -146,43 +122,57 @@
           if (!entry) return;
           clearTimeout(debounceTimer);
           entry.version = (entry.version || 0) + 1;
-          post('file-edit', {
-            filename: activeFile,
-            content: entry.model.getValue(),
-            version: entry.version,
+          client.post('file-edit', {
+            filename: activeFile, content: entry.model.getValue(), version: entry.version,
           });
         }
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-          function () {
-            flushEdit();
-            if (activeFile) post('request-save', { filename: activeFile });
-          }
-        );
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+          flushEdit();
+          if (activeFile) client.post('request-save', { filename: activeFile });
+        });
         editor.onDidChangeModelContent(function () {
           if (suppressEditEvents) return;
           if (!activeFile) return;
           clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(flushEdit, 100);
+          debounceTimer = setTimeout(flushEdit, 30);
         });
         cb();
       });
     }
 
-    function setActiveFile(filename) {
-      if (!models[filename]) return;
-      activeFile = filename;
+    function languageForFile(fn, requested) {
+      return window.SebookMonacoLangs
+        ? window.SebookMonacoLangs.languageForFile(fn, requested)
+        : (requested || 'plaintext');
+    }
+
+    function renderTabs() {
+      els.tabBar.innerHTML = '';
+      Object.keys(models).forEach(function (fn) {
+        var tab = document.createElement('div');
+        tab.className = 'tvm-tab' + (fn === activeFile ? ' active' : '');
+        tab.textContent = fn;
+        tab.title = fn;
+        tab.addEventListener('click', function () { setActiveFile(fn); });
+        els.tabBar.appendChild(tab);
+      });
+    }
+
+    function setActiveFile(fn) {
+      if (!models[fn]) return;
+      activeFile = fn;
       ensureMonacoLoaded(function () {
-        editor.setModel(models[filename].model);
+        editor.setModel(models[fn].model);
         renderTabs();
       });
     }
 
     function applyPaneSnapshot(snap) {
       if (!snap) return;
-      if (typeof snap.darkMode === 'boolean') applyDarkMode(snap.darkMode);
+      if (typeof snap.darkMode === 'boolean') {
+        document.documentElement.classList.toggle('dark-mode', snap.darkMode);
+      }
       ensureMonacoLoaded(function () {
-        // Build/update models
         var seen = {};
         var snapFiles = snap.files || {};
         Object.keys(snapFiles).forEach(function (fn) {
@@ -192,8 +182,7 @@
           if (!models[fn]) {
             models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
           } else {
-            var current = models[fn].model.getValue();
-            if (current !== (sf.content || '')) {
+            if (models[fn].model.getValue() !== (sf.content || '')) {
               suppressEditEvents = true;
               try { models[fn].model.setValue(sf.content || ''); }
               finally { suppressEditEvents = false; }
@@ -201,105 +190,48 @@
             if (typeof sf.version === 'number') models[fn].version = sf.version;
           }
         });
-        // Drop models for filenames no longer in the pane
+        // Drop models for filenames no longer in this pane.
         Object.keys(models).forEach(function (fn) {
           if (!seen[fn]) {
             try { models[fn].model.dispose(); } catch (e) { /* ignore */ }
             delete models[fn];
           }
         });
-        // Set active file
         var prefer = snap.activeFile || Object.keys(models)[0];
         if (prefer && models[prefer]) {
           activeFile = prefer;
           editor.setModel(models[activeFile].model);
         }
         renderTabs();
-        overlayEl.style.display = 'none';
-        setStatus('Connected', 'ok');
+        client.markConnected();
       });
     }
 
-    channel.addEventListener('message', function (e) {
-      var msg = e.data || {};
-      if (msg.sourceId === sourceId) return;
+    // ── Role-specific message routing ────────────────────────────────────
+    function handleMessage(msg) {
       switch (msg.type) {
-        case 'heartbeat':
-          lastHeartbeat = Date.now();
-          setStatus('Connected', 'ok');
-          post('heartbeat-ack', { role: role });
-          break;
         case 'pane-snapshot':
           if (msg.pane === pane) applyPaneSnapshot(msg);
           break;
         case 'state-snapshot':
-          if (typeof msg.darkMode === 'boolean') applyDarkMode(msg.darkMode);
+          if (typeof msg.darkMode === 'boolean') {
+            document.documentElement.classList.toggle('dark-mode', msg.darkMode);
+          }
           break;
         case 'step-change':
-          // If the new step's file list shares no files with our pane, mark
-          // ourselves as disconnected. Main also re-broadcasts pane-snapshot
-          // when the pane is re-detached after step change.
-          if (msg.fileList && Array.isArray(msg.fileList)) {
+          // If new step shares no files with our pane, surface a hint.
+          if (Array.isArray(msg.fileList)) {
             var anyKept = Object.keys(models).some(function (fn) {
               return msg.fileList.indexOf(fn) !== -1;
             });
-            if (!anyKept) setStatus('Step changed — close to reattach', 'warn');
-          }
-          break;
-        case 'dark-mode':
-          applyDarkMode(msg.enabled);
-          break;
-        case 'force-close':
-          if (msg.targetRole === role) {
-            sendClosingThenClose();
+            if (!anyKept) client.setStatus('Step changed — close to reattach', 'warn');
           }
           break;
         case 'save-confirmed':
-          if (msg.filename && models[msg.filename]) {
-            setStatus('Saved ✓', 'ok');
-            setTimeout(function () { setStatus('Connected', 'ok'); }, 1500);
-          }
+          if (msg.filename && models[msg.filename]) client.flashStatus('Saved ✓', 'ok');
           break;
       }
-    });
-
-    function sendClosingThenClose() {
-      try {
-        var finalContents = {};
-        Object.keys(models).forEach(function (fn) {
-          finalContents[fn] = models[fn].model.getValue();
-        });
-        post('popup-closing', { role: role, finalContents: finalContents });
-      } catch (e) { /* ignore */ }
-      setTimeout(function () { window.close(); }, 30);
     }
-
-    window.addEventListener('beforeunload', function () {
-      try {
-        var finalContents = {};
-        Object.keys(models).forEach(function (fn) {
-          finalContents[fn] = models[fn].model.getValue();
-        });
-        post('popup-closing', { role: role, finalContents: finalContents });
-      } catch (e) { /* ignore */ }
-    });
-
-    // Heartbeat watcher
-    setInterval(function () {
-      if (!lastHeartbeat) return;
-      var age = Date.now() - lastHeartbeat;
-      if (age > 12000) setStatus('Disconnected', 'bad');
-      else if (age > 6000) setStatus('Reconnecting…', 'warn');
-    }, 1500);
-
-    post('hello', { role: role });
-    setTimeout(function () { if (!Object.keys(models).length) post('hello', { role: role }); }, 400);
-    setTimeout(function () {
-      if (!Object.keys(models).length) {
-        overlayEl.textContent = 'Reconnecting to tutorial…';
-        setStatus('Reconnecting…', 'warn');
-      }
-    }, 2000);
   })();
   </script>
 </body>
