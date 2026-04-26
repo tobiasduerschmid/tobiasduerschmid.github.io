@@ -297,6 +297,13 @@
         outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
         editorSplit: config.editor_split || false,
         outputHeight: config.output_height || null,
+        // Optional independent layout overrides:
+        //   `output_position: 'bottom-left'` — hoist Output panel into the left column.
+        //   `run_label: 'Test'` — override the Run button label.
+        // Combined with `uml_position: 'bottom-right'`, you get a clean
+        // UML-bottom-right / Output-bottom-left swap.
+        output_position: config.output_position || null,
+        run_label: config.run_label || 'Run',
       });
       window._tutorial = tutorial;
       tutorial.start();

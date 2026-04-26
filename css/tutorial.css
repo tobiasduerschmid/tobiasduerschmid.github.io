@@ -195,6 +195,13 @@ html, body {
   overflow: hidden;
 }
 
+/* When `uml_position: 'right'` is paired with `output_position: 'bottom-left'`,
+   the UML pane lives inside the workspace using the SAME class as the bottom-left
+   mode (`.tvm-uml-bottom-left-view`). All CSS rules below — light-mode overrides,
+   sizing, toolbar styling — therefore apply unchanged. The only positional
+   difference is the parent (`.tvm-workspace` vs. `.tvm-instructions-panel`),
+   handled by the parent's own flex layout. No new CSS needed. */
+
 /* Light mode overrides for left tab bar */
 html:not(.dark-mode) .tvm-left-tab-bar {
   background: #f3f4f6;

@@ -227,6 +227,16 @@
     this._umlPositionRight = options.uml_position === 'right'; // diagram in right bottom tab
     this._umlPositionBelow = options.uml_position === 'below'; // diagram below instructions (always visible)
     this._umlPositionBottomLeft = options.uml_position === 'bottom-left'; // diagram pane below left panel (always visible)
+    // bottom-right SWAPS the UML and Output panels: UML goes below editors (workspace),
+    // and Output moves below instructions (left column). Use when the live class
+    // diagram is more important than test output during the work cycle.
+    // Independent of UML positioning: hoist the Output panel into the left column
+    // (below instructions). When combined with `uml_position: 'right'`, the right
+    // tabbed panel reduces to UML-only (no Output tab/view), giving you a clean
+    // Output-bottom-left / UML-bottom-right layout.
+    this._outputPositionBottomLeft = options.output_position === 'bottom-left';
+    // Optional override of the Run button label (e.g. "Test" for pytest-driven tutorials).
+    this._runLabel = options.run_label || 'Run';
     this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
@@ -452,8 +462,12 @@
         '<div class="tvm-preview-container">' +
         '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
-    } else if (this._umlPositionRight && this._umlDiagramEnabled) {
-      // Right-positioned UML: output + UML share a tabbed bottom panel
+    } else if (this._umlPositionRight && this._umlDiagramEnabled && !this._outputPositionBottomLeft) {
+      // Right-positioned UML, default Output placement: output + UML share a
+      // tabbed bottom panel in the workspace. (When `output_position: bottom-left`
+      // is ALSO set, this branch is skipped — the simple Output panel below is
+      // built for the left column, and a standalone UML pane is rendered in
+      // the workspace bottom-pane block further down.)
       var umlRightToolbar =
         '<div class="tvm-diagram-toolbar">' +
         '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
@@ -487,7 +501,7 @@
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
-        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
+        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
@@ -511,7 +525,7 @@
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
-        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
+        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
@@ -523,6 +537,11 @@
     var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight && !this._umlPositionBelow && !this._umlPositionBottomLeft;
     var useBelowUml = this._umlDiagramEnabled && this._umlPositionBelow;
     var useBottomLeftUml = this._umlDiagramEnabled && this._umlPositionBottomLeft;
+    // Independent: when set, the Output panel is rendered in the left column
+    // (below instructions) instead of below the editors in the workspace.
+    // Combined with `uml_position: 'right'`, you get the recommended layout:
+    // editors top-right, UML bottom-right (no tabs), Output bottom-left.
+    var useBottomLeftOutput = this._outputPositionBottomLeft;
     this.root.innerHTML =
       '<div class="tvm-loading">' +
       '<div class="tvm-loading-spinner"></div>' +
@@ -622,6 +641,15 @@
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
         : '') +
+      // Independent option: when output_position: bottom-left is set, the Output
+      // panel is hoisted into the left column (below instructions). It uses the
+      // SAME splitter class as the bottom-left UML mode (`.tvm-uml-bottom-left-splitter`)
+      // and inserts the Output panel directly — all existing CSS rules and the
+      // splitter-resize wiring just work.
+      (useBottomLeftOutput
+        ? '<div class="tvm-uml-bottom-left-splitter" title="Drag to resize"></div>' +
+          terminalHtml
+        : '') +
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
       '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
@@ -712,7 +740,40 @@
           '</div>'
         : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
-      terminalHtml +
+      // Workspace bottom-pane:
+      //   - If Output was hoisted to bottom-left AND uml_position is 'right',
+      //     render the SAME UML pane that the bottom-left mode uses (same
+      //     class `.tvm-uml-bottom-left-view`, same HTML, same wiring). Only
+      //     the parent container differs — that's the entire point of using
+      //     the same class: every CSS rule, every JS handler (popout,
+      //     fullscreen, zoom, splitter resolution) works automatically.
+      //   - If Output was hoisted to bottom-left WITHOUT a right-mode UML,
+      //     leave the workspace editor-only.
+      //   - Otherwise render the regular Output panel (which may itself be
+      //     a right-tabbed panel containing UML, see the `_umlPositionRight`
+      //     branch above).
+      ((useBottomLeftOutput && this._umlPositionRight && this._umlDiagramEnabled)
+        ? '<div class="tvm-uml-bottom-left-view">' +
+          '<div class="tvm-diagram-toolbar">' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<div class="tvm-diagram-zoom-controls">' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">−</button>' +
+          '<span class="tvm-diagram-zoom-label">100%</span>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">✕</button>' +
+          '</div>' +
+          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">⛶</button>' +
+          '<button class="tvm-diagram-popout-btn" title="Open in separate window">⧉</button>' +
+          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">↻ Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">↻</button>' +
+          '</div>' +
+          '<div class="tvm-diagram-content"></div>' +
+          '</div>'
+        : useBottomLeftOutput
+        ? ''
+        : terminalHtml) +
       '</div>' +
       '</div>';
 
@@ -731,7 +792,14 @@
     this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
     this._umlContainer = this._umlPositionRight
-      ? this.root.querySelector('.tvm-uml-right-view')
+      // Right mode normally uses .tvm-uml-right-view (inside the right-tabbed
+      // panel). When `output_position: bottom-left` is also set, the right
+      // tabbed panel is suppressed and a standalone UML pane is rendered in
+      // the workspace using the SAME class (`.tvm-uml-bottom-left-view`) that
+      // bottom-left mode uses — same HTML, same wiring, same CSS, only the
+      // parent container differs.
+      ? (this.root.querySelector('.tvm-uml-right-view') ||
+         this.root.querySelector('.tvm-uml-bottom-left-view'))
       : this._umlPositionBelow
         ? this.root.querySelector('.tvm-uml-below-view')
         : this._umlPositionBottomLeft
@@ -1173,18 +1241,50 @@
     var workspace = this.root.querySelector('.tvm-workspace');
     this._makeDraggable(hsplitter, 'vertical', instructions, workspace);
 
+    // Workspace vsplitter — sits between the editor panel (top) and whatever
+    // happens to be in the workspace bottom slot. Find that bottom element by
+    // checking actual children of the workspace, not by guessing class names.
+    // This way the splitter just works regardless of whether the bottom is an
+    // Output panel, a terminal, a preview, or a UML pane (re-using the same
+    // .tvm-uml-bottom-left-view class as everywhere else).
     var vsplitter = this.root.querySelector('.tvm-vsplitter');
     var editorPanel = this.root.querySelector('.tvm-editor-panel');
-    var bottomPanel = this.root.querySelector(
-      this.config.useTerminal ? '.tvm-terminal-panel' :
-        this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
-    this._makeDraggable(vsplitter, 'horizontal', editorPanel, bottomPanel);
+    var workspaceEl = this.root.querySelector('.tvm-workspace');
+    var workspaceBottom = null;
+    if (workspaceEl && vsplitter) {
+      var sibling = vsplitter.nextElementSibling;
+      while (sibling) {
+        if (sibling.matches(
+              '.tvm-output-panel, .tvm-terminal-panel, .tvm-preview-panel,' +
+              ' .tvm-uml-bottom-left-view, .tvm-uml-below-view')) {
+          workspaceBottom = sibling;
+          break;
+        }
+        sibling = sibling.nextElementSibling;
+      }
+    }
+    if (vsplitter && editorPanel && workspaceBottom) {
+      this._makeDraggable(vsplitter, 'horizontal', editorPanel, workspaceBottom);
+    } else if (vsplitter) {
+      // No bottom panel exists (workspace is editor-only because Output was
+      // hoisted away and no UML pane took its place) — hide the vsplitter so
+      // it can't be dragged into a broken state.
+      vsplitter.style.display = 'none';
+    }
 
+    // Bottom-left splitter — sits in the left column between the steps view
+    // and the always-visible UML pane (when uml_position: bottom-left) OR the
+    // hoisted Output panel (when output_position: bottom-left). The same
+    // splitter element handles both: it just resizes whatever sibling sits
+    // beneath it.
     var umlBottomLeftSplitter = this.root.querySelector('.tvm-uml-bottom-left-splitter');
     if (umlBottomLeftSplitter) {
       var stepsView = this.root.querySelector('.tvm-steps-view');
-      var umlBottomLeftView = this.root.querySelector('.tvm-uml-bottom-left-view');
-      this._makeDraggable(umlBottomLeftSplitter, 'horizontal', stepsView, umlBottomLeftView);
+      // The element directly after the splitter is what gets resized.
+      var resizeTarget = umlBottomLeftSplitter.nextElementSibling;
+      if (stepsView && resizeTarget) {
+        this._makeDraggable(umlBottomLeftSplitter, 'horizontal', stepsView, resizeTarget);
+      }
     }
 
     // Split-editor divider — drag to resize the two panes
@@ -2464,7 +2564,7 @@
       self._runBrowserCode(code, function (text, kind) {
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
       }, function () {
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
         if (stopBtn) { stopBtn.style.display = 'none'; }
       });
       return;
@@ -2478,7 +2578,7 @@
         var runBtn = self.root.querySelector('.tvm-run-btn');
         if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
         self._postWorker({ type: 'run', path: sqlPath }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
           if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
         });
       });
@@ -2496,7 +2596,7 @@
         var argsInp = self.root.querySelector('.tvm-args-input');
         if (argsInp) query = argsInp.value.trim();
         self._postWorker({ type: 'run', path: plPath, query: query }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
           if (msg.exitCode !== 0 && !query) self._appendOutput('\n\u2717 Error\n', 'err');
         });
       });
@@ -2517,7 +2617,7 @@
         var runBtn = self.root.querySelector('.tvm-run-btn');
         if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Compiling…'; }
         self._postWorker({ type: 'run', path: javaPath }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
           if (msg.exitCode === 0) {
             self._appendOutput('\n\u2713 Done\n', 'info');
           } else {
@@ -2547,7 +2647,7 @@
       }
 
       self._postWorker({ type: 'run', path: path, args: args }, function (msg) {
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
         if (msg.exitCode === 0) {
           self._appendOutput('\n\u2713 Done\n', 'info');
         } else {
@@ -5100,6 +5200,13 @@
 
     el.innerHTML = '';                       // clear FIRST so snapshot is right
     this._applyUMLColors(el);
+    // The bundle's prepareDiagramContainer (which the main-thread render path
+    // calls) sets `display: block !important` on the container. Without it,
+    // the surrounding flex layout shrinks the SVG to fit and zoom (which sets
+    // svg.style.width to a pixel value) has no visible effect. Mirror it here.
+    if (window.UMLShared && typeof UMLShared.prepareDiagramContainer === 'function') {
+      try { UMLShared.prepareDiagramContainer(el, diagramType); } catch (_) {}
+    }
 
     function applySVG(svgStr) {
       el.innerHTML = svgStr;

@@ -19,13 +19,21 @@ output_height: "25%"
 # others on quiz score.
 require_tests: false
 
-# Live UML class diagram in the bottom-left panel. Pairs with the inline
-# "before" diagrams embedded in step instructions for dual coding.
+# Layout: code on top-left, tests on top-right (split editors).
+# `uml_position: right` puts the live class diagram on the bottom-right (below editors).
+# `output_position: bottom-left` (independent flag) hoists the Output panel into
+# the left column (below instructions). Combined, these give the recommended
+# refactoring-tutorial layout: instructions + test output on the left, code +
+# class diagram on the right.
 uml_diagram: true
-uml_position: bottom-left
+uml_position: right
+output_position: bottom-left
 uml_default_view: true
 uml_default_type: class
 uml_class_layout: landscape
+
+# Override the Run button label — this tutorial runs pytest, not arbitrary code.
+run_label: "Test"
 
 autosave_type: files
 
