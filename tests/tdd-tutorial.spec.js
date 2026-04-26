@@ -105,7 +105,7 @@ test.describe.serial('TDD Tutorial', () => {
     const tabs = page.locator('.tvm-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
     expect(await tabs.count()).toBeGreaterThanOrEqual(1);
-    await expect(page.locator('.tvm-editor-container')).toBeVisible();
+    await expect(page.locator('.tvm-editor-container').first()).toBeVisible();
   });
 
   // --- Run / clear ---
@@ -114,7 +114,7 @@ test.describe.serial('TDD Tutorial', () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
     await setEditorContent(page, 'print("Hello TDD!")');
-    await page.locator('.tvm-editor-container').click();
+    await page.locator('.tvm-editor-container').first().click();
     await page.keyboard.press('Control+s');
     await page.waitForTimeout(500);
     await clickRun(page);
@@ -132,7 +132,7 @@ test.describe.serial('TDD Tutorial', () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
     await setEditorContent(page, 'def broken(:');
-    await page.locator('.tvm-editor-container').click();
+    await page.locator('.tvm-editor-container').first().click();
     await page.keyboard.press('Control+s');
     await page.waitForTimeout(500);
     await clickRun(page);
@@ -219,6 +219,12 @@ test.describe.serial('TDD Tutorial — step-by-step', () => {
         await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
         await page.locator('.tvm-quiz-continue-btn').click();
         await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
+      });
+    } else if (!isLast && step.tests?.length > 0) {
+      // No quiz on this step — advance to the next step directly via Next.
+      test(`step ${i + 1} "${step.title}": advances to step ${i + 2}`, async () => {
+        await page.locator('.tvm-btn-next').click();
+        await expect(page.locator('.tvm-step-btn').nth(i + 1)).toHaveClass(/active/, { timeout: 5_000 });
       });
     }
   }

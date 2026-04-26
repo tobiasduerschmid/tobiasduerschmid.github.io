@@ -2333,5 +2333,8 @@
    * =================================================================== */
 
   global.analyzeJavaSources = analyzeJavaSources;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { analyzeJavaSources };
+  }
 
 })(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));

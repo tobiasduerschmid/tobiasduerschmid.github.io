@@ -97,7 +97,7 @@ test.describe.serial('Testing Foundations Tutorial', () => {
     const tabs = page.locator('.tvm-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
     expect(await tabs.count()).toBeGreaterThanOrEqual(1);
-    await expect(page.locator('.tvm-editor-container')).toBeVisible();
+    await expect(page.locator('.tvm-editor-container').first()).toBeVisible();
   });
 
   // --- Run / clear ---
@@ -106,7 +106,7 @@ test.describe.serial('Testing Foundations Tutorial', () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
     await setEditorContent(page, 'print("Hello Foundations!")');
-    await page.locator('.tvm-editor-container').click();
+    await page.locator('.tvm-editor-container').first().click();
     await page.keyboard.press('Control+s');
     await page.waitForTimeout(500);
     await clickRun(page);
