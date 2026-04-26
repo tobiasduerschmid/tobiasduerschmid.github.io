@@ -1069,20 +1069,40 @@ def add_track(title, artist, *extras, **metadata):
       ['title', 'artist']
     ).error).toContain('*args');
 
-    const defaults = text`
+    // Literal and empty-container defaults are now supported (P1.7) — verify
+    // simple-string defaults succeed and reach the dataclass.
+    const literalDefaults = text`
 def add_track(title, artist="unknown", album="single"):
     return title, artist, album
 `;
-    workspace = workspaceFrom({ 'tracks.py': defaults }, 'tracks.py');
+    workspace = workspaceFrom({ 'tracks.py': literalDefaults }, 'tracks.py');
+    analysis = analyze(workspace);
+    const literalPlan = adapter.planParameterObject(
+      workspace,
+      analysis,
+      'tracks.py',
+      positionOn(literalDefaults, 'return title'),
+      'TrackInfo',
+      ['artist', 'album']
+    );
+    expect(literalPlan.error).toBeFalsy();
+
+    // Non-literal, non-empty-container defaults still refuse with a precise
+    // message naming the offending parameter and default expression.
+    const fancyDefaults = text`
+def add_track(title, artist=resolve_artist(), album=DEFAULT_ALBUM):
+    return title, artist, album
+`;
+    workspace = workspaceFrom({ 'tracks.py': fancyDefaults }, 'tracks.py');
     analysis = analyze(workspace);
     expect(adapter.planParameterObject(
       workspace,
       analysis,
       'tracks.py',
-      positionOn(defaults, 'return title'),
+      positionOn(fancyDefaults, 'return title'),
       'TrackInfo',
       ['artist', 'album']
-    ).error).toContain('defaults');
+    ).error).toMatch(/literal|empty container|default/);
 
     const collision = text`
 class TrackInfo:
@@ -2546,5 +2566,549 @@ def extracted_code(title, artist, album, duration_sec, genre, release_year, bpm,
     for (const [name, foreground, background] of pairs) {
       expect(contrastRatio(foreground, background), name).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  // ========================================================================
+  // P0 regression tests — correctness bugs found in the engine review.
+  // ========================================================================
+
+  test('P0.4 extract method does not duplicate self in helper signature when selection references self', () => {
+    const before = text`
+class Streaming:
+    def process(self, user, track):
+        url = self.build_url(track)
+        log = f"playing {url}"
+        print(log)
+`;
+    const workspace = workspaceFrom({ 'streaming.py': before }, 'streaming.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(
+      workspace,
+      analysis,
+      'streaming.py',
+      selectionBetween(before, 'url = self.build_url(track)', 'log = f"playing {url}"'),
+      'compute_log'
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['streaming.py'];
+    // The helper signature must not have duplicate self.
+    expect(result).not.toContain('def compute_log(self, self,');
+    expect(result).not.toContain('self.compute_log(self,');
+    expect(result).toContain('def compute_log(self, track):');
+    expect(result).toContain('log = self.compute_log(track)');
+  });
+
+  test('P0.4 extract method handles classmethod receivers without duplicating cls', () => {
+    const before = text`
+class Streaming:
+    @classmethod
+    def from_config(cls, name, value):
+        url = cls.build_url(name)
+        prefix = f"{value}:{url}"
+        return prefix
+`;
+    const workspace = workspaceFrom({ 'streaming.py': before }, 'streaming.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(
+      workspace,
+      analysis,
+      'streaming.py',
+      selectionBetween(before, 'url = cls.build_url(name)', 'prefix = f"{value}:{url}"'),
+      'build_prefix'
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['streaming.py'];
+    // No duplicate cls in the helper signature or call site.
+    expect(result).not.toMatch(/def build_prefix\(cls, cls,/);
+    expect(result).not.toMatch(/cls\.build_prefix\(cls,/);
+  });
+
+  test('P0.5 extract class does not duplicate self when selected method bodies reference self', () => {
+    const before = text`
+class StreamingApp:
+    def __init__(self, region):
+        self.subscription_tier = "free"
+        self.payment_method = "none"
+
+    def charge(self, amount):
+        return self.subscription_tier + ":" + self.payment_method
+`;
+    const workspace = workspaceFrom({ 'app.py': before }, 'app.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtractClass(
+      workspace,
+      analysis,
+      'app.py',
+      positionOn(before, 'class StreamingApp:'),
+      'BillingManager',
+      'billing',
+      ['subscription_tier', 'payment_method'],
+      ['charge']
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['app.py'];
+    expect(result).not.toContain('def __init__(self, self');
+    expect(result).not.toContain('BillingManager(self,');
+  });
+
+  test('P0.5 extract class extracted __init__ uses real constructor params (no duplicate self)', () => {
+    const before = text`
+class StreamingApp:
+    def __init__(self, region: str, default_tier: str):
+        self.subscription_tier = default_tier
+        self.payment_method = "none"
+`;
+    const workspace = workspaceFrom({ 'app.py': before }, 'app.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtractClass(
+      workspace,
+      analysis,
+      'app.py',
+      positionOn(before, 'class StreamingApp:'),
+      'BillingManager',
+      'billing',
+      ['subscription_tier', 'payment_method'],
+      []
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['app.py'];
+    expect(result).toContain('class BillingManager:');
+    // default_tier IS a real init param dependency; self/cls must not appear as a dep.
+    expect(result).toMatch(/def __init__\(self, default_tier: str\) -> None:/);
+  });
+
+  test('P0.6 extract method refuses to overwrite a sibling method on the same class', () => {
+    const before = text`
+class Player:
+    def compute_total(self, x):
+        return x * 2
+
+    def process(self, x):
+        result = x + 1
+        return result
+`;
+    const workspace = workspaceFrom({ 'player.py': before }, 'player.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(
+      workspace,
+      analysis,
+      'player.py',
+      selectionAt(before, 'result = x + 1'),
+      'compute_total'
+    );
+    expect(plan.error).toMatch(/already exists/);
+  });
+
+  test('P0.6 extract method allows a different helper name alongside an existing sibling method', () => {
+    const before = text`
+class Player:
+    def compute_total(self, x):
+        return x * 2
+
+    def process(self, x):
+        result = x + 1
+        return result
+`;
+    const workspace = workspaceFrom({ 'player.py': before }, 'player.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(
+      workspace,
+      analysis,
+      'player.py',
+      selectionAt(before, 'result = x + 1'),
+      'compute_increment'
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['player.py'];
+    // Both methods coexist after extraction.
+    expect(result).toContain('def compute_total(self, x):');
+    expect(result).toContain('def compute_increment(self, x):');
+  });
+
+  test('P0.1 introduce parameter object generates local copy when function rebinds a selected parameter', () => {
+    const before = text`
+def normalize_payment(amount, currency):
+    currency = currency.upper()
+    return f"{amount} {currency}"
+
+normalize_payment(10, "usd")
+`;
+    const workspace = workspaceFrom({ 'pay.py': before }, 'pay.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planParameterObject(
+      workspace,
+      analysis,
+      'pay.py',
+      positionOn(before, 'def normalize_payment'),
+      'PaymentParams',
+      ['amount', 'currency']
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['pay.py'];
+    // Rebound 'currency' gets a local copy; the rebinding stays as a local assignment.
+    expect(result).toContain('currency = payment_params.currency');
+    expect(result).toContain('currency = currency.upper()');
+    // Read-only 'amount' is rewritten to obj.amount.
+    expect(result).toContain('payment_params.amount');
+    // CRITICAL: must not write back into the parameter object (would mutate caller).
+    expect(result).not.toMatch(/payment_params\.currency\s*=/);
+  });
+
+  test('P0.2 move method refuses dunder/special methods', () => {
+    const before = text`
+class Source:
+    def __len__(self, target):
+        return target.size + 1
+
+class Target:
+    pass
+`;
+    const workspace = workspaceFrom({ 'mod.py': before }, 'mod.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planMoveMethod(
+      workspace,
+      analysis,
+      'mod.py',
+      positionOn(before, 'def __len__'),
+      'Target'
+    );
+    expect(plan.error).toMatch(/special|dunder/);
+  });
+
+  test('P0.3 move method refuses methods that use name-mangled __private attributes', () => {
+    const before = text`
+class Source:
+    def __init__(self):
+        self.__secret = 42
+
+    def transfer(self, target):
+        return self.__secret + target.value
+
+class Target:
+    pass
+`;
+    const workspace = workspaceFrom({ 'mod.py': before }, 'mod.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planMoveMethod(
+      workspace,
+      analysis,
+      'mod.py',
+      positionOn(before, 'def transfer'),
+      'Target'
+    );
+    expect(plan.error).toMatch(/name-mangled|__private/);
+  });
+
+  test('P1.1 rename refuses when eval/exec references the target as a string literal', () => {
+    const before = text`
+def old_helper(x):
+    return x
+
+eval("old_helper(1)")
+`;
+    const workspace = workspaceFrom({ 'mod.py': before }, 'mod.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planRename(
+      workspace,
+      analysis,
+      'mod.py',
+      positionOn(before, 'old_helper(x)'),
+      'old_helper',
+      'new_helper'
+    );
+    expect(plan.error).toMatch(/eval|exec|references "old_helper"/);
+  });
+
+  test('P1.1 rename warns when getattr/setattr references the target as a string literal', () => {
+    const before = text`
+class Track:
+    def __init__(self):
+        self.title = ""
+
+t = Track()
+value = getattr(t, "title")
+`;
+    const workspace = workspaceFrom({ 'mod.py': before }, 'mod.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planRename(
+      workspace,
+      analysis,
+      'mod.py',
+      positionOn(before, 'self.title = ""'),
+      'title',
+      'name'
+    );
+    // The rename should still succeed (getattr is a soft hazard) but with a warning.
+    expect(plan.error).toBeFalsy();
+    expect(plan.warnings).toBeTruthy();
+    expect(plan.warnings.join(' ')).toMatch(/getattr.*"title"|"title".*getattr/);
+  });
+
+  test('P1.7 introduce parameter object preserves literal and mutable defaults via dataclass', () => {
+    const before = text`
+from typing import List
+
+def configure(name: str, port: int = 8080, hosts: list = [], label: str = "default", trace: bool = False):
+    return (name, port, hosts, label, trace)
+`;
+    const workspace = workspaceFrom({ 'cfg.py': before }, 'cfg.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planParameterObject(
+      workspace,
+      analysis,
+      'cfg.py',
+      positionOn(before, 'def configure'),
+      'ConfigureParams',
+      ['port', 'hosts', 'label', 'trace']
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['cfg.py'];
+    // Literal defaults land in the dataclass with the same syntax.
+    expect(result).toContain('port: int = 8080');
+    expect(result).toContain('label: str = "default"');
+    expect(result).toContain('trace: bool = False');
+    // Mutable empty-list default uses field(default_factory=list).
+    expect(result).toContain('hosts: list = field(default_factory=list)');
+    // The dataclasses import gains `field`.
+    expect(result).toMatch(/from dataclasses import [^\n]*\bfield\b/);
+  });
+
+  test('P0.7 move field refuses when target __init__ cannot construct the value', () => {
+    const before = text`
+class Source:
+    def __init__(self, factory):
+        self.target = Target()
+        self.cache = factory.create()
+
+class Target:
+    def __init__(self):
+        pass
+`;
+    const workspace = workspaceFrom({ 'mod.py': before }, 'mod.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planMoveField(
+      workspace,
+      analysis,
+      'mod.py',
+      positionOn(before, 'self.cache = factory.create()'),
+      'Target'
+    );
+    expect(plan.error).toMatch(/factory|not available/);
+  });
+
+  // ========================================================================
+  // P3 — Tutorial scenarios from code-smells-refactoring.yml as spec tests.
+  // The implementation stays general; these tests anchor the engine on the
+  // actual tutorial code so steps 4–7 can never silently regress.
+  // ========================================================================
+
+  test('P3.1 tutorial step 4: extracts _apply_filter from MusicLibrary.apply_genre_filter', () => {
+    // The tutorial selection covers list-comp + sort (NOT the return — engine
+    // refuses selections containing return statements). The user keeps the
+    // return at the call site and later edits the helper to take a Callable
+    // predicate; the engine handles the mechanical extract.
+    const filters = text`
+"""Filters for the music library."""
+from typing import Dict, List
+
+
+class MusicLibrary:
+    """An in-memory music library with genre and artist filters."""
+
+    def __init__(self, tracks: List[Dict]) -> None:
+        self.tracks: List[Dict] = tracks
+
+    def apply_genre_filter(self, genre: str) -> List[Dict]:
+        result: List[Dict] = [t for t in self.tracks if t["genre"] == genre]
+        result.sort(key=lambda t: t["title"])
+        return result[:50]
+
+    def apply_artist_filter(self, artist: str) -> List[Dict]:
+        result: List[Dict] = [t for t in self.tracks if t["artist"] == artist]
+        result.sort(key=lambda t: t["title"])
+        return result[:50]
+`;
+    const workspace = workspaceFrom({ 'filters.py': filters }, 'filters.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtract(
+      workspace,
+      analysis,
+      'filters.py',
+      selectionBetween(
+        filters,
+        'result: List[Dict] = [t for t in self.tracks if t["genre"] == genre]',
+        'result.sort(key=lambda t: t["title"])'
+      ),
+      '_apply_filter'
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['filters.py'];
+    // After extraction, MusicLibrary has the new helper alongside the original methods.
+    expect(result).toContain('def _apply_filter(self');
+    // The duplicate-self bug must not fire here (selection references self.tracks).
+    expect(result).not.toContain('def _apply_filter(self, self');
+    // The original apply_genre_filter call site delegates to self._apply_filter(...).
+    expect(result).toContain('self._apply_filter(');
+    // Live-out variable 'result' is returned and assigned at the call site.
+    expect(result).toMatch(/result\s*=\s*self\._apply_filter\(/);
+    // The original methods still exist with their public signatures unchanged.
+    expect(result).toContain('def apply_genre_filter(self, genre: str) -> List[Dict]:');
+    expect(result).toContain('def apply_artist_filter(self, artist: str) -> List[Dict]:');
+  });
+
+  test('P3.2 tutorial step 5: introduces AlbumInfo across positional and keyword call sites', () => {
+    const track = text`
+"""Track catalog."""
+from typing import Dict
+
+
+class TrackCatalog:
+    def __init__(self) -> None:
+        self.tracks = []
+
+    def add_track(self, title: str, artist: str, album: str, genre: str, release_year: int, duration_sec: int) -> Dict:
+        record = {
+            "title": title,
+            "artist": artist,
+            "album": album,
+            "genre": genre,
+            "release_year": release_year,
+            "duration_sec": duration_sec,
+        }
+        self.tracks.append(record)
+        return record
+`;
+    const helpers = text`
+"""Helpers seed a catalog with sample data via positional calls."""
+from track import TrackCatalog
+
+
+def seed_library(catalog: TrackCatalog) -> None:
+    catalog.add_track("Song A", "Alice", "Debut", "rock", 2020, 180)
+    catalog.add_track("Song B", "Alice", "Debut", "rock", 2020, 200)
+`;
+    const tests = text`
+"""Tests use keyword arguments."""
+from track import TrackCatalog
+
+
+def test_add_track_keyword():
+    cat = TrackCatalog()
+    cat.add_track(title="Song A", artist="Alice", album="Debut", genre="rock", release_year=2020, duration_sec=180)
+`;
+    const workspace = workspaceFrom(
+      { 'track.py': track, 'helpers.py': helpers, 'test_track.py': tests },
+      'track.py'
+    );
+    const analysis = analyze(workspace);
+    const plan = adapter.planParameterObject(
+      workspace,
+      analysis,
+      'track.py',
+      positionOn(track, 'def add_track'),
+      'AlbumInfo',
+      ['artist', 'album', 'genre', 'release_year']
+    );
+    expect(plan.error).toBeFalsy();
+    const applied = applyPlan(workspace, plan);
+    // Source: dataclass + new signature.
+    expect(applied['track.py']).toContain('@dataclass');
+    expect(applied['track.py']).toContain('class AlbumInfo:');
+    expect(applied['track.py']).toMatch(/def add_track\(self, title: str, album_info: AlbumInfo, duration_sec: int\)/);
+    // Helpers: positional callers wrap the clumped params in AlbumInfo(...).
+    expect(applied['helpers.py']).toContain('AlbumInfo(');
+    // The engine adds AlbumInfo to the existing `from track import ...` line.
+    expect(applied['helpers.py']).toMatch(/from track import [^\n]*AlbumInfo/);
+    // Tests: keyword callers produce keyword-form constructor.
+    expect(applied['test_track.py']).toContain('album_info=AlbumInfo(');
+  });
+
+  test('P3.3 tutorial step 6: moves Player.compute_remaining_seconds into Track', () => {
+    // Tutorial code: the method uses ZERO state of Player, only Track. That's
+    // the diagnostic for Feature Envy. After move, `track.X` becomes `self.X`.
+    const media = text`
+"""The streaming media classes."""
+from dataclasses import dataclass
+
+
+@dataclass
+class Track:
+    track_id: str
+    duration_sec: int
+    current_position: int = 0
+
+
+@dataclass
+class Player:
+    volume: int = 50
+
+    def compute_remaining_seconds(self, track: Track) -> int:
+        return track.duration_sec - track.current_position
+`;
+    const workspace = workspaceFrom({ 'media.py': media }, 'media.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planMoveMethod(
+      workspace,
+      analysis,
+      'media.py',
+      positionOn(media, 'def compute_remaining_seconds'),
+      'Track'
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['media.py'];
+    // After move: the method body is on Track, with track→self rewrite.
+    expect(result).toMatch(/class Track:[\s\S]*def compute_remaining_seconds\(self\)/);
+    expect(result).toContain('self.duration_sec - self.current_position');
+    // A forwarding wrapper remains on Player so existing callers still work.
+    expect(result).toMatch(/class Player:[\s\S]*compute_remaining_seconds/);
+    expect(result).toMatch(/return track\.compute_remaining_seconds\(\)/);
+  });
+
+  test('P3.4 tutorial step 7: extracts BillingManager from StreamingApp', () => {
+    const app = text`
+"""Streaming app god-class."""
+
+
+class StreamingApp:
+    def __init__(self) -> None:
+        self.user_count = 0
+        self.subscription_tier = "free"
+        self.payment_method = "none"
+        self.invoice_list = []
+
+    def charge_monthly(self, user) -> None:
+        self.invoice_list.append((user, self.subscription_tier, self.payment_method, "monthly"))
+
+    def charge_annual(self, user) -> None:
+        self.invoice_list.append((user, self.subscription_tier, self.payment_method, "annual"))
+
+    def total_users(self) -> int:
+        return self.user_count
+`;
+    const workspace = workspaceFrom({ 'app.py': app }, 'app.py');
+    const analysis = analyze(workspace);
+    const plan = adapter.planExtractClass(
+      workspace,
+      analysis,
+      'app.py',
+      positionOn(app, 'class StreamingApp:'),
+      'BillingManager',
+      'billing',
+      ['subscription_tier', 'payment_method', 'invoice_list'],
+      ['charge_monthly', 'charge_annual']
+    );
+    expect(plan.error).toBeFalsy();
+    const result = applyPlan(workspace, plan)['app.py'];
+    expect(result).toContain('class BillingManager:');
+    // The new class owns the moved fields.
+    expect(result).toMatch(/class BillingManager:[\s\S]*self\.subscription_tier\s*=/);
+    expect(result).toMatch(/class BillingManager:[\s\S]*self\.invoice_list\s*=/);
+    // Source class has a delegate.
+    expect(result).toContain('self.billing = BillingManager(');
+    // Unrelated method (total_users) and field (user_count) stay on StreamingApp.
+    expect(result).toMatch(/class StreamingApp:[\s\S]*def total_users\(self\)/);
+    expect(result).toMatch(/class StreamingApp:[\s\S]*self\.user_count\s*=/);
+    // Duplicate-self regression: the new __init__ has only one self.
+    expect(result).not.toContain('def __init__(self, self');
   });
 });

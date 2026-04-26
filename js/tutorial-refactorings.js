@@ -710,6 +710,9 @@
       if (!scope) return { error: 'Place the cursor on a Python symbol to rename it.' };
       var conflict = renameConflictFromAnalysis(analysis, activeFile, scope, oldName, newName);
       if (conflict) return { error: conflict };
+      var hazardError = renameDynamicHazardError(analysis, activeFile, oldName);
+      if (hazardError) return { error: hazardError };
+      var warnings = collectRenameDynamicWarnings(analysis, activeFile, oldName);
       var edits = [];
       workspace.files.forEach(function (f) {
         if (!isPythonFile(f.language, f.filename)) return;
@@ -734,11 +737,13 @@
           ));
         }
       });
-      return {
+      var plan = {
         title: 'Rename ' + oldName + ' to ' + newName,
         edits: edits,
         summary: 'Renames Python identifier occurrences in the safe detected scope.',
       };
+      if (warnings.length) plan.warnings = warnings;
+      return plan;
     },
 
     planExtract: function (workspace, analysis, activeFile, selection, name) {
@@ -772,6 +777,11 @@
       if (helperNameConflicts(analysis, activeFile, functionContainer, name)) {
         return { error: 'A symbol named ' + name + ' already exists in this scope.' };
       }
+      var isMethod = !!(functionContainer && functionContainer.className);
+      var firstParam = functionContainer && functionContainer.params && functionContainer.params[0];
+      var receiverName = isMethod && firstParam && (firstParam.name === 'self' || firstParam.name === 'cls')
+        ? firstParam.name
+        : null;
       var declaredBefore = collectDeclaredBeforeFromAnalysis(analysis, activeFile, functionContainer, start);
       var selectedIds = collectSymbolsInRange(analysis, activeFile, start, end, 'load', functionContainer);
       var assignedInside = collectSymbolsInRange(analysis, activeFile, start, end, 'store', functionContainer);
@@ -785,6 +795,7 @@
       );
       var params = [];
       selectedIds.forEach(function (id) {
+        if (receiverName && id === receiverName) return;
         if (declaredBefore.has(id) && !assignedInside.has(id) && !PYTHON_BUILTINS.has(id)) params.push(id);
       });
       var outputs = [];
@@ -792,7 +803,6 @@
         if (usedAfter.has(id)) outputs.push(id);
       });
 
-      var isMethod = !!(functionContainer && functionContainer.className);
       var helperIndent = isMethod ? (functionContainer.indent || 0) : 0;
       var bodyIndent = helperIndent + 4;
       var selectedBody = lines.slice(start, end + 1)
@@ -809,13 +819,13 @@
       var helperParams = params.map(function (paramName) {
         return annotationMap[paramName] ? (paramName + ': ' + annotationMap[paramName]) : paramName;
       });
-      if (isMethod) helperParams.unshift('self');
+      if (receiverName) helperParams.unshift(receiverName);
       var returnAnnotation = outputs.length === 0 ? ' -> None' : '';
       var helperLines = [
         repeat(' ', helperIndent) + 'def ' + name + '(' + helperParams.join(', ') + ')' + returnAnnotation + ':',
       ].concat(selectedBody);
 
-      var callExpr = (isMethod ? 'self.' : '') + name + '(' + params.join(', ') + ')';
+      var callExpr = (receiverName ? receiverName + '.' : '') + name + '(' + params.join(', ') + ')';
       var callLine;
       if (outputs.length === 1) callLine = repeat(' ', baseIndent) + outputs[0] + ' = ' + callExpr;
       else if (outputs.length > 1) callLine = repeat(' ', baseIndent) + outputs.join(', ') + ' = ' + callExpr;
@@ -873,8 +883,14 @@
       if (selected.length < 2) {
         return { error: 'Select at least two parameters that travel together.' };
       }
-      if (selected.some(function (param) { return !!param.default; })) {
-        return { error: 'Introduce Parameter Object does not support selected parameters with defaults yet.' };
+      var unsupportedDefault = selected.filter(function (param) {
+        return param.default && !isSupportedParamDefault(param.default);
+      })[0];
+      if (unsupportedDefault) {
+        return {
+          error: 'Introduce Parameter Object cannot move parameter ' + unsupportedDefault.name
+            + ' because its default ' + unsupportedDefault.default + ' is not a literal or empty container.',
+        };
       }
       var variableName = snakeCase(objectName);
       var edits = [];
@@ -1815,8 +1831,14 @@
     return (file.symbols || []).some(function (symbol) {
       if (symbol.name !== name || !symbol.range) return false;
       if (!fn) return symbol.scope === null;
-      return (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null))
-        || (symbol.scope === null && !fn.className);
+      // local conflict inside the function we are extracting from
+      if (symbol.scope === fn.name && (symbol.className || null) === (fn.className || null)) return true;
+      // module-level conflict only when extracting from a free function
+      if (symbol.scope === null && !fn.className) return true;
+      // sibling-method (or class-body assignment) conflict on the same class
+      if (fn.className && symbol.className === fn.className && symbol.scope === null
+          && (symbol.kind === 'function' || (symbol.kind === 'name' && symbol.ctx === 'store'))) return true;
+      return false;
     });
   }
 
@@ -1867,13 +1889,97 @@
     if (hasVarArgsOrKwargs(method) || hasKeywordOnlyParams(method)) {
       return 'Move Method does not support variable or keyword-only parameters yet.';
     }
+    if (isDunderName(method.name)) {
+      return 'Move Method does not move special/dunder methods because Python looks them up on the type, not the instance.';
+    }
     if (functionContainsCallNamed(analysis, filename, method, 'super')) {
       return 'Move Method does not support super() calls yet.';
+    }
+    if (methodUsesNameMangledAttribute(analysis, filename, method)) {
+      return 'Move Method does not move methods that use name-mangled __private attributes; rename them first.';
     }
     if (methodUsesSourceSelfState(analysis, filename, method)) {
       return 'Move Method would move source-object state; extract that dependency first.';
     }
     return '';
+  }
+
+  function isDunderName(name) {
+    return /^__\w+__$/.test(String(name || ''));
+  }
+
+  // ---- Dynamic-hazard detector (P1.1) -------------------------------------
+  // Python's reflective APIs let code refer to a symbol indirectly. A naive
+  // text/AST rewriter cannot follow these references, so we either refuse the
+  // refactoring (when continuing would silently miss a use) or warn the user.
+
+  var DYNAMIC_NAME_APIS = ['getattr', 'setattr', 'hasattr', 'delattr'];
+  var DYNAMIC_EXEC_APIS = ['eval', 'exec'];
+
+  function renameDynamicHazardError(analysis, activeFile, oldName) {
+    if (!analysis || !analysis.files) return '';
+    var fileNames = Object.keys(analysis.files);
+    for (var f = 0; f < fileNames.length; f++) {
+      var file = analysis.files[fileNames[f]];
+      var calls = (file && file.calls) || [];
+      for (var c = 0; c < calls.length; c++) {
+        var call = calls[c];
+        if (DYNAMIC_EXEC_APIS.indexOf(call.name) === -1) continue;
+        var arg = call.args && call.args[0];
+        if (arg && stringLiteralContains(arg.text, oldName)) {
+          return 'Rename refused: ' + call.name + '() in ' + fileNames[f]
+            + ' references "' + oldName + '" as a string. Resolve manually before renaming.';
+        }
+      }
+    }
+    return '';
+  }
+
+  function collectRenameDynamicWarnings(analysis, activeFile, oldName) {
+    var warnings = [];
+    if (!analysis || !analysis.files) return warnings;
+    Object.keys(analysis.files).forEach(function (filename) {
+      var file = analysis.files[filename];
+      (file && file.calls || []).forEach(function (call) {
+        if (DYNAMIC_NAME_APIS.indexOf(call.name) === -1) return;
+        var second = call.args && call.args[1];
+        if (!second) return;
+        if (stringLiteralEquals(second.text, oldName)) {
+          warnings.push(call.name + '("' + oldName + '") in ' + filename
+            + ' must be updated by hand — string-based attribute access is not rewritten.');
+        }
+      });
+    });
+    return warnings;
+  }
+
+  function stringLiteralEquals(text, value) {
+    var stripped = stripStringLiteral(text);
+    return stripped !== null && stripped === value;
+  }
+
+  function stringLiteralContains(text, value) {
+    var stripped = stripStringLiteral(text);
+    return stripped !== null && stripped.indexOf(value) !== -1;
+  }
+
+  function stripStringLiteral(text) {
+    var t = String(text || '').trim();
+    var match = t.match(/^[rRbBfFuU]{0,2}(['"])((?:\\.|[^\\])*?)\1$/);
+    return match ? match[2] : null;
+  }
+
+  function methodUsesNameMangledAttribute(analysis, filename, method) {
+    var file = analysisFile(analysis, filename);
+    if (!file || !method) return false;
+    return (file.symbols || []).some(function (symbol) {
+      if (symbol.kind !== 'attribute' || !symbol.range) return false;
+      if (symbol.scope !== method.name) return false;
+      if ((symbol.className || null) !== (method.className || null)) return false;
+      var name = String(symbol.name || '');
+      // Name-mangled attributes start with two underscores and do not end with two underscores.
+      return /^__/.test(name) && !/__$/.test(name);
+    });
   }
 
   function functionContainsCallNamed(analysis, filename, fn, callName) {
@@ -1941,7 +2047,58 @@
     if (fieldAssignmentCount(targetFile, target.name, assignment.name) > 0) {
       return 'The target class already defines this field.';
     }
+    var initOrder = unresolvedNameInTargetInit(analysis, file, targetFile, target, assignment);
+    if (initOrder) return initOrder;
     return '';
+  }
+
+  function unresolvedNameInTargetInit(analysis, sourceFile, targetFile, target, assignment) {
+    if (!assignment.valueRange) return '';
+    var targetInit = findClassInit(analysis, target.filename, target.name);
+    var targetParams = new Set();
+    (targetInit && targetInit.params || []).forEach(function (p) { targetParams.add(p.name); });
+    var moduleNames = collectModuleLevelNames(targetFile);
+    var names = symbolsInAstRange(sourceFile, assignment.valueRange, 'name', 'load');
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i].name;
+      if (name === 'self' || name === 'cls') continue;
+      if (PYTHON_BUILTINS.has(name) || PYTHON_KEYWORDS.has(name)) continue;
+      if (targetParams.has(name) || moduleNames.has(name)) continue;
+      return 'Move Field cannot move ' + assignment.name
+        + ' because its initializer uses ' + name
+        + ', which is not available in ' + target.name + ".__init__.";
+    }
+    var attrs = symbolsInAstRange(sourceFile, assignment.valueRange, 'attribute', null);
+    for (var j = 0; j < attrs.length; j++) {
+      var attr = attrs[j];
+      if (attr.receiver === 'self') {
+        return 'Move Field cannot move ' + assignment.name
+          + ' because its initializer references self.' + attr.name
+          + ' on the source class.';
+      }
+    }
+    return '';
+  }
+
+  function collectModuleLevelNames(fileAnalysis) {
+    var out = new Set();
+    if (!fileAnalysis) return out;
+    (fileAnalysis.classes || []).forEach(function (cls) { out.add(cls.name); });
+    (fileAnalysis.functions || []).forEach(function (fn) {
+      if (!fn.className) out.add(fn.name);
+    });
+    (fileAnalysis.imports || []).forEach(function (item) {
+      importAliases(item).forEach(function (alias) {
+        if (alias.name === '*') return;
+        out.add(alias.asname || alias.name);
+      });
+    });
+    (fileAnalysis.assignments || []).forEach(function (assignment) {
+      if (!assignment.className && !assignment.scope && assignment.receiver === '') {
+        out.add(assignment.name);
+      }
+    });
+    return out;
   }
 
   function planMoveFieldReferenceRewrites(analysis, filename, owner, assignment, target) {
@@ -2429,6 +2586,7 @@
     var seen = {};
     fields.forEach(function (field) {
       symbolsInAstRange(file, field.valueRange || field.range, 'name', 'load').forEach(function (symbol) {
+        if (symbol.name === 'self' || symbol.name === 'cls') return;
         if (PYTHON_BUILTINS.has(symbol.name) || seen[symbol.name]) return;
         var init = findAstFunctionAt(analysis, filename, field.range.startLine - 1);
         var param = (init && init.params || []).filter(function (item) { return item.name === symbol.name; })[0];
@@ -2766,10 +2924,17 @@
     if (!inserted) keepText.push(variableName + ': ' + objectName);
     var bodyStart = func.startLine + 1;
     var bodyEnd = func.endLine;
+
+    // Detect rebound selected params: any selected param with a store-context reference inside the function body.
+    var reboundParams = collectReboundParameters(fileAnalysis, func, selectedSet);
+
     var replacements = [];
     (fileAnalysis && fileAnalysis.symbols || []).forEach(function (symbol) {
       if (symbol.kind !== 'name' || !selectedSet.has(symbol.name) || !symbol.range) return;
       if (!symbolBelongsToFunction(symbol, func)) return;
+      // Rebound params keep their local name; only their initial value comes from the object.
+      // This avoids turning local mutation into mutation of the caller's parameter object.
+      if (reboundParams.has(symbol.name)) return;
       var lineIdx = symbol.range.startLine - 1;
       if (lineIdx < bodyStart || lineIdx > bodyEnd) return;
       replacements.push({
@@ -2781,7 +2946,61 @@
     });
     lines = applyLineReplacements(lines, replacements);
     lines = replaceFunctionParamList(lines, func, keepText);
+
+    if (reboundParams.size) {
+      lines = insertLocalCopiesForReboundParams(lines, func, selected, reboundParams, variableName);
+    }
     return lines.join('\n');
+  }
+
+  function collectReboundParameters(fileAnalysis, func, selectedSet) {
+    var rebound = new Set();
+    if (!fileAnalysis || !selectedSet || !selectedSet.size) return rebound;
+    (fileAnalysis.symbols || []).forEach(function (symbol) {
+      if (symbol.kind !== 'name' || symbol.ctx !== 'store') return;
+      if (!selectedSet.has(symbol.name)) return;
+      if (!symbolBelongsToFunction(symbol, func)) return;
+      if (!symbol.range) return;
+      var lineIdx = symbol.range.startLine - 1;
+      if (lineIdx <= func.startLine || lineIdx > func.endLine) return;
+      rebound.add(symbol.name);
+    });
+    return rebound;
+  }
+
+  function insertLocalCopiesForReboundParams(lines, func, selected, reboundParams, variableName) {
+    var headerClose = findFunctionHeaderCloseLine(lines, func.startLine);
+    var insertAt = headerClose + 1;
+    insertAt = skipDocstringLines(lines, insertAt, func.endLine);
+    var bodyIndent = (func.indent || 0) + 4;
+    var pad = repeat(' ', bodyIndent);
+    var copyLines = [];
+    selected.forEach(function (p) {
+      if (!reboundParams.has(p.name)) return;
+      copyLines.push(pad + p.name + ' = ' + variableName + '.' + p.name);
+    });
+    if (!copyLines.length) return lines;
+    lines.splice.apply(lines, [insertAt, 0].concat(copyLines));
+    return lines;
+  }
+
+  function skipDocstringLines(lines, insertAt, bodyEnd) {
+    var line = lines[insertAt];
+    if (line === undefined) return insertAt;
+    var trimmed = line.trim();
+    var quote = '';
+    if (trimmed.indexOf('"""') === 0) quote = '"""';
+    else if (trimmed.indexOf("'''") === 0) quote = "'''";
+    if (!quote) return insertAt;
+    // Single-line triple-quoted string?
+    if (trimmed.length > quote.length && trimmed.indexOf(quote, quote.length) === trimmed.length - quote.length) {
+      return insertAt + 1;
+    }
+    // Multi-line: scan for the closing triple quote.
+    for (var i = insertAt + 1; i <= bodyEnd && i < lines.length; i++) {
+      if ((lines[i] || '').indexOf(quote) !== -1) return i + 1;
+    }
+    return insertAt;
   }
 
   function rewriteCallsForParameterObject(
@@ -2923,7 +3142,10 @@
 
   function ensureDataclassObject(content, fileAnalysis, func, selected, objectName) {
     var lines = content.split('\n');
-    var importResult = ensureDataclassImport(lines, fileAnalysis, func);
+    var needsField = selected.some(function (p) {
+      return p.default && isMutableContainerDefault(p.default);
+    });
+    var importResult = ensureDataclassImport(lines, fileAnalysis, func, needsField);
     lines = importResult.lines;
     func = importResult.func;
     var insertAt = func.className && typeof func.classStartLine === 'number'
@@ -2934,11 +3156,55 @@
       'class ' + objectName + ':',
     ];
     selected.forEach(function (p) {
-      objectLines.push('    ' + p.name + ': ' + (p.annotation || 'object'));
+      objectLines.push('    ' + dataclassFieldLine(p));
     });
     objectLines.push('');
     lines.splice(insertAt, 0, objectLines.join('\n'));
     return lines.join('\n');
+  }
+
+  function dataclassFieldLine(param) {
+    var annotation = param.annotation || 'object';
+    if (!param.default) return param.name + ': ' + annotation;
+    if (isMutableContainerDefault(param.default)) {
+      return param.name + ': ' + annotation + ' = field(default_factory=' + mutableContainerFactory(param.default) + ')';
+    }
+    return param.name + ': ' + annotation + ' = ' + param.default;
+  }
+
+  function isSupportedParamDefault(value) {
+    var trimmed = String(value || '').trim();
+    if (!trimmed) return true;
+    if (isLiteralDefault(trimmed)) return true;
+    if (isMutableContainerDefault(trimmed)) return true;
+    return false;
+  }
+
+  function isLiteralDefault(value) {
+    var v = String(value || '').trim();
+    if (v === 'None' || v === 'True' || v === 'False') return true;
+    if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(v)) return true;
+    if (/^-?\d+\.\d*(?:[eE][+-]?\d+)?$/.test(v)) return true;
+    if (/^("([^"\\]|\\.)*"|'([^'\\]|\\.)*')$/.test(v)) return true;
+    if (/^(?:[rRbBfFuU]{0,2})("([^"\\]|\\.)*"|'([^'\\]|\\.)*')$/.test(v)) return true;
+    return false;
+  }
+
+  function isMutableContainerDefault(value) {
+    var v = String(value || '').trim();
+    if (v === '[]' || v === '{}' || v === '()') return true;
+    if (/^list\s*\(\s*\)$/.test(v) || /^dict\s*\(\s*\)$/.test(v)) return true;
+    if (/^set\s*\(\s*\)$/.test(v) || /^tuple\s*\(\s*\)$/.test(v)) return true;
+    return false;
+  }
+
+  function mutableContainerFactory(value) {
+    var v = String(value || '').trim();
+    if (v === '[]' || /^list\s*\(/.test(v)) return 'list';
+    if (v === '{}' || /^dict\s*\(/.test(v)) return 'dict';
+    if (/^set\s*\(/.test(v)) return 'set';
+    if (v === '()' || /^tuple\s*\(/.test(v)) return 'tuple';
+    return 'list';
   }
 
   function ensureParameterObjectImport(content, fileAnalysis, sourceFilename, objectName) {
@@ -2967,15 +3233,20 @@
     return lines.join('\n');
   }
 
-  function ensureDataclassImport(lines, fileAnalysis, func) {
+  function ensureDataclassImport(lines, fileAnalysis, func, needsField) {
+    var needed = ['dataclass'];
+    if (needsField) needed.push('field');
     var imports = fileAnalysis && fileAnalysis.imports || [];
     var dataclassesImport = imports.filter(function (item) {
       return item.kind === 'from' && item.module === 'dataclasses';
     })[0];
     if (dataclassesImport) {
-      if (dataclassesImport.names.indexOf('dataclass') === -1) {
-        var lineIdx = dataclassesImport.range.startLine - 1;
-        lines[lineIdx] = lines[lineIdx].replace(/\s*$/, ', dataclass');
+      var lineIdx = dataclassesImport.range.startLine - 1;
+      var missing = needed.filter(function (name) {
+        return dataclassesImport.names.indexOf(name) === -1;
+      });
+      if (missing.length) {
+        lines[lineIdx] = lines[lineIdx].replace(/\s*$/, ', ' + missing.join(', '));
       }
       return { lines: lines, func: func };
     }
@@ -2986,9 +3257,10 @@
       }
     });
     var nextLine = trimCode(lines[insertAt] || '');
+    var importLine = 'from dataclasses import ' + needed.join(', ');
     var inserted = nextLine === '' || isImportLine(nextLine)
-      ? ['from dataclasses import dataclass']
-      : ['from dataclasses import dataclass', ''];
+      ? [importLine]
+      : [importLine, ''];
     lines.splice.apply(lines, [insertAt, 0].concat(inserted));
     return { lines: lines, func: cloneWithLineOffset(func, inserted.length) };
   }
