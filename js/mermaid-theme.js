@@ -137,6 +137,13 @@
       '  line-height: 1.35;',
       '  margin: 0;',
       '}',
+      // Mermaid wraps node labels in <p> inside foreignObject. Page-level
+      // rules like `.tvm-step-instructions p { color: ... }` (tutorial.css)
+      // would otherwise win specificity over mermaid's own inline color on
+      // the parent span — and then the dark-mode invert filter flips that
+      // page color into something unreadable. Inherit from the span so the
+      // theme/classDef color actually reaches the text.
+      'div.mermaid svg foreignObject p { color: inherit !important; }',
       // Edge labels stay regular weight + italic to match ArchUML edge style,
       // and at a smaller font than node labels so they read as annotations.
       'div.mermaid svg .edgeLabel,',

@@ -8206,10 +8206,11 @@
 
   TutorialCode.prototype._gitTermWriteHelp = function () {
     var lines = [
-      'Lightweight terminal — only the following commands work:',
-      '  git <subcommand>         init | status | add | commit | log | branch |',
-      '                            switch | checkout | merge | rm | mv | reset |',
-      '                            restore | config',
+      'Lightweight terminal — supported commands:',
+      '  git <subcommand>',
+      '    init, status, add, commit, log, branch, switch, checkout,',
+      '    merge, rm, mv, reset, restore, config, tag, diff, show, stash,',
+      '    cherry-pick, revert, bisect, reflog',
       '  cd <dir>                 change working directory',
       '  ls [dir]                 list files',
       '  pwd                      print working directory',

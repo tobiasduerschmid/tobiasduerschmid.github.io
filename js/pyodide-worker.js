@@ -601,6 +601,20 @@ function _buildGitState(dir) {
               }
             });
 
+            // Expose stash entries to the workbench's stash shelf. The
+            // renderer expects `{ref, branch, message}` tuples; we draw them
+            // from `.git/STASH_LOG.json` (see _stashPush).
+            try {
+              var stashEntries = _stashRead(dir);
+              stashEntries.forEach(function (e, i) {
+                files.stashed.push({
+                  ref: 'stash@{' + i + '}',
+                  branch: e.branch || '',
+                  message: e.message || '',
+                });
+              });
+            } catch (e) { /* no stash log — fine */ }
+
             return {
               commits: commits,
               branches: Object.keys(branchMap),
@@ -743,13 +757,21 @@ function _dispatchGit(id, args, cwd) {
     if (sub === 'merge')        return _gitCmdMerge(id, rest, dir, fs);
     if (sub === 'rm')           return _gitCmdRm(id, rest, dir, fs, cwd);
     if (sub === 'mv')           return _gitCmdMv(id, rest, dir, fs, cwd);
-    if (sub === 'reset')        return _gitCmdReset(id, rest, dir, fs);
+    if (sub === 'reset')        return _gitCmdReset(id, rest, dir, fs, cwd);
     if (sub === 'restore')      return _gitCmdRestore(id, rest, dir, fs, cwd);
+    if (sub === 'tag')          return _gitCmdTag(id, rest, dir, fs);
+    if (sub === 'diff')         return _gitCmdDiff(id, rest, dir, fs, cwd);
+    if (sub === 'show')         return _gitCmdShow(id, rest, dir, fs);
+    if (sub === 'stash')        return _gitCmdStash(id, rest, dir, fs);
+    if (sub === 'cherry-pick')  return _gitCmdCherryPick(id, rest, dir, fs);
+    if (sub === 'revert')       return _gitCmdRevert(id, rest, dir, fs);
+    if (sub === 'bisect')       return _gitCmdBisect(id, rest, dir, fs);
+    if (sub === 'reflog')       return _gitCmdReflog(id, rest, dir, fs);
   } catch (err) {
     return _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
   }
   return _gitReply(id, '',
-    "git: '" + sub + "' is not supported in this tutorial. Try: init, status, add, commit, log, branch, switch, checkout, merge, rm, mv, reset, restore, config\n",
+    "git: '" + sub + "' is not supported in this tutorial. Try: init, status, add, commit, log, branch, switch, checkout, merge, rm, mv, reset, restore, config, tag, diff, show, stash, cherry-pick, revert, bisect, reflog\n",
     1, []);
 }
 
@@ -1088,10 +1110,17 @@ function _gitCmdCommit(id, args, dir, fs) {
       author: { name: name, email: email },
     };
     if (amend) commitArgs.amend = true;
+    var oldOid = cfg[3];
     return _git.commit(commitArgs).then(function (oid) {
       var shortHash = oid.substring(0, 7);
       var subject = (message || '').split('\n')[0];
       var prefix = hadHead && !amend ? '' : '(root-commit) ';
+      _appendReflog(dir, 'HEAD', oldOid, oid,
+        'commit' + (amend ? ' (amend)' : (!hadHead ? ' (initial)' : '')) + ': ' + subject);
+      if (branch && branch !== 'HEAD') {
+        _appendReflog(dir, 'refs/heads/' + branch, oldOid, oid,
+          'commit' + (amend ? ' (amend)' : (!hadHead ? ' (initial)' : '')) + ': ' + subject);
+      }
       _gitReply(id, '[' + branch + ' ' + prefix + shortHash + '] ' + subject + '\n', '', 0, []);
     });
   }).catch(function (err) {
@@ -1383,7 +1412,12 @@ function _gitCmdCheckout(id, args, dir, fs, cwd) {
 
 function _doCheckout(id, dir, fs, name, create) {
   // Capture working-tree state pre-checkout so we can compute mutated paths.
-  _snapshotPaths(dir).then(function (preMap) {
+  Promise.all([
+    _snapshotPaths(dir),
+    _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
+    _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+  ]).then(function (r) {
+    var preMap = r[0], oldOid = r[1], oldBranch = r[2] || 'HEAD';
     var doIt;
     if (create) {
       doIt = _git.branch({ fs: fs, dir: dir, ref: name, checkout: false })
@@ -1392,13 +1426,18 @@ function _doCheckout(id, dir, fs, name, create) {
       doIt = _git.checkout({ fs: fs, dir: dir, ref: name, force: false });
     }
     return doIt.then(function () {
-      return _snapshotPaths(dir).then(function (postMap) {
-        var mutated = _diffMaps(preMap, postMap);
-        var msg = create
-          ? "Switched to a new branch '" + name + "'\n"
-          : "Switched to branch '" + name + "'\n";
-        _gitReply(id, msg, '', 0, mutated);
-      });
+      return _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; })
+        .then(function (newOid) {
+          _appendReflog(dir, 'HEAD', oldOid, newOid,
+            'checkout: moving from ' + oldBranch + ' to ' + name);
+          return _snapshotPaths(dir);
+        }).then(function (postMap) {
+          var mutated = _diffMaps(preMap, postMap);
+          var msg = create
+            ? "Switched to a new branch '" + name + "'\n"
+            : "Switched to branch '" + name + "'\n";
+          _gitReply(id, msg, '', 0, mutated);
+        });
     });
   }).catch(function (err) {
     _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
@@ -1415,13 +1454,16 @@ function _gitCmdMerge(id, args, dir, fs) {
         author: { name: 'Student', email: 'student@example.com' },
       }).then(function (result) {
         return _git.checkout({ fs: fs, dir: dir, ref: current, force: true }).then(function () {
-          return _snapshotPaths(dir).then(function (postMap) {
-            var mutated = _diffMaps(preMap, postMap);
-            var note = result && result.fastForward
-              ? "Fast-forward\n"
-              : (result && result.alreadyMerged ? "Already up to date.\n" : "Merge made by recursive strategy.\n");
-            _gitReply(id, note, '', 0, mutated);
-          });
+          return Promise.all([_snapshotPaths(dir), _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; })]);
+        }).then(function (post) {
+          var postMap = post[0], newOid = post[1];
+          var mutated = _diffMaps(preMap, postMap);
+          var note = result && result.fastForward
+            ? "Fast-forward\n"
+            : (result && result.alreadyMerged ? "Already up to date.\n" : "Merge made by recursive strategy.\n");
+          _appendReflog(dir, 'HEAD', null, newOid, 'merge ' + ref + ': ' + note.trim());
+          if (current) _appendReflog(dir, 'refs/heads/' + current, null, newOid, 'merge ' + ref + ': ' + note.trim());
+          _gitReply(id, note, '', 0, mutated);
         });
       });
     });
@@ -1602,6 +1644,8 @@ function _gitCmdReset(id, args, dir, fs, cwd) {
     }).then(function (postMap) {
       var mutated = (mode === 'hard') ? _diffMaps(preMap, postMap) : [];
       var short = targetOid.substring(0, 7);
+      _appendReflog(dir, 'HEAD', null, targetOid, 'reset: moving to ' + ref);
+      if (branchRef) _appendReflog(dir, branchRef, null, targetOid, 'reset: moving to ' + ref);
       _gitReply(id, "HEAD is now at " + short + "\n", '', 0, mutated);
     });
   }).catch(function (err) {
@@ -1743,4 +1787,960 @@ function _diffMaps(pre, post) {
     if (!(k in post)) changed[k] = true;
   });
   return Object.keys(changed);
+}
+
+// ---- git tag ---------------------------------------------------------------
+
+function _gitCmdTag(id, args, dir, fs) {
+  // Forms:
+  //   git tag                         — list lightweight tags
+  //   git tag -l / --list             — same
+  //   git tag <name> [<commit>]       — create lightweight tag at <commit> (or HEAD)
+  //   git tag -a <name> -m <msg> [c]  — annotated tag (we treat same as lightweight + message)
+  //   git tag -d <name>               — delete
+  var del = false, list = false, annotated = false, message = null;
+  var positional = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '-d' || a === '--delete') { del = true; continue; }
+    if (a === '-l' || a === '--list')   { list = true; continue; }
+    if (a === '-a' || a === '--annotate') { annotated = true; continue; }
+    if (a === '-m' || a === '--message') { message = args[i + 1] || ''; i++; continue; }
+    if (a.indexOf('--message=') === 0) { message = a.substring('--message='.length); annotated = true; continue; }
+    if (a === '--') continue;
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+    positional.push(a);
+  }
+
+  if (list || (positional.length === 0 && !del)) {
+    var listFn = _git.listTags ? _git.listTags({ fs: fs, dir: dir }) : Promise.resolve([]);
+    listFn.then(function (tags) {
+      _gitReply(id, (tags || []).join('\n') + ((tags && tags.length) ? '\n' : ''), '', 0, []);
+    }).catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
+    return;
+  }
+
+  if (del) {
+    var name = positional[0];
+    if (!name) return _gitReply(id, '', "fatal: tag name required\n", 1, []);
+    var delFn = _git.deleteTag
+      ? _git.deleteTag({ fs: fs, dir: dir, ref: name })
+      : _git.writeRef({ fs: fs, dir: dir, ref: 'refs/tags/' + name, value: '0000000000000000000000000000000000000000', force: true })
+          .then(function () {
+            try { pyodide.FS.unlink(dir + '/.git/refs/tags/' + name); } catch (e) {}
+          });
+    delFn.then(function () { _gitReply(id, "Deleted tag '" + name + "'\n", '', 0, []); })
+         .catch(function (err) { _gitReply(id, '', 'error: ' + (err.message || err) + '\n', 1, []); });
+    return;
+  }
+
+  // Create
+  var tagName = positional[0];
+  var ref = positional[1] || 'HEAD';
+  if (!tagName) return _gitReply(id, '', "fatal: tag name required\n", 1, []);
+
+  _git.resolveRef({ fs: fs, dir: dir, ref: ref }).then(function (oid) {
+    if (annotated && _git.annotatedTag) {
+      return _git.annotatedTag({
+        fs: fs, dir: dir, ref: tagName, object: oid,
+        message: message || tagName,
+        tagger: { name: 'Student', email: 'student@example.com' },
+      });
+    }
+    return _git.tag
+      ? _git.tag({ fs: fs, dir: dir, ref: tagName, object: oid, force: false })
+      : _git.writeRef({ fs: fs, dir: dir, ref: 'refs/tags/' + tagName, value: oid, force: false });
+  }).then(function () { _gitReply(id, '', '', 0, []); })
+    .catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
+}
+
+// ---- git diff --------------------------------------------------------------
+
+function _gitCmdDiff(id, args, dir, fs, cwd) {
+  // Supported forms:
+  //   git diff                — workdir vs index (unstaged changes)
+  //   git diff --staged       — index vs HEAD (staged changes)
+  //   git diff --cached       — alias for --staged
+  //   git diff <ref>          — workdir vs <ref>
+  //   git diff <a> <b>        — <a> vs <b>
+  //   git diff -- <path>...   — limit to paths
+  var staged = false;
+  var refs = [];
+  var paths = [];
+  var sawDD = false;
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (!sawDD) {
+      if (a === '--') { sawDD = true; continue; }
+      if (a === '--staged' || a === '--cached') { staged = true; continue; }
+      if (a === '--name-only' || a === '--stat') { continue; /* accepted, ignored */ }
+      if (a.charAt(0) === '-') {
+        return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+      }
+      refs.push(a);
+    } else {
+      paths.push(a);
+    }
+  }
+
+  // Resolve which two trees we compare. Each tree is identified by:
+  //   - 'WORKDIR' — read from FS
+  //   - 'STAGE'   — index
+  //   - oid       — committed tree
+  var leftSrc, rightSrc;
+  function resolveOid(ref) {
+    return _git.resolveRef({ fs: fs, dir: dir, ref: ref });
+  }
+  var setup;
+  if (refs.length === 0) {
+    if (staged) {
+      // index vs HEAD
+      setup = resolveOid('HEAD').then(function (oid) {
+        leftSrc = { kind: 'commit', oid: oid };
+        rightSrc = { kind: 'stage' };
+      });
+    } else {
+      // workdir vs index
+      leftSrc = { kind: 'stage' };
+      rightSrc = { kind: 'workdir' };
+      setup = Promise.resolve();
+    }
+  } else if (refs.length === 1) {
+    setup = resolveOid(refs[0]).then(function (oid) {
+      leftSrc = { kind: 'commit', oid: oid };
+      rightSrc = staged ? { kind: 'stage' } : { kind: 'workdir' };
+    });
+  } else {
+    setup = Promise.all([resolveOid(refs[0]), resolveOid(refs[1])]).then(function (r) {
+      leftSrc = { kind: 'commit', oid: r[0] };
+      rightSrc = { kind: 'commit', oid: r[1] };
+    });
+  }
+
+  setup.then(function () {
+    return Promise.all([_collectFiles(dir, fs, leftSrc), _collectFiles(dir, fs, rightSrc)]);
+  }).then(function (sides) {
+    var left = sides[0], right = sides[1];
+    var pathFilter = null;
+    if (paths.length) {
+      pathFilter = {};
+      paths.forEach(function (p) {
+        var abs = _normalizePath(cwd || dir, dir, p);
+        var rel = _toRel(dir, abs);
+        if (rel) pathFilter[rel] = true;
+      });
+    }
+    var allPaths = {};
+    Object.keys(left).forEach(function (k) { if (!pathFilter || pathFilter[k]) allPaths[k] = true; });
+    Object.keys(right).forEach(function (k) { if (!pathFilter || pathFilter[k]) allPaths[k] = true; });
+
+    var out = '';
+    var sortedPaths = Object.keys(allPaths).sort();
+    var CYAN = '\x1b[36m', BOLD = '\x1b[1m', GREEN = '\x1b[32m', RED = '\x1b[31m', RESET = '\x1b[m';
+    sortedPaths.forEach(function (p) {
+      var l = left[p], r = right[p];
+      if (l === undefined && r === undefined) return;
+      if (l === r) return;  // identical contents
+      out += BOLD + 'diff --git a/' + p + ' b/' + p + RESET + '\n';
+      if (l === undefined) {
+        out += BOLD + 'new file mode 100644' + RESET + '\n';
+        out += BOLD + '--- /dev/null' + RESET + '\n';
+        out += BOLD + '+++ b/' + p + RESET + '\n';
+      } else if (r === undefined) {
+        out += BOLD + 'deleted file mode 100644' + RESET + '\n';
+        out += BOLD + '--- a/' + p + RESET + '\n';
+        out += BOLD + '+++ /dev/null' + RESET + '\n';
+      } else {
+        out += BOLD + '--- a/' + p + RESET + '\n';
+        out += BOLD + '+++ b/' + p + RESET + '\n';
+      }
+      out += _formatHunks(l || '', r || '', GREEN, RED, CYAN, RESET);
+    });
+    if (out === '') {
+      _gitReply(id, '', '', 0, []);
+    } else {
+      _gitReply(id, out, '', 0, []);
+    }
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+// Read every file's content into {path: string, ...} for the given source.
+function _collectFiles(dir, fs, src) {
+  var out = {};
+  if (src.kind === 'workdir') {
+    function walk(absPath, relPath) {
+      var st;
+      try { st = pyodide.FS.stat(absPath); } catch (e) { return; }
+      if ((st.mode & 0o170000) === 0o040000) {
+        if (relPath === '.git' || relPath.indexOf('.git/') === 0) return;
+        var entries; try { entries = pyodide.FS.readdir(absPath); } catch (e) { return; }
+        entries.forEach(function (n) {
+          if (n === '.' || n === '..') return;
+          walk((absPath === '/' ? '' : absPath) + '/' + n, relPath ? relPath + '/' + n : n);
+        });
+      } else {
+        try { out[relPath] = pyodide.FS.readFile(absPath, { encoding: 'utf8' }); }
+        catch (e) { /* skip binary */ }
+      }
+    }
+    walk(dir, '');
+    return Promise.resolve(out);
+  }
+  if (src.kind === 'stage') {
+    // Use statusMatrix to get paths, then readBlob for each STAGE entry.
+    return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+      return Promise.all(matrix.map(function (row) {
+        var fp = row[0], H = row[1], W = row[2], S = row[3];
+        if (S === 0) return null; // not in index
+        // S === 1 means index matches HEAD; S === 2 matches workdir; S === 3 differs from both
+        if (S === 1) {
+          return _git.readBlob({ fs: fs, dir: dir, oid: 'HEAD', filepath: fp })
+            .then(function (b) { out[fp] = new TextDecoder().decode(b.blob); }).catch(function () {});
+        }
+        // For S === 2 or 3, the index tree differs from HEAD. iso-git lacks a
+        // direct read-from-index API across versions; fall back to workdir for
+        // S === 2 (matches workdir) and to a full-staged-content read via
+        // walk(STAGE) for S === 3.
+        if (S === 2) {
+          try { out[fp] = pyodide.FS.readFile(dir + '/' + fp, { encoding: 'utf8' }); } catch (e) {}
+          return null;
+        }
+        // S === 3: we don't have a great primitive — best-effort is to use
+        // the STAGE walker via git.walk.
+        return null;
+      })).then(function () { return out; });
+    });
+  }
+  // commit
+  return _git.readTree({ fs: fs, dir: dir, oid: src.oid }).then(function () {
+    // Walk the tree recursively reading every blob.
+    return _walkCommitTree(fs, dir, src.oid, out, '');
+  }).then(function () { return out; });
+}
+
+function _walkCommitTree(fs, dir, oid, out, prefix) {
+  return _git.readTree({ fs: fs, dir: dir, oid: oid }).then(function (treeObj) {
+    var entries = treeObj.tree || [];
+    return Promise.all(entries.map(function (e) {
+      var p = prefix ? (prefix + '/' + e.path) : e.path;
+      if (e.type === 'blob') {
+        return _git.readBlob({ fs: fs, dir: dir, oid: e.oid }).then(function (b) {
+          try { out[p] = new TextDecoder().decode(b.blob); } catch (err) { /* binary */ }
+        });
+      }
+      if (e.type === 'tree') {
+        return _walkCommitTree(fs, dir, e.oid, out, p);
+      }
+      return null;
+    }));
+  });
+}
+
+// Minimal unified-diff hunk formatter. Single hunk per file, full file
+// context — adequate for tutorial-sized files. For larger files this would
+// chunk into proper hunks, but that's out of scope.
+function _formatHunks(a, b, GREEN, RED, CYAN, RESET) {
+  var aLines = a.split('\n'); if (aLines.length && aLines[aLines.length - 1] === '') aLines.pop();
+  var bLines = b.split('\n'); if (bLines.length && bLines[bLines.length - 1] === '') bLines.pop();
+  // Compute LCS-based diff (Myers-light: longest common subsequence via DP).
+  var n = aLines.length, m = bLines.length;
+  var dp = [];
+  for (var i = 0; i <= n; i++) { dp.push(new Int32Array(m + 1)); }
+  for (var i2 = 1; i2 <= n; i2++) {
+    for (var j = 1; j <= m; j++) {
+      dp[i2][j] = aLines[i2 - 1] === bLines[j - 1]
+        ? dp[i2 - 1][j - 1] + 1
+        : Math.max(dp[i2 - 1][j], dp[i2][j - 1]);
+    }
+  }
+  var ops = [];
+  var i3 = n, j2 = m;
+  while (i3 > 0 && j2 > 0) {
+    if (aLines[i3 - 1] === bLines[j2 - 1]) { ops.unshift({ op: ' ', line: aLines[i3 - 1] }); i3--; j2--; }
+    else if (dp[i3 - 1][j2] >= dp[i3][j2 - 1]) { ops.unshift({ op: '-', line: aLines[i3 - 1] }); i3--; }
+    else { ops.unshift({ op: '+', line: bLines[j2 - 1] }); j2--; }
+  }
+  while (i3 > 0) { ops.unshift({ op: '-', line: aLines[i3 - 1] }); i3--; }
+  while (j2 > 0) { ops.unshift({ op: '+', line: bLines[j2 - 1] }); j2--; }
+
+  // Header
+  var out = CYAN + '@@ -1,' + n + ' +1,' + m + ' @@' + RESET + '\n';
+  ops.forEach(function (o) {
+    if (o.op === '+') out += GREEN + '+' + o.line + RESET + '\n';
+    else if (o.op === '-') out += RED + '-' + o.line + RESET + '\n';
+    else out += ' ' + o.line + '\n';
+  });
+  return out;
+}
+
+// ---- git show --------------------------------------------------------------
+
+function _gitCmdShow(id, args, dir, fs) {
+  // Forms:
+  //   git show                — show HEAD
+  //   git show <ref>          — show that commit
+  // Output: commit metadata + diff against parent (or vs empty for root).
+  var ref = args[0] || 'HEAD';
+  if (args.length > 0 && args[0].charAt(0) === '-') {
+    return _gitReply(id, '', "error: unknown option `" + args[0].replace(/^-+/, '') + "'\n", 1, []);
+  }
+  _git.resolveRef({ fs: fs, dir: dir, ref: ref }).then(function (oid) {
+    return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function (c) {
+      var YELLOW = '\x1b[33m', RESET = '\x1b[m';
+      var out = YELLOW + 'commit ' + oid + RESET + '\n';
+      if (c.commit.parent && c.commit.parent.length > 1) {
+        out += 'Merge: ' + c.commit.parent.map(function (p) { return p.substring(0, 7); }).join(' ') + '\n';
+      }
+      if (c.commit.author) {
+        out += 'Author: ' + c.commit.author.name + ' <' + c.commit.author.email + '>\n';
+        if (c.commit.author.timestamp) {
+          out += 'Date:   ' + new Date(c.commit.author.timestamp * 1000).toString() + '\n';
+        }
+      }
+      out += '\n    ' + (c.commit.message || '').replace(/\n/g, '\n    ') + '\n\n';
+
+      // Diff against first parent (or empty for root)
+      var parentOid = (c.commit.parent && c.commit.parent[0]) || null;
+      var rightFiles = {};
+      var leftFiles = {};
+      var leftPromise = parentOid
+        ? _walkCommitTree(fs, dir, parentOid, leftFiles, '')
+        : Promise.resolve();
+      return leftPromise
+        .then(function () { return _walkCommitTree(fs, dir, oid, rightFiles, ''); })
+        .then(function () {
+          var allPaths = {};
+          Object.keys(leftFiles).forEach(function (k) { allPaths[k] = true; });
+          Object.keys(rightFiles).forEach(function (k) { allPaths[k] = true; });
+          var sorted = Object.keys(allPaths).sort();
+          var BOLD = '\x1b[1m', GREEN = '\x1b[32m', RED = '\x1b[31m', CYAN = '\x1b[36m';
+          sorted.forEach(function (p) {
+            var l = leftFiles[p], r = rightFiles[p];
+            if (l === r) return;
+            out += BOLD + 'diff --git a/' + p + ' b/' + p + RESET + '\n';
+            if (l === undefined) out += BOLD + 'new file mode 100644' + RESET + '\n' + BOLD + '--- /dev/null' + RESET + '\n' + BOLD + '+++ b/' + p + RESET + '\n';
+            else if (r === undefined) out += BOLD + 'deleted file mode 100644' + RESET + '\n' + BOLD + '--- a/' + p + RESET + '\n' + BOLD + '+++ /dev/null' + RESET + '\n';
+            else out += BOLD + '--- a/' + p + RESET + '\n' + BOLD + '+++ b/' + p + RESET + '\n';
+            out += _formatHunks(l || '', r || '', GREEN, RED, CYAN, RESET);
+          });
+          _gitReply(id, out, '', 0, []);
+        });
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', "fatal: bad revision '" + ref + "'\n", 1, []);
+  });
+}
+
+// ---- git stash -------------------------------------------------------------
+//
+// Tutorial-grade implementation: each stash is a real iso-git commit on
+// `refs/stash` whose tree captures the working tree state at the time of
+// `git stash push`. Older stashes survive as parents of newer ones, so the
+// stash log becomes a linear chain of commits walkable via `git.log`.
+// `git stash pop` restores files from the stash tree, then advances
+// refs/stash to the previous parent (or deletes the ref when empty).
+
+function _gitCmdStash(id, args, dir, fs) {
+  var sub = args[0] || 'push';
+  var rest = args.slice(1);
+  if (sub === 'push' || sub === 'save') return _stashPush(id, rest, dir, fs);
+  if (sub === 'pop')                    return _stashPop(id, rest, dir, fs);
+  if (sub === 'apply')                  return _stashApply(id, rest, dir, fs, false);
+  if (sub === 'drop')                   return _stashDrop(id, rest, dir, fs);
+  if (sub === 'list')                   return _stashList(id, rest, dir, fs);
+  if (sub === 'show')                   return _stashShow(id, rest, dir, fs);
+  if (sub === 'clear')                  return _stashClear(id, rest, dir, fs);
+  // Bare `git stash` is shorthand for `git stash push`.
+  if (!sub || sub.charAt(0) === '-')    return _stashPush(id, args, dir, fs);
+  return _gitReply(id, '', "git stash: unknown subcommand '" + sub + "'\n", 1, []);
+}
+
+// Stash implementation backed by a JSON file at `.git/STASH_LOG.json`.
+// Each entry is {message, branch, headOid, files: {path: content, ...}}.
+// Newest stash is index 0 (matches `stash@{0}` semantics). We avoid iso-git's
+// writeCommit/writeTree primitives because their cross-version API surface
+// for synthesizing commits without a normal ref-update is brittle.
+
+var STASH_LOG_PATH = '/.git/STASH_LOG.json';
+
+function _stashRead(dir) {
+  try {
+    var t = pyodide.FS.readFile(dir + STASH_LOG_PATH, { encoding: 'utf8' });
+    return JSON.parse(t);
+  } catch (e) { return []; }
+}
+function _stashWrite(dir, entries) {
+  pyodide.FS.writeFile(dir + STASH_LOG_PATH, JSON.stringify(entries), { encoding: 'utf8' });
+}
+
+// Snapshot every file in the workdir (excluding .git/) as a {path: content}
+// map. Used by `git stash push` to capture the working tree.
+function _snapshotWorkdir(dir) {
+  var files = {};
+  function walk(absPath, relPath) {
+    var st;
+    try { st = pyodide.FS.stat(absPath); } catch (e) { return; }
+    if ((st.mode & 0o170000) === 0o040000) {
+      if (relPath === '.git' || relPath.indexOf('.git/') === 0) return;
+      var entries; try { entries = pyodide.FS.readdir(absPath); } catch (e) { return; }
+      entries.forEach(function (n) {
+        if (n === '.' || n === '..') return;
+        walk((absPath === '/' ? '' : absPath) + '/' + n, relPath ? relPath + '/' + n : n);
+      });
+    } else {
+      try { files[relPath] = pyodide.FS.readFile(absPath, { encoding: 'utf8' }); }
+      catch (e) { /* binary — skip */ }
+    }
+  }
+  walk(dir, '');
+  return files;
+}
+
+function _stashPush(id, args, dir, fs) {
+  var message = null;
+  for (var i = 0; i < args.length; i++) {
+    if (args[i] === '-m' || args[i] === '--message') { message = args[i + 1] || ''; i++; }
+    else if (args[i].indexOf('-m') === 0) { message = args[i].substring(2); }
+  }
+  Promise.all([
+    _git.statusMatrix({ fs: fs, dir: dir }),
+    _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+    _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
+  ]).then(function (r) {
+    var matrix = r[0], branch = r[1] || 'HEAD', headOid = r[2];
+    var hasChanges = matrix.some(function (row) {
+      return row[1] !== row[2] || row[1] !== row[3];
+    });
+    if (!hasChanges) {
+      _gitReply(id, "No local changes to save\n", '', 0, []);
+      return;
+    }
+    if (!headOid) {
+      _gitReply(id, '', "fatal: You do not have the initial commit yet\n", 1, []);
+      return;
+    }
+    var entries = _stashRead(dir);
+    var entry = {
+      message: message || ('WIP on ' + branch + ': ' + headOid.substring(0, 7)),
+      branch: branch, headOid: headOid,
+      files: _snapshotWorkdir(dir),
+      timestamp: Math.floor(Date.now() / 1000),
+    };
+    entries.unshift(entry);  // newest at index 0
+    _stashWrite(dir, entries);
+    // Restore working tree to HEAD.
+    return _snapshotPaths(dir).then(function (preMap) {
+      return _git.checkout({ fs: fs, dir: dir, ref: branch, force: true })
+        .then(function () { return _snapshotPaths(dir); })
+        .then(function (postMap) {
+          _gitReply(id,
+            "Saved working directory and index state " + entry.message + "\n",
+            '', 0, _diffMaps(preMap, postMap));
+        });
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+function _stashList(id, args, dir, fs) {
+  var entries = _stashRead(dir);
+  var out = entries.map(function (e, i) {
+    return 'stash@{' + i + '}: ' + e.message;
+  }).join('\n');
+  _gitReply(id, out + (out ? '\n' : ''), '', 0, []);
+}
+
+// Resolve a stash selector ("stash@{N}", "N", or empty for top) to an index.
+function _stashIndex(args, entries) {
+  var sel = args[0];
+  if (!sel) return 0;
+  var m = sel.match(/^stash@\{(\d+)\}$/);
+  if (m) return parseInt(m[1], 10);
+  if (/^\d+$/.test(sel)) return parseInt(sel, 10);
+  return 0;
+}
+
+function _stashApply(id, args, dir, fs, andDrop) {
+  var entries = _stashRead(dir);
+  if (entries.length === 0) return _gitReply(id, '', "No stash entries found.\n", 1, []);
+  var idx = _stashIndex(args, entries);
+  if (idx < 0 || idx >= entries.length) return _gitReply(id, '', "fatal: stash entry not found\n", 1, []);
+  var entry = entries[idx];
+  _snapshotPaths(dir).then(function (preMap) {
+    // Apply stashed files onto the working tree. We don't auto-stage — match
+    // real git, which restores to working tree by default.
+    Object.keys(entry.files).forEach(function (p) {
+      var sub = p.indexOf('/') !== -1 ? p.substring(0, p.lastIndexOf('/')) : '';
+      if (sub) {
+        var parts = sub.split('/'); var cur = dir;
+        parts.forEach(function (s) { cur += '/' + s; try { pyodide.FS.mkdir(cur); } catch (e) {} });
+      }
+      pyodide.FS.writeFile(dir + '/' + p, entry.files[p], { encoding: 'utf8' });
+    });
+    if (andDrop) {
+      entries.splice(idx, 1);
+      _stashWrite(dir, entries);
+    }
+    return _snapshotPaths(dir).then(function (postMap) {
+      _gitReply(id,
+        andDrop
+          ? "Dropped stash@{" + idx + "} (" + entry.message + ")\n"
+          : "Applied stash@{" + idx + "}\n",
+        '', 0, _diffMaps(preMap, postMap));
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+function _stashPop(id, args, dir, fs) { return _stashApply(id, args, dir, fs, true); }
+
+function _stashDrop(id, args, dir, fs) {
+  var entries = _stashRead(dir);
+  if (entries.length === 0) return _gitReply(id, '', "No stash entries found.\n", 1, []);
+  var idx = _stashIndex(args, entries);
+  if (idx < 0 || idx >= entries.length) return _gitReply(id, '', "fatal: stash entry not found\n", 1, []);
+  var dropped = entries.splice(idx, 1)[0];
+  _stashWrite(dir, entries);
+  _gitReply(id, "Dropped stash@{" + idx + "} (" + dropped.message + ")\n", '', 0, []);
+}
+
+function _stashShow(id, args, dir, fs) {
+  var entries = _stashRead(dir);
+  if (entries.length === 0) return _gitReply(id, '', "No stash entries found.\n", 1, []);
+  var idx = _stashIndex(args, entries);
+  var entry = entries[idx];
+  if (!entry) return _gitReply(id, '', "fatal: stash entry not found\n", 1, []);
+  var headOid = entry.headOid;
+  var leftFiles = {}, rightFiles = entry.files;
+  _walkCommitTree(fs, dir, headOid, leftFiles, '').then(function () {
+    var allPaths = {};
+    Object.keys(leftFiles).forEach(function (k) { allPaths[k] = true; });
+    Object.keys(rightFiles).forEach(function (k) { allPaths[k] = true; });
+    var BOLD = '\x1b[1m', GREEN = '\x1b[32m', RED = '\x1b[31m', CYAN = '\x1b[36m', RESET = '\x1b[m';
+    var out = '';
+    Object.keys(allPaths).sort().forEach(function (p) {
+      var l = leftFiles[p], r = rightFiles[p];
+      if (l === r) return;
+      out += BOLD + 'diff --git a/' + p + ' b/' + p + RESET + '\n';
+      if (l === undefined) out += BOLD + '--- /dev/null' + RESET + '\n+++ b/' + p + '\n';
+      else if (r === undefined) out += BOLD + '--- a/' + p + RESET + '\n+++ /dev/null\n';
+      else out += BOLD + '--- a/' + p + RESET + '\n' + BOLD + '+++ b/' + p + RESET + '\n';
+      out += _formatHunks(l || '', r || '', GREEN, RED, CYAN, RESET);
+    });
+    _gitReply(id, out, '', 0, []);
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+function _stashClear(id, args, dir, fs) {
+  try { pyodide.FS.unlink(dir + STASH_LOG_PATH); } catch (e) {}
+  _gitReply(id, '', '', 0, []);
+}
+
+// ---- git cherry-pick -------------------------------------------------------
+//
+// Apply the changes introduced by <commit> on top of the current branch as a
+// new commit. iso-git lacks a direct `cherry-pick` so we re-create the diff
+// by reading the committed tree, copying paths into the workdir+index, and
+// committing with the original message.
+
+function _gitCmdCherryPick(id, args, dir, fs) {
+  var noCommit = args.indexOf('-n') !== -1 || args.indexOf('--no-commit') !== -1;
+  var refs = args.filter(function (a) { return a.charAt(0) !== '-'; });
+  if (refs.length === 0) return _gitReply(id, '', "fatal: cherry-pick requires a commit\n", 1, []);
+
+  var ref = refs[0];
+  Promise.all([
+    _git.resolveRef({ fs: fs, dir: dir, ref: ref }),
+    _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+  ]).then(function (r) {
+    var oid = r[0], branch = r[1];
+    return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function (c) {
+      var parentOid = (c.commit.parent || [])[0];
+      var parentFiles = {};
+      var sourceFiles = {};
+      var collectParent = parentOid
+        ? _walkCommitTree(fs, dir, parentOid, parentFiles, '')
+        : Promise.resolve();
+      return collectParent
+        .then(function () { return _walkCommitTree(fs, dir, oid, sourceFiles, ''); })
+        .then(function () {
+          // For each path that differs between parent and source, apply the
+          // change to the workdir.
+          return _snapshotPaths(dir).then(function (preMap) {
+            var allPaths = {};
+            Object.keys(parentFiles).forEach(function (k) { allPaths[k] = true; });
+            Object.keys(sourceFiles).forEach(function (k) { allPaths[k] = true; });
+            var changed = [];
+            Object.keys(allPaths).forEach(function (p) {
+              var pa = parentFiles[p], so = sourceFiles[p];
+              if (pa === so) return;
+              if (so === undefined) {
+                // file was deleted in source — delete in workdir
+                try { pyodide.FS.unlink(dir + '/' + p); } catch (e) {}
+              } else {
+                // create or overwrite
+                var subdir = p.indexOf('/') !== -1 ? p.substring(0, p.lastIndexOf('/')) : '';
+                if (subdir) {
+                  var parts = subdir.split('/'); var cur = dir;
+                  parts.forEach(function (s) { cur += '/' + s; try { pyodide.FS.mkdir(cur); } catch (e) {} });
+                }
+                pyodide.FS.writeFile(dir + '/' + p, so, { encoding: 'utf8' });
+              }
+              changed.push(p);
+            });
+            // Stage the changes
+            return Promise.all(changed.map(function (p) {
+              var abs = dir + '/' + p;
+              var exists = true;
+              try { pyodide.FS.stat(abs); } catch (e) { exists = false; }
+              return exists ? _git.add({ fs: fs, dir: dir, filepath: p })
+                            : _git.remove({ fs: fs, dir: dir, filepath: p });
+            })).then(function () {
+              if (noCommit) return null;
+              return _git.commit({
+                fs: fs, dir: dir,
+                message: c.commit.message || ('cherry-pick of ' + oid.substring(0, 7)),
+                author: c.commit.author,
+              });
+            }).then(function (newOid) {
+              return _snapshotPaths(dir).then(function (postMap) {
+                var msg = newOid
+                  ? "[" + (branch || 'HEAD') + " " + newOid.substring(0, 7) + "] " +
+                    (c.commit.message || '').split('\n')[0] + "\n"
+                  : "Changes applied; commit deferred (-n).\n";
+                _gitReply(id, msg, '', 0, _diffMaps(preMap, postMap));
+              });
+            });
+          });
+        });
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+// ---- git revert ------------------------------------------------------------
+//
+// Inverse of cherry-pick: apply the REVERSE diff of <commit> (parent vs
+// commit, swapped) on top of HEAD as a new commit.
+
+function _gitCmdRevert(id, args, dir, fs) {
+  var noCommit = args.indexOf('-n') !== -1 || args.indexOf('--no-commit') !== -1;
+  var refs = args.filter(function (a) { return a.charAt(0) !== '-'; });
+  if (refs.length === 0) return _gitReply(id, '', "fatal: revert requires a commit\n", 1, []);
+
+  var ref = refs[0];
+  Promise.all([
+    _git.resolveRef({ fs: fs, dir: dir, ref: ref }),
+    _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+  ]).then(function (r) {
+    var oid = r[0], branch = r[1];
+    return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function (c) {
+      var parentOid = (c.commit.parent || [])[0];
+      var parentFiles = {}, sourceFiles = {};
+      var collectParent = parentOid
+        ? _walkCommitTree(fs, dir, parentOid, parentFiles, '')
+        : Promise.resolve();
+      return collectParent
+        .then(function () { return _walkCommitTree(fs, dir, oid, sourceFiles, ''); })
+        .then(function () {
+          return _snapshotPaths(dir).then(function (preMap) {
+            // REVERSE: apply parent's content where source differs from parent.
+            var allPaths = {};
+            Object.keys(parentFiles).forEach(function (k) { allPaths[k] = true; });
+            Object.keys(sourceFiles).forEach(function (k) { allPaths[k] = true; });
+            var changed = [];
+            Object.keys(allPaths).forEach(function (p) {
+              var pa = parentFiles[p], so = sourceFiles[p];
+              if (pa === so) return;
+              if (pa === undefined) {
+                try { pyodide.FS.unlink(dir + '/' + p); } catch (e) {}
+              } else {
+                var subdir = p.indexOf('/') !== -1 ? p.substring(0, p.lastIndexOf('/')) : '';
+                if (subdir) {
+                  var parts = subdir.split('/'); var cur = dir;
+                  parts.forEach(function (s) { cur += '/' + s; try { pyodide.FS.mkdir(cur); } catch (e) {} });
+                }
+                pyodide.FS.writeFile(dir + '/' + p, pa, { encoding: 'utf8' });
+              }
+              changed.push(p);
+            });
+            return Promise.all(changed.map(function (p) {
+              var abs = dir + '/' + p;
+              var exists = true;
+              try { pyodide.FS.stat(abs); } catch (e) { exists = false; }
+              return exists ? _git.add({ fs: fs, dir: dir, filepath: p })
+                            : _git.remove({ fs: fs, dir: dir, filepath: p });
+            })).then(function () {
+              if (noCommit) return null;
+              var subj = (c.commit.message || '').split('\n')[0];
+              return _git.commit({
+                fs: fs, dir: dir,
+                message: 'Revert "' + subj + '"\n\nThis reverts commit ' + oid + '.\n',
+              });
+            }).then(function (newOid) {
+              return _snapshotPaths(dir).then(function (postMap) {
+                var msg = newOid
+                  ? "[" + (branch || 'HEAD') + " " + newOid.substring(0, 7) + "] Revert \"" +
+                    (c.commit.message || '').split('\n')[0] + "\"\n"
+                  : "Changes applied; commit deferred (-n).\n";
+                _gitReply(id, msg, '', 0, _diffMaps(preMap, postMap));
+              });
+            });
+          });
+        });
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+// ---- git bisect ------------------------------------------------------------
+//
+// Workflow command. iso-git has no native bisect, so we implement the binary
+// search ourselves. State lives in `.git/BISECT_STATE.json`:
+//   { good: [oid...], bad: oid|null, skip: [oid...], original: 'branch-name'|oid }
+// Each `good`/`bad` move recomputes the midpoint commit between the latest
+// known-bad and any known-good ancestor, then checks it out.
+
+var BISECT_STATE_PATH = '/.git/BISECT_STATE.json';
+
+function _bisectReadState(dir) {
+  try {
+    var t = pyodide.FS.readFile(dir + BISECT_STATE_PATH, { encoding: 'utf8' });
+    return JSON.parse(t);
+  } catch (e) { return null; }
+}
+function _bisectWriteState(dir, st) {
+  pyodide.FS.writeFile(dir + BISECT_STATE_PATH, JSON.stringify(st), { encoding: 'utf8' });
+}
+function _bisectClearState(dir) {
+  try { pyodide.FS.unlink(dir + BISECT_STATE_PATH); } catch (e) {}
+}
+
+// Walk parents of `from` (depth-first) until we hit one of `untils` (or no
+// more parents). Returns the chain INCLUDING `from` and EXCLUDING the until.
+function _ancestryChain(dir, fs, from, untils) {
+  var stop = {}; (untils || []).forEach(function (o) { stop[o] = true; });
+  var chain = [];
+  var seen = {};
+  function step(oid) {
+    if (!oid || seen[oid] || stop[oid]) return Promise.resolve();
+    seen[oid] = true;
+    return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function (c) {
+      chain.push(oid);
+      var parents = c.commit.parent || [];
+      return parents.length ? step(parents[0]) : Promise.resolve();
+    }).catch(function () { return null; });
+  }
+  return step(from).then(function () { return chain; });
+}
+
+function _bisectCheckoutMid(dir, fs, st) {
+  // Candidates: ancestors of `bad` that are NOT the `bad` itself, and that
+  // are descendants of any `good` (i.e. excluded if reachable from a good).
+  if (!st.bad) return Promise.resolve(null);
+  return _ancestryChain(dir, fs, st.bad, st.good).then(function (chain) {
+    // Drop `bad` itself (we already know it's bad) and `skip`s.
+    var candidates = chain.filter(function (o) {
+      return o !== st.bad && (st.skip || []).indexOf(o) === -1;
+    });
+    if (candidates.length === 0) return null;
+    var mid = candidates[Math.floor(candidates.length / 2)];
+    return _git.checkout({ fs: fs, dir: dir, ref: mid, force: true })
+      .then(function () { return { oid: mid, remaining: candidates.length }; });
+  });
+}
+
+function _gitCmdBisect(id, args, dir, fs) {
+  var sub = args[0];
+  var rest = args.slice(1);
+  if (sub === 'start')   return _bisectStart(id, rest, dir, fs);
+  if (sub === 'good')    return _bisectMark(id, rest, dir, fs, 'good');
+  if (sub === 'bad')     return _bisectMark(id, rest, dir, fs, 'bad');
+  if (sub === 'new')     return _bisectMark(id, rest, dir, fs, 'bad');
+  if (sub === 'old')     return _bisectMark(id, rest, dir, fs, 'good');
+  if (sub === 'skip')    return _bisectMark(id, rest, dir, fs, 'skip');
+  if (sub === 'reset')   return _bisectReset(id, rest, dir, fs);
+  if (sub === 'log')     return _bisectLog(id, rest, dir, fs);
+  if (!sub)              return _gitReply(id, '', "usage: git bisect <start|good|bad|skip|reset|log>\n", 1, []);
+  return _gitReply(id, '', "git bisect: unknown subcommand '" + sub + "'\n", 1, []);
+}
+
+function _bisectStart(id, args, dir, fs) {
+  // git bisect start [<bad> [<good>...]]
+  Promise.all([
+    _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+    _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
+  ]).then(function (r) {
+    var origBranch = r[0];
+    var origOid = r[1];
+    var bad = null, good = [];
+    if (args[0]) {
+      bad = null;  // resolved below
+    }
+    var promises = [];
+    if (args[0]) promises.push(_git.resolveRef({ fs: fs, dir: dir, ref: args[0] }).then(function (o) { bad = o; }));
+    for (var i = 1; i < args.length; i++) {
+      (function (g) {
+        promises.push(_git.resolveRef({ fs: fs, dir: dir, ref: g }).then(function (o) { good.push(o); }));
+      })(args[i]);
+    }
+    return Promise.all(promises).then(function () {
+      var st = {
+        good: good, bad: bad, skip: [], log: ['git bisect start' + (args.length ? ' ' + args.join(' ') : '')],
+        original: origBranch || origOid,
+      };
+      _bisectWriteState(dir, st);
+      var msg = "Bisect started. Now mark commits with `git bisect good` (works) or `git bisect bad` (broken).\n";
+      if (bad && good.length) {
+        return _bisectCheckoutMid(dir, fs, st).then(function (mid) {
+          if (!mid) {
+            msg += "Bisecting: 0 revisions left to test\n";
+          } else {
+            return _snapshotPaths(dir).then(function () {
+              msg += "Bisecting: roughly " + Math.max(1, Math.floor(Math.log2(mid.remaining))) +
+                     " more steps (" + mid.remaining + " revisions)\n" +
+                     "[" + mid.oid + "] checked out for testing\n";
+              _gitReply(id, msg, '', 0, []);
+            });
+          }
+          _gitReply(id, msg, '', 0, []);
+        });
+      }
+      _gitReply(id, msg, '', 0, []);
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+function _bisectMark(id, args, dir, fs, kind) {
+  var st = _bisectReadState(dir);
+  if (!st) return _gitReply(id, '', "You need to start by 'git bisect start'\n", 1, []);
+  var oidPromise = args[0]
+    ? _git.resolveRef({ fs: fs, dir: dir, ref: args[0] })
+    : _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' });
+  oidPromise.then(function (oid) {
+    if (kind === 'good') st.good.push(oid);
+    else if (kind === 'bad') st.bad = oid;
+    else if (kind === 'skip') st.skip.push(oid);
+    st.log.push('git bisect ' + kind + (args[0] ? ' ' + args[0] : ''));
+    _bisectWriteState(dir, st);
+    if (!st.bad || st.good.length === 0) {
+      _gitReply(id, "status: waiting for both good and bad commits.\n", '', 0, []);
+      return;
+    }
+    return _bisectCheckoutMid(dir, fs, st).then(function (mid) {
+      if (!mid) {
+        // Convergence: bad is the first bad commit.
+        return _git.readCommit({ fs: fs, dir: dir, oid: st.bad }).then(function (c) {
+          var subj = ((c.commit.message) || '').split('\n')[0];
+          _gitReply(id, st.bad + " is the first bad commit\n    " + subj + "\n", '', 0, []);
+        });
+      }
+      return _snapshotPaths(dir).then(function () {
+        _gitReply(id, "Bisecting: " + mid.remaining + " revisions left to test\n[" + mid.oid + "] checked out for testing\n",
+          '', 0, []);
+      });
+    });
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
+}
+
+function _bisectReset(id, args, dir, fs) {
+  var st = _bisectReadState(dir);
+  if (!st) return _gitReply(id, '', "We are not bisecting.\n", 1, []);
+  var ref = args[0] || st.original;
+  _bisectClearState(dir);
+  _git.checkout({ fs: fs, dir: dir, ref: ref, force: true })
+    .then(function () { return _snapshotPaths(dir); })
+    .then(function (post) {
+      _gitReply(id, "Bisect reset; back at " + ref + ".\n", '', 0, Object.keys(post));
+    })
+    .catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
+}
+
+function _bisectLog(id, args, dir, fs) {
+  var st = _bisectReadState(dir);
+  if (!st) return _gitReply(id, '', "We are not bisecting.\n", 1, []);
+  _gitReply(id, st.log.join('\n') + '\n', '', 0, []);
+}
+
+// ---- git reflog ------------------------------------------------------------
+//
+// Real git records every HEAD/branch update in `.git/logs/<ref>`. iso-git
+// doesn't always write reflogs automatically, so we ALSO maintain our own
+// `.git/logs/HEAD` from the dispatcher: every commit/checkout/reset/merge/
+// branch op that changes HEAD appends a line in standard reflog format:
+//   <old> <new> <name> <email> <ts> <tz>\t<message>
+// `git reflog` reads that file and prints `<short> HEAD@{n}: <message>`.
+
+function _gitCmdReflog(id, args, dir, fs) {
+  var sub = args[0];
+  if (sub === 'show' || !sub || sub.charAt(0) !== '-' && !/^(expire|delete|exists)$/.test(sub)) {
+    var ref = (sub === 'show' ? args[1] : sub) || 'HEAD';
+    return _showReflog(id, dir, ref);
+  }
+  return _gitReply(id, '', "git reflog: only `show` is supported in this terminal\n", 1, []);
+}
+
+function _showReflog(id, dir, ref) {
+  var path = dir + '/.git/logs/' + (ref === 'HEAD' ? 'HEAD' : (ref.indexOf('refs/') === 0 ? ref : 'refs/heads/' + ref));
+  var content;
+  try { content = pyodide.FS.readFile(path, { encoding: 'utf8' }); }
+  catch (e) {
+    return _gitReply(id, '', "fatal: no reflog for '" + ref + "'\n", 1, []);
+  }
+  var lines = content.split('\n').filter(Boolean);
+  // Print newest first, like real git.
+  var YELLOW = '\x1b[33m', RESET = '\x1b[m';
+  var out = '';
+  for (var i = lines.length - 1; i >= 0; i--) {
+    var parsed = _parseReflogLine(lines[i]);
+    if (!parsed) continue;
+    var idx = lines.length - 1 - i;
+    out += YELLOW + parsed.newOid.substring(0, 7) + RESET +
+           ' ' + ref + '@{' + idx + '}: ' + parsed.message + '\n';
+  }
+  _gitReply(id, out, '', 0, []);
+}
+
+function _parseReflogLine(line) {
+  // Format: "<old> <new> <name> <email> <ts> <tz>\t<message>"
+  var tabIdx = line.indexOf('\t');
+  if (tabIdx === -1) return null;
+  var head = line.substring(0, tabIdx);
+  var msg = line.substring(tabIdx + 1);
+  var parts = head.split(' ');
+  if (parts.length < 2) return null;
+  return { oldOid: parts[0], newOid: parts[1], message: msg };
+}
+
+// Append a line to the reflog for `ref`. Called from dispatchers that move
+// HEAD or a branch. Best-effort: never fails the parent op if the write
+// errors (e.g., logs/ dir missing on a freshly-created ref).
+function _appendReflog(dir, ref, oldOid, newOid, message) {
+  var logPath = dir + '/.git/logs/' + (ref === 'HEAD' ? 'HEAD' : ref);
+  try {
+    var parts = logPath.substring(0, logPath.lastIndexOf('/')).split('/').filter(Boolean);
+    var cur = '';
+    parts.forEach(function (p) { cur += '/' + p; try { pyodide.FS.mkdir(cur); } catch (e) {} });
+    var line = (oldOid || '0000000000000000000000000000000000000000') + ' ' +
+               (newOid || '0000000000000000000000000000000000000000') + ' ' +
+               'Student <student@example.com> ' + Math.floor(Date.now() / 1000) + ' +0000\t' +
+               (message || '') + '\n';
+    var existing = '';
+    try { existing = pyodide.FS.readFile(logPath, { encoding: 'utf8' }); } catch (e) {}
+    pyodide.FS.writeFile(logPath, existing + line, { encoding: 'utf8' });
+  } catch (e) { /* best-effort */ }
 }

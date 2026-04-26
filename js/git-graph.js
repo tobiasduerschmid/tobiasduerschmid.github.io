@@ -2327,6 +2327,7 @@
         // Try to reuse by exact key (same path, same zone → update in place).
         if (rowEls[d.key]) {
           reusedEntry = rowEls[d.key];
+          reusedEntry._prevKey = d.key;
           delete rowEls[d.key];
         } else if (zoneName !== 'stashed') {
           // Try to reuse by path from another zone → animate zone change.
@@ -2339,6 +2340,7 @@
               if (cand.entry.zone === 'stashed') continue; // don't merge stash↔file
               reusedEntry = cand.entry;
               cand.entry._claimed = true;
+              cand.entry._prevKey = cand.key;
               delete rowEls[cand.key];
               break;
             }
@@ -2406,7 +2408,12 @@
         var zoneChanged = entry._prevZone !== undefined && entry._prevZone !== entry.zone;
         var statusChanged = entry._prevStatus !== undefined && entry._prevStatus !== entry.status;
         if (!zoneChanged && !statusChanged) return;
-        var prior = oldRects[surviveKey];
+        // Prefer the exact old key recorded during reuse — this guarantees
+        // the FLIP source is the row's PREVIOUS position even when oldRects
+        // happens to hold multiple entries for the same path (e.g. a file
+        // that was simultaneously staged and unstaged before the user added
+        // it). Falls back to the new key, then a path-only scan.
+        var prior = oldRects[entry._prevKey] || oldRects[surviveKey];
         if (!prior) {
           for (var okey in oldRects) {
             if (oldRects.hasOwnProperty(okey) && okey.split(':').slice(1).join(':') === entry.path) {
