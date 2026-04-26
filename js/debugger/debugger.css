@@ -188,8 +188,8 @@
 }
 
 /* Default standalone breakpoint — visible from a distance: bold red dot a
-   couple px larger than Monaco's gutter affords by default. Single thin
-   solid black outline (no inset highlight, no double-stroke) per design. */
+   couple px larger than Monaco's gutter affords by default. Use a subtle
+   drop shadow instead of a hard outline so it matches the chevron treatment. */
 .tvm-bp-glyph {
   background: #e63946;
   border-radius: 50%;
@@ -198,7 +198,7 @@
   margin-left: 4px;
   margin-top: 3px;
   cursor: pointer;
-  box-shadow: 0 0 0 1px #000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
 }
 .tvm-bp-cond {
   background: #d62828;
@@ -258,7 +258,7 @@
   justify-content: center;
   background: #d62828;
   color: #fff;
-  box-shadow: 0 0 0 1px #000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
   font-size: 14px;
   line-height: 1;
   font-weight: 900;
@@ -391,11 +391,8 @@
 .tvm-debug-current-glyph {
   /* OUTLINE-only pentagonal arrow pointing right. Sized larger than the
      line height so it pops out into the surrounding rows visually.
-     For high contrast in BOTH light and dark mode we draw the chevron twice:
-     a thicker dark backing stroke first, then the bright yellow on top.
-     This gives the yellow line a dark "halo" that reads cleanly on white,
-     light gray, near-black, etc. */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23000000' stroke-opacity='0.85' stroke-width='4.4' stroke-linejoin='round' stroke-linecap='round'/><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
+     A thin drop shadow supplies contrast without the prior black outline. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -404,20 +401,20 @@
   margin-left: 0 !important;
   margin-top: -3px !important;   /* center against the line; lets it overflow up */
   overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
 }
 /* "On a breakpoint" variant — chevron outline + red dot drawn INSIDE the
    chevron body, BOTH baked into the same SVG so we don't depend on a CSS
    ::before pseudo (Monaco's glyph-margin elements were dropping/overriding
    the ::before, leaving the small inner dot invisible).
    Layers, in z-order:
-     1. Dark backing stroke of chevron (light/dark mode contrast)
-     2. Yellow chevron stroke
-     3. Red filled circle with thin black outline, sized to fit inside the
+     1. Yellow chevron stroke
+     2. Red filled circle, sized to fit inside the
         chevron's wide left half so it's clearly contained.
    Standalone bp glyph for this line is suppressed by refreshBpDecorations
    so only this combined glyph renders. */
 .tvm-debug-current-glyph-on-bp {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23000000' stroke-opacity='0.85' stroke-width='4.4' stroke-linejoin='round' stroke-linecap='round'/><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/><circle cx='8.5' cy='11' r='4.2' fill='%23e63946' stroke='%23000' stroke-width='1'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='9.1' cy='11' r='4.2' fill='%23e63946'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -426,14 +423,15 @@
   margin-left: 0 !important;
   margin-top: -3px !important;
   overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
 }
 .tvm-debug-current-line-rewound {
   background: rgba(148, 163, 184, 0.22);
 }
 /* Rewound-mode glyph: same pentagon, pointing LEFT, slate-gray outline with
-   the same dark backing-stroke trick for cross-mode contrast. */
+   the same thin drop-shadow contrast treatment. */
 .tvm-debug-current-glyph-rewound {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%23000000' stroke-opacity='0.85' stroke-width='4.4' stroke-linejoin='round' stroke-linecap='round'/><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -442,9 +440,10 @@
   margin-left: 0 !important;
   margin-top: -3px !important;
   overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
 }
 .tvm-debug-current-glyph-rewound-on-bp {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%23000000' stroke-opacity='0.85' stroke-width='4.4' stroke-linejoin='round' stroke-linecap='round'/><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/><circle cx='13.5' cy='11' r='4.2' fill='%23e63946' stroke='%23000' stroke-width='1'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='12.9' cy='11' r='4.2' fill='%23e63946'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -453,6 +452,7 @@
   margin-left: 0 !important;
   margin-top: -3px !important;
   overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
 }
 
 /* ---- Debug views (in the left instructions panel as tabs) -------------- */
@@ -929,9 +929,12 @@ html.dark-mode .sebook-dbg-reload-note {
 
 /* --- Breakpoint glyphs ---
    Keep these tokens identical to the red dot baked into the chevron SVGs above
-   so a breakpoint does not change color/outline when the execution marker
+   so a breakpoint does not change color/shadow when the execution marker
    lands on it. */
-html.dark-mode .tvm-bp-glyph { background: #e63946; box-shadow: 0 0 0 1px #000; }
+html.dark-mode .tvm-bp-glyph {
+  background: #e63946;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
+}
 html.dark-mode .tvm-bp-cond { background: #d62828; }
 html.dark-mode .tvm-bp-error { background: #f1a325; }
 html.dark-mode .tvm-bp-dialog-backdrop { background: rgba(2, 6, 23, 0.62); }

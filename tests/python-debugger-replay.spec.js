@@ -216,7 +216,7 @@ async function breakpointVisualTokens(page, darkMode) {
     const chevronStyle = getComputedStyle(chevron);
     const result = {
       standaloneBackground: standaloneStyle.backgroundColor,
-      standaloneOutline: standaloneStyle.boxShadow,
+      standaloneShadow: standaloneStyle.boxShadow,
       standaloneWidth: standaloneStyle.width,
       standaloneHeight: standaloneStyle.height,
       conditionalWidth: conditionalStyle.width,
@@ -225,6 +225,7 @@ async function breakpointVisualTokens(page, darkMode) {
       conditionalQuestionAlignItems: conditionalQuestionStyle.alignItems,
       conditionalQuestionJustifyContent: conditionalQuestionStyle.justifyContent,
       chevronBreakpointImage: chevronStyle.backgroundImage,
+      chevronFilter: chevronStyle.filter,
     };
 
     standalone.remove();
@@ -306,7 +307,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
       const dark = await breakpointVisualTokens(page, true);
 
       expect(light.standaloneBackground).toBe('rgb(230, 57, 70)');
-      expect(light.standaloneOutline).toContain('rgb(0, 0, 0)');
+      expect(light.standaloneShadow).toContain('rgba(0, 0, 0, 0.62)');
       expect(light.standaloneWidth).toBe('16px');
       expect(light.standaloneHeight).toBe('16px');
       expect(light.conditionalWidth).toBe('16px');
@@ -314,6 +315,9 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(light.conditionalQuestionDisplay).toBe('flex');
       expect(light.conditionalQuestionAlignItems).toBe('center');
       expect(light.conditionalQuestionJustifyContent).toBe('center');
+      expect(light.chevronFilter).toContain('drop-shadow');
+      expect(light.chevronBreakpointImage).not.toContain('%23000000');
+      expect(light.chevronBreakpointImage).not.toContain('stroke=\"%23000');
       expect(dark).toEqual(light);
     } finally {
       await page.close();
