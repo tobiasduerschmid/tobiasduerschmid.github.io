@@ -176,8 +176,10 @@
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutor-chat.css' | relative_url }}">
 
-  <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language. -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language.
+       crossorigin=anonymous ensures the response is valid under COEP=credentialless
+       (which the COI shim sets on debugger / webcontainer tutorials). -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" crossorigin="anonymous"></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
 
   <!-- Custom UML diagram renderers -->
@@ -211,20 +213,58 @@
 
   {% assign tutorial_reset_type = tutorial_data.reset_type | default: 'files' %}
 
-  {% if tutorial_backend == 'webcontainer' %}
-  <!-- Register Cross-Origin Isolation service worker required by WebContainers -->
+  {% if tutorial_backend == 'webcontainer' or tutorial_data.debugger %}
+  <!-- Register Cross-Origin Isolation service worker.
+       WebContainers needs it always; the time-travel debugger needs it for
+       SharedArrayBuffer + Atomics.wait (used to block the pyodide worker on
+       step/continue commands). Conditional injection keeps non-debugger
+       pyodide tutorials clean of the COEP header (which can break embedded
+       third-party iframes). -->
   <script>
     (function () {
-      if (window.crossOriginIsolated) return; // already isolated — no action needed
       if (!('serviceWorker' in navigator)) return;
-      navigator.serviceWorker.register('{{ "/js/coi-serviceworker.js" | relative_url }}')
+      // Always force an update check — this is what gets stale SWs replaced
+      // when we ship a fix. Without it, browsers can serve a 24h-cached SW.
+      // Once a new SW activates, `controllerchange` fires; we reload so the
+      // page picks up the new headers immediately.
+      var reloadedForUpdate = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloadedForUpdate) return;
+        reloadedForUpdate = true;
+        window.location.reload();
+      });
+
+      if (window.crossOriginIsolated) {
+        // Already isolated — still trigger an update check in the background
+        // so any future SW patches roll out without manual cache clearing.
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+          if (reg) reg.update();
+        });
+        return;
+      }
+      // If a SW is already controlling this page but `crossOriginIsolated`
+      // is still false, reloading won't help (the headers are already being
+      // applied as much as they're going to be). Reloading anyway would
+      // create an infinite refresh loop.
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+          if (reg) reg.update();
+        });
+        return;
+      }
+      navigator.serviceWorker.register('{{ "/coi-serviceworker.js" | relative_url }}')
         .then(function (reg) {
+          reg.update();   // force a fresh fetch of the SW source
           function reload() { window.location.reload(); }
           if (reg.installing) {
             reg.installing.addEventListener('statechange', function () {
               if (this.state === 'installed') reload();
             });
+          } else if (reg.waiting) {
+            reload();
           } else if (reg.active) {
+            // Registered but no controller — fresh load. Reload once to put
+            // the SW in control of this client.
             reload();
           }
         });
@@ -297,6 +337,11 @@
         outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
         editorSplit: config.editor_split || false,
         outputHeight: config.output_height || null,
+        // Time-travel debugger opt-in (pyodide tutorials only). When false,
+        // no debugger code is loaded. See plan in
+        // .claude/plans/what-would-be-options-temporal-ritchie.md
+        debugger: config.debugger || false,
+        debuggerOptions: config.debugger_options || {},
         // Optional independent layout overrides:
         //   `output_position: 'bottom-left'` — hoist Output panel into the left column.
         //   `run_label: 'Test'` — override the Run button label.
@@ -582,9 +627,10 @@
     })();
   </script>
 
-  <!-- Only load jQuery + Bootstrap (skip portfolio/carousel scripts) -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <!-- Only load jQuery + Bootstrap (skip portfolio/carousel scripts).
+       crossorigin=anonymous required for COEP=credentialless contexts. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
 
 </body>
 </html>

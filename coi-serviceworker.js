@@ -22,13 +22,15 @@ self.addEventListener('fetch', function (e) {
   // Skip non-GET and opaque cache-only requests that would cause errors
   if (e.request.method !== 'GET') return;
   if (e.request.cache === 'only-if-cached' && e.request.mode !== 'same-origin') return;
+  // Skip cross-origin requests entirely. Re-fetching them in the SW would
+  // attach credentials and produce a response that COEP=credentialless rejects;
+  // letting the browser handle them directly preserves the no-cors / no-credentials
+  // semantics that credentialless mode requires for CDN scripts (marked, mermaid,
+  // monaco, pyodide, etc.).
+  if (new URL(e.request.url).origin !== self.location.origin) return;
 
   e.respondWith(
     fetch(e.request).then(function (response) {
-      // Only add headers to same-origin responses; cross-origin resources
-      // already carry their own CORP headers (or use credentialless mode).
-      if (!response.url.startsWith(self.location.origin)) return response;
-
       var headers = new Headers(response.headers);
       headers.set('Cross-Origin-Opener-Policy', 'same-origin');
       // credentialless is more permissive than require-corp and works with CDN assets

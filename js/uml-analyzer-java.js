@@ -2334,4 +2334,4 @@
 
   global.analyzeJavaSources = analyzeJavaSources;
 
-})(typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : this);
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));

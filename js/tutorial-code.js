@@ -46,6 +46,15 @@
       var s = document.createElement('script');
       s.src = url; s.onload = resolve;
       s.onerror = function () { reject(new Error('Failed to load: ' + url)); };
+      // For cross-origin scripts, request CORS so the response works under
+      // COEP=credentialless (used by webcontainer + debugger tutorials). Public
+      // CDNs (jsdelivr, unpkg, cdnjs) all serve `Access-Control-Allow-Origin: *`,
+      // so this is safe everywhere — including non-COEP pages where the
+      // attribute is simply ignored.
+      try {
+        var u = new URL(url, window.location.href);
+        if (u.origin !== window.location.origin) s.crossOrigin = 'anonymous';
+      } catch (e) { /* invalid URL — let load attempt fail naturally */ }
       document.head.appendChild(s);
     });
   }
@@ -54,6 +63,10 @@
     if (document.querySelector('link[href="' + url + '"]')) return;
     var l = document.createElement('link');
     l.rel = 'stylesheet'; l.href = url;
+    try {
+      var u = new URL(url, window.location.href);
+      if (u.origin !== window.location.origin) l.crossOrigin = 'anonymous';
+    } catch (e) { /* ignore */ }
     document.head.appendChild(l);
   }
 
@@ -267,6 +280,12 @@
     // Browser JS runner state
     this._jsRunnerFrame = null;
     this._jsRunnerMsgId = 0;
+
+    // Time-travel debugger opt-in (pyodide only). When false, no debugger code
+    // is loaded — see js/debugger/main.js. When true, _buildUI() lazy-loads the
+    // debugger module after the base UI is constructed.
+    this.debuggerEnabled = !!options.debugger && backend === 'pyodide';
+    this.debuggerOptions = options.debuggerOptions || {};
   }
 
   // ---------------------------------------------------------------------------
@@ -287,6 +306,12 @@
       })
       .then(function () {
         return self._initBackend();
+      })
+      .then(function () {
+        // Time-travel debugger lazy-load. When `debugger: true` in YAML, fetch
+        // the debugger module + stylesheet on demand and let it attach to the
+        // already-built UI + Monaco instance + worker. When false, this is a no-op.
+        if (self.debuggerEnabled) return self._loadDebuggerModule();
       })
       .then(function () {
         // Watch for dark-mode class changes and re-theme Monaco + terminal (all backends).
@@ -3206,7 +3231,40 @@
       tabSize: 2,
       wordWrap: 'on',
       padding: { top: 8 },
+      // Glyph margin is the click-target column for breakpoints. Only enable
+      // when the time-travel debugger is opted in — otherwise an empty grey
+      // column would appear next to line numbers in non-debugger tutorials.
+      glyphMargin: !!this.debuggerEnabled,
     };
+  };
+
+  // Lazy-load the time-travel debugger module. Inserts <script> + <link> for
+  // js/debugger/{main.js,debugger.css}, then awaits `window.SEBookDebugger`
+  // global and calls its `attach(this)` hook. No-op when debuggerEnabled is
+  // false — the `start()` chain skips this method entirely. See plan file at
+  // .claude/plans/what-would-be-options-temporal-ritchie.md for architecture.
+  TutorialCode.prototype._loadDebuggerModule = function () {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      function done() {
+        if (window.SEBookDebugger && typeof window.SEBookDebugger.attach === 'function') {
+          try { window.SEBookDebugger.attach(self); } catch (e) { return reject(e); }
+          resolve();
+        } else {
+          reject(new Error('SEBookDebugger global not found after script load'));
+        }
+      }
+      if (window.SEBookDebugger) { done(); return; }
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = '/js/debugger/debugger.css';
+      document.head.appendChild(css);
+      var script = document.createElement('script');
+      script.src = '/js/debugger/main.js';
+      script.onload = done;
+      script.onerror = function () { reject(new Error('Failed to load debugger module')); };
+      document.head.appendChild(script);
+    });
   };
 
   TutorialCode.prototype._initEditor = function () {
@@ -6187,6 +6245,12 @@
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return;
 
     if (window.TutorChat) { window.TutorChat.onStepChange(); }
+    // Time-travel debugger: clear history + close any active debug session.
+    // Breakpoints persist across steps (matches VS Code), but per-run state
+    // does not. No-op when debugger is not loaded.
+    if (this.debuggerEnabled && window.SEBookDebugger) {
+      window.SEBookDebugger.onStepChange(this);
+    }
 
     var firstVisit = !this._stepsVisited.has(index);
     this._stepsVisited.add(index);

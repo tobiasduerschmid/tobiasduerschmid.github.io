@@ -64,8 +64,41 @@ loadPyodide({
 
 // ---- Message handler --------------------------------------------------------
 
+// Time-travel debugger: lazy-loaded only when the main thread sends
+// `enableDebugger` (which only happens on tutorials with `debugger: true` in
+// YAML). The extension installs its own handlers for `runDebug`, `stepCmd`,
+// `updateWatches`, etc. — when not loaded, those messages would be ignored
+// by this base handler, which is fine because the main thread never sends
+// them on non-debugger tutorials.
+var _debuggerLoaded = false;
+var _debuggerHandlers = null;   // installed by worker-extension.js when loaded
+
 self.onmessage = function (e) {
   var msg = e.data;
+
+  if (msg.type === 'enableDebugger') {
+    if (!_debuggerLoaded) {
+      try {
+        importScripts('/js/debugger/worker-extension.js');
+        _debuggerLoaded = true;
+      } catch (err) {
+        self.postMessage({ type: 'debuggerError', message: 'Failed to load debugger extension: ' + err.message });
+        return;
+      }
+    }
+    self.postMessage({ type: 'debuggerReady' });
+    return;
+  }
+
+  // Route debugger-protocol messages to the loaded extension. The extension
+  // populates `_debuggerHandlers` (an object keyed by message type) when it
+  // loads. If the user clicks Debug before `enableDebugger` round-trips, the
+  // main thread waits for `debuggerReady` first.
+  if (_debuggerHandlers && _debuggerHandlers[msg.type]) {
+    _debuggerHandlers[msg.type](msg);
+    return;
+  }
+
   if (!pyodide) {
     self.postMessage({ type: 'run_done', id: msg.id, exitCode: 1,
       error: 'Pyodide not ready yet' });

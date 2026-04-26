@@ -1,0 +1,501 @@
+/* ============================================================================
+   Time-travel debugger styles. Only loaded on tutorials with `debugger: true`.
+   Follows the existing `.tvm-*` naming convention used by tutorial.css.
+   ========================================================================== */
+
+/* ---- Debug button + step toolbar (in editor's output-actions row) -------- */
+
+.tvm-debug-btn {
+  background: #6f42c1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 4px;
+}
+.tvm-debug-btn:hover { background: #5a32a3; }
+
+.tvm-debug-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(111, 66, 193, 0.08);
+  border: 1px solid rgba(111, 66, 193, 0.25);
+  border-radius: 4px;
+}
+.tvm-debug-toolbar .tvm-debug-step {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #6f42c1;
+  border-radius: 3px;
+  padding: 2px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 22px;
+}
+.tvm-debug-toolbar .tvm-debug-step:hover:not(:disabled) {
+  background: rgba(111, 66, 193, 0.15);
+  border-color: rgba(111, 66, 193, 0.4);
+}
+.tvm-debug-toolbar .tvm-debug-step:disabled {
+  opacity: 0.35; cursor: not-allowed;
+}
+.tvm-debug-toolbar .tvm-debug-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(111, 66, 193, 0.3);
+  margin: 0 3px;
+}
+.tvm-debug-toolbar .tvm-debug-status {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #6f42c1;
+  font-style: italic;
+  min-width: 80px;
+}
+
+/* ---- Reload-needed inline note (when crossOriginIsolated is false) ------ */
+.sebook-dbg-reload-note {
+  font-size: 11px;
+  color: #c0392b;
+  font-style: italic;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: rgba(192, 57, 43, 0.08);
+  border-radius: 3px;
+}
+
+/* ---- Breakpoint glyphs in Monaco gutter --------------------------------- */
+.tvm-bp-glyph {
+  background: #d62828;
+  border-radius: 50%;
+  width: 12px !important;
+  height: 12px !important;
+  margin-left: 4px;
+  margin-top: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.4) inset;
+}
+.tvm-bp-cond {
+  background: #d62828;
+  position: relative;
+}
+.tvm-bp-cond::after {
+  content: '?';
+  position: absolute;
+  top: -3px;
+  left: 1px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 12px;
+}
+.tvm-bp-error {
+  background: #f1a325;
+}
+
+/* Current-line decoration during pause */
+.tvm-debug-current-line {
+  background: rgba(255, 213, 79, 0.18);
+}
+.tvm-debug-current-glyph {
+  background: transparent !important;
+  position: relative;
+}
+.tvm-debug-current-glyph::before {
+  content: '▶';
+  color: #f9a825;
+  font-size: 12px;
+  position: absolute;
+  left: 2px;
+  top: -2px;
+}
+.tvm-debug-current-line-rewound {
+  background: rgba(149, 165, 166, 0.18);
+}
+.tvm-debug-current-glyph-rewound::before {
+  content: '◁';
+  color: #7f8c8d;
+}
+
+/* ---- Debug views (in the left instructions panel as tabs) -------------- */
+
+.tvm-debug-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  background: #fafafa;
+}
+
+.tvm-debug-empty {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  font-family: -apple-system, sans-serif;
+}
+
+.tvm-debug-empty-row {
+  color: #999;
+  font-style: italic;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.tvm-debug-section-head {
+  font-weight: 700;
+  color: #555;
+  background: #ececec;
+  padding: 4px 8px;
+  margin: 8px -12px 4px;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tvm-debug-section-head:first-child { margin-top: 0; }
+
+.tvm-debug-exception {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 6px 10px;
+  border-left: 3px solid #c0392b;
+  margin-bottom: 8px;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.tvm-debug-return {
+  background: #d4edda;
+  color: #155724;
+  padding: 4px 10px;
+  border-left: 3px solid #28a745;
+  margin-bottom: 6px;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+/* Variables tree */
+.tvm-debug-vars { line-height: 1.6; }
+.tvm-debug-var-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 0;
+  cursor: default;
+}
+.tvm-debug-var-row:hover { background: rgba(111, 66, 193, 0.05); }
+.tvm-debug-expander {
+  display: inline-block;
+  width: 14px;
+  font-size: 9px;
+  color: #6f42c1;
+  cursor: pointer;
+  user-select: none;
+}
+.tvm-debug-expander-spacer {
+  display: inline-block;
+  width: 14px;
+}
+.tvm-debug-var-name {
+  color: #2c3e50;
+  font-weight: 600;
+  min-width: 60px;
+}
+.tvm-debug-var-type {
+  color: #999;
+  font-size: 10px;
+  font-style: italic;
+}
+.tvm-debug-var-value {
+  color: #d35400;
+  word-break: break-all;
+  flex: 1;
+}
+.tvm-debug-alias {
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 3px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-family: -apple-system, sans-serif;
+}
+.tvm-debug-truncated {
+  color: #999;
+  font-style: italic;
+  padding: 2px 0;
+  font-size: 11px;
+}
+.tvm-debug-var-children { padding-left: 0; }
+
+/* Call stack */
+.tvm-debug-stack { padding: 4px 0; }
+.tvm-debug-frame {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin: 2px 0;
+}
+.tvm-debug-frame:hover { background: rgba(111, 66, 193, 0.08); }
+.tvm-debug-frame.active {
+  background: rgba(111, 66, 193, 0.18);
+  border-left: 3px solid #6f42c1;
+  padding-left: 5px;
+}
+.tvm-debug-frame-fn { color: #2c3e50; font-weight: 600; }
+.tvm-debug-frame-loc { color: #7f8c8d; font-size: 11px; }
+
+/* Watch */
+.tvm-debug-watch-list { margin-bottom: 8px; }
+.tvm-debug-watch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #ececec;
+}
+.tvm-debug-watch-expr {
+  color: #2c3e50;
+  font-weight: 600;
+  flex: 0 0 130px;
+  word-break: break-all;
+}
+.tvm-debug-watch-arrow { color: #999; }
+.tvm-debug-watch-val {
+  color: #d35400;
+  flex: 1;
+  word-break: break-all;
+}
+.tvm-debug-watch-na { color: #ccc; font-style: italic; }
+.tvm-debug-watch-error { color: #c0392b; font-style: italic; font-size: 11px; }
+.tvm-debug-watch-remove {
+  background: transparent;
+  color: #c0392b;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.tvm-debug-watch-remove:hover { color: #e74c3c; }
+.tvm-debug-watch-add {
+  display: flex;
+  gap: 6px;
+  padding: 6px 0;
+}
+.tvm-debug-watch-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+}
+.tvm-debug-watch-add-btn {
+  background: #6f42c1;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tvm-debug-watch-add-btn:hover { background: #5a32a3; }
+
+/* History */
+.tvm-debug-history-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 6px;
+}
+.tvm-debug-history-slider {
+  flex: 1;
+  cursor: pointer;
+}
+.tvm-debug-history-pos {
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 11px;
+  color: #7f8c8d;
+  min-width: 60px;
+  text-align: right;
+}
+.tvm-debug-history-live {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: -apple-system, sans-serif;
+}
+.tvm-debug-history-rewound {
+  color: #d35400;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: -apple-system, sans-serif;
+}
+.tvm-debug-history-list {
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 11px;
+}
+.tvm-debug-history-item {
+  display: flex;
+  gap: 8px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.tvm-debug-history-item:hover { background: rgba(111, 66, 193, 0.05); }
+.tvm-debug-history-item.active {
+  background: rgba(255, 213, 79, 0.25);
+  font-weight: 700;
+}
+.tvm-debug-history-i {
+  color: #999;
+  min-width: 36px;
+  text-align: right;
+}
+.tvm-debug-history-ev {
+  width: 14px;
+  text-align: center;
+  color: #6f42c1;
+  font-weight: 700;
+}
+.tvm-debug-history-loc { color: #2c3e50; }
+
+/* Output panel collapsed sliver during debug */
+.tvm-output-panel.tvm-debug-collapsed { overflow: hidden; }
+.tvm-output-panel.tvm-debug-collapsed .tvm-output-container { display: none; }
+
+/* ============================================================================
+   Dark mode — full contrast pass.
+   Light mode uses purple #6f42c1 + grays on white. Dark mode uses lavender
+   #b794f4 + lighter grays on a deep slate background, calibrated for WCAG-AA
+   contrast against the panel background (#1f2330, 4.5:1+ for body text).
+   ========================================================================== */
+
+/* --- Debug button + step toolbar --- */
+html.dark-mode .tvm-debug-btn { background: #8b5cf6; color: #fff; }
+html.dark-mode .tvm-debug-btn:hover { background: #a78bfa; }
+html.dark-mode .tvm-debug-toolbar {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(167, 139, 250, 0.4);
+}
+html.dark-mode .tvm-debug-toolbar .tvm-debug-step { color: #c4b5fd; }
+html.dark-mode .tvm-debug-toolbar .tvm-debug-step:hover:not(:disabled) {
+  background: rgba(167, 139, 250, 0.25);
+  border-color: rgba(196, 181, 253, 0.55);
+}
+html.dark-mode .tvm-debug-toolbar .tvm-debug-divider { background: rgba(196, 181, 253, 0.4); }
+html.dark-mode .tvm-debug-toolbar .tvm-debug-status { color: #c4b5fd; }
+html.dark-mode .sebook-dbg-reload-note {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* --- Breakpoint glyphs (slightly brighter red so they pop on dark gutter) --- */
+html.dark-mode .tvm-bp-glyph { background: #f87171; box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset; }
+html.dark-mode .tvm-bp-error { background: #fbbf24; }
+
+/* Current-line decoration (more visible amber on dark background) */
+html.dark-mode .tvm-debug-current-line { background: rgba(251, 191, 36, 0.20); }
+html.dark-mode .tvm-debug-current-glyph::before { color: #fbbf24; }
+html.dark-mode .tvm-debug-current-line-rewound { background: rgba(148, 163, 184, 0.20); }
+html.dark-mode .tvm-debug-current-glyph-rewound::before { color: #94a3b8; }
+
+/* --- Debug view panels --- */
+html.dark-mode .tvm-debug-view {
+  background: #1f2330;
+  color: #e2e8f0;
+}
+html.dark-mode .tvm-debug-empty { color: #94a3b8; }
+html.dark-mode .tvm-debug-empty-row { color: #94a3b8; }
+html.dark-mode .tvm-debug-section-head {
+  background: #2d3346;
+  color: #f1f5f9;
+}
+html.dark-mode .tvm-debug-exception {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fecaca;
+  border-left-color: #f87171;
+}
+html.dark-mode .tvm-debug-return {
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+  border-left-color: #4ade80;
+}
+
+/* Variables tree */
+html.dark-mode .tvm-debug-var-row:hover { background: rgba(167, 139, 250, 0.12); }
+html.dark-mode .tvm-debug-expander { color: #c4b5fd; }
+html.dark-mode .tvm-debug-var-name { color: #f1f5f9; }
+html.dark-mode .tvm-debug-var-type { color: #94a3b8; }
+html.dark-mode .tvm-debug-var-value { color: #fbbf24; }
+html.dark-mode .tvm-debug-alias {
+  background: rgba(251, 191, 36, 0.20);
+  color: #fde68a;
+}
+html.dark-mode .tvm-debug-truncated { color: #94a3b8; }
+
+/* Call stack */
+html.dark-mode .tvm-debug-frame:hover { background: rgba(167, 139, 250, 0.15); }
+html.dark-mode .tvm-debug-frame.active {
+  background: rgba(167, 139, 250, 0.30);
+  border-left-color: #a78bfa;
+}
+html.dark-mode .tvm-debug-frame-fn { color: #f1f5f9; }
+html.dark-mode .tvm-debug-frame-loc { color: #cbd5e1; }
+
+/* Watch */
+html.dark-mode .tvm-debug-watch-row { border-bottom-color: #2d3346; }
+html.dark-mode .tvm-debug-watch-expr { color: #f1f5f9; }
+html.dark-mode .tvm-debug-watch-arrow { color: #94a3b8; }
+html.dark-mode .tvm-debug-watch-val { color: #fbbf24; }
+html.dark-mode .tvm-debug-watch-na { color: #64748b; }
+html.dark-mode .tvm-debug-watch-error { color: #fca5a5; }
+html.dark-mode .tvm-debug-watch-remove { color: #f87171; }
+html.dark-mode .tvm-debug-watch-remove:hover { color: #fca5a5; }
+html.dark-mode .tvm-debug-watch-input {
+  background: #2d3346;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+html.dark-mode .tvm-debug-watch-input::placeholder { color: #64748b; }
+html.dark-mode .tvm-debug-watch-add-btn { background: #8b5cf6; color: #fff; }
+html.dark-mode .tvm-debug-watch-add-btn:hover { background: #a78bfa; }
+
+/* History */
+html.dark-mode .tvm-debug-history-controls { border-bottom-color: #2d3346; }
+html.dark-mode .tvm-debug-history-pos { color: #cbd5e1; }
+html.dark-mode .tvm-debug-history-live { color: #4ade80; }
+html.dark-mode .tvm-debug-history-rewound { color: #fb923c; }
+html.dark-mode .tvm-debug-history-list { color: #e2e8f0; }
+html.dark-mode .tvm-debug-history-item:hover { background: rgba(167, 139, 250, 0.12); }
+html.dark-mode .tvm-debug-history-item.active {
+  background: rgba(251, 191, 36, 0.25);
+  color: #fde68a;
+}
+html.dark-mode .tvm-debug-history-i { color: #94a3b8; }
+html.dark-mode .tvm-debug-history-ev { color: #c4b5fd; }
+html.dark-mode .tvm-debug-history-loc { color: #f1f5f9; }
