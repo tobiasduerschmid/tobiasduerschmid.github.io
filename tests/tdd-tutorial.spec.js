@@ -154,15 +154,14 @@ test.describe.serial('TDD Tutorial', () => {
     expect(after).toContain('# added comment');
   });
 
-  // --- Quiz flow (also unlocks step 2 for the navigation test) ---
+  // --- Step advance (also unlocks step 2 for the navigation test) ---
+  // Step 1 has no quiz — the first knowledge check is after the REFACTOR step
+  // (step 3). Passing step 1's tests + Next should advance directly to step 2.
 
-  test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
+  test('passing step 1 + next advances to step 2', async () => {
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
     await page.locator('.tvm-btn-next').click();
-    await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
-    await answerQuizCorrectly(page);
-    await page.locator('.tvm-quiz-continue-btn').click();
-    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
+    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/, { timeout: 5_000 });
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 

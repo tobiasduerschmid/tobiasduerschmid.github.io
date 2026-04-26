@@ -206,6 +206,7 @@
 
     // Git graph state
     this.gitGraphPath = options.gitGraphPath || null;
+    this.gitSetupCommands = options.gitSetupCommands || [];
     this._gitGraph = null;
     this._currentView = 'editor';
     this._gitGraphAutoRefreshTimer = null;
@@ -769,6 +770,15 @@
           '</div>' +
           '</div>' +
           '<div class="tvm-git-graph-container"></div>' +
+          // Embedded terminal for backends that don't already provide a real
+          // shell (everything except v86). Students type git commands here;
+          // the JS-side router dispatches to isomorphic-git in the worker.
+          (this.config.backend !== 'v86'
+            ? '<div class="tvm-git-terminal-section">' +
+              '<div class="tvm-git-terminal-header"><span>Terminal</span></div>' +
+              '<div class="tvm-git-terminal-container"></div>' +
+              '</div>'
+            : '') +
           '</div>'
         : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
@@ -1404,9 +1414,13 @@
     var self = this;
     self._showLoading('Loading dependencies\u2026');
 
-    // xterm must load before Monaco's AMD loader or its UMD bundle breaks
+    // xterm must load before Monaco's AMD loader or its UMD bundle breaks.
+    // Also needed for the embedded git terminal that pyodide tutorials with
+    // git_graph render below the gitgraph panel.
+    var needsXterm = this.config.useTerminal
+      || (this.gitGraphPath && this.config.backend !== 'v86');
     var prereqPromise;
-    if (this.config.useTerminal) {
+    if (needsXterm) {
       loadCSS(CDN.XTERM_CSS);
       prereqPromise = loadScript(CDN.XTERM_JS)
         .then(function () { return loadScript(CDN.XTERM_FIT); })
@@ -2341,12 +2355,32 @@
           self.booted = true;
           // Run global setup (treated as Python code for pyodide backend)
           var setupCmds = self.setupCommands;
-          if (setupCmds.length > 0) {
-            self._postWorker({ type: 'runCode', code: setupCmds.join('\n'), silent: true },
-              function () { resolve(); });
-          } else {
-            resolve();
-          }
+          var pythonSetup = setupCmds.length > 0
+            ? new Promise(function (r) {
+                self._postWorker({ type: 'runCode', code: setupCmds.join('\n'), silent: true }, function () { r(); });
+              })
+            : Promise.resolve();
+          // Git bring-up runs after Python setup so user-supplied imports
+          // can't race with the FS adapter being attached. The git terminal
+          // is created on the main thread; the worker side only needs the
+          // iso-git module loaded and dir registered.
+          var gitSetup = self.gitGraphPath
+            ? pythonSetup.then(function () {
+                return new Promise(function (r) {
+                  self._postWorker({ type: 'gitInit', dir: self.gitGraphPath }, function () { r(); });
+                });
+              }).then(function () {
+                self._initGitTerminal();
+                if (self.gitSetupCommands && self.gitSetupCommands.length) {
+                  return self._runGitSetup(self.gitSetupCommands);
+                }
+              }).then(function () {
+                // First paint of the gitgraph (in case the user lands on
+                // graph view from a step's `view: git_graph`).
+                if (window.GitGraph) self._lightRefreshGitGraph();
+              })
+            : pythonSetup;
+          gitSetup.then(function () { resolve(); });
           return;
         }
         if (msg.type === 'stdout') {
@@ -7332,10 +7366,16 @@
     if (view === 'git_graph' && graphPanel) {
       editorPanel.style.display = 'none';
       graphPanel.style.display = 'flex';
+      // The embedded pyodide git terminal lives inside the graph panel; xterm
+      // can't size correctly while its container is display:none, so fit on
+      // first reveal.
+      var self2 = this;
+      if (this.gitTerm && this.gitTermFitAddon) {
+        setTimeout(function () { try { self2.gitTermFitAddon.fit(); self2.gitTerm.focus(); } catch (e) {} }, 50);
+      }
       // Immediately show the last cached graph (avoids "No commits yet" flash)
       this._lightRefreshGitGraph();
       // Then schedule a full dump+read for fresh data
-      var self2 = this;
       setTimeout(function () {
         self2._refreshGitGraph();
         setTimeout(function () { self2._refreshGitGraph(); }, 1500);
@@ -7577,55 +7617,401 @@
   }
 
   /**
-   * FULL refresh: runs _dumpGitState (uses serial) then reads the file.
-   * Used for: Refresh button clicks, initial _setView, step loads.
+   * FULL refresh: producer-driven dump. Used for: Refresh button clicks,
+   * initial _setView, step loads. Backend dispatch:
+   *   v86       → _dumpGitState() (serial) + _renderGitGraphFromText
+   *   pyodide   → worker.gitGetState → GitGraph.fromStructured
+   * Other backends with gitGraphPath unset are no-ops.
    */
   TutorialCode.prototype._refreshGitGraph = function () {
-    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
+    if (!this.booted || !window.GitGraph) return;
     if (this._gitGraphRefreshing) return;
+    var backend = this.config.backend;
+    if (backend !== 'v86' && backend !== 'pyodide') return;
     this._gitGraphRefreshing = true;
     var self = this;
-
     var safetyTimer = setTimeout(function () { self._gitGraphRefreshing = false; }, 10000);
 
-    // Also ensure the PROMPT_COMMAND hook is installed
-    this._installGitGraphPromptHook();
+    if (backend === 'v86') {
+      this._installGitGraphPromptHook();
+      var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
+      this._dumpGitState()
+        .then(function () { return new Promise(function (resolve) { setTimeout(resolve, 150); }); })
+        .then(function () { return self.emulator.read_file(stateReadPath); })
+        .then(function (buf) {
+          clearTimeout(safetyTimer);
+          self._gitGraphRefreshing = false;
+          self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+        })
+        .catch(function () {
+          clearTimeout(safetyTimer);
+          self._gitGraphRefreshing = false;
+        });
+      return;
+    }
 
-    var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
-
-    this._dumpGitState()
-      .then(function () {
-        return new Promise(function (resolve) { setTimeout(resolve, 150); });
-      })
-      .then(function () {
-        return self.emulator.read_file(stateReadPath);
-      })
-      .then(function (buf) {
-        clearTimeout(safetyTimer);
-        self._gitGraphRefreshing = false;
-        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
-      })
-      .catch(function () {
-        clearTimeout(safetyTimer);
-        self._gitGraphRefreshing = false;
-      });
+    // pyodide
+    this._pyodideGetGitState().then(function (state) {
+      clearTimeout(safetyTimer);
+      self._gitGraphRefreshing = false;
+      self._renderGitGraphFromState(state);
+    }).catch(function () {
+      clearTimeout(safetyTimer);
+      self._gitGraphRefreshing = false;
+    });
   };
 
   /**
-   * LIGHT refresh: only reads the .gitgraph_state file via 9p.
-   * Zero serial interaction — safe to call at any time.
-   * The PROMPT_COMMAND hook keeps the file fresh after every command,
-   * so this always returns up-to-date data.
+   * LIGHT refresh: producer-driven, no expensive setup. Backend dispatch:
+   *   v86       → reads cached .gitgraph_state file via 9p (PROMPT_COMMAND keeps it fresh)
+   *   pyodide   → identical to full refresh (worker call is already cheap; no separate cache needed)
    */
   TutorialCode.prototype._lightRefreshGitGraph = function () {
-    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
+    if (!this.booted || !window.GitGraph) return;
+    var backend = this.config.backend;
     var self = this;
-    var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
-    this.emulator.read_file(stateReadPath)
-      .then(function (buf) {
-        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
-      })
-      .catch(function () { /* file doesn't exist yet — ignore */ });
+    if (backend === 'v86') {
+      var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
+      this.emulator.read_file(stateReadPath)
+        .then(function (buf) { self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf)); })
+        .catch(function () { /* file doesn't exist yet — ignore */ });
+      return;
+    }
+    if (backend === 'pyodide') {
+      this._pyodideGetGitState().then(function (state) {
+        self._renderGitGraphFromState(state);
+      }).catch(function () { /* repo not initialized yet — ignore */ });
+    }
+  };
+
+  // Render from a pre-built structured state (used by the pyodide path).
+  // Mirrors _renderGitGraphFromText's tail half, just bypassing the parser.
+  TutorialCode.prototype._renderGitGraphFromState = function (state) {
+    var data = window.GitGraph.fromStructured(state || {
+      commits: [], branches: [],
+      head: { ref: null, hash: null, detached: false },
+      files: { untracked: [], unstaged: [], staged: [], stashed: [] },
+    });
+    if (!this._gitGraph) {
+      this._gitGraph = new GitGraph(this.gitGraphContainerEl);
+    }
+    this._gitGraph.render(data);
+    if (this._isGraphDetached && this._isGraphDetached()) {
+      this._popoutManager.broadcastGraphUpdate({
+        html: this.gitGraphContainerEl.innerHTML || '',
+      });
+    }
+  };
+
+  // Ask the pyodide worker for the current git state. Returns a structured
+  // object directly (no text round-trip).
+  TutorialCode.prototype._pyodideGetGitState = function () {
+    var self = this;
+    var dir = this.gitGraphPath || '/tutorial';
+    return new Promise(function (resolve, reject) {
+      self._postWorker({ type: 'gitGetState', dir: dir }, function (msg) {
+        if (msg.type === 'git_state') resolve(msg.state);
+        else reject(new Error(msg.message || 'gitGetState failed'));
+      });
+    });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Pyodide git terminal — xterm-based, JS-side router → iso-git in worker
+  //
+  // Lightweight by design: tokenize a line, dispatch on `git`, `cd`, `ls`,
+  // `pwd`, `clear`, `help` and reject everything else. No pipes, globs, env
+  // vars, or subshells. Monaco edits flow into the FS via _flushAllToFS()
+  // before any read-side git command; iso-git's mutated paths come back via
+  // worker.git_run_done and we refresh Monaco models from FS.
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._initGitTerminal = function () {
+    if (!this.gitGraphPath || this.config.backend === 'v86') return;
+    var container = this.root.querySelector('.tvm-git-terminal-container');
+    if (!container || this.gitTerm) return;
+
+    var TermClass = window.Terminal;
+    if (!TermClass) return;
+    var isDark = this._isDarkMode();
+    this.gitTerm = new TermClass({
+      cursorBlink: true,
+      fontSize: this.config.fontSize - 1,
+      fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
+      theme: isDark ? THEMES.dark.xterm : THEMES.light.xterm,
+      scrollback: 5000,
+      convertEol: true,
+    });
+    var FitAddonClass = (window.FitAddon && window.FitAddon.FitAddon)
+      ? window.FitAddon.FitAddon : window.FitAddon;
+    this.gitTermFitAddon = new FitAddonClass();
+    this.gitTerm.loadAddon(this.gitTermFitAddon);
+    this.gitTerm.open(container);
+
+    var self = this;
+    setTimeout(function () { try { self.gitTermFitAddon.fit(); } catch (e) {} }, 100);
+    if (window.ResizeObserver) {
+      var t;
+      var ro = new ResizeObserver(function () {
+        clearTimeout(t);
+        t = setTimeout(function () { try { self.gitTermFitAddon.fit(); } catch (e) {} }, 50);
+      });
+      ro.observe(container);
+    }
+
+    // Per-terminal CWD so `cd subdir` then `git add foo.py` resolves correctly.
+    this._gitTermCwd = this.gitGraphPath || '/tutorial';
+    this._gitTermLineBuf = '';
+    this._gitTermBusy = false;
+
+    this.gitTerm.onData(function (data) { self._gitTermOnData(data); });
+    this._writeGitPrompt();
+  };
+
+  TutorialCode.prototype._writeGitPrompt = function () {
+    if (!this.gitTerm) return;
+    var rel = this._gitTermCwd.replace(/^\/tutorial/, '~') || '~';
+    this.gitTerm.write('\x1b[1;32mstudent\x1b[0m:\x1b[1;34m' + rel + '\x1b[0m$ ');
+  };
+
+  TutorialCode.prototype._gitTermOnData = function (data) {
+    if (!this.gitTerm) return;
+    if (this._gitTermBusy) return; // ignore typing while a command is dispatching
+    var self = this;
+    for (var i = 0; i < data.length; i++) {
+      var ch = data.charAt(i);
+      if (ch === '\r' || ch === '\n') {
+        this.gitTerm.write('\r\n');
+        var line = this._gitTermLineBuf;
+        this._gitTermLineBuf = '';
+        this._dispatchGitTermLine(line).then(function () {
+          self._writeGitPrompt();
+        });
+        return;
+      }
+      if (ch === '\x7f' || ch === '\b') {
+        if (this._gitTermLineBuf.length > 0) {
+          this._gitTermLineBuf = this._gitTermLineBuf.slice(0, -1);
+          this.gitTerm.write('\b \b');
+        }
+        continue;
+      }
+      // Ignore control sequences (arrow keys etc.). Only echo printable chars.
+      if (ch < ' ') continue;
+      this._gitTermLineBuf += ch;
+      this.gitTerm.write(ch);
+    }
+  };
+
+  // Dispatch a single typed line. Returns a Promise that resolves when the
+  // terminal can accept input again.
+  TutorialCode.prototype._dispatchGitTermLine = function (line) {
+    var self = this;
+    var trimmed = String(line || '').trim();
+    if (trimmed === '') return Promise.resolve();
+    var tokens = this._gitTokenize(trimmed);
+    if (tokens.length === 0) return Promise.resolve();
+    var verb = tokens[0];
+
+    // Local-only commands handled on the main thread.
+    if (verb === 'clear') { this.gitTerm.clear(); return Promise.resolve(); }
+    if (verb === 'help')  { this._gitTermWriteHelp(); return Promise.resolve(); }
+    if (verb === 'pwd')   { this.gitTerm.write(this._gitTermCwd + '\r\n'); return Promise.resolve(); }
+    if (verb === 'cd')    { return this._gitTermCd(tokens.slice(1)); }
+    if (verb === 'ls')    { return this._gitTermLs(tokens.slice(1)); }
+
+    if (verb !== 'git') {
+      this.gitTerm.write(verb + ': command not found (type `help` to see what works here)\r\n');
+      return Promise.resolve();
+    }
+
+    // git ... → flush dirty Monaco buffers into the FS so iso-git sees the
+    // student's latest edits, then dispatch via worker.
+    this._gitTermBusy = true;
+    return this._flushAllToFS().then(function () {
+      return self._runGitLine(trimmed);
+    }).then(function (res) {
+      if (res.stdout) self.gitTerm.write(res.stdout.replace(/\n/g, '\r\n'));
+      if (res.stderr) self.gitTerm.write('\x1b[31m' + res.stderr.replace(/\n/g, '\r\n') + '\x1b[0m');
+      // FS → Monaco: refresh editor models for any path iso-git mutated.
+      var mutated = res.mutatedPaths || [];
+      var refreshes = mutated.map(function (rel) { return self._refreshMonacoFromFS(rel); });
+      return Promise.all(refreshes);
+    }).then(function () {
+      // Re-render gitgraph after every git command.
+      self._refreshGitGraph();
+      self._gitTermBusy = false;
+    }).catch(function (err) {
+      self.gitTerm.write('\x1b[31mfatal: ' + (err && err.message || err) + '\x1b[0m\r\n');
+      self._gitTermBusy = false;
+    });
+  };
+
+  // Run YAML-supplied git_setup lines through the same worker dispatcher,
+  // silently (no terminal echo). Used during _initPyodide bring-up.
+  TutorialCode.prototype._runGitSetup = function (lines) {
+    var self = this;
+    var dir = this.gitGraphPath || '/tutorial';
+    var seq = Promise.resolve();
+    lines.forEach(function (line) {
+      seq = seq.then(function () {
+        return new Promise(function (resolve) {
+          self._postWorker({ type: 'gitRun', line: String(line), cwd: dir, dir: dir }, function (msg) {
+            if (msg.stderr) {
+              // Surface setup errors to the console so authors can debug,
+              // but don't reject — let the rest of bring-up proceed.
+              console.warn('git_setup:', line, '→', msg.stderr.trim());
+            }
+            resolve();
+          });
+        });
+      });
+    });
+    return seq;
+  };
+
+  TutorialCode.prototype._runGitLine = function (line) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      self._postWorker({
+        type: 'gitRun', line: line,
+        cwd: self._gitTermCwd, dir: self.gitGraphPath || '/tutorial',
+      }, function (msg) {
+        if (msg.type === 'git_run_done') {
+          resolve({ stdout: msg.stdout, stderr: msg.stderr,
+                    exitCode: msg.exitCode, mutatedPaths: msg.mutatedPaths || [] });
+        } else {
+          reject(new Error(msg.message || 'gitRun failed'));
+        }
+      });
+    });
+  };
+
+  TutorialCode.prototype._gitTokenize = function (line) {
+    var tokens = [], cur = '', inSingle = false, inDouble = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (inSingle) {
+        if (ch === "'") inSingle = false; else cur += ch;
+      } else if (inDouble) {
+        if (ch === '"') inDouble = false; else cur += ch;
+      } else if (ch === "'") inSingle = true;
+      else if (ch === '"') inDouble = true;
+      else if (/\s/.test(ch)) {
+        if (cur.length) { tokens.push(cur); cur = ''; }
+      } else cur += ch;
+    }
+    if (cur.length) tokens.push(cur);
+    return tokens;
+  };
+
+  TutorialCode.prototype._gitTermWriteHelp = function () {
+    var lines = [
+      'Lightweight terminal — only the following commands work:',
+      '  git <subcommand>         init | status | add | commit | log | branch |',
+      '                            switch | checkout | merge | rm | mv | reset |',
+      '                            restore | config',
+      '  cd <dir>                 change working directory',
+      '  ls [dir]                 list files',
+      '  pwd                      print working directory',
+      '  clear                    clear the screen',
+      '  help                     show this message',
+      '',
+      'Edit files in the editor on the right; `git add` will see your changes.',
+      '',
+    ];
+    this.gitTerm.write(lines.join('\r\n'));
+  };
+
+  TutorialCode.prototype._gitTermCd = function (args) {
+    var target = (args && args[0]) || (this.gitGraphPath || '/tutorial');
+    var resolved;
+    if (target === '~') resolved = this.gitGraphPath || '/tutorial';
+    else if (target.charAt(0) === '/') resolved = this._gitResolvePath(target);
+    else resolved = this._gitResolvePath(this._gitTermCwd + '/' + target);
+    var self = this;
+    return new Promise(function (resolve) {
+      self._postWorker({ type: 'gitListDir', path: resolved }, function (msg) {
+        if (msg.error) {
+          self.gitTerm.write('cd: ' + target + ': ' + msg.error + '\r\n');
+        } else {
+          self._gitTermCwd = resolved;
+        }
+        resolve();
+      });
+    });
+  };
+
+  TutorialCode.prototype._gitTermLs = function (args) {
+    var target = (args && args[0]) || this._gitTermCwd;
+    if (target.charAt(0) !== '/') target = this._gitResolvePath(this._gitTermCwd + '/' + target);
+    var self = this;
+    return new Promise(function (resolve) {
+      self._postWorker({ type: 'gitListDir', path: target }, function (msg) {
+        if (msg.error) {
+          self.gitTerm.write('ls: ' + target + ': ' + msg.error + '\r\n');
+        } else {
+          var entries = msg.entries || [];
+          var lines = entries.map(function (e) {
+            return e.isDir ? ('\x1b[1;34m' + e.name + '/\x1b[0m') : e.name;
+          });
+          if (lines.length) self.gitTerm.write(lines.join('  ') + '\r\n');
+        }
+        resolve();
+      });
+    });
+  };
+
+  TutorialCode.prototype._gitResolvePath = function (abs) {
+    var parts = abs.split('/').filter(Boolean);
+    var stack = [];
+    parts.forEach(function (p) {
+      if (p === '.') return;
+      if (p === '..') { stack.pop(); return; }
+      stack.push(p);
+    });
+    return '/' + stack.join('/');
+  };
+
+  // Monaco → FS flush: write every dirty editor buffer into Pyodide's FS
+  // so the next git command sees the student's latest edits.
+  TutorialCode.prototype._flushAllToFS = function () {
+    if (this.config.backend !== 'pyodide') return Promise.resolve();
+    var self = this;
+    var pending = [];
+    Object.keys(this.editorModels).forEach(function (filename) {
+      var entry = self.editorModels[filename];
+      if (!entry) return;
+      var content = entry.model.getValue();
+      if (entry.lastSyncContent === content) return;
+      pending.push(self._syncFileToBackend(filename));
+    });
+    return Promise.all(pending);
+  };
+
+  // FS → Monaco: re-read a path from the worker FS and update the model.
+  // Called for each path in mutatedPaths after a git command.
+  TutorialCode.prototype._refreshMonacoFromFS = function (relPath) {
+    if (this.config.backend !== 'pyodide') return Promise.resolve();
+    var self = this;
+    var dir = this.gitGraphPath || '/tutorial';
+    var abs = dir + '/' + relPath;
+    return new Promise(function (resolve) {
+      self._postWorker({ type: 'read', path: abs }, function (msg) {
+        if (msg.type === 'read_ok') {
+          var entry = self.editorModels[relPath];
+          if (entry && entry.model.getValue() !== msg.content) {
+            self._suppressAutoSave = true;
+            entry.model.setValue(msg.content);
+            entry.lastSyncContent = msg.content;
+            self._suppressAutoSave = false;
+          } else if (entry) {
+            entry.lastSyncContent = msg.content;
+          }
+        }
+        resolve();
+      });
+    });
   };
 
   /**

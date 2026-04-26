@@ -125,6 +125,13 @@ async function debuggerState(page) {
   });
 }
 
+async function waitForDebugComplete(page) {
+  await page.waitForFunction(() => {
+    const ctl = window._tutorial && window._tutorial._debuggerCtl;
+    return ctl && !ctl.session && ctl.statusEl && ctl.statusEl.textContent === 'finished';
+  }, null, { timeout: DEBUG_TIMEOUT });
+}
+
 test.describe.serial('Python debugger replay variable edits', () => {
   test.setTimeout(240_000);
 
@@ -182,4 +189,51 @@ test.describe.serial('Python debugger replay variable edits', () => {
       }
     });
   }
+
+  test('starting again after a finished run resets synced history', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await prepareDebuggerAtBreakpoint(page, 17);
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await waitForDebugComplete(page);
+
+      const finished = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        return {
+          controllerHistoryLength: ctl.history.length,
+          syncHistoryLength: ctl.sync.state.history.length,
+        };
+      });
+      expect(finished.controllerHistoryLength).toBeGreaterThan(1);
+      expect(finished.syncHistoryLength).toBe(finished.controllerHistoryLength);
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.startSession());
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.session && ctl.paused && snap && snap.line === 1;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const firstPause = await debuggerState(page);
+      expect(firstPause.controller.historyLength).toBe(1);
+      expect(firstPause.sync.historyLength).toBe(1);
+      expect(firstPause.sync.line).toBe(1);
+      expect(firstPause.currentDecorationLines).toEqual([1]);
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.line === 17 && /listcomp\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const secondBreakpoint = await debuggerState(page);
+      expect(secondBreakpoint.controller.line).toBe(17);
+      expect(secondBreakpoint.sync.line).toBe(17);
+      expect(secondBreakpoint.sync.historyLength).toBe(secondBreakpoint.controller.historyLength);
+      expect(secondBreakpoint.currentDecorationLines).toEqual([17]);
+    } finally {
+      await page.close();
+    }
+  });
 });

@@ -1210,6 +1210,46 @@ html:not(.dark-mode) .tvm-editor-pane-divider {
   padding: 10px;
 }
 
+/* Embedded git terminal (non-v86 backends with git_graph). The graph keeps
+   flex:1 above; this section gets a fixed minimum so the prompt is always
+   visible without burying the graph. */
+.tvm-git-terminal-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+  min-height: 140px;
+  border-top: 1px solid #2a2a2e;
+  background: #1e1e1e;
+}
+.tvm-git-terminal-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  color: #b0b0c0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+.tvm-git-terminal-container {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px;
+}
+.tvm-git-terminal-container .xterm { height: 100%; }
+.tvm-git-terminal-container .xterm-viewport { scrollbar-width: thin; scrollbar-color: #333 transparent; }
+html:not(.dark-mode) .tvm-git-terminal-section {
+  background: #ffffff;
+  border-top-color: #d4d4d4;
+}
+html:not(.dark-mode) .tvm-git-terminal-header {
+  background: #f4f5f7;
+  color: #54555a;
+  border-bottom-color: #d4d4d4;
+}
+
 /* git-graph.css (imported at the top of this file) holds the core widget
    styles and delta animations, shared with the SEBook command-lab. */
 

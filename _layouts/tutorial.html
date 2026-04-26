@@ -330,6 +330,7 @@
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
         javaWorkerPath:   '{{ "/js/java-worker.js"   | relative_url }}',
         gitGraphPath: config.git_graph || null,
+        gitSetupCommands: config.git_setup || [],
         userCommandListener:       config.user_command_listener || null,
         postFileloadSetupCommands: config.post_fileload_setup     || [],
         uml_diagram: config.uml_diagram || false,

@@ -15,6 +15,14 @@ output_height: "25%"
 require_tests: true
 autosave_type: files
 
+# Live git visualization next to the editor — students can switch to the Git
+# Graph view at any time and commit each Red-Green-Refactor step to watch the
+# DAG grow. The embedded terminal accepts a small set of git commands.
+git_graph: /tutorial
+git_setup:
+  - "git config user.name 'Student'"
+  - "git config user.email 'student@example.com'"
+
 # Global setup: install pytest, expose /tutorial on sys.path, and patch the
 # pytest module cache so each `pytest.main(...)` call sees the latest source
 # rather than a stale import. The module name list MUST include every project

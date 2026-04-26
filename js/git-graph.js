@@ -318,6 +318,73 @@
   // Expose for the command-lab to probe/normalize outside parseGitState.
   GitGraph._normalizeFilesSpec = _normalizeFilesSpec;
 
+  // Backend-agnostic entry point: takes a producer-built state object directly
+  // (commits, branches, head already in their final shape, files in raw spec
+  // form) and returns the same data structure parseGitState produces. Used by
+  // the pyodide/iso-git path so we skip a structured→text→structured detour.
+  //
+  // Inputs:
+  //   state.commits   = [{ hash, shortHash, parents, message, decorations,
+  //                        children, col, row, branchColor }, ...]
+  //   state.branches  = [string, ...] (just names; remoteness inferred from "origin/")
+  //   state.head      = { ref, hash, detached }   (ref like "refs/heads/main" or null)
+  //   state.files     = { untracked, unstaged, staged, stashed }
+  GitGraph.fromStructured = function (state) {
+    var commits = (state.commits || []).map(function (c) {
+      return {
+        hash: c.hash,
+        shortHash: c.shortHash || (c.hash ? c.hash.substring(0, 7) : ''),
+        parents: (c.parents || []).slice(),
+        message: c.message || '',
+        decorations: c.decorations || '',
+        children: (c.children || []).slice(),
+        col: 0, row: 0, branchColor: null,
+      };
+    });
+    var commitMap = {};
+    commits.forEach(function (c) { commitMap[c.hash] = c; });
+
+    // Wire children if producer didn't.
+    var anyChildren = commits.some(function (c) { return c.children.length > 0; });
+    if (!anyChildren) {
+      commits.forEach(function (c) {
+        c.parents.forEach(function (p) {
+          if (commitMap[p]) commitMap[p].children.push(c.hash);
+        });
+      });
+    }
+
+    // Build branches[] objects with remote flag.
+    var branchMap = {};
+    var branches = [];
+    (state.branches || []).forEach(function (name) {
+      // Resolve the branch tip from decorations (the producer wrote them).
+      for (var i = 0; i < commits.length; i++) {
+        var dec = commits[i].decorations || '';
+        var parts = dec.split(',').map(function (p) { return p.trim().replace(/^HEAD\s*->\s*/, ''); });
+        if (parts.indexOf(name) !== -1) {
+          branchMap[name] = commits[i].hash;
+          break;
+        }
+      }
+      branches.push({
+        name: name,
+        hash: branchMap[name] || null,
+        remote: name.indexOf('origin/') === 0,
+      });
+    });
+
+    var head = state.head || { ref: null, hash: null, detached: false };
+
+    return {
+      commits: commits,
+      branches: branches,
+      head: { ref: head.ref || null, hash: head.hash || null, detached: !!head.detached },
+      commitMap: commitMap,
+      workingTree: _normalizeFilesSpec(state.files || null),
+    };
+  };
+
   GitGraph.parseGitState = function (logOutput, branchOutput, headRef, filesSpec) {
     var commits = [];
     var branchMap = {};   // branch name → commit hash

@@ -325,6 +325,33 @@
     if (this.sync) this.sync.replaceState(this._buildSyncState());
   };
 
+  DebuggerController.prototype._resetExecutionTrace = function (resetOutput) {
+    this.history = [];
+    this.historyIdx = -1;
+    this.liveIdx = -1;
+    this.selectedFrameIdx = -1;
+    this.paused = false;
+    if (resetOutput) {
+      this.outputDuringDebug = '';
+      this.outputLines = 0;
+    }
+    this._publishHistoryReset();
+  };
+
+  DebuggerController.prototype._appendHistoryToSync = function (snaps, replaceLast, expectedPriorLength) {
+    if (!this.sync || !snaps || !snaps.length) return;
+    var syncHistory = this.sync.state && this.sync.state.history;
+    if (!syncHistory || syncHistory.length !== expectedPriorLength) {
+      console.warn('[SEBookDebugger] sync history length mismatch; replacing full debugger state', {
+        expected: expectedPriorLength,
+        actual: syncHistory ? syncHistory.length : null,
+      });
+      this._publishHistoryReset();
+      return;
+    }
+    this.sync.appendHistory(snaps, !!replaceLast);
+  };
+
   // ── Action handler — routes popout requests + local dispatches. ─────────
   DebuggerController.prototype._handleAction = function (action) {
     if (!action || !action.type) return;
@@ -439,18 +466,11 @@
   DebuggerController.prototype.handleStepChange = function () {
     // Stop any active session, clear history; keep breakpoints.
     if (this.session) this.stopSession();
-    this.history = [];
-    this.historyIdx = -1;
-    this.liveIdx = -1;
-    this.paused = false;
-    this.outputDuringDebug = '';
-    this.outputLines = 0;
+    this._resetExecutionTrace(true);
     this.loadConfiguredBreakpoints();
     this.renderAll();
     this.refreshBpDecorations();   // breakpoint visuals follow file switches
     this.scheduleBreakpointRefresh();
-    // Publish a fresh full snapshot so popouts forget stale history.
-    this._publishHistoryReset();
     this._publishActiveFile();
   };
 
@@ -771,17 +791,11 @@
         replayAnchor: replayAnchor,
         replayGuardLimit: replayGuardLimit,
       };
-      self.history = [];
-      self.historyIdx = -1;
-      self.liveIdx = -1;
-      self.paused = false;
       self._pendingOverrideKey = null;
-      self.outputDuringDebug = '';
-      self.outputLines = 0;
       // Replay is a fresh execution trace. Reset the shared sync history at
       // the same time as the controller history so editor decorations and
       // popouts do not interpret new replay indices against stale rows.
-      self._publishHistoryReset();
+      self._resetExecutionTrace(true);
       self.disableStepButtons(true);
       self.t._worker.postMessage({ type: 'enableDebugger' });
     };
@@ -1276,12 +1290,7 @@
       capReached: false,
       pendingStart: { filename: path, code: code, files: files },
     };
-    this.history = [];
-    this.historyIdx = -1;
-    this.liveIdx = -1;
-    this.paused = false;
-    this.outputDuringDebug = '';
-    this.outputLines = 0;
+    this._resetExecutionTrace(true);
 
     // Lock editor read-only. When the sync/editor-attach path is available it
     // owns read-only state per editor; doing it here first would cause the
@@ -1309,7 +1318,6 @@
     this.activateTab('dbg-combined');
     this.disableStepButtons(true);
     this.setStatus('starting…');
-    this._publishSession();
     this._publishWatches();
     this._publishCursor();
 
@@ -1470,7 +1478,8 @@
   DebuggerController.prototype.onPaused = function (msg) {
     if (!this.session) return;
     var snaps = msg.snapshots || [];
-    var startIdx = this.history.length;
+    var priorHistoryLength = this.history.length;
+    var startIdx = priorHistoryLength;
     if (msg.replace_last && snaps.length && this.liveIdx >= 0) {
       startIdx = this.liveIdx;
       this.history[this.liveIdx] = snaps[0];
@@ -1484,9 +1493,7 @@
     this.historyIdx = this.liveIdx;
     // Cheap incremental broadcast — popouts learn about new snapshots
     // without us re-shipping the entire history array each tick.
-    if (this.sync && snaps.length) {
-      this.sync.appendHistory(snaps, !!msg.replace_last);
-    }
+    this._appendHistoryToSync(snaps, !!msg.replace_last, priorHistoryLength);
     // If we're in the middle of a replay (post-edit re-execution), let the
     // replay driver decide whether to auto-step further or hand control back.
     if (this.handlePausedDuringReplay(startIdx, endIdx)) return;
@@ -1546,12 +1553,11 @@
     this.session = null;
     this.paused = false;
     if (!keepHistory) {
-      this.history = [];
-      this.historyIdx = -1;
-      this.liveIdx = -1;
+      this._resetExecutionTrace(false);
       this.renderAll();
+    } else {
+      this._publishHistoryReset();
     }
-    this._publishHistoryReset();
   };
 
   // ===========================================================================
