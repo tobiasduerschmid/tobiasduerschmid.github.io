@@ -529,6 +529,65 @@
 .tvm-output-panel.tvm-debug-collapsed .tvm-output-container { display: none; }
 
 /* ============================================================================
+   Instructions-detached + debugger:true case.
+   When the user pops out the instructions to a separate window AND the tutorial
+   has the debugger enabled, we DON'T collapse the left panel to a thin strip
+   (which is the default behavior for non-debugger tutorials). The panel stays
+   full size so Watch / Call Stack / Variables / History remain visible. The
+   default `.tvm-instructions-detached` rule already hides .tvm-steps-view, so
+   here we just need to:
+     - keep the panel at its normal flex width (override the 56px shrink)
+     - keep the debug views visible (they're shown by activateTab)
+     - render the "popped out" placeholder as a compact bar above the tabs
+       instead of as a floating tile that takes the whole panel
+   ========================================================================== */
+.tvm-instructions-panel.tvm-instructions-detached.tvm-instructions-detached-debugger {
+  flex: 1 1 0 !important;       /* honour the panel's normal share of width */
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: visible;
+}
+/* Compact "popped out" pill above the tab bar — single-line, click to reattach. */
+.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-instructions-detached-placeholder {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: #fff8d6;
+  border-bottom: 1px solid #FFD100;
+  flex: 0 0 auto;
+  writing-mode: horizontal-tb;
+}
+.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-detached-msg {
+  font-size: 11px;
+  color: #5C4308;
+  font-weight: 600;
+  flex: 1;
+}
+.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-btn-reattach {
+  background: #FFD100;
+  color: #1A1A1A;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-btn-reattach:hover {
+  background: #FFB81C;
+}
+/* Dark mode */
+html.dark-mode .tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-instructions-detached-placeholder {
+  background: rgba(255, 209, 0, 0.14);
+  border-bottom-color: rgba(255, 209, 0, 0.45);
+}
+html.dark-mode .tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-detached-msg {
+  color: #FFE066;
+}
+
+/* ============================================================================
    Dark mode — UCLA Gold pops on the deep slate panel background. The bright
    gold (#FFD100) maintains 13:1+ contrast on #1f2330 when used as text/icons,
    and pairs with #1A1A1A text on solid-gold backgrounds (matches light mode).

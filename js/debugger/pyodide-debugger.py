@@ -21,6 +21,7 @@ Architecture (see plan: .claude/plans/what-would-be-options-temporal-ritchie.md)
 """
 
 import bdb
+import ast
 import json
 import sys
 
@@ -46,7 +47,7 @@ _INTERNAL_NAMES = frozenset({
     # but cover any tutorials that happen to define a same-named symbol)
     '_ttd_make', '_ttd_run_with_clean_globals', '_ttd_cleanup',
     'TimeTravelDebugger', '_HIDDEN_GLOBAL_PREFIXES', '_INTERNAL_NAMES',
-    '_UNCHANGED', '_is_user_global',
+    '_UNCHANGED', '_is_user_global', '__ttd_apply_override',
     # pyodide-worker.js bootstrap leftovers
     '_sys', '_m', '_f', '_k', '__run_capture',
 })
@@ -149,9 +150,12 @@ class TimeTravelDebugger(bdb.Bdb):
         self._max_repr = 200
         self._user_filename = None
         self._user_root = '/tutorial/'
+        self._source_injected_lines = set()
 
         self._buffer = []                # snapshots since last flush
         self._total = 0                  # all-time snapshot count (for cap)
+        self._current_location_hit = None
+        self._line_hit_counts = {}
         self._cap_warned = False
         self._stop_flag = False
 
@@ -206,6 +210,8 @@ class TimeTravelDebugger(bdb.Bdb):
     def dispatch_line(self, frame):
         if not self._is_user_frame(frame):
             return self.trace_dispatch
+        if frame.f_lineno in self._source_injected_lines:
+            return self.trace_dispatch
         should_pause = self.stop_here(frame) or self._break_here(frame)
         self._handle_line(frame, should_pause)
         if self.quitting:
@@ -231,9 +237,15 @@ class TimeTravelDebugger(bdb.Bdb):
     def user_call(self, frame, args):
         if self._stop_flag:
             return
-        self._call_counter += 1
-        self._frame_call_id[id(frame)] = self._call_counter
+        self._ensure_call_id(frame)
         self._snapshot(frame, 'call')
+
+    def _ensure_call_id(self, frame):
+        frame_id = id(frame)
+        if frame_id not in self._frame_call_id:
+            self._call_counter += 1
+            self._frame_call_id[frame_id] = self._call_counter
+        return self._frame_call_id[frame_id]
 
     def user_line(self, frame):
         self._handle_line(frame, True)
@@ -247,10 +259,18 @@ class TimeTravelDebugger(bdb.Bdb):
         # edit + step forward" work: the previous session captured the user's
         # edit as an override at this exact snapshot index, and re-execution
         # has now reached that point.
+        self._current_location_hit = self._bump_line_hit(frame)
         self._apply_pending_overrides(frame)
-        self._snapshot(frame, 'line')
-        if should_pause:
+        snapped = self._snapshot(frame, 'line')
+        if should_pause and snapped:
             self._flush_and_block(frame)
+
+    def _bump_line_hit(self, frame):
+        key = (frame.f_code.co_filename, frame.f_code.co_firstlineno,
+               frame.f_code.co_name, frame.f_lineno)
+        count = self._line_hit_counts.get(key, 0) + 1
+        self._line_hit_counts[key] = count
+        return count
 
     def user_return(self, frame, retval):
         if self._stop_flag:
@@ -265,8 +285,8 @@ class TimeTravelDebugger(bdb.Bdb):
     def user_exception(self, frame, exc_info):
         if self._stop_flag:
             return
-        self._snapshot(frame, 'exception', exc=exc_info[1])
-        self._flush_and_block(frame)
+        if self._snapshot(frame, 'exception', exc=exc_info[1]):
+            self._flush_and_block(frame)
 
     def _is_user_frame(self, frame):
         filename = frame.f_code.co_filename
@@ -341,9 +361,9 @@ class TimeTravelDebugger(bdb.Bdb):
                     'type': 'capReached',
                     'limit': self._max_history,
                 })
-            return
+            return False
 
-        top_call_id = self._frame_call_id.get(id(frame), 0)
+        top_call_id = self._ensure_call_id(frame)
         snap = {
             'file': frame.f_code.co_filename,
             'line': frame.f_lineno,
@@ -352,6 +372,8 @@ class TimeTravelDebugger(bdb.Bdb):
             'stack': self._serialize_stack(frame),
             'watches': self._eval_watches(frame),
         }
+        if event in ('line', 'sync'):
+            snap['location_hit'] = self._current_location_hit
         if exc is not None:
             snap['exception'] = {
                 'type': type(exc).__name__,
@@ -363,6 +385,7 @@ class TimeTravelDebugger(bdb.Bdb):
         self._buffer.append(snap)
         if count:
             self._total += 1
+        return True
 
     def _serialize_stack(self, frame):
         # Walk f_back chain, OUTERMOST first (so UI's stack[0] is <module>).
@@ -371,7 +394,7 @@ class TimeTravelDebugger(bdb.Bdb):
 
         out = []
         for f in frames:
-            cid = self._frame_call_id.get(id(f), 0)
+            cid = self._ensure_call_id(f)
             is_top = (f is frame)
             locals_dict = self._effective_locals(f)
             if self._filter_globals and f.f_locals is f.f_globals:
@@ -383,6 +406,7 @@ class TimeTravelDebugger(bdb.Bdb):
                 'function': f.f_code.co_name,
                 'file': f.f_code.co_filename,
                 'line': f.f_lineno,
+                'first_line': f.f_code.co_firstlineno,
                 'call_id': cid,
                 'locals': self._diff_dict(cid, 'locals', locals_dict),
             }
@@ -644,29 +668,38 @@ class TimeTravelDebugger(bdb.Bdb):
         op = change.get('op')
         f = change.get('file')
         ln = change.get('line')
+        if not f or not ln:
+            return
         if op == 'add':
             cond = change.get('condition') or None
+            self._clear_bp_at(f, ln)
             self.set_break(f, ln, cond=cond)
         elif op == 'remove':
-            self.clear_break(f, ln)
+            self._clear_bp_at(f, ln)
         elif op == 'edit':
-            self.clear_break(f, ln)
+            self._clear_bp_at(f, ln)
             cond = change.get('condition') or None
             self.set_break(f, ln, cond=cond)
+
+    def _clear_bp_at(self, filename, lineno):
+        try:
+            self.clear_break(filename, lineno)
+        except Exception:
+            pass
 
     # --- variable mutation -------------------------------------------------
 
     def _apply_pending_overrides(self, frame):
-        """Apply any pre-recorded overrides whose snapshot_idx matches the
-        current snapshot count. Called from `user_line` BEFORE snapshotting,
-        so when `self._total == override.snapshot_idx`, we apply.
-        Each override fires at most once."""
+        """Apply pre-recorded overrides at their original source location.
+        Older payloads can still fall back to snapshot_idx. Called from
+        `user_line` BEFORE snapshotting so the emitted snapshot includes the
+        edited value. Each override fires at most once."""
         if not self._overrides:
             return
         for i, ov in enumerate(self._overrides):
             if i in self._applied_override_indices:
                 continue
-            if ov.get('snapshot_idx') != self._total:
+            if not self._override_matches_current_location(frame, ov):
                 continue
             # Resolve the target frame by depth (0 = top)
             depth = ov.get('frame_depth', 0)
@@ -677,6 +710,26 @@ class TimeTravelDebugger(bdb.Bdb):
             self._apply_one_edit(target, ov.get('var'), ov.get('expr'),
                                   scope=ov.get('scope', 'locals'))
             self._applied_override_indices.add(i)
+
+    def _override_matches_current_location(self, frame, ov):
+        line = ov.get('line')
+        hit_count = ov.get('hit_count')
+        function_name = ov.get('function')
+        first_line = ov.get('first_line')
+        if line and hit_count:
+            try:
+                if frame.f_lineno != int(line):
+                    return False
+                if self._current_location_hit != int(hit_count):
+                    return False
+                if function_name and frame.f_code.co_name != function_name:
+                    return False
+                if first_line and frame.f_code.co_firstlineno != int(first_line):
+                    return False
+                return True
+            except Exception:
+                return False
+        return ov.get('snapshot_idx') == self._total
 
     def _apply_live_edits(self, frame, edits):
         """Apply edits to the current pause's frames immediately. Called from
@@ -781,6 +834,140 @@ class TimeTravelDebugger(bdb.Bdb):
                 pass
 
 
+def _ttd_compile_with_source_overrides(code_str, filename, overrides):
+    source_overrides = [
+        dict(ov, _ttd_oid=i)
+        for i, ov in enumerate(overrides or [])
+        if ov.get('source') and ov.get('scope') == 'locals'
+    ]
+    if not source_overrides:
+        return compile(code_str, filename, 'exec'), set(), None
+
+    try:
+        tree = ast.parse(code_str, filename=filename, mode='exec')
+    except Exception:
+        return compile(code_str, filename, 'exec'), set(), None
+
+    injected_lines = set()
+    apply_targets = {}
+    inserted_any = False
+    for ov in source_overrides:
+        var_name = ov.get('var')
+        expr = ov.get('expr')
+        line = ov.get('line')
+        if not var_name or not str(var_name).isidentifier() or expr is None or not line:
+            continue
+        scope_body = _ttd_find_scope_body(
+            tree,
+            ov.get('function'),
+            ov.get('first_line'),
+        )
+        if scope_body is None:
+            continue
+        try:
+            value_expr = ast.parse(str(expr), mode='eval').body
+        except Exception:
+            continue
+        target_body, insert_at = _ttd_find_insertion_body(scope_body, int(line))
+        if target_body is None:
+            continue
+
+        oid = ov['_ttd_oid']
+        synthetic_line = 10_000_000 + oid
+        injected_lines.add(synthetic_line)
+        apply_targets[oid] = int(ov.get('hit_count') or 1)
+        node = ast.If(
+            test=ast.Call(
+                func=ast.Name(id='__ttd_apply_override', ctx=ast.Load()),
+                args=[ast.Constant(value=oid)],
+                keywords=[],
+            ),
+            body=[
+                ast.Assign(
+                    targets=[ast.Name(id=str(var_name), ctx=ast.Store())],
+                    value=value_expr,
+                )
+            ],
+            orelse=[],
+        )
+        _ttd_set_line_recursive(node, synthetic_line)
+        target_body.insert(insert_at, node)
+        inserted_any = True
+
+    if not inserted_any:
+        return compile(code_str, filename, 'exec'), set(), None
+    ast.fix_missing_locations(tree)
+    hit_counts = {}
+
+    def apply_override(oid):
+        hit_counts[oid] = hit_counts.get(oid, 0) + 1
+        return hit_counts[oid] == apply_targets.get(oid)
+
+    return compile(tree, filename, 'exec'), injected_lines, apply_override
+
+
+def _ttd_find_scope_body(tree, function_name, first_line):
+    if function_name in (None, '<module>'):
+        return tree.body
+    try:
+        first_line = int(first_line)
+    except Exception:
+        first_line = None
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name == function_name and (first_line is None or node.lineno == first_line):
+                return node.body
+    return None
+
+
+def _ttd_find_insertion_body(body, line):
+    for index, stmt in enumerate(body):
+        start = getattr(stmt, 'lineno', None)
+        end = getattr(stmt, 'end_lineno', start)
+        if start is None:
+            continue
+        if start <= line <= end:
+            for child_body in _ttd_child_bodies(stmt):
+                found_body, found_index = _ttd_find_insertion_body(child_body, line)
+                if found_body is not None:
+                    return found_body, found_index
+            return body, index
+        if start > line:
+            return body, index
+    return body, len(body)
+
+
+def _ttd_child_bodies(stmt):
+    bodies = []
+    for attr in ('body', 'orelse', 'finalbody'):
+        child = getattr(stmt, attr, None)
+        if isinstance(child, list) and child:
+            bodies.append(child)
+    handlers = getattr(stmt, 'handlers', None)
+    if handlers:
+        for handler in handlers:
+            if getattr(handler, 'body', None):
+                bodies.append(handler.body)
+    cases = getattr(stmt, 'cases', None)
+    if cases:
+        for case in cases:
+            if getattr(case, 'body', None):
+                bodies.append(case.body)
+    return bodies
+
+
+def _ttd_set_line_recursive(node, line):
+    for child in ast.walk(node):
+        if hasattr(child, 'lineno'):
+            child.lineno = line
+        if hasattr(child, 'end_lineno'):
+            child.end_lineno = line
+        if hasattr(child, 'col_offset'):
+            child.col_offset = 0
+        if hasattr(child, 'end_col_offset'):
+            child.end_col_offset = 0
+
+
 def _ttd_make(post_paused, wait_for_command, consume_pending, watches, opts):
     """Factory called from JS. Returns the constructed instance. Avoids JS
     needing to know Python class-construction semantics across the bridge."""
@@ -814,10 +1001,13 @@ def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):
             py_overrides = overrides.to_py() if hasattr(overrides, 'to_py') else list(overrides or [])
         except Exception:
             py_overrides = []
-    dbg._overrides = list(py_overrides)
+    compiled, injected_lines, apply_override = _ttd_compile_with_source_overrides(
+        code_str, filename, py_overrides
+    )
+    dbg._overrides = [ov for ov in py_overrides if not ov.get('source')]
+    dbg._source_injected_lines = set(injected_lines)
     dbg._user_filename = filename
 
-    compiled = compile(code_str, filename, 'exec')
     # Fresh, minimal globals — only what user code legitimately expects.
     user_globals = {
         '__name__': '__main__',
@@ -828,6 +1018,8 @@ def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):
         '__builtins__': __builtins__,
         '__file__': filename,
     }
+    if apply_override is not None:
+        user_globals['__ttd_apply_override'] = apply_override
     try:
         dbg.run(compiled, user_globals)
     finally:

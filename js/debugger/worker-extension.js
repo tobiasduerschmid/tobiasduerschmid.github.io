@@ -31,7 +31,7 @@
 
 // Bump this when shipping a fix to the debugger so it's visible in the console
 // that the new version is loaded (otherwise stale-SW caching is invisible).
-var TTD_VERSION = '0.5.2-local-edit-overlay';
+var TTD_VERSION = '0.6.3-replay-anchors';
 self.postMessage({ type: 'log', msg: '[ttd worker] loaded v' + TTD_VERSION });
 
 var SAB_HEADER_BYTES = 32;          // 8 Int32 slots
@@ -121,14 +121,16 @@ function handleRunDebug(msg) {
       var opts = msg.options || {};
       var filename = msg.filename || '/tutorial/main.py';
       var code = msg.code;
+      var args = msg.args || [];
 
       // Ensure file is on disk so frame.f_code.co_filename matches what the
       // UI passes for breakpoints. Write code under the tutorial file path
       // and execute via __file__ semantics.
       try {
         pyodide.FS.writeFile(filename, code, { encoding: 'utf8' });
+        pyodide.runPython('import sys; sys.argv = ' + JSON.stringify([filename].concat(args || [])));
       } catch (e) {
-        self.postMessage({ type: 'debugComplete', exitCode: 1, error: 'Failed to write debug file: ' + e.message });
+        self.postMessage({ type: 'debugComplete', exitCode: 1, error: 'Failed to prepare debug run: ' + e.message });
         return;
       }
 

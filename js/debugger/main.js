@@ -23,10 +23,13 @@
  *   Int32 [0]  command (1=continue, 2=step, 3=next, 4=return, 5=stop, 6=sync)
  *   Int32 [1]  watches_dirty
  *   Int32 [2]  bps_dirty
- *   Int32 [3]  watches_len
- *   Int32 [4]  bps_len
- *   Uint8 [32 .. 32+32K)   watches JSON
- *   Uint8 [32+32K .. +32K) bps JSON
+ *   Int32 [3]  edits_dirty
+ *   Int32 [4]  watches_len
+ *   Int32 [5]  bps_len
+ *   Int32 [6]  edits_len
+ *   Uint8 [WATCH_OFF .. +32K) watches JSON
+ *   Uint8 [BPS_OFF   .. +32K) breakpoint changes JSON
+ *   Uint8 [EDITS_OFF .. +32K) live edit JSON
  */
 
 (function () {
@@ -126,6 +129,7 @@
 
   // ---- Lifecycle ------------------------------------------------------------
   DebuggerController.prototype.install = function () {
+    this.loadConfiguredBreakpoints();
     this.loadPersistedBreakpoints();
     this.installTabs();
     this.installDebugButton();
@@ -397,16 +401,19 @@
   DebuggerController.prototype.restartFromHistory = function (followupCmd) {
     var overrides = (this.session.pendingOverrides || []).slice();
     var resumeAtIdx = this.historyIdx;
+    var replayAnchor = this.makeReplayAnchor(resumeAtIdx);
+    var replayGuardLimit = Math.max(this.history.length + 1000, resumeAtIdx + 1000, 2000);
     var watches = (this.session.watches || []).slice();
+    var args = (this.session.args || []).slice();
     this.setStatus(overrides.length ? 'replaying with edits…' : 'replaying from history…');
     // Stop the current session; on debugComplete we'll start a fresh one.
     var self = this;
     // Save the file path/code we need for the new run from the model now,
     // because endSession() will null `session`.
-    var filename = this.t.activeFileName;
+    var path = this.session.debugFilename || (replayAnchor && replayAnchor.file) || ('/tutorial/' + this.t.activeFileName);
+    var filename = path.replace(/^\/tutorial\//, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
-    var code = model ? model.getValue() : '';
-    var path = '/tutorial/' + filename;
+    var code = model ? model.getValue() : (this.session.debugCode || '');
 
     // Temporary one-shot completion handler that fires AFTER current debug
     // ends (because of CMD_STOP) and starts the new run.
@@ -421,6 +428,9 @@
         i32: new Int32Array(sab),
         u8: new Uint8Array(sab),
         watches: watches,
+        args: args,
+        debugFilename: path,
+        debugCode: code,
         capReached: false,
         pendingStart: { filename: path, code: code },
         // Re-overrides for the new run; cleared once they fire.
@@ -429,6 +439,8 @@
         // originally clicked (continue/step/next/return).
         autoFollowup: followupCmd,
         replayTargetIdx: resumeAtIdx,
+        replayAnchor: replayAnchor,
+        replayGuardLimit: replayGuardLimit,
       };
       self.history = [];
       self.historyIdx = -1;
@@ -443,16 +455,112 @@
     this.sendCommand(CMD_STOP);
   };
 
-  // For replays, on each `paused` we check whether we've reached the snapshot
-  // index where the user originally rewound to. If so, auto-advance with the
-  // followup command they originally clicked. Otherwise just continue the
-  // replay automatically (we're walking back to where the user was).
-  DebuggerController.prototype.handlePausedDuringReplay = function () {
+  DebuggerController.prototype.makeReplayAnchor = function (idx) {
+    var snap = this.history[idx];
+    if (!snap || !snap.stack || !snap.stack.length) return null;
+    var topIdx = snap.stack.length - 1;
+    var top = snap.stack[topIdx];
+    var selectedIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : topIdx;
+    var selected = snap.stack[selectedIdx] || top;
+    return {
+      index: idx,
+      event: snap.event === 'sync' ? 'line' : snap.event,
+      file: snap.file,
+      line: snap.line,
+      location_hit: snap.location_hit == null ? null : snap.location_hit,
+      top: this.frameAnchor(top),
+      selected: this.frameAnchor(selected),
+      selected_from_top: topIdx - selectedIdx,
+    };
+  };
+
+  DebuggerController.prototype.frameAnchor = function (frame) {
+    if (!frame) return null;
+    return {
+      file: frame.file,
+      function_name: frame.function,
+      first_line: frame.first_line,
+      line: frame.line,
+    };
+  };
+
+  DebuggerController.prototype.snapshotMatchesReplayAnchor = function (snap, anchor) {
+    if (!snap || !anchor) return false;
+    var event = snap.event === 'sync' ? 'line' : snap.event;
+    if (event !== anchor.event) return false;
+    if (snap.file !== anchor.file || snap.line !== anchor.line) return false;
+    if (anchor.location_hit != null && snap.location_hit !== anchor.location_hit) return false;
+    var top = snap.stack && snap.stack[snap.stack.length - 1];
+    if (!this.frameMatchesAnchor(top, anchor.top, false)) return false;
+    return true;
+  };
+
+  DebuggerController.prototype.frameMatchesAnchor = function (frame, anchor, includeLine) {
+    if (!frame || !anchor) return false;
+    if (frame.file !== anchor.file) return false;
+    if (frame.function !== anchor.function_name) return false;
+    if (frame.first_line !== anchor.first_line) return false;
+    if (includeLine && frame.line !== anchor.line) return false;
+    return true;
+  };
+
+  DebuggerController.prototype.findReplayAnchor = function (startIdx, endIdx, anchor) {
+    if (!anchor) return -1;
+    for (var i = Math.max(0, startIdx); i <= endIdx; i++) {
+      if (this.snapshotMatchesReplayAnchor(this.history[i], anchor)) return i;
+    }
+    return -1;
+  };
+
+  DebuggerController.prototype.restoreReplayFrameSelection = function (anchor) {
+    var snap = this.history[this.historyIdx];
+    if (!snap || !snap.stack || !snap.stack.length || !anchor) {
+      this.selectedFrameIdx = -1;
+      return;
+    }
+    var topIdx = snap.stack.length - 1;
+    var byDepth = topIdx - (anchor.selected_from_top || 0);
+    if (byDepth >= 0 && byDepth < snap.stack.length &&
+        this.frameMatchesAnchor(snap.stack[byDepth], anchor.selected, false)) {
+      this.selectedFrameIdx = byDepth;
+      return;
+    }
+    for (var i = snap.stack.length - 1; i >= 0; i--) {
+      if (this.frameMatchesAnchor(snap.stack[i], anchor.selected, false)) {
+        this.selectedFrameIdx = i;
+        return;
+      }
+    }
+    this.selectedFrameIdx = -1;
+  };
+
+  // For replays, each `paused` batch may contain several snapshots. Use the
+  // original source location as the primary handoff point; numeric history
+  // indices are only a fallback because edits can alter the later trace shape.
+  DebuggerController.prototype.handlePausedDuringReplay = function (startIdx, endIdx) {
     if (!this.session) return false;
     var target = this.session.replayTargetIdx;
     var fcmd = this.session.autoFollowup;
+    var anchor = this.session.replayAnchor;
     if (target == null || fcmd == null) return false;
-    if (this.liveIdx < target) {
+    var matchedIdx = this.findReplayAnchor(startIdx, endIdx, anchor);
+    if (anchor && matchedIdx < 0) {
+      var guard = this.session.replayGuardLimit || Math.max(target + 1000, 2000);
+      if (this.liveIdx < guard) {
+        this.sendCommand(CMD_STEP);
+        this.setStatus('replaying to edited line…');
+        return true;
+      }
+      this.session.replayTargetIdx = null;
+      this.session.autoFollowup = null;
+      this.session.replayAnchor = null;
+      this.paused = true;
+      this.disableStepButtons(false);
+      this.setStatus('replay paused before target; source location changed');
+      this.renderAll();
+      return true;
+    }
+    if (!anchor && matchedIdx < 0 && this.liveIdx < target) {
       // Still replaying — auto-continue silently. CMD_CONTINUE keeps running
       // until the next breakpoint or program end. To honor breakpoints during
       // replay would be confusing; since the override already applied, we
@@ -463,10 +571,25 @@
       this.setStatus('replaying step ' + (this.liveIdx + 1) + '/' + (target + 1) + '…');
       return true;
     }
+    if (matchedIdx >= 0) {
+      this.historyIdx = matchedIdx;
+    } else if (!anchor && fcmd === '__pause' && target >= 0 && target < this.history.length) {
+      this.historyIdx = target;
+    }
     // We've reached (or passed) the original rewound point — clear replay
     // markers and let the user's followup play out.
     this.session.replayTargetIdx = null;
     this.session.autoFollowup = null;
+    this.session.replayAnchor = null;
+    this.session.replayGuardLimit = null;
+    this.restoreReplayFrameSelection(anchor);
+    if (fcmd === '__pause') {
+      this.paused = true;
+      this.disableStepButtons(false);
+      this.setStatus('paused at line ' + this.history[this.historyIdx].line);
+      this.renderAll();
+      return true;
+    }
     this.setStatus('replay complete — applying ' + fcmd);
     var code = fcmd === 'continue' ? CMD_CONTINUE
             : fcmd === 'step'     ? CMD_STEP
@@ -554,27 +677,42 @@
     }
     this.persistBreakpoints();
     this.refreshBpDecorations();
-    if (this.session) this.queueBreakpointChange(change);
+    if (this.session) {
+      if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
+    }
   };
 
   DebuggerController.prototype.editBreakpointCondition = function (filename, line) {
     var path = '/tutorial/' + filename;
     var bps = this.breakpoints.get(path);
-    if (!bps || !bps.has(line)) {
-      // Right-click on empty line → set unconditional first (like clicking)
-      this.toggleBreakpoint(filename, line);
+    if (!bps) {
+      bps = new Map();
+      this.breakpoints.set(path, bps);
+    }
+    var wasMissing = !bps.has(line);
+    if (wasMissing) {
+      // Right-click on empty line → create a breakpoint only if the prompt is
+      // accepted, so we do not briefly sync an unconditional breakpoint first.
+      bps.set(line, { condition: null });
       bps = this.breakpoints.get(path);
     }
     var current = bps.get(line);
     var existing = (current && current.condition) || '';
     var input = window.prompt('Breakpoint condition (Python expression, empty = unconditional):', existing);
-    if (input === null) return;   // cancelled
+    if (input === null) {
+      if (wasMissing) {
+        bps.delete(line);
+        this.refreshBpDecorations();
+      }
+      return;   // cancelled
+    }
     var cond = input.trim() ? input.trim() : null;
     bps.set(line, { condition: cond });
     this.persistBreakpoints();
     this.refreshBpDecorations();
     if (this.session) {
-      this.queueBreakpointChange({ op: 'edit', file: path, line: line, condition: cond });
+      var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
+      if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
     }
   };
 
@@ -589,6 +727,7 @@
       var decos = [];
       if (bps) {
         bps.forEach(function (info, line) {
+          if (line < 1 || line > model.getLineCount()) return;
           var glyphClass = info.condition
             ? 'tvm-bp-glyph tvm-bp-cond' + (info.condError ? ' tvm-bp-error' : '')
             : 'tvm-bp-glyph';
@@ -638,10 +777,40 @@
     } catch (e) { /* ignore */ }
   };
 
+  DebuggerController.prototype.normalizeBreakpointPath = function (file) {
+    var path = String(file || '').trim();
+    if (!path) return null;
+    if (path.indexOf('/tutorial/') === 0) return path;
+    if (path.charAt(0) === '/') return '/tutorial' + path;
+    return '/tutorial/' + path;
+  };
+
+  DebuggerController.prototype.loadConfiguredBreakpoints = function () {
+    var configured = this.opts.initial_breakpoints || this.opts.breakpoints || [];
+    if (!Array.isArray(configured)) return;
+    var self = this;
+    configured.forEach(function (bp) {
+      var file = bp && (bp.file || bp.path || bp.filename);
+      var path = self.normalizeBreakpointPath(file || self.t.activeFileName);
+      var line = parseInt(bp && bp.line, 10);
+      if (!path || !line || line < 1) return;
+      var condition = bp.condition == null ? null : String(bp.condition).trim();
+      if (!condition) condition = null;
+      var bps = self.breakpoints.get(path);
+      if (!bps) { bps = new Map(); self.breakpoints.set(path, bps); }
+      bps.set(line, { condition: condition });
+    });
+  };
+
   DebuggerController.prototype.collectBreakpointsForRun = function () {
+    var self = this;
     var out = [];
     this.breakpoints.forEach(function (bps, path) {
+      var fname = path.replace(/^\/tutorial\//, '');
+      var model = self.t.editorModels[fname] && self.t.editorModels[fname].model;
+      var maxLine = model ? model.getLineCount() : Infinity;
       bps.forEach(function (info, line) {
+        if (line < 1 || line > maxLine) return;
         out.push({ file: path, line: line, condition: info.condition || null });
       });
     });
@@ -752,6 +921,9 @@
       sab: sab, i32: i32, u8: u8,
       // Seed from any watches the user added BEFORE starting the session.
       watches: (this._pendingWatches || []).slice(),
+      args: this.collectProgramArgs(),
+      debugFilename: path,
+      debugCode: code,
       capReached: false,
       pendingStart: { filename: path, code: code },
     };
@@ -801,6 +973,7 @@
       code: st.code,
       breakpoints: this.collectBreakpointsForRun(),
       watches: this.session.watches,
+      args: this.session.args || [],
       options: this.opts,
       // Variable-mutation overrides recorded by the user during a previous
       // rewound state. The worker applies each at its recorded snapshot index.
@@ -817,6 +990,9 @@
     if (this.session.pendingLiveEdits && this.session.pendingLiveEdits.length) {
       this.session.pendingLiveEdits = [];
     }
+    if (this.session.pendingBreakpointChanges && this.session.pendingBreakpointChanges.length) {
+      this.session.pendingBreakpointChanges = [];
+    }
   };
 
   DebuggerController.prototype.requestSync = function () {
@@ -826,40 +1002,88 @@
     this.sendCommand(CMD_SYNC);
   };
 
-  DebuggerController.prototype.queueBreakpointChange = function (change) {
+  DebuggerController.prototype.refreshWatchesNow = function () {
     if (!this.session) return;
-    // Read existing pending list (if any), append, re-encode.
-    // For simplicity we always overwrite with a single-change array.
-    var json = JSON.stringify([change]);
-    var bytes = this.encoder.encode(json);
-    this.session.u8.set(bytes, BPS_OFF);
-    Atomics.store(this.session.i32, SLOT_BPS_LEN, bytes.length);
-    Atomics.store(this.session.i32, SLOT_BPS_DIRTY, 1);
+    if (this.historyIdx >= 0 && this.historyIdx < this.liveIdx) {
+      this.setStatus('replaying with watches…');
+      this.restartFromHistory('__pause');
+      return;
+    }
+    this.requestSync();
+  };
+
+  DebuggerController.prototype.refreshBreakpointsNow = function () {
+    if (!this.session) return;
+    if (this.historyIdx >= 0 && this.historyIdx < this.liveIdx) {
+      this.setStatus('replaying with breakpoints…');
+      this.restartFromHistory('__pause');
+      return;
+    }
+    if (this.paused) {
+      this.disableStepButtons(true);
+      this.setStatus('updating breakpoints…');
+      this.sendCommand(CMD_SYNC);
+    }
+  };
+
+  DebuggerController.prototype.queueBreakpointChange = function (change) {
+    if (!this.session) return false;
+    this.session.pendingBreakpointChanges = this.session.pendingBreakpointChanges || [];
+    this.session.pendingBreakpointChanges.push(change);
+    var json = JSON.stringify(this.session.pendingBreakpointChanges);
+    if (!this.writePayload(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, json, 'breakpoints')) {
+      this.session.pendingBreakpointChanges.pop();
+      return false;
+    }
+    return true;
+  };
+
+  DebuggerController.prototype.collectProgramArgs = function () {
+    var argsInp = this.t.root && this.t.root.querySelector('.tvm-args-input');
+    if (!argsInp || argsInp.style.display === 'none') return [];
+    var raw = (argsInp.value || '').trim();
+    if (!raw) return [];
+    var matches = raw.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+    return matches.map(function (s) { return s.replace(/^"|"$/g, ''); });
   };
 
   DebuggerController.prototype.queueWatchUpdate = function () {
-    if (!this.session) return;
+    if (!this.session) return false;
     var json = JSON.stringify(this.session.watches);
+    return this.writePayload(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, json, 'watches');
+  };
+
+  DebuggerController.prototype.writePayload = function (offset, capacity, lenSlot, dirtySlot, json, label) {
     var bytes = this.encoder.encode(json);
-    this.session.u8.set(bytes, WATCH_OFF);
-    Atomics.store(this.session.i32, SLOT_WATCHES_LEN, bytes.length);
-    Atomics.store(this.session.i32, SLOT_WATCHES_DIRTY, 1);
+    if (bytes.length > capacity) {
+      this.setStatus(label + ' update too large');
+      console.warn('[ttd] ' + label + ' payload too large:', bytes.length, '>', capacity);
+      return false;
+    }
+    this.session.u8.fill(0, offset, offset + capacity);
+    this.session.u8.set(bytes, offset);
+    Atomics.store(this.session.i32, lenSlot, bytes.length);
+    Atomics.store(this.session.i32, dirtySlot, 1);
+    return true;
   };
 
   DebuggerController.prototype.onPaused = function (msg) {
     if (!this.session) return;
     var snaps = msg.snapshots || [];
+    var startIdx = this.history.length;
     if (msg.replace_last && snaps.length && this.liveIdx >= 0) {
+      startIdx = this.liveIdx;
       this.history[this.liveIdx] = snaps[snaps.length - 1];
     } else {
       for (var i = 0; i < snaps.length; i++) this.history.push(snaps[i]);
       this.liveIdx = this.history.length - 1;
     }
+    var endIdx = this.liveIdx;
     this.historyIdx = this.liveIdx;
-    this.selectedFrameIdx = -1;
     // If we're in the middle of a replay (post-edit re-execution), let the
     // replay driver decide whether to auto-step further or hand control back.
-    if (this.handlePausedDuringReplay()) return;
+    if (this.handlePausedDuringReplay(startIdx, endIdx)) return;
+    this.selectedFrameIdx = -1;
     this.paused = true;
     this.disableStepButtons(false);
     this.setStatus('paused at line ' + this.history[this.liveIdx].line);
@@ -1024,6 +1248,7 @@
     var rows = [];
     var seenOids = {};   // alias detection within scope
     var keys = Object.keys(dict).sort();
+    var editable = this.isVarScopeEditable(snap, frameIdx, scope);
     for (var i = 0; i < keys.length; i++) {
       var name = keys[i];
       var resolved = (dict[name] === UNCHANGED)
@@ -1042,10 +1267,21 @@
       // editKey identifies (scope, frameIdx, name) so the click handler knows
       // exactly what to mutate. We pass frameIdx separately so call-stack
       // navigation stays correct.
-      var editKey = scope + '|' + frameIdx + '|' + name;
+      var editKey = editable ? (scope + '|' + frameIdx + '|' + name) : '';
       rows.push(this.renderVarRow(name, resolved, aliasBadge, 0, editKey));
     }
     return '<div class="tvm-debug-vars">' + rows.join('') + '</div>';
+  };
+
+  DebuggerController.prototype.isVarScopeEditable = function (snap, frameIdx, scope) {
+    if (!this.session || !snap || !snap.stack) return false;
+    if (snap.event !== 'line' && snap.event !== 'sync') return false;
+    var frame = snap.stack[frameIdx];
+    if (!frame) return false;
+    if (scope === 'globals') return frameIdx === snap.stack.length - 1;
+    if (scope !== 'locals') return false;
+    if (frame.function === '<module>') return true;
+    return frameIdx === snap.stack.length - 1;
   };
 
   DebuggerController.prototype.renderVarRow = function (name, val, aliasBadge, depth, editKey) {
@@ -1159,7 +1395,7 @@
       if (!unchanged) {
         valueEl.textContent = expr;
         valueEl.classList.add('tvm-debug-var-edit-pending');
-        valueEl.setAttribute('title', 'Pending — applies on next step (was: ' + originalText + ')');
+        valueEl.setAttribute('title', 'Applying edit… (was: ' + originalText + ')');
       }
       input.replaceWith(valueEl);
       if (!unchanged) self.applyVarEdit(scope, frameIdx, name, expr);
@@ -1176,59 +1412,83 @@
   };
 
   // Apply a variable edit. Two paths:
-  //   - LIVE (historyIdx === liveIdx): queue via SAB live_edits channel; the
-  //     worker mutates the current frame in place, then returns a replacement
-  //     snapshot through CMD_SYNC without executing the user's next line.
+  //   - LIVE globals/module locals: mutate through SAB and refresh with CMD_SYNC.
+  //   - LIVE function locals: Pyodide cannot write optimized fast locals through
+  //     frame.f_locals, so record a source-level override and replay to the
+  //     current snapshot with the assignment injected before that line.
   //   - REWOUND (historyIdx < liveIdx): record an override pinned to this
-  //     snapshot index + frame depth. On the next forward action, we restart
-  //     the session, replaying with the override applied at the matching point.
+  //     snapshot index + frame depth, then immediately replay to that snapshot
+  //     so the edit is visible/applied without an extra user step.
   DebuggerController.prototype.applyVarEdit = function (scope, frameIdx, name, expr) {
     if (!this.session) return;
     var snap = this.history[this.historyIdx];
     if (!snap) return;
+    if (!this.isVarScopeEditable(snap, frameIdx, scope)) {
+      this.setStatus('edit unavailable for this history row/frame');
+      this.renderAll();
+      return;
+    }
     // Convert UI frame index (outer→inner) to Python frame_depth (top=0,
     // counted from innermost). top frame is stack[stack.length-1].
     var topIdx = snap.stack.length - 1;
     var frameDepth = topIdx - frameIdx;
+    var frame = snap.stack[frameIdx];
+    var sourceLocal = scope === 'locals' && frame && frame.function !== '<module>' && frameIdx === topIdx;
+    var override = {
+      snapshot_idx: this.historyIdx,
+      frame_depth: frameDepth,
+      scope: scope,
+      var: name,
+      expr: expr,
+      line: frame && frame.line,
+      function: frame && frame.function,
+      first_line: frame && frame.first_line,
+      hit_count: snap.location_hit || 1,
+    };
+    if (sourceLocal) {
+      override.source = true;
+    }
     var rewound = this.historyIdx < this.liveIdx;
     if (rewound) {
-      // Record override; will be applied on session restart triggered by
-      // the user's next forward command.
+      // Record override and immediately replay to the selected historical
+      // snapshot. This keeps rewound edits feeling like live edits.
       this.session.pendingOverrides = this.session.pendingOverrides || [];
-      this.session.pendingOverrides.push({
-        snapshot_idx: this.historyIdx,
-        frame_depth: frameDepth,
-        scope: scope,
-        var: name,
-        expr: expr,
-      });
-      this.setStatus('edit recorded — will apply on next forward step');
-      // Visual: show the override in the variables panel so the user knows it took
+      this.session.pendingOverrides.push(override);
       this._pendingOverrideKey = scope + '|' + frameIdx + '|' + name;
-      this.renderAll();
+      this.setStatus('replaying with edit…');
+      this.restartFromHistory('__pause');
+    } else if (sourceLocal) {
+      this.session.pendingOverrides = this.session.pendingOverrides || [];
+      this.session.pendingOverrides.push(override);
+      this.setStatus('replaying with edit…');
+      this.restartFromHistory('__pause');
     } else {
       // Live: queue via SAB. Will be consumed at the next _flush_and_block.
-      this.queueLiveEdit({
+      if (this.queueLiveEdit({
         frame_depth: frameDepth,
         scope: scope,
         var: name,
         expr: expr,
-      });
-      this.requestSync();
+      })) {
+        this.requestSync();
+      } else {
+        this.renderAll();
+      }
     }
   };
 
   DebuggerController.prototype.queueLiveEdit = function (edit) {
-    if (!this.session) return;
+    if (!this.session) return false;
     // Append to any prior queued edits in this same flush window. We always
     // overwrite the SAB region with the full pending set.
     this.session.pendingLiveEdits = this.session.pendingLiveEdits || [];
     this.session.pendingLiveEdits.push(edit);
     var json = JSON.stringify(this.session.pendingLiveEdits);
-    var bytes = this.encoder.encode(json);
-    this.session.u8.set(bytes, EDITS_OFF);
-    Atomics.store(this.session.i32, SLOT_EDITS_LEN, bytes.length);
-    Atomics.store(this.session.i32, SLOT_EDITS_DIRTY, 1);
+    if (!this.writePayload(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, json, 'edits')) {
+      this.session.pendingLiveEdits.pop();
+      return false;
+    }
+    return true;
   };
 
   DebuggerController.prototype.renderCallStack = function () {
@@ -1310,9 +1570,12 @@
         self.session.watches.push(expr);
         // Also keep pendingWatches in sync so the same list survives a future
         // session restart without requiring the user to re-type.
-        self._pendingWatches = self.session.watches.slice();
-        self.queueWatchUpdate();
-        self.requestSync();
+        if (self.queueWatchUpdate()) {
+          self._pendingWatches = self.session.watches.slice();
+          self.refreshWatchesNow();
+        } else {
+          self.session.watches.pop();
+        }
       }
       input.value = '';
       self.renderWatch();
@@ -1325,10 +1588,13 @@
         btn.addEventListener('click', function () {
           var idx = +btn.getAttribute('data-i');
           if (self.session) {
-            self.session.watches.splice(idx, 1);
-            self._pendingWatches = self.session.watches.slice();
-            self.queueWatchUpdate();
-            self.requestSync();
+            var removed = self.session.watches.splice(idx, 1);
+            if (self.queueWatchUpdate()) {
+              self._pendingWatches = self.session.watches.slice();
+              self.refreshWatchesNow();
+            } else {
+              self.session.watches.splice(idx, 0, removed[0]);
+            }
           } else if (self._pendingWatches) {
             self._pendingWatches.splice(idx, 1);
           }

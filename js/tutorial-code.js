@@ -3257,10 +3257,11 @@
       if (window.SEBookDebugger) { done(); return; }
       var css = document.createElement('link');
       css.rel = 'stylesheet';
-      css.href = '/js/debugger/debugger.css';
+      var dbgAssetVersion = String(Date.now());
+      css.href = '/js/debugger/debugger.css?v=' + dbgAssetVersion;
       document.head.appendChild(css);
       var script = document.createElement('script');
-      script.src = '/js/debugger/main.js';
+      script.src = '/js/debugger/main.js?v=' + dbgAssetVersion;
       script.onload = done;
       script.onerror = function () { reject(new Error('Failed to load debugger module')); };
       document.head.appendChild(script);
@@ -4308,6 +4309,13 @@
     // steps-view height instead, so UML below expands. Otherwise shrink the
     // whole panel's width to a thin strip.
     var verticalShrink = !!(this._umlPositionBelow || this._umlPositionBottomLeft);
+    // Debugger-mode: when the time-travel debugger is enabled, popping out the
+    // instructions should NOT collapse the left panel — there's still useful
+    // content to show there (Watch / Call Stack / Variables / History). Keep
+    // the panel full-width and just hide the Steps view + auto-switch to the
+    // Debug tab. A compact "instructions popped out" pill replaces the Steps
+    // tab so the user can re-attach with one click.
+    var debuggerMode = !!this.debuggerEnabled;
     if (detached) {
       if (!panel.querySelector('.tvm-instructions-detached-placeholder')) {
         var placeholder = document.createElement('div');
@@ -4325,10 +4333,23 @@
         });
       }
       panel.classList.add('tvm-instructions-detached');
-      panel.classList.toggle('tvm-instructions-detached-vertical', verticalShrink);
-      panel.classList.toggle('tvm-instructions-detached-horizontal', !verticalShrink);
+      // In debugger mode, override the layout-shrink classes — keep full size
+      // and just toggle which inner views are visible (handled by CSS keyed
+      // on tvm-instructions-detached-debugger).
+      panel.classList.toggle('tvm-instructions-detached-debugger', debuggerMode);
+      panel.classList.toggle('tvm-instructions-detached-vertical', !debuggerMode && verticalShrink);
+      panel.classList.toggle('tvm-instructions-detached-horizontal', !debuggerMode && !verticalShrink);
+      // If the user was viewing Steps when they popped out, send them to the
+      // Debug tab so they have something to look at.
+      if (debuggerMode && this._debuggerCtl) {
+        var activeTab = panel.querySelector('.tvm-left-tab.active');
+        if (activeTab && activeTab.getAttribute('data-panel') === 'steps') {
+          this._debuggerCtl.activateTab('dbg-combined');
+        }
+      }
     } else {
       panel.classList.remove('tvm-instructions-detached');
+      panel.classList.remove('tvm-instructions-detached-debugger');
       panel.classList.remove('tvm-instructions-detached-vertical');
       panel.classList.remove('tvm-instructions-detached-horizontal');
       var ph = panel.querySelector('.tvm-instructions-detached-placeholder');
