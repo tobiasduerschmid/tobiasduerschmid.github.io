@@ -3,9 +3,16 @@ description: "Identify smells in real Python code and apply named refactorings s
 
 backend: pyodide
 
-# Single-pane editor (no auto-routed test split). Tests live alongside source
-# in the same workspace; the student opens whichever file the task points at.
-editor_split: false
+# Show source code (left) and tests (right) side by side. Files prefixed
+# `test_` auto-route to the right pane; everything else lands on the left.
+# This makes the safety dance — green-tests → change → green-tests — visible
+# at a glance: the student edits the source on the left and watches the test
+# results come from the right without ever switching tabs.
+editor_split: true
+
+# Compact output strip below the editors — pytest's pass/fail summary is
+# usually the only thing that needs to be visible there.
+output_height: "25%"
 
 # Tests are run by the student via the Run button when relevant; not every
 # step gates on `pytest passes`. Some steps gate on AST-shape assertions,
@@ -109,10 +116,9 @@ steps:
 
       ### Your task
 
-      1. **Run** the existing test (`test_royalty.py`). It passes — `royalty_song` is correct.
-      2. **Extend** the parametrize table in `test_royalty.py` to cover `royalty_podcast` and `royalty_audiobook` with at least two `(plays, rate)` cases each. Use the same formula `plays * rate * 0.7` to compute the expected values.
-      3. **Run again.** Two tests will turn red.
-      4. **Fix** the bug in `royalty.py`. Notice that you have to fix it in **two separate places** because the logic is duplicated.
+      1. **Run** the existing tests in `test_royalty.py`. `test_royalty_song` passes — the song formula is correct. But `test_monthly_payouts_sums_across_track_types` already **fails**: that's an integration test summing royalties across all three track types via the `MonthlyPayouts` caller, and the buggy podcast / audiobook formulas produce a wildly wrong total. The bug propagates *upward* through every caller of the broken methods.
+      2. **Extend** the parametrize table in `test_royalty.py` to cover `royalty_podcast` and `royalty_audiobook` with at least two `(plays, rate)` cases each. Use the formula `plays * rate * 0.7` to compute the expected values. Two new tests will turn red — the bug is now visible at the *unit* level too, not just at the integration level.
+      3. **Fix** the bug in `royalty.py`. You have to fix it in **two separate places** because the logic is duplicated. After the fix, all three test layers pass: the per-method unit tests, the integration test, and (in production) any future caller.
 
       You will not yet refactor the duplication away. That waits until Step 4. The point of this step is to *feel the cost*: a single bug, fixed in N places, where N is the number of duplicates.
 
@@ -496,7 +502,7 @@ steps:
 
       > **Learning objective.** After this step you will be able to (a) recognize a Long Method by its sub-goal structure, (b) apply **Extract Function** while keeping tests green, and (c) explain the safety dance — the test discipline that makes refactoring safe.
 
-      Open `player.py`. The class `Streaming` has a method `process_play_event(user, track)` that is **35 lines long** and does five different things:
+      Open `player.py`. The original `Streaming.process_play_event(user, track)` was **about 35 lines** doing five different things. Sub-goal 1 (the subscription check) has already been extracted as a worked example — the file you opened starts from there. The method body still inlines four more sub-goals:
 
       1. Verify the user's subscription
       2. Check that the track is available in the user's region
@@ -1318,9 +1324,10 @@ steps:
 
         - path: "test_gates.py"
           content: |
-            """Truth-table-driven tests for boolean gates."""
+            """Truth-table-driven tests for boolean gates and the PlayController caller."""
             import pytest
             from gates import PlaybackGates
+            from play_controller import PlayController, UserState
 
 
             @pytest.fixture
@@ -1354,6 +1361,21 @@ steps:
             ])
             def test_play_decision(gates: PlaybackGates, is_logged_in: bool, is_offline: bool, expected: str) -> None:
                 assert gates.play_decision(is_logged_in, is_offline) == expected
+
+
+            # ---- Caller tests: PlayController must keep working post-simplification ----
+
+            @pytest.mark.parametrize("state,expected", [
+                (UserState(free_trial_days_left=0, is_premium=True,  is_logged_in=True,  is_offline=False), "trial_expired"),
+                (UserState(free_trial_days_left=5, is_premium=False, is_logged_in=False, is_offline=False), "error_login_required"),
+                (UserState(free_trial_days_left=5, is_premium=True,  is_logged_in=True,  is_offline=True),  "play_cached"),
+                (UserState(free_trial_days_left=5, is_premium=True,  is_logged_in=True,  is_offline=False), "stream:high"),
+                (UserState(free_trial_days_left=5, is_premium=False, is_logged_in=True,  is_offline=False), "stream:low"),
+            ])
+            def test_play_controller_decide(gates: PlaybackGates, state: UserState, expected: str) -> None:
+                controller: PlayController = PlayController(gates)
+                assert controller.decide(state) == expected
+
 
             if __name__ == "__main__":
                 import sys
@@ -2140,18 +2162,22 @@ steps:
 
       Take 60 seconds. In a comment at the top of `track.py`, write what you'd put in an `AlbumInfo` dataclass *if you were writing it by hand*: field names + Python types. Don't peek at the tool's output yet. Then invoke the tool and compare. The compare is the lesson — your sketch usually matches the tool's output, which builds your trust that the tool is doing what you'd do, just faster.
 
-      ## How to drive the tool
+      ## Your tasks (in order)
 
-      1. **Place your cursor** in `TrackCatalog.add_track`'s parameter list. **Right-click → Refactor: Introduce Parameter Object…**
-      2. The tool asks for the **class name** — type `AlbumInfo`. Select `artist`, `album`, `genre`, `release_year`.
-      3. **Inspect the diff** before accepting. The new `add_track` should accept `(self, title, album_info, duration_sec, bpm, isrc)` — five parameters (plus self), one of which is structured.
-      4. After accepting, **look at the live UML in the bottom-left.** A new `AlbumInfo` box has appeared with the four clumped fields, and `TrackCatalog.add_track`'s signature is shorter.
+      1. **Refactor the signature.** Place your cursor in `TrackCatalog.add_track`'s parameter list. **Right-click → Refactor: Introduce Parameter Object…** The tool asks for the **class name** — type `AlbumInfo`. Select `artist`, `album`, `genre`, `release_year`. Inspect the diff. The new `add_track` should accept `(self, title, album_info, duration_sec, bpm, isrc)` — five parameters (plus self), one of which is structured. Watch the **live UML in the bottom-left**: a new `AlbumInfo` box appears with the four clumped fields, and `TrackCatalog.add_track`'s signature shrinks.
+      2. **Update `helpers.py`.** Open it. `seed_library` calls `add_track` with **positional** arguments — tools rewrite *named* call sites more reliably than positional ones, so the tool likely missed this. Replace each call with the new `AlbumInfo` form.
+      3. **Update `test_track.py`.** Open it. `test_add_track_inserts_record` calls `add_track` with the *old* eight-keyword form — that signature no longer exists. Replace the call with the new `AlbumInfo` form. (The other test, `test_seed_library_populates_two_tracks`, doesn't need to change because it goes through `seed_library`.)
+      4. **Run the tests.** All three should now be green.
 
-      ## Run the tests
+      ## Pause and reckon: what did this refactor cost?
 
-      After you accept the refactoring, **run the tests**. If they fail, the tool may have missed a call site somewhere — tools rewrite *syntax they can see*, and dynamic-feeling Python call patterns can slip through static analysis.
+      Count the files you had to edit by hand: **`helpers.py` and `test_track.py`** — two files, even though the smell was in *one* line of `track.py`. That count is the **concrete cost of changing a public signature**: every call site has to follow, and tests are call sites too.
 
-      Don't read ahead about *which* call. Run the tests, watch the failure, find the offending call site yourself, fix it. The closing reflection — "what did the tool do well? what did it not catch?" — is the load-bearing lesson of this step. **Behavior preservation remains your responsibility** even with a smart tool.
+      This is what makes parameter objects valuable *from the start*. If you bundle related fields into a `@dataclass` when you first design a function, the signature stays stable as you add new fields — `AlbumInfo` can grow a `label` or `producer` field without changing any call site. Eight flat parameters can't.
+
+      The lesson generalizes: **stable interfaces are a design choice that pays off across every future signature change.** When tests have to be updated by a refactor, that's a signal — the test was reaching past the public interface, OR the public interface itself was the wrong shape. In Step 5's case, it's the second: the original `add_track` shape didn't reflect that four of its parameters always travel together.
+
+      Look out for this in later steps. Steps 6 and 7 will demonstrate refactorings where the *public* interface stays stable and **tests do not change** — that's the contrast.
 
       ## Why a `@dataclass`, not a `dict`?
 
@@ -2237,14 +2263,28 @@ steps:
 
 
           ## Tests
-          `test_add_track_inserts_record` confirms the record values are unchanged after the
-          refactor. `test_seed_library_populates_two_tracks` confirms the helper module's
-          calls to `add_track` continue to work. Both tests must stay green throughout.
+          The three `test_seed_library_*` tests in `test_track.py` lock in the observable
+          behavior: after `seed_library(catalog)`, the catalog contains two records with the
+          right field values. They go through the *stable* `seed_library(catalog) -> None`
+          interface, not through `add_track` directly — so the refactor changes `add_track`'s
+          signature without forcing the tests to change.
         language: "markdown"
 
       - path: "test_track.py"
         content: |
-          """Tests — verify behavior is preserved across the refactor."""
+          """Tests for TrackCatalog. Exercise `add_track` directly AND through `seed_library`.
+
+          IMPORTANT — this step deliberately tests `add_track` *directly*. Why? Because the
+          smell is in `add_track`'s signature, and Introduce Parameter Object **changes that
+          signature**. When a public signature changes, every call site has to change too —
+          *including tests*. That cost is part of what you're learning here. Bundle parameters
+          eagerly (cheap) and you pay later when call sites multiply; bundle them as a
+          `@dataclass` and the signature is stable from the start.
+
+          After the refactor you will rewrite the kwargs in this file to pass an `AlbumInfo`.
+          The number of files that need to change (this file + `helpers.py`) is the *concrete
+          measurement* of the cost.
+          """
           import pytest
           from typing import Dict
           from track import TrackCatalog
@@ -2257,7 +2297,8 @@ steps:
 
 
           def test_add_track_inserts_record(catalog: TrackCatalog) -> None:
-              # After the refactor, the call will use AlbumInfo for the album fields.
+              # After the refactor, this kwarg call will need to pass an `AlbumInfo`
+              # for the album-metadata clump (artist / album / genre / release_year).
               record: Dict = catalog.add_track(
                   title="Echo",
                   artist="Carol",
@@ -2277,10 +2318,13 @@ steps:
 
 
           def test_seed_library_populates_two_tracks(catalog: TrackCatalog) -> None:
+              # `seed_library`'s `(catalog) -> None` signature is stable across the refactor.
+              # This test does NOT need to change — only the internal call inside helpers.py does.
               seed_library(catalog)
               assert len(catalog.library) == 2
               assert catalog.library[0]["title"] == "Lullaby"
               assert catalog.library[1]["bpm"] == 140
+
 
           if __name__ == "__main__":
               import sys
@@ -2375,14 +2419,23 @@ steps:
             order of keys. External behavior — what callers observe — is preserved.
 
             ## Tests
-            `test_add_track_inserts_record` confirms the record values are unchanged after the
-            refactor. `test_seed_library_populates_two_tracks` confirms the helper module's
-            calls to `add_track` continue to work. Both tests must stay green throughout.
+            The three `test_seed_library_*` tests in `test_track.py` lock in the observable
+            behavior: after `seed_library(catalog)`, the catalog contains two records with the
+            right field values. They go through the *stable* `seed_library(catalog) -> None`
+            interface, not through `add_track` directly — so the refactor changes `add_track`'s
+            signature without forcing the tests to change.
           language: "markdown"
 
         - path: "test_track.py"
           content: |
-            """Tests — verify behavior is preserved across the refactor."""
+            """Tests for TrackCatalog after Introduce Parameter Object.
+
+            Note: `test_add_track_inserts_record` was rewritten as part of this step's task —
+            its `add_track` call now passes an `AlbumInfo` instead of four flat album fields.
+            That update is the *concrete cost* of changing a public signature; this is the
+            file you'd be unable to avoid editing in any real codebase. `test_seed_library_*`
+            did not need to change because it goes through a stable wrapper.
+            """
             import pytest
             from typing import Dict
             from track import TrackCatalog, AlbumInfo
@@ -2418,6 +2471,7 @@ steps:
                 assert len(catalog.library) == 2
                 assert catalog.library[0]["title"] == "Lullaby"
                 assert catalog.library[1]["bpm"] == 140
+
 
             if __name__ == "__main__":
                 import sys
@@ -2483,7 +2537,7 @@ steps:
           print(output)
           assert code == 0, f"pytest failed:\n{output}"
         hints:
-          - text: "If tests fail, check helpers.py — the seed_library function may still call add_track with the old signature. Update it to pass an AlbumInfo."
+          - text: "If tests fail, check `helpers.py` — `seed_library` calls `add_track` with positional args, which tools often miss. Update it to pass an `AlbumInfo` for the album-metadata clump. The test file shouldn't need changes — tests go through `seed_library`, not `add_track`."
             condition: "default"
 
       - description: "Memo: Rationale and Invariant filled in"
@@ -2675,11 +2729,16 @@ steps:
         content: |
           """UI helper that formats the player's current state for display.
 
-          This caller currently goes through Player.compute_remaining_seconds(track),
+          This caller currently goes through `Player.compute_remaining_seconds(track)`,
           which is Feature Envy on Track. After the Move Method refactor, the call
           site here MUST be updated from `self.player.compute_remaining_seconds(track)`
           to `track.compute_remaining_seconds()`. The tool may rewrite this for you;
           if it doesn't, the tests will catch the missed call site.
+
+          The tests in `test_media.py` go *only* through `PlaybackUI.format_remaining`,
+          whose `(track) -> str` signature is stable across the refactor — so the tests
+          themselves don't change. The cost of the refactor lives entirely inside this
+          file.
           """
           from media import Player, Track
 
@@ -2691,7 +2750,9 @@ steps:
                   self.player: Player = player
 
               def format_remaining(self, track: Track) -> str:
-                  """Return a `M:SS remaining` string for the given track."""
+                  """Return a `M:SS remaining` string, or `Finished` when done."""
+                  if track.is_finished():
+                      return "Finished"
                   seconds: int = self.player.compute_remaining_seconds(track)
                   minutes: int = seconds // 60
                   secs: int = seconds % 60
@@ -2700,51 +2761,57 @@ steps:
 
       - path: "test_media.py"
         content: |
-          """Behavior tests for Player, Track, and the PlaybackUI caller."""
+          """Behavior tests for the playback UI.
+
+          DESIGN — *contrast with Step 5*. Step 5 changed a public signature, and the tests
+          had to follow. This step does NOT change a public signature: `compute_remaining_seconds`
+          is an *internal* helper the UI calls; moving it from `Player` to `Track` is a private
+          rearrangement that callers don't observe. The `PlaybackUI.format_remaining(track) -> str`
+          surface is stable, so every test below is stable too. After the refactor, the tests
+          DO NOT CHANGE — only the internal call inside `playback_ui.py` does.
+
+          That stability is the *payoff* of refactoring through stable interfaces. Compare it
+          to Step 5's two-file edit: here the cost is exactly one file (`playback_ui.py`).
+          """
+          import pytest
           from media import Player, Track
           from playback_ui import PlaybackUI
-          import pytest
 
 
-          def test_remaining_seconds_at_start() -> None:
-              t: Track = Track(track_id="t1", duration_sec=300, current_position=0)
-              # The student must update this call site after the move:
-              # before: Player().compute_remaining_seconds(t)
-              # after:  t.compute_remaining_seconds()
-              p: Player = Player()
-              assert p.compute_remaining_seconds(t) == 300
+          @pytest.fixture
+          def ui() -> PlaybackUI:
+              return PlaybackUI(Player())
 
 
-          def test_remaining_seconds_partway() -> None:
-              t: Track = Track(track_id="t1", duration_sec=300, current_position=120)
-              p: Player = Player()
-              assert p.compute_remaining_seconds(t) == 180
+          def test_format_remaining_at_start(ui: PlaybackUI) -> None:
+              # 300s remaining → "5:00 remaining"
+              track: Track = Track(track_id="t1", duration_sec=300, current_position=0)
+              assert ui.format_remaining(track) == "5:00 remaining"
 
 
-          def test_is_finished_true_at_end() -> None:
-              t: Track = Track(track_id="t1", duration_sec=100, current_position=100)
-              assert t.is_finished() is True
+          def test_format_remaining_partway(ui: PlaybackUI) -> None:
+              # 300 - 120 = 180s → "3:00 remaining"
+              track: Track = Track(track_id="t1", duration_sec=300, current_position=120)
+              assert ui.format_remaining(track) == "3:00 remaining"
 
 
-          def test_is_finished_false_partway() -> None:
-              t: Track = Track(track_id="t1", duration_sec=100, current_position=50)
-              assert t.is_finished() is False
+          def test_format_remaining_pads_seconds(ui: PlaybackUI) -> None:
+              # 125 - 60 = 65s → "1:05 remaining" (zero-padded seconds)
+              track: Track = Track(track_id="t1", duration_sec=125, current_position=60)
+              assert ui.format_remaining(track) == "1:05 remaining"
 
 
-          # ---- Caller tests: PlaybackUI must keep working across the Move Method refactor ----
-
-          def test_playback_ui_formats_remaining_at_start() -> None:
-              t: Track = Track(track_id="t1", duration_sec=125, current_position=0)
-              ui: PlaybackUI = PlaybackUI(Player())
-              # 125s = 2:05 remaining
-              assert ui.format_remaining(t) == "2:05 remaining"
+          def test_format_remaining_at_end(ui: PlaybackUI) -> None:
+              # When position == duration, is_finished() is True → "Finished"
+              track: Track = Track(track_id="t1", duration_sec=100, current_position=100)
+              assert ui.format_remaining(track) == "Finished"
 
 
-          def test_playback_ui_formats_remaining_partway() -> None:
-              t: Track = Track(track_id="t1", duration_sec=125, current_position=60)
-              ui: PlaybackUI = PlaybackUI(Player())
-              # 125 - 60 = 65s = 1:05 remaining
-              assert ui.format_remaining(t) == "1:05 remaining"
+          def test_format_remaining_one_second_left(ui: PlaybackUI) -> None:
+              # 1s remaining (not finished) → "0:01 remaining"
+              track: Track = Track(track_id="t1", duration_sec=100, current_position=99)
+              assert ui.format_remaining(track) == "0:01 remaining"
+
 
           if __name__ == "__main__":
               import sys
@@ -2767,11 +2834,14 @@ steps:
           <!-- TODO: which property of behavior is preserved? Be specific about the contract. -->
 
 
-          ## Tests
-          `test_remaining_seconds_at_start`, `test_remaining_seconds_partway`, `test_is_finished_true_at_end`,
-          and `test_is_finished_false_partway` confirm the invariant — same inputs produce the same
-          outputs both before and after the move (after updating call sites). The test file should not
-          need changes other than rewriting `p.compute_remaining_seconds(t)` to `t.compute_remaining_seconds()`.
+          The five `test_format_remaining_*` tests in `test_media.py` confirm the
+          observable behavior of `PlaybackUI.format_remaining(track) -> str`: the right
+          formatted string for each remaining-time scenario, including the `"Finished"`
+          terminal case. Because the tests go through `format_remaining`'s stable
+          signature, **the test file does not change across the refactor** — only the
+          internal call inside `playback_ui.py` does (from `self.player.compute_remaining_seconds(track)`
+          to `track.compute_remaining_seconds()`). Contrast this with Step 5, where
+          changing a public signature forced the tests to follow.
         language: "markdown"
 
     open_file: "media.py"
@@ -2805,10 +2875,11 @@ steps:
 
         - path: "playback_ui.py"
           content: |
-            """UI helper that formats the player's current state for display.
+            """UI helper — post-refactor: reaches into Track directly.
 
-            After the Move Method refactor, the call site no longer reaches into Player —
-            it goes directly through Track, which owns the data.
+            The only change from the starter is the internal call inside `format_remaining`:
+            `self.player.compute_remaining_seconds(track)` becomes `track.compute_remaining_seconds()`.
+            The public method signature (`format_remaining(track) -> str`) is identical.
             """
             from media import Player, Track
 
@@ -2820,7 +2891,9 @@ steps:
                     self.player: Player = player
 
                 def format_remaining(self, track: Track) -> str:
-                    """Return a `M:SS remaining` string for the given track."""
+                    """Return a `M:SS remaining` string, or `Finished` when done."""
+                    if track.is_finished():
+                        return "Finished"
                     seconds: int = track.compute_remaining_seconds()
                     minutes: int = seconds // 60
                     secs: int = seconds % 60
@@ -2829,42 +2902,48 @@ steps:
 
         - path: "test_media.py"
           content: |
-            """Behavior tests for Player, Track, and the PlaybackUI caller."""
+            """Behavior tests for the playback UI — IDENTICAL to the starter file.
+
+            Notice: this file is byte-for-byte unchanged from the starter. The Move Method
+            refactor moved `compute_remaining_seconds` from Player to Track, but the
+            *public* interface — `PlaybackUI.format_remaining(track) -> str` — stayed the
+            same. Tests that go through stable interfaces don't need to change across a
+            refactor. Compare to Step 5, where the test file did need to change.
+            """
+            import pytest
             from media import Player, Track
             from playback_ui import PlaybackUI
-            import pytest
 
 
-            def test_remaining_seconds_at_start() -> None:
-                t: Track = Track(track_id="t1", duration_sec=300, current_position=0)
-                assert t.compute_remaining_seconds() == 300
+            @pytest.fixture
+            def ui() -> PlaybackUI:
+                return PlaybackUI(Player())
 
 
-            def test_remaining_seconds_partway() -> None:
-                t: Track = Track(track_id="t1", duration_sec=300, current_position=120)
-                assert t.compute_remaining_seconds() == 180
+            def test_format_remaining_at_start(ui: PlaybackUI) -> None:
+                track: Track = Track(track_id="t1", duration_sec=300, current_position=0)
+                assert ui.format_remaining(track) == "5:00 remaining"
 
 
-            def test_is_finished_true_at_end() -> None:
-                t: Track = Track(track_id="t1", duration_sec=100, current_position=100)
-                assert t.is_finished() is True
+            def test_format_remaining_partway(ui: PlaybackUI) -> None:
+                track: Track = Track(track_id="t1", duration_sec=300, current_position=120)
+                assert ui.format_remaining(track) == "3:00 remaining"
 
 
-            def test_is_finished_false_partway() -> None:
-                t: Track = Track(track_id="t1", duration_sec=100, current_position=50)
-                assert t.is_finished() is False
+            def test_format_remaining_pads_seconds(ui: PlaybackUI) -> None:
+                track: Track = Track(track_id="t1", duration_sec=125, current_position=60)
+                assert ui.format_remaining(track) == "1:05 remaining"
 
 
-            def test_playback_ui_formats_remaining_at_start() -> None:
-                t: Track = Track(track_id="t1", duration_sec=125, current_position=0)
-                ui: PlaybackUI = PlaybackUI(Player())
-                assert ui.format_remaining(t) == "2:05 remaining"
+            def test_format_remaining_at_end(ui: PlaybackUI) -> None:
+                track: Track = Track(track_id="t1", duration_sec=100, current_position=100)
+                assert ui.format_remaining(track) == "Finished"
 
 
-            def test_playback_ui_formats_remaining_partway() -> None:
-                t: Track = Track(track_id="t1", duration_sec=125, current_position=60)
-                ui: PlaybackUI = PlaybackUI(Player())
-                assert ui.format_remaining(t) == "1:05 remaining"
+            def test_format_remaining_one_second_left(ui: PlaybackUI) -> None:
+                track: Track = Track(track_id="t1", duration_sec=100, current_position=99)
+                assert ui.format_remaining(track) == "0:01 remaining"
+
 
             if __name__ == "__main__":
                 import sys
@@ -2893,11 +2972,13 @@ steps:
             existing tests confirm this — they need only the call-site rewrite, not any
             change in expected values.
 
-            ## Tests
-            `test_remaining_seconds_at_start`, `test_remaining_seconds_partway`, `test_is_finished_true_at_end`,
-            and `test_is_finished_false_partway` confirm the invariant — same inputs produce the same
-            outputs both before and after the move (after updating call sites). The test file should not
-            need changes other than rewriting `p.compute_remaining_seconds(t)` to `t.compute_remaining_seconds()`.
+            The five `test_format_remaining_*` tests confirm `PlaybackUI.format_remaining(track) -> str`
+            is unchanged. Because these tests go through `format_remaining`'s stable
+            signature, the test file is byte-for-byte identical before and after the
+            refactor. Only `playback_ui.py`'s internal call site changes. Compare to
+            Step 5, where the test file *had* to be edited because the public signature
+            of `add_track` changed — that's the cost a public-API change pays; this
+            refactor avoids it entirely.
           language: "markdown"
       explanation: |
         **`Player` got smaller. `Track` got one method richer.** The `Player → Track` "uses" arrow disappeared from the diagram because `Player` no longer reaches into `Track` for that calculation. The method is now where the data lives.
@@ -2905,6 +2986,14 @@ steps:
         **Two refactorings in one step.** Move Method on `compute_remaining_seconds`, and the Step-3 boolean simplification on `is_finished`. The point of the second is **spacing** — applying a previous step's lesson in a new context. Step 3 simplified booleans in standalone functions; here you simplified one inside a class method. Same anti-pattern, same fix.
 
         **Compare before/after.** The inline UML at the top showed `Player` containing `compute_remaining_seconds` with an arrow pointing to `Track`. The live UML now shows the method inside `Track`'s box and no arrow. **The tests still pass** — that's the proof of behavior preservation.
+
+        ### Pause and reckon: how many files did you edit?
+
+        Count again. **One file: `playback_ui.py`** (plus `media.py` itself — the source of the move). The `test_media.py` file is byte-for-byte identical before and after the refactor.
+
+        Compare to Step 5, where you had to edit `helpers.py` AND `test_track.py`. The difference isn't that this refactoring was easier — it's that this refactoring went through a *stable interface*. `PlaybackUI.format_remaining(track) -> str` is the public contract; moving an internal helper from one class to another doesn't break it. Moving a public signature does.
+
+        **The takeaway, in one sentence:** when a refactoring needs you to edit tests, that's a signal — either the public surface changed (Step 5) or the tests were reaching past the public surface (a test-design problem). When neither is true, tests stay green for free.
 
     tests:
       - description: "compute_remaining_seconds is now a method of Track (not Player)"
@@ -3097,20 +3186,20 @@ steps:
             **Fix-then-refactor.** The Step 1 lesson generalizes: never refactor over a known bug. Fix in each location with green tests, *then* consolidate. This is the highest-leverage sequencing rule in the toolkit.
 
         - question: |
-            **Mid-tutorial mix — Step 4 callback.** A teammate spots two near-duplicate functions and proposes Extract Function. The duplicates were just written this morning and the third occurrence isn't on the roadmap. What does the **Rule of Three** suggest?
+            **Mid-tutorial mix — Step 4 callback.** Two near-duplicate functions were just written this morning. The third occurrence isn't on the roadmap. The variation between the two copies is **subtle** — you'd have to study them to be sure what's common. What does the **Rule of Three** suggest as the *default*?
           type: single
           options:
             - "Extract immediately — duplication is always a smell"
-            - "Wait for the third occurrence to confirm what's truly common"
+            - "Wait for the third occurrence — when variation isn't obvious, the third copy reveals what's truly common"
             - "Refuse to extract until tests are added for both copies"
             - "Extract only if the two functions live in the same file"
           correct_index: 1
           option_feedback:
-            0: "Eager extraction at two duplicates is a real pattern, but it backfires when the third occurrence reveals a different variation than the first two implied (the wrong-abstraction trap)."
+            0: "Eager extraction at two duplicates is a real pattern, but it backfires when the third occurrence reveals a different variation than the first two implied (the wrong-abstraction trap). Step 4 noted that the *default* is to wait."
             2: "Tests-first is correct discipline before *any* refactor, but it's not what Rule of Three says. Rule of Three is about the third *occurrence*, not the third *test*."
             3: "Co-location is unrelated to Rule of Three."
           explanation: |
-            **Two duplicates is the minimum, three is the safe bet.** The Rule of Three exists because two near-duplicates can mislead — what looks like the same pattern may diverge in the third occurrence in a way that breaks the abstraction.
+            **The Rule of Three is the *default*, not an absolute.** Step 4 made the nuance explicit: when the variation is *obvious and stable* (like a predicate), extracting at two duplicates is fine. When the variation is subtle (this question's setup), the rule's default — wait for three — saves you from a wrong-abstraction trap.
 
 
   # ==========================================================================
@@ -3272,51 +3361,87 @@ steps:
 
 
           ## Tests
-          The behavior tests in `test_streaming_app.py` cover both the catalog API
-          (`test_search_returns_matching_titles`, `test_search_records_history`) and the
-          billing API (`test_charge_monthly_creates_invoice`, `test_charge_annual_creates_invoice`,
-          `test_invoice_list_grows_per_charge`). The catalog tests should require no edits
-          across the refactor. The billing tests are written defensively to support both the
-          old (`app.charge_monthly()`) and new (`app.billing.charge_monthly()`) APIs, so they
-          stay green throughout the migration.
+          The five `test_*_runner_*` tests in `test_streaming_app.py` go entirely through
+          `AppRunner` — `configure_payment`, `run_searches`, `search_history`, `charge_monthly`,
+          `charge_annual`, and `invoices()`. Those are the *stable* signatures the refactor
+          preserves. Internally, `app_runner.py` is updated when billing migrates (its
+          `self.app.charge_monthly()` becomes `self.app.billing.charge_monthly()`, etc.),
+          but the test file itself does not change.
         language: "markdown"
 
       - path: "app_runner.py"
         content: |
-          """Daily app routine that exercises both the catalog and billing clusters.
+          """The high-level driver tests interact with.
 
-          Every call site here that touches billing (charge_monthly, invoice_list)
+          Every method below has a stable signature. Internally, several call sites
           will need to be updated after the Extract Class refactor — from
-          `self.app.charge_monthly()` to `self.app.billing.charge_monthly()`,
-          and from `self.app.invoice_list` to `self.app.billing.invoice_list`.
-          The tool may not catch all of these; the tests will.
+          `self.app.charge_monthly()` to `self.app.billing.charge_monthly()`, and
+          from `self.app.invoice_list` to `self.app.billing.invoice_list`. Those are
+          the *internal* edits the refactor forces. The methods on `AppRunner` keep
+          their signatures, so `test_streaming_app.py` doesn't change.
           """
-          from typing import List
+          from typing import Dict, List
           from streaming_app import StreamingApp
 
 
           class AppRunner:
-              """Drives a daily flow over StreamingApp's public surface."""
+              """Drives daily flows over StreamingApp. Tests interact only with this surface."""
 
               def __init__(self, app: StreamingApp) -> None:
                   self.app: StreamingApp = app
 
-              def daily_routine(self, queries: List[str]) -> int:
-                  """Run searches, then process the monthly charge.
+              def configure_payment(self, method: str) -> None:
+                  """Set the payment method used for subsequent charges."""
+                  # Pre-refactor: payment_method is a field on StreamingApp.
+                  # Post-refactor: it lives on app.billing.
+                  self.app.payment_method = method
 
-                  Returns the number of invoices accumulated so far.
-                  """
-                  for q in queries:
-                      self.app.search(q)
-                  self.app.charge_monthly()
-                  return len(self.app.invoice_list)
+              def run_searches(self, queries: List[str]) -> List[List[str]]:
+                  """Run a batch of catalog searches; return one hit list per query."""
+                  return [self.app.search(q) for q in queries]
+
+              def search_history(self) -> List[str]:
+                  """The list of queries the user has run, in order."""
+                  return list(self.app.search_history)
+
+              def charge_monthly(self) -> Dict:
+                  """Process this month's charge; return the resulting invoice."""
+                  # Pre-refactor: charge_monthly is on StreamingApp.
+                  # Post-refactor: it lives on app.billing.
+                  return self.app.charge_monthly()
+
+              def charge_annual(self) -> Dict:
+                  """Process the annual charge; return the resulting invoice."""
+                  return self.app.charge_annual()
+
+              def invoices(self) -> List[Dict]:
+                  """All invoices accumulated so far."""
+                  # Pre-refactor: invoice_list is on StreamingApp.
+                  # Post-refactor: it lives on app.billing.
+                  return list(self.app.invoice_list)
         language: "python"
 
       - path: "test_streaming_app.py"
         content: |
-          """Public-API behavior tests for StreamingApp and AppRunner."""
+          """Behavior tests for the streaming app, exercised entirely through `AppRunner`.
+
+          DESIGN — *every* test below goes through `AppRunner`. None of them touch
+          `app.charge_monthly()` or `app.billing.charge_monthly()` directly. Why?
+
+          The Extract Class refactor is going to relocate billing fields and methods
+          from `StreamingApp` to a new `BillingManager`. If a test poked at
+          `app.charge_monthly()` it would break the moment that method moves; if it
+          switched on `hasattr(app, 'billing')` to handle both shapes, the test would
+          be coupled to *which step of the refactor we're in*. Both options are bad
+          test design.
+
+          The right answer is to test through a stable surface. `AppRunner` exposes
+          the operations callers actually care about (`charge_monthly`, `invoices()`,
+          etc.) and keeps those signatures fixed. Internally, `AppRunner` is updated
+          when billing moves. Tests aren't.
+          """
           import pytest
-          from typing import Dict
+          from typing import Dict, List
           from streaming_app import StreamingApp
           from app_runner import AppRunner
 
@@ -3329,63 +3454,49 @@ steps:
                   "t2": {"title": "Echo Chamber"},
                   "t3": {"title": "Bright Lights"},
               }
-              # The billing fields will move; the test sets them via whatever
-              # path remains correct (direct attribute today, .billing.X tomorrow).
               return a
 
 
-          # ---- Catalog public API ----
-          def test_search_returns_matching_titles(app: StreamingApp) -> None:
-              assert sorted(app.search("echo")) == ["t1", "t2"]
+          @pytest.fixture
+          def runner(app: StreamingApp) -> AppRunner:
+              return AppRunner(app)
 
 
-          def test_search_records_history(app: StreamingApp) -> None:
-              app.search("echo")
-              app.search("bright")
-              assert app.search_history == ["echo", "bright"]
+          # ---- Catalog: search behavior ----
+
+          def test_run_searches_returns_matching_titles(runner: AppRunner) -> None:
+              results: List[List[str]] = runner.run_searches(["echo"])
+              assert sorted(results[0]) == ["t1", "t2"]
 
 
-          # ---- Billing public API — written to survive the extraction ----
-          def test_charge_monthly_creates_invoice(app: StreamingApp) -> None:
-              # After refactor, billing.subscription_tier, billing.payment_method, etc.
-              if hasattr(app, 'billing'):
-                  app.billing.payment_method = "visa-1234"
-                  invoice: Dict = app.billing.charge_monthly()
-              else:
-                  app.payment_method = "visa-1234"
-                  invoice = app.charge_monthly()
+          def test_search_history_records_each_query(runner: AppRunner) -> None:
+              runner.run_searches(["echo", "bright"])
+              assert runner.search_history() == ["echo", "bright"]
+
+
+          # ---- Billing: charge behavior ----
+
+          def test_charge_monthly_creates_invoice_with_method(runner: AppRunner) -> None:
+              runner.configure_payment("visa-1234")
+              invoice: Dict = runner.charge_monthly()
               assert invoice["amount"] == pytest.approx(9.99)
               assert invoice["method"] == "visa-1234"
+              assert invoice["period"] == "monthly"
 
 
-          def test_charge_annual_creates_invoice(app: StreamingApp) -> None:
-              if hasattr(app, 'billing'):
-                  app.billing.payment_method = "visa-1234"
-                  invoice: Dict = app.billing.charge_annual()
-              else:
-                  app.payment_method = "visa-1234"
-                  invoice = app.charge_annual()
+          def test_charge_annual_creates_invoice_with_twelve_months(runner: AppRunner) -> None:
+              runner.configure_payment("visa-1234")
+              invoice: Dict = runner.charge_annual()
               assert invoice["amount"] == pytest.approx(9.99 * 12)
+              assert invoice["period"] == "annual"
 
 
-          def test_invoice_list_grows_per_charge(app: StreamingApp) -> None:
-              if hasattr(app, 'billing'):
-                  app.billing.charge_monthly()
-                  app.billing.charge_monthly()
-                  assert len(app.billing.invoice_list) == 2
-              else:
-                  app.charge_monthly()
-                  app.charge_monthly()
-                  assert len(app.invoice_list) == 2
+          def test_invoices_grow_per_charge(runner: AppRunner) -> None:
+              runner.configure_payment("visa-1234")
+              runner.charge_monthly()
+              runner.charge_monthly()
+              assert len(runner.invoices()) == 2
 
-
-          # ---- Caller tests: AppRunner must keep working across the Extract Class refactor ----
-
-          def test_app_runner_records_searches_and_charges(app: StreamingApp) -> None:
-              runner: AppRunner = AppRunner(app)
-              invoice_count: int = runner.daily_routine(["echo", "bright"])
-              assert app.search_history == ["echo", "bright"]
-              assert invoice_count == 1
 
           if __name__ == "__main__":
               import sys
@@ -3451,20 +3562,109 @@ steps:
 
         - path: "app_runner.py"
           content: |
-            """Daily app routine — post-refactor: billing reached via app.billing.X."""
-            from typing import List
+            """Drives daily flows over StreamingApp — post-refactor: billing reached via app.billing.X.
+
+            Notice: every public method below has the same signature as the starter file.
+            Only the *internal* call sites changed (to `self.app.billing.X`). That's why
+            `test_streaming_app.py` is byte-for-byte identical across the refactor.
+            """
+            from typing import Dict, List
             from streaming_app import StreamingApp
 
 
             class AppRunner:
+                """Drives daily flows over StreamingApp. Tests interact only with this surface."""
+
                 def __init__(self, app: StreamingApp) -> None:
                     self.app: StreamingApp = app
 
-                def daily_routine(self, queries: List[str]) -> int:
-                    for q in queries:
-                        self.app.search(q)
-                    self.app.billing.charge_monthly()
-                    return len(self.app.billing.invoice_list)
+                def configure_payment(self, method: str) -> None:
+                    """Set the payment method used for subsequent charges."""
+                    self.app.billing.payment_method = method
+
+                def run_searches(self, queries: List[str]) -> List[List[str]]:
+                    """Run a batch of catalog searches; return one hit list per query."""
+                    return [self.app.search(q) for q in queries]
+
+                def search_history(self) -> List[str]:
+                    """The list of queries the user has run, in order."""
+                    return list(self.app.search_history)
+
+                def charge_monthly(self) -> Dict:
+                    """Process this month's charge; return the resulting invoice."""
+                    return self.app.billing.charge_monthly()
+
+                def charge_annual(self) -> Dict:
+                    """Process the annual charge; return the resulting invoice."""
+                    return self.app.billing.charge_annual()
+
+                def invoices(self) -> List[Dict]:
+                    """All invoices accumulated so far."""
+                    return list(self.app.billing.invoice_list)
+          language: "python"
+
+        - path: "test_streaming_app.py"
+          content: |
+            """Behavior tests — IDENTICAL to the starter file. Tests do not change across
+            the Extract Class refactor because they go through `AppRunner`'s stable surface.
+            """
+            import pytest
+            from typing import Dict, List
+            from streaming_app import StreamingApp
+            from app_runner import AppRunner
+
+
+            @pytest.fixture
+            def app() -> StreamingApp:
+                a: StreamingApp = StreamingApp(user_id="u42")
+                a.track_index = {
+                    "t1": {"title": "Echoes"},
+                    "t2": {"title": "Echo Chamber"},
+                    "t3": {"title": "Bright Lights"},
+                }
+                return a
+
+
+            @pytest.fixture
+            def runner(app: StreamingApp) -> AppRunner:
+                return AppRunner(app)
+
+
+            def test_run_searches_returns_matching_titles(runner: AppRunner) -> None:
+                results: List[List[str]] = runner.run_searches(["echo"])
+                assert sorted(results[0]) == ["t1", "t2"]
+
+
+            def test_search_history_records_each_query(runner: AppRunner) -> None:
+                runner.run_searches(["echo", "bright"])
+                assert runner.search_history() == ["echo", "bright"]
+
+
+            def test_charge_monthly_creates_invoice_with_method(runner: AppRunner) -> None:
+                runner.configure_payment("visa-1234")
+                invoice: Dict = runner.charge_monthly()
+                assert invoice["amount"] == pytest.approx(9.99)
+                assert invoice["method"] == "visa-1234"
+                assert invoice["period"] == "monthly"
+
+
+            def test_charge_annual_creates_invoice_with_twelve_months(runner: AppRunner) -> None:
+                runner.configure_payment("visa-1234")
+                invoice: Dict = runner.charge_annual()
+                assert invoice["amount"] == pytest.approx(9.99 * 12)
+                assert invoice["period"] == "annual"
+
+
+            def test_invoices_grow_per_charge(runner: AppRunner) -> None:
+                runner.configure_payment("visa-1234")
+                runner.charge_monthly()
+                runner.charge_monthly()
+                assert len(runner.invoices()) == 2
+
+
+            if __name__ == "__main__":
+                import sys
+                pytest.main([sys.argv[0], "-v"])
           language: "python"
 
         - path: "memo.md"
@@ -3490,17 +3690,16 @@ steps:
             ## Invariant
             The public API of `StreamingApp` (its `search`, `record_recommendation` methods
             and the catalog state) is unchanged. The billing API has migrated under
-            `app.billing.X` — the test fixtures handle both the old direct form and the
-            new namespaced form, so behavior across the public surface is preserved.
+            `app.billing.X`. The `AppRunner` surface in `app_runner.py` mediates this:
+            its public methods keep the same signatures, so test code continues to call
+            `runner.charge_monthly()` rather than reaching into the migrating internals.
 
             ## Tests
-            The behavior tests in `test_streaming_app.py` cover both the catalog API
-            (`test_search_returns_matching_titles`, `test_search_records_history`) and the
-            billing API (`test_charge_monthly_creates_invoice`, `test_charge_annual_creates_invoice`,
-            `test_invoice_list_grows_per_charge`). The catalog tests should require no edits
-            across the refactor. The billing tests are written defensively to support both the
-            old (`app.charge_monthly()`) and new (`app.billing.charge_monthly()`) APIs, so they
-            stay green throughout the migration.
+            The five `test_*_runner_*` tests in `test_streaming_app.py` go entirely through
+            `AppRunner`. Those signatures are stable across the refactor, so the test file
+            is byte-for-byte identical before and after. The cost of the Extract Class
+            refactor lives in `streaming_app.py` (the source of the move) and `app_runner.py`
+            (its internal call sites), not in the tests.
           language: "markdown"
       explanation: |
         **One fat box, two collaborating boxes.** `StreamingApp` now has only catalog responsibilities. `BillingManager` owns subscription, payment, invoices, and the `notify_payment_due` method. Anything billing-related is one place.
@@ -3514,7 +3713,15 @@ steps:
         - **Before:** add a new payment method (e.g., "PayPal") → edit `StreamingApp` (mixed with catalog code).
         - **After:** add a new payment method → edit `BillingManager` only. Catalog code is untouched.
 
-        **Compare before/after.** The inline UML showed one box with five methods and six fields. The live UML now shows two boxes connected by a `--has-->` relationship. **Tests still pass** — the public API on `StreamingApp` (`.search`, `.record_recommendation`) is unchanged; the billing API is now reached through `.billing.X`.
+        **Compare before/after.** The inline UML showed one box with five methods and six fields. The live UML now shows two boxes connected by a `--has-->` relationship.
+
+        ### Pause and reckon: how many files did you edit?
+
+        Count: `streaming_app.py` (the source — fields and methods migrated to `BillingManager`) and `app_runner.py` (its internal call sites updated from `self.app.X` to `self.app.billing.X`). **`test_streaming_app.py` is byte-for-byte identical before and after.**
+
+        Why? Tests go through `AppRunner`'s stable methods — `configure_payment`, `charge_monthly`, `invoices()`. Those signatures haven't changed; only their internal implementations have. This is exactly the same dynamic as Step 6: a stable test surface absorbs the refactor's churn so tests don't need to.
+
+        Compare the cost: Step 5 (changed public signature) → 2 file edits *plus* test edits. Step 6 + Step 7 (preserved public signatures) → 1 caller edit each, *no* test edits. The pattern is consistent: **the cost of a refactor is the cost of fixing every place that depended on what changed**. Stable interfaces minimize "every place."
 
     tests:
       - description: "BillingManager class exists"
@@ -3663,7 +3870,7 @@ steps:
             Three billing fields: **subscription_tier, payment_method, invoice_list**. Identifying these *before* using the tool is the responsibility-recognition gate. Without it, you risk moving fields that don't actually belong to the billing cluster.
 
         - question: |
-            What's the **safe order** for extracting a class via Move Method/Field?
+            If you were doing Extract Class **manually** (one Move Method/Field at a time, instead of with the all-at-once tool), what's the **safe order**?
           type: single
           options:
             - "Move methods first, then fields"
@@ -3672,11 +3879,11 @@ steps:
             - "The order doesn't matter — the tool handles dependencies"
           correct_index: 1
           option_feedback:
-            0: "Methods that reference fields will break when their fields are still elsewhere. Method-first leaves a window where references are wrong."
+            0: "Methods that reference fields would break when their fields are still elsewhere. Method-first leaves a window where references are wrong."
             2: "Simultaneous moves aren't an option in stepwise refactoring — each move is a discrete edit."
-            3: "The tool handles individual references, but it doesn't reorder your moves. Wrong order = broken intermediate states."
+            3: "An all-at-once Extract Class tool *does* handle ordering automatically. The question is about the discipline that applies when sequencing moves manually — which is what 'safe order' refers to."
           explanation: |
-            **Fields first, methods second.** Methods depend on fields; reverse order breaks references during the intermediate state. The tool's per-move soundness depends on you sequencing correctly.
+            **Fields first, methods second.** Methods depend on fields; reverse order breaks references during the intermediate state. Whether you use a single Extract Class action (which sequences internally) or chain Move Field + Move Method by hand, the underlying ordering rule is the same.
 
         - question: |
             **Spacing callback to Step 4.** `charge_monthly` and `charge_annual` share most of their body. Should you Extract Function on them **before** moving them to `BillingManager`?
@@ -3789,7 +3996,14 @@ steps:
 
       ## How to apply this
 
-      The starter `tracks.py` already declares `Track`, `Song`, `Podcast`, `Audiobook` as a hierarchy with `Track.play(user)` as `@abstractmethod`. Run the dispatch micro-tests first to confirm polymorphism is wired correctly. Then, for each branch of the original `play` function, move the body into the corresponding subclass's `play(self, user)` method (replace `track.X` with `self.X`). Finally, replace the original `play` function body with `return track.play(user)`.
+      The starter `tracks.py` already declares `Track`, `Song`, `Podcast`, `Audiobook` as a hierarchy with `Track.play(user)` as `@abstractmethod`. **Run the test suite first** — most tests will fail. The shape of those failures is your map for what to do next:
+
+      - `test_track_cannot_be_instantiated` **passes** — the abstract base contract is wired correctly. `Track(...)` raises `TypeError`. ✓
+      - `test_subclass_dispatch_calls_subclass_play` **fails** — Song/Podcast.play return `None` because the starter bodies are stubs.
+      - The per-subclass behavior tests **fail** for the same reason.
+      - `Audiobook` can't be instantiated at all — its `play` method is intentionally missing, demonstrating that `@abstractmethod` enforces subclass overrides at *instantiation* time. The error message tells you exactly what to add.
+
+      Now you have a punch list. For each branch of the original `play(track_kind, ...)` function, move the body into the corresponding subclass's `play(self, user)` method (replacing `track.X` with `self.X`). Finally, replace the original `play` function body with `return track.play(user)`.
 
       Tool-wise, this is just **Refactor: Move Method** done three times — same flow you used in Steps 6 and 7. Some branches may be easier to copy/paste because the conditional pattern doesn't always select cleanly for tool-driven moves; that's fine.
 
@@ -3944,6 +4158,7 @@ steps:
         content: |
           """Behavior tests for the polymorphic Track hierarchy and PlaybackLoop caller."""
           import pytest
+          from typing import List
           from tracks import Track, Song, Podcast, Audiobook, User, play
           from playback_loop import PlaybackLoop
 
@@ -4003,7 +4218,7 @@ steps:
               s: Song = Song(track_id="s1", duration_sec=180)
               p: Podcast = Podcast(track_id="p1", duration_sec=2400, last_position=300)
               a: Audiobook = Audiobook(track_id="a1", duration_sec=3600, playback_speed=1.5)
-              results: list = loop.play_one_of_each(s, p, a)
+              results: List[str] = loop.play_one_of_each(s, p, a)
               assert results == [
                   "playing song s1",
                   "resuming podcast p1 at 300s",
@@ -4126,9 +4341,17 @@ steps:
 
         **The productive failure paid off.** `Audiobook` had no `play` method initially. Python raised `TypeError: Can't instantiate abstract class Audiobook with abstract method play`. The error message told you exactly what to add. That's the value of `@abstractmethod` — it makes the missing implementation a *startup* error, not a *runtime* error somewhere later.
 
-        **The dispatch micro-tests ran green from the start.** Before you migrated any branch logic, two tests confirmed: (a) `Track` itself can't be instantiated; (b) calling `play` on a subclass instance dispatches to that subclass's method. That gave you confidence the polymorphism was wired correctly *before* trusting it with real behavior.
+        **The dispatch contract was enforced from the start by `@abstractmethod`.** `test_track_cannot_be_instantiated` passed immediately — the abstract base refused construction. The other dispatch tests failed in informative ways: stub bodies returned `None`, and the missing `Audiobook.play` raised `TypeError` at instantiation. Each failure pointed at the exact next step. By the time the migrations completed, all dispatch tests went green together.
 
         **Compare before/after.** The inline UML showed one flat `Track` and a procedural `play` function with three branches. The live UML now shows `Track` (abstract) at the top with three concrete subclasses below, each with its own `play`. **Adding a `Live` track type later requires a new subclass — the `play` function and existing tests don't change.** That's Open/Closed.
+
+        ### Pause and reckon: the test file again.
+
+        Look at `test_tracks.py`. The per-subclass tests like `test_song_default_returns_plain_play_message` call `s.play(User("u1"))` directly. The dispatcher test calls the procedural `play("song", s, User("u1"))`. Both shapes existed *before* the refactor; both still exist *after*. The refactor *moved logic* into the subclass methods, but the methods themselves were already declared.
+
+        That's why the tests didn't need to change: their interfaces (`Song.play`, `Podcast.play`, `Audiobook.play`, the procedural shim `play`) are the *target* of the refactor, not casualties of it. We declared the surface up front (the abstract base + concrete stubs), wrote tests against it, then filled in the bodies. Tests went red while bodies were stubs, then green as bodies arrived.
+
+        This is the **interface-first** approach to refactoring: design the public surface you want, write tests against it, then refactor the implementation to match. Tests stay green throughout because they were written against the destination, not the origin. Step 5's lesson said "stable interfaces save you from editing tests across signature changes." Step 8's lesson is the same idea spelled differently: **design the destination interface first, and the tests automatically become a refactor safety net rather than a migration burden.**
 
     tests:
       - description: "Track is abstract"
@@ -4645,6 +4868,19 @@ steps:
 
       Run the tests after the refactor. They must still pass.
 
+      ## Pause and reckon: which option costs more, and why?
+
+      Before you finish this step, look at the test file. Notice that **none** of the tests call `pm.add_to_playlist(...)` or `pm.add_to_queue(...)` directly. They all go through `TrackImporter`. The tests don't depend on which option you picked.
+
+      Now think about what *did* have to change for each option:
+
+      - **Option B (Extract Function)** preserves the public signatures of `add_to_playlist` and `add_to_queue`. The internal validation logic moves into a private `_validate_track_data` helper. **No callers change. `importer.py` is untouched. `test_playlist.py` is untouched.** This is the same dynamic you saw in Step 6 (Move Method) and Step 7 (Extract Class) — the refactor stayed inside the class's existing public surface.
+      - **Option A (Introduce Parameter Object)** changes the public signatures of `add_to_playlist` and `add_to_queue`. **`importer.py`'s `_add_to_*_one` helpers MUST be updated** to construct a `TrackInfo` for the new shape. This is the same dynamic as Step 5 — bundling parameters means every caller has to follow.
+
+      In Step 5 the cost landed on the test file. Here, *because the tests already go through a stable wrapper*, the cost lands on the wrapper instead. That's the lesson restated one more time: **a refactor's cost is paid wherever the changed signature is referenced.** Tests are exempt only when they reference *some other* stable interface that absorbs the change.
+
+      Take 30 seconds before moving on: which option did you pick, and which file(s) did *that* choice force you to edit beyond `playlist.py`? Add one line to your memo's *Rationale* naming those files.
+
       ## What's next after this tutorial
 
       You've covered method-level smells (Long Method, Duplication, Boolean anti-patterns), data-level smells (Long Parameter List, Feature Envy), and class-level smells (God Class, type-conditional dispatch). The next layer is **design principles** — the rules of thumb that make smells less likely to appear in the first place. Two suggested follow-ups:
@@ -4729,11 +4965,15 @@ steps:
         content: |
           """Bulk-imports tracks into a PlaylistManager.
 
-          If you pick Option A (Introduce Parameter Object), every call site here
-          will need to pass a `TrackInfo` instead of the four album-related fields
-          flat. If you pick Option B (Extract Function on validation), the call
-          shape stays the same — but the helper inside PlaylistManager is shared.
-          Either way: the tests below exercise the caller across the refactor.
+          If the chosen refactoring is Option A (Introduce Parameter Object), every
+          call site here will need to pass a `TrackInfo` instead of four flat album
+          fields — exactly the same kind of cost you paid in Step 5 with `AlbumInfo`.
+          If the chosen refactoring is Option B (Extract Function on validation),
+          the call shape here stays the same and only `playlist.py` changes.
+
+          Tests in `test_playlist.py` go entirely through `TrackImporter`'s
+          `import_to_playlist` and `import_to_queue` methods. Their signatures are
+          stable across either option.
           """
           from typing import Any, Dict, List
           from playlist import PlaylistManager
@@ -4745,27 +4985,67 @@ steps:
               def __init__(self, manager: PlaylistManager) -> None:
                   self.manager: PlaylistManager = manager
 
-              def import_to_playlist(self, tracks: List[Dict[str, Any]]) -> int:
-                  """Add each track dict to the underlying playlist. Returns count added."""
-                  count: int = 0
-                  for t in tracks:
-                      self.manager.add_to_playlist(
-                          title=t["title"],
-                          artist=t["artist"],
-                          album=t["album"],
-                          year=t["year"],
-                          genre=t["genre"],
-                          duration_sec=t["duration_sec"],
-                          bpm=t["bpm"],
-                          isrc=t["isrc"],
-                      )
-                      count += 1
-                  return count
+              def import_to_playlist(self, tracks: List[Dict[str, Any]]) -> List[Dict]:
+                  """Add each record to the underlying playlist; return the inserted records."""
+                  return [self._add_to_playlist_one(t) for t in tracks]
+
+              def import_to_queue(self, tracks: List[Dict[str, Any]]) -> List[Dict]:
+                  """Add each record to the underlying queue; return the inserted records."""
+                  return [self._add_to_queue_one(t) for t in tracks]
+
+              # ---- Internal call sites: these may need to change after the refactor ----
+
+              def _add_to_playlist_one(self, t: Dict[str, Any]) -> Dict:
+                  return self.manager.add_to_playlist(
+                      title=t["title"],
+                      artist=t["artist"],
+                      album=t["album"],
+                      year=t["year"],
+                      genre=t["genre"],
+                      duration_sec=t["duration_sec"],
+                      bpm=t["bpm"],
+                      isrc=t["isrc"],
+                  )
+
+              def _add_to_queue_one(self, t: Dict[str, Any]) -> Dict:
+                  return self.manager.add_to_queue(
+                      title=t["title"],
+                      artist=t["artist"],
+                      album=t["album"],
+                      year=t["year"],
+                      genre=t["genre"],
+                      duration_sec=t["duration_sec"],
+                      bpm=t["bpm"],
+                      isrc=t["isrc"],
+                  )
         language: "python"
 
       - path: "test_playlist.py"
         content: |
-          """Behavior tests for PlaylistManager and the TrackImporter caller."""
+          """Synthesis tests — exercised entirely through `TrackImporter`'s stable surface.
+
+          DESIGN NOTE — *every* test below goes through `importer.import_to_playlist`
+          or `importer.import_to_queue`. None of them call `pm.add_to_playlist(...)`
+          or `pm.add_to_queue(...)` directly, and none of them branch on which
+          option you picked. The whole point of the synthesis is to apply what
+          Steps 5–7 taught:
+
+            - Step 5: when a public signature changes, ALL callers (including tests)
+              have to change with it. That cost is real.
+            - Steps 6, 7: when a refactor stays *behind* a stable interface, tests
+              don't need to change.
+
+          For Step 10:
+            - Option A (Introduce Parameter Object) IS a public-signature change
+              on `add_to_playlist` / `add_to_queue`. The test surface — `TrackImporter`'s
+              public methods — stays stable, so the *tests* don't change. But
+              `importer.py`'s internal `_add_to_*_one` helpers DO need updating
+              (they construct the new TrackInfo). Same cost as Step 5, paid inside
+              the importer instead of inside the tests.
+            - Option B (Extract Function on validation) keeps `add_to_playlist` /
+              `add_to_queue` signatures stable. Both `importer.py` and the tests
+              are byte-for-byte unchanged.
+          """
           import pytest
           from typing import Any, Dict, List
           from playlist import PlaylistManager
@@ -4777,7 +5057,12 @@ steps:
               return PlaylistManager()
 
 
-          def _track_args(**overrides: Any) -> Dict[str, Any]:
+          @pytest.fixture
+          def importer(pm: PlaylistManager) -> TrackImporter:
+              return TrackImporter(pm)
+
+
+          def _track_record(**overrides: Any) -> Dict[str, Any]:
               base: Dict[str, Any] = dict(
                   title="Echoes", artist="Alice", album="Reflections", year=2022,
                   genre="indie", duration_sec=200, bpm=110, isrc="ISRC001",
@@ -4786,104 +5071,43 @@ steps:
               return base
 
 
-          def test_add_to_playlist_returns_record(pm: PlaylistManager) -> None:
-              # The student may need to switch to a TrackInfo object after the refactor.
-              args: Dict[str, Any] = _track_args()
-              # Try keyword args first; if Refactoring made it positional, fall back.
-              try:
-                  rec: Dict = pm.add_to_playlist(**args)
-              except TypeError:
-                  # Refactor introduced a parameter object — try the object form.
-                  from playlist import TrackInfo  # may not exist before refactor
-                  rec = pm.add_to_playlist(
-                      title=args["title"],
-                      track_info=TrackInfo(artist=args["artist"], album=args["album"],
-                                           year=args["year"], genre=args["genre"]),
-                      duration_sec=args["duration_sec"],
-                      bpm=args["bpm"],
-                      isrc=args["isrc"],
-                  )
-              assert rec["title"] == "Echoes"
-              assert rec["isrc"] == "ISRC001"
+          def test_import_to_playlist_returns_inserted_records(importer: TrackImporter) -> None:
+              records: List[Dict[str, Any]] = [_track_record(isrc="A"), _track_record(isrc="B")]
+              inserted: List[Dict] = importer.import_to_playlist(records)
+              assert len(inserted) == 2
+              assert inserted[0]["title"] == "Echoes"
+              assert inserted[0]["isrc"] == "A"
+              assert inserted[1]["isrc"] == "B"
 
 
-          def test_add_to_playlist_validates_title(pm: PlaylistManager) -> None:
-              with pytest.raises(ValueError, match="title"):
-                  args: Dict[str, Any] = _track_args(title="")
-                  try:
-                      pm.add_to_playlist(**args)
-                  except TypeError:
-                      from playlist import TrackInfo
-                      pm.add_to_playlist(
-                          title="",
-                          track_info=TrackInfo(artist=args["artist"], album=args["album"],
-                                               year=args["year"], genre=args["genre"]),
-                          duration_sec=args["duration_sec"], bpm=args["bpm"], isrc=args["isrc"],
-                      )
-
-
-          def test_add_to_playlist_validates_duration(pm: PlaylistManager) -> None:
-              with pytest.raises(ValueError, match="duration"):
-                  args: Dict[str, Any] = _track_args(duration_sec=0)
-                  try:
-                      pm.add_to_playlist(**args)
-                  except TypeError:
-                      from playlist import TrackInfo
-                      pm.add_to_playlist(
-                          title=args["title"],
-                          track_info=TrackInfo(artist=args["artist"], album=args["album"],
-                                               year=args["year"], genre=args["genre"]),
-                          duration_sec=0, bpm=args["bpm"], isrc=args["isrc"],
-                      )
-
-
-          def test_dedup_returns_existing_record(pm: PlaylistManager) -> None:
-              args: Dict[str, Any] = _track_args()
-              try:
-                  rec1: Dict = pm.add_to_playlist(**args)
-                  rec2: Dict = pm.add_to_playlist(**args)
-              except TypeError:
-                  from playlist import TrackInfo
-                  ti = TrackInfo(artist=args["artist"], album=args["album"],
-                                 year=args["year"], genre=args["genre"])
-                  rec1 = pm.add_to_playlist(title=args["title"], track_info=ti,
-                                            duration_sec=args["duration_sec"], bpm=args["bpm"],
-                                            isrc=args["isrc"])
-                  rec2 = pm.add_to_playlist(title=args["title"], track_info=ti,
-                                            duration_sec=args["duration_sec"], bpm=args["bpm"],
-                                            isrc=args["isrc"])
-              assert rec1 is rec2  # same dict returned
-
-
-          def test_add_to_queue_validates_title(pm: PlaylistManager) -> None:
-              with pytest.raises(ValueError, match="title"):
-                  args: Dict[str, Any] = _track_args(title="")
-                  try:
-                      pm.add_to_queue(**args)
-                  except TypeError:
-                      from playlist import TrackInfo
-                      pm.add_to_queue(
-                          title="",
-                          track_info=TrackInfo(artist=args["artist"], album=args["album"],
-                                               year=args["year"], genre=args["genre"]),
-                          duration_sec=args["duration_sec"], bpm=args["bpm"], isrc=args["isrc"],
-                      )
-
-
-          # ---- Caller test: TrackImporter must keep working across the refactor ----
-
-          def test_track_importer_bulk_imports(pm: PlaylistManager) -> None:
-              importer: TrackImporter = TrackImporter(pm)
-              records: List[Dict[str, Any]] = [_track_args(isrc="A"), _track_args(isrc="B")]
-              # If the student picked Option A (Parameter Object), the importer's
-              # call site needs to be updated to pass TrackInfo. We support both.
-              try:
-                  added: int = importer.import_to_playlist(records)
-              except TypeError:
-                  pytest.skip("Importer needs updating for Option A — see importer.py")
-                  return
-              assert added == 2
+          def test_import_to_playlist_appends_to_underlying_list(
+              importer: TrackImporter, pm: PlaylistManager,
+          ) -> None:
+              importer.import_to_playlist([_track_record(isrc="A"), _track_record(isrc="B")])
               assert len(pm.playlist) == 2
+
+
+          def test_import_to_playlist_validates_title(importer: TrackImporter) -> None:
+              with pytest.raises(ValueError, match="title"):
+                  importer.import_to_playlist([_track_record(title="")])
+
+
+          def test_import_to_playlist_validates_duration(importer: TrackImporter) -> None:
+              with pytest.raises(ValueError, match="duration"):
+                  importer.import_to_playlist([_track_record(duration_sec=0)])
+
+
+          def test_import_to_playlist_dedupes_by_isrc(
+              importer: TrackImporter, pm: PlaylistManager,
+          ) -> None:
+              importer.import_to_playlist([_track_record(isrc="X"), _track_record(isrc="X")])
+              assert len(pm.playlist) == 1
+
+
+          def test_import_to_queue_validates_title(importer: TrackImporter) -> None:
+              with pytest.raises(ValueError, match="title"):
+                  importer.import_to_queue([_track_record(title="")])
+
 
           if __name__ == "__main__":
               import sys
@@ -5038,10 +5262,15 @@ steps:
             are unchanged.
 
             ## Tests
-            `test_add_to_playlist_returns_record`, `test_add_to_playlist_validates_title`,
-            `test_add_to_playlist_validates_duration`, `test_dedup_returns_existing_record`,
-            and `test_add_to_queue_validates_title` confirm the invariant. They cover all
-            three branches of the validation logic plus the dedup contract.
+            The six `test_import_to_*` tests in `test_playlist.py` go through
+            `TrackImporter.import_to_playlist` and `import_to_queue` — stable surfaces
+            across either Option A or Option B. With Option B (this solution),
+            `playlist.py` adds the helper methods and the public signatures stay the
+            same, so `importer.py` and `test_playlist.py` are both byte-for-byte
+            unchanged. Compare to Step 5: there, choosing the parameter-object route
+            forced edits to two callers (one of which was the test file). Here Option
+            B's stability avoids that cost entirely; Option A would have shifted it
+            into `importer.py`'s internal helpers.
           language: "markdown"
       explanation: |
         **One sample memo, but yours may differ.** This solution chose Option B (Extract Function on validation) because the duplication was the highest-impact smell — present in two methods, identical text, zero variation. Option A (Introduce Parameter Object) is also defensible: it directly addresses Long Parameter List, and the duplication can be tackled second.
