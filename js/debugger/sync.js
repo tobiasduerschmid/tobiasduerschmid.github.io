@@ -67,6 +67,7 @@
       // breakpoints[path] = { line: { condition, condError } }
       breakpoints: {},
       watches: [],
+      watchpoints: [],
       session: {
         active: false,
         capReached: false,

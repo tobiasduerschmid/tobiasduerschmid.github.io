@@ -54,6 +54,21 @@
     };
     var disposers = [];
 
+    function displayFrameForSnapshot(snap, frameIdx) {
+      if (!snap || !snap.stack) return null;
+      var frame = snap.stack[frameIdx];
+      if (!frame) return null;
+      var topIdx = snap.stack.length - 1;
+      if (frameIdx === topIdx && snap.watchpoint_origin) {
+        var copy = {};
+        for (var k in frame) copy[k] = frame[k];
+        copy.file = snap.watchpoint_origin.file || frame.file;
+        copy.line = snap.watchpoint_origin.line || frame.line;
+        return copy;
+      }
+      return frame;
+    }
+
     function currentLineState() {
       var s = sync.state || {};
       if (s.historyIdx == null || s.historyIdx < 0 || !s.history || !s.history.length) return null;
@@ -62,7 +77,7 @@
       var frameIdx = (s.selectedFrameIdx != null && s.selectedFrameIdx >= 0)
         ? s.selectedFrameIdx
         : (snap.stack.length - 1);
-      var frame = snap.stack[frameIdx];
+      var frame = displayFrameForSnapshot(snap, frameIdx);
       if (!frame || !frame.file || !frame.line) return null;
       return {
         path: frame.file,
@@ -120,7 +135,7 @@
     }
 
     // ── Current-line decoration (yellow line where execution is) ───────────
-    function paintCurrentLine() {
+    function paintCurrentLine(revealLine) {
       var model = editor.getModel(); if (!model) {
         if (editor._dbgCurrentLineIds && editor._dbgCurrentLineIds.length) {
           editor._dbgCurrentLineIds = [];
@@ -142,7 +157,7 @@
       var frameIdx = (s.selectedFrameIdx != null && s.selectedFrameIdx >= 0)
         ? s.selectedFrameIdx
         : (snap.stack.length - 1);
-      var frame = snap.stack[frameIdx];
+      var frame = displayFrameForSnapshot(snap, frameIdx);
       if (!frame) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
         return;
@@ -158,17 +173,22 @@
         return;
       }
       var rewound = s.historyIdx < (s.liveIdx == null ? -1 : s.liveIdx);
-      var cls = rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line';
-      var glyph = rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph';
+      var afterLine = !!(snap.watchpoint_origin && frameIdx === snap.stack.length - 1);
+      var cls = afterLine ? 'tvm-debug-current-line-after'
+        : (rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line');
+      var glyph = afterLine ? 'tvm-debug-current-glyph-after'
+        : (rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph');
       var bps = (s.breakpoints || {})[path] || {};
-      if (bps[line]) {
+      if (!afterLine && bps[line]) {
         glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
       }
       editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], [{
         range: new monaco.Range(line, 1, line, 1),
         options: { isWholeLine: true, className: cls, glyphMarginClassName: glyph },
       }]);
-      try { editor.revealLineInCenterIfOutsideViewport(line); } catch (e) {}
+      if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
+        editor.revealLineInCenterIfOutsideViewport(line);
+      }
     }
 
     // ── Read-only during debug session ─────────────────────────────────────
@@ -211,10 +231,11 @@
     var unsub = sync.subscribe(function (s, changedKeys) {
       if (changedKeys.has('breakpoints') || changedKeys.has('activeFile') || changedKeys.has('paneForFile')) {
         paintBreakpoints();
+        paintCurrentLine(false);
       }
       if (changedKeys.has('history') || changedKeys.has('historyIdx') || changedKeys.has('liveIdx')
           || changedKeys.has('selectedFrameIdx') || changedKeys.has('paused') || changedKeys.has('activeFile')) {
-        paintCurrentLine();
+        paintCurrentLine(changedKeys.has('history') || changedKeys.has('historyIdx') || changedKeys.has('liveIdx'));
         paintBreakpoints();
       }
       if (changedKeys.has('session')) {

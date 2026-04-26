@@ -225,26 +225,47 @@
 
   // ---- Outbound: commands + queued updates ------------------------------
 
+  NodeChannel.prototype._writeCommand = function (cmd) {
+    if (!this.writer) return false;
+    this.writer.write(JSON.stringify(cmd) + '\n').catch(function (err) {
+      console.warn('[NodeChannel] failed to write command:', err && err.message || err);
+    });
+    return true;
+  };
+
+  NodeChannel.prototype._writeRuntimeUpdate = function (update) {
+    update.update_only = true;
+    return this._writeCommand(update);
+  };
+
   NodeChannel.prototype.sendCommand = function (cmdCode) {
     if (!this.writer) return;
     var cmd = { code: cmdCode };
     if (this._pendingWatches) { cmd.watches = this._pendingWatches; this._pendingWatches = null; }
     if (this._pendingBpChanges) { cmd.breakpoint_changes = this._pendingBpChanges; this._pendingBpChanges = null; }
     if (this._pendingLiveEdits) { cmd.live_edits = this._pendingLiveEdits; this._pendingLiveEdits = null; }
-    this.writer.write(JSON.stringify(cmd) + '\n').catch(function (err) {
-      console.warn('[NodeChannel] failed to write command:', err && err.message || err);
-    });
+    this._writeCommand(cmd);
   };
 
   NodeChannel.prototype.sendWatches = function (watches) {
-    this._pendingWatches = (watches || []).slice();
-    return true;
+    var next = (watches || []).slice();
+    if (!this.writer) {
+      this._pendingWatches = next;
+      return true;
+    }
+    this._pendingWatches = null;
+    return this._writeRuntimeUpdate({ watches: next });
   };
 
   NodeChannel.prototype.sendBreakpointChanges = function (changes) {
     if (!Array.isArray(changes) || !changes.length) return true;
-    this._pendingBpChanges = (this._pendingBpChanges || []).concat(changes);
-    return true;
+    var next = (this._pendingBpChanges || []).concat(changes);
+    if (!this.writer) {
+      this._pendingBpChanges = next;
+      return true;
+    }
+    this._pendingBpChanges = null;
+    return this._writeRuntimeUpdate({ breakpoint_changes: next });
   };
 
   NodeChannel.prototype.sendLiveEdits = function (edits) {

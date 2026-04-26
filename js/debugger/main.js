@@ -52,6 +52,36 @@
 
   var UNCHANGED = 'UNCHANGED';   // diff sentinel from Python side
 
+  function debugManagerIcon(name) {
+    var svg = "<svg class='tvm-debug-manager-svg' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden='true' focusable='false'>";
+    if (name === 'playData') {
+      return svg + "<polygon points='5,4 15,12 5,20' fill='currentColor'/>" +
+        "<circle cx='17.5' cy='12' r='3.3' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='17.5' cy='12' r='1.2' fill='currentColor'/></svg>";
+    }
+    if (name === 'backData') {
+      return svg + "<polygon points='19,4 9,12 19,20' fill='currentColor'/>" +
+        "<circle cx='6.5' cy='12' r='3.3' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='6.5' cy='12' r='1.2' fill='currentColor'/></svg>";
+    }
+    if (name === 'plus') {
+      return svg + "<path d='M12 5v14M5 12h14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round'/></svg>";
+    }
+    if (name === 'edit') {
+      return svg + "<path d='M5 16.5 15.7 5.8a2.1 2.1 0 0 1 3 3L8 19.5H5z' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linejoin='round'/>" +
+        "<path d='m14 7.5 2.5 2.5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
+    }
+    if (name === 'trash') {
+      return svg + "<path d='M6 7h12M10 7V5h4v2M8 10l.7 9h6.6L16 10' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+    }
+    if (name === 'dataWatch') {
+      return svg + "<circle cx='8.5' cy='12' r='4' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='8.5' cy='12' r='1.35' fill='currentColor'/>" +
+        "<path d='M14 7h5M14 12h5M14 17h5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
+    }
+    return '';
+  }
+
   // ---- attach() -----------------------------------------------------------
   function attach(tutorial) {
     if (!window.crossOriginIsolated) {
@@ -113,6 +143,9 @@
 
     // Per-file breakpoint state. filename -> Map<line, {condition: string|null}>
     this.breakpoints = new Map();
+    this._pendingWatches = [];
+    this.watchpoints = [];
+    this._nextWatchpointId = 1;
 
     // History (frozen snapshots from worker). selectedFrameIdx is per-pause
     // selection within stack[].
@@ -253,7 +286,8 @@
       paneForFile: {},
       filesAvailable: this.t.editorModels ? Object.keys(this.t.editorModels) : [],
       breakpoints: this._serializeBreakpoints(),
-      watches: ((this.session && this.session.watches) || this._pendingWatches || []).slice(),
+      watches: this.getNormalWatches(),
+      watchpoints: this._serializeWatchpoints(),
       session: this._buildSessionMeta(),
       history: this.history.slice(),
       historyIdx: this.historyIdx,
@@ -268,11 +302,24 @@
     this.breakpoints.forEach(function (bps, path) {
       var perFile = {};
       bps.forEach(function (info, line) {
-        perFile[line] = { condition: info.condition || null, condError: info.condError || null };
+        perFile[line] = {
+          condition: info.condition || null,
+          condError: info.condError || null,
+        };
       });
       out[path] = perFile;
     });
     return out;
+  };
+
+  DebuggerController.prototype._serializeWatchpoints = function () {
+    return (this.watchpoints || []).map(function (wp) {
+      return {
+        id: wp.id,
+        expr: wp.expr,
+        enabled: wp.enabled !== false,
+      };
+    });
   };
 
   DebuggerController.prototype._buildSessionMeta = function () {
@@ -298,9 +345,11 @@
   };
   DebuggerController.prototype._publishWatches = function () {
     if (this.sync) {
-      var w = ((this.session && this.session.watches) || this._pendingWatches || []).slice();
-      this.sync.publish({ watches: w });
+      this.sync.publish({ watches: this.getNormalWatches() });
     }
+  };
+  DebuggerController.prototype._publishWatchpoints = function () {
+    if (this.sync) this.sync.publish({ watchpoints: this._serializeWatchpoints() });
   };
   DebuggerController.prototype._publishSession = function () {
     if (this.sync) this.sync.publish({ session: this._buildSessionMeta() });
@@ -323,6 +372,214 @@
   };
   DebuggerController.prototype._publishHistoryReset = function () {
     if (this.sync) this.sync.replaceState(this._buildSyncState());
+  };
+
+  DebuggerController.prototype.getNormalWatches = function () {
+    return (this._pendingWatches || []).slice();
+  };
+
+  DebuggerController.prototype.getEnabledWatchpoints = function () {
+    return (this.watchpoints || []).filter(function (wp) {
+      return wp && wp.expr && wp.enabled !== false;
+    });
+  };
+
+  DebuggerController.prototype.collectBreakpointConditionExpressions = function () {
+    var out = [];
+    this.breakpoints.forEach(function (bps) {
+      bps.forEach(function (info) {
+        if (info && info.condition) out.push(info.condition);
+      });
+    });
+    return out;
+  };
+
+  DebuggerController.prototype.collectWatchExpressions = function () {
+    var out = [];
+    var seen = Object.create(null);
+    function add(expr) {
+      expr = String(expr || '').trim();
+      if (!expr || seen[expr]) return;
+      seen[expr] = true;
+      out.push(expr);
+    }
+    this.getNormalWatches().forEach(add);
+    this.getEnabledWatchpoints().forEach(function (wp) { add(wp.expr); });
+    this.collectBreakpointConditionExpressions().forEach(add);
+    return out;
+  };
+
+  DebuggerController.prototype.updateSessionWatches = function (refresh) {
+    if (!this.session) return true;
+    var prev = (this.session.watches || []).slice();
+    this.session.watches = this.collectWatchExpressions();
+    if (!this.queueWatchUpdate()) {
+      this.session.watches = prev;
+      return false;
+    }
+    if (refresh) this.refreshWatchesNow();
+    return true;
+  };
+
+  DebuggerController.prototype.isViewingHistory = function () {
+    return this.historyIdx >= 0 && this.historyIdx < this.liveIdx;
+  };
+
+  DebuggerController.prototype.addNormalWatch = function (expr, refresh) {
+    expr = String(expr || '').trim();
+    if (!expr) return false;
+    if (refresh == null) refresh = true;
+    this._pendingWatches = this._pendingWatches || [];
+    this._pendingWatches.push(expr);
+    if (!this.updateSessionWatches(refresh)) {
+      this._pendingWatches.pop();
+      return false;
+    }
+    this.renderWatch();
+    this.renderBreakpointManager();
+    this._publishWatches();
+    return true;
+  };
+
+  DebuggerController.prototype.removeNormalWatch = function (idx, refresh) {
+    if (typeof idx !== 'number' || idx < 0) return false;
+    if (refresh == null) refresh = true;
+    this._pendingWatches = this._pendingWatches || [];
+    if (idx >= this._pendingWatches.length) return false;
+    var removed = this._pendingWatches.splice(idx, 1)[0];
+    if (!this.updateSessionWatches(refresh)) {
+      this._pendingWatches.splice(idx, 0, removed);
+      return false;
+    }
+    this.renderWatch();
+    this.renderBreakpointManager();
+    this._publishWatches();
+    return true;
+  };
+
+  DebuggerController.prototype.promoteWatchToWatchpoint = function (idx) {
+    if (typeof idx !== 'number' || idx < 0) return false;
+    var watches = this.getNormalWatches();
+    if (idx >= watches.length) return false;
+    var expr = watches[idx];
+    var refresh = !this.isViewingHistory();
+    if (!this.addWatchpoint(expr)) return false;
+    return this.removeNormalWatch(idx, refresh);
+  };
+
+  DebuggerController.prototype.addWatchpoint = function (expr) {
+    expr = String(expr || '').trim();
+    if (!expr) return null;
+    var existing = null;
+    for (var i = 0; i < this.watchpoints.length; i++) {
+      if (this.watchpoints[i].expr === expr) {
+        existing = this.watchpoints[i];
+        break;
+      }
+    }
+    var created = false;
+    var prevEnabled = existing ? (existing.enabled !== false) : null;
+    if (existing) {
+      existing.enabled = true;
+    } else {
+      existing = { id: 'wp' + (this._nextWatchpointId++), expr: expr, enabled: true };
+      this.watchpoints.push(existing);
+      created = true;
+    }
+    var refresh = !this.isViewingHistory();
+    if (!this.updateSessionWatches(refresh)) {
+      if (created) this.watchpoints.pop();
+      else existing.enabled = prevEnabled;
+      return null;
+    }
+    this.renderBreakpointManager();
+    this._publishWatchpoints();
+    return existing;
+  };
+
+  DebuggerController.prototype.removeWatchpoint = function (id) {
+    var idx = this.findWatchpointIndex(id);
+    if (idx < 0) return false;
+    var removed = this.watchpoints.splice(idx, 1)[0];
+    var refresh = !this.isViewingHistory();
+    if (!this.updateSessionWatches(refresh)) {
+      this.watchpoints.splice(idx, 0, removed);
+      return false;
+    }
+    this.renderBreakpointManager();
+    this._publishWatchpoints();
+    return true;
+  };
+
+  DebuggerController.prototype.watchpointRemovePreferenceKey = function () {
+    return 'tutorial-debug-watchpoint-remove-choice-' + this.t.tutorialId;
+  };
+
+  DebuggerController.prototype.getWatchpointRemovePreference = function () {
+    try {
+      var choice = localStorage.getItem(this.watchpointRemovePreferenceKey());
+      return (choice === 'watch' || choice === 'delete') ? choice : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  DebuggerController.prototype.setWatchpointRemovePreference = function (choice) {
+    try {
+      if (choice === 'watch' || choice === 'delete') {
+        localStorage.setItem(this.watchpointRemovePreferenceKey(), choice);
+      }
+    } catch (e) { /* localStorage unavailable */ }
+  };
+
+  DebuggerController.prototype.removeWatchpointWithChoice = function (id, choice) {
+    var idx = this.findWatchpointIndex(id);
+    if (idx < 0) return false;
+    var expr = this.watchpoints[idx].expr;
+    var shouldAddWatch = choice === 'watch';
+    var refresh = !this.isViewingHistory();
+    if (shouldAddWatch && this.getNormalWatches().indexOf(expr) === -1) {
+      if (!this.addNormalWatch(expr, refresh)) return false;
+    }
+    return this.removeWatchpoint(id);
+  };
+
+  DebuggerController.prototype.requestRemoveWatchpoint = function (id) {
+    var idx = this.findWatchpointIndex(id);
+    if (idx < 0) return false;
+    var pref = this.getWatchpointRemovePreference();
+    var self = this;
+    if (pref) return this.removeWatchpointWithChoice(id, pref);
+    this.showRemoveWatchpointDialog(this.watchpoints[idx]).then(function (result) {
+      if (!result || !result.choice) return;
+      if (result.remember) self.setWatchpointRemovePreference(result.choice);
+      self.removeWatchpointWithChoice(id, result.choice);
+    });
+    return true;
+  };
+
+  DebuggerController.prototype.toggleWatchpoint = function (id) {
+    var idx = this.findWatchpointIndex(id);
+    if (idx < 0) return false;
+    var wp = this.watchpoints[idx];
+    var prev = wp.enabled !== false;
+    wp.enabled = !prev;
+    var refresh = !this.isViewingHistory();
+    if (!this.updateSessionWatches(refresh)) {
+      wp.enabled = prev;
+      return false;
+    }
+    this.renderBreakpointManager();
+    this._publishWatchpoints();
+    return true;
+  };
+
+  DebuggerController.prototype.findWatchpointIndex = function (id) {
+    id = String(id || '');
+    for (var i = 0; i < this.watchpoints.length; i++) {
+      if (String(this.watchpoints[i].id) === id) return i;
+    }
+    return -1;
   };
 
   DebuggerController.prototype._resetExecutionTrace = function (resetOutput) {
@@ -393,37 +650,47 @@
       case 'addWatch': {
         var expr = (action.expr || '').trim();
         if (!expr) break;
-        if (!self.session) {
-          self._pendingWatches = self._pendingWatches || [];
-          self._pendingWatches.push(expr);
-        } else {
-          self.session.watches.push(expr);
-          if (self.queueWatchUpdate()) {
-            self._pendingWatches = self.session.watches.slice();
-            self.refreshWatchesNow();
-          } else {
-            self.session.watches.pop();
-          }
-        }
-        self.renderWatch();
-        self._publishWatches();
+        self.addNormalWatch(expr);
         break;
       }
       case 'removeWatch': {
         if (typeof action.idx !== 'number') break;
-        if (self.session) {
-          var removed = self.session.watches.splice(action.idx, 1);
-          if (self.queueWatchUpdate()) {
-            self._pendingWatches = self.session.watches.slice();
-            self.refreshWatchesNow();
-          } else {
-            self.session.watches.splice(action.idx, 0, removed[0]);
-          }
-        } else if (self._pendingWatches) {
-          self._pendingWatches.splice(action.idx, 1);
+        self.removeNormalWatch(action.idx);
+        break;
+      }
+      case 'promoteWatchToWatchpoint': {
+        if (typeof action.idx !== 'number') break;
+        self.promoteWatchToWatchpoint(action.idx);
+        break;
+      }
+      case 'addWatchpoint': {
+        self.addWatchpoint(action.expr || '');
+        break;
+      }
+      case 'removeWatchpoint': {
+        if (action.choice === 'watch' || action.choice === 'delete') {
+          if (action.remember) self.setWatchpointRemovePreference(action.choice);
+          self.removeWatchpointWithChoice(action.id, action.choice);
+          break;
         }
-        self.renderWatch();
-        self._publishWatches();
+        self.requestRemoveWatchpoint(action.id);
+        break;
+      }
+      case 'toggleWatchpoint': {
+        self.toggleWatchpoint(action.id);
+        break;
+      }
+      case 'runBackToWatchpoint': {
+        self.runBackToWatchpoint(action.id || null);
+        break;
+      }
+      case 'runToWatchpoint': {
+        self.runForwardToWatchpoint(false, action.id || null);
+        break;
+      }
+      case 'removeBreakpoint': {
+        var rfn = String(action.path || '').replace(/^\/tutorial\//, '');
+        if (rfn && action.line) self.removeBreakpoint(rfn, action.line);
         break;
       }
       case 'editVariable': {
@@ -562,16 +829,17 @@
     }
   };
 
-  // The combined-view shell. Three sections in order: Watch, Call Stack,
-  // Variables. Each section has a clickable header (chevron rotates), a body
-  // that hides when the section is collapsed, and a stable `data-section`
-  // attribute used by the per-section render methods to find their target.
+  // The combined-view shell. Each section has a clickable header (chevron
+  // rotates), a body that hides when the section is collapsed, and a stable
+  // `data-section` attribute used by the per-section render methods to find
+  // their target.
   // Collapse state persists per-tutorial in localStorage.
   DebuggerController.prototype._buildCombinedViewShell = function () {
     var sections = [
-      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
       { key: 'stack',   label: 'Call Stack',  icon: 'fa-layer-group',        empty: 'Start debugging to see the call stack.' },
       { key: 'vars',    label: 'Variables',   icon: 'fa-list',               empty: 'Start debugging to see variables.' },
+      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
+      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: 'Add breakpoints or data watchpoints.' },
       { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' },
     ];
     var self = this;
@@ -842,6 +1110,10 @@
       this.runBackToBreakpoint();
       return;
     }
+    if (cmd === 'backWatch') {
+      this.runBackToWatchpoint(null);
+      return;
+    }
     if (cmd === 'backOut') {
       this.stepBackOut();
       return;
@@ -851,10 +1123,33 @@
       this.setStatus('stopping…');
       return;
     }
+    if (this.session.runtimeSyncInFlight && this.isForwardDebugCommand(cmd)) {
+      this.session.afterRuntimeSync = cmd;
+      this.setStatus('applying changes…');
+      return;
+    }
     // A rewound history row is a different execution cursor. To move forward
     // from there, restart and replay to that snapshot, then issue the command.
     if (this.historyIdx < this.liveIdx) {
-      this.restartFromHistory(cmd);
+      if (cmd === 'watchContinue') {
+        this.runForwardToWatchpoint(false, null);
+      } else if (cmd === 'continue' && this.hasForwardStopConditions()) {
+        this.runForwardToWatchpoint(true, null);
+      } else {
+        this.restartFromHistory(cmd);
+      }
+      return;
+    }
+    if (this.needsRuntimeSyncBeforeCommand(cmd)) {
+      this.requestRuntimeSync(cmd, 'applying changes…');
+      return;
+    }
+    if (cmd === 'watchContinue') {
+      this.runForwardToWatchpoint(false, null);
+      return;
+    }
+    if (cmd === 'continue' && this.hasForwardStopConditions()) {
+      this.runForwardToWatchpoint(true, null);
       return;
     }
     var code = cmd === 'continue' ? CMD_CONTINUE
@@ -863,9 +1158,25 @@
             : cmd === 'return'   ? CMD_RETURN
             : 0;
     if (!code) return;
+    if (this.session) {
+      this.session.continueThroughRuntimeStops = cmd === 'continue' && !this.hasForwardStopConditions();
+    }
     this.sendCommand(code);
     this.setStatus(cmd + '…');
     this.disableStepButtons(true);
+  };
+
+  DebuggerController.prototype.isForwardDebugCommand = function (cmd) {
+    return cmd === 'continue' || cmd === 'watchContinue' ||
+      cmd === 'step' || cmd === 'next' || cmd === 'return';
+  };
+
+  DebuggerController.prototype.needsRuntimeSyncBeforeCommand = function (cmd) {
+    return !!(this.session &&
+      this.isForwardDebugCommand(cmd) &&
+      this.session.runtimeUpdatePending &&
+      this.paused &&
+      this.historyIdx === this.liveIdx);
   };
 
   // Restart the debug session from the beginning and replay to the selected
@@ -879,6 +1190,7 @@
     var replayGuardLimit = Math.max(this.history.length + 1000, resumeAtIdx + 1000, 2000);
     var watches = (this.session.watches || []).slice();
     var args = (this.session.args || []).slice();
+    var pendingWatchpointRun = this.session.pendingWatchpointRun || null;
     this.setStatus(overrides.length ? 'replaying with edits…' : 'replaying from history…');
     // Stop the current session; on debugComplete we'll start a fresh one.
     var self = this;
@@ -919,6 +1231,7 @@
         replayTargetIdx: resumeAtIdx,
         replayAnchor: replayAnchor,
         replayGuardLimit: replayGuardLimit,
+        pendingWatchpointRun: pendingWatchpointRun,
       };
       self._pendingOverrideKey = null;
       // Replay is a fresh execution trace. Reset the shared sync history at
@@ -928,6 +1241,13 @@
       self.disableStepButtons(true);
       self.t._worker.postMessage({ type: 'enableDebugger' });
     };
+    // The user has chosen to execute forward from a historical row. Leave the
+    // reverse-view presentation immediately; the replay that reconstructs this
+    // point is now the active forward execution, even before it reaches the
+    // old snapshot location.
+    this._resetExecutionTrace(true);
+    this.disableStepButtons(true);
+    this.renderAll();
     this.sendCommand(CMD_STOP);
   };
 
@@ -1061,6 +1381,12 @@
       this.renderAll();
       return true;
     }
+    if (fcmd === '__watchpointContinue') {
+      var pendingRun = this.session.pendingWatchpointRun || {};
+      this.session.pendingWatchpointRun = null;
+      this.beginWatchpointRun(!!pendingRun.includeLineBreakpoints, pendingRun.id || null);
+      return true;
+    }
     this.setStatus('replay complete — applying ' + fcmd);
     var code = fcmd === 'continue' ? CMD_CONTINUE
             : fcmd === 'step'     ? CMD_STEP
@@ -1153,6 +1479,270 @@
     }
   };
 
+  DebuggerController.prototype.hasEnabledWatchpoints = function () {
+    return this.getEnabledWatchpoints().length > 0;
+  };
+
+  DebuggerController.prototype.hasCodeBreakpoints = function () {
+    var found = false;
+    this.breakpoints.forEach(function (bps) {
+      if (bps && bps.size) found = true;
+    });
+    return found;
+  };
+
+  DebuggerController.prototype.hasForwardStopConditions = function () {
+    return this.hasEnabledWatchpoints() || this.hasCodeBreakpoints();
+  };
+
+  DebuggerController.prototype.runBackToWatchpoint = function (id) {
+    if (this.historyIdx <= 0) {
+      this.setStatus('already at first instruction');
+      return;
+    }
+    var watchpoints = this.watchpointsForRun(id);
+    if (!watchpoints.length) {
+      this.setStatus('no data watchpoints enabled');
+      return;
+    }
+    var target = 0;
+    var hit = null;
+    for (var i = this.historyIdx - 1; i >= 0; i--) {
+      hit = this.watchpointHitAt(i, watchpoints);
+      if (hit) {
+        target = i;
+        break;
+      }
+    }
+    this.historyIdx = target;
+    if (hit) this.applyWatchpointOrigin(hit);
+    this.selectedFrameIdx = -1;
+    if (this.session) {
+      this.session.preserveReverseCursorOnNextPause = target;
+    }
+    this.renderAll();
+    if (hit) {
+      var origin = hit.origin || {};
+      this.setStatus('rewound to data watchpoint at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
+    } else {
+      this.setStatus('rewound to first instruction');
+    }
+  };
+
+  DebuggerController.prototype.runForwardToWatchpoint = function (includeLineBreakpoints, id) {
+    if (!this.session) return;
+    var watchpoints = this.watchpointsForRun(id);
+    var canStopOnLineBreakpoint = !!includeLineBreakpoints && this.hasCodeBreakpoints();
+    if (!watchpoints.length && !canStopOnLineBreakpoint) {
+      this.setStatus('no data watchpoints enabled');
+      return;
+    }
+    if (this.historyIdx < this.liveIdx) {
+      var existing = this.findForwardPauseTarget(this.historyIdx + 1, this.liveIdx, includeLineBreakpoints, watchpoints);
+      if (existing) {
+        this.pauseAtForwardTarget(existing);
+        return;
+      }
+      this.session.pendingWatchpointRun = {
+        includeLineBreakpoints: !!includeLineBreakpoints,
+        id: id || null,
+      };
+      this.restartFromHistory('__watchpointContinue');
+      return;
+    }
+    this.beginWatchpointRun(includeLineBreakpoints, id);
+  };
+
+  DebuggerController.prototype.beginWatchpointRun = function (includeLineBreakpoints, id) {
+    if (!this.session) return;
+    var watchpoints = this.watchpointsForRun(id);
+    var canStopOnLineBreakpoint = !!includeLineBreakpoints && this.hasCodeBreakpoints();
+    if (!watchpoints.length && !canStopOnLineBreakpoint) {
+      this.setStatus('no data watchpoints enabled');
+      return;
+    }
+    this.session.watchpointRun = {
+      includeLineBreakpoints: !!includeLineBreakpoints,
+      id: id || null,
+      startIdx: this.historyIdx,
+    };
+    this.disableStepButtons(true);
+    this.setStatus(this.watchpointRunStatus(this.session.watchpointRun));
+    this.sendCommand(CMD_STEP);
+  };
+
+  DebuggerController.prototype.watchpointRunStatus = function (run) {
+    if (run && run.includeLineBreakpoints && !this.watchpointsForRun(run.id || null).length) {
+      return 'running to breakpoint…';
+    }
+    return 'running to data watchpoint…';
+  };
+
+  DebuggerController.prototype.handlePausedDuringWatchpointRun = function (startIdx, endIdx) {
+    if (!this.session || !this.session.watchpointRun) return false;
+    var run = this.session.watchpointRun;
+    var watchpoints = this.watchpointsForRun(run.id || null);
+    var hit = this.findForwardPauseTarget(startIdx, endIdx, run.includeLineBreakpoints, watchpoints);
+    if (hit) {
+      this.session.watchpointRun = null;
+      this.pauseAtForwardTarget(hit);
+      return true;
+    }
+    this.sendCommand(CMD_STEP);
+    this.setStatus(this.watchpointRunStatus(run));
+    return true;
+  };
+
+  DebuggerController.prototype.pauseAtForwardTarget = function (hit) {
+    if (!hit) return;
+    if (hit.kind === 'watchpoint') this.applyWatchpointOrigin(hit);
+    this.historyIdx = hit.idx;
+    this.selectedFrameIdx = -1;
+    this.paused = true;
+    this.disableStepButtons(false);
+    this.renderAll();
+    if (hit.kind === 'breakpoint') {
+      var snap = this.history[hit.idx];
+      this.setStatus('paused at breakpoint at ' + this.basename(snap.file) + ':' + snap.line);
+    } else {
+      var origin = hit.origin || {};
+      this.setStatus('data watchpoint hit at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
+    }
+    this._publishCursor();
+    this._publishSession();
+  };
+
+  DebuggerController.prototype.findForwardPauseTarget = function (fromIdx, toIdx, includeLineBreakpoints, watchpoints) {
+    var end = Math.min(toIdx, this.history.length - 1);
+    for (var i = Math.max(0, fromIdx); i <= end; i++) {
+      var watchHit = this.watchpointHitAt(i, watchpoints);
+      if (watchHit) return {
+        kind: 'watchpoint',
+        idx: i,
+        expr: watchHit.expr,
+        id: watchHit.id,
+        origin: watchHit.origin,
+      };
+      if (includeLineBreakpoints && this.snapshotBreakpointMatch(this.history[i])) {
+        return { kind: 'breakpoint', idx: i };
+      }
+    }
+    return null;
+  };
+
+  DebuggerController.prototype.watchpointsForRun = function (id) {
+    var enabled = this.getEnabledWatchpoints();
+    if (!id) return enabled;
+    id = String(id);
+    return enabled.filter(function (wp) { return String(wp.id) === id; });
+  };
+
+  DebuggerController.prototype.watchpointHitAt = function (idx, watchpoints) {
+    watchpoints = watchpoints || this.getEnabledWatchpoints();
+    for (var i = 0; i < watchpoints.length; i++) {
+      var wp = watchpoints[i];
+      if (this.watchpointBecameTrueAt(idx, wp)) {
+        return {
+          id: wp.id,
+          expr: wp.expr,
+          watchpoint: wp,
+          origin: this.watchpointOriginForHit(idx),
+        };
+      }
+    }
+    return null;
+  };
+
+  DebuggerController.prototype.watchpointOriginForHit = function (idx) {
+    var source = idx > 0 ? this.history[idx - 1] : this.history[idx];
+    if (!source) return null;
+    var frame = source.stack && source.stack.length ? source.stack[source.stack.length - 1] : null;
+    return {
+      file: (frame && frame.file) || source.file,
+      line: (frame && frame.line) || source.line,
+      function: frame && frame.function,
+      call_id: frame && frame.call_id,
+    };
+  };
+
+  DebuggerController.prototype.applyWatchpointOrigin = function (hit) {
+    if (!hit || hit.idx == null || !hit.origin) return;
+    var snap = this.history[hit.idx];
+    if (!snap) return;
+    snap.watchpoint_origin = hit.origin;
+    if (this.sync) this._publishHistoryReset();
+  };
+
+  DebuggerController.prototype.displayFrameForSnapshot = function (snap, frameIdx) {
+    if (!snap || !snap.stack) return null;
+    var frame = snap.stack[frameIdx];
+    if (!frame) return null;
+    var topIdx = snap.stack.length - 1;
+    if (frameIdx === topIdx && snap.watchpoint_origin) {
+      return Object.assign({}, frame, {
+        file: snap.watchpoint_origin.file || frame.file,
+        line: snap.watchpoint_origin.line || frame.line,
+      });
+    }
+    return frame;
+  };
+
+  DebuggerController.prototype.displayLocationForSnapshot = function (snap) {
+    if (!snap) return null;
+    var origin = snap.watchpoint_origin;
+    return {
+      file: (origin && origin.file) || snap.file,
+      line: (origin && origin.line) || snap.line,
+    };
+  };
+
+  DebuggerController.prototype.watchpointBecameTrueAt = function (idx, wp) {
+    if (!wp || !wp.expr || idx < 0 || idx >= this.history.length) return false;
+    var cur = this.watchValueTruthy(this.watchValueAt(idx, wp.expr));
+    if (!cur) return false;
+    var prev = idx > 0 ? this.watchValueTruthy(this.watchValueAt(idx - 1, wp.expr)) : false;
+    return !prev;
+  };
+
+  DebuggerController.prototype.watchValueAt = function (idx, expr) {
+    var snap = this.history[idx];
+    return snap && snap.watches ? snap.watches[expr] : null;
+  };
+
+  DebuggerController.prototype.watchValueTruthy = function (value) {
+    if (!value || value.error) return false;
+    var repr = String(value.repr != null ? value.repr : (value.preview != null ? value.preview : '')).trim();
+    var type = String(value.type || value.kind || '').toLowerCase();
+    if (!repr) return false;
+    if (type === 'bool' || type === 'boolean') return repr === 'True' || repr === 'true';
+    if (type === 'int' || type === 'float' || type === 'number' || type === 'bigint') {
+      var n = Number(repr.replace(/n$/, ''));
+      return !!n && !isNaN(n);
+    }
+    if (type === 'str' || type === 'string') return repr !== "''" && repr !== '""';
+    return !/^(False|false|None|null|undefined|0|0\.0|NaN|nan)$/.test(repr);
+  };
+
+  DebuggerController.prototype.snapshotBreakpointMatch = function (snap) {
+    if (!snap || !snap.file || !snap.line) return false;
+    var bps = this.breakpoints.get(snap.file);
+    if (!bps) {
+      var fname = String(snap.file).replace(/^\/tutorial\//, '');
+      bps = this.breakpoints.get('/tutorial/' + fname);
+    }
+    if (!bps || !bps.has(snap.line)) return false;
+    var info = bps.get(snap.line) || {};
+    if (!info.condition) return true;
+    var val = snap.watches && snap.watches[info.condition];
+    if (val && val.error) {
+      info.condError = val.error;
+      this.refreshBpDecorations();
+      this._publishBreakpoints();
+      return true;
+    }
+    return this.watchValueTruthy(val);
+  };
+
   DebuggerController.prototype.snapshotHasBreakpoint = function (snap) {
     if (!snap || !snap.file || !snap.line) return false;
     var bps = this.breakpoints.get(snap.file);
@@ -1183,7 +1773,7 @@
     for (var i = 0; i < btns.length; i++) {
       var cmd = btns[i].getAttribute('data-cmd');
       // Step Back & Stop are always available (back is UI-only; stop must work mid-block).
-      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backOut' || cmd === 'stop') continue;
+      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' || cmd === 'stop') continue;
       btns[i].disabled = disabled;
     }
     this._publishSession();
@@ -1245,7 +1835,10 @@
     }
     this.persistBreakpoints();
     this.refreshBpDecorations();
+    this.renderCurrentLine();
+    this.renderBreakpointManager();
     this._publishBreakpoints();
+    this.updateSessionWatches(false);
     if (this.session) {
       if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
     }
@@ -1268,7 +1861,9 @@
       bps.set(line, { condition: cond });
       self.persistBreakpoints();
       self.refreshBpDecorations();
+      self.renderBreakpointManager();
       self._publishBreakpoints();
+      self.updateSessionWatches(false);
       if (self.session) {
         var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
         if (self.queueBreakpointChange(change)) self.refreshBreakpointsNow();
@@ -1397,6 +1992,116 @@
     });
   };
 
+  DebuggerController.prototype.showRemoveWatchpointDialog = function (watchpoint) {
+    var old = document.querySelector('.tvm-bp-dialog-backdrop');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    return new Promise(function (resolve) {
+      var done = false;
+      var previousFocus = document.activeElement;
+      var backdrop = document.createElement('div');
+      backdrop.className = 'tvm-bp-dialog-backdrop';
+      backdrop.setAttribute('role', 'presentation');
+
+      var dialog = document.createElement('div');
+      dialog.className = 'tvm-bp-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'tvm-wp-remove-dialog-title');
+
+      var header = document.createElement('div');
+      header.className = 'tvm-bp-dialog-header';
+      var marker = document.createElement('span');
+      marker.className = 'tvm-bp-dialog-marker tvm-bp-dialog-marker-watchpoint';
+      marker.innerHTML = debugManagerIcon('dataWatch');
+      header.appendChild(marker);
+
+      var titleWrap = document.createElement('div');
+      titleWrap.className = 'tvm-bp-dialog-title-wrap';
+      var title = document.createElement('h3');
+      title.id = 'tvm-wp-remove-dialog-title';
+      title.className = 'tvm-bp-dialog-title';
+      title.textContent = 'Remove Data Watchpoint';
+      var loc = document.createElement('div');
+      loc.className = 'tvm-bp-dialog-location';
+      loc.textContent = watchpoint && watchpoint.expr ? watchpoint.expr : '';
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(loc);
+      header.appendChild(titleWrap);
+
+      var body = document.createElement('div');
+      body.className = 'tvm-bp-dialog-body';
+      var prompt = document.createElement('div');
+      prompt.className = 'tvm-bp-dialog-copy';
+      prompt.textContent = 'Do you want to keep this expression as a normal watch?';
+      body.appendChild(prompt);
+      var rememberLabel = document.createElement('label');
+      rememberLabel.className = 'tvm-bp-dialog-check';
+      var remember = document.createElement('input');
+      remember.type = 'checkbox';
+      var rememberText = document.createElement('span');
+      rememberText.textContent = "Don't ask again";
+      rememberLabel.appendChild(remember);
+      rememberLabel.appendChild(rememberText);
+      body.appendChild(rememberLabel);
+
+      var actions = document.createElement('div');
+      actions.className = 'tvm-bp-dialog-actions';
+      var cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'tvm-bp-dialog-btn tvm-bp-dialog-cancel';
+      cancel.textContent = 'Cancel';
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'tvm-bp-dialog-btn tvm-bp-dialog-clear';
+      del.textContent = 'Delete';
+      var keep = document.createElement('button');
+      keep.type = 'button';
+      keep.className = 'tvm-bp-dialog-btn tvm-bp-dialog-save';
+      keep.textContent = 'Turn into Watch';
+      actions.appendChild(cancel);
+      actions.appendChild(del);
+      actions.appendChild(keep);
+
+      dialog.appendChild(header);
+      dialog.appendChild(body);
+      dialog.appendChild(actions);
+      backdrop.appendChild(dialog);
+      document.body.appendChild(backdrop);
+
+      function close(result) {
+        if (done) return;
+        done = true;
+        backdrop.removeEventListener('keydown', onKeydown);
+        if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        try {
+          if (previousFocus && previousFocus.focus) previousFocus.focus();
+        } catch (e) {}
+        resolve(result);
+      }
+      function choice(which) {
+        close({ choice: which, remember: !!remember.checked });
+      }
+      function onKeydown(e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          close(null);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          choice('watch');
+        }
+      }
+
+      backdrop.addEventListener('keydown', onKeydown);
+      backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === backdrop) close(null);
+      });
+      cancel.addEventListener('click', function () { close(null); });
+      del.addEventListener('click', function () { choice('delete'); });
+      keep.addEventListener('click', function () { choice('watch'); });
+      window.setTimeout(function () { keep.focus(); }, 0);
+    });
+  };
+
   DebuggerController.prototype.refreshBpDecorations = function () {
     var self = this;
     // Design rule: the bright STANDALONE breakpoint dot (full size) shows
@@ -1407,7 +2112,7 @@
     var curFrameIdx = curSnap && curSnap.stack && curSnap.stack.length
       ? (self.selectedFrameIdx >= 0 ? self.selectedFrameIdx : curSnap.stack.length - 1)
       : -1;
-    var curFrame = curFrameIdx >= 0 ? curSnap.stack[curFrameIdx] : null;
+    var curFrame = curFrameIdx >= 0 ? self.displayFrameForSnapshot(curSnap, curFrameIdx) : null;
     var curFile = curFrame ? curFrame.file : null;
     var curLine = curFrame ? curFrame.line : 0;
     function paint(editor) {
@@ -1628,8 +2333,9 @@
 
     this.session = {
       sab: sab, i32: i32, u8: u8,
-      // Seed from any watches the user added BEFORE starting the session.
-      watches: (this._pendingWatches || []).slice(),
+      // Seed from normal watches, data watchpoints, and conditional breakpoint
+      // expressions so all debugger stop conditions are present in snapshots.
+      watches: this.collectWatchExpressions(),
       args: this.collectProgramArgs(),
       debugFilename: path,
       debugCode: code,
@@ -1737,9 +2443,24 @@
 
   DebuggerController.prototype.requestSync = function () {
     if (!this.session || !this.paused || this.historyIdx !== this.liveIdx) return;
+    this.requestRuntimeSync(null, 'applying…');
+  };
+
+  DebuggerController.prototype.requestRuntimeSync = function (followupCmd, status) {
+    if (!this.session || this.historyIdx !== this.liveIdx) return;
+    if (followupCmd) this.session.afterRuntimeSync = followupCmd;
+    if (this.session.runtimeSyncInFlight) return;
+    this.session.runtimeSyncInFlight = true;
+    this.session.runtimeSyncTargetVersion = this.session.runtimeUpdateVersion || 0;
     this.disableStepButtons(true);
-    this.setStatus('applying…');
+    this.setStatus(status || 'applying…');
     this.sendCommand(CMD_SYNC);
+  };
+
+  DebuggerController.prototype.markRuntimeUpdatePending = function () {
+    if (!this.session) return;
+    this.session.runtimeUpdatePending = true;
+    this.session.runtimeUpdateVersion = (this.session.runtimeUpdateVersion || 0) + 1;
   };
 
   DebuggerController.prototype.refreshWatchesNow = function () {
@@ -1755,14 +2476,16 @@
   DebuggerController.prototype.refreshBreakpointsNow = function () {
     if (!this.session) return;
     if (this.historyIdx >= 0 && this.historyIdx < this.liveIdx) {
-      this.setStatus('replaying with breakpoints…');
-      this.restartFromHistory('__pause');
+      // Breakpoint edits while viewing history should not force a replay.
+      // The current worker can accept the breakpoint table update, and if the
+      // user later executes forward from this rewound snapshot we already
+      // restart from history with the latest breakpoint set.
+      this.disableStepButtons(false);
+      this.setStatus('breakpoints updated');
       return;
     }
     if (this.paused) {
-      this.disableStepButtons(true);
-      this.setStatus('updating breakpoints…');
-      this.sendCommand(CMD_SYNC);
+      this.requestRuntimeSync(null, 'updating breakpoints…');
     }
   };
 
@@ -1773,6 +2496,7 @@
     if (this.channel) {
       var ok = this.channel.sendBreakpointChanges([change]);
       if (!ok) this.session.pendingBreakpointChanges.pop();
+      else this.markRuntimeUpdatePending();
       return ok;
     }
     var json = JSON.stringify(this.session.pendingBreakpointChanges);
@@ -1780,6 +2504,7 @@
       this.session.pendingBreakpointChanges.pop();
       return false;
     }
+    this.markRuntimeUpdatePending();
     return true;
   };
 
@@ -1806,9 +2531,15 @@
 
   DebuggerController.prototype.queueWatchUpdate = function () {
     if (!this.session) return false;
-    if (this.channel) return this.channel.sendWatches(this.session.watches);
+    if (this.channel) {
+      var ok = this.channel.sendWatches(this.session.watches);
+      if (ok) this.markRuntimeUpdatePending();
+      return ok;
+    }
     var json = JSON.stringify(this.session.watches);
-    return this.writePayload(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, json, 'watches');
+    var wrote = this.writePayload(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, json, 'watches');
+    if (wrote) this.markRuntimeUpdatePending();
+    return wrote;
   };
 
   DebuggerController.prototype.writePayload = function (offset, capacity, lenSlot, dirtySlot, json, label) {
@@ -1832,6 +2563,9 @@
     var startIdx = priorHistoryLength;
     if (msg.replace_last && snaps.length && this.liveIdx >= 0) {
       startIdx = this.liveIdx;
+      if (this.history[this.liveIdx] && this.history[this.liveIdx].watchpoint_origin && !snaps[0].watchpoint_origin) {
+        snaps[0].watchpoint_origin = this.history[this.liveIdx].watchpoint_origin;
+      }
       this.history[this.liveIdx] = snaps[0];
       for (var r = 1; r < snaps.length; r++) this.history.push(snaps[r]);
       this.liveIdx = this.history.length - 1;
@@ -1841,12 +2575,27 @@
     }
     var endIdx = this.liveIdx;
     this.historyIdx = this.liveIdx;
+    var syncTargetVersion = this.session.runtimeSyncTargetVersion || 0;
+    if (!this.session.runtimeSyncInFlight ||
+        (this.session.runtimeUpdateVersion || 0) <= syncTargetVersion) {
+      this.session.runtimeUpdatePending = false;
+    }
+    this.session.runtimeSyncInFlight = false;
+    this.session.runtimeSyncTargetVersion = null;
     // Cheap incremental broadcast — popouts learn about new snapshots
     // without us re-shipping the entire history array each tick.
     this._appendHistoryToSync(snaps, !!msg.replace_last, priorHistoryLength);
     // If we're in the middle of a replay (post-edit re-execution), let the
     // replay driver decide whether to auto-step further or hand control back.
     if (this.handlePausedDuringReplay(startIdx, endIdx)) return;
+    if (this.handlePausedDuringWatchpointRun(startIdx, endIdx)) return;
+    if (this.session && this.session.continueThroughRuntimeStops && !this.hasForwardStopConditions()) {
+      this.paused = false;
+      this.sendCommand(CMD_CONTINUE);
+      this.setStatus('continue…');
+      return;
+    }
+    if (this.session) this.session.continueThroughRuntimeStops = false;
     this.selectedFrameIdx = -1;
     this.paused = true;
     var preserveIdx = this.session && this.session.preserveReverseCursorOnNextPause;
@@ -1862,16 +2611,24 @@
     if (!preservedReverseCursor) {
       this.setStatus('paused at line ' + this.history[this.liveIdx].line);
     }
-    this.renderAll();
+    this.renderAll(!preservedReverseCursor);
     this._publishCursor();
     this._publishSession();
+    var followup = this.session && this.session.afterRuntimeSync;
+    if (followup) {
+      this.session.afterRuntimeSync = null;
+      this.handleToolbarCmd(followup);
+    }
   };
 
   DebuggerController.prototype.onDebugComplete = function (msg) {
-    this.setStatus(msg.exitCode === 0 ? 'finished' : ('error: ' + (msg.error || '')));
     this.disableStepButtons(true);
-    // Keep history viewable in review mode; user can click "Restart Debug" via Debug button.
     this.endSession(true);
+    if (this.statusEl) {
+      this.statusEl.textContent = 'finished';
+      this.statusEl.title = 'finished';
+    }
+    this._publishSession();
   };
 
   DebuggerController.prototype.onCapReached = function (msg) {
@@ -1920,6 +2677,10 @@
     }
     this.session = null;
     this.paused = false;
+    if (this.statusEl) {
+      this.statusEl.textContent = '';
+      this.statusEl.title = '';
+    }
     if (!keepHistory) {
       this._resetExecutionTrace(false);
       this.renderAll();
@@ -1947,12 +2708,13 @@
   // ===========================================================================
   // Rendering
   // ===========================================================================
-  DebuggerController.prototype.renderAll = function () {
+  DebuggerController.prototype.renderAll = function (revealCurrentLine) {
     this.renderVariables();
     this.renderCallStack();
     this.renderWatch();
+    this.renderBreakpointManager();
     this.renderHistory();
-    this.renderCurrentLine();
+    this.renderCurrentLine(!!revealCurrentLine);
     // Re-emit breakpoint decorations so the suppression of the standalone bp
     // glyph on the CURRENT-step line takes effect (otherwise the standalone
     // bp + the combined chevron-on-bp both render at the same gutter slot).
@@ -2215,8 +2977,8 @@
   };
 
   // Apply a variable edit. Two paths:
-  //   - LIVE globals/module locals: mutate through SAB and refresh with CMD_SYNC.
-  //   - LIVE function locals: Pyodide cannot write optimized fast locals through
+  //   - LIVE globals/module locals: mutate through the runtime and refresh with CMD_SYNC.
+  //   - LIVE Python function locals: Pyodide cannot write optimized fast locals through
   //     frame.f_locals, so record a source-level override and replay to the
   //     current snapshot with the assignment injected before that line.
   //   - REWOUND (historyIdx < liveIdx): record an override pinned to this
@@ -2237,9 +2999,8 @@
     var frameDepth = topIdx - frameIdx;
     var frame = snap.stack[frameIdx];
     var backend = this.t.config && this.t.config.backend;
-    var sourceLocal = scope === 'locals' && frame && frame.function !== '<module>' && frameIdx === topIdx;
-    var sourceModule = backend === 'pyodide' && frame && frame.function === '<module>';
-    var sourceReplay = sourceLocal || sourceModule;
+    var sourceReplay = backend === 'pyodide' && scope === 'locals' &&
+      frame && frameIdx === topIdx;
     var override = {
       snapshot_idx: this.historyIdx,
       frame_depth: frameDepth,
@@ -2292,6 +3053,7 @@
     if (this.channel) {
       var ok = this.channel.sendLiveEdits([edit]);
       if (!ok) this.session.pendingLiveEdits.pop();
+      else this.markRuntimeUpdatePending();
       return ok;
     }
     var json = JSON.stringify(this.session.pendingLiveEdits);
@@ -2299,6 +3061,7 @@
       this.session.pendingLiveEdits.pop();
       return false;
     }
+    this.markRuntimeUpdatePending();
     return true;
   };
 
@@ -2313,7 +3076,7 @@
     var rows = [];
     var selectedIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : (snap.stack.length - 1);
     for (var i = snap.stack.length - 1; i >= 0; i--) {
-      var f = snap.stack[i];
+      var f = this.displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
       rows.push('<div class="' + cls + '" data-frame-idx="' + i + '">' +
                 '<span class="tvm-debug-frame-fn">' + this.escape(f.function) + '</span>' +
@@ -2340,10 +3103,7 @@
     var view = this.viewEl('dbg-watch');
     if (!view) return;
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
-    // Show in-session watches if available, else pre-session "pending" ones.
-    var watches = (this.session && this.session.watches)
-                  || this._pendingWatches
-                  || [];
+    var watches = this.getNormalWatches();
     var rows = [];
     for (var i = 0; i < watches.length; i++) {
       var expr = watches[i];
@@ -2353,11 +3113,17 @@
             ? '<span class="tvm-debug-watch-error">' + this.escape(v.error) + '</span>'
             : this.escape(v.repr || v.preview || ''))
         : '<span class="tvm-debug-watch-na">—</span>';
+      var type = String(v && (v.type || v.kind) || '').toLowerCase();
+      var repr = String(v && (v.repr != null ? v.repr : v.preview) || '').trim();
+      var canPromote = v && !v.error && (type === 'bool' || type === 'boolean' || repr === 'True' || repr === 'False' || repr === 'true' || repr === 'false');
       rows.push('<div class="tvm-debug-watch-row">' +
                 '<span class="tvm-debug-watch-expr">' + this.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-remove" data-i="' + i + '" title="Remove">×</button>' +
+                (canPromote
+                  ? '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Turn to Data Watchpoint" aria-label="Turn to Data Watchpoint">' + debugManagerIcon('dataWatch') + '</button>'
+                  : '') +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
@@ -2374,24 +3140,8 @@
     function add() {
       var expr = (input.value || '').trim();
       if (!expr) return;
-      if (!self.session) {
-        // No session yet: store on a pending list so next session picks them up.
-        self._pendingWatches = self._pendingWatches || [];
-        self._pendingWatches.push(expr);
-      } else {
-        self.session.watches.push(expr);
-        // Also keep pendingWatches in sync so the same list survives a future
-        // session restart without requiring the user to re-type.
-        if (self.queueWatchUpdate()) {
-          self._pendingWatches = self.session.watches.slice();
-          self.refreshWatchesNow();
-        } else {
-          self.session.watches.pop();
-        }
-      }
+      self.addNormalWatch(expr);
       input.value = '';
-      self.renderWatch();
-      self._publishWatches();
     }
     if (addBtn) addBtn.addEventListener('click', add);
     if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
@@ -2400,22 +3150,198 @@
       (function (btn) {
         btn.addEventListener('click', function () {
           var idx = +btn.getAttribute('data-i');
-          if (self.session) {
-            var removed = self.session.watches.splice(idx, 1);
-            if (self.queueWatchUpdate()) {
-              self._pendingWatches = self.session.watches.slice();
-              self.refreshWatchesNow();
-            } else {
-              self.session.watches.splice(idx, 0, removed[0]);
-            }
-          } else if (self._pendingWatches) {
-            self._pendingWatches.splice(idx, 1);
-          }
-          self.renderWatch();
-          self._publishWatches();
+          self.removeNormalWatch(idx);
         });
       })(removeBtns[i]);
     }
+    var promoteBtns = view.querySelectorAll('.tvm-debug-watch-promote');
+    for (var p = 0; p < promoteBtns.length; p++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var idx = +btn.getAttribute('data-i');
+          self.promoteWatchToWatchpoint(idx);
+        });
+      })(promoteBtns[p]);
+    }
+  };
+
+  DebuggerController.prototype.removeBreakpoint = function (filename, line) {
+    var path = this.normalizeBreakpointPath(filename);
+    var bps = this.breakpoints.get(path);
+    if (!bps || !bps.has(line)) return;
+    bps.delete(line);
+    if (bps.size === 0) this.breakpoints.delete(path);
+    this.persistBreakpoints();
+    this.refreshBpDecorations();
+    this.renderCurrentLine();
+    this.renderBreakpointManager();
+    this._publishBreakpoints();
+    this.updateSessionWatches(false);
+    if (this.session) {
+      if (this.queueBreakpointChange({ op: 'remove', file: path, line: line })) this.refreshBreakpointsNow();
+    }
+  };
+
+  DebuggerController.prototype.renderBreakpointManager = function () {
+    var view = this.viewEl('dbg-breakpoints');
+    if (!view) return;
+    var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
+    var bpRows = [];
+    var self = this;
+    this.breakpoints.forEach(function (bps, path) {
+      var lines = Array.from(bps.keys()).sort(function (a, b) { return a - b; });
+      lines.forEach(function (line) {
+        var info = bps.get(line) || {};
+        var cond = info.condition
+          ? '<span class="tvm-debug-manager-condition">when ' + self.escape(info.condition) + '</span>'
+          : '<span class="tvm-debug-manager-muted">unconditional</span>';
+        var err = info.condError
+          ? '<span class="tvm-debug-manager-error">' + self.escape(info.condError) + '</span>'
+          : '';
+        bpRows.push(
+          '<div class="tvm-debug-manager-row tvm-debug-manager-code-row">' +
+          '<span class="tvm-debug-manager-dot"></span>' +
+          '<span class="tvm-debug-manager-main">' +
+          '<span class="tvm-debug-manager-title">' + self.escape(self.basename(path)) + ':' + line + '</span>' +
+          cond + err +
+          '</span>' +
+          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
+          '</div>'
+        );
+      });
+    });
+    var wpRows = this.watchpoints.map(function (wp) {
+      var v = snap && snap.watches ? snap.watches[wp.expr] : null;
+      var val = self.renderWatchValue(v);
+      var disabled = wp.enabled === false;
+      return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
+        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable data watchpoint' : 'Disable data watchpoint') + '">' +
+        '<input type="checkbox" data-wp-toggle="' + self.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span>' +
+        '</label>' +
+        '<span class="tvm-debug-manager-main">' +
+        '<span class="tvm-debug-manager-title">' + self.escape(wp.expr) + '</span>' +
+        '<span class="tvm-debug-manager-value">' + val + '</span>' +
+        '</span>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" title="Run to this data watchpoint" aria-label="Run to this data watchpoint">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" title="Run back to this data watchpoint" aria-label="Run back to this data watchpoint">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + self.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
+        '</div>';
+    });
+    var watchpointControls =
+      '<div class="tvm-debug-manager-add">' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression becomes true" />' +
+      '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
+      '</div>' +
+      '<div class="tvm-debug-manager-actions">' +
+      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back</span></button>' +
+      '</div>';
+    view.innerHTML =
+      '<div class="tvm-debug-manager">' +
+      this.renderBreakpointManagerGroup('manager-code-breakpoints', 'Code Breakpoints',
+        bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') +
+      this.renderBreakpointManagerGroup('manager-data-watchpoints', 'Data Watchpoints',
+        wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') +
+      watchpointControls +
+      '</div>';
+
+    var input = view.querySelector('.tvm-debug-watchpoint-input');
+    var addBtn = view.querySelector('.tvm-debug-watchpoint-add-btn');
+    function add() {
+      var expr = (input && input.value || '').trim();
+      if (!expr) return;
+      self.addWatchpoint(expr);
+      if (input) input.value = '';
+    }
+    if (addBtn) addBtn.addEventListener('click', add);
+    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
+    var editBtns = view.querySelectorAll('[data-bp-edit]');
+    for (var i = 0; i < editBtns.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self.editBreakpointCondition(
+            String(btn.getAttribute('data-path') || '').replace(/^\/tutorial\//, ''),
+            +btn.getAttribute('data-line')
+          );
+        });
+      })(editBtns[i]);
+    }
+    var removeBtns = view.querySelectorAll('[data-bp-remove]');
+    for (var j = 0; j < removeBtns.length; j++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self.removeBreakpoint(
+            String(btn.getAttribute('data-path') || '').replace(/^\/tutorial\//, ''),
+            +btn.getAttribute('data-line')
+          );
+        });
+      })(removeBtns[j]);
+    }
+    var toggles = view.querySelectorAll('[data-wp-toggle]');
+    for (var k = 0; k < toggles.length; k++) {
+      (function (el) {
+        el.addEventListener('change', function () { self.toggleWatchpoint(el.getAttribute('data-wp-toggle')); });
+      })(toggles[k]);
+    }
+    var runBtns = view.querySelectorAll('[data-wp-run]');
+    for (var r = 0; r < runBtns.length; r++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.runForwardToWatchpoint(false, btn.getAttribute('data-wp-run')); });
+      })(runBtns[r]);
+    }
+    var backBtns = view.querySelectorAll('[data-wp-back]');
+    for (var b = 0; b < backBtns.length; b++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.runBackToWatchpoint(btn.getAttribute('data-wp-back')); });
+      })(backBtns[b]);
+    }
+    var wpRemoveBtns = view.querySelectorAll('[data-wp-remove]');
+    for (var w = 0; w < wpRemoveBtns.length; w++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.requestRemoveWatchpoint(btn.getAttribute('data-wp-remove')); });
+      })(wpRemoveBtns[w]);
+    }
+    var runAll = view.querySelector('[data-wp-run-all]');
+    if (runAll) runAll.addEventListener('click', function () { self.runForwardToWatchpoint(false, null); });
+    var backAll = view.querySelector('[data-wp-back-all]');
+    if (backAll) backAll.addEventListener('click', function () { self.runBackToWatchpoint(null); });
+    this.wireBreakpointManagerGroups(view);
+  };
+
+  DebuggerController.prototype.renderBreakpointManagerGroup = function (key, label, bodyHtml) {
+    var collapsed = this._isSubsectionCollapsed(key);
+    return '<section class="tvm-debug-manager-group' + (collapsed ? ' collapsed' : '') + '" data-manager-group="' + this.escape(key) + '">' +
+      '<button type="button" class="tvm-debug-manager-heading" data-manager-group-toggle="' + this.escape(key) + '">' +
+      '<span class="tvm-debug-manager-chevron">▾</span>' +
+      '<span>' + this.escape(label) + '</span>' +
+      '</button>' +
+      '<div class="tvm-debug-manager-group-body">' + bodyHtml + '</div>' +
+      '</section>';
+  };
+
+  DebuggerController.prototype.wireBreakpointManagerGroups = function (view) {
+    var self = this;
+    var heads = view.querySelectorAll('[data-manager-group-toggle]');
+    for (var i = 0; i < heads.length; i++) {
+      (function (head) {
+        head.addEventListener('click', function () {
+          var key = head.getAttribute('data-manager-group-toggle');
+          var group = head.closest && head.closest('.tvm-debug-manager-group');
+          if (!group) return;
+          var nowCollapsed = !group.classList.contains('collapsed');
+          group.classList.toggle('collapsed', nowCollapsed);
+          self._setSubsectionCollapsed(key, nowCollapsed);
+        });
+      })(heads[i]);
+    }
+  };
+
+  DebuggerController.prototype.renderWatchValue = function (v) {
+    if (!v) return '<span class="tvm-debug-watch-na">—</span>';
+    if (v.error) return '<span class="tvm-debug-watch-error">' + this.escape(v.error) + '</span>';
+    return this.escape(v.repr || v.preview || '');
   };
 
   DebuggerController.prototype.renderHistory = function () {
@@ -2439,12 +3365,13 @@
     var end = Math.min(n, start + 100);
     for (var i = start; i < end; i++) {
       var s = this.history[i];
+      var loc = this.displayLocationForSnapshot(s);
       var marker = (i === this.historyIdx) ? ' active' : '';
       var ev = s.event === 'call' ? '↳' : s.event === 'return' ? '↰' : s.event === 'exception' ? '⚠' : '·';
       html += '<div class="tvm-debug-history-item' + marker + '" data-i="' + i + '">' +
               '<span class="tvm-debug-history-i">' + (i + 1) + '</span>' +
               '<span class="tvm-debug-history-ev">' + ev + '</span>' +
-              '<span class="tvm-debug-history-loc">' + this.escape(this.basename(s.file)) + ':' + s.line + '</span>' +
+              '<span class="tvm-debug-history-loc">' + this.escape(this.basename(loc.file)) + ':' + loc.line + '</span>' +
               '</div>';
     }
     html += '</div>';
@@ -2468,12 +3395,12 @@
     }
   };
 
-  DebuggerController.prototype.renderCurrentLine = function () {
+  DebuggerController.prototype.renderCurrentLine = function (revealLine) {
     if (!this.t.editor) return;
     if (this.historyIdx < 0) { this.clearCurrentLineDecoration(); return; }
     var snap = this.history[this.historyIdx];
     var frameIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : (snap.stack.length - 1);
-    var frame = snap.stack[frameIdx];
+    var frame = this.displayFrameForSnapshot(snap, frameIdx);
     if (!frame) { this.clearCurrentLineDecoration(); return; }
     var line = frame.line;
     // Map worker filename (`/tutorial/foo.py`) to Monaco model URI
@@ -2486,13 +3413,16 @@
       return;
     }
     var rewound = this.historyIdx < this.liveIdx;
-    var cls = rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line';
-    var glyph = rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph';
+    var afterLine = !!(snap.watchpoint_origin && frameIdx === snap.stack.length - 1);
+    var cls = afterLine ? 'tvm-debug-current-line-after'
+      : (rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line');
+    var glyph = afterLine ? 'tvm-debug-current-glyph-after'
+      : (rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph');
     // If the current line sits on a breakpoint, use a combined chevron glyph
     // that paints the smaller red dot inside it. This applies to both forward
     // and rewound history cursors so the dot never grows under the chevron.
     var bpsForFile = this.breakpoints.get(frame.file);
-    if (bpsForFile && bpsForFile.has(line)) {
+    if (!afterLine && bpsForFile && bpsForFile.has(line)) {
       glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
     }
     var deco = [{
@@ -2507,11 +3437,12 @@
     var prev = editor._dbgCurrentLineIds || [];
     editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);
     this.currentLineDecoIds = editor._dbgCurrentLineIds;
+    if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
+      editor.revealLineInCenterIfOutsideViewport(line);
+    }
     // Repaint breakpoints so the dot on the current line shrinks (or restores
     // to full size if the current line moved away from a breakpoint).
     this.refreshBpDecorations();
-    // Reveal the line so it's in view
-    editor.revealLineInCenterIfOutsideViewport(line);
   };
 
   DebuggerController.prototype.ensureFrameFileVisible = function (fname) {
@@ -2550,6 +3481,7 @@
       'dbg-vars':    'vars',
       'dbg-stack':   'stack',
       'dbg-watch':   'watch',
+      'dbg-breakpoints': 'breakpoints',
       'dbg-history': 'history',
     };
     if (combinedSectionMap[panel]) {

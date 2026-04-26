@@ -310,6 +310,7 @@ function onLine(file, line, scopeFn) {
   var frame = stack[stack.length - 1] || { function: '<module>', file: file, line: line, callId: 0, scopeFn: null };
   frame.line = line;
   frame.scopeFn = scopeFn;
+  drainPendingUpdates(scopeFn);
 
   if (totalSnapshots >= maxHistory) {
     if (!capWarned) {
@@ -352,10 +353,10 @@ function onLine(file, line, scopeFn) {
 
   send({ type: 'paused', snapshots: snapshotBuffer });
   snapshotBuffer = [];
-  pauseLoop(scopeFn);
+  pauseLoop(file, line, scopeFn);
 }
 
-function pauseLoop(scopeFn) {
+function pauseLoop(file, line, scopeFn) {
   while (true) {
     Atomics.wait(i32, SLOT_CMD, 0);
     var cmd = Atomics.load(i32, SLOT_CMD);
@@ -366,7 +367,9 @@ function pauseLoop(scopeFn) {
     if (cmd === 3) { userMode = 'stepOver'; stepBaseDepth = stack.length; break; }
     if (cmd === 4) { userMode = 'stepOut'; stepBaseDepth = stack.length; break; }
     if (cmd === 5) { stopFlag = true; throw new Error('__ttd_stop__'); }
-    if (cmd === 6) { /* sync — keep looping */ }
+    if (cmd === 6) {
+      send({ type: 'paused', snapshots: [makeSnapshot(file, line, scopeFn)], replace_last: true });
+    }
   }
 }
 

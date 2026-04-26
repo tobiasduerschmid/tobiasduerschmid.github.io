@@ -41,6 +41,7 @@
     this.i32 = null;
     this.u8 = null;
     this._encoder = new TextEncoder();
+    this._decoder = new TextDecoder();
     this._msgListener = null;
   }
 
@@ -146,7 +147,15 @@
 
   BrowserChannel.prototype.sendBreakpointChanges = function (changes) {
     if (!Array.isArray(changes) || !changes.length) return true;
-    return this._writeJson(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, changes);
+    var next = changes.slice();
+    if (this.i32 && Atomics.load(this.i32, SLOT_BPS_DIRTY) === 1) {
+      var len = Atomics.load(this.i32, SLOT_BPS_LEN);
+      try {
+        var pending = JSON.parse(this._decoder.decode(this.u8.subarray(BPS_OFF, BPS_OFF + len)));
+        if (Array.isArray(pending)) next = pending.concat(next);
+      } catch (e) {}
+    }
+    return this._writeJson(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, next);
   };
 
   BrowserChannel.prototype.sendLiveEdits = function (edits) {

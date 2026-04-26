@@ -188,11 +188,13 @@
 }
 
 /* Default standalone breakpoint — visible from a distance: bold red dot a
-   couple px larger than Monaco's gutter affords by default. Use a subtle
-   drop shadow instead of a hard outline so it matches the chevron treatment. */
+   couple px larger than Monaco's gutter affords by default. A hairline gray
+   outline plus shadow matches the chevron treatment. */
 .tvm-bp-glyph {
   background: #e63946;
+  border: 1px solid #3f3f46;
   border-radius: 50%;
+  box-sizing: border-box;
   width: 16px !important;
   height: 16px !important;
   margin-left: 4px;
@@ -257,11 +259,21 @@
   align-items: center;
   justify-content: center;
   background: #d62828;
+  border: 1px solid #3f3f46;
+  box-sizing: border-box;
   color: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
   font-size: 14px;
   line-height: 1;
   font-weight: 900;
+}
+.tvm-bp-dialog-marker .tvm-debug-manager-svg {
+  width: 15px;
+  height: 15px;
+}
+.tvm-bp-dialog-marker-watchpoint {
+  background: #FFD100;
+  color: #1A1A1A;
 }
 .tvm-bp-dialog-title-wrap {
   min-width: 0;
@@ -315,6 +327,25 @@
   font-size: 12px;
   line-height: 1.35;
   font-family: "Fira Code", "Cascadia Code", Menlo, monospace;
+}
+.tvm-bp-dialog-copy {
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.tvm-bp-dialog-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.tvm-bp-dialog-check input {
+  margin: 0;
+  accent-color: #FFD100;
 }
 .tvm-bp-dialog-actions {
   display: flex;
@@ -383,16 +414,16 @@
 /* Current-line decoration during pause.
    Glyph: yellow pentagonal chevron OUTLINE drawn via inline SVG background
    so the red breakpoint dot underneath stays visible (and animates smaller).
-   Line highlight: amber band at ~30% opacity — louder than the prior 22%
-   so the active row stands out clearly without overpowering syntax colors. */
+   Line highlight: saturated amber band with enough opacity to separate the
+   active row without overpowering syntax colors. */
 .tvm-debug-current-line {
-  background: rgba(255, 213, 79, 0.30);
+  background: rgba(255, 193, 7, 0.36);
 }
 .tvm-debug-current-glyph {
   /* OUTLINE-only pentagonal arrow pointing right. Sized larger than the
      line height so it pops out into the surrounding rows visually.
-     A thin drop shadow supplies contrast without the prior black outline. */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
+     A hairline dark-gray outline plus drop shadow supplies contrast. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%233f3f46' stroke-width='3.6' stroke-linejoin='round' stroke-linecap='round'/><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -414,7 +445,7 @@
    Standalone bp glyph for this line is suppressed by refreshBpDecorations
    so only this combined glyph renders. */
 .tvm-debug-current-glyph-on-bp {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='9.1' cy='11' r='4.2' fill='%23e63946'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%233f3f46' stroke-width='3.6' stroke-linejoin='round' stroke-linecap='round'/><polygon points='2,3 12,3 20,11 12,19 2,19' fill='none' stroke='%23fbbf24' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='9.1' cy='11' r='4.2' fill='%23e63946' stroke='%233f3f46' stroke-width='1'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -428,10 +459,25 @@
 .tvm-debug-current-line-rewound {
   background: rgba(148, 163, 184, 0.22);
 }
+.tvm-debug-current-line-after {
+  background: rgba(148, 163, 184, 0.24);
+}
 /* Rewound-mode glyph: same pentagon, pointing LEFT, slate-gray outline with
    the same thin drop-shadow contrast treatment. */
 .tvm-debug-current-glyph-rewound {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%233f3f46' stroke-width='3.6' stroke-linejoin='round' stroke-linecap='round'/><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: left center !important;
+  background-size: 26px 26px !important;
+  width: 28px !important;
+  height: 26px !important;
+  margin-left: 0 !important;
+  margin-top: -3px !important;
+  overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
+}
+.tvm-debug-current-glyph-after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='%23e5e7eb' stroke='%233f3f46' stroke-width='3.2' stroke-linejoin='round' stroke-linecap='round'/><polygon points='20,3 10,3 2,11 10,19 20,19' fill='%23e5e7eb' stroke='%2394a3b8' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -443,7 +489,7 @@
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
 }
 .tvm-debug-current-glyph-rewound-on-bp {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='12.9' cy='11' r='4.2' fill='%23e63946'/></svg>") !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%233f3f46' stroke-width='3.6' stroke-linejoin='round' stroke-linecap='round'/><polygon points='20,3 10,3 2,11 10,19 20,19' fill='none' stroke='%2394a3b8' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/><circle cx='12.9' cy='11' r='4.2' fill='%23e63946' stroke='%233f3f46' stroke-width='1'/></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: 26px 26px !important;
@@ -732,16 +778,38 @@
 }
 .tvm-debug-watch-na { color: #999; font-style: italic; }
 .tvm-debug-watch-error { color: #c0392b; font-style: italic; font-size: 11px; }
-.tvm-debug-watch-remove {
+.tvm-debug-watch-action {
   background: transparent;
-  color: #c0392b;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  padding: 0 4px;
+  width: 24px;
+  height: 24px;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
 }
-.tvm-debug-watch-remove:hover { color: #e74c3c; }
+.tvm-debug-watch-action .tvm-debug-manager-svg {
+  width: 16px;
+  height: 16px;
+}
+.tvm-debug-watch-promote {
+  color: #946B0C;
+}
+.tvm-debug-watch-promote:hover {
+  background: rgba(255, 209, 0, 0.18);
+  border-color: rgba(148, 107, 12, 0.34);
+}
+.tvm-debug-watch-remove {
+  color: #c0392b;
+}
+.tvm-debug-watch-remove:hover {
+  background: rgba(192, 57, 43, 0.10);
+  border-color: rgba(192, 57, 43, 0.28);
+  color: #e74c3c;
+}
 .tvm-debug-watch-add {
   display: flex;
   gap: 6px;
@@ -771,6 +839,203 @@
   cursor: pointer;
 }
 .tvm-debug-watch-add-btn:hover { background: #FFB81C; }
+
+/* Breakpoint manager */
+.tvm-debug-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tvm-debug-manager-add,
+.tvm-debug-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0 2px;
+}
+.tvm-debug-watchpoint-input {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.tvm-debug-watchpoint-input:focus {
+  outline: none;
+  border-color: #946B0C;
+  box-shadow: 0 0 0 2px rgba(255, 209, 0, 0.40);
+}
+.tvm-debug-watchpoint-add-btn,
+.tvm-debug-manager-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #FFD100;
+  color: #1A1A1A;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tvm-debug-manager-run {
+  background: transparent;
+  color: #946B0C;
+  border: 1px solid rgba(148, 107, 12, 0.34);
+}
+.tvm-debug-watchpoint-add-btn:hover,
+.tvm-debug-manager-run:hover {
+  background: #FFB81C;
+}
+.tvm-debug-manager-group {
+  margin-top: 4px;
+}
+.tvm-debug-manager-group-body {
+  display: flex;
+  flex-direction: column;
+}
+.tvm-debug-manager-group.collapsed .tvm-debug-manager-group-body {
+  display: none;
+}
+.tvm-debug-manager-heading {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  margin-top: 4px;
+  padding: 3px 2px;
+  color: #555;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.tvm-debug-manager-heading:hover {
+  background: rgba(255, 209, 0, 0.12);
+}
+.tvm-debug-manager-chevron {
+  color: #946B0C;
+  font-size: 11px;
+  transition: transform 120ms ease;
+}
+.tvm-debug-manager-group.collapsed .tvm-debug-manager-chevron {
+  transform: rotate(-90deg);
+}
+.tvm-debug-manager-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 4px 3px;
+  border-bottom: 1px solid #ececec;
+}
+.tvm-debug-manager-row.disabled {
+  opacity: 0.54;
+}
+.tvm-debug-manager-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+.tvm-debug-manager-title {
+  color: #2c3e50;
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.tvm-debug-manager-condition,
+.tvm-debug-manager-muted,
+.tvm-debug-manager-value {
+  color: #64748b;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.tvm-debug-manager-error {
+  color: #c0392b;
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.tvm-debug-manager-dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e63946;
+  border: 1px solid #3f3f46;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
+  box-sizing: border-box;
+}
+.tvm-debug-manager-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.tvm-debug-manager-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.tvm-debug-manager-toggle span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #3f3f46;
+  background: #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.tvm-debug-manager-toggle input:checked + span {
+  background: #e63946;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
+}
+.tvm-debug-manager-icon {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 107, 12, 0.26);
+  border-radius: 4px;
+  background: transparent;
+  color: #946B0C;
+  cursor: pointer;
+}
+.tvm-debug-manager-svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  flex: 0 0 auto;
+}
+.tvm-debug-watchpoint-add-btn .tvm-debug-manager-svg,
+.tvm-debug-manager-run .tvm-debug-manager-svg {
+  width: 14px;
+  height: 14px;
+}
+.tvm-debug-manager-icon:hover {
+  background: rgba(255, 209, 0, 0.18);
+}
+.tvm-debug-manager-danger {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.24);
+}
+.tvm-debug-manager-danger:hover {
+  background: rgba(230, 57, 70, 0.12);
+}
 
 /* History */
 .tvm-debug-history-controls {
@@ -933,6 +1198,7 @@ html.dark-mode .sebook-dbg-reload-note {
    lands on it. */
 html.dark-mode .tvm-bp-glyph {
   background: #e63946;
+  border-color: #3f3f46;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
 }
 html.dark-mode .tvm-bp-cond { background: #d62828; }
@@ -950,6 +1216,12 @@ html.dark-mode .tvm-bp-dialog-actions {
 }
 html.dark-mode .tvm-bp-dialog-location,
 html.dark-mode .tvm-bp-dialog-label {
+  color: #cbd5e1;
+}
+html.dark-mode .tvm-bp-dialog-copy {
+  color: #e2e8f0;
+}
+html.dark-mode .tvm-bp-dialog-check {
   color: #cbd5e1;
 }
 html.dark-mode .tvm-bp-dialog-input {
@@ -988,8 +1260,9 @@ html.dark-mode .tvm-bp-dialog-clear:hover:not(:disabled) {
 }
 
 /* Current-line decoration */
-html.dark-mode .tvm-debug-current-line { background: rgba(251, 191, 36, 0.20); }
+html.dark-mode .tvm-debug-current-line { background: rgba(245, 158, 11, 0.30); }
 html.dark-mode .tvm-debug-current-line-rewound { background: rgba(148, 163, 184, 0.20); }
+html.dark-mode .tvm-debug-current-line-after { background: rgba(148, 163, 184, 0.24); }
 
 /* --- Debug view panels --- */
 html.dark-mode .tvm-debug-view {
@@ -1085,8 +1358,17 @@ html.dark-mode .tvm-debug-watch-arrow { color: #94a3b8; }
 html.dark-mode .tvm-debug-watch-val { color: #fbbf24; }
 html.dark-mode .tvm-debug-watch-na { color: #64748b; }
 html.dark-mode .tvm-debug-watch-error { color: #fca5a5; }
+html.dark-mode .tvm-debug-watch-promote { color: #FFE066; }
+html.dark-mode .tvm-debug-watch-promote:hover {
+  background: rgba(255, 209, 0, 0.16);
+  border-color: rgba(255, 224, 102, 0.42);
+}
 html.dark-mode .tvm-debug-watch-remove { color: #f87171; }
-html.dark-mode .tvm-debug-watch-remove:hover { color: #fca5a5; }
+html.dark-mode .tvm-debug-watch-remove:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.36);
+  color: #fca5a5;
+}
 html.dark-mode .tvm-debug-watch-input {
   background: #2d3346;
   color: #f1f5f9;
@@ -1099,6 +1381,79 @@ html.dark-mode .tvm-debug-watch-input:focus {
 html.dark-mode .tvm-debug-watch-input::placeholder { color: #64748b; }
 html.dark-mode .tvm-debug-watch-add-btn { background: #FFD100; color: #1A1A1A; }
 html.dark-mode .tvm-debug-watch-add-btn:hover { background: #FFE066; color: #1A1A1A; }
+
+/* Breakpoint manager */
+html.dark-mode .tvm-debug-watchpoint-input {
+  background: #2d3346;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+html.dark-mode .tvm-debug-watchpoint-input:focus {
+  border-color: #FFD100;
+  box-shadow: 0 0 0 2px rgba(255, 209, 0, 0.40);
+}
+html.dark-mode .tvm-debug-watchpoint-input::placeholder { color: #64748b; }
+html.dark-mode .tvm-debug-watchpoint-add-btn {
+  background: #FFD100;
+  color: #1A1A1A;
+}
+html.dark-mode .tvm-debug-watchpoint-add-btn:hover,
+html.dark-mode .tvm-debug-manager-run:hover {
+  background: #FFE066;
+  color: #1A1A1A;
+}
+html.dark-mode .tvm-debug-manager-run {
+  background: rgba(255, 209, 0, 0.18);
+  border-color: rgba(255, 224, 102, 0.38);
+  color: #FFE066;
+}
+html.dark-mode .tvm-debug-manager-heading {
+  color: #94a3b8;
+}
+html.dark-mode .tvm-debug-manager-heading:hover {
+  background: rgba(255, 209, 0, 0.14);
+}
+html.dark-mode .tvm-debug-manager-chevron {
+  color: #FFE066;
+}
+html.dark-mode .tvm-debug-manager-row {
+  border-bottom-color: #2d3346;
+}
+html.dark-mode .tvm-debug-manager-title {
+  color: #f1f5f9;
+}
+html.dark-mode .tvm-debug-manager-condition,
+html.dark-mode .tvm-debug-manager-muted,
+html.dark-mode .tvm-debug-manager-value {
+  color: #cbd5e1;
+}
+html.dark-mode .tvm-debug-manager-error {
+  color: #fca5a5;
+}
+html.dark-mode .tvm-debug-manager-dot,
+html.dark-mode .tvm-debug-manager-toggle input:checked + span {
+  background: #e63946;
+  border-color: #3f3f46;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
+}
+html.dark-mode .tvm-debug-manager-toggle span {
+  background: #475569;
+  border-color: #3f3f46;
+}
+html.dark-mode .tvm-debug-manager-icon {
+  color: #FFE066;
+  border-color: rgba(255, 224, 102, 0.30);
+}
+html.dark-mode .tvm-debug-manager-icon:hover {
+  background: rgba(255, 209, 0, 0.18);
+}
+html.dark-mode .tvm-debug-manager-danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.30);
+}
+html.dark-mode .tvm-debug-manager-danger:hover {
+  background: rgba(248, 113, 113, 0.16);
+}
 
 /* History */
 html.dark-mode .tvm-debug-history-controls { border-bottom-color: #2d3346; }

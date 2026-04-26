@@ -39,6 +39,33 @@ def outer(n):
 print(outer(4))
 `;
 
+const WATCHPOINT_CODE = `total = 0
+for i in range(5):
+    total += i
+    marker = total
+print(total)
+`;
+
+const LIVE_UPDATE_CODE = `total = 0
+for i in range(8):
+    total += i
+    marker = total
+print(total)
+`;
+
+const LIVE_EDIT_CODE = `def compute():
+    total = 1
+    marker = total
+    print(marker)
+
+compute()
+`;
+
+const LIVE_MODULE_EDIT_CODE = `total = 1
+marker = total
+print(marker)
+`;
+
 async function waitForTutorialReady(page) {
   await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
   await page.waitForFunction(() => window._tutorial && window._tutorial._debuggerCtl && window._tutorial.editor,
@@ -185,6 +212,75 @@ async function waitForDebugComplete(page) {
   }, null, { timeout: DEBUG_TIMEOUT });
 }
 
+async function startDebuggerWithBreakpoints(page, filename, code, breakpointLines) {
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  await page.evaluate(async ({ filename, code, lines }) => {
+    const tutorial = window._tutorial;
+    tutorial.loadStep(5);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    tutorial.openFile(filename, code, 'python');
+    tutorial._setActiveFile(filename);
+
+    const ctl = tutorial._debuggerCtl;
+    ctl.breakpoints = new Map();
+    ctl.watchpoints = [];
+    ctl._nextWatchpointId = 1;
+    ctl._pendingWatches = [];
+    ctl.persistBreakpoints();
+    ctl.refreshBpDecorations();
+    for (const line of lines) ctl.toggleBreakpoint(filename, line);
+    ctl.startSession();
+  }, { filename, code, lines: breakpointLines });
+
+  await page.waitForFunction(() => {
+    const ctl = window._tutorial && window._tutorial._debuggerCtl;
+    return ctl && ctl.paused && ctl.historyIdx >= 0;
+  }, null, { timeout: DEBUG_TIMEOUT });
+}
+
+async function continueToLine(page, line, filenamePattern) {
+  await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+  await page.waitForFunction(({ line, filenamePattern }) => {
+    const ctl = window._tutorial && window._tutorial._debuggerCtl;
+    const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+    return ctl && ctl.paused && snap && snap.line === line &&
+      new RegExp(filenamePattern).test(snap.file);
+  }, { line, filenamePattern }, { timeout: DEBUG_TIMEOUT });
+}
+
+async function waitForLine(page, line, filenamePattern, minLocationHit = 1) {
+  await page.waitForFunction(({ line, filenamePattern, minLocationHit }) => {
+    const ctl = window._tutorial && window._tutorial._debuggerCtl;
+    const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+    return ctl && ctl.paused && snap && snap.line === line &&
+      (snap.location_hit || 1) >= minLocationHit &&
+      new RegExp(filenamePattern).test(snap.file);
+  }, { line, filenamePattern, minLocationHit }, { timeout: DEBUG_TIMEOUT });
+}
+
+async function setBreakpointCondition(page, filename, line, condition, op = 'edit') {
+  await page.evaluate(({ filename, line, condition, op }) => {
+    const ctl = window._tutorial._debuggerCtl;
+    const path = '/tutorial/' + filename;
+    let bps = ctl.breakpoints.get(path);
+    if (!bps) {
+      bps = new Map();
+      ctl.breakpoints.set(path, bps);
+    }
+    bps.set(line, { condition });
+    ctl.persistBreakpoints();
+    ctl.refreshBpDecorations();
+    ctl.renderBreakpointManager();
+    ctl._publishBreakpoints();
+    ctl.updateSessionWatches(false);
+    if (ctl.session) {
+      ctl.queueBreakpointChange({ op, file: path, line, condition });
+      ctl.refreshBreakpointsNow();
+    }
+  }, { filename, line, condition, op });
+}
+
 async function breakpointVisualTokens(page, darkMode) {
   return page.evaluate((dark) => {
     document.documentElement.classList.toggle('dark-mode', dark);
@@ -216,6 +312,7 @@ async function breakpointVisualTokens(page, darkMode) {
     const chevronStyle = getComputedStyle(chevron);
     const result = {
       standaloneBackground: standaloneStyle.backgroundColor,
+      standaloneBorderColor: standaloneStyle.borderColor,
       standaloneShadow: standaloneStyle.boxShadow,
       standaloneWidth: standaloneStyle.width,
       standaloneHeight: standaloneStyle.height,
@@ -307,6 +404,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
       const dark = await breakpointVisualTokens(page, true);
 
       expect(light.standaloneBackground).toBe('rgb(230, 57, 70)');
+      expect(light.standaloneBorderColor).toBe('rgb(63, 63, 70)');
       expect(light.standaloneShadow).toContain('rgba(0, 0, 0, 0.62)');
       expect(light.standaloneWidth).toBe('16px');
       expect(light.standaloneHeight).toBe('16px');
@@ -316,6 +414,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(light.conditionalQuestionAlignItems).toBe('center');
       expect(light.conditionalQuestionJustifyContent).toBe('center');
       expect(light.chevronFilter).toContain('drop-shadow');
+      expect(light.chevronBreakpointImage).toContain('%233f3f46');
       expect(light.chevronBreakpointImage).not.toContain('%23000000');
       expect(light.chevronBreakpointImage).not.toContain('stroke=\"%23000');
       expect(dark).toEqual(light);
@@ -516,6 +615,517 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(rewoundBreakpoint.currentDecorationLines).toEqual([17]);
       expect(rewoundBreakpoint.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-rewound-on-bp']);
       expect(rewoundBreakpoint.breakpointGlyphLines).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('data watchpoints stop on true transitions and can run backward to the hit', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('watchpoints.py', code, 'python');
+        tutorial._setActiveFile('watchpoints.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._nextWatchpointId = 1;
+        ctl._pendingWatches = [];
+        localStorage.removeItem('tutorial-debug-subsection-' + tutorial.tutorialId + '-manager-code-breakpoints');
+        localStorage.removeItem('tutorial-debug-subsection-' + tutorial.tutorialId + '-manager-data-watchpoints');
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.toggleBreakpoint('watchpoints.py', 5);
+        ctl.addWatchpoint('total >= 3');
+        ctl.activateTab('dbg-combined');
+        ctl.renderAll();
+        ctl.startSession();
+      }, { code: WATCHPOINT_CODE });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const value = snap && snap.watches && snap.watches['total >= 3'];
+        return ctl && ctl.paused && snap && snap.watchpoint_origin && snap.watchpoint_origin.line === 3 &&
+          value && value.repr === 'True' &&
+          /data watchpoint hit/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const hit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        const manager = window._tutorial.root.querySelector('.tvm-dbg-section-body[data-section="breakpoints"]');
+        const model = window._tutorial.editor.getModel();
+        const currentGlyphClasses = model.getAllDecorations()
+          .map(d => String(d.options?.glyphMarginClassName || ''))
+          .filter(cls => cls.includes('tvm-debug-current-glyph'));
+        const currentDecorationLines = model.getAllDecorations()
+          .filter(d => String(d.options?.className || '').includes('tvm-debug-current-line'))
+          .map(d => d.range.startLineNumber);
+        return {
+          hitIdx: ctl.historyIdx,
+          line: snap.watchpoint_origin && snap.watchpoint_origin.line,
+          rawLine: snap.line,
+          status: ctl.statusEl.textContent,
+          currentDecorationLines,
+          currentGlyphClasses,
+          normalWatches: ctl.getNormalWatches(),
+          transportWatches: ctl.session.watches,
+          syncWatchpoints: ctl.sync.state.watchpoints,
+          codeRows: manager.querySelectorAll('.tvm-debug-manager-code-row').length,
+          watchpointRows: manager.querySelectorAll('.tvm-debug-manager-watchpoint-row').length,
+          managerSvgIcons: manager.querySelectorAll('.tvm-debug-manager-svg').length,
+          toolbarDataButtons: window._tutorial._debuggerCtl.stepToolbar.querySelectorAll('[data-cmd="watchContinue"], [data-cmd="backWatch"]').length,
+          managerText: manager.textContent,
+        };
+      });
+      expect(hit.line).toBe(3);
+      expect(hit.rawLine).toBe(4);
+      expect(hit.status).toContain('data watchpoint hit');
+      expect(hit.status).toContain('watchpoints.py:3');
+      expect(hit.currentDecorationLines).toEqual([3]);
+      expect(hit.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-after']);
+      expect(hit.normalWatches).toEqual([]);
+      expect(hit.transportWatches).toContain('total >= 3');
+      expect(hit.syncWatchpoints).toEqual([{ id: 'wp1', expr: 'total >= 3', enabled: true }]);
+      expect(hit.codeRows).toBe(1);
+      expect(hit.watchpointRows).toBe(1);
+      expect(hit.managerSvgIcons).toBeGreaterThanOrEqual(7);
+      expect(hit.toolbarDataButtons).toBe(0);
+      expect(hit.managerText).toContain('watchpoints.py:5');
+      expect(hit.managerText).toContain('total >= 3');
+
+      await page.locator('[data-manager-group-toggle="manager-code-breakpoints"]').click();
+      await expect(page.locator('[data-manager-group="manager-code-breakpoints"]')).toHaveClass(/collapsed/);
+      await page.locator('[data-manager-group-toggle="manager-data-watchpoints"]').click();
+      await expect(page.locator('[data-manager-group="manager-data-watchpoints"]')).toHaveClass(/collapsed/);
+      await page.locator('[data-manager-group-toggle="manager-data-watchpoints"]').click();
+      await expect(page.locator('[data-manager-group="manager-data-watchpoints"]')).not.toHaveClass(/collapsed/);
+
+      await page.locator('.tvm-debug-watchpoint-input').fill('marker == 3');
+      await page.locator('.tvm-debug-watchpoint-add-btn').click();
+      await expect.poll(async () => page.evaluate(() => window._tutorial._debuggerCtl.sync.state.watchpoints.length))
+        .toBe(2);
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('step'));
+      await page.waitForFunction((hitIdx) => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx > hitIdx;
+      }, hit.hitIdx, { timeout: DEBUG_TIMEOUT });
+
+      await page.locator('[data-wp-back="wp1"]').click();
+      await page.waitForFunction((hitIdx) => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && snap && ctl.historyIdx === hitIdx && snap.watchpoint_origin && snap.watchpoint_origin.line === 3 &&
+          /rewound to data watchpoint/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, hit.hitIdx, { timeout: DEBUG_TIMEOUT });
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('breakpoints added while paused are synchronized before continue resumes', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('live-sync.py', code, 'python');
+        tutorial._setActiveFile('live-sync.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._pendingWatches = [];
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.toggleBreakpoint('live-sync.py', 3);
+        ctl.startSession();
+      }, { code: LIVE_UPDATE_CODE });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.line === 3 && /live-sync\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.toggleBreakpoint('live-sync.py', 4);
+        ctl.handleToolbarCmd('continue');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.line === 4 && /live-sync\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const state = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          line: snap.line,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+          breakpoints: Array.from(ctl.breakpoints.get('/tutorial/live-sync.py').keys()),
+        };
+      });
+      expect(state.line).toBe(4);
+      expect(state.breakpoints.sort()).toEqual([3, 4]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('breakpoints removed while paused are honored by the current continue', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-remove.py', LIVE_UPDATE_CODE, [3, 4]);
+      await continueToLine(page, 3, 'live-remove\\.py$');
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('live-remove.py', 4);
+        ctl.handleToolbarCmd('continue');
+      });
+      await waitForLine(page, 3, 'live-remove\\.py$', 2);
+
+      const state = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          line: snap.line,
+          locationHit: snap.location_hit,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+          breakpoints: Array.from(ctl.breakpoints.get('/tutorial/live-remove.py').keys()),
+        };
+      });
+      expect(state.line).toBe(3);
+      expect(state.locationHit).toBe(2);
+      expect(state.status).toContain('live-remove.py:3');
+      expect(state.breakpoints).toEqual([3]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('removing the current breakpoint while paused lets the current session finish', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-remove-current.py', LIVE_UPDATE_CODE, [3]);
+      await continueToLine(page, 3, 'live-remove-current\\.py$');
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('live-remove-current.py', 3);
+        ctl.handleToolbarCmd('continue');
+      });
+      await waitForDebugComplete(page);
+
+      const state = await page.evaluate(() => ({
+        output: document.querySelector('.tvm-output-pre')?.textContent || '',
+        breakpoints: Array.from(window._tutorial._debuggerCtl.breakpoints.get('/tutorial/live-remove-current.py') || []),
+      }));
+      expect(state.output).toMatch(/\b28\b/);
+      expect(state.breakpoints).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('conditional breakpoint edits while paused affect the current session', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-condition.py', LIVE_UPDATE_CODE, [3]);
+      await continueToLine(page, 3, 'live-condition\\.py$');
+
+      await setBreakpointCondition(page, 'live-condition.py', 4, 'total == -1', 'add');
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await waitForLine(page, 3, 'live-condition\\.py$', 2);
+
+      await setBreakpointCondition(page, 'live-condition.py', 4, 'total == 1');
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await waitForLine(page, 4, 'live-condition\\.py$', 2);
+
+      const state = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          line: snap.line,
+          locationHit: snap.location_hit,
+          conditionValue: snap.watches && snap.watches['total == 1'],
+          breakpoints: Array.from(ctl.breakpoints.get('/tutorial/live-condition.py').entries())
+            .map(([line, info]) => ({ line, condition: info.condition || null })),
+          status: ctl.statusEl && ctl.statusEl.textContent,
+        };
+      });
+      expect(state.line).toBe(4);
+      expect(state.locationHit).toBe(2);
+      expect(state.conditionValue && state.conditionValue.repr).toBe('True');
+      expect(state.breakpoints).toEqual([
+        { line: 3, condition: null },
+        { line: 4, condition: 'total == 1' },
+      ]);
+      expect(state.status).toContain('live-condition.py:4');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('data watchpoints added while paused affect the current session', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('live-watchpoint.py', code, 'python');
+        tutorial._setActiveFile('live-watchpoint.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._nextWatchpointId = 1;
+        ctl._pendingWatches = [];
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.toggleBreakpoint('live-watchpoint.py', 3);
+        ctl.startSession();
+      }, { code: LIVE_UPDATE_CODE });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.line === 3 && /live-watchpoint\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('live-watchpoint.py', 3);
+        ctl.addWatchpoint('marker == 0');
+        ctl.handleToolbarCmd('watchContinue');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.watchpoint_origin &&
+          snap.watchpoint_origin.line === 4 &&
+          /data watchpoint hit/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const hit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          rawLine: snap.line,
+          originLine: snap.watchpoint_origin && snap.watchpoint_origin.line,
+          watch: snap.watches && snap.watches['marker == 0'],
+          transportWatches: ctl.session.watches,
+        };
+      });
+      expect(hit.rawLine).toBe(5);
+      expect(hit.originLine).toBe(4);
+      expect(hit.watch && hit.watch.repr).toBe('True');
+      expect(hit.transportWatches).toContain('marker == 0');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('data watchpoints removed while paused do not fire later in the current session', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-watch-remove.py', LIVE_UPDATE_CODE, [3]);
+      await continueToLine(page, 3, 'live-watch-remove\\.py$');
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.addWatchpoint('marker == 0'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && !ctl.session?.runtimeSyncInFlight &&
+          ctl.getEnabledWatchpoints().length === 1 &&
+          ctl.session.watches.includes('marker == 0') &&
+          snap && snap.watches && Object.prototype.hasOwnProperty.call(snap.watches, 'marker == 0');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('live-watch-remove.py', 3);
+        ctl.removeWatchpoint('wp1');
+        ctl.handleToolbarCmd('continue');
+      });
+      await waitForDebugComplete(page);
+
+      const state = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        return {
+          output: document.querySelector('.tvm-output-pre')?.textContent || '',
+          watchpoints: ctl.getEnabledWatchpoints(),
+          status: ctl.statusEl && ctl.statusEl.textContent,
+        };
+      });
+      expect(state.output).toMatch(/\b28\b/);
+      expect(state.watchpoints).toEqual([]);
+      expect(state.status).toBe('finished');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('normal watches added and removed while paused resync the current snapshot', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-watch-sync.py', LIVE_UPDATE_CODE, [3]);
+      await continueToLine(page, 3, 'live-watch-sync\\.py$');
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.addNormalWatch('total'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && !ctl.session?.runtimeSyncInFlight &&
+          snap && snap.watches && snap.watches.total && snap.watches.total.repr === '0' &&
+          ctl.getNormalWatches().includes('total');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.removeNormalWatch(0));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && !ctl.session?.runtimeSyncInFlight &&
+          snap && snap.watches && !Object.prototype.hasOwnProperty.call(snap.watches, 'total') &&
+          ctl.getNormalWatches().length === 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const state = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          watches: ctl.getNormalWatches(),
+          transportWatches: ctl.session.watches,
+          snapshotWatches: Object.keys(snap.watches || {}),
+        };
+      });
+      expect(state.watches).toEqual([]);
+      expect(state.transportWatches).toEqual([]);
+      expect(state.snapshotWatches).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('live function-local variable edits update execution state before continuing', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('live-edit.py', code, 'python');
+        tutorial._setActiveFile('live-edit.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._pendingWatches = [];
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.toggleBreakpoint('live-edit.py', 3);
+        ctl.startSession();
+      }, { code: LIVE_EDIT_CODE });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const top = snap && snap.stack && snap.stack[snap.stack.length - 1];
+        return ctl && ctl.paused && snap && snap.line === 3 && top && top.function === 'compute';
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        ctl.applyVarEdit('locals', snap.stack.length - 1, 'total', '5');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        if (!ctl || !ctl.paused || !snap || snap.line !== 3 || ctl.session?.replayTargetIdx != null) return false;
+        const topIdx = snap.stack.length - 1;
+        const value = ctl.resolveVar(snap, topIdx, 'locals', 'total');
+        return value && value.repr === '5';
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await waitForDebugComplete(page);
+      const output = await page.evaluate(() => document.querySelector('.tvm-output-pre')?.textContent || '');
+      expect(output).toMatch(/\b5\b/);
+      expect(output).not.toMatch(/\b1\b/);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('live module variable edits on a use line update execution state before continuing', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'live-module-edit.py', LIVE_MODULE_EDIT_CODE, [2]);
+      await continueToLine(page, 2, 'live-module-edit\\.py$');
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        ctl.applyVarEdit('locals', snap.stack.length - 1, 'total', '7');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        if (!ctl || !ctl.paused || !snap || snap.line !== 2 || ctl.session?.replayTargetIdx != null) return false;
+        const topIdx = snap.stack.length - 1;
+        const value = ctl.resolveVar(snap, topIdx, 'locals', 'total');
+        return value && value.repr === '7';
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+      await waitForDebugComplete(page);
+      const output = await page.evaluate(() => document.querySelector('.tvm-output-pre')?.textContent || '');
+      expect(output).toMatch(/\b7\b/);
+      expect(output).not.toMatch(/\b1\b/);
     } finally {
       await page.close();
     }

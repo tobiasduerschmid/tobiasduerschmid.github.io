@@ -72,6 +72,16 @@ function readLineSync() {
 const commandQueue = [];
 const commandWaiters = [];
 let stdinBuffer = '';
+let runtimeUpdateChain = Promise.resolve();
+
+function queueRuntimeUpdate(msg) {
+  runtimeUpdateChain = runtimeUpdateChain
+    .then(() => applyRuntimeUpdates(msg))
+    .catch((e) => {
+      send({ type: 'debuggerError', message: 'runtime update error: ' + String(e && e.stack || e) });
+    });
+  return runtimeUpdateChain;
+}
 
 process.stdin.on('data', (chunk) => {
   stdinBuffer += chunk.toString('utf8');
@@ -82,6 +92,10 @@ process.stdin.on('data', (chunk) => {
     if (!line.trim()) continue;
     let msg;
     try { msg = JSON.parse(line); } catch (e) { continue; }
+    if (msg.update_only) {
+      queueRuntimeUpdate(msg);
+      continue;
+    }
     if (commandWaiters.length) {
       const waiter = commandWaiters.shift();
       waiter(msg);
@@ -431,8 +445,8 @@ function shouldSurfacePause(params) {
 
 // ---- Apply UI commands -----------------------------------------------------
 
-async function applyCommand(cmd) {
-  // cmd shape: { code: 1..6, watches?, breakpoint_changes?, live_edits? }
+async function applyRuntimeUpdates(cmd) {
+  if (!cmd) return;
   if (cmd.watches) watches = cmd.watches.slice();
   if (cmd.breakpoint_changes) {
     for (const ch of cmd.breakpoint_changes) await applyBpChange(ch);
@@ -440,23 +454,34 @@ async function applyCommand(cmd) {
   if (cmd.live_edits) {
     for (const e of cmd.live_edits) await applyLiveEdit(e);
   }
+}
+
+async function applyCommand(cmd) {
+  // cmd shape: { code: 1..6, watches?, breakpoint_changes?, live_edits? }
+  await runtimeUpdateChain;
+  await applyRuntimeUpdates(cmd);
   switch (cmd.code) {
-    case 1: userMode = 'continue'; stepBaseFrame = null; await post('Debugger.resume'); break;
+    case 1: userMode = 'continue'; stepBaseFrame = null; await post('Debugger.resume'); return true;
     case 2: userMode = 'stepInto'; stepBaseFrame = null; await post('Debugger.stepInto'); break;
     case 3:
       userMode = 'stepOver';
       stepBaseFrame = { depth: cmd._currentDepth || 1 };
       await post('Debugger.stepOver');
-      break;
+      return true;
     case 4:
       userMode = 'stepOut';
       stepBaseFrame = { depth: cmd._currentDepth || 1 };
       await post('Debugger.stepOut');
-      break;
-    case 5: stopFlag = true; await post('Debugger.resume'); break;
-    case 6: userMode = 'sync'; stepBaseFrame = null; await post('Debugger.stepInto'); break;
-    default: await post('Debugger.resume');
+      return true;
+    case 5: stopFlag = true; await post('Debugger.resume'); return true;
+    case 6: {
+      const snap = await captureSnapshot({ callFrames: lastCallFrames }, 'sync');
+      send({ type: 'paused', snapshots: [snap], replace_last: true });
+      return false;
+    }
+    default: await post('Debugger.resume'); return true;
   }
+  return true;
 }
 
 async function applyBpChange(ch) {
@@ -557,6 +582,7 @@ async function handlePaused(params) {
     return;
   }
   lastCallFrames = params.callFrames || [];
+  await runtimeUpdateChain;
   // Don't snapshot in our own internal frames (e.g. the runner's bootstrap)
   const topUrl = lastCallFrames[0] && lastCallFrames[0].url;
   if (!topUrl || topUrl.indexOf('node:') === 0 || topUrl.indexOf('runner.js') !== -1) {
@@ -602,8 +628,8 @@ async function handlePaused(params) {
   while (true) {
     const cmd = await awaitCommand();
     cmd._currentDepth = lastCallFrames.length;
-    await applyCommand(cmd);
-    if (cmd.code !== 0) break;   // a real step/continue; otherwise (no-op) keep waiting
+    const didResume = await applyCommand(cmd);
+    if (didResume) break;
   }
 }
 

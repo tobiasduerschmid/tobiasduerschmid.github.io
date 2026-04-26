@@ -24,6 +24,7 @@ import bdb
 import ast
 import json
 import sys
+import types
 
 try:
     import ctypes
@@ -58,11 +59,19 @@ def _is_user_global(name, value):
         return False
     if name in _INTERNAL_NAMES:
         return False
+    # Hide top-level functions introduced by `def foo(...)`: they clutter the
+    # Globals pane and are already visible in the call stack/source. Keep
+    # variables that merely store function values, e.g. `callback = foo` or
+    # `predicate = lambda x: ...`, because those are meaningful data.
+    if isinstance(value, types.FunctionType):
+        if (getattr(value, '__module__', None) == '__main__' and
+                getattr(value, '__name__', None) == name and
+                getattr(value, '__qualname__', None) == name):
+            return False
     mod = getattr(value, '__module__', None)
     if mod is None or mod == '__main__' or mod == 'builtins':
         # __main__ = user-defined; builtins/None covers literals + locals
         # Still hide modules even if they happen to be in __main__.
-        import types
         if isinstance(value, types.ModuleType):
             return False
         return True
@@ -158,6 +167,7 @@ class TimeTravelDebugger(bdb.Bdb):
         self._line_hit_counts = {}
         self._cap_warned = False
         self._stop_flag = False
+        self._runtime_breaks = {}
 
         # Per-frame call identity so UI Step-Back-Over knows "same activation".
         self._call_counter = 0
@@ -196,6 +206,37 @@ class TimeTravelDebugger(bdb.Bdb):
         """Continue running, but keep tracing so history remains complete."""
         self._set_stopinfo(self.botframe, None, -1)
 
+    def set_break(self, filename, lineno, temporary=False, cond=None,
+                  funcname=None):
+        if not filename or not lineno:
+            return 'Breakpoint filename and line are required'
+        try:
+            line = int(lineno)
+        except Exception:
+            return 'Breakpoint line must be a number'
+        key = self.canonic(filename)
+        per_file = self._runtime_breaks.setdefault(key, {})
+        per_file[line] = {
+            'file': filename,
+            'line': line,
+            'condition': cond or None,
+        }
+        return None
+
+    def clear_break(self, filename, lineno):
+        try:
+            line = int(lineno)
+        except Exception:
+            return 'Breakpoint line must be a number'
+        key = self.canonic(filename)
+        per_file = self._runtime_breaks.get(key)
+        if not per_file or line not in per_file:
+            return 'There are no breakpoints at {}:{}'.format(filename, line)
+        del per_file[line]
+        if not per_file:
+            self._runtime_breaks.pop(key, None)
+        return None
+
     def dispatch_call(self, frame, arg):
         if self.botframe is None:
             self.botframe = frame.f_back
@@ -212,6 +253,8 @@ class TimeTravelDebugger(bdb.Bdb):
             return self.trace_dispatch
         if frame.f_lineno in self._source_injected_lines:
             return self.trace_dispatch
+        self._drain_pending_updates(frame, refresh_last_watch=False,
+                                    apply_live_edits=False)
         should_pause = self.stop_here(frame) or self._break_here(frame)
         self._handle_line(frame, should_pause)
         if self.quitting:
@@ -305,51 +348,27 @@ class TimeTravelDebugger(bdb.Bdb):
 
     def _break_here(self, frame):
         filename = self.canonic(frame.f_code.co_filename)
-        if filename not in self.breaks:
+        per_file = self._runtime_breaks.get(filename)
+        if not per_file:
             return False
         lineno = frame.f_lineno
-        if lineno not in self.breaks[filename]:
-            lineno = frame.f_code.co_firstlineno
-            if lineno not in self.breaks[filename]:
-                return False
-
-        bp, delete_ok, cond_error = self._effective_breakpoint(filename, lineno,
-                                                               frame)
-        if not bp:
+        info = per_file.get(lineno)
+        if not info:
             return False
-        self.currentbp = bp.number
-        if cond_error:
+        cond = info.get('condition')
+        if not cond:
+            return True
+        try:
+            locals_for_eval = self._effective_locals(frame)
+            return bool(eval(cond, frame.f_globals, locals_for_eval))
+        except Exception as e:
             self._post({
                 'type': 'breakpointError',
-                'file': bp.file,
-                'line': bp.line,
-                'error': cond_error,
+                'file': info.get('file') or frame.f_code.co_filename,
+                'line': lineno,
+                'error': '{}: {}'.format(type(e).__name__, e),
             })
-        if delete_ok and bp.temporary:
-            self.do_clear(str(bp.number))
-        return True
-
-    def _effective_breakpoint(self, filename, lineno, frame):
-        for bp in bdb.Breakpoint.bplist.get((filename, lineno), []):
-            if not bp.enabled:
-                continue
-            if not bdb.checkfuncname(bp, frame):
-                continue
-            bp.hits += 1
-            if not bp.cond:
-                if bp.ignore > 0:
-                    bp.ignore -= 1
-                    continue
-                return bp, True, None
-            try:
-                if eval(bp.cond, frame.f_globals, frame.f_locals):
-                    if bp.ignore > 0:
-                        bp.ignore -= 1
-                        continue
-                    return bp, True, None
-            except Exception as e:
-                return bp, False, '{}: {}'.format(type(e).__name__, e)
-        return None, None, None
+            return True
 
     # --- snapshot construction ---------------------------------------------
 
@@ -631,19 +650,8 @@ class TimeTravelDebugger(bdb.Bdb):
         # added or breakpoints changed during the previous block window).
         # Live variable edits are deliberately read AFTER `_wait` below, so
         # they reflect what the user does DURING this pause.
-        pending = self._consume_pending()
-        if pending:
-            new_watches = pending.get('watches')
-            if new_watches is not None:
-                self._watches = list(new_watches)
-                if self._buffer:
-                    self._buffer[-1]['watches'] = self._eval_watches(frame)
-            for change in (pending.get('breakpoint_changes') or []):
-                self._apply_bp_change(change)
-            # If the previous pause queued edits but the user only sent a step
-            # cmd later, those edits would be in the buffer too; apply them so
-            # they don't leak into a later pause.
-            self._apply_live_edits(frame, pending.get('live_edits') or [])
+        self._drain_pending_updates(frame, refresh_last_watch=True,
+                                    apply_live_edits=True)
 
         self._flush_buffer()
 
@@ -653,16 +661,8 @@ class TimeTravelDebugger(bdb.Bdb):
         # the value, typed a new expression, and pressed Enter). We must apply
         # these BEFORE returning control to bdb so the next bytecode reads
         # the new value — without this, edits would lag one full step.
-        post_pending = self._consume_pending()
-        if post_pending:
-            self._apply_live_edits(frame, post_pending.get('live_edits') or [])
-            # Also apply any breakpoint changes queued during the pause so the
-            # next dispatch sees them.
-            for change in (post_pending.get('breakpoint_changes') or []):
-                self._apply_bp_change(change)
-            new_watches = post_pending.get('watches')
-            if new_watches is not None:
-                self._watches = list(new_watches)
+        self._drain_pending_updates(frame, refresh_last_watch=False,
+                                    apply_live_edits=True)
 
         if cmd == 0:
             self.set_continue()
@@ -685,6 +685,22 @@ class TimeTravelDebugger(bdb.Bdb):
         if cmd != 4:
             self._reapply_live_overrides()
 
+    def _drain_pending_updates(self, frame, refresh_last_watch=False,
+                               apply_live_edits=True):
+        pending = self._consume_pending()
+        if not pending:
+            return False
+        new_watches = pending.get('watches')
+        if new_watches is not None:
+            self._watches = list(new_watches)
+            if refresh_last_watch and self._buffer:
+                self._buffer[-1]['watches'] = self._eval_watches(frame)
+        for change in (pending.get('breakpoint_changes') or []):
+            self._apply_bp_change(change)
+        if apply_live_edits:
+            self._apply_live_edits(frame, pending.get('live_edits') or [])
+        return True
+
     def _apply_bp_change(self, change):
         op = change.get('op')
         f = change.get('file')
@@ -694,13 +710,19 @@ class TimeTravelDebugger(bdb.Bdb):
         if op == 'add':
             cond = change.get('condition') or None
             self._clear_bp_at(f, ln)
-            self.set_break(f, ln, cond=cond)
+            err = self.set_break(f, ln, cond=cond)
+            if err:
+                self._post({'type': 'breakpointError', 'file': f,
+                            'line': ln, 'error': str(err)})
         elif op == 'remove':
             self._clear_bp_at(f, ln)
         elif op == 'edit':
             self._clear_bp_at(f, ln)
             cond = change.get('condition') or None
-            self.set_break(f, ln, cond=cond)
+            err = self.set_break(f, ln, cond=cond)
+            if err:
+                self._post({'type': 'breakpointError', 'file': f,
+                            'line': ln, 'error': str(err)})
 
     def _clear_bp_at(self, filename, lineno):
         try:

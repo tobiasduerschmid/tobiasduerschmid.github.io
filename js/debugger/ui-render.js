@@ -38,6 +38,76 @@
     var i = p.lastIndexOf('/');
     return i >= 0 ? p.substring(i + 1) : p;
   }
+  function debugManagerIcon(name) {
+    var svg = "<svg class='tvm-debug-manager-svg' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden='true' focusable='false'>";
+    if (name === 'playData') {
+      return svg + "<polygon points='5,4 15,12 5,20' fill='currentColor'/>" +
+        "<circle cx='17.5' cy='12' r='3.3' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='17.5' cy='12' r='1.2' fill='currentColor'/></svg>";
+    }
+    if (name === 'backData') {
+      return svg + "<polygon points='19,4 9,12 19,20' fill='currentColor'/>" +
+        "<circle cx='6.5' cy='12' r='3.3' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='6.5' cy='12' r='1.2' fill='currentColor'/></svg>";
+    }
+    if (name === 'plus') {
+      return svg + "<path d='M12 5v14M5 12h14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round'/></svg>";
+    }
+    if (name === 'edit') {
+      return svg + "<path d='M5 16.5 15.7 5.8a2.1 2.1 0 0 1 3 3L8 19.5H5z' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linejoin='round'/>" +
+        "<path d='m14 7.5 2.5 2.5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
+    }
+    if (name === 'trash') {
+      return svg + "<path d='M6 7h12M10 7V5h4v2M8 10l.7 9h6.6L16 10' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+    }
+    if (name === 'dataWatch') {
+      return svg + "<circle cx='8.5' cy='12' r='4' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
+        "<circle cx='8.5' cy='12' r='1.35' fill='currentColor'/>" +
+        "<path d='M14 7h5M14 12h5M14 17h5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
+    }
+    return '';
+  }
+  function debugToolbarIcon(name) {
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden='true'>";
+    if (name === 'play') {
+      return svg + "<polygon points='5,3 21,12 5,21' fill='currentColor'/></svg>";
+    }
+    if (name === 'stop') {
+      return svg + "<rect x='4' y='4' width='16' height='16' rx='1.5' fill='currentColor'/></svg>";
+    }
+    if (name === 'over') {
+      return svg + "<path d='M 3,16 Q 12,2 20,14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>" +
+        "<polygon points='20,14 23,9 16,11' fill='currentColor'/>" +
+        "<circle cx='12' cy='21' r='2.4' fill='currentColor'/></svg>";
+    }
+    if (name === 'into') {
+      return svg + "<line x1='12' y1='2' x2='12' y2='14' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+        "<polygon points='12,17 6,10 18,10' fill='currentColor'/>" +
+        "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/></svg>";
+    }
+    if (name === 'out') {
+      return svg + "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/>" +
+        "<line x1='12' y1='10' x2='12' y2='18' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+        "<polygon points='12,4 6,11 18,11' fill='currentColor'/></svg>";
+    }
+    if (name === 'back') {
+      return svg + "<path d='M 21,16 Q 12,2 4,14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>" +
+        "<polygon points='4,14 1,9 8,11' fill='currentColor'/>" +
+        "<circle cx='12' cy='21' r='2.4' fill='currentColor'/></svg>";
+    }
+    if (name === 'backContinue') {
+      return svg + "<polygon points='19,4 7,12 19,20' fill='currentColor'/>" +
+        "<circle cx='6' cy='12' r='3' fill='currentColor'/></svg>";
+    }
+    if (name === 'backOut') {
+      return svg + "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/>" +
+        "<line x1='12' y1='10' x2='12' y2='18' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+        "<polygon points='12,4 6,11 18,11' fill='currentColor'/>" +
+        "<path d='M 18,7 H 7' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round'/>" +
+        "<polygon points='7,7 12,3.5 12,10.5' fill='currentColor'/></svg>";
+    }
+    return '';
+  }
   function defaultHelpers(h) {
     h = h || {};
     return {
@@ -49,6 +119,136 @@
       setSectionCollapsed: h.setSectionCollapsed || function () {},
       isVarScopeEditable: h.isVarScopeEditable || function () { return false; },
     };
+  }
+
+  function watchpointRemovePreferenceKey(tutorialId) {
+    return 'tutorial-debug-watchpoint-remove-choice-' + (tutorialId || 'default');
+  }
+
+  function getWatchpointRemovePreference(tutorialId) {
+    try {
+      var choice = localStorage.getItem(watchpointRemovePreferenceKey(tutorialId));
+      return (choice === 'watch' || choice === 'delete') ? choice : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setWatchpointRemovePreference(tutorialId, choice) {
+    try {
+      if (choice === 'watch' || choice === 'delete') {
+        localStorage.setItem(watchpointRemovePreferenceKey(tutorialId), choice);
+      }
+    } catch (e) { /* localStorage unavailable */ }
+  }
+
+  function showRemoveWatchpointDialog(watchpoint) {
+    var old = document.querySelector('.tvm-bp-dialog-backdrop');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    return new Promise(function (resolve) {
+      var done = false;
+      var previousFocus = document.activeElement;
+      var backdrop = document.createElement('div');
+      backdrop.className = 'tvm-bp-dialog-backdrop';
+      backdrop.setAttribute('role', 'presentation');
+
+      var dialog = document.createElement('div');
+      dialog.className = 'tvm-bp-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'tvm-wp-remove-dialog-title');
+
+      var header = document.createElement('div');
+      header.className = 'tvm-bp-dialog-header';
+      var marker = document.createElement('span');
+      marker.className = 'tvm-bp-dialog-marker tvm-bp-dialog-marker-watchpoint';
+      marker.innerHTML = debugManagerIcon('dataWatch');
+      header.appendChild(marker);
+
+      var titleWrap = document.createElement('div');
+      titleWrap.className = 'tvm-bp-dialog-title-wrap';
+      var title = document.createElement('h3');
+      title.id = 'tvm-wp-remove-dialog-title';
+      title.className = 'tvm-bp-dialog-title';
+      title.textContent = 'Remove Data Watchpoint';
+      var loc = document.createElement('div');
+      loc.className = 'tvm-bp-dialog-location';
+      loc.textContent = watchpoint && watchpoint.expr ? watchpoint.expr : '';
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(loc);
+      header.appendChild(titleWrap);
+
+      var body = document.createElement('div');
+      body.className = 'tvm-bp-dialog-body';
+      var prompt = document.createElement('div');
+      prompt.className = 'tvm-bp-dialog-copy';
+      prompt.textContent = 'Do you want to keep this expression as a normal watch?';
+      body.appendChild(prompt);
+      var rememberLabel = document.createElement('label');
+      rememberLabel.className = 'tvm-bp-dialog-check';
+      var remember = document.createElement('input');
+      remember.type = 'checkbox';
+      var rememberText = document.createElement('span');
+      rememberText.textContent = "Don't ask again";
+      rememberLabel.appendChild(remember);
+      rememberLabel.appendChild(rememberText);
+      body.appendChild(rememberLabel);
+
+      var actions = document.createElement('div');
+      actions.className = 'tvm-bp-dialog-actions';
+      var cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'tvm-bp-dialog-btn tvm-bp-dialog-cancel';
+      cancel.textContent = 'Cancel';
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'tvm-bp-dialog-btn tvm-bp-dialog-clear';
+      del.textContent = 'Delete';
+      var keep = document.createElement('button');
+      keep.type = 'button';
+      keep.className = 'tvm-bp-dialog-btn tvm-bp-dialog-save';
+      keep.textContent = 'Turn into Watch';
+      actions.appendChild(cancel);
+      actions.appendChild(del);
+      actions.appendChild(keep);
+
+      dialog.appendChild(header);
+      dialog.appendChild(body);
+      dialog.appendChild(actions);
+      backdrop.appendChild(dialog);
+      document.body.appendChild(backdrop);
+
+      function close(result) {
+        if (done) return;
+        done = true;
+        backdrop.removeEventListener('keydown', onKeydown);
+        if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        try {
+          if (previousFocus && previousFocus.focus) previousFocus.focus();
+        } catch (e) {}
+        resolve(result);
+      }
+      function choice(which) {
+        close({ choice: which, remember: !!remember.checked });
+      }
+      function onKeydown(e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          close(null);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          choice('watch');
+        }
+      }
+      backdrop.addEventListener('keydown', onKeydown);
+      backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === backdrop) close(null);
+      });
+      cancel.addEventListener('click', function () { close(null); });
+      del.addEventListener('click', function () { choice('delete'); });
+      keep.addEventListener('click', function () { choice('watch'); });
+      setTimeout(function () { keep.focus(); }, 0);
+    });
   }
 
   // -- Step toolbar ---------------------------------------------------------
@@ -65,16 +265,16 @@
       rootEl.classList.add('tvm-debug-toolbar');
       rootEl.innerHTML =
         '<span class="tvm-debug-status"></span>' +
-        '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)"><i class="fa fa-play"></i></button>' +
-        '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)"><i class="fa fa-forward-step"></i></button>' +
-        '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)"><i class="fa fa-arrow-down"></i></button>' +
-        '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)"><i class="fa fa-arrow-up"></i></button>' +
+        '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + debugToolbarIcon('play') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + debugToolbarIcon('over') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + debugToolbarIcon('into') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + debugToolbarIcon('out') + '</button>' +
         '<span class="tvm-debug-divider"></span>' +
-        '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)"><i class="fa fa-backward-step"></i></button>' +
-        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)"><i class="fa fa-backward"></i></button>' +
-        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)"><i class="fa fa-arrow-up"></i></button>' +
+        '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + debugToolbarIcon('back') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + debugToolbarIcon('backContinue') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + debugToolbarIcon('backOut') + '</button>' +
         '<span class="tvm-debug-divider"></span>' +
-        '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)"><i class="fa fa-stop"></i></button>';
+        '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + debugToolbarIcon('stop') + '</button>';
       var btns = rootEl.querySelectorAll('.tvm-debug-step');
       for (var i = 0; i < btns.length; i++) {
         (function (btn) {
@@ -93,7 +293,7 @@
       var b = btns[i];
       var cmd = b.getAttribute('data-cmd');
       // Reverse-time controls and Stop are always available during a session.
-      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backOut' || cmd === 'stop');
+      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' || cmd === 'stop');
       b.disabled = !alwaysOn && disabled;
     }
     var statusEl = rootEl.querySelector('.tvm-debug-status');
@@ -109,9 +309,10 @@
     if (!rootEl || rootEl.dataset.shellBuilt) return;
     rootEl.dataset.shellBuilt = '1';
     var sections = [
-      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
       { key: 'stack',   label: 'Call Stack',  icon: 'fa-layer-group',        empty: 'Start debugging to see the call stack.' },
       { key: 'vars',    label: 'Variables',   icon: 'fa-list',               empty: 'Start debugging to see variables.' },
+      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
+      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: 'Add breakpoints or data watchpoints.' },
       { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' },
     ];
     rootEl.innerHTML = sections.map(function (s) {
@@ -149,6 +350,7 @@
     helpers = defaultHelpers(helpers);
     buildCombinedShell(rootEl, helpers);
     renderWatch(findSectionBody(rootEl, 'watch'), state, dispatch, helpers);
+    renderBreakpoints(findSectionBody(rootEl, 'breakpoints'), state, dispatch, helpers);
     renderCallStack(findSectionBody(rootEl, 'stack'), state, dispatch, helpers);
     renderVariables(findSectionBody(rootEl, 'vars'), state, dispatch, helpers);
     renderHistory(findSectionBody(rootEl, 'history'), state, dispatch, helpers);
@@ -378,6 +580,29 @@
     return null;
   }
 
+  function displayFrameForSnapshot(snap, frameIdx) {
+    if (!snap || !snap.stack) return null;
+    var frame = snap.stack[frameIdx];
+    if (!frame) return null;
+    var topIdx = snap.stack.length - 1;
+    if (frameIdx === topIdx && snap.watchpoint_origin) {
+      var copy = {};
+      for (var k in frame) copy[k] = frame[k];
+      copy.file = snap.watchpoint_origin.file || frame.file;
+      copy.line = snap.watchpoint_origin.line || frame.line;
+      return copy;
+    }
+    return frame;
+  }
+
+  function displayLocationForSnapshot(snap) {
+    var origin = snap && snap.watchpoint_origin;
+    return {
+      file: (origin && origin.file) || (snap && snap.file),
+      line: (origin && origin.line) || (snap && snap.line),
+    };
+  }
+
   // -- Call stack -----------------------------------------------------------
 
   function renderCallStack(view, state, dispatch, helpers) {
@@ -394,7 +619,7 @@
       ? state.selectedFrameIdx
       : (snap.stack.length - 1);
     for (var i = snap.stack.length - 1; i >= 0; i--) {
-      var f = snap.stack[i];
+      var f = displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
       rows.push('<div class="' + cls + '" data-frame-idx="' + i + '">' +
                 '<span class="tvm-debug-frame-fn">' + helpers.escape(f.function) + '</span>' +
@@ -431,11 +656,17 @@
             ? '<span class="tvm-debug-watch-error">' + helpers.escape(v.error) + '</span>'
             : helpers.escape(v.repr || v.preview || ''))
         : '<span class="tvm-debug-watch-na">—</span>';
+      var type = String(v && (v.type || v.kind) || '').toLowerCase();
+      var repr = String(v && (v.repr != null ? v.repr : v.preview) || '').trim();
+      var canPromote = v && !v.error && (type === 'bool' || type === 'boolean' || repr === 'True' || repr === 'False' || repr === 'true' || repr === 'false');
       rows.push('<div class="tvm-debug-watch-row">' +
                 '<span class="tvm-debug-watch-expr">' + helpers.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-remove" data-i="' + i + '" title="Remove">×</button>' +
+                (canPromote
+                  ? '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Turn to Data Watchpoint" aria-label="Turn to Data Watchpoint">' + debugManagerIcon('dataWatch') + '</button>'
+                  : '') +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
@@ -465,6 +696,204 @@
         });
       })(removeBtns[i2]);
     }
+    var promoteBtns = view.querySelectorAll('.tvm-debug-watch-promote');
+    for (var p = 0; p < promoteBtns.length; p++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var idx = +btn.getAttribute('data-i');
+          dispatch({ type: 'promoteWatchToWatchpoint', idx: idx });
+        });
+      })(promoteBtns[p]);
+    }
+  }
+
+  // -- Breakpoint manager --------------------------------------------------
+
+  function renderBreakpoints(view, state, dispatch, helpers) {
+    if (!view) return;
+    helpers = defaultHelpers(helpers);
+    var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
+      ? state.history[state.historyIdx]
+      : null;
+    var bpRows = [];
+    var breakpoints = state.breakpoints || {};
+    Object.keys(breakpoints).sort().forEach(function (path) {
+      var lines = Object.keys(breakpoints[path] || {}).map(function (n) { return +n; }).sort(function (a, b) { return a - b; });
+      lines.forEach(function (line) {
+        var info = breakpoints[path][line] || {};
+        var cond = info.condition
+          ? '<span class="tvm-debug-manager-condition">when ' + helpers.escape(info.condition) + '</span>'
+          : '<span class="tvm-debug-manager-muted">unconditional</span>';
+        var err = info.condError
+          ? '<span class="tvm-debug-manager-error">' + helpers.escape(info.condError) + '</span>'
+          : '';
+        bpRows.push(
+          '<div class="tvm-debug-manager-row tvm-debug-manager-code-row">' +
+          '<span class="tvm-debug-manager-dot"></span>' +
+          '<span class="tvm-debug-manager-main">' +
+          '<span class="tvm-debug-manager-title">' + helpers.escape(helpers.basename(path)) + ':' + line + '</span>' +
+          cond + err +
+          '</span>' +
+          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
+          '</div>'
+        );
+      });
+    });
+
+    var watchpoints = state.watchpoints || [];
+    var wpRows = watchpoints.map(function (wp) {
+      var v = snap && snap.watches ? snap.watches[wp.expr] : null;
+      var disabled = wp.enabled === false;
+      return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
+        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable data watchpoint' : 'Disable data watchpoint') + '">' +
+        '<input type="checkbox" data-wp-toggle="' + helpers.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span>' +
+        '</label>' +
+        '<span class="tvm-debug-manager-main">' +
+        '<span class="tvm-debug-manager-title">' + helpers.escape(wp.expr) + '</span>' +
+        '<span class="tvm-debug-manager-value">' + renderWatchValue(v, helpers) + '</span>' +
+        '</span>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + helpers.escape(wp.id) + '" title="Run to this data watchpoint" aria-label="Run to this data watchpoint">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + helpers.escape(wp.id) + '" title="Run back to this data watchpoint" aria-label="Run back to this data watchpoint">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + helpers.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
+        '</div>';
+    });
+    var watchpointControls =
+      '<div class="tvm-debug-manager-add">' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression becomes true" />' +
+      '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
+      '</div>' +
+      '<div class="tvm-debug-manager-actions">' +
+      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back</span></button>' +
+      '</div>';
+
+    view.innerHTML =
+      '<div class="tvm-debug-manager">' +
+      renderBreakpointGroup('manager-code-breakpoints', 'Code Breakpoints',
+        bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>', helpers) +
+      renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
+        wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>', helpers) +
+      watchpointControls +
+      '</div>';
+
+    var input = view.querySelector('.tvm-debug-watchpoint-input');
+    var addBtn = view.querySelector('.tvm-debug-watchpoint-add-btn');
+    function add() {
+      var expr = (input && input.value || '').trim();
+      if (!expr) return;
+      dispatch({ type: 'addWatchpoint', expr: expr });
+      if (input) input.value = '';
+    }
+    if (addBtn) addBtn.addEventListener('click', add);
+    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
+    wireManagerButtons(view, state, dispatch);
+    wireBreakpointGroups(view, helpers);
+  }
+
+  function renderBreakpointGroup(key, label, bodyHtml, helpers) {
+    var collapsed = helpers.getSubsectionCollapsed(key);
+    return '<section class="tvm-debug-manager-group' + (collapsed ? ' collapsed' : '') + '" data-manager-group="' + helpers.escape(key) + '">' +
+      '<button type="button" class="tvm-debug-manager-heading" data-manager-group-toggle="' + helpers.escape(key) + '">' +
+      '<span class="tvm-debug-manager-chevron">▾</span>' +
+      '<span>' + helpers.escape(label) + '</span>' +
+      '</button>' +
+      '<div class="tvm-debug-manager-group-body">' + bodyHtml + '</div>' +
+      '</section>';
+  }
+
+  function wireBreakpointGroups(view, helpers) {
+    var heads = view.querySelectorAll('[data-manager-group-toggle]');
+    for (var i = 0; i < heads.length; i++) {
+      (function (head) {
+        head.addEventListener('click', function () {
+          var key = head.getAttribute('data-manager-group-toggle');
+          var group = head.closest && head.closest('.tvm-debug-manager-group');
+          if (!group) return;
+          var nowCollapsed = !group.classList.contains('collapsed');
+          group.classList.toggle('collapsed', nowCollapsed);
+          helpers.setSubsectionCollapsed(key, nowCollapsed);
+        });
+      })(heads[i]);
+    }
+  }
+
+  function renderWatchValue(v, helpers) {
+    if (!v) return '<span class="tvm-debug-watch-na">—</span>';
+    if (v.error) return '<span class="tvm-debug-watch-error">' + helpers.escape(v.error) + '</span>';
+    return helpers.escape(v.repr || v.preview || '');
+  }
+
+  function wireManagerButtons(view, state, dispatch) {
+    var editBtns = view.querySelectorAll('[data-bp-edit]');
+    for (var i = 0; i < editBtns.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          dispatch({ type: 'editBreakpointCondition', path: btn.getAttribute('data-path'), line: +btn.getAttribute('data-line') });
+        });
+      })(editBtns[i]);
+    }
+    var removeBtns = view.querySelectorAll('[data-bp-remove]');
+    for (var j = 0; j < removeBtns.length; j++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          dispatch({ type: 'removeBreakpoint', path: btn.getAttribute('data-path'), line: +btn.getAttribute('data-line') });
+        });
+      })(removeBtns[j]);
+    }
+    var toggles = view.querySelectorAll('[data-wp-toggle]');
+    for (var k = 0; k < toggles.length; k++) {
+      (function (el) {
+        el.addEventListener('change', function () { dispatch({ type: 'toggleWatchpoint', id: el.getAttribute('data-wp-toggle') }); });
+      })(toggles[k]);
+    }
+    var runBtns = view.querySelectorAll('[data-wp-run]');
+    for (var r = 0; r < runBtns.length; r++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { dispatch({ type: 'runToWatchpoint', id: btn.getAttribute('data-wp-run') }); });
+      })(runBtns[r]);
+    }
+    var backBtns = view.querySelectorAll('[data-wp-back]');
+    for (var b = 0; b < backBtns.length; b++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { dispatch({ type: 'runBackToWatchpoint', id: btn.getAttribute('data-wp-back') }); });
+      })(backBtns[b]);
+    }
+    var wpRemoveBtns = view.querySelectorAll('[data-wp-remove]');
+    for (var w = 0; w < wpRemoveBtns.length; w++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-wp-remove');
+          var tutorialId = state && state.tutorialId;
+          var pref = getWatchpointRemovePreference(tutorialId);
+          function send(choice, remember) {
+            if (remember) setWatchpointRemovePreference(tutorialId, choice);
+            dispatch({ type: 'removeWatchpoint', id: id, choice: choice });
+          }
+          if (pref) {
+            send(pref, false);
+            return;
+          }
+          var watchpoints = (state && state.watchpoints) || [];
+          var wp = null;
+          for (var wi = 0; wi < watchpoints.length; wi++) {
+            if (String(watchpoints[wi].id) === String(id)) {
+              wp = watchpoints[wi];
+              break;
+            }
+          }
+          showRemoveWatchpointDialog(wp).then(function (result) {
+            if (!result || !result.choice) return;
+            send(result.choice, !!result.remember);
+          });
+        });
+      })(wpRemoveBtns[w]);
+    }
+    var runAll = view.querySelector('[data-wp-run-all]');
+    if (runAll) runAll.addEventListener('click', function () { dispatch({ type: 'runToWatchpoint' }); });
+    var backAll = view.querySelector('[data-wp-back-all]');
+    if (backAll) backAll.addEventListener('click', function () { dispatch({ type: 'runBackToWatchpoint' }); });
   }
 
   // -- History --------------------------------------------------------------
@@ -490,12 +919,13 @@
     var end = Math.min(n, start + 100);
     for (var i = start; i < end; i++) {
       var s = state.history[i];
+      var loc = displayLocationForSnapshot(s);
       var marker = (i === hi) ? ' active' : '';
       var ev = s.event === 'call' ? '↳' : s.event === 'return' ? '↰' : s.event === 'exception' ? '⚠' : '·';
       html += '<div class="tvm-debug-history-item' + marker + '" data-i="' + i + '">' +
               '<span class="tvm-debug-history-i">' + (i + 1) + '</span>' +
               '<span class="tvm-debug-history-ev">' + ev + '</span>' +
-              '<span class="tvm-debug-history-loc">' + helpers.escape(helpers.basename(s.file)) + ':' + s.line + '</span>' +
+              '<span class="tvm-debug-history-loc">' + helpers.escape(helpers.basename(loc.file)) + ':' + loc.line + '</span>' +
               '</div>';
     }
     html += '</div>';
@@ -520,6 +950,7 @@
     renderVariables: renderVariables,
     renderCallStack: renderCallStack,
     renderWatch: renderWatch,
+    renderBreakpoints: renderBreakpoints,
     renderHistory: renderHistory,
     buildCombinedShell: buildCombinedShell,
     findSectionBody: findSectionBody,
