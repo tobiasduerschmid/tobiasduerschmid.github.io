@@ -1,0 +1,153 @@
+title: "Time-Travel Debugger Demo (Node.js)"
+description: "Same time-travel debugger UI as the Python demo, this time on the in-browser JS sandbox used by the rest of the SEBook Node.js tutorials. Set breakpoints in the Monaco gutter, step through code, scrub the History scrubber, watch expressions, hover identifiers, and edit variable values mid-flight or rewound."
+
+# `browser` (sandboxed iframe) — same backend as nodejs.yml so the debugger
+# experience is consistent with the other Node.js tutorials.
+backend: browser
+debugger: true
+
+debugger_options:
+  back_in_time: true
+  max_history: 5000
+  snapshot_depth: 4
+  filter_globals: true
+  initial_breakpoints:
+    - file: "stats_pipeline.js"
+      line: 50
+
+require_tests: false
+autosave_type: files
+
+steps:
+  - title: "Debug a Node stats pipeline"
+    has_args: true
+    instructions: |
+      ## Time-travel debugger on Node.js
+
+      Same time-travel debugger UI as the Python demo, this time on the
+      in-browser JavaScript sandbox (the same backend as
+      `/SEBook/tools/nodejs-tutorial`) so the debug experience stays
+      consistent with the other Node.js tutorials.
+
+      The bundled program calls a chain of functions, mutates a list, and
+      computes a small statistic — enough surface to exercise every debugger
+      feature.
+
+      ### Things to try
+
+      1. A breakpoint is preset on the score line. Click in the gutter to add,
+         remove, or move breakpoints.
+      2. Click **Debug** (next to Run). The first time, WebContainer takes a
+         few seconds to boot Node.
+      3. **Step Into** (F11) into `computeScore`. Watch the **Call Stack**
+         tab grow. Click frames to inspect each.
+      4. **Step Back** (Shift+F10) to rewind through history. Notice the
+         gutter arrow turns gray when rewound.
+      5. **Watch** tab → add `records.length` and `scores.reduce((a,b)=>a+b,0) / Math.max(scores.length, 1)`.
+      6. **Hover** an identifier in the editor while paused.
+      7. Right-click a breakpoint dot → enter a condition like `record.grade === 'A'`.
+      8. Drag the **History** scrubber.
+      9. Click any value in **Variables** to edit it. Edits applied while live
+         take effect on the next step; edits made while rewound are recorded
+         and the session re-executes from the start to apply them.
+
+      ### Aliasing experiment
+
+      The function `registerStudent` deliberately appends to a shared array
+      stored on the function — a classic JS pitfall (the function-property
+      survives across calls). After running, expand `students` in different
+      `registerStudent` frames; they share the same `oid`.
+
+    files:
+      - path: "stats_pipeline.js"
+        language: "javascript"
+        content: |
+          // Student grade pipeline — exercises the debugger across many calls.
+
+          function makeRecord(name, rawScores) {
+            return { name, rawScores, grade: null };
+          }
+
+          function parseParameters(argv) {
+            let limit = null;
+            let curve = 0;
+            if (argv.length > 2 && argv[2] !== "all") limit = parseInt(argv[2], 10);
+            if (argv.length > 3) curve = parseFloat(argv[3]);
+            return { limit, curve };
+          }
+
+          function computeScore(record) {
+            const total = record.rawScores.reduce((a, b) => a + b, 0);
+            return total / record.rawScores.length;
+          }
+
+          function assignGrade(score) {
+            if (score >= 90) return "A";
+            if (score >= 80) return "B";
+            if (score >= 70) return "C";
+            if (score >= 60) return "D";
+            return "F";
+          }
+
+          function gradeDistribution(records) {
+            const dist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+            for (const r of records) dist[r.grade]++;
+            return dist;
+          }
+
+          function printDistribution(dist) {
+            const total = Object.values(dist).reduce((a, b) => a + b, 0);
+            for (const g of ["A", "B", "C", "D", "F"]) {
+              const bar = "#".repeat(dist[g]);
+              const pct = (100 * dist[g] / Math.max(total, 1)).toFixed(1);
+              console.log(`  ${g}: ${bar.padEnd(10)} (${dist[g]}, ${pct}%)`);
+            }
+          }
+
+          function average(scores) {
+            return scores.length
+              ? scores.reduce((a, b) => a + b, 0) / scores.length
+              : 0;
+          }
+
+          // Aliasing pitfall: function-property keeps the array alive across calls.
+          function registerStudent(name, rawScores) {
+            registerStudent.students = registerStudent.students || [];
+            const record = makeRecord(name, rawScores);
+            registerStudent.students.push(record);
+            return registerStudent.students;
+          }
+
+          function main() {
+            const { limit, curve } = parseParameters(process.argv);
+            let roster = [
+              ["Ada",      [95, 88, 92]],
+              ["Linus",    [72, 81, 78]],
+              ["Grace",    [98, 95, 91]],
+              ["Alan",     [60, 55, 70]],
+              ["Margaret", [85, 89, 87]],
+            ];
+            if (limit !== null) roster = roster.slice(0, limit);
+
+            const records = [];
+            const scores = [];
+            let students = [];
+            for (const [name, raw] of roster) {
+              students = registerStudent(name, raw);
+              const record = students[students.length - 1];
+              const score = Math.min(computeScore(record) + curve, 100);
+              record.grade = assignGrade(score);
+              scores.push(score);
+              records.push(record);
+            }
+
+            console.log(`Parameters: limit=${limit}, curve=${curve}`);
+            console.log(`Average: ${average(scores).toFixed(2)}`);
+            console.log("Grade distribution:");
+            printDistribution(gradeDistribution(records));
+            return records;
+          }
+
+          main();
+
+    open_file: "stats_pipeline.js"

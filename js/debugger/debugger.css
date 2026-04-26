@@ -69,11 +69,16 @@
   margin: 0 3px;
 }
 .tvm-debug-toolbar .tvm-debug-status {
-  margin-left: 8px;
+  flex: 0 0 160px;
+  min-width: 160px;
+  max-width: 160px;
+  margin-right: 8px;
   font-size: 11px;
   color: #5C4308;
   font-style: italic;
-  min-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---- Reload-needed inline note (when crossOriginIsolated is false) ------ */

@@ -131,6 +131,7 @@
 
     // Editor state to restore on debug stop
     this._editorWasReadOnly = false;
+    this._editor2WasReadOnly = false;
     this._panelOriginalFlex = '';
   }
 
@@ -138,13 +139,301 @@
   DebuggerController.prototype.install = function () {
     this.loadConfiguredBreakpoints();
     this.loadPersistedBreakpoints();
+    // Sync bus FIRST so subsequent installation can publish initial state
+    // and editors can attach and paint pre-set breakpoints synchronously.
+    this._initSync();
     this.installTabs();
     this.installDebugButton();
-    this.installGutterClickHandler();
-    this.installHoverProvider();
+    // Single attach call replaces the old installGutterClickHandler +
+    // installHoverProvider + refreshBpDecorations + scheduleBreakpointRefresh +
+    // editor read-only logic. Same call is also used by popped-out editors.
+    this._installEditorAttachments();
+    // Pick a transport channel based on backend. Pyodide uses a Web Worker +
+    // SharedArrayBuffer (legacy in-place code below). Webcontainer (Node.js)
+    // uses NodeChannel — spawns a Node process and talks JSON-over-stdio.
+    // Browser uses BrowserChannel — spawns a same-origin iframe with shared
+    // SAB and acorn-instrumented user code.
+    var backend = this.t.config && this.t.config.backend;
+    if (backend === 'webcontainer' && window.SEBookNodeChannel) {
+      this.channel = new window.SEBookNodeChannel(this, this.t);
+    } else if (backend === 'browser' && window.SEBookBrowserChannel) {
+      this.channel = new window.SEBookBrowserChannel(this, this.t);
+    }
+    if (this.channel && typeof this.channel.install === 'function') this.channel.install();
     this.attachWorkerListener();
-    this.refreshBpDecorations();
-    this.scheduleBreakpointRefresh();
+    // Repaint editor model swaps in main: when the user switches active file,
+    // the new file's breakpoints + current-line need to refresh. attach()'s
+    // onDidChangeModel handles this for the same editor; the active-file
+    // change is published below so the subscriber inside attach() repaints.
+    this._publishActiveFile();
+  };
+
+  // ===========================================================================
+  // Sync bus — single source of truth shared with popped-out windows
+  // ===========================================================================
+
+  DebuggerController.prototype._initSync = function () {
+    if (!window.DebuggerSync) {
+      console.warn('[SEBookDebugger] DebuggerSync not loaded; popouts disabled');
+      return;
+    }
+    var pm = this.t._popoutManager;
+    if (!pm || !pm.channel) {
+      // Popout manager not ready (no BroadcastChannel). The debugger still
+      // works, just without popout sync.
+      this.sync = null;
+      return;
+    }
+    var self = this;
+    this.sync = new window.DebuggerSync({
+      channel: pm.channel,
+      sourceId: 'dbg-main-' + Math.random().toString(36).slice(2, 10),
+      isAuthority: true,
+      initialState: this._buildSyncState(),
+    });
+    this.sync.onAction(function (action) { self._handleAction(action); });
+    this.sync.onHello(function () {
+      // A new mirror joined — make sure it gets a fresh full snapshot. The
+      // sync bus already replied with state+history; we just refresh in case
+      // late-bound state (e.g. activeFile) changed since construction.
+      self.sync.replaceState(self._buildSyncState());
+    });
+  };
+
+  DebuggerController.prototype._installEditorAttachments = function () {
+    if (!window.SEBookDebuggerEditor) {
+      console.warn('[SEBookDebugger] SEBookDebuggerEditor not loaded');
+      return;
+    }
+    if (!this.sync) {
+      // No sync available: at least install the legacy gutter click handler
+      // so the debugger remains usable in a single-window context.
+      this.installGutterClickHandler();
+      this.installHoverProvider();
+      this.refreshBpDecorations();
+      this.scheduleBreakpointRefresh();
+      return;
+    }
+    var self = this;
+    var helpers = {
+      monaco: window.monaco,
+      basename: function (p) { return self.basename(p); },
+      normalizePath: function (f) { return self.normalizeBreakpointPath(f); },
+    };
+    if (this.t.editor) {
+      this._editorAttach1 = window.SEBookDebuggerEditor.attach(this.t.editor, this.sync, Object.assign({}, helpers, {
+        getActiveFile: function () { return self._activeFileForEditor(self.t.editor); },
+      }));
+    }
+    if (this.t.editor2) {
+      this._editorAttach2 = window.SEBookDebuggerEditor.attach(this.t.editor2, this.sync, Object.assign({}, helpers, {
+        getActiveFile: function () { return self._activeFileForEditor(self.t.editor2); },
+      }));
+    }
+    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript'] });
+    // Repaint when the tutorial's active file changes (Monaco's onDidChangeModel
+    // already covers per-editor file swaps; this covers other state changes).
+  };
+
+  // Helper for editor-attach `getActiveFile`: returns the filename whose model
+  // is currently shown by the given editor instance.
+  DebuggerController.prototype._activeFileForEditor = function (editor) {
+    if (editor === this.t.editor2) return this.t._rightActiveFile || this.t.activeFileName;
+    return this.t._leftActiveFile || this.t.activeFileName;
+  };
+
+  // Build the current full sync state from controller fields. Called once on
+  // sync init and on hello-snapshot replies.
+  DebuggerController.prototype._buildSyncState = function () {
+    return {
+      tutorialId: this.t.tutorialId,
+      backend: this.t.config && this.t.config.backend,
+      debuggerEnabled: true,
+      activeFile: this.t.activeFileName || null,
+      paneForFile: {},
+      filesAvailable: this.t.editorModels ? Object.keys(this.t.editorModels) : [],
+      breakpoints: this._serializeBreakpoints(),
+      watches: ((this.session && this.session.watches) || this._pendingWatches || []).slice(),
+      session: this._buildSessionMeta(),
+      history: this.history.slice(),
+      historyIdx: this.historyIdx,
+      liveIdx: this.liveIdx,
+      selectedFrameIdx: this.selectedFrameIdx,
+      paused: this.paused,
+    };
+  };
+
+  DebuggerController.prototype._serializeBreakpoints = function () {
+    var out = {};
+    this.breakpoints.forEach(function (bps, path) {
+      var perFile = {};
+      bps.forEach(function (info, line) {
+        perFile[line] = { condition: info.condition || null, condError: info.condError || null };
+      });
+      out[path] = perFile;
+    });
+    return out;
+  };
+
+  DebuggerController.prototype._buildSessionMeta = function () {
+    return {
+      active: !!this.session,
+      capReached: !!(this.session && this.session.capReached),
+      status: (this.statusEl && this.statusEl.textContent) || '',
+      statusKind: this.session ? (this.paused ? 'paused' : 'running') : 'idle',
+      stepButtonsDisabled: this._areStepButtonsDisabled(),
+    };
+  };
+
+  DebuggerController.prototype._areStepButtonsDisabled = function () {
+    if (!this.stepToolbar) return true;
+    // Use Continue as a representative non-back/non-stop button.
+    var b = this.stepToolbar.querySelector('.tvm-debug-step[data-cmd="continue"]');
+    return b ? !!b.disabled : true;
+  };
+
+  // ── Publish helpers — call these after mutating internal state. ─────────
+  DebuggerController.prototype._publishBreakpoints = function () {
+    if (this.sync) this.sync.publish({ breakpoints: this._serializeBreakpoints() });
+  };
+  DebuggerController.prototype._publishWatches = function () {
+    if (this.sync) {
+      var w = ((this.session && this.session.watches) || this._pendingWatches || []).slice();
+      this.sync.publish({ watches: w });
+    }
+  };
+  DebuggerController.prototype._publishSession = function () {
+    if (this.sync) this.sync.publish({ session: this._buildSessionMeta() });
+  };
+  DebuggerController.prototype._publishCursor = function () {
+    if (this.sync) {
+      this.sync.publish({
+        historyIdx: this.historyIdx,
+        liveIdx: this.liveIdx,
+        selectedFrameIdx: this.selectedFrameIdx,
+        paused: this.paused,
+      });
+    }
+  };
+  DebuggerController.prototype._publishActiveFile = function () {
+    if (this.sync) this.sync.publish({
+      activeFile: this.t.activeFileName || null,
+      filesAvailable: this.t.editorModels ? Object.keys(this.t.editorModels) : [],
+    });
+  };
+  DebuggerController.prototype._publishHistoryReset = function () {
+    if (this.sync) this.sync.replaceState(this._buildSyncState());
+  };
+
+  // ── Action handler — routes popout requests + local dispatches. ─────────
+  DebuggerController.prototype._handleAction = function (action) {
+    if (!action || !action.type) return;
+    var self = this;
+    switch (action.type) {
+      case 'toggleBreakpoint': {
+        var fn = String(action.path || '').replace(/^\/tutorial\//, '');
+        if (fn) self.toggleBreakpoint(fn, action.line);
+        break;
+      }
+      case 'editBreakpointCondition': {
+        var fn2 = String(action.path || '').replace(/^\/tutorial\//, '');
+        if (fn2) self.editBreakpointCondition(fn2, action.line);
+        break;
+      }
+      case 'step': {
+        if (action.cmd) self.handleToolbarCmd(action.cmd);
+        break;
+      }
+      case 'setHistoryIdx': {
+        if (typeof action.idx === 'number' && action.idx >= 0 && action.idx < self.history.length) {
+          self.historyIdx = action.idx;
+          self.selectedFrameIdx = -1;
+          self.renderAll();
+          self._publishCursor();
+        }
+        break;
+      }
+      case 'setSelectedFrameIdx': {
+        if (typeof action.idx === 'number') {
+          self.selectedFrameIdx = action.idx;
+          self.renderVariables();
+          self.renderCallStack();
+          self.renderCurrentLine();
+          self._publishCursor();
+        }
+        break;
+      }
+      case 'addWatch': {
+        var expr = (action.expr || '').trim();
+        if (!expr) break;
+        if (!self.session) {
+          self._pendingWatches = self._pendingWatches || [];
+          self._pendingWatches.push(expr);
+        } else {
+          self.session.watches.push(expr);
+          if (self.queueWatchUpdate()) {
+            self._pendingWatches = self.session.watches.slice();
+            self.refreshWatchesNow();
+          } else {
+            self.session.watches.pop();
+          }
+        }
+        self.renderWatch();
+        self._publishWatches();
+        break;
+      }
+      case 'removeWatch': {
+        if (typeof action.idx !== 'number') break;
+        if (self.session) {
+          var removed = self.session.watches.splice(action.idx, 1);
+          if (self.queueWatchUpdate()) {
+            self._pendingWatches = self.session.watches.slice();
+            self.refreshWatchesNow();
+          } else {
+            self.session.watches.splice(action.idx, 0, removed[0]);
+          }
+        } else if (self._pendingWatches) {
+          self._pendingWatches.splice(action.idx, 1);
+        }
+        self.renderWatch();
+        self._publishWatches();
+        break;
+      }
+      case 'editVariable': {
+        self.applyVarEdit(action.scope, action.frameIdx, action.name, action.expr);
+        break;
+      }
+      case 'startSession': {
+        self.startSession();
+        break;
+      }
+      case 'stopSession': {
+        self.stopSession();
+        break;
+      }
+      case 'setActiveFile': {
+        if (action.filename && self.t.editorModels && self.t.editorModels[action.filename]) {
+          if (typeof self.t._setActiveFile === 'function') self.t._setActiveFile(action.filename);
+          self._publishActiveFile();
+        }
+        break;
+      }
+    }
+  };
+
+  // ── Public: open a popout debugger window. ──────────────────────────────
+  DebuggerController.prototype.popoutDebugger = function () {
+    if (!this.t._popoutManager || !this.t._popoutManager.isAvailable()) {
+      console.warn('[SEBookDebugger] popout manager unavailable');
+      return null;
+    }
+    if (!this.sync) {
+      console.warn('[SEBookDebugger] sync bus unavailable; cannot pop out');
+      return null;
+    }
+    // Make sure the latest state is in the bus before the popup connects.
+    this.sync.replaceState(this._buildSyncState());
+    return this.t._popoutManager.detachDebugger();
   };
 
   DebuggerController.prototype.handleStepChange = function () {
@@ -160,6 +449,9 @@
     this.renderAll();
     this.refreshBpDecorations();   // breakpoint visuals follow file switches
     this.scheduleBreakpointRefresh();
+    // Publish a fresh full snapshot so popouts forget stale history.
+    this._publishHistoryReset();
+    this._publishActiveFile();
   };
 
   DebuggerController.prototype.scheduleBreakpointRefresh = function () {
@@ -341,16 +633,32 @@
     this.debugBtn.innerHTML = '<i class="fa fa-bug"></i> Debug';
     this.debugBtn.addEventListener('click', function () { self.startSession(); });
 
-    // Insert just before the Run button (or at end if not found)
+    // Pop-out button: opens the debugger view in its own window. Sync bus
+    // mirrors all state in real time, so popping out mid-session is safe.
+    this.debugPopoutBtn = document.createElement('button');
+    this.debugPopoutBtn.className = 'tvm-debug-popout-btn';
+    this.debugPopoutBtn.title = 'Open debugger in a separate window';
+    this.debugPopoutBtn.innerHTML = '<i class="fa fa-up-right-from-square"></i>';
+    this.debugPopoutBtn.style.marginLeft = '4px';
+    this.debugPopoutBtn.addEventListener('click', function () { self.popoutDebugger(); });
+
+    // Insert just before the Run button (or at end if not found). Popout
+    // button sits adjacent to Debug.
     var runBtn = actions.querySelector('.tvm-run-btn');
-    if (runBtn) actions.insertBefore(this.debugBtn, runBtn);
-    else actions.appendChild(this.debugBtn);
+    if (runBtn) {
+      actions.insertBefore(this.debugBtn, runBtn);
+      actions.insertBefore(this.debugPopoutBtn, runBtn);
+    } else {
+      actions.appendChild(this.debugBtn);
+      actions.appendChild(this.debugPopoutBtn);
+    }
 
     // Step toolbar — inserted after Run; hidden until session active.
     this.stepToolbar = document.createElement('div');
     this.stepToolbar.className = 'tvm-debug-toolbar';
     this.stepToolbar.style.display = 'none';
     this.stepToolbar.innerHTML =
+      '<span class="tvm-debug-status"></span>' +
       '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)"><i class="fa fa-play"></i></button>' +
       '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)"><i class="fa fa-forward-step"></i></button>' +
       '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)"><i class="fa fa-arrow-down"></i></button>' +
@@ -358,8 +666,7 @@
       '<span class="tvm-debug-divider"></span>' +
       '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)"><i class="fa fa-backward-step"></i></button>' +
       '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)"><i class="fa fa-stop"></i></button>' +
-      '<span class="tvm-debug-status"></span>';
+      '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)"><i class="fa fa-stop"></i></button>';
     actions.appendChild(this.stepToolbar);
 
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
@@ -471,6 +778,10 @@
       self._pendingOverrideKey = null;
       self.outputDuringDebug = '';
       self.outputLines = 0;
+      // Replay is a fresh execution trace. Reset the shared sync history at
+      // the same time as the controller history so editor decorations and
+      // popouts do not interpret new replay indices against stale rows.
+      self._publishHistoryReset();
       self.disableStepButtons(true);
       self.t._worker.postMessage({ type: 'enableDebugger' });
     };
@@ -526,14 +837,6 @@
     return true;
   };
 
-  DebuggerController.prototype.findReplayAnchor = function (startIdx, endIdx, anchor) {
-    if (!anchor) return -1;
-    for (var i = Math.max(0, startIdx); i <= endIdx; i++) {
-      if (this.snapshotMatchesReplayAnchor(this.history[i], anchor)) return i;
-    }
-    return -1;
-  };
-
   DebuggerController.prototype.restoreReplayFrameSelection = function (anchor) {
     var snap = this.history[this.historyIdx];
     if (!snap || !snap.stack || !snap.stack.length || !anchor) {
@@ -565,7 +868,9 @@
     var fcmd = this.session.autoFollowup;
     var anchor = this.session.replayAnchor;
     if (target == null || fcmd == null) return false;
-    var matchedIdx = this.findReplayAnchor(startIdx, endIdx, anchor);
+    var matchedIdx = anchor && this.snapshotMatchesReplayAnchor(this.history[endIdx], anchor)
+      ? endIdx
+      : -1;
     if (anchor && matchedIdx < 0) {
       var guard = this.session.replayGuardLimit || Math.max(target + 1000, 2000);
       if (this.liveIdx < guard) {
@@ -647,10 +952,15 @@
       if (cmd === 'back' || cmd === 'stop') continue;
       btns[i].disabled = disabled;
     }
+    this._publishSession();
   };
 
   DebuggerController.prototype.setStatus = function (text) {
-    if (this.statusEl) this.statusEl.textContent = text || '';
+    if (this.statusEl) {
+      this.statusEl.textContent = text || '';
+      this.statusEl.title = text || '';
+    }
+    this._publishSession();
   };
 
   // ===========================================================================
@@ -700,6 +1010,7 @@
     }
     this.persistBreakpoints();
     this.refreshBpDecorations();
+    this._publishBreakpoints();
     if (this.session) {
       if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
     }
@@ -733,6 +1044,7 @@
     bps.set(line, { condition: cond });
     this.persistBreakpoints();
     this.refreshBpDecorations();
+    this._publishBreakpoints();
     if (this.session) {
       var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
       if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
@@ -900,6 +1212,10 @@
   // Worker protocol — start session, listen for paused/complete
   // ===========================================================================
   DebuggerController.prototype.attachWorkerListener = function () {
+    // When a channel is in use (e.g. NodeChannel for webcontainer), it owns
+    // its own dispatch path — paused/log/editError etc. are routed via the
+    // channel's stdout parser, not via the worker's postMessage stream.
+    if (this.channel) return;
     if (!this.t._worker) return;
     var self = this;
     this.t._worker.addEventListener('message', function (e) {
@@ -922,13 +1238,17 @@
 
   DebuggerController.prototype.startSession = function () {
     if (this.session) return;   // already active
-    if (!this.t._worker) { alert('Pyodide not ready yet'); return; }
+    // For pyodide we need a Worker reference; for webcontainer (NodeChannel)
+    // we need the WebContainer to be booted; for browser we just need the
+    // BrowserChannel module loaded (no async runtime to wait on).
+    var backend = this.t.config && this.t.config.backend;
+    if (!this.channel && !this.t._worker) { alert('Pyodide not ready yet'); return; }
+    if (this.channel && backend === 'webcontainer' && !this.t._webcontainer) {
+      alert('WebContainer is not ready yet'); return;
+    }
 
-    // Sync the active file content to the worker filesystem before debug.
-    // The tutorial's existing flow writes files via the `write` message; we
-    // ensure the active editor model is also written so the path matches what
-    // bdb sees in frame.f_code.co_filename.
-    var filename = this.t.activeFileName;
+    var step = this.t.steps && this.t.steps[this.t.currentStep >= 0 ? this.t.currentStep : 0];
+    var filename = (step && step.run_file) ? step.run_file : this.t.activeFileName;
     if (!filename) { alert('No active file to debug'); return; }
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
     if (!model) { alert('Cannot locate code for ' + filename); return; }
@@ -937,10 +1257,14 @@
     var files = this.collectDebugFiles();
     files[path] = code;
 
-    // Set up SAB
-    var sab = new SharedArrayBuffer(SAB_TOTAL_BYTES);
-    var i32 = new Int32Array(sab);
-    var u8 = new Uint8Array(sab);
+    // SAB only matters for the pyodide (worker) path. For NodeChannel the
+    // session object holds metadata only — the channel owns its own pipes.
+    var sab = null, i32 = null, u8 = null;
+    if (!this.channel) {
+      sab = new SharedArrayBuffer(SAB_TOTAL_BYTES);
+      i32 = new Int32Array(sab);
+      u8 = new Uint8Array(sab);
+    }
 
     this.session = {
       sab: sab, i32: i32, u8: u8,
@@ -959,12 +1283,20 @@
     this.outputDuringDebug = '';
     this.outputLines = 0;
 
-    // Lock editor read-only
-    if (this.t.editor) {
-      this._editorWasReadOnly = !!this.t.editor.getOption(monaco.editor.EditorOption.readOnly);
-      this.t.editor.updateOptions({ readOnly: true });
+    // Lock editor read-only. When the sync/editor-attach path is available it
+    // owns read-only state per editor; doing it here first would cause the
+    // attachment to save "true" as the original value and leave the editor
+    // locked after Stop. The fallback path still needs the legacy lock.
+    if (!this.sync) {
+      if (this.t.editor) {
+        this._editorWasReadOnly = !!this.t.editor.getOption(monaco.editor.EditorOption.readOnly);
+        this.t.editor.updateOptions({ readOnly: true });
+      }
+      if (this.t.editor2) {
+        this._editor2WasReadOnly = !!this.t.editor2.getOption(monaco.editor.EditorOption.readOnly);
+        this.t.editor2.updateOptions({ readOnly: true });
+      }
     }
-    if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: true });
 
     // Disable Run/Test
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
@@ -974,17 +1306,31 @@
     if (this.debugBtn) this.debugBtn.style.display = 'none';
     if (this.stepToolbar) this.stepToolbar.style.display = 'flex';
 
-    // Auto-switch to the combined Debug tab (Watch + Call Stack + Variables
-    // stacked). Note: we deliberately do NOT collapse the output panel —
-    // prints from the user's program go there and need to stay visible during
-    // the debug session. Hiding them caused confusion in earlier iterations.
     this.activateTab('dbg-combined');
     this.disableStepButtons(true);
     this.setStatus('starting…');
+    this._publishSession();
+    this._publishWatches();
+    this._publishCursor();
 
-    // Load/enable the worker extension first. The extension owns debugInit, so
-    // on a fresh worker we must wait for debuggerReady before sending it.
-    this.t._worker.postMessage({ type: 'enableDebugger' });
+    if (this.channel) {
+      // NodeChannel: bypasses debugInit/runDebug postMessage handshake.
+      this.session.pendingStart = null;
+      this.channel.startSession({
+        filename: path,
+        code: code,
+        files: files,
+        breakpoints: this.collectBreakpointsForRun(),
+        watches: this.session.watches,
+        args: this.session.args || [],
+        options: this.opts,
+        overrides: this.session.replayOverrides || [],
+      });
+    } else {
+      // Pyodide: load/enable the worker extension first; debugInit waits for
+      // debuggerReady so a fresh worker has time to importScripts.
+      this.t._worker.postMessage({ type: 'enableDebugger' });
+    }
   };
 
   DebuggerController.prototype.onDebuggerReady = function () {
@@ -1011,13 +1357,23 @@
   DebuggerController.prototype.sendCommand = function (cmdCode) {
     if (!this.session) return;
     this.paused = false;
-    Atomics.store(this.session.i32, SLOT_CMD, cmdCode);
-    Atomics.notify(this.session.i32, SLOT_CMD, 1);
+    if (this.channel) {
+      this.channel.sendCommand(cmdCode);
+    } else {
+      Atomics.store(this.session.i32, SLOT_CMD, cmdCode);
+      Atomics.notify(this.session.i32, SLOT_CMD, 1);
+    }
     if (this.session.pendingLiveEdits && this.session.pendingLiveEdits.length) {
       this.session.pendingLiveEdits = [];
     }
     if (this.session.pendingBreakpointChanges && this.session.pendingBreakpointChanges.length) {
       this.session.pendingBreakpointChanges = [];
+    }
+    // Publish user-visible cursor movement for real commands. Internal replay
+    // steps should stay visually parked on the user's selected line until the
+    // replay reaches its anchor; otherwise edits appear to jump back to line 1.
+    if (!this.session || this.session.replayTargetIdx == null) {
+      this._publishCursor();
     }
   };
 
@@ -1056,6 +1412,11 @@
     if (!this.session) return false;
     this.session.pendingBreakpointChanges = this.session.pendingBreakpointChanges || [];
     this.session.pendingBreakpointChanges.push(change);
+    if (this.channel) {
+      var ok = this.channel.sendBreakpointChanges([change]);
+      if (!ok) this.session.pendingBreakpointChanges.pop();
+      return ok;
+    }
     var json = JSON.stringify(this.session.pendingBreakpointChanges);
     if (!this.writePayload(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, json, 'breakpoints')) {
       this.session.pendingBreakpointChanges.pop();
@@ -1087,6 +1448,7 @@
 
   DebuggerController.prototype.queueWatchUpdate = function () {
     if (!this.session) return false;
+    if (this.channel) return this.channel.sendWatches(this.session.watches);
     var json = JSON.stringify(this.session.watches);
     return this.writePayload(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, json, 'watches');
   };
@@ -1111,13 +1473,20 @@
     var startIdx = this.history.length;
     if (msg.replace_last && snaps.length && this.liveIdx >= 0) {
       startIdx = this.liveIdx;
-      this.history[this.liveIdx] = snaps[snaps.length - 1];
+      this.history[this.liveIdx] = snaps[0];
+      for (var r = 1; r < snaps.length; r++) this.history.push(snaps[r]);
+      this.liveIdx = this.history.length - 1;
     } else {
       for (var i = 0; i < snaps.length; i++) this.history.push(snaps[i]);
       this.liveIdx = this.history.length - 1;
     }
     var endIdx = this.liveIdx;
     this.historyIdx = this.liveIdx;
+    // Cheap incremental broadcast — popouts learn about new snapshots
+    // without us re-shipping the entire history array each tick.
+    if (this.sync && snaps.length) {
+      this.sync.appendHistory(snaps, !!msg.replace_last);
+    }
     // If we're in the middle of a replay (post-edit re-execution), let the
     // replay driver decide whether to auto-step further or hand control back.
     if (this.handlePausedDuringReplay(startIdx, endIdx)) return;
@@ -1126,6 +1495,8 @@
     this.disableStepButtons(false);
     this.setStatus('paused at line ' + this.history[this.liveIdx].line);
     this.renderAll();
+    this._publishCursor();
+    this._publishSession();
   };
 
   DebuggerController.prototype.onDebugComplete = function (msg) {
@@ -1147,6 +1518,7 @@
       var info = bps.get(msg.line);
       info.condError = msg.error;
       this.refreshBpDecorations();
+      this._publishBreakpoints();
     }
   };
 
@@ -1157,13 +1529,20 @@
 
   DebuggerController.prototype.endSession = function (keepHistory) {
     // Restore editor + UI state
-    if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._editorWasReadOnly });
-    if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._editorWasReadOnly });
+    if (!this.sync) {
+      if (this.t.editor) this.t.editor.updateOptions({ readOnly: this._editorWasReadOnly });
+      if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._editor2WasReadOnly });
+    }
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
     if (runBtn) { runBtn.disabled = false; runBtn.title = 'Run current file (Ctrl+Enter)'; }
     if (this.stepToolbar) this.stepToolbar.style.display = 'none';
     if (this.debugBtn) this.debugBtn.style.display = '';
     this.clearCurrentLineDecoration();
+    // For NodeChannel, kill the spawned Node process. Pyodide's worker stays
+    // alive across sessions (just resets its state via _ttd_cleanup).
+    if (this.channel && typeof this.channel.dispose === 'function') {
+      try { this.channel.dispose(); } catch (e) {}
+    }
     this.session = null;
     this.paused = false;
     if (!keepHistory) {
@@ -1172,6 +1551,7 @@
       this.liveIdx = -1;
       this.renderAll();
     }
+    this._publishHistoryReset();
   };
 
   // ===========================================================================
@@ -1199,6 +1579,13 @@
     this.renderWatch();
     this.renderHistory();
     this.renderCurrentLine();
+    // Auto-publish cursor + session AFTER any local re-render. This ensures
+    // popouts always see fresh state without each mutation site having to
+    // remember to publish — pre-existing paths like stepBack and the replay
+    // machinery used to mutate historyIdx without calling _publishCursor,
+    // which left popout variables/stack/etc. stale.
+    this._publishCursor();
+    this._publishSession();
   };
 
   DebuggerController.prototype.renderVariables = function () {
@@ -1471,7 +1858,10 @@
     var topIdx = snap.stack.length - 1;
     var frameDepth = topIdx - frameIdx;
     var frame = snap.stack[frameIdx];
+    var backend = this.t.config && this.t.config.backend;
     var sourceLocal = scope === 'locals' && frame && frame.function !== '<module>' && frameIdx === topIdx;
+    var sourceModule = backend === 'pyodide' && frame && frame.function === '<module>';
+    var sourceReplay = sourceLocal || sourceModule;
     var override = {
       snapshot_idx: this.historyIdx,
       frame_depth: frameDepth,
@@ -1483,7 +1873,7 @@
       first_line: frame && frame.first_line,
       hit_count: snap.location_hit || 1,
     };
-    if (sourceLocal) {
+    if (sourceReplay) {
       override.source = true;
     }
     var rewound = this.historyIdx < this.liveIdx;
@@ -1495,7 +1885,7 @@
       this._pendingOverrideKey = scope + '|' + frameIdx + '|' + name;
       this.setStatus('replaying with edit…');
       this.restartFromHistory('__pause');
-    } else if (sourceLocal) {
+    } else if (sourceReplay) {
       this.session.pendingOverrides = this.session.pendingOverrides || [];
       this.session.pendingOverrides.push(override);
       this.setStatus('replaying with edit…');
@@ -1521,6 +1911,11 @@
     // overwrite the SAB region with the full pending set.
     this.session.pendingLiveEdits = this.session.pendingLiveEdits || [];
     this.session.pendingLiveEdits.push(edit);
+    if (this.channel) {
+      var ok = this.channel.sendLiveEdits([edit]);
+      if (!ok) this.session.pendingLiveEdits.pop();
+      return ok;
+    }
     var json = JSON.stringify(this.session.pendingLiveEdits);
     if (!this.writePayload(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, json, 'edits')) {
       this.session.pendingLiveEdits.pop();
@@ -1557,6 +1952,7 @@
           self.renderVariables();
           self.renderCallStack();
           self.renderCurrentLine();
+          self._publishCursor();
         });
       })(frames[j]);
     }
@@ -1617,6 +2013,7 @@
       }
       input.value = '';
       self.renderWatch();
+      self._publishWatches();
     }
     if (addBtn) addBtn.addEventListener('click', add);
     if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
@@ -1637,6 +2034,7 @@
             self._pendingWatches.splice(idx, 1);
           }
           self.renderWatch();
+          self._publishWatches();
         });
       })(removeBtns[i]);
     }
@@ -1698,13 +2096,16 @@
     var snap = this.history[this.historyIdx];
     var frameIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : (snap.stack.length - 1);
     var frame = snap.stack[frameIdx];
-    if (!frame) return;
+    if (!frame) { this.clearCurrentLineDecoration(); return; }
     var line = frame.line;
     // Map worker filename (`/tutorial/foo.py`) to Monaco model URI
     var fname = frame.file.replace(/^\/tutorial\//, '');
-    if (fname !== this.t.activeFileName) {
-      // Could switch the file — for v1, just show in current editor only when
-      // the current file matches.
+    var editor = this.ensureFrameFileVisible(fname);
+    if (!editor) { this.clearCurrentLineDecoration(); return; }
+    var model = editor.getModel && editor.getModel();
+    if (!model || line < 1 || line > model.getLineCount()) {
+      this.clearCurrentLineDecoration();
+      return;
     }
     var rewound = this.historyIdx < this.liveIdx;
     var cls = rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line';
@@ -1717,15 +2118,40 @@
         glyphMarginClassName: glyph,
       },
     }];
-    this.currentLineDecoIds = this.t.editor.deltaDecorations(this.currentLineDecoIds, deco);
+    this.clearCurrentLineDecoration();
+    var prev = editor._dbgCurrentLineIds || [];
+    editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);
+    this.currentLineDecoIds = editor._dbgCurrentLineIds;
     // Reveal the line so it's in view
-    this.t.editor.revealLineInCenterIfOutsideViewport(line);
+    editor.revealLineInCenterIfOutsideViewport(line);
+  };
+
+  DebuggerController.prototype.ensureFrameFileVisible = function (fname) {
+    if (!fname || !this.t.editorModels || !this.t.editorModels[fname]) return null;
+    var split = !!(this.t._splitActive && this.t.editor2);
+    var pane = split && this.t._paneForFile ? this.t._paneForFile(fname) : 'left';
+    var editor = split && pane === 'right' ? this.t.editor2 : this.t.editor;
+    var entry = this.t.editorModels[fname];
+    var current = this.activeFileForEditor(editor);
+    if (current !== fname || editor.getModel() !== entry.model) {
+      if (typeof this.t._setActiveFile === 'function') {
+        this.t._setActiveFile(fname);
+      } else {
+        editor.setModel(entry.model);
+      }
+      if (this.t._renderTabs) this.t._renderTabs();
+    }
+    return split && pane === 'right' ? this.t.editor2 : this.t.editor;
   };
 
   DebuggerController.prototype.clearCurrentLineDecoration = function () {
-    if (this.t.editor) {
-      this.currentLineDecoIds = this.t.editor.deltaDecorations(this.currentLineDecoIds, []);
+    var editors = [this.t.editor, this.t.editor2];
+    for (var i = 0; i < editors.length; i++) {
+      var editor = editors[i];
+      if (!editor) continue;
+      editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
     }
+    this.currentLineDecoIds = [];
   };
 
   // Resolve render targets. Legacy panel keys map into section bodies of

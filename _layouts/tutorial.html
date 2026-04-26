@@ -213,6 +213,13 @@
 
   {% assign tutorial_reset_type = tutorial_data.reset_type | default: 'files' %}
 
+  {%- comment -%}
+    The COI service worker (adds COOP/COEP=credentialless headers) is needed by:
+      - WebContainers backend (always)
+      - Any tutorial with the time-travel debugger enabled, because the debugger
+        relies on SharedArrayBuffer + Atomics.wait — even on the browser backend
+        where we share a SAB with a sandboxed iframe.
+  {%- endcomment -%}
   {% if tutorial_backend == 'webcontainer' or tutorial_data.debugger %}
   <!-- Register Cross-Origin Isolation service worker.
        WebContainers needs it always; the time-travel debugger needs it for

@@ -24,7 +24,7 @@
   var CHANNEL_PREFIX = 'ttsync-';
   var STORAGE_PREFIX = 'tutorial-popout-state-';
   var HEARTBEAT_MS = 2000;
-  var DEAD_AFTER_MS = 6000;
+  var DEAD_AFTER_MS = 15000;
   var CLOSE_POLL_MS = 1000;
 
   function uid() {
@@ -47,6 +47,7 @@
     this.panePopupUrl = opts.panePopupUrl || '/tutorial-pane-popup.html';
     this.outputPopupUrl = opts.outputPopupUrl || '/tutorial-output-popup.html';
     this.graphPopupUrl = opts.graphPopupUrl || '/tutorial-graph-popup.html';
+    this.debuggerPopupUrl = opts.debuggerPopupUrl || '/tutorial-debugger-popup.html';
     this.tutorialTitle = opts.tutorialTitle || '';
     this.hooks = opts.hooks || {};
 
@@ -86,7 +87,11 @@
 
   TutorialPopoutManager.prototype.isDetached = function (role) {
     var p = this._popups[role];
-    return !!(p && p.window && !p.window.closed);
+    if (!p) return false;
+    if (p.window && !p.window.closed) return true;
+    // After a main-window reload the popup can reconnect over BroadcastChannel,
+    // but the opener Window reference is gone. Treat a recent heartbeat as live.
+    return !!(!p.window && p.lastSeen && (Date.now() - p.lastSeen) <= DEAD_AFTER_MS);
   };
 
   TutorialPopoutManager.prototype.getDetachedRoles = function () {
@@ -280,6 +285,36 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Detach: time-travel debugger view
+  //   Role: 'debugger'. The popup connects via SebookPopoutClient + creates
+  //   a DebuggerSync mirror; main publishes state via DebuggerSync. We don't
+  //   send any meta-snapshot here because debugger state flows through the
+  //   sync bus on `dbg:hello` from the popup.
+  // ---------------------------------------------------------------------------
+  TutorialPopoutManager.prototype.detachDebugger = function () {
+    if (!this._available) return null;
+    var role = 'debugger';
+    var existing = this._popups[role];
+    if (existing && existing.window && !existing.window.closed) {
+      existing.window.focus();
+      this._safeHook('onDebuggerPopupReopened');
+      return existing.window;
+    }
+    var winName = 'tdebugger-' + this.pathname;
+    var darkMode = document.documentElement.classList.contains('dark-mode');
+    var url = this.debuggerPopupUrl
+      + '?channel=' + encodeURIComponent(this.channelName)
+      + '&dark=' + (darkMode ? '1' : '0')
+      + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
+    var w = window.open(url, winName, 'width=520,height=820,resizable=yes,scrollbars=yes');
+    if (!w) return null;
+    this._popups[role] = { window: w, openedAt: Date.now() };
+    this._notifyPopupOpened(role);
+    this._writeStateMirror();
+    return w;
+  };
+
+  // ---------------------------------------------------------------------------
   // Detach: instructions
   // ---------------------------------------------------------------------------
   TutorialPopoutManager.prototype.detachInstructions = function () {
@@ -319,10 +354,12 @@
   // to reattach without hunting down the popup window).
   TutorialPopoutManager.prototype.requestPopupClose = function (role) {
     var p = this._popups[role];
-    if (!p || !p.window || p.window.closed) return;
+    if (!p) return;
     this._post('force-close', { targetRole: role });
     // Best-effort direct close too (allowed for windows we opened).
-    try { p.window.close(); } catch (e) { /* ignore */ }
+    if (p.window && !p.window.closed) {
+      try { p.window.close(); } catch (e) { /* ignore */ }
+    }
   };
 
   // Close every tab/pane popup (instructions popup is left untouched). Called
@@ -384,7 +421,7 @@
       case 'request-refactor-workspace': this._handleRefactorWorkspaceRequest(msg); break;
       case 'apply-refactor-edits': this._handleApplyRefactorEdits(msg); break;
       case 'popup-closing': this._handlePopupClosing(msg); break;
-      case 'heartbeat-ack': /* informational */ break;
+      case 'heartbeat-ack': this._handleHeartbeatAck(msg); break;
       default: break;
     }
   };
@@ -394,9 +431,9 @@
     if (!role) return;
     // We may already track the window from window.open(); also remember the
     // role even if the user opened a popup directly via URL (rare).
-    if (!this._popups[role] || !this._popups[role].window) {
-      this._popups[role] = { window: null, openedAt: Date.now() };
-    }
+    var entry = this._popups[role] || { window: null, openedAt: Date.now() };
+    entry.lastSeen = Date.now();
+    this._popups[role] = entry;
     if (role.indexOf('tab:') === 0) {
       var filename = role.slice(4);
       if (this.hooks.getFileMeta) {
@@ -426,6 +463,21 @@
       }
     }
     this._notifyPopupOpened(role);
+  };
+
+  TutorialPopoutManager.prototype._handleHeartbeatAck = function (msg) {
+    var role = msg.role;
+    if (!role) return;
+    var entry = this._popups[role];
+    if (!entry) {
+      // Existing popup survived a main-window reload. It will answer the new
+      // manager's heartbeat even though it won't re-run its initial hello.
+      this._popups[role] = { window: null, openedAt: Date.now(), lastSeen: Date.now() };
+      this._handleHello({ role: role });
+      this._writeStateMirror();
+      return;
+    }
+    entry.lastSeen = Date.now();
   };
 
   TutorialPopoutManager.prototype._handleFileEdit = function (msg) {
@@ -502,22 +554,32 @@
   TutorialPopoutManager.prototype._handlePopupClosing = function (msg) {
     var role = msg.role;
     if (!role) return;
+    var entry = this._popups[role];
     var passthrough = msg.finalContent;
+    var appliedFinalContent = false;
     // Apply final content if a tab is closing
     if (role.indexOf('tab:') === 0 && typeof msg.finalContent === 'string') {
-      this._safeHook('onFileEditFromPopup', role.slice(4), msg.finalContent,
-        (this._fileVersions[role.slice(4)] || 0) + 1);
+      var fn = role.slice(4);
+      var nextVersion = (this._fileVersions[fn] || 0) + 1;
+      this._fileVersions[fn] = nextVersion;
+      this._safeHook('onFileEditFromPopup', fn, msg.finalContent, nextVersion);
+      appliedFinalContent = true;
     }
     // Apply final per-file contents map for pane closures
     if (role.indexOf('pane:') === 0 && msg.finalContents && typeof msg.finalContents === 'object') {
       var self = this;
       Object.keys(msg.finalContents).forEach(function (fn) {
-        self._safeHook('onFileEditFromPopup', fn, msg.finalContents[fn],
-          (self._fileVersions[fn] || 0) + 1);
+        var nextVersion = (self._fileVersions[fn] || 0) + 1;
+        self._fileVersions[fn] = nextVersion;
+        self._safeHook('onFileEditFromPopup', fn, msg.finalContents[fn], nextVersion);
       });
       passthrough = msg.finalContents;
+      appliedFinalContent = true;
     }
-    var entry = this._popups[role];
+    if (!entry) {
+      if (appliedFinalContent) this._writeStateMirror();
+      return;
+    }
     delete this._popups[role];
     this._safeHook('onPopupClosed', role, passthrough);
     this._writeStateMirror();
@@ -540,6 +602,10 @@
       var p = this._popups[role];
       if (!p) continue;
       if (p.window && p.window.closed) {
+        delete this._popups[role];
+        this._safeHook('onPopupClosed', role, null);
+        changed = true;
+      } else if (!p.window && p.lastSeen && (Date.now() - p.lastSeen) > DEAD_AFTER_MS) {
         delete this._popups[role];
         this._safeHook('onPopupClosed', role, null);
         changed = true;

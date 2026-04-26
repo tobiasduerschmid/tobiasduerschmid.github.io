@@ -34,7 +34,7 @@
     MONACO_LOADER: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
     MONACO_VS: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
     MARKED: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-    WEBCONTAINER: 'https://cdn.jsdelivr.net/npm/@webcontainer/api@1.5.5/dist/index.js',
+    WEBCONTAINER: 'https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/dist/index.js',
   };
 
   // ---------------------------------------------------------------------------
@@ -281,10 +281,17 @@
     this._jsRunnerFrame = null;
     this._jsRunnerMsgId = 0;
 
-    // Time-travel debugger opt-in (pyodide only). When false, no debugger code
-    // is loaded — see js/debugger/main.js. When true, _buildUI() lazy-loads the
-    // debugger module after the base UI is constructed.
-    this.debuggerEnabled = !!options.debugger && backend === 'pyodide';
+    // Time-travel debugger opt-in. Supported backends:
+    //   - pyodide (Python, via bdb + sys.settrace, in a Web Worker + SAB)
+    //   - webcontainer (Node.js, via in-process V8 inspector + JSON-over-stdio)
+    //   - browser (in-page sandboxed JS, via acorn AST instrumentation +
+    //     sibling iframe + SAB for sync pause)
+    // When false, no debugger code is loaded — see js/debugger/main.js. When
+    // true, _buildUI() lazy-loads the debugger module after the base UI is
+    // constructed.
+    this.debuggerEnabled = !!options.debugger && (
+      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser'
+    );
     this.debuggerOptions = options.debuggerOptions || {};
   }
 
@@ -2687,7 +2694,30 @@
     var self = this;
     this._showLoading('Booting WebContainers\u2026');
 
-    return import(CDN.WEBCONTAINER).then(function (module) {
+    // Under COEP=credentialless (set by the COI service worker), dynamic
+    // `import()` of cross-origin ESM defaults to a no-cors fetch and the
+    // browser refuses to instantiate the resulting opaque response as a
+    // module. Prepending a `<link rel="modulepreload" crossorigin="anonymous">`
+    // forces a CORS fetch (jsdelivr serves `Access-Control-Allow-Origin: *`),
+    // and the dynamic import then reuses the CORS-fetched copy from cache.
+    function preloadModule(url) {
+      return new Promise(function (resolve, reject) {
+        var existing = document.querySelector('link[rel="modulepreload"][href="' + url + '"]');
+        if (existing) return resolve();
+        var link = document.createElement('link');
+        link.rel = 'modulepreload';
+        link.href = url;
+        link.crossOrigin = 'anonymous';
+        link.onload = resolve;
+        link.onerror = function () { reject(new Error('Failed to preload: ' + url)); };
+        document.head.appendChild(link);
+      });
+    }
+
+    return preloadModule(CDN.WEBCONTAINER)
+      .catch(function () { /* preload failed \u2014 try import anyway */ })
+      .then(function () { return import(CDN.WEBCONTAINER); })
+      .then(function (module) {
       var WebContainer = module.WebContainer;
       return WebContainer.boot();
     }).then(function (wc) {
@@ -2831,7 +2861,7 @@
 
     var escaped = code.split('<\/script>').join('<\\/script>');
 
-    var sandboxScript = 
+    var sandboxScript =
       '(function(){\n' +
       '  var rid=' + rid + ';\n' +
       '  function __s(t,x){parent.postMessage({__jsrun:true,__rid:rid,type:t,text:x},"*");}\n' +
@@ -3245,6 +3275,8 @@
   // .claude/plans/what-would-be-options-temporal-ritchie.md for architecture.
   TutorialCode.prototype._loadDebuggerModule = function () {
     var self = this;
+    var needsNodeChannel = self.config.backend === 'webcontainer';
+    var needsBrowserChannel = self.config.backend === 'browser';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -3256,7 +3288,16 @@
         css.href = '/js/debugger/debugger.css?v=' + dbgAssetVersion;
         document.head.appendChild(css);
       }
-      function done() {
+      function loadScriptOnce(src) {
+        return new Promise(function (res, rej) {
+          var s = document.createElement('script');
+          s.src = src;
+          s.onload = res;
+          s.onerror = function () { rej(new Error('Failed to load: ' + src)); };
+          document.head.appendChild(s);
+        });
+      }
+      function attach() {
         ensureCss();
         if (window.SEBookDebugger && typeof window.SEBookDebugger.attach === 'function') {
           try { window.SEBookDebugger.attach(self); } catch (e) { return reject(e); }
@@ -3266,12 +3307,36 @@
         }
       }
       ensureCss();
-      if (window.SEBookDebugger) { done(); return; }
-      var script = document.createElement('script');
-      script.src = '/js/debugger/main.js?v=' + dbgAssetVersion;
-      script.onload = done;
-      script.onerror = function () { reject(new Error('Failed to load debugger module')); };
-      document.head.appendChild(script);
+      // Load shared modules (sync bus, editor-attach, ui-render) in parallel
+      // BEFORE main.js — main.js wires them together in install(). The same
+      // modules are also loaded by tutorial-debugger-popup.html so popouts
+      // share the exact same code path.
+      var sharedScripts = Promise.all([
+        window.DebuggerSync ? null : loadScriptOnce('/js/debugger/sync.js?v=' + dbgAssetVersion),
+        window.SEBookDebuggerEditor ? null : loadScriptOnce('/js/debugger/editor-attach.js?v=' + dbgAssetVersion),
+        window.SEBookDebuggerUI ? null : loadScriptOnce('/js/debugger/ui-render.js?v=' + dbgAssetVersion),
+      ]);
+      var p = sharedScripts.then(function () {
+        if (window.SEBookDebugger) return null;
+        return loadScriptOnce('/js/debugger/main.js?v=' + dbgAssetVersion);
+      });
+      // Webcontainer tutorials also need the node-channel adapter so the
+      // controller can spawn + drive a Node process for debugging.
+      if (needsNodeChannel) {
+        p = p.then(function () {
+          if (window.SEBookNodeChannel) return null;
+          return loadScriptOnce('/js/debugger/node-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      // Browser-backend tutorials use the browser channel (sandboxed iframe
+      // + acorn AST instrumentation + SAB for synchronous step pause).
+      if (needsBrowserChannel) {
+        p = p.then(function () {
+          if (window.SEBookBrowserChannel) return null;
+          return loadScriptOnce('/js/debugger/browser-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      p.then(attach).catch(reject);
     });
   };
 
@@ -4482,6 +4547,7 @@
       panePopupUrl: this.config.panePopupUrl || '/tutorial-pane-popup.html',
       outputPopupUrl: this.config.outputPopupUrl || '/tutorial-output-popup.html',
       graphPopupUrl: this.config.graphPopupUrl || '/tutorial-graph-popup.html',
+      debuggerPopupUrl: this.config.debuggerPopupUrl || '/tutorial-debugger-popup.html',
       tutorialTitle: this.config.tutorialTitle || this._deriveTutorialTitle(),
       hooks: {
         onStepChangeRequest: function (idx) {

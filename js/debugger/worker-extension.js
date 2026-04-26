@@ -31,7 +31,7 @@
 
 // Bump this when shipping a fix to the debugger so it's visible in the console
 // that the new version is loaded (otherwise stale-SW caching is invisible).
-var TTD_VERSION = '0.6.3-replay-anchors';
+var TTD_VERSION = '0.6.5-module-source-replay';
 self.postMessage({ type: 'log', msg: '[ttd worker] loaded v' + TTD_VERSION });
 
 var SAB_HEADER_BYTES = 32;          // 8 Int32 slots

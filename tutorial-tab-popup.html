@@ -13,6 +13,7 @@
     })();
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/js/debugger/debugger.css' | relative_url }}">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -61,153 +62,23 @@
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/editor-attach.js' | relative_url }}"></script>
+  <script src="{{ '/js/popout/shared-editor.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
-  (function () {
-    var filename = new URLSearchParams(location.search).get('filename') || '';
-    if (!filename) {
-      document.getElementById('overlayEl').textContent = 'Invalid popup URL (missing filename).';
-      return;
-    }
-
-    var els = {
-      filename: document.getElementById('filenameEl'),
-      status:   document.getElementById('statusEl'),
-      overlay:  document.getElementById('overlayEl'),
-      orphan:   document.getElementById('orphanEl'),
-      close:    document.getElementById('closeBtn'),
-      editor:   document.getElementById('editorRoot'),
-    };
-    els.filename.textContent = filename;
-    els.close.addEventListener('click', function () { window.close(); });
-
-    // Editor state
-    var editor = null;
-    var monacoModel = null;
-    var currentVersion = 0;
-    var suppressEditEvents = false;
-    var refactoringHost = null;
-
-    var client = SebookPopoutClient.connect({
-      role: 'tab:' + filename,
-      statusEl: els.status,
-      statusClass: 'ttp-status',
-      overlayEl: els.overlay,
-      onMessage: handleMessage,
-      onDarkModeChange: function (enabled) {
-        if (window.monaco) {
-          monaco.editor.setTheme(window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
-                                  : (enabled ? 'vs-dark' : 'vs'));
-        }
-      },
-      getFinalState: function () {
-        return { finalContent: monacoModel ? monacoModel.getValue() : null };
+    SebookSharedEditor.bootForRole({
+      kind: 'tab',
+      filename: new URLSearchParams(location.search).get('filename') || '',
+      els: {
+        filename: document.getElementById('filenameEl'),
+        status:   document.getElementById('statusEl'),
+        overlay:  document.getElementById('overlayEl'),
+        orphan:   document.getElementById('orphanEl'),
+        close:    document.getElementById('closeBtn'),
+        editor:   document.getElementById('editorRoot'),
       },
     });
-
-    document.title = filename + ' — ' + client.tutorialTitle;
-
-    // ── Editor lifecycle ─────────────────────────────────────────────────
-    function bootMonaco(content, language) {
-      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
-      require(['vs/editor/editor.main'], function () {
-        if (window.SebookMonacoLangs) window.SebookMonacoLangs.register(monaco);
-        var lang = window.SebookMonacoLangs
-          ? window.SebookMonacoLangs.languageForFile(filename, language)
-          : (language || 'plaintext');
-        var dark = document.documentElement.classList.contains('dark-mode');
-        var theme = window.SebookMonacoLangs ? (dark ? 'sebook-dark' : 'sebook-light')
-                                              : (dark ? 'vs-dark' : 'vs');
-        monacoModel = monaco.editor.createModel(content || '', lang);
-        editor = monaco.editor.create(els.editor, {
-          model: monacoModel, theme: theme, fontSize: 14,
-          minimap: { enabled: false }, scrollBeyondLastLine: false,
-          automaticLayout: true, tabSize: 2, wordWrap: 'on',
-          padding: { top: 8 },
-        });
-
-        var debounceTimer;
-        function flushEdit() {
-          clearTimeout(debounceTimer);
-          currentVersion++;
-          client.post('file-edit', {
-            filename: filename, content: monacoModel.getValue(), version: currentVersion,
-          });
-        }
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
-          // Flush latest edit immediately so main has the freshest content
-          // before save side effects (autosave, React preview patch, UML).
-          flushEdit();
-          client.post('request-save', { filename: filename });
-        });
-        monacoModel.onDidChangeContent(function () {
-          if (suppressEditEvents) return;
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(flushEdit, 30);
-        });
-        if (window.SebookRefactorings) {
-          refactoringHost = window.SebookRefactorings.createPopupHost(client, {
-            flush: flushEdit,
-            getActiveFileName: function () { return filename; },
-            getActiveContent: function () { return monacoModel ? monacoModel.getValue() : ''; },
-          });
-          window.SebookRefactorings.attach({
-            monaco: monaco,
-            editors: [editor],
-            getActiveFileName: function () { return filename; },
-            getWorkspace: refactoringHost.getWorkspace,
-            applyEdits: refactoringHost.applyEdits,
-          });
-        }
-      });
-    }
-
-    function applySnapshot(snap) {
-      if (!snap || snap.filename !== filename) return;
-      if (typeof snap.version === 'number') currentVersion = snap.version;
-      if (typeof snap.darkMode === 'boolean') {
-        document.documentElement.classList.toggle('dark-mode', snap.darkMode);
-      }
-      if (!editor) {
-        bootMonaco(snap.content || '', snap.language || '');
-      } else if (monacoModel.getValue() !== snap.content) {
-        suppressEditEvents = true;
-        try { monacoModel.setValue(snap.content || ''); }
-        finally { suppressEditEvents = false; }
-      }
-      els.orphan.style.display = 'none';
-      els.editor.style.display = '';
-      client.markConnected();
-    }
-
-    function showOrphaned() {
-      els.orphan.style.display = '';
-      els.editor.style.display = 'none';
-      client.setStatus('File not in current step', 'warn');
-    }
-
-    // ── Role-specific message routing ────────────────────────────────────
-    function handleMessage(msg) {
-      if (refactoringHost && refactoringHost.handleMessage(msg)) return;
-      switch (msg.type) {
-        case 'file-snapshot':
-          if (msg.filename === filename) applySnapshot(msg);
-          break;
-        case 'state-snapshot':
-          if (msg.files && msg.files[filename]) applySnapshot(msg.files[filename]);
-          break;
-        case 'step-change':
-          // Mark orphaned if the new step doesn't include our file.
-          if (Array.isArray(msg.fileList) && msg.fileList.indexOf(filename) === -1) {
-            showOrphaned();
-          }
-          break;
-        case 'save-confirmed':
-          if (msg.filename === filename) client.flashStatus('Saved ✓', 'ok');
-          break;
-      }
-    }
-  })();
   </script>
 </body>
 </html>

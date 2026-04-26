@@ -1,0 +1,188 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Debugger &mdash; Tutorial</title>
+  <script>
+    // Apply dark/light theme from URL before any paint to avoid a flash.
+    (function () {
+      var p = new URLSearchParams(location.search);
+      if (p.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/js/debugger/debugger.css' | relative_url }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
+    html:not(.dark-mode) body { background: #fff; color: #222; }
+    .tdp-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
+      flex-shrink: 0; font-size: 12.5px;
+    }
+    html:not(.dark-mode) .tdp-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; }
+    .tdp-title { font-weight: 600; }
+    .tdp-status { color: #888; font-size: 11.5px; margin-left: auto; }
+    .tdp-status.ok { color: #4caf50; }
+    .tdp-status.warn { color: #d4a017; }
+    .tdp-status.bad { color: #c0392b; }
+    .tdp-toolbar-host {
+      display: flex; align-items: center; gap: 4px; padding: 6px 12px;
+      background: #1a1a1c; border-bottom: 1px solid #2a2a2e; flex-shrink: 0;
+    }
+    html:not(.dark-mode) .tdp-toolbar-host { background: #fafafa; border-bottom-color: #d4d4d4; }
+    .tdp-toolbar-host .tvm-debug-toolbar { display: flex; }
+    #debugViewRoot {
+      flex: 1; min-height: 0; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .tdp-overlay {
+      position: absolute; inset: 0; background: rgba(20,20,28,0.92); color: #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; z-index: 999;
+    }
+    html:not(.dark-mode) .tdp-overlay { background: rgba(255,255,255,0.94); color: #333; }
+    .tdp-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="tdp-bar">
+    <span class="tdp-title"><i class="fa fa-bug"></i> Debugger</span>
+    <span class="tdp-status" id="statusEl">Connecting&hellip;</span>
+  </div>
+  <div class="tdp-toolbar-host" id="toolbarRoot"></div>
+  <div class="tdp-wrap">
+    <div id="debugViewRoot" class="tvm-debug-view tvm-debug-view-dbg-combined"></div>
+    <div class="tdp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
+  </div>
+
+  <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/ui-render.js' | relative_url }}"></script>
+  <script>
+  (function () {
+    'use strict';
+    var els = {
+      status:    document.getElementById('statusEl'),
+      overlay:   document.getElementById('overlayEl'),
+      toolbar:   document.getElementById('toolbarRoot'),
+      debugView: document.getElementById('debugViewRoot'),
+    };
+
+    var client = SebookPopoutClient.connect({
+      role: 'debugger',
+      statusEl: els.status,
+      statusClass: 'tdp-status',
+      overlayEl: els.overlay,
+      onMessage: handleMessage,
+    });
+    document.title = 'Debugger — ' + client.tutorialTitle;
+
+    // Mirror sync over the same BroadcastChannel SebookPopoutClient joined.
+    var sync = new window.DebuggerSync({
+      channel: client.channel,
+      sourceId: 'dbg-popout-' + Math.random().toString(36).slice(2, 10),
+      isAuthority: false,
+      role: 'debugger',
+    });
+
+    // Section / subsection collapse persistence — same localStorage keys main
+    // uses, so collapse state agrees across windows.
+    function makeHelpers(tutorialId) {
+      var keyForSection = function (k) { return 'tutorial-debug-section-' + tutorialId + '-' + k; };
+      var keyForSub = function (k) { return 'tutorial-debug-subsection-' + tutorialId + '-' + k; };
+      return {
+        getSectionCollapsed: function (k) {
+          try { return localStorage.getItem(keyForSection(k)) === 'collapsed'; }
+          catch (e) { return false; }
+        },
+        setSectionCollapsed: function (k, v) {
+          try { localStorage.setItem(keyForSection(k), v ? 'collapsed' : 'expanded'); }
+          catch (e) {}
+        },
+        getSubsectionCollapsed: function (k) {
+          try { return localStorage.getItem(keyForSub(k)) === 'collapsed'; }
+          catch (e) { return false; }
+        },
+        setSubsectionCollapsed: function (k, v) {
+          try { localStorage.setItem(keyForSub(k), v ? 'collapsed' : 'expanded'); }
+          catch (e) {}
+        },
+        // Editing variables in a popout is allowed under the same constraints
+        // as on main: live (or sync) event, top frame for locals, etc.
+        isVarScopeEditable: function (snap, frameIdx, scope, state) {
+          if (!state || !state.session || !state.session.active) return false;
+          if (!snap || !snap.stack) return false;
+          if (snap.event !== 'line' && snap.event !== 'sync') return false;
+          var frame = snap.stack[frameIdx];
+          if (!frame) return false;
+          if (scope === 'globals') return frameIdx === snap.stack.length - 1;
+          if (scope !== 'locals') return false;
+          if (frame.function === '<module>') return true;
+          return frameIdx === snap.stack.length - 1;
+        },
+      };
+    }
+
+    var helpers = makeHelpers('default');
+
+    function dispatch(action) {
+      // setActiveFile dispatched from the history scrubber when navigating to
+      // a snapshot whose frame.file differs from main's active file.
+      sync.dispatch(action);
+    }
+
+    function rerender(state) {
+      // Rebuild helpers if the tutorialId arrived in a snapshot.
+      if (state.tutorialId && helpers._tid !== state.tutorialId) {
+        helpers = makeHelpers(state.tutorialId);
+        helpers._tid = state.tutorialId;
+      }
+      window.SEBookDebuggerUI.renderToolbar(els.toolbar, state, dispatch, helpers);
+      window.SEBookDebuggerUI.renderDebugView(els.debugView, state, dispatch, helpers);
+      // Hide the overlay as soon as we have actionable state (debugger
+      // enabled flag, or any history, or any breakpoint).
+      var hasActionable =
+        state.debuggerEnabled ||
+        (state.history && state.history.length) ||
+        (state.breakpoints && Object.keys(state.breakpoints).length) ||
+        (state.session && state.session.active);
+      if (hasActionable) {
+        els.overlay.style.display = 'none';
+        client.markConnected();
+      }
+    }
+
+    sync.subscribe(rerender);
+    // Initial paint with the seed state (mostly empty, but the toolbar shell
+    // exists). The hello round-trip will replace it with the authority's
+    // current state shortly.
+    rerender(sync.state);
+    sync.requestSnapshot();
+
+    // Periodically re-request snapshots in case the main hasn't responded
+    // yet (e.g. main loaded slower than the popup).
+    var helloRetry = setInterval(function () {
+      if (sync.state.debuggerEnabled || (sync.state.history && sync.state.history.length)) {
+        clearInterval(helloRetry);
+      } else {
+        sync.requestSnapshot();
+      }
+    }, 800);
+    setTimeout(function () { clearInterval(helloRetry); }, 8000);
+
+    function handleMessage(msg) {
+      // SebookPopoutClient already handles heartbeat/dark-mode/force-close.
+      // DebuggerSync handles all dbg:* messages via its own channel listener.
+      // Nothing else to do here — but keep the function so role-specific
+      // tutorial messages (like step-change) could be observed in the future.
+    }
+  })();
+  </script>
+</body>
+</html>

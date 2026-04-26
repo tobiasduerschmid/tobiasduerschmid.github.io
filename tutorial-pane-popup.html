@@ -12,6 +12,7 @@
     })();
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/js/debugger/debugger.css' | relative_url }}">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -53,217 +54,22 @@
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
+  <script src="{{ '/js/debugger/editor-attach.js' | relative_url }}"></script>
+  <script src="{{ '/js/popout/shared-editor.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
-  (function () {
-    var pane = new URLSearchParams(location.search).get('pane');
-    if (!pane) {
-      document.getElementById('overlayEl').textContent = 'Invalid popup URL (missing pane).';
-      return;
-    }
-
-    var els = {
-      paneName: document.getElementById('paneNameEl'),
-      status:   document.getElementById('statusEl'),
-      overlay:  document.getElementById('overlayEl'),
-      tabBar:   document.getElementById('tabBar'),
-      editor:   document.getElementById('editorRoot'),
-    };
-
-    // Editor / model state
-    var monacoReady = false;
-    var editor = null;
-    var models = {};         // filename → { model, version }
-    var activeFile = null;
-    var suppressEditEvents = false;
-    var refactoringHost = null;
-    var flushAllEdits = function () {};
-
-    var client = SebookPopoutClient.connect({
-      role: 'pane:' + pane,
-      statusEl: els.status,
-      statusClass: 'tpp-status',
-      overlayEl: els.overlay,
-      onMessage: handleMessage,
-      onDarkModeChange: function (enabled) {
-        if (window.monaco) {
-          monaco.editor.setTheme(window.SebookMonacoLangs ? (enabled ? 'sebook-dark' : 'sebook-light')
-                                  : (enabled ? 'vs-dark' : 'vs'));
-        }
-      },
-      getFinalState: function () {
-        var finalContents = {};
-        Object.keys(models).forEach(function (fn) { finalContents[fn] = models[fn].model.getValue(); });
-        return { finalContents: finalContents };
+    SebookSharedEditor.bootForRole({
+      kind: 'pane',
+      pane: new URLSearchParams(location.search).get('pane') || '',
+      els: {
+        paneName: document.getElementById('paneNameEl'),
+        status:   document.getElementById('statusEl'),
+        overlay:  document.getElementById('overlayEl'),
+        tabBar:   document.getElementById('tabBar'),
+        editor:   document.getElementById('editorRoot'),
       },
     });
-
-    var paneLabel = pane === 'left' ? 'Code' : pane === 'right' ? 'Tests' : pane;
-    els.paneName.textContent = paneLabel;
-    document.title = paneLabel + ' — ' + client.tutorialTitle;
-
-    // ── Editor lifecycle ─────────────────────────────────────────────────
-    function ensureMonacoLoaded(cb) {
-      if (monacoReady) return cb();
-      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
-      require(['vs/editor/editor.main'], function () {
-        monacoReady = true;
-        if (window.SebookMonacoLangs) window.SebookMonacoLangs.register(monaco);
-        var dark = document.documentElement.classList.contains('dark-mode');
-        var theme = window.SebookMonacoLangs ? (dark ? 'sebook-dark' : 'sebook-light')
-                                              : (dark ? 'vs-dark' : 'vs');
-        editor = monaco.editor.create(els.editor, {
-          theme: theme, fontSize: 14, minimap: { enabled: false },
-          scrollBeyondLastLine: false, automaticLayout: true,
-          tabSize: 2, wordWrap: 'on', padding: { top: 8 },
-        });
-
-        var debounceTimer;
-        function flushEdit() {
-          if (!activeFile) return;
-          var entry = models[activeFile];
-          if (!entry) return;
-          clearTimeout(debounceTimer);
-          entry.version = (entry.version || 0) + 1;
-          client.post('file-edit', {
-            filename: activeFile, content: entry.model.getValue(), version: entry.version,
-          });
-        }
-        flushAllEdits = function () {
-          clearTimeout(debounceTimer);
-          Object.keys(models).forEach(function (fn) {
-            var entry = models[fn];
-            if (!entry) return;
-            entry.version = (entry.version || 0) + 1;
-            client.post('file-edit', {
-              filename: fn, content: entry.model.getValue(), version: entry.version,
-            });
-          });
-        };
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
-          flushEdit();
-          if (activeFile) client.post('request-save', { filename: activeFile });
-        });
-        editor.onDidChangeModelContent(function () {
-          if (suppressEditEvents) return;
-          if (!activeFile) return;
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(flushEdit, 30);
-        });
-        if (window.SebookRefactorings) {
-          refactoringHost = window.SebookRefactorings.createPopupHost(client, {
-            flush: flushAllEdits,
-            getActiveFileName: function () { return activeFile; },
-            getActiveContent: function () {
-              return activeFile && models[activeFile] ? models[activeFile].model.getValue() : '';
-            },
-          });
-          window.SebookRefactorings.attach({
-            monaco: monaco,
-            editors: [editor],
-            getActiveFileName: function () { return activeFile; },
-            getWorkspace: refactoringHost.getWorkspace,
-            applyEdits: refactoringHost.applyEdits,
-          });
-        }
-        cb();
-      });
-    }
-
-    function languageForFile(fn, requested) {
-      return window.SebookMonacoLangs
-        ? window.SebookMonacoLangs.languageForFile(fn, requested)
-        : (requested || 'plaintext');
-    }
-
-    function renderTabs() {
-      els.tabBar.innerHTML = '';
-      Object.keys(models).forEach(function (fn) {
-        var tab = document.createElement('div');
-        tab.className = 'tvm-tab' + (fn === activeFile ? ' active' : '');
-        tab.textContent = fn;
-        tab.title = fn;
-        tab.addEventListener('click', function () { setActiveFile(fn); });
-        els.tabBar.appendChild(tab);
-      });
-    }
-
-    function setActiveFile(fn) {
-      if (!models[fn]) return;
-      activeFile = fn;
-      ensureMonacoLoaded(function () {
-        editor.setModel(models[fn].model);
-        renderTabs();
-      });
-    }
-
-    function applyPaneSnapshot(snap) {
-      if (!snap) return;
-      if (typeof snap.darkMode === 'boolean') {
-        document.documentElement.classList.toggle('dark-mode', snap.darkMode);
-      }
-      ensureMonacoLoaded(function () {
-        var seen = {};
-        var snapFiles = snap.files || {};
-        Object.keys(snapFiles).forEach(function (fn) {
-          seen[fn] = true;
-          var sf = snapFiles[fn];
-          var lang = languageForFile(fn, sf.language);
-          if (!models[fn]) {
-            models[fn] = { model: monaco.editor.createModel(sf.content || '', lang), version: sf.version || 0 };
-          } else {
-            if (models[fn].model.getValue() !== (sf.content || '')) {
-              suppressEditEvents = true;
-              try { models[fn].model.setValue(sf.content || ''); }
-              finally { suppressEditEvents = false; }
-            }
-            if (typeof sf.version === 'number') models[fn].version = sf.version;
-          }
-        });
-        // Drop models for filenames no longer in this pane.
-        Object.keys(models).forEach(function (fn) {
-          if (!seen[fn]) {
-            try { models[fn].model.dispose(); } catch (e) { /* ignore */ }
-            delete models[fn];
-          }
-        });
-        var prefer = snap.activeFile || Object.keys(models)[0];
-        if (prefer && models[prefer]) {
-          activeFile = prefer;
-          editor.setModel(models[activeFile].model);
-        }
-        renderTabs();
-        client.markConnected();
-      });
-    }
-
-    // ── Role-specific message routing ────────────────────────────────────
-    function handleMessage(msg) {
-      if (refactoringHost && refactoringHost.handleMessage(msg)) return;
-      switch (msg.type) {
-        case 'pane-snapshot':
-          if (msg.pane === pane) applyPaneSnapshot(msg);
-          break;
-        case 'state-snapshot':
-          if (typeof msg.darkMode === 'boolean') {
-            document.documentElement.classList.toggle('dark-mode', msg.darkMode);
-          }
-          break;
-        case 'step-change':
-          // If new step shares no files with our pane, surface a hint.
-          if (Array.isArray(msg.fileList)) {
-            var anyKept = Object.keys(models).some(function (fn) {
-              return msg.fileList.indexOf(fn) !== -1;
-            });
-            if (!anyKept) client.setStatus('Step changed — close to reattach', 'warn');
-          }
-          break;
-        case 'save-confirmed':
-          if (msg.filename && models[msg.filename]) client.flashStatus('Saved ✓', 'ok');
-          break;
-      }
-    }
-  })();
   </script>
 </body>
 </html>

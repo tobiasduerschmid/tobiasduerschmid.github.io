@@ -353,7 +353,8 @@ class TimeTravelDebugger(bdb.Bdb):
 
     # --- snapshot construction ---------------------------------------------
 
-    def _snapshot(self, frame, event, retval=None, exc=None, count=True):
+    def _snapshot(self, frame, event, retval=None, exc=None, count=True,
+                  force_full=False):
         if count and self._total >= self._max_history:
             if not self._cap_warned:
                 self._cap_warned = True
@@ -369,7 +370,7 @@ class TimeTravelDebugger(bdb.Bdb):
             'line': frame.f_lineno,
             'event': event,
             'call_id': top_call_id,
-            'stack': self._serialize_stack(frame),
+            'stack': self._serialize_stack(frame, force_full=force_full),
             'watches': self._eval_watches(frame),
         }
         if event in ('line', 'sync'):
@@ -387,7 +388,7 @@ class TimeTravelDebugger(bdb.Bdb):
             self._total += 1
         return True
 
-    def _serialize_stack(self, frame):
+    def _serialize_stack(self, frame, force_full=False):
         # Walk f_back chain, OUTERMOST first (so UI's stack[0] is <module>).
         frames = self._user_frames_from(frame)
         frames.reverse()
@@ -408,15 +409,35 @@ class TimeTravelDebugger(bdb.Bdb):
                 'line': f.f_lineno,
                 'first_line': f.f_code.co_firstlineno,
                 'call_id': cid,
-                'locals': self._diff_dict(cid, 'locals', locals_dict),
+                'locals': self._full_dict(cid, 'locals', locals_dict)
+                    if force_full else self._diff_dict(cid, 'locals', locals_dict),
             }
             if is_top:
                 gd = f.f_globals
                 if self._filter_globals:
                     gd = {k: v for k, v in gd.items() if _is_user_global(k, v)}
-                entry['globals'] = self._diff_dict(cid, 'globals', gd)
+                entry['globals'] = self._full_dict(cid, 'globals', gd) \
+                    if force_full else self._diff_dict(cid, 'globals', gd)
             out.append(entry)
         return out
+
+    def _full_dict(self, call_id, scope_key, d):
+        # Replacement sync snapshots overwrite the history row that diff
+        # sentinels would normally resolve through, so they must be
+        # self-contained while still advancing the diff baseline.
+        baseline_key = (call_id, scope_key)
+        result = {}
+        new_baseline = {}
+        for name, value in d.items():
+            try:
+                serialized = self._serialize(value, self._depth)
+            except Exception as e:
+                serialized = {'kind': 'primitive', 'type': 'error',
+                              'repr': '<repr error: {}>'.format(e)}
+            new_baseline[name] = serialized
+            result[name] = serialized
+        self._prev_by_call[baseline_key] = new_baseline
+        return result
 
     def _diff_dict(self, call_id, scope_key, d):
         # Compare against last-emitted serialized values for this (call_id, scope).
@@ -655,7 +676,7 @@ class TimeTravelDebugger(bdb.Bdb):
             self._stop_flag = True
             self.set_quit()
         elif cmd == 5:
-            self._snapshot(frame, 'sync', count=False)
+            self._snapshot(frame, 'sync', count=False, force_full=True)
             self._flush_buffer(replace_last=True)
             self._flush_and_block(frame)
         else:
@@ -764,9 +785,33 @@ class TimeTravelDebugger(bdb.Bdb):
                         'error': '{}: {}'.format(type(e).__name__, e)})
             return
 
-        # Globals/module path: module locals are the globals dict, and writing
-        # there is visible to the rest of the program immediately.
-        if scope == 'globals' or frame.f_locals is frame.f_globals:
+        # Module-level code can expose the same user namespace through both
+        # locals and globals. In Pyodide those mappings are not guaranteed to
+        # be the same object, while LOAD_NAME may still prefer locals. Keep
+        # them in sync so editing either Variables subsection changes what the
+        # next top-level statement actually reads.
+        if frame.f_code.co_name == '<module>':
+            wrote = False
+            errors = []
+            for mapping_name, mapping in (('locals', frame.f_locals),
+                                          ('globals', frame.f_globals)):
+                try:
+                    mapping[var_name] = value
+                    wrote = True
+                except Exception as e:
+                    errors.append('{}: {}: {}'.format(
+                        mapping_name, type(e).__name__, e
+                    ))
+            if not wrote:
+                self._post({'type': 'editError',
+                            'var': var_name, 'expr': expr,
+                            'error': '; '.join(errors) or 'module writeback failed'})
+            else:
+                self._log('edit module[{}] = {!r}'.format(var_name, value))
+            return
+
+        # Globals path for function frames: write to the module globals dict.
+        if scope == 'globals':
             frame.f_globals[var_name] = value
             actual = frame.f_globals.get(var_name)
             if actual is not value:
@@ -838,7 +883,7 @@ def _ttd_compile_with_source_overrides(code_str, filename, overrides):
     source_overrides = [
         dict(ov, _ttd_oid=i)
         for i, ov in enumerate(overrides or [])
-        if ov.get('source') and ov.get('scope') == 'locals'
+        if ov.get('source') and ov.get('scope') in ('locals', 'globals')
     ]
     if not source_overrides:
         return compile(code_str, filename, 'exec'), set(), None

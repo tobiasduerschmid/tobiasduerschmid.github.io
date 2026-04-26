@@ -2,6 +2,7 @@ title: "Node.js Essentials: JavaScript for the Backend"
 description: "A hands-on introduction to Node.js for students who already know Python and C++. Learn to run JavaScript, understand the event loop, and write modern async code — all in the browser."
 
 backend: browser
+debugger: true
 
 require_tests: true
 autosave_type: none

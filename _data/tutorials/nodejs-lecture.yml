@@ -2,6 +2,9 @@ title: "Node.js Lecture"
 description: "Code walkthroughs from the CS 35L Lecture 5 — Client Server & Node.js. Covers JavaScript basics, JSON, blocking vs. non-blocking I/O, the built-in http module, and Express.js routing."
 
 backend: browser
+# Time-travel debugger (browser-backend impl: sandboxed iframe + acorn AST
+# instrumentation + SAB sync pause). Same UI as the Python/Node demos.
+debugger: true
 
 instructor_mode: true
 require_tests: false
