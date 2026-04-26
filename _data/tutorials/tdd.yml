@@ -2,6 +2,7 @@ title: "TDD with pytest — Dragon Dice Battle"
 description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — twelve tiny tests, one design pressure at a time, plus a final transfer cycle (FizzBuzz) that proves the rhythm carries to a brand-new problem. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
 
 backend: pyodide
+debugger: true
 
 # Show code (left) and tests (right) side by side. Files prefixed `test_`
 # auto-route to the right pane; `scorer.py` lands on the left.

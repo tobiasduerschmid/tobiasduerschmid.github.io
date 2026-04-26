@@ -2,6 +2,7 @@ title: "The Observer Pattern: Stop Hard-Coding Your Dependencies"
 description: "Learn the most widely used behavioral design pattern by experiencing the pain of tightly coupled code first, then discovering how the Observer pattern makes your systems flexible and extensible. You will refactor a broken weather station into clean, decoupled architecture — guided by UML diagrams that update live as you code."
 
 backend: pyodide
+debugger: true
 uml_diagram: true
 uml_position: right
 uml_default_view: true

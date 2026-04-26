@@ -2,6 +2,7 @@ title: "SOLID Design Principles: Stop Writing Code That Falls Apart"
 description: "Learn the SOLID principles by suffering through rigid code first, then leveling up with refactoring. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
 
 backend: pyodide
+debugger: true
 
 uml_diagram: true
 uml_position: right

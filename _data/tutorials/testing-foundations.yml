@@ -2,6 +2,7 @@ title: "Testing Foundations with pytest"
 description: "Build the core testing skills you need BEFORE learning TDD: write meaningful assertions, choose test cases using partitions and boundaries, and test behavior instead of implementation."
 
 backend: pyodide
+debugger: true
 
 # Show code (left) and tests (right) side by side — students can toggle back
 # to tabbed view with the button above the editors. Files prefixed `test_`
