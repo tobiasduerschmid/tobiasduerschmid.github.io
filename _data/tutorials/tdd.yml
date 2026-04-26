@@ -137,22 +137,14 @@ steps:
 
       Kent Beck's *Canon TDD* (December 2023) starts with **a written list of behaviors you want the code to have** — *before* writing any tests. The list isn't a contract; it's a thinking tool. New behaviors get appended as they occur to you; ones you finish get struck through; ones that turn out to be already-implemented (cycle 5, cycle 7) get a checkmark with no code change.
 
-      Here is the list this tutorial works through, *in the order the cycles will tackle them*:
+      Here are the first three items, *in the order the cycles will tackle them*:
 
       - ☐ Cycle 1 — Empty roll → no damage, no events
       - ☐ Cycle 2 — A single 1 → one Dragon Flame event
       - ☐ Cycle 3 — A single 5 → one Lightning Spark event
-      - ☐ Cycle 4 — Multiple singles → one event per die (forces a loop)
-      - ☐ Cycle 5 — Mixed dice (`[1, 5]`) → both events appear (free pass — verify with mutation move)
-      - ☐ Cycle 6 — Three 1s → one Dragon Blast (not three Flames) — *design-breaking test*
-      - ☐ Cycle 7 — Triple 1s + a leftover 5 → Dragon Blast + Lightning Spark
-      - ☐ Cycle 8 — Three 2s → Goblin Swarm — *the rule-objects refactor*
-      - ☐ Cycle 9 — Triples 3, 4, 6 → Orc Charge / Troll Smash / Demon Strike (data only, no `score()` edit)
-      - ☐ Cycle 10 — *Six* 1s → *two* Dragon Blasts (hidden bug)
-      - ☐ Cycle 11 — Invalid dice (`0`, `7`, `"x"`) → `ValueError`
-      - ☐ Cycle 12 — `report.summary()` returns a human-readable string
+      - ☐ Cycle 4 — …
 
-      Beck's discipline is to *one-test-at-a-time*: pick the next list item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He warns explicitly against converting all list items to tests up front ("leads to rework and depression") and against mixing refactor into making a test pass ("wearing two hats simultaneously"). The platform's step-by-step structure enforces both disciplines for you — so you can focus on the rhythm itself.
+      More items appear as we work through them — Beck's discipline is to *not* pre-resolve them all. Pick the next item, turn *only that one* into a runnable test, make it pass, optionally refactor, repeat. He warns explicitly against converting every list item up front ("leads to rework and depression") and against mixing refactor into making a test pass ("wearing two hats simultaneously"). The platform's step-by-step structure enforces both disciplines for you.
 
       ## Cycle 1's spec
 
@@ -163,26 +155,32 @@ steps:
       ## Your task
 
       1. In **`test_scorer.py`** (right pane), fill in the three sub-goal comments. Leave **`scorer.py`** empty — its code belongs to the GREEN step.
-      2. **Predict** the exact failure message you'll see, then click **Run**.
-      3. Expected output: `ImportError: cannot import name 'score'` (or `ModuleNotFoundError` if `scorer.py` is empty). **That IS the deliverable** — RED for the right reason.
+      2. **Predict** the *category* of failure you'll see — `ImportError`, `AttributeError`, or `AssertionError`? Write it down.
+      3. Click **Run**. Compare the actual failure to your prediction.
 
-      ## Detail: why a tuple, not a list
+      <details markdown="1"><summary>Reveal — what we expected (open after running)</summary>
 
-      The empty events case is written as `()` (an empty tuple), not `[]` (an empty list). Tuples are immutable — they can't be mutated by accident, and they're safe dataclass defaults (cycle 2 uses that). Every test in this tutorial that pins down events uses a tuple.
+      `ImportError: cannot import name 'score'` (or `ModuleNotFoundError` if `scorer.py` is empty). **That IS the deliverable** — RED for the right reason.
+      </details>
 
-      ## References
+      <details markdown="1"><summary>Why `()` and not `[]`? (open if you wondered)</summary>
+
+      Tuples are immutable — they can't be mutated by accident, and they're safe dataclass defaults (cycle 2 uses that). Every test in this tutorial that pins down events uses a tuple.
+      </details>
+
+      <details markdown="1"><summary>📚 References</summary>
 
       - [pytest — Get started](https://docs.pytest.org/en/stable/getting-started.html)
       - [Python — `assert` statement](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement)
       - If you get stuck on the test, click **Show Solution** below the editor for one possible form.
+      </details>
 
-      ## Self-test before clicking Next
+      <details markdown="1"><summary>🪞 Self-check (open after running, answer from memory)</summary>
 
-      Close the page in your head and answer:
-
-      - What two pieces of information does pytest's failure message give you?
-      - Why is "RED for the right reason" worth distinguishing from "RED for any reason"?
-      - If you had to write a test for a `multiply(a, b)` function from scratch, what four parts would it contain?
+      - What two pieces of information does pytest's failure message give you? *(Discriminator: it names which test failed AND on which assertion the values diverged. If you said "pass or fail," you were thinking of the bar, not the message.)*
+      - Why is "RED for the right reason" worth distinguishing from "RED for any reason"? *(Discriminator: a `SyntaxError` proves nothing about the unit; an `ImportError` proves the unit is missing.)*
+      - If you had to write a test for a `multiply(a, b)` function from scratch, what four parts would it contain? *(Import • test_ function • arrange+act • assert.)*
+      </details>
 
     files:
       - path: "scorer.py"
@@ -320,8 +318,6 @@ steps:
       | `assert report.total_damage == 0` | That something exposes `total_damage`, equal to `0` |
       | `assert report.events == ()` | …and `events`, equal to `()` |
 
-      Four obligations. Anything you write that does not contribute to one of those four is speculative design — it has no test demanding it, so it has no test guarding it, so it has no business being there yet.
-
       ## Three Python tools, in this *new context*
 
       You already know these — what's new is *why this test forces you to reach for them*:
@@ -340,10 +336,10 @@ steps:
       ## Your task
 
       1. In **`scorer.py`** (left pane), replace each sub-goal comment with the matching line. Re-read the test for the contract.
-      2. **Predict** what pytest will show. Run.
+      2. **Before you click Run**, identify *one* way your code could be wrong. (A misplaced default? A forgotten decorator? A method where the test reads an attribute?) Run, then check whether your prediction matched.
       3. Resist any "improvement" beyond what the test demands — the next step is REFACTOR, and it only earns work that has somewhere to go.
 
-      ## Common mistakes to avoid
+      <details markdown="1"><summary>🛟 Stuck? Common shapes that fail (open if pytest is red)</summary>
 
       - **`events: list = []`** — Python rejects mutable defaults in dataclasses with `ValueError`. What immutable alternative matches the test's `events == ()` assertion?
       - **Forgetting `@property`** — without it, `report.total_damage` is a *bound method object*, not a number; the assertion fails in a weird way.
@@ -351,13 +347,15 @@ steps:
       - **`if not dice: ...`** — speculative branching. The empty-tuple default already handles the empty case.
 
       If you get genuinely stuck, click **Show Solution** below the editor for one possible form.
+      </details>
 
-      ## Self-test before clicking Next
+      <details markdown="1"><summary>🪞 Self-check (open after green, answer from memory)</summary>
 
       - What three things does `@dataclass` write for you that you'd otherwise type by hand?
       - Why is `@property` a better fit than a plain method for `total_damage` *given how the test reads it*?
       - What does `frozen=True` buy us, and which later cycle will first rely on it?
       - What four obligations does the cycle-1 test impose — derived from reading the test alone?
+      </details>
 
     files:
       - path: "scorer.py"
@@ -507,27 +505,39 @@ steps:
 
       ## The REFACTOR checklist (you'll re-use this every cycle)
 
-      | Category | Question to ask | Cycle 1 answer |
+      | Category | Question to ask | Your cycle 1 answer |
       |---|---|---|
-      | **Duplication** | Two pieces of code expressing the same idea? | No — only one piece of code |
-      | **Names** | Do names describe what they *mean*, not how they work? | `BattleReport`, `total_damage`, `events`, `score` — all domain words |
-      | **Test names** | Does each test name read as a behavior sentence? | `test_empty_roll_has_zero_damage_and_no_events` — long but unambiguous |
-      | **Magic constants** | Unexplained numbers or strings? | None yet |
-      | **Imports** | Conventional order, no dead imports? | Just `from dataclasses import dataclass` — clean |
+      | **Duplication** | Two pieces of code expressing the same idea? | _____ |
+      | **Names** | Do names describe what they *mean*, not how they work? | _____ |
+      | **Test names** | Does each test name read as a behavior sentence? | _____ |
+      | **Magic constants** | Unexplained numbers or strings? | _____ |
+      | **Imports** | Conventional order, no dead imports? | _____ |
 
-      For cycle 1, every row is "fine." That's a real outcome of a REFACTOR phase — and *recognising it without skipping the look* is the win.
+      Fill the right column from your code *before* opening the reveal. The discipline is the looking, not the finding.
 
       ## Your task
 
       1. Re-read your code with the checklist. Spend 30 seconds — don't rush.
       2. Make any tiny improvement you spot (e.g., a module docstring); keep the bar green.
-      3. Take the **first quiz** below, focused on the rhythm you just lived through.
+      3. Open the reveal below to compare your answers. Then take the **first quiz**.
 
+      <details markdown="1"><summary>Reveal — one possible cycle-1 answer column</summary>
 
+      | Category | Cycle 1 answer |
+      |---|---|
+      | **Duplication** | No — only one piece of code |
+      | **Names** | `BattleReport`, `total_damage`, `events`, `score` — all domain words |
+      | **Test names** | `test_empty_roll_has_zero_damage_and_no_events` — long but unambiguous |
+      | **Magic constants** | None yet |
+      | **Imports** | Just `from dataclasses import dataclass` — clean |
 
-      ### Why REFACTOR is the most-skipped phase
+      For cycle 1, every row is "fine." That's a real outcome of a REFACTOR phase — and *recognising it without skipping the look* is the win.
+      </details>
+
+      <details markdown="1"><summary>Why REFACTOR is the most-skipped phase</summary>
 
       Martin Fowler calls skipping refactor "the most common way to screw up TDD." Field studies of student and professional practice agree: developers treat the green bar as the finish line. Within a few cycles, duplication accumulates and the test suite ages — exactly because nobody paused at REFACTOR to look. By making "enter the phase even when there's nothing to do" a habit now, you defend against that drift for the rest of the tutorial.
+      </details>
 
     files:
       - path: "scorer.py"
@@ -747,19 +757,23 @@ steps:
 
       ## Your task
 
-      1. **🔴 RED** — add `test_single_one_creates_dragon_flame_event` in `test_scorer.py`. The assertion should pin down `total_damage == 100` and one `ScoringEvent("Dragon Flame", (1,), 100)` in `events`. Update the import to bring in `ScoringEvent`. Run — predict the failure, check.
-      2. **🟢 GREEN** — introduce a `ScoringEvent` dataclass and the **smallest** change to `score`. The minimum here is a hardcoded `if dice == [1]:` branch — that's deliberate.
+      1. **🔴 RED** — add `test_single_one_creates_dragon_flame_event` in `test_scorer.py`. From the spec ("a single die showing 1 creates a *Dragon Flame* event worth 100 damage"), translate into pytest assertions yourself. The four-part shape from cycle 1 still applies; the rules table at the top names the event and damage. **Predict** the failure category (`ImportError`? `AttributeError`? `AssertionError`?) before running.
+      2. **🟢 GREEN** — pick the smallest code that turns the test green. Resist any abstraction beyond what cycle 2's single test demands. After you've made your choice, open the reveal below to compare.
       3. **🔵 REFACTOR** — walk the cycle-1 checklist. Resist generalising; cycle 4 will earn the loop.
 
-      Expected RED: `ImportError: cannot import name 'ScoringEvent'` — the test forces you to *name* the event class before writing it. That's the design pressure of test-first thinking.
+      <details markdown="1"><summary>Reveal — what we expected for RED (open after running)</summary>
 
-      ## Why "allow the hard-code" is a TDD discipline
+      `ImportError: cannot import name 'ScoringEvent'` — the test forces you to *name* the event class before writing it. That's the design pressure of test-first thinking.
+      </details>
 
-      The instinct is to extract a rule, write a loop, build the abstraction now. TDD asks you to wait for the test that *demands* it. A speculative loop is a guess at the right shape; a loop refactor pulled by cycle 4's test is a *discovery*. **Refactor toward duplication, not before it.**
+      <details markdown="1"><summary>Reveal — one shape for the smallest GREEN (open after you've tried)</summary>
 
-      If you're genuinely stuck, click **Show Solution** below the editor.
+      A hardcoded `if dice == [1]:` branch returning a `BattleReport` with one `ScoringEvent`. Yes, it's ugly. Yes, you can see how cycle 3 will duplicate it. That's the point — wait for the second example.
+      </details>
 
-      🪞 **Cycle-2 reflection (10 seconds):** before you click Run, articulate to yourself: *what did the test force you to **name** before any code existed?* That naming-pressure is the design move you just made — and you'll see it again every cycle.
+      > **Why "allow the hard-code" is a TDD discipline.** The instinct is to extract a rule, write a loop, build the abstraction now. TDD asks you to wait for the test that *demands* it. A speculative loop is a guess at the right shape; a loop refactor pulled by cycle 4's test is a *discovery*. **Refactor toward duplication, not before it.**
+
+      🪞 **Pause (10 seconds, after green):** what did the test force you to *name* before any code existed? Hold your answer; the cycle-3 reveal will compare.
 
     files:
       - path: "scorer.py"
@@ -925,13 +939,11 @@ steps:
       2. **🟢 GREEN** — add a second hardcoded `if dice == [5]:` branch. **Resist** the urge to write a loop or dict lookup.
       3. **🔵 REFACTOR** — walk the checklist. The duplication is now visible; the right move is to **note it and write nothing**. No test demands the loop yet.
 
-      ## Why deliberately keeping ugly code is the disciplined move
-
-      You can clearly see duplication. Refactoring it now would be *guessing* at the right shape with one too few data points. Cycle 4's test will provide the second data point — and the loop refactor it earns is a discovery, not a guess. **Refactor toward duplication, not before it.**
+      > **Why deliberately keeping ugly code is the disciplined move.** You can clearly see duplication. Refactoring it now would be *guessing* at the right shape with one too few data points. Cycle 4's test will provide the second data point — and the loop refactor it earns is a discovery, not a guess. **Refactor toward duplication, not before it.**
 
       Click **Show Solution** below the editor if you need one form of the test + GREEN code.
 
-      🪞 **Cycle-3 reflection (10 seconds):** the discomfort you may feel right now ("this is obviously duplicated, just *fix it*") is the **most important pedagogical moment of cycle 3**. Notice the urge. Don't act on it. Cycle 4 will reward the patience.
+      🪞 **Pause (10 seconds, after green):** the discomfort you may feel right now ("this is obviously duplicated, just *fix it*") is real. Spend 10 seconds writing down: *what would happen if you acted on it now?* (We'll see in cycle 4.)
 
     files:
       - path: "scorer.py"
@@ -1112,16 +1124,19 @@ steps:
       ## Your task
 
       1. **🔴 RED** — add `test_two_ones_create_two_dragon_flames` asserting damage 200 and two Flame events. Run; predict the failure.
-      2. **🟢 GREEN** — you have two options. Pick the better one:
-         - *Option A*: a third hardcoded branch for `dice == [1, 1]`. Passes — and makes duplication worse, with a fourth branch coming next cycle.
-         - *Option B*: replace the hardcoded branches with a `for` loop over each die. Passes cycle 4 *and* retires the cycle-3 duplication in one move.
-      3. **🔵 REFACTOR** — re-run; the previous three tests are your safety net. Note what just happened: you rewrote the body of `score` and knew within a second that you didn't break anything.
+      2. **🟢 GREEN** — you have two options:
+         - *Option A*: a third hardcoded branch for `dice == [1, 1]`.
+         - *Option B*: replace the hardcoded branches with a `for` loop over each die.
 
-      ## The threshold-concept moment: *tests enable change*
+         **Pick one. *Before* you implement, predict what each option costs over the next two cycles** (5 and 6 will add mixed dice and triple 1s). Implement your choice, run, and revisit your prediction.
+      3. **🔵 REFACTOR** — re-run; the previous three tests are your safety net.
 
-      You just **rewrote the body of `score`** — two hardcoded branches → generic per-die loop — and confirmed in one second that nothing broke. Without the test suite you'd have had to reason from scratch: *"Does this still handle empty? Single 1? Single 5?"*
+      🪞 **Pause (after green):** in *one sentence*, what did the four green checkmarks just tell you that you'd otherwise have had to verify by hand? Hold your answer; the cycle quiz returns to it.
 
-      That's what "tests enable change" means. Not "prevent change." Not "slow change." **Enable** — they replace fear-driven manual reasoning with a mechanical check. This is the cycle that earns the safety-net quiz below.
+      <details markdown="1"><summary>Reveal — what happens when option A wins (open after running)</summary>
+
+      A third hardcoded branch passes cycle 4. But cycle 5 ([1, 5]) will then need a fourth branch, cycle 6 (triple 1s) a fifth, and the loop refactor still has to happen — only now you have more code to delete. *Locally smallest* (one new `if`) is *globally largest*.
+      </details>
 
       Click **Show Solution** if you need to see one form of option B.
 
@@ -1311,7 +1326,7 @@ steps:
               "The whole point of cycle 4 was to retire the `if dice == [...]:` branches in favour of a generic per-die loop. Remove them."
 
     quiz:
-      title: "Cycle 4 Quiz — Tests as Design Pressure"
+      title: "Cycle 4 Quiz"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1369,7 +1384,7 @@ steps:
             loop is the smallest *durable* change.
 
         - question: |
-            **(Spaced review — Cycle 1)** Why is "RED for the right reason" still the right framing in cycle 4, even though we are now adding a test on top of an already-passing suite?
+            Why is "RED for the right reason" still the right framing in cycle 4, even though we are now adding a test on top of an already-passing suite?
           type: single
           options:
             - "It is not — `RED for the right reason` only applies to cycle 1, where there is no implementation at all"
@@ -1402,24 +1417,23 @@ steps:
 
       ## Your task
 
-      1. **🔴 RED** — add `test_one_and_five_create_two_different_events`. **Predict** what pytest will show this time, then run.
-      2. **🟢 GREEN** — most likely outcome: **all five tests pass without any production change**. Cycle 4's loop already handles mixed dice independently. The new test costs zero code — it just documents the intended behavior.
-      3. **🔵 REFACTOR** — verify the "free pass" with the ten-second **mutation move** (next collapsible).
+      1. **🔴 RED** — add `test_one_and_five_create_two_different_events`. **Predict** whether you'll need to change `scorer.py`. Write down "yes" or "no" *before* running. Run the test — were you right?
+      2. **🟢 GREEN + mutation check** — make whatever change is needed (possibly none). Then **prove the test isn't vacuous** with the ten-second mutation move:
 
+         - **Pick a line in `scorer.py`** that the new test *should* depend on. (One you predict, breaking it would make cycle 5 fail.)
+         - Change it (e.g., `if die == 5:` → `if die == 999:`). Run pytest.
+         - Ask: did the new test fail? If yes — the test really does pin down the behavior. If no — your test isn't actually checking what you thought; rewrite it. Restore the line.
+      3. **🔵 REFACTOR** — walk the checklist.
 
-
-      ### The mutation move (verify the test isn't vacuous — do this!)
-
-      A test that passes immediately can mean two things:
+      <details markdown="1"><summary>Why this matters: a passing test can mean two opposite things</summary>
 
       | Why? | What it means |
       |---|---|
       | A previous refactor already generalised the behavior | ✅ Positive — design is healthy |
       | The assertion is vacuously true / missing / wrong oracle | ❌ Defect — a *Liar* test |
 
-      Tell them apart in 10 seconds: **break the production code on purpose**. Open `scorer.py`, temporarily change `if die == 5:` to `if die == 999:`. Run pytest. The new test should now fail — proving it actually checks the behavior. Restore the line.
-
-      This single move is the strongest defence against AI-generated Liar tests. Make it a habit; we'll come back to it.
+      The mutation move is the strongest defence against AI-generated Liar tests — and it generalises to *any* passing test you didn't expect. Make it a habit; we'll come back to it.
+      </details>
 
     files:
       - path: "scorer.py"

@@ -6742,7 +6742,11 @@
     html += (step.tests && step.tests.length > 0)
       ? '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>'
       : '<span></span>';
-    html += index < this.steps.length - 1
+    var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
+      && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
+    var hasNextStep = index < this.steps.length - 1;
+    var showNext = hasNextStep || hasUnpassedQuiz;
+    html += showNext
       ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
       : '<span></span>';
 
@@ -6781,12 +6785,13 @@
 
     // Build HTML once and cache so the popup can be sent the *exact* same
     // shuffled rendering if the user clicked Next there.
+    var isFinalQuiz = stepIndex === this.steps.length - 1;
     var html = window.SebookQuiz.buildHTML({
-      stepIndex: stepIndex, quiz: quiz,
+      stepIndex: stepIndex, quiz: quiz, isFinalQuiz: isFinalQuiz,
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
     });
-    this._lastQuizHTML = { stepIndex: stepIndex, html: html, minScore: quiz.min_score };
+    this._lastQuizHTML = { stepIndex: stepIndex, html: html, minScore: quiz.min_score, isFinalQuiz: isFinalQuiz };
 
     if (this.quizPanelEl) {
       this.quizPanelEl.style.display = '';
@@ -6796,6 +6801,7 @@
         stepIndex: stepIndex,
         quizHTML: html,
         minScore: quiz.min_score !== undefined ? quiz.min_score : 0.8,
+        isFinalQuiz: isFinalQuiz,
         onPass: function (idx) { self._completeQuiz(idx); },
       });
     }
@@ -6814,6 +6820,7 @@
         stepIndex: stepIndex,
         quizHTML: html,
         minScore: quiz.min_score !== undefined ? quiz.min_score : 0.8,
+        isFinalQuiz: isFinalQuiz,
       });
     }
   };
@@ -6832,8 +6839,11 @@
     this._quizPassed.add(stepIndex);
     this._stepsUnlocked.add(stepIndex + 1);
     if (this.autoSaveEnabled) this._autoSaveProgress();
-    if (this.quizPanelEl && this.quizPanelEl.style.display !== 'none') this._hideStepQuiz();
-    this.loadStep(stepIndex + 1);
+    var hasNextStep = stepIndex + 1 < this.steps.length;
+    if (hasNextStep) {
+      if (this.quizPanelEl && this.quizPanelEl.style.display !== 'none') this._hideStepQuiz();
+      this.loadStep(stepIndex + 1);
+    }
   };
 
   // Legacy aliases — keep the old method names as thin wrappers so any

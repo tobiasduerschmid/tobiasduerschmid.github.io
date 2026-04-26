@@ -238,6 +238,7 @@
         stepIndex: msg.stepIndex,
         quizHTML: msg.quizHTML,
         minScore: msg.minScore,
+        isFinalQuiz: !!msg.isFinalQuiz,
         onPass: function (idx) {
           // Source-of-truth quizPassed/_stepsUnlocked + advance step lives
           // in main — tell it the popup completed the quiz.

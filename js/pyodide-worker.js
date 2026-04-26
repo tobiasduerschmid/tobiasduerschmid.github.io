@@ -1653,6 +1653,19 @@ function _gitCmdReset(id, args, dir, fs, cwd) {
   });
 }
 
+// Resolve a refish OR an abbreviated SHA to a full oid. iso-git's resolveRef
+// only accepts full ref names and full oids; this helper layers in
+// `git.expandOid` so users can pass `abc1234` or just `abc`.
+function _resolveCommitish(fs, dir, ref) {
+  return _git.resolveRef({ fs: fs, dir: dir, ref: ref }).catch(function (err) {
+    // Maybe it's a short oid — try expandOid
+    if (_git.expandOid) {
+      return _git.expandOid({ fs: fs, dir: dir, oid: ref });
+    }
+    throw err;
+  });
+}
+
 // Heuristic: distinguishes a refish argument from a pathspec when the user
 // types `git reset <foo>` with no flags. A path always either contains '/'
 // or matches an existing FS entry; a ref doesn't.
@@ -2088,7 +2101,7 @@ function _gitCmdShow(id, args, dir, fs) {
   if (args.length > 0 && args[0].charAt(0) === '-') {
     return _gitReply(id, '', "error: unknown option `" + args[0].replace(/^-+/, '') + "'\n", 1, []);
   }
-  _git.resolveRef({ fs: fs, dir: dir, ref: ref }).then(function (oid) {
+  _resolveCommitish(fs, dir, ref).then(function (oid) {
     return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function (c) {
       var YELLOW = '\x1b[33m', RESET = '\x1b[m';
       var out = YELLOW + 'commit ' + oid + RESET + '\n';
@@ -2232,15 +2245,41 @@ function _stashPush(id, args, dir, fs) {
     };
     entries.unshift(entry);  // newest at index 0
     _stashWrite(dir, entries);
-    // Restore working tree to HEAD.
+    // Restore working tree to HEAD: walk the HEAD tree, overwrite each file
+    // with its committed content, and unlink any file present in workdir but
+    // absent from HEAD. iso-git's `checkout({ref: <currentBranch>})` short-
+    // circuits when HEAD already points at the ref, so we apply the tree
+    // explicitly.
     return _snapshotPaths(dir).then(function (preMap) {
-      return _git.checkout({ fs: fs, dir: dir, ref: branch, force: true })
-        .then(function () { return _snapshotPaths(dir); })
-        .then(function (postMap) {
-          _gitReply(id,
-            "Saved working directory and index state " + entry.message + "\n",
-            '', 0, _diffMaps(preMap, postMap));
+      var headFiles = {};
+      return _walkCommitTree(fs, dir, headOid, headFiles, '').then(function () {
+        var preFiles = _snapshotWorkdir(dir);
+        // Overwrite tracked files with HEAD content.
+        Object.keys(headFiles).forEach(function (p) {
+          var sub = p.indexOf('/') !== -1 ? p.substring(0, p.lastIndexOf('/')) : '';
+          if (sub) {
+            var parts = sub.split('/'); var cur = dir;
+            parts.forEach(function (s) { cur += '/' + s; try { pyodide.FS.mkdir(cur); } catch (e) {} });
+          }
+          pyodide.FS.writeFile(dir + '/' + p, headFiles[p], { encoding: 'utf8' });
         });
+        // Remove any workdir file that isn't in HEAD (untracked + tracked-deleted).
+        Object.keys(preFiles).forEach(function (p) {
+          if (!(p in headFiles)) {
+            try { pyodide.FS.unlink(dir + '/' + p); } catch (e) {}
+          }
+        });
+        // Reset index to match HEAD.
+        return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+          return Promise.all(matrix.map(function (row) {
+            return _git.resetIndex({ fs: fs, dir: dir, filepath: row[0] });
+          }));
+        });
+      }).then(function () { return _snapshotPaths(dir); }).then(function (postMap) {
+        _gitReply(id,
+          "Saved working directory and index state " + entry.message + "\n",
+          '', 0, _diffMaps(preMap, postMap));
+      });
     });
   }).catch(function (err) {
     _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
@@ -2358,7 +2397,7 @@ function _gitCmdCherryPick(id, args, dir, fs) {
 
   var ref = refs[0];
   Promise.all([
-    _git.resolveRef({ fs: fs, dir: dir, ref: ref }),
+    _resolveCommitish(fs, dir, ref),
     _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
   ]).then(function (r) {
     var oid = r[0], branch = r[1];
@@ -2439,7 +2478,7 @@ function _gitCmdRevert(id, args, dir, fs) {
 
   var ref = refs[0];
   Promise.all([
-    _git.resolveRef({ fs: fs, dir: dir, ref: ref }),
+    _resolveCommitish(fs, dir, ref),
     _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
   ]).then(function (r) {
     var oid = r[0], branch = r[1];

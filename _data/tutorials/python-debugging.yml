@@ -16,6 +16,15 @@ autosave_type: files
 editor_split: true
 output_height: "30%"
 
+# Live git visualization next to the editor — students can commit each
+# debugging cycle (symptom → fix → verify) and watch the DAG grow as they
+# work through cases. The embedded terminal accepts a small set of git
+# commands.
+git_graph: /tutorial
+git_setup:
+  - "git config user.name 'Student'"
+  - "git config user.email 'student@example.com'"
+
 setup_commands:
   - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
   - "import sys; sys.path.insert(0, '/tutorial')"
@@ -24,10 +33,13 @@ setup_commands:
     def _make_pytest_patch():
         _orig = _pytest.main
         _sysmod = _sys
-        _ours = ('greet','pathfinder','maze_data','ledger','waitlist','tagger','tour')
+        _ours = ('greet','pathfinder','maze_data','ledger','waitlist','tagger','tour','checkout_main')
         def _patched(*a, **kw):
             for m in list(_sysmod.modules):
-                if m.startswith('test_') or m in _ours:
+                if (m.startswith('test_')
+                        or m in _ours
+                        or m == 'checkout_app'
+                        or m.startswith('checkout_app.')):
                     del _sysmod.modules[m]
             return _orig(*a, **kw)
         return _patched
@@ -45,14 +57,11 @@ steps:
   # ===========================================================================
   - title: "The Debugging Process"
     instructions: |
-      > 🎯 **Goal:** Learn the 7-stage debugging cycle by watching it applied to a tiny bug, then apply the last steps yourself.
-      > 🧠 **Bloom's level:** *Understand / Apply.*
+      > 🎯 **Goal:** Apply the 7-stage debugging cycle to a tiny off-by-one bug.
 
-      ### 💡 Why this tutorial exists
+      The process below is what the research calls a **hypothesis-driven debugging cycle**. It applies to every bug you'll ever fix.
 
-      Most CS classes treat debugging as something that *just happens* when you write code. It isn't. Studies of novice debuggers consistently find a small set of unproductive habits — *tinkering* (random edits), *symptom-patching* (adding `+1` to make the output match), and *local verification* ("the line I just wrote looks fine, so the program must be fine"). These habits are not personality flaws. They're the absence of a **process**.
-
-      The process below is what the research calls a **hypothesis-driven debugging cycle**. It applies to every bug you'll ever fix:
+      If you currently *tinker* (edit, run, hope, repeat), that's the default everyone starts with — including most professional engineers under pressure. The cycle below is what replaces it. You aren't expected to internalize it *yet*; you'll practice it across the next seven steps.
 
       ```mermaid
       flowchart TD
@@ -62,10 +71,9 @@ steps:
           D --> E[5. Localize — first wrong line]
           E --> F[6. Fix — minimal change]
           F --> G[7. Verify — rerun ALL tests]
-          G --> H[8. Reflect — what would I do differently?]
       ```
 
-      Notice what is **not** in the diagram: editing code. No edit happens until stage 6. That's the central discipline.
+      No edit happens until stage 6. That's the central discipline.
 
       ### 📂 What you have
 
@@ -73,13 +81,13 @@ steps:
 
       ### 🔍 1. Symptom — predict, then run
 
-      Open `greet.py`. Read it. Then **predict**, in your head:
+      Open `greet.py`. Read it. Predict what each of these returns:
 
-      - What will `greet(["Ada", "Linus", "Grace"])` return?
-      - What will `greet([])` return?
-      - What will `greet(["Solo"])` return?
+      - `greet(["Ada", "Linus", "Grace"])`
+      - `greet([])`
+      - `greet(["Solo"])`
 
-      Hold those predictions. Now click **Run**. One test fails. Read the failure carefully — pytest tells you the exact mismatch. *That mismatch is the symptom.* Write it in your head: **expected** `"Hello, Ada, Linus, Grace!"`, **actual** `"Hello, Linus, Grace!"`.
+      Now click **Run**. Read the failing assertion — the mismatch *is* the symptom. State it in your own words.
 
       ### 🧠 2. Predict the state
 
@@ -93,11 +101,18 @@ steps:
 
       ### 🔎 4. Hypothesis (one sentence)
 
-      Don't fix yet. Write the hypothesis in your head, ideally as a single sentence: *"The loop starts at index 1, so `names[0]` is never appended to `parts`."*
+      Don't fix yet. Write your hypothesis as a single sentence — *what* is wrong and *where* it lives.
+
+      <details><summary>Compare with a sample sentence</summary>
+
+      *"The loop starts at index 1, so `names[0]` is never appended to `parts`."*
+
+      Did yours name *which iteration* is wrong and *what consequence* follows? That's the schema.
+      </details>
 
       ### 📍 5. Localize
 
-      Which line is the **first divergence** between intended and actual behavior? It's not the test (the test is correct). It's not the `return` (it returns what it has). It's the `range(...)` call.
+      Three candidates: the test, the `return`, the `range(...)`. Pick the **first divergence** — the earliest line whose behavior contradicts your hypothesis. Justify in one sentence why the other two are not it.
 
       ### 🩹 6. Minimal fix
 
@@ -105,11 +120,7 @@ steps:
 
       ### ✅ 7. Verify
 
-      Click **Run**. *All three* tests must pass — the one that was failing AND the two that already passed. Verification means *no regressions*, not just *the failing test now passes*. Confusing those two is the **local-verification** trap.
-
-      ### 🪞 8. Reflect
-
-      Notice what just happened: you did not look at the code first and try to spot the bug. You ran the tests, named the symptom, predicted the state, collected evidence, formed a hypothesis, then fixed. Six stages of *not editing* before one stage of editing. That ratio is the difference between debugging and tinkering.
+      Click **Run**. *All three* tests must pass — the one that was failing AND the two that already passed. Verification means *no regressions*. Confusing those is the **local-verification** trap.
 
     files:
       - path: "greet.py"
@@ -117,7 +128,6 @@ steps:
         content: |
           def greet(names):
               parts = ["Hello"]
-              # BUG is somewhere on the next line.
               for i in range(1, len(names)):
                   parts.append(names[i])
               return ", ".join(parts) + "!"
@@ -153,15 +163,7 @@ steps:
                     parts.append(names[i])
                 return ", ".join(parts) + "!"
       explanation: |
-        The fix is `range(0, len(names))` (or equivalently `range(len(names))`). Mapping back to the cycle:
-
-        - **Symptom** — `test_three_names_all_appear` failed; `Ada` was missing.
-        - **Predict** — at loop start, `i` should be `0` and `names[i]` should be `"Ada"`.
-        - **Evidence** — Step Over once with the breakpoint on the `for` line; `i` was `1`, not `0`.
-        - **Hypothesis** — the loop starts at index 1, skipping `names[0]`.
-        - **Localize** — line 4, the `range(...)` call.
-        - **Fix** — change `range(1, ...)` to `range(0, ...)`.
-        - **Verify** — all three tests pass after the fix.
+        Fix is `range(0, len(names))` (or `range(len(names))`).
 
         Notice: we didn't *also* refactor to `for name in names:` even though that's nicer. A bug fix is not a license to clean up the surrounding code. Smaller fixes are safer to review and easier to revert if they introduce a new problem.
 
@@ -203,12 +205,12 @@ steps:
           options:
             - "Hypothesis"
             - "Evidence collection"
-            - "Fix"
+            - "Localize"
             - "Verification"
           correct_index: 1
           option_feedback:
             0: "A hypothesis is a *one-sentence proposed cause* (e.g., \"the input has invisible whitespace\"). Adding a `print` and observing a value is the *evidence* you'd use to test such a hypothesis."
-            2: "A fix is an edit that addresses the cause. Observing a value via `print(repr(...))` is gathering data — no edit has happened yet."
+            2: "Localize is identifying the *line* where intended and actual diverge. Observing a value reveals *what* is wrong; localization is the next move (which line first produced this value?)."
             3: "Verification is rerunning the test suite *after* a fix. The `print(repr(x))` happened before any edit, so it's earlier in the cycle."
           explanation: |
             Adding instrumentation and observing values is **evidence collection** (stage 3). The hypothesis comes *after* you have evidence — and the fix and verification come later still. Naming the stage you're in helps you avoid skipping straight to fixing.
@@ -230,25 +232,25 @@ steps:
             Verification means rerunning the **entire** test suite — including tests that previously passed. A fix in one place can introduce a regression somewhere else, and that's exactly the kind of regression a quick "did the failing test go green?" check will miss.
 
         - question: |
-            Which statement matches what professional debugging research consistently recommends?
+            A debugger user types `len(parts)` into the Watch panel during a paused session and sees `2`, when they expected `3`. Which stage of the cycle is this?
           type: single
           options:
-            - "If your code compiles, the bug must be a logic error in your code."
-            - "If your code compiles, then the surface-level structure is OK — but compilation says nothing about correctness."
-            - "If your code compiles, your tests should also pass."
-            - "If your code compiles cleanly with no warnings, you can skip the test suite for that change."
+            - "Predict"
+            - "Evidence"
+            - "Localize"
+            - "Verify"
           correct_index: 1
           option_feedback:
-            0: "Compilation rules out *some* errors (typos, missing imports) but not all bugs. Logic, semantic, type, and data-representation bugs all compile cleanly."
-            2: "Tests can fail even when code compiles. Compilation and behavior are different properties — confusing them is a common error pattern documented across novice debugging studies."
-            3: "Compiling cleanly is necessary but not sufficient. The test suite verifies behavior, which is a strictly stronger property than \"compiles.\""
+            0: "Predict happens *before* the debugger pauses — it's holding a value in your head. Watching a live value during a pause is collecting *evidence* against the prediction."
+            2: "Localize is identifying the line where intended and actual diverge. Watching a value confirms a *value* is wrong; localization is the next move (which line first produced this value?)."
+            3: "Verify happens *after* a fix — rerunning the test suite. The student here hasn't fixed anything yet; they're still gathering data."
           explanation: |
-            **Compilation says nothing about correctness.** It rules out a small subset of errors (typos, missing imports). Many of the most expensive bugs in real systems compile cleanly, run, and produce wrong output. Confusing "compiles" with "works" is one of the top recurring patterns flagged in the debugging-education literature.
+            Reading a watched value during a pause is **evidence collection**. Predict happens upstream (before the run); Localize and Verify happen downstream (after a hypothesis or fix). Naming the stage you're in is what keeps the cycle from collapsing into tinkering.
 
         - question: |
-            Which of these is the *symptom*, and which is the *cause*?
+            `total(items)` returns $5 too high for one user. You discover the discount-loading function reads the wrong database column, so that user's discount is never applied.
 
-            Scenario: A function `total(items)` should sum prices, but for one specific user it returns a value that's $5 too high. You discover that the user's profile has a discount field that was never being applied because the discount-loading function reads the wrong column from the database.
+            Which is the *symptom* and which is the *cause*?
           type: single
           options:
             - "Symptom: discount-loading reads wrong column. Cause: total is $5 too high."
@@ -275,12 +277,7 @@ steps:
   # ===========================================================================
   - title: "Debugger Tour"
     instructions: |
-      > 🎯 **Goal:** Build minimum tool fluency so you have a hand on the wheel before the next three cases hit. There's no bug here — `tour.py` runs correctly.
-      > 🧠 **Bloom's level:** *Remember / Apply.*
-
-      ### 🎚️ How this step is organized
-
-      Each section pairs a **debugging question** with the **smallest tool move** that answers it. That ordering matters: the research is explicit that tool-first instruction (here are 12 buttons!) produces superficial clicking. Tools become *useful* only when subordinated to a real question.
+      > 🎯 **Goal:** Build minimum tool fluency. Each section below pairs a **debugging question** with the **smallest tool move** that answers it. There's no bug to fix — `tour.py` runs correctly.
 
       Click **Debug** (not Run) to start each section.
 
@@ -324,13 +321,17 @@ steps:
 
       ### 7. *"Are these two variables actually the same object?"* → Aliasing badge
 
-      `tour.py` deliberately includes a classic Python pitfall: `register_score` uses a *shared default list*. Run to completion (Continue twice). In the Variables tab, look at `defaults` and the inner `students` list inside `register_score`. They share an `oid` and a `↔` alias badge — they're literally the same list in memory.
+      `register_score` has a `students=[]` default argument. **Predict:** after `main()` finishes, how many entries does `defaults` contain? Hold the answer.
 
-      That's how you spot aliasing bugs *before* they bite.
+      Now run to completion (Continue twice). In the Variables tab, expand `defaults` and the inner `students` list inside `register_score`. They share an `oid` and a `↔` alias badge — they're the same list. Compare to your prediction.
+
+      That's how you spot aliasing *before* it bites.
 
       ### 🪞 Reflect
 
-      You haven't fixed any bug here. You've practiced the seven smallest moves the debugger offers. The next three steps will ask you to use them on real bugs — and the most important habit is: **for each move, name the question it answers.** If you can't, you don't need that move yet.
+      Close the editor. From memory, list the seven moves. For each, name the **debugging question** it answers. If you can't, that move isn't yet yours — flag it for revisit.
+
+      Carry this forward: for any new debugger feature you encounter, name the question it answers. If you can't, you don't need it yet.
 
     files:
       - path: "tour.py"
@@ -347,7 +348,6 @@ steps:
                   total += score
               return total / len(scores)
 
-          # Classic shared-default-list aliasing trap.
           def register_score(name, value, students=[]):
               students.append({"name": name, "score": value})
               return students
@@ -380,6 +380,60 @@ steps:
       explanation: |
         There's no fix to apply — this step is procedural drill. The aliasing trap on line 14 (`students=[]` default argument shared across calls) is a real Python gotcha worth remembering: default arguments are evaluated **once** at function-definition time, not on each call. The standard fix in production code is `students=None` plus `if students is None: students = []`. We don't fix it here; we just notice that the debugger's `↔` badge would tell us about it.
 
+    quiz:
+      title: "Tour — Quick Retrieval"
+      min_score: 0.75
+      shuffle: true
+      questions:
+
+        - question: |
+            "I want to know which iteration of a 10,000-item loop is the first one to break the invariant." Which tool answers it?
+          type: single
+          options:
+            - "Step Over until it breaks"
+            - "Conditional breakpoint with the invariant as the predicate"
+            - "Hover over the variable"
+            - "Call Stack"
+          correct_index: 1
+          option_feedback:
+            0: "10,000 manual steps is what conditional breakpoints exist to avoid."
+            2: "Hover shows the value at *this* paused moment. It can't filter across iterations."
+            3: "Call Stack shows *how* you got to the current line, not *which iteration* first violated something."
+          explanation: |
+            **Conditional breakpoints filter.** The condition runs at every loop pass; the debugger pauses only when it's true.
+
+        - question: |
+            "I want to inspect what `total` was 5 lines ago." Which tool answers it?
+          type: single
+          options:
+            - "Add a Watch and rerun"
+            - "Drag the History scrubber backward"
+            - "Set a breakpoint earlier and restart"
+            - "Hover the variable"
+          correct_index: 1
+          option_feedback:
+            0: "Watch shows the *current* value at the paused moment, not historical values."
+            2: "This works but costs you a full rerun. The history scrubber rewinds without restarting — much faster."
+            3: "Hover is the same as Watch — it shows the value at the current pause, not the past."
+          explanation: |
+            **Time-travel.** The scrubber lets you slide back through any moment in the run without re-executing.
+
+        - question: |
+            "I just changed `x` and `y` looks different too — are they secretly the same object?" Which tool answers it?
+          type: single
+          options:
+            - "Hover both variables and compare values"
+            - "Check the `oid` and `↔` badge in the Variables tab"
+            - "Set a conditional breakpoint"
+            - "Drag the History scrubber"
+          correct_index: 1
+          option_feedback:
+            0: "Identical values can come from different objects (e.g., two equal lists). Identity is a stronger property than value equality."
+            2: "A conditional breakpoint pauses on a predicate; it doesn't surface object identity."
+            3: "The scrubber shows past values; aliasing is about *current* identity."
+          explanation: |
+            **Object identity ≠ equality.** The `↔` alias badge and matching `oid` mean two names point at the *same* object — modifying one will appear to modify the other.
+
 
   # ===========================================================================
   # STEP 3 — Case 1: Maze Pathfinder (Boundary Bug)
@@ -393,7 +447,6 @@ steps:
   - title: "Case 1 — Maze Pathfinder (Boundary Bug)"
     instructions: |
       > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
-      > 🧠 **Bloom's level:** *Apply / Analyze.*
 
       ### 📂 What you have
 
@@ -405,16 +458,13 @@ steps:
       - `test_path_rejected_when_battery_too_small` — passes (max_steps=9, no 9-step path).
       - `test_path_found_when_battery_limit_is_exact` — **fails** (max_steps=10, but a 10-step path exists).
 
-      The bug is **not** in the maze data. It is in the search logic.
-
       ### 1. Symptom — run and read
 
-      Click **Run**. Read the failing assertion. Write the symptom in your head:
-      *expected: a list of 11 positions; actual: `None`.*
+      Click **Run**. Read the failing assertion. State the symptom in one sentence: *expected what / got what.*
 
       ### 2. Predict before debugging
 
-      Open `pathfinder.py`. Read `_dfs` carefully — especially these two checks at the top of the function (lines ~13-17):
+      Open `pathfinder.py`. Read `_dfs` carefully — especially the two checks at the top of the function:
 
       ```python
       if steps_used >= max_steps:
@@ -424,25 +474,17 @@ steps:
           return path.copy()
       ```
 
-      **Predict, before running anything:** at the moment a recursive call has just stepped onto the goal cell using exactly the budget, what are `steps_used` and `max_steps`? Which of the two checks above runs first? What does it return?
-
-      Write the answer in your head before continuing.
+      **Predict:** at the moment a recursive call has just stepped onto the goal cell using exactly the budget, what are `steps_used` and `max_steps`? Which of the two checks above runs first? What does it return?
 
       ### 3. Set evidence — breakpoint and watches
 
-      Click the gutter beside **line 11** of `pathfinder.py` (`steps_used = len(path) - 1`). In the **Watch** tab, add these expressions, in order:
-
-      - `current`
-      - `goal`
-      - `current == goal`
-      - `steps_used`
-      - `max_steps`
+      Set a breakpoint at the top of `_dfs` (the `steps_used = len(path) - 1` line). In the **Watch** tab, add at least the values your prediction depends on. Add more if you want orientation (e.g., `current`, `goal`, `current == goal`).
 
       ### 4. Drive
 
-      Click **Debug**. The first pause is on the very first call (start cell). Use **Continue** (F5) to advance to the next call. Repeat. As recursion deepens, the **Call Stack** tab grows — click frames to inspect each level's locals.
+      Click **Debug**. **Continue** (F5) advances to each next pause — repeat until `current == goal` is `True` in the Watch tab. **Don't fix yet.**
 
-      **Don't fix yet.** Continue until `current == goal` is `True` in the Watch tab.
+      As recursion deepens, the **Call Stack** tab grows. Click any frame to see that level's locals — this is how you read recursion in a debugger.
 
       ### 5. The first wrong decision
 
@@ -452,11 +494,20 @@ steps:
 
       ### 6. Hypothesis
 
-      State it in one sentence in your head: *"The cutoff check rejects exact-budget arrivals before the goal check can accept them."*
+      Write your one-sentence hypothesis. Format: *"<which check> <does what> <when>."* No fix yet — just the cause. (If you can't write a clean sentence yet, that's fine — the act of trying surfaces what's still fuzzy.)
+
+      <details><summary>Compare with a sample sentence</summary>
+
+      *"The cutoff check rejects exact-budget arrivals before the goal check can accept them."*
+
+      Did yours name the *check* and the *timing*? If so, you have the schema for a debugging hypothesis: a specific code element doing the wrong thing at a specific moment.
+      </details>
 
       ### 7. Minimal fix
 
-      Edit `_dfs` so the goal check runs **before** the cutoff check. (Equivalently: make the cutoff accept the case where `current == goal`. The goal-first ordering is clearer because reaching the goal is terminal and valid regardless of how many steps it took.)
+      Edit `_dfs` so the goal check runs **before** the cutoff check.
+
+      🪞 *Before you verify — where else have you seen a bug like this?* Off-by-one boundaries hide in `range`, slice indices, comparison operators, loop sentinels, array bounds. Spend 15 seconds listing two places this shape could appear in your own code. Then: *which stage of the cycle was hardest for you on this case — Predict, Evidence, or Hypothesis?* Name it; you'll re-encounter that stage in Case 2.
 
       ### 8. Verify
 
@@ -469,7 +520,6 @@ steps:
           # Mazes used by the pathfinder case.
 
           # Shortest valid path from S to G is exactly 10 steps.
-          # Chosen to expose an off-by-one boundary bug.
           BATTERY_LIMIT_MAZE = [
               "#########",
               "#S..#..G#",
@@ -490,10 +540,7 @@ steps:
       - path: "pathfinder.py"
         language: "python"
         content: |
-          """Depth-first maze pathfinder with a deliberately seeded boundary bug.
-
-          The bug is not in the maze data. It is in the search logic.
-          """
+          """Depth-first maze pathfinder."""
 
           def find_marker(maze, marker):
               for row_index, row in enumerate(maze):
@@ -687,23 +734,22 @@ steps:
         command: |
           source = open('/tutorial/test_pathfinder.py').read()
           assert 'max_steps=10' in source, \
-              "Don't change the test — the test correctly says a 10-step path with max_steps=10 should be accepted. Fix `pathfinder.py` instead."
+              "Don't change the test — fix `pathfinder.py` instead."
           assert 'max_steps=9' in source, \
-              "Don't change the test — the under-budget rejection case is still meaningful. Revert `test_pathfinder.py`."
+              "Don't delete the under-budget rejection case — revert `test_pathfinder.py`."
 
       - description: "Workaround guard — maze unchanged"
         command: |
-          import re
           source = open('/tutorial/maze_data.py').read()
           assert '"#S..#..G#"' in source, \
-              "Don't edit the maze — the maze was correct. The bug is in `_dfs`'s logic, not the data."
+              "Don't edit the maze — fix `_dfs` instead."
 
       - description: "Workaround guard — both checks present"
         command: |
           source = open('/tutorial/pathfinder.py').read()
           assert 'current == goal' in source, "The goal check shouldn't be removed — without it, the function never returns a path."
           assert 'steps_used >= max_steps' in source or 'len(path) - 1 >= max_steps' in source, \
-              "Don't remove the cutoff entirely — without it, `test_path_rejected_when_battery_too_small` fails. The bug was the *ordering*, not the existence of the cutoff."
+              "Don't remove the cutoff entirely — `test_path_rejected_when_battery_too_small` would fail."
 
     quiz:
       title: "Case 1 — Knowledge Check"
@@ -751,7 +797,7 @@ steps:
             - "False — verify means rerun all tests, including the ones that were already green, to catch regressions"
           correct_index: 1
           option_feedback:
-            0: "This is the local-verification trap from Step 1. A change that fixes one test can easily break another. The only reliable verification is rerunning the entire suite."
+            0: "Fixing one test can break another — `test_path_rejected_when_battery_too_small` is exactly the kind of case a too-aggressive fix could break. The only reliable verification is rerunning the entire suite."
           explanation: |
             **Verification means rerunning the whole suite.** Specifically: after the goal-first fix, `test_path_rejected_when_battery_too_small` (max_steps=9) must still pass. If you accidentally over-loosen the cutoff, this test will catch you — but only if you rerun it.
 
@@ -769,7 +815,8 @@ steps:
   - title: "Case 2 — Ledger Reconciliation (Data Representation Bug)"
     instructions: |
       > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
-      > 🧠 **Bloom's level:** *Apply / Analyze.*
+
+      > 🔀 **How is this different from Case 1?** Case 1 was *algorithmic* — the data was correct; one check was in the wrong place. This is a *data-representation* bug — the algorithm is correct; the data carries something invisible. Different family, different first move.
 
       ### 📂 What you have
 
@@ -794,7 +841,7 @@ steps:
 
       ### 3. Stop only on the suspicious account — conditional breakpoint
 
-      Click the gutter on **line 52** of `ledger.py` (`before = balances.get(...)`). Right-click the red dot → **Edit Breakpoint** → enter the condition:
+      Set a breakpoint at the start of `apply_transaction` (the `before = balances.get(...)` line). Right-click the red dot → **Edit Breakpoint** → enter the condition:
 
       ```
       tx.account == "ACCT-202"
@@ -810,7 +857,7 @@ steps:
       - `tx.kind`
       - **`repr(tx.kind)`** ← the secret weapon
 
-      Add `repr(tx.kind)` to your **Watch** tab so it shows on every pause. Watch for one transaction where `repr` shows something `print` would have hidden.
+      Add `repr(tx.kind)` to your **Watch** tab so it shows on every pause. Across the ACCT-202 pauses, what does `repr` show that you wouldn't notice otherwise?
 
       ### 5. Where is the divergence?
 
@@ -818,11 +865,18 @@ steps:
 
       ### 6. Hypothesis
 
-      One sentence: *"The kind field arrives from the CSV with hidden whitespace. `load_transactions` doesn't normalize it, so it falls through to the unknown-kind branch in `apply_transaction` and gets treated as a withdrawal."*
+      Write your one-sentence hypothesis before expanding. Name the *layer* (loading vs processing) and what's wrong with the data.
+
+      <details><summary>Compare with a sample sentence</summary>
+
+      *"The kind field arrives from the CSV with hidden whitespace. `load_transactions` doesn't normalize it, so it falls through to the unknown-kind branch in `apply_transaction` and gets treated as a withdrawal."*
+
+      A clean hypothesis names *where* the bug enters (the loader) and *why* the symptom appears far from the cause (the if/elif cascade silently misses).
+      </details>
 
       ### 7. Minimal fix
 
-      One change in `load_transactions` (line ~44). Resist the temptation to:
+      One change in `load_transactions` on the `kind=row["type"].upper()` line. Resist the temptation to:
 
       - Patch the final balance.
       - Edit the CSV.
@@ -830,6 +884,8 @@ steps:
       - Delete the unknown-kind fallback.
 
       The right fix is **the smallest change in the right place**.
+
+      🪞 *Before you verify — where else have you seen a bug like this?* Hidden-character bugs hide in CSV imports, copy-pasted strings, JSON keys, environment variables, log lines, command-line args. List two places where `repr()` would surface something `print()` hides. Then: *which stage of the cycle did `repr()` change for you — Evidence, Localize, or both?*
 
       ### 8. Verify
 
@@ -839,11 +895,7 @@ steps:
       - path: "ledger.py"
         language: "python"
         content: |
-          """Ledger reconciliation case study.
-
-          This program has a deliberately seeded reconciliation bug. The point of
-          the case is to use conditional breakpoints and `repr()` to localize it.
-          """
+          """Ledger reconciliation — applies CSV transactions to running balances."""
 
           import csv
           import logging
@@ -1054,7 +1106,9 @@ steps:
         - **Changing the REVERSAL arithmetic in `apply_transaction`.** This rewrites the spec to match the bug's symptom.
         - **Deleting the unknown-kind branch.** That branch exists for a reason (legacy blank types). Removing it would surface a `NameError` for `after`, which is a different problem entirely.
 
-        A more defensive variant of the fix also validates at load time:
+        <details><summary>Want to go further? A more defensive variant.</summary>
+
+        Validate at load time:
 
         ```python
         kind = row["type"].strip().upper()
@@ -1062,7 +1116,8 @@ steps:
             raise ValueError(f"unknown transaction kind {kind!r} in row {row['id']}")
         ```
 
-        That would have caught the original bug at *load* time, with a clear message, instead of producing a silently wrong balance.
+        That would have caught the original bug at *load* time with a clear message, instead of producing a silently wrong balance.
+        </details>
 
     tests:
       - description: "Both ledger tests pass"
@@ -1084,17 +1139,16 @@ steps:
         command: |
           source = open('/tutorial/ledger.py').read()
           assert '.strip()' in source, \
-              "The fix should call `.strip()` on the `type` field somewhere in `load_transactions`. Don't just patch the final balance."
-          # Specifically check the load_transactions area (rough heuristic)
+              "The fix should call `.strip()` on the `type` field in `load_transactions`."
           lt_block = source[source.find('def load_transactions'):source.find('def apply_transaction')]
           assert '.strip()' in lt_block, \
-              "Put the `.strip()` inside `load_transactions`, not in `apply_transaction`. The bug is in how data gets loaded, not in how it's processed."
+              "Put `.strip()` in `load_transactions`, not in `apply_transaction`."
 
       - description: "Workaround guard — CSV unchanged"
         command: |
           source = open('/tutorial/transactions.csv').read()
           assert 'T011,ACCT-202, REVERSAL,18.00' in source, \
-              "Don't edit the CSV — the bug is in the loader, not the data. Real-world CSVs often have whitespace; your loader should handle it. Revert `transactions.csv`."
+              "Don't edit the CSV — fix the loader instead. Revert `transactions.csv`."
 
       - description: "Workaround guard — apply_transaction arithmetic intact"
         command: |
@@ -1136,15 +1190,15 @@ steps:
             Why is `repr(tx.kind)` more useful than `print(tx.kind)` when investigating this bug?
           type: single
           options:
-            - "`repr()` runs faster than `print()`"
+            - "`repr()` calls `str()` internally, so it produces the same output — the difference is just defensive habit"
             - "`repr()` shows quotes and escape characters around the string, making invisible characters (like leading spaces) visible"
-            - "`print()` doesn't work inside the debugger"
-            - "`repr()` returns an integer, which is easier to compare"
+            - "`repr()` strips trailing whitespace before displaying, which is what makes the leading space visible by contrast"
+            - "`repr()` is the only function that displays unicode characters correctly"
           correct_index: 1
           option_feedback:
-            0: "Speed isn't the issue. The two are roughly equivalent in performance for short strings."
-            2: "`print()` works fine in the debugger console. The relevant difference is what each function shows — `repr()` exposes invisible characters that `print()` strips."
-            3: "`repr()` returns a *string*, not an integer. The string includes quotes and escape sequences so you can see characters that would otherwise be invisible."
+            0: "`repr()` and `str()` are different by design. `str(' REVERSAL')` prints `' REVERSAL'` with no delimiters; `repr(' REVERSAL')` prints `\"' REVERSAL'\"` with quotes. The difference is structural, not stylistic."
+            2: "Backwards. `repr()` doesn't *strip* whitespace — it *displays* it inside quote delimiters so you can see it. `print()` displays the string content without delimiters, which is what makes leading/trailing whitespace invisible."
+            3: "Both `print()` and `repr()` display Unicode. The issue isn't unicode — it's that `print()` shows raw content without delimiters, hiding leading/trailing whitespace, while `repr()` wraps the value in quotes that expose it."
           explanation: |
             `repr('REVERSAL')` returns `\"'REVERSAL'\"` — including the surrounding quotes — while `repr(' REVERSAL')` returns `\"' REVERSAL'\"`. The leading space jumps out because `repr()` shows the string *as a Python literal*, with quotes around its contents. `print()` displays the string's content without delimiters, so leading and trailing whitespace becomes invisible. This is the canonical Python trick for spotting whitespace bugs.
 
@@ -1179,7 +1233,8 @@ steps:
   - title: "Case 3 — Course Waitlist (Temporal Bug)"
     instructions: |
       > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
-      > 🧠 **Bloom's level:** *Analyze / Evaluate.*
+
+      > 🔀 **How is this different from Cases 1 and 2?** Cases 1–2 were *spatial* — the bug is in some specific line. This one isn't. By the end of step 3 you'll be able to name what kind of bug it is and what new debugger move it asks for.
 
       ### 📂 What you have
 
@@ -1192,11 +1247,13 @@ steps:
 
       ### 1. Symptom — read the failure carefully
 
-      Click **Run**. The failing assertion shows expected vs actual enrollment lists. Note them down in your head — this is your destination when scrubbing.
+      Click **Run**. The failing assertion shows expected vs actual enrollment lists. Note the difference — you'll need it in step 3.
 
       ### 2. The trick — don't run forward, run **backward**
 
       Click **Debug** without setting any breakpoints. Let the program run to completion. The debugger will be at the end of execution.
+
+      *Letting it finish first puts you at the wrong end-state — your destination. From there, scrubbing backward is faster than stepping forward, because events 1–3 produced no symptom at all.*
 
       Now, in the **Variables** tab, expand `state` then `'CS201'` then `enrolled` and `waitlist`. Observe their final (wrong) values.
 
@@ -1204,13 +1261,13 @@ steps:
 
       Drag the **History** scrubber backward, slowly, while watching the Variables tab. You'll see `enrolled` and `waitlist` change as you rewind through events.
 
-      You're looking for the **first event** (counting from event 1) where `state['CS201'].waitlist` shrinks AND a name moves into `enrolled` that was **not at the front** of the waitlist.
+      Scrub one event at a time. At each event, ask **one** question: *"Did the front of the waitlist just get admitted?"* Stop at the first event where the answer is no.
 
       ### 4. Now narrow to a line
 
-      Once you've identified that event, scrub *forward* to it. Set a breakpoint inside `allocate_next` (around **line 56**, the line that reads `next_student = course.waitlist.pop()`).
+      Once you've identified that event, scrub *forward* to it. Set a breakpoint inside `allocate_next` on the line that reads `next_student = course.waitlist.pop()`.
 
-      Click **Continue** (or restart with Debug if needed) until execution pauses inside `allocate_next` for the right event.
+      Click **Continue** (or restart with Debug if needed) until execution pauses there for the right event.
 
       ### 5. The smoking gun
 
@@ -1225,11 +1282,25 @@ steps:
 
       ### 6. Hypothesis
 
-      One sentence: *"`list.pop()` removes the LAST element. The spec says FIFO — the FIRST element should be admitted first."*
+      Write your one-sentence hypothesis. Name the *operation* and the *spec it violates*.
 
-      ### 7. Minimal fix
+      <details><summary>Compare with a sample sentence</summary>
 
-      One small change in `allocate_next`. (Acceptable: `pop(0)`, or convert `waitlist` to `collections.deque` and use `popleft()`.)
+      *"`list.pop()` removes the LAST element. The spec says FIFO — the FIRST element should be admitted first."*
+
+      The hypothesis pins the bug to a *single library call's behavior* rather than to the surrounding orchestration. That precision is what makes the fix one character.
+      </details>
+
+      ### 7. Minimal fix — and a judgment call
+
+      Two correct fixes exist. Pick one and **justify in one sentence** (write your reasoning as a comment at the top of `allocate_next`):
+
+      - `course.waitlist.pop(0)` — one-character change, list stays a list.
+      - Convert `waitlist` to `collections.deque` and use `popleft()` — bigger diff, but the type *says* "queue".
+
+      Criteria to weigh: communicates intent / asymptotic cost / disruption to surrounding code. There's no single right answer; the *justified* choice is what matters.
+
+      🪞 *Before you verify — where else have you seen a bug like this?* Symptom-far-from-cause bugs hide in caches that go stale events ago, message queues processed out of order, undo/redo stacks, optimistic UI updates. List two places where the wrong final state would have been easier to find by stepping backward than forward. Then: *which stage of the cycle did back-in-time scrubbing change for you — Evidence, Localize, or both?*
 
       ### 8. Verify
 
@@ -1450,17 +1521,7 @@ steps:
       explanation: |
         The fix is `course.waitlist.pop(0)` instead of `course.waitlist.pop()`. Python's `list.pop()` with no argument removes the **last** element (LIFO / stack behavior). For a FIFO queue you need `pop(0)` to remove the **first** element.
 
-        The history-scrubber technique was the key to localization. The final state (CS201 enrolled = `['Ava Chen', 'Jules Kim']` — wrong) is several events after the *first* bad transition (event 4: drop Ben Ortiz). Stepping forward from the start would have meant inspecting state at every event — the scrubber lets you instead anchor on the wrong final state and rewind backward to the moment things first diverged from the spec.
-
-        For a production-quality version, prefer `collections.deque`:
-
-        ```python
-        from collections import deque
-        # In CourseState: waitlist: deque = field(default_factory=deque)
-        # In allocate_next: next_student = course.waitlist.popleft()
-        ```
-
-        `deque.popleft()` is O(1) where `list.pop(0)` is O(n) (the rest of the list has to shift). At a small scale it doesn't matter, but the bigger win is **readability**: `popleft()` *says* "this is a queue" in a way `pop(0)` doesn't.
+        For production code prefer `collections.deque` with `popleft()` — quiz Q4 explores why.
 
         Common wrong fixes (and why they're wrong):
 
@@ -1594,7 +1655,832 @@ steps:
 
 
   # ===========================================================================
-  # STEP 6 — Interleaved Technique-Selection Drill
+  # STEP 6 — Case 4: Event-Driven Checkout (Sequence Diagram Inference)
+  # Source: debugging_case_studies/case4_sequence_diagram_checkout/
+  #   - The case study's `trace_uml.py` and `generate_sequence_diagram.py`
+  #     are intentionally NOT included — the tutorial's built-in sequence
+  #     diagram analyzer traces from `if __name__ == "__main__":` instead.
+  # Pedagogy:
+  #   New technique — sequence diagram inference for protocol/wiring bugs.
+  #   The bug is in event subscription, not in any imperative call chain —
+  #     source reading is genuinely inefficient here, by design.
+  #   Variation — same cycle, fourth surface (event-bus indirection).
+  #   Bloom's level — Apply / Analyze / Evaluate.
+  # ===========================================================================
+  - title: "Case 4 — Event-Driven Checkout (Sequence Diagram)"
+    instructions: |
+      > 🎯 **Goal:** A checkout service correctly raises `OutOfStockError` for an out-of-stock cart, but the warehouse still receives a pick ticket. The bug is in event-bus wiring, not in any one method body. Use the **Sequence Diagram** panel — it makes the runtime call order visible.
+
+      > 🔀 **How is this different from the previous three cases?** Cases 1–3 had bugs you could trace with breakpoints in the relevant function. This one resists that. You'll see why in step 3.
+
+      ### 📂 What you have
+
+      An event-driven checkout service spread across many small files in `checkout_app/`. Don't try to read them all up-front — the case is designed so you don't need to *yet*. The sequence diagram will linearize the parts that matter.
+
+      - **Where the bug hides (you'll edit one):** `workflow_config.py` (event wiring), `event_bus.py` (pub/sub).
+      - **The orchestrator (read it once):** `checkout_service.py`.
+      - **Realistic clutter (open if curious):** `audit.py`, `notifications.py`, `shipping.py`, `inventory.py`, `payment.py`, `catalog.py`, `promotions.py`, `app_factory.py`, `models.py`, `checkout_main.py`.
+      - **Tests + entry point:** `test_checkout.py`, `checkout_main.py`.
+
+      Plus a tab on the right: **Sequence Diagram**, refreshed live as you edit.
+
+      ### 1. Symptom
+
+      Click **Test**. The first test fails:
+
+      ```text
+      AssertionError: assert [] == ['order-1001']
+      ```
+
+      The order was correctly rejected with `OutOfStockError`, but `'order-1001'` is still in the shipping queue. The warehouse is being told to ship a rejected order.
+
+      ### 2. Predict before reading code
+
+      Read the rejection logic in `checkout_app/checkout_service.py`. Specifically:
+
+      ```python
+      try:
+          reservation = self._inventory.reserve(order.order_id, order.items)
+      except OutOfStockError:
+          self._bus.publish(DomainEvent(EventKind.ORDER_REJECTED, order.order_id, request.items))
+          raise
+      ```
+
+      Predict: which line in `CheckoutService.checkout()` is responsible for placing the rejected order onto the shipping queue?
+
+      ### 3. Surprise — there is no such line
+
+      Search the file. `CheckoutService` never directly calls `ShippingQueue.enqueue(...)`. The side effect happens **through the event bus** — `CheckoutService` publishes events, the bus delivers them to subscribed handlers, and one of those handlers happens to be `FulfillmentScheduler.prepare_pick_ticket`. That handler calls `ShippingQueue.enqueue`.
+
+      Source reading is now stuck. You'd need to follow indirect call chains across `event_bus.py`, `workflow_config.py`, and `shipping.py` to reconstruct the runtime story. **There is a faster way.**
+
+      ### 4. Open the Sequence Diagram panel
+
+      Look to the right (or click the **Sequence Diagram** tab). The panel shows the actual runtime call order, traced from `checkout_main.py`'s `__main__` block. Read it top to bottom.
+
+      Find these two arrows:
+
+      - The arrow into `FulfillmentScheduler.prepare_pick_ticket(...)`.
+      - The arrow into `InventoryService.reserve(...)`.
+
+      ### 5. The first impossible arrow
+
+      The protocol is *reserve first, then ship*. In the diagram, **which arrow violates that order?** Don't read the next section until you've found it.
+
+      <details><summary>Click to compare with the sample answer</summary>
+
+      The diagram shows `prepare_pick_ticket` firing **before** `InventoryService.reserve` runs. By the time `reserve` raises `OutOfStockError`, the warehouse has already been told to pack the order. That's the protocol violation — the bug.
+      </details>
+
+      ### 6. Hypothesis
+
+      Write your one-sentence hypothesis. Name the *handler* and the *topic mismatch*.
+
+      <details><summary>Compare with a sample sentence</summary>
+
+      *"The `FulfillmentScheduler.prepare_pick_ticket` handler is subscribed to the wrong event topic — `PAYMENT_AUTHORIZED` instead of `INVENTORY_RESERVED`."*
+
+      The hypothesis isn't *about* the handler's code — its body is correct. The bug is that the *configuration* asks the handler to react to the wrong event. Naming the layer correctly is half the fix.
+      </details>
+
+      ### 6b. Two candidate fixes — evaluate before choosing
+
+      Imagine two engineers each propose a fix that makes the failing test pass:
+
+      - **A.** Re-wire the subscription in `workflow_config.py` so `prepare_pick_ticket` listens for `INVENTORY_RESERVED` instead of `PAYMENT_AUTHORIZED`.
+      - **B.** Add a defensive guard at the top of `prepare_pick_ticket`: `if event.kind != EventKind.INVENTORY_RESERVED: return`.
+
+      Both make the test green. Which is the better fix, and why? **The principle:** *prefer fixing where the invariant is most directly expressible.* Hold your reasoning — quiz Q3 will ask you to defend the choice.
+
+      ### 7. Localize
+
+      Open `checkout_app/workflow_config.py` and find the row that registers `fulfillment.prepare_pick_ticket`.
+
+      ### 8. Minimal fix
+
+      Change the topic for the fulfillment registration from `EventKind.PAYMENT_AUTHORIZED` to `EventKind.INVENTORY_RESERVED`. **One identifier.** Don't add defensive checks inside `prepare_pick_ticket` — the wiring is the right layer to fix.
+
+      🪞 *Before you verify — where else have you seen a bug like this?* Wiring/protocol bugs hide in event buses, plugin systems, dependency injection containers, middleware pipelines, route tables, message queues, observer hooks. List two places where the bug *could not* be found by reading any single function — only by linearizing the runtime story. Then: *which stage of the cycle did the sequence diagram change for you — Evidence, Localize, or Hypothesis?*
+
+      ### 9. Verify — and reread the diagram
+
+      Click **Test**. Both tests turn green. Now look at the **Sequence Diagram** panel again — the impossible arrow is gone, and the call order matches the protocol.
+
+    uml_files:
+      - checkout_main.py
+      - checkout_app/__init__.py
+      - checkout_app/models.py
+      - checkout_app/catalog.py
+      - checkout_app/promotions.py
+      - checkout_app/payment.py
+      - checkout_app/inventory.py
+      - checkout_app/shipping.py
+      - checkout_app/notifications.py
+      - checkout_app/audit.py
+      - checkout_app/event_bus.py
+      - checkout_app/workflow_config.py
+      - checkout_app/checkout_service.py
+      - checkout_app/app_factory.py
+
+    files:
+      - path: "checkout_app/__init__.py"
+        language: "python"
+        content: |
+          """Event-driven checkout example for sequence-diagram debugging."""
+
+      - path: "checkout_app/models.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from dataclasses import dataclass
+          from enum import Enum
+          from typing import Callable
+
+
+          class EventKind(str, Enum):
+              PAYMENT_AUTHORIZED = "payment.authorized"
+              INVENTORY_RESERVED = "inventory.reserved"
+              ORDER_REJECTED = "order.rejected"
+              ORDER_CONFIRMED = "order.confirmed"
+
+
+          @dataclass(frozen=True)
+          class LineItem:
+              sku: str
+              qty: int
+
+
+          @dataclass(frozen=True)
+          class CheckoutRequest:
+              customer_id: str
+              cart_id: str
+              items: tuple
+              coupon_code: str | None = None
+
+
+          @dataclass(frozen=True)
+          class OrderDraft:
+              order_id: str
+              customer_id: str
+              items: tuple
+              amount_cents: int
+
+
+          @dataclass(frozen=True)
+          class PaymentAuthorization:
+              order_id: str
+              authorization_id: str
+              amount_cents: int
+
+
+          @dataclass(frozen=True)
+          class InventoryReservation:
+              order_id: str
+              reservation_id: str
+              items: tuple
+
+
+          @dataclass(frozen=True)
+          class CheckoutReceipt:
+              order_id: str
+              amount_cents: int
+              authorization_id: str
+              reservation_id: str
+
+
+          @dataclass(frozen=True)
+          class DomainEvent:
+              kind: EventKind
+              order_id: str
+              payload: object
+
+
+          class OutOfStockError(Exception):
+              pass
+
+
+          EventHandler = Callable[[DomainEvent], None]
+
+      - path: "checkout_app/catalog.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from .models import LineItem
+
+
+          class Catalog:
+              def __init__(self, prices_cents):
+                  self._prices_cents = dict(prices_cents)
+
+              def price_items(self, items):
+                  total = 0
+                  for item in items:
+                      total += self._prices_cents[item.sku] * item.qty
+                  return total
+
+      - path: "checkout_app/promotions.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+
+          class PromotionEngine:
+              """Discounts. Not the bug in this case — present to add realistic clutter."""
+
+              def __init__(self, coupons):
+                  self._coupons = dict(coupons)
+
+              def apply_coupon(self, amount_cents, coupon_code):
+                  if not coupon_code:
+                      return amount_cents
+                  discount = self._coupons.get(coupon_code, 0)
+                  return max(0, amount_cents - min(discount, amount_cents))
+
+      - path: "checkout_app/payment.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from .models import PaymentAuthorization
+
+
+          class PaymentGateway:
+              def __init__(self):
+                  self._next_number = 7000
+                  self.captured_authorizations = []
+
+              def authorize(self, order_id, amount_cents):
+                  self._next_number += 1
+                  return PaymentAuthorization(
+                      order_id=order_id,
+                      authorization_id=f"auth-{self._next_number}",
+                      amount_cents=amount_cents,
+                  )
+
+              def capture(self, authorization):
+                  self.captured_authorizations.append(authorization.authorization_id)
+
+      - path: "checkout_app/inventory.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from .models import InventoryReservation, OutOfStockError
+
+
+          class InventoryService:
+              def __init__(self, stock_by_sku):
+                  self._stock_by_sku = dict(stock_by_sku)
+                  self._reservation_number = 300
+
+              def reserve(self, order_id, items):
+                  shortages = []
+                  for item in items:
+                      available = self._stock_by_sku.get(item.sku, 0)
+                      if available < item.qty:
+                          shortages.append(f"{item.sku}: requested {item.qty}, available {available}")
+                  if shortages:
+                      raise OutOfStockError("; ".join(shortages))
+
+                  for item in items:
+                      self._stock_by_sku[item.sku] -= item.qty
+                  self._reservation_number += 1
+                  return InventoryReservation(
+                      order_id=order_id,
+                      reservation_id=f"res-{self._reservation_number}",
+                      items=items,
+                  )
+
+              def snapshot(self):
+                  return dict(self._stock_by_sku)
+
+      - path: "checkout_app/shipping.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from dataclasses import dataclass
+
+          from .models import EventKind, InventoryReservation, PaymentAuthorization
+
+
+          @dataclass(frozen=True)
+          class PickTicket:
+              order_id: str
+              source_event: EventKind
+              note: str
+
+
+          class ShippingQueue:
+              def __init__(self):
+                  self._tickets = []
+
+              def enqueue(self, ticket):
+                  self._tickets.append(ticket)
+
+              def pending_order_ids(self):
+                  return [ticket.order_id for ticket in self._tickets]
+
+              def tickets(self):
+                  return list(self._tickets)
+
+
+          class FulfillmentScheduler:
+              """Owns the side effect of placing an order on the warehouse pick queue."""
+
+              def __init__(self, queue):
+                  self._queue = queue
+
+              def prepare_pick_ticket(self, event):
+                  payload = event.payload
+                  if isinstance(payload, InventoryReservation):
+                      note = f"reservation {payload.reservation_id} completed"
+                  elif isinstance(payload, PaymentAuthorization):
+                      note = f"authorization {payload.authorization_id} completed"
+                  else:
+                      note = "generic checkout event"
+
+                  self._queue.enqueue(
+                      PickTicket(order_id=event.order_id, source_event=event.kind, note=note)
+                  )
+
+      - path: "checkout_app/notifications.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+
+          class CustomerNotifier:
+              def __init__(self):
+                  self.sent_messages = []
+
+              def send_payment_hold_email(self, event):
+                  self.sent_messages.append(f"Payment hold created for {event.order_id}")
+
+              def send_confirmation_email(self, event):
+                  self.sent_messages.append(f"Confirmed {event.order_id}")
+
+              def send_rejection_email(self, event):
+                  self.sent_messages.append(f"Rejected {event.order_id}")
+
+      - path: "checkout_app/audit.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+
+          class AuditTrail:
+              def __init__(self):
+                  self.entries = []
+
+              def record(self, event):
+                  self.entries.append(f"{event.kind.value}:{event.order_id}")
+
+      - path: "checkout_app/event_bus.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from collections import defaultdict
+          from dataclasses import dataclass
+
+          from .models import EventHandler, EventKind
+
+
+          @dataclass(frozen=True)
+          class HandlerRegistration:
+              topic: EventKind
+              handler: EventHandler
+              label: str
+              enabled: bool = True
+
+
+          class EventBus:
+              """A tiny synchronous event bus.
+
+              CheckoutService never calls FulfillmentScheduler directly, so the
+              wrong side effect is much easier to see in a runtime sequence
+              diagram than in the orchestrator source.
+              """
+
+              def __init__(self):
+                  self._handlers_by_topic = defaultdict(list)
+                  self._recent_events = []
+
+              def install(self, registrations):
+                  for registration in registrations:
+                      if registration.enabled:
+                          self._handlers_by_topic[registration.topic].append(registration)
+
+              def publish(self, event):
+                  self._recent_events.append(event)
+                  registrations = list(self._handlers_by_topic.get(event.kind, []))
+                  for registration in registrations:
+                      self._deliver(event, registration)
+
+              def _deliver(self, event, registration):
+                  registration.handler(event)
+
+              def recent_event_kinds(self):
+                  return [event.kind for event in self._recent_events]
+
+      - path: "checkout_app/workflow_config.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from .event_bus import HandlerRegistration
+          from .models import EventKind
+
+
+          class WorkflowConfig:
+              """Centralized event wiring.
+
+              In a larger system these rows might be generated from YAML or
+              feature-flag settings. One row is intentionally wrong.
+              """
+
+              @staticmethod
+              def registrations(audit, notifier, fulfillment):
+                  return [
+                      HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, audit.record, "audit payment"),
+                      HandlerRegistration(EventKind.INVENTORY_RESERVED, audit.record, "audit inventory"),
+                      HandlerRegistration(EventKind.ORDER_CONFIRMED, audit.record, "audit confirmed"),
+                      HandlerRegistration(EventKind.ORDER_REJECTED, audit.record, "audit rejected"),
+                      HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, notifier.send_payment_hold_email, "payment hold email"),
+                      HandlerRegistration(EventKind.ORDER_CONFIRMED, notifier.send_confirmation_email, "customer confirmation"),
+                      HandlerRegistration(EventKind.ORDER_REJECTED, notifier.send_rejection_email, "customer rejection"),
+                      # BUG: a pick ticket must be prepared only after inventory is reserved.
+                      HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket, "warehouse pick ticket"),
+                  ]
+
+      - path: "checkout_app/checkout_service.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from .models import (
+              CheckoutReceipt,
+              DomainEvent,
+              EventKind,
+              OrderDraft,
+              OutOfStockError,
+          )
+
+
+          class CheckoutService:
+              """Coordinates payment, inventory, event publication, and receipts."""
+
+              def __init__(self, catalog, promotions, payment_gateway, inventory, bus):
+                  self._catalog = catalog
+                  self._promotions = promotions
+                  self._payment_gateway = payment_gateway
+                  self._inventory = inventory
+                  self._bus = bus
+                  self._next_order_number = 1000
+
+              def checkout(self, request):
+                  order = self._create_order_draft(request)
+                  authorization = self._payment_gateway.authorize(order.order_id, order.amount_cents)
+                  self._bus.publish(DomainEvent(EventKind.PAYMENT_AUTHORIZED, order.order_id, authorization))
+
+                  try:
+                      reservation = self._inventory.reserve(order.order_id, order.items)
+                  except OutOfStockError:
+                      self._bus.publish(DomainEvent(EventKind.ORDER_REJECTED, order.order_id, request.items))
+                      raise
+
+                  self._bus.publish(DomainEvent(EventKind.INVENTORY_RESERVED, order.order_id, reservation))
+                  self._payment_gateway.capture(authorization)
+                  self._bus.publish(DomainEvent(EventKind.ORDER_CONFIRMED, order.order_id, reservation))
+                  return CheckoutReceipt(
+                      order_id=order.order_id,
+                      amount_cents=order.amount_cents,
+                      authorization_id=authorization.authorization_id,
+                      reservation_id=reservation.reservation_id,
+                  )
+
+              def _create_order_draft(self, request):
+                  self._next_order_number += 1
+                  amount = self._catalog.price_items(request.items)
+                  amount = self._promotions.apply_coupon(amount, request.coupon_code)
+                  return OrderDraft(
+                      order_id=f"order-{self._next_order_number}",
+                      customer_id=request.customer_id,
+                      items=request.items,
+                      amount_cents=amount,
+                  )
+
+      - path: "checkout_app/app_factory.py"
+        language: "python"
+        content: |
+          from __future__ import annotations
+
+          from dataclasses import dataclass
+
+          from .audit import AuditTrail
+          from .catalog import Catalog
+          from .checkout_service import CheckoutService
+          from .event_bus import EventBus
+          from .inventory import InventoryService
+          from .notifications import CustomerNotifier
+          from .payment import PaymentGateway
+          from .promotions import PromotionEngine
+          from .shipping import FulfillmentScheduler, ShippingQueue
+          from .workflow_config import WorkflowConfig
+
+
+          @dataclass
+          class CheckoutApp:
+              checkout_service: CheckoutService
+              inventory: InventoryService
+              bus: EventBus
+              audit: AuditTrail
+              notifier: CustomerNotifier
+              shipping_queue: ShippingQueue
+              payment_gateway: PaymentGateway
+
+
+          def build_app(stock_by_sku=None):
+              catalog = Catalog({"USB-CABLE": 1299, "LAPTOP-STAND": 4200, "NOISE-CANCEL-CASE": 1800})
+              promotions = PromotionEngine({"TENOFF": 1000, "FREESHIP": 500})
+              payment_gateway = PaymentGateway()
+              inventory = InventoryService(stock_by_sku or {"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 0})
+              bus = EventBus()
+              audit = AuditTrail()
+              notifier = CustomerNotifier()
+              shipping_queue = ShippingQueue()
+              fulfillment = FulfillmentScheduler(shipping_queue)
+
+              bus.install(WorkflowConfig.registrations(audit, notifier, fulfillment))
+
+              checkout_service = CheckoutService(catalog, promotions, payment_gateway, inventory, bus)
+              return CheckoutApp(
+                  checkout_service=checkout_service,
+                  inventory=inventory,
+                  bus=bus,
+                  audit=audit,
+                  notifier=notifier,
+                  shipping_queue=shipping_queue,
+                  payment_gateway=payment_gateway,
+              )
+
+      - path: "checkout_main.py"
+        language: "python"
+        content: |
+          """Entry point for the sequence-diagram analyzer.
+
+          The diagram is traced from the body of `if __name__ == "__main__":`.
+          Each variable gets its type from a constructor call so the analyzer
+          can follow the call chain into method bodies.
+          """
+
+          from checkout_app.audit import AuditTrail
+          from checkout_app.catalog import Catalog
+          from checkout_app.checkout_service import CheckoutService
+          from checkout_app.event_bus import EventBus
+          from checkout_app.inventory import InventoryService
+          from checkout_app.models import CheckoutRequest, LineItem, OutOfStockError
+          from checkout_app.notifications import CustomerNotifier
+          from checkout_app.payment import PaymentGateway
+          from checkout_app.promotions import PromotionEngine
+          from checkout_app.shipping import FulfillmentScheduler, ShippingQueue
+          from checkout_app.workflow_config import WorkflowConfig
+
+
+          if __name__ == "__main__":
+              catalog = Catalog({"USB-CABLE": 1299, "LAPTOP-STAND": 4200, "NOISE-CANCEL-CASE": 1800})
+              promotions = PromotionEngine({"TENOFF": 1000, "FREESHIP": 500})
+              payment_gateway = PaymentGateway()
+              inventory = InventoryService({"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 0})
+              bus = EventBus()
+              audit = AuditTrail()
+              notifier = CustomerNotifier()
+              shipping_queue = ShippingQueue()
+              fulfillment = FulfillmentScheduler(shipping_queue)
+              bus.install(WorkflowConfig.registrations(audit, notifier, fulfillment))
+              checkout_service = CheckoutService(catalog, promotions, payment_gateway, inventory, bus)
+
+              request = CheckoutRequest(
+                  customer_id="student-42",
+                  cart_id="cart-out-of-stock",
+                  items=(LineItem("NOISE-CANCEL-CASE", 1),),
+              )
+              try:
+                  checkout_service.checkout(request)
+              except OutOfStockError as exc:
+                  print(f"Checkout correctly rejected: {exc}")
+
+              print("Audit events:", [entry.split(":")[0] for entry in audit.entries])
+              print("Customer messages:", notifier.sent_messages)
+              print("Shipping queue tickets:", shipping_queue.tickets())
+              print("Inventory snapshot:", inventory.snapshot())
+
+      - path: "test_checkout.py"
+        language: "python"
+        content: |
+          import pytest
+
+          from checkout_app.app_factory import build_app
+          from checkout_app.models import CheckoutRequest, LineItem, OutOfStockError
+
+
+          def test_out_of_stock_order_is_not_sent_to_warehouse():
+              app = build_app(stock_by_sku={"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 0})
+              request = CheckoutRequest(
+                  customer_id="student-42",
+                  cart_id="cart-out-of-stock",
+                  items=(LineItem("NOISE-CANCEL-CASE", 1),),
+              )
+
+              with pytest.raises(OutOfStockError):
+                  app.checkout_service.checkout(request)
+
+              # The order was rejected — no pick ticket should exist.
+              assert app.shipping_queue.pending_order_ids() == []
+
+
+          def test_in_stock_order_is_confirmed_and_queued_once():
+              app = build_app(stock_by_sku={"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 2})
+              request = CheckoutRequest(
+                  customer_id="student-42",
+                  cart_id="cart-ok",
+                  items=(LineItem("NOISE-CANCEL-CASE", 1),),
+              )
+
+              receipt = app.checkout_service.checkout(request)
+
+              assert receipt.order_id == "order-1001"
+              assert app.shipping_queue.pending_order_ids() == ["order-1001"]
+              assert app.inventory.snapshot() == {"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 1}
+
+    open_file: "checkout_app/workflow_config.py"
+    run_file: "test_checkout.py"
+
+    solution:
+      files:
+        - path: "checkout_app/workflow_config.py"
+          language: "python"
+          content: |
+            from __future__ import annotations
+
+            from .event_bus import HandlerRegistration
+            from .models import EventKind
+
+
+            class WorkflowConfig:
+                """Centralized event wiring — fixed."""
+
+                @staticmethod
+                def registrations(audit, notifier, fulfillment):
+                    return [
+                        HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, audit.record, "audit payment"),
+                        HandlerRegistration(EventKind.INVENTORY_RESERVED, audit.record, "audit inventory"),
+                        HandlerRegistration(EventKind.ORDER_CONFIRMED, audit.record, "audit confirmed"),
+                        HandlerRegistration(EventKind.ORDER_REJECTED, audit.record, "audit rejected"),
+                        HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, notifier.send_payment_hold_email, "payment hold email"),
+                        HandlerRegistration(EventKind.ORDER_CONFIRMED, notifier.send_confirmation_email, "customer confirmation"),
+                        HandlerRegistration(EventKind.ORDER_REJECTED, notifier.send_rejection_email, "customer rejection"),
+                        # FIXED: pick a ticket only after inventory is reserved.
+                        HandlerRegistration(EventKind.INVENTORY_RESERVED, fulfillment.prepare_pick_ticket, "warehouse pick ticket"),
+                    ]
+      explanation: |
+        The fix is a single-token change in `checkout_app/workflow_config.py`: the last `HandlerRegistration` subscribes `fulfillment.prepare_pick_ticket` to `EventKind.INVENTORY_RESERVED` instead of `EventKind.PAYMENT_AUTHORIZED`. After the change:
+
+        - Payment authorization no longer triggers fulfillment.
+        - Fulfillment runs only when inventory has actually been reserved.
+        - The out-of-stock path raises `OutOfStockError` *before* `INVENTORY_RESERVED` is published, so no pick ticket is ever created for a rejected order.
+
+        **The bug-shape rule worth remembering:** when a side effect appears far from any obvious call to it, the cause is usually *wiring* (subscription topics, dependency injection, middleware order), not algorithm. The sequence diagram earned its place because *no single source file* contained the call chain — the diagram linearized the runtime story so the first impossible arrow popped out visually.
+
+        Common wrong fixes (and why they're wrong):
+
+        - **Defensive guard inside `prepare_pick_ticket`** (`if event.kind != EventKind.INVENTORY_RESERVED: return`) — works, but moves the policy from the wiring layer to the handler. Now every new handler needs the same defensive boilerplate. The wiring is the right place to enforce protocol invariants.
+        - **Special-case the out-of-stock SKU in `app_factory.build_app`** — hardcodes a fix for a single SKU. The next out-of-stock SKU breaks again.
+        - **Catch the `OutOfStockError` in `prepare_pick_ticket` and pop the ticket back off** — the ticket was already enqueued. Even if you remove it later, downstream consumers (warehouse log, inventory holds, etc.) may have already acted on it. The fix is to never enqueue in the first place.
+        - **Edit the test** to expect the rejected ticket. The test correctly states the behavior; the wiring is wrong.
+
+    tests:
+      - description: "Both checkout tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_checkout.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nThe fix should re-wire the fulfillment subscription in workflow_config.py."
+        hints:
+          - title: "Small nudge"
+            text: "Open the **Sequence Diagram** panel. Read it top to bottom. Where is `prepare_pick_ticket` first called? Compare to where `reserve` runs. Which arrow is impossible?"
+          - title: "Strategic hint"
+            text: "The bug is in event-bus wiring, not in any method body. Open `checkout_app/workflow_config.py` and look at the last `HandlerRegistration`. What event topic is `fulfillment.prepare_pick_ticket` subscribed to? What event topic *should* it be subscribed to?"
+          - title: "Spoiler — full fix"
+            text: "In `checkout_app/workflow_config.py`, change the last registration's first argument from `EventKind.PAYMENT_AUTHORIZED` to `EventKind.INVENTORY_RESERVED`. One identifier, one line."
+
+      - description: "Workaround guard — fix is at the wiring layer"
+        command: |
+          source = open('/tutorial/checkout_app/workflow_config.py').read()
+          # The correct wiring must be present.
+          assert 'INVENTORY_RESERVED, fulfillment.prepare_pick_ticket' in source.replace(' ', '').replace('EventKind.', ''), \
+              "Wire `fulfillment.prepare_pick_ticket` to `EventKind.INVENTORY_RESERVED` in `WorkflowConfig.registrations`."
+          # The wrong wiring must be gone.
+          assert 'PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket' not in source.replace(' ', '').replace('EventKind.', ''), \
+              "Remove the `EventKind.PAYMENT_AUTHORIZED` subscription for `fulfillment.prepare_pick_ticket` — that's the buggy wiring."
+
+      - description: "Workaround guard — handler body unchanged (no defensive checks)"
+        command: |
+          source = open('/tutorial/checkout_app/shipping.py').read()
+          # No `if event.kind` topic-filtering inside the handler. The right
+          # place to enforce protocol invariants is the wiring, not every handler.
+          assert 'event.kind' not in source.split('def prepare_pick_ticket')[1].split('def ')[0] if 'def prepare_pick_ticket' in source else True, \
+              "Don't add a defensive `if event.kind == ...` check inside `prepare_pick_ticket`. The right fix is at the wiring layer (`workflow_config.py`)."
+
+      - description: "Workaround guard — test expectations unchanged"
+        command: |
+          source = open('/tutorial/test_checkout.py').read()
+          assert 'app.shipping_queue.pending_order_ids() == []' in source, \
+              "Don't change the test's expected empty-shipping-queue assertion. The test correctly states the spec."
+          assert 'app.shipping_queue.pending_order_ids() == [\"order-1001\"]' in source, \
+              "Don't weaken the in-stock test. Revert `test_checkout.py`."
+
+    quiz:
+      title: "Case 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Source-reading `CheckoutService.checkout()` was unusually unhelpful for finding this bug. Why?
+          type: single
+          options:
+            - "The method had no side effects, so there was nothing to trace"
+            - "`CheckoutService` never directly calls `ShippingQueue.enqueue` — the side effect is delivered through the event bus, so a single-file source read can't follow the chain"
+            - "The method was too long to read carefully"
+            - "Python static type checkers can't detect this kind of bug"
+          correct_index: 1
+          option_feedback:
+            0: "The method does have side effects (it publishes events). The point is that the buggy side effect — enqueueing a pick ticket for a rejected order — happens in a *different file*, triggered by an event subscription."
+            2: "Length wasn't the issue. The method is short. The issue is that the relevant call chain crosses files and is reconstructed at runtime by the event bus."
+            3: "Type checkers verify type signatures, not runtime call ordering. Even a perfectly type-checked program can subscribe a handler to the wrong event topic — the types match either way."
+          explanation: |
+            **The event bus decouples publishers from subscribers — that's the point.** The trade-off is that you can't follow a single source file to know what runs in response to a published event. Source-reading is fine for direct call chains; for indirect ones, you need a tool that *runs* the program and shows you what actually happened — which is exactly what a sequence diagram is.
+
+        - question: |
+            Where in the codebase did the actual bug live?
+          type: single
+          options:
+            - "`checkout_service.py` (orchestration logic)"
+            - "`shipping.py` (the `prepare_pick_ticket` handler body)"
+            - "`workflow_config.py` (event subscription topic)"
+            - "`inventory.py` (the `reserve` method)"
+          correct_index: 2
+          option_feedback:
+            0: "The orchestrator's `checkout` method is fine — it publishes events in the right order. The bug is in *which handler* responds to *which event*."
+            1: "The handler body is correct — given any event, it builds a pick ticket. The bug is that the wiring asks the handler to react to the wrong event topic."
+            3: "`InventoryService.reserve` correctly raises `OutOfStockError` when stock is insufficient. The bug is that fulfillment ran *before* `reserve` was even called."
+          explanation: |
+            **The bug is in the wiring** — a single `HandlerRegistration` subscribes `fulfillment.prepare_pick_ticket` to `EventKind.PAYMENT_AUTHORIZED` instead of `EventKind.INVENTORY_RESERVED`. When configuration data is the source of truth for runtime behavior, configuration data is where this class of bug lives. Treat config files (subscriptions, DI containers, route tables) as code — they are.
+
+        - question: |
+            Two engineers propose fixes:
+
+            **A.** Edit `workflow_config.py` to subscribe `prepare_pick_ticket` to `INVENTORY_RESERVED` instead of `PAYMENT_AUTHORIZED`.
+
+            **B.** Add a defensive guard at the top of `prepare_pick_ticket`: `if event.kind != EventKind.INVENTORY_RESERVED: return`.
+
+            Both make the failing test pass. Which is the better fix?
+          type: single
+          options:
+            - "B — defensive checks make the code safer regardless"
+            - "A — the wiring is the right layer; B turns every new handler into a place where someone has to remember the same defensive boilerplate"
+            - "Both are equally good"
+            - "Neither — only changing the test would be acceptable"
+          correct_index: 1
+          option_feedback:
+            0: "Defensive checks have their place — at trust boundaries (user input, network requests). For a system you control end-to-end, defensive checks at every handler turn into noise that future readers must mentally subtract. The wiring layer is *the* place to enforce which handler runs on which event."
+            2: "B looks defensive in isolation but creates a maintenance trap. The next handler someone writes needs the same `if event.kind == ...` boilerplate, or the same bug recurs. With A, the wiring layer guarantees the invariant once for everyone."
+            3: "Editing the test to match the bug is symptom-patching at the spec layer — the worst kind. Don't do that."
+          explanation: |
+            **Fix at the layer that *names* the invariant.** The invariant here is *"fulfillment runs only after inventory is reserved."* That invariant lives in `workflow_config.py` — the wiring layer is literally the file whose job is to say *which handler runs on which event*. Adding a defensive `if` inside the handler moves the invariant out of the layer that names it and scatters it across handlers, where it's easy for future code to drift away. A general principle: **prefer fixing where the invariant is most directly expressible**, not where it's noticeable.
+
+        - question: |
+            Which kinds of bugs is sequence-diagram inference particularly good for?
+          type: multiple
+          options:
+            - "Bugs where the side effect happens via event-bus / pub-sub indirection"
+            - "Bugs where dependency-injection wiring orders calls in the wrong sequence"
+            - "Bugs in a 5-line pure function with no calls"
+            - "Bugs in middleware where the order of `before/after` hooks matters"
+          correct_indices: [0, 1, 3]
+          option_feedback:
+            2: "A 5-line pure function with no calls produces no interesting sequence diagram (one lifeline, no arrows). Ordinary breakpoints + watches are the right move there. Sequence diagrams shine on *protocol* and *interaction* problems — where the question is **\"who calls whom in what order?\"** rather than **\"what's the value of x?\"**"
+          explanation: |
+            **Sequence diagrams are interaction-focused tools.** They earn their cost when the bug is about *who calls whom in what order across many objects* — event buses, DI containers, middleware chains, async pipelines, plugin systems. For local algorithmic bugs (boundary conditions, off-by-ones, arithmetic), ordinary stepping is faster.
+
+
+  # ===========================================================================
+  # STEP 7 — Interleaved Technique-Selection Drill
   # Pedagogy:
   #   Interleaving — mixed scenarios force discrimination of bug families.
   #   Retrieval practice — quiz-only step, no editing, anchored on judgment.
@@ -1603,25 +2489,9 @@ steps:
   # ===========================================================================
   - title: "Triage Drill — Pick the Right Technique"
     instructions: |
-      > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families. The cues that tell you which technique to reach for are the same cues that distinguish a confident debugger from a flailing one.
-      > 🧠 **Bloom's level:** *Analyze.*
+      > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families.
 
-      ### 🧭 Refresher
-
-      | Bug structure | Best first move |
-      |---|---|
-      | Boundary / off-by-one | Ordinary breakpoint + watch the boundary expression |
-      | Bug fires for one item in a long stream | Conditional breakpoint with a discriminating predicate |
-      | Symptom appears later than the cause | Run to completion, scrub backward, then breakpoint on the suspected event |
-      | Aliasing / shared-state surprise | Inspect `oid` badges in Variables tab |
-      | Failure not reproducing | Test design problem first — write a discriminating test |
-      | Stuck after >15 minutes of edits | **Stop. Write down the failure description.** This is the anti-tinkering move. |
-
-      ### 📝 Drill
-
-      Below is a knowledge check with several scenarios, all interleaved. For each, pick the technique whose *cue structure* matches the scenario. Wrong answers come with feedback explaining why a different technique would be a worse fit *for that specific scenario*.
-
-      Pass threshold: **0.85**. Aim higher than usual — the discrimination skill is the whole point.
+      Try the drill from memory. Pass threshold: **0.85**. After the quiz, you'll see a recap of the cue→technique mapping for spaced retrieval next time.
 
     files:
       - path: "notes.txt"
@@ -1638,14 +2508,17 @@ steps:
 
     solution:
       explanation: |
-        There's no code to fix here. The point of the step is the quiz: noticing what *cue* in a bug description tells you which technique to reach for. Cues to internalize:
+        What you practiced here is **technique selection** — reading the cue in a bug description and reaching for the right tool. For spaced retrieval next time, here is the canonical mapping:
 
-        - "wrong by an exact amount" / "off by one" → boundary, single breakpoint + watches.
-        - "long stream / many iterations / processes thousands" → conditional breakpoint or filtered logging.
-        - "final state wrong but events seemed fine" / "symptom appears late" → back-in-time scrubbing.
-        - "two variables changed when only one should have" / "shared state" → aliasing — check `oid`.
-        - "intermittent" / "passes locally fails on CI" → reproducibility problem first.
-        - "20 minutes of edits, no progress" → stop, write down the failure. Don't keep tinkering.
+        | Bug cue | First move |
+        |---|---|
+        | Boundary / off-by-one | Ordinary breakpoint + watch the boundary expression |
+        | One item in a long stream | Conditional breakpoint with a discriminating predicate |
+        | Symptom appears later than the cause | Run to completion, scrub backward, then breakpoint on the suspected event |
+        | Wiring / protocol violation across files | Sequence diagram — linearize who calls whom |
+        | Aliasing / shared-state surprise | Inspect `oid` badges in Variables |
+        | Failure not reproducing | Reproducibility first — write a discriminating test |
+        | Stuck >15 minutes | Stop. Externalize the failure description. |
 
     quiz:
       title: "Debugging Triage Drill"
@@ -1660,12 +2533,12 @@ steps:
             - "Set a normal breakpoint inside the loop and step through, watching the running total"
             - "Set a conditional breakpoint that pauses only when the running total exceeds the maximum plausible value (or whatever invariant is broken)"
             - "Add print statements after every line in the function and read the 50,000 lines of output"
-            - "Restart the program with the debugger attached and just hope it pauses at the right place"
+            - "Run with `pdb.set_trace()` before the loop and step through it manually"
           correct_index: 1
           option_feedback:
             0: "Stepping through 50,000 iterations is exactly the kind of work the debugger should save you. With a conditional, the debugger pauses only on the iteration of interest."
             2: "Reading 50,000 lines by eye is human-impossible. If you must use prints, filter them with a predicate so only the relevant ones print — at which point you've reinvented a conditional breakpoint, more clumsily."
-            3: "Hope is not a debugging strategy. The debugger is a tool with controls; use them deliberately."
+            3: "`pdb.set_trace()` is a real and common move, but it leaves you stepping through 50,000 iterations the same way option 0 does. The debugger has filters; use them."
           explanation: |
             Long streams want **conditional** breakpoints. The condition is whatever invariant you suspect is broken (`running_total > 1e9`, `line.startswith('ERROR')`, etc.). The debugger filters; you only see the iterations that matter.
 
@@ -1676,12 +2549,12 @@ steps:
             - "Conditional breakpoint with a complex predicate"
             - "Back-in-time scrubbing of the entire program execution"
             - "Ordinary breakpoint at the top of the function plus a Watch expression on the parameter and any boundary expression"
-            - "Add 30 print statements to make sure no detail is missed"
+            - "Add a `print()` inside the recursion to trace each call"
           correct_index: 2
           option_feedback:
             0: "A conditional breakpoint is overkill here — the function is small and the input is specific. An ordinary breakpoint plus stepping plus the call stack gives you everything you need."
             1: "Back-in-time scrubbing shines when the symptom appears far from the cause. Here, the function is 12 lines and the symptom is in the return value — it's not a temporal-distance problem."
-            3: "Print debugging works but is heavyweight for a 12-line function. Ordinary breakpoints + watches give you the same information without modifying the source."
+            3: "Print-tracing works but modifies the source for every probe. Ordinary breakpoints + watches give you the same information non-invasively, and the call stack tells you what print can't (which recursion path you're on)."
           explanation: |
             For small, well-localized buggy functions, **ordinary breakpoint + step + watch + call stack** is the simplest and fastest combination. Reach for fancier tools (conditional breakpoints, back-in-time) only when the simpler tool is genuinely insufficient.
 
@@ -1727,7 +2600,7 @@ steps:
             - "Ask a teammate to fix it for you"
           correct_index: 2
           option_feedback:
-            0: "This is the *tinkering* habit research repeatedly identifies as unproductive. It feels like progress because edits keep happening, but the edits aren't grounded in evidence. Twenty minutes of unfounded edits commonly produces *more* bugs, not fewer."
+            0: "Pushing through edits without new evidence is what the research calls *tinkering*. Most students default to it under frustration — including, historically, most professional engineers. The remedy isn't willpower; it's externalizing the failure first (option C). Try that next time you stall."
             1: "A rewrite occasionally helps for tiny scripts but is overkill here. The reason the bug is hard isn't because the code is broken structurally — it's because you don't have a clear hypothesis. Address the hypothesis problem first."
             3: "Asking is a *follow-up* move. Before that, externalize what you know. The act of writing down the symptom, your hypotheses, and what you've ruled out often reveals the next move *to you*. If it doesn't, you now have a clear question to ask."
           explanation: |
@@ -1781,7 +2654,7 @@ steps:
 
 
   # ===========================================================================
-  # STEP 7 — Transfer Challenge + Reflection
+  # STEP 8 — Transfer Challenge + Reflection
   # Pedagogy:
   #   Transfer — same conceptual bug family as Case 2 (data-representation),
   #     different surface code. Tests that the student can apply the cycle
@@ -1792,40 +2665,30 @@ steps:
   # ===========================================================================
   - title: "Transfer Challenge — You're On Your Own"
     instructions: |
-      > 🎯 **Goal:** Find and fix a bug in unfamiliar code without step-by-step prompts. You pick the technique. You write the debugging log.
-      > 🧠 **Bloom's level:** *Apply / Create.*
+      > 🎯 **Goal:** Find and fix a bug in unfamiliar code without step-by-step prompts. You pick the technique. You type the debugging log.
+
+      *Compare to Cases 1–3: there, we numbered each stage of the cycle. Here, you do.*
 
       ### 📂 What you have
 
-      A small program: `tagger.py` reads a file `articles.txt` where each line is `"Title|tag"` and returns the most common tag across all articles.
+      A small program: `tagger.py` reads `articles.txt` (each line is `"Title|tag"`) and returns the most common tag.
 
       Two pytest tests in `test_tagger.py`:
 
       - `test_python_is_most_common` — fails (returns the wrong value).
       - `test_no_whitespace_in_result` — fails (the result contains whitespace).
 
-      That's all the framing you get. **No numbered scaffold this time.**
-
       ### 📋 Your debugging log
 
-      As you work, fill in the log mentally. After your fix, you'll articulate it through the final quiz.
-
-      ```
-      1. Failure (one sentence, expected vs actual): ...
-      2. Hypothesis (before any debugger move): ...
-      3. Technique chosen and why: ...
-      4. Evidence found (one observation that confirmed or killed the hypothesis): ...
-      5. Minimal fix (line and change): ...
-      6. Verification (which tests now pass that didn't before): ...
-      ```
+      Open `debugging_log.md` and **type** each field as you work. The next quiz will reference your log.
 
       ### 🚨 Resist the obvious
 
-      You will recognize the bug family. **Don't pattern-match without evidence** — the *shape* may resemble something you've seen, but verify with the debugger before assuming. Fast pattern-matching is what produces "the suspicious line is probably the bug" wrong fixes.
+      You may recognize the bug family — but verify with the debugger before assuming. Pattern-matching without evidence is the trap of Step 7's tinkering item.
 
       ### Hint of last resort
 
-      If you genuinely stall after 10 minutes, the test output already tells you what `repr(...)` would tell you on a paused breakpoint. Re-read the failing assertion of `test_no_whitespace_in_result`.
+      If you haven't found it *yet* after 10 minutes, the test output already tells you what `repr(...)` would tell you on a paused breakpoint. Re-read the failing assertion of `test_no_whitespace_in_result`.
 
     files:
       - path: "tagger.py"
@@ -1875,6 +2738,21 @@ steps:
               assert result == result.strip(), \
                   f"Result {result!r} contains whitespace — tags should be normalized at load time."
 
+      - path: "debugging_log.md"
+        language: "markdown"
+        content: |
+          # Debugging log
+
+          Fill each field as you work. The labels map to the 7-stage cycle from Step 1.
+
+          1. **Symptom** (one sentence — expected vs actual): _..._
+          2. **Predict** (what should the state be at the suspect line?): _..._
+          3. **Evidence — technique chosen and why** (breakpoint? conditional? scrubber? sequence diagram?): _..._
+          4. **Hypothesis** (one sentence — *what* is wrong, *where* it lives): _..._
+          5. **Localize** (the line where intended and actual first diverge): _..._
+          6. **Fix** (file, line, minimal change): _..._
+          7. **Verify** (which tests pass now that didn't before; any regressions?): _..._
+
     open_file: "tagger.py"
     run_file: "test_tagger.py"
 
@@ -1904,6 +2782,8 @@ steps:
 
         Notice what makes this bug family so common in real codebases: every layer that reads external data is a possible source. CSV imports. JSON parses. HTTP request bodies. Database VARCHAR columns. User text input. The defensive habit is *strip-and-normalize at the boundary*; once data is inside your domain, trust it.
 
+        🪞 **Far-transfer probe.** Pick one codebase you've worked on recently. Where does external data enter? At those entry points: is normalization happening at the boundary, or are downstream consumers doing it (or worse, not doing it at all)? Spend 30 seconds answering for one entry point.
+
     tests:
       - description: "Both tagger tests pass"
         command: |
@@ -1920,11 +2800,18 @@ steps:
           - title: "Spoiler — full fix"
             text: "Change `counts[tag.upper()] += 1` to `counts[tag.strip().upper()] += 1`. Same pattern as Case 2's fix to `load_transactions`."
 
-      - description: "Workaround guard — fix is in tagger.py with strip"
+      - description: "Workaround guard — fix is at the load boundary"
         command: |
           source = open('/tutorial/tagger.py').read()
-          assert '.strip()' in source or '.rstrip(' in source, \
-              "The fix should call `.strip()` (or `.rstrip()`) on `tag` before counting. Don't post-process the return value."
+          stripped = source.replace(' ', '')
+          # Must call strip on `tag` somewhere, AND the fix must be inside the loader,
+          # not on the return value (which would be a post-process workaround).
+          loader_block = source[source.find('def top_tag'):]
+          assert ('.strip()' in loader_block) or ('.rstrip(' in loader_block), \
+              "Strip on the input field, not the return value — fix at the load boundary, like Case 2."
+          # Specifically reject `most_common(1)[0][0].strip()` style post-processing
+          assert '][0].strip()' not in stripped and '][0].rstrip(' not in stripped, \
+              "Post-processing the return value masks the bug. Strip the *input* in the loop, not the output."
 
       - description: "Workaround guard — articles.txt unchanged"
         command: |
@@ -1961,21 +2848,20 @@ steps:
             This bug is the **same family as Case 2** in different clothes. Both: external data (CSV row in Case 2, file line here) carries a stray whitespace character; the loading code doesn't normalize it; the fix is to strip-and-validate at the data boundary. Recognizing isomorphism across surfaces is what *transfer* means in the research literature.
 
         - question: |
-            Be honest with yourself. Before working through this tutorial, would you have found this bug by:
+            *Self-check — no wrong answer.* Before this tutorial, which mode would you have defaulted to on this bug? (The reflection is the point — not the score.)
           type: single
           options:
-            - "Tinkering — randomly trying `.strip()` and `.replace('\\n', '')` and other edits until something worked"
-            - "Adding `print(tag)` everywhere — but the newline would have been invisible without `repr`"
-            - "Hypothesis-driven debugging — set a breakpoint, inspect `repr(tag)`, form the hypothesis, fix at the load boundary"
-            - "I genuinely don't know — depends on the day"
-          correct_index: 2
+            - "Tinkering — try `.strip()`, `.replace('\\n', '')`, and other edits until something worked"
+            - "Adding `print(tag)` everywhere — the newline would have been invisible without `repr`"
+            - "Hypothesis-driven — breakpoint, inspect `repr(tag)`, name the cause, fix at the load boundary"
+            - "Honestly don't know — depends on the day"
+          correct_index: 3
           option_feedback:
-            0: "Tinkering is the habit research most consistently identifies as unproductive. The fact that it occasionally lands on `.strip()` doesn't justify it — most of the time it produces *more* bugs and reinforces a non-strategic mental model."
-            1: "`print(tag)` would have shown `python` for the python lines. The trailing `\\n` would have been printed as a literal newline (the next print appears on a new line) but you might not consciously notice. `repr()` makes it impossible to miss."
-            3: "This option models the deliberate process of the tutorial. It's also longer in setup but faster overall — the fix gets identified once, applied minimally, and verified, with no need to undo a sequence of failed tinkering edits."
-            4: "Honest answer. The tutorial isn't here to make you claim you've internalized the cycle in 90 minutes — it's here to give you a vocabulary for noticing which mode you're in. That's the win."
+            0: "Tinkering occasionally lands on `.strip()`, but it teaches the wrong habit. The remedy isn't willpower — it's externalizing the failure first, then choosing a technique."
+            1: "`print(tag)` would have shown `python` for the python lines. The trailing `\\n` prints as a literal newline (the next print appears on a new line) — easy to miss. `repr()` makes it impossible to miss."
+            2: "That's the deliberate process — slower setup, faster total time, no failed-edit cleanup. If you actually used this *yet*, that's the win."
           explanation: |
-            There is no *graded* correct answer here — but noticing which mode you defaulted to before the tutorial and which mode you used during it is itself the metacognitive skill the literature recommends. If you used hypothesis-driven debugging this time, you've taken the most important step. If you tinkered, you now know the name for it and what to do differently next time.
+            **No graded answer.** Naming which mode you default to is the metacognitive skill the literature recommends. Whichever you picked, you now have a vocabulary for it.
 
         - question: |
             *(Final retrieval — spaced from Step 1.)* Place these debugging-cycle stages in order:

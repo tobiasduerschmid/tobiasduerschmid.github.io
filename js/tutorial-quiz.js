@@ -52,6 +52,7 @@
     var doShuffle = quiz.shuffle !== false;
     var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
     var nextStepNum = stepIndex + 2;
+    var isFinalQuiz = !!opts.isFinalQuiz;
 
     function appendAnswerBadges(labels, noteText) {
       if (!labels.length) return '';
@@ -102,8 +103,10 @@
     if (doShuffle) shuffle(questions);
 
     var html = '<div class="tvm-quiz-gate-header"><span class="tvm-quiz-gate-icon">&#128203;</span>'
-      + '<div><strong>Knowledge Check</strong><p>Score ≥' + minPct
-      + '% to continue to Step ' + nextStepNum + '</p></div></div>';
+      + '<div>' + (isFinalQuiz
+        ? '<strong>Final Knowledge Check</strong><p>Score ≥' + minPct + '% to complete the tutorial</p>'
+        : '<strong>Knowledge Check</strong><p>Score ≥' + minPct + '% to continue to Step ' + nextStepNum + '</p>')
+      + '</div></div>';
 
     html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '">';
     html += '<div class="quiz-header">';
@@ -176,7 +179,7 @@
       + '<span style="font-size:0.55em;font-weight:400;"> / ' + questions.length + '</span></div>'
       + '<p class="score-summary"></p><div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>'
       + '<div class="results-actions">'
-      + '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>'
+      + (isFinalQuiz ? '' : '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>')
       + '<button class="restart-btn">Try Again</button></div></div></div></div>';
     return html;
   }
@@ -190,6 +193,7 @@
     var stepIndex = opts.stepIndex;
     var minScore = (opts.minScore !== undefined && opts.minScore !== null) ? opts.minScore : 0.8;
     var onPass = opts.onPass || function () {};
+    var isFinalQuiz = !!opts.isFinalQuiz;
 
     var container = hostEl && hostEl.querySelector('.quiz-container');
     if (!container) return;
@@ -308,10 +312,13 @@
       var contBtn = container.querySelector('.tvm-quiz-continue-btn');
       var restBtn = container.querySelector('.restart-btn');
       if (passed) {
-        if (summary) summary.textContent = "Great job! You're ready for the next step.";
+        if (summary) summary.textContent = isFinalQuiz
+          ? 'Tutorial complete — great job!'
+          : "Great job! You're ready for the next step.";
         if (contBtn) contBtn.classList.remove('hidden');
         if (restBtn) restBtn.classList.add('hidden');
-        if (st) st.textContent = '✓ Passed';
+        if (st) st.textContent = isFinalQuiz ? '✓ Tutorial Complete' : '✓ Passed';
+        if (isFinalQuiz) onPass(stepIndex);
       } else {
         var needed = Math.round(minScore * total);
         if (summary) summary.textContent = 'You scored ' + score + '/' + total + '. Need at least '
@@ -498,6 +505,7 @@
       stepIndex: opts.stepIndex,
       minScore: opts.minScore !== undefined ? opts.minScore
         : (opts.quiz && opts.quiz.min_score !== undefined ? opts.quiz.min_score : 0.8),
+      isFinalQuiz: !!opts.isFinalQuiz,
       onPass: opts.onPass,
     });
   }
