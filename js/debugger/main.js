@@ -75,6 +75,13 @@
     if (tutorial._debuggerCtl) tutorial._debuggerCtl.handleStepChange();
   }
 
+  function refreshBreakpoints(tutorial) {
+    if (!tutorial._debuggerCtl) return;
+    tutorial._debuggerCtl.loadConfiguredBreakpoints();
+    tutorial._debuggerCtl.refreshBpDecorations();
+    tutorial._debuggerCtl.scheduleBreakpointRefresh();
+  }
+
   function injectReloadBanner(tutorial) {
     // Show a small one-time hint near the editor toolbar that a reload is needed.
     var hostFinder = function () {
@@ -137,6 +144,7 @@
     this.installHoverProvider();
     this.attachWorkerListener();
     this.refreshBpDecorations();
+    this.scheduleBreakpointRefresh();
   };
 
   DebuggerController.prototype.handleStepChange = function () {
@@ -148,8 +156,18 @@
     this.paused = false;
     this.outputDuringDebug = '';
     this.outputLines = 0;
+    this.loadConfiguredBreakpoints();
     this.renderAll();
     this.refreshBpDecorations();   // breakpoint visuals follow file switches
+    this.scheduleBreakpointRefresh();
+  };
+
+  DebuggerController.prototype.scheduleBreakpointRefresh = function () {
+    var self = this;
+    window.setTimeout(function () { self.refreshBpDecorations(); }, 0);
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () { self.refreshBpDecorations(); });
+    }
   };
 
   // ===========================================================================
@@ -414,6 +432,8 @@
     var filename = path.replace(/^\/tutorial\//, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
     var code = model ? model.getValue() : (this.session.debugCode || '');
+    var files = this.collectDebugFiles();
+    files[path] = code;
 
     // Temporary one-shot completion handler that fires AFTER current debug
     // ends (because of CMD_STOP) and starts the new run.
@@ -432,9 +452,11 @@
         debugFilename: path,
         debugCode: code,
         capReached: false,
-        pendingStart: { filename: path, code: code },
-        // Re-overrides for the new run; cleared once they fire.
+        pendingStart: { filename: path, code: code, files: files },
+        // Re-overrides for the new run, and keep the same list as the durable
+        // edit ledger so later replays don't forget earlier variable edits.
         replayOverrides: overrides,
+        pendingOverrides: overrides.slice(),
         // After replay, the user's natural next action is whatever they
         // originally clicked (continue/step/next/return).
         autoFollowup: followupCmd,
@@ -555,6 +577,7 @@
       this.session.autoFollowup = null;
       this.session.replayAnchor = null;
       this.paused = true;
+      this.selectedFrameIdx = -1;
       this.disableStepButtons(false);
       this.setStatus('replay paused before target; source location changed');
       this.renderAll();
@@ -911,6 +934,8 @@
     if (!model) { alert('Cannot locate code for ' + filename); return; }
     var code = model.getValue();
     var path = '/tutorial/' + filename;
+    var files = this.collectDebugFiles();
+    files[path] = code;
 
     // Set up SAB
     var sab = new SharedArrayBuffer(SAB_TOTAL_BYTES);
@@ -925,7 +950,7 @@
       debugFilename: path,
       debugCode: code,
       capReached: false,
-      pendingStart: { filename: path, code: code },
+      pendingStart: { filename: path, code: code, files: files },
     };
     this.history = [];
     this.historyIdx = -1;
@@ -971,6 +996,7 @@
       type: 'runDebug',
       filename: st.filename,
       code: st.code,
+      files: st.files || {},
       breakpoints: this.collectBreakpointsForRun(),
       watches: this.session.watches,
       args: this.session.args || [],
@@ -1045,6 +1071,18 @@
     if (!raw) return [];
     var matches = raw.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
     return matches.map(function (s) { return s.replace(/^"|"$/g, ''); });
+  };
+
+  DebuggerController.prototype.collectDebugFiles = function () {
+    var files = {};
+    var models = this.t.editorModels || {};
+    Object.keys(models).forEach(function (filename) {
+      var entry = models[filename];
+      if (entry && entry.model) {
+        files['/tutorial/' + filename] = entry.model.getValue();
+      }
+    });
+    return files;
   };
 
   DebuggerController.prototype.queueWatchUpdate = function () {
@@ -1727,5 +1765,6 @@
   window.SEBookDebugger = {
     attach: attach,
     onStepChange: onStepChange,
+    refreshBreakpoints: refreshBreakpoints,
   };
 })();

@@ -3246,7 +3246,18 @@
   TutorialCode.prototype._loadDebuggerModule = function () {
     var self = this;
     return new Promise(function (resolve, reject) {
+      var dbgAssetVersion = String(Date.now());
+      function ensureCss() {
+        var existing = document.querySelector('link[data-sebook-debugger-css="true"]');
+        if (existing) return;
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.setAttribute('data-sebook-debugger-css', 'true');
+        css.href = '/js/debugger/debugger.css?v=' + dbgAssetVersion;
+        document.head.appendChild(css);
+      }
       function done() {
+        ensureCss();
         if (window.SEBookDebugger && typeof window.SEBookDebugger.attach === 'function') {
           try { window.SEBookDebugger.attach(self); } catch (e) { return reject(e); }
           resolve();
@@ -3254,12 +3265,8 @@
           reject(new Error('SEBookDebugger global not found after script load'));
         }
       }
+      ensureCss();
       if (window.SEBookDebugger) { done(); return; }
-      var css = document.createElement('link');
-      css.rel = 'stylesheet';
-      var dbgAssetVersion = String(Date.now());
-      css.href = '/js/debugger/debugger.css?v=' + dbgAssetVersion;
-      document.head.appendChild(css);
       var script = document.createElement('script');
       script.src = '/js/debugger/main.js?v=' + dbgAssetVersion;
       script.onload = done;
@@ -3418,6 +3425,10 @@
       // Tabs mode: single editor hosts every file
       this._leftActiveFile = filename;
       this.editor.setModel(entry.model);
+    }
+    if (this.debuggerEnabled && window.SEBookDebugger &&
+        typeof window.SEBookDebugger.refreshBreakpoints === 'function') {
+      window.SEBookDebugger.refreshBreakpoints(this);
     }
   };
 

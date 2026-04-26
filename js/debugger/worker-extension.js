@@ -106,6 +106,11 @@ function handleRunDebug(msg) {
     self.postMessage({ type: 'debugComplete', exitCode: 1, error: 'Debugger not initialised (missing SAB)' });
     return;
   }
+  if (typeof _running !== 'undefined' && _running) {
+    self.postMessage({ type: 'debugComplete', exitCode: 1, error: 'Worker is already running code' });
+    return;
+  }
+  if (typeof _running !== 'undefined') _running = true;
 
   fetchPySrc()
     .then(function (src) {
@@ -122,17 +127,32 @@ function handleRunDebug(msg) {
       var filename = msg.filename || '/tutorial/main.py';
       var code = msg.code;
       var args = msg.args || [];
+      var files = msg.files || {};
 
       // Ensure file is on disk so frame.f_code.co_filename matches what the
       // UI passes for breakpoints. Write code under the tutorial file path
       // and execute via __file__ semantics.
       try {
-        pyodide.FS.writeFile(filename, code, { encoding: 'utf8' });
+        Object.keys(files).forEach(function (path) {
+          writeDebugFile(path, files[path]);
+        });
+        if (!Object.prototype.hasOwnProperty.call(files, filename)) {
+          writeDebugFile(filename, code);
+        }
         pyodide.runPython('import sys; sys.argv = ' + JSON.stringify([filename].concat(args || [])));
       } catch (e) {
+        if (typeof _running !== 'undefined') _running = false;
         self.postMessage({ type: 'debugComplete', exitCode: 1, error: 'Failed to prepare debug run: ' + e.message });
         return;
       }
+
+      return pyodide.loadPackagesFromImports(code).then(function () {
+        pyodide.runPython([
+          'import sys as _sys',
+          'for _m in list(_sys.modules):',
+          '    _f = getattr(_sys.modules[_m], "__file__", "") or ""',
+          '    if "/tutorial/" in _f: del _sys.modules[_m]',
+        ].join('\n'));
 
       // Build JS callbacks the Python side will invoke during execution.
       var postPausedCb = function (jsonStr) {
@@ -237,9 +257,26 @@ function handleRunDebug(msg) {
         try { ttdCleanup(); } catch (e) {}
         try { ttdCleanup.destroy && ttdCleanup.destroy(); } catch (e) {}
         debuggerInstance = null;
+        if (typeof _running !== 'undefined') _running = false;
       }
+      });
     })
     .catch(function (err) {
+      if (typeof _running !== 'undefined') _running = false;
       self.postMessage({ type: 'debugComplete', exitCode: 1, error: String(err && err.message || err) });
     });
+}
+
+function writeDebugFile(path, content) {
+  var fullPath = path.indexOf('/tutorial/') === 0 ? path : '/tutorial/' + path.replace(/^\/+/, '');
+  var dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
+  if (dir) {
+    var parts = dir.split('/').filter(Boolean);
+    var cur = '';
+    parts.forEach(function (p) {
+      cur += '/' + p;
+      try { pyodide.FS.mkdir(cur); } catch (e) { /* exists */ }
+    });
+  }
+  pyodide.FS.writeFile(fullPath, content || '', { encoding: 'utf8' });
 }

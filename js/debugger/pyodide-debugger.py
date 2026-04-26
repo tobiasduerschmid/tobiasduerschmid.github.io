@@ -850,6 +850,7 @@ def _ttd_compile_with_source_overrides(code_str, filename, overrides):
 
     injected_lines = set()
     apply_targets = {}
+    insert_offsets = {}
     inserted_any = False
     for ov in source_overrides:
         var_name = ov.get('var')
@@ -891,7 +892,10 @@ def _ttd_compile_with_source_overrides(code_str, filename, overrides):
             orelse=[],
         )
         _ttd_set_line_recursive(node, synthetic_line)
-        target_body.insert(insert_at, node)
+        insert_key = (id(target_body), insert_at)
+        actual_insert_at = insert_at + insert_offsets.get(insert_key, 0)
+        target_body.insert(actual_insert_at, node)
+        insert_offsets[insert_key] = insert_offsets.get(insert_key, 0) + 1
         inserted_any = True
 
     if not inserted_any:
