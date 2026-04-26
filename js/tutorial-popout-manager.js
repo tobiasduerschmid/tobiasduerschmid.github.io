@@ -381,6 +381,8 @@
       case 'request-refresh': this._safeHook('onRefreshOutputRequest'); break;
       case 'args-change': this._safeHook('onArgsChange', msg.args || ''); break;
       case 'stream-filter-change': this._safeHook('onStreamFilterChange', msg.filter || 'all'); break;
+      case 'request-refactor-workspace': this._handleRefactorWorkspaceRequest(msg); break;
+      case 'apply-refactor-edits': this._handleApplyRefactorEdits(msg); break;
       case 'popup-closing': this._handlePopupClosing(msg); break;
       case 'heartbeat-ack': /* informational */ break;
       default: break;
@@ -435,6 +437,66 @@
     this._safeHook('onFileEditFromPopup', fn, msg.content, this._fileVersions[fn]);
     // Mirror to localStorage so a main reload doesn't lose work
     this._writeStateMirror({ filename: fn, content: msg.content });
+  };
+
+  TutorialPopoutManager.prototype._handleRefactorWorkspaceRequest = function (msg) {
+    var hook = this.hooks.getRefactorWorkspace;
+    var workspace = null;
+    try {
+      workspace = typeof hook === 'function' ? hook(msg) : null;
+      this._post('refactor-workspace', {
+        requestId: msg.requestId,
+        targetSourceId: msg.sourceId,
+        ok: !!workspace,
+        workspace: workspace,
+        error: workspace ? '' : 'Refactoring workspace is unavailable.',
+      });
+    } catch (e) {
+      this._post('refactor-workspace', {
+        requestId: msg.requestId,
+        targetSourceId: msg.sourceId,
+        ok: false,
+        error: e && e.message ? e.message : String(e),
+      });
+    }
+  };
+
+  TutorialPopoutManager.prototype._handleApplyRefactorEdits = function (msg) {
+    var self = this;
+    var hook = this.hooks.onApplyRefactorEdits;
+    if (typeof hook !== 'function') {
+      this._post('refactor-applied', {
+        requestId: msg.requestId,
+        targetSourceId: msg.sourceId,
+        ok: false,
+        error: 'Refactoring apply hook is unavailable.',
+      });
+      return;
+    }
+    try {
+      Promise.resolve(hook(msg.edits || [], msg.meta || {}, msg)).then(function (result) {
+        self._post('refactor-applied', {
+          requestId: msg.requestId,
+          targetSourceId: msg.sourceId,
+          ok: true,
+          result: result || null,
+        });
+      }).catch(function (err) {
+        self._post('refactor-applied', {
+          requestId: msg.requestId,
+          targetSourceId: msg.sourceId,
+          ok: false,
+          error: err && err.message ? err.message : String(err),
+        });
+      });
+    } catch (e) {
+      this._post('refactor-applied', {
+        requestId: msg.requestId,
+        targetSourceId: msg.sourceId,
+        ok: false,
+        error: e && e.message ? e.message : String(e),
+      });
+    }
   };
 
   TutorialPopoutManager.prototype._handlePopupClosing = function (msg) {

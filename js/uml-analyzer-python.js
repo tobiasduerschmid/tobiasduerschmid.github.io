@@ -1750,6 +1750,11 @@
       lines.push('}');
     }
 
+    var externalBases = this._externalBaseClassNames(sorted);
+    for (var eb = 0; eb < externalBases.length; eb++) {
+      lines.push('class ' + externalBases[eb]);
+    }
+
     // Build bidirectional association set (both classes reference each other)
     var bidir = {};
     var emittedBidir = {};
@@ -1773,11 +1778,9 @@
       for (var j = 0; j < cls.bases.length; j++) {
         var base = cls.bases[j];
         if (base === 'ABC' || base === 'ABCMeta' || base === 'object') continue;
-        if (this.classMap[base]) {
-          var baseInfo = this.classMap[base];
-          var arrow = _isInterface(baseInfo, this.allTypeNames) ? ' ..|> ' : ' --|> ';
-          lines.push(cls.name + arrow + base);
-        }
+        var baseInfo = this.classMap[base];
+        var arrow = baseInfo && _isInterface(baseInfo, this.allTypeNames) ? ' ..|> ' : ' --|> ';
+        lines.push(cls.name + arrow + base);
       }
 
       // Composition — navigable, with multiplicity (only target side is inferrable)
@@ -1839,6 +1842,22 @@
 
     lines.push('@enduml');
     return lines.join('\n');
+  };
+
+  PythonClassExtractor.prototype._externalBaseClassNames = function (classes) {
+    var ignored = { ABC: true, ABCMeta: true, object: true };
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < classes.length; i++) {
+      var bases = classes[i].bases || [];
+      for (var j = 0; j < bases.length; j++) {
+        var base = bases[j];
+        if (!base || ignored[base] || this.classMap[base] || seen[base]) continue;
+        seen[base] = true;
+        out.push(base);
+      }
+    }
+    return out.sort();
   };
 
   /* ===================================================================

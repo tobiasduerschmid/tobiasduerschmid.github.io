@@ -60,6 +60,7 @@
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
   (function () {
@@ -85,6 +86,7 @@
     var monacoModel = null;
     var currentVersion = 0;
     var suppressEditEvents = false;
+    var refactoringHost = null;
 
     var client = SebookPopoutClient.connect({
       role: 'tab:' + filename,
@@ -143,6 +145,20 @@
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(flushEdit, 30);
         });
+        if (window.SebookRefactorings) {
+          refactoringHost = window.SebookRefactorings.createPopupHost(client, {
+            flush: flushEdit,
+            getActiveFileName: function () { return filename; },
+            getActiveContent: function () { return monacoModel ? monacoModel.getValue() : ''; },
+          });
+          window.SebookRefactorings.attach({
+            monaco: monaco,
+            editors: [editor],
+            getActiveFileName: function () { return filename; },
+            getWorkspace: refactoringHost.getWorkspace,
+            applyEdits: refactoringHost.applyEdits,
+          });
+        }
       });
     }
 
@@ -172,6 +188,7 @@
 
     // ── Role-specific message routing ────────────────────────────────────
     function handleMessage(msg) {
+      if (refactoringHost && refactoringHost.handleMessage(msg)) return;
       switch (msg.type) {
         case 'file-snapshot':
           if (msg.filename === filename) applySnapshot(msg);

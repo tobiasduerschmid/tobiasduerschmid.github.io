@@ -332,6 +332,36 @@ test.describe('Step 4: Inheritance', () => {
     // Subclasses should NOT have color as a standalone attribute line
     expect(diagram).not.toMatch(/\+color: str\n.*\+radius/);
   });
+
+  test('shows unresolved user-written superclasses as generalizations', () => {
+    const code = [
+      'from abc import ABC, abstractmethod',
+      'from dataclasses import dataclass',
+      '',
+      '@dataclass',
+      'class Tracks(ABC):',
+      '    track_id: str',
+      '    @abstractmethod',
+      '    def play(self) -> str:',
+      '        ...',
+      '',
+      '@dataclass',
+      'class Song(Track):',
+      '    def play(self) -> str:',
+      '        return self.track_id',
+      '',
+      '@dataclass',
+      'class Podcasssssst(Track):',
+      '    def play(self) -> str:',
+      '        return self.track_id',
+    ].join('\n');
+
+    const diagram = inferDiagram(code);
+    expect(diagram).toContain('class Track');
+    expect(diagram).toContain('Song --|> Track');
+    expect(diagram).toContain('Podcasssssst --|> Track');
+    expect(diagram).not.toContain('Tracks --|> ABC');
+  });
 });
 
 // ---------------------------------------------------------------------------

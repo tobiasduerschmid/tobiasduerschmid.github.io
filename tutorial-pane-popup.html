@@ -52,6 +52,7 @@
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js"></script>
   <script>
   (function () {
@@ -75,6 +76,8 @@
     var models = {};         // filename → { model, version }
     var activeFile = null;
     var suppressEditEvents = false;
+    var refactoringHost = null;
+    var flushAllEdits = function () {};
 
     var client = SebookPopoutClient.connect({
       role: 'pane:' + pane,
@@ -126,6 +129,17 @@
             filename: activeFile, content: entry.model.getValue(), version: entry.version,
           });
         }
+        flushAllEdits = function () {
+          clearTimeout(debounceTimer);
+          Object.keys(models).forEach(function (fn) {
+            var entry = models[fn];
+            if (!entry) return;
+            entry.version = (entry.version || 0) + 1;
+            client.post('file-edit', {
+              filename: fn, content: entry.model.getValue(), version: entry.version,
+            });
+          });
+        };
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
           flushEdit();
           if (activeFile) client.post('request-save', { filename: activeFile });
@@ -136,6 +150,22 @@
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(flushEdit, 30);
         });
+        if (window.SebookRefactorings) {
+          refactoringHost = window.SebookRefactorings.createPopupHost(client, {
+            flush: flushAllEdits,
+            getActiveFileName: function () { return activeFile; },
+            getActiveContent: function () {
+              return activeFile && models[activeFile] ? models[activeFile].model.getValue() : '';
+            },
+          });
+          window.SebookRefactorings.attach({
+            monaco: monaco,
+            editors: [editor],
+            getActiveFileName: function () { return activeFile; },
+            getWorkspace: refactoringHost.getWorkspace,
+            applyEdits: refactoringHost.applyEdits,
+          });
+        }
         cb();
       });
     }
@@ -209,6 +239,7 @@
 
     // ── Role-specific message routing ────────────────────────────────────
     function handleMessage(msg) {
+      if (refactoringHost && refactoringHost.handleMessage(msg)) return;
       switch (msg.type) {
         case 'pane-snapshot':
           if (msg.pane === pane) applyPaneSnapshot(msg);

@@ -138,6 +138,8 @@ topics:
         url: /SEBook/development_practices/code_smells.html
       - name: Refactoring
         url: /SEBook/development_practices/refactoring.html
+      - name: Code Smells & Refactoring Tutorial
+        url: /SEBook/tools/code-smells-refactoring-tutorial.html
       - name: Top Down Code Comprehension
         url: /SEBook/development_practices/topdown.html
   - name: Tools

@@ -19,6 +19,11 @@
 (function () {
   'use strict';
 
+  // URL of this script — used to resolve sibling worker URLs (uml-worker.js)
+  // even when tutorial-code.js is served from a non-standard path.
+  var SCRIPT_URL = (typeof document !== 'undefined'
+    && document.currentScript && document.currentScript.src) || '';
+
   // ---------------------------------------------------------------------------
   // CDN URLs
   // ---------------------------------------------------------------------------
@@ -233,6 +238,8 @@
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
+    this._umlAnalysisRequestId = 0;     // monotonic id; later analyses supersede earlier ones
+    this._umlRenderRequestId = 0;       // monotonic id; later renders supersede earlier ones
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
     this._umlZoom = 1;                  // current zoom level (inline view)
@@ -3125,6 +3132,7 @@
       });
     }
 
+    this._initRefactorings();
     return Promise.resolve();
   };
 
@@ -3140,6 +3148,29 @@
         function () { self._runCurrentFile(); }
       );
     }
+  };
+
+  TutorialCode.prototype._initRefactorings = function () {
+    if (!window.SebookRefactorings || this._refactoringController) return;
+    var self = this;
+    var editors = [this.editor];
+    if (this.editor2) editors.push(this.editor2);
+    this._refactoringController = window.SebookRefactorings.attach({
+      monaco: monaco,
+      editors: editors,
+      getActiveFileName: function (editor) {
+        if (editor === self.editor2) return self._rightActiveFile || self.activeFileName;
+        return self._leftActiveFile || self.activeFileName;
+      },
+      getWorkspace: function (ctx) {
+        return self._buildRefactoringWorkspace({
+          activeFile: ctx && ctx.activeFile,
+        });
+      },
+      applyEdits: function (edits, plan) {
+        return self._applyRefactoringEdits(edits, plan);
+      },
+    });
   };
 
   /**
@@ -3914,6 +3945,99 @@
     };
   };
 
+  TutorialCode.prototype._buildRefactoringWorkspace = function (request) {
+    request = request || {};
+    var step = this.steps[this.currentStep] || {};
+    var paths = [];
+    if (step.files && step.files.length) {
+      paths = step.files.map(function (f) { return f.path; });
+    } else {
+      paths = Object.keys(this.editorModels);
+    }
+    var seen = {};
+    var files = [];
+    for (var i = 0; i < paths.length; i++) {
+      var filename = paths[i];
+      if (!filename || seen[filename]) continue;
+      seen[filename] = true;
+      var entry = this.editorModels[filename];
+      var spec = null;
+      if (step.files) {
+        for (var s = 0; s < step.files.length; s++) {
+          if (step.files[s].path === filename) { spec = step.files[s]; break; }
+        }
+      }
+      var content = entry ? entry.model.getValue() : ((spec && spec.content) || '');
+      if (request.activeFile === filename && typeof request.activeContent === 'string') {
+        content = request.activeContent;
+      }
+      var language = entry && entry.model.getLanguageId
+        ? entry.model.getLanguageId()
+        : ((spec && spec.language) || detectLanguage(filename));
+      files.push({ filename: filename, content: content, language: language });
+    }
+    return {
+      activeFile: request.activeFile || this.activeFileName || (files[0] && files[0].filename) || null,
+      files: files,
+      stepIndex: this.currentStep,
+      tutorialId: this.tutorialId,
+    };
+  };
+
+  TutorialCode.prototype._applyRefactoringEdits = function (edits, plan, request) {
+    edits = edits || [];
+    request = request || {};
+    if (request.activeFile && typeof request.activeContent === 'string' && this.editorModels[request.activeFile]) {
+      this._applyFileEditFromPopup(request.activeFile, request.activeContent);
+    }
+    var self = this;
+    var byFile = {};
+    edits.forEach(function (edit) {
+      if (!edit || !edit.filename || !edit.range) return;
+      if (!byFile[edit.filename]) byFile[edit.filename] = [];
+      byFile[edit.filename].push(edit);
+    });
+    var changed = [];
+    Object.keys(byFile).forEach(function (filename) {
+      var entry = self.editorModels[filename];
+      if (!entry || !entry.model) return;
+      var model = entry.model;
+      var ops = byFile[filename].map(function (edit) {
+        return {
+          range: new monaco.Range(
+            edit.range.startLineNumber,
+            edit.range.startColumn,
+            edit.range.endLineNumber,
+            edit.range.endColumn
+          ),
+          text: edit.text || '',
+          forceMoveMarkers: true,
+        };
+      });
+      model.pushEditOperations([], ops, function () { return null; });
+      changed.push(filename);
+    });
+    var syncs = changed.map(function (filename) {
+      return Promise.resolve(self._syncFileToBackend(filename));
+    });
+    if (this.autoSaveEnabled && changed.length) this._autoSaveProgress();
+    if (this._popoutManager) {
+      changed.forEach(function (filename) {
+        if (self._popoutManager.isDetached('tab:' + filename)) {
+          var meta = self._fileMeta(filename);
+          if (meta) self._popoutManager._sendFileSnapshot(filename, meta);
+        }
+      });
+      this._rebroadcastDetachedPanes();
+    }
+    if (this._umlDiagramEnabled && changed.some(function (f) { return self._umlWatchedFiles.indexOf(f) !== -1; })) {
+      this._scheduleUMLRefresh(true);
+    }
+    return Promise.all(syncs).then(function () {
+      return { changedFiles: changed };
+    });
+  };
+
   TutorialCode.prototype._pickPaneActive = function (pane) {
     var self = this;
     var candidates = Object.keys(this.editorModels).filter(function (f) {
@@ -4276,6 +4400,12 @@
           var sel = self.root && self.root.querySelector('.tvm-stream-filter');
           if (sel) { sel.value = filter; sel.dispatchEvent(new Event('change', { bubbles: true })); }
         },
+        getRefactorWorkspace: function (request) {
+          return self._buildRefactoringWorkspace(request || {});
+        },
+        onApplyRefactorEdits: function (edits, meta, request) {
+          return self._applyRefactoringEdits(edits, meta, request || {});
+        },
       },
     });
     this._popoutManager.init();
@@ -4358,6 +4488,191 @@
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // UML worker service — moves both UML analysis AND SVG rendering off the
+  // main thread. Two independent coalescing pipelines (analyze + render)
+  // share one Worker instance.
+  //
+  // Coalescing single-flight pipeline (per kind):
+  //   - At most one in-flight + at most one queued. Newest wins.
+  //   - Older queued requests are rejected with `umlSuperseded` so callers
+  //     can no-op rather than treat as failure.
+  //   - Identical-payload requests dedupe against in-flight or queued.
+  //   - Single-slot content-hash cache short-circuits identical re-runs.
+  // Keeps the worker queue from growing during a Ctrl+S spam-burst.
+  // ---------------------------------------------------------------------------
+  function umlWorkerUrl() {
+    if (SCRIPT_URL && typeof URL === 'function') {
+      try { return new URL('uml-worker.js', SCRIPT_URL).href; } catch (e) { /* fall through */ }
+    }
+    return '/js/uml-worker.js';
+  }
+
+  function umlHashString(str) {
+    var h = 0;
+    if (!str) return 0;
+    for (var i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return h;
+  }
+
+  function umlSupersededError() {
+    var e = new Error('superseded');
+    e.umlSuperseded = true;
+    return e;
+  }
+  function isUMLSuperseded(err) { return !!(err && err.umlSuperseded); }
+
+  var UMLWorkerService = (function () {
+    var worker = null;
+    var supported = (typeof Worker !== 'undefined');
+    var nextId = 1;
+
+    var inflight = { analyze: null, render: null };
+    var queued = { analyze: null, render: null };
+    var cacheKey = { analyze: '', render: '' };
+    var cacheValue = { analyze: null, render: null };
+    var REPLY_KIND = { analysis: 'analyze', renderResult: 'render' };
+    var SEND_TYPE = { analyze: 'analyze', render: 'renderDiagram' };
+    var RESULT_FIELD = { analyze: 'result', render: 'svg' };
+
+    function ensureWorker() {
+      if (worker || !supported) return worker;
+      try {
+        worker = new Worker(umlWorkerUrl());
+      } catch (e) {
+        supported = false;
+        return null;
+      }
+      worker.onmessage = function (event) {
+        var msg = event.data || {};
+        var kind = REPLY_KIND[msg.type];
+        if (!kind) return;
+        var slot = inflight[kind];
+        if (!slot || slot.id !== msg.id) return;
+        inflight[kind] = null;
+        clearTimeout(slot.timer);
+        if (msg.ok) {
+          cacheKey[kind] = slot.key;
+          cacheValue[kind] = msg[RESULT_FIELD[kind]];
+          slot.resolve(msg[RESULT_FIELD[kind]]);
+        } else {
+          slot.reject(new Error(msg.error || 'UML ' + kind + ' failed.'));
+        }
+        drainQueue(kind);
+      };
+      worker.onerror = function (event) {
+        var err = new Error(event.message || 'UML worker failed.');
+        ['analyze', 'render'].forEach(function (kind) {
+          if (inflight[kind]) {
+            clearTimeout(inflight[kind].timer);
+            inflight[kind].reject(err);
+            inflight[kind] = null;
+          }
+          if (queued[kind]) { queued[kind].reject(err); queued[kind] = null; }
+        });
+      };
+      return worker;
+    }
+
+    function dispatch(kind, req) {
+      var w = ensureWorker();
+      if (!w) { req.reject(new Error('UML worker not available')); return; }
+      if (cacheValue[kind] && req.key === cacheKey[kind]) {
+        req.resolve(cacheValue[kind]);
+        return;
+      }
+      var id = nextId++;
+      inflight[kind] = {
+        id: id, key: req.key,
+        resolve: req.resolve, reject: req.reject,
+        timer: setTimeout(function () {
+          if (!inflight[kind] || inflight[kind].id !== id) return;
+          var slot = inflight[kind];
+          inflight[kind] = null;
+          slot.reject(new Error('UML ' + kind + ' timed out.'));
+          drainQueue(kind);
+        }, 60000),
+      };
+      var msg = { type: SEND_TYPE[kind], id: id };
+      Object.keys(req.payload).forEach(function (k) { msg[k] = req.payload[k]; });
+      w.postMessage(msg);
+    }
+
+    function drainQueue(kind) {
+      if (inflight[kind] || !queued[kind]) return;
+      var next = queued[kind];
+      queued[kind] = null;
+      dispatch(kind, next);
+    }
+
+    function submit(kind, key, payload) {
+      if (!supported) return Promise.reject(new Error('UML worker not available'));
+
+      if (cacheValue[kind] && key === cacheKey[kind]) {
+        return Promise.resolve(cacheValue[kind]);
+      }
+
+      var dup = inflight[kind] && inflight[kind].key === key ? inflight[kind] : null;
+      if (!dup && queued[kind] && queued[kind].key === key) dup = queued[kind];
+      if (dup) {
+        return new Promise(function (resolve, reject) {
+          var oR = dup.resolve, oJ = dup.reject;
+          dup.resolve = function (v) { oR(v); resolve(v); };
+          dup.reject  = function (e) { oJ(e); reject(e); };
+        });
+      }
+
+      return new Promise(function (resolve, reject) {
+        var req = { key: key, payload: payload, resolve: resolve, reject: reject };
+        if (inflight[kind]) {
+          if (queued[kind]) queued[kind].reject(umlSupersededError());
+          queued[kind] = req;
+        } else {
+          dispatch(kind, req);
+        }
+      });
+    }
+
+    function analyzeKey(lang, sources, options) {
+      var parts = [lang];
+      Object.keys(sources).sort().forEach(function (fn) {
+        var s = sources[fn] || '';
+        parts.push(fn + ':' + s.length + ':' + umlHashString(s));
+      });
+      if (options) parts.push(JSON.stringify(options));
+      return parts.join('|');
+    }
+
+    function renderKey(diagramType, syntax, cssVars, container) {
+      // measurements derive from syntax + page font, so they don't need to be
+      // in the cache key — the syntax hash already covers them.
+      return diagramType + '|' + (syntax || '').length + '|' + umlHashString(syntax || '') +
+        '|' + JSON.stringify(cssVars || {}) + '|' + JSON.stringify(container || {});
+    }
+
+    function analyze(lang, sources, options) {
+      return submit('analyze', analyzeKey(lang, sources, options),
+        { lang: lang, sources: sources, options: options });
+    }
+
+    function render(diagramType, syntax, cssVars, container, measurements) {
+      return submit('render', renderKey(diagramType, syntax, cssVars, container),
+        { diagramType: diagramType, syntax: syntax, cssVars: cssVars,
+          container: container, measurements: measurements });
+    }
+
+    return {
+      analyze: analyze,
+      render: render,
+      supported: function () { return supported; },
+    };
+  })();
+  // Backwards alias for the analysis-side caller.
+  var UMLAnalysisService = UMLWorkerService;
+
   /** Lazily load the JS-based Python UML analyzer (fast, no Pyodide needed) */
   TutorialCode.prototype._loadPythonJSAnalyzer = function (callback) {
     if (typeof window !== 'undefined' && window.analyzePythonSources) { callback(); return; }
@@ -4431,13 +4746,7 @@
     }
 
     function onSourcesReady() {
-      if (lang === 'js') {
-        self._runJSUMLAnalysis(sources);
-      } else if (lang === 'java') {
-        self._runJavaUMLAnalysis(sources);
-      } else {
-        self._runPythonJSUMLAnalysis(sources);
-      }
+      self._runUMLAnalysis(lang, sources);
     }
 
     // Read each watched file's current editor content (or from backend)
@@ -4464,65 +4773,91 @@
     });
   };
 
-  /** Run the Python analyzer directly in the browser (no Pyodide needed) */
-  TutorialCode.prototype._runPythonJSUMLAnalysis = function (sources) {
+  /**
+   * Run the appropriate UML analyzer for `lang` against `sources`.
+   *
+   * Off-thread by default via UMLAnalysisService (Web Worker). Falls back to
+   * the on-main-thread analyzer if the worker can't be constructed (e.g.,
+   * file:// page, CSP, ancient browser).
+   *
+   * Robustness against rapid edits / fast saves:
+   *   - Per-instance `_umlAnalysisRequestId` supersedes earlier requests; if a
+   *     newer call has been issued (or the step changed), the result is dropped.
+   *   - Re-checks supersession inside the rAF callback in case a newer request
+   *     started between the worker resolving and the next frame.
+   *   - The service-level coalescing pipeline keeps the worker queue from
+   *     piling up: at most one analysis in flight + at most one queued.
+   */
+  TutorialCode.prototype._runUMLAnalysis = function (lang, sources) {
     var self = this;
-    this._loadPythonJSAnalyzer(function () {
-      try {
-        var umlOptions = {
-          hideVisibility: self._umlHideFlags.indexOf('visibility') !== -1,
-          hideMultiplicity: self._umlHideFlags.indexOf('multiplicity') !== -1
-        };
-        var result = window.analyzePythonSources(sources, umlOptions);
-        self._umlLastDiagrams = result;
-        self._renderCurrentUMLDiagram();
-        if (result.errors && result.errors.length > 0) {
-          console.warn('Python UML analysis warnings:', result.errors);
-        }
-      } catch (err) {
-        console.error('Python UML analysis error:', err);
-        self._showUMLError('Python analysis failed: ' + err.message);
-      }
-    });
-  };
+    var options = (lang === 'python') ? {
+      hideVisibility: this._umlHideFlags.indexOf('visibility') !== -1,
+      hideMultiplicity: this._umlHideFlags.indexOf('multiplicity') !== -1
+    } : null;
 
-  /** Run the JS/TS analyzer directly in the browser */
-  TutorialCode.prototype._runJSUMLAnalysis = function (sources) {
-    var self = this;
-    // Lazy-load TypeScript compiler, then the JS analyzer, then run
-    this._loadTypeScriptCompiler(function () {
-      self._loadJSAnalyzer(function () {
-        try {
-          var result = window.analyzeJSSources(sources, window.ts);
-          self._umlLastDiagrams = result;
-          self._renderCurrentUMLDiagram();
-          if (result.errors && result.errors.length > 0) {
-            console.warn('JS UML analysis warnings:', result.errors);
-          }
-        } catch (err) {
-          console.error('JS UML analysis error:', err);
-          self._showUMLError('JS/TS analysis failed: ' + err.message);
-        }
+    var reqId = ++this._umlAnalysisRequestId;
+    function isCurrent() { return reqId === self._umlAnalysisRequestId; }
+
+    function onResult(result) {
+      if (!isCurrent()) return;
+      self._umlLastDiagrams = result;
+      if (result.errors && result.errors.length > 0) {
+        console.warn(lang + ' UML analysis warnings:', result.errors);
+      }
+      // One-frame fence: let the editor paint the keystroke that triggered us
+      // before the (DOM-bound, ~50–300 ms) renderer takes the main thread.
+      requestAnimationFrame(function () {
+        if (!isCurrent()) return;
+        self._renderCurrentUMLDiagram();
       });
-    });
+    }
+    function onError(err) {
+      if (!isCurrent()) return;
+      console.error(lang + ' UML analysis error:', err);
+      self._showUMLError((lang.charAt(0).toUpperCase() + lang.slice(1)) +
+        ' analysis failed: ' + (err && err.message ? err.message : err));
+    }
+
+    if (UMLAnalysisService.supported()) {
+      UMLAnalysisService.analyze(lang, sources, options).then(onResult, function (err) {
+        if (isUMLSuperseded(err)) return;       // a newer request will handle it
+        if (!isCurrent()) return;               // step changed mid-flight
+        // True worker failure → fall back to main-thread analyzer so the UML
+        // view still works (matches today's behaviour for users without workers).
+        self._runUMLAnalysisFallback(lang, sources, options, reqId, onResult, onError);
+      });
+    } else {
+      this._runUMLAnalysisFallback(lang, sources, options, reqId, onResult, onError);
+    }
   };
 
-  /** Run the Java analyzer directly in the browser (no worker round-trip) */
-  TutorialCode.prototype._runJavaUMLAnalysis = function (sources) {
+  /** Fallback path: run the analyzer on the main thread (legacy behaviour). */
+  TutorialCode.prototype._runUMLAnalysisFallback = function (lang, sources, options, reqId, onResult, onError) {
     var self = this;
-    this._loadJavaAnalyzer(function () {
-      try {
-        var result = window.analyzeJavaSources(sources);
-        self._umlLastDiagrams = result;
-        self._renderCurrentUMLDiagram();
-        if (result.errors && result.errors.length > 0) {
-          console.warn('Java UML analysis warnings:', result.errors);
-        }
-      } catch (err) {
-        console.error('Java UML analysis error:', err);
-        self._showUMLError('Java analysis failed: ' + err.message);
+    function isCurrent() { return reqId === self._umlAnalysisRequestId; }
+    try {
+      if (lang === 'python') {
+        this._loadPythonJSAnalyzer(function () {
+          if (!isCurrent()) return;
+          try { onResult(window.analyzePythonSources(sources, options || {})); }
+          catch (e) { onError(e); }
+        });
+      } else if (lang === 'java') {
+        this._loadJavaAnalyzer(function () {
+          if (!isCurrent()) return;
+          try { onResult(window.analyzeJavaSources(sources)); }
+          catch (e) { onError(e); }
+        });
+      } else {
+        this._loadTypeScriptCompiler(function () {
+          self._loadJSAnalyzer(function () {
+            if (!isCurrent()) return;
+            try { onResult(window.analyzeJSSources(sources, window.ts)); }
+            catch (e) { onError(e); }
+          });
+        });
       }
-    });
+    } catch (e) { onError(e); }
   };
 
   /** Lazily load the Java UML analyzer */
@@ -4589,29 +4924,225 @@
   };
 
   /** Render class diagram using the custom SVG renderer */
+  // CSS variables the ArchUML renderer reads from the container. We pre-resolve
+  // them on the main thread so the worker can answer getComputedStyle without
+  // any real DOM. Keep in sync with getThemeColors in uml-bundle.js.
+  var UML_CSS_VARS = [
+    '--uml-bg', '--uml-stroke', '--uml-text', '--uml-fill', '--uml-header-fill',
+    '--uml-line', '--uml-secondary-line', '--uml-secondary-fill',
+    '--uml-label-fill', '--uml-label-stroke',
+  ];
+
+  TutorialCode.prototype._snapshotUMLContainer = function (el) {
+    var cs = window.getComputedStyle(el);
+    var rect = el.getBoundingClientRect ? el.getBoundingClientRect() : { width: 0, height: 0 };
+    var cssVars = {};
+    for (var i = 0; i < UML_CSS_VARS.length; i++) {
+      cssVars[UML_CSS_VARS[i]] = (cs.getPropertyValue(UML_CSS_VARS[i]) || '').trim();
+    }
+    return {
+      cssVars: cssVars,
+      container: {
+        width: rect.width || el.clientWidth || 800,
+        height: rect.height || el.clientHeight || 600,
+        clientWidth: el.clientWidth || rect.width || 800,
+      },
+    };
+  };
+
+  /**
+   * Pre-measure all strings the bundle would measure for this diagram, using
+   * an actual SVG `<text>` node + `getComputedTextLength`. This matches what
+   * the browser will render the diagram's text at — Canvas `measureText` can
+   * disagree with the SVG text engine by a few percent, which is enough to
+   * make long method signatures spill out of their box (the bundle sizes the
+   * box from Canvas measurement but the SVG renders slightly wider).
+   *
+   * The worker uses these measurements instead of its OffscreenCanvas, so
+   * box widths are computed against true rendered widths — fixes both the
+   * Firefox `system-ui` fallback divergence AND the Canvas-vs-SVG width
+   * discrepancy that causes text overflow on long method signatures.
+   *
+   * Walks the parsed AST manually and records the same textWidth calls the
+   * bundle would make. Doesn't run layout — just measurement — so the cost is
+   * O(strings), not O(n²) for the layout algorithm.
+   */
+  TutorialCode.prototype._preMeasureForWorker = function (diagramType, syntax) {
+    if (!window.UMLShared) return null;
+    var Renderer = (diagramType === 'sequence') ? window.UMLSequenceDiagram : window.UMLClassDiagram;
+    if (!Renderer || typeof Renderer.parse !== 'function') return null;
+
+    var BASE = UMLShared.BASE_CFG || {};
+    // The bundle's class-diagram CFG sets fontSizeStereotype = fontSize - 1
+    // (default 14 → stereotype 13). The convention isn't exposed via BASE_CFG,
+    // so we derive it the same way the bundle does internally.
+    var sizeBody = BASE.fontSize;
+    var sizeBold = BASE.fontSizeBold;
+    var sizeStereotype = (BASE.fontSize != null) ? (BASE.fontSize - 1) : null;
+    var ff = BASE.fontFamily;
+
+    // Reuse a single hidden SVG host across calls so we don't pay DOM-creation
+    // cost per measurement.
+    //
+    // CRITICAL: font-family must live on the host SVG via the `style` attribute
+    // (CSS inheritance), NOT as a `font-family` SVG attribute on the text
+    // element. The two paths produce different metrics in Chromium — the SVG
+    // attribute path returns Canvas-like widths, while the CSS path matches
+    // what the browser actually paints. The bundle emits font-family as a CSS
+    // style on the root SVG, so we mirror that to match the rendered widths.
+    if (!this._umlMeasureHost || this._umlMeasureHostFont !== ff) {
+      if (this._umlMeasureHost && this._umlMeasureHost.parentNode) {
+        this._umlMeasureHost.parentNode.removeChild(this._umlMeasureHost);
+      }
+      var svgNS = 'http://www.w3.org/2000/svg';
+      var host = document.createElementNS(svgNS, 'svg');
+      host.setAttribute('style', 'font-family: ' + (ff || '') + ';');
+      host.style.position = 'absolute';
+      host.style.left = '-9999px';
+      host.style.top = '-9999px';
+      var textNode = document.createElementNS(svgNS, 'text');
+      host.appendChild(textNode);
+      document.body.appendChild(host);
+      this._umlMeasureHost = host;
+      this._umlMeasureTextNode = textNode;
+      this._umlMeasureHostFont = ff;
+    }
+    var measureNode = this._umlMeasureTextNode;
+
+    var measurements = {};
+    function measure(text, bold, fontSize) {
+      if (text == null || text === '' || fontSize == null) return;
+      var key = (bold ? 'B' : 'R') + '|' + fontSize + '|' + (ff || '') + '|' + text;
+      if (measurements[key] !== undefined) return;
+      measureNode.setAttribute('font-size', String(fontSize));
+      // Match the bundle's emission: only set font-weight when bold, omit
+      // otherwise. Setting font-weight="normal" as an attribute changes
+      // Chromium's metrics for SVG text by ~3% vs. omitting it entirely.
+      if (bold) measureNode.setAttribute('font-weight', 'bold');
+      else measureNode.removeAttribute('font-weight');
+      measureNode.textContent = text;
+      // Use the maximum of SVG `getComputedTextLength` and Canvas `measureText`.
+      // The two engines disagree by a few percent and the disagreement flips
+      // direction across browsers (Chromium: SVG > Canvas; Gecko: sometimes
+      // Canvas > SVG). Taking the max guarantees the box is sized for the
+      // wider of the two, which is at least as wide as whatever the browser
+      // actually paints — so the rendered text never spills outside the box.
+      var svgW = measureNode.getComputedTextLength();
+      var canvasW = UMLShared.textWidth(text, bold, fontSize, ff);
+      measurements[key] = Math.max(svgW, canvasW);
+    }
+
+    var parsed;
+    try { parsed = Renderer.parse(syntax); } catch (_) { return null; }
+    if (!parsed) return null;
+
+    // Class boxes (mirrors measureBox in uml-bundle.js)
+    var classes = parsed.classes || [];
+    for (var ci = 0; ci < classes.length; ci++) {
+      var cls = classes[ci];
+      measure(cls.name, true, sizeBold);
+
+      // Stereotype text — matches the synthesis in the bundle's measureBox
+      var stereo = '';
+      if (cls.stereotype) stereo = '«' + cls.stereotype + '»';
+      else if (cls.type === 'abstract') stereo = '«abstract»';
+      else if (cls.type === 'interface') stereo = '«interface»';
+      else if (cls.type === 'enum') stereo = '«enumeration»';
+      if (stereo) measure(stereo, false, sizeStereotype);
+
+      var attrs = cls.attributes || [];
+      for (var ai = 0; ai < attrs.length; ai++) measure(attrs[ai].text, false, sizeBody);
+      var meths = cls.methods || [];
+      for (var mi = 0; mi < meths.length; mi++) measure(meths[mi].text, false, sizeBody);
+    }
+
+    // Relationship labels and multiplicities (use stereotype size in the bundle)
+    var rels = parsed.relationships || [];
+    for (var ri = 0; ri < rels.length; ri++) {
+      var rel = rels[ri];
+      if (rel.label) measure(rel.label, false, sizeStereotype);
+      if (rel.fromMult) measure(rel.fromMult, false, sizeStereotype);
+      if (rel.toMult) measure(rel.toMult, false, sizeStereotype);
+    }
+
+    return measurements;
+  };
+
+  /** Render class diagram via the worker (DOM-shimmed bundle). */
   TutorialCode.prototype._renderClassDiagramSVG = function (syntax) {
-    if (!this._umlContentEl || !window.UMLClassDiagram) {
+    if (!this._umlContentEl) {
       this._showUMLError('UML renderer not loaded.');
       return;
     }
-    this._umlContentEl.innerHTML = '';
-    this._applyUMLColors(this._umlContentEl);
-    UMLClassDiagram.render(this._umlContentEl, this._applyTutorialClassLayout(syntax));
-    var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
-    this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
+    this._renderUMLViaWorker('class', this._applyTutorialClassLayout(syntax));
   };
 
-  /** Render sequence diagram using the custom SVG renderer */
+  /** Render sequence diagram via the worker. */
   TutorialCode.prototype._renderSequenceDiagramSVG = function (syntax) {
-    if (!this._umlContentEl || !window.UMLSequenceDiagram) {
+    if (!this._umlContentEl) {
       this._showUMLError('UML sequence renderer not loaded.');
       return;
     }
-    this._umlContentEl.innerHTML = '';
-    this._applyUMLColors(this._umlContentEl);
-    UMLSequenceDiagram.render(this._umlContentEl, syntax);
-    var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
-    this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
+    this._renderUMLViaWorker('sequence', syntax);
+  };
+
+  /**
+   * Off-thread render. Critical detail: the snapshot is taken AFTER clearing
+   * the container, so the worker sees the same empty-container geometry the
+   * main-thread renderer used to see. Otherwise the previous SVG inflates the
+   * container's height and the layout algorithm flips direction (LR vs TB).
+   */
+  TutorialCode.prototype._renderUMLViaWorker = function (diagramType, syntax) {
+    var self = this;
+    var el = this._umlContentEl;
+    var reqId = ++this._umlRenderRequestId;
+    function isCurrent() { return reqId === self._umlRenderRequestId; }
+
+    el.innerHTML = '';                       // clear FIRST so snapshot is right
+    this._applyUMLColors(el);
+
+    function applySVG(svgStr) {
+      el.innerHTML = svgStr;
+      // autoFitSVG re-fits the rendered SVG using getBBox on the LIVE DOM —
+      // matters because the worker measured text on OffscreenCanvas, whose
+      // glyph metrics can differ subtly from the live document's font fallback
+      // (tested identical for our font, but autoFitSVG is what the bundle's
+      // own renderFromData calls and is the canonical reconciliation step).
+      if (window.UMLShared && typeof UMLShared.autoFitSVG === 'function') {
+        try { UMLShared.autoFitSVG(el); } catch (_) {}
+      }
+      var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
+      self._applyUMLZoom(el, self._umlZoom, zoomLabel);
+    }
+
+    function fallbackMainThread() {
+      try {
+        var R = (diagramType === 'sequence') ? window.UMLSequenceDiagram : window.UMLClassDiagram;
+        if (!R) { self._showUMLError('UML renderer not loaded.'); return; }
+        R.render(el, syntax);
+        var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
+        self._applyUMLZoom(el, self._umlZoom, zoomLabel);
+      } catch (e) {
+        self._showUMLError('Render failed: ' + ((e && e.message) || e));
+      }
+    }
+
+    if (UMLWorkerService.supported()) {
+      var snap = this._snapshotUMLContainer(el);
+      var measurements = this._preMeasureForWorker(diagramType, syntax);
+      UMLWorkerService.render(diagramType, syntax, snap.cssVars, snap.container, measurements)
+        .then(function (svg) {
+          if (!isCurrent()) return;
+          applySVG(svg);
+        }, function (err) {
+          if (isUMLSuperseded(err)) return;
+          if (!isCurrent()) return;
+          console.warn('UML worker render failed, falling back to main thread:', err);
+          fallbackMainThread();
+        });
+    } else {
+      fallbackMainThread();
+    }
   };
 
   /** Render Mermaid syntax into SVG in the diagram content area */
@@ -5734,6 +6265,8 @@
         this._umlWatchedFiles = [];
       }
       this._umlLastDiagrams = null;
+      this._umlAnalysisRequestId++;  // invalidate any in-flight analysis from the previous step
+      this._umlRenderRequestId++;    // and any in-flight render
       this._renderTabs();  // Update tab bar to show/hide UML tab
     }
 
