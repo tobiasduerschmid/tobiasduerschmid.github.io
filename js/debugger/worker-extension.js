@@ -11,32 +11,44 @@
  *   - Loads pyodide-debugger.py and instantiates TimeTravelDebugger per session.
  *
  * SAB layout (Int32 view):
- *   [0]  command          1=continue, 2=step (into), 3=next (over), 4=return (out), 5=stop
+ *   [0]  command          1=continue, 2=step (into), 3=next (over), 4=return (out), 5=stop, 6=sync
  *   [1]  watches_dirty    0/1 — main sets to 1 after writing new watches payload
  *   [2]  bps_dirty        0/1 — main sets to 1 after writing new breakpoint changes payload
- *   [3]  watches_len      bytes length of watches payload
- *   [4]  bps_len          bytes length of bps payload
+ *   [3]  edits_dirty      0/1 — main sets to 1 after writing live variable edits
+ *   [4]  watches_len      bytes length of watches payload
+ *   [5]  bps_len          bytes length of bps payload
+ *   [6]  edits_len        bytes length of live edits payload
  *
  * SAB layout (Uint8 view, payload regions):
  *   [WATCH_OFF .. WATCH_OFF + 32KB)  watches JSON (UTF-8)
  *   [BPS_OFF   .. BPS_OFF   + 32KB)  bps JSON (UTF-8)
+ *   [EDITS_OFF .. EDITS_OFF + 32KB)  live edit JSON (UTF-8)
  *
- * Total SAB size: 64KB + 32 bytes header — comfortable budget.
+ * Total SAB size: 96KB + 32 bytes header — comfortable budget.
  */
 
 'use strict';
 
+// Bump this when shipping a fix to the debugger so it's visible in the console
+// that the new version is loaded (otherwise stale-SW caching is invisible).
+var TTD_VERSION = '0.5.2-local-edit-overlay';
+self.postMessage({ type: 'log', msg: '[ttd worker] loaded v' + TTD_VERSION });
+
 var SAB_HEADER_BYTES = 32;          // 8 Int32 slots
 var WATCH_REGION_BYTES = 32 * 1024;
 var BPS_REGION_BYTES = 32 * 1024;
+var EDITS_REGION_BYTES = 32 * 1024;
 var WATCH_OFF = SAB_HEADER_BYTES;
 var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
+var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
 
 var SLOT_CMD = 0;
 var SLOT_WATCHES_DIRTY = 1;
 var SLOT_BPS_DIRTY = 2;
-var SLOT_WATCHES_LEN = 3;
-var SLOT_BPS_LEN = 4;
+var SLOT_EDITS_DIRTY = 3;
+var SLOT_WATCHES_LEN = 4;
+var SLOT_BPS_LEN = 5;
+var SLOT_EDITS_LEN = 6;
 
 // Block-condition constant for Atomics.wait — we wait while [SLOT_CMD] === 0,
 // so all real commands are 1..5 (no 0).
@@ -67,11 +79,15 @@ function handleDebugInit(msg) {
   Atomics.store(i32, SLOT_CMD, CMD_NONE);
   Atomics.store(i32, SLOT_WATCHES_DIRTY, 0);
   Atomics.store(i32, SLOT_BPS_DIRTY, 0);
+  Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
 }
 
 function fetchPySrc() {
   if (debuggerPySrc !== null) return Promise.resolve(debuggerPySrc);
-  return fetch('/js/debugger/pyodide-debugger.py')
+  // Cache-bust + bypass HTTP cache so dev edits to the Python source roll
+  // out without requiring SW unregistration. The fetch happens once per
+  // worker (i.e. once per page load).
+  return fetch('/js/debugger/pyodide-debugger.py?v=' + Date.now(), { cache: 'no-store' })
     .then(function (r) {
       if (!r.ok) throw new Error('Failed to fetch pyodide-debugger.py: ' + r.status);
       return r.text();
@@ -130,8 +146,8 @@ function handleRunDebug(msg) {
         Atomics.wait(i32, SLOT_CMD, CMD_NONE);
         var cmd = Atomics.load(i32, SLOT_CMD);
         Atomics.store(i32, SLOT_CMD, CMD_NONE);
-        // Map our 1..5 protocol back to bdb's expected 0..4.
-        // 1=continue→0, 2=step→1, 3=next→2, 4=return→3, 5=stop→4
+        // Map our 1..6 protocol back to Python command codes.
+        // 1=continue→0, 2=step→1, 3=next→2, 4=return→3, 5=stop→4, 6=sync→5
         return cmd > 0 ? cmd - 1 : 0;
       };
       var consumePendingCb = function () {
@@ -154,7 +170,19 @@ function handleRunDebug(msg) {
           } catch (e) { /* ignore */ }
           Atomics.store(i32, SLOT_BPS_DIRTY, 0);
         }
-        return out;
+        if (Atomics.load(i32, SLOT_EDITS_DIRTY) === 1) {
+          var eLen = Atomics.load(i32, SLOT_EDITS_LEN);
+          var eBytes = u8.subarray(EDITS_OFF, EDITS_OFF + eLen);
+          try {
+            out = out || {};
+            out.live_edits = JSON.parse(textDecoder.decode(eBytes));
+          } catch (e) { /* ignore */ }
+          Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
+        }
+        // Return JSON rather than a raw JS object. Pyodide JsProxy.to_py()
+        // conversion has been unreliable for nested arrays across versions,
+        // and live_edits must arrive exactly or variable writeback is skipped.
+        return out ? JSON.stringify(out) : null;
       };
 
       // Construct the Python debugger via the factory function (avoids
@@ -162,11 +190,12 @@ function handleRunDebug(msg) {
       var ttdMake = pyodide.globals.get('_ttd_make');
       var ttdCleanup = pyodide.globals.get('_ttd_cleanup');
 
-      // Wrap callbacks so Python receives them as plain JS functions (pyodide
-      // converts JS functions to callable Python objects automatically).
-      // Pass watches as JS array (pyodide auto-converts to Python list).
-      // opts as plain object (auto-converts to dict).
-      var dbg = ttdMake(postPausedCb, waitForCommandCb, consumePendingCb, watches, opts);
+      // Pass watches and opts as JSON strings rather than JsProxies. JsProxy
+      // conversion was unreliable across pyodide versions (sometimes the
+      // array arrived empty in Python). JSON round-trip is unambiguous.
+      var watchesJson = JSON.stringify(watches || []);
+      var optsJson = JSON.stringify(opts || {});
+      var dbg = ttdMake(postPausedCb, waitForCommandCb, consumePendingCb, watchesJson, optsJson);
 
       // Install all initial breakpoints. Each: {file, line, condition?}
       bps.forEach(function (bp) {
@@ -178,7 +207,7 @@ function handleRunDebug(msg) {
       debuggerInstance = dbg;
 
       // Stream stdout/stderr during debug exactly like a normal run, so
-      // print() output still flows to the (collapsed) Output panel.
+      // print() output flows to the regular Output panel.
       pyodide.setStdout({ batched: function (text) {
         self.postMessage({ type: 'stdout', text: text + '\n' });
       }});
@@ -195,8 +224,8 @@ function handleRunDebug(msg) {
       // _ttd_make, _f, _k, _m, ...) that lives in pyodide's __main__.
       try {
         var ttdRun = pyodide.globals.get('_ttd_run_with_clean_globals');
-        var overrides = msg.overrides || [];
-        ttdRun(dbg, code, filename, overrides);
+        var overridesJson = JSON.stringify(msg.overrides || []);
+        ttdRun(dbg, code, filename, overridesJson);
         self.postMessage({ type: 'debugComplete', exitCode: 0 });
       } catch (e) {
         self.postMessage({ type: 'debugComplete', exitCode: 1, error: String(e && e.message || e) });

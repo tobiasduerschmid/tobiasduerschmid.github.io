@@ -79,7 +79,10 @@ self.onmessage = function (e) {
   if (msg.type === 'enableDebugger') {
     if (!_debuggerLoaded) {
       try {
-        importScripts('/js/debugger/worker-extension.js');
+        // Cache-bust on every fresh worker so dev iteration on the debugger
+        // module doesn't require manual SW unregistration. The worker is a
+        // fresh instance per page load, so this only adds one fetch per load.
+        importScripts('/js/debugger/worker-extension.js?v=' + Date.now());
         _debuggerLoaded = true;
       } catch (err) {
         self.postMessage({ type: 'debuggerError', message: 'Failed to load debugger extension: ' + err.message });

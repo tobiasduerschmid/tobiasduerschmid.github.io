@@ -3,6 +3,12 @@ description: "A hands-on introduction to Python for students who already know C+
 
 backend: pyodide
 
+# Time-travel debugger opt-in (per-tutorial, default off). Enables click-to-set
+# breakpoints in the gutter, conditional breakpoints, watch expressions,
+# hover-to-inspect, full step controls, and back-in-time stepping. See plan
+# at .claude/plans/what-would-be-options-temporal-ritchie.md.
+debugger: true
+
 require_tests: true
 autosave_type: files
 

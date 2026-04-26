@@ -24,6 +24,11 @@ import bdb
 import json
 import sys
 
+try:
+    import ctypes
+except Exception:
+    ctypes = None
+
 
 # Sentinel string returned by the diffing logic. UI must walk backward through
 # history to find the last non-'UNCHANGED' value for that identifier in the
@@ -36,17 +41,31 @@ _UNCHANGED = 'UNCHANGED'
 _HIDDEN_GLOBAL_PREFIXES = ('__',)
 
 
+_INTERNAL_NAMES = frozenset({
+    # debugger machinery (defensive — clean exec globals already exclude these,
+    # but cover any tutorials that happen to define a same-named symbol)
+    '_ttd_make', '_ttd_run_with_clean_globals', '_ttd_cleanup',
+    'TimeTravelDebugger', '_HIDDEN_GLOBAL_PREFIXES', '_INTERNAL_NAMES',
+    '_UNCHANGED', '_is_user_global',
+    # pyodide-worker.js bootstrap leftovers
+    '_sys', '_m', '_f', '_k', '__run_capture',
+})
+
+
 def _is_user_global(name, value):
     if name.startswith(_HIDDEN_GLOBAL_PREFIXES):
+        return False
+    if name in _INTERNAL_NAMES:
         return False
     mod = getattr(value, '__module__', None)
     if mod is None or mod == '__main__' or mod == 'builtins':
         # __main__ = user-defined; builtins/None covers literals + locals
+        # Still hide modules even if they happen to be in __main__.
+        import types
+        if isinstance(value, types.ModuleType):
+            return False
         return True
-    # Module objects — always hide unless they're user-authored
-    import types
-    if isinstance(value, types.ModuleType):
-        return False
+    # Anything else (functions/classes imported from stdlib, etc.) is hidden.
     return False
 
 
@@ -61,7 +80,8 @@ class TimeTravelDebugger(bdb.Bdb):
         Sends a `paused` postMessage to the main thread.
       wait_for_command: callable () -> int
         Blocks via Atomics.wait, returns command code:
-          0=continue, 1=step (into), 2=next (over), 3=return (out), 4=stop
+          0=continue, 1=step (into), 2=next (over), 3=return (out),
+          4=stop, 5=sync pending UI changes without executing code
       consume_pending: callable () -> dict | None
         Returns any queued {watches, breakpoint_changes} from main thread,
         or None. Called at every pause so live UI updates reach the worker.
@@ -83,20 +103,52 @@ class TimeTravelDebugger(bdb.Bdb):
             raw = consume_pending()
             if raw is None:
                 return None
+            if isinstance(raw, str):
+                try:
+                    return json.loads(raw)
+                except Exception:
+                    return None
             try:
                 return raw.to_py()
             except AttributeError:
                 return raw
         self._consume_pending = _consume_wrapped
-        # watches comes from JS as a JsProxy of an Array; coerce to Python list.
-        # opts comes as a JsProxy of a plain Object; coerce to Python dict.
-        self._watches = list(watches.to_py() if hasattr(watches, 'to_py') else (watches or []))
-        self._opts = (opts.to_py() if hasattr(opts, 'to_py') else opts) or {}
+        # Diagnostic helper — logs go to main thread console via a dedicated
+        # message type. Cheap and easy to grep for "[ttd]" in DevTools.
+        self._log = lambda msg: self._post({'type': 'log', 'msg': str(msg)})
+        # watches and opts come from JS as JSON strings (chosen over JsProxy
+        # because pyodide's auto-conversion was unreliable across versions —
+        # arrays sometimes arrived empty in Python). JSON round-trip is
+        # unambiguous and version-independent.
+        if isinstance(watches, str):
+            try:
+                self._watches = list(json.loads(watches))
+            except Exception:
+                self._watches = []
+        else:
+            # Backwards compat: if a caller still passes a JsProxy/list
+            try:
+                self._watches = list(watches.to_py() if hasattr(watches, 'to_py') else (watches or []))
+            except Exception:
+                self._watches = []
+        if isinstance(opts, str):
+            try:
+                self._opts = json.loads(opts) or {}
+            except Exception:
+                self._opts = {}
+        else:
+            self._opts = (opts.to_py() if hasattr(opts, 'to_py') else opts) or {}
+        # Confirm wiring at construction — proves which Python module is running
+        # and what watches actually arrived (catches stale-SW caching issues).
+        self._log('TTD __init__ watches=' + repr(self._watches) +
+                  ' opts_keys=' + repr(list(self._opts.keys())))
         # Per-snapshot serialization budget. Deeper structures truncate.
         self._depth = int(self._opts.get('snapshot_depth', 3))
         self._max_history = int(self._opts.get('max_history', 50000))
         self._filter_globals = bool(self._opts.get('filter_globals', True))
         self._max_repr = 200
+        self._user_filename = None
+        self._user_root = '/tutorial/'
 
         self._buffer = []                # snapshots since last flush
         self._total = 0                  # all-time snapshot count (for cap)
@@ -118,7 +170,63 @@ class TimeTravelDebugger(bdb.Bdb):
         # variable. Used to emit _UNCHANGED markers.
         self._prev_by_call = {}          # call_id -> {var_name: serialized_value}
 
+        # Variable-mutation overrides. Either:
+        #   - Pre-set via _ttd_overrides on a re-execution (rewound + edit + step)
+        #     in which case format is {snapshot_idx, frame_depth, var, expr}.
+        #     Applied when self._total == snapshot_idx during user_line.
+        #   - Live-applied via _consume_pending in form {var, expr, target_call_id}
+        #     during a single pause to mutate the current frame in place.
+        self._overrides = []
+        # Track applied overrides so each fires exactly once.
+        self._applied_override_indices = set()
+        # Function-local edits can be copied back to CPython/Pyodide fast
+        # locals only when the trace callback returns. While we are still
+        # blocked in the pause loop, keep an explicit overlay so sync snapshots
+        # and watch expressions reflect the edit immediately instead of
+        # snapping back to stale f_locals values.
+        self._live_frame_overrides = {}
+
     # --- bdb hooks ----------------------------------------------------------
+
+    def set_continue(self):
+        """Continue running, but keep tracing so history remains complete."""
+        self._set_stopinfo(self.botframe, None, -1)
+
+    def dispatch_call(self, frame, arg):
+        if self.botframe is None:
+            self.botframe = frame.f_back
+            return self.trace_dispatch
+        if not self._is_user_frame(frame):
+            return None
+        self.user_call(frame, arg)
+        if self.quitting:
+            raise bdb.BdbQuit
+        return self.trace_dispatch
+
+    def dispatch_line(self, frame):
+        if not self._is_user_frame(frame):
+            return self.trace_dispatch
+        should_pause = self.stop_here(frame) or self._break_here(frame)
+        self._handle_line(frame, should_pause)
+        if self.quitting:
+            raise bdb.BdbQuit
+        return self.trace_dispatch
+
+    def dispatch_return(self, frame, arg):
+        if self._is_user_frame(frame):
+            try:
+                self.frame_returning = frame
+                self.user_return(frame, arg)
+            finally:
+                self.frame_returning = None
+            if self.quitting:
+                raise bdb.BdbQuit
+        if self.stop_here(frame) or frame == self.returnframe:
+            if self.stopframe is frame and self.stoplineno != -1:
+                self._set_stopinfo(None, None)
+            if self.stoplineno != -1:
+                self._set_caller_tracefunc(frame)
+        return self.trace_dispatch
 
     def user_call(self, frame, args):
         if self._stop_flag:
@@ -128,20 +236,28 @@ class TimeTravelDebugger(bdb.Bdb):
         self._snapshot(frame, 'call')
 
     def user_line(self, frame):
+        self._handle_line(frame, True)
+
+    def _handle_line(self, frame, should_pause):
         if self._stop_flag:
             self.set_quit()
             return
+        # Apply any pre-recorded overrides BEFORE snapshotting, so the
+        # snapshot reflects the modified state. This is what makes "rewind +
+        # edit + step forward" work: the previous session captured the user's
+        # edit as an override at this exact snapshot index, and re-execution
+        # has now reached that point.
+        self._apply_pending_overrides(frame)
         self._snapshot(frame, 'line')
-        # bdb has already determined we should pause here (breakpoint condition
-        # met, or we're stepping). All non-stopping lines also reach user_line
-        # only when stepping; bdb's dispatch_line skips otherwise.
-        self._flush_and_block(frame)
+        if should_pause:
+            self._flush_and_block(frame)
 
     def user_return(self, frame, retval):
         if self._stop_flag:
             return
         self._snapshot(frame, 'return', retval=retval)
         self._frame_call_id.pop(id(frame), None)
+        self._live_frame_overrides.pop(id(frame), None)
         # Prune diff baseline for completed call so memory doesn't grow forever.
         # The call_id is now historical; UI still has it in `history` but worker
         # won't emit more snapshots for it.
@@ -152,10 +268,73 @@ class TimeTravelDebugger(bdb.Bdb):
         self._snapshot(frame, 'exception', exc=exc_info[1])
         self._flush_and_block(frame)
 
+    def _is_user_frame(self, frame):
+        filename = frame.f_code.co_filename
+        if self._user_filename and filename == self._user_filename:
+            return True
+        return filename.startswith(self._user_root)
+
+    def _user_frames_from(self, frame):
+        frames = []
+        f = frame
+        while f is not None:
+            if self._is_user_frame(f):
+                frames.append(f)
+            f = f.f_back
+        return frames
+
+    def _break_here(self, frame):
+        filename = self.canonic(frame.f_code.co_filename)
+        if filename not in self.breaks:
+            return False
+        lineno = frame.f_lineno
+        if lineno not in self.breaks[filename]:
+            lineno = frame.f_code.co_firstlineno
+            if lineno not in self.breaks[filename]:
+                return False
+
+        bp, delete_ok, cond_error = self._effective_breakpoint(filename, lineno,
+                                                               frame)
+        if not bp:
+            return False
+        self.currentbp = bp.number
+        if cond_error:
+            self._post({
+                'type': 'breakpointError',
+                'file': bp.file,
+                'line': bp.line,
+                'error': cond_error,
+            })
+        if delete_ok and bp.temporary:
+            self.do_clear(str(bp.number))
+        return True
+
+    def _effective_breakpoint(self, filename, lineno, frame):
+        for bp in bdb.Breakpoint.bplist.get((filename, lineno), []):
+            if not bp.enabled:
+                continue
+            if not bdb.checkfuncname(bp, frame):
+                continue
+            bp.hits += 1
+            if not bp.cond:
+                if bp.ignore > 0:
+                    bp.ignore -= 1
+                    continue
+                return bp, True, None
+            try:
+                if eval(bp.cond, frame.f_globals, frame.f_locals):
+                    if bp.ignore > 0:
+                        bp.ignore -= 1
+                        continue
+                    return bp, True, None
+            except Exception as e:
+                return bp, False, '{}: {}'.format(type(e).__name__, e)
+        return None, None, None
+
     # --- snapshot construction ---------------------------------------------
 
-    def _snapshot(self, frame, event, retval=None, exc=None):
-        if self._total >= self._max_history:
+    def _snapshot(self, frame, event, retval=None, exc=None, count=True):
+        if count and self._total >= self._max_history:
             if not self._cap_warned:
                 self._cap_warned = True
                 self._post({
@@ -182,27 +361,30 @@ class TimeTravelDebugger(bdb.Bdb):
             snap['return_value'] = self._serialize(retval, self._depth)
 
         self._buffer.append(snap)
-        self._total += 1
+        if count:
+            self._total += 1
 
     def _serialize_stack(self, frame):
         # Walk f_back chain, OUTERMOST first (so UI's stack[0] is <module>).
-        frames = []
-        f = frame
-        while f is not None:
-            frames.append(f)
-            f = f.f_back
+        frames = self._user_frames_from(frame)
         frames.reverse()
 
         out = []
         for f in frames:
             cid = self._frame_call_id.get(id(f), 0)
             is_top = (f is frame)
+            locals_dict = self._effective_locals(f)
+            if self._filter_globals and f.f_locals is f.f_globals:
+                locals_dict = {
+                    k: v for k, v in locals_dict.items()
+                    if _is_user_global(k, v)
+                }
             entry = {
                 'function': f.f_code.co_name,
                 'file': f.f_code.co_filename,
                 'line': f.f_lineno,
                 'call_id': cid,
-                'locals': self._diff_dict(cid, 'locals', f.f_locals),
+                'locals': self._diff_dict(cid, 'locals', locals_dict),
             }
             if is_top:
                 gd = f.f_globals
@@ -378,9 +560,10 @@ class TimeTravelDebugger(bdb.Bdb):
 
     def _eval_watches(self, frame):
         out = {}
+        locals_for_eval = self._effective_locals(frame)
         for w in self._watches:
             try:
-                v = eval(w, frame.f_globals, frame.f_locals)
+                v = eval(w, frame.f_globals, locals_for_eval)
                 out[w] = self._serialize(v, self._depth)
             except Exception as e:
                 out[w] = {'error': '{}: {}'.format(type(e).__name__, e)}
@@ -388,25 +571,54 @@ class TimeTravelDebugger(bdb.Bdb):
 
     # --- pause / resume protocol -------------------------------------------
 
+    def _flush_buffer(self, replace_last=False):
+        if not self._buffer:
+            return
+        self._post({
+            'type': 'paused',
+            'snapshots': self._buffer,
+            'replace_last': replace_last,
+        })
+        self._buffer = []
+
     def _flush_and_block(self, frame):
-        # Apply any UI-queued changes (new watches, new breakpoints) BEFORE we
-        # report state, so the snapshot we send already reflects them.
+        # Drain pending UI updates queued BEFORE this pause (e.g. watches
+        # added or breakpoints changed during the previous block window).
+        # Live variable edits are deliberately read AFTER `_wait` below, so
+        # they reflect what the user does DURING this pause.
         pending = self._consume_pending()
         if pending:
             new_watches = pending.get('watches')
             if new_watches is not None:
                 self._watches = list(new_watches)
-                # Re-eval watches for the snapshot we're about to send so the
-                # user sees results immediately on this very pause.
                 if self._buffer:
                     self._buffer[-1]['watches'] = self._eval_watches(frame)
             for change in (pending.get('breakpoint_changes') or []):
                 self._apply_bp_change(change)
+            # If the previous pause queued edits but the user only sent a step
+            # cmd later, those edits would be in the buffer too; apply them so
+            # they don't leak into a later pause.
+            self._apply_live_edits(frame, pending.get('live_edits') or [])
 
-        self._post({'type': 'paused', 'snapshots': self._buffer})
-        self._buffer = []
+        self._flush_buffer()
 
         cmd = self._wait()
+
+        # Drain pending edits queued DURING this pause (after the user clicked
+        # the value, typed a new expression, and pressed Enter). We must apply
+        # these BEFORE returning control to bdb so the next bytecode reads
+        # the new value — without this, edits would lag one full step.
+        post_pending = self._consume_pending()
+        if post_pending:
+            self._apply_live_edits(frame, post_pending.get('live_edits') or [])
+            # Also apply any breakpoint changes queued during the pause so the
+            # next dispatch sees them.
+            for change in (post_pending.get('breakpoint_changes') or []):
+                self._apply_bp_change(change)
+            new_watches = post_pending.get('watches')
+            if new_watches is not None:
+                self._watches = list(new_watches)
+
         if cmd == 0:
             self.set_continue()
         elif cmd == 1:
@@ -418,9 +630,15 @@ class TimeTravelDebugger(bdb.Bdb):
         elif cmd == 4:
             self._stop_flag = True
             self.set_quit()
+        elif cmd == 5:
+            self._snapshot(frame, 'sync', count=False)
+            self._flush_buffer(replace_last=True)
+            self._flush_and_block(frame)
         else:
             # Unknown command — fall back to continue rather than block forever.
             self.set_continue()
+        if cmd != 4:
+            self._reapply_live_overrides()
 
     def _apply_bp_change(self, change):
         op = change.get('op')
@@ -436,12 +654,184 @@ class TimeTravelDebugger(bdb.Bdb):
             cond = change.get('condition') or None
             self.set_break(f, ln, cond=cond)
 
+    # --- variable mutation -------------------------------------------------
+
+    def _apply_pending_overrides(self, frame):
+        """Apply any pre-recorded overrides whose snapshot_idx matches the
+        current snapshot count. Called from `user_line` BEFORE snapshotting,
+        so when `self._total == override.snapshot_idx`, we apply.
+        Each override fires at most once."""
+        if not self._overrides:
+            return
+        for i, ov in enumerate(self._overrides):
+            if i in self._applied_override_indices:
+                continue
+            if ov.get('snapshot_idx') != self._total:
+                continue
+            # Resolve the target frame by depth (0 = top)
+            depth = ov.get('frame_depth', 0)
+            target = self._frame_at_depth(frame, depth)
+            if target is None:
+                self._applied_override_indices.add(i)
+                continue
+            self._apply_one_edit(target, ov.get('var'), ov.get('expr'),
+                                  scope=ov.get('scope', 'locals'))
+            self._applied_override_indices.add(i)
+
+    def _apply_live_edits(self, frame, edits):
+        """Apply edits to the current pause's frames immediately. Called from
+        `_flush_and_block` when the UI sends `live_edits` via SAB."""
+        for edit in edits:
+            depth = edit.get('frame_depth', 0)
+            target = self._frame_at_depth(frame, depth)
+            if target is None:
+                continue
+            self._apply_one_edit(target, edit.get('var'), edit.get('expr'),
+                                  scope=edit.get('scope', 'locals'))
+
+    def _frame_at_depth(self, top_frame, depth):
+        """Walk the call stack INNERMOST -> OUTERMOST (depth=0 is top).
+        Note: this matches how the snapshot's `stack` is indexed by the UI:
+        UI passes depth measured from the top of the stack."""
+        frames = self._user_frames_from(top_frame)
+        if depth < 0 or depth >= len(frames):
+            return None
+        return frames[depth]
+
+    def _apply_one_edit(self, frame, var_name, expr, scope='locals'):
+        if not var_name or expr is None:
+            return
+        try:
+            # Evaluate the user's expression in the frame's scope so they can
+            # reference other locals/globals (e.g. `len(items) + 1`).
+            value = eval(expr, frame.f_globals, self._effective_locals(frame))
+        except Exception as e:
+            self._post({'type': 'editError',
+                        'var': var_name, 'expr': expr,
+                        'error': '{}: {}'.format(type(e).__name__, e)})
+            return
+
+        # Globals/module path: module locals are the globals dict, and writing
+        # there is visible to the rest of the program immediately.
+        if scope == 'globals' or frame.f_locals is frame.f_globals:
+            frame.f_globals[var_name] = value
+            actual = frame.f_globals.get(var_name)
+            if actual is not value:
+                self._post({'type': 'editError',
+                            'var': var_name, 'expr': expr,
+                            'error': 'globals writeback did not persist'})
+            else:
+                self._log('edit globals[{}] = {!r}'.format(var_name, value))
+            return
+
+        # Locals path: because this runs from the trace callback, CPython/Pyodide
+        # may not copy the edit to fast locals until the callback returns. Store
+        # an overlay first so sync snapshots and watches show the intended state
+        # immediately, then reapply the edit right before execution resumes.
+        self._record_local_override(frame, var_name, value)
+        d = frame.f_locals
+        d[var_name] = value
+        force_error = None
+        if ctypes is not None:
+            try:
+                ctypes.pythonapi.PyFrame_LocalsToFast(
+                    ctypes.py_object(frame), ctypes.c_int(0)
+                )
+            except Exception as e:
+                force_error = '{}: {}'.format(type(e).__name__, e)
+
+        suffix = ''
+        if force_error:
+            suffix = ' (deferred trace writeback; PyFrame_LocalsToFast unavailable: {})'.format(force_error)
+        self._log('edit locals[{}] = {!r}{}'.format(var_name, value, suffix))
+
+
+    def _effective_locals(self, frame):
+        overrides = self._live_frame_overrides.get(id(frame))
+        if not overrides:
+            return frame.f_locals
+        merged = dict(frame.f_locals)
+        merged.update(overrides['values'])
+        return merged
+
+    def _record_local_override(self, frame, var_name, value):
+        frame_id = id(frame)
+        entry = self._live_frame_overrides.get(frame_id)
+        if not entry:
+            entry = {'frame': frame, 'values': {}}
+            self._live_frame_overrides[frame_id] = entry
+        entry['values'][var_name] = value
+
+    def _reapply_live_overrides(self):
+        for entry in list(self._live_frame_overrides.values()):
+            frame = entry['frame']
+            values = entry['values']
+            try:
+                d = frame.f_locals
+                for name, value in values.items():
+                    d[name] = value
+                if ctypes is not None:
+                    try:
+                        ctypes.pythonapi.PyFrame_LocalsToFast(
+                            ctypes.py_object(frame), ctypes.c_int(0)
+                        )
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
 
 def _ttd_make(post_paused, wait_for_command, consume_pending, watches, opts):
     """Factory called from JS. Returns the constructed instance. Avoids JS
     needing to know Python class-construction semantics across the bridge."""
     return TimeTravelDebugger(post_paused, wait_for_command, consume_pending,
                               watches, opts)
+
+
+def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):
+    """
+    Run user code under the debugger with a FRESH globals dict so the user's
+    view of `globals()` doesn't include any of our debugger machinery
+    (TimeTravelDebugger, bdb, json, _ttd_make, _f, _k, _m, ...) that lives in
+    pyodide's `__main__`.
+
+    Compiles the source with the user-facing filename so bdb breakpoints
+    keyed on that path actually match `frame.f_code.co_filename`.
+
+    `overrides` is a JSON string of variable mutations to apply at specific
+    points during execution. Format:
+      [{ snapshot_idx: int, frame_depth: int (0=top), var: str, expr: str,
+         scope: 'locals' | 'globals' }, ...]
+    The debugger applies them in `user_line` when `self._total == snapshot_idx`.
+    """
+    if isinstance(overrides, str):
+        try:
+            py_overrides = list(json.loads(overrides))
+        except Exception:
+            py_overrides = []
+    else:
+        try:
+            py_overrides = overrides.to_py() if hasattr(overrides, 'to_py') else list(overrides or [])
+        except Exception:
+            py_overrides = []
+    dbg._overrides = list(py_overrides)
+    dbg._user_filename = filename
+
+    compiled = compile(code_str, filename, 'exec')
+    # Fresh, minimal globals — only what user code legitimately expects.
+    user_globals = {
+        '__name__': '__main__',
+        '__doc__': None,
+        '__package__': None,
+        '__loader__': None,
+        '__spec__': None,
+        '__builtins__': __builtins__,
+        '__file__': filename,
+    }
+    try:
+        dbg.run(compiled, user_globals)
+    finally:
+        dbg._flush_buffer()
 
 
 def _ttd_cleanup():

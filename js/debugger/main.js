@@ -20,7 +20,7 @@
  *   postMessage / SharedArrayBuffer      ← reads cmd; bdb.set_step()/set_next()
  *
  * SAB layout matches js/debugger/worker-extension.js exactly:
- *   Int32 [0]  command (1=continue, 2=step, 3=next, 4=return, 5=stop)
+ *   Int32 [0]  command (1=continue, 2=step, 3=next, 4=return, 5=stop, 6=sync)
  *   Int32 [1]  watches_dirty
  *   Int32 [2]  bps_dirty
  *   Int32 [3]  watches_len
@@ -36,12 +36,16 @@
   var SAB_HEADER_BYTES = 32;
   var WATCH_REGION_BYTES = 32 * 1024;
   var BPS_REGION_BYTES = 32 * 1024;
-  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES;
+  var EDITS_REGION_BYTES = 32 * 1024;
+  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES + EDITS_REGION_BYTES;
   var WATCH_OFF = SAB_HEADER_BYTES;
   var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
-  var SLOT_CMD = 0, SLOT_WATCHES_DIRTY = 1, SLOT_BPS_DIRTY = 2;
-  var SLOT_WATCHES_LEN = 3, SLOT_BPS_LEN = 4;
+  var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
+  var SLOT_CMD = 0;
+  var SLOT_WATCHES_DIRTY = 1, SLOT_BPS_DIRTY = 2, SLOT_EDITS_DIRTY = 3;
+  var SLOT_WATCHES_LEN = 4, SLOT_BPS_LEN = 5, SLOT_EDITS_LEN = 6;
   var CMD_CONTINUE = 1, CMD_STEP = 2, CMD_NEXT = 3, CMD_RETURN = 4, CMD_STOP = 5;
+  var CMD_SYNC = 6;
 
   var UNCHANGED = 'UNCHANGED';   // diff sentinel from Python side
 
@@ -107,6 +111,7 @@
     this.liveIdx = -1;          // last index that's actually "live" (worker is paused there)
     this.selectedFrameIdx = -1; // top of stack by default; -1 means top
     this.session = null;        // {sab, i32, u8, watches:Set<string>, capReached:boolean}
+    this.paused = false;
     this.outputDuringDebug = '';// buffered stdout (output panel collapsed)
     this.outputLines = 0;
 
@@ -136,6 +141,7 @@
     this.history = [];
     this.historyIdx = -1;
     this.liveIdx = -1;
+    this.paused = false;
     this.outputDuringDebug = '';
     this.outputLines = 0;
     this.renderAll();
@@ -172,19 +178,17 @@
     }
     this.tabBar = tabBar;
 
-    // 2. Create the 4 debug view divs as siblings of `.tvm-steps-view`.
+    // 2. Create the debug views as siblings of `.tvm-steps-view`.
+    //    Single combined "Debug" tab contains three stacked, collapsible
+    //    sections in this top-to-bottom order: Watch, Call Stack, Variables.
+    //    History gets its own tab — it has different ergonomics (scrubber +
+    //    long list) and benefits from full vertical real estate.
     var stepsView = instructionsPanel.querySelector('.tvm-steps-view');
     if (!stepsView) return;
 
     var views = [
-      { panel: 'dbg-vars',    label: '<i class="fa fa-list"></i> Variables',
-        empty: 'Start debugging to see variables.' },
-      { panel: 'dbg-stack',   label: '<i class="fa fa-layer-group"></i> Call Stack',
-        empty: 'Start debugging to see the call stack.' },
-      { panel: 'dbg-watch',   label: '<i class="fa fa-eye"></i> Watch',
-        empty: '' /* watch panel always shows the input even when empty */ },
-      { panel: 'dbg-history', label: '<i class="fa fa-clock-rotate-left"></i> History',
-        empty: 'Start debugging to navigate execution history.' },
+      { panel: 'dbg-combined', label: '<i class="fa fa-bug"></i> Debug',
+        type: 'combined' },
     ];
     var self = this;
     views.forEach(function (v) {
@@ -199,10 +203,16 @@
       view.className = 'tvm-debug-view tvm-debug-view-' + v.panel;
       view.style.display = 'none';
       view.dataset.panel = v.panel;
-      view.innerHTML = '<div class="tvm-debug-empty">' + v.empty + '</div>';
-      // Insert AFTER stepsView so layout flow stays consistent
+      if (v.type === 'combined') {
+        view.innerHTML = self._buildCombinedViewShell();
+      } else {
+        view.innerHTML = '<div class="tvm-debug-empty">' + (v.empty || '') + '</div>';
+      }
       instructionsPanel.appendChild(view);
     });
+
+    // Wire collapse/expand on section headers inside the combined view
+    this._wireSectionToggles();
 
     // Hook other existing left tabs (Steps, UML) to also hide our debug views
     // when clicked. Their existing click handler runs first; ours runs after.
@@ -210,12 +220,69 @@
     for (var i = 0; i < existing.length; i++) {
       var btn2 = existing[i];
       var panel = btn2.getAttribute('data-panel');
-      if (panel !== 'steps' && panel !== 'dbg-vars' && panel !== 'dbg-stack' && panel !== 'dbg-watch' && panel !== 'dbg-history') {
+      if (panel !== 'steps' && panel !== 'dbg-combined') {
         btn2.addEventListener('click', (function (p) {
           return function () { self.activateTab(p); };
         })(panel));
       }
     }
+  };
+
+  // The combined-view shell. Three sections in order: Watch, Call Stack,
+  // Variables. Each section has a clickable header (chevron rotates), a body
+  // that hides when the section is collapsed, and a stable `data-section`
+  // attribute used by the per-section render methods to find their target.
+  // Collapse state persists per-tutorial in localStorage.
+  DebuggerController.prototype._buildCombinedViewShell = function () {
+    var sections = [
+      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
+      { key: 'stack',   label: 'Call Stack',  icon: 'fa-layer-group',        empty: 'Start debugging to see the call stack.' },
+      { key: 'vars',    label: 'Variables',   icon: 'fa-list',               empty: 'Start debugging to see variables.' },
+      { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' },
+    ];
+    var self = this;
+    return sections.map(function (s) {
+      var collapsed = self._isSectionCollapsed(s.key);
+      return '<section class="tvm-dbg-section' + (collapsed ? ' collapsed' : '') +
+             '" data-section="' + s.key + '">' +
+             '<header class="tvm-dbg-section-head" data-section="' + s.key + '">' +
+             '<span class="tvm-dbg-section-chevron">▾</span>' +
+             '<i class="fa ' + s.icon + '"></i>' +
+             '<span class="tvm-dbg-section-title">' + s.label + '</span>' +
+             '</header>' +
+             '<div class="tvm-dbg-section-body" data-section="' + s.key + '">' +
+             '<div class="tvm-debug-empty">' + s.empty + '</div>' +
+             '</div>' +
+             '</section>';
+    }).join('');
+  };
+
+  DebuggerController.prototype._sectionStorageKey = function (key) {
+    return 'tutorial-debug-section-' + this.t.tutorialId + '-' + key;
+  };
+  DebuggerController.prototype._isSectionCollapsed = function (key) {
+    try { return localStorage.getItem(this._sectionStorageKey(key)) === 'collapsed'; }
+    catch (e) { return false; }
+  };
+  DebuggerController.prototype._setSectionCollapsed = function (key, collapsed) {
+    try { localStorage.setItem(this._sectionStorageKey(key), collapsed ? 'collapsed' : 'expanded'); }
+    catch (e) { /* private mode etc. — ignore */ }
+  };
+
+  DebuggerController.prototype._wireSectionToggles = function () {
+    var self = this;
+    var combined = this.t.root.querySelector('.tvm-debug-view-dbg-combined');
+    if (!combined) return;
+    combined.addEventListener('click', function (e) {
+      var head = e.target && e.target.closest && e.target.closest('.tvm-dbg-section-head');
+      if (!head) return;
+      var section = head.parentElement;
+      if (!section) return;
+      var key = section.getAttribute('data-section');
+      var nowCollapsed = !section.classList.contains('collapsed');
+      section.classList.toggle('collapsed', nowCollapsed);
+      self._setSectionCollapsed(key, nowCollapsed);
+    });
   };
 
   DebuggerController.prototype.activateTab = function (panel) {
@@ -306,10 +373,11 @@
       this.setStatus('stopping…');
       return;
     }
-    // Forward commands need a snap-to-live first if user is rewound.
+    // A rewound history row is a different execution cursor. To move forward
+    // from there, restart and replay to that snapshot, then issue the command.
     if (this.historyIdx < this.liveIdx) {
-      this.historyIdx = this.liveIdx;
-      this.renderAll();
+      this.restartFromHistory(cmd);
+      return;
     }
     var code = cmd === 'continue' ? CMD_CONTINUE
             : cmd === 'step'     ? CMD_STEP
@@ -320,6 +388,93 @@
     this.sendCommand(code);
     this.setStatus(cmd + '…');
     this.disableStepButtons(true);
+  };
+
+  // Restart the debug session from the beginning and replay to the selected
+  // history index. This is required whenever the user wants to execute forward
+  // from a rewound snapshot: the live worker is parked at a later point and
+  // cannot be retroactively moved back.
+  DebuggerController.prototype.restartFromHistory = function (followupCmd) {
+    var overrides = (this.session.pendingOverrides || []).slice();
+    var resumeAtIdx = this.historyIdx;
+    var watches = (this.session.watches || []).slice();
+    this.setStatus(overrides.length ? 'replaying with edits…' : 'replaying from history…');
+    // Stop the current session; on debugComplete we'll start a fresh one.
+    var self = this;
+    // Save the file path/code we need for the new run from the model now,
+    // because endSession() will null `session`.
+    var filename = this.t.activeFileName;
+    var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
+    var code = model ? model.getValue() : '';
+    var path = '/tutorial/' + filename;
+
+    // Temporary one-shot completion handler that fires AFTER current debug
+    // ends (because of CMD_STOP) and starts the new run.
+    var origComplete = this.onDebugComplete;
+    this.onDebugComplete = function (msg) {
+      // Restore handler
+      self.onDebugComplete = origComplete;
+      // Build a fresh session that reuses overrides + watches
+      var sab = new SharedArrayBuffer(SAB_TOTAL_BYTES);
+      self.session = {
+        sab: sab,
+        i32: new Int32Array(sab),
+        u8: new Uint8Array(sab),
+        watches: watches,
+        capReached: false,
+        pendingStart: { filename: path, code: code },
+        // Re-overrides for the new run; cleared once they fire.
+        replayOverrides: overrides,
+        // After replay, the user's natural next action is whatever they
+        // originally clicked (continue/step/next/return).
+        autoFollowup: followupCmd,
+        replayTargetIdx: resumeAtIdx,
+      };
+      self.history = [];
+      self.historyIdx = -1;
+      self.liveIdx = -1;
+      self.paused = false;
+      self._pendingOverrideKey = null;
+      self.outputDuringDebug = '';
+      self.outputLines = 0;
+      self.disableStepButtons(true);
+      self.t._worker.postMessage({ type: 'enableDebugger' });
+    };
+    this.sendCommand(CMD_STOP);
+  };
+
+  // For replays, on each `paused` we check whether we've reached the snapshot
+  // index where the user originally rewound to. If so, auto-advance with the
+  // followup command they originally clicked. Otherwise just continue the
+  // replay automatically (we're walking back to where the user was).
+  DebuggerController.prototype.handlePausedDuringReplay = function () {
+    if (!this.session) return false;
+    var target = this.session.replayTargetIdx;
+    var fcmd = this.session.autoFollowup;
+    if (target == null || fcmd == null) return false;
+    if (this.liveIdx < target) {
+      // Still replaying — auto-continue silently. CMD_CONTINUE keeps running
+      // until the next breakpoint or program end. To honor breakpoints during
+      // replay would be confusing; since the override already applied, we
+      // just resume to the snapshot count target.
+      // To avoid skipping the replay target we step instead, which guarantees
+      // each user_line is reported.
+      this.sendCommand(CMD_STEP);
+      this.setStatus('replaying step ' + (this.liveIdx + 1) + '/' + (target + 1) + '…');
+      return true;
+    }
+    // We've reached (or passed) the original rewound point — clear replay
+    // markers and let the user's followup play out.
+    this.session.replayTargetIdx = null;
+    this.session.autoFollowup = null;
+    this.setStatus('replay complete — applying ' + fcmd);
+    var code = fcmd === 'continue' ? CMD_CONTINUE
+            : fcmd === 'step'     ? CMD_STEP
+            : fcmd === 'next'     ? CMD_NEXT
+            : fcmd === 'return'   ? CMD_RETURN
+            : CMD_STEP;
+    this.sendCommand(code);
+    return true;
   };
 
   DebuggerController.prototype.stepBack = function () {
@@ -562,8 +717,15 @@
       else if (msg.type === 'debugComplete') self.onDebugComplete(msg);
       else if (msg.type === 'capReached') self.onCapReached(msg);
       else if (msg.type === 'breakpointError') self.onBreakpointError(msg);
+      else if (msg.type === 'editError') self.onEditError(msg);
+      else if (msg.type === 'log') console.log('[ttd]', msg.msg);
       else if (msg.type === 'debuggerError') console.error('[debugger]', msg.message);
     });
+  };
+
+  DebuggerController.prototype.onEditError = function (msg) {
+    console.warn('[ttd edit]', msg.var, '=', msg.expr, '→', msg.error);
+    this.setStatus('edit failed: ' + (msg.error || 'unknown'));
   };
 
   DebuggerController.prototype.startSession = function () {
@@ -596,6 +758,7 @@
     this.history = [];
     this.historyIdx = -1;
     this.liveIdx = -1;
+    this.paused = false;
     this.outputDuringDebug = '';
     this.outputLines = 0;
 
@@ -614,14 +777,16 @@
     if (this.debugBtn) this.debugBtn.style.display = 'none';
     if (this.stepToolbar) this.stepToolbar.style.display = 'flex';
 
-    // Auto-switch to Variables tab; collapse output panel
-    this.activateTab('dbg-vars');
-    this.collapseOutputPanel(true);
+    // Auto-switch to the combined Debug tab (Watch + Call Stack + Variables
+    // stacked). Note: we deliberately do NOT collapse the output panel —
+    // prints from the user's program go there and need to stay visible during
+    // the debug session. Hiding them caused confusion in earlier iterations.
+    this.activateTab('dbg-combined');
     this.disableStepButtons(true);
     this.setStatus('starting…');
 
-    // Send init then enableDebugger; the worker responds with debuggerReady.
-    this.t._worker.postMessage({ type: 'debugInit', sab: sab });
+    // Load/enable the worker extension first. The extension owns debugInit, so
+    // on a fresh worker we must wait for debuggerReady before sending it.
     this.t._worker.postMessage({ type: 'enableDebugger' });
   };
 
@@ -629,6 +794,7 @@
     if (!this.session || !this.session.pendingStart) return;
     var st = this.session.pendingStart;
     this.session.pendingStart = null;
+    this.t._worker.postMessage({ type: 'debugInit', sab: this.session.sab });
     this.t._worker.postMessage({
       type: 'runDebug',
       filename: st.filename,
@@ -636,14 +802,28 @@
       breakpoints: this.collectBreakpointsForRun(),
       watches: this.session.watches,
       options: this.opts,
+      // Variable-mutation overrides recorded by the user during a previous
+      // rewound state. The worker applies each at its recorded snapshot index.
+      overrides: this.session.replayOverrides || [],
     });
     this.setStatus('running…');
   };
 
   DebuggerController.prototype.sendCommand = function (cmdCode) {
     if (!this.session) return;
+    this.paused = false;
     Atomics.store(this.session.i32, SLOT_CMD, cmdCode);
     Atomics.notify(this.session.i32, SLOT_CMD, 1);
+    if (this.session.pendingLiveEdits && this.session.pendingLiveEdits.length) {
+      this.session.pendingLiveEdits = [];
+    }
+  };
+
+  DebuggerController.prototype.requestSync = function () {
+    if (!this.session || !this.paused || this.historyIdx !== this.liveIdx) return;
+    this.disableStepButtons(true);
+    this.setStatus('applying…');
+    this.sendCommand(CMD_SYNC);
   };
 
   DebuggerController.prototype.queueBreakpointChange = function (change) {
@@ -669,10 +849,18 @@
   DebuggerController.prototype.onPaused = function (msg) {
     if (!this.session) return;
     var snaps = msg.snapshots || [];
-    for (var i = 0; i < snaps.length; i++) this.history.push(snaps[i]);
-    this.liveIdx = this.history.length - 1;
+    if (msg.replace_last && snaps.length && this.liveIdx >= 0) {
+      this.history[this.liveIdx] = snaps[snaps.length - 1];
+    } else {
+      for (var i = 0; i < snaps.length; i++) this.history.push(snaps[i]);
+      this.liveIdx = this.history.length - 1;
+    }
     this.historyIdx = this.liveIdx;
     this.selectedFrameIdx = -1;
+    // If we're in the middle of a replay (post-edit re-execution), let the
+    // replay driver decide whether to auto-step further or hand control back.
+    if (this.handlePausedDuringReplay()) return;
+    this.paused = true;
     this.disableStepButtons(false);
     this.setStatus('paused at line ' + this.history[this.liveIdx].line);
     this.renderAll();
@@ -713,9 +901,9 @@
     if (runBtn) { runBtn.disabled = false; runBtn.title = 'Run current file (Ctrl+Enter)'; }
     if (this.stepToolbar) this.stepToolbar.style.display = 'none';
     if (this.debugBtn) this.debugBtn.style.display = '';
-    this.collapseOutputPanel(false);
     this.clearCurrentLineDecoration();
     this.session = null;
+    this.paused = false;
     if (!keepHistory) {
       this.history = [];
       this.historyIdx = -1;
@@ -762,11 +950,17 @@
     var frameIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : (snap.stack.length - 1);
     var frame = snap.stack[frameIdx];
     if (!frame) { view.innerHTML = '<div class="tvm-debug-empty">No frame.</div>'; return; }
-    var html = '<div class="tvm-debug-section-head">Locals · ' + this.escape(frame.function) + '</div>';
-    html += this.renderVarTable(snap, frameIdx, 'locals', frame.locals);
+    var html = this._renderSubsection(
+      'locals',
+      'Locals · ' + this.escape(frame.function),
+      this.renderVarTable(snap, frameIdx, 'locals', frame.locals)
+    );
     if (frame.globals) {
-      html += '<div class="tvm-debug-section-head">Globals</div>';
-      html += this.renderVarTable(snap, frameIdx, 'globals', frame.globals);
+      html += this._renderSubsection(
+        'globals',
+        'Globals',
+        this.renderVarTable(snap, frameIdx, 'globals', frame.globals)
+      );
     }
     if (snap.exception) {
       html = '<div class="tvm-debug-exception">⚠️ ' + this.escape(snap.exception.type) + ': ' +
@@ -778,6 +972,49 @@
     }
     view.innerHTML = html;
     this.wireExpanders(view);
+    this._wireSubsectionToggles(view);
+  };
+
+  // Sub-sections inside the Variables section (Locals, Globals).
+  // Each is independently collapsible and persists its state.
+  DebuggerController.prototype._renderSubsection = function (key, label, contentHtml) {
+    var collapsed = this._isSubsectionCollapsed(key);
+    return '<div class="tvm-debug-subsection' + (collapsed ? ' collapsed' : '') +
+           '" data-subsection="' + key + '">' +
+           '<div class="tvm-debug-subsection-head">' +
+           '<span class="tvm-debug-subsection-chevron">▾</span>' +
+           '<span class="tvm-debug-subsection-title">' + label + '</span>' +
+           '</div>' +
+           '<div class="tvm-debug-subsection-body">' + contentHtml + '</div>' +
+           '</div>';
+  };
+
+  DebuggerController.prototype._subsectionStorageKey = function (key) {
+    return 'tutorial-debug-subsection-' + this.t.tutorialId + '-' + key;
+  };
+  DebuggerController.prototype._isSubsectionCollapsed = function (key) {
+    try { return localStorage.getItem(this._subsectionStorageKey(key)) === 'collapsed'; }
+    catch (e) { return false; }
+  };
+  DebuggerController.prototype._setSubsectionCollapsed = function (key, collapsed) {
+    try { localStorage.setItem(this._subsectionStorageKey(key), collapsed ? 'collapsed' : 'expanded'); }
+    catch (e) { /* ignore */ }
+  };
+  DebuggerController.prototype._wireSubsectionToggles = function (view) {
+    var self = this;
+    var heads = view.querySelectorAll('.tvm-debug-subsection-head');
+    for (var i = 0; i < heads.length; i++) {
+      (function (head) {
+        head.addEventListener('click', function () {
+          var sub = head.parentElement;
+          if (!sub) return;
+          var key = sub.getAttribute('data-subsection');
+          var nowCollapsed = !sub.classList.contains('collapsed');
+          sub.classList.toggle('collapsed', nowCollapsed);
+          self._setSubsectionCollapsed(key, nowCollapsed);
+        });
+      })(heads[i]);
+    }
   };
 
   DebuggerController.prototype.renderVarTable = function (snap, frameIdx, scope, dict) {
@@ -802,16 +1039,26 @@
       } else if (oid) {
         seenOids[oid] = name;
       }
-      rows.push(this.renderVarRow(name, resolved, aliasBadge, 0));
+      // editKey identifies (scope, frameIdx, name) so the click handler knows
+      // exactly what to mutate. We pass frameIdx separately so call-stack
+      // navigation stays correct.
+      var editKey = scope + '|' + frameIdx + '|' + name;
+      rows.push(this.renderVarRow(name, resolved, aliasBadge, 0, editKey));
     }
     return '<div class="tvm-debug-vars">' + rows.join('') + '</div>';
   };
 
-  DebuggerController.prototype.renderVarRow = function (name, val, aliasBadge, depth) {
+  DebuggerController.prototype.renderVarRow = function (name, val, aliasBadge, depth, editKey) {
     if (!val) return '';
     var nameHtml = '<span class="tvm-debug-var-name">' + this.escape(name) + '</span>';
     var typeHtml = '<span class="tvm-debug-var-type">' + this.escape(val.type || val.kind) + '</span>';
-    var valueHtml = '<span class="tvm-debug-var-value">' + this.escape(val.repr || val.preview || '') + '</span>';
+    // Editable values are top-level (depth 0) primitives or collections in
+    // either Locals or Globals. Nested children are not editable in v1
+    // (would require expression paths like `foo.bar[2]`). The editKey carries
+    // the (scope, name) tuple so the click handler knows what to mutate.
+    var editAttr = editKey ? ' data-edit-key="' + this.escape(editKey) + '" title="Click to edit"' : '';
+    var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
+                    '>' + this.escape(val.repr || val.preview || '') + '</span>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
     var expander = hasChildren
       ? '<span class="tvm-debug-expander" data-expanded="false">▶</span>'
@@ -869,6 +1116,119 @@
         });
       })(expanders[i]);
     }
+    // Click-to-edit on values: replaces the span with an input, applies on
+    // Enter, cancels on Escape. Live edits go through SAB; rewound edits get
+    // recorded as overrides for the next session restart.
+    var self = this;
+    var editables = view.querySelectorAll('.tvm-debug-var-editable');
+    for (var k = 0; k < editables.length; k++) {
+      (function (el) {
+        el.addEventListener('click', function () {
+          self.startInlineEdit(el);
+        });
+      })(editables[k]);
+    }
+  };
+
+  DebuggerController.prototype.startInlineEdit = function (valueEl) {
+    if (!this.session) return;   // only meaningful during a debug session
+    var key = valueEl.getAttribute('data-edit-key');
+    if (!key) return;
+    var parts = key.split('|');   // scope|frameIdx|name
+    var scope = parts[0], frameIdx = +parts[1], name = parts[2];
+    var originalText = valueEl.textContent;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tvm-debug-var-edit-input';
+    input.value = originalText;
+    input.setAttribute('spellcheck', 'false');
+    valueEl.replaceWith(input);
+    input.focus();
+    input.select();
+    var self = this;
+    var done = false;
+    function commit() {
+      if (done) return; done = true;
+      var expr = input.value;
+      // Detect "no change" so we don't queue a no-op edit (which would still
+      // re-eval and produce the same value, but adds noise to live_edits).
+      var unchanged = expr === originalText;
+      // Show the user's edit visually: the value span flips to the new text
+      // with a "pending" affordance until the next snapshot arrives, at which
+      // point renderAll() replaces it with the worker-confirmed value.
+      if (!unchanged) {
+        valueEl.textContent = expr;
+        valueEl.classList.add('tvm-debug-var-edit-pending');
+        valueEl.setAttribute('title', 'Pending — applies on next step (was: ' + originalText + ')');
+      }
+      input.replaceWith(valueEl);
+      if (!unchanged) self.applyVarEdit(scope, frameIdx, name, expr);
+    }
+    function cancel() {
+      if (done) return; done = true;
+      input.replaceWith(valueEl);
+    }
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', commit);
+  };
+
+  // Apply a variable edit. Two paths:
+  //   - LIVE (historyIdx === liveIdx): queue via SAB live_edits channel; the
+  //     worker mutates the current frame in place, then returns a replacement
+  //     snapshot through CMD_SYNC without executing the user's next line.
+  //   - REWOUND (historyIdx < liveIdx): record an override pinned to this
+  //     snapshot index + frame depth. On the next forward action, we restart
+  //     the session, replaying with the override applied at the matching point.
+  DebuggerController.prototype.applyVarEdit = function (scope, frameIdx, name, expr) {
+    if (!this.session) return;
+    var snap = this.history[this.historyIdx];
+    if (!snap) return;
+    // Convert UI frame index (outer→inner) to Python frame_depth (top=0,
+    // counted from innermost). top frame is stack[stack.length-1].
+    var topIdx = snap.stack.length - 1;
+    var frameDepth = topIdx - frameIdx;
+    var rewound = this.historyIdx < this.liveIdx;
+    if (rewound) {
+      // Record override; will be applied on session restart triggered by
+      // the user's next forward command.
+      this.session.pendingOverrides = this.session.pendingOverrides || [];
+      this.session.pendingOverrides.push({
+        snapshot_idx: this.historyIdx,
+        frame_depth: frameDepth,
+        scope: scope,
+        var: name,
+        expr: expr,
+      });
+      this.setStatus('edit recorded — will apply on next forward step');
+      // Visual: show the override in the variables panel so the user knows it took
+      this._pendingOverrideKey = scope + '|' + frameIdx + '|' + name;
+      this.renderAll();
+    } else {
+      // Live: queue via SAB. Will be consumed at the next _flush_and_block.
+      this.queueLiveEdit({
+        frame_depth: frameDepth,
+        scope: scope,
+        var: name,
+        expr: expr,
+      });
+      this.requestSync();
+    }
+  };
+
+  DebuggerController.prototype.queueLiveEdit = function (edit) {
+    if (!this.session) return;
+    // Append to any prior queued edits in this same flush window. We always
+    // overwrite the SAB region with the full pending set.
+    this.session.pendingLiveEdits = this.session.pendingLiveEdits || [];
+    this.session.pendingLiveEdits.push(edit);
+    var json = JSON.stringify(this.session.pendingLiveEdits);
+    var bytes = this.encoder.encode(json);
+    this.session.u8.set(bytes, EDITS_OFF);
+    Atomics.store(this.session.i32, SLOT_EDITS_LEN, bytes.length);
+    Atomics.store(this.session.i32, SLOT_EDITS_DIRTY, 1);
   };
 
   DebuggerController.prototype.renderCallStack = function () {
@@ -952,6 +1312,7 @@
         // session restart without requiring the user to re-type.
         self._pendingWatches = self.session.watches.slice();
         self.queueWatchUpdate();
+        self.requestSync();
       }
       input.value = '';
       self.renderWatch();
@@ -967,6 +1328,7 @@
             self.session.watches.splice(idx, 1);
             self._pendingWatches = self.session.watches.slice();
             self.queueWatchUpdate();
+            self.requestSync();
           } else if (self._pendingWatches) {
             self._pendingWatches.splice(idx, 1);
           }
@@ -1062,7 +1424,22 @@
     }
   };
 
+  // Resolve render targets. Legacy panel keys map into section bodies of
+  // the combined view (so renderVariables/renderCallStack/renderWatch/
+  // renderHistory keep their existing single-target write pattern).
   DebuggerController.prototype.viewEl = function (panel) {
+    var combinedSectionMap = {
+      'dbg-vars':    'vars',
+      'dbg-stack':   'stack',
+      'dbg-watch':   'watch',
+      'dbg-history': 'history',
+    };
+    if (combinedSectionMap[panel]) {
+      return this.t.root.querySelector(
+        '.tvm-debug-view-dbg-combined .tvm-dbg-section-body[data-section="' +
+        combinedSectionMap[panel] + '"]'
+      );
+    }
     return this.t.root.querySelector('.tvm-debug-view-' + panel);
   };
 
