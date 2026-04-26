@@ -71,6 +71,8 @@
         '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)"><i class="fa fa-arrow-up"></i></button>' +
         '<span class="tvm-debug-divider"></span>' +
         '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)"><i class="fa fa-backward-step"></i></button>' +
+        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)"><i class="fa fa-backward"></i></button>' +
+        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)"><i class="fa fa-arrow-up"></i></button>' +
         '<span class="tvm-debug-divider"></span>' +
         '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)"><i class="fa fa-stop"></i></button>';
       var btns = rootEl.querySelectorAll('.tvm-debug-step');
@@ -90,8 +92,8 @@
     for (var i = 0; i < btns.length; i++) {
       var b = btns[i];
       var cmd = b.getAttribute('data-cmd');
-      // Step Back & Stop are always available during a session.
-      var alwaysOn = (cmd === 'back' || cmd === 'stop');
+      // Reverse-time controls and Stop are always available during a session.
+      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backOut' || cmd === 'stop');
       b.disabled = !alwaysOn && disabled;
     }
     var statusEl = rootEl.querySelector('.tvm-debug-status');

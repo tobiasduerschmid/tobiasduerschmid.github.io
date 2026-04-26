@@ -1902,24 +1902,65 @@
     monaco.editor.defineTheme('sebook-dark', {
       base: 'vs-dark', inherit: true,
       rules: [
-        { token: 'keyword.shell-sebook', foreground: '569cd6' },
-        { token: 'command.shell-sebook', foreground: '4ec9b0' },
-        { token: 'variable.shell-sebook', foreground: '9cdcfe' },
-        { token: 'attribute.name.shell-sebook', foreground: 'f44747' },
-        { token: 'string.shell-sebook', foreground: 'ce9178' },
-        { token: 'comment.shell-sebook', foreground: '6a9955' },
-        // f-string interpolation delimiters — light blue to signal "code zone"
-        { token: 'string.fstring.delimiter', foreground: '569cd6' },
-        // Prolog tokens
-        { token: 'atom', foreground: 'ce9178' },
-        // JSX tokens
-        { token: 'tag.jsx', foreground: '569cd6' },
-        { token: 'type.identifier.tag.jsx', foreground: '4ec9b0' },
-        { token: 'delimiter.tag.jsx', foreground: '808080' },
-        { token: 'attribute.name.jsx', foreground: '9cdcfe' },
-        { token: 'attribute.value.jsx', foreground: 'ce9178' },
+        // Plain text / identifiers / operators: pure white. Against #08090c
+        // background that's a 19.6:1 contrast — well past WCAG-AAA.
+        { token: '', foreground: 'ffffff' },
+        // Override the common vs-dark token colors with high-saturation,
+        // high-luminance values so EVERY language (Python, JS, Java, C, …)
+        // gets the bumped contrast — not just shell-sebook.
+        { token: 'keyword',     foreground: '8ec5ff' },   // was #569cd6
+        { token: 'comment',     foreground: 'a8d8a8' },   // was #6a9955
+        { token: 'string',      foreground: 'ffb88c' },   // was #ce9178
+        { token: 'number',      foreground: 'd4f0b0' },   // was #b5cea8
+        { token: 'type',        foreground: '7eecd0' },   // was #4ec9b0
+        { token: 'function',    foreground: 'fff0a0' },
+        { token: 'variable',    foreground: 'ffffff' },
+        { token: 'identifier',  foreground: 'ffffff' },
+        { token: 'delimiter',   foreground: 'd0d0d0' },
+        { token: 'operator',    foreground: 'd0d0d0' },
+        { token: 'constant',    foreground: 'c8b0ff' },
+        { token: 'tag',         foreground: '8ec5ff' },
+        { token: 'attribute',   foreground: 'd4f0b0' },
+        // Custom shell-sebook tokens.
+        { token: 'keyword.shell-sebook',        foreground: '8ec5ff' },
+        { token: 'command.shell-sebook',        foreground: '7eecd0' },
+        { token: 'variable.shell-sebook',       foreground: 'd4eaff' },
+        { token: 'attribute.name.shell-sebook', foreground: 'ff8e8e' },
+        { token: 'string.shell-sebook',         foreground: 'ffb88c' },
+        { token: 'comment.shell-sebook',        foreground: 'a8d8a8' },
+        { token: 'string.fstring.delimiter',    foreground: '8ec5ff' },
+        { token: 'atom',                        foreground: 'ffb88c' },
+        // JSX
+        { token: 'tag.jsx',                     foreground: '8ec5ff' },
+        { token: 'type.identifier.tag.jsx',     foreground: '7eecd0' },
+        { token: 'delimiter.tag.jsx',           foreground: 'b5b5b5' },
+        { token: 'attribute.name.jsx',          foreground: 'd4eaff' },
+        { token: 'attribute.value.jsx',         foreground: 'ffb88c' },
       ],
-      colors: { 'editor.background': '#1e1e1e' },
+      colors: {
+        // Near-true-black background. Pushed all the way down to #050608 so
+        // the new pure-white foreground reads at near-max contrast (~20.4:1).
+        'editor.background':                    '#050608',
+        'editor.foreground':                    '#ffffff',
+        // Gutter / line numbers — visible against the darker background.
+        'editorLineNumber.foreground':          '#8a8d96',
+        'editorLineNumber.activeForeground':    '#ffffff',
+        'editorIndentGuide.background':         '#1c1d22',
+        'editorIndentGuide.activeBackground':   '#3e404a',
+        // Selection bumped to a slightly brighter blue so it pops on near-black.
+        'editor.selectionBackground':           '#3a5a8c',
+        'editor.inactiveSelectionBackground':   '#2c3e5e',
+        'editor.lineHighlightBackground':       '#0d0e13',
+        'editor.lineHighlightBorder':           '#0d0e13',
+        'editorCursor.foreground':              '#ffffff',
+        // Bracket pair colorization stays distinct against pure black.
+        'editorBracketHighlight.foreground1':   '#ffe066',
+        'editorBracketHighlight.foreground2':   '#ff8c66',
+        'editorBracketHighlight.foreground3':   '#a78bfa',
+        // Find/replace match highlight visible without washing out.
+        'editor.findMatchBackground':           '#5e4a18',
+        'editor.findMatchHighlightBackground':  '#3a2e10',
+      },
     });
   };
 

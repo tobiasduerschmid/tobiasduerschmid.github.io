@@ -54,6 +54,22 @@
     };
     var disposers = [];
 
+    function currentLineState() {
+      var s = sync.state || {};
+      if (s.historyIdx == null || s.historyIdx < 0 || !s.history || !s.history.length) return null;
+      var snap = s.history[s.historyIdx];
+      if (!snap || !snap.stack || !snap.stack.length) return null;
+      var frameIdx = (s.selectedFrameIdx != null && s.selectedFrameIdx >= 0)
+        ? s.selectedFrameIdx
+        : (snap.stack.length - 1);
+      var frame = snap.stack[frameIdx];
+      if (!frame || !frame.file || !frame.line) return null;
+      return {
+        path: frame.file,
+        line: frame.line,
+      };
+    }
+
     // ── Gutter click → toggleBreakpoint / editBreakpointCondition ─────────
     var clickD = editor.onMouseDown(function (e) {
       if (!e.target || e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
@@ -80,9 +96,11 @@
       var decos = [];
       var lines = Object.keys(bps);
       var maxLine = model.getLineCount();
+      var cur = currentLineState();
       for (var i = 0; i < lines.length; i++) {
         var line = +lines[i];
         if (!line || line < 1 || line > maxLine) continue;
+        if (cur && cur.path === path && cur.line === line) continue;
         var info = bps[line] || {};
         var glyphClass = info.condition
           ? 'tvm-bp-glyph tvm-bp-cond' + (info.condError ? ' tvm-bp-error' : '')
@@ -142,6 +160,10 @@
       var rewound = s.historyIdx < (s.liveIdx == null ? -1 : s.liveIdx);
       var cls = rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line';
       var glyph = rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph';
+      var bps = (s.breakpoints || {})[path] || {};
+      if (bps[line]) {
+        glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
+      }
       editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], [{
         range: new monaco.Range(line, 1, line, 1),
         options: { isWholeLine: true, className: cls, glyphMarginClassName: glyph },
@@ -193,6 +215,7 @@
       if (changedKeys.has('history') || changedKeys.has('historyIdx') || changedKeys.has('liveIdx')
           || changedKeys.has('selectedFrameIdx') || changedKeys.has('paused') || changedKeys.has('activeFile')) {
         paintCurrentLine();
+        paintBreakpoints();
       }
       if (changedKeys.has('session')) {
         applyReadOnly();

@@ -677,16 +677,79 @@
     this.stepToolbar = document.createElement('div');
     this.stepToolbar.className = 'tvm-debug-toolbar';
     this.stepToolbar.style.display = 'none';
+    // Inline SVG glyphs in the canonical VSCode/Chrome DevTools debugger
+    // visual language. Use a larger 24x24 viewBox + thicker strokes than
+    // before so the shapes read clearly at small render sizes:
+    //   continue  ▶ chunky play triangle
+    //   stepOver  ⤾ thick arc OVER a prominent dot, arrowhead at end
+    //   stepInto  ↓ ▬  fat down-arrow into a horizontal landing line
+    //   stepOut   ↑ ▬  fat up-arrow exiting from a horizontal start line
+    //   stepBack  ⤿ mirror of stepOver (arrowhead on the left)
+    //   stop      ◼ filled square with a slight rounded corner
+    var SVG_NS = "xmlns='http://www.w3.org/2000/svg'";
+
+    var svgPlay = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<polygon points='5,3 21,12 5,21' fill='currentColor'/></svg>";
+
+    var svgStop = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<rect x='4' y='4' width='16' height='16' rx='1.5' fill='currentColor'/></svg>";
+
+    // Step Over: tall arc (peaking near the top) so the curve is unmistakable,
+    // landing at a prominent fat arrowhead on the right; the "skipped line"
+    // is a fat dot directly under the apex.
+    var svgOver = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<path d='M 3,16 Q 12,2 20,14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>" +
+      "<polygon points='20,14 23,9 16,11' fill='currentColor'/>" +
+      "<circle cx='12' cy='21' r='2.4' fill='currentColor'/></svg>";
+
+    // Step Into: vertical down-arrow with a horizontal landing bar at the
+    // bottom (the "next line you're entering"). Bar + arrow = clear "into".
+    var svgInto = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<line x1='12' y1='2' x2='12' y2='14' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+      "<polygon points='12,17 6,10 18,10' fill='currentColor'/>" +
+      "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/></svg>";
+
+    // Step Out: horizontal start bar at the bottom (the line you're leaving)
+    // with a fat up-arrow exiting upward.
+    var svgOut = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/>" +
+      "<line x1='12' y1='10' x2='12' y2='18' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+      "<polygon points='12,4 6,11 18,11' fill='currentColor'/></svg>";
+
+    // Step Back: mirror of stepOver, arrowhead at left, dot below apex.
+    var svgBack = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<path d='M 21,16 Q 12,2 4,14' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>" +
+      "<polygon points='4,14 1,9 8,11' fill='currentColor'/>" +
+      "<circle cx='12' cy='21' r='2.4' fill='currentColor'/></svg>";
+
+    // Run Back: reverse-time continue. Left-pointing play triangle plus a
+    // breakpoint dot means "rewind until a breakpoint, or the first snapshot."
+    var svgBackContinue = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<polygon points='19,4 7,12 19,20' fill='currentColor'/>" +
+      "<circle cx='6' cy='12' r='3' fill='currentColor'/></svg>";
+
+    // Step Back Out: reverse-time step out. The up-arrow says "leave the
+    // current frame"; the small left arrow marks that this moves backward
+    // through history rather than executing a forward step-out.
+    var svgBackOut = "<svg " + SVG_NS + " viewBox='0 0 24 24' aria-hidden='true'>" +
+      "<rect x='5' y='20' width='14' height='2.5' rx='1' fill='currentColor'/>" +
+      "<line x1='12' y1='10' x2='12' y2='18' stroke='currentColor' stroke-width='3' stroke-linecap='round'/>" +
+      "<polygon points='12,4 6,11 18,11' fill='currentColor'/>" +
+      "<path d='M 18,7 H 7' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round'/>" +
+      "<polygon points='7,7 12,3.5 12,10.5' fill='currentColor'/></svg>";
+
     this.stepToolbar.innerHTML =
       '<span class="tvm-debug-status"></span>' +
-      '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)"><i class="fa fa-play"></i></button>' +
-      '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)"><i class="fa fa-forward-step"></i></button>' +
-      '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)"><i class="fa fa-arrow-down"></i></button>' +
-      '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)"><i class="fa fa-arrow-up"></i></button>' +
+      '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + svgPlay + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + svgOver + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + svgInto + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + svgOut + '</button>' +
       '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)"><i class="fa fa-backward-step"></i></button>' +
+      '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + svgBack + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + svgBackContinue + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + svgBackOut + '</button>' +
       '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)"><i class="fa fa-stop"></i></button>';
+      '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + svgStop + '</button>';
     actions.appendChild(this.stepToolbar);
 
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
@@ -698,23 +761,89 @@
       })(btns[i]);
     }
     this.statusEl = this.stepToolbar.querySelector('.tvm-debug-status');
+    this.stepToolbarHome = actions;
+    this.stepToolbarHeader = actions.closest && actions.closest('.tvm-output-header');
+    this.installResponsiveStepToolbar(actions);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', function (e) {
       if (!self.session) return;
       if (e.key === 'F5' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('continue'); }
+      else if (e.key === 'F5' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backContinue'); }
       else if (e.key === 'F5' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('stop'); }
       else if (e.key === 'F10' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('next'); }
+      else if (e.key === 'F10' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backOut'); }
       else if (e.key === 'F10' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('back'); }
       else if (e.key === 'F11' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('step'); }
       else if (e.key === 'F11' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('return'); }
     });
   };
 
+  DebuggerController.prototype.installResponsiveStepToolbar = function (actions) {
+    if (!actions || !this.stepToolbar) return;
+    var self = this;
+    actions.classList.add('tvm-debug-actions');
+    var schedule = function () {
+      if (self._toolbarLayoutFrame) return;
+      var raf = window.requestAnimationFrame || function (fn) { return window.setTimeout(fn, 16); };
+      self._toolbarLayoutFrame = raf(function () {
+        self._toolbarLayoutFrame = null;
+        self.updateResponsiveStepToolbar(actions);
+      });
+    };
+    this._scheduleToolbarLayout = schedule;
+    if (window.ResizeObserver) {
+      this._toolbarResizeObserver = new ResizeObserver(schedule);
+      this._toolbarResizeObserver.observe(actions);
+      var header = actions.closest && actions.closest('.tvm-output-header');
+      if (header) this._toolbarResizeObserver.observe(header);
+    } else {
+      window.addEventListener('resize', schedule);
+    }
+    schedule();
+  };
+
+  DebuggerController.prototype.updateResponsiveStepToolbar = function (actions) {
+    actions = actions || (this.t.root && this.t.root.querySelector('.tvm-output-actions'));
+    if (!actions || !this.stepToolbar) return;
+    var toolbar = this.stepToolbar;
+    var header = (actions.closest && actions.closest('.tvm-output-header')) || this.stepToolbarHeader;
+    if (toolbar.parentNode !== actions) {
+      actions.appendChild(toolbar);
+    }
+    actions.classList.remove('tvm-debug-toolbar-new-row');
+    if (header) header.classList.remove('tvm-debug-toolbar-row-host');
+    toolbar.classList.remove('tvm-debug-toolbar-new-row');
+    if (toolbar.style.display === 'none') return;
+
+    var bounds = header ? header.getBoundingClientRect() : actions.getBoundingClientRect();
+    var toolbarBounds = toolbar.getBoundingClientRect();
+    var clipped = toolbarBounds.right > bounds.right + 0.5 ||
+      toolbarBounds.left < bounds.left - 0.5 ||
+      actions.scrollWidth > actions.clientWidth + 1;
+    if (clipped) {
+      toolbar.classList.add('tvm-debug-toolbar-new-row');
+      if (header) {
+        header.classList.add('tvm-debug-toolbar-row-host');
+        header.appendChild(toolbar);
+      } else {
+        actions.classList.add('tvm-debug-toolbar-new-row');
+      }
+    }
+  };
+
   DebuggerController.prototype.handleToolbarCmd = function (cmd) {
     if (!this.session) return;
     if (cmd === 'back') {
       this.stepBack();
+      return;
+    }
+    if (cmd === 'backContinue') {
+      this.runBackToBreakpoint();
+      return;
+    }
+    if (cmd === 'backOut') {
+      this.stepBackOut();
       return;
     }
     if (cmd === 'stop') {
@@ -957,13 +1086,104 @@
     this.setStatus('rewound: step ' + (i + 1) + '/' + this.history.length);
   };
 
+  DebuggerController.prototype.stepBackOut = function () {
+    if (this.historyIdx <= 0) return;
+    var current = this.history[this.historyIdx];
+    if (!current || !current.stack || current.stack.length <= 1) {
+      this.setStatus('already at outermost frame');
+      return;
+    }
+    var currentDepth = current.stack.length;
+    var callerIdx = currentDepth - 2;
+    var caller = current.stack[callerIdx];
+    var target = -1;
+    for (var i = this.historyIdx - 1; i >= 0; i--) {
+      var snap = this.history[i];
+      if (!snap || !snap.stack || snap.stack.length >= currentDepth) continue;
+      if (snap.stack.length <= callerIdx) continue;
+      if (!this.sameHistoryFrame(snap.stack[callerIdx], caller)) continue;
+      target = i;
+      break;
+    }
+    if (target < 0) {
+      this.setStatus('no earlier caller frame in history');
+      return;
+    }
+    this.historyIdx = target;
+    this.selectedFrameIdx = -1;
+    if (this.session) {
+      this.session.preserveReverseCursorOnNextPause = target;
+    }
+    this.renderAll();
+    this.setStatus('rewound out: step ' + (target + 1) + '/' + this.history.length);
+  };
+
+  DebuggerController.prototype.runBackToBreakpoint = function () {
+    if (this.historyIdx <= 0) {
+      this.setStatus('already at first instruction');
+      return;
+    }
+    var current = this.history[this.historyIdx];
+    var movedOffCurrentLocation = !current;
+    var target = 0;
+    var hitBreakpoint = false;
+    for (var i = this.historyIdx - 1; i >= 0; i--) {
+      var snap = this.history[i];
+      if (!movedOffCurrentLocation) {
+        if (this.sameHistoryLocation(snap, current)) continue;
+        movedOffCurrentLocation = true;
+      }
+      if (this.snapshotHasBreakpoint(snap)) {
+        target = i;
+        hitBreakpoint = true;
+        break;
+      }
+    }
+    this.historyIdx = target;
+    this.selectedFrameIdx = -1;
+    if (this.session) {
+      this.session.preserveReverseCursorOnNextPause = target;
+    }
+    this.renderAll();
+    var snap = this.history[target];
+    if (hitBreakpoint && snap) {
+      this.setStatus('rewound to breakpoint at ' + this.basename(snap.file) + ':' + snap.line);
+    } else {
+      this.setStatus('rewound to first instruction');
+    }
+  };
+
+  DebuggerController.prototype.snapshotHasBreakpoint = function (snap) {
+    if (!snap || !snap.file || !snap.line) return false;
+    var bps = this.breakpoints.get(snap.file);
+    if (!bps) {
+      var fname = String(snap.file).replace(/^\/tutorial\//, '');
+      bps = this.breakpoints.get('/tutorial/' + fname);
+    }
+    return !!(bps && bps.has(snap.line));
+  };
+
+  DebuggerController.prototype.sameHistoryLocation = function (a, b) {
+    if (!a || !b) return false;
+    return this.normalizeBreakpointPath(a.file) === this.normalizeBreakpointPath(b.file) &&
+      a.line === b.line;
+  };
+
+  DebuggerController.prototype.sameHistoryFrame = function (a, b) {
+    if (!a || !b) return false;
+    if (a.call_id != null && b.call_id != null) return a.call_id === b.call_id;
+    return a.file === b.file &&
+      a.function === b.function &&
+      a.first_line === b.first_line;
+  };
+
   DebuggerController.prototype.disableStepButtons = function (disabled) {
     if (!this.stepToolbar) return;
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
     for (var i = 0; i < btns.length; i++) {
       var cmd = btns[i].getAttribute('data-cmd');
       // Step Back & Stop are always available (back is UI-only; stop must work mid-block).
-      if (cmd === 'back' || cmd === 'stop') continue;
+      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backOut' || cmd === 'stop') continue;
       btns[i].disabled = disabled;
     }
     this._publishSession();
@@ -974,6 +1194,7 @@
       this.statusEl.textContent = text || '';
       this.statusEl.title = text || '';
     }
+    if (this._scheduleToolbarLayout) this._scheduleToolbarLayout();
     this._publishSession();
   };
 
@@ -1038,35 +1259,157 @@
       this.breakpoints.set(path, bps);
     }
     var wasMissing = !bps.has(line);
-    if (wasMissing) {
-      // Right-click on empty line → create a breakpoint only if the prompt is
-      // accepted, so we do not briefly sync an unconditional breakpoint first.
-      bps.set(line, { condition: null });
-      bps = this.breakpoints.get(path);
-    }
     var current = bps.get(line);
     var existing = (current && current.condition) || '';
-    var input = window.prompt('Breakpoint condition (Python expression, empty = unconditional):', existing);
-    if (input === null) {
-      if (wasMissing) {
-        bps.delete(line);
-        this.refreshBpDecorations();
+    var self = this;
+    this.showBreakpointConditionDialog(filename, line, existing, current && current.condError).then(function (result) {
+      if (!result) return;
+      var cond = result.condition && result.condition.trim() ? result.condition.trim() : null;
+      bps.set(line, { condition: cond });
+      self.persistBreakpoints();
+      self.refreshBpDecorations();
+      self._publishBreakpoints();
+      if (self.session) {
+        var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
+        if (self.queueBreakpointChange(change)) self.refreshBreakpointsNow();
       }
-      return;   // cancelled
-    }
-    var cond = input.trim() ? input.trim() : null;
-    bps.set(line, { condition: cond });
-    this.persistBreakpoints();
-    this.refreshBpDecorations();
-    this._publishBreakpoints();
-    if (this.session) {
-      var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
-      if (this.queueBreakpointChange(change)) this.refreshBreakpointsNow();
-    }
+    });
+  };
+
+  DebuggerController.prototype.showBreakpointConditionDialog = function (filename, line, existing, condError) {
+    var old = document.querySelector('.tvm-bp-dialog-backdrop');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var self = this;
+    return new Promise(function (resolve) {
+      var done = false;
+      var previousFocus = document.activeElement;
+      var backdrop = document.createElement('div');
+      backdrop.className = 'tvm-bp-dialog-backdrop';
+      backdrop.setAttribute('role', 'presentation');
+
+      var dialog = document.createElement('div');
+      dialog.className = 'tvm-bp-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'tvm-bp-dialog-title');
+
+      var header = document.createElement('div');
+      header.className = 'tvm-bp-dialog-header';
+
+      var marker = document.createElement('span');
+      marker.className = 'tvm-bp-dialog-marker';
+      marker.textContent = '?';
+      header.appendChild(marker);
+
+      var titleWrap = document.createElement('div');
+      titleWrap.className = 'tvm-bp-dialog-title-wrap';
+      var title = document.createElement('h3');
+      title.id = 'tvm-bp-dialog-title';
+      title.className = 'tvm-bp-dialog-title';
+      title.textContent = 'Breakpoint Condition';
+      var loc = document.createElement('div');
+      loc.className = 'tvm-bp-dialog-location';
+      loc.textContent = self.basename(filename) + ':' + line;
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(loc);
+      header.appendChild(titleWrap);
+
+      var body = document.createElement('div');
+      body.className = 'tvm-bp-dialog-body';
+      var label = document.createElement('label');
+      label.className = 'tvm-bp-dialog-label';
+      label.setAttribute('for', 'tvm-bp-condition-input');
+      label.textContent = 'Python expression';
+      var input = document.createElement('input');
+      input.id = 'tvm-bp-condition-input';
+      input.className = 'tvm-bp-dialog-input';
+      input.type = 'text';
+      input.value = existing || '';
+      input.placeholder = 'score >= 90 and attempts < 3';
+      input.setAttribute('spellcheck', 'false');
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('autocapitalize', 'off');
+      body.appendChild(label);
+      body.appendChild(input);
+      if (condError) {
+        var error = document.createElement('div');
+        error.className = 'tvm-bp-dialog-error';
+        error.textContent = condError;
+        body.appendChild(error);
+      }
+
+      var actions = document.createElement('div');
+      actions.className = 'tvm-bp-dialog-actions';
+      var clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'tvm-bp-dialog-btn tvm-bp-dialog-clear';
+      clear.textContent = 'Clear Condition';
+      clear.disabled = !(existing && existing.trim());
+      var cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'tvm-bp-dialog-btn tvm-bp-dialog-cancel';
+      cancel.textContent = 'Cancel';
+      var save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'tvm-bp-dialog-btn tvm-bp-dialog-save';
+      save.textContent = 'Save';
+      actions.appendChild(clear);
+      actions.appendChild(cancel);
+      actions.appendChild(save);
+
+      dialog.appendChild(header);
+      dialog.appendChild(body);
+      dialog.appendChild(actions);
+      backdrop.appendChild(dialog);
+      document.body.appendChild(backdrop);
+
+      function close(result) {
+        if (done) return;
+        done = true;
+        backdrop.removeEventListener('keydown', onKeydown);
+        if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        try {
+          if (previousFocus && previousFocus.focus) previousFocus.focus();
+        } catch (e) {}
+        resolve(result);
+      }
+      function onKeydown(e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          close(null);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          close({ condition: input.value });
+        }
+      }
+
+      backdrop.addEventListener('keydown', onKeydown);
+      backdrop.addEventListener('mousedown', function (e) {
+        if (e.target === backdrop) close(null);
+      });
+      cancel.addEventListener('click', function () { close(null); });
+      clear.addEventListener('click', function () { close({ condition: '' }); });
+      save.addEventListener('click', function () { close({ condition: input.value }); });
+      window.setTimeout(function () {
+        input.focus();
+        input.select();
+      }, 0);
+    });
   };
 
   DebuggerController.prototype.refreshBpDecorations = function () {
     var self = this;
+    // Design rule: the bright STANDALONE breakpoint dot (full size) shows
+    // when there's no chevron over it. When the current step lands on a
+    // breakpoint, we suppress the standalone dot — the chevron's combined
+    // `-on-bp` variant draws a smaller dot INSIDE its outline instead.
+    var curSnap = (self.historyIdx >= 0 && self.history[self.historyIdx]) || null;
+    var curFrameIdx = curSnap && curSnap.stack && curSnap.stack.length
+      ? (self.selectedFrameIdx >= 0 ? self.selectedFrameIdx : curSnap.stack.length - 1)
+      : -1;
+    var curFrame = curFrameIdx >= 0 ? curSnap.stack[curFrameIdx] : null;
+    var curFile = curFrame ? curFrame.file : null;
+    var curLine = curFrame ? curFrame.line : 0;
     function paint(editor) {
       if (!editor) return;
       var model = editor.getModel(); if (!model) return;
@@ -1077,6 +1420,9 @@
       if (bps) {
         bps.forEach(function (info, line) {
           if (line < 1 || line > model.getLineCount()) return;
+          // Suppress standalone bp on the current line (live or rewound).
+          // The combined chevron+inner-dot glyph handles that slot.
+          if (curFile === path && curLine === line) return;
           var glyphClass = info.condition
             ? 'tvm-bp-glyph tvm-bp-cond' + (info.condError ? ' tvm-bp-error' : '')
             : 'tvm-bp-glyph';
@@ -1314,6 +1660,7 @@
     // Show step toolbar; hide Debug button
     if (this.debugBtn) this.debugBtn.style.display = 'none';
     if (this.stepToolbar) this.stepToolbar.style.display = 'flex';
+    if (this._scheduleToolbarLayout) this._scheduleToolbarLayout();
 
     this.activateTab('dbg-combined');
     this.disableStepButtons(true);
@@ -1364,6 +1711,9 @@
 
   DebuggerController.prototype.sendCommand = function (cmdCode) {
     if (!this.session) return;
+    if (cmdCode !== CMD_SYNC) {
+      this.session.preserveReverseCursorOnNextPause = null;
+    }
     this.paused = false;
     if (this.channel) {
       this.channel.sendCommand(cmdCode);
@@ -1499,8 +1849,19 @@
     if (this.handlePausedDuringReplay(startIdx, endIdx)) return;
     this.selectedFrameIdx = -1;
     this.paused = true;
+    var preserveIdx = this.session && this.session.preserveReverseCursorOnNextPause;
+    var preservedReverseCursor = typeof preserveIdx === 'number' &&
+      preserveIdx >= 0 &&
+      preserveIdx < this.history.length &&
+      preserveIdx < this.liveIdx;
+    if (preservedReverseCursor) {
+      this.historyIdx = preserveIdx;
+    }
+    if (this.session) this.session.preserveReverseCursorOnNextPause = null;
     this.disableStepButtons(false);
-    this.setStatus('paused at line ' + this.history[this.liveIdx].line);
+    if (!preservedReverseCursor) {
+      this.setStatus('paused at line ' + this.history[this.liveIdx].line);
+    }
     this.renderAll();
     this._publishCursor();
     this._publishSession();
@@ -1543,6 +1904,13 @@
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
     if (runBtn) { runBtn.disabled = false; runBtn.title = 'Run current file (Ctrl+Enter)'; }
     if (this.stepToolbar) this.stepToolbar.style.display = 'none';
+    var actions = this.t.root && this.t.root.querySelector('.tvm-output-actions');
+    if (actions) actions.classList.remove('tvm-debug-toolbar-new-row');
+    if (this.stepToolbarHeader) this.stepToolbarHeader.classList.remove('tvm-debug-toolbar-row-host');
+    if (this.stepToolbar) this.stepToolbar.classList.remove('tvm-debug-toolbar-new-row');
+    if (actions && this.stepToolbar && this.stepToolbar.parentNode !== actions) {
+      actions.appendChild(this.stepToolbar);
+    }
     if (this.debugBtn) this.debugBtn.style.display = '';
     this.clearCurrentLineDecoration();
     // For NodeChannel, kill the spawned Node process. Pyodide's worker stays
@@ -1585,6 +1953,10 @@
     this.renderWatch();
     this.renderHistory();
     this.renderCurrentLine();
+    // Re-emit breakpoint decorations so the suppression of the standalone bp
+    // glyph on the CURRENT-step line takes effect (otherwise the standalone
+    // bp + the combined chevron-on-bp both render at the same gutter slot).
+    this.refreshBpDecorations();
     // Auto-publish cursor + session AFTER any local re-render. This ensures
     // popouts always see fresh state without each mutation site having to
     // remember to publish — pre-existing paths like stepBack and the replay
@@ -2116,6 +2488,13 @@
     var rewound = this.historyIdx < this.liveIdx;
     var cls = rewound ? 'tvm-debug-current-line-rewound' : 'tvm-debug-current-line';
     var glyph = rewound ? 'tvm-debug-current-glyph-rewound' : 'tvm-debug-current-glyph';
+    // If the current line sits on a breakpoint, use a combined chevron glyph
+    // that paints the smaller red dot inside it. This applies to both forward
+    // and rewound history cursors so the dot never grows under the chevron.
+    var bpsForFile = this.breakpoints.get(frame.file);
+    if (bpsForFile && bpsForFile.has(line)) {
+      glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
+    }
     var deco = [{
       range: new monaco.Range(line, 1, line, 1),
       options: {
@@ -2128,6 +2507,9 @@
     var prev = editor._dbgCurrentLineIds || [];
     editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);
     this.currentLineDecoIds = editor._dbgCurrentLineIds;
+    // Repaint breakpoints so the dot on the current line shrinks (or restores
+    // to full size if the current line moved away from a breakpoint).
+    this.refreshBpDecorations();
     // Reveal the line so it's in view
     editor.revealLineInCenterIfOutsideViewport(line);
   };
