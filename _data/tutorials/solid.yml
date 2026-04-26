@@ -3,6 +3,7 @@ description: "Learn the SOLID principles by suffering through rigid code first, 
 
 backend: pyodide
 debugger: true
+pytest: true
 
 uml_diagram: true
 uml_position: right
@@ -3003,8 +3004,6 @@ steps:
                   assert result["success"] is True
 
 
-          if __name__ == "__main__":
-              pytest.main([__file__, "-v"])
         language: "python"
 
     open_file: "payments.py"
@@ -3194,8 +3193,6 @@ steps:
                     assert result["success"] is True
 
 
-            if __name__ == "__main__":
-                pytest.main([__file__, "-v"])
           language: "python"
 
       explanation: |
@@ -3789,8 +3786,6 @@ steps:
               assert entries[2]["duration"] is None
 
 
-          if __name__ == "__main__":
-              pytest.main([__file__, "-v"])
         language: "python"
 
     open_file: "media_player.py"
@@ -3978,8 +3973,6 @@ steps:
                 assert entries[2]["duration"] is None
 
 
-            if __name__ == "__main__":
-                pytest.main([__file__, "-v"])
           language: "python"
       explanation: |
         **The structural move — same pattern in both domains.**

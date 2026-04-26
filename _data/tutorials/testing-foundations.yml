@@ -3,6 +3,7 @@ description: "Build the core testing skills you need BEFORE learning TDD: write 
 
 backend: pyodide
 debugger: true
+pytest: true
 
 # Show code (left) and tests (right) side by side — students can toggle back
 # to tabbed view with the button above the editors. Files prefixed `test_`
@@ -165,8 +166,6 @@ steps:
               assert streak_badge(100) == "💯"
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "streaks.py"
@@ -445,8 +444,6 @@ steps:
           # Why is 100 worth its own test?
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
       - path: "test_oracle_drill.py"
@@ -481,8 +478,6 @@ steps:
               assert isinstance(result, int)
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "test_leveling.py"
@@ -509,8 +504,6 @@ steps:
                 assert xp_to_level(10000) == 100
 
 
-            if __name__ == "__main__":
-                pytest.main(["-v"])
           language: "python"
         - path: "test_oracle_drill.py"
           content: |
@@ -534,8 +527,6 @@ steps:
                 assert result == 100
 
 
-            if __name__ == "__main__":
-                pytest.main(["-v"])
           language: "python"
       explanation: |
         Replace the weak `isinstance` check with a strong equality oracle: `result == 0`
@@ -842,8 +833,6 @@ steps:
           #     ...
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "test_squad.py"
@@ -882,8 +871,6 @@ steps:
                 assert squad_name_valid("") is False        # length 0
 
 
-            if __name__ == "__main__":
-                pytest.main(["-v"])
           language: "python"
       explanation: |
         For a range [3, 12], the four critical boundaries are 2, 3, 12, 13. Each student
@@ -1207,8 +1194,6 @@ steps:
               assert len(queue._tracks) == 2
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "test_brittle_audit.py"
@@ -1585,8 +1570,6 @@ steps:
           # TODO: Write at least 3 tests covering all three partitions of plan.
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "test_streaming.py"
@@ -1620,8 +1603,6 @@ steps:
                 assert streaming_price(20, "") == 20
 
 
-            if __name__ == "__main__":
-                pytest.main(["-v"])
           language: "python"
       explanation: |
         Three partitions: student, family, other. One test per partition gets you to 3.

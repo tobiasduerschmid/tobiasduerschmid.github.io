@@ -1210,45 +1210,57 @@ html:not(.dark-mode) .tvm-editor-pane-divider {
   padding: 10px;
 }
 
-/* Embedded git terminal (non-v86 backends with git_graph). The graph keeps
-   flex:1 above; this section gets a fixed minimum so the prompt is always
-   visible without burying the graph. */
-.tvm-git-terminal-section {
+/* Output ↔ Terminal tabbed panel (pyodide tutorials with git_graph).
+   Tab bar sits at the top; the active view fills the rest. The Terminal
+   tab embeds an xterm tied to the JS-side git command router. */
+.tvm-out-term-tabbed { display: flex; flex-direction: column; min-height: 0; }
+.tvm-out-term-tab-bar {
   display: flex;
-  flex-direction: column;
-  flex: 0 0 220px;
-  min-height: 140px;
-  border-top: 1px solid #2a2a2e;
-  background: #1e1e1e;
-}
-.tvm-git-terminal-header {
-  display: flex;
-  align-items: center;
-  padding: 4px 12px;
+  flex-shrink: 0;
   background: #161618;
   border-bottom: 1px solid #2a2a2e;
+}
+.tvm-out-term-tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid #2a2a2e;
   color: #b0b0c0;
-  font-size: 12px;
+  padding: 6px 14px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.03em;
-  flex-shrink: 0;
+  cursor: pointer;
+}
+.tvm-out-term-tab:hover { color: #fff; background: #1f1f23; }
+.tvm-out-term-tab.active { color: #fff; background: #1e1e1e; }
+.tvm-out-term-tab i { margin-right: 4px; opacity: 0.85; }
+
+.tvm-output-view, .tvm-terminal-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .tvm-git-terminal-container {
   flex: 1;
   min-height: 0;
   padding: 4px 6px;
+  background: #1e1e1e;
 }
 .tvm-git-terminal-container .xterm { height: 100%; }
 .tvm-git-terminal-container .xterm-viewport { scrollbar-width: thin; scrollbar-color: #333 transparent; }
-html:not(.dark-mode) .tvm-git-terminal-section {
-  background: #ffffff;
-  border-top-color: #d4d4d4;
-}
-html:not(.dark-mode) .tvm-git-terminal-header {
+
+html:not(.dark-mode) .tvm-out-term-tab-bar {
   background: #f4f5f7;
-  color: #54555a;
   border-bottom-color: #d4d4d4;
 }
+html:not(.dark-mode) .tvm-out-term-tab {
+  color: #54555a;
+  border-right-color: #d4d4d4;
+}
+html:not(.dark-mode) .tvm-out-term-tab:hover { color: #1a1a1a; background: #ebedf0; }
+html:not(.dark-mode) .tvm-out-term-tab.active { color: #1a1a1a; background: #fff; }
+html:not(.dark-mode) .tvm-git-terminal-container { background: #ffffff; }
 
 /* git-graph.css (imported at the top of this file) holds the core widget
    styles and delta animations, shared with the SEBook command-lab. */

@@ -3,6 +3,7 @@ description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scori
 
 backend: pyodide
 debugger: true
+pytest: true
 
 # Show code (left) and tests (right) side by side. Files prefixed `test_`
 # auto-route to the right pane; `scorer.py` lands on the left.
@@ -4996,8 +4997,6 @@ steps:
           # Write your tests below — one per behavior in your list.
 
 
-          if __name__ == "__main__":
-              pytest.main(["-v"])
         language: "python"
 
     open_file: "test_fizzbuzz.py"
@@ -5061,8 +5060,6 @@ steps:
                     fizzbuzz(-1)
 
 
-            if __name__ == "__main__":
-                pytest.main(["-v"])
           language: "python"
       explanation: |
         One disciplined path through the FizzBuzz spec. The order is

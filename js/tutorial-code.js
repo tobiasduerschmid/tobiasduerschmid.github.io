@@ -251,6 +251,11 @@
     this._outputPositionBottomLeft = options.output_position === 'bottom-left';
     // Optional override of the Run button label (e.g. "Test" for pytest-driven tutorials).
     this._runLabel = options.run_label || 'Run';
+    // Auto-pytest mode: when true and backend is pyodide, clicking Run on a
+    // file matching test_*.py / *_test.py invokes `pytest.main([path, "-v"])`
+    // instead of exec'ing the file as a script. The Run button also relabels
+    // itself to "Test" automatically when the active file is a test file.
+    this._pytestMode = !!options.pytest;
     this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
@@ -547,7 +552,9 @@
         '</div>' +
         '</div>';
     } else {
-      terminalHtml = '<div class="tvm-output-panel">' +
+      // Build the standard Output view body (used both standalone and inside
+      // the Output↔Terminal tabbed panel for pyodide+git tutorials).
+      var outputBody =
         '<div class="tvm-output-header">' +
         '<span>Output</span>' +
         '<div class="tvm-output-actions">' +
@@ -563,8 +570,28 @@
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
         '</div></div>' +
-        '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
-        '</div>';
+        '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>';
+
+      var hasGitTerminal = this.gitGraphPath && this.config.backend !== 'v86';
+      if (hasGitTerminal) {
+        // Tabbed: Output + Terminal share this panel area. The Terminal tab
+        // is the natural default for pyodide+git tutorials, but we open on
+        // Output so the run button is immediately visible until students
+        // switch to the git workflow.
+        terminalHtml =
+          '<div class="tvm-output-panel tvm-out-term-tabbed">' +
+          '<div class="tvm-out-term-tab-bar">' +
+          '<button class="tvm-out-term-tab active" data-panel="output"><i class="fa fa-terminal"></i> Output</button>' +
+          '<button class="tvm-out-term-tab" data-panel="terminal"><i class="fa fa-code-branch"></i> Terminal</button>' +
+          '</div>' +
+          '<div class="tvm-output-view">' + outputBody + '</div>' +
+          '<div class="tvm-terminal-view" style="display:none">' +
+          '<div class="tvm-git-terminal-container"></div>' +
+          '</div>' +
+          '</div>';
+      } else {
+        terminalHtml = '<div class="tvm-output-panel">' + outputBody + '</div>';
+      }
     }
 
     var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight && !this._umlPositionBelow && !this._umlPositionBottomLeft;
@@ -770,15 +797,9 @@
           '</div>' +
           '</div>' +
           '<div class="tvm-git-graph-container"></div>' +
-          // Embedded terminal for backends that don't already provide a real
-          // shell (everything except v86). Students type git commands here;
-          // the JS-side router dispatches to isomorphic-git in the worker.
-          (this.config.backend !== 'v86'
-            ? '<div class="tvm-git-terminal-section">' +
-              '<div class="tvm-git-terminal-header"><span>Terminal</span></div>' +
-              '<div class="tvm-git-terminal-container"></div>' +
-              '</div>'
-            : '') +
+          // For non-v86 backends the embedded git terminal lives in the
+          // shared Output↔Terminal tabbed panel below the editor (same
+          // place as Output) — see the `hasGitTerminal` branch above.
           '</div>'
         : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
@@ -1146,6 +1167,16 @@
     if (gitRefreshBtn) gitRefreshBtn.addEventListener('click', function () { self._refreshGitGraph(); });
     var gitGraphPopoutBtn = this.root.querySelector('.tvm-git-graph-popout-btn');
     if (gitGraphPopoutBtn) gitGraphPopoutBtn.addEventListener('click', function () { self._popoutGraph(); });
+
+    // Output ↔ Terminal tab toggle (pyodide tutorials with git_graph).
+    var outTermTabs = this.root.querySelectorAll('.tvm-out-term-tab');
+    for (var ti = 0; ti < outTermTabs.length; ti++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self._showOutputTermPanel(btn.getAttribute('data-panel'));
+        });
+      })(outTermTabs[ti]);
+    }
 
     if (this.config.useTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
@@ -2696,14 +2727,36 @@
 
     if (backend !== 'pyodide') return;
     var path = '/tutorial/' + filename;
+    var runAsPytest = self._pytestMode && self._isPytestFile(filename);
 
     // Sync first, then run
     this._syncFileToBackend(filename, function () {
       self._clearOutput();
-      self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+      self._appendOutput('\u25b6 ' + filename + (runAsPytest ? ' (pytest)' : '') + '\n', 'info');
 
       var runBtn = self.root.querySelector('.tvm-run-btn');
-      if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+      var runningLabel = runAsPytest ? '\u23f3 Testing\u2026' : '\u23f3 Running\u2026';
+      if (runBtn) { runBtn.disabled = true; runBtn.textContent = runningLabel; }
+
+      if (runAsPytest) {
+        // Run pytest on the file directly. The pytest module-cache patch from
+        // setup_commands ensures fresh source on every invocation.
+        var pyCode = 'import pytest; raise SystemExit(pytest.main([' +
+          JSON.stringify(path) + ', "-v"]))';
+        self._postWorker({ type: 'runCode', code: pyCode }, function (msg) {
+          if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = '\u25b6 ' + self._effectiveRunLabel();
+          }
+          if (msg.exitCode === 0) {
+            self._appendOutput('\n\u2713 All tests passed\n', 'info');
+          } else {
+            // pytest exits 1 on test failure, 2 on usage error, etc. \u2014 all "not green".
+            self._appendOutput('\n\u2717 Tests failed\n', 'err');
+          }
+        });
+        return;
+      }
 
       var args = [];
       var argsInp = self.root.querySelector('.tvm-args-input');
@@ -2713,7 +2766,10 @@
       }
 
       self._postWorker({ type: 'run', path: path, args: args }, function (msg) {
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
+        if (runBtn) {
+          runBtn.disabled = false;
+          runBtn.textContent = '\u25b6 ' + self._effectiveRunLabel();
+        }
         if (msg.exitCode === 0) {
           self._appendOutput('\n\u2713 Done\n', 'info');
         } else {
@@ -2721,6 +2777,35 @@
         }
       });
     });
+  };
+
+  // Match `test_*.py` (prefix convention) or `*_test.py` (suffix convention).
+  TutorialCode.prototype._isPytestFile = function (filename) {
+    if (!filename) return false;
+    var base = filename.split('/').pop();
+    return /^test_.+\.py$/i.test(base) || /_test\.py$/i.test(base);
+  };
+
+  // The effective label for the Run button \u2014 "Test" when pytest mode is on
+  // and the file that would actually run (run_file or activeFileName) is a
+  // test_*.py / *_test.py. Otherwise the configured `run_label` (default "Run").
+  TutorialCode.prototype._effectiveRunLabel = function () {
+    if (this._pytestMode) {
+      var step = this.steps && this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+      var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+      if (this._isPytestFile(runFile)) return 'Test';
+    }
+    return this._runLabel;
+  };
+
+  // Refresh the Run button text in place. Called whenever the active file
+  // changes so the label can flip between "Run" and "Test" as the student
+  // switches tabs in pytest-mode tutorials.
+  TutorialCode.prototype._refreshRunButtonLabel = function () {
+    if (!this.root) return;
+    var btn = this.root.querySelector('.tvm-run-btn');
+    if (!btn || btn.disabled) return; // don't clobber "\u23f3 Running\u2026"
+    btn.textContent = '\u25b6 ' + this._effectiveRunLabel();
   };
 
   // ---- WebContainers backend -------------------------------------------------
@@ -3529,6 +3614,7 @@
         typeof window.SEBookDebugger.refreshBreakpoints === 'function') {
       window.SEBookDebugger.refreshBreakpoints(this);
     }
+    this._refreshRunButtonLabel();
   };
 
   TutorialCode.prototype._renderTabs = function () {
@@ -7366,12 +7452,13 @@
     if (view === 'git_graph' && graphPanel) {
       editorPanel.style.display = 'none';
       graphPanel.style.display = 'flex';
-      // The embedded pyodide git terminal lives inside the graph panel; xterm
-      // can't size correctly while its container is display:none, so fit on
-      // first reveal.
+      // For pyodide tutorials, default the bottom panel to the Terminal tab
+      // when the user enters graph view (their next action is almost always
+      // to type a git command). Editor view leaves the tab as the user left
+      // it. xterm.fit() runs inside _showOutputTermPanel after the tab swap.
       var self2 = this;
-      if (this.gitTerm && this.gitTermFitAddon) {
-        setTimeout(function () { try { self2.gitTermFitAddon.fit(); self2.gitTerm.focus(); } catch (e) {} }, 50);
+      if (this.gitGraphPath && this.config.backend !== 'v86') {
+        this._showOutputTermPanel('terminal');
       }
       // Immediately show the last cached graph (avoids "No commits yet" flash)
       this._lightRefreshGitGraph();
@@ -7726,6 +7813,25 @@
   // worker.git_run_done and we refresh Monaco models from FS.
   // ---------------------------------------------------------------------------
 
+  // Toggle the shared bottom panel between Output and Terminal views.
+  // Idempotent — safe to call from view changes or tab clicks.
+  TutorialCode.prototype._showOutputTermPanel = function (panel) {
+    var tabs = this.root.querySelectorAll('.tvm-out-term-tab');
+    if (tabs.length === 0) return; // tutorial without the tabbed panel
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('active', tabs[i].getAttribute('data-panel') === panel);
+    }
+    var outView = this.root.querySelector('.tvm-out-term-tabbed > .tvm-output-view');
+    var termView = this.root.querySelector('.tvm-out-term-tabbed > .tvm-terminal-view');
+    if (outView)  outView.style.display  = (panel === 'output')   ? 'flex' : 'none';
+    if (termView) termView.style.display = (panel === 'terminal') ? 'flex' : 'none';
+    // xterm needs a fit() after the container becomes visible.
+    if (panel === 'terminal' && this.gitTerm && this.gitTermFitAddon) {
+      var self = this;
+      setTimeout(function () { try { self.gitTermFitAddon.fit(); self.gitTerm.focus(); } catch (e) {} }, 30);
+    }
+  };
+
   TutorialCode.prototype._initGitTerminal = function () {
     if (!this.gitGraphPath || this.config.backend === 'v86') return;
     var container = this.root.querySelector('.tvm-git-terminal-container');
@@ -7762,7 +7868,15 @@
     // Per-terminal CWD so `cd subdir` then `git add foo.py` resolves correctly.
     this._gitTermCwd = this.gitGraphPath || '/tutorial';
     this._gitTermLineBuf = '';
+    this._gitTermCursorPos = 0;
+    this._gitTermHistory = [];      // past commands, oldest first
+    this._gitTermHistoryIdx = -1;   // -1 = composing new line; 0..N-1 = browsing
+    this._gitTermStashedLine = '';  // line being composed when up-arrow grabbed history
     this._gitTermBusy = false;
+    // xterm-js can deliver an ESC sequence chunked across calls (\x1b alone,
+    // then [A on the next tick). Carry partial sequences across invocations
+    // so arrow keys work reliably.
+    this._gitTermEscPending = '';
 
     this.gitTerm.onData(function (data) { self._gitTermOnData(data); });
     this._writeGitPrompt();
@@ -7774,33 +7888,218 @@
     this.gitTerm.write('\x1b[1;32mstudent\x1b[0m:\x1b[1;34m' + rel + '\x1b[0m$ ');
   };
 
+  // Readline-style input handling: cursor movement (←/→/Home/End), history
+  // (↑/↓), inline insert/delete, Ctrl+U (kill line), Ctrl+L (clear screen).
+  // xterm sends multi-byte escape sequences for arrow keys; we scan the
+  // incoming `data` chunk and interpret each token before mutating state.
   TutorialCode.prototype._gitTermOnData = function (data) {
     if (!this.gitTerm) return;
     if (this._gitTermBusy) return; // ignore typing while a command is dispatching
     var self = this;
-    for (var i = 0; i < data.length; i++) {
+    // Prepend any incomplete escape sequence carried over from the previous
+    // delivery — xterm chunks key events arbitrarily.
+    if (this._gitTermEscPending) {
+      data = this._gitTermEscPending + data;
+      this._gitTermEscPending = '';
+    }
+    var i = 0;
+    while (i < data.length) {
       var ch = data.charAt(i);
+
+      // ---- ESC sequences (arrow keys, Home, End, Delete) -----------------
+      if (ch === '\x1b') {
+        // Need at least 2 more bytes (intro + final). If we don't have them,
+        // stash everything from `i` and wait for the next chunk.
+        if (i + 1 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+        var seq2 = data.charAt(i + 1);
+        if (seq2 === '[') {
+          if (i + 2 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+          var seq3 = data.charAt(i + 2);
+          if (seq3 === 'A') { this._gitHistoryPrev(); i += 3; continue; }
+          if (seq3 === 'B') { this._gitHistoryNext(); i += 3; continue; }
+          if (seq3 === 'C') { this._gitCursorRight(); i += 3; continue; }
+          if (seq3 === 'D') { this._gitCursorLeft(); i += 3; continue; }
+          if (seq3 === 'H') { this._gitCursorHome(); i += 3; continue; }
+          if (seq3 === 'F') { this._gitCursorEnd(); i += 3; continue; }
+          // Delete = `\x1b[3~` (need to see the trailing `~` first)
+          if (seq3 === '3') {
+            if (i + 3 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+            if (data.charAt(i + 3) === '~') { this._gitDeleteForward(); i += 4; continue; }
+          }
+          // Unknown CSI: skip up to a final byte (letter or '~'). If we run
+          // out of bytes, stash and wait.
+          var j = i + 2;
+          while (j < data.length && !/[a-zA-Z~]/.test(data.charAt(j))) j++;
+          if (j >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+          i = j + 1;
+          continue;
+        }
+        if (seq2 === 'O') {
+          if (i + 2 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+          var seq3b = data.charAt(i + 2);
+          if (seq3b === 'H') { this._gitCursorHome(); i += 3; continue; }
+          if (seq3b === 'F') { this._gitCursorEnd(); i += 3; continue; }
+          i += 3; // unknown SS3
+          continue;
+        }
+        // Unknown ESC introducer — drop ESC + next byte
+        i += 2;
+        continue;
+      }
+
+      // ---- Control characters --------------------------------------------
       if (ch === '\r' || ch === '\n') {
-        this.gitTerm.write('\r\n');
         var line = this._gitTermLineBuf;
+        this.gitTerm.write('\r\n');
+        if (line.trim().length) {
+          this._gitTermHistory.push(line);
+        }
         this._gitTermLineBuf = '';
+        this._gitTermCursorPos = 0;
+        this._gitTermHistoryIdx = -1;
+        this._gitTermStashedLine = '';
         this._dispatchGitTermLine(line).then(function () {
           self._writeGitPrompt();
         });
         return;
       }
-      if (ch === '\x7f' || ch === '\b') {
-        if (this._gitTermLineBuf.length > 0) {
-          this._gitTermLineBuf = this._gitTermLineBuf.slice(0, -1);
-          this.gitTerm.write('\b \b');
-        }
-        continue;
-      }
-      // Ignore control sequences (arrow keys etc.). Only echo printable chars.
-      if (ch < ' ') continue;
-      this._gitTermLineBuf += ch;
-      this.gitTerm.write(ch);
+      if (ch === '\x7f' || ch === '\b') { this._gitDeleteBackward(); i++; continue; }
+      if (ch === '\x01')                { this._gitCursorHome();    i++; continue; } // Ctrl+A
+      if (ch === '\x05')                { this._gitCursorEnd();     i++; continue; } // Ctrl+E
+      if (ch === '\x15')                { this._gitKillLine();      i++; continue; } // Ctrl+U
+      if (ch === '\x0c')                { this._gitClearScreen();   i++; continue; } // Ctrl+L
+      if (ch < ' ')                     { i++; continue; }                            // ignore other ctrls
+
+      // ---- Printable: insert at cursor -----------------------------------
+      this._gitInsertChar(ch);
+      i++;
     }
+  };
+
+  // ---- Line-edit primitives. Each updates _gitTermLineBuf + cursor and
+  // emits the smallest possible xterm escape sequence to keep the visible
+  // line in sync.
+  TutorialCode.prototype._gitInsertChar = function (ch) {
+    var pos = this._gitTermCursorPos;
+    var buf = this._gitTermLineBuf;
+    var tail = buf.substring(pos);
+    this._gitTermLineBuf = buf.substring(0, pos) + ch + tail;
+    this._gitTermCursorPos = pos + 1;
+    if (tail.length === 0) {
+      this.gitTerm.write(ch);
+    } else {
+      // Print char + tail, then walk cursor back over the tail.
+      this.gitTerm.write(ch + tail + this._cursorBack(tail.length));
+    }
+  };
+
+  TutorialCode.prototype._gitDeleteBackward = function () {
+    var pos = this._gitTermCursorPos;
+    if (pos === 0) return;
+    var buf = this._gitTermLineBuf;
+    var tail = buf.substring(pos);
+    this._gitTermLineBuf = buf.substring(0, pos - 1) + tail;
+    this._gitTermCursorPos = pos - 1;
+    // Walk cursor left, rewrite tail, blank the trailing column, walk back.
+    this.gitTerm.write('\b' + tail + ' ' + this._cursorBack(tail.length + 1));
+  };
+
+  TutorialCode.prototype._gitDeleteForward = function () {
+    var pos = this._gitTermCursorPos;
+    var buf = this._gitTermLineBuf;
+    if (pos >= buf.length) return;
+    var newTail = buf.substring(pos + 1);
+    this._gitTermLineBuf = buf.substring(0, pos) + newTail;
+    // Rewrite tail, blank trailing column, walk back.
+    this.gitTerm.write(newTail + ' ' + this._cursorBack(newTail.length + 1));
+  };
+
+  TutorialCode.prototype._gitCursorLeft = function () {
+    if (this._gitTermCursorPos > 0) {
+      this._gitTermCursorPos--;
+      this.gitTerm.write('\b');
+    }
+  };
+
+  TutorialCode.prototype._gitCursorRight = function () {
+    if (this._gitTermCursorPos < this._gitTermLineBuf.length) {
+      this._gitTermCursorPos++;
+      this.gitTerm.write('\x1b[C');
+    }
+  };
+
+  TutorialCode.prototype._gitCursorHome = function () {
+    if (this._gitTermCursorPos > 0) {
+      this.gitTerm.write(this._cursorBack(this._gitTermCursorPos));
+      this._gitTermCursorPos = 0;
+    }
+  };
+
+  TutorialCode.prototype._gitCursorEnd = function () {
+    var d = this._gitTermLineBuf.length - this._gitTermCursorPos;
+    if (d > 0) {
+      this.gitTerm.write('\x1b[' + d + 'C');
+      this._gitTermCursorPos = this._gitTermLineBuf.length;
+    }
+  };
+
+  TutorialCode.prototype._gitKillLine = function () {
+    // Move to start, erase to end-of-line, drop the buffer.
+    this._gitCursorHome();
+    this.gitTerm.write('\x1b[K');
+    this._gitTermLineBuf = '';
+    this._gitTermCursorPos = 0;
+  };
+
+  TutorialCode.prototype._gitClearScreen = function () {
+    this.gitTerm.clear();
+    this._writeGitPrompt();
+    if (this._gitTermLineBuf.length) {
+      this.gitTerm.write(this._gitTermLineBuf + this._cursorBack(this._gitTermLineBuf.length - this._gitTermCursorPos));
+    }
+  };
+
+  TutorialCode.prototype._gitHistoryPrev = function () {
+    var hist = this._gitTermHistory;
+    if (hist.length === 0) return;
+    if (this._gitTermHistoryIdx === -1) {
+      this._gitTermStashedLine = this._gitTermLineBuf;
+      this._gitTermHistoryIdx = hist.length - 1;
+    } else if (this._gitTermHistoryIdx > 0) {
+      this._gitTermHistoryIdx--;
+    } else {
+      return;
+    }
+    this._gitReplaceLine(hist[this._gitTermHistoryIdx]);
+  };
+
+  TutorialCode.prototype._gitHistoryNext = function () {
+    if (this._gitTermHistoryIdx === -1) return;
+    var hist = this._gitTermHistory;
+    if (this._gitTermHistoryIdx < hist.length - 1) {
+      this._gitTermHistoryIdx++;
+      this._gitReplaceLine(hist[this._gitTermHistoryIdx]);
+    } else {
+      this._gitTermHistoryIdx = -1;
+      this._gitReplaceLine(this._gitTermStashedLine);
+      this._gitTermStashedLine = '';
+    }
+  };
+
+  // Replace the current visible line text with `s` and put the cursor at end.
+  TutorialCode.prototype._gitReplaceLine = function (s) {
+    // Move to start, erase to end-of-line, write the new line.
+    if (this._gitTermCursorPos > 0) {
+      this.gitTerm.write(this._cursorBack(this._gitTermCursorPos));
+    }
+    this.gitTerm.write('\x1b[K' + (s || ''));
+    this._gitTermLineBuf = s || '';
+    this._gitTermCursorPos = this._gitTermLineBuf.length;
+  };
+
+  TutorialCode.prototype._cursorBack = function (n) {
+    if (n <= 0) return '';
+    return '\x1b[' + n + 'D';
   };
 
   // Dispatch a single typed line. Returns a Promise that resolves when the

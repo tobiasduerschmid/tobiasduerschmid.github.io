@@ -128,6 +128,8 @@ topics:
         url: /SEBook/development_practices/code_comprehension.html
       - name: Debugging
         url: /SEBook/development_practices/debugging.html
+      - name: Python Debugging Tutorial
+        url: /SEBook/tools/python-debugging.html
       - name: Gen Ai
         url: /SEBook/development_practices/genAI.html
       - name: Modern Code Review

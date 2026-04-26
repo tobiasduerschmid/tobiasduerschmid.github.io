@@ -901,17 +901,37 @@
       this._nodeEls = {};
       this._edgeEls = {};
       this._labelEls = {};
-      if (this.container && !this.container.querySelector('.git-graph-svg')) {
-        this.container.innerHTML =
-          '<div class="git-graph-empty">' +
+      // Insert (or keep) the "no commits yet" placeholder WITHOUT wiping the
+      // workbench. Earlier this used `container.innerHTML = ...`, which on
+      // every empty-state render destroyed the workbench element built by
+      // _diffWorkbench on the previous call — making every workbench row look
+      // brand-new (untracked → staged FLIPs never fired). Now we just ensure
+      // a single `.git-graph-empty` node sits inside the container alongside
+      // the persistent workbench.
+      if (this.container && !this.container.querySelector('.git-graph-empty')) {
+        // Strip stale SVG / leftover non-workbench children, then add the
+        // placeholder. Workbench is preserved by identity.
+        var children = Array.prototype.slice.call(this.container.children);
+        for (var ci = 0; ci < children.length; ci++) {
+          if (children[ci] !== this._workbenchEl) {
+            this.container.removeChild(children[ci]);
+          }
+        }
+        var empty = document.createElement('div');
+        empty.className = 'git-graph-empty';
+        empty.innerHTML =
           '<div style="text-align:center">' +
           '<div style="font-size:48px;margin-bottom:12px;">&#x1f333;</div>' +
           '<div>No commits yet.<br>Run <code>git commit</code> to see the graph.</div>' +
-          '</div></div>';
+          '</div>';
+        this.container.appendChild(empty);
       }
       if (data && data.workingTree) this._diffWorkbench(data);
       return;
     }
+    // Commits exist now — drop a previous empty-state placeholder if any.
+    var emptyEl = this.container && this.container.querySelector('.git-graph-empty');
+    if (emptyEl && emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl);
 
     this._layout(data);
     var dims = this._computeDimensions(data);

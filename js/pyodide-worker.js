@@ -197,9 +197,24 @@ function runCode(id, code, silent) {
     })
     .catch(function (err) {
       _running = false;
-      var msg = err.type ? (err.type + ': ' + err.message) : String(err);
+      // SystemExit is a clean exit signal, not an error. Recognize it and
+      // suppress the traceback. Two forms to detect:
+      //   1. err.type === 'SystemExit' (pyodide PythonError exposes the
+      //      raised Python class name on .type).
+      //   2. "SystemExit: <n>" anywhere in the message (fallback for older
+      //      pyodide builds that don't populate .type).
+      var msg = err && err.message ? err.message : String(err);
+      var isSystemExit = (err && err.type === 'SystemExit') ||
+                         /(^|\n|\b)SystemExit\b/.test(msg);
+      if (isSystemExit) {
+        var codeMatch = /SystemExit\s*:\s*(\d+)/.exec(msg);
+        var exitCode = codeMatch ? parseInt(codeMatch[1], 10) : 0;
+        self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
+        return;
+      }
+      var fullMsg = err.type ? (err.type + ': ' + msg) : msg;
       if (!silent) {
-        self.postMessage({ type: 'stderr', text: msg + '\n' });
+        self.postMessage({ type: 'stderr', text: fullMsg + '\n' });
       }
       self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
     });
@@ -724,7 +739,7 @@ function _dispatchGit(id, args, cwd) {
     if (sub === 'log')          return _gitCmdLog(id, rest, dir, fs);
     if (sub === 'branch')       return _gitCmdBranch(id, rest, dir, fs);
     if (sub === 'switch')       return _gitCmdSwitch(id, rest, dir, fs);
-    if (sub === 'checkout')     return _gitCmdCheckout(id, rest, dir, fs);
+    if (sub === 'checkout')     return _gitCmdCheckout(id, rest, dir, fs, cwd);
     if (sub === 'merge')        return _gitCmdMerge(id, rest, dir, fs);
     if (sub === 'rm')           return _gitCmdRm(id, rest, dir, fs, cwd);
     if (sub === 'mv')           return _gitCmdMv(id, rest, dir, fs, cwd);
@@ -750,30 +765,95 @@ function _gitCmdInit(id, args, dir, fs) {
 }
 
 function _gitCmdConfig(id, args, dir, fs) {
-  // `git config <key> <value>` — only the form we support. `--global` is silently
-  // accepted and treated as repo-local since iso-git has no global store.
-  var filtered = args.filter(function (a) { return a !== '--global'; });
-  if (filtered.length < 2) {
-    return _gitReply(id, '', "usage: git config [--global] <key> <value>\n", 1, []);
+  // Real git's `config` accepts read, write, list, get, and unset modes:
+  //   git config <key>                  — print value
+  //   git config --get <key>            — print value (explicit read)
+  //   git config <key> <value>          — write
+  //   git config --add <key> <value>    — write (we treat same as plain set)
+  //   git config --unset <key>          — remove
+  //   git config --list / -l            — list all keys
+  //   git config --global ...           — accepted for source compat; iso-git
+  //                                       has no global store so we treat as
+  //                                       local.
+  var listAll = false, unset = false, getMode = false, add = false;
+  var rest = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '--global' || a === '--local' || a === '--system') continue;
+    if (a === '--list' || a === '-l') { listAll = true; continue; }
+    if (a === '--unset') { unset = true; continue; }
+    if (a === '--get')   { getMode = true; continue; }
+    if (a === '--add')   { add = true; continue; }
+    rest.push(a);
   }
-  var key = filtered[0];
-  var value = filtered.slice(1).join(' ');
+
+  if (listAll) {
+    _git.listConfig
+      ? _git.listConfig({ fs: fs, dir: dir }).then(function (entries) {
+          var out = entries.map(function (e) { return e.path + '=' + e.value; }).join('\n');
+          _gitReply(id, out + (out ? '\n' : ''), '', 0, []);
+        }).catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); })
+      : _readWholeConfig(dir).then(function (text) { _gitReply(id, text, '', 0, []); })
+        .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+    return;
+  }
+
+  if (unset) {
+    if (rest.length < 1) return _gitReply(id, '', "error: wrong number of arguments\n", 1, []);
+    _git.setConfig({ fs: fs, dir: dir, path: rest[0], value: undefined })
+      .then(function () { _gitReply(id, '', '', 0, []); })
+      .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+    return;
+  }
+
+  if (rest.length === 0) {
+    return _gitReply(id, '', "usage: git config [<options>] <key> [<value>]\n", 1, []);
+  }
+
+  // Read mode: `git config <key>` or `git config --get <key>`
+  if (rest.length === 1 || getMode && rest.length === 1) {
+    _git.getConfig({ fs: fs, dir: dir, path: rest[0] })
+      .then(function (val) {
+        if (val === undefined || val === null) _gitReply(id, '', '', 1, []);
+        else _gitReply(id, String(val) + '\n', '', 0, []);
+      }).catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+    return;
+  }
+
+  // Write mode
+  var key = rest[0];
+  var value = rest.slice(1).join(' ');
   _git.setConfig({ fs: fs, dir: dir, path: key, value: value })
     .then(function () { _gitReply(id, '', '', 0, []); })
     .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+}
+
+// Fallback when iso-git build doesn't expose listConfig: read .git/config raw.
+function _readWholeConfig(dir) {
+  try {
+    var content = pyodide.FS.readFile(dir + '/.git/config', { encoding: 'utf8' });
+    return Promise.resolve(content || '');
+  } catch (e) { return Promise.resolve(''); }
 }
 
 function _gitCmdStatus(id, args, dir, fs, cwd) {
   Promise.all([
     _git.statusMatrix({ fs: fs, dir: dir }).catch(function () { return []; }),
     _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+    // Detect "no commits yet" state — HEAD is a symbolic ref but the branch
+    // it points at has no oid. real-git shows a special header line for this.
+    _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
   ]).then(function (r) {
-    var matrix = r[0], branch = r[1] || '(none)';
+    var matrix = r[0], branch = r[1], headOid = r[2];
+    var hasCommits = !!headOid;
     var staged = [], unstaged = [], untracked = [];
     matrix.forEach(function (row) {
       var fp = row[0], H = row[1], W = row[2], S = row[3];
       if (H === 0 && W === 2 && S === 0) untracked.push(fp);
-      else if (H === 0 && S !== 0) staged.push({ status: 'new file', path: fp });
+      else if (H === 0 && S !== 0) {
+        staged.push({ status: 'new file', path: fp });
+        if (W === 3) unstaged.push({ status: 'modified', path: fp });
+      }
       else if (H === 1 && W === 0 && S === 0) staged.push({ status: 'deleted', path: fp });
       else if (H === 1 && W === 0 && S === 1) unstaged.push({ status: 'deleted', path: fp });
       else if (H === 1 && W === 2 && S === 1) unstaged.push({ status: 'modified', path: fp });
@@ -783,21 +863,46 @@ function _gitCmdStatus(id, args, dir, fs, cwd) {
         unstaged.push({ status: 'modified', path: fp });
       }
     });
-    var out = 'On branch ' + branch + '\n';
+
+    // ANSI colors so the terminal renders status entries the same way real
+    // git does — green for staged, red for unstaged/untracked.
+    var GREEN = '\x1b[32m', RED = '\x1b[31m', RESET = '\x1b[m';
+
+    var out = 'On branch ' + (branch || 'main') + '\n';
+    if (!hasCommits) out += '\nNo commits yet\n';
+
+    if (staged.length) {
+      out += '\nChanges to be committed:\n';
+      out += '  (use "git restore --staged <file>..." to unstage)\n';
+      staged.forEach(function (s) {
+        out += '\t' + GREEN + _padStatus(s.status) + s.path + RESET + '\n';
+      });
+    }
+    if (unstaged.length) {
+      out += '\nChanges not staged for commit:\n';
+      out += '  (use "git add <file>..." to update what will be committed)\n';
+      out += '  (use "git restore <file>..." to discard changes in working directory)\n';
+      unstaged.forEach(function (s) {
+        out += '\t' + RED + _padStatus(s.status) + s.path + RESET + '\n';
+      });
+    }
+    if (untracked.length) {
+      out += '\nUntracked files:\n';
+      out += '  (use "git add <file>..." to include in what will be committed)\n';
+      untracked.forEach(function (f) { out += '\t' + RED + f + RESET + '\n'; });
+    }
+
     if (staged.length === 0 && unstaged.length === 0 && untracked.length === 0) {
-      out += 'nothing to commit, working tree clean\n';
-    } else {
-      if (staged.length) {
-        out += '\nChanges to be committed:\n';
-        staged.forEach(function (s) { out += '\t' + s.status + ':\t' + s.path + '\n'; });
-      }
-      if (unstaged.length) {
-        out += '\nChanges not staged for commit:\n';
-        unstaged.forEach(function (s) { out += '\t' + s.status + ':\t' + s.path + '\n'; });
-      }
-      if (untracked.length) {
-        out += '\nUntracked files:\n';
-        untracked.forEach(function (f) { out += '\t' + f + '\n'; });
+      out += hasCommits ? '\nnothing to commit, working tree clean\n'
+                        : '\nnothing to commit (create/copy files and use "git add" to track)\n';
+    } else if (staged.length === 0 && (unstaged.length || untracked.length)) {
+      out += '\n';
+      if (untracked.length && !unstaged.length) {
+        out += hasCommits
+          ? 'nothing added to commit but untracked files present (use "git add" to track)\n'
+          : 'nothing added to commit but untracked files present (use "git add" to track)\n';
+      } else {
+        out += 'no changes added to commit (use "git add" and/or "git commit -a")\n';
       }
     }
     _gitReply(id, out, '', 0, []);
@@ -806,106 +911,269 @@ function _gitCmdStatus(id, args, dir, fs, cwd) {
   });
 }
 
+// Pad status verb to align paths in `git status` output. Real git uses
+// 12-column padding; matches "modified:   ", "new file:   ", "deleted:    ".
+function _padStatus(verb) {
+  var s = verb + ':';
+  while (s.length < 12) s += ' ';
+  return s;
+}
+
 function _gitCmdAdd(id, args, dir, fs, cwd) {
-  if (args.length === 0) {
+  // Recognise `-A`, `--all`, `-u`, `--update`. All of these stage every file
+  // under the working tree (or under the cwd, for `.`). In real git `-u`
+  // skips untracked files; we match that distinction.
+  var addAll = false, updateOnly = false;
+  var pathspecs = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '-A' || a === '--all' || a === '--no-ignore-removal') { addAll = true; continue; }
+    if (a === '-u' || a === '--update') { updateOnly = true; continue; }
+    if (a === '--') continue;
+    if (a.charAt(0) === '-') {
+      // Unknown flag — surface it instead of silently expanding.
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+    pathspecs.push(a);
+  }
+
+  if (pathspecs.length === 0 && !addAll && !updateOnly) {
     return _gitReply(id, '', "Nothing specified, nothing added.\nhint: Maybe you wanted to say 'git add .'?\n", 1, []);
   }
-  // Build a list of relative filepaths.
-  function expand(arg) {
-    if (arg === '.') {
-      // Add everything iso-git sees in statusMatrix that is present in workdir.
-      return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
-        return matrix.map(function (row) { return row[0]; });
+
+  // pathspec semantics:
+  //   `.`       → everything under cwd (real git scopes by cwd)
+  //   `<path>`  → that single relative path
+  //   (-A / -u with no pathspec) → everything under dir (whole worktree)
+  function gatherFromMatrix(filterRel) {
+    return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+      return matrix.filter(function (row) {
+        if (!filterRel) return true;
+        return row[0] === filterRel || row[0].indexOf(filterRel + '/') === 0;
       });
-    }
-    var abs = _normalizePath(cwd, dir, arg);
-    var rel = _toRel(dir, abs);
-    if (rel === null) {
-      return Promise.reject(new Error("path '" + arg + "' is outside the working tree"));
-    }
-    return Promise.resolve([rel]);
+    });
   }
-  var p = Promise.all(args.map(expand));
-  p.then(function (lists) {
-    var paths = [].concat.apply([], lists);
-    var ops = paths.map(function (filepath) {
-      // Detect deleted-in-workdir vs present, choose remove vs add.
-      var abs = dir + '/' + filepath;
+
+  var cwdRel = _toRel(dir, cwd) || '';
+  if (cwdRel === '.') cwdRel = '';
+
+  // Collect work items: either matrix rows (filtered) or single paths.
+  var work = [];
+  if (addAll || updateOnly) {
+    // Operate on whole tree. For `add -A`, also pick up untracked files
+    // anywhere under `dir`. statusMatrix already includes them (untracked
+    // files appear with H=0,W=2,S=0 — our switch handles all rows below).
+    work.push(gatherFromMatrix(null));
+  }
+  pathspecs.forEach(function (ps) {
+    if (ps === '.') {
+      work.push(gatherFromMatrix(cwdRel || null));
+    } else {
+      var abs = _normalizePath(cwd, dir, ps);
+      var rel = _toRel(dir, abs);
+      if (rel === null) {
+        work.push(Promise.reject(new Error("fatal: pathspec '" + ps + "' did not match any files")));
+        return;
+      }
+      // If `rel` points at a directory, expand via matrix; otherwise treat
+      // as a single file row synthesized from the FS state.
+      var st = null;
+      try { st = pyodide.FS.stat(abs); } catch (e) { /* missing — let iso-git report */ }
+      var isDir = st && (st.mode & 0o170000) === 0o040000;
+      if (isDir) {
+        work.push(gatherFromMatrix(rel));
+      } else {
+        // Single file — synthesize a row stub. Use 0 placeholders; the per-
+        // file dispatcher below only checks existence to choose add/remove.
+        work.push(Promise.resolve([[rel, st ? 1 : 0, st ? 2 : 0, 0]]));
+      }
+    }
+  });
+
+  Promise.all(work).then(function (lists) {
+    // Dedupe and dispatch.
+    var rows = [].concat.apply([], lists);
+    var seen = {};
+    var ops = [];
+    rows.forEach(function (row) {
+      var fp = row[0]; if (seen[fp]) return; seen[fp] = true;
+      var H = row[1], W = row[2];
+      var abs = dir + '/' + fp;
       var exists = true;
       try { pyodide.FS.stat(abs); } catch (e) { exists = false; }
       if (!exists) {
-        return _git.remove({ fs: fs, dir: dir, filepath: filepath });
+        // File is gone in the working tree.
+        if (H === 0) return; // never tracked AND gone — nothing to do
+        ops.push(_git.remove({ fs: fs, dir: dir, filepath: fp }));
+        return;
       }
-      return _git.add({ fs: fs, dir: dir, filepath: filepath });
+      if (updateOnly && H === 0) {
+        // `-u` only updates already-tracked files.
+        return;
+      }
+      ops.push(_git.add({ fs: fs, dir: dir, filepath: fp }));
     });
     return Promise.all(ops);
   }).then(function () {
     _gitReply(id, '', '', 0, []);
   }).catch(function (err) {
-    _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
+    _gitReply(id, '', (/^fatal:/.test(err.message) ? '' : 'fatal: ') + err.message + '\n', 1, []);
   });
 }
 
 function _gitCmdCommit(id, args, dir, fs) {
-  // Parse: `git commit -m "msg"` or `git commit -am "msg"`.
+  // Parse: `git commit -m "msg"`, `git commit -am "msg"`, `git commit --message=msg`,
+  //         `git commit --allow-empty -m "msg"`, `git commit --amend ...`.
   var message = null;
   var stageAll = false;
+  var allowEmpty = false;
+  var amend = false;
   for (var i = 0; i < args.length; i++) {
-    if (args[i] === '-m' || args[i] === '--message') {
-      message = args[i + 1] || ''; i++;
-    } else if (args[i] === '-am' || args[i] === '-ma') {
-      stageAll = true;
-      message = args[i + 1] || ''; i++;
-    } else if (args[i] === '-a' || args[i] === '--all') {
-      stageAll = true;
+    var a = args[i];
+    if (a === '-m' || a === '--message') { message = args[i + 1] || ''; i++; }
+    else if (a.indexOf('--message=') === 0) { message = a.substring('--message='.length); }
+    else if (a === '-am' || a === '-ma') { stageAll = true; message = args[i + 1] || ''; i++; }
+    else if (a === '-a' || a === '--all') { stageAll = true; }
+    else if (a === '--allow-empty') { allowEmpty = true; }
+    else if (a === '--amend') { amend = true; }
+    else if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
     }
   }
-  if (!message) {
+  if (!message && !amend) {
     return _gitReply(id, '', "Aborting: no commit message. Use -m \"...\".\n", 1, []);
   }
 
-  var prep = stageAll
+  var stagePromise = stageAll
     ? _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
         return Promise.all(matrix.map(function (row) {
           var fp = row[0], H = row[1], W = row[2];
           if (H === 1 && W === 0) return _git.remove({ fs: fs, dir: dir, filepath: fp });
-          if (W !== 1) return _git.add({ fs: fs, dir: dir, filepath: fp });
+          if (H === 1 && W !== 1) return _git.add({ fs: fs, dir: dir, filepath: fp }); // existing tracked → restage
+          // Note: `commit -a` does NOT add untracked files (real git behavior).
           return Promise.resolve();
         }));
       })
     : Promise.resolve();
 
-  prep.then(function () {
+  stagePromise.then(function () {
+    // Verify there's something staged unless --allow-empty (or --amend).
+    if (allowEmpty || amend) return null;
+    return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+      var anyStaged = matrix.some(function (row) {
+        var H = row[1], S = row[3];
+        // staged differs from HEAD ⇔ S !== 1 (when tracked) OR (untracked-but-staged: S !== 0)
+        if (H === 0 && S !== 0) return true;       // new file staged
+        if (H === 1 && S !== 1) return true;       // staged change
+        return false;
+      });
+      if (!anyStaged) {
+        return Promise.reject(new Error('__NOTHING_STAGED__'));
+      }
+    });
+  }).then(function () {
     return Promise.all([
       _git.getConfig({ fs: fs, dir: dir, path: 'user.name' }).catch(function () { return null; }),
       _git.getConfig({ fs: fs, dir: dir, path: 'user.email' }).catch(function () { return null; }),
+      _git.currentBranch({ fs: fs, dir: dir }).catch(function () { return null; }),
+      _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
     ]);
   }).then(function (cfg) {
     var name = cfg[0] || 'Student';
     var email = cfg[1] || 'student@example.com';
-    return _git.commit({
-      fs: fs, dir: dir, message: message,
+    var branch = cfg[2] || 'HEAD';
+    var hadHead = !!cfg[3];
+    var commitArgs = {
+      fs: fs, dir: dir, message: message || '',
       author: { name: name, email: email },
+    };
+    if (amend) commitArgs.amend = true;
+    return _git.commit(commitArgs).then(function (oid) {
+      var shortHash = oid.substring(0, 7);
+      var subject = (message || '').split('\n')[0];
+      var prefix = hadHead && !amend ? '' : '(root-commit) ';
+      _gitReply(id, '[' + branch + ' ' + prefix + shortHash + '] ' + subject + '\n', '', 0, []);
     });
-  }).then(function (oid) {
-    _gitReply(id,
-      '[' + (oid.substring(0, 7)) + '] ' + message.split('\n')[0] + '\n',
-      '', 0, []);
   }).catch(function (err) {
-    _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
+    if (err && err.message === '__NOTHING_STAGED__') {
+      // Match real git's nothing-to-commit message style.
+      _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+        var hasUntracked = matrix.some(function (r) { return r[1] === 0 && r[2] === 2 && r[3] === 0; });
+        var msg = hasUntracked
+          ? "On branch main\nnothing added to commit but untracked files present (use \"git add\" to track)\n"
+          : "On branch main\nnothing to commit, working tree clean\n";
+        _gitReply(id, msg, '', 1, []);
+      });
+      return;
+    }
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
   });
 }
 
 function _gitCmdLog(id, args, dir, fs) {
-  var oneline = args.indexOf('--oneline') !== -1;
-  _git.log({ fs: fs, dir: dir, depth: 100 }).then(function (entries) {
+  // Supported flags:
+  //   --oneline                  — short format
+  //   --all                      — log from all branches (deduped)
+  //   -n <count> / --max-count=<n>  — limit
+  //   --graph                    — not implemented; surface a clear error
+  var oneline = false, showAll = false, depth = 100;
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '--oneline') { oneline = true; continue; }
+    if (a === '--all')     { showAll = true; continue; }
+    if (a === '--graph')   { return _gitReply(id, '',
+        "git log --graph isn't supported in this terminal — use the Git Graph view instead.\n", 1, []); }
+    if (a === '-n' || a === '--max-count') {
+      var n = parseInt(args[i + 1], 10); if (!isNaN(n)) depth = n; i++; continue;
+    }
+    if (a.indexOf('--max-count=') === 0) {
+      var n2 = parseInt(a.substring('--max-count='.length), 10); if (!isNaN(n2)) depth = n2; continue;
+    }
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+  }
+
+  var YELLOW = '\x1b[33m', RESET = '\x1b[m';
+
+  var refsPromise = showAll
+    ? _git.listBranches({ fs: fs, dir: dir }).catch(function () { return ['HEAD']; })
+    : Promise.resolve(['HEAD']);
+
+  refsPromise.then(function (refs) {
+    if (!refs || refs.length === 0) refs = ['HEAD'];
+    return Promise.all(refs.map(function (r) {
+      return _git.log({ fs: fs, dir: dir, ref: r, depth: depth })
+        .catch(function () { return []; });
+    }));
+  }).then(function (lists) {
+    var seen = {}, entries = [];
+    lists.forEach(function (l) {
+      l.forEach(function (e) { if (!seen[e.oid]) { seen[e.oid] = true; entries.push(e); } });
+    });
+    // Sort newest first by author timestamp.
+    entries.sort(function (a, b) {
+      var ta = (a.commit && a.commit.author && a.commit.author.timestamp) || 0;
+      var tb = (b.commit && b.commit.author && b.commit.author.timestamp) || 0;
+      return tb - ta;
+    });
+    if (depth) entries = entries.slice(0, depth);
+
+    if (entries.length === 0) {
+      return _gitReply(id, '',
+        "fatal: your current branch '" + 'main' + "' does not have any commits yet\n", 1, []);
+    }
+
     var out = '';
     entries.forEach(function (e) {
       var subject = ((e.commit && e.commit.message) || '').split('\n')[0];
       if (oneline) {
-        out += e.oid.substring(0, 7) + ' ' + subject + '\n';
+        out += YELLOW + e.oid.substring(0, 7) + RESET + ' ' + subject + '\n';
       } else {
-        out += 'commit ' + e.oid + '\n';
+        out += YELLOW + 'commit ' + e.oid + RESET + '\n';
+        if (e.commit && e.commit.parent && e.commit.parent.length > 1) {
+          out += 'Merge: ' + e.commit.parent.map(function (p) { return p.substring(0, 7); }).join(' ') + '\n';
+        }
         if (e.commit && e.commit.author) {
           out += 'Author: ' + e.commit.author.name + ' <' + e.commit.author.email + '>\n';
           if (e.commit.author.timestamp) {
@@ -915,44 +1183,137 @@ function _gitCmdLog(id, args, dir, fs) {
         out += '\n    ' + (e.commit && e.commit.message ? e.commit.message.replace(/\n/g, '\n    ') : '') + '\n\n';
       }
     });
-    _gitReply(id, out || '(no commits yet)\n', '', 0, []);
+    _gitReply(id, out, '', 0, []);
   }).catch(function (err) {
-    if (err && err.code === 'NotFoundError') {
-      _gitReply(id, '', "fatal: your current branch does not have any commits yet\n", 1, []);
+    if (err && (err.code === 'NotFoundError' || /HEAD/i.test(err.message || ''))) {
+      _gitReply(id, '', "fatal: your current branch 'main' does not have any commits yet\n", 1, []);
     } else {
-      _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
+      _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
     }
   });
 }
 
 function _gitCmdBranch(id, args, dir, fs) {
-  // `git branch` (list) | `git branch <name>` (create) | `git branch -d <name>` (delete)
-  if (args.length === 0) {
-    return Promise.all([
-      _git.listBranches({ fs: fs, dir: dir }),
-      _git.currentBranch({ fs: fs, dir: dir }),
-    ]).then(function (r) {
-      var branches = r[0], cur = r[1];
-      var out = '';
-      branches.forEach(function (b) { out += (b === cur ? '* ' : '  ') + b + '\n'; });
-      _gitReply(id, out || '', '', 0, []);
-    }).catch(function (err) {
-      _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
-    });
+  // Modes:
+  //   git branch                   — list local
+  //   git branch -a                — list local + remote
+  //   git branch <name>            — create from HEAD
+  //   git branch <name> <start>    — create from <start>
+  //   git branch -d <name>         — delete (only if merged)
+  //   git branch -D <name>         — force delete
+  //   git branch -m <new>          — rename current
+  //   git branch -m <old> <new>    — rename specific
+  var listAll = false, deleteName = null, forceDelete = false;
+  var renameOld = null, renameNew = null;
+  var positional = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '-a' || a === '--all') { listAll = true; continue; }
+    if (a === '-d' || a === '--delete') { deleteName = args[i + 1]; i++; continue; }
+    if (a === '-D') { deleteName = args[i + 1]; forceDelete = true; i++; continue; }
+    if (a === '-m' || a === '--move' || a === '-M') {
+      // -m <new>  OR  -m <old> <new>
+      if (args.length === i + 2) { renameOld = args[i + 1]; renameNew = args[i + 2]; i += 2; }
+      else { renameNew = args[i + 1]; i++; }
+      continue;
+    }
+    if (a === '--') continue;
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+    positional.push(a);
   }
-  if (args[0] === '-d' || args[0] === '-D') {
-    var name = args[1];
-    if (!name) return _gitReply(id, '', "branch name required\n", 1, []);
-    _git.deleteBranch({ fs: fs, dir: dir, ref: name })
-      .then(function () { _gitReply(id, "Deleted branch " + name + "\n", '', 0, []); })
-      .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+
+  // Rename
+  if (renameNew) {
+    var doRename = renameOld
+      ? Promise.resolve(renameOld)
+      : _git.currentBranch({ fs: fs, dir: dir });
+    doRename.then(function (oldName) {
+      if (!oldName) throw new Error('not on a branch');
+      return _git.renameBranch
+        ? _git.renameBranch({ fs: fs, dir: dir, ref: renameNew, oldref: oldName })
+        : Promise.reject(new Error('rename not supported in this iso-git build'));
+    }).then(function () { _gitReply(id, '', '', 0, []); })
+      .catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
     return;
   }
-  // Create
-  var newName = args[0];
-  _git.branch({ fs: fs, dir: dir, ref: newName, checkout: false })
-    .then(function () { _gitReply(id, '', '', 0, []); })
-    .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+
+  // Delete
+  if (deleteName) {
+    if (!forceDelete) {
+      // iso-git deleteBranch doesn't check merge status; for safety we
+      // refuse to delete a branch that isn't an ancestor of HEAD unless -D.
+      Promise.all([
+        _git.resolveRef({ fs: fs, dir: dir, ref: deleteName }).catch(function () { return null; }),
+        _git.resolveRef({ fs: fs, dir: dir, ref: 'HEAD' }).catch(function () { return null; }),
+      ]).then(function (r) {
+        var branchOid = r[0], headOid = r[1];
+        if (!branchOid) return Promise.reject(new Error("branch '" + deleteName + "' not found"));
+        return _git.isDescendent
+          ? _git.isDescendent({ fs: fs, dir: dir, oid: headOid, ancestor: branchOid })
+          : Promise.resolve(true);
+      }).then(function (merged) {
+        if (!merged) {
+          _gitReply(id, '',
+            "error: The branch '" + deleteName + "' is not fully merged.\n" +
+            "If you are sure you want to delete it, run 'git branch -D " + deleteName + "'.\n",
+            1, []);
+          return;
+        }
+        return _git.deleteBranch({ fs: fs, dir: dir, ref: deleteName }).then(function () {
+          _gitReply(id, "Deleted branch " + deleteName + ".\n", '', 0, []);
+        });
+      }).catch(function (err) { _gitReply(id, '', 'error: ' + (err.message || err) + '\n', 1, []); });
+      return;
+    }
+    _git.deleteBranch({ fs: fs, dir: dir, ref: deleteName })
+      .then(function () { _gitReply(id, "Deleted branch " + deleteName + " (was force-deleted).\n", '', 0, []); })
+      .catch(function (err) { _gitReply(id, '', 'error: ' + (err.message || err) + '\n', 1, []); });
+    return;
+  }
+
+  // Create with optional start point
+  if (positional.length >= 1) {
+    var newName = positional[0];
+    var startPoint = positional[1] || 'HEAD';
+    _git.resolveRef({ fs: fs, dir: dir, ref: startPoint })
+      .then(function (oid) {
+        return _git.writeRef({ fs: fs, dir: dir, ref: 'refs/heads/' + newName, value: oid, force: false });
+      })
+      .then(function () { _gitReply(id, '', '', 0, []); })
+      .catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
+    return;
+  }
+
+  // List
+  Promise.all([
+    _git.listBranches({ fs: fs, dir: dir }),
+    _git.currentBranch({ fs: fs, dir: dir }),
+  ]).then(function (r) {
+    var branches = r[0] || [], cur = r[1];
+    var out = '';
+    branches.forEach(function (b) {
+      var marker = (b === cur) ? '* ' : '  ';
+      var color = (b === cur) ? '\x1b[32m' : '';
+      var reset = (b === cur) ? '\x1b[m' : '';
+      out += marker + color + b + reset + '\n';
+    });
+    if (listAll) {
+      _git.listBranches({ fs: fs, dir: dir, remote: 'origin' })
+        .catch(function () { return []; })
+        .then(function (remotes) {
+          remotes.forEach(function (rb) {
+            out += '  \x1b[31mremotes/origin/' + rb + '\x1b[m\n';
+          });
+          _gitReply(id, out, '', 0, []);
+        });
+    } else {
+      _gitReply(id, out, '', 0, []);
+    }
+  }).catch(function (err) {
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+  });
 }
 
 function _gitCmdSwitch(id, args, dir, fs) {
@@ -967,16 +1328,57 @@ function _gitCmdSwitch(id, args, dir, fs) {
   _doCheckout(id, dir, fs, name, create);
 }
 
-function _gitCmdCheckout(id, args, dir, fs) {
-  // `git checkout <ref>` | `git checkout -b <name>` | `git checkout <ref> -- <path>` (limited)
-  var create = false, name = null;
+function _gitCmdCheckout(id, args, dir, fs, cwd) {
+  // Forms supported (matching real git):
+  //   git checkout <ref>                        — switch to <ref>
+  //   git checkout -b <name>                    — create+switch
+  //   git checkout -- <path>...                 — restore <path> from HEAD/index
+  //   git checkout <ref> -- <path>...           — restore <path> from <ref>
+  //   git checkout HEAD~1                       — detached HEAD
+  var create = false, ref = null;
+  var pathspecs = [];
+  var sawDoubleDash = false;
   for (var i = 0; i < args.length; i++) {
-    if (args[i] === '-b' || args[i] === '-B') { create = true; }
-    else if (args[i] === '--') { break; }
-    else if (!name) { name = args[i]; }
+    var a = args[i];
+    if (!sawDoubleDash) {
+      if (a === '-b' || a === '-B') { create = true; continue; }
+      if (a === '--') { sawDoubleDash = true; continue; }
+      if (a.charAt(0) === '-' && !/^-?\d+$/.test(a)) {
+        return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+      }
+      if (ref === null) { ref = a; continue; }
+      // Bare token after ref but before `--` is treated as pathspec (real git
+      // accepts this when the ref+pathspec form is unambiguous).
+      pathspecs.push(a);
+      sawDoubleDash = true;  // anything after this is also a pathspec
+      continue;
+    }
+    pathspecs.push(a);
   }
-  if (!name) return _gitReply(id, '', "checkout: ref required\n", 1, []);
-  _doCheckout(id, dir, fs, name, create);
+
+  if (pathspecs.length > 0) {
+    // File-restore mode. Resolve paths relative to cwd.
+    var rels = [];
+    for (var p = 0; p < pathspecs.length; p++) {
+      var abs = _normalizePath(cwd || dir, dir, pathspecs[p]);
+      var rel = _toRel(dir, abs);
+      if (rel === null) {
+        return _gitReply(id, '', "fatal: pathspec '" + pathspecs[p] + "' is outside the working tree\n", 1, []);
+      }
+      rels.push(rel);
+    }
+    _git.checkout({
+      fs: fs, dir: dir, ref: ref || 'HEAD', force: true, filepaths: rels,
+    }).then(function () {
+      _gitReply(id, '', '', 0, rels);
+    }).catch(function (err) {
+      _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
+    });
+    return;
+  }
+
+  if (!ref) return _gitReply(id, '', "fatal: missing branch or commit name\n", 1, []);
+  _doCheckout(id, dir, fs, ref, create);
 }
 
 function _doCheckout(id, dir, fs, name, create) {
@@ -1029,20 +1431,65 @@ function _gitCmdMerge(id, args, dir, fs) {
 }
 
 function _gitCmdRm(id, args, dir, fs, cwd) {
-  if (args.length === 0) return _gitReply(id, '', "rm: file required\n", 1, []);
-  var paths = args.filter(function (a) { return a.charAt(0) !== '-'; });
-  var ops = paths.map(function (p) {
-    var abs = _normalizePath(cwd, dir, p);
+  // Real git rm semantics:
+  //   git rm <file>               — remove from index AND working tree
+  //   git rm --cached <file>      — remove from index only (keep file)
+  //   git rm -r <dir>             — recursive (only allowed with -r for dirs)
+  //   git rm -f <file>            — force (we treat as the default)
+  var cached = false, recursive = false;
+  var pathspecs = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '--cached') { cached = true; continue; }
+    if (a === '-r' || a === '--recursive') { recursive = true; continue; }
+    if (a === '-f' || a === '--force') { continue; }
+    if (a === '--') continue;
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+    pathspecs.push(a);
+  }
+  if (pathspecs.length === 0) return _gitReply(id, '', "fatal: No pathspec was given.\n", 1, []);
+
+  // Expand each pathspec: if it points at a directory, require -r and walk
+  // children; if it's a file, just take that single rel path.
+  function expand(ps) {
+    var abs = _normalizePath(cwd || dir, dir, ps);
     var rel = _toRel(dir, abs);
-    if (rel === null) return Promise.reject(new Error("'" + p + "' is outside the working tree"));
-    try { pyodide.FS.unlink(abs); } catch (e) { /* tolerate already-gone */ }
-    return _git.remove({ fs: fs, dir: dir, filepath: rel }).then(function () { return rel; });
-  });
-  Promise.all(ops).then(function (rels) {
-    var out = rels.map(function (r) { return "rm '" + r + "'\n"; }).join('');
-    _gitReply(id, out, '', 0, rels);
+    if (rel === null) {
+      return Promise.reject(new Error("pathspec '" + ps + "' is outside the working tree"));
+    }
+    var st = null;
+    try { st = pyodide.FS.stat(abs); } catch (e) { /* missing */ }
+    if (st && (st.mode & 0o170000) === 0o040000) {
+      if (!recursive) {
+        return Promise.reject(new Error("not removing '" + rel + "' recursively without -r"));
+      }
+      return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+        return matrix
+          .map(function (row) { return row[0]; })
+          .filter(function (fp) { return fp === rel || fp.indexOf(rel + '/') === 0; });
+      });
+    }
+    return Promise.resolve([rel]);
+  }
+
+  Promise.all(pathspecs.map(expand)).then(function (lists) {
+    var rels = [].concat.apply([], lists);
+    var seen = {}; rels = rels.filter(function (r) { return seen[r] ? false : (seen[r] = true); });
+    var ops = rels.map(function (rel) {
+      var abs = dir + '/' + rel;
+      if (!cached) {
+        try { pyodide.FS.unlink(abs); } catch (e) { /* tolerate already-gone */ }
+      }
+      return _git.remove({ fs: fs, dir: dir, filepath: rel });
+    });
+    return Promise.all(ops).then(function () {
+      var out = rels.map(function (r) { return "rm '" + r + "'\n"; }).join('');
+      _gitReply(id, out, '', 0, cached ? [] : rels);
+    });
   }).catch(function (err) {
-    _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
   });
 }
 
@@ -1072,66 +1519,185 @@ function _gitCmdMv(id, args, dir, fs, cwd) {
   });
 }
 
-function _gitCmdReset(id, args, dir, fs) {
-  // Supported forms: `git reset --hard <ref>` and `git reset <ref>` (mixed-ish: just resetIndex).
-  var hard = false, ref = 'HEAD';
-  args.forEach(function (a) {
-    if (a === '--hard') hard = true;
-    else if (a === '--soft' || a === '--mixed') { /* not strictly modeled — same as default */ }
-    else if (a !== '--') ref = a;
-  });
-  _snapshotPaths(dir).then(function (preMap) {
-    if (hard) {
-      return _git.checkout({ fs: fs, dir: dir, ref: ref, force: true }).then(function () {
-        // Update HEAD to point at <ref> if it's a branch ref. checkout already handles this.
-        return _snapshotPaths(dir);
-      }).then(function (postMap) {
-        var mutated = _diffMaps(preMap, postMap);
-        _gitReply(id, "HEAD is now at " + ref + "\n", '', 0, mutated);
-      });
+function _gitCmdReset(id, args, dir, fs, cwd) {
+  // Supported forms (matching real git):
+  //   git reset                        — unstage everything (path = '.', mixed)
+  //   git reset <pathspec>...          — unstage paths only (mixed, no <ref>)
+  //   git reset <ref>                  — mixed reset to <ref>: move branch +
+  //                                      reset index, leave working tree
+  //   git reset --soft <ref>           — only move branch tip
+  //   git reset --mixed <ref>          — branch + index (default)
+  //   git reset --hard <ref>           — branch + index + working tree
+  // <ref> defaults to HEAD when only a mode flag is given.
+  var mode = 'mixed', ref = null;
+  var pathspecs = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '--soft')    { mode = 'soft';  continue; }
+    if (a === '--mixed')   { mode = 'mixed'; continue; }
+    if (a === '--hard')    { mode = 'hard';  continue; }
+    if (a === '--')        { continue; }
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
     }
-    // Soft/mixed: rewrite the index from <ref> without touching working tree.
-    return _git.resolveRef({ fs: fs, dir: dir, ref: ref }).then(function (oid) {
-      return _git.readCommit({ fs: fs, dir: dir, oid: oid }).then(function () {
-        // iso-git lacks a direct `reset` — approximate by rewriting HEAD.
-        return _git.writeRef({ fs: fs, dir: dir, ref: 'HEAD', value: oid, force: true });
-      });
-    }).then(function () {
-      _gitReply(id, '', '', 0, []);
+    if (ref === null && _looksLikeRef(a)) { ref = a; continue; }
+    pathspecs.push(a);
+  }
+  if (ref === null) ref = 'HEAD';
+
+  // Path-only mode: `git reset [--] <paths>` — unstage matching paths from <ref>.
+  if (pathspecs.length > 0) {
+    var rels = [];
+    for (var p = 0; p < pathspecs.length; p++) {
+      var abs = _normalizePath(cwd || dir, dir, pathspecs[p]);
+      var rel = _toRel(dir, abs);
+      if (rel === null) {
+        return _gitReply(id, '', "fatal: pathspec '" + pathspecs[p] + "' is outside the working tree\n", 1, []);
+      }
+      rels.push(rel);
+    }
+    Promise.all(rels.map(function (r) {
+      return _git.resetIndex({ fs: fs, dir: dir, filepath: r, ref: ref });
+    })).then(function () { _gitReply(id, '', '', 0, []); })
+      .catch(function (err) { _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []); });
+    return;
+  }
+
+  // Whole-repo reset: move current branch tip to <ref> and (depending on
+  // mode) reset the index and/or working tree.
+  Promise.all([
+    _git.currentBranch({ fs: fs, dir: dir, fullname: true }).catch(function () { return null; }),
+    _git.resolveRef({ fs: fs, dir: dir, ref: ref }).catch(function () { return null; }),
+    _snapshotPaths(dir),
+  ]).then(function (r) {
+    var branchRef = r[0], targetOid = r[1], preMap = r[2];
+    if (!targetOid) {
+      return Promise.reject(new Error("ambiguous argument '" + ref + "': unknown revision"));
+    }
+    // 1. Move the current branch ref to point at targetOid (only if we're
+    //    on a branch — detached HEAD just moves HEAD itself).
+    var moveRef = branchRef
+      ? _git.writeRef({ fs: fs, dir: dir, ref: branchRef, value: targetOid, force: true })
+      : _git.writeRef({ fs: fs, dir: dir, ref: 'HEAD', value: targetOid, force: true });
+
+    return moveRef.then(function () {
+      if (mode === 'soft') return preMap;
+      // mixed / hard: refresh index from new HEAD by checking out the tree.
+      // For hard, force=true also overwrites the working tree. For mixed,
+      // we want the working tree untouched; iso-git doesn't have an
+      // index-only checkout, so we read the tree manually.
+      if (mode === 'hard') {
+        return _git.checkout({
+          fs: fs, dir: dir, ref: branchRef ? branchRef.replace(/^refs\/heads\//, '') : targetOid,
+          force: true,
+        }).then(function () { return _snapshotPaths(dir); });
+      }
+      // mixed: walk the new HEAD's tree and rewrite each index entry without
+      // touching the working tree. resetIndex does this per-path.
+      return _git.statusMatrix({ fs: fs, dir: dir }).then(function (matrix) {
+        return Promise.all(matrix.map(function (row) {
+          return _git.resetIndex({ fs: fs, dir: dir, filepath: row[0], ref: 'HEAD' });
+        }));
+      }).then(function () { return preMap; /* working tree unchanged */ });
+    }).then(function (postMap) {
+      var mutated = (mode === 'hard') ? _diffMaps(preMap, postMap) : [];
+      var short = targetOid.substring(0, 7);
+      _gitReply(id, "HEAD is now at " + short + "\n", '', 0, mutated);
     });
   }).catch(function (err) {
-    _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []);
+    _gitReply(id, '', 'fatal: ' + (err.message || err) + '\n', 1, []);
   });
 }
 
+// Heuristic: distinguishes a refish argument from a pathspec when the user
+// types `git reset <foo>` with no flags. A path always either contains '/'
+// or matches an existing FS entry; a ref doesn't.
+function _looksLikeRef(s) {
+  if (!s) return false;
+  if (s.indexOf('/') !== -1 && s.indexOf('refs/') !== 0) return false;
+  // If a working-tree file exists with that name, treat as path.
+  try { pyodide.FS.stat(_gitDir + '/' + s); return false; } catch (e) {}
+  return true;
+}
+
 function _gitCmdRestore(id, args, dir, fs, cwd) {
-  // Minimal: `git restore <path>` — discard working tree changes for <path>.
-  if (args.length === 0) return _gitReply(id, '', "restore: file required\n", 1, []);
-  var staged = args.indexOf('--staged') !== -1;
-  var paths = args.filter(function (a) { return a.charAt(0) !== '-'; });
-  if (staged) {
-    Promise.all(paths.map(function (p) {
-      var abs = _normalizePath(cwd, dir, p);
-      var rel = _toRel(dir, abs);
-      if (rel === null) return Promise.reject(new Error("'" + p + "' is outside the working tree"));
-      return _git.resetIndex({ fs: fs, dir: dir, filepath: rel });
-    })).then(function () { _gitReply(id, '', '', 0, []); })
-      .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
-    return;
+  // Real git's `restore` behaviors:
+  //   git restore <path>                  — restore working tree from index
+  //                                         (drop unstaged changes, keep staged)
+  //   git restore --staged <path>         — unstage; working tree untouched
+  //   git restore -S -W <path>            — both (--staged + --worktree)
+  //   git restore --source=<ref> <path>   — restore from <ref>
+  //   git restore --source=<ref> -SW <p>  — restore working tree AND unstage
+  //                                         from <ref>
+  // Flags we recognise: --staged / -S, --worktree / -W, --source=<ref>.
+  var staged = false, worktree = false, source = null;
+  var pathspecs = [];
+  for (var i = 0; i < args.length; i++) {
+    var a = args[i];
+    if (a === '--staged' || a === '-S') { staged = true; continue; }
+    if (a === '--worktree' || a === '-W') { worktree = true; continue; }
+    if (a.indexOf('--source=') === 0) { source = a.substring('--source='.length); continue; }
+    if (a === '-s' || a === '--source') { source = args[i + 1]; i++; continue; }
+    if (a === '--') continue;
+    if (a.charAt(0) === '-') {
+      return _gitReply(id, '', "error: unknown option `" + a.replace(/^-+/, '') + "'\n", 1, []);
+    }
+    pathspecs.push(a);
   }
-  // working-tree restore
-  var rels = paths.map(function (p) {
-    var abs = _normalizePath(cwd, dir, p);
+  if (pathspecs.length === 0) {
+    return _gitReply(id, '',
+      "fatal: you must specify path(s) to restore\n", 1, []);
+  }
+  // Default: restore working tree (matches real git when neither --staged nor
+  // --worktree is given).
+  if (!staged && !worktree) worktree = true;
+
+  // Resolve all pathspecs. Reject any outside the worktree.
+  var rels = [];
+  for (var p = 0; p < pathspecs.length; p++) {
+    var abs = _normalizePath(cwd, dir, pathspecs[p]);
     var rel = _toRel(dir, abs);
-    if (rel === null) return null;
-    return rel;
-  });
-  if (rels.indexOf(null) !== -1) {
-    return _gitReply(id, '', "restore: paths must be inside the working tree\n", 1, []);
+    if (rel === null) {
+      return _gitReply(id, '', "fatal: pathspec '" + pathspecs[p] + "' is outside the working tree\n", 1, []);
+    }
+    rels.push(rel);
   }
-  _git.checkout({ fs: fs, dir: dir, force: true, filepaths: rels })
-    .then(function () { _gitReply(id, '', '', 0, rels); })
-    .catch(function (err) { _gitReply(id, '', 'fatal: ' + err.message + '\n', 1, []); });
+
+  // Unstage step (if --staged): rewrite index entry for each path to match
+  // the source ref (HEAD by default, or --source=<ref>). iso-git's
+  // resetIndex always pulls from HEAD, so for --source we need a manual path.
+  function doStaged() {
+    if (!staged) return Promise.resolve();
+    if (source && source !== 'HEAD') {
+      // For arbitrary --source, repurpose index by reading the blob at <ref>
+      // and re-adding. Simpler: temporarily checkout the file from <ref> into
+      // a buffer, write to FS, add. We avoid that complexity by falling back
+      // to resetIndex if the source resolves to the same oid as HEAD.
+      return Promise.all(rels.map(function (rel) {
+        return _git.resetIndex({ fs: fs, dir: dir, filepath: rel, ref: source });
+      }));
+    }
+    return Promise.all(rels.map(function (rel) {
+      return _git.resetIndex({ fs: fs, dir: dir, filepath: rel });
+    }));
+  }
+
+  // Working-tree step (if --worktree): copy file content from source/index
+  // into the working tree.
+  function doWorktree() {
+    if (!worktree) return Promise.resolve();
+    var ref = source || 'HEAD';
+    return _git.checkout({
+      fs: fs, dir: dir, ref: ref, force: true, filepaths: rels,
+    });
+  }
+
+  doStaged().then(doWorktree).then(function () {
+    var mutated = worktree ? rels : [];
+    _gitReply(id, '', '', 0, mutated);
+  }).catch(function (err) {
+    _gitReply(id, '', (/^fatal:/.test(err.message || '') ? '' : 'fatal: ') + (err.message || err) + '\n', 1, []);
+  });
 }
 
 // ---- Path-snapshot helpers (drive `mutatedPaths` for Monaco refresh) -------

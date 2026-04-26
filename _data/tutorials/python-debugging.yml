@@ -1,0 +1,2004 @@
+title: "Debugging Python: From Symptom to Fix"
+description: "Learn debugging as a distinct, learnable skill — not as accidental tinkering. You'll work three real Python bugs (recursive boundary, data-representation, temporal ordering) using a hypothesis-driven process and the time-travel debugger's breakpoints, conditional breakpoints, watch expressions, and history scrubber. Ends with an interleaved triage drill and an independent transfer challenge."
+
+backend: pyodide
+debugger: true
+pytest: true
+
+debugger_options:
+  back_in_time: true
+  max_history: 20000
+  snapshot_depth: 4
+  filter_globals: true
+
+require_tests: true
+autosave_type: files
+editor_split: true
+output_height: "30%"
+
+setup_commands:
+  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import sys; sys.path.insert(0, '/tutorial')"
+  - |
+    import pytest as _pytest, sys as _sys
+    def _make_pytest_patch():
+        _orig = _pytest.main
+        _sysmod = _sys
+        _ours = ('greet','pathfinder','maze_data','ledger','waitlist','tagger','tour')
+        def _patched(*a, **kw):
+            for m in list(_sysmod.modules):
+                if m.startswith('test_') or m in _ours:
+                    del _sysmod.modules[m]
+            return _orig(*a, **kw)
+        return _patched
+    _pytest.main = _make_pytest_patch()
+
+steps:
+
+  # ===========================================================================
+  # STEP 1 — The Debugging Process (worked example on a tiny off-by-one bug)
+  # Pedagogy:
+  #   Worked example       — instructor narrates each stage of the cycle.
+  #   Generation effect    — predict outputs before running.
+  #   Retrieval practice   — quiz at end requires recalling the 7 stages.
+  #   Bloom's level        — Understand / Apply.
+  # ===========================================================================
+  - title: "The Debugging Process"
+    instructions: |
+      > 🎯 **Goal:** Learn the 7-stage debugging cycle by watching it applied to a tiny bug, then apply the last steps yourself.
+      > 🧠 **Bloom's level:** *Understand / Apply.*
+
+      ### 💡 Why this tutorial exists
+
+      Most CS classes treat debugging as something that *just happens* when you write code. It isn't. Studies of novice debuggers consistently find a small set of unproductive habits — *tinkering* (random edits), *symptom-patching* (adding `+1` to make the output match), and *local verification* ("the line I just wrote looks fine, so the program must be fine"). These habits are not personality flaws. They're the absence of a **process**.
+
+      The process below is what the research calls a **hypothesis-driven debugging cycle**. It applies to every bug you'll ever fix:
+
+      ```mermaid
+      flowchart TD
+          A[1. Symptom — what's wrong?] --> B[2. Predict — what should the state be?]
+          B --> C[3. Evidence — collect data with the right tool]
+          C --> D[4. Hypothesis — one sentence cause]
+          D --> E[5. Localize — first wrong line]
+          E --> F[6. Fix — minimal change]
+          F --> G[7. Verify — rerun ALL tests]
+          G --> H[8. Reflect — what would I do differently?]
+      ```
+
+      Notice what is **not** in the diagram: editing code. No edit happens until stage 6. That's the central discipline.
+
+      ### 📂 What you have
+
+      Two files: `greet.py` (production code, has a bug) and `test_greet.py` (three pytest tests, one of which fails). Don't run anything yet.
+
+      ### 🔍 1. Symptom — predict, then run
+
+      Open `greet.py`. Read it. Then **predict**, in your head:
+
+      - What will `greet(["Ada", "Linus", "Grace"])` return?
+      - What will `greet([])` return?
+      - What will `greet(["Solo"])` return?
+
+      Hold those predictions. Now click **Run**. One test fails. Read the failure carefully — pytest tells you the exact mismatch. *That mismatch is the symptom.* Write it in your head: **expected** `"Hello, Ada, Linus, Grace!"`, **actual** `"Hello, Linus, Grace!"`.
+
+      ### 🧠 2. Predict the state
+
+      Before opening the debugger, predict: at the moment the loop body first executes, what should `i` be? What is `names[i]` supposed to be? Hold the answer.
+
+      ### 🔬 3. Evidence — your first breakpoint
+
+      A breakpoint is already set on line 4 (the `for` line). Click **Debug** (next to Run). Execution pauses *before* the marked line runs. The **Variables** tab shows `names`. The **Watch** tab is empty — add `i` to it (you'll see `<not yet defined>` since the loop hasn't started).
+
+      Now click **Step Over** (F10) once. The loop has started one iteration. Look at `i` in Watch. Look at `names[i]`. Compare with your prediction.
+
+      ### 🔎 4. Hypothesis (one sentence)
+
+      Don't fix yet. Write the hypothesis in your head, ideally as a single sentence: *"The loop starts at index 1, so `names[0]` is never appended to `parts`."*
+
+      ### 📍 5. Localize
+
+      Which line is the **first divergence** between intended and actual behavior? It's not the test (the test is correct). It's not the `return` (it returns what it has). It's the `range(...)` call.
+
+      ### 🩹 6. Minimal fix
+
+      Now you may edit. **Smallest possible change.** Don't refactor the whole function. Don't add a special case for empty lists. Just fix the iteration range.
+
+      ### ✅ 7. Verify
+
+      Click **Run**. *All three* tests must pass — the one that was failing AND the two that already passed. Verification means *no regressions*, not just *the failing test now passes*. Confusing those two is the **local-verification** trap.
+
+      ### 🪞 8. Reflect
+
+      Notice what just happened: you did not look at the code first and try to spot the bug. You ran the tests, named the symptom, predicted the state, collected evidence, formed a hypothesis, then fixed. Six stages of *not editing* before one stage of editing. That ratio is the difference between debugging and tinkering.
+
+    files:
+      - path: "greet.py"
+        language: "python"
+        content: |
+          def greet(names):
+              parts = ["Hello"]
+              # BUG is somewhere on the next line.
+              for i in range(1, len(names)):
+                  parts.append(names[i])
+              return ", ".join(parts) + "!"
+
+      - path: "test_greet.py"
+        language: "python"
+        content: |
+          from greet import greet
+
+
+          def test_three_names_all_appear():
+              assert greet(["Ada", "Linus", "Grace"]) == "Hello, Ada, Linus, Grace!"
+
+
+          def test_empty_list_just_says_hello():
+              assert greet([]) == "Hello!"
+
+
+          def test_single_name_appears():
+              assert greet(["Solo"]) == "Hello, Solo!"
+
+    open_file: "greet.py"
+    run_file: "test_greet.py"
+
+    solution:
+      files:
+        - path: "greet.py"
+          language: "python"
+          content: |
+            def greet(names):
+                parts = ["Hello"]
+                for i in range(0, len(names)):
+                    parts.append(names[i])
+                return ", ".join(parts) + "!"
+      explanation: |
+        The fix is `range(0, len(names))` (or equivalently `range(len(names))`). Mapping back to the cycle:
+
+        - **Symptom** — `test_three_names_all_appear` failed; `Ada` was missing.
+        - **Predict** — at loop start, `i` should be `0` and `names[i]` should be `"Ada"`.
+        - **Evidence** — Step Over once with the breakpoint on the `for` line; `i` was `1`, not `0`.
+        - **Hypothesis** — the loop starts at index 1, skipping `names[0]`.
+        - **Localize** — line 4, the `range(...)` call.
+        - **Fix** — change `range(1, ...)` to `range(0, ...)`.
+        - **Verify** — all three tests pass after the fix.
+
+        Notice: we didn't *also* refactor to `for name in names:` even though that's nicer. A bug fix is not a license to clean up the surrounding code. Smaller fixes are safer to review and easier to revert if they introduce a new problem.
+
+    tests:
+      - description: "All three tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_greet.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nFix the loop range so `names[0]` is included."
+        hints:
+          - title: "Small nudge"
+            text: "Look carefully at the `range(...)` call. What's the first index it produces?"
+          - title: "Strategic hint"
+            text: "Trace `greet([\"Ada\", \"Linus\", \"Grace\"])` by hand. What value of `i` does the first iteration use? What index *should* it use to include `\"Ada\"`?"
+          - title: "Spoiler — full fix"
+            text: "Change `range(1, len(names))` to `range(0, len(names))` (or `range(len(names))`). The original skipped index 0."
+
+      - description: "Workaround guard — test file unchanged"
+        command: |
+          source = open('/tutorial/test_greet.py').read()
+          assert '"Hello, Ada, Linus, Grace!"' in source, \
+              "Don't change the test file — production code is what we change. Revert `test_greet.py`."
+          assert '"Hello!"' in source, \
+              "Don't change the test file — production code is what we change. Revert `test_greet.py`."
+
+    quiz:
+      title: "The Debugging Process — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A teammate says: *"I added `print(repr(x))` and saw the value had a leading space."*
+
+            Which stage of the debugging cycle is this?
+          type: single
+          options:
+            - "Hypothesis"
+            - "Evidence collection"
+            - "Fix"
+            - "Verification"
+          correct_index: 1
+          option_feedback:
+            0: "A hypothesis is a *one-sentence proposed cause* (e.g., \"the input has invisible whitespace\"). Adding a `print` and observing a value is the *evidence* you'd use to test such a hypothesis."
+            2: "A fix is an edit that addresses the cause. Observing a value via `print(repr(...))` is gathering data — no edit has happened yet."
+            3: "Verification is rerunning the test suite *after* a fix. The `print(repr(x))` happened before any edit, so it's earlier in the cycle."
+          explanation: |
+            Adding instrumentation and observing values is **evidence collection** (stage 3). The hypothesis comes *after* you have evidence — and the fix and verification come later still. Naming the stage you're in helps you avoid skipping straight to fixing.
+
+        - question: |
+            A student fixes their failing test, runs `pytest test_failing.py` (just that one file) and sees green. They mark the bug fixed and move on. What stage did they skip?
+          type: single
+          options:
+            - "Verification — they should rerun **all** tests, not only the previously failing one"
+            - "Hypothesis — they should have written down their proposed cause first"
+            - "Localization — they should have identified the exact line"
+            - "Nothing — running the previously-failing test is sufficient verification"
+          correct_index: 0
+          option_feedback:
+            1: "Hypothesis is important, but the student got past it — they identified a fix that worked. The skip happened *after* the fix, when they didn't rerun the rest of the suite."
+            2: "Localization happened — they fixed something. The skip was *after* the fix, in the verification phase."
+            3: "This is the **local-verification trap** — judging the whole program by checking only the part you just touched. A fix can break tests that were previously passing, and the only way to catch that is rerunning the whole suite."
+          explanation: |
+            Verification means rerunning the **entire** test suite — including tests that previously passed. A fix in one place can introduce a regression somewhere else, and that's exactly the kind of regression a quick "did the failing test go green?" check will miss.
+
+        - question: |
+            Which statement matches what professional debugging research consistently recommends?
+          type: single
+          options:
+            - "If your code compiles, the bug must be a logic error in your code."
+            - "If your code compiles, then the surface-level structure is OK — but compilation says nothing about correctness."
+            - "If your code compiles, your tests should also pass."
+            - "If your code compiles cleanly with no warnings, you can skip the test suite for that change."
+          correct_index: 1
+          option_feedback:
+            0: "Compilation rules out *some* errors (typos, missing imports) but not all bugs. Logic, semantic, type, and data-representation bugs all compile cleanly."
+            2: "Tests can fail even when code compiles. Compilation and behavior are different properties — confusing them is a common error pattern documented across novice debugging studies."
+            3: "Compiling cleanly is necessary but not sufficient. The test suite verifies behavior, which is a strictly stronger property than \"compiles.\""
+          explanation: |
+            **Compilation says nothing about correctness.** It rules out a small subset of errors (typos, missing imports). Many of the most expensive bugs in real systems compile cleanly, run, and produce wrong output. Confusing "compiles" with "works" is one of the top recurring patterns flagged in the debugging-education literature.
+
+        - question: |
+            Which of these is the *symptom*, and which is the *cause*?
+
+            Scenario: A function `total(items)` should sum prices, but for one specific user it returns a value that's $5 too high. You discover that the user's profile has a discount field that was never being applied because the discount-loading function reads the wrong column from the database.
+          type: single
+          options:
+            - "Symptom: discount-loading reads wrong column. Cause: total is $5 too high."
+            - "Symptom: total is $5 too high. Cause: discount-loading reads wrong column."
+            - "They are the same thing — the user's bill is wrong."
+            - "Neither — both are bugs and need separate fixes."
+          correct_index: 1
+          option_feedback:
+            0: "These are flipped. The thing the user *experiences* is the wrong total — that's the symptom. The thing in the code that produces it is the wrong-column read — that's the cause."
+            2: "Symptom and cause are different concepts. The symptom is what you observe (a wrong total). The cause is the broken thing that produces the symptom (the wrong column)."
+            3: "There is one root cause (the wrong column) producing one symptom (the wrong total). Treating them as separate bugs leads to symptom-patching — e.g., subtracting $5 from the total — without fixing the actual problem."
+          explanation: |
+            The symptom is what you *observe* (the wrong total). The cause is the *reason* it happens (the discount-loading function reading the wrong column). Symptom-patching — e.g., always subtracting $5 from totals for that user — would make the test green without fixing the underlying bug.
+
+
+  # ===========================================================================
+  # STEP 2 — Debugger Tour (tool fluency anchored to questions, no bug)
+  # Pedagogy:
+  #   Tool subordinated to question — each tool move answers a debugging
+  #     question, not a feature menu.
+  #   Faded scaffolding — students click through with concrete prompts; later
+  #     cases ask the same moves with no prompts.
+  #   Bloom's level — Remember / Apply.
+  # ===========================================================================
+  - title: "Debugger Tour"
+    instructions: |
+      > 🎯 **Goal:** Build minimum tool fluency so you have a hand on the wheel before the next three cases hit. There's no bug here — `tour.py` runs correctly.
+      > 🧠 **Bloom's level:** *Remember / Apply.*
+
+      ### 🎚️ How this step is organized
+
+      Each section pairs a **debugging question** with the **smallest tool move** that answers it. That ordering matters: the research is explicit that tool-first instruction (here are 12 buttons!) produces superficial clicking. Tools become *useful* only when subordinated to a real question.
+
+      Click **Debug** (not Run) to start each section.
+
+      ### 1. *"Where is execution right now?"* → Breakpoint
+
+      Click the gutter (the empty space to the left of the line numbers) next to **line 8** in `tour.py` (the line `total += score`). A red dot appears — that's a breakpoint.
+
+      Click **Debug**. Execution pauses *before* line 8 runs, with a yellow arrow in the gutter. The current line is highlighted.
+
+      ### 2. *"What does this variable hold right now?"* → Variables tab + hover
+
+      Look at the **Variables** tab (right side). You'll see locals like `score` and `total`. Each value has a type badge (`int`, `list`, `dict`).
+
+      Now **hover over `score`** in the editor. A tooltip shows the value. The same trick works on any identifier in the source — no need to dig through the panel.
+
+      ### 3. *"What value will an expression have at this point?"* → Watch
+
+      Open the **Watch** tab. Click ➕ and add `total + score`. The expression evaluates *as if it ran right now*. Click **Step Over** (F10). The value updates.
+
+      Watches are how you ask "what would `len(items) * factor` be at this exact moment?" without editing the program to add a `print`.
+
+      ### 4. *"Which iteration first violates an invariant?"* → Conditional breakpoint
+
+      Right-click the red dot on line 8 → **Edit Breakpoint** → enter `score < 0` as the condition. Click **Continue** (F5).
+
+      Execution flies through every iteration where `score >= 0` and pauses *only* at the iteration where `score < 0` (line 8). That's the iteration where the invariant first fails.
+
+      Without conditional breakpoints, you'd step 9 times through normal iterations to reach the one you care about. With one, the debugger does the filtering.
+
+      ### 5. *"How did we get here?"* → Call Stack
+
+      Open the **Call Stack** tab. You'll see `process_scores → main`. Click each frame to inspect that scope's locals. The stack tells the story of how this line got executed.
+
+      For recursive code, the stack is a *vertical history of decisions*. You'll use it heavily in Case 1.
+
+      ### 6. *"What was this variable BEFORE this line ran?"* → History scrubber
+
+      Drag the **History** scrubber (the timeline at the bottom) backward by 5-10 ticks. Watch `total` rewind in the Variables tab. Drag forward — it advances. The arrow gutter turns gray when you're rewound (you're not at "live" execution anymore).
+
+      This is the time-travel feature. You can move to any moment in the program's history without restarting.
+
+      ### 7. *"Are these two variables actually the same object?"* → Aliasing badge
+
+      `tour.py` deliberately includes a classic Python pitfall: `register_score` uses a *shared default list*. Run to completion (Continue twice). In the Variables tab, look at `defaults` and the inner `students` list inside `register_score`. They share an `oid` and a `↔` alias badge — they're literally the same list in memory.
+
+      That's how you spot aliasing bugs *before* they bite.
+
+      ### 🪞 Reflect
+
+      You haven't fixed any bug here. You've practiced the seven smallest moves the debugger offers. The next three steps will ask you to use them on real bugs — and the most important habit is: **for each move, name the question it answers.** If you can't, you don't need that move yet.
+
+    files:
+      - path: "tour.py"
+        language: "python"
+        content: |
+          # Tour program — no bug. Exercise the debugger UI here.
+
+          def compute_score(raw):
+              return sum(raw) / len(raw)
+
+          def process_scores(scores):
+              total = 0
+              for score in scores:
+                  total += score
+              return total / len(scores)
+
+          # Classic shared-default-list aliasing trap.
+          def register_score(name, value, students=[]):
+              students.append({"name": name, "score": value})
+              return students
+
+          def main():
+              raw = [
+                  ("Ada", [95, 88, 92]),
+                  ("Linus", [72, 81, 78]),
+                  ("Grace", [98, 95, 91]),
+                  ("Alan", [-3, 55, 70]),     # negative — used by §4
+                  ("Margaret", [85, 89, 87]),
+              ]
+              scores = []
+              defaults = []
+              for name, raw_scores in raw:
+                  score = compute_score(raw_scores)
+                  defaults = register_score(name, score)
+                  scores.append(score)
+              average = process_scores(scores)
+              print(f"average score: {average:.2f}")
+              return average
+
+          main()
+
+    open_file: "tour.py"
+
+    require_tests: false
+
+    solution:
+      explanation: |
+        There's no fix to apply — this step is procedural drill. The aliasing trap on line 14 (`students=[]` default argument shared across calls) is a real Python gotcha worth remembering: default arguments are evaluated **once** at function-definition time, not on each call. The standard fix in production code is `students=None` plus `if students is None: students = []`. We don't fix it here; we just notice that the debugger's `↔` badge would tell us about it.
+
+
+  # ===========================================================================
+  # STEP 3 — Case 1: Maze Pathfinder (Boundary Bug)
+  # Source: debugging_case_studies/case1_maze_breakpoints/
+  # Pedagogy:
+  #   Apply the cycle from Step 1 — full debugging form scaffold.
+  #   Worked-example fade — Step 1 was fully narrated; here you drive.
+  #   Variation — same cycle, different surface (recursion + call stack).
+  #   Bloom's level — Apply / Analyze.
+  # ===========================================================================
+  - title: "Case 1 — Maze Pathfinder (Boundary Bug)"
+    instructions: |
+      > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
+      > 🧠 **Bloom's level:** *Apply / Analyze.*
+
+      ### 📂 What you have
+
+      A small delivery robot has a battery measured in grid steps. `find_path(maze, max_steps)` should return a path if one exists using **at most** `max_steps` moves, otherwise `None`.
+
+      Three pytest tests in `test_pathfinder.py`:
+
+      - `test_tiny_maze_found_with_extra_budget` — passes.
+      - `test_path_rejected_when_battery_too_small` — passes (max_steps=9, no 9-step path).
+      - `test_path_found_when_battery_limit_is_exact` — **fails** (max_steps=10, but a 10-step path exists).
+
+      The bug is **not** in the maze data. It is in the search logic.
+
+      ### 1. Symptom — run and read
+
+      Click **Run**. Read the failing assertion. Write the symptom in your head:
+      *expected: a list of 11 positions; actual: `None`.*
+
+      ### 2. Predict before debugging
+
+      Open `pathfinder.py`. Read `_dfs` carefully — especially these two checks at the top of the function (lines ~13-17):
+
+      ```python
+      if steps_used >= max_steps:
+          return None
+
+      if current == goal:
+          return path.copy()
+      ```
+
+      **Predict, before running anything:** at the moment a recursive call has just stepped onto the goal cell using exactly the budget, what are `steps_used` and `max_steps`? Which of the two checks above runs first? What does it return?
+
+      Write the answer in your head before continuing.
+
+      ### 3. Set evidence — breakpoint and watches
+
+      Click the gutter beside **line 11** of `pathfinder.py` (`steps_used = len(path) - 1`). In the **Watch** tab, add these expressions, in order:
+
+      - `current`
+      - `goal`
+      - `current == goal`
+      - `steps_used`
+      - `max_steps`
+
+      ### 4. Drive
+
+      Click **Debug**. The first pause is on the very first call (start cell). Use **Continue** (F5) to advance to the next call. Repeat. As recursion deepens, the **Call Stack** tab grows — click frames to inspect each level's locals.
+
+      **Don't fix yet.** Continue until `current == goal` is `True` in the Watch tab.
+
+      ### 5. The first wrong decision
+
+      At the moment `current == goal` is `True`, look at `steps_used` and `max_steps`. Which conditional fires first when the body of `_dfs` runs at this point — the cutoff or the goal check?
+
+      That is the **first divergence** between intended behavior ("we reached the goal, return the path") and actual behavior ("we hit the budget, return None").
+
+      ### 6. Hypothesis
+
+      State it in one sentence in your head: *"The cutoff check rejects exact-budget arrivals before the goal check can accept them."*
+
+      ### 7. Minimal fix
+
+      Edit `_dfs` so the goal check runs **before** the cutoff check. (Equivalently: make the cutoff accept the case where `current == goal`. The goal-first ordering is clearer because reaching the goal is terminal and valid regardless of how many steps it took.)
+
+      ### 8. Verify
+
+      Click **Run**. All three tests must pass — including `test_path_rejected_when_battery_too_small`. If that one breaks, your fix is too aggressive.
+
+    files:
+      - path: "maze_data.py"
+        language: "python"
+        content: |
+          # Mazes used by the pathfinder case.
+
+          # Shortest valid path from S to G is exactly 10 steps.
+          # Chosen to expose an off-by-one boundary bug.
+          BATTERY_LIMIT_MAZE = [
+              "#########",
+              "#S..#..G#",
+              "#.#.#.#.#",
+              "#.#...#.#",
+              "#.#####.#",
+              "#.......#",
+              "#########",
+          ]
+
+          # Sanity maze whose shortest path is 2 steps.
+          TINY_MAZE = [
+              "#####",
+              "#S.G#",
+              "#####",
+          ]
+
+      - path: "pathfinder.py"
+        language: "python"
+        content: |
+          """Depth-first maze pathfinder with a deliberately seeded boundary bug.
+
+          The bug is not in the maze data. It is in the search logic.
+          """
+
+          def find_marker(maze, marker):
+              for row_index, row in enumerate(maze):
+                  col_index = row.find(marker)
+                  if col_index != -1:
+                      return row_index, col_index
+              raise ValueError(f"marker {marker!r} not found")
+
+
+          def is_open(maze, position):
+              row, col = position
+              return maze[row][col] != "#"
+
+
+          def neighbors(maze, position):
+              """Yield neighbors in a deterministic order so traces are repeatable."""
+              row, col = position
+              for next_position in [
+                  (row, col + 1),  # east
+                  (row + 1, col),  # south
+                  (row, col - 1),  # west
+                  (row - 1, col),  # north
+              ]:
+                  if is_open(maze, next_position):
+                      yield next_position
+
+
+          def find_path(maze, max_steps):
+              """Return a path from S to G using at most max_steps moves.
+
+              A path includes both the start and goal positions, so:
+                steps_used == len(path) - 1
+              """
+              start = find_marker(maze, "S")
+              goal = find_marker(maze, "G")
+              return _dfs(
+                  maze=maze,
+                  current=start,
+                  goal=goal,
+                  max_steps=max_steps,
+                  path=[start],
+                  seen={start},
+              )
+
+
+          def _dfs(maze, current, goal, max_steps, path, seen):
+              steps_used = len(path) - 1
+
+              # Stop searching when the path has used the available battery budget.
+              if steps_used >= max_steps:
+                  return None
+
+              if current == goal:
+                  return path.copy()
+
+              for next_position in neighbors(maze, current):
+                  if next_position in seen:
+                      continue
+                  seen.add(next_position)
+                  path.append(next_position)
+                  result = _dfs(maze, next_position, goal, max_steps, path, seen)
+                  if result is not None:
+                      return result
+                  path.pop()
+                  seen.remove(next_position)
+
+              return None
+
+      - path: "test_pathfinder.py"
+        language: "python"
+        content: |
+          from maze_data import BATTERY_LIMIT_MAZE, TINY_MAZE
+          from pathfinder import find_path
+
+
+          def test_tiny_maze_found_with_extra_budget():
+              path = find_path(TINY_MAZE, max_steps=3)
+              assert path is not None
+              assert len(path) - 1 == 2
+
+
+          def test_path_rejected_when_battery_too_small():
+              path = find_path(BATTERY_LIMIT_MAZE, max_steps=9)
+              assert path is None
+
+
+          def test_path_found_when_battery_limit_is_exact():
+              path = find_path(BATTERY_LIMIT_MAZE, max_steps=10)
+              assert path is not None, "A 10-step path exists and should be accepted."
+              assert len(path) - 1 == 10
+
+    open_file: "pathfinder.py"
+    run_file: "test_pathfinder.py"
+
+    solution:
+      files:
+        - path: "pathfinder.py"
+          language: "python"
+          content: |
+            """Depth-first maze pathfinder — boundary bug fixed."""
+
+            def find_marker(maze, marker):
+                for row_index, row in enumerate(maze):
+                    col_index = row.find(marker)
+                    if col_index != -1:
+                        return row_index, col_index
+                raise ValueError(f"marker {marker!r} not found")
+
+
+            def is_open(maze, position):
+                row, col = position
+                return maze[row][col] != "#"
+
+
+            def neighbors(maze, position):
+                row, col = position
+                for next_position in [
+                    (row, col + 1),
+                    (row + 1, col),
+                    (row, col - 1),
+                    (row - 1, col),
+                ]:
+                    if is_open(maze, next_position):
+                        yield next_position
+
+
+            def find_path(maze, max_steps):
+                start = find_marker(maze, "S")
+                goal = find_marker(maze, "G")
+                return _dfs(
+                    maze=maze,
+                    current=start,
+                    goal=goal,
+                    max_steps=max_steps,
+                    path=[start],
+                    seen={start},
+                )
+
+
+            def _dfs(maze, current, goal, max_steps, path, seen):
+                steps_used = len(path) - 1
+
+                # Goal check FIRST — reaching the goal is terminal and valid
+                # regardless of how many steps it took.
+                if current == goal:
+                    return path.copy()
+
+                if steps_used >= max_steps:
+                    return None
+
+                for next_position in neighbors(maze, current):
+                    if next_position in seen:
+                        continue
+                    seen.add(next_position)
+                    path.append(next_position)
+                    result = _dfs(maze, next_position, goal, max_steps, path, seen)
+                    if result is not None:
+                        return result
+                    path.pop()
+                    seen.remove(next_position)
+
+                return None
+      explanation: |
+        Swap the order of the two checks at the top of `_dfs` so the goal check runs first. When the recursion lands on the goal cell with `steps_used == max_steps`, we now correctly return the path instead of bailing out one step too soon.
+
+        Why goal-first is preferred over the alternative (loosening the cutoff to `>` or to `> max_steps if current != goal`): reaching the goal is a **terminal valid state**. Treating it that way reads more clearly than special-casing the cutoff condition. The two are functionally equivalent in this maze, but the goal-first version generalizes better — for any future cutoff predicate, the goal acceptance still works.
+
+        Common wrong fixes (and why they're wrong):
+
+        - **Raising `max_steps` in the test.** That's editing the spec to match the bug, not fixing the code.
+        - **Editing the maze.** Same issue — the test was correct.
+        - **Removing the cutoff entirely.** Now the path-rejection test (max_steps=9) breaks. The cutoff was correct *as a concept*; only its ordering was wrong.
+
+    tests:
+      - description: "All three pathfinder tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_pathfinder.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nMake sure the exact-budget path is accepted AND the under-budget path is still rejected."
+        hints:
+          - title: "Small nudge"
+            text: "Look at the order of the two checks at the top of `_dfs`. Which one runs first when `steps_used == max_steps` AND `current == goal`?"
+          - title: "Strategic hint"
+            text: "Trace by hand: when the recursion calls `_dfs(current=goal, ...)` after using all 10 steps, what is `steps_used`? Which check fires? Should reaching the goal be allowed even at the budget limit?"
+          - title: "Spoiler — full fix"
+            text: "Move the `if current == goal:` block ABOVE the `if steps_used >= max_steps:` block. Reaching the goal is a terminal valid state — accept it before the cutoff has a chance to reject it."
+
+      - description: "Workaround guard — test file unchanged"
+        command: |
+          source = open('/tutorial/test_pathfinder.py').read()
+          assert 'max_steps=10' in source, \
+              "Don't change the test — the test correctly says a 10-step path with max_steps=10 should be accepted. Fix `pathfinder.py` instead."
+          assert 'max_steps=9' in source, \
+              "Don't change the test — the under-budget rejection case is still meaningful. Revert `test_pathfinder.py`."
+
+      - description: "Workaround guard — maze unchanged"
+        command: |
+          import re
+          source = open('/tutorial/maze_data.py').read()
+          assert '"#S..#..G#"' in source, \
+              "Don't edit the maze — the maze was correct. The bug is in `_dfs`'s logic, not the data."
+
+      - description: "Workaround guard — both checks present"
+        command: |
+          source = open('/tutorial/pathfinder.py').read()
+          assert 'current == goal' in source, "The goal check shouldn't be removed — without it, the function never returns a path."
+          assert 'steps_used >= max_steps' in source or 'len(path) - 1 >= max_steps' in source, \
+              "Don't remove the cutoff entirely — without it, `test_path_rejected_when_battery_too_small` fails. The bug was the *ordering*, not the existence of the cutoff."
+
+    quiz:
+      title: "Case 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which of these would be a **root-cause fix** for this bug, as opposed to a workaround?
+          type: single
+          options:
+            - "Change the failing test to use `max_steps=11` so it passes"
+            - "Edit `BATTERY_LIMIT_MAZE` to add an extra row of open cells"
+            - "Move the `if current == goal:` check to run before the cutoff check"
+            - "Catch the `None` return in `find_path` and re-run DFS with `max_steps + 1`"
+          correct_index: 2
+          option_feedback:
+            0: "This makes the test pass without changing the code's behavior — the same bug would still reject any future user who calls `find_path` with the exact required budget. That's a workaround, not a fix."
+            1: "Editing the data makes the bug invisible for *this* maze. The next maze with a path equal to its budget would have the same problem. That's a workaround."
+            3: "Calling DFS twice is more code, doesn't address why the first call rejected a valid path, and is twice as slow. The actual bug — wrong check ordering in `_dfs` — is still present."
+          explanation: |
+            The root cause is the *order* of the two early checks in `_dfs`. Reordering them is a one-line, minimal change that addresses the cause directly. Every other option here is a workaround: it makes the symptom disappear without fixing the underlying logic.
+
+        - question: |
+            For Python's `range()`, which expression includes the value `10`?
+          type: single
+          options:
+            - "`range(0, 10)`"
+            - "`range(0, 11)`"
+            - "Neither — `range` never includes its end"
+            - "Both, since `range` is inclusive of both endpoints"
+          correct_index: 1
+          option_feedback:
+            0: "`range(0, 10)` produces `0, 1, 2, ..., 9`. The end is exclusive in Python."
+            2: "Half-true: the *end* is exclusive. But `range(0, 11)` *does* include 10 because 10 is less than 11."
+            3: "`range` is half-open: start inclusive, end exclusive. This is the source of countless off-by-one bugs."
+          explanation: |
+            Python's `range(start, stop)` is half-open — `stop` is not included. `range(0, 10)` is `0..9`; `range(0, 11)` is `0..10`. This same half-open / exact-boundary issue is exactly what bit `_dfs` — `steps_used >= max_steps` rejected the case `steps_used == max_steps` even when that was the goal cell.
+
+        - question: |
+            *True or false:* Once you've fixed the boundary bug in `_dfs`, you can verify the fix is correct by rerunning **only** `test_path_found_when_battery_limit_is_exact` (the previously failing test).
+          type: single
+          options:
+            - "True — the other tests already passed, so they're fine"
+            - "False — verify means rerun all tests, including the ones that were already green, to catch regressions"
+          correct_index: 1
+          option_feedback:
+            0: "This is the local-verification trap from Step 1. A change that fixes one test can easily break another. The only reliable verification is rerunning the entire suite."
+          explanation: |
+            **Verification means rerunning the whole suite.** Specifically: after the goal-first fix, `test_path_rejected_when_battery_too_small` (max_steps=9) must still pass. If you accidentally over-loosen the cutoff, this test will catch you — but only if you rerun it.
+
+
+  # ===========================================================================
+  # STEP 4 — Case 2: Ledger Reconciliation (Data Representation Bug)
+  # Source: debugging_case_studies/case2_ledger_conditional_logging/
+  # Pedagogy:
+  #   New technique — conditional breakpoints, repr() for invisible chars.
+  #   Variation Theory — same cycle, different surface (input data instead
+  #     of algorithmic logic). Forces discrimination of bug families.
+  #   Anti-tinkering — explicit instruction NOT to step through 30 iterations.
+  #   Bloom's level — Apply / Analyze.
+  # ===========================================================================
+  - title: "Case 2 — Ledger Reconciliation (Data Representation Bug)"
+    instructions: |
+      > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
+      > 🧠 **Bloom's level:** *Apply / Analyze.*
+
+      ### 📂 What you have
+
+      - `ledger.py` — loads transactions from a CSV and applies them to account balances.
+      - `transactions.csv` — 30 rows of test data.
+      - `test_ledger.py` — two pytest tests, **both failing**.
+
+      Read both failures carefully.
+
+      ### 1. Symptom — and a clue
+
+      Click **Run**. Two tests fail:
+
+      - `test_month_end_balances` — `ACCT-202` is wrong by $36.00.
+      - `test_transaction_types_are_valid_after_loading` — the loaded transaction kinds set contains an unexpected value.
+
+      The second failure is a **clue, not a separate bug**. Look at the assertion message — what kind appears that shouldn't?
+
+      ### 2. Predict before debugging
+
+      You could step through 30 transactions to find the wrong one. **Don't.** That's exactly the kind of work the debugger is supposed to save you. Predict instead: of the 30 transactions, which one(s) belong to `ACCT-202`? *(You can scan `transactions.csv` if you want — but only briefly.)*
+
+      ### 3. Stop only on the suspicious account — conditional breakpoint
+
+      Click the gutter on **line 52** of `ledger.py` (`before = balances.get(...)`). Right-click the red dot → **Edit Breakpoint** → enter the condition:
+
+      ```
+      tx.account == "ACCT-202"
+      ```
+
+      Click **Debug**. The debugger flies past every transaction for other accounts and pauses *only* on the rows for ACCT-202. Use **Continue** to move from one ACCT-202 row to the next.
+
+      ### 4. Look closely
+
+      For each pause, inspect:
+
+      - `tx.id`
+      - `tx.kind`
+      - **`repr(tx.kind)`** ← the secret weapon
+
+      Add `repr(tx.kind)` to your **Watch** tab so it shows on every pause. Watch for one transaction where `repr` shows something `print` would have hidden.
+
+      ### 5. Where is the divergence?
+
+      Once you've spotted the malformed transaction, ask: where in the code is the bug? Is it in `apply_transaction` (which decides DEPOSIT vs WITHDRAWAL etc.)? Or earlier, in how the row got loaded into a `Transaction` object?
+
+      ### 6. Hypothesis
+
+      One sentence: *"The kind field arrives from the CSV with hidden whitespace. `load_transactions` doesn't normalize it, so it falls through to the unknown-kind branch in `apply_transaction` and gets treated as a withdrawal."*
+
+      ### 7. Minimal fix
+
+      One change in `load_transactions` (line ~44). Resist the temptation to:
+
+      - Patch the final balance.
+      - Edit the CSV.
+      - Change the reversal arithmetic in `apply_transaction`.
+      - Delete the unknown-kind fallback.
+
+      The right fix is **the smallest change in the right place**.
+
+      ### 8. Verify
+
+      Click **Run**. Both tests must turn green. The arithmetic in `apply_transaction` is unchanged; only the loading code was wrong.
+
+    files:
+      - path: "ledger.py"
+        language: "python"
+        content: |
+          """Ledger reconciliation case study.
+
+          This program has a deliberately seeded reconciliation bug. The point of
+          the case is to use conditional breakpoints and `repr()` to localize it.
+          """
+
+          import csv
+          import logging
+          from dataclasses import dataclass
+          from decimal import Decimal
+
+          logger = logging.getLogger(__name__)
+
+          VALID_KINDS = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
+
+
+          @dataclass(frozen=True)
+          class Transaction:
+              id: str
+              account: str
+              kind: str
+              amount_cents: int
+
+
+          def parse_money(text):
+              """Convert a dollars-and-cents string to integer cents."""
+              return int(Decimal(text) * 100)
+
+
+          def load_transactions(path):
+              transactions = []
+              with open(path, newline="", encoding="utf-8") as csv_file:
+                  reader = csv.DictReader(csv_file)
+                  for row in reader:
+                      transactions.append(
+                          Transaction(
+                              id=row["id"],
+                              account=row["account"],
+                              kind=row["type"].upper(),
+                              amount_cents=parse_money(row["amount"]),
+                          )
+                      )
+              return transactions
+
+
+          def apply_transaction(balances, tx):
+              before = balances.get(tx.account, 0)
+
+              if tx.kind == "DEPOSIT":
+                  after = before + tx.amount_cents
+              elif tx.kind == "WITHDRAWAL":
+                  after = before - tx.amount_cents
+              elif tx.kind == "FEE":
+                  after = before - tx.amount_cents
+              elif tx.kind == "REFUND":
+                  after = before + tx.amount_cents
+              elif tx.kind == "REVERSAL":
+                  after = before + tx.amount_cents
+              else:
+                  # Realistic but dangerous legacy behavior: old exports used blank
+                  # types for card charges, so unknown types are treated as
+                  # withdrawals.
+                  after = before - tx.amount_cents
+
+              balances[tx.account] = after
+
+
+          def reconcile(transactions):
+              balances = {}
+              for tx in transactions:
+                  apply_transaction(balances, tx)
+              return balances
+
+      - path: "transactions.csv"
+        language: "plaintext"
+        content: |
+          id,account,type,amount
+          T001,ACCT-100,DEPOSIT,200.00
+          T002,ACCT-100,WITHDRAWAL,45.25
+          T003,ACCT-100,FEE,2.50
+          T004,ACCT-100,REFUND,10.00
+          T005,ACCT-101,DEPOSIT,125.00
+          T006,ACCT-101,WITHDRAWAL,19.99
+          T007,ACCT-101,WITHDRAWAL,8.50
+          T008,ACCT-101,REFUND,8.50
+          T009,ACCT-202,DEPOSIT,80.00
+          T010,ACCT-202,WITHDRAWAL,18.00
+          T011,ACCT-202, REVERSAL,18.00
+          T012,ACCT-303,DEPOSIT,300.00
+          T013,ACCT-303,FEE,7.50
+          T014,ACCT-303,WITHDRAWAL,22.00
+          T015,ACCT-303,REFUND,3.25
+          T016,ACCT-100,WITHDRAWAL,16.00
+          T017,ACCT-101,FEE,2.50
+          T018,ACCT-202,WITHDRAWAL,7.25
+          T019,ACCT-303,WITHDRAWAL,41.99
+          T020,ACCT-100,REFUND,1.25
+          T021,ACCT-101,DEPOSIT,40.00
+          T022,ACCT-202,FEE,1.75
+          T023,ACCT-303,FEE,2.50
+          T024,ACCT-100,FEE,2.50
+          T025,ACCT-101,WITHDRAWAL,12.00
+          T026,ACCT-202,DEPOSIT,5.00
+          T027,ACCT-303,REFUND,10.00
+          T028,ACCT-100,WITHDRAWAL,30.00
+          T029,ACCT-101,REFUND,4.00
+          T030,ACCT-202,WITHDRAWAL,3.00
+
+      - path: "test_ledger.py"
+        language: "python"
+        content: |
+          from ledger import load_transactions, reconcile
+
+
+          def test_month_end_balances():
+              transactions = load_transactions('/tutorial/transactions.csv')
+              balances = reconcile(transactions)
+              assert balances == {
+                  "ACCT-100": 11500,
+                  "ACCT-101": 13451,
+                  "ACCT-202": 7300,
+                  "ACCT-303": 23926,
+              }
+
+
+          def test_transaction_types_are_valid_after_loading():
+              transactions = load_transactions('/tutorial/transactions.csv')
+              kinds = {tx.kind for tx in transactions}
+              assert kinds <= {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}, \
+                  f"unexpected transaction kind(s) loaded: {kinds}"
+
+    open_file: "ledger.py"
+    run_file: "test_ledger.py"
+
+    solution:
+      files:
+        - path: "ledger.py"
+          language: "python"
+          content: |
+            """Ledger reconciliation — bug fixed."""
+
+            import csv
+            import logging
+            from dataclasses import dataclass
+            from decimal import Decimal
+
+            logger = logging.getLogger(__name__)
+
+            VALID_KINDS = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
+
+
+            @dataclass(frozen=True)
+            class Transaction:
+                id: str
+                account: str
+                kind: str
+                amount_cents: int
+
+
+            def parse_money(text):
+                return int(Decimal(text) * 100)
+
+
+            def load_transactions(path):
+                transactions = []
+                with open(path, newline="", encoding="utf-8") as csv_file:
+                    reader = csv.DictReader(csv_file)
+                    for row in reader:
+                        transactions.append(
+                            Transaction(
+                                id=row["id"],
+                                account=row["account"],
+                                kind=row["type"].strip().upper(),
+                                amount_cents=parse_money(row["amount"]),
+                            )
+                        )
+                return transactions
+
+
+            def apply_transaction(balances, tx):
+                before = balances.get(tx.account, 0)
+
+                if tx.kind == "DEPOSIT":
+                    after = before + tx.amount_cents
+                elif tx.kind == "WITHDRAWAL":
+                    after = before - tx.amount_cents
+                elif tx.kind == "FEE":
+                    after = before - tx.amount_cents
+                elif tx.kind == "REFUND":
+                    after = before + tx.amount_cents
+                elif tx.kind == "REVERSAL":
+                    after = before + tx.amount_cents
+                else:
+                    after = before - tx.amount_cents
+
+                balances[tx.account] = after
+
+
+            def reconcile(transactions):
+                balances = {}
+                for tx in transactions:
+                    apply_transaction(balances, tx)
+                return balances
+      explanation: |
+        The fix is `kind=row["type"].strip().upper()` in `load_transactions`. The CSV row `T011,ACCT-202, REVERSAL,18.00` has a leading space in the type field. The original code's `.upper()` preserved that space (the `' '` is unchanged by `upper()`), so `tx.kind` became `' REVERSAL'`. None of the explicit `if/elif` branches in `apply_transaction` matched, so it fell through to the unknown-kind branch and was charged as a $18 withdrawal. The fix should have *added* $18 (REVERSAL), so the account is off by $18 + $18 = **$36**.
+
+        The `repr()` trick is what surfaces the issue. `print(' REVERSAL')` looks identical to `print('REVERSAL')` to a human reader, but `repr(' REVERSAL')` shows `"' REVERSAL'"` — quotes included — making the leading space unmistakable.
+
+        Common wrong fixes (and why they're wrong):
+
+        - **Adding $36.00 to ACCT-202 after reconciliation.** Hardcodes a one-time correction without fixing the cause. The next CSV with the same data shape will be wrong again.
+        - **Editing `transactions.csv`.** "Fix the data" is a workaround. The bug is that the *loader* doesn't normalize whitespace — your loader should be robust against typical CSV imperfections.
+        - **Changing the REVERSAL arithmetic in `apply_transaction`.** This rewrites the spec to match the bug's symptom.
+        - **Deleting the unknown-kind branch.** That branch exists for a reason (legacy blank types). Removing it would surface a `NameError` for `after`, which is a different problem entirely.
+
+        A more defensive variant of the fix also validates at load time:
+
+        ```python
+        kind = row["type"].strip().upper()
+        if kind not in VALID_KINDS:
+            raise ValueError(f"unknown transaction kind {kind!r} in row {row['id']}")
+        ```
+
+        That would have caught the original bug at *load* time, with a clear message, instead of producing a silently wrong balance.
+
+    tests:
+      - description: "Both ledger tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_ledger.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nThe fix should normalize the `type` field at load time."
+        hints:
+          - title: "Small nudge"
+            text: "Look at line 11 of `transactions.csv` very carefully. What's different about that row's `type` field compared to the others?"
+          - title: "Strategic hint"
+            text: "Set a conditional breakpoint at the start of `apply_transaction` with `tx.account == \"ACCT-202\"`. When paused on T011, watch `repr(tx.kind)`. The `repr()` reveals what `print()` hides."
+          - title: "Spoiler — full fix"
+            text: "Change `kind=row[\"type\"].upper()` to `kind=row[\"type\"].strip().upper()` in `load_transactions`. The leading space on T011 was bypassing all explicit branches in `apply_transaction`."
+
+      - description: "Workaround guard — fix is in load_transactions"
+        command: |
+          source = open('/tutorial/ledger.py').read()
+          assert '.strip()' in source, \
+              "The fix should call `.strip()` on the `type` field somewhere in `load_transactions`. Don't just patch the final balance."
+          # Specifically check the load_transactions area (rough heuristic)
+          lt_block = source[source.find('def load_transactions'):source.find('def apply_transaction')]
+          assert '.strip()' in lt_block, \
+              "Put the `.strip()` inside `load_transactions`, not in `apply_transaction`. The bug is in how data gets loaded, not in how it's processed."
+
+      - description: "Workaround guard — CSV unchanged"
+        command: |
+          source = open('/tutorial/transactions.csv').read()
+          assert 'T011,ACCT-202, REVERSAL,18.00' in source, \
+              "Don't edit the CSV — the bug is in the loader, not the data. Real-world CSVs often have whitespace; your loader should handle it. Revert `transactions.csv`."
+
+      - description: "Workaround guard — apply_transaction arithmetic intact"
+        command: |
+          source = open('/tutorial/ledger.py').read()
+          assert 'tx.kind == "REVERSAL"' in source, \
+              "Don't remove or modify the REVERSAL branch in `apply_transaction`. The bug is in loading, not in the arithmetic."
+          assert 'tx.kind == "WITHDRAWAL"' in source, \
+              "Don't remove the WITHDRAWAL branch. The bug is in loading, not in the arithmetic."
+
+      - description: "Workaround guard — test expectations unchanged"
+        command: |
+          source = open('/tutorial/test_ledger.py').read()
+          assert '"ACCT-202": 7300' in source, \
+              "Don't change the expected balance for ACCT-202 — the test correctly states what the balance *should* be. Revert `test_ledger.py`."
+
+    quiz:
+      title: "Case 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which of these is the **root-cause fix**?
+          type: single
+          options:
+            - "After `reconcile(...)` runs, do `balances[\"ACCT-202\"] += 3600` to correct the off-by-$36 result"
+            - "Edit `transactions.csv` to remove the leading space on row T011"
+            - "In `load_transactions`, change `row[\"type\"].upper()` to `row[\"type\"].strip().upper()`"
+            - "Change the REVERSAL branch in `apply_transaction` to subtract instead of add"
+          correct_index: 2
+          option_feedback:
+            0: "This hardcodes a one-time correction. The next CSV with the same shape will be wrong again. The bug is that the loader doesn't normalize whitespace — that's where the fix belongs."
+            1: "Editing the data hides the symptom for *this* CSV but doesn't fix the loader. Real CSV imports often have stray whitespace; a robust loader strips it."
+            3: "This rewrites the spec to match the bug's symptom. The REVERSAL arithmetic is correct (a reversal cancels a charge — addition). The bug is that the kind field never had a chance to *match* `\"REVERSAL\"`."
+          explanation: |
+            The bug is that the CSV row had a leading space, so `kind` became `' REVERSAL'` instead of `'REVERSAL'`. The fix belongs in `load_transactions` because that's where data flows from external (untrusted) format into internal representation. Strip-and-validate at the boundary, then trust the data inside.
+
+        - question: |
+            Why is `repr(tx.kind)` more useful than `print(tx.kind)` when investigating this bug?
+          type: single
+          options:
+            - "`repr()` runs faster than `print()`"
+            - "`repr()` shows quotes and escape characters around the string, making invisible characters (like leading spaces) visible"
+            - "`print()` doesn't work inside the debugger"
+            - "`repr()` returns an integer, which is easier to compare"
+          correct_index: 1
+          option_feedback:
+            0: "Speed isn't the issue. The two are roughly equivalent in performance for short strings."
+            2: "`print()` works fine in the debugger console. The relevant difference is what each function shows — `repr()` exposes invisible characters that `print()` strips."
+            3: "`repr()` returns a *string*, not an integer. The string includes quotes and escape sequences so you can see characters that would otherwise be invisible."
+          explanation: |
+            `repr('REVERSAL')` returns `\"'REVERSAL'\"` — including the surrounding quotes — while `repr(' REVERSAL')` returns `\"' REVERSAL'\"`. The leading space jumps out because `repr()` shows the string *as a Python literal*, with quotes around its contents. `print()` displays the string's content without delimiters, so leading and trailing whitespace becomes invisible. This is the canonical Python trick for spotting whitespace bugs.
+
+        - question: |
+            You have a 30-iteration loop where one specific iteration produces a wrong result. Which technique most efficiently locates the bad iteration?
+          type: single
+          options:
+            - "Set a normal breakpoint inside the loop and click Continue 30 times"
+            - "Set a conditional breakpoint with a predicate that's true ONLY for the suspicious iteration"
+            - "Add `print(...)` to every line of the function and read the output"
+            - "Comment out lines until the loop produces the right answer"
+          correct_index: 1
+          option_feedback:
+            0: "This works but is exactly the kind of mechanical drudgery the debugger is meant to eliminate. With 30 iterations it's tolerable; with 30,000 it's hopeless."
+            2: "This produces a flood of output you'd have to skim by eye. A conditional breakpoint puts the filtering logic inside the debugger so it stops only on the iteration you care about."
+            3: "This is *tinkering* — random edits to see what changes. It can occasionally land on the answer but it teaches the wrong habit and breaks badly on bigger programs."
+          explanation: |
+            **Conditional breakpoints scale.** They turn the debugger into a filter: only stop when this expression is true. The cost is the same regardless of whether the loop has 30 or 30,000 iterations. This is one of the highest-leverage debugger features and the reason "set a conditional breakpoint" is one of the first moves an experienced debugger reaches for in long-running data-processing code.
+
+
+  # ===========================================================================
+  # STEP 5 — Case 3: Course Waitlist (Temporal Bug, back-in-time)
+  # Source: debugging_case_studies/case3_waitlist_time_travel/ (waitlist.py
+  #   and test_waitlist.py only — trace tooling replaced by the in-browser
+  #   history scrubber).
+  # Pedagogy:
+  #   New technique — back-in-time / history scrubber.
+  #   Historical localization BEFORE line-level localization.
+  #   First-divergence reasoning (research §"Hypothesis-driven localization").
+  #   Bloom's level — Analyze / Evaluate.
+  # ===========================================================================
+  - title: "Case 3 — Course Waitlist (Temporal Bug)"
+    instructions: |
+      > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
+      > 🧠 **Bloom's level:** *Analyze / Evaluate.*
+
+      ### 📂 What you have
+
+      `waitlist.py` simulates two courses (CS201, MATH220) with sample events: students join waitlists, students drop, freed seats get allocated. The stated policy is **FIFO**: the first student to join a full course's waitlist should be the first admitted when a seat opens.
+
+      `test_waitlist.py` has two tests, **one failing**:
+
+      - `test_cs201_waitlist_is_fifo` — fails: enrolled list is wrong.
+      - `test_math220_single_waitlisted_student_gets_open_seat` — passes (only one waitlisted student, so FIFO/LIFO is indistinguishable).
+
+      ### 1. Symptom — read the failure carefully
+
+      Click **Run**. The failing assertion shows expected vs actual enrollment lists. Note them down in your head — this is your destination when scrubbing.
+
+      ### 2. The trick — don't run forward, run **backward**
+
+      Click **Debug** without setting any breakpoints. Let the program run to completion. The debugger will be at the end of execution.
+
+      Now, in the **Variables** tab, expand `state` then `'CS201'` then `enrolled` and `waitlist`. Observe their final (wrong) values.
+
+      ### 3. Scrub backward through history
+
+      Drag the **History** scrubber backward, slowly, while watching the Variables tab. You'll see `enrolled` and `waitlist` change as you rewind through events.
+
+      You're looking for the **first event** (counting from event 1) where `state['CS201'].waitlist` shrinks AND a name moves into `enrolled` that was **not at the front** of the waitlist.
+
+      ### 4. Now narrow to a line
+
+      Once you've identified that event, scrub *forward* to it. Set a breakpoint inside `allocate_next` (around **line 56**, the line that reads `next_student = course.waitlist.pop()`).
+
+      Click **Continue** (or restart with Debug if needed) until execution pauses inside `allocate_next` for the right event.
+
+      ### 5. The smoking gun
+
+      In the **Watch** tab, add:
+
+      - `course.waitlist`
+      - `course.waitlist[0]`
+      - `course.waitlist[-1]`
+      - `next_student` *(after the `pop()` line runs — Step Over once)*
+
+      Step Over the `pop()` line. Compare `next_student` to `course.waitlist[0]` and `course.waitlist[-1]` (from before the pop). Which end did `pop()` take from?
+
+      ### 6. Hypothesis
+
+      One sentence: *"`list.pop()` removes the LAST element. The spec says FIFO — the FIRST element should be admitted first."*
+
+      ### 7. Minimal fix
+
+      One small change in `allocate_next`. (Acceptable: `pop(0)`, or convert `waitlist` to `collections.deque` and use `popleft()`.)
+
+      ### 8. Verify
+
+      Click **Run**. Both waitlist tests must pass.
+
+    files:
+      - path: "waitlist.py"
+        language: "python"
+        content: |
+          """Course waitlist simulator with a deliberately seeded ordering bug."""
+
+          from dataclasses import dataclass, field
+
+
+          @dataclass
+          class CourseState:
+              capacity: int
+              enrolled: list = field(default_factory=list)
+              waitlist: list = field(default_factory=list)
+
+              @property
+              def open_seats(self):
+                  return self.capacity - len(self.enrolled)
+
+
+          @dataclass(frozen=True)
+          class Event:
+              step: int
+              kind: str
+              course: str
+              student: str = None
+
+
+          def initial_state():
+              return {
+                  "CS201": CourseState(capacity=2, enrolled=["Ava Chen", "Ben Ortiz"]),
+                  "MATH220": CourseState(capacity=1, enrolled=["Iris Long"]),
+              }
+
+
+          def sample_events():
+              """Reproducible event stream.
+
+              CS201 policy: students should be admitted from the waitlist in FIFO order.
+              """
+              return [
+                  Event(1, "join_waitlist", "CS201", "Mina Patel"),
+                  Event(2, "join_waitlist", "CS201", "Theo Rios"),
+                  Event(3, "join_waitlist", "CS201", "Jules Kim"),
+                  Event(4, "drop", "CS201", "Ben Ortiz"),
+                  Event(5, "join_waitlist", "MATH220", "Noor Ali"),
+                  Event(6, "join_waitlist", "CS201", "Kai Morgan"),
+                  Event(7, "drop", "MATH220", "Iris Long"),
+                  Event(8, "drop", "CS201", "Ava Chen"),
+                  Event(9, "join_waitlist", "CS201", "Sam Lee"),
+              ]
+
+
+          def apply_event(state, event):
+              course = state[event.course]
+              if event.kind == "join_waitlist":
+                  _handle_join(course, event.student)
+              elif event.kind == "drop":
+                  _handle_drop(event.course, course, event.student)
+              else:
+                  raise ValueError(f"unknown event kind {event.kind!r}")
+
+
+          def _handle_join(course, student):
+              if student in course.enrolled or student in course.waitlist:
+                  raise ValueError(f"duplicate student in course state: {student}")
+
+              if course.open_seats > 0:
+                  course.enrolled.append(student)
+              else:
+                  course.waitlist.append(student)
+
+
+          def _handle_drop(course_name, course, student):
+              if student in course.enrolled:
+                  course.enrolled.remove(student)
+                  allocate_next(course_name, course)
+              elif student in course.waitlist:
+                  course.waitlist.remove(student)
+
+
+          def allocate_next(course_name, course):
+              """Fill open seats from the waitlist."""
+              while course.open_seats > 0 and course.waitlist:
+                  next_student = course.waitlist.pop()
+                  course.enrolled.append(next_student)
+
+
+          def run_events(events=None, state=None):
+              if state is None:
+                  state = initial_state()
+              if events is None:
+                  events = sample_events()
+              for event in events:
+                  apply_event(state, event)
+              return state
+
+      - path: "test_waitlist.py"
+        language: "python"
+        content: |
+          from waitlist import run_events
+
+
+          def test_cs201_waitlist_is_fifo():
+              state = run_events()
+              cs201 = state["CS201"]
+              assert cs201.enrolled == ["Mina Patel", "Theo Rios"]
+              assert cs201.waitlist == ["Jules Kim", "Kai Morgan", "Sam Lee"]
+
+
+          def test_math220_single_waitlisted_student_gets_open_seat():
+              state = run_events()
+              math220 = state["MATH220"]
+              assert math220.enrolled == ["Noor Ali"]
+              assert math220.waitlist == []
+
+    open_file: "waitlist.py"
+    run_file: "test_waitlist.py"
+
+    solution:
+      files:
+        - path: "waitlist.py"
+          language: "python"
+          content: |
+            """Course waitlist simulator — bug fixed (FIFO enforced)."""
+
+            from dataclasses import dataclass, field
+
+
+            @dataclass
+            class CourseState:
+                capacity: int
+                enrolled: list = field(default_factory=list)
+                waitlist: list = field(default_factory=list)
+
+                @property
+                def open_seats(self):
+                    return self.capacity - len(self.enrolled)
+
+
+            @dataclass(frozen=True)
+            class Event:
+                step: int
+                kind: str
+                course: str
+                student: str = None
+
+
+            def initial_state():
+                return {
+                    "CS201": CourseState(capacity=2, enrolled=["Ava Chen", "Ben Ortiz"]),
+                    "MATH220": CourseState(capacity=1, enrolled=["Iris Long"]),
+                }
+
+
+            def sample_events():
+                return [
+                    Event(1, "join_waitlist", "CS201", "Mina Patel"),
+                    Event(2, "join_waitlist", "CS201", "Theo Rios"),
+                    Event(3, "join_waitlist", "CS201", "Jules Kim"),
+                    Event(4, "drop", "CS201", "Ben Ortiz"),
+                    Event(5, "join_waitlist", "MATH220", "Noor Ali"),
+                    Event(6, "join_waitlist", "CS201", "Kai Morgan"),
+                    Event(7, "drop", "MATH220", "Iris Long"),
+                    Event(8, "drop", "CS201", "Ava Chen"),
+                    Event(9, "join_waitlist", "CS201", "Sam Lee"),
+                ]
+
+
+            def apply_event(state, event):
+                course = state[event.course]
+                if event.kind == "join_waitlist":
+                    _handle_join(course, event.student)
+                elif event.kind == "drop":
+                    _handle_drop(event.course, course, event.student)
+                else:
+                    raise ValueError(f"unknown event kind {event.kind!r}")
+
+
+            def _handle_join(course, student):
+                if student in course.enrolled or student in course.waitlist:
+                    raise ValueError(f"duplicate student in course state: {student}")
+
+                if course.open_seats > 0:
+                    course.enrolled.append(student)
+                else:
+                    course.waitlist.append(student)
+
+
+            def _handle_drop(course_name, course, student):
+                if student in course.enrolled:
+                    course.enrolled.remove(student)
+                    allocate_next(course_name, course)
+                elif student in course.waitlist:
+                    course.waitlist.remove(student)
+
+
+            def allocate_next(course_name, course):
+                """Fill open seats from the waitlist (FIFO)."""
+                while course.open_seats > 0 and course.waitlist:
+                    next_student = course.waitlist.pop(0)
+                    course.enrolled.append(next_student)
+
+
+            def run_events(events=None, state=None):
+                if state is None:
+                    state = initial_state()
+                if events is None:
+                    events = sample_events()
+                for event in events:
+                    apply_event(state, event)
+                return state
+      explanation: |
+        The fix is `course.waitlist.pop(0)` instead of `course.waitlist.pop()`. Python's `list.pop()` with no argument removes the **last** element (LIFO / stack behavior). For a FIFO queue you need `pop(0)` to remove the **first** element.
+
+        The history-scrubber technique was the key to localization. The final state (CS201 enrolled = `['Ava Chen', 'Jules Kim']` — wrong) is several events after the *first* bad transition (event 4: drop Ben Ortiz). Stepping forward from the start would have meant inspecting state at every event — the scrubber lets you instead anchor on the wrong final state and rewind backward to the moment things first diverged from the spec.
+
+        For a production-quality version, prefer `collections.deque`:
+
+        ```python
+        from collections import deque
+        # In CourseState: waitlist: deque = field(default_factory=deque)
+        # In allocate_next: next_student = course.waitlist.popleft()
+        ```
+
+        `deque.popleft()` is O(1) where `list.pop(0)` is O(n) (the rest of the list has to shift). At a small scale it doesn't matter, but the bigger win is **readability**: `popleft()` *says* "this is a queue" in a way `pop(0)` doesn't.
+
+        Common wrong fixes (and why they're wrong):
+
+        - **Sorting `waitlist` alphabetically before pop.** This produces deterministic-looking output that happens to match the test by coincidence (Mina, Theo come before Jules alphabetically). It is unrelated to FIFO.
+        - **Special-casing Jules Kim or specific names.** Hardcodes a fix to *this* event stream; any new event ordering breaks again.
+        - **Reordering `sample_events()`.** Editing the input data to match the bug.
+        - **Changing the test's expected lists to LIFO.** Editing the spec to match the bug.
+
+    tests:
+      - description: "Both waitlist tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_waitlist.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nThe fix should make `allocate_next` admit students in FIFO order."
+        hints:
+          - title: "Small nudge"
+            text: "Look at `allocate_next` — specifically the call to `pop()`. Which end of the list does `pop()` with no argument remove from?"
+          - title: "Strategic hint"
+            text: "Set a breakpoint on the `next_student = course.waitlist.pop()` line. When paused, watch `course.waitlist[0]` and `course.waitlist[-1]`. Step over. Which one became `next_student`? Which one *should* have, given FIFO policy?"
+          - title: "Spoiler — full fix"
+            text: "Change `course.waitlist.pop()` to `course.waitlist.pop(0)` in `allocate_next`. (Or better: use `collections.deque` and `popleft()` — but `pop(0)` is enough to make tests pass.)"
+
+      - description: "Workaround guard — fix is FIFO removal in allocate_next"
+        command: |
+          source = open('/tutorial/waitlist.py').read()
+          alloc_block = source[source.find('def allocate_next'):source.find('def run_events')]
+          assert 'pop(0)' in alloc_block or 'popleft' in alloc_block, \
+              "The fix should change `pop()` to `pop(0)` (or use `deque.popleft()`) inside `allocate_next`. That's the line where FIFO policy lives."
+
+      - description: "Workaround guard — events unchanged"
+        command: |
+          source = open('/tutorial/waitlist.py').read()
+          assert 'Event(1, "join_waitlist", "CS201", "Mina Patel"),' in source, \
+              "Don't reorder `sample_events()` — the events represent real student actions. Revert the event list."
+          assert 'Event(3, "join_waitlist", "CS201", "Jules Kim"),' in source, \
+              "Don't change the event stream. The bug is in `allocate_next`, not the events."
+
+      - description: "Workaround guard — test expectations unchanged"
+        command: |
+          source = open('/tutorial/test_waitlist.py').read()
+          assert '["Mina Patel", "Theo Rios"]' in source, \
+              "Don't change the expected enrolled list — FIFO is the spec. Revert `test_waitlist.py`."
+          assert '["Jules Kim", "Kai Morgan", "Sam Lee"]' in source, \
+              "Don't change the expected waitlist — FIFO is the spec. Revert `test_waitlist.py`."
+
+      - description: "Workaround guard — no alphabetical sort hack"
+        command: |
+          source = open('/tutorial/waitlist.py').read()
+          alloc_block = source[source.find('def allocate_next'):source.find('def run_events')]
+          assert 'sort' not in alloc_block.lower(), \
+              "Don't sort the waitlist alphabetically — the test happens to be alphabetical by coincidence, but the spec is FIFO (insertion order), not alphabetical."
+
+      - description: "Workaround guard — _handle_join still appends"
+        command: |
+          source = open('/tutorial/waitlist.py').read()
+          join_block = source[source.find('def _handle_join'):source.find('def _handle_drop')]
+          assert 'course.waitlist.append(student)' in join_block, \
+              "`_handle_join` should still APPEND new waitlisted students to the end. The bug was on the *removal* side (allocate_next), not the *insertion* side."
+
+    quiz:
+      title: "Case 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            For a Python list `xs = ['a', 'b', 'c', 'd']`, what does `xs.pop()` return, and what is `xs` afterward?
+          type: single
+          options:
+            - "Returns `'a'`; `xs` becomes `['b', 'c', 'd']`"
+            - "Returns `'d'`; `xs` becomes `['a', 'b', 'c']`"
+            - "Returns the entire list; `xs` becomes `[]`"
+            - "Raises an error — `pop()` requires an index"
+          correct_index: 1
+          option_feedback:
+            0: "That would be `xs.pop(0)`, which removes from the front. With no argument, `pop()` removes from the end."
+            2: "`pop` removes a single element, not the whole list. For a single-element list, that element happens to *be* the whole list, but in general only one element is returned."
+            3: "`pop()` works without an argument — it defaults to `-1`, the last element. `pop(0)` and `pop(-1)` are both valid."
+          explanation: |
+            `list.pop()` with no argument removes and returns the **last** element. This is LIFO (stack) behavior. For FIFO (queue) behavior, use `pop(0)` (or `collections.deque.popleft()` for O(1) performance).
+
+        - question: |
+            Which of these is the **correct** fix to enforce FIFO admission policy?
+          type: single
+          options:
+            - "Sort `course.waitlist` alphabetically before calling `pop()`"
+            - "Special-case Jules Kim and Mina Patel in `allocate_next`"
+            - "Change `course.waitlist.pop()` to `course.waitlist.pop(0)` in `allocate_next`"
+            - "Reorder `sample_events()` so Jules Kim joins last"
+          correct_index: 2
+          option_feedback:
+            0: "Alphabetical order happens to match FIFO order in this specific test by coincidence (Mina, Theo come before Jules). Change one student's name and the test breaks. The spec is FIFO (insertion order), not alphabetical — these are different concepts."
+            1: "Hardcoding student names is the textbook *symptom-patch* anti-pattern. The next event stream with different names breaks again. The bug isn't about which students; it's about which *end* of the list is admitted first."
+            3: "Editing the input data to match the bug is a workaround. Real registrar systems can't reorder real student actions to make their code happy."
+          explanation: |
+            The bug is in *how a student is removed from the waitlist*, not in any of the data. `pop()` removes from the back; `pop(0)` removes from the front. FIFO requires removing from the front.
+
+        - question: |
+            You discover the symptom (CS201 enrolls the wrong students) at the **end** of the program, but the cause is in **event 4** (drop Ben Ortiz, which triggers `allocate_next`). Which technique most directly localizes the bug?
+          type: single
+          options:
+            - "Step from event 1, watching state after each event, until something looks wrong"
+            - "Set a breakpoint on the failing test's assertion and inspect the final state"
+            - "Run to completion, then drag the History scrubber backward to find the first event where state diverged from the spec"
+            - "Add `print(state)` after every event and read the output"
+          correct_index: 2
+          option_feedback:
+            0: "Forward stepping works but is wasteful — events 1, 2, 3 produce no symptom. You'd inspect them anyway because you don't know which event is the bad one until you reach it. Backward navigation lets you anchor on the *known* wrong final state and rewind to the divergence."
+            1: "The final state inspection only confirms the symptom you already knew about (the test failed). It doesn't help localize *which event* caused it."
+            3: "Adding prints is a viable fallback when no time-travel debugger is available. With one available, scrubbing is faster, leaves no print debris in the code, and lets you skim 9 snapshots in seconds."
+          explanation: |
+            **Back-in-time / history-scrubbing is built for exactly this bug shape.** When the symptom appears later than the cause, scrubbing backward from the symptom — instead of stepping forward from the start — directly walks you to the divergence point. Forward stepping spends time on events that produced no observable change.
+
+        - question: |
+            *(Bonus — code communication.)* Which choice best **communicates** that a list is being used as a FIFO queue?
+          type: single
+          options:
+            - "`my_list.pop(0)` (Python `list`)"
+            - "`my_deque.popleft()` (`collections.deque`)"
+            - "`my_list[0]; del my_list[0]`"
+            - "`heapq.heappop(my_heap)`"
+          correct_index: 1
+          option_feedback:
+            0: "It works, but `pop(0)` doesn't tell the next reader \"queue.\" Many lists in real code use `pop(0)` for non-queue reasons. The reader has to infer intent from context."
+            2: "Functionally equivalent but harder to read. `popleft()` says queue in one word."
+            3: "`heapq` is a priority queue, not a FIFO queue. Order is by *priority*, not insertion."
+          explanation: |
+            `collections.deque.popleft()` is the idiomatic, readable choice. It tells the next reader: *this is a FIFO queue*. `list.pop(0)` works but doesn't communicate intent (and is O(n) for large lists). For a debugging tutorial, the takeaway is broader: **fixes that document intent are easier to get right and easier to maintain** than fixes that merely produce the right output.
+
+
+  # ===========================================================================
+  # STEP 6 — Interleaved Technique-Selection Drill
+  # Pedagogy:
+  #   Interleaving — mixed scenarios force discrimination of bug families.
+  #   Retrieval practice — quiz-only step, no editing, anchored on judgment.
+  #   Anti-tinkering — explicit prompt about what to do when stuck.
+  #   Bloom's level — Analyze.
+  # ===========================================================================
+  - title: "Triage Drill — Pick the Right Technique"
+    instructions: |
+      > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families. The cues that tell you which technique to reach for are the same cues that distinguish a confident debugger from a flailing one.
+      > 🧠 **Bloom's level:** *Analyze.*
+
+      ### 🧭 Refresher
+
+      | Bug structure | Best first move |
+      |---|---|
+      | Boundary / off-by-one | Ordinary breakpoint + watch the boundary expression |
+      | Bug fires for one item in a long stream | Conditional breakpoint with a discriminating predicate |
+      | Symptom appears later than the cause | Run to completion, scrub backward, then breakpoint on the suspected event |
+      | Aliasing / shared-state surprise | Inspect `oid` badges in Variables tab |
+      | Failure not reproducing | Test design problem first — write a discriminating test |
+      | Stuck after >15 minutes of edits | **Stop. Write down the failure description.** This is the anti-tinkering move. |
+
+      ### 📝 Drill
+
+      Below is a knowledge check with several scenarios, all interleaved. For each, pick the technique whose *cue structure* matches the scenario. Wrong answers come with feedback explaining why a different technique would be a worse fit *for that specific scenario*.
+
+      Pass threshold: **0.85**. Aim higher than usual — the discrimination skill is the whole point.
+
+    files:
+      - path: "notes.txt"
+        language: "plaintext"
+        content: |
+          This step is a quiz only. No code to edit.
+
+          Take your time on each scenario — the goal is matching cues to
+          techniques, not memorizing pairs.
+
+    open_file: "notes.txt"
+
+    require_tests: false
+
+    solution:
+      explanation: |
+        There's no code to fix here. The point of the step is the quiz: noticing what *cue* in a bug description tells you which technique to reach for. Cues to internalize:
+
+        - "wrong by an exact amount" / "off by one" → boundary, single breakpoint + watches.
+        - "long stream / many iterations / processes thousands" → conditional breakpoint or filtered logging.
+        - "final state wrong but events seemed fine" / "symptom appears late" → back-in-time scrubbing.
+        - "two variables changed when only one should have" / "shared state" → aliasing — check `oid`.
+        - "intermittent" / "passes locally fails on CI" → reproducibility problem first.
+        - "20 minutes of edits, no progress" → stop, write down the failure. Don't keep tinkering.
+
+    quiz:
+      title: "Debugging Triage Drill"
+      min_score: 0.85
+      shuffle: true
+      questions:
+
+        - question: |
+            A function processes 50,000 log lines and produces a wrong total. You've confirmed the bug is consistent run-to-run. Which technique most efficiently localizes it?
+          type: single
+          options:
+            - "Set a normal breakpoint inside the loop and step through, watching the running total"
+            - "Set a conditional breakpoint that pauses only when the running total exceeds the maximum plausible value (or whatever invariant is broken)"
+            - "Add print statements after every line in the function and read the 50,000 lines of output"
+            - "Restart the program with the debugger attached and just hope it pauses at the right place"
+          correct_index: 1
+          option_feedback:
+            0: "Stepping through 50,000 iterations is exactly the kind of work the debugger should save you. With a conditional, the debugger pauses only on the iteration of interest."
+            2: "Reading 50,000 lines by eye is human-impossible. If you must use prints, filter them with a predicate so only the relevant ones print — at which point you've reinvented a conditional breakpoint, more clumsily."
+            3: "Hope is not a debugging strategy. The debugger is a tool with controls; use them deliberately."
+          explanation: |
+            Long streams want **conditional** breakpoints. The condition is whatever invariant you suspect is broken (`running_total > 1e9`, `line.startswith('ERROR')`, etc.). The debugger filters; you only see the iterations that matter.
+
+        - question: |
+            A recursive function returns the wrong answer for one specific input. The function is small (12 lines) and you have a clear test case that reproduces it. Which technique fits best?
+          type: single
+          options:
+            - "Conditional breakpoint with a complex predicate"
+            - "Back-in-time scrubbing of the entire program execution"
+            - "Ordinary breakpoint at the top of the function plus a Watch expression on the parameter and any boundary expression"
+            - "Add 30 print statements to make sure no detail is missed"
+          correct_index: 2
+          option_feedback:
+            0: "A conditional breakpoint is overkill here — the function is small and the input is specific. An ordinary breakpoint plus stepping plus the call stack gives you everything you need."
+            1: "Back-in-time scrubbing shines when the symptom appears far from the cause. Here, the function is 12 lines and the symptom is in the return value — it's not a temporal-distance problem."
+            3: "Print debugging works but is heavyweight for a 12-line function. Ordinary breakpoints + watches give you the same information without modifying the source."
+          explanation: |
+            For small, well-localized buggy functions, **ordinary breakpoint + step + watch + call stack** is the simplest and fastest combination. Reach for fancier tools (conditional breakpoints, back-in-time) only when the simpler tool is genuinely insufficient.
+
+        - question: |
+            Final cart total is wrong; a discount appears to have been applied to the wrong line item. The cart processed 8 events (add item, apply coupon, etc.) and the wrong-line discount happened somewhere in the middle. Which technique fits best?
+          type: single
+          options:
+            - "Set a conditional breakpoint on the discount-application line that pauses if the wrong line is being modified"
+            - "Run to completion, then scrub the History scrubber backward to find the first event where the discount went to the wrong line"
+            - "Use `git bisect` on the cart's commit history"
+            - "Step forward through every event from the start"
+          correct_index: 1
+          option_feedback:
+            0: "This works *if* you already know which expression characterizes 'wrong line.' Often you don't — that's exactly what scrubbing helps you discover. Once scrubbing has identified the suspicious moment, *then* a breakpoint can pinpoint it."
+            2: "`git bisect` finds the *commit* that introduced a regression. Useful for a *different* class of debugging problem (a bug that worked before some commit). It's not the right tool when you have one buggy version and want to know *which event* in a single run caused the symptom."
+            3: "Forward stepping through 8 events is fine in a pinch but wasteful — events 1, 2, 3 likely produced correct partial state. Anchoring on the wrong final state and rewinding is faster."
+          explanation: |
+            **Back-in-time / scrubbing** is the right first move when symptom and cause are temporally distant within a single run. After scrubbing localizes the suspicious event, an ordinary breakpoint can give you line-level precision.
+
+        - question: |
+            A function has two parameters that should be independent. After running, you find that modifying one of them mysteriously changes the other. Which technique fits best?
+          type: single
+          options:
+            - "Add print statements to track every modification"
+            - "Set a conditional breakpoint on every line that touches either parameter"
+            - "Inspect the `oid` badges in the Variables tab — if both names share the same `oid`, they're the same object in memory"
+            - "Use back-in-time scrubbing"
+          correct_index: 2
+          option_feedback:
+            0: "Print debugging is a fallback. The debugger has dedicated UI for spotting aliasing — use it."
+            1: "Brute force, and you'll discover the same answer the `oid` badge tells you in one glance."
+            3: "Scrubbing tells you *when* state diverged. The `oid` badge tells you *why* (they're the same object). For aliasing specifically, `oid` is the more direct cue."
+          explanation: |
+            Mysterious co-mutation is the signature of **aliasing**. The most efficient first move is checking the Variables tab: if two names share an `oid`, they reference the same object, and modifying one will appear to "modify" the other. The classic Python instance is mutable default arguments — exactly what you saw in Step 2's `register_score`.
+
+        - question: |
+            You've spent 20 minutes setting and clearing breakpoints, making small edits, and rerunning tests. Nothing has worked, and you're starting to feel frustrated. What's the right next move?
+          type: single
+          options:
+            - "Push through — debugging always feels this way; just keep iterating"
+            - "Restart the file from scratch with a fresh implementation"
+            - "Stop. Write down — in plain words — the symptom (expected vs actual) and what hypotheses you've ruled out so far. Then re-pick a technique"
+            - "Ask a teammate to fix it for you"
+          correct_index: 2
+          option_feedback:
+            0: "This is the *tinkering* habit research repeatedly identifies as unproductive. It feels like progress because edits keep happening, but the edits aren't grounded in evidence. Twenty minutes of unfounded edits commonly produces *more* bugs, not fewer."
+            1: "A rewrite occasionally helps for tiny scripts but is overkill here. The reason the bug is hard isn't because the code is broken structurally — it's because you don't have a clear hypothesis. Address the hypothesis problem first."
+            3: "Asking is a *follow-up* move. Before that, externalize what you know. The act of writing down the symptom, your hypotheses, and what you've ruled out often reveals the next move *to you*. If it doesn't, you now have a clear question to ask."
+          explanation: |
+            **Tinkering is the antithesis of debugging.** When the cycle has stalled, the right move is to externalize: write down the failure precisely, list hypotheses you've ruled out (and *how*), and re-pick a technique deliberately. Murphy and colleagues' "debugging form" research found that simply forcing this articulation helped students solve bugs they otherwise would have escalated to staff.
+
+        - question: |
+            A test passes locally on your laptop but fails on the autograder. You've reproduced the failure on the autograder twice. What's the most useful first move?
+          type: single
+          options:
+            - "Set a conditional breakpoint inside the function — clearly the issue is data-dependent"
+            - "Drag the History scrubber backward — clearly the symptom appears late"
+            - "First, find a way to reproduce the failure locally. Without local reproduction, you can't use any debugger technique productively"
+            - "Email the instructor for an autograder log"
+          correct_index: 2
+          option_feedback:
+            0: "A conditional breakpoint can't help if you can't reproduce the bug locally — the breakpoint never fires."
+            1: "Same problem — scrubbing requires running the program; if it doesn't fail locally, you have nothing to scrub through."
+            3: "An autograder log is useful, but the larger question is *why* environments differ. Sometimes the answer is OS, Python version, locale, or random seed. Reproducing locally is the necessary first step before any other technique becomes useful."
+          explanation: |
+            **Reproducibility is upstream of every debugging technique.** A bug you can't reproduce is a bug you can't debug — none of breakpoints, scrubbing, or watches help if the failure isn't in front of you. The first move is to find what differs between environments (Python version? OS? data? seed?) and either fix the discrepancy or simulate the autograder's environment locally.
+
+        - question: |
+            A test that previously passed now fails after a change you just made. The previous test still passes. What does this tell you?
+          type: single
+          options:
+            - "You introduced a regression. The bug is in the change you just made; revert and re-apply more carefully"
+            - "The test was wrong all along; update its expected value"
+            - "You should add `time.sleep(1)` to make the test more deterministic"
+            - "You should ignore this — you're focused on the previously-failing test"
+          correct_index: 0
+          option_feedback:
+            1: "If the test previously passed and the only change is yours, the test isn't suddenly wrong — the test caught a real regression. Updating the expected value is a workaround that hides the regression."
+            2: "Sleeps mask race conditions, but they don't fix logic regressions. Adding sleeps to make tests pass is a known anti-pattern."
+            3: "Ignoring a regression because you're focused elsewhere is exactly how regressions ship to production. Fix it now while the change is fresh in your head."
+          explanation: |
+            A previously-passing test that newly fails after your change is a **regression** — your change broke a behavior that was correct. Revert and re-apply more carefully (smaller change, more thought). This is exactly why "verify means rerun the **whole** suite" — to catch regressions, not just confirm the one fix.
+
+        - question: |
+            Which of these counts as **evidence** in the debugging cycle?
+          type: multiple
+          options:
+            - "A specific value of a variable observed at a specific line, e.g., `i = 1` at the start of the loop"
+            - "A failing test's exact assertion message"
+            - "A vague hunch that 'something feels off about the loop'"
+            - "A `repr()` of a string showing a hidden whitespace character"
+          correct_indices: [0, 1, 3]
+          option_feedback:
+            2: "A hunch is a *seed for a hypothesis*, not evidence. Evidence is observable, specific, and reproducible. Until the hunch is converted to a discriminating test or observation, it's not yet evidence."
+          explanation: |
+            **Evidence is observable, specific, and reproducible.** Variable values at specific lines, exact failure messages, and `repr()` outputs all qualify. Hunches are valuable as the *starting point* for hypothesis generation, but they don't yet count as evidence — they need to be tested against observations before they earn that status. Distinguishing the two clearly is one of the highest-leverage moves an experienced debugger makes.
+
+
+  # ===========================================================================
+  # STEP 7 — Transfer Challenge + Reflection
+  # Pedagogy:
+  #   Transfer — same conceptual bug family as Case 2 (data-representation),
+  #     different surface code. Tests that the student can apply the cycle
+  #     without scaffolded prompts.
+  #   Faded scaffolds — only the debugging-log template; no step-by-step.
+  #   Self-monitoring — final reflection question.
+  #   Bloom's level — Apply / Create / Evaluate.
+  # ===========================================================================
+  - title: "Transfer Challenge — You're On Your Own"
+    instructions: |
+      > 🎯 **Goal:** Find and fix a bug in unfamiliar code without step-by-step prompts. You pick the technique. You write the debugging log.
+      > 🧠 **Bloom's level:** *Apply / Create.*
+
+      ### 📂 What you have
+
+      A small program: `tagger.py` reads a file `articles.txt` where each line is `"Title|tag"` and returns the most common tag across all articles.
+
+      Two pytest tests in `test_tagger.py`:
+
+      - `test_python_is_most_common` — fails (returns the wrong value).
+      - `test_no_whitespace_in_result` — fails (the result contains whitespace).
+
+      That's all the framing you get. **No numbered scaffold this time.**
+
+      ### 📋 Your debugging log
+
+      As you work, fill in the log mentally. After your fix, you'll articulate it through the final quiz.
+
+      ```
+      1. Failure (one sentence, expected vs actual): ...
+      2. Hypothesis (before any debugger move): ...
+      3. Technique chosen and why: ...
+      4. Evidence found (one observation that confirmed or killed the hypothesis): ...
+      5. Minimal fix (line and change): ...
+      6. Verification (which tests now pass that didn't before): ...
+      ```
+
+      ### 🚨 Resist the obvious
+
+      You will recognize the bug family. **Don't pattern-match without evidence** — the *shape* may resemble something you've seen, but verify with the debugger before assuming. Fast pattern-matching is what produces "the suspicious line is probably the bug" wrong fixes.
+
+      ### Hint of last resort
+
+      If you genuinely stall after 10 minutes, the test output already tells you what `repr(...)` would tell you on a paused breakpoint. Re-read the failing assertion of `test_no_whitespace_in_result`.
+
+    files:
+      - path: "tagger.py"
+        language: "python"
+        content: |
+          """Article tag analyzer.
+
+          Reads a file where each line is `"Title|tag"`, returns the most
+          common tag (uppercased) across all articles.
+
+          There is a bug. Both tests in test_tagger.py fail.
+          """
+
+          from collections import Counter
+
+
+          def top_tag(articles_path):
+              counts = Counter()
+              with open(articles_path) as f:
+                  for line in f:
+                      title, tag = line.split("|", 1)
+                      counts[tag.upper()] += 1
+              return counts.most_common(1)[0][0]
+
+      - path: "articles.txt"
+        language: "plaintext"
+        content: |
+          Why Python rocks|python
+          JavaScript closures|javascript
+          Decorators in Python|python
+          Async Python explained|python
+          Rust intro|rust
+
+      - path: "test_tagger.py"
+        language: "python"
+        content: |
+          from tagger import top_tag
+
+
+          def test_python_is_most_common():
+              # Three of five articles are tagged "python", so PYTHON should win.
+              assert top_tag('/tutorial/articles.txt') == "PYTHON"
+
+
+          def test_no_whitespace_in_result():
+              result = top_tag('/tutorial/articles.txt')
+              assert result == result.strip(), \
+                  f"Result {result!r} contains whitespace — tags should be normalized at load time."
+
+    open_file: "tagger.py"
+    run_file: "test_tagger.py"
+
+    solution:
+      files:
+        - path: "tagger.py"
+          language: "python"
+          content: |
+            """Article tag analyzer — fixed."""
+
+            from collections import Counter
+
+
+            def top_tag(articles_path):
+                counts = Counter()
+                with open(articles_path) as f:
+                    for line in f:
+                        title, tag = line.split("|", 1)
+                        counts[tag.strip().upper()] += 1
+                return counts.most_common(1)[0][0]
+      explanation: |
+        **The bug** is that `for line in f` yields each line *with its trailing newline included*. So `tag` becomes `'python\n'`, and `tag.upper()` becomes `'PYTHON\n'`. The Counter accumulates under that key, and the function returns `'PYTHON\n'` — which the tests, expecting `'PYTHON'`, correctly reject.
+
+        **The fix** is `tag.strip().upper()` (or call `.rstrip()` / `.rstrip('\n')` if you want to be more specific). Strip-and-validate at the boundary is the same pattern as Case 2's ledger fix.
+
+        **The case-isomorphism is intentional.** This bug is the same family as Case 2 — input data has invisible whitespace; the bug fires *because* normalization wasn't applied at load time; the fix is in the loading layer. The surface is completely different (file iteration with `for line in f` vs `csv.DictReader`), but the cycle and the cure are the same. That's *transfer* — the same mental model applies despite a different surface.
+
+        Notice what makes this bug family so common in real codebases: every layer that reads external data is a possible source. CSV imports. JSON parses. HTTP request bodies. Database VARCHAR columns. User text input. The defensive habit is *strip-and-normalize at the boundary*; once data is inside your domain, trust it.
+
+    tests:
+      - description: "Both tagger tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_tagger.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nNormalize the tag at load time."
+        hints:
+          - title: "Small nudge"
+            text: "Set a breakpoint inside the loop, click Debug, and inspect `repr(tag)` in the Variables/Watch tab. What's there that you can't see by just `print(tag)`?"
+          - title: "Strategic hint"
+            text: "When you iterate `for line in f`, each `line` includes its trailing newline. After `line.split('|', 1)`, the trailing `\\n` ends up on `tag`. The fix belongs in the loader, *before* `tag.upper()`."
+          - title: "Spoiler — full fix"
+            text: "Change `counts[tag.upper()] += 1` to `counts[tag.strip().upper()] += 1`. Same pattern as Case 2's fix to `load_transactions`."
+
+      - description: "Workaround guard — fix is in tagger.py with strip"
+        command: |
+          source = open('/tutorial/tagger.py').read()
+          assert '.strip()' in source or '.rstrip(' in source, \
+              "The fix should call `.strip()` (or `.rstrip()`) on `tag` before counting. Don't post-process the return value."
+
+      - description: "Workaround guard — articles.txt unchanged"
+        command: |
+          source = open('/tutorial/articles.txt').read()
+          assert 'Why Python rocks|python' in source and 'Async Python explained|python' in source, \
+              "Don't edit `articles.txt` — real article exports often have stray whitespace; your code should handle it. Revert the data file."
+
+      - description: "Workaround guard — test expectations unchanged"
+        command: |
+          source = open('/tutorial/test_tagger.py').read()
+          assert '== "PYTHON"' in source, \
+              "Don't change the test's expected value to match the bug. Revert `test_tagger.py`."
+
+    quiz:
+      title: "Transfer & Reflection"
+      min_score: 0.8
+      shuffle: false
+      questions:
+
+        - question: |
+            Which of the three earlier cases is this bug **most structurally similar to**?
+          type: single
+          options:
+            - "Case 1 (Maze Pathfinder, boundary bug in `_dfs`)"
+            - "Case 2 (Ledger Reconciliation, hidden-whitespace in CSV import)"
+            - "Case 3 (Course Waitlist, FIFO vs LIFO ordering)"
+            - "None of them — this is a totally new bug family"
+          correct_index: 1
+          option_feedback:
+            0: "Case 1 was a *boundary / off-by-one* bug — `>=` rejecting an exact-budget path. This bug isn't about boundaries; it's about input data having a hidden character (a `\\n`) that broke equality with the expected key."
+            2: "Case 3 was about *order of admission* (FIFO vs LIFO). This bug isn't about ordering; the bug fires regardless of when the offending line is processed."
+            3: "Surface looks different (file iteration vs CSV) but the *family* is identical: input data carries a stray whitespace character, normalization is missing at the loading layer, fix is `strip()` at the boundary. This is exactly Case 2."
+          explanation: |
+            This bug is the **same family as Case 2** in different clothes. Both: external data (CSV row in Case 2, file line here) carries a stray whitespace character; the loading code doesn't normalize it; the fix is to strip-and-validate at the data boundary. Recognizing isomorphism across surfaces is what *transfer* means in the research literature.
+
+        - question: |
+            Be honest with yourself. Before working through this tutorial, would you have found this bug by:
+          type: single
+          options:
+            - "Tinkering — randomly trying `.strip()` and `.replace('\\n', '')` and other edits until something worked"
+            - "Adding `print(tag)` everywhere — but the newline would have been invisible without `repr`"
+            - "Hypothesis-driven debugging — set a breakpoint, inspect `repr(tag)`, form the hypothesis, fix at the load boundary"
+            - "I genuinely don't know — depends on the day"
+          correct_index: 2
+          option_feedback:
+            0: "Tinkering is the habit research most consistently identifies as unproductive. The fact that it occasionally lands on `.strip()` doesn't justify it — most of the time it produces *more* bugs and reinforces a non-strategic mental model."
+            1: "`print(tag)` would have shown `python` for the python lines. The trailing `\\n` would have been printed as a literal newline (the next print appears on a new line) but you might not consciously notice. `repr()` makes it impossible to miss."
+            3: "This option models the deliberate process of the tutorial. It's also longer in setup but faster overall — the fix gets identified once, applied minimally, and verified, with no need to undo a sequence of failed tinkering edits."
+            4: "Honest answer. The tutorial isn't here to make you claim you've internalized the cycle in 90 minutes — it's here to give you a vocabulary for noticing which mode you're in. That's the win."
+          explanation: |
+            There is no *graded* correct answer here — but noticing which mode you defaulted to before the tutorial and which mode you used during it is itself the metacognitive skill the literature recommends. If you used hypothesis-driven debugging this time, you've taken the most important step. If you tinkered, you now know the name for it and what to do differently next time.
+
+        - question: |
+            *(Final retrieval — spaced from Step 1.)* Place these debugging-cycle stages in order:
+
+            A. Verify
+            B. Symptom
+            C. Hypothesis
+            D. Fix
+            E. Evidence
+            F. Localize
+            G. Predict
+          type: single
+          options:
+            - "B → G → E → C → F → D → A"
+            - "B → D → A → C → E → F → G"
+            - "G → B → C → E → F → D → A"
+            - "B → E → G → C → F → D → A"
+          correct_index: 0
+          option_feedback:
+            1: "Fix and Verify before Hypothesis is the *tinkering* anti-cycle: edit, run, hope, repeat. The whole point of hypothesis-driven debugging is that the fix comes near the end of the process."
+            2: "Predict before Symptom inverts the order. You can't predict what *should* happen until you know what *is* happening. The Symptom is what triggers the cycle in the first place."
+            3: "Predict before Evidence is closer to right but *very* close to wrong. Predict comes from understanding the spec; Evidence comes from running the program. The order is: Symptom (run) → Predict (what *should* the state be) → Evidence (collect actual state) → Hypothesis."
+          explanation: |
+            **Symptom → Predict → Evidence → Hypothesis → Localize → Fix → Verify.** The order matters: each stage produces what the next stage needs. Skipping or reordering creates known anti-patterns: tinkering (Fix-first), local verification (skipping Verify of the full suite), or pattern-matching wrong fixes (Localize without Hypothesis).
+
+            🪞 **Final reflection (no graded answer):** *Which stage is hardest for you to slow down on?* If your honest answer is "Fix" — i.e., you skip ahead to editing — you're in good company. That's the most common failure mode. The remedy is not willpower; it's the explicit form of the cycle plus practice. You just did three rounds of practice.

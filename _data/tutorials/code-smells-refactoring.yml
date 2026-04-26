@@ -3,6 +3,7 @@ description: "Identify smells in real Python code and apply named refactorings s
 
 backend: pyodide
 debugger: true
+pytest: true
 
 # Show source code (left) and tests (right) side by side. Files prefixed
 # `test_` auto-route to the right pane; everything else lands on the left.
@@ -252,9 +253,6 @@ steps:
               )
               assert total == pytest.approx(8.4)
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
     open_file: "test_royalty.py"
@@ -330,9 +328,6 @@ steps:
                 )
                 assert total == pytest.approx(8.4)
 
-            if __name__ == "__main__":
-                import sys
-                pytest.main([sys.argv[0], "-v"])
           language: "python"
       explanation: |
         **Two halves of the lesson.**
@@ -769,9 +764,6 @@ steps:
               assert track_global.play_count == 3
               assert premium_user.daily_plays == 3
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
     open_file: "player.py"
@@ -1281,9 +1273,6 @@ steps:
               controller: PlayController = PlayController(gates)
               assert controller.decide(state) == expected
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
       - path: "truth_table.md"
@@ -1386,9 +1375,6 @@ steps:
                 assert controller.decide(state) == expected
 
 
-            if __name__ == "__main__":
-                import sys
-                pytest.main([sys.argv[0], "-v"])
           language: "python"
 
         - path: "truth_table.md"
@@ -1845,9 +1831,6 @@ steps:
               handler: SearchHandler = SearchHandler(library)
               assert handler.search("year", "2020") == []
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
       - path: "memo.md"
@@ -2335,9 +2318,6 @@ steps:
               assert catalog.library[1]["bpm"] == 140
 
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
     open_file: "track.py"
@@ -2482,9 +2462,6 @@ steps:
                 assert catalog.library[1]["bpm"] == 140
 
 
-            if __name__ == "__main__":
-                import sys
-                pytest.main([sys.argv[0], "-v"])
           language: "python"
       explanation: |
         **The clump becomes a class.** `AlbumInfo` is a small `@dataclass` that names the relationship between the four album-related fields. `add_track`'s signature shrinks from 8 parameters to 5 — and the 5 are now all *different* (no clump remains).
@@ -2822,9 +2799,6 @@ steps:
               assert ui.format_remaining(track) == "0:01 remaining"
 
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
       - path: "memo.md"
@@ -2954,9 +2928,6 @@ steps:
                 assert ui.format_remaining(track) == "0:01 remaining"
 
 
-            if __name__ == "__main__":
-                import sys
-                pytest.main([sys.argv[0], "-v"])
           language: "python"
 
         - path: "memo.md"
@@ -3507,9 +3478,6 @@ steps:
               assert len(runner.invoices()) == 2
 
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
     open_file: "streaming_app.py"
@@ -3671,9 +3639,6 @@ steps:
                 assert len(runner.invoices()) == 2
 
 
-            if __name__ == "__main__":
-                import sys
-                pytest.main([sys.argv[0], "-v"])
           language: "python"
 
         - path: "memo.md"
@@ -4234,9 +4199,6 @@ steps:
                   "playing audiobook a1 at 1.5x speed",
               ]
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
     open_file: "tracks.py"
@@ -5118,9 +5080,6 @@ steps:
                   importer.import_to_queue([_track_record(title="")])
 
 
-          if __name__ == "__main__":
-              import sys
-              pytest.main([sys.argv[0], "-v"])
         language: "python"
 
       - path: "memo.md"
