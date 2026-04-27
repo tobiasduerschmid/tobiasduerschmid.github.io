@@ -504,15 +504,45 @@ layout: framework
   </button>
 
   <h2>Where else does this site store data?</h2>
-  <p>
-    For full transparency: the site uses no <code>sessionStorage</code> persistently
-    (only briefly during a one-time migration of the reduced-motion preference into
-    <code>localStorage</code>) and no <code>IndexedDB</code>. The only third-party
-    requests come from the public CDNs that serve fonts, FontAwesome icons, jQuery,
-    Bootstrap, and Mermaid &mdash; none of which we send any user data to.
-    Cookies set on a different origin (such as YouTube embeds) are governed by
-    those services' own privacy policies and cannot be controlled from this page.
-  </p>
+  <p>For full transparency, here is everything else the site touches that <em>could</em> be considered storage &mdash; with what's actually used:</p>
+  <ul>
+    <li>
+      <strong><code>sessionStorage</code></strong> &mdash; not used persistently. A single one-time migration step
+      reads and clears a legacy <code>prefersReducedMotion</code> entry to promote it into
+      <code>localStorage</code>; nothing else is written to <code>sessionStorage</code>.
+    </li>
+    <li>
+      <strong><code>IndexedDB</code></strong>, <strong>WebSQL</strong>, <strong>Cache API</strong>
+      (<code>caches.open</code>), <strong>File System Access API</strong>
+      (<code>showDirectoryPicker</code>, <code>showSaveFilePicker</code>) &mdash; <strong>not used</strong>. No data is stored here at all.
+    </li>
+    <li>
+      <strong>Service worker</strong> &mdash; tutorials that need cross-origin isolation
+      (e.g. WebContainers-backed exercises) register
+      <a href="{{ '/coi-serviceworker.js' | relative_url }}"><code>coi-serviceworker.js</code></a>,
+      whose <em>only</em> job is to inject <code>COOP</code> / <code>COEP</code> response headers.
+      It does not cache responses, store request bodies, or persist anything.
+    </li>
+    <li>
+      <strong><code>BroadcastChannel</code></strong> &mdash; used as in-memory messaging between
+      the main tutorial window and detached editor / instructions / debugger / output / UML
+      pop-out windows (channel names <code>ttsync-&lt;path&gt;</code>, <code>uml-sync-&lt;path&gt;</code>).
+      Messages live only while at least one of the windows is open and are not written to disk.
+      The browser-based Linux VM (v86) also uses a <code>v86-inbrowser-&lt;n&gt;</code> channel for
+      its virtual networking; same lifetime, no persistence.
+    </li>
+    <li>
+      <strong>Third-party CDNs</strong> &mdash; this site loads fonts, FontAwesome icons, jQuery,
+      Bootstrap, Mermaid, marked, KaTeX, Monaco, Pyodide, and the WebContainers runtime
+      from public CDNs. We don't send those services any user data, but their
+      networks see the request. No analytics, telemetry, or trackers are loaded.
+    </li>
+    <li>
+      <strong>Cross-origin cookies</strong> &mdash; embedded YouTube videos and similar
+      third-party iframes set their own cookies on their own origin. Those are governed
+      by those services' privacy policies and can't be reached or deleted from this page.
+    </li>
+  </ul>
 
 </div>
 

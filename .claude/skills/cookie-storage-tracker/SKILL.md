@@ -1,37 +1,64 @@
 ---
 name: cookie-storage-tracker
-description: Project rule for keeping the user-facing storage inventory at /cookies/ in sync with the code. USE THIS SKILL EVERY SINGLE TIME you write, edit, or review code that reads from or writes to any browser storage in this Jekyll site — `document.cookie`, `localStorage.setItem` / `getItem` / `removeItem`, `sessionStorage.*`, `indexedDB.*`, the Cache API, or any helper like `setCookie()` / `getCookie()` / `_storageKey()`. Trigger when you introduce a new storage key, rename one, change what is stored under an existing key, delete a feature that owned a key, change cookie expiry/scope/SameSite/Secure attributes, add a new tutorial id pattern, or write any code that ends up calling one of these APIs even transitively. Also trigger on requests like "save this preference", "remember this across reloads", "persist user state", "store the user's choice", "cache this in the browser", "add an autosave for X", "track per-question stats", "remember which tab is open", or any feature that implicitly needs persistence. The site has a unified user-facing inventory at `/cookies/` (source: `cookies.html`) with trash-icon delete actions per entry — every storage key the site touches MUST appear there, or the privacy notice becomes a lie.
+description: Project rule for keeping the user-facing storage inventory at /cookies/ in sync with the code. USE THIS SKILL EVERY SINGLE TIME you write, edit, review, OR delete code that reads from, writes to, registers, opens, or removes anything that persists in the user's browser — `document.cookie`, any `localStorage.*` (`setItem` / `getItem` / `removeItem` / `clear` / bracket access / `localStorage[k]`), any `sessionStorage.*`, `indexedDB.*` / `IDBDatabase` / `idb` / `idb-keyval` / `Dexie`, the Cache API (`caches.open`, `caches.put`, `caches.match`, `caches.delete`), `navigator.storage.persist()`, `navigator.serviceWorker.register()`, `BroadcastChannel`, `showDirectoryPicker` / `showSaveFilePicker` / File System Access API, `webkitRequestFileSystem`, legacy `openDatabase` (WebSQL), or any helper like `setCookie()` / `getCookie()` / `deleteCookie()` / `Cookies.set` / `Cookies.get` / `_storageKey()` / `STORAGE_KEY` / `*_KEY` / `*Storage*Key`. Trigger when you introduce a new storage key, rename one, change what is stored under an existing key, delete a feature that owned a key (the row must be removed too), change cookie expiry / scope / `SameSite` / `Secure` / `HttpOnly` / domain attributes, add or change a dynamic-key prefix template (e.g. `tutorial-progress-{id}`, `myfeature-{path}`), add or remove a Service Worker, add or remove a BroadcastChannel name, swap one storage backend for another (e.g. cookie → localStorage), introduce a third-party library that itself stores anything (`localforage`, `js-cookie`, `idb-keyval`, `Dexie`, `pouchdb`, an analytics SDK, an A/B testing SDK), or write any code that ends up calling one of these APIs even transitively. Also trigger on requests like "save this preference", "remember this across reloads", "persist user state", "store the user's choice", "cache this in the browser", "add an autosave for X", "track per-question stats", "remember which tab is open", "save my place", "checkpoint", "remember between sessions", or any feature that implicitly needs persistence. The site has a unified user-facing inventory at `/cookies/` (source: `cookies.html`) with trash-icon delete actions per entry — every storage key the site touches MUST appear there, or the privacy notice becomes a lie. NEVER inline a separate cookie notice on a single page; the unified notice in `_includes/cookie-notice.html` is the single source of truth.
 ---
 
 # Cookie & Storage Tracker
 
-## The rule
+## Why this skill exists
 
 This site exposes a complete, user-managed inventory of every cookie and `localStorage` key it writes, at **`/cookies/`** (source: [`cookies.html`](../../../cookies.html)). The privacy/cookie notice that appears at the bottom of every page links there and tells users:
 
 > "This site stores a few preferences and your progress locally in your browser
-> (cookies and localStorage) so it works the way you left it. Nothing is sent
-> to or stored on any external server."
+> (cookies and localStorage) so it works the way you left it. **Nothing is sent
+> to or stored on any external server**, and this site does not sell, share, or
+> disclose any user data to third parties."
 
-That promise only holds if **every** storage key is documented. If you introduce, rename, or remove a key in code without updating `cookies.html`, the user is silently misled and cannot delete the new entry. **This is non-negotiable for this project.**
+That promise only holds if **every** persisted entry is documented and deletable. If you introduce, rename, or remove a key in code without updating `cookies.html`, the user is silently misled and cannot delete the new entry. **This is non-negotiable for this project.** Treat `cookies.html` as a privacy contract under version control, not as documentation.
 
-## When this skill fires
+## Storage APIs you must watch for
 
-You MUST update `cookies.html` whenever any of the following happens:
+These are the APIs and patterns that the skill scans for in your changes. Anything in this list triggers the workflow below.
+
+| Surface | Patterns / signals |
+|---|---|
+| **Cookies** | `document.cookie = ...`, `document.cookie.match`, `document.cookie.split(';')`, `setCookie(`, `getCookie(`, `deleteCookie(`, `Cookies.set(`, `Cookies.get(`, `Cookies.remove(` (any `js-cookie` import) |
+| **`localStorage`** | `localStorage.setItem`, `localStorage.getItem`, `localStorage.removeItem`, `localStorage.clear`, `localStorage[k]`, `localStorage.key(i)`, helpers like `_storageKey()`, `STORAGE_KEY`, `STATS_KEY`, `*_KEY` constants |
+| **`sessionStorage`** | same family, `sessionStorage.*` |
+| **IndexedDB** | `indexedDB.open`, `IDBDatabase`, `IDBObjectStore`, `idb` / `idb-keyval` / `Dexie` / `pouchdb` imports |
+| **Cache API** | `caches.open`, `caches.match`, `caches.put`, `caches.delete`, `caches.keys` |
+| **Service Worker** | `navigator.serviceWorker.register`, any new file under `*-serviceworker.js` or `sw.js` |
+| **`BroadcastChannel`** | `new BroadcastChannel(...)` — even ephemeral, the *name* must be documented |
+| **File System Access** | `showDirectoryPicker`, `showSaveFilePicker`, `FileSystemDirectoryHandle`, `webkitRequestFileSystem` |
+| **Persistent storage / quota** | `navigator.storage.persist`, `navigator.storage.estimate`, `navigator.storage.getDirectory` (OPFS) |
+| **Legacy** | `openDatabase` (WebSQL — never reintroduce; remove on sight) |
+| **Indirect / third-party** | new dependency in `package.json` named `js-cookie`, `idb`, `idb-keyval`, `localforage`, `Dexie`, `pouchdb`, an analytics or A/B SDK, anything advertising "persists across sessions" |
+
+A *transitive* call counts. If you add a feature whose helper sits two function calls away from `localStorage.setItem`, that key is your responsibility too.
+
+## What change requires what update
+
+You MUST update `cookies.html` whenever any of the following happens. Use the table to pick the precise edit.
 
 | Change in code | Required update in `cookies.html` |
 |---|---|
 | New `document.cookie = "FOO=...` or `setCookie('FOO', ...)` | Add a `<tr data-storage="cookie" data-key="FOO">` row in the right category. |
-| New `localStorage.setItem('BAR', ...)` | Add a `<tr data-storage="localStorage" data-key="BAR">` row. |
-| New `sessionStorage.setItem(...)` or `indexedDB.open(...)` | Add a new section explaining it (the page currently states "no sessionStorage / no IndexedDB" — update that paragraph). |
+| New `localStorage.setItem('BAR', ...)` (or any equivalent helper) | Add a `<tr data-storage="localStorage" data-key="BAR">` row. |
+| New `sessionStorage.setItem(...)` that *persists across visits or affects user state* | Add an entry to the bullet list under "Where else does this site store data?" and rewrite the existing `sessionStorage` bullet so it no longer says "not used persistently". |
+| New `indexedDB.open(...)` or any IDB-backed library | Same: add a section, rewrite the IndexedDB bullet to describe what is stored, and add a delete action equivalent to the trash-icon UX. |
+| New `caches.open(...)` (Cache API) | Same — rewrite the Cache API bullet, list the cache name(s), and add a way to clear them. |
+| New Service Worker registration | Update the Service Worker bullet: name the SW file, what it does, and whether it caches *anything*. |
+| New `BroadcastChannel` | Update the BroadcastChannel bullet with the new channel name. |
+| New File System Access call | Add a section (the page currently asserts these aren't used). |
 | Renamed key | Rename the row's `data-key` and the displayed `<td class="storage-key">`. |
-| Removed key (feature deleted) | Delete the row. |
-| New dynamic key pattern (e.g. `myfeature-{id}-...`) | Add it to the dynamic-prefix list near the top of `<script>` and to the `<p>` legend that lists prefixes. |
-| Changed cookie expiry / scope / `SameSite` / `Secure` flag | Update the row's purpose blurb if the change is user-visible (e.g. session vs persistent). |
+| Removed key (feature deleted) | **Delete the row.** Stale entries in the inventory are also a privacy violation. |
+| New dynamic key pattern (e.g. `myfeature-{id}-...`) | Add it to `DYNAMIC_PREFIXES` in the page's `<script>` and to the prefix legend AND to the relevant "Delete all" button's `data-clear-prefixes` so bulk-delete still wipes everything. |
+| Changed cookie expiry / `path` / `SameSite` / `Secure` / `HttpOnly` / domain | Update the row's purpose blurb if the change is user-visible (session vs persistent, scope expansion, etc.). |
+| Swapped backends (e.g. cookie → localStorage) | Move the row to the right table AND update its `data-storage` attribute. |
 
 ## How to update `cookies.html`
 
-1. **Find the right category.** The page is grouped by feature, not by storage type alone. Pick the table that the new key belongs to (UI, bookmarks, SE Gym, Accessibility & audio, Tutorial state, Standalone tutorials). If none fits, add a new `<h3>` + `<table>` + bulk-delete button — copy the structure of an existing block.
+1. **Find the right category.** The page is grouped by feature, not by storage type alone. Pick the table that the new key belongs to (UI & reading preferences, SE Book bookmarks, SE Gym, Accessibility & audio, SE Gym performance statistics, Tutorial progress & debugger state, Standalone tutorials). If none fits, add a new `<h3>` + `<table>` + bulk-delete button — copy the structure of an existing block.
 2. **Add the row.** Use the exact format:
    ```html
    <tr data-storage="cookie|localStorage" data-key="THE_EXACT_KEY">
@@ -50,32 +77,38 @@ You MUST update `cookies.html` whenever any of the following happens:
    - Add the new prefix and a brief description to the `<p style="font-size:0.85em..."` legend just below the dynamic table.
    - Add the prefix to the `data-clear-prefixes` attribute of the relevant "Delete all" button so bulk-delete still wipes everything.
 4. **Be honest about scope.** If the value is conditional (e.g. only written when a toggle is on), say so in the purpose cell — users should know why a value might or might not be set.
-5. **Re-check the "Where else does this site store data?" paragraph** at the bottom. It currently asserts no `sessionStorage` and no `IndexedDB`. If you added either, rewrite it.
+5. **Re-check the "Where else does this site store data?" bullets** at the bottom for `sessionStorage`, `IndexedDB`, Cache API, Service Worker, BroadcastChannel, File System Access, third-party CDNs, and cross-origin cookies. The bullets currently read "not used" / "ephemeral only" for several of them — if your change makes any of those statements wrong, rewrite the bullet *and* (where it makes sense) add a delete action.
+6. **Internal-only counts.** A key that no UI surface lets the user toggle still appears in the inventory if it persists across sessions. Privacy is about what's *stored*, not what's *exposed*.
 
 ## When the unified notice itself needs updating
 
-The text of the bottom-of-page notice lives in **one place**: [`_includes/cookie-notice.html`](../../../_includes/cookie-notice.html). The four layouts that show it (`default`, `blog`, `sebook`, `tutorial`) all `{% include %}` it. Edit the include — never hand-edit the layouts. **Never inline a separate cookie notice on a single page** — every page must have exactly one notice, and it must come from the include. (The SE Gym page formerly had two; the inline copy was removed and replaced with `{% comment %}...{% endcomment %}` to make the rationale visible to future authors.)
+The text of the bottom-of-page notice lives in **one place**: [`_includes/cookie-notice.html`](../../../_includes/cookie-notice.html). The four layouts that show it (`default`, `blog`, `sebook`, `tutorial`) all `{% include %}` it. Edit the include — **never hand-edit the layouts** to change the notice text, **never duplicate the notice on individual pages** (the SE Gym page formerly had two; the inline copy was removed and replaced with `{% comment %}...{% endcomment %}` to make the rationale visible to future authors). The include uses `{% unless page.url contains '/cookies' %}` to suppress itself on the inventory page.
+
+If you add a new layout, include `{% include cookie-notice.html %}` near the footer or you'll have a layout that lies by omission.
 
 ## Quick checklist before you finish a change
 
-- [ ] Did I add/rename/remove a storage key? → updated `cookies.html`.
-- [ ] Did I introduce `sessionStorage` or `IndexedDB` for the first time? → added a new section AND rewrote the bottom paragraph.
-- [ ] Is the new key dynamic? → added to `DYNAMIC_PREFIXES`, the legend, and the bulk-delete `data-clear-prefixes`.
+- [ ] Did I touch any storage API or helper from the table above? → ran the workflow.
+- [ ] Did I add/rename/remove a key? → updated `cookies.html` (row added / renamed / **deleted**).
+- [ ] Did I touch a *dynamic* key pattern? → updated `DYNAMIC_PREFIXES`, the legend text, AND the `data-clear-prefixes` on the bulk-delete button.
+- [ ] Did I introduce `sessionStorage` (persistent), `IndexedDB`, Cache API, Service Worker that caches, File System Access, or `BroadcastChannel` with a new name? → rewrote the corresponding bullet in "Where else does this site store data?"
+- [ ] Did I add a third-party library that itself stores anything? → documented every key it touches.
+- [ ] Did I change a cookie's expiry / scope / `SameSite` / `Secure`? → updated the purpose blurb if the change is user-visible.
 - [ ] Did I want to add a per-feature notice? → don't. Edit `_includes/cookie-notice.html` instead, and let it apply everywhere.
 - [ ] Does the new row's purpose explain it in plain English a non-developer can verify against their own data?
 
 If you skipped any of these, go back and do them — the cookies page is a privacy contract, not an afterthought.
 
-## Reference: known storage keys (as of last update)
+## Reference: known storage as of last skill update
 
-This is a snapshot to help you spot duplicates and pick the right category — `cookies.html` is the source of truth.
+This is a snapshot to help you spot duplicates and pick the right category — **`cookies.html` is the source of truth**, not this list.
 
-**Cookies**
+**Cookies (10):**
 - `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `read-aloud`, `uml-accent-color`
 - `se-bookmarks`, `se-bookmarks-active`
 - `se-gym`, `se-gym-active`, `analyze-performance`
 
-**localStorage**
+**localStorage — static (8):**
 - `prefersReducedMotion`
 - `cap_volume`, `cap_speed`
 - `tts-voice-name`
@@ -83,7 +116,7 @@ This is a snapshot to help you spot duplicates and pick the right category — `
 - `tutorial-autosave`
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
-**localStorage — dynamic prefixes** (one entry per tutorial id / page path)
+**localStorage — dynamic prefixes (7)** (one entry per tutorial id / page path):
 - `tutorial-progress-<id>` — saved code & current step
 - `tutorial-editor-split-<id>` — split-pane preference
 - `tutorial-popout-state-<path>` — detached editor crash-recovery snapshot
@@ -92,4 +125,11 @@ This is a snapshot to help you spot duplicates and pick the right category — `
 - `tutorial-debug-section-<id>-<name>` — debugger panel collapse
 - `tutorial-debug-subsection-<id>-<name>` — debugger sub-panel collapse
 
-**Not used:** `sessionStorage` (only briefly during a one-time migration), `IndexedDB`. If you change this, update `cookies.html`.
+**Adjacent surfaces (currently documented as ephemeral / unused):**
+- `sessionStorage` — only a one-time migration of `prefersReducedMotion`; nothing else
+- IndexedDB, Cache API, File System Access, WebSQL — **not used**
+- Service Worker — `coi-serviceworker.js` is registered for COOP/COEP header injection only; no caching
+- `BroadcastChannel` — channel names `ttsync-<path>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
+- Cross-origin cookies — third-party iframes (e.g. YouTube embeds) are out of scope
+
+If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.
