@@ -69,7 +69,16 @@ steps:
     instructions: |
       > **Prerequisite:** [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) — pytest discovery, `assert`, partitions, behavior-not-implementation. If those feel new, do that one first.
 
-      You'll grow a small dice-scoring engine over 15 steps using **only Test-Driven Development**.
+      ## What you're building — *Dragon Dice*
+
+      **Dragon Dice** is a (fictional) tabletop combat game. The mechanic is simple: a player rolls a handful of six-sided dice, and certain face values and combinations trigger named *combat events* — *Dragon Flame*, *Lightning Spark*, *Goblin Swarm*, and so on — each worth a damage number. A turn's roll is just a Python list of dice values, e.g. `[1, 1, 1, 1, 5]`.
+
+      Two kinds of scoring happen on every roll:
+
+      - **Singles** — a `1` becomes one *Dragon Flame* (100 damage); a `5` becomes one *Lightning Spark* (50). Other face values, on their own, score nothing.
+      - **Triples (combos)** — three matching dice trigger a bigger event that *consumes* its dice. Three 1s become **one** *Dragon Blast* (1000) instead of three Dragon Flames; three 2s become a *Goblin Swarm*; and so on. Whatever the combos don't consume keeps scoring as singles, so `[1, 1, 1, 1, 5]` produces *one* Dragon Blast (consuming three 1s) **plus** a leftover Dragon Flame **plus** a Lightning Spark — for 1150 total damage. The full ruleset is in the table further down.
+
+      Your goal across the twelve Dragon-Dice cycles is to grow a `score(dice)` function that turns any roll into a `BattleReport` — its `total_damage` and the ordered tuple of `ScoringEvent`s it produced. **You will not look at the full ruleset and write it all at once.** TDD adds **one rule at a time**, each one earned by a test that demands it. After cycle 12 a thirteenth *transfer* cycle reapplies the same rhythm to a totally unrelated problem (FizzBuzz), as proof the discipline carries beyond this domain.
 
       ## Test-Driven Development in one minute
 
@@ -554,7 +563,7 @@ steps:
                   return sum(event.damage for event in self.events)
 
 
-          def score(dice):
+          def score(dice: list[int]) -> BattleReport:
               return BattleReport()
         language: "python"
 
@@ -790,7 +799,7 @@ steps:
                   return sum(event.damage for event in self.events)
 
 
-          def score(dice):
+          def score(dice: list[int]) -> BattleReport:
               return BattleReport()
         language: "python"
 

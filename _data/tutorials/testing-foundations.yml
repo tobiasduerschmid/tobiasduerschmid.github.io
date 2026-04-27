@@ -59,7 +59,11 @@ steps:
 
       > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
 
-      🪞 **Calibrate yourself** (1 second, mental note): On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Remember the number — you'll re-check at the end.
+      🪞 **Calibrate yourself**: On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Write the number as a comment at the top of `streaks.py`:
+      ```python
+      # Confidence before Step 1: __/10
+      ```
+      You'll compare it in Step 5. Writing it down makes the comparison real.
 
       ### 💡 Why test?
 
@@ -115,14 +119,14 @@ steps:
       The bug lives at *exactly* `100` days — the line between 🔥 and 💯. That's no coincidence. Bugs love **boundaries** — the values where behavior changes. They're the natural home of off-by-one errors (`>` vs `>=`, `<` vs `<=`). You'll hunt boundaries systematically in **Step 3**.
       </details>
 
-      🧭 **Pause — name what just happened.** You ran a test, read a failure, fixed code, and confirmed it with a re-run. In one sentence: what did that test *specify* about `streak_badge`? Don't use the word "check" — find a different framing. That's the conceptual shift this tutorial is built around.
+      🧭 **Pause — name what just happened.** You ran a test, read a failure, fixed code, and confirmed it with a re-run. In one sentence: what did that test *specify* about `streak_badge`? Use the words "specification" or "behavior" rather than "check." Then go one level deeper: *why* does writing the assertion first (before seeing whether the code passes) mean the test reflects intended behavior rather than observed behavior? What would change if you wrote the assertion after reading the output?
 
       > 🔭 **Coming in Step 2:** Not all assertions are equally useful. The tests you just ran use strong claims — but assertions can be weak, medium, or strong, and the difference determines which bugs slip through. You'll see exactly why in the next step.
 
     files:
       - path: "streaks.py"
         content: |
-          def streak_badge(days):
+          def streak_badge(days: int) -> str:
               """Pick the streak badge for a daily-app streak (Duolingo / Snapchat / BeReal style).
 
               Spec:
@@ -177,7 +181,7 @@ steps:
       files:
         - path: "streaks.py"
           content: |
-            def streak_badge(days):
+            def streak_badge(days: int) -> str:
                 """Pick the streak badge for a daily-app streak (Duolingo / Snapchat / BeReal style).
 
                 Spec:
@@ -358,6 +362,8 @@ steps:
 
       **pytest convention**: both the **file name** and **function names** must start with `test_`.
 
+      Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For these stubs, Arrange and Act are already in the docstring comments; your task is only the **Assert** line.
+
       Now apply that shape to `xp_to_level` — a classic JRPG / Pokemon-style level calculator. Three test stubs are waiting in `test_leveling.py`. For each one:
 
       1. **Read the spec** in `leveling.py`'s docstring + body to find the leveling formula.
@@ -416,7 +422,7 @@ steps:
           """Player leveling utilities — JRPG / Pokemon style."""
 
 
-          def xp_to_level(xp):
+          def xp_to_level(xp: int) -> int:
               """Convert raw experience points to player level.
 
               Spec: every 100 XP earns one level (integer division by 100).
@@ -426,7 +432,7 @@ steps:
               return xp // 100
 
 
-          def level_to_min_xp(level):
+          def level_to_min_xp(level: int) -> int:
               """The minimum XP required to be AT a given level."""
               return level * 100
         language: "python"
@@ -479,6 +485,7 @@ steps:
           def test_oracle_strong_starter():
               # Arrange + Act
               result = xp_to_level(0)
+              # The spec says: 0 XP → level 0.  The expected value is 0.
               # TODO: replace this weak oracle with the strongest possible assertion.
               assert isinstance(result, int)
 
@@ -486,6 +493,7 @@ steps:
           def test_oracle_strong_max():
               # Arrange + Act
               result = xp_to_level(10000)
+              # The spec says: 10 000 XP ÷ 100 = level 100.  The expected value is 100.
               # TODO: replace this weak oracle with the strongest possible assertion.
               assert isinstance(result, int)
 
@@ -810,7 +818,9 @@ steps:
       3. *Test every boundary* — last invalid before each transition, first valid after.
       </details>
 
-      🧭 **Reflect before moving on.** Without scrolling back, answer: why is testing `squad_name_valid` at length 3 more informative than testing it at length 6? Write one sentence using the word "partition" or "boundary." If you can name the reason precisely, the concept is yours; if you reach for vague words, re-read the "Check your 4 boundary values" disclosure.
+      🧭 **Reflect before moving on.** Without scrolling back, answer: why is testing `squad_name_valid` at length 3 more informative than testing it at length 6? Write one sentence using the word "partition" or "boundary." Then go deeper: what is the *mechanism*? What property of the code's structure means a bug at the length-3 boundary is invisible to every test at lengths 5–8, no matter how many there are? Name the code-structural reason, not just the vocabulary word.
+
+      🔗 **Connect to your own code.** Think of the last function you wrote before this tutorial. What inputs did you test it with? Apply the partition + boundary method: identify the partitions in that function's input space and name at least one boundary you probably didn't test. If you weren't testing at all before this tutorial, name what your first test for that function would be.
 
       > 🔭 **Coming in Step 4:** You can now choose the right inputs with precise assertions. But tests can still break for the wrong reason — not because your function's behavior changed, but because your test looked at the wrong thing. We'll see that next.
 
@@ -818,7 +828,7 @@ steps:
     files:
       - path: "squad.py"
         content: |
-          def squad_name_valid(name):
+          def squad_name_valid(name: str) -> bool:
               """Return True iff len(name) is between 3 and 12 inclusive (typical
               gaming-platform username rule — Fortnite / Roblox / Discord-style)."""
               return 3 <= len(name) <= 12
@@ -1074,16 +1084,63 @@ steps:
       > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
       > 🧠 **Bloom's level:** *Analyze* (spot brittle tests) and *Evaluate* (judge them against the public-API contract).
 
-      ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). All four currently pass. You'll *discover* which are brittle and which are robust — and *how many* of each.
+      ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). All four currently pass. You'll *discover* which are **brittle** (break on pure refactoring even when behavior is unchanged) and which are **robust** (survive any refactoring that preserves the public behavior).
 
       1. **Read the four tests** in `test_brittle_audit.py`. Before running anything: *classify each test* — does it access internal state (looks inside the object) or only the public interface (calls methods that don't start with `_`)? Write your classification as a comment next to each test.
       2. **Run the suite as-is** — all four tests pass. Good. Now do the experiment:
-      3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the three methods). The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles` still produce the same outputs.
+      3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the three methods). There are exactly 4 occurrences; use find/replace to catch all of them. The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles` still produce the same outputs.
       4. **Before re-running:** predict how many tests will fail and which ones.
-      5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. If you were wrong, write one sentence explaining the structural difference between the surviving tests and the failing ones.
+      5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. Whether you were right or wrong: write one sentence tracing the causal chain — from "I renamed `_tracks`" to "exactly these tests fail." The explanation should work without running the code.
       6. **Rewrite each broken test** using only the public API (methods that don't start with `_`). When all four pass against the refactored code, your suite is robust.
 
+      <details markdown="1"><summary>📦 Two Python tools used in this step: <code>@dataclass</code> and <code>@property</code></summary>
+
+      **`@dataclass` — auto-generated value objects**
+
+      `playlist.py` stores each track as a `Track` instance declared with `@dataclass(frozen=True)`:
+
+      ```python
+      from dataclasses import dataclass
+
+      @dataclass(frozen=True)
+      class Track:
+          title: str
+          duration_seconds: int
+      ```
+
+      `@dataclass` reads the annotated fields and auto-generates `__init__`, `__repr__`, and `__eq__`. `frozen=True` makes instances immutable — a `Track` can't have its title changed after creation, and two `Track`s with identical fields compare equal with `==` out of the box.
+
+      Without `@dataclass` you'd write all this by hand:
+      ```python
+      class Track:
+          def __init__(self, title: str, duration_seconds: int) -> None:
+              self.title = title
+              self.duration_seconds = duration_seconds
+          def __eq__(self, other): ...
+          def __repr__(self): ...
+      ```
+      Same result, far more boilerplate.
+
+      **`@property` — a method that reads like an attribute**
+
+      `PlaylistQueue.total_duration` is declared with `@property`:
+
+      ```python
+      @property
+      def total_duration(self) -> int:
+          return sum(t.duration_seconds for t in self._tracks)
+      ```
+
+      Because of `@property`, callers write `queue.total_duration` (no parentheses) instead of `queue.total_duration()`. Use `@property` for *derived* values — ones that are computed from stored state rather than stored themselves — that read naturally as a noun.
+
+      Contrast with `track_count()` and `titles()`, which are regular methods. Rule of thumb: if the value *feels like a fixed attribute of the object* (total duration is a property of the queue's current state), make it a `@property`. If it *feels like an action or a lookup with side effects*, keep it a method.
+
+      You'll see `@dataclass` and `@property` again in the TDD tutorial — where `ScoringEvent`, `BattleReport`, and `total_damage` follow the same patterns.
+      </details>
+
       💡 **Why this matters**: When a test only touches the public API, the production code stays free to evolve internally. The experiment you just ran is a live demonstration of the Refactoring Litmus Test (expand below to name what you discovered).
+
+      💡 **This principle extends beyond classes.** For top-level functions: the "public contract" is the return value. Don't assert on intermediate variables or module-level state the function happens to touch internally — those are implementation details too, just without the `_` prefix signal. Assert on what callers observe: the return value.
 
       <details markdown="1"><summary>🔬 The Refactoring Litmus Test — name what you just discovered</summary>
 
@@ -1092,7 +1149,7 @@ steps:
 
       That breakage is the symptom; the fix is to rewrite the tests, not to revert the refactor.
 
-      Both types of test were checking the same observable behavior: *the track was added*. They differed only in **how** they verified it. The brittle test peeked at implementation details (`_tracks`). The robust test used the public interface (`titles()`). Compare that to this pair:
+      Both types of test were checking the same observable behavior: *the track was added*. They differed only in **how** they verified it. The brittle test peeked at implementation details (`_tracks[0].title`). The robust test used the public interface (`titles()`). Compare that to this pair:
 
       ```python
       # 🚨 BRITTLE — peeks at private state
@@ -1113,14 +1170,14 @@ steps:
       flowchart TB
           subgraph before["BEFORE — all tests pass"]
               direction LR
-              b1["Brittle test<br/>queue._tracks[0]"]:::brittle
+              b1["Brittle test<br/>queue._tracks[0].title"]:::brittle
               b2["Robust test<br/>queue.titles()"]:::robust
               b1 --> bp1["✓"]:::good
               b2 --> bp2["✓"]:::good
           end
           subgraph after["AFTER — _tracks renamed to _queue"]
               direction LR
-              a1["Brittle test<br/>queue._tracks[0]"]:::brittle
+              a1["Brittle test<br/>queue._tracks[0].title"]:::brittle
               a2["Robust test<br/>queue.titles()"]:::robust
               a1 --> ap1["✗ AttributeError"]:::bad
               a2 --> ap2["✓ still passes"]:::good
@@ -1142,8 +1199,8 @@ steps:
           queue.add("Espresso", 175)
           queue.add("Vampire", 218)
 
-          # Act — invoke the ONE behavior under test
-          result = queue.total_duration()
+          # Act — read the ONE derived value under test
+          result = queue.total_duration   # property — no ()
 
           # Assert — verify the observable outcome
           assert result == 393
@@ -1158,42 +1215,52 @@ steps:
       ```python
       def test_total_duration_runs():
           q = PlaylistQueue(); q.add("Espresso", 175); q.add("Vampire", 218)
-          assert q.total_duration() is not None   # passes for any non-None return
+          assert q.total_duration is not None   # passes for any non-None return
       ```
 
       **Suite B — 80% coverage, strong oracle:**
       ```python
       def test_total_duration_sums_track_lengths():
           q = PlaylistQueue(); q.add("Espresso", 175); q.add("Vampire", 218)
-          assert q.total_duration() == 393
+          assert q.total_duration == 393
       ```
 
       If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior.
       </details>
 
-      🧭 **Reflect before moving on.** In your own words, without scrolling back: what is the structural difference between a brittle test and a robust one? Give a concrete example — not the `PlaylistQueue` one you just worked through. If you struggle to find a new example, that's a signal to re-read the Refactoring Litmus Test above.
+      🧭 **Reflect before moving on.** In your own words, without scrolling back: what is the structural difference between a brittle test and a robust one? Give a concrete example — not the `PlaylistQueue` one you just worked through. Then trace the *causal chain*: what needs to be true about how the production code changes for a brittle test to break while a robust test survives? The explanation should work for any class or function, not just this one.
 
 
     files:
       - path: "playlist.py"
         content: |
+          from dataclasses import dataclass
+
+
+          @dataclass(frozen=True)
+          class Track:
+              title: str
+              duration_seconds: int
+
+
           class PlaylistQueue:
               """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""
 
-              def __init__(self):
-                  self._tracks = []
+              def __init__(self) -> None:
+                  self._tracks: list[Track] = []
 
-              def add(self, title, duration_seconds):
-                  self._tracks.append({"title": title, "duration": duration_seconds})
+              def add(self, title: str, duration_seconds: int) -> None:
+                  self._tracks.append(Track(title, duration_seconds))
 
-              def total_duration(self):
-                  return sum(t["duration"] for t in self._tracks)
+              @property
+              def total_duration(self) -> int:
+                  return sum(t.duration_seconds for t in self._tracks)
 
-              def track_count(self):
+              def track_count(self) -> int:
                   return len(self._tracks)
 
-              def titles(self):
-                  return [t["title"] for t in self._tracks]
+              def titles(self) -> list[str]:
+                  return [t.title for t in self._tracks]
         language: "python"
 
       - path: "test_brittle_audit.py"
@@ -1213,15 +1280,15 @@ steps:
           def test_add_track_internal_list():
               queue = PlaylistQueue()
               queue.add("Espresso", 175)
-              assert queue._tracks[0]["title"] == "Espresso"
-              assert queue._tracks[0]["duration"] == 175
+              assert queue._tracks[0].title == "Espresso"
+              assert queue._tracks[0].duration_seconds == 175
 
 
           def test_total_duration_sums_track_lengths():
               queue = PlaylistQueue()
               queue.add("Espresso", 175)
               queue.add("Vampire", 218)
-              assert queue.total_duration() == 393
+              assert queue.total_duration == 393
 
 
           def test_internal_list_length():
@@ -1261,7 +1328,7 @@ steps:
                 queue = PlaylistQueue()
                 queue.add("Espresso", 175)
                 queue.add("Vampire", 218)
-                assert queue.total_duration() == 393
+                assert queue.total_duration == 393
 
 
             def test_track_count_via_public_api():
@@ -1285,7 +1352,7 @@ steps:
           - title: "Small nudge"
             text: "Search the file for `._tracks` (or `._queue` if you've already renamed). Each line that has it is in a brittle test. There are exactly two such tests."
           - title: "Strategic hint"
-            text: "Replace `queue._tracks[0][\"title\"]` with a public-method call. Open `playlist.py` and look at the method definitions — any method *not* starting with `_` is part of the public API and safe to call from a test."
+            text: "Replace `queue._tracks[0].title` with a public-method call. Open `playlist.py` and look at the method definitions — any method *not* starting with `_` is part of the public API and safe to call from a test."
           - title: "Almost-spoiler — apply the AAA shape"
             text: "Each brittle test reaches into private state. Rewrite it using only the public methods.\n```python\ndef test_<behavior>():\n    queue = PlaylistQueue()\n    queue.add(<title>, <duration>)\n    assert <something_via_public_api> == <expected>\n```\nFor `test_add_track_internal_list`, the observable behavior is *the title appears when you ask for titles*. For `test_internal_list_length`, the observable behavior is *the count goes up when you add tracks*."
       - description: "Test file still contains at least 4 test functions"
@@ -1489,6 +1556,8 @@ steps:
       3. What did Step 3 teach you about *which inputs to pick*?
       4. What did Step 4 teach you about *what to assert against*?
 
+      Write all four sentences *before* expanding the disclosure below — the comparison is only useful if you retrieved first, not read first.
+
       Once you've written your four sentences, expand the box below and compare. If your version names the same ideas in different words, you've consolidated the schema. If a step is fuzzy, that's where to revisit.
 
       <details markdown="1"><summary>📖 Compare with our recap</summary>
@@ -1527,9 +1596,13 @@ steps:
 
       Ask yourself: for `streaming_price`, are there any "edge-of-category" inputs worth testing beyond the three named categories? What about an unexpected string like `"premium"`, or an empty string `""`? These are the categorical equivalents of boundary probing — checking the edges of the decision logic for inputs the spec doesn't explicitly name.
 
+      💡 **Two-parameter functions:** When a function takes two parameters, partition each dimension independently, then pick deliberate combinations — not all combinations (that grows exponentially), but enough to represent each partition at least once. Here, `price` has no spec-defined constraints, so any representative value (e.g., 20) works across all plan tests. If `price` had its own threshold (e.g., "discount only for orders ≥ $5"), you'd apply boundary testing to that dimension too.
+
+      💡 **Floating-point equality:** When the expected value is computed by multiplication (e.g., `20 * 0.50`), standard `==` usually works for simple fractions, but for arbitrary floats use `assert result == pytest.approx(expected)` to avoid rounding surprises (e.g., `assert streaming_price(13.99, "student") == pytest.approx(6.995)`).
+
       🪞 **Recalibrate**: At the start of Step 1 you rated your confidence (1–10) for designing a test suite from scratch. Re-rate yourself now. The gap between those numbers is what you actually learned — the *feeling* of progress is unreliable; the gap is data.
 
-      🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. If nothing changed — that's useful information too; name what would have to shift.
+      🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. Then explain *why* that shift matters for the next function you write — what will you do differently tomorrow that you wouldn't have done before this tutorial?
 
       <details markdown="1"><summary>🪞 Two independent dimensions of test design (separation)</summary>
 
@@ -1564,9 +1637,12 @@ steps:
       | Takes a numeric input with a valid range (`min ≤ x ≤ max`) | **Boundary value analysis** — test `min-1, min, max, max+1` | Step 3 |
       | Takes an input from a small set of categories (`"student"`, `"family"`, …) | **Equivalence partitioning** — one test per category | Step 3 + Step 5 |
       | Returns a value (vs. mutates state) | **Strong-oracle equality** — `assert result == expected` | Step 2 |
+      | Returns a float computed by multiplication/division | **`pytest.approx`** — `assert result == pytest.approx(expected)` to avoid floating-point rounding surprises | Step 2 + real projects |
+      | Should raise an exception for certain inputs | **`pytest.raises`** — `with pytest.raises(ValueError): func(bad_input)` | Next tutorial |
+      | Returns a list or dict | **Collection equality** — `assert result == [1, 2, 3]`; for order-independent: `assert sorted(result) == sorted(expected)` | Real projects |
       | Mutates an object's state | **Public API behavior tests** — `obj.observable() == expected` | Step 4 |
       | Has internal state you're tempted to peek at | **Don't.** Add a public method instead, then test through it | Step 4 |
-      | Is "trivial" and you think it doesn't need a test | It does. *Today's* trivial is *tomorrow's* surprise dependency | from research |
+      | Is "trivial" and you think it doesn't need a test | It deserves at least one regression test — *today's* trivial is *tomorrow's* surprise dependency | from research |
 
       Most real functions hit several rows at once. Apply them all.
       </details>
@@ -1577,7 +1653,7 @@ steps:
 
       ```python
       # Option A — numeric boundaries (more like Step 3)
-      def shipping_fee(weight_kg):
+      def shipping_fee(weight_kg: float) -> int:
           """Free if 0 < weight <= 1; $5 if 1 < weight <= 10; $20 above."""
           if weight_kg <= 0: return 0
           if weight_kg <= 1: return 0
@@ -1586,9 +1662,9 @@ steps:
 
       # Option B — state-changing (more like Step 4)
       class StreakCounter:
-          def __init__(self): self._n = 0
-          def increment(self): self._n += 1
-          def value(self): return self._n
+          def __init__(self) -> None: self._n: int = 0
+          def increment(self) -> None: self._n += 1
+          def value(self) -> int: return self._n
       ```
 
       Then write tests that match the shape of the chosen function. The test-quality checks (strong oracles, multiple partitions, ≥ 3 functions, all pass) still apply.
@@ -1615,7 +1691,7 @@ steps:
     files:
       - path: "streaming.py"
         content: |
-          def streaming_price(price, plan):
+          def streaming_price(price: float, plan: str) -> float:
               """Apply a streaming-service plan discount.
 
               student -> 50% off  (Spotify Student / YouTube Premium Student style)

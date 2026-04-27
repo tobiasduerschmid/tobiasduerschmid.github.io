@@ -182,10 +182,16 @@
       if (!afterLine && bps[line]) {
         glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
       }
-      editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], [{
-        range: new monaco.Range(line, 1, line, 1),
-        options: { isWholeLine: true, className: cls, glyphMarginClassName: glyph },
-      }]);
+      editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], [
+        {
+          range: new monaco.Range(line, 1, line, 1),
+          options: { isWholeLine: true, className: cls },
+        },
+        {
+          range: new monaco.Range(line, 1, line, 1),
+          options: { isWholeLine: false, glyphMarginClassName: glyph },
+        },
+      ]);
       if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
         editor.revealLineInCenterIfOutsideViewport(line);
       }

@@ -46,7 +46,7 @@ _HIDDEN_GLOBAL_PREFIXES = ('__',)
 _INTERNAL_NAMES = frozenset({
     # debugger machinery (defensive — clean exec globals already exclude these,
     # but cover any tutorials that happen to define a same-named symbol)
-    '_ttd_make', '_ttd_run_with_clean_globals', '_ttd_cleanup',
+    '_ttd_make', '_ttd_run_with_clean_globals', '_ttd_run_pytest', '_ttd_cleanup',
     'TimeTravelDebugger', '_HIDDEN_GLOBAL_PREFIXES', '_INTERNAL_NAMES',
     '_UNCHANGED', '_is_user_global', '__ttd_apply_override',
     # pyodide-worker.js bootstrap leftovers
@@ -1106,6 +1106,48 @@ def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):
         user_globals['__ttd_apply_override'] = apply_override
     try:
         dbg.run(compiled, user_globals)
+    finally:
+        dbg._flush_buffer()
+
+
+def _ttd_run_pytest(dbg, pytest_args, filename, overrides):
+    """
+    Run real pytest under the debugger. Unlike the normal source runner, this
+    does not compile a synthetic entry file; pytest performs its usual
+    collection/import/call flow, while the debugger traces user frames under
+    /tutorial/.
+    """
+    if isinstance(pytest_args, str):
+        try:
+            py_args = list(json.loads(pytest_args))
+        except Exception:
+            py_args = [filename]
+    else:
+        try:
+            py_args = list(pytest_args.to_py() if hasattr(pytest_args, 'to_py') else (pytest_args or [filename]))
+        except Exception:
+            py_args = [filename]
+
+    if isinstance(overrides, str):
+        try:
+            py_overrides = list(json.loads(overrides))
+        except Exception:
+            py_overrides = []
+    else:
+        try:
+            py_overrides = overrides.to_py() if hasattr(overrides, 'to_py') else list(overrides or [])
+        except Exception:
+            py_overrides = []
+
+    dbg._overrides = [ov for ov in py_overrides if not ov.get('source')]
+    dbg._source_injected_lines = set()
+    dbg._user_filename = filename
+
+    import pytest
+    try:
+        code = dbg.runcall(pytest.main, py_args)
+        if code:
+            raise SystemExit(code)
     finally:
         dbg._flush_buffer()
 

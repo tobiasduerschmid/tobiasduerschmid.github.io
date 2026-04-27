@@ -73,6 +73,7 @@
   gap: 3px;
   margin-left: 8px;
   padding: 2px 6px;
+  flex: 1 1 0;
   max-width: 100%;
   min-width: 0;
   background: rgba(255, 209, 0, 0.20);
@@ -84,6 +85,13 @@
 .tvm-output-actions.tvm-debug-toolbar-new-row .tvm-debug-toolbar {
   flex-wrap: wrap;
   row-gap: 4px;
+}
+.tvm-debug-toolbar .tvm-debug-step,
+.tvm-debug-toolbar .tvm-debug-divider {
+  flex: 0 0 auto;
+}
+.tvm-debug-toolbar .tvm-debug-status + .tvm-debug-step {
+  margin-left: auto;
 }
 .tvm-debug-toolbar .tvm-debug-step {
   background: transparent;
@@ -129,9 +137,9 @@
   margin: 0 3px;
 }
 .tvm-debug-toolbar .tvm-debug-status {
-  flex: 1 1 150px;
-  min-width: 110px;
-  max-width: 160px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
   margin-right: 8px;
   font-size: 11px;
   color: #5C4308;
@@ -141,12 +149,12 @@
   white-space: nowrap;
 }
 .tvm-output-actions.tvm-debug-toolbar-new-row .tvm-debug-status {
-  flex: 1 1 180px;
-  max-width: none;
+  flex: 1 1 auto;
+  width: auto;
 }
 .tvm-debug-toolbar.tvm-debug-toolbar-new-row .tvm-debug-status {
-  flex: 1 1 180px;
-  max-width: none;
+  flex: 1 1 auto;
+  width: auto;
 }
 
 .tdp-toolbar-host {

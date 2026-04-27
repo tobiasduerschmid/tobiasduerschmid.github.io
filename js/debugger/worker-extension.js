@@ -134,6 +134,8 @@ function handleRunDebug(msg) {
       var code = msg.code;
       var args = msg.args || [];
       var files = msg.files || {};
+      var runAsPytest = !!msg.pytest;
+      var pytestArgs = msg.pytestArgs || (runAsPytest ? [filename, '-v'] : null);
 
       // Ensure file is on disk so frame.f_code.co_filename matches what the
       // UI passes for breakpoints. Write code under the tutorial file path
@@ -152,7 +154,8 @@ function handleRunDebug(msg) {
         return;
       }
 
-      return pyodide.loadPackagesFromImports(code).then(function () {
+      var importProbe = runAsPytest ? ('import pytest\n' + (code || '')) : code;
+      return pyodide.loadPackagesFromImports(importProbe).then(function () {
         pyodide.runPython([
           'import sys as _sys',
           'for _m in list(_sys.modules):',
@@ -249,14 +252,20 @@ function handleRunDebug(msg) {
       // _ttd_make, _f, _k, _m, ...) that lives in pyodide's __main__.
       try {
         var ttdRun = pyodide.globals.get('_ttd_run_with_clean_globals');
+        var ttdRunPytest = pyodide.globals.get('_ttd_run_pytest');
         var overridesJson = JSON.stringify(msg.overrides || []);
-        ttdRun(dbg, code, filename, overridesJson);
+        if (runAsPytest) {
+          ttdRunPytest(dbg, JSON.stringify(pytestArgs || [filename]), filename, overridesJson);
+        } else {
+          ttdRun(dbg, code, filename, overridesJson);
+        }
         self.postMessage({ type: 'debugComplete', exitCode: 0 });
       } catch (e) {
         self.postMessage({ type: 'debugComplete', exitCode: 1, error: String(e && e.message || e) });
       } finally {
         try { dbg.destroy && dbg.destroy(); } catch (e) {}
         try { ttdMake.destroy && ttdMake.destroy(); } catch (e) {}
+        try { ttdRunPytest && ttdRunPytest.destroy && ttdRunPytest.destroy(); } catch (e) {}
         try { ttdCleanup(); } catch (e) {}
         try { ttdCleanup.destroy && ttdCleanup.destroy(); } catch (e) {}
         debuggerInstance = null;

@@ -1133,7 +1133,7 @@
     if (this.historyIdx < this.liveIdx) {
       if (cmd === 'watchContinue') {
         this.runForwardToWatchpoint(false, null);
-      } else if (cmd === 'continue' && this.hasForwardStopConditions()) {
+      } else if (cmd === 'continue' && this.hasEnabledWatchpoints()) {
         this.runForwardToWatchpoint(true, null);
       } else {
         this.restartFromHistory(cmd);
@@ -1148,7 +1148,7 @@
       this.runForwardToWatchpoint(false, null);
       return;
     }
-    if (cmd === 'continue' && this.hasForwardStopConditions()) {
+    if (cmd === 'continue' && this.hasEnabledWatchpoints()) {
       this.runForwardToWatchpoint(true, null);
       return;
     }
@@ -1191,6 +1191,8 @@
     var watches = (this.session.watches || []).slice();
     var args = (this.session.args || []).slice();
     var pendingWatchpointRun = this.session.pendingWatchpointRun || null;
+    var debugPytest = !!this.session.debugPytest;
+    var debugPytestArgs = this.session.debugPytestArgs ? this.session.debugPytestArgs.slice() : null;
     this.setStatus(overrides.length ? 'replaying with edits…' : 'replaying from history…');
     // Stop the current session; on debugComplete we'll start a fresh one.
     var self = this;
@@ -1219,8 +1221,16 @@
         args: args,
         debugFilename: path,
         debugCode: code,
+        debugPytest: debugPytest,
+        debugPytestArgs: debugPytestArgs,
         capReached: false,
-        pendingStart: { filename: path, code: code, files: files },
+        pendingStart: {
+          filename: path,
+          code: code,
+          files: files,
+          pytest: debugPytest,
+          pytestArgs: debugPytestArgs,
+        },
         // Re-overrides for the new run, and keep the same list as the durable
         // edit ledger so later replays don't forget earlier variable edits.
         replayOverrides: overrides,
@@ -1641,12 +1651,13 @@
     watchpoints = watchpoints || this.getEnabledWatchpoints();
     for (var i = 0; i < watchpoints.length; i++) {
       var wp = watchpoints[i];
-      if (this.watchpointChangedAt(idx, wp)) {
+      var origin = this.watchpointOriginForHit(idx);
+      if (this.watchpointChangedAt(idx, wp, origin)) {
         return {
           id: wp.id,
           expr: wp.expr,
           watchpoint: wp,
-          origin: this.watchpointOriginForHit(idx),
+          origin: origin,
         };
       }
     }
@@ -1654,9 +1665,20 @@
   };
 
   DebuggerController.prototype.watchpointOriginForHit = function (idx) {
+    var cur = this.history[idx];
     var source = idx > 0 ? this.history[idx - 1] : this.history[idx];
     if (!source) return null;
-    var frame = source.stack && source.stack.length ? source.stack[source.stack.length - 1] : null;
+    var curFrame = cur && cur.stack && cur.stack.length ? cur.stack[cur.stack.length - 1] : null;
+    var frame = null;
+    if (curFrame && curFrame.call_id != null && source.stack && source.stack.length) {
+      for (var i = source.stack.length - 1; i >= 0; i--) {
+        if (source.stack[i] && source.stack[i].call_id === curFrame.call_id) {
+          frame = source.stack[i];
+          break;
+        }
+      }
+    }
+    if (!frame) frame = source.stack && source.stack.length ? source.stack[source.stack.length - 1] : null;
     return {
       file: (frame && frame.file) || source.file,
       line: (frame && frame.line) || source.line,
@@ -1696,15 +1718,101 @@
     };
   };
 
-  DebuggerController.prototype.watchpointChangedAt = function (idx, wp) {
+  DebuggerController.prototype.watchpointChangedAt = function (idx, wp, origin) {
     if (!wp || !wp.expr || idx < 0 || idx >= this.history.length) return false;
     if (idx <= 0) return false;
     var curRaw = this.watchValueAt(idx, wp.expr);
     var cur = this.watchValueComparable(curRaw);
     if (!cur || cur.state !== 'value') return false;
     var prev = this.previousWatchValueComparable(idx, wp.expr);
-    if (!prev) return this.watchValueTruthy(curRaw);
+    if (!prev) return this.watchpointFirstObservationChangedAt(wp.expr, curRaw, origin);
     return cur.key !== prev.key;
+  };
+
+  DebuggerController.prototype.watchpointFirstObservationChangedAt = function (expr, value, origin) {
+    return this.watchValueTruthy(value) &&
+      this.watchpointOriginWritesExpression(expr, origin);
+  };
+
+  DebuggerController.prototype.watchpointOriginWritesExpression = function (expr, origin) {
+    if (!origin || !origin.file || !origin.line) return false;
+    var line = this.sourceLineForDebuggerFile(origin.file, origin.line);
+    if (!line) return false;
+    return this.sourceLineAssignsWatchExpression(line, expr);
+  };
+
+  DebuggerController.prototype.sourceLineForDebuggerFile = function (file, line) {
+    var fname = String(file || '').replace(/^\/tutorial\//, '');
+    var model = this.t.editorModels && this.t.editorModels[fname] && this.t.editorModels[fname].model;
+    if (!model || line < 1 || line > model.getLineCount()) return '';
+    return model.getLineContent(line) || '';
+  };
+
+  DebuggerController.prototype.sourceLineAssignsWatchExpression = function (line, expr) {
+    expr = String(expr || '').trim();
+    var stripped = String(line || '').replace(/#.*$/, '').trim();
+    if (!stripped) return false;
+    var assigned = this.assignedWatchTargetsFromLine(stripped);
+    if (!assigned.length) return false;
+    if (/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(expr)) {
+      for (var a = 0; a < assigned.length; a++) {
+        if (assigned[a] === expr) return true;
+      }
+    }
+    var refs = this.watchExpressionIdentifierSet(expr);
+    for (var i = 0; i < assigned.length; i++) {
+      var name = assigned[i];
+      var base = name.split('.')[0];
+      if (refs[name] || refs[base]) return true;
+    }
+    return false;
+  };
+
+  DebuggerController.prototype.assignedWatchTargetsFromLine = function (stripped) {
+    var eq = this.assignmentEqualsIndex(stripped);
+    if (eq < 0) return [];
+    var opStart = eq;
+    while (opStart > 0 && /[+\-*\/%&|^<>]/.test(stripped.charAt(opStart - 1))) opStart--;
+    var lhs = stripped.slice(0, opStart).trim()
+      .replace(/^(?:let|const|var)\s+/, '')
+      .replace(/^\s*\((.*)\)\s*$/, '$1')
+      .trim();
+    if (!lhs || lhs.indexOf('(') !== -1) return [];
+    var parts = lhs.split(',');
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(part)) out.push(part);
+    }
+    return out;
+  };
+
+  DebuggerController.prototype.watchExpressionIdentifierSet = function (expr) {
+    var out = Object.create(null);
+    var keywords = {
+      'True': true, 'False': true, 'None': true,
+      'true': true, 'false': true, 'null': true, 'undefined': true,
+    };
+    String(expr || '').replace(/[A-Za-z_$][\w$]*/g, function (name, offset, full) {
+      if (offset > 0 && full.charAt(offset - 1) === '.') return name;
+      if (!keywords[name]) out[name] = true;
+      return name;
+    });
+    return out;
+  };
+
+  DebuggerController.prototype.assignmentEqualsIndex = function (line) {
+    for (var i = 0; i < line.length; i++) {
+      if (line.charAt(i) !== '=') continue;
+      var prev = i > 0 ? line.charAt(i - 1) : '';
+      var next = i + 1 < line.length ? line.charAt(i + 1) : '';
+      if (next === '=' || next === '>' || prev === '=' || prev === '!' ||
+          prev === '<' || prev === '>') {
+        continue;
+      }
+      return i;
+    }
+    return -1;
   };
 
   DebuggerController.prototype.watchValueAt = function (idx, expr) {
@@ -2350,6 +2458,7 @@
     var code = model.getValue();
     var path = '/tutorial/' + filename;
     var files = this.collectDebugFiles();
+    var runAsPytest = this.shouldDebugWithPytest(filename);
     files[path] = code;
 
     // SAB only matters for the pyodide (worker) path. For NodeChannel the
@@ -2369,8 +2478,16 @@
       args: this.collectProgramArgs(),
       debugFilename: path,
       debugCode: code,
+      debugPytest: runAsPytest,
+      debugPytestArgs: runAsPytest ? this.pytestArgsForDebug(path) : null,
       capReached: false,
-      pendingStart: { filename: path, code: code, files: files },
+      pendingStart: {
+        filename: path,
+        code: code,
+        files: files,
+        pytest: runAsPytest,
+        pytestArgs: runAsPytest ? this.pytestArgsForDebug(path) : null,
+      },
     };
     this._resetExecutionTrace(true);
 
@@ -2416,6 +2533,8 @@
         args: this.session.args || [],
         options: this.opts,
         overrides: this.session.replayOverrides || [],
+        pytest: runAsPytest,
+        pytestArgs: runAsPytest ? this.pytestArgsForDebug(path) : null,
       });
     } else {
       // Pyodide: load/enable the worker extension first; debugInit waits for
@@ -2438,6 +2557,8 @@
       watches: this.session.watches,
       args: this.session.args || [],
       options: this.opts,
+      pytest: !!st.pytest,
+      pytestArgs: st.pytestArgs || null,
       // Variable-mutation overrides recorded by the user during a previous
       // rewound state. The worker applies each at its recorded snapshot index.
       overrides: this.session.replayOverrides || [],
@@ -2559,6 +2680,20 @@
     return files;
   };
 
+  DebuggerController.prototype.shouldDebugWithPytest = function (filename) {
+    return !!(this.t && this.t._pytestMode && this.isPytestFile(filename));
+  };
+
+  DebuggerController.prototype.pytestArgsForDebug = function (path) {
+    return [path, '-v', '--tb=short', '--no-header'];
+  };
+
+  DebuggerController.prototype.isPytestFile = function (filename) {
+    if (!filename) return false;
+    var base = String(filename).split('/').pop();
+    return /^test_.+\.py$/i.test(base) || /_test\.py$/i.test(base);
+  };
+
   DebuggerController.prototype.queueWatchUpdate = function () {
     if (!this.session) return false;
     if (this.channel) {
@@ -2639,7 +2774,12 @@
     if (this.session) this.session.preserveReverseCursorOnNextPause = null;
     this.disableStepButtons(false);
     if (!preservedReverseCursor) {
-      this.setStatus('paused at line ' + this.history[this.liveIdx].line);
+      var liveSnap = this.history[this.liveIdx];
+      if (this.snapshotBreakpointMatch(liveSnap)) {
+        this.setStatus('paused at breakpoint at ' + this.basename(liveSnap.file) + ':' + liveSnap.line);
+      } else {
+        this.setStatus('paused at line ' + liveSnap.line);
+      }
     }
     this.renderAll(!preservedReverseCursor);
     this._publishCursor();
@@ -3451,14 +3591,22 @@
     if (!afterLine && bpsForFile && bpsForFile.has(line)) {
       glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
     }
-    var deco = [{
-      range: new monaco.Range(line, 1, line, 1),
-      options: {
-        isWholeLine: true,
-        className: cls,
-        glyphMarginClassName: glyph,
+    var deco = [
+      {
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          className: cls,
+        },
       },
-    }];
+      {
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: false,
+          glyphMarginClassName: glyph,
+        },
+      },
+    ];
     this.clearCurrentLineDecoration();
     var prev = editor._dbgCurrentLineIds || [];
     editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);

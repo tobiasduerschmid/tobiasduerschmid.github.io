@@ -140,6 +140,83 @@ test.describe.serial('TDD Tutorial', () => {
       .toContainText(/Error|error|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
+  test('debugger starts pytest runs for test files', async ({ browser }) => {
+    const debugPage = await browser.newPage();
+    try {
+      await debugPage.goto(`${TUTORIAL_URL}?instructor-mode=true&autosave=false`);
+      await waitForTutorialReady(debugPage);
+      await debugPage.waitForFunction(() =>
+        window._tutorial && window._tutorial.booted && window._tutorial._debuggerCtl,
+        { timeout: BOOT_TIMEOUT });
+      await debugPage.evaluate(async () => {
+        const tutorial = window._tutorial;
+        tutorial.instructorMode = true;
+        for (let step = 0; step <= 6; step++) {
+          tutorial._stepsUnlocked.add(step);
+        }
+        tutorial.loadStep(6);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await tutorial.applySolution();
+      });
+      const loadedTestSource = await debugPage.evaluate(() =>
+        window._tutorial.editorModels['test_scorer.py'].model.getValue());
+      expect(loadedTestSource).toContain('test_one_and_five_create_two_different_events');
+
+      const targetLine = await debugPage.evaluate(() => {
+        const tutorial = window._tutorial;
+        tutorial._setActiveFile('test_scorer.py');
+        const model = tutorial.editorModels['test_scorer.py'].model;
+        const lineCount = model.getLineCount();
+        for (let line = 1; line <= lineCount; line++) {
+          if (model.getLineContent(line).includes('report = score([])')) {
+            const ctl = tutorial._debuggerCtl;
+            ctl.breakpoints = new Map();
+            ctl.watchpoints = [];
+            ctl._pendingWatches = [];
+            ctl.persistBreakpoints();
+            ctl.refreshBpDecorations();
+            ctl.toggleBreakpoint('test_scorer.py', line);
+            ctl.startSession();
+            return line;
+          }
+        }
+        return -1;
+      });
+      expect(targetLine).toBeGreaterThan(0);
+
+      await debugPage.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: TEST_RUN_TIMEOUT });
+      await debugPage.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+
+      await debugPage.waitForFunction(({ targetLine }) => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap &&
+          snap.line === targetLine &&
+          /test_scorer\.py$/.test(snap.file || '');
+      }, { targetLine }, { timeout: TEST_RUN_TIMEOUT });
+
+      const state = await debugPage.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          line: snap.line,
+          file: snap.file,
+          debugFilename: ctl.session && ctl.session.debugFilename,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+          output: document.querySelector('.tvm-output-pre')?.textContent || '',
+        };
+      });
+      expect(state.debugFilename).toBe('/tutorial/test_scorer.py');
+      expect(state.output).toContain('test_scorer.py');
+      expect(state.status).toContain(String(targetLine));
+    } finally {
+      await debugPage.close();
+    }
+  });
+
   // --- Editor ---
 
   test('editor content can be modified', async () => {
