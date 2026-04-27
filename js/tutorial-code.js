@@ -6202,12 +6202,11 @@
         // overwriting it with the step's starter content. This is what turns
         // the git-playground into an undo-by-editing-build-git.sh experience.
         return self._syncStepFiles(curStep).then(function () {
-          self._renderTabs();
-        // Await syncs, then quiesce the shell. _restoreStepEntrySnapshot
-        // sent a Ctrl-C to clear any stray PS2 continuation; its response
-        // (^C plus a fresh prompt) streams in asynchronously. Without the
-        // _runSilent(':') the response can arrive after we set muteCount=0
-        // and appear in the terminal as a spurious "^C" line.
+          // Await syncs, then quiesce the shell. _restoreStepEntrySnapshot
+          // sent a Ctrl-C to clear any stray PS2 continuation; its response
+          // (^C plus a fresh prompt) streams in asynchronously. Without the
+          // _runSilent(':') the response can arrive after we set muteCount=0
+          // and appear in the terminal as a spurious "^C" line.
           return self._runSilent(':');
         }).then(function () {
           // Replay post-fileload setup on the newly-restored VM. The snapshot
@@ -6217,6 +6216,8 @@
           // effect students observe. Backends without post-fileload setup
           // fall through as a resolved no-op.
           return self._runPostFileloadSetup(curStep);
+        }).then(function () {
+          return self._refreshStepVisibleFiles(curStep);
         }).then(function () {
           return self._updateUserCmdListener(curStep);
         }).then(function () {
@@ -6336,6 +6337,7 @@
     // Run post_fileload_setup AFTER all setup/solution commands so e.g.
     // `bash build-git.sh` replays against the final VM state.
     p = p.then(function () { return self._runPostFileloadSetup(curStep); });
+    p = p.then(function () { return self._refreshStepVisibleFiles(curStep); });
     p = p.then(function () { return self._updateUserCmdListener(curStep); });
 
     // Quiesce the shell before snapshotting: a no-op silent command forces
@@ -6416,6 +6418,8 @@
           // Replay post_fileload_setup against the student's restored files
           // (e.g. re-run build-git.sh so the VM matches the autosaved script).
           return self._runPostFileloadSetup(savedStepObj);
+        }).then(function () {
+          return self._refreshStepVisibleFiles(savedStepObj);
         }).then(function () {
           return self._updateUserCmdListener(savedStepObj);
         }).then(function () {
@@ -6540,6 +6544,7 @@
       self._autoSaveProgress();
     });
     p = p.then(function () { return self._runPostFileloadSetup(savedStepObj); });
+    p = p.then(function () { return self._refreshStepVisibleFiles(savedStepObj); });
     p = p.then(function () { return self._updateUserCmdListener(savedStepObj); });
     p = p.then(function () { self._hideLoading(); });
 
@@ -6666,6 +6671,8 @@
         p = p.then(function () { return self._runPostFileloadSetup(step); });
       }
       p.then(function () {
+        return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      }).then(function () {
         self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
         // Cache the clean "entry state" of this step so future Reset /
@@ -6680,6 +6687,9 @@
       } else if (this.config.backend === 'java') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       }
+      self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+    } else if (firstVisit) {
+      self._refreshStepVisibleFiles(step, { includeStepFiles: false });
     }
 
     if (this.config.backend === 'v86') this._startFileWatch(2000);
@@ -7522,7 +7532,16 @@
     if (!this.emulator || !this.booted || this.config.backend !== 'v86') return;
     if (this._reverseSyncBusy) return;
     var self = this;
-    var files = Object.keys(this.editorModels);
+    var seen = {};
+    var files = [];
+    function addFile(filename) {
+      if (!filename || seen[filename]) return;
+      seen[filename] = true;
+      files.push(filename);
+    }
+    Object.keys(this.editorModels).forEach(addFile);
+    var step = this.steps[this.currentStep];
+    if (step && step.watch_files) step.watch_files.forEach(addFile);
     if (files.length === 0) return;
     this._reverseSyncBusy = true;
     var promises = files.map(function (filename) {
@@ -7531,12 +7550,26 @@
           var res = self.emulator.fs9p.SearchPath('/' + filename);
           if (res && res.id !== -1) {
             var inode = self.emulator.fs9p.inodes[res.id];
-            if (inode.mode & 0x49) self._executableFiles.add(filename);
-            else self._executableFiles.delete(filename);
+            if (inode.mode & 0x49) {
+              self._executableFiles.add(filename);
+            } else {
+              self._executableFiles.delete(filename);
+            }
           }
           var content = new TextDecoder('utf-8').decode(buf);
           var entry = self.editorModels[filename];
-          if (entry && entry.lastSyncContent !== content) {
+          if (!entry) {
+            var active = self.activeFileName;
+            self._suppressAutoSave = true;
+            self.openFile(filename, content);
+            self._suppressAutoSave = false;
+            entry = self.editorModels[filename];
+            if (entry) entry.lastSyncContent = content;
+            if (active && self.editorModels[active]) {
+              self._setActiveFile(active);
+              self._renderTabs();
+            }
+          } else if (entry.lastSyncContent !== content) {
             entry.lastSyncContent = content;
             if (entry.model.getValue() !== content) {
               self._suppressAutoSave = true;
@@ -7680,6 +7713,85 @@
     var all = globalCmds.concat(stepCmds).map(function (c) { return String(c).trim(); }).filter(Boolean);
     if (all.length === 0) return Promise.resolve();
     return this._runSilent(all.join('; '));
+  };
+
+  TutorialCode.prototype._getStepVisibleFiles = function (step, opts) {
+    opts = opts || {};
+    var includeStepFiles = opts.includeStepFiles !== false;
+    var stepFilePaths = {};
+    var seen = {};
+    var files = [];
+    function add(path) {
+      if (!path || seen[path]) return;
+      if (!includeStepFiles && stepFilePaths[path]) return;
+      seen[path] = true;
+      files.push(path);
+    }
+    if (step && step.files) {
+      step.files.forEach(function (f) {
+        stepFilePaths[f.path] = true;
+        if (includeStepFiles) add(f.path);
+      });
+    }
+    if (step) add(step.open_file);
+    if (step && step.watch_files) {
+      step.watch_files.forEach(function (path) { add(path); });
+    }
+    return files;
+  };
+
+  TutorialCode.prototype._readBackendFile = function (filename) {
+    var self = this;
+    if (!filename) return Promise.resolve(null);
+
+    if (self.config.backend === 'v86') {
+      if (!self.emulator || !self.booted) return Promise.resolve(null);
+      return self.emulator.read_file('/' + filename)
+        .then(function (buf) { return new TextDecoder('utf-8').decode(buf); })
+        .catch(function () { return null; });
+    }
+
+    if (self.config.backend === 'webcontainer' && self._webcontainer) {
+      return self._webcontainer.fs.readFile('tutorial/' + filename, 'utf8')
+        .then(function (content) {
+          if (typeof content === 'string') return content;
+          return new TextDecoder('utf-8').decode(content);
+        })
+        .catch(function () { return null; });
+    }
+
+    return Promise.resolve(null);
+  };
+
+  TutorialCode.prototype._refreshStepVisibleFiles = function (step, opts) {
+    var self = this;
+    var files = self._getStepVisibleFiles(step, opts);
+    if (files.length === 0) return Promise.resolve();
+
+    var p = Promise.resolve();
+    self._suppressAutoSave = true;
+    files.forEach(function (filename) {
+      p = p.then(function () {
+        return self._readBackendFile(filename).then(function (content) {
+          if (content === null) return;
+          self.openFile(filename, content);
+          if (self.editorModels[filename]) {
+            self.editorModels[filename].lastSyncContent = content;
+          }
+        });
+      });
+    });
+
+    return p.then(function () {
+      self._suppressAutoSave = false;
+      var target = (step && step.open_file) ||
+        (step && step.watch_files && step.watch_files[0]) ||
+        (step && step.files && step.files[0] && step.files[0].path);
+      if (target && self.editorModels[target]) self._setActiveFile(target);
+      self._renderTabs();
+    }).catch(function () {
+      self._suppressAutoSave = false;
+    });
   };
 
   // ---------------------------------------------------------------------------

@@ -411,6 +411,8 @@ steps:
       > `git diff` compare to produce that output? If you're unsure, re-read
       > the explanation above — this distinction matters in every future step.
 
+    open_file: "myproject/hero_registry.py"
+
     watch_files:
       - "myproject/hero_registry.py"
 
@@ -1605,10 +1607,10 @@ steps:
       > commit → new label → diverged timelines → HEAD switching sides.
 
 
+    open_file: "myproject/hero_registry.py"
+
     watch_files:
       - "myproject/hero_registry.py"
-
-    open_file: "myproject/hero_registry.py"
 
     solution:
       files:
@@ -1910,6 +1912,8 @@ steps:
       The `-d` flag safely deletes a branch only if it's been fully merged.
       This keeps your branch list tidy.
 
+    open_file: "myproject/hero_registry.py"
+
     watch_files:
       - "myproject/hero_registry.py"
 
@@ -2064,6 +2068,8 @@ steps:
       **Important:** Stay on `main` and proceed to the next step. In the
       next step, we'll add *mission logging* to the same `recruit` function
       on main, setting up a conflict!
+
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
       - "myproject/hero_registry.py"
@@ -2347,6 +2353,8 @@ steps:
       > — one coming from `main` and one from `update-recruit`.
       > That diamond shape is the visual signature of a successful merge:
       > two diverging histories reunited into one.
+
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
       - "myproject/hero_registry.py"
@@ -2676,6 +2684,8 @@ steps:
       file at `git add` time. The commit preserved it. And `git reset --hard
       HEAD` restored the working directory to match — proving that once
       something is committed, Git can always bring it back.
+
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
       - "myproject/hero_registry.py"
@@ -3197,6 +3207,8 @@ steps:
       branching, merge conflict resolution, remote collaboration, and
       independent feature work — that's a whole journey. You should
       feel good about this.
+
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
       - "myproject/hero_registry.py"
