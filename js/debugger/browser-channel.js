@@ -147,23 +147,23 @@
   };
 
   BrowserChannel.prototype.sendWatches = function (watches) {
-    return this._writeJson(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, watches || []);
+    return this._writeJson(WATCH_OFF, WATCH_REGION_BYTES, SLOT_WATCHES_LEN, SLOT_WATCHES_DIRTY, watches || [], 'watches');
   };
 
   BrowserChannel.prototype.sendBreakpointChanges = function (changes) {
     if (!Array.isArray(changes) || !changes.length) return true;
     var next = this._mergePendingArray(BPS_OFF, SLOT_BPS_LEN, SLOT_BPS_DIRTY, changes);
-    return this._writeJson(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, next);
+    return this._writeJson(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, next, 'breakpoints');
   };
 
   BrowserChannel.prototype.sendLiveEdits = function (edits) {
     if (!Array.isArray(edits) || !edits.length) return true;
     var next = this._mergePendingArray(EDITS_OFF, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, edits);
-    return this._writeJson(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, next);
+    return this._writeJson(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, next, 'edits');
   };
 
   BrowserChannel.prototype.sendExceptionBreakpoints = function (excBps) {
-    return this._writeJson(EXCBPS_OFF, EXCBPS_REGION_BYTES, SLOT_EXCBPS_LEN, SLOT_EXCBPS_DIRTY, excBps || []);
+    return this._writeJson(EXCBPS_OFF, EXCBPS_REGION_BYTES, SLOT_EXCBPS_LEN, SLOT_EXCBPS_DIRTY, excBps || [], 'exception breakpoints');
   };
 
   BrowserChannel.prototype._mergePendingArray = function (offset, lenSlot, dirtySlot, additions) {
@@ -178,11 +178,17 @@
     return next;
   };
 
-  BrowserChannel.prototype._writeJson = function (offset, capacity, lenSlot, dirtySlot, value) {
+  BrowserChannel.prototype._writeJson = function (offset, capacity, lenSlot, dirtySlot, value, label) {
     if (!this.u8) return false;
     var bytes = this._encoder.encode(JSON.stringify(value));
     if (bytes.length > capacity) {
-      console.warn('[BrowserChannel] payload too large:', bytes.length, '>', capacity);
+      var msg = (label || 'payload') + ' update too large';
+      console.warn('[BrowserChannel]', msg + ':', bytes.length, '>', capacity);
+      // Mirror the Pyodide path's surface (main.js writePayload) so the user
+      // sees feedback in the status bar instead of failing silently.
+      if (this.controller && typeof this.controller.setStatus === 'function') {
+        this.controller.setStatus(msg);
+      }
       return false;
     }
     this.u8.fill(0, offset, offset + capacity);

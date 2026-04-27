@@ -364,11 +364,18 @@ class TimeTravelDebugger(bdb.Bdb):
         if self._stop_flag:
             return
         self._snapshot(frame, 'return', retval=retval)
-        self._frame_call_id.pop(id(frame), None)
+        # Capture call_id BEFORE popping the frame mapping so we can prune the
+        # diff baseline. _snapshot above must run first because it consults
+        # _ensure_call_id via the still-populated map.
+        call_id = self._frame_call_id.pop(id(frame), None)
         self._live_frame_overrides.pop(id(frame), None)
         # Prune diff baseline for completed call so memory doesn't grow forever.
         # The call_id is now historical; UI still has it in `history` but worker
-        # won't emit more snapshots for it.
+        # won't emit more snapshots for it. Recursive calls have distinct call_ids
+        # so we won't stomp ancestor baselines.
+        if call_id is not None:
+            self._prev_by_call.pop((call_id, 'locals'), None)
+            self._prev_by_call.pop((call_id, 'globals'), None)
 
     def user_exception(self, frame, exc_info):
         if self._stop_flag:
@@ -1282,6 +1289,10 @@ def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):
         dbg.run(compiled, user_globals)
     finally:
         dbg._flush_buffer()
+        # Defense-in-depth: JS-side _ttd_cleanup() also drops the trace fn, but
+        # if that path errors mid-flight, leaving sys.settrace installed makes
+        # the next plain runCode 10-100x slower with phantom debug overhead.
+        sys.settrace(None)
 
 
 def _ttd_run_pytest(dbg, pytest_args, filename, overrides):
@@ -1324,6 +1335,7 @@ def _ttd_run_pytest(dbg, pytest_args, filename, overrides):
             raise SystemExit(code)
     finally:
         dbg._flush_buffer()
+        sys.settrace(None)
 
 
 def _ttd_cleanup():

@@ -158,7 +158,16 @@
         self._stdoutBuf += self._decoder.decode(result.value, { stream: true });
         self._processStdoutBuffer();
         loop();
-      }).catch(function () { /* reader closed */ });
+      }).catch(function (err) {
+        // After dispose() releases the reader this rejects with an expected
+        // "reader released" error. Distinguish that from real read failures:
+        // if the controller still has an active session, surface as a fail
+        // so the UI doesn't hang at "running…" forever.
+        if (self.controller && self.controller.session) {
+          console.error('[NodeChannel] stdout reader error:', err);
+          self._fail('Lost stdout: ' + (err && err.message || err));
+        }
+      });
     }
     loop();
   };
@@ -198,6 +207,17 @@
     }
     if (out) this._appendUserOutput(out);
     this._stdoutBuf = buf.slice(i);
+    // Cap: if a malformed/long stretch is sitting in the buffer waiting for a
+    // PROTO_SUFFIX that may never arrive, dump it as plain output and reset
+    // so the buffer can't grow without bound. The partialPrefixLength tail
+    // preservation only keeps a few bytes, well below this cap.
+    var MAX_BUF = 4 * 1024 * 1024;
+    if (this._stdoutBuf.length > MAX_BUF) {
+      console.warn('[NodeChannel] stdout buffer exceeded', MAX_BUF,
+                   'bytes without protocol suffix; flushing as plain output');
+      this._appendUserOutput(this._stdoutBuf);
+      this._stdoutBuf = '';
+    }
   };
 
   function partialPrefixLength(text) {
