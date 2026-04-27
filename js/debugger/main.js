@@ -2398,7 +2398,9 @@
       hitLabel.textContent = 'Iteration count (skip first N−1 hits)';
       var hitInput = document.createElement('input');
       hitInput.id = 'tvm-bp-hitcount-input';
-      hitInput.className = 'tvm-bp-dialog-input';
+      // Distinct class from the condition input so existing tests/selectors
+      // that target `.tvm-bp-dialog-input` continue to match a single field.
+      hitInput.className = 'tvm-bp-dialog-hitcount-input';
       hitInput.type = 'number';
       hitInput.min = '1';
       hitInput.step = '1';

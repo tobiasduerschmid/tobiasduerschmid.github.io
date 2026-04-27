@@ -312,7 +312,8 @@
   font-size: 12px;
   font-weight: 700;
 }
-.tvm-bp-dialog-input {
+.tvm-bp-dialog-input,
+.tvm-bp-dialog-hitcount-input {
   display: block;
   width: 100%;
   box-sizing: border-box;
@@ -324,7 +325,8 @@
   font: 13px/1.45 "Fira Code", "Cascadia Code", Menlo, monospace;
   outline: none;
 }
-.tvm-bp-dialog-input:focus {
+.tvm-bp-dialog-input:focus,
+.tvm-bp-dialog-hitcount-input:focus {
   border-color: #946B0C;
   box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.32);
   background: #fff;
@@ -1272,17 +1274,20 @@ html.dark-mode .tvm-bp-dialog-copy {
 html.dark-mode .tvm-bp-dialog-check {
   color: #cbd5e1;
 }
-html.dark-mode .tvm-bp-dialog-input {
+html.dark-mode .tvm-bp-dialog-input,
+html.dark-mode .tvm-bp-dialog-hitcount-input {
   background: #151924;
   color: #f8fafc;
   border-color: #4b5563;
 }
-html.dark-mode .tvm-bp-dialog-input:focus {
+html.dark-mode .tvm-bp-dialog-input:focus,
+html.dark-mode .tvm-bp-dialog-hitcount-input:focus {
   border-color: #FFD100;
   background: #111827;
   box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.26);
 }
-html.dark-mode .tvm-bp-dialog-input::placeholder {
+html.dark-mode .tvm-bp-dialog-input::placeholder,
+html.dark-mode .tvm-bp-dialog-hitcount-input::placeholder {
   color: #64748b;
 }
 html.dark-mode .tvm-bp-dialog-error {
