@@ -102,7 +102,7 @@ questions:
   - id: 6 
     question: "You have a pattern rule: `%.o: %.c`. What does the `%` symbol do?" 
     options: 
-      - "It acts as a wildcard, creating a generic template that tells `make` how to turn any `.c` file into a matching `.o` file." 
+      - "It is a wildcard — `%.o: %.c` matches every `.c` file to its `.o` counterpart."
       - "It tells `make` to execute the command silently." 
       - "It substitutes the current working directory path into the command." 
       - "It performs an integer modulo operation on the file timestamps." 

@@ -103,8 +103,8 @@ questions:
       The Facade's communication is **one-directional**: the Facade calls subsystem classes, but the subsystem does not know about the Facade. The Mediator's communication is **bidirectional**. Why does this distinction matter architecturally?
     options:
       - "One-directional communication is always faster than bidirectional"
-      - "The subsystem can be used and tested independently of the Facade, while colleagues in Mediator depend on the mediator interface"
-      - "Facades can only be used with structural patterns; Mediators with behavioral patterns"
+      - "The subsystem can run independently of the Facade; Mediator colleagues require the mediator to interact"
+      - "Facades only work with structural patterns; Mediators only with behavioral patterns"
       - "There is no practical difference — both achieve decoupling"
     correct_index: 1
     option_feedback:

@@ -6,7 +6,7 @@ questions:
     question: "A startup is building a new music streaming application. The product owner states, 'Listeners need the ability to seamlessly transition between songs without any perceivable loading delays.' What does this statement best represent?"
     options:
       - "A constraint on the technical solution space."
-      - "A (slighty vague) quality attribute requirement."
+      - "A (slightly vague) quality attribute requirement."
       - "A specific architectural implementation strategy."
       - "A concrete algorithmic choice for data caching."
     correct_index: 1

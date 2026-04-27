@@ -26,7 +26,7 @@ questions:
     question: "In C++, `'A'` is a `char` and `\"Alice\"` is a `const char*` — they are fundamentally different types. A C++ student writes `name = 'Alice'` in Python and worries they've created a character array instead of a string. Are they right?"
     options:
       - "Yes — Python's single quotes create a character array, just like C++'s `char[]`"
-      - "No — Python has no `char` type. Single quotes (`'...'`) and double quotes (`\"...\"`) are completely interchangeable and both create `str` objects. This lets you pick whichever style avoids escaping: `\"It's easy\"` or `'<div class=\"box\">'`"
+      - "No — Python has no `char` type; single and double quotes both create identical `str` objects."
       - "No — single quotes create byte strings, while double quotes create Unicode strings"
       - "Yes — while both work, single-quoted strings are immutable and double-quoted strings are mutable"
     correct_index: 1
@@ -156,7 +156,7 @@ questions:
       ```
     options:
       - "No bug — the default empty list is created fresh on each call"
-      - "Bug: the default argument `items=[]` is created **once** when the function is defined, not on each call. Subsequent calls mutate the same list object, so `add_item('a')` then `add_item('b')` returns `['a', 'b']` — not `['b']`"
+      - "Bug: `items=[]` is evaluated once when the function is defined, so subsequent calls mutate the same shared list."
       - "Bug: `append()` doesn't work on lists — you should use `items + [item]`"
       - "Bug: default arguments must be `None` in Python — `[]` causes a SyntaxError"
     correct_index: 1

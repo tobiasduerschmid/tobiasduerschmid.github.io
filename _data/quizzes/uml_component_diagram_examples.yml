@@ -159,7 +159,7 @@ questions:
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;component PayPalGateway {&#10;  provide &quot;IPayment&quot; as p2&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
       - "Generalization — PayPalGateway inherits from StripeGateway."
-      - "Provided/required interfaces — ShoppingCart requires `IPayment`, and any component providing `IPayment` can be substituted."
+      - "Provided/required interfaces — any component providing `IPayment` can substitute for StripeGateway."
       - "Dependency — add a dashed arrow from ShoppingCart to PayPalGateway."
       - "Composition — embed PayPalGateway inside ShoppingCart."
     correct_index: 1

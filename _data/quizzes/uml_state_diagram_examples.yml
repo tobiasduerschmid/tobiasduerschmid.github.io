@@ -247,7 +247,7 @@ questions:
       <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Connecting : connect()&#10;Connecting : entry/ showSpinner()&#10;Connecting : exit/ hideSpinner()&#10;Connecting --> Connected : handshakeOK / logSuccess()&#10;Connecting --> Error : timeout / logError()&#10;@enduml"></div>
     options:
       - "There is no difference; they are the same thing."
-      - "The entry/ action runs every time the state is entered (from any transition), while a transition effect only runs during that specific transition."
+      - "The entry/ action runs on every entry into the state; a transition effect only runs for that one transition."
       - "The entry/ action runs before the transition, while the effect runs after."
       - "The entry/ action is optional, while transition effects are mandatory."
     correct_index: 1

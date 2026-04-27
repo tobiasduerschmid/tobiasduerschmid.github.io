@@ -283,9 +283,9 @@ questions:
 
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
     options:
-      - "Employee inherits from Boss."
-      - "Employee holds a reference to Boss (navigable), but Boss does not necessarily know about Employee."
-      - "Boss holds a reference to Employee."
+      - "Employee inherits from Boss (subclass relationship)."
+      - "Employee holds a navigable reference to Boss; Boss has no reference back."
+      - "Boss holds a reference to Employee, not the other way around."
       - "Employee depends on Boss temporarily (like a method parameter)."
     correct_index: 1
     option_feedback:
@@ -306,7 +306,7 @@ questions:
     options:
       - "Always — every association must show navigability."
       - "Only in analysis/domain models, not in design models."
-      - "In design-level diagrams, to show which class stores the reference — this maps directly to a field in code."
+      - "At the design level, to show which class stores the reference."
       - "Never — navigability is not part of UML."
     correct_index: 2
     option_feedback:

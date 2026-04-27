@@ -65,8 +65,8 @@ questions:
       A developer argues: "Our `Logger` class uses the Singleton pattern, and it's fine — we never need to test it." What is wrong with this reasoning?
     options:
       - "Loggers should always use the Factory Method pattern instead"
-      - "The problem is not testing the Logger itself, but testing the code that *uses* the Logger — which cannot substitute a test double through normal dependency injection"
-      - "Singleton Loggers have thread-safety issues"
+      - "Every caller's `Logger.getInstance()` is a hidden dependency that cannot be swapped for a test double"
+      - "Singleton Loggers have thread-safety issues across concurrent threads"
       - "Loggers should use the Observer pattern instead"
     correct_index: 1
     option_feedback:

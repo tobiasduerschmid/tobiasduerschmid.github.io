@@ -5231,8 +5231,7 @@ steps:
   # Synthesizes the journey: twelve Dragon-Dice cycles plus the FizzBuzz
   # transfer. When TDD shines vs. when it doesn't, the anti-pattern taxonomy,
   # the empirical case, and a final quiz that mixes spaced retrieval across
-  # earlier cycles with new application questions at Bloom's Analyze/Evaluate
-  # levels.
+  # earlier cycles with new application questions requiring analysis and evaluation.
   # ==========================================================================
   - title: "The Big Picture — Twelve Cycles and a Transfer"
     instructions: |
@@ -5804,7 +5803,7 @@ steps:
             code*, not a measure of correctness.
 
         - question: |
-            **(Bloom's Create — design a test list from a spec.)** A teammate hands you this spec for a function `is_valid_password(password: str) -> bool`:
+            **(Design a test list from a spec.)** A teammate hands you this spec for a function `is_valid_password(password: str) -> bool`:
 
             > Returns `True` iff **all** of these hold: length is at least 8 *and* at most 64; contains at least one digit (`0`–`9`); contains at least one symbol from `!@#$%`; otherwise returns `False`. The empty string is invalid.
 
@@ -5829,11 +5828,10 @@ steps:
             bug report. Notice how the boundary-pair pattern (7/8 and 64/65) matches the
             cycle-3 lesson on partition transitions.
 
-            **Why this is a Bloom's Create item, not Apply**: there's no single canonical
-            answer (your *exact* ordering may differ, e.g., empty-string first as the
-            simplest-of-all). The skill being tested is *generating* a structured plan from
-            a spec — the same skill you'll use on every function you TDD outside this
-            tutorial. The four candidate lists above contrast different wrong-answer patterns:
+            **Why there's no single right answer**: your *exact* ordering may differ (e.g.,
+            empty-string first as the simplest-of-all). The skill being practised here is
+            *generating* a structured plan from a spec — the same skill you'll use on every
+            function you TDD outside this tutorial. The four candidate lists above contrast different wrong-answer patterns:
             random-instead-of-systematic, wrong-rules, and the Giant antipattern.
 
             If you found yourself drafting your own list before scrolling to the options —

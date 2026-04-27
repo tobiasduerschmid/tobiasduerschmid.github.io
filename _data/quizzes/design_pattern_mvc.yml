@@ -64,10 +64,10 @@ questions:
     question: |
       The Model in MVC automatically notifies all registered Views whenever its state changes. A developer adds 50 Views to the same Model. Performance degrades. What Observer-specific problem has MVC inherited?
     options:
-      - "The lapsed listener problem"
-      - "The notification storm problem — every model change triggers 50 view updates, many of which may be unnecessary"
-      - "The inverted dependency problem"
-      - "The god class problem"
+      - "The lapsed listener problem — observers that should have detached stay subscribed and leak memory"
+      - "The notification storm problem — every model change broadcasts to every view, many of which don't need to update"
+      - "The inverted dependency problem — registration points one way in code while data flows the other"
+      - "The god class problem — one class accumulates too many responsibilities"
     correct_index: 1
     option_feedback:
       0: |
@@ -84,7 +84,7 @@ questions:
       Modern frameworks like React effectively replace MVC's Observer mechanism with reactive state management (hooks, signals). Which core MVC principle do these frameworks still preserve?
     options:
       - "The Strategy pattern for swappable controllers"
-      - "Separation of what the system knows (state) from how it looks (UI) from how the user interacts (event handlers)"
+      - "Separation of state, presentation, and event handling — even when the underlying mechanism changes"
       - "The Composite pattern for UI tree structure"
       - "The use of explicit Subject and Observer base classes"
     correct_index: 1

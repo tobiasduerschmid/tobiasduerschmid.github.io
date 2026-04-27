@@ -47,7 +47,6 @@ steps:
   #                           on the boundary value the student just predicted.
   #   Safety-net metaphor   — tests catch regressions before they reach production.
   #   Forward-pointer       — streak bug IS a boundary bug (covered in Step 3).
-  #   Bloom's level         — Remember / Understand / Analyze (quiz).
   # (Note: this is testing, NOT TDD. TDD has its own tutorial: tdd.yml.)
   # --------------------------------------------------------------------------
   - title: "Why Test? The Bug That Got Away"
@@ -55,15 +54,9 @@ steps:
       > 📣 **The kind of bug that ships.** Imagine you've kept your Duolingo streak alive for **100 days straight**. You open the app expecting the 💯 badge — and it shows you 🔥 instead. One missing `=` sign in the badge logic, and the milestone you actually earned silently disappeared. The code runs cleanly, prints no error, and a million 100-day-streakers feel slightly betrayed. *That* is what tests prevent.
 
       > 🎯 **Goal:** Find the bug in `streak_badge`, watch a real test catch it, then fix the code so the test passes.
-      > 🧠 **Bloom's level:** *Apply* — fix production code so a pre-written test passes.
+      > 🧠 **Skills you'll gain:** Read a failing test, understand what it expects, and fix production code to make it pass.
 
       > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
-
-      🪞 **Calibrate yourself**: On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Write the number as a comment at the top of `streaks.py`:
-      ```python
-      # Confidence before Step 1: __/10
-      ```
-      You'll compare it in Step 5. Writing it down makes the comparison real.
 
       ### 💡 Why test?
 
@@ -329,12 +322,11 @@ steps:
   #   Variation Theory      — weak / medium / strong oracles held against the
   #                           same function to make "assertion strength" discernible.
   #   Fill-in-the-Oracle    — Arrange+Act given; student writes only Assert.
-  #   Bloom's level         — Remember / Apply / Analyze.
   # --------------------------------------------------------------------------
   - title: "Your First pytest Test"
     instructions: |
       > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
-      > 🧠 **Bloom's level:** *Apply* (write your first pytest tests) and *Analyze* (judge oracle strength).
+      > 🧠 **Skills you'll gain:** Write pytest tests from scratch and judge whether an assertion is strong enough to actually catch bugs.
 
       🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something. What exactly does each assertion claim? Is each one checking the *exact* expected value, or would it pass for multiple different return values? Hold your answer — you'll use it in Task 2.
 
@@ -743,12 +735,11 @@ steps:
   #   Variation Theory    — partition structure held constant, boundaries vary.
   #   Worked example      — two tests given (happy + boundary-just-below).
   #   Faded scaffold      — student writes 4 more boundary tests.
-  #   Bloom's level       — Understand / Apply / Analyze (quiz).
   # --------------------------------------------------------------------------
   - title: "Choosing What to Test: Partitions & Boundaries"
     instructions: |
       > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
-      > 🧠 **Bloom's level:** *Analyze* — decompose a spec into partitions, then identify the boundaries between them.
+      > 🧠 **Skills you'll gain:** Divide a function's input space into meaningful groups and pinpoint the exact boundary values where off-by-one bugs hide.
 
       💡 **The principle**: an **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
 
@@ -837,8 +828,6 @@ steps:
       1. *Partition* the input space.
       2. *Pick one representative* per partition.
       3. *Test every boundary* — last invalid before each transition, first valid after.
-
-      🧭 **Reflect before moving on.** Without scrolling back, answer: why is testing `squad_name_valid` at length 3 more informative than testing it at length 6? Write one sentence using the word "partition" or "boundary." Then go deeper: what is the *mechanism*? What property of the code's structure means a bug at the length-3 boundary is invisible to every test at lengths 5–8, no matter how many there are? Name the code-structural reason, not just the vocabulary word.
 
       🔗 **Connect to your own code.** Think of the last function you wrote before this tutorial. What inputs did you test it with? Apply the partition + boundary method: identify the partitions in that function's input space and name at least one boundary you probably didn't test. If you weren't testing at all before this tutorial, name what your first test for that function would be.
 
@@ -1097,12 +1086,11 @@ steps:
   #   Contrasting cases   — brittle vs robust on the same class.
   #   AAA pattern         — scaffolded structure for robust tests.
   #   Coverage ≠ quality  — demo with a deliberately weak 100% suite vs a strong 80% suite.
-  #   Bloom's level       — Analyze / Evaluate.
   # --------------------------------------------------------------------------
   - title: "Test Behavior, Not Implementation"
     instructions: |
       > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
-      > 🧠 **Bloom's level:** *Analyze* (spot brittle tests) and *Evaluate* (judge them against the public-API contract).
+      > 🧠 **Skills you'll gain:** Spot tests that break whenever you refactor, and rewrite them so they test what a function *does* rather than how it does it internally.
 
       ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). All four currently pass. You'll *discover* which are **brittle** (break on pure refactoring even when behavior is unchanged) and which are **robust** (survive any refactoring that preserves the public behavior).
 
@@ -1245,8 +1233,6 @@ steps:
       ```
 
       If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior. The same logic explains why Step 4's brittle tests passed before the rename: running the assertion is not the same as verifying the right thing.
-
-      🧭 **Reflect before moving on.** In your own words, without scrolling back: what is the structural difference between a brittle test and a robust one? Give a concrete example — not the `PlaylistQueue` one you just worked through. Then trace the *causal chain*: what needs to be true about how the production code changes for a brittle test to break while a robust test survives? The explanation should work for any class or function, not just this one.
 
 
     files:
@@ -1564,7 +1550,6 @@ steps:
   # STEP 5 — Putting It All Together
   # Pedagogy:
   #   Variation Theory FUSION  — partitions + oracles + behavior in one task.
-  #   Bloom's Create level     — design a suite from scratch.
   #   Dehaene Pillar 4         — consolidation: name what changed.
   #   Transfer test            — novel domain forces generalization.
   #   Metacognitive prompt     — self-monitoring of skill gaps.
@@ -1572,7 +1557,7 @@ steps:
   - title: "Putting It All Together"
     instructions: |
       > 🎯 **Goal:** Design a complete test suite **from scratch** — combining everything from Steps 1–4.
-      > 🧠 **Bloom's level:** *Create* — synthesize partitions, oracle strength, and behavior-vs-implementation into a working suite.
+      > 🧠 **Skills you'll gain:** Design a complete test suite for a new function from scratch — choosing partitions, writing strong assertions, and keeping tests decoupled from implementation details.
 
       ✍️ **Before reading on, write your own recap.** In one or two sentences each, answer from memory (no scrolling back):
 

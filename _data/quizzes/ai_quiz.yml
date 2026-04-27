@@ -46,11 +46,11 @@ questions:
     options:
       - "Any difficulty that makes a student want to give up."
       - "Difficulties that appear during learning but actually trigger deeper processing."
-      - "The difficulty of finding a good internet connection."
+      - "Cognitive load that comes from confusing or poorly written course material."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
     option_feedback:
       0: "Difficulty is only desirable when it remains productive and connected to the learning goal. Overload, discouragement, or impossible tasks can block learning instead of deepening it."
-      2: "An external obstacle is not automatically useful for learning. Desirable difficulties create effortful processing of the material itself."
+      2: "Struggle with badly explained material is *extraneous* cognitive load, not desirable difficulty. Desirable difficulty comes from the structure of the practice itself (retrieval, spacing, interleaving), not from having to decode unclear instruction."
       3: "An unresolved stuck state is not the goal. Productive challenge helps when it leads to retrieval, discrimination, explanation, or other deeper processing."
     explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
