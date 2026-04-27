@@ -1308,8 +1308,12 @@ steps:
             - "`CREATE TABLE books (id INTEGER, title TEXT, author TEXT, year TEXT, pages TEXT)`"
             - "`CREATE TABLE books (book_data TEXT)`"
           correct_index: 1
+          option_feedback:
+            0: "Missing a `PRIMARY KEY` — without one there's no guaranteed way to uniquely identify each book, making updates and deletes ambiguous."
+            2: "Storing `year` as `TEXT` instead of `INTEGER` loses type safety — you can't sort or range-query correctly, and the column accepts non-year strings."
+            3: "Storing all data in a single `TEXT` column gives up all schema enforcement: no types, no `NOT NULL` constraints, and no ability to query individual fields."
           explanation: |
-            Option B is best: it has a `PRIMARY KEY` for unique identification, `NOT NULL` on required fields (title, author), appropriate types (INTEGER for year, not TEXT), and leaves optional fields (pages) nullable. Option A lacks a primary key. Option C makes everything TEXT, losing type safety. Option D stores everything in one column — no schema enforcement at all.
+            The best schema has a `PRIMARY KEY` for unique identification, `NOT NULL` on required fields (title, author), appropriate types (`INTEGER` for year, not `TEXT`), and leaves optional fields (`pages`) nullable.
 
         - question: |
             **Arrange** the lines to create a `songs` table with a primary key and a required title.

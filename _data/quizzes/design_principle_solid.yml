@@ -120,7 +120,7 @@ questions:
       3: |
         Throwing for inputs the parent accepted strengthens the precondition. That is exactly the kind
         of substitution break LSP forbids.
-    explanation: "The classic LSP rules: **preconditions may not be strengthened**, **postconditions may not be weakened**, **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent. Option A inverts both rules; option C encourages the Refused-Bequest smell; option D actively strengthens preconditions (disallowing previously-legal inputs)."
+    explanation: "The classic LSP rules: **preconditions may not be strengthened**, **postconditions may not be weakened**, **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent."
 
   - id: 6
     type: single
@@ -153,7 +153,7 @@ questions:
       3: |
         Returning `null` from `fly()` still leaves `Ostrich` in a type position where clients expect
         flight behavior. The contract remains misleading.
-    explanation: "The real problem is the **taxonomy**: `Ostrich` is-a bird but is-not-a flying thing. Segregating `FlyingBird` aligns the type hierarchy with behavior, eliminating the need for clients to defensive-check (which is itself an LSP symptom). Options A and B hide the violation behind `instanceof`-style logic (the 'architectural pollution' the chapter warns about). Option D still lets `Ostrich` appear where flight is expected and makes the contract worse."
+    explanation: "The real problem is the **taxonomy**: `Ostrich` is-a bird but is-not-a flying thing. Segregating `FlyingBird` aligns the type hierarchy with behavior, eliminating the need for clients to defensive-check (which is itself an LSP symptom)."
 
   - id: 7
     type: single
@@ -232,7 +232,7 @@ questions:
       3: |
         Reflection keeps the stringly-typed dependency and adds fragility. It does not create a stable
         abstraction for carrier behavior.
-    explanation: "OCP = **open for extension, closed for modification**. Strategy/polymorphism lets you add a new `Carrier` without touching calculator code. Option A modifies tested code (the very thing OCP warns against); option C duplicates code; option D replaces a switch with a more fragile mechanism and still doesn't invert the dependency on concrete carriers."
+    explanation: "OCP = **open for extension, closed for modification**. Strategy/polymorphism lets you add a new `Carrier` without touching calculator code."
 
   - id: 10
     type: single
@@ -277,7 +277,7 @@ questions:
       3: |
         If infrastructure defines the interface, the abstraction often mirrors the database. The
         high-level service should define the contract it needs.
-    explanation: "DIP requires that **the high-level module owns the abstraction**. Option B shows correct interface ownership: the business logic declares what it needs; infrastructure conforms. Option A has policy depending on detail (the violation DIP names). Option C confuses DIP (architectural strategy) with DI (code-level tactic) — the chapter explicitly distinguishes these. Option D inverts ownership the wrong way; the interface ends up mirroring the database, not the business domain."
+    explanation: "DIP requires that **the high-level module owns the abstraction**. When business logic declares the interface it needs and infrastructure conforms, the dependency direction runs from concrete to abstract — exactly what DIP prescribes."
 
   - id: 12
     type: single
@@ -299,4 +299,4 @@ questions:
       3: |
         Being closed to modification does not prove there is only one reason to change. OCP and SRP
         reinforce each other, but neither automatically implies the other.
-    explanation: "LSP → OCP is the cleanest dependency: safe polymorphism is what lets a client stay *closed for modification* while the system remains *open for extension* via new subtypes. Option A confuses architecture with tooling. Option C treats ISP and DIP as substitutes when they address different problems (interface shape vs. dependency direction). Option D mistakes 'closed to change' for 'has one axis of change' — distinct properties."
+    explanation: "LSP → OCP is the cleanest dependency: safe polymorphism is what lets a client stay *closed for modification* while the system remains *open for extension* via new subtypes."

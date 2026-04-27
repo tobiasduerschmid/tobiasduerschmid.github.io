@@ -180,7 +180,7 @@ questions:
       3: |
         Programming language or file type is rarely the domain reason code changes. Splitting `.py`,
         `.js`, and `.sql` does not separate business concerns.
-    explanation: "Option B separates concerns along axes that plausibly change for different reasons (security rules, UX, business rules, analytics) — each with a narrow interface to the others. Option A is the God Module. Option C is hyper-decomposition that destroys cohesion. Option D splits on the wrong axis (programming language has nothing to do with the domain concern)."
+    explanation: "Separating concerns along axes that plausibly change for different reasons (security rules, UX, business rules, analytics) — each with a narrow interface to the others — is what effective SoC looks like in practice."
 
   - id: 9
     type: single

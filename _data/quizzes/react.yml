@@ -280,7 +280,7 @@ questions:
       3: |
         The functional form gives the previous value safely, but returning that same mutated object
         still violates React's immutability model.
-    explanation: "**`setUser({ ...user, name: 'Bob' })` is correct because it creates a new object reference (triggering re-render) while preserving all other fields — mutating in-place passes the same reference and React skips the re-render.** Option A mutates the existing object — React detects changes by reference, so passing the same object reference means no re-render. Option B replaces the whole object, dropping `age`. Option D mutates `prev` in-place and returns the same reference — same problem as A. Option C spreads the existing object into a *new* object (new reference), then overrides only `name`. React sees a new reference, re-renders, and `age` is preserved."
+    explanation: "**`setUser({ ...user, name: 'Bob' })` is correct** — spreading the existing object into a *new* object creates a new reference (triggering re-render) while preserving unchanged fields like `age`. React detects state changes by reference comparison, so mutating in place and returning the same object is invisible to it."
 
   - id: 14
     question: |

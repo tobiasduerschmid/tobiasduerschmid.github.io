@@ -8023,8 +8023,10 @@ steps:
             - "You created a Factory for objects that are only created in one place"
             - "You refactored a class with 8 methods serving 3 different actors into 3 focused classes"
           correct_indices: [0, 1, 2]
+          option_feedback:
+            3: "This is a valid SRP refactoring: 8 methods serving 3 different actors justify 3 focused classes. That reduces coupling and aligns each class with a single reason to change — the opposite of over-engineering."
           explanation: |
-            A, B, and C are classic over-engineering red flags. An ABC with one implementation = **premature abstraction** (wait for the second variant). Exploding a simple function across classes = **obscured intent**. A Factory for single-site construction = **unnecessary indirection**. Option D, though, is a **valid SRP refactoring** — 3 actors justify 3 classes.
+            These are classic over-engineering red flags: an ABC with one implementation is **premature abstraction** (wait for the second variant); exploding a simple function across classes is **obscured intent**; a Factory for single-site construction is **unnecessary indirection**. Splitting a class with 8 methods serving 3 different actors into 3 focused classes, by contrast, is a valid SRP refactoring.
 
         - question: |
             In the refactored library system, `CheckoutService` calls `book.checkout()` without checking the book's type. This works because of a specific SOLID principle. Adding a new book format (e.g., `PodcastBook`) would require no changes to `CheckoutService`. Which principle relationship makes this possible?

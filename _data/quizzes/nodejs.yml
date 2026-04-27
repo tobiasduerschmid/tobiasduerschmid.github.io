@@ -334,7 +334,7 @@ questions:
       3: |
         Wrapping the timer ID with `Promise.resolve` resolves immediately with the ID; it does not wait
         for the callback.
-    explanation: "**`new Promise(resolve => setTimeout(resolve, ms))` is correct because it resolves when the timer fires — the other options return a timer ID, await a number immediately, or fail to return the Promise.** `new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called. Passing `resolve` directly to `setTimeout` means: 'call `resolve` after `ms` milliseconds.' Option A returns a numeric timer ID, not a Promise. Option B `await`s the number `ms` directly — awaiting a non-Promise resolves immediately, so there is no delay. Option D calls `Promise.resolve` with a timer ID and doesn't `return` the Promise."
+    explanation: "**`new Promise(resolve => setTimeout(resolve, ms))` is correct** — `new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called; passing `resolve` directly to `setTimeout` means 'call `resolve` after `ms` milliseconds.' The other approaches either return a timer ID immediately, await a non-Promise (resolving instantly), or never return the Promise at all."
 
   - id: 16
     question: |

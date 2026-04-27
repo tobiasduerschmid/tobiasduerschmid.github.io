@@ -532,5 +532,9 @@ steps:
             - "`app.delete('/users/:userId', (req, res) => { res.send({ deleted: true, id: req.params.userId }); })`"
             - "`app.post('/delete/users/:userId', (req, res) => { res.json({ deleted: true }); })`"
           correct_index: 0
+          option_feedback:
+            1: "Using GET for a destructive operation violates REST semantics — GET must be safe (no side effects). Use `app.delete()` to map the DELETE HTTP verb correctly."
+            2: "`res.send()` with an object does serialise it, but `res.json()` is the idiomatic choice — it explicitly sets `Content-Type: application/json` and signals intent."
+            3: "Using POST and a non-standard URL (`/delete/users/:userId`) violates REST conventions. Also, the response body omits the deleted user's ID."
           explanation: |
-            REST convention maps the DELETE HTTP verb to `app.delete()`. The route parameter `:userId` is read from `req.params.userId`. `res.json()` serialises the object and sets `Content-Type: application/json`. Option B uses GET for a destructive operation (violates REST semantics). Option C uses `res.send()` with an object — Express serialises it, but `res.json()` is explicit and idiomatic. Option D uses POST and omits the user ID from the response body.
+            REST convention maps the DELETE HTTP verb to `app.delete()`. The route parameter `:userId` is read from `req.params.userId`. `res.json()` serialises the object and sets `Content-Type: application/json`.

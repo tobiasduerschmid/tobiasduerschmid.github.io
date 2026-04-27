@@ -2685,12 +2685,14 @@ steps:
             - "`{if (cart.includes(product)) return <span>In Cart</span>}` — use an if-statement inside the JSX expression braces"
             - "`<span visible={cart.includes(product)}>In Cart</span>` — use the built-in `visible` prop to toggle display"
           correct_index: 1
+          option_feedback:
+            0: "Ternary requires both branches: `condition ? trueValue : falseValue`. A one-branch ternary is a syntax error — use `&&` when you only need the truthy case."
+            2: "`if` is a statement, not an expression. JSX `{}` braces only accept expressions. Use `&&` or a ternary for conditional rendering."
+            3: "React has no built-in `visible` prop — unknown props are passed to the DOM element and ignored (or cause a warning). Use `&&` to conditionally render the element."
           explanation: |
             `&&` short-circuit is the correct pattern for show/hide. Use `.filter()` with `item.id === product.id`
             to check membership by ID rather than object reference (reference equality on objects is unreliable
             after state updates create new arrays — `[...cart, product]` creates a new array, so `cart.includes(product)` may fail).
-            Option A is invalid syntax — ternary requires both branches (`? ... : ...`). Option C is invalid — `if` statements
-            cannot appear inside JSX expression braces (JSX only accepts expressions, not statements).
 
         # ---- Comprehensive review: Steps 1-7 ----
         - question: |

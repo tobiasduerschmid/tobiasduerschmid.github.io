@@ -1991,7 +1991,11 @@ steps:
             - "`grep \"WARN\" server.log > grep \"admin\" | wc -l`"
             - "`wc -l $(grep \"WARN\" server.log | grep \"admin\")`"
           correct_index: 0
-          explanation: "Chaining `grep | grep | wc -l` correctly pipes each command's stdout into the next command's stdin. Option D tries to use command substitution `$(...)` to pass the filtered text as an argument to `wc -l`, but `wc -l` expects either a filename argument or piped stdin — not raw text pasted into the command line. Option B uses `&&` (run next only if previous succeeds), which is not the same as `|` (connect stdout to stdin)."
+          option_feedback:
+            1: "`&&` runs the next command only if the previous one succeeded — it does not connect their output. `|` connects stdout of one command to stdin of the next. Also, `> wc -l` tries to write output into a *file* literally named `wc`, not run `wc -l`."
+            2: "`>` redirects stdout to a file; here it would create a file named `grep` instead of piping output to the `grep` command. Replace `>` with `|` to connect the two commands."
+            3: "`$(grep ...)` captures the matching lines as a string and passes them as a command-line argument to `wc -l`. But `wc -l` counts lines from its stdin or a filename argument — not from inline text. Use a pipe instead: `grep ... | grep ... | wc -l`."
+          explanation: "Chaining `grep | grep | wc -l` pipes each command's stdout directly into the next command's stdin — the standard way to build multi-stage filters in Bash."
 
         - question: |
             **Scenario:** A junior developer writes the following script:
