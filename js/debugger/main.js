@@ -1820,8 +1820,15 @@
     return found;
   };
 
+  DebuggerController.prototype.hasEnabledExceptionBreakpoints = function () {
+    return (this.exceptionBreakpoints || []).some(function (eb) {
+      return eb && eb.enabled !== false;
+    });
+  };
+
   DebuggerController.prototype.hasForwardStopConditions = function () {
-    return this.hasEnabledWatchpoints() || this.hasCodeBreakpoints();
+    return this.hasEnabledWatchpoints() || this.hasCodeBreakpoints() ||
+      this.hasEnabledExceptionBreakpoints();
   };
 
   DebuggerController.prototype.runBackToWatchpoint = function (id) {

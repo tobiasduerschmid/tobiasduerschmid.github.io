@@ -1262,6 +1262,101 @@ test.describe.serial('Python debugger replay variable edits', () => {
     }
   });
 
+  test('run to exception stops when no code or data breakpoints are set', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      const code = `def boom():
+    marker = 1
+    raise ValueError("kaboom")
+
+print("before")
+boom()
+print("after")
+`;
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('exception-only.py', code, 'python');
+        tutorial._setActiveFile('exception-only.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._pendingWatches = [];
+        ctl.exceptionBreakpoints = [{ id: 1, enabled: true, type: '', mode: 'uncaught' }];
+        ctl._nextExceptionBpId = 2;
+        localStorage.removeItem('tutorial-debug-bps-' + tutorial.tutorialId);
+        localStorage.removeItem('tutorial-debug-excbps-' + tutorial.tutorialId);
+        ctl.persistBreakpoints();
+        ctl.persistExceptionBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.renderBreakpointManager();
+        ctl._publishBreakpoints();
+        ctl._publishWatchpoints();
+        ctl._publishExceptionBreakpoints();
+        ctl.startSession();
+      }, { code });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        return ctl && ctl.paused && ctl.historyIdx >= 0;
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const initialStopConditions = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        return {
+          hasCodeBreakpoints: ctl.hasCodeBreakpoints(),
+          hasEnabledWatchpoints: ctl.hasEnabledWatchpoints(),
+          hasEnabledExceptionBreakpoints: ctl.hasEnabledExceptionBreakpoints(),
+          hasForwardStopConditions: ctl.hasForwardStopConditions(),
+        };
+      });
+      expect(initialStopConditions).toEqual({
+        hasCodeBreakpoints: false,
+        hasEnabledWatchpoints: false,
+        hasEnabledExceptionBreakpoints: true,
+        hasForwardStopConditions: true,
+      });
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.runForwardToExceptionBreakpoint());
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.event === 'exception' &&
+          snap.exception && snap.exception.type === 'ValueError' &&
+          /exception-only\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const hit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        const top = snap.stack[snap.stack.length - 1];
+        return {
+          event: snap.event,
+          line: snap.line,
+          exceptionType: snap.exception && snap.exception.type,
+          exceptionMessage: snap.exception && snap.exception.message,
+          topFunction: top && top.function,
+          output: document.querySelector('.tvm-output-pre')?.textContent || '',
+        };
+      });
+      expect(hit).toEqual(expect.objectContaining({
+        event: 'exception',
+        line: 3,
+        exceptionType: 'ValueError',
+        exceptionMessage: 'kaboom',
+        topFunction: 'boom',
+      }));
+      expect(hit.output).toContain('before');
+      expect(hit.output).not.toContain('after');
+    } finally {
+      await page.close();
+    }
+  });
+
   test('data watchpoints added while paused affect the current session', async ({ browser }) => {
     const page = await browser.newPage();
     try {
