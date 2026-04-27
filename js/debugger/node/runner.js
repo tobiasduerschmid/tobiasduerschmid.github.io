@@ -83,7 +83,7 @@ function queueRuntimeUpdate(msg) {
   return runtimeUpdateChain;
 }
 
-process.stdin.on('data', (chunk) => {
+function handleCommandChunk(chunk) {
   stdinBuffer += chunk.toString('utf8');
   let nl;
   while ((nl = stdinBuffer.indexOf('\n')) !== -1) {
@@ -103,7 +103,11 @@ process.stdin.on('data', (chunk) => {
       commandQueue.push(msg);
     }
   }
-});
+}
+
+function startCommandReader() {
+  process.stdin.on('data', handleCommandChunk);
+}
 
 function awaitCommand() {
   return new Promise((resolve) => {
@@ -723,6 +727,7 @@ async function boot() {
     process.exit(1);
   }
   cfg = JSON.parse(initLine);
+  startCommandReader();
   watches = cfg.watches || [];
   opts = cfg.options || {};
   snapshotDepth = opts.snapshot_depth || 3;

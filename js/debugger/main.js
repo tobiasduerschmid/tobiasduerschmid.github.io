@@ -323,6 +323,7 @@
   DebuggerController.prototype._serializeBreakpoints = function () {
     var out = {};
     this.breakpoints.forEach(function (bps, path) {
+      if (!bps || !bps.size) return;
       var perFile = {};
       bps.forEach(function (info, line) {
         perFile[line] = {
@@ -2279,12 +2280,15 @@
   };
 
   DebuggerController.prototype.toggleBreakpoint = function (filename, line) {
-    var path = '/tutorial/' + filename;
+    var path = this.normalizeBreakpointPath(filename);
+    line = this.normalizeBreakpointLine(line);
+    if (!path || !line) return;
     var bps = this.breakpoints.get(path);
     if (!bps) { bps = new Map(); this.breakpoints.set(path, bps); }
     var change;
     if (bps.has(line)) {
       bps.delete(line);
+      if (bps.size === 0) this.breakpoints.delete(path);
       change = { op: 'remove', file: path, line: line };
     } else {
       bps.set(line, { condition: null, hitCount: null });
@@ -2302,7 +2306,9 @@
   };
 
   DebuggerController.prototype.editBreakpointCondition = function (filename, line) {
-    var path = '/tutorial/' + filename;
+    var path = this.normalizeBreakpointPath(filename);
+    line = this.normalizeBreakpointLine(line);
+    if (!path || !line) return;
     var bps = this.breakpoints.get(path);
     if (!bps) {
       bps = new Map();
@@ -2313,8 +2319,11 @@
     var existing = (current && current.condition) || '';
     var existingHits = (current && current.hitCount) || null;
     var self = this;
-    this.showBreakpointConditionDialog(filename, line, existing, current && current.condError, existingHits).then(function (result) {
-      if (!result) return;
+    this.showBreakpointConditionDialog(path.replace(/^\/tutorial\//, ''), line, existing, current && current.condError, existingHits).then(function (result) {
+      if (!result) {
+        if (wasMissing && bps.size === 0) self.breakpoints.delete(path);
+        return;
+      }
       var cond = result.condition && result.condition.trim() ? result.condition.trim() : null;
       var hits = parseInt(result.hitCount, 10);
       if (!isFinite(hits) || hits < 1) hits = null;
@@ -2596,11 +2605,14 @@
       if (!editor) return;
       var model = editor.getModel(); if (!model) return;
       var fname = self.activeFileForEditor(editor); if (!fname) return;
-      var path = '/tutorial/' + fname;
+      var path = self.normalizeBreakpointPath(fname);
+      if (!path) return;
       var bps = self.breakpoints.get(path);
       var decos = [];
       if (bps) {
         bps.forEach(function (info, line) {
+          line = self.normalizeBreakpointLine(line);
+          if (!line) return;
           if (line < 1 || line > model.getLineCount()) return;
           // Suppress standalone bp on the current line (live or rewound).
           // The combined chevron+inner-dot glyph handles that slot.
@@ -2635,10 +2647,14 @@
   };
 
   DebuggerController.prototype.persistBreakpoints = function () {
+    var self = this;
     var ser = [];
     this.breakpoints.forEach(function (bps, path) {
       bps.forEach(function (info, line) {
-        ser.push({ path: path, line: line, condition: info.condition || null, hitCount: info.hitCount || null });
+        var normalizedPath = self.normalizeBreakpointPath(path);
+        var normalizedLine = self.normalizeBreakpointLine(line);
+        if (!normalizedPath || !normalizedLine) return;
+        ser.push({ path: normalizedPath, line: normalizedLine, condition: info.condition || null, hitCount: info.hitCount || null });
       });
     });
     try {
@@ -2651,13 +2667,19 @@
       var raw = localStorage.getItem('tutorial-debug-bps-' + this.t.tutorialId);
       if (!raw) return;
       var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return;
       var self = this;
       arr.forEach(function (b) {
-        var bps = self.breakpoints.get(b.path);
-        if (!bps) { bps = new Map(); self.breakpoints.set(b.path, bps); }
-        var hits = parseInt(b.hitCount, 10);
+        var path = self.normalizeBreakpointPath(b && (b.path || b.file || b.filename));
+        var line = self.normalizeBreakpointLine(b && b.line);
+        if (!path || !line) return;
+        var bps = self.breakpoints.get(path);
+        if (!bps) { bps = new Map(); self.breakpoints.set(path, bps); }
+        var hits = parseInt(b.hitCount != null ? b.hitCount : b.hit_count, 10);
         if (!isFinite(hits) || hits < 1) hits = null;
-        bps.set(b.line, { condition: b.condition || null, hitCount: hits });
+        var condition = b.condition == null ? null : String(b.condition).trim();
+        if (!condition) condition = null;
+        bps.set(line, { condition: condition, hitCount: hits });
       });
     } catch (e) { /* ignore */ }
   };
@@ -2670,6 +2692,11 @@
     return '/tutorial/' + path;
   };
 
+  DebuggerController.prototype.normalizeBreakpointLine = function (line) {
+    var n = Number(line);
+    return isFinite(n) && Math.floor(n) === n && n >= 1 ? n : null;
+  };
+
   DebuggerController.prototype.loadConfiguredBreakpoints = function () {
     var configured = this.opts.initial_breakpoints || this.opts.breakpoints || [];
     if (!Array.isArray(configured)) return;
@@ -2677,7 +2704,7 @@
     configured.forEach(function (bp) {
       var file = bp && (bp.file || bp.path || bp.filename);
       var path = self.normalizeBreakpointPath(file || self.t.activeFileName);
-      var line = parseInt(bp && bp.line, 10);
+      var line = self.normalizeBreakpointLine(bp && bp.line);
       if (!path || !line || line < 1) return;
       var condition = bp.condition == null ? null : String(bp.condition).trim();
       if (!condition) condition = null;
@@ -2693,10 +2720,14 @@
     var self = this;
     var out = [];
     this.breakpoints.forEach(function (bps, path) {
+      path = self.normalizeBreakpointPath(path);
+      if (!path) return;
       var fname = path.replace(/^\/tutorial\//, '');
       var model = self.t.editorModels[fname] && self.t.editorModels[fname].model;
       var maxLine = model ? model.getLineCount() : Infinity;
       bps.forEach(function (info, line) {
+        line = self.normalizeBreakpointLine(line);
+        if (!line) return;
         if (line < 1 || line > maxLine) return;
         out.push({
           file: path,
@@ -2807,10 +2838,11 @@
     var step = this.t.steps && this.t.steps[this.t.currentStep >= 0 ? this.t.currentStep : 0];
     var filename = (step && step.run_file) ? step.run_file : this.t.activeFileName;
     if (!filename) { alert('No active file to debug'); return; }
+    filename = String(filename).replace(/^\/tutorial\//, '').replace(/^\/+/, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
     if (!model) { alert('Cannot locate code for ' + filename); return; }
     var code = model.getValue();
-    var path = '/tutorial/' + filename;
+    var path = this.normalizeBreakpointPath(filename);
     var files = this.collectDebugFiles();
     var runAsPytest = this.shouldDebugWithPytest(filename);
     files[path] = code;
@@ -3159,9 +3191,11 @@
   };
 
   DebuggerController.prototype.onBreakpointError = function (msg) {
-    var bps = this.breakpoints.get(msg.file);
-    if (bps && bps.has(msg.line)) {
-      var info = bps.get(msg.line);
+    var path = this.normalizeBreakpointPath(msg && msg.file);
+    var line = this.normalizeBreakpointLine(msg && msg.line);
+    var bps = path ? this.breakpoints.get(path) : null;
+    if (bps && line && bps.has(line)) {
+      var info = bps.get(line);
       info.condError = msg.error;
       this.refreshBpDecorations();
       this._publishBreakpoints();
@@ -3683,6 +3717,8 @@
 
   DebuggerController.prototype.removeBreakpoint = function (filename, line) {
     var path = this.normalizeBreakpointPath(filename);
+    line = this.normalizeBreakpointLine(line);
+    if (!path || !line) return;
     var bps = this.breakpoints.get(path);
     if (!bps || !bps.has(line)) return;
     bps.delete(line);

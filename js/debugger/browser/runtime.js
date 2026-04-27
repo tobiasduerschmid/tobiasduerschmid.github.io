@@ -22,16 +22,18 @@
 'use strict';
 
 // Bump to make stale-cache issues obvious in the console.
-var TTD_BROWSER_VERSION = '0.2.1-worker';
+var TTD_BROWSER_VERSION = '0.2.2-runtime-updates';
 
 // ---- SAB layout (same as worker-extension.js / node-channel.js) -------
-var SAB_HEADER_BYTES = 32;
+var SAB_HEADER_BYTES = 64;
 var WATCH_REGION_BYTES = 32 * 1024;
 var BPS_REGION_BYTES = 32 * 1024;
 var EDITS_REGION_BYTES = 32 * 1024;
+var EXCBPS_REGION_BYTES = 32 * 1024;
 var WATCH_OFF = SAB_HEADER_BYTES;
 var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
 var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
+var EXCBPS_OFF = EDITS_OFF + EDITS_REGION_BYTES;
 var SLOT_CMD = 0;
 var SLOT_WATCHES_DIRTY = 1;
 var SLOT_BPS_DIRTY = 2;
@@ -39,6 +41,8 @@ var SLOT_EDITS_DIRTY = 3;
 var SLOT_WATCHES_LEN = 4;
 var SLOT_BPS_LEN = 5;
 var SLOT_EDITS_LEN = 6;
+var SLOT_EXCBPS_DIRTY = 7;
+var SLOT_EXCBPS_LEN = 8;
 
 var i32 = null, u8 = null;
 var watches = [];
@@ -496,6 +500,14 @@ function drainPendingUpdates(scopeFn) {
     } catch (err) {}
     Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
   }
+  if (Atomics.load(i32, SLOT_EXCBPS_DIRTY) === 1) {
+    var exlen = Atomics.load(i32, SLOT_EXCBPS_LEN);
+    try {
+      var nextExceptionBreakpoints = JSON.parse(decodeSharedJsonBytes(EXCBPS_OFF, exlen));
+      exceptionBreakpoints = Array.isArray(nextExceptionBreakpoints) ? nextExceptionBreakpoints.slice() : [];
+    } catch (err2) {}
+    Atomics.store(i32, SLOT_EXCBPS_DIRTY, 0);
+  }
 }
 
 function shouldSurfaceForStep() {
@@ -553,7 +565,7 @@ function evalInScope(expr, scopeFn) {
   var locals = scopeFn ? safeCall(scopeFn) : {};
   var keys = Object.keys(locals);
   var values = keys.map(function (k) { return locals[k]; });
-  var fn = new Function.apply(null, keys.concat(['return (' + expr + ')']));
+  var fn = Function.apply(null, keys.concat(['return (' + expr + ');']));
   return fn.apply(null, values);
 }
 

@@ -13,7 +13,8 @@
  *      - postMessage `__ttd_init` with the SAB + entry source + breakpoints.
  *      - Listen for `paused` / `debugComplete` / `log` / `editError` and
  *        dispatch to the controller's existing handlers.
- *   2. sendCommand / sendWatches / sendBreakpointChanges / sendLiveEdits:
+ *   2. sendCommand / sendWatches / sendBreakpointChanges / sendLiveEdits /
+ *      sendExceptionBreakpoints:
  *      - Same SAB layout as the Pyodide path. Atomics.store + Atomics.notify.
  */
 
@@ -21,17 +22,20 @@
   'use strict';
 
   // ---- SAB layout (must match runtime.js) -------------------------------
-  var SAB_HEADER_BYTES = 32;
+  var SAB_HEADER_BYTES = 64;
   var WATCH_REGION_BYTES = 32 * 1024;
   var BPS_REGION_BYTES = 32 * 1024;
   var EDITS_REGION_BYTES = 32 * 1024;
-  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES + EDITS_REGION_BYTES;
+  var EXCBPS_REGION_BYTES = 32 * 1024;
+  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES + EDITS_REGION_BYTES + EXCBPS_REGION_BYTES;
   var WATCH_OFF = SAB_HEADER_BYTES;
   var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
   var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
+  var EXCBPS_OFF = EDITS_OFF + EDITS_REGION_BYTES;
   var SLOT_CMD = 0;
   var SLOT_WATCHES_DIRTY = 1, SLOT_BPS_DIRTY = 2, SLOT_EDITS_DIRTY = 3;
   var SLOT_WATCHES_LEN = 4, SLOT_BPS_LEN = 5, SLOT_EDITS_LEN = 6;
+  var SLOT_EXCBPS_DIRTY = 7, SLOT_EXCBPS_LEN = 8;
 
   function BrowserChannel(controller, tutorial) {
     this.controller = controller;
@@ -148,20 +152,30 @@
 
   BrowserChannel.prototype.sendBreakpointChanges = function (changes) {
     if (!Array.isArray(changes) || !changes.length) return true;
-    var next = changes.slice();
-    if (this.i32 && Atomics.load(this.i32, SLOT_BPS_DIRTY) === 1) {
-      var len = Atomics.load(this.i32, SLOT_BPS_LEN);
-      try {
-        var pending = this._decodeSharedJson(BPS_OFF, len);
-        if (Array.isArray(pending)) next = pending.concat(next);
-      } catch (e) {}
-    }
+    var next = this._mergePendingArray(BPS_OFF, SLOT_BPS_LEN, SLOT_BPS_DIRTY, changes);
     return this._writeJson(BPS_OFF, BPS_REGION_BYTES, SLOT_BPS_LEN, SLOT_BPS_DIRTY, next);
   };
 
   BrowserChannel.prototype.sendLiveEdits = function (edits) {
     if (!Array.isArray(edits) || !edits.length) return true;
-    return this._writeJson(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, edits);
+    var next = this._mergePendingArray(EDITS_OFF, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, edits);
+    return this._writeJson(EDITS_OFF, EDITS_REGION_BYTES, SLOT_EDITS_LEN, SLOT_EDITS_DIRTY, next);
+  };
+
+  BrowserChannel.prototype.sendExceptionBreakpoints = function (excBps) {
+    return this._writeJson(EXCBPS_OFF, EXCBPS_REGION_BYTES, SLOT_EXCBPS_LEN, SLOT_EXCBPS_DIRTY, excBps || []);
+  };
+
+  BrowserChannel.prototype._mergePendingArray = function (offset, lenSlot, dirtySlot, additions) {
+    var next = (additions || []).slice();
+    if (this.i32 && Atomics.load(this.i32, dirtySlot) === 1) {
+      var len = Atomics.load(this.i32, lenSlot);
+      try {
+        var pending = this._decodeSharedJson(offset, len);
+        if (Array.isArray(pending)) next = pending.concat(next);
+      } catch (e) {}
+    }
+    return next;
   };
 
   BrowserChannel.prototype._writeJson = function (offset, capacity, lenSlot, dirtySlot, value) {

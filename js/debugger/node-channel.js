@@ -46,6 +46,7 @@
     this._pendingWatches = null;
     this._pendingBpChanges = null;
     this._pendingLiveEdits = null;
+    this._pendingExceptionBps = null;
   }
 
   NodeChannel.prototype.install = function () {
@@ -60,6 +61,7 @@
     this._pendingWatches = null;
     this._pendingBpChanges = null;
     this._pendingLiveEdits = null;
+    this._pendingExceptionBps = null;
   };
 
   // ---- Session lifecycle -------------------------------------------------
@@ -103,7 +105,8 @@
           overrides: cfg.overrides || [],
           exceptionBreakpoints: cfg.exceptionBreakpoints || [],
         };
-        return self.writer.write(JSON.stringify(init) + '\n');
+        return self.writer.write(JSON.stringify(init) + '\n')
+          .then(function () { self._flushPendingRuntimeUpdates(); });
       })
       .catch(function (err) {
         self._fail('Failed to start Node debug: ' + (err && err.message || err));
@@ -239,12 +242,40 @@
     return this._writeCommand(update);
   };
 
+  NodeChannel.prototype._flushPendingRuntimeUpdates = function () {
+    if (!this.writer) return false;
+    var update = {};
+    var hasUpdate = false;
+    if (this._pendingWatches) {
+      update.watches = this._pendingWatches;
+      this._pendingWatches = null;
+      hasUpdate = true;
+    }
+    if (this._pendingBpChanges) {
+      update.breakpoint_changes = this._pendingBpChanges;
+      this._pendingBpChanges = null;
+      hasUpdate = true;
+    }
+    if (this._pendingExceptionBps) {
+      update.exception_breakpoints = this._pendingExceptionBps;
+      this._pendingExceptionBps = null;
+      hasUpdate = true;
+    }
+    if (this._pendingLiveEdits) {
+      update.live_edits = this._pendingLiveEdits;
+      this._pendingLiveEdits = null;
+      hasUpdate = true;
+    }
+    return hasUpdate ? this._writeRuntimeUpdate(update) : true;
+  };
+
   NodeChannel.prototype.sendCommand = function (cmdCode) {
     if (!this.writer) return;
     var cmd = { code: cmdCode };
     if (this._pendingWatches) { cmd.watches = this._pendingWatches; this._pendingWatches = null; }
     if (this._pendingBpChanges) { cmd.breakpoint_changes = this._pendingBpChanges; this._pendingBpChanges = null; }
     if (this._pendingLiveEdits) { cmd.live_edits = this._pendingLiveEdits; this._pendingLiveEdits = null; }
+    if (this._pendingExceptionBps) { cmd.exception_breakpoints = this._pendingExceptionBps; this._pendingExceptionBps = null; }
     this._writeCommand(cmd);
   };
 

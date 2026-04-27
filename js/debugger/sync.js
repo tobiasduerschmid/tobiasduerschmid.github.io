@@ -68,6 +68,7 @@
       breakpoints: {},
       watches: [],
       watchpoints: [],
+      exceptionBreakpoints: [],
       session: {
         active: false,
         capReached: false,
