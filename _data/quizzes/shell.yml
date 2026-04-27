@@ -3,11 +3,11 @@ description: "Test your conceptual understanding of shell environments, data str
 active: true
 questions:
   - id: 1
-    question: "A developer needs to parse a massive log file, extract IP addresses, sort them, and count unique occurrences. Instead of writing a 500-line Python script, they use `cat | awk | sort | uniq -c`. Why is this approach fundamentally preferred in the UNIX environment?"
+    question: "A developer needs to parse a massive log file, extract IP addresses, sort them, and count unique occurrences. Instead of writing a 500-line Python script, they use `grep | cut | sort | uniq -c`. Why is this approach fundamentally preferred in the UNIX environment?"
     options:
       - "Because shell scripts execute faster than compiled C or C++ programs."
       - "It adheres to the UNIX philosophy of combining small, single-purpose programs that communicate via universal text streams."
-      - "Because `awk` and `sort` are built-in OS functions that completely bypass the system's kernel."
+      - "Because `cut` and `sort` are built-in OS functions that completely bypass the system's kernel."
       - "It prevents the operating system from allocating memory to background processes."
     correct_index: 1
     option_feedback:
@@ -15,7 +15,7 @@ questions:
         The UNIX benefit here is composability, not a guarantee that shell pipelines are faster than
         compiled programs. The pipeline works because each tool accepts and emits a simple stream.
       2: |
-        `awk` and `sort` are ordinary programs using OS services. The design win is the shared
+        `cut` and `sort` are ordinary programs using OS services. The design win is the shared
         text-stream interface, not bypassing the kernel.
       3: |
         Pipelines can avoid temporary files and stream data between processes, but they do not prevent

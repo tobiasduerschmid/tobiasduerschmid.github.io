@@ -42,11 +42,12 @@ steps:
   #   Generation Effect     — predict outputs before running.
   #   Worked-example effect — students READ pre-written pytest tests before
   #                           being asked to write any (faded scaffolding
-  #                           continues into Step 2 where they write the oracle).
+  #                           continues into Step 2 where they write their own
+  #                           tests for the first time.
   #   Productive failure    — one calibrated RED test, with a specific message,
   #                           on the boundary value the student just predicted.
   #   Safety-net metaphor   — tests catch regressions before they reach production.
-  #   Forward-pointer       — streak bug IS a boundary bug (covered in Step 3).
+  #   Forward-pointer       — streak bug IS a boundary bug (covered in Step 2).
   # (Note: this is testing, NOT TDD. TDD has its own tutorial: tdd.yml.)
   # --------------------------------------------------------------------------
   - title: "Why Test? The Bug That Got Away"
@@ -109,12 +110,12 @@ steps:
 
       <details markdown="1"><summary>🎯 Why this bug matters (read after solving)</summary>
 
-      The bug lives at *exactly* `100` days — the line between 🔥 and 💯. That's no coincidence. Bugs love **boundaries** — the values where behavior changes. They're the natural home of off-by-one errors (`>` vs `>=`, `<` vs `<=`). You'll hunt boundaries systematically in **Step 3**.
+      The bug lives at *exactly* `100` days — the line between 🔥 and 💯. That's no coincidence. Bugs love **boundaries** — the values where behavior changes. They're the natural home of off-by-one errors (`>` vs `>=`, `<` vs `<=`). You'll hunt boundaries systematically in **Step 2**.
       </details>
 
       🧭 **Pause — name what just happened.** You ran a test, read a failure, fixed code, and confirmed it with a re-run. In one sentence: what did that test *specify* about `streak_badge`? Use the words "specification" or "behavior" rather than "check." Then go one level deeper: *why* does writing the assertion first (before seeing whether the code passes) mean the test reflects intended behavior rather than observed behavior? What would change if you wrote the assertion after reading the output?
 
-      > 🔭 **Coming in Step 2:** Not all assertions are equally useful. The tests you just ran use strong claims — but assertions can be weak, medium, or strong, and the difference determines which bugs slip through. You'll see exactly why in the next step.
+      > 🔭 **Coming in Step 2:** Not all *inputs* are equally useful for finding bugs. The streak bug at exactly day 100 wasn't a coincidence — bugs cluster at **boundaries**, the values where one behavior turns into another. You'll learn how to find them systematically before they ship.
 
     files:
       - path: "streaks.py"
@@ -161,7 +162,7 @@ steps:
           def test_exactly_at_century_boundary_is_diamond():
               # The spec says: 100 days and up earns 💯.
               # 100 is the *boundary* — the value where 🔥 turns into 💯.
-              # Boundary bugs (off-by-one) love values like this. (More in Step 3.)
+              # Boundary bugs (off-by-one) love values like this. (More in Step 2.)
               assert streak_badge(100) == "💯"
 
 
@@ -244,7 +245,7 @@ steps:
           option_feedback:
             0: "This claim ignores the order in which tests are written. Tests written *after* the code reflect what the code *happens to do* — including any bugs the author baked in. Tests written *before* (or alongside) reflect what the code *should* do. The two suites look identical only when the implementation already happens to be correct."
             1: "Exactly. Post-hoc tests are written against code that already exists, so they can only confirm what the implementation *does* — including any bugs baked in. They also can't guide design during development that already happened."
-            2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 2."
+            2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 3."
             3: "Context-switching is a minor cost compared with the real issue — post-hoc tests can only confirm your implementation matches itself, not that it matches the spec. They also can't act as a safety net during the development that already happened."
           explanation: |
             Post-hoc tests verify *your implementation* rather than *intended behavior*.
@@ -316,25 +317,33 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 2 — Your First pytest Test + Oracle Strength
+  # STEP 2 — Choosing What to Test: Partitions & Boundaries
   # Pedagogy:
-  #   Guide-and-Release     — explain conventions, then immediate hands-on.
-  #   Variation Theory      — weak / medium / strong oracles held against the
-  #                           same function to make "assertion strength" discernible.
-  #   Fill-in-the-Oracle    — Arrange+Act given; student writes only Assert.
+  #   First hands-on writing — also introduces the pytest-test SHAPE
+  #                            (test_ prefix, AAA, single assertion).
+  #   Black-box thinking     — derive tests from spec, not implementation.
+  #   Callback to Step 1     — the streak bug WAS a boundary bug (retrieval).
+  #   Variation Theory       — partition structure held constant, boundaries
+  #                            vary — so "boundary value" is what stands out.
+  #   Worked example         — three tests given (representative + both boundaries)
+  #                            instead of two; reduces cold-start load.
+  #   Faded scaffold         — student writes only 3 tests (down from 4) so the
+  #                            cognitive budget can absorb pytest-shape teaching.
+  #   Setup for Step 3       — `is True` introduces the IDEA of strong-vs-weak;
+  #                            Step 3 generalizes to any return type.
   # --------------------------------------------------------------------------
-  - title: "Your First pytest Test"
+  - title: "Choosing What to Test: Partitions & Boundaries"
     instructions: |
-      > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
-      > 🧠 **Skills you'll gain:** Write pytest tests from scratch and judge whether an assertion is strong enough to actually catch bugs.
+      > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
+      > 🧠 **Skills you'll gain:** Write your own pytest tests from scratch, divide a function's input space into meaningful groups, and pinpoint the exact boundary values where off-by-one bugs hide.
 
-      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. What would happen if those `==` checks were replaced with `assert result is not None`? Hold that thought.
+      🧭 **Bridge from Step 1.** That `streak_badge` bug at *exactly* day 100 wasn't random — it lived at a **boundary**, the value where one behavior turns into another. This step teaches you to find those boundary values systematically, before they ship.
 
-      Now open `test_leveling.py`. Three tests are waiting — each one calls `xp_to_level(...)` on a different input (the starter at 0 XP, the first level-up, the legendary level-100 cap). Each test already has an assertion in place — but the assertions are **weak**. Run the file once: all three tests pass, even though the assertions barely pin anything down.
+      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. Notice the *shape* of each — same structure, different inputs. You're about to write tests just like these.
 
       ### 📝 The shape of a pytest test
 
-      A pytest test is just a function whose name starts with `test_`, containing one or more plain `assert` statements. Here's the shape, demonstrated on a *different* function so you can see the pattern without seeing today's answer:
+      A pytest test is just a function whose name starts with `test_`, containing one or more plain `assert` statements. Here's the shape on a *different* function so you can see the pattern without seeing today's answer:
 
       ```python
       # The function under test (in some module):
@@ -354,349 +363,25 @@ steps:
 
       **pytest convention**: both the **file name** and **function names** must start with `test_`.
 
-      Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For the three tests in `test_leveling.py`, Arrange and Act are already done — your job is only the **Assert** line.
+      Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For the boundary tests below, all three sit on a single line each: the input string is the Arrange, the call to `squad_name_valid(...)` is the Act, and `is True` / `is False` is the Assert.
 
-      ### 📖 Oracle strength — the three levels
+      ### 💡 The principle: equivalence partitions and boundaries
 
-      The **oracle** is the assertion that decides pass/fail. The same function call can be checked at three levels of strength:
-
-      | Strength | Assertion | What breaks it? |
-      |---|---|---|
-      | **Weak** | `assert result is not None` | Almost nothing — `42`, `"hi"`, `0` all pass |
-      | **Medium** | `assert isinstance(result, int)` | Type errors only — wrong numbers slip through |
-      | **Strong** | `assert result == 0` | *Any* incorrect value |
-
-      Weak oracles look productive but verify nothing. Rushed students and AI assistants default to them because they almost always succeed — the *Liar test* anti-pattern.
-
-      Notice what the table isolates: the input is held constant (`xp_to_level(0)` in every row). Only the **assertion** varies. This is one whole dimension of test quality — and it lives **independently** of the dimension you'll meet in Step 3: *which inputs to pick*. A great test gets both right.
-
-      ⚙️ **Task — strengthen the three weak oracles** (file: `test_leveling.py`):
-
-      **Before changing anything:** answer this in your head — *would `assert isinstance(result, int)` catch a bug where `xp_to_level(0)` returns `9999` instead of `0`?* Write a one-word answer (yes/no) and one sentence explaining why.
-
-      Then for each of the three tests:
-
-      1. **Read the spec** in `leveling.py` to find the leveling formula (`xp // 100`).
-      2. **Compute** the expected return value for the input the test uses (`0`, `100`, `10000`).
-      3. **Replace** the weak `assert isinstance(result, int)` with the strongest possible assertion — `assert result == <your computed value>` — one that fails for *any* wrong value.
-
-      💬 **Required:** Above each new assertion, add a Python comment in this form:
-      ```python
-      # Weak version would pass if the function returned: ___
-      ```
-      Fill in a specific concrete wrong value. This is the design move that prevents Liar tests.
-
-      <details markdown="1"><summary>📖 Test names ARE documentation</summary>
-
-      Notice that good test names *describe the behavior they verify*: `test_starter_with_zero_xp`, `test_first_level_up`, `test_max_level_cap`. A failing test should read like a one-line bug report: *"max_level_cap FAILED — assert 99 == 100"*. If you can read your test names without opening the code and still know what the suite covers, your tests double as documentation.
-
-      Anti-example: `test_1`, `test_xp`, `test_works`. These tell the next reader nothing.
-      </details>
-
-      <details markdown="1"><summary>📖 Why pytest beats raw `assert`</summary>
-
-      Raw `assert` halts at the first failure; you only learn about one bug at a time. pytest discovers all tests, runs them all, names each one, and shows the *exact* mismatched value when one fails — e.g. `assert 4 == 5  where 4 = func(3)`.
-
-      No classes, no boilerplate — just functions starting with `test_`.
-      </details>
-
-
-    files:
-      # Reference from Step 1 — the instructions ask the student to scan these
-      # three tests and reuse the same assertion shapes for test_leveling.py.
-      - path: "test_streaks.py"
-        content: |
-          """Tests for streaks.streak_badge — pre-written for you in Step 1.
-          Re-shown here as the model you'll mirror when writing test_leveling.py."""
-          import pytest
-          from streaks import streak_badge
-
-
-          def test_well_above_century_is_diamond():
-              assert streak_badge(150) == "💯"
-
-
-          def test_inside_fire_range_is_fire():
-              assert streak_badge(50) == "🔥"
-
-
-          def test_exactly_at_century_boundary_is_diamond():
-              assert streak_badge(100) == "💯"
-        language: "python"
-
-      - path: "leveling.py"
-        content: |
-          """Player leveling utilities — JRPG / Pokemon style."""
-
-
-          def xp_to_level(xp: int) -> int:
-              """Convert raw experience points to player level.
-
-              Spec: every 100 XP earns one level (integer division by 100).
-              Level cap is conventionally 100 in mainline JRPGs; this function
-              doesn't enforce a cap — that's a separate design decision.
-              """
-              return xp // 100
-
-
-          def level_to_min_xp(level: int) -> int:
-              """The minimum XP required to be AT a given level."""
-              return level * 100
-        language: "python"
-
-      - path: "test_leveling.py"
-        content: |
-          """Tests for the leveling module — three tests with WEAK oracles.
-
-          Each test calls xp_to_level(...) on a different input. Arrange and Act
-          are done for you. Your job: replace each weak `isinstance` assertion
-          with the strongest possible oracle (==) — one that fails for any
-          incorrect value.
-
-          The leveling spec is in leveling.py.
-          """
-          import pytest
-          from leveling import xp_to_level
-
-
-          def test_starter_with_zero_xp():
-              # A brand-new account has 0 XP. The spec says: 0 XP → level 0.
-              result = xp_to_level(0)
-              # TODO: replace this weak oracle with the strongest possible assertion.
-              assert isinstance(result, int)
-
-
-          def test_first_level_up():
-              # The moment you cross from level 0 to level 1.
-              # Look up the spec: how much XP gets you to level 1 *exactly*?
-              result = xp_to_level(100)
-              # TODO: replace this weak oracle with the strongest possible assertion.
-              assert isinstance(result, int)
-
-
-          def test_max_level_cap():
-              # Level 100 is the famous JRPG max (Pokemon, Final Fantasy, Dragon Quest, …).
-              # What XP value puts you at *exactly* level 100?
-              result = xp_to_level(10000)
-              # TODO: replace this weak oracle with the strongest possible assertion.
-              assert isinstance(result, int)
-
-
-        language: "python"
-
-    open_file: "test_leveling.py"
-    run_file: "test_leveling.py"
-
-    solution:
-      files:
-        - path: "test_leveling.py"
-          content: |
-            """Tests for the leveling module — strong oracles."""
-            import pytest
-            from leveling import xp_to_level
-
-
-            def test_starter_with_zero_xp():
-                result = xp_to_level(0)
-                # Weak version would pass if the function returned: 9999
-                assert result == 0
-
-
-            def test_first_level_up():
-                result = xp_to_level(100)
-                # Weak version would pass if the function returned: 42
-                assert result == 1
-
-
-            def test_max_level_cap():
-                result = xp_to_level(10000)
-                # Weak version would pass if the function returned: 7
-                assert result == 100
-
-
-          language: "python"
-      explanation: |
-        Replace each weak `isinstance` check with a strong equality oracle: `result == 0`
-        for the starter, `result == 1` for the first level-up, and `result == 100` for the
-        cap. The strong oracle would fail if the function returned any wrong integer, not
-        just the wrong type.
-
-    tests:
-      - description: "test_leveling.py runs without errors"
-        command: |
-          output = __run_capture('/tutorial/test_leveling.py')
-      - description: "test_starter_with_zero_xp uses a strong oracle (== 0, not isinstance)"
-        command: |
-          import re
-          source = open('/tutorial/test_leveling.py').read()
-          body = source.split('test_starter_with_zero_xp')[1].split('def ')[0]
-          assert 'isinstance' not in body, \
-              "test_starter_with_zero_xp still uses `isinstance`, which only checks the return type — `9999` would pass it. A strong oracle pins the exact value. What does the spec say xp_to_level(0) should return? Assert that exact value with ==."
-          assert re.search(r'==\s*0\b', body), \
-              "test_starter_with_zero_xp doesn't yet assert the exact expected value. Replace the weak oracle with `assert result == 0` (the level a brand-new account is at)."
-      - description: "test_first_level_up uses a strong oracle (== 1, not isinstance)"
-        command: |
-          import re
-          source = open('/tutorial/test_leveling.py').read()
-          body = source.split('test_first_level_up')[1].split('def ')[0]
-          assert 'isinstance' not in body, \
-              "test_first_level_up still uses `isinstance`. A strong oracle pins the exact value. Compute what xp_to_level(100) should return from the spec, then assert that value with ==."
-          assert re.search(r'==\s*1\b', body), \
-              "test_first_level_up doesn't yet assert the exact expected level. The spec says every 100 XP earns one level — so 100 XP puts you at level... ? Replace the weak oracle with `assert result == <that number>`."
-      - description: "test_max_level_cap uses a strong oracle (== 100, not isinstance)"
-        command: |
-          import re
-          source = open('/tutorial/test_leveling.py').read()
-          body = source.split('def test_max_level_cap')[1].split('def ')[0]
-          assert 'isinstance' not in body, \
-              "test_max_level_cap still uses `isinstance`. A strong oracle pins the exact value. What level does 10000 XP put you at according to the spec?"
-          assert re.search(r'==\s*100\b', body), \
-              "test_max_level_cap doesn't yet assert the exact expected level. Compute it from the spec (`xp // 100`) for the input the test uses (10000), then replace the weak oracle with `assert result == <that number>`."
-      - description: "All leveling tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_leveling.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some leveling tests failed:\n{output}"
-        hints:
-          - title: "Strong-oracle nudge"
-            text: "A *strong* oracle pins the result to one exact value. `isinstance(result, int)` accepts any int — what does it *not* check?"
-          - title: "Strategic hint"
-            text: "For each test, replace `assert isinstance(result, int)` with `assert result == <expected value>`. The expected values come from the formula `xp // 100` applied to the test's input."
-          - title: "Almost-spoiler — compute, don't copy"
-            text: "Compute the level for each input from the spec (`xp // 100`): `0`, `100`, `10000`. Then replace each `assert isinstance(result, int)` with `assert result == <your_number>`."
-
-    quiz:
-      title: "pytest Basics — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-
-        - question: |
-            Which file name will pytest **automatically discover** as a test file?
-          type: single
-          options:
-            - "`testing_leveling.py`"
-            - "`test_leveling.py`"
-            - "`check_leveling.py`"
-            - "`leveling_tests.py`"
-          correct_index: 1
-          option_feedback:
-            0: "pytest discovers files starting with `test_` (note the underscore) or ending with `_test.py`. `testing_leveling.py` matches *neither* pattern — pytest will silently skip it."
-            1: "Correct. `test_leveling.py` starts with `test_` and ends with `.py` — it matches the discovery rule. Functions inside must also start with `test_`."
-            2: "There's no convention `check_*` in pytest. The discovery rule is `test_*` prefix or `*_test.py` suffix only."
-            3: "Close — but pytest looks for `*_test.py` (singular) or `test_*` prefix. `leveling_tests.py` (plural \"tests\") doesn't match either."
-          explanation: |
-            pytest discovers files whose names start with `test_` or end with `_test.py`.
-            Functions inside must also start with `test_`.
-
-        - question: |
-            What does this pytest output mean?
-            ```
-            test_math.py::test_addition PASSED
-            test_math.py::test_division FAILED
-            ```
-          type: single
-          options:
-            - "Both tests ran and produced output, but only `test_addition` returned the value pytest expected as a success signal"
-            - "The assertions in `test_addition` all held; at least one assertion in `test_division` did not"
-            - "The test file has a syntax error in `test_division` that prevented it from being collected by the test runner"
-            - "`test_division` was skipped because it depends on `test_addition` completing first and pytest enforces execution order"
-          correct_index: 1
-          option_feedback:
-            0: "pytest's PASSED/FAILED is not about return values. Test functions don't return anything that pytest reads — pytest only checks whether any `assert` statement raised `AssertionError`. PASSED = no assertion failed; FAILED = at least one did."
-            1: "Right. PASSED means no `AssertionError` was raised in that function; FAILED means at least one assertion produced `False`. pytest shows the exact line and the mismatched values."
-            2: "A syntax error would have been reported during *collection*, not run. The fact that the line says `test_division FAILED` means the function *did* run; an assertion inside it just didn't hold."
-            3: "pytest does not enforce dependency or order between tests by default — each runs independently. Test functions are isolated unless you explicitly opt into ordering plugins."
-          explanation: |
-            PASSED means the assertions in that test function all held. FAILED means at least
-            one assertion in `test_division` was `False`. pytest will show the exact line and
-            values that caused the failure.
-
-        - question: |
-            Two tests check the same function. Which assertion is **strongest** (most likely to catch a bug)?
-
-            **A.**
-            ```python
-            def test_add_a():
-                result = add(2, 3)
-                assert isinstance(result, int)
-            ```
-
-            **B.**
-            ```python
-            def test_add_b():
-                result = add(2, 3)
-                assert result == 5
-            ```
-          type: single
-          options:
-            - "A — it checks the return type, which catches the widest possible category of bugs"
-            - "B — it checks the exact expected value, failing for any wrong answer. A passes even if `add` returns 42"
-            - "Both are equally strong — both are `True` for a correctly-implemented `add`"
-            - "Neither — strong oracles always require multiple assertions, not just one"
-          correct_index: 1
-          option_feedback:
-            0: "This inverts the right intuition. A type check is *cheap* but doesn't catch wrong values — `add(2, 3)` returning `0`, `42`, or any other int still passes. The \"widest category of bugs\" is exactly what `isinstance` *fails* to catch."
-            1: "Exactly. B is a strong oracle: only `5` satisfies `result == 5`. A is weak: any `int` passes `isinstance(result, int)` — `0`, `42`, `5` all look green, including wrong answers."
-            2: "They are not equally strong. The whole point of *oracle strength* is that two assertions on the same function call can differ wildly in what bugs they expose. `assert isinstance(result, int)` is satisfied by infinitely many wrong values; `assert result == 5` is satisfied by exactly one correct value."
-            3: "Strong oracles do not require multiple assertions — they require one *precise* assertion. A single `assert result == 5` already pins the expected behavior exactly. Padding with extra `isinstance` checks doesn't strengthen the oracle, it just adds noise."
-          explanation: |
-            A is a **weak oracle**: `add(2, 3)` returning `0`, `42`, or `5` all pass. B is a
-            **strong oracle**: only `5` satisfies it. Weak oracles look green but verify
-            nothing — the *Liar test* anti-pattern.
-
-        - question: |
-            **(Spaced review — Step 1)** A developer finishes a feature and deletes the tests because "the feature is done and working." What principle does this violate?
-          type: single
-          options:
-            - "The DRY principle — tests duplicate the code's logic unnecessarily"
-            - "The safety-net principle — passing tests stay in place to catch regressions, not disposable scaffolding to be removed once a feature ships"
-            - "The YAGNI principle — tests are speculative code that may not be needed"
-            - "No principle — deleting tests after a feature ships is standard practice"
-          correct_index: 1
-          option_feedback:
-            0: "Tests do *encode* the same intent as the code they verify, but that's not duplication in the DRY sense — DRY is about avoiding *the same logic in two places that must change together*. Tests describe *what should happen*; code describes *how it happens*. Different concerns, both worth keeping."
-            1: "Right. The safety-net principle: each passing test permanently guards that behavior. Deleting it cuts a hole in the net. If someone later reverts or re-introduces the bug, there is nothing to catch it."
-            2: "YAGNI (\"You Aren't Gonna Need It\") cautions against speculative *features*, not against tests for shipped behavior. A test guarding shipped behavior is the opposite of speculative — that behavior is already in production."
-            3: "Deleting passing tests is *not* standard practice on any team that treats tests as a safety net. Anyone proposing this is misunderstanding the role of the test suite. The whole point is that tests stay in place to catch the regression no one anticipated."
-          explanation: |
-            Each passing test stays in place to catch regressions. Deleting passing tests cuts
-            holes in the safety net: if someone later modifies the code and introduces a
-            regression, there is no test to catch it.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 3 — Choosing What to Test: Partitions & Boundaries
-  # Pedagogy:
-  #   Black-box thinking  — derive tests from spec, not implementation.
-  #   Callback to Step 1  — the streak bug WAS a boundary bug (retrieval).
-  #   Variation Theory    — partition structure held constant, boundaries vary.
-  #   Worked example      — two tests given (happy + boundary-just-below).
-  #   Faded scaffold      — student writes 4 more boundary tests.
-  # --------------------------------------------------------------------------
-  - title: "Choosing What to Test: Partitions & Boundaries"
-    instructions: |
-      > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
-      > 🧠 **Skills you'll gain:** Divide a function's input space into meaningful groups and pinpoint the exact boundary values where off-by-one bugs hide.
-
-      💡 **The principle**: an **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
+      An **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
 
       Today's function: `squad_name_valid(name)` — checking if a Fortnite / Roblox / Discord squad name is the right length. Rule: `3 ≤ len ≤ 12` characters.
 
       🔍 **Before writing any code:** Looking only at the spec (`3 ≤ len ≤ 12`), list the 4 input lengths you would test. Don't run anything. For each one, write a single word explaining *why this specific length matters more than its neighbor*. Hold your list — check it against the disclosure below after writing your tests.
 
-      ⚙️ **Task** (`test_squad.py`): Two worked tests are provided.
+      ⚙️ **Task** (`test_squad.py`): **Three** worked tests are provided so you can see the pattern from multiple angles before writing your own. Read all three first, then write three more.
 
-      💬 **Self-explain first** (do this *before* writing): Read the two provided tests carefully. *Why* does the first one assert `is True` and the second `is False`? *Why* did the author pick length `5` for "valid representative" and `2` for "just below min"? Then answer: what is *the same* about these two tests, and what is *different*? Articulating both sides primes you to make your own.
+      💬 **Self-explain first** (do this *before* writing): Read the three provided tests carefully. *Why* did the author pick length `5` for "valid representative", `2` for "just below min", and `12` for "boundary at max valid"? What is *the same* about all three tests, and what is *different*? Articulating both sides primes you to make your own.
 
-      Now **write four more tests**. The four stubs in the file name what each test must check; you decide the input and the expected return value.
+      Now **write three more tests**. The three stubs in the file name what each test must check; you decide the input string and the expected return value.
 
       | Test name | What partition or boundary it pins down |
       |---|---|
       | `test_boundary_min_valid` | the **smallest** length the spec says is valid |
-      | `test_boundary_max_valid` | the **largest** length the spec says is valid |
       | `test_too_long_just_above_max` | one length **past** the upper bound |
       | `test_empty_string` | the empty string |
 
@@ -704,9 +389,9 @@ steps:
 
       - What concrete input string has the right length?
       - Should `squad_name_valid` return `True` or `False` for it? (Read the rule — don't guess.)
-      - Then write the assertion.
+      - Then write the assertion using the same `is True` / `is False` pattern as the worked examples.
 
-      💡 **Strong oracles on a Boolean return**: `squad_name_valid` returns `True`/`False`. `assert squad_name_valid("epic") is True` is strong (identity comparison — only `True` itself passes). `assert squad_name_valid("epic")` with no comparison is weak — `1`, `"yes"`, or any truthy value would slip through.
+      💡 **Strong oracles on a Boolean return**: `squad_name_valid` returns `True`/`False`. `assert squad_name_valid("epic") is True` is strong (identity comparison — only `True` itself passes). `assert squad_name_valid("epic")` with no comparison is weak — `1`, `"yes"`, or any truthy value would slip through. (You'll generalize this idea — *strong vs. weak assertions* — to any return type in Step 3.)
 
       <details markdown="1"><summary>📖 Quick aside: <code>is True</code> vs <code>== True</code></summary>
 
@@ -718,7 +403,7 @@ steps:
       | `assert result == True` | ✓ passes — `1 == True` is `True` |
       | `assert result` (no comparison) | ✓ passes — `1` is truthy |
 
-      For a function whose contract says "returns a Boolean", use `is True` / `is False` — the test then catches *both* wrong values *and* wrong types. (For non-Boolean returns, prefer `==` with the exact expected value.)
+      For a function whose contract says "returns a Boolean", use `is True` / `is False` — the test then catches *both* wrong values *and* wrong types. (For non-Boolean returns, prefer `==` with the exact expected value — that's Step 3.)
       </details>
 
       <details markdown="1"><summary>📐 Reveal — check your 4 input lengths (open AFTER you've written them)</summary>
@@ -769,9 +454,21 @@ steps:
       2. *Pick one representative* per partition.
       3. *Test every boundary* — last invalid before each transition, first valid after.
 
+      <details markdown="1"><summary>📖 Test names ARE documentation</summary>
+
+      Notice that good test names *describe the behavior they verify*: `test_valid_representative`, `test_boundary_max_valid`, `test_too_long_just_above_max`. A failing test should read like a one-line bug report: *"boundary_max_valid FAILED — assert False is True"*. If you can read your test names without opening the code and still know what the suite covers, your tests double as documentation.
+
+      Anti-example: `test_1`, `test_squad`, `test_works`. These tell the next reader nothing.
+      </details>
+
+      <details markdown="1"><summary>📖 Why pytest beats raw `assert`</summary>
+
+      Raw `assert` halts at the first failure; you only learn about one bug at a time. pytest discovers all tests, runs them all, names each one, and shows the *exact* mismatched value when one fails — e.g. `assert False is True`. No classes, no boilerplate — just functions starting with `test_`.
+      </details>
+
       🔗 **Connect to your own code.** Think of the last function you wrote before this tutorial. What inputs did you test it with? Apply the partition + boundary method: identify the partitions in that function's input space and name at least one boundary you probably didn't test. If you weren't testing at all before this tutorial, name what your first test for that function would be.
 
-      > 🔭 **Coming in Step 4:** You can now choose the right inputs with precise assertions. But tests can still break for the wrong reason — not because your function's behavior changed, but because your test looked at the wrong thing. We'll see that next.
+      > 🔭 **Coming in Step 3:** The `is True` / `is False` move you used here is one example of a *strong oracle* — an assertion that pins exactly the expected value. Step 3 generalizes this to any return type — strings, numbers, lists, dicts — and shows the three flavors of *weak* oracle that look productive but verify almost nothing.
 
 
     files:
@@ -785,39 +482,52 @@ steps:
 
       - path: "test_squad.py"
         content: |
-          """Partition & boundary tests for squad_name_valid."""
+          """Partition & boundary tests for squad_name_valid.
+
+          Three worked examples are provided. Read them, see the pattern, then
+          write three more tests for the remaining boundaries and edges.
+          """
           import pytest
           from squad import squad_name_valid
 
 
-          # --- Given: a representative valid input (middle of the 'valid' partition) ---
+          # --- Worked example 1: a representative valid input (middle of valid partition) ---
+          # `is True` is the strong-oracle form for a Boolean return — only `True` itself passes.
           def test_valid_representative():
               assert squad_name_valid("ninja") is True    # length 5
 
 
-          # --- Given: just below the valid minimum (boundary at len == 2) ---
+          # --- Worked example 2: just below the valid minimum (boundary at len == 2) ---
+          # This catches a `< 3` bug that the spec says should be `<= 3`.
           def test_too_short_just_below_min():
               assert squad_name_valid("xs") is False      # length 2
 
 
-          # --- TODO: smallest length the spec calls valid. ---
+          # --- Worked example 3: at the upper boundary of the valid partition ---
+          # This catches a `< 12` bug that the spec says should be `<= 12`.
+          # NOTE: the spec says length 12 is VALID. Read it, don't guess.
+          def test_boundary_max_valid():
+              assert squad_name_valid("epicgamerlol") is True   # length 12
+
+
+          # --- TODO 1: smallest length the spec calls valid ---
+          # Hint: the spec says `3 <= len <= 12`. What's the SMALLEST length that's valid?
+          # Pick any string of that length, then assert `is True`.
           # def test_boundary_min_valid():
           #     ...
 
 
-          # --- TODO: largest length the spec calls valid. ---
-          # def test_boundary_max_valid():
-          #     ...
-
-
-          # --- TODO: one length past the upper bound. ---
+          # --- TODO 2: one length past the upper bound ---
+          # Hint: the partner of test_boundary_max_valid. The spec says length 12 is valid;
+          # what's the first length that should be REJECTED above it?
           # def test_too_long_just_above_max():
           #     ...
 
 
-          # --- TODO: the empty string ---
+          # --- TODO 3: the empty string ---
           # Before writing: which partition does "" belong to? Is it a separate
-          # partition or the extreme of an existing one? Note your answer as a comment.
+          # partition or the extreme of an existing one? Write your answer as a comment
+          # above the test, then assert the expected behavior.
           # def test_empty_string():
           #     ...
 
@@ -844,18 +554,19 @@ steps:
                 assert squad_name_valid("xs") is False      # length 2
 
 
-            def test_boundary_min_valid():
-                assert squad_name_valid("epi") is True      # length 3
-
-
             def test_boundary_max_valid():
                 assert squad_name_valid("epicgamerlol") is True  # length 12
+
+
+            def test_boundary_min_valid():
+                assert squad_name_valid("epi") is True      # length 3
 
 
             def test_too_long_just_above_max():
                 assert squad_name_valid("thirteenchars") is False  # length 13
 
 
+            # The empty string is the extreme of the "too short" partition (length 0).
             def test_empty_string():
                 assert squad_name_valid("") is False        # length 0
 
@@ -875,14 +586,6 @@ steps:
           body = source.split('test_boundary_min_valid')[1].split('def ')[0]
           assert 'assert' in body, \
               "test_boundary_min_valid is empty. Add an assert: pick a 3-character squad name and pin down `squad_name_valid(your_name) is True`."
-      - description: "test_boundary_max_valid exists and asserts the largest valid length is accepted"
-        command: |
-          source = open('/tutorial/test_squad.py').read()
-          assert 'def test_boundary_max_valid' in source, \
-              "Write `def test_boundary_max_valid():` for the largest valid length (12). This boundary catches '<= max' vs '< max' bugs."
-          body = source.split('test_boundary_max_valid')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_boundary_max_valid is empty. Pick a 12-character squad name and pin down `squad_name_valid(your_name) is True`."
       - description: "test_too_long_just_above_max exists and asserts a length past the max is rejected"
         command: |
           source = open('/tutorial/test_squad.py').read()
@@ -908,9 +611,9 @@ steps:
           assert code == 0, f"Some tests failed:\n{output}"
         hints:
           - title: "Small nudge"
-            text: "Mirror the two provided tests. Each new test is `def test_...():` with one `assert squad_name_valid(\"...\") is True` (or `is False`)."
+            text: "Mirror the three provided tests. Each new test is `def test_...():` with one `assert squad_name_valid(\"...\") is True` (or `is False`)."
           - title: "Strategic hint"
-            text: "Pick any string of the right length. Length 3: 3 characters. Length 12: 12 characters. Length 13: 13 characters. Empty: \"\"."
+            text: "Pick any string of the right length. Length 3: 3 characters. Length 13: 13 characters. Empty: \"\"."
           - title: "Almost-spoiler — compute, don't copy"
             text: "Read the spec (3 ≤ len ≤ 12). For each test, decide the length you need, pick any squad name with that length, and decide `is True` vs `is False` from the spec. Don't transcribe a fixed string — derive it."
 
@@ -919,6 +622,24 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+
+        - question: |
+            Which file name will pytest **automatically discover** as a test file?
+          type: single
+          options:
+            - "`testing_squad.py`"
+            - "`test_squad.py`"
+            - "`check_squad.py`"
+            - "`squad_tests.py`"
+          correct_index: 1
+          option_feedback:
+            0: "pytest discovers files starting with `test_` (note the underscore) or ending with `_test.py`. `testing_squad.py` matches *neither* pattern — pytest will silently skip it."
+            1: "Correct. `test_squad.py` starts with `test_` and ends with `.py` — it matches the discovery rule. Functions inside must also start with `test_`."
+            2: "There's no convention `check_*` in pytest. The discovery rule is `test_*` prefix or `*_test.py` suffix only."
+            3: "Close — but pytest looks for `*_test.py` (singular) or `test_*` prefix. `squad_tests.py` (plural \"tests\") doesn't match either."
+          explanation: |
+            pytest discovers files whose names start with `test_` or end with `_test.py`.
+            Functions inside must also start with `test_`.
 
         - question: |
             A spec reads: *"A discount applies for orders of strictly more than $50 and up to $500 inclusive."*
@@ -979,26 +700,6 @@ steps:
             budget on the *boundaries between* partitions, not the middles.
 
         - question: |
-            **(Spaced review — Step 2)** A teammate writes `assert squad_name_valid("epic")` (no `is True`). The test passes against the current code. Why is this oracle still weak?
-          type: single
-          options:
-            - "It is not weak — the test passes, so the oracle is doing its job"
-            - "It is weak because it would also pass for any *truthy* return — `1`, `\"yes\"`, or even `[1, 2]` would all satisfy it. Use `is True` to pin the exact Boolean"
-            - "It is weak because pytest assertions need an explicit message string after the comma"
-            - "It is weak because the input string is too short to be representative"
-          correct_index: 1
-          option_feedback:
-            0: "*Currently passing* is a weaker claim than *correctly testing*. A bare `assert squad_name_valid(\"epic\")` passes today only because `squad_name_valid` happens to return `True`. The day someone refactors it to return the name string `\"epic\"` (still truthy!), the oracle will still pass — but now it's verifying nothing meaningful."
-            1: "Right. A bare `assert <expr>` passes for any truthy return — `1`, `\"epic\"`, `[True]` would all pass, even though none of them are `True`. `is True` uses identity comparison and accepts *only* the `True` singleton."
-            2: "pytest assertion messages are optional. The oracle's strength has nothing to do with whether you supplied a failure message; it has everything to do with which return values would *fail* the assertion. Bare `assert <expr>` is satisfied by every truthy value, which is the weakness here."
-            3: "The input length isn't the issue — `\"epic\"` is a perfectly valid length-4 input. The oracle weakness is structural: `assert <expr>` (no comparison) accepts any truthy return value, regardless of the input."
-          explanation: |
-            A bare `assert <expr>` succeeds for any truthy value. If `squad_name_valid` were
-            (incorrectly) refactored to return the name string itself instead of `True`,
-            this oracle would still pass. `is True` (identity comparison) is the strong form
-            for Boolean returns.
-
-        - question: |
             **(Spaced review — Step 1)** Recall the bug in `streak_badge`: `days > 100` instead of `days >= 100`. Classify this bug.
           type: single
           options:
@@ -1010,7 +711,7 @@ steps:
           option_feedback:
             0: "The type is not the issue here: `days` is compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator."
             1: "Correct. The bug only surfaces at exactly `days == 100` — the single boundary value where the `> 100` operator gives the wrong answer. That one-specific-value signature is the definition of a boundary bug."
-            2: "It's tempting to call any wrong-`if` bug a logic error, but that's too coarse. Boundary bug is the more precise classification: this bug only manifests at *one specific value* (100), which is the diagnostic signature of a `>` vs `>=` mistake. That precision is what Step 3 is about."
+            2: "It's tempting to call any wrong-`if` bug a logic error, but that's too coarse. Boundary bug is the more precise classification: this bug only manifests at *one specific value* (100), which is the diagnostic signature of a `>` vs `>=` mistake. That precision is what *this* step is about."
             3: "*Regression* describes how a bug enters a codebase (re-introducing something previously fixed), not what kind of bug it is. The bug here might or might not be a regression — but its *type* is a boundary bug."
           explanation: |
             Boundary bugs manifest only at the exact value where partitions meet.
@@ -1020,17 +721,379 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 4 — Test Behavior, Not Implementation
+  # STEP 3 — Oracle Strength: Strong, Weak, and the Liar Test
   # Pedagogy:
-  #   Threshold concept   — tests verify WHAT, not HOW.
+  #   Bridge from Step 2  — `is True` was a strong oracle for booleans;
+  #                         now generalize to any return type.
+  #   Variation Theory    — three flavors of weak oracle (presence/type/field)
+  #                         held against the SAME function and SAME inputs, so
+  #                         the only thing that varies is assertion shape.
+  #   Liar test heuristic — weak oracles are productive-looking but verify
+  #                         almost nothing.
+  #   Setup for Step 4    — strong oracles win up to a ceiling (the spec).
+  #                         Step 4 reveals the over-specification trap.
+  # --------------------------------------------------------------------------
+  - title: "Oracle Strength: Strong, Weak, and the Liar Test"
+    instructions: |
+      > 🎯 **Goal:** Spot a *weak oracle* — an assertion that looks productive but lets wrong answers slip through — and rewrite it as a strong oracle that pins exactly what the spec says.
+      > 🧠 **Skills you'll gain:** Recognize the three most common weak-oracle anti-patterns (presence, type, single-field) and replace each with a strong oracle that catches *any* wrong return value.
+
+      🧭 **Bridge from Step 2.** In Step 2 you wrote `assert squad_name_valid("epic") is True`. That's a *strong* oracle on a Boolean: only the `True` singleton satisfies it, so any wrong return — `False`, `1`, `"yes"` — fails the test. Now we generalize: for any return type (numbers, strings, lists, dicts), what makes one assertion strong and another *deceptively* weak?
+
+      Today's function returns something richer than a Boolean — a **dict**. Open `loot.py` and read the spec. `build_loot_card(name, qty, rarity)` returns a five-field dict: `name`, `qty`, `rarity`, `label`, `is_rare`. The test surface is bigger now — and that's exactly where weak oracles get tempting.
+
+      🔍 **Predict first.** Open `test_loot.py`. Three tests are written and **all three pass** against the current code. Don't run them yet. For each one, ask: *"If a bug made `build_loot_card` return a slightly wrong dict, would this assertion catch it?"* Hold your three answers — you'll check them against the table below.
+
+      ### 📖 Oracle strength — three flavors of weak
+
+      The **oracle** is the assertion that decides pass/fail. The same function call can be checked at very different strengths. Watch the same input — `build_loot_card("Healing Potion", 3, "common")` — under four assertions:
+
+      | Strength | Assertion | What still passes (i.e., what it *misses*) |
+      |---|---|---|
+      | **Weak — presence** | `assert "name" in result` | Any dict with a `name` key. `{"name": "Wrong Name", ...}` passes. |
+      | **Weak — type** | `assert isinstance(result, dict)` | Any dict whatsoever. `{}` passes. |
+      | **Weak — single-field** | `assert result["is_rare"] is False` | The other four fields could all be wrong. |
+      | **Strong — full equality** | `assert result == {"name": "Healing Potion", "qty": 3, "rarity": "common", "label": "3× Common Healing Potion", "is_rare": False}` | Only the exact spec-mandated dict satisfies it. |
+
+      Each weak form is satisfying to write — you get a green check — and each verifies almost nothing. That's the **Liar test** anti-pattern: an assertion that *looks* like a test but lies about how thoroughly the function was checked. Rushed engineers and AI assistants gravitate to weak oracles because they almost always pass. The cost shows up later, when a real bug ships and the green test couldn't have caught it.
+
+      Notice what the table holds constant: same function, same inputs. Only the **assertion** varies. That's the dimension you're learning here — and it lives independently of *which inputs to pick* (Step 2's lesson). A great test gets both right.
+
+      ⚙️ **Task — strengthen the three weak oracles** (file: `test_loot.py`):
+
+      Each test starts with a different flavor of weak oracle. Your job for each:
+
+      1. **Read the spec** in `loot.py` — the docstring lists the five fields and the rule for each.
+      2. **Compute** what the dict should be for the test's specific inputs (compute `label` and `is_rare` yourself from the rule).
+      3. **Replace** the weak assertion with `assert result == { ... }` pinning all five spec-mandated fields.
+
+      💬 **Required:** Above each new strong oracle, add a Python comment in this form:
+      ```python
+      # Weak version (___) would also pass for: ___
+      ```
+      Name the *flavor* of the original weak oracle (presence / type / single-field) and a specific *wrong dict* the weak oracle would have accepted. This forces the Liar-test pattern into your hands — you can't write the comment without seeing what the weak form misses.
+
+      <details markdown="1"><summary>🧠 Why a *dict* makes the contrast visible (and an int doesn't)</summary>
+
+      Imagine the function returned a single integer — say `3`. The weak forms are still definable (`assert result is not None`, `assert isinstance(result, int)`), but the strong form (`assert result == 3`) feels trivial: of course you write the answer.
+
+      A dict has *structure*. The output has five fields, each with its own correctness condition. That structure is what makes weak oracles tempting and deceptive: an `assert "name" in result` looks like *real* testing — there's a key reference, a substantive-looking check — but it accepts thousands of different wrong dicts. The richer the return type, the more disciplined the oracle has to be. Dicts, lists, and formatted strings are where weak oracles do the most damage in real codebases.
+      </details>
+
+      <details markdown="1"><summary>📖 Why pytest beats raw <code>assert</code></summary>
+
+      Raw `assert` halts at the first failure; you only learn about one bug at a time. pytest discovers all tests, runs them all, names each one, and shows the *exact* mismatched value when one fails — e.g. `assert {...} == {...}`, with the differing keys highlighted. For a dict-returning function, that diff is gold: you immediately see *which field* is wrong, which is far more debuggable than a generic `AssertionError`.
+      </details>
+
+      > 🔭 **Coming in Step 4:** Strong oracles beat weak ones — but is the *strongest possible* oracle always the right answer? You'll see what happens when "I pinned the entire output" goes a step too far, and how the right oracle sits *exactly* on the spec, no less *and* no more.
+
+
+    files:
+      - path: "loot.py"
+        content: |
+          """Loot card generator — Diablo / Borderlands / Genshin Impact style."""
+
+
+          def build_loot_card(name: str, qty: int, rarity: str) -> dict:
+              """Create the inventory card for a piece of loot.
+
+              Spec (the public contract — what callers can rely on):
+                name    -> the input name, unchanged
+                qty     -> the input qty, unchanged
+                rarity  -> the input rarity, lowercased
+                label   -> "{qty}× {Rarity-capitalized} {name}"
+                is_rare -> True iff rarity is "rare", "epic", or "legendary"
+              """
+              normalized = rarity.lower()
+              return {
+                  "name": name,
+                  "qty": qty,
+                  "rarity": normalized,
+                  "label": f"{qty}× {rarity.capitalize()} {name}",
+                  "is_rare": normalized in {"rare", "epic", "legendary"},
+              }
+        language: "python"
+
+      - path: "test_loot.py"
+        content: |
+          """Tests for build_loot_card — three tests, three flavors of WEAK oracle.
+
+          Each test calls build_loot_card(...) with specific inputs and currently
+          PASSES. Each starts with a different flavor of weak oracle that lets
+          wrong implementations slip through. Your job: rewrite each as a STRONG
+          oracle that pins all five spec-mandated fields with `==`.
+
+          The spec is in loot.py.
+          """
+          import pytest
+          from loot import build_loot_card
+
+
+          def test_common_potion_card():
+              result = build_loot_card("Healing Potion", 3, "common")
+              # WEAK ORACLE — flavor: PRESENCE.
+              # This passes for any dict that has a `name` key — including
+              # {"name": "Wrong Name", "qty": 0, ...}. It verifies almost nothing.
+              # TODO: replace with `assert result == { ... }` pinning all 5 fields.
+              # TODO (required): add a comment above the new assert in this form:
+              #   # Weak version (presence) would also pass for: <a specific wrong dict>
+              assert "name" in result
+
+
+          def test_rare_sword_card():
+              result = build_loot_card("Vorpal Sword", 1, "rare")
+              # WEAK ORACLE — flavor: TYPE.
+              # Any dict at all passes this — including {} or a totally wrong dict.
+              # TODO: replace with `assert result == { ... }` pinning all 5 fields.
+              # TODO (required): add a comment above the new assert in this form:
+              #   # Weak version (type) would also pass for: <a specific wrong dict>
+              assert isinstance(result, dict)
+
+
+          def test_legendary_drop_card():
+              result = build_loot_card("Excalibur", 1, "legendary")
+              # WEAK ORACLE — flavor: SINGLE-FIELD.
+              # The other four fields could all be wrong and this still passes.
+              # TODO: replace with `assert result == { ... }` pinning all 5 fields.
+              # TODO (required): add a comment above the new assert in this form:
+              #   # Weak version (single-field) would also pass for: <a specific wrong dict>
+              assert result["is_rare"] is True
+
+
+        language: "python"
+
+    open_file: "test_loot.py"
+    run_file: "test_loot.py"
+
+    solution:
+      files:
+        - path: "test_loot.py"
+          content: |
+            """Tests for build_loot_card — strong oracles."""
+            import pytest
+            from loot import build_loot_card
+
+
+            def test_common_potion_card():
+                result = build_loot_card("Healing Potion", 3, "common")
+                # Weak version (presence) would also pass for: {"name": "Wrong", "qty": 0, "rarity": "wrong", "label": "wrong", "is_rare": True}
+                assert result == {
+                    "name": "Healing Potion",
+                    "qty": 3,
+                    "rarity": "common",
+                    "label": "3× Common Healing Potion",
+                    "is_rare": False,
+                }
+
+
+            def test_rare_sword_card():
+                result = build_loot_card("Vorpal Sword", 1, "rare")
+                # Weak version (type) would also pass for: {} or {"anything": "at all"}
+                assert result == {
+                    "name": "Vorpal Sword",
+                    "qty": 1,
+                    "rarity": "rare",
+                    "label": "1× Rare Vorpal Sword",
+                    "is_rare": True,
+                }
+
+
+            def test_legendary_drop_card():
+                result = build_loot_card("Excalibur", 1, "legendary")
+                # Weak version (single-field) would also pass for: {"name": "wrong", "qty": 99, "rarity": "wrong", "label": "wrong", "is_rare": True}
+                assert result == {
+                    "name": "Excalibur",
+                    "qty": 1,
+                    "rarity": "legendary",
+                    "label": "1× Legendary Excalibur",
+                    "is_rare": True,
+                }
+
+
+          language: "python"
+      explanation: |
+        Each weak oracle was a different flavor of Liar test:
+          - presence: `"name" in result` — passes for any dict with a name key
+          - type: `isinstance(result, dict)` — passes for any dict whatsoever
+          - single-field: `result["is_rare"] is True` — passes if 4 of 5 fields are wrong
+        The strong form pins the entire spec-mandated dict, so any wrong field fails the test.
+        (Coming in Step 4: a tension. Full-dict equality is the right answer when the spec
+        and the implementation match exactly — but it can over-specify when the implementation
+        evolves. Step 4 shows the upper bound.)
+
+    tests:
+      - description: "test_common_potion_card uses a strong oracle (no `\"name\" in result` form)"
+        command: |
+          import re
+          source = open('/tutorial/test_loot.py').read()
+          body = source.split('def test_common_potion_card')[1].split('def ')[0]
+          assert '"name" in result' not in body and "'name' in result" not in body, \
+              "test_common_potion_card still uses the *presence* weak oracle (`\"name\" in result`). It passes for any dict that has a `name` key — even one with wrong values everywhere else. Replace it with `assert result == {full dict}` pinning all 5 fields (name, qty, rarity, label, is_rare)."
+          assert re.search(r'assert\s+result\s*==\s*\{', body), \
+              "test_common_potion_card doesn't yet pin the expected dict with `==`. Use `assert result == { ... }` listing all five spec-mandated fields with their expected values for the inputs (\"Healing Potion\", 3, \"common\")."
+      - description: "test_rare_sword_card uses a strong oracle (no `isinstance` form)"
+        command: |
+          import re
+          source = open('/tutorial/test_loot.py').read()
+          body = source.split('def test_rare_sword_card')[1].split('def ')[0]
+          assert 'isinstance' not in body, \
+              "test_rare_sword_card still uses the *type* weak oracle (`isinstance(result, dict)`). It passes for any dict — including `{}`. Replace it with `assert result == {full dict}` pinning all 5 fields."
+          assert re.search(r'assert\s+result\s*==\s*\{', body), \
+              "test_rare_sword_card doesn't yet pin the expected dict with `==`. Use `assert result == { ... }` listing all five spec-mandated fields for the inputs (\"Vorpal Sword\", 1, \"rare\")."
+      - description: "test_legendary_drop_card uses a strong oracle (not just the is_rare field)"
+        command: |
+          import re
+          source = open('/tutorial/test_loot.py').read()
+          body = source.split('def test_legendary_drop_card')[1].split('def ')[0]
+          assert re.search(r'assert\s+result\s*==\s*\{', body), \
+              "test_legendary_drop_card doesn't yet pin the full expected dict with `==`. The single-field check (`result[\"is_rare\"] is True`) passes for thousands of wrong dicts — wrong name, wrong qty, wrong label, wrong rarity all slip through as long as is_rare is True. Use `assert result == { ... }` listing all five spec-mandated fields."
+      - description: "Each strengthened test has its `# Weak version (...) would also pass for: ___` comment"
+        command: |
+          import re
+          source = open('/tutorial/test_loot.py').read()
+          # One Weak-version comment per test (3 total).
+          weak_comments = re.findall(r'#\s*Weak version\s*\(([^)]+)\)\s*would also pass for:\s*\S', source)
+          assert len(weak_comments) >= 3, \
+              f"Found {len(weak_comments)} `# Weak version (...) would also pass for: ___` comments — need at least 3, one per test. The comment is the design move that exposes the Liar pattern. Naming a specific wrong dict the weak oracle would have accepted is what makes the contrast concrete."
+      - description: "All loot oracle tests pass against the reference implementation"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_loot.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some loot tests failed:\n{output}"
+        hints:
+          - title: "Strong-oracle nudge"
+            text: "A strong oracle on a dict-returning function pins every spec-mandated field. The shape is:\n```python\nassert result == {\"name\": <expected>, \"qty\": <expected>, \"rarity\": <expected>, \"label\": <expected>, \"is_rare\": <expected>}\n```\nCompute each expected value from the spec — don't copy what you think the function returns."
+          - title: "Strategic hint — compute label and is_rare"
+            text: "For each test, work out:\n- `name`, `qty` — copied from the input.\n- `rarity` — input lowercased.\n- `label` — `f\"{qty}× {Rarity.capitalize()} {name}\"`. So `(3, \"common\", \"Healing Potion\")` → `\"3× Common Healing Potion\"`.\n- `is_rare` — `True` only for rarity in {`rare`, `epic`, `legendary`}.\nApply this rule to each test's inputs."
+          - title: "Almost-spoiler — the weak-version comment shape"
+            text: "Above each strong assert, add the comment in this exact form:\n```python\n# Weak version (presence) would also pass for: {\"name\": \"Wrong Name\", \"qty\": 0, ...}\n```\nNaming a specific wrong dict each weak oracle would still accept is what locks in the Liar-test pattern."
+
+    quiz:
+      title: "Oracle Strength — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Two tests check the same `build_loot_card` call. Which assertion is **strongest** (most likely to catch a bug)?
+
+            **A.**
+            ```python
+            def test_a():
+                result = build_loot_card("Healing Potion", 3, "common")
+                assert "name" in result
+            ```
+
+            **B.**
+            ```python
+            def test_b():
+                result = build_loot_card("Healing Potion", 3, "common")
+                assert result == {
+                    "name": "Healing Potion", "qty": 3, "rarity": "common",
+                    "label": "3× Common Healing Potion", "is_rare": False,
+                }
+            ```
+          type: single
+          options:
+            - "A — checking presence is more flexible because it doesn't break on output changes"
+            - "B — it pins every spec-mandated field. A passes for any dict with a `name` key, including completely wrong contents"
+            - "Both are equally strong — both succeed for the correct call"
+            - "Neither — strong oracles always need multiple `assert` statements, not a single `==`"
+          correct_index: 1
+          option_feedback:
+            0: "Flexibility-to-future-changes is exactly the wrong success criterion. A *should* fail when `qty`, `rarity`, `label`, or `is_rare` is wrong — but it doesn't, because the assertion only references `name`. The reason A 'survives' is that it's verifying almost nothing, not that it's well-designed."
+            1: "Right. B is the strong oracle: only the exact spec-mandated dict satisfies it. A is the *presence* weak oracle: any dict with a `name` key — including `{\"name\": \"Wrong\", \"qty\": 0, ...}` — passes. Liar-test territory."
+            2: "Two assertions on the same call can differ wildly in bug-catching power. A passes for thousands of wrong dicts; B passes for exactly one (the correct one). 'Both succeed for the correct call' just means both don't false-positive — it doesn't mean both catch bugs."
+            3: "Strong oracles aren't about *count* of assertions — they're about *precision*. One precise `assert result == {...}` pins the entire output exactly. Adding more checks doesn't strengthen the oracle; it just adds noise."
+          explanation: |
+            B is a strong oracle: only the exact expected dict satisfies it. A is the
+            *presence* weak oracle — any dict with a `name` key passes, including ones
+            where `qty`, `rarity`, `label`, and `is_rare` are all wrong.
+
+        - question: |
+            For `build_loot_card("Excalibur", 1, "legendary")`, which assertion is the **weakest** (catches the fewest bugs)?
+          type: single
+          options:
+            - "`assert isinstance(result, dict)`"
+            - "`assert result[\"is_rare\"] is True`"
+            - "`assert result == { ... }` (full dict, all 5 fields)"
+            - "`assert result[\"name\"] == \"Excalibur\" and result[\"qty\"] == 1`"
+          correct_index: 0
+          option_feedback:
+            0: "Right. `isinstance(result, dict)` is the *type* weak oracle — any dict at all passes, including `{}` and dicts with completely wrong values. It's the canonical Liar test for dict-returning functions."
+            1: "This is the *single-field* weak oracle — better than `isinstance` (it at least checks one specific field), but the other four fields could all be wrong. Stronger than option 0, weaker than option 3."
+            2: "Full-dict equality is the *strong* oracle — only the exact spec-mandated dict satisfies it. (Step 4 will show the ceiling on this — but for now, this is the strongest of the four options.)"
+            3: "Two-field `==` is stronger than `isinstance` (which checks no values at all). It's still weaker than full-dict equality because it lets `rarity`, `label`, and `is_rare` be wrong — but it's not the *weakest* of the four."
+          explanation: |
+            `isinstance(result, dict)` accepts any dict whatsoever — `{}` passes, a totally
+            wrong dict passes. This is the canonical *type* weak oracle. The other options
+            check at least one value; only `isinstance` checks no values at all.
+
+        - question: |
+            **(Spaced review — Step 2)** A teammate writes `assert squad_name_valid("epic")` (no `is True`). The test passes against the current code. Why is this oracle still weak?
+          type: single
+          options:
+            - "It is not weak — the test passes, so the oracle is doing its job"
+            - "It is weak because it would also pass for any *truthy* return — `1`, `\"yes\"`, or even `[1, 2]` would all satisfy it. Use `is True` to pin the exact Boolean"
+            - "It is weak because pytest assertions need an explicit message string after the comma"
+            - "It is weak because the input string is too short to be representative"
+          correct_index: 1
+          option_feedback:
+            0: "*Currently passing* is a weaker claim than *correctly testing*. A bare `assert squad_name_valid(\"epic\")` passes today only because `squad_name_valid` happens to return `True`. The day someone refactors it to return the name string `\"epic\"` (still truthy!), the oracle will still pass — but now it's verifying nothing meaningful. Same Liar-test family as the dict checks above."
+            1: "Right. A bare `assert <expr>` passes for any truthy return — `1`, `\"epic\"`, `[True]` would all pass, even though none of them are `True`. `is True` uses identity comparison and accepts *only* the `True` singleton. It's the Boolean-return version of full-dict equality: pin the exact value."
+            2: "pytest assertion messages are optional. The oracle's strength has nothing to do with whether you supplied a failure message; it has everything to do with which return values would *fail* the assertion. Bare `assert <expr>` is satisfied by every truthy value, which is the weakness here."
+            3: "The input length isn't the issue — `\"epic\"` is a perfectly valid length-4 input. The oracle weakness is structural: `assert <expr>` (no comparison) accepts any truthy return value, regardless of the input."
+          explanation: |
+            A bare `assert <expr>` succeeds for any truthy value — same Liar-test family
+            as the dict checks. `is True` (identity comparison) is the strong form for
+            Boolean returns; `== {full dict}` is the strong form for dicts. Same lesson,
+            different shapes.
+
+        - question: |
+            **(Spaced review — Step 1)** A passing test stays in the suite. Why?
+          type: single
+          options:
+            - "Symmetry — every code change should ship with a matching test addition or removal"
+            - "Each passing test is a permanent guard against regressions: if a future change re-introduces the bug, the test fails before users see it"
+            - "Removing tests after a feature ships keeps the suite small and fast"
+            - "Tests get noisy over time and need to be deleted to keep the signal clean"
+          correct_index: 1
+          option_feedback:
+            0: "There's no symmetry rule. The *purpose* of a test is to guard a specific behavior; the question is whether that behavior is still worth guarding (it almost always is). Symmetry between code changes and test deletions isn't a real principle."
+            1: "Right. The *safety-net* idea from Step 1: each passing test stays in place to catch the regression no one anticipated. Delete the test and you cut a hole in the net at exactly the spot a future bug would land."
+            2: "Speed is sometimes a reason to *split* test suites (fast unit tests vs. slow integration), but never a reason to *delete* a passing test that guards real behavior. The cost of running it is tiny; the cost of a regression slipping through is large."
+            3: "Test noise is a real problem, but the fix is usually to *strengthen* weak oracles or remove duplicates — not to delete passing tests for shipped behavior. A test guarding shipped behavior is the opposite of noise."
+          explanation: |
+            The safety-net principle: each passing test permanently guards its behavior.
+            Deleting it cuts a hole in the net. If someone later re-introduces the bug,
+            there's nothing to catch it.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — Test Behavior, Not Implementation (with the over-specification trap)
+  # Pedagogy:
+  #   Threshold concept   — tests verify the SPEC: no less (weak oracle), no more
+  #                         (over-specification or internal coupling).
   #   Contrasting cases   — brittle vs robust on the same class.
   #   AAA pattern         — scaffolded structure for robust tests.
-  #   Coverage ≠ quality  — demo with a deliberately weak 100% suite vs a strong 80% suite.
+  #   Coverage ≠ quality  — deliberately weak 100% suite vs a strong 80% suite.
+  #   Tension with Step 3 — "strongest oracle wins" has an upper bound: the spec.
   # --------------------------------------------------------------------------
   - title: "Test Behavior, Not Implementation"
     instructions: |
-      > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
-      > 🧠 **Skills you'll gain:** Spot tests that break whenever you refactor, and rewrite them so they test what a function *does* rather than how it does it internally.
+      > 🎯 **Goal:** Test **WHAT** the spec says — no less (weak oracle), no more (over-specification or peeking at internals).
+      > 🧠 **Skills you'll gain:** Spot tests that break for the *wrong* reason — internal renames or unrelated output additions — and rewrite them to verify only the spec.
+
+      🧭 **The bridge from Step 3.** Step 3 said: *strong oracles beat weak ones — pin the exact value*. That's true, but only up to a ceiling: **the spec**. Going *below* the spec is a weak oracle (Step 3's lesson). Going *above* it — asserting on things the spec doesn't mandate — is the **over-specification trap**, and it produces tests that break during clean refactors. This step covers both halves of "above the spec":
+
+      - **(a) Internal coupling** — the test peeks at private state (`obj._tracks`). A pure rename of the internal attribute breaks the test even though no observable behavior changed.
+      - **(b) Over-specification** — the test pins output fields the spec doesn't mandate (e.g., a full-dict equality that includes a `created_at` timestamp the spec never promised). Adding a new internal-but-public field breaks the test even though every spec-mandated field is still correct.
+
+      Both are species of the same disease: *tests verifying the implementation rather than the contract*. The cure is the same: **assert on exactly what the spec says, no more, no less.**
+
+      ## Part A — Internal coupling (the rename experiment)
 
       ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). All four currently pass. You'll *discover* which are **brittle** (break on pure refactoring even when behavior is unchanged) and which are **robust** (survive any refactoring that preserves the public behavior).
 
@@ -1156,6 +1219,45 @@ steps:
       Every robust test fits this shape. If you can't separate Arrange from Act cleanly, the function under test is doing too much.
       </details>
 
+      ## Part B — Over-specification (the upper bound of oracle strength)
+
+      In Step 3 you wrote `assert result == {full dict}` to make the oracle as strong as possible. That was right *for that spec*. Now watch what happens when the implementation grows a new output field that the spec never mentioned.
+
+      The same `build_loot_card(name, qty, rarity)` from Step 3 is back in `loot.py` — but the production team has added a `created_at` timestamp to the returned dict for analytics. **The spec hasn't changed.** Every field a caller relies on is still computed correctly. But the test from Step 3 — written with full-dict equality — now fails:
+
+      ```python
+      # Step-3-style test (full dict equality):
+      def test_legendary_drop():
+          result = build_loot_card("Excalibur", 1, "legendary")
+          assert result == {
+              "name": "Excalibur", "qty": 1, "rarity": "legendary",
+              "label": "1× Legendary Excalibur", "is_rare": True,
+          }
+      # ✗ FAILS — result now also has "created_at": 1730000000
+      ```
+
+      The assertion was *too strong*. It pinned the entire output, including fields the spec never promised. That extra precision is the over-specification trap: the test breaks during clean refactors that don't change observable behavior.
+
+      ⚙️ **Task** (`test_loot_overspec.py`): Two tests use full-dict equality. Run them — they fail against the new `build_loot_card` even though every spec-mandated field is correct. Rewrite each test to **assert on exactly the spec-mandated fields** (`name`, `qty`, `rarity`, `label`, `is_rare`) and **not** on `created_at`. When the same refactor (adding a new field) ships next month, your suite stays green.
+
+      💡 **The rule of thumb**: re-read the spec. List the fields it *explicitly* mandates. Assert on each one with `==`. Don't full-equality the whole dict unless the spec promises *exactly that shape and nothing else* — and most specs don't.
+
+      <details markdown="1"><summary>📐 The rule of "no less, no more" — visualized</summary>
+
+      ```mermaid
+      flowchart TB
+          spec["✅ THE SPEC<br/>(what callers can rely on)"]:::good
+          weak["❌ Weak oracle<br/>(asserts LESS than the spec)<br/>misses real bugs"]:::bad
+          strong["✅ Right oracle<br/>(asserts EXACTLY the spec)<br/>catches real bugs, survives refactors"]:::good
+          overspec["❌ Over-specified oracle<br/>(asserts MORE than the spec —<br/>private state OR unmandated fields)<br/>breaks on clean refactors"]:::bad
+          weak --- strong --- overspec
+          classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+          classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
+      ```
+
+      "Strong" isn't a one-way arrow. The right oracle sits *exactly* on the spec — anything beyond it is just as harmful as anything below it.
+      </details>
+
       ### 🎓 Coverage ≠ quality
 
       **Suite A — 100% line coverage, weak oracle:**
@@ -1248,6 +1350,89 @@ steps:
 
         language: "python"
 
+      - path: "loot.py"
+        content: |
+          """Loot card generator — same function as Step 3, but the
+          implementation has been extended with a `created_at` analytics field.
+
+          The SPEC has not changed: callers rely on name, qty, rarity, label,
+          and is_rare. The new `created_at` is internal — it exists for
+          analytics and is NOT part of the public contract.
+          """
+          import time
+
+
+          def build_loot_card(name: str, qty: int, rarity: str) -> dict:
+              """Create the inventory card for a piece of loot.
+
+              Spec (the public contract — what callers rely on):
+                name    -> the input name
+                qty     -> the input qty
+                rarity  -> the input rarity, lowercased
+                label   -> "{qty}× {Rarity-capitalized} {name}"
+                is_rare -> True iff rarity is "rare", "epic", or "legendary"
+
+              The returned dict ALSO carries a `created_at` field for
+              analytics. That field is NOT part of the spec — its presence
+              and value are implementation details and must not be asserted on.
+              """
+              normalized = rarity.lower()
+              return {
+                  "name": name,
+                  "qty": qty,
+                  "rarity": normalized,
+                  "label": f"{qty}× {rarity.capitalize()} {name}",
+                  "is_rare": normalized in {"rare", "epic", "legendary"},
+                  "created_at": int(time.time()),
+              }
+        language: "python"
+
+      - path: "test_loot_overspec.py"
+        content: |
+          """OVER-SPECIFICATION AUDIT: these two tests over-specify the output.
+
+          Each one full-equality-checks the entire returned dict, including
+          the `created_at` analytics field that the spec never promised. As a
+          result both tests FAIL against the current `build_loot_card` — even
+          though every spec-mandated field is correct.
+
+          Your job: rewrite each test to assert on EXACTLY the spec-mandated
+          fields (name, qty, rarity, label, is_rare) and NOT on `created_at`.
+          When the implementation evolves (timestamps change every second),
+          your tests must still go green.
+          """
+          import pytest
+          from loot import build_loot_card
+
+
+          def test_common_potion_has_correct_card():
+              result = build_loot_card("Healing Potion", 3, "common")
+              # OVER-SPECIFIED — full-equality pins `created_at` (not in spec).
+              # TODO: rewrite as field-by-field assertions on spec-mandated keys.
+              assert result == {
+                  "name": "Healing Potion",
+                  "qty": 3,
+                  "rarity": "common",
+                  "label": "3× Common Healing Potion",
+                  "is_rare": False,
+              }
+
+
+          def test_legendary_drop_has_correct_card():
+              result = build_loot_card("Excalibur", 1, "legendary")
+              # OVER-SPECIFIED — same problem as above.
+              # TODO: rewrite as field-by-field assertions on spec-mandated keys.
+              assert result == {
+                  "name": "Excalibur",
+                  "qty": 1,
+                  "rarity": "legendary",
+                  "label": "1× Legendary Excalibur",
+                  "is_rare": True,
+              }
+
+
+        language: "python"
+
     open_file: "test_brittle_audit.py"
     run_file: "test_brittle_audit.py"
 
@@ -1286,12 +1471,44 @@ steps:
                 queue.add("Vampire", 218)
                 assert queue.track_count() == 2
           language: "python"
+        - path: "test_loot_overspec.py"
+          content: |
+            """OVER-SPECIFICATION AUDIT — solved."""
+            import pytest
+            from loot import build_loot_card
+
+
+            def test_common_potion_has_correct_card():
+                result = build_loot_card("Healing Potion", 3, "common")
+                # Assert ONLY on the spec-mandated fields. `created_at` is not
+                # in the spec, so we don't pin it.
+                assert result["name"] == "Healing Potion"
+                assert result["qty"] == 3
+                assert result["rarity"] == "common"
+                assert result["label"] == "3× Common Healing Potion"
+                assert result["is_rare"] is False
+
+
+            def test_legendary_drop_has_correct_card():
+                result = build_loot_card("Excalibur", 1, "legendary")
+                assert result["name"] == "Excalibur"
+                assert result["qty"] == 1
+                assert result["rarity"] == "legendary"
+                assert result["label"] == "1× Legendary Excalibur"
+                assert result["is_rare"] is True
+          language: "python"
       explanation: |
-        Replace direct `._tracks` access with public API calls (titles(), durations(),
-        track_count()). The duration assertion still holds — but now via durations()[0]
-        instead of _tracks[0].duration_seconds, so the rename experiment leaves it
-        green. Robust tests verify what the class DOES (its observable behavior via
-        the public API), not HOW it stores state internally.
+        Two fixes, one shared lesson — *test the spec, no more, no less*.
+
+        Part A: replace direct `._tracks` access with public API calls (titles(),
+        durations(), track_count()). The duration assertion still holds — but now via
+        durations()[0] instead of _tracks[0].duration_seconds, so the rename experiment
+        leaves it green.
+
+        Part B: replace full-dict equality with field-by-field equality on the
+        spec-mandated fields only. `created_at` is in the returned dict but NOT in the
+        spec, so we don't pin it — and the test stays green every time `created_at`
+        changes (every second, in fact).
 
     tests:
       - description: "Brittle tests have been fixed (no private attribute access)"
@@ -1319,6 +1536,36 @@ steps:
           code = pytest.main(['/tutorial/test_brittle_audit.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+      - description: "Over-spec tests no longer full-equality-check the dict (no `result == {...}`)"
+        command: |
+          import re
+          source = open('/tutorial/test_loot_overspec.py').read()
+          # Look for `result == {` (multi-line dict literal). The unfixed form pins the whole dict.
+          assert not re.search(r'result\s*==\s*\{', source), \
+              "At least one test still uses `result == {...}` (full-dict equality). That's the over-specification trap — `created_at` is in the returned dict but NOT in the spec, so the test fails on every refactor that touches the timestamp. Replace each full-equality assertion with one `assert result[\"<field>\"] == <expected>` line per spec-mandated field (name, qty, rarity, label, is_rare)."
+        hints:
+          - title: "Small nudge"
+            text: "The spec lists 5 fields callers rely on: name, qty, rarity, label, is_rare. `created_at` isn't among them. Pin those 5 with separate `assert result[\"<field>\"] == <expected>` lines; don't full-equality the whole dict."
+          - title: "Strategic hint"
+            text: "Replace `assert result == {full dict}` with five individual asserts:\n```python\nassert result[\"name\"] == \"...\"\nassert result[\"qty\"] == ...\nassert result[\"rarity\"] == \"...\"\nassert result[\"label\"] == \"...\"\nassert result[\"is_rare\"] is ...  # bool\n```"
+      - description: "Over-spec tests do NOT assert on the unspecified `created_at` field"
+        command: |
+          source = open('/tutorial/test_loot_overspec.py').read()
+          assert 'created_at' not in source, \
+              "Your tests reference `created_at` — that's the field the spec doesn't mandate. Don't pin it. Assert only on name, qty, rarity, label, and is_rare. The whole point of this exercise is that `created_at` is NOT part of the contract."
+      - description: "Over-spec tests still assert all five spec-mandated fields"
+        command: |
+          source = open('/tutorial/test_loot_overspec.py').read()
+          for field in ('"name"', '"qty"', '"rarity"', '"label"', '"is_rare"'):
+              assert field in source, \
+                  f"Missing assertion on {field}. The spec mandates 5 fields — name, qty, rarity, label, is_rare. Each one needs its own `assert result[<field>] == <expected>` line in each test (so a regression in any one field is caught individually)."
+      - description: "Over-spec tests pass against the timestamped implementation"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_loot_overspec.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some over-spec tests still fail:\n{output}"
 
     quiz:
       title: "Behavior vs Implementation — Knowledge Check"
@@ -1420,7 +1667,31 @@ steps:
             on the critical paths beat weak oracles everywhere.
 
         - question: |
-            **(Spaced review — Step 2)** Which assertion is the *strongest* oracle for `compute_total([1.50, 2.00])`?
+            A function `build_user_profile(name, age)` has this spec:
+
+            > Returns a dict with `name` (input), `age` (input), and `is_adult` (True iff age ≥ 18).
+
+            The current implementation also returns a `cached_at` timestamp for internal caching. The spec doesn't mention `cached_at`. Which assertion is **right** — strong on the spec but not over-specified?
+          type: single
+          options:
+            - "`assert build_user_profile(\"alice\", 30) is not None` — survives any future change"
+            - "`assert build_user_profile(\"alice\", 30) == {\"name\": \"alice\", \"age\": 30, \"is_adult\": True, \"cached_at\": 1730000000}` — pins everything"
+            - "`assert result[\"name\"] == \"alice\"`, `assert result[\"age\"] == 30`, `assert result[\"is_adult\"] is True` — one assert per spec-mandated field"
+            - "`assert isinstance(build_user_profile(\"alice\", 30), dict)` — the type guarantee is enough"
+          correct_index: 2
+          option_feedback:
+            0: "`is not None` is the weak-oracle Liar — any dict, including a wrong one, passes. The 'survives any future change' framing is exactly the trap: a test that survives every change because it asserts almost nothing isn't robust, it's empty."
+            1: "This is the over-specification trap. `cached_at` is *not in the spec* — it's an internal caching detail. Pinning it means the test fails every time the cache fires (i.e., every second), even though every spec-mandated field is correct."
+            2: "Right. Three asserts, one per spec-mandated field. `cached_at` is unspecified, so we don't pin it. The test stays green when the cache implementation evolves and red when any spec-mandated field regresses."
+            3: "Type checks are medium oracles — they catch wrong types, never wrong values. `build_user_profile(\"alice\", 30)` could return `{\"name\": \"bob\", \"age\": 0, \"is_adult\": False}` and `isinstance(..., dict)` is happy. The right oracle pins each spec-mandated field."
+          explanation: |
+            The right oracle sits *exactly* on the spec — no less (weak/medium), no more
+            (over-specified). Field-by-field equality on spec-mandated fields catches
+            real regressions and survives changes to unspecified internal fields like
+            `cached_at`.
+
+        - question: |
+            **(Spaced review — Step 3)** Which assertion is the *strongest* oracle for `compute_total([1.50, 2.00])`?
           type: single
           options:
             - "`assert compute_total([1.50, 2.00]) is not None`"
@@ -1430,16 +1701,16 @@ steps:
           correct_index: 3
           option_feedback:
             0: "`is not None` is the canonical *weak oracle*. Any non-`None` return passes — `0.0`, `\"banana\"`, `[]`. It tells you the function returned *something*, not whether it returned *the right thing*."
-            1: "Type checks catch type errors only. The function could return `42.0` (wrong sum) and `isinstance` is happy. Step 2 named this the *medium-strength* oracle — better than `is not None`, still wrong-value-blind."
+            1: "Type checks catch type errors only. The function could return `42.0` (wrong sum) and `isinstance` is happy. Step 3 named this the *medium-strength* oracle — better than `is not None`, still wrong-value-blind."
             2: "`> 0` is a property check, not a value check. The function could return `0.01`, `42.0`, `1000000.0` — all positive, all wrong. Property assertions are useful when you genuinely don't know the exact expected value, but for a deterministic function whose answer you can compute, pin the value."
             3: "Exactly. `== 3.50` is the only strong oracle here — any wrong return value (`0.0`, `1.5`, `42.0`) would fail it. The other options accept large families of wrong answers."
           explanation: |
             A strong oracle pins the exact expected value — only `3.50` satisfies it. The
             others would still pass if the function returned `0.0`, `42.0`, or any positive
-            float — exactly the *Liar test* anti-pattern from Step 2.
+            float — exactly the *Liar test* anti-pattern from Step 3.
 
         - question: |
-            **(Spaced review — Step 3)** For a function `charge_fee(amount)` with rule *"fee is 2% if amount is 100 or more, else free"*, which test pair exposes the most bugs?
+            **(Spaced review — Step 2)** For a function `charge_fee(amount)` with rule *"fee is 2% if amount is 100 or more, else free"*, which test pair exposes the most bugs?
           type: single
           options:
             - "`amount = 50` and `amount = 200` — one value on each side, well away from the boundary"
@@ -1451,14 +1722,14 @@ steps:
             0: "$50 and $200 are both *deep inside* their partitions — both will pass under either `> 100` or `>= 100`, since 50 is clearly free and 200 clearly charges the fee. Boundary bugs *only* manifest at the boundary; values away from it never expose them."
             1: "Right. 99 and 100 straddle the `>= 100` threshold. The canonical boundary bug here is `> 100` vs `>= 100` — it produces the wrong answer at exactly `amount = 100` and nowhere else."
             2: "Extreme-value tests catch overflow / representation bugs (rare in this kind of spec) but completely miss the off-by-one risk at $100. The most common bug here — confusing `>= 100` with `> 100` — produces correct behavior at $0 and $1,000,000. You'd ship the bug."
-            3: "$1 and $2 are both in the *same partition* (free), so they verify the same path twice and never approach the boundary. This is the same anti-pattern as the previous Step 3 quiz: many tests crowded in one partition is roughly one test repeated."
+            3: "$1 and $2 are both in the *same partition* (free), so they verify the same path twice and never approach the boundary. This is the same anti-pattern as the Step 2 quiz: many tests crowded in one partition is roughly one test repeated."
           explanation: |
             The boundary is at 100. Testing 99 and 100 catches the canonical off-by-one
             (`> 100` vs `>= 100`). Picking values far from the boundary misses exactly
             the bugs that Boundary Value Analysis is designed to expose.
 
         - question: |
-            **(Spaced review — Step 3)** A test reads `assert is_age_valid(18) == True`. A colleague says to use `is True` instead. What is the reason?
+            **(Spaced review — Step 2)** A test reads `assert is_age_valid(18) == True`. A colleague says to use `is True` instead. What is the reason?
 
             ```python
             # Option A (current):
@@ -1502,9 +1773,9 @@ steps:
       ✍️ **Before reading on, write your own recap.** In one or two sentences each, answer from memory (no scrolling back):
 
       1. What did Step 1 teach you about *what tests are for*?
-      2. What did Step 2 teach you about *the assertion*?
-      3. What did Step 3 teach you about *which inputs to pick*?
-      4. What did Step 4 teach you about *what to assert against*?
+      2. What did Step 2 teach you about *which inputs to pick*?
+      3. What did Step 3 teach you about *the assertion*?
+      4. What did Step 4 teach you about *what to assert — and what NOT to assert*?
 
       Write all four sentences *before* expanding the disclosure below — the comparison is only useful if you retrieved first, not read first.
 
@@ -1513,9 +1784,9 @@ steps:
       <details markdown="1"><summary>📖 Compare with our recap</summary>
 
       - **Step 1 — what tests are for**: tests are *executable specifications of behavior* and a *safety net* against regressions, not "checking your homework."
-      - **Step 2 — the assertion**: oracle strength is one independent dimension. A strong oracle pins the exact expected value; weak oracles pass for almost any return.
-      - **Step 3 — which inputs to pick**: partition the input space, then test the *boundaries* between partitions — the off-by-one zone where most bugs live.
-      - **Step 4 — what to assert against**: the public API, not implementation details. Robust tests survive refactors.
+      - **Step 2 — which inputs to pick**: partition the input space, then test the *boundaries* between partitions — the off-by-one zone where most bugs live.
+      - **Step 3 — the assertion**: oracle strength is one independent dimension. A strong oracle pins exactly what the spec mandates; weak oracles pass for almost any return.
+      - **Step 4 — what to assert against**: the spec, no less *and no more*. Don't peek at private state (internal coupling), and don't pin output fields the spec doesn't mandate (over-specification). Robust tests survive refactors.
 
       The skill underneath all four: *making the gap between what code does and what it should do visible and automatic*.
       </details>
@@ -1540,9 +1811,9 @@ steps:
       2. Pick a representative input for each partition.
       3. For each input, **compute** the expected return value and write a test with a **strong oracle** (an exact `==` on the computed value, not an `is not None` check).
 
-      You are now applying everything from Steps 1–4: behavior specification (1), pytest + oracle strength (2), partitions (3), and testing through the public function rather than internals (4).
+      You are now applying everything from Steps 1–4: behavior specification (1), partitions (2), oracle strength (3), and testing the spec — no more, no less (4).
 
-      💡 **No numeric range, so no boundary values — but partitions still apply.** Step 3's boundary heuristic needed an *ordered* domain: lengths, ages, scores. Here `plan` is categorical — `"student"`, `"family"`, anything else — no numeric ordering, so there are no `>=` / `>` comparison operators and therefore no off-by-one boundary values to probe. But equivalence partitioning still applies: you test one representative per category. This is a Separation of two ideas you've used together: boundaries are a *special case* of partitioning that kicks in only when the domain is ordered.
+      💡 **No numeric range, so no boundary values — but partitions still apply.** Step 2's boundary heuristic needed an *ordered* domain: lengths, ages, scores. Here `plan` is categorical — `"student"`, `"family"`, anything else — no numeric ordering, so there are no `>=` / `>` comparison operators and therefore no off-by-one boundary values to probe. But equivalence partitioning still applies: you test one representative per category. This is a Separation of two ideas you've used together: boundaries are a *special case* of partitioning that kicks in only when the domain is ordered.
 
       Ask yourself: for `streaming_price`, are there any "edge-of-category" inputs worth testing beyond the three named categories? What about an unexpected string like `"premium"`, or an empty string `""`? These are the categorical equivalents of boundary probing — checking the edges of the decision logic for inputs the spec doesn't explicitly name.
 
@@ -1583,12 +1854,13 @@ steps:
 
       | If the function… | Reach for… | Pattern from |
       |---|---|---|
-      | Takes a numeric input with a valid range (`min ≤ x ≤ max`) | **Boundary value analysis** — test `min-1, min, max, max+1` | Step 3 |
-      | Takes an input from a small set of categories (`"student"`, `"family"`, …) | **Equivalence partitioning** — one test per category | Step 3 + Step 5 |
-      | Returns a value (vs. mutates state) | **Strong-oracle equality** — `assert result == expected` | Step 2 |
-      | Returns a float computed by multiplication/division | **`pytest.approx`** — `assert result == pytest.approx(expected)` to avoid floating-point rounding surprises | Step 2 + real projects |
+      | Takes a numeric input with a valid range (`min ≤ x ≤ max`) | **Boundary value analysis** — test `min-1, min, max, max+1` | Step 2 |
+      | Takes an input from a small set of categories (`"student"`, `"family"`, …) | **Equivalence partitioning** — one test per category | Step 2 + Step 5 |
+      | Returns a value (vs. mutates state) | **Strong-oracle equality** — `assert result == expected` | Step 3 |
+      | Returns a float computed by multiplication/division | **`pytest.approx`** — `assert result == pytest.approx(expected)` to avoid floating-point rounding surprises | Step 3 + real projects |
       | Should raise an exception for certain inputs | **`pytest.raises`** — `with pytest.raises(ValueError): func(bad_input)` | Next tutorial |
-      | Returns a list or dict | **Collection equality** — `assert result == [1, 2, 3]`; for order-independent: `assert sorted(result) == sorted(expected)` | Real projects |
+      | Returns a dict / record | **Field-by-field equality on spec-mandated fields only** — `assert result["price"] == 5` for each field the spec names. Don't full-equality the whole dict (over-specification: it breaks when an unrelated field gets added) | Step 4 |
+      | Returns a list | **Collection equality** — `assert result == [1, 2, 3]`; for order-independent: `assert sorted(result) == sorted(expected)` | Step 3 + real projects |
       | Mutates an object's state | **Public API behavior tests** — `obj.observable() == expected` | Step 4 |
       | Has internal state you're tempted to peek at | **Don't.** Add a public method instead, then test through it | Step 4 |
       | Is "trivial" and you think it doesn't need a test | It deserves at least one regression test — *today's* trivial is *tomorrow's* surprise dependency | from research |
@@ -1601,7 +1873,7 @@ steps:
       The `streaming_price` task is the recommended path. If you'd rather practice on a different shape of function, edit `streaming.py` and replace the function with **one** of:
 
       ```python
-      # Option A — numeric boundaries (more like Step 3)
+      # Option A — numeric boundaries (more like Step 2)
       def shipping_fee(weight_kg: float) -> int:
           """Free if 0 < weight <= 1; $5 if 1 < weight <= 10; $20 above."""
           if weight_kg <= 0: return 0
@@ -1626,7 +1898,7 @@ steps:
       | Feature | What it solves | When you'll want it |
       |---|---|---|
       | **`@pytest.fixture`** + `conftest.py` | Repeated Arrange logic across many tests (e.g. database connection, sample objects, mock services) | When two tests start with the same 5 lines of setup. |
-      | **`@pytest.mark.parametrize`** | A family of similar tests on different inputs — *one function, many cases* | When you'd otherwise copy-paste the same test for `test_age_18`, `test_age_19`, `test_age_20`. The boundary-and-partition logic from Step 3 fits this perfectly. |
+      | **`@pytest.mark.parametrize`** | A family of similar tests on different inputs — *one function, many cases* | When you'd otherwise copy-paste the same test for `test_age_18`, `test_age_19`, `test_age_20`. The boundary-and-partition logic from Step 2 fits this perfectly. |
       | **`unittest.mock` / `pytest-mock`** | Testing code that calls external services (HTTP, database, file I/O) without actually hitting them | When the function under test would otherwise require network or disk to run. |
       | **`pytest-cov`** (coverage) | Measuring *which* lines of production code your tests execute | When you suspect a partition is missing — coverage shows untested branches. (Reminder from Step 4: coverage ≠ quality.) |
       | **Property-based testing** (`hypothesis`) | Auto-generating thousands of inputs to find edge cases your boundary tests missed | When the input space is too large for case-by-case enumeration. |
@@ -1751,7 +2023,7 @@ steps:
           source = open('/tutorial/test_streaming.py').read()
           weak = 'is not None' in source or 'isinstance(' in source
           assert not weak, \
-              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 2 warned about. For each test: choose a concrete `price` input, compute the expected post-discount value yourself from the spec table, and assert that exact value with `==`."
+              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 3 warned about. For each test: choose a concrete `price` input, compute the expected post-discount value yourself from the spec table, and assert that exact value with `==`."
       - description: "All tests pass against the reference implementation"
         command: |
           import pytest, io, sys
@@ -1765,7 +2037,7 @@ steps:
           - title: "Strong-oracle reminder"
             text: "Don't write `assert streaming_price(20, \"family\") is not None` — that passes for almost any return. Pin the *exact* value with `==`. The spec table above tells you the discount percentage for each partition; compute the post-discount price for a chosen input yourself."
           - title: "Almost-spoiler — compute, don't copy"
-            text: "Pick your representative price (e.g., a $20 streaming subscription). For each partition, compute the expected return value from the spec: 50% off ⇒ price × 0.50; 30% off ⇒ price × 0.70; no discount ⇒ price. Then write one test per partition with `assert streaming_price(price, plan) == <your_number>`. The shape is the same as Step 2's tests — only the function and partitions differ."
+            text: "Pick your representative price (e.g., a $20 streaming subscription). For each partition, compute the expected return value from the spec: 50% off ⇒ price × 0.50; 30% off ⇒ price × 0.70; no discount ⇒ price. Then write one test per partition with `assert streaming_price(price, plan) == <your_number>`. The shape is the same as Step 3's tests — only the function and partitions differ."
 
     quiz:
       title: "Wrap-up — Knowledge Check"
@@ -1824,12 +2096,12 @@ steps:
           option_feedback:
             0: "Starting from the implementation makes your tests confirm what the code *does*, not what it *should* do — the same post-hoc trap from Step 1. Start from the spec: identify the partitions, then find the boundaries."
             1: "`is not None` is the canonical weak oracle: it passes for any non-`None` return, including wrong values. You've replaced it with strong `==` assertions precisely to avoid this."
-            2: "Exactly. Partition `s` by length: too-short (< 3), valid (3–20), too-long (> 20). The boundaries sit at lengths 2, 3, 20, 21. Pick one representative per partition plus those four boundary values — that's the Step 3 method applied cold."
-            3: "A single random test is equivalent to one middle-of-partition sample — it misses all boundaries. The skill from Step 3 is to choose inputs *deliberately*, not arbitrarily."
+            2: "Exactly. Partition `s` by length: too-short (< 3), valid (3–20), too-long (> 20). The boundaries sit at lengths 2, 3, 20, 21. Pick one representative per partition plus those four boundary values — that's the Step 2 method applied cold."
+            3: "A single random test is equivalent to one middle-of-partition sample — it misses all boundaries. The skill from Step 2 is to choose inputs *deliberately*, not arbitrarily."
           explanation: |
             Start from the spec, not the implementation. Partition `s` by length:
             too-short (< 3), valid (3–20), too-long (> 20). Test boundary values 2, 3, 20, 21
-            and one representative in the middle. That's the Step 3 method applied directly
+            and one representative in the middle. That's the Step 2 method applied directly
             to a new function — no peeking at the implementation required.
 
         - question: |
