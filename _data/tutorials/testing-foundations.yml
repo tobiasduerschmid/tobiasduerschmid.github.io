@@ -1113,7 +1113,7 @@ steps:
       5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. Whether you were right or wrong: write one sentence tracing the causal chain — from "I renamed `_tracks`" to "exactly these tests fail." The explanation should work without running the code.
       6. **Rewrite each broken test** using only the public API — methods that don't start with `_`. The public surface of `PlaylistQueue` is: `add`, `track_count()`, `titles()`, `durations()`, `total_duration`. Anything starting with `_` is internal and off-limits to tests. When all four pass against the refactored code, your suite is robust.
 
-      <details markdown="1"><summary>📦 Two Python tools used in this step: <code>@dataclass</code> and <code>@property</code></summary>
+      ### 📦 Two Python tools used in this step: `@dataclass` and `@property`
 
       **`@dataclass` — auto-generated value objects**
 
@@ -1156,7 +1156,6 @@ steps:
       Contrast with `track_count()`, `titles()`, and `durations()`, which are regular methods. Rule of thumb: if the value *feels like a fixed attribute of the object* (total duration is a property of the queue's current state), make it a `@property`. If it *feels like an action or a lookup with side effects*, keep it a method.
 
       You'll see `@dataclass` and `@property` again in the TDD tutorial — where `ScoringEvent`, `BattleReport`, and `total_damage` follow the same patterns.
-      </details>
 
       💡 **Why this matters**: When a test only touches the public API, the production code stays free to evolve internally. The experiment you just ran is a live demonstration of the Refactoring Litmus Test (expand below to name what you discovered).
 
