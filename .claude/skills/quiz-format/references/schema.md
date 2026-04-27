@@ -47,6 +47,36 @@ When `decks:` is present, the include flattens `questions:` from each named deck
 
 The student must score ≥ `min_score` to unlock the next step. `min_score: 1` is fine (perfect score required). `min_score: 0` effectively disables the gate but still shows feedback.
 
+## Choosing a question type
+
+Pick the type that matches the cognitive level you're testing. The wrong type quietly demotes a high-Bloom objective to recognition — an Apply-level objective evaluated by recognition-level questions trains pattern-matching, not synthesis.
+
+| Bloom level | What the student does | Right tool |
+|---|---|---|
+| Remember | Recall a fact, definition, or rule | `single` MCQ with paraphrased stem |
+| Understand | Explain or interpret an idea | `single` MCQ where distractors encode partial understandings |
+| Apply | Use a concept on a *novel* scenario | `single` or `multiple` with a fresh scenario in the stem and distractors that encode procedure-misuse |
+| Analyze | Discriminate across a set of items | `multiple` forcing exhaustive selection across the set |
+| Procedural sequencing | Arrange steps into a working solution | `parsons` |
+| Apply / Create (writing code) | Produce code from scratch | **Not a quiz.** Use a coding exercise (the tutorial's code editor + assertions). |
+
+**Two diagnostic questions to ask before drafting:**
+
+1. *Is the stem novel?* For Apply/Analyze, the student must not have seen the exact scenario in the tutorial. If your stem is verbatim from the lesson, you're testing Remember.
+2. *Could the student answer by recognising syntax alone?* If yes, you're testing typing, not understanding. Replace at least one distractor with a *semantic* near-neighbour (a legal alternative encoding a real wrong belief), or convert the question to `parsons`. See "Distractor design" below.
+
+## Stem design
+
+The stem (`question:` field) is what the student reads first and holds in working memory while evaluating options. Five rules keep it pulling its weight:
+
+1. **Paraphrase, don't quote the lesson.** Verbatim text from the tutorial cues recall (Bloom Remember), not understanding. If the stem reads identically to a sentence in the lesson, the question is testing memory of phrasing.
+2. **No filler.** "for cleanup before merging" or "as a best practice in modern projects" pads without changing the construct under test. Trim until every clause carries the question.
+3. **Comparable shape and length, key vs distractors.** A noticeably longer or more-qualified key leaks the answer to test-wise students (Rodriguez 2005). Make all options similar in shape, length, and level of qualification — applies to the option text, not the stem.
+4. **Bold the negative if you must use it.** "Which is **not** valid?" — students miss the unbolded negative regularly. Better: rewrite as a positive question.
+5. **Stem and distractors must be consistent.** If the stem shows observed behavior (output, error, code trace, a comment like `# → [1, 2]`), every distractor must propose a mechanism *compatible with that observation* — see "Distractor design" → test 6 below for the full rule.
+
+For code stems specifically, the **cognitive-load budget** is set in `pedagogy.md` Principle 4: keep the stem ≤5 lines when options also contain code, and aim for options that differ along *one* dimension.
+
 ## Question shapes
 
 ### `type: single` (default)
@@ -110,7 +140,54 @@ The student must arrange code lines into a correct order. Distractors are extra 
   explanation: "The direction is from concrete dispatch logic to polymorphism."
 ```
 
-**Parsons does not support `option_feedback`.** There's no per-line model for misconception feedback — the granularity here is order/inclusion, not selection from alternatives. If you have specific misconceptions about ordering, encode them in `explanation:`.
+#### When to choose Parsons over MCQ
+
+Parsons is the right tool when the student already understands each line in isolation but you want to test the *ordering* schema — control-flow shape, sequencing of state changes, dependency between steps. It removes syntax-recall load (Sweller's germane focus) while still demanding structural reasoning. Choose Parsons over a "which version compiles?" MCQ when your goal is to teach the *shape* of a solution. Choose MCQ over Parsons when discrimination between conceptual neighbours matters more than ordering.
+
+#### Length
+
+4–8 correct lines hits the working-memory sweet spot for novel algorithms — that's the default to aim for. Standard algorithms with a clean iterative or recursive skeleton (binary search, BFS/DFS, classic recursion patterns) often run **9–12 lines** and remain usable: the schema is familiar enough that intrinsic load stays bounded. **Past 14**, the task degrades into a slot-puzzle and intrinsic load swamps the schema work — split the question, omit lines that don't carry the construct, or move to a code-execution exercise.
+
+Whatever your line count, **count the lines before shipping** — authoring agents commonly believe they're inside the cap when they're not. If you've shipped 11 lines, name it ("11 lines — within the standard-algorithm band"); don't claim "kept within 4–8" when it's not.
+
+#### Distractor design (for Parsons)
+
+Each Parsons distractor should encode a specific wrong mental model: an off-by-one boundary, a wrong order of dependent steps, a step that belongs to a *different* algorithm. Avoid syntax-only distractors ("same line with `==` instead of `=`") — those test typing, not structure. Aim for 1–2 distractors max; each one doubles the search space.
+
+#### `display: inline` vs `block`
+
+Use `inline` for expression-level ordering (function-composition pipelines, regex tokens, single-line statement reordering). Use `block` (default) for statement-level ordering — the typical case.
+
+#### Why no `option_feedback`
+
+Parsons error modes are combinatorial (n! orderings); per-line feedback would explode and cannot map cleanly to a single misconception. **Parsons does not support `option_feedback`.** Encode the top 1–2 ordering misconceptions in `explanation:` ("a common error is putting the recursive call before the base case — that produces infinite recursion"). The granularity here is order and inclusion, not selection from alternatives.
+
+## Distractor design (read before drafting options)
+
+A wrong answer earns its place by encoding a *specific* wrong mental model. Item-writing literature (Haladyna 2004; Rodriguez 2005 on three- vs. four-option items) is unanimous on what makes a distractor work — and a distractor that fails these tests is unrescuable by feedback.
+
+### Five tests every distractor must pass
+
+1. **Plausible to a partial-knower.** Wrong for a *reason* a student might actually hold, not wrong because it's silly or off-topic. If you cannot finish the sentence *"a student picks this because they are thinking…"*, cut the distractor.
+2. **Misconception-grounded.** Encodes a specific neighboring concept, procedure-misuse, or partial knowledge — not random noise. Distractors that fail this test waste a slot and dilute discrimination.
+3. **Variation-clean.** Differs from the correct answer on *one* critical feature where possible. A distractor that varies on two dimensions at once (e.g. wrong operator AND wrong order) makes it ambiguous which mental model the item is testing — and which one the feedback is correcting.
+4. **Homogeneous with the key.** Parallel grammatical form, comparable length, similar level of qualification. A noticeably longer or more-qualified key leaks the answer to test-wise students (Rodriguez 2005). Avoid "all of the above" / "none of the above" — they encode test-taking strategy, not understanding.
+5. **Free of cueing.** No grammatical agreement leaks (e.g. *"a"* before an option that starts with a consonant), no copy-paste from the lesson signaling the right answer, no negative phrasing without bolding the negative.
+6. **Consistent with what the stem shows.** When the stem includes observed behavior — output (`# → [1, 2]`), an error, a code trace, or any "given" — every distractor must propose a mechanism that *would produce that observation*. A distractor that implies "the shown output is actually different" or proposes a mechanism that would output something else is asking the student to disbelieve the stem; that's a different (epistemic) question, not the mechanism question you're posing. A partial-knower can rule out such distractors without engaging the construct, which fails test 1. If you genuinely want to test "is the shown output correct?", reframe the stem to ask that explicitly.
+
+### Three-option items are often better than four
+
+If your fourth distractor would be a filler that fails the five tests above, **ship three options** (Rodriguez 2005). Three plausible distractors beat four where one is obviously wrong. Don't pad to four out of habit.
+
+### Distractor taxonomy for code questions
+
+Three useful categories, in descending pedagogical value:
+
+1. **Semantic near-neighbours** (best). The option compiles/parses but means something different — `WHERE SUM(x)` instead of `HAVING SUM(x)`, `n > 0` as a base case instead of `n == 0`, sequential `await` instead of `Promise.all`. These encode real mental models and earn a high-quality `option_feedback` entry.
+2. **Wrong-construct substitutes** (good). A different but legal construct that a confused student would pick — `&&` instead of `|`, `()` instead of `[]` for a list comprehension, `is` vs `==`. Earns feedback if a coherent confusion explains the choice.
+3. **Syntactically malformed** (use sparingly). Unbalanced parens, made-up keywords, code that won't compile. Useful only for difficulty calibration in early-novice items; do *not* attach `option_feedback` to these — there's no mental model to correct. If most of your distractors are category 3, the question is testing syntax recognition, not understanding — rewrite the distractors as category 1, or convert the question to a Parsons.
+
+A distractor passing all five tests typically *deserves* an `option_feedback` entry — they correlate.
 
 ## `option_feedback` — full triggering semantics
 
@@ -169,6 +246,6 @@ When something renders wrong, look at:
 |---|---|
 | Feedback shows above the wrong option | The `_includes/quiz.html` shuffle loop isn't moving the feedback div with its button. |
 | Feedback never appears for tutorial quizzes | `q.option_feedback` not propagating through the `buildHTML()` map in `js/tutorial-quiz.js`. |
-| Liquid integer-key access fails | Quote the keys as strings (`"0":`); the rendering layer falls back to string keys. |
+| Liquid render glitches with integer keys | The rendering layer accepts both integer and string keys (see "full triggering semantics" above) — quoting as strings (`"0":`) is the safe fallback if a Liquid render misbehaves. Integer keys remain the recommended default. |
 | Print view missing feedback | Check the relevant `@media print` block — there are three (tutorial.css, quiz.html inline, print-tutorial.html inline). |
 | Markdown not rendering in feedback | Make sure the Liquid template runs `| markdownify` (it does, in `_includes/quiz.html` line ~119). |

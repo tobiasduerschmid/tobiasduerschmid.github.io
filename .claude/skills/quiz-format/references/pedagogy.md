@@ -6,13 +6,26 @@ The goal of `option_feedback` is **to land surgical correction at the moment the
 
 **House style: clarify, don't label.** Do not use the word "misconception" in feedback content, and do not write phrases like *"This is the X-misconception / X conflation / X confusion / X trap / X fallacy / X tautology"*. The label-and-correct pattern reads as a template tic when repeated across many questions and shifts attention from the corrective content to the diagnostic vocabulary. Just clarify the wrong reasoning directly — lead with the actual fact, the proximate distinction, or what's really happening.
 
+## Before authoring: is a quiz the right tool?
+
+MCQ is great at testing *discrimination* between near-neighbour concepts (recursion step vs base case, `WHERE` vs `HAVING`, unit vs integration test). It is a poor proxy for *production* skills — writing code, designing a class, choosing an architecture. If the construct you want to assess is "the student can write a working factorial," replacing it with "the student can recognise a working factorial from four candidates" demotes Bloom Apply/Create to Bloom Remember and trains pattern-matching, not synthesis.
+
+Two diagnostic questions:
+
+1. *Could the student pass this question by recognising the correct line without producing it?* If yes, and your objective was Apply/Create, you've miscalibrated the tool — write a coding exercise (or a Parsons) instead.
+2. *Are most of your distractors syntactically malformed?* If yes, the question is testing syntax recognition (Bloom Remember), not understanding. Rewrite at least one distractor as a *semantic* near-neighbour, or convert to a Parsons.
+
+When MCQ *is* the right tool, this document and `schema.md` (especially "Choosing a question type" and "Distractor design") tell you how to make it land.
+
 ## The five principles
 
 ### 1. Variation Theory (Marton & Booth, 1997)
 
 Concepts are learned by **contrast** — students grasp what something *is* by encountering what it *is not*. Per-option feedback is built for this: each wrong option encodes a distinct neighboring concept, and the feedback should clarify the contrast.
 
-**Rule:** Lead with the contrast — *what's actually true* and the *load-bearing distinction* that separates it from the wrong reasoning. Optionally gesture at why the wrong reasoning is plausible, but do not label the error ("this is the *X*-misconception", "the *X* trap"); just clarify.
+**Rule (writing the feedback):** Lead with the contrast — *what's actually true* and the *load-bearing distinction* that separates it from the wrong reasoning. Optionally gesture at why the wrong reasoning is plausible, but do not label the error ("this is the *X*-misconception", "the *X* trap"); just clarify.
+
+**Rule (designing the distractors):** Each distractor should differ from the correct answer on as few critical features as possible — ideally one. A distractor that varies on two dimensions at once (e.g. wrong operator AND wrong order) makes it ambiguous which mental model the item is testing, and the feedback ends up correcting two things at once. The cleanest items vary along a single axis: `WHERE` vs `HAVING`, `n > 0` vs `n == 0`, sequential `await` vs `Promise.all`. (See `schema.md` → "Distractor design" for the full five-test rubric.)
 
 ### 2. Corrective Feedback (Hattie & Timperley, 2007; Shute, 2008)
 
@@ -34,7 +47,9 @@ Wrong-answer feedback is most powerful when it lands **after** the student has a
 
 Per-option feedback should target only the specific wrong reasoning at hand. Anything longer than ~3 sentences duplicates the general `explanation:` and creates extraneous load. The student is reading the feedback at the moment their working memory is already loaded with their failed reasoning — keep it focused.
 
-**Rule:** If the feedback would be longer than 3 sentences, the rest belongs in `explanation:`. The general explanation is for canonical reasoning; option_feedback is for surgical correction.
+**Rule (length):** If the feedback would be longer than 3 sentences, the rest belongs in `explanation:`. Role split (Hattie & Timperley): `option_feedback` is *feed-back* — corrective on this specific wrong reasoning. `explanation` is *feed-up + feed-forward* — the canonical principle, plus (where useful) a pointer to the next concept or the adjacent trap. They are not the same job; an item where they read interchangeably means one is redundant.
+
+**Rule (code in stem and options):** If the question stem contains code AND each option is a different code variant, the student must hold the stem in working memory while diffing four candidates. With ~4 working-memory slots and high element-interactivity (variables, control flow, side effects all interact), a 10-line stem plus four 4-line option variants blows the budget. Two paths out: (a) keep the stem ≤5 lines and aim for options that differ along *one* dimension (a single line, operator, or call) so a vertical scan reveals the diff; or (b) if you genuinely need full code variants in every option, shrink the stem to a one-line scenario or convert the question to Parsons.
 
 ### 5. Growth-Mindset Framing (Dweck, 1999)
 
@@ -103,7 +118,7 @@ What this demonstrates:
 
 Sometimes leaving it out is the right call:
 
-- **Trivially-wrong distractors.** If an option is wrong because it's syntactically malformed, contains a made-up keyword, or is obviously off-topic, there's no real reasoning to correct — just a bad option that exists for difficulty calibration. Don't add feedback that says "this isn't valid syntax"; the student knows.
+- **Trivially-wrong distractors.** If an option is wrong because it's syntactically malformed, contains a made-up keyword, or is obviously off-topic, there's no real reasoning to correct. Skip the feedback — *and* reconsider the distractor itself. A question whose wrong options are all syntactically malformed is testing recognition, not understanding (Bloom Remember, not Analyze). Replace at least one malformed distractor with a *semantically* near-neighbour option (a legal alternative encoding a real wrong belief), or convert the question to a Parsons. See `schema.md` → "Distractor design" for the full rubric.
 - **Options where you can't articulate the wrong reasoning.** If you can't crisply finish the sentence "students who pick this are probably thinking…", the feedback you'd write is going to be vague filler. Skip it.
 - **Pure factual recall.** "What year was Python first released?" doesn't have a wrong-reasoning structure — wrong years are just wrong, not the result of confused mental models. Use `explanation:` for the answer and call it done.
 - **Optional indices in multi-choice.** Feedback assigned to `optional_indices` never fires — it's wasted work. The whole point of `optional_indices` is "either choice is fine".

@@ -120,6 +120,38 @@ The two flagship examples (recursion base case, unit-test properties) live in `p
   explanation: "SQL evaluates clauses in this order: `FROM` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `ORDER BY` → `LIMIT`. `WHERE` runs before grouping (filters individual rows); `HAVING` runs after grouping (filters group results)."
 ```
 
+## Parsons — BFS traversal order (no `option_feedback`; misconceptions in `explanation`)
+
+Parsons doesn't support `option_feedback`, so the misconception correction lives in the explanation. The distractor encodes the most common BFS error (using a stack instead of a queue → DFS).
+
+```yaml
+- question: |
+    Arrange the lines to implement breadth-first search over a graph represented as `{node: [neighbours]}`. Return the visit order.
+  type: parsons
+  display: block
+  lines:
+    - "def bfs(graph, start):"
+    - "    visited, order = {start}, []"
+    - "    queue = collections.deque([start])"
+    - "    while queue:"
+    - "        node = queue.popleft()"
+    - "        order.append(node)"
+    - "        for nbr in graph[node]:"
+    - "            if nbr not in visited:"
+    - "                visited.add(nbr); queue.append(nbr)"
+    - "    return order"
+  distractors:
+    - "        node = queue.pop()"
+  explanation: |
+    BFS uses a **FIFO queue** — `popleft()` from a `deque` (or `queue.popleft()`) — so the
+    earliest-discovered nodes are visited first. The distractor `queue.pop()` removes from
+    the *right*, turning the queue into a stack and the algorithm into DFS. The visited-set
+    update must happen *when a node is enqueued*, not when it's dequeued, otherwise the same
+    node can be added to the queue multiple times before its first visit.
+```
+
+Why this is good: the distractor is *one* line that swaps a single method (`popleft` → `pop`), encoding the canonical BFS-vs-DFS misconception cleanly (Variation Theory: one critical feature). The explanation names the misconception ("turning the queue into a stack") because Parsons can't attach per-line feedback.
+
 ## How to write your own
 
 When you sit down to draft `option_feedback` for a question:
