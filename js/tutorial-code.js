@@ -1275,6 +1275,19 @@
     }).catch(function () { /* ignore snapshot failures */ });
   };
 
+  TutorialCode.prototype._canCacheLiveStepEntrySnapshot = function (idx) {
+    if (this.resetType !== 'commands') return true;
+    if (idx == null || idx <= 0) return true;
+    if (!this.requireTests) return false;
+    for (var i = 0; i < idx; i++) {
+      var step = this.steps[i];
+      if (step && step.tests && step.tests.length > 0 && !this._stepsPassed.has(i)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   /**
    * Restore a cached step-entry snapshot. Returns a Promise that resolves
    * to true on success, false if no snapshot is cached (caller should fall
@@ -6262,11 +6275,9 @@
       });
     }
 
-    // Apply files for all prior steps (JS-only, fast). Commands for all
-    // prior steps + the current step's setup are accumulated and flushed in
-    // ONE _runSilent call below — so we pay one VM round-trip total rather
-    // than one per step.
-    var commandBatch = [];
+    // Apply each prior step in chronological order. For Git tutorials the
+    // timing of file writes matters: a later step's file content must not
+    // exist before an earlier step's commit command runs.
     for (var i = 0; i < targetStep; i++) {
       (function (stepIdx) {
         var st = self.steps[stepIdx];
@@ -6304,8 +6315,11 @@
         // 3. Accumulate solution commands
         if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            st.solution.commands.forEach(function (cmd) {
-              commandBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+            p = p.then(function () {
+              var batch = st.solution.commands
+                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+                .join('\n');
+              return self._runSilent(batch);
             });
           }
         }
@@ -6322,16 +6336,13 @@
     // Accumulate current step's setup_commands
     if (curStep && curStep.setup_commands && curStep.setup_commands.length > 0) {
       if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-        curStep.setup_commands.forEach(function (cmd) {
-          commandBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+        p = p.then(function () {
+          var batch = curStep.setup_commands
+            .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+            .join('\n');
+          return self._runSilent(batch);
         });
       }
-    }
-
-    // One round-trip for every queued command across all replayed steps.
-    if (commandBatch.length > 0 &&
-        (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
-      p = p.then(function () { return self._runSilent(commandBatch.join('\n')); });
     }
 
     // Run post_fileload_setup AFTER all setup/solution commands so e.g.
@@ -6462,11 +6473,8 @@
       });
     }
 
-    // File writes for every replayed step happen JS-side (fast), but every
-    // step's solution commands are accumulated into a single batch below and
-    // dispatched as ONE _runSilent call. That replaces N VM round-trips with
-    // one — the main cost of cold restore.
-    var restoreBatch = [];
+    // Replay each step in chronological order. Git restore depends on the
+    // same ordering as reset: starter files, solution files, then commands.
     for (var i = 0; i < targetStep; i++) {
       (function (stepIdx) {
         var step = self.steps[stepIdx];
@@ -6501,11 +6509,14 @@
           });
         }
 
-        // 3. Accumulate solution commands into the single batch
+        // 3. Run this step's solution commands before later step files exist.
         if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            step.solution.commands.forEach(function (cmd) {
-              restoreBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+            p = p.then(function () {
+              var batch = step.solution.commands
+                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+                .join('\n');
+              return self._runSilent(batch);
             });
           }
         }
@@ -6516,12 +6527,6 @@
     var savedStepObj = self.steps[targetStep];
     if (savedStepObj && savedStepObj.files) {
       p = p.then(function () { return self._syncStepFiles(savedStepObj, { setActive: false }); });
-    }
-
-    // Flush every accumulated solution command in a single VM round-trip
-    if (restoreBatch.length > 0 &&
-        (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
-      p = p.then(function () { return self._runSilent(restoreBatch.join('\n')); });
     }
 
     // Quiesce before snapshot — see _resetStepWithCommandsSlow for rationale.
@@ -6677,7 +6682,9 @@
         self._refreshGitGraph && self._refreshGitGraph();
         // Cache the clean "entry state" of this step so future Reset /
         // autosave-restore operations can skip replay entirely.
-        self._saveStepEntrySnapshot(index);
+        if (self._canCacheLiveStepEntrySnapshot(index)) {
+          self._saveStepEntrySnapshot(index);
+        }
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
       if (this.config.backend === 'pyodide') {
