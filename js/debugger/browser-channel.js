@@ -151,7 +151,7 @@
     if (this.i32 && Atomics.load(this.i32, SLOT_BPS_DIRTY) === 1) {
       var len = Atomics.load(this.i32, SLOT_BPS_LEN);
       try {
-        var pending = JSON.parse(this._decoder.decode(this.u8.subarray(BPS_OFF, BPS_OFF + len)));
+        var pending = this._decodeSharedJson(BPS_OFF, len);
         if (Array.isArray(pending)) next = pending.concat(next);
       } catch (e) {}
     }
@@ -175,6 +175,12 @@
     Atomics.store(this.i32, lenSlot, bytes.length);
     Atomics.store(this.i32, dirtySlot, 1);
     return true;
+  };
+
+  BrowserChannel.prototype._decodeSharedJson = function (offset, len) {
+    var copy = new Uint8Array(len);
+    copy.set(this.u8.subarray(offset, offset + len));
+    return JSON.parse(this._decoder.decode(copy));
   };
 
   window.SEBookBrowserChannel = BrowserChannel;

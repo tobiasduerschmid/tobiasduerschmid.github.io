@@ -113,15 +113,28 @@ class TimeTravelDebugger(bdb.Bdb):
             raw = consume_pending()
             if raw is None:
                 return None
+            try:
+                if hasattr(raw, 'to_py'):
+                    raw = raw.to_py()
+            except Exception:
+                pass
             if isinstance(raw, str):
                 try:
                     return json.loads(raw)
                 except Exception:
                     return None
-            try:
-                return raw.to_py()
-            except AttributeError:
+            if isinstance(raw, dict):
                 return raw
+            try:
+                text = str(raw)
+            except Exception:
+                text = ''
+            if text and text not in ('None', 'null', 'undefined', '[object Object]'):
+                try:
+                    return json.loads(text)
+                except Exception:
+                    return None
+            return None
         self._consume_pending = _consume_wrapped
         # Diagnostic helper — logs go to main thread console via a dedicated
         # message type. Cheap and easy to grep for "[ttd]" in DevTools.

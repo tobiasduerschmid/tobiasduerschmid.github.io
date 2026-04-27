@@ -656,16 +656,11 @@
             ? '<span class="tvm-debug-watch-error">' + helpers.escape(v.error) + '</span>'
             : helpers.escape(v.repr || v.preview || ''))
         : '<span class="tvm-debug-watch-na">—</span>';
-      var type = String(v && (v.type || v.kind) || '').toLowerCase();
-      var repr = String(v && (v.repr != null ? v.repr : v.preview) || '').trim();
-      var canPromote = v && !v.error && (type === 'bool' || type === 'boolean' || repr === 'True' || repr === 'False' || repr === 'true' || repr === 'false');
       rows.push('<div class="tvm-debug-watch-row">' +
                 '<span class="tvm-debug-watch-expr">' + helpers.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                (canPromote
-                  ? '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Turn to Data Watchpoint" aria-label="Turn to Data Watchpoint">' + debugManagerIcon('dataWatch') + '</button>'
-                  : '') +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
                 '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
@@ -754,19 +749,19 @@
         '<span class="tvm-debug-manager-title">' + helpers.escape(wp.expr) + '</span>' +
         '<span class="tvm-debug-manager-value">' + renderWatchValue(v, helpers) + '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-wp-run="' + helpers.escape(wp.id) + '" title="Run to this data watchpoint" aria-label="Run to this data watchpoint">' + debugManagerIcon('playData') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-wp-back="' + helpers.escape(wp.id) + '" title="Run back to this data watchpoint" aria-label="Run back to this data watchpoint">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + helpers.escape(wp.id) + '" title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + helpers.escape(wp.id) + '" title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
         '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + helpers.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression becomes true" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
-      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data</span></button>' +
-      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
       '</div>';
 
     view.innerHTML =

@@ -1523,7 +1523,7 @@
     this.renderAll();
     if (hit) {
       var origin = hit.origin || {};
-      this.setStatus('rewound to data watchpoint at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
+      this.setStatus('rewound to data change at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
     } else {
       this.setStatus('rewound to first instruction');
     }
@@ -1575,7 +1575,7 @@
     if (run && run.includeLineBreakpoints && !this.watchpointsForRun(run.id || null).length) {
       return 'running to breakpoint…';
     }
-    return 'running to data watchpoint…';
+    return 'running to data change…';
   };
 
   DebuggerController.prototype.handlePausedDuringWatchpointRun = function (startIdx, endIdx) {
@@ -1606,7 +1606,7 @@
       this.setStatus('paused at breakpoint at ' + this.basename(snap.file) + ':' + snap.line);
     } else {
       var origin = hit.origin || {};
-      this.setStatus('data watchpoint hit at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
+      this.setStatus('data watchpoint changed at ' + this.basename(origin.file) + ':' + origin.line + ': ' + hit.expr);
     }
     this._publishCursor();
     this._publishSession();
@@ -1641,7 +1641,7 @@
     watchpoints = watchpoints || this.getEnabledWatchpoints();
     for (var i = 0; i < watchpoints.length; i++) {
       var wp = watchpoints[i];
-      if (this.watchpointBecameTrueAt(idx, wp)) {
+      if (this.watchpointChangedAt(idx, wp)) {
         return {
           id: wp.id,
           expr: wp.expr,
@@ -1696,17 +1696,47 @@
     };
   };
 
-  DebuggerController.prototype.watchpointBecameTrueAt = function (idx, wp) {
+  DebuggerController.prototype.watchpointChangedAt = function (idx, wp) {
     if (!wp || !wp.expr || idx < 0 || idx >= this.history.length) return false;
-    var cur = this.watchValueTruthy(this.watchValueAt(idx, wp.expr));
-    if (!cur) return false;
-    var prev = idx > 0 ? this.watchValueTruthy(this.watchValueAt(idx - 1, wp.expr)) : false;
-    return !prev;
+    if (idx <= 0) return false;
+    var curRaw = this.watchValueAt(idx, wp.expr);
+    var cur = this.watchValueComparable(curRaw);
+    if (!cur || cur.state !== 'value') return false;
+    var prev = this.previousWatchValueComparable(idx, wp.expr);
+    if (!prev) return this.watchValueTruthy(curRaw);
+    return cur.key !== prev.key;
   };
 
   DebuggerController.prototype.watchValueAt = function (idx, expr) {
     var snap = this.history[idx];
     return snap && snap.watches ? snap.watches[expr] : null;
+  };
+
+  DebuggerController.prototype.watchValueComparable = function (value) {
+    if (!value) return null;
+    if (value.error) return { state: 'error', key: String(value.error) };
+    return { state: 'value', key: this.stableValueKey(value) };
+  };
+
+  DebuggerController.prototype.previousWatchValueComparable = function (idx, expr) {
+    for (var i = idx - 1; i >= 0; i--) {
+      var prev = this.watchValueComparable(this.watchValueAt(i, expr));
+      if (prev && prev.state === 'value') return prev;
+    }
+    return null;
+  };
+
+  DebuggerController.prototype.stableValueKey = function (value) {
+    if (value == null || typeof value !== 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) {
+      return '[' + value.map(this.stableValueKey, this).join(',') + ']';
+    }
+    var keys = Object.keys(value).sort();
+    var parts = [];
+    for (var i = 0; i < keys.length; i++) {
+      parts.push(JSON.stringify(keys[i]) + ':' + this.stableValueKey(value[keys[i]]));
+    }
+    return '{' + parts.join(',') + '}';
   };
 
   DebuggerController.prototype.watchValueTruthy = function (value) {
@@ -2623,12 +2653,7 @@
 
   DebuggerController.prototype.onDebugComplete = function (msg) {
     this.disableStepButtons(true);
-    this.endSession(true);
-    if (this.statusEl) {
-      this.statusEl.textContent = 'finished';
-      this.statusEl.title = 'finished';
-    }
-    this._publishSession();
+    this.endSession(false);
   };
 
   DebuggerController.prototype.onCapReached = function (msg) {
@@ -3113,16 +3138,11 @@
             ? '<span class="tvm-debug-watch-error">' + this.escape(v.error) + '</span>'
             : this.escape(v.repr || v.preview || ''))
         : '<span class="tvm-debug-watch-na">—</span>';
-      var type = String(v && (v.type || v.kind) || '').toLowerCase();
-      var repr = String(v && (v.repr != null ? v.repr : v.preview) || '').trim();
-      var canPromote = v && !v.error && (type === 'bool' || type === 'boolean' || repr === 'True' || repr === 'False' || repr === 'true' || repr === 'false');
       rows.push('<div class="tvm-debug-watch-row">' +
                 '<span class="tvm-debug-watch-expr">' + this.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                (canPromote
-                  ? '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Turn to Data Watchpoint" aria-label="Turn to Data Watchpoint">' + debugManagerIcon('dataWatch') + '</button>'
-                  : '') +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
                 '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
@@ -3224,19 +3244,19 @@
         '<span class="tvm-debug-manager-title">' + self.escape(wp.expr) + '</span>' +
         '<span class="tvm-debug-manager-value">' + val + '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" title="Run to this data watchpoint" aria-label="Run to this data watchpoint">' + debugManagerIcon('playData') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" title="Run back to this data watchpoint" aria-label="Run back to this data watchpoint">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
         '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + self.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression becomes true" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
-      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data</span></button>' +
-      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
+      '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
       '</div>';
     view.innerHTML =
       '<div class="tvm-debug-manager">' +
@@ -3405,8 +3425,14 @@
     var line = frame.line;
     // Map worker filename (`/tutorial/foo.py`) to Monaco model URI
     var fname = frame.file.replace(/^\/tutorial\//, '');
+    var activeBefore = this.t.activeFileName;
+    var leftBefore = this.t._leftActiveFile;
+    var rightBefore = this.t._rightActiveFile;
     var editor = this.ensureFrameFileVisible(fname);
     if (!editor) { this.clearCurrentLineDecoration(); return; }
+    var activeChanged = this.t.activeFileName !== activeBefore ||
+      this.t._leftActiveFile !== leftBefore ||
+      this.t._rightActiveFile !== rightBefore;
     var model = editor.getModel && editor.getModel();
     if (!model || line < 1 || line > model.getLineCount()) {
       this.clearCurrentLineDecoration();
@@ -3440,6 +3466,7 @@
     if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
       editor.revealLineInCenterIfOutsideViewport(line);
     }
+    if (activeChanged) this._publishActiveFile();
     // Repaint breakpoints so the dot on the current line shrinks (or restores
     // to full size if the current line moved away from a breakpoint).
     this.refreshBpDecorations();

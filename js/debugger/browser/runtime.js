@@ -63,6 +63,11 @@ var TEXT_ENCODER = new TextEncoder();
 
 function send(msg) { self.postMessage({ __ttd: true, payload: msg }); }
 function log(m) { send({ type: 'log', msg: '[ttd-browser] ' + m }); }
+function decodeSharedJsonBytes(offset, len) {
+  var copy = new Uint8Array(len);
+  copy.set(u8.subarray(offset, offset + len));
+  return TEXT_DECODER.decode(copy);
+}
 
 // ---- Init handshake ---------------------------------------------------
 
@@ -377,14 +382,14 @@ function drainPendingUpdates(scopeFn) {
   if (Atomics.load(i32, SLOT_WATCHES_DIRTY) === 1) {
     var len = Atomics.load(i32, SLOT_WATCHES_LEN);
     try {
-      watches = JSON.parse(TEXT_DECODER.decode(u8.subarray(WATCH_OFF, WATCH_OFF + len)));
+      watches = JSON.parse(decodeSharedJsonBytes(WATCH_OFF, len));
     } catch (e) {}
     Atomics.store(i32, SLOT_WATCHES_DIRTY, 0);
   }
   if (Atomics.load(i32, SLOT_BPS_DIRTY) === 1) {
     var blen = Atomics.load(i32, SLOT_BPS_LEN);
     try {
-      var changes = JSON.parse(TEXT_DECODER.decode(u8.subarray(BPS_OFF, BPS_OFF + blen)));
+      var changes = JSON.parse(decodeSharedJsonBytes(BPS_OFF, blen));
       changes.forEach(function (ch) {
         var k = ch.file + ':' + ch.line;
         if (ch.op === 'add' || ch.op === 'edit') breakpoints.set(k, { condition: ch.condition || null });
@@ -396,7 +401,7 @@ function drainPendingUpdates(scopeFn) {
   if (Atomics.load(i32, SLOT_EDITS_DIRTY) === 1) {
     var elen = Atomics.load(i32, SLOT_EDITS_LEN);
     try {
-      var edits = JSON.parse(TEXT_DECODER.decode(u8.subarray(EDITS_OFF, EDITS_OFF + elen)));
+      var edits = JSON.parse(decodeSharedJsonBytes(EDITS_OFF, elen));
       edits.forEach(function (e) { applyLiveEdit(e, scopeFn); });
     } catch (err) {}
     Atomics.store(i32, SLOT_EDITS_DIRTY, 0);

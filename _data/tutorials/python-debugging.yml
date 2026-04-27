@@ -174,7 +174,7 @@ steps:
           old = sys.stdout; sys.stdout = buf = io.StringIO()
           code = pytest.main(['/tutorial/test_greet.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nFix the loop range so `names[0]` is included."
+          assert code == 0, f"Some tests still fail. pytest output:\n\n{output}\n\nRead the failing assertion: which name is missing? Use that observation as your Symptom, then open the debugger."
         hints:
           - title: "Small nudge"
             text: "Look carefully at the `range(...)` call. What's the first index it produces?"
@@ -263,7 +263,7 @@ steps:
             2: "Symptom and cause are different concepts. The symptom is what you observe (a wrong total). The cause is the broken thing that produces the symptom (the wrong column)."
             3: "There is one root cause (the wrong column) producing one symptom (the wrong total). Treating them as separate bugs leads to symptom-patching — e.g., subtracting $5 from the total — without fixing the actual problem."
           explanation: |
-            The symptom is what you *observe* (the wrong total). The cause is the *reason* it happens (the discount-loading function reading the wrong column). Symptom-patching — e.g., always subtracting $5 from totals for that user — would make the test green without fixing the underlying bug.
+            The symptom is what you *observe* (the wrong total). The cause is the *reason* it happens (the discount-loading function reading the wrong column). Symptom-patching — e.g., inserting a special `if user_id == BAD_USER: total -= 5` check — would make one test green without fixing the underlying bug, and would fail on any other user affected by the same column read.
 
 
   # ===========================================================================
@@ -321,11 +321,11 @@ steps:
 
       ### 7. *"Are these two variables actually the same object?"* → Aliasing badge
 
-      `register_score` has a `students=[]` default argument. **Predict:** after `main()` finishes, how many entries does `defaults` contain? Hold the answer.
+      `register_score` has a `students=[]` default argument. **Predict:** does `register_score` create a fresh student list on each call, or reuse the same list every time? After `main()` finishes, what do you expect the default `students` argument to contain — and how many entries?
 
       Now run to completion (Continue twice). In the Variables tab, expand `defaults` and the inner `students` list inside `register_score`. They share an `oid` and a `↔` alias badge — they're the same list. Compare to your prediction.
 
-      That's how you spot aliasing *before* it bites.
+      If your prediction was wrong, complete this sentence before moving on: *"I assumed the list was ___, but the debugger shows ___ because ___."* That sentence is a hypothesis about your own mental model of how Python default arguments work.
 
       ### 🪞 Reflect
 
@@ -396,7 +396,7 @@ steps:
             - "Call Stack"
           correct_index: 1
           option_feedback:
-            0: "10,000 manual steps is what conditional breakpoints exist to avoid."
+            0: "Stepping through 10,000 iterations works in principle but is prohibitive. A conditional breakpoint runs the same check at every iteration inside the debugger's engine — effectively free per iteration — and pauses only when the predicate is true."
             2: "Hover shows the value at *this* paused moment. It can't filter across iterations."
             3: "Call Stack shows *how* you got to the current line, not *which iteration* first violated something."
           explanation: |
@@ -413,7 +413,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Watch shows the *current* value at the paused moment, not historical values."
-            2: "This works but costs you a full rerun. The history scrubber rewinds without restarting — much faster."
+            2: "This works but requires re-executing the entire program from scratch. If the program takes 30 seconds — or an hour — to run, you pay that cost every time you want to inspect a different moment. The scrubber rewinds through the recorded trace instantly, no rerun needed."
             3: "Hover is the same as Watch — it shows the value at the current pause, not the past."
           explanation: |
             **Time-travel.** The scrubber lets you slide back through any moment in the run without re-executing.
@@ -486,9 +486,20 @@ steps:
 
       As recursion deepens, the **Call Stack** tab grows. Click any frame to see that level's locals — this is how you read recursion in a debugger.
 
-      ### 5. The first wrong decision
+      ### 5. Compare prediction to observation
 
-      At the moment `current == goal` is `True`, look at `steps_used` and `max_steps`. Which conditional fires first when the body of `_dfs` runs at this point — the cutoff or the goal check?
+      When `current == goal` is `True` in the Watch tab, look at `steps_used` and `max_steps`.
+
+      - What did you predict `steps_used` would be at the moment the goal cell is reached?
+      - What does the debugger show?
+      - If they differ, complete this sentence before continuing: *"My model assumed ___, but the code computes `steps_used` as `len(path) - 1`, which means ___."*
+
+      <details><summary>What the comparison typically reveals</summary>
+
+      Most students predict `steps_used = 9` (the nine moves *leading to* the goal). The actual value is `10` — because the goal cell has already been appended to `path` before this recursive call starts, so `len(path) - 1` counts the goal cell itself as a step. If your prediction was wrong, that gap is the heart of the bug.
+      </details>
+
+      Which conditional fires first when `_dfs` runs on this call — the cutoff or the goal check?
 
       That is the **first divergence** between intended behavior ("we reached the goal, return the path") and actual behavior ("we hit the budget, return None").
 
@@ -507,7 +518,15 @@ steps:
 
       Edit `_dfs` so the goal check runs **before** the cutoff check.
 
-      🪞 *Before you verify — where else have you seen a bug like this?* Off-by-one boundaries hide in `range`, slice indices, comparison operators, loop sentinels, array bounds. Spend 15 seconds listing two places this shape could appear in your own code. Then: *which stage of the cycle was hardest for you on this case — Predict, Evidence, or Hypothesis?* Name it; you'll re-encounter that stage in Case 2.
+      ### 🪞 Reflect — before you verify
+
+      **Bug family:** Off-by-one boundaries hide in `range`, slice indices, comparison operators, loop sentinels, array bounds. Name one place in your own code where this exact shape could appear.
+
+      **Cycle stage:** Which stage was hardest on this case — Predict, Evidence, or Hypothesis? Name it.
+
+      *If it was Predict:* recursive code is hard to predict because you'd need to mentally simulate the whole call stack. The debugger's Call Stack tab is built for exactly that gap.
+
+      *If it was Hypothesis:* the schema that helped was "which check does what when." That schema transfers to every boundary bug you'll meet.
 
       ### 8. Verify
 
@@ -774,20 +793,20 @@ steps:
             The root cause is the *order* of the two early checks in `_dfs`. Reordering them is a one-line, minimal change that addresses the cause directly. Every other option here is a workaround: it makes the symptom disappear without fixing the underlying logic.
 
         - question: |
-            For Python's `range()`, which expression includes the value `10`?
+            A student fixes `_dfs` by loosening the cutoff to `steps_used > max_steps` instead of swapping the check order. The `test_path_found_when_battery_limit_is_exact` test now passes. Is this a correct fix?
           type: single
           options:
-            - "`range(0, 10)`"
-            - "`range(0, 11)`"
-            - "Neither — `range` never includes its end"
-            - "Both, since `range` is inclusive of both endpoints"
+            - "Yes — it works for this case, so it is correct"
+            - "No — it accepts paths that *exceed* the budget. `test_path_rejected_when_battery_too_small` would now fail, because a path longer than `max_steps` would no longer be rejected."
+            - "Yes — `>` and `>=` are interchangeable in boundary checks"
+            - "No — we should have used `<` instead"
           correct_index: 1
           option_feedback:
-            0: "`range(0, 10)` produces `0, 1, 2, ..., 9`. The end is exclusive in Python."
-            2: "Half-true: the *end* is exclusive. But `range(0, 11)` *does* include 10 because 10 is less than 11."
-            3: "`range` is half-open: start inclusive, end exclusive. This is the source of countless off-by-one bugs."
+            0: "Making one test pass is not the same as fixing the bug. `steps_used > max_steps` means the cutoff fires only when `steps_used` *exceeds* the budget — so a path of length `max_steps + 1` would be accepted. Try the `test_path_rejected_when_battery_too_small` test with this 'fix' applied."
+            2: "`>` and `>=` differ at exactly the boundary value — the very value this bug is about. `steps_used >= max_steps` rejects `steps_used == max_steps`; `steps_used > max_steps` accepts it. They are not interchangeable when the boundary case is the target."
+            3: "`steps_used < max_steps` inverts the cutoff entirely, accepting any path that used *fewer* steps than the budget and rejecting everything at or above. That would reject even the small-maze two-step path."
           explanation: |
-            Python's `range(start, stop)` is half-open — `stop` is not included. `range(0, 10)` is `0..9`; `range(0, 11)` is `0..10`. This same half-open / exact-boundary issue is exactly what bit `_dfs` — `steps_used >= max_steps` rejected the case `steps_used == max_steps` even when that was the goal cell.
+            The root-cause fix is **check ordering** — goal first, cutoff second — not loosening the comparator. Loosening `>=` to `>` makes the exact-budget test pass but breaks the under-budget-rejection test, because a path one step over budget is now accepted. A fix that passes the newly-passing test while breaking a previously-passing test is a **regression**, not a fix. This is exactly why Verify means rerunning the *whole* suite.
 
         - question: |
             *True or false:* Once you've fixed the boundary bug in `_dfs`, you can verify the fix is correct by rerunning **only** `test_path_found_when_battery_limit_is_exact` (the previously failing test).
@@ -816,7 +835,12 @@ steps:
     instructions: |
       > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
 
-      > 🔀 **How is this different from Case 1?** Case 1 was *algorithmic* — the data was correct; one check was in the wrong place. This is a *data-representation* bug — the algorithm is correct; the data carries something invisible. Different family, different first move.
+      > 🔀 **Before you start:** Case 1 had a bug you could trace by reading two `if` checks in one function. Is that true here? Spend 30 seconds predicting: what *kind* of thing is wrong, and what will the evidence-collection move look like?
+      >
+      > <details><summary>The contrast — read after you've tried step 3</summary>
+      >
+      > Case 1 was *algorithmic* — the data was correct; one check was in the wrong place. This is a *data-representation* bug — the algorithm is correct; the data carries something invisible. Different family, different first move: you don't step through logic looking for a wrong branch; you inspect the data itself to find what it's hiding.
+      > </details>
 
       ### 📂 What you have
 
@@ -841,11 +865,12 @@ steps:
 
       ### 3. Stop only on the suspicious account — conditional breakpoint
 
-      Set a breakpoint at the start of `apply_transaction` (the `before = balances.get(...)` line). Right-click the red dot → **Edit Breakpoint** → enter the condition:
+      Set a breakpoint at the start of `apply_transaction` (the `before = balances.get(...)` line). Right-click the red dot → **Edit Breakpoint** → enter a condition that pauses only for the suspicious account. What predicate on `tx` discriminates ACCT-202 from the other accounts?
 
-      ```
-      tx.account == "ACCT-202"
-      ```
+      <details><summary>Predicate answer</summary>
+
+      `tx.account == "ACCT-202"`
+      </details>
 
       Click **Debug**. The debugger flies past every transaction for other accounts and pauses *only* on the rows for ACCT-202. Use **Continue** to move from one ACCT-202 row to the next.
 
@@ -859,11 +884,24 @@ steps:
 
       Add `repr(tx.kind)` to your **Watch** tab so it shows on every pause. Across the ACCT-202 pauses, what does `repr` show that you wouldn't notice otherwise?
 
-      ### 5. Where is the divergence?
+      ### 5. Compare prediction to observation
+
+      Across the ACCT-202 pauses, look at `repr(tx.kind)` in your Watch tab.
+
+      - What did you predict `tx.kind` would be for transaction T011?
+      - What does `repr()` show that `print()` would have hidden?
+      - Complete this sentence: *"My model assumed the value was ___, but repr shows ___ because ___."*
+
+      <details><summary>What the comparison reveals</summary>
+
+      Most students predict `tx.kind == 'REVERSAL'`. The `repr()` output shows `"' REVERSAL'"` — the outer quotes make the leading space unmistakable. `print()` would have shown ` REVERSAL` with no delimiters, where the space blends invisibly into the line. The gap between prediction and observation is the bug's fingerprint.
+      </details>
+
+      ### 6. Where is the divergence?
 
       Once you've spotted the malformed transaction, ask: where in the code is the bug? Is it in `apply_transaction` (which decides DEPOSIT vs WITHDRAWAL etc.)? Or earlier, in how the row got loaded into a `Transaction` object?
 
-      ### 6. Hypothesis
+      ### 7. Hypothesis
 
       Write your one-sentence hypothesis before expanding. Name the *layer* (loading vs processing) and what's wrong with the data.
 
@@ -874,7 +912,7 @@ steps:
       A clean hypothesis names *where* the bug enters (the loader) and *why* the symptom appears far from the cause (the if/elif cascade silently misses).
       </details>
 
-      ### 7. Minimal fix
+      ### 8. Minimal fix
 
       One change in `load_transactions` on the `kind=row["type"].upper()` line. Resist the temptation to:
 
@@ -885,9 +923,13 @@ steps:
 
       The right fix is **the smallest change in the right place**.
 
-      🪞 *Before you verify — where else have you seen a bug like this?* Hidden-character bugs hide in CSV imports, copy-pasted strings, JSON keys, environment variables, log lines, command-line args. List two places where `repr()` would surface something `print()` hides. Then: *which stage of the cycle did `repr()` change for you — Evidence, Localize, or both?*
+      ### 🪞 Reflect — before you verify
 
-      ### 8. Verify
+      **Bug family:** Hidden-character bugs hide in CSV imports, copy-pasted strings, JSON keys, environment variables, log lines, command-line args. Name one place where `repr()` would surface something `print()` hides.
+
+      **What `repr()` changed:** Did it change the Evidence step for you (you saw the space you wouldn't have seen), the Localize step (it told you exactly which field), or both? Write one sentence explaining *why* `print()` would have missed it.
+
+      ### 9. Verify
 
       Click **Run**. Both tests must turn green. The arithmetic in `apply_transaction` is unchanged; only the loading code was wrong.
 
@@ -1196,9 +1238,9 @@ steps:
             - "`repr()` is the only function that displays unicode characters correctly"
           correct_index: 1
           option_feedback:
-            0: "`repr()` and `str()` are different by design. `str(' REVERSAL')` prints `' REVERSAL'` with no delimiters; `repr(' REVERSAL')` prints `\"' REVERSAL'\"` with quotes. The difference is structural, not stylistic."
-            2: "Backwards. `repr()` doesn't *strip* whitespace — it *displays* it inside quote delimiters so you can see it. `print()` displays the string content without delimiters, which is what makes leading/trailing whitespace invisible."
-            3: "Both `print()` and `repr()` display Unicode. The issue isn't unicode — it's that `print()` shows raw content without delimiters, hiding leading/trailing whitespace, while `repr()` wraps the value in quotes that expose it."
+            0: "`str(' REVERSAL')` outputs the string's content directly — the leading space looks the same as any gap before a word. `repr(' REVERSAL')` outputs `\"' REVERSAL'\"`, wrapping the whole value in quote characters. Those outer quotes make the leading space unmistakable: you can see it sits inside the quotes, between `'` and `R`. The difference is structural, not stylistic."
+            2: "Backwards. `repr()` doesn't strip whitespace — it *displays* it inside quote delimiters so you can see it. `print()` displays the string's raw content without delimiters, which is precisely what makes leading/trailing whitespace invisible."
+            3: "Both `print()` and `repr()` display Unicode correctly. The issue is that `print()` outputs raw content without surrounding delimiters, so a leading space looks like normal spacing, while `repr()` wraps the value in quote characters that make the boundary visible."
           explanation: |
             `repr('REVERSAL')` returns `\"'REVERSAL'\"` — including the surrounding quotes — while `repr(' REVERSAL')` returns `\"' REVERSAL'\"`. The leading space jumps out because `repr()` shows the string *as a Python literal*, with quotes around its contents. `print()` displays the string's content without delimiters, so leading and trailing whitespace becomes invisible. This is the canonical Python trick for spotting whitespace bugs.
 
@@ -1234,7 +1276,12 @@ steps:
     instructions: |
       > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
 
-      > 🔀 **How is this different from Cases 1 and 2?** Cases 1–2 were *spatial* — the bug is in some specific line. This one isn't. By the end of step 3 you'll be able to name what kind of bug it is and what new debugger move it asks for.
+      > 🔀 **Before you start:** In Cases 1 and 2, you could find the bug by reaching one specific line with a breakpoint. Will that work here? Spend 30 seconds predicting: what *kind* of thing might be wrong, and will a single well-placed breakpoint be enough to find it?
+      >
+      > <details><summary>The contrast — read after step 3</summary>
+      >
+      > Cases 1–2 were *spatial* — the bug lives at a specific line you can reach with a breakpoint. This one is *temporal* — the cause and the symptom are separated by time. The wrong state is visible at the end, but the wrong decision happened much earlier. The new move is the history scrubber: run to the wrong final state, then rewind to find the first moment things went wrong.
+      > </details>
 
       ### 📂 What you have
 
@@ -1249,11 +1296,16 @@ steps:
 
       Click **Run**. The failing assertion shows expected vs actual enrollment lists. Note the difference — you'll need it in step 3.
 
-      ### 2. The trick — don't run forward, run **backward**
+      ### 2. Strategy — which direction would you start?
+
+      Would you step forward from event 1, watching state change after each event? Or would you let the program finish, then work backward from the known wrong final state?
+
+      <details><summary>Which direction is faster here — and why?</summary>
+
+      Backward. Events 1–3 produce no observable symptom. Starting forward means inspecting correct state for several events before anything looks wrong. Anchoring on the known wrong final state and scrubbing backward walks directly to the first divergence — you stop the moment something changes from wrong to right.
+      </details>
 
       Click **Debug** without setting any breakpoints. Let the program run to completion. The debugger will be at the end of execution.
-
-      *Letting it finish first puts you at the wrong end-state — your destination. From there, scrubbing backward is faster than stepping forward, because events 1–3 produced no symptom at all.*
 
       Now, in the **Variables** tab, expand `state` then `'CS201'` then `enrolled` and `waitlist`. Observe their final (wrong) values.
 
@@ -1265,20 +1317,25 @@ steps:
 
       ### 4. Now narrow to a line
 
-      Once you've identified that event, scrub *forward* to it. Set a breakpoint inside `allocate_next` on the line that reads `next_student = course.waitlist.pop()`.
+      Once you've identified that event, scrub *forward* to it. Set a breakpoint inside `allocate_next` — the function responsible for moving students from the waitlist into enrolled seats.
 
       Click **Continue** (or restart with Debug if needed) until execution pauses there for the right event.
 
-      ### 5. The smoking gun
+      ### 5. Compare prediction to observation
 
-      In the **Watch** tab, add:
+      Before you step over the `pop()` line, add these to the **Watch** tab:
 
-      - `course.waitlist`
-      - `course.waitlist[0]`
-      - `course.waitlist[-1]`
-      - `next_student` *(after the `pop()` line runs — Step Over once)*
+      - `course.waitlist[0]` — the student at the front
+      - `course.waitlist[-1]` — the student at the back
 
-      Step Over the `pop()` line. Compare `next_student` to `course.waitlist[0]` and `course.waitlist[-1]` (from before the pop). Which end did `pop()` take from?
+      **Predict:** given FIFO policy, which end should `pop()` remove from — front or back?
+
+      Now Step Over the `pop()` line. Add `next_student` to Watch (it now has a value). Compare: which end of the waitlist did `pop()` actually take from?
+
+      <details><summary>What the comparison reveals</summary>
+
+      `pop()` with no argument removes the *last* element (index `-1`). FIFO policy requires removing the *first* element. If your prediction was "front", your model was right — and the code was wrong. If you predicted "back", you may have assumed `pop()` defaults to front. That's the key gap: Python's list is a stack by default, not a queue.
+      </details>
 
       ### 6. Hypothesis
 
@@ -1300,7 +1357,11 @@ steps:
 
       Criteria to weigh: communicates intent / asymptotic cost / disruption to surrounding code. There's no single right answer; the *justified* choice is what matters.
 
-      🪞 *Before you verify — where else have you seen a bug like this?* Symptom-far-from-cause bugs hide in caches that go stale events ago, message queues processed out of order, undo/redo stacks, optimistic UI updates. List two places where the wrong final state would have been easier to find by stepping backward than forward. Then: *which stage of the cycle did back-in-time scrubbing change for you — Evidence, Localize, or both?*
+      ### 🪞 Reflect — before you verify
+
+      **Bug family:** Symptom-far-from-cause bugs hide in caches that go stale events ago, message queues processed out of order, undo/redo stacks, optimistic UI updates. Name one place where the wrong final state would have been easier to find by stepping *backward* than forward.
+
+      **Did you try stepping forward first?** If so, at what point did you decide to switch direction? That decision point is worth naming — it's the diagnostic cue that says "this is a temporal bug."
 
       ### 8. Verify
 
@@ -1647,9 +1708,9 @@ steps:
             - "`heapq.heappop(my_heap)`"
           correct_index: 1
           option_feedback:
-            0: "It works, but `pop(0)` doesn't tell the next reader \"queue.\" Many lists in real code use `pop(0)` for non-queue reasons. The reader has to infer intent from context."
-            2: "Functionally equivalent but harder to read. `popleft()` says queue in one word."
-            3: "`heapq` is a priority queue, not a FIFO queue. Order is by *priority*, not insertion."
+            0: "`pop(0)` works but doesn't tell the next reader \"queue\" — many lists use `pop(0)` for non-queue reasons, so intent must be inferred from context. It also costs O(n) time because Python shifts every remaining element left after removing index 0. `deque.popleft()` communicates intent and runs in O(1)."
+            2: "Functionally equivalent but harder to read. `popleft()` names the operation in one word."
+            3: "`heapq` is a priority queue — it returns the *smallest* element regardless of insertion order. That's not FIFO."
           explanation: |
             `collections.deque.popleft()` is the idiomatic, readable choice. It tells the next reader: *this is a FIFO queue*. `list.pop(0)` works but doesn't communicate intent (and is O(n) for large lists). For a debugging tutorial, the takeaway is broader: **fixes that document intent are easier to get right and easier to maintain** than fixes that merely produce the right output.
 
@@ -1671,15 +1732,18 @@ steps:
     instructions: |
       > 🎯 **Goal:** A checkout service correctly raises `OutOfStockError` for an out-of-stock cart, but the warehouse still receives a pick ticket. The bug is in event-bus wiring, not in any one method body. Use the **Sequence Diagram** panel — it makes the runtime call order visible.
 
-      > 🔀 **How is this different from the previous three cases?** Cases 1–3 had bugs you could trace with breakpoints in the relevant function. This one resists that. You'll see why in step 3.
+      > 🔀 **Before you start:** In Cases 1–3, you could trace the bug by reaching the right function with a breakpoint. Will that approach work here — where the symptom is a side effect that "shouldn't" exist? Predict: what new kind of tool might be needed?
+      >
+      > <details><summary>The contrast — read after step 3</summary>
+      >
+      > Cases 1–3 had bugs in a specific function body you could reach with a breakpoint. This one is a *protocol/wiring* bug — no single function body is wrong. The side effect arrives through an event bus, so `CheckoutService` never directly calls the shipping code. Source-reading one file is genuinely not enough. You need a tool that traces the runtime call order across all files — the Sequence Diagram.
+      > </details>
 
       ### 📂 What you have
 
-      An event-driven checkout service spread across many small files in `checkout_app/`. Don't try to read them all up-front — the case is designed so you don't need to *yet*. The sequence diagram will linearize the parts that matter.
+      An event-driven checkout service spread across many small files in `checkout_app/`. The sequence diagram will guide you to where the bug lives — don't try to read all the files up-front.
 
-      - **Where the bug hides (you'll edit one):** `workflow_config.py` (event wiring), `event_bus.py` (pub/sub).
-      - **The orchestrator (read it once):** `checkout_service.py`.
-      - **Realistic clutter (open if curious):** `audit.py`, `notifications.py`, `shipping.py`, `inventory.py`, `payment.py`, `catalog.py`, `promotions.py`, `app_factory.py`, `models.py`, `checkout_main.py`.
+      - **Start here:** `checkout_app/checkout_service.py` (the orchestrator) and the **Sequence Diagram** tab.
       - **Tests + entry point:** `test_checkout.py`, `checkout_main.py`.
 
       Plus a tab on the right: **Sequence Diagram**, refreshed live as you edit.
@@ -1708,11 +1772,16 @@ steps:
 
       Predict: which line in `CheckoutService.checkout()` is responsible for placing the rejected order onto the shipping queue?
 
-      ### 3. Surprise — there is no such line
+      ### 3. Search the source
 
-      Search the file. `CheckoutService` never directly calls `ShippingQueue.enqueue(...)`. The side effect happens **through the event bus** — `CheckoutService` publishes events, the bus delivers them to subscribed handlers, and one of those handlers happens to be `FulfillmentScheduler.prepare_pick_ticket`. That handler calls `ShippingQueue.enqueue`.
+      Use Ctrl-F in the editor to search `checkout_app/checkout_service.py` for any direct call to `ShippingQueue.enqueue`. What do you find?
 
-      Source reading is now stuck. You'd need to follow indirect call chains across `event_bus.py`, `workflow_config.py`, and `shipping.py` to reconstruct the runtime story. **There is a faster way.**
+      <details><summary>What the search reveals — and why it matters</summary>
+
+      There is no such call. `CheckoutService` never directly calls `ShippingQueue.enqueue`. The side effect is delivered through the event bus — `CheckoutService` publishes events, subscribed handlers receive them, and one of those handlers calls `ShippingQueue.enqueue`.
+
+      Source-reading is now stuck. You'd need to follow the event flow across `event_bus.py`, `workflow_config.py`, and `shipping.py` to reconstruct who calls what. **There is a faster way.**
+      </details>
 
       ### 4. Open the Sequence Diagram panel
 
@@ -1732,7 +1801,20 @@ steps:
       The diagram shows `prepare_pick_ticket` firing **before** `InventoryService.reserve` runs. By the time `reserve` raises `OutOfStockError`, the warehouse has already been told to pack the order. That's the protocol violation — the bug.
       </details>
 
-      ### 6. Hypothesis
+      ### 6. Compare prediction to observation
+
+      Look at the sequence diagram and find:
+      - The arrow into `FulfillmentScheduler.prepare_pick_ticket(...)`.
+      - The arrow into `InventoryService.reserve(...)`.
+
+      **Predict:** in the correct protocol, which fires first? Now find the actual order in the diagram. Which arrow is in the wrong position?
+
+      <details><summary>What the comparison reveals</summary>
+
+      `prepare_pick_ticket` fires *before* `InventoryService.reserve`. By the time `reserve` raises `OutOfStockError`, the warehouse has already been told to pack the order. If you predicted reserve-first, your model of the protocol was right — and the wiring was wrong.
+      </details>
+
+      ### 7. Hypothesis
 
       Write your one-sentence hypothesis. Name the *handler* and the *topic mismatch*.
 
@@ -1743,26 +1825,30 @@ steps:
       The hypothesis isn't *about* the handler's code — its body is correct. The bug is that the *configuration* asks the handler to react to the wrong event. Naming the layer correctly is half the fix.
       </details>
 
-      ### 6b. Two candidate fixes — evaluate before choosing
+      ### 8. Evaluate two candidate fixes
 
       Imagine two engineers each propose a fix that makes the failing test pass:
 
       - **A.** Re-wire the subscription in `workflow_config.py` so `prepare_pick_ticket` listens for `INVENTORY_RESERVED` instead of `PAYMENT_AUTHORIZED`.
       - **B.** Add a defensive guard at the top of `prepare_pick_ticket`: `if event.kind != EventKind.INVENTORY_RESERVED: return`.
 
-      Both make the test green. Which is the better fix, and why? **The principle:** *prefer fixing where the invariant is most directly expressible.* Hold your reasoning — quiz Q3 will ask you to defend the choice.
+      Both make the test green. Write your one-sentence justification for which is better *before moving on* — quiz Q3 will ask you to defend it. **The principle:** *prefer fixing where the invariant is most directly expressible.*
 
-      ### 7. Localize
+      ### 9. Localize
 
       Open `checkout_app/workflow_config.py` and find the row that registers `fulfillment.prepare_pick_ticket`.
 
-      ### 8. Minimal fix
+      ### 10. Minimal fix
 
       Change the topic for the fulfillment registration from `EventKind.PAYMENT_AUTHORIZED` to `EventKind.INVENTORY_RESERVED`. **One identifier.** Don't add defensive checks inside `prepare_pick_ticket` — the wiring is the right layer to fix.
 
-      🪞 *Before you verify — where else have you seen a bug like this?* Wiring/protocol bugs hide in event buses, plugin systems, dependency injection containers, middleware pipelines, route tables, message queues, observer hooks. List two places where the bug *could not* be found by reading any single function — only by linearizing the runtime story. Then: *which stage of the cycle did the sequence diagram change for you — Evidence, Localize, or Hypothesis?*
+      ### 🪞 Reflect — before you verify
 
-      ### 9. Verify — and reread the diagram
+      **Bug family:** Wiring/protocol bugs hide in event buses, plugin systems, dependency injection containers, middleware pipelines, route tables, message queues, observer hooks. Name one place where the bug *could not* be found by reading any single function — only by tracing the runtime story.
+
+      **Which file did you instinctively open first?** Was it `checkout_service.py`? If so, what made you realize that wasn't the right place — and what was the signal that pointed you to `workflow_config.py`?
+
+      ### 11. Verify — and reread the diagram
 
       Click **Test**. Both tests turn green. Now look at the **Sequence Diagram** panel again — the impossible arrow is gone, and the call order matches the protocol.
 
@@ -2474,7 +2560,10 @@ steps:
             - "Bugs in middleware where the order of `before/after` hooks matters"
           correct_indices: [0, 1, 3]
           option_feedback:
-            2: "A 5-line pure function with no calls produces no interesting sequence diagram (one lifeline, no arrows). Ordinary breakpoints + watches are the right move there. Sequence diagrams shine on *protocol* and *interaction* problems — where the question is **\"who calls whom in what order?\"** rather than **\"what's the value of x?\"**"
+            0: "Yes — when `ShippingQueue.enqueue` is triggered by an event-bus message rather than a direct call, no single source file shows the full chain. The sequence diagram traces the runtime call order across all files, making the indirect delivery visible."
+            1: "Yes — dependency injection containers wire which implementation each component receives. If the wrong implementation is injected, calls arrive in the wrong sequence. A sequence diagram shows which constructors and method calls actually run."
+            2: "A 5-line pure function with no external calls produces no interesting sequence diagram — one lifeline, no arrows. Ordinary breakpoints + watches are faster there. Sequence diagrams earn their cost on *protocol* and *interaction* problems, where the question is \"who calls whom in what order?\""
+            3: "Yes — middleware pipelines call `before` and `after` hooks in a defined sequence. If those hooks are registered in the wrong order or a hook is missing, the diagram reveals the actual call ordering versus what the protocol requires."
           explanation: |
             **Sequence diagrams are interaction-focused tools.** They earn their cost when the bug is about *who calls whom in what order across many objects* — event buses, DI containers, middleware chains, async pipelines, plugin systems. For local algorithmic bugs (boundary conditions, off-by-ones, arithmetic), ordinary stepping is faster.
 
@@ -2600,11 +2689,11 @@ steps:
             - "Ask a teammate to fix it for you"
           correct_index: 2
           option_feedback:
-            0: "Pushing through edits without new evidence is what the research calls *tinkering*. Most students default to it under frustration — including, historically, most professional engineers. The remedy isn't willpower; it's externalizing the failure first (option C). Try that next time you stall."
-            1: "A rewrite occasionally helps for tiny scripts but is overkill here. The reason the bug is hard isn't because the code is broken structurally — it's because you don't have a clear hypothesis. Address the hypothesis problem first."
-            3: "Asking is a *follow-up* move. Before that, externalize what you know. The act of writing down the symptom, your hypotheses, and what you've ruled out often reveals the next move *to you*. If it doesn't, you now have a clear question to ask."
+            0: "Trying edit after edit without new evidence is a frustrating cycle that rarely ends productively. Stop and externalize: write down the symptom in plain words, list what hypotheses you've already ruled out and how, then re-pick a technique deliberately. The act of writing usually surfaces the next move."
+            1: "A rewrite occasionally helps for tiny scripts, but it's overkill here. The bug is hard because you don't have a clear hypothesis yet — not because the code is structurally broken. Externalize the failure first."
+            3: "Asking a teammate is a good *follow-up* move. Before that, externalize what you know. The act of writing the symptom and the ruled-out hypotheses often reveals the next move to you — and if it doesn't, you now have a precise question rather than a vague one."
           explanation: |
-            **Tinkering is the antithesis of debugging.** When the cycle has stalled, the right move is to externalize: write down the failure precisely, list hypotheses you've ruled out (and *how*), and re-pick a technique deliberately. Murphy and colleagues' "debugging form" research found that simply forcing this articulation helped students solve bugs they otherwise would have escalated to staff.
+            **When the cycle stalls, the move is to externalize.** Write down the failure precisely, list hypotheses you've ruled out (and *how*), and re-pick a technique deliberately. This isn't about willpower — it's about getting the problem out of your head and onto a surface where you can reason about it. Research on debugging found that simply forcing this articulation helped students solve bugs they otherwise would have escalated.
 
         - question: |
             A test passes locally on your laptop but fails on the autograder. You've reproduced the failure on the autograder twice. What's the most useful first move?
@@ -2637,6 +2726,22 @@ steps:
             3: "Ignoring a regression because you're focused elsewhere is exactly how regressions ship to production. Fix it now while the change is fresh in your head."
           explanation: |
             A previously-passing test that newly fails after your change is a **regression** — your change broke a behavior that was correct. Revert and re-apply more carefully (smaller change, more thought). This is exactly why "verify means rerun the **whole** suite" — to catch regressions, not just confirm the one fix.
+
+        - question: |
+            A payment processor handles 10,000 transactions. Two adjacent transactions produce totals that are slightly off — but only when a specific merchant ID appears. The failure is consistent run-to-run, and the wrong calculation fires *exactly* when the bad merchant ID is processed. Which technique fits best?
+          type: single
+          options:
+            - "Run to completion, then scrub the History scrubber backward — the symptom appears in the middle of the run"
+            - "Set a conditional breakpoint with the predicate `tx.merchant_id == SUSPECT_ID`"
+            - "Inspect `oid` badges in the Variables tab — the totals might be aliased objects"
+            - "Step forward through all 10,000 transactions"
+          correct_index: 1
+          option_feedback:
+            0: "Scrubbing works well when the symptom and cause are in *different, temporally-separated* moments — you need to rewind past several events that look fine. Here, the wrong calculation fires *exactly when* the bad merchant ID is processed: the symptom and cause are at the same moment. A conditional breakpoint that pauses only for that merchant ID is more direct."
+            2: "The symptom is a wrong value, not co-mutation of two names. Aliasing is the signature of two variables moving together unexpectedly — not of a single wrong calculation on one specific input."
+            3: "10,000 manual steps is precisely what conditional breakpoints are designed to avoid."
+          explanation: |
+            **Conditional breakpoints vs. back-in-time scrubbing depend on temporal distance.** Scrubbing earns its cost when symptom and cause are separated by time (many events happen between the bug and when you notice it). Here, the symptom co-occurs with the cause — the bad calculation fires exactly when the suspicious merchant ID is processed. A conditional breakpoint that pauses only on that ID is the direct move.
 
         - question: |
             Which of these counts as **evidence** in the debugging cycle?
@@ -2680,15 +2785,40 @@ steps:
 
       ### 📋 Your debugging log
 
-      Open `debugging_log.md` and **type** each field as you work. The next quiz will reference your log.
+      Open `debugging_log.md` and **fill each field as you work.**
 
       ### 🚨 Resist the obvious
 
       You may recognize the bug family — but verify with the debugger before assuming. Pattern-matching without evidence is the trap of Step 7's tinkering item.
 
+      ### 🔗 After fixing — before the quiz
+
+      The Transfer Challenge is intentionally in the same bug family as one of the four cases. Before reading the solution or the quiz:
+
+      - Which case is it most similar to structurally?
+      - Write one sentence: *"Both bugs share ___ even though the surface is different because ___."*
+      - Write one sentence: *"The surface difference is ___ — which is what makes this feel new."*
+
+      Commit to those sentences. Quiz Q1 asks you to defend the match.
+
+      ### 🌐 Far-transfer probe — while you debug
+
+      Pick one codebase you've worked on recently. Where does external data enter (a file read, an API call, a form submission, a database query)? At that entry point: is normalization happening at the boundary, or are downstream consumers doing it — or not doing it at all? Spend 30 seconds answering for one entry point before you start the debugger.
+
       ### Hint of last resort
 
       If you haven't found it *yet* after 10 minutes, the test output already tells you what `repr(...)` would tell you on a paused breakpoint. Re-read the failing assertion of `test_no_whitespace_in_result`.
+
+      ### 🪞 Self-check — after you fix it
+
+      Before this tutorial, which mode would you have defaulted to on this bug?
+
+      - **Tinkering** — try `.strip()`, `.replace('\n', '')`, and other edits until something worked.
+      - **Print-first** — add `print(tag)` everywhere. (The trailing `\n` prints as a literal newline, easy to miss; `repr()` makes it impossible to miss.)
+      - **Hypothesis-driven** — breakpoint, inspect `repr(tag)`, name the cause, fix at the load boundary.
+      - **Honestly not sure** — depends on the day and how stuck you felt.
+
+      Name which one. That's the metacognitive skill: knowing your default mode is how you know when to override it.
 
     files:
       - path: "tagger.py"
@@ -2743,15 +2873,23 @@ steps:
         content: |
           # Debugging log
 
-          Fill each field as you work. The labels map to the 7-stage cycle from Step 1.
+          Fill each field as you work. Fields 1, 2, 6, 7 are labelled for you.
+          Fields 3–5 are not — name the stage yourself, then fill in the content.
 
           1. **Symptom** (one sentence — expected vs actual): _..._
           2. **Predict** (what should the state be at the suspect line?): _..._
-          3. **Evidence — technique chosen and why** (breakpoint? conditional? scrubber? sequence diagram?): _..._
-          4. **Hypothesis** (one sentence — *what* is wrong, *where* it lives): _..._
-          5. **Localize** (the line where intended and actual first diverge): _..._
+          3. **[Stage name?]** (technique chosen and why — write: "I used [tool] because [cue]"): _..._
+          4. **[Stage name?]** (one sentence — *what* is wrong, *where* it lives): _..._
+          5. **[Stage name?]** (the line where intended and actual first diverge): _..._
           6. **Fix** (file, line, minimal change): _..._
-          7. **Verify** (which tests pass now that didn't before; any regressions?): _..._
+          7. **Verify** (which tests pass now; any regressions?): _..._
+
+          <details><summary>Field labels 3–5 (open only after completing the log)</summary>
+
+          3. Evidence
+          4. Hypothesis
+          5. Localize
+          </details>
 
     open_file: "tagger.py"
     run_file: "test_tagger.py"
@@ -2781,8 +2919,6 @@ steps:
         **The case-isomorphism is intentional.** This bug is the same family as Case 2 — input data has invisible whitespace; the bug fires *because* normalization wasn't applied at load time; the fix is in the loading layer. The surface is completely different (file iteration with `for line in f` vs `csv.DictReader`), but the cycle and the cure are the same. That's *transfer* — the same mental model applies despite a different surface.
 
         Notice what makes this bug family so common in real codebases: every layer that reads external data is a possible source. CSV imports. JSON parses. HTTP request bodies. Database VARCHAR columns. User text input. The defensive habit is *strip-and-normalize at the boundary*; once data is inside your domain, trust it.
-
-        🪞 **Far-transfer probe.** Pick one codebase you've worked on recently. Where does external data enter? At those entry points: is normalization happening at the boundary, or are downstream consumers doing it (or worse, not doing it at all)? Spend 30 seconds answering for one entry point.
 
     tests:
       - description: "Both tagger tests pass"
@@ -2827,7 +2963,7 @@ steps:
 
     quiz:
       title: "Transfer & Reflection"
-      min_score: 0.8
+      min_score: 0.5
       shuffle: false
       questions:
 
@@ -2846,22 +2982,6 @@ steps:
             3: "Surface looks different (file iteration vs CSV) but the *family* is identical: input data carries a stray whitespace character, normalization is missing at the loading layer, fix is `strip()` at the boundary. This is exactly Case 2."
           explanation: |
             This bug is the **same family as Case 2** in different clothes. Both: external data (CSV row in Case 2, file line here) carries a stray whitespace character; the loading code doesn't normalize it; the fix is to strip-and-validate at the data boundary. Recognizing isomorphism across surfaces is what *transfer* means in the research literature.
-
-        - question: |
-            *Self-check — no wrong answer.* Before this tutorial, which mode would you have defaulted to on this bug? (The reflection is the point — not the score.)
-          type: single
-          options:
-            - "Tinkering — try `.strip()`, `.replace('\\n', '')`, and other edits until something worked"
-            - "Adding `print(tag)` everywhere — the newline would have been invisible without `repr`"
-            - "Hypothesis-driven — breakpoint, inspect `repr(tag)`, name the cause, fix at the load boundary"
-            - "Honestly don't know — depends on the day"
-          correct_index: 3
-          option_feedback:
-            0: "Tinkering occasionally lands on `.strip()`, but it teaches the wrong habit. The remedy isn't willpower — it's externalizing the failure first, then choosing a technique."
-            1: "`print(tag)` would have shown `python` for the python lines. The trailing `\\n` prints as a literal newline (the next print appears on a new line) — easy to miss. `repr()` makes it impossible to miss."
-            2: "That's the deliberate process — slower setup, faster total time, no failed-edit cleanup. If you actually used this *yet*, that's the win."
-          explanation: |
-            **No graded answer.** Naming which mode you default to is the metacognitive skill the literature recommends. Whichever you picked, you now have a vocabulary for it.
 
         - question: |
             *(Final retrieval — spaced from Step 1.)* Place these debugging-cycle stages in order:

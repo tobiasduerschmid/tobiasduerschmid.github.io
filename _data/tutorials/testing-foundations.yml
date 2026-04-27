@@ -59,6 +59,8 @@ steps:
 
       > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
 
+      🪞 **Calibrate yourself** (1 second, mental note): On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Remember the number — you'll re-check at the end.
+
       ### 💡 Why test?
 
       Many students think testing is about **finding bugs after you write code**. That's half the story. Tests also:
@@ -108,14 +110,14 @@ steps:
           classDef neutral fill:#fafafa,stroke:#bdbdbd,color:#424242
       ```
 
-      🪞 **Calibrate yourself** (1 second, mental note): On a scale of 1–10, how confident are you right now that you could *design a test suite from scratch* for an unfamiliar function? Remember the number — you'll re-check at the end.
-
       <details markdown="1"><summary>🎯 Why this bug matters (read after solving)</summary>
 
       The bug lives at *exactly* `100` days — the line between 🔥 and 💯. That's no coincidence. Bugs love **boundaries** — the values where behavior changes. They're the natural home of off-by-one errors (`>` vs `>=`, `<` vs `<=`). You'll hunt boundaries systematically in **Step 3**.
       </details>
 
-      🧭 **Pause — name what just happened.** Right now, does writing tests feel like *checking your own homework*, or like *writing a specification of behavior*? Whichever it is, name what would have to shift to make it feel more like the latter. Stay with the discomfort if you're unsure — that's the threshold this tutorial is built around.
+      🧭 **Pause — name what just happened.** You ran a test, read a failure, fixed code, and confirmed it with a re-run. In one sentence: what did that test *specify* about `streak_badge`? Don't use the word "check" — find a different framing. That's the conceptual shift this tutorial is built around.
+
+      > 🔭 **Coming in Step 2:** Not all assertions are equally useful. The tests you just ran use strong claims — but assertions can be weak, medium, or strong, and the difference determines which bugs slip through. You'll see exactly why in the next step.
 
     files:
       - path: "streaks.py"
@@ -223,7 +225,7 @@ steps:
           old = sys.stdout; sys.stdout = buf = io.StringIO()
           code = pytest.main(['/tutorial/test_streaks.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests still fail — pytest output:\n\n{output}\n\nFix `streaks.py` so that `streak_badge(100) == '💯'`."
+          assert code == 0, f"Some tests still fail. Read the assertion error in the output: which value did the function return, and which did the test expect? That mismatch is your symptom — trace the code to find where it diverges.\n\n{output}"
 
     quiz:
       title: "Why Test? — Knowledge Check"
@@ -244,6 +246,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "This claim ignores the order in which tests are written. Tests written *after* the code reflect what the code *happens to do* — including any bugs the author baked in. Tests written *before* (or alongside) reflect what the code *should* do. The two suites look identical only when the implementation already happens to be correct."
+            1: "Exactly. Post-hoc tests are written against code that already exists, so they can only confirm what the implementation *does* — including any bugs baked in. They also can't guide design during development that already happened."
             2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 2."
             3: "Context-switching is a minor cost compared with the real issue — post-hoc tests can only confirm your implementation matches itself, not that it matches the spec. They also can't act as a safety net during the development that already happened."
           explanation: |
@@ -264,6 +267,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "`assert` is not a print statement. The string after the comma is the *failure message* — it only appears when the assertion is `False` and Python raises an `AssertionError`."
+            1: "Right. The condition is evaluated; if `True`, execution continues silently. If `False`, Python raises `AssertionError` with the message string as the error detail."
             2: "`assert` doesn't create or modify variables — it just evaluates a condition. The `result` here must already exist when `assert` runs, or you'd get a `NameError` first."
             3: "A `False` assertion does *not* silently continue — it raises `AssertionError`. (Python's `-O` flag *does* strip asserts, but in normal execution they always raise on failure.)"
           explanation: |
@@ -271,21 +275,26 @@ steps:
             execution continues. If `False`, Python raises an `AssertionError` with the message.
 
         - question: |
-            Which of the following is **not** a benefit of automated tests?
+            Dijkstra wrote: *"Testing can show the presence of bugs, but never their absence."*
+
+            Applied to automated test suites, this means:
           type: single
           options:
-            - "They prevent regressions — bugs that were fixed from coming back"
-            - "They enable fearless refactoring by catching breakage immediately"
-            - "They guarantee your code has zero bugs"
-            - "They specify expected behavior as executable documentation"
-          correct_index: 2
+            - "Tests are only useful if you already suspect a bug — otherwise they're wasted effort"
+            - "Passing tests confirm that tested behaviors work as specified, but cannot rule out bugs in untested behaviors or inputs"
+            - "If all tests pass, the code is safe to deploy without further review"
+            - "Tests guarantee correctness once you reach 100% line coverage"
+          correct_index: 1
           option_feedback:
-            0: "This *is* a real benefit — once a passing test guards a behavior, a future change that breaks that behavior fails the test. The question asks for the **non-benefit**."
-            1: "Fearless refactoring *is* a real benefit — that's the safety-net property. The question asks for the **non-benefit**."
-            3: "Tests-as-documentation *is* a real benefit — the test name plus its assertion together describe what the code is supposed to do. The question asks for the **non-benefit**."
+            0: "Tests aren't just useful when you already suspect a bug — they document expected behavior and catch regressions you didn't anticipate. The Dijkstra quote is about the *ceiling* of what tests guarantee, not about when to bother writing them."
+            1: "Exactly. Passing tests show the tested behaviors work as specified. They cannot show that *untested* behaviors work — the guarantee only extends as far as the suite covers."
+            2: "Even with a full passing suite, untested behaviors could still harbor bugs. Tests prove only what they test. Code review, static analysis, and other practices complement testing precisely because no suite is exhaustive."
+            3: "Coverage measures which lines *ran*, not whether their behavior was *verified*. Full coverage with weak oracles (`is not None` everywhere) passes for almost any return value and proves almost nothing. Dijkstra's quote applies regardless of coverage level."
           explanation: |
-            Tests **reduce** bugs and catch **regressions**, but they cannot guarantee zero bugs.
-            Dijkstra famously said: "Testing can show the presence of bugs, but never their absence."
+            Tests confirm the behaviors they test, but cannot guarantee zero bugs overall.
+            Dijkstra's observation means: your suite is only as trustworthy as the inputs it
+            exercises and the oracles it uses. A suite with three strong tests knows three
+            things; a suite with three weak tests knows almost nothing.
 
         - question: |
             The "safety net" metaphor for testing means:
@@ -298,6 +307,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "This describes *continuous integration* (running tests automatically on every commit) — that's about the trigger, not the metaphor. The safety-net image is about what each *passing* test does for you: it stays in place to catch later breakage."
+            1: "Right. Each passing test permanently guards that behavior against future regressions — that's the safety net. If a future change breaks a guarded behavior, the test fails before users feel it."
             2: "The safety-net image isn't about a coverage number. A test suite with 100% line coverage but weak oracles is full of holes; a smaller suite with strong oracles on the critical paths is a tighter net. Coverage and the safety-net principle are different ideas (more in Step 4)."
             3: "This describes the *testing pyramid* (a way of layering test types), not the safety-net metaphor. The safety net is about *passing tests as permanent guards against regression*, regardless of what level of the pyramid they sit at."
           explanation: |
@@ -322,7 +332,9 @@ steps:
       > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
       > 🧠 **Bloom's level:** *Apply* (write your first pytest tests) and *Analyze* (judge oracle strength).
 
-      🔍 **Read first** (don't write yet). Open `test_leveling.py`. For each test stub, predict in your head: *what behavior is this test claiming?* Run it once to see pytest's output format.
+      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something. What exactly does each assertion claim? Is each one checking the *exact* expected value, or would it pass for multiple different return values? Hold your answer — you'll use it in Task 2.
+
+      Now open `test_leveling.py`. For each stub, predict in your head: *what behavior is this test claiming?* Run it once to see pytest's output format.
 
       ⚙️ **Task 1 — write the assertions** (file: `test_leveling.py`):
 
@@ -354,9 +366,23 @@ steps:
 
       The third stub (`test_max_level_cap`) doesn't exist yet — you write it from scratch. **Level 100 is the max level in countless JRPGs** (Pokemon, Final Fantasy, Dragon Quest, …). What XP value puts you at *exactly* level 100? Compute it, then pin it down with a test.
 
-      ### 💡 Oracle strength — the central idea of Task 2
+      ⚙️ **Task 2 — make the oracle strong** (file: `test_oracle_drill.py`):
 
-      The **oracle** is the assertion that decides pass/fail. The same function call can be checked with a *weak*, *medium*, or *strong* oracle — and weakness is invisible until a bug slips through:
+      Open `test_oracle_drill.py`. Each test has `result = xp_to_level(...)` already done. The assertion reads `assert isinstance(result, int)`.
+
+      **Before reading on or changing anything:** answer this in your head — *would `assert isinstance(result, int)` catch a bug where `xp_to_level(0)` returns `9999` instead of `0`?* Write a one-word answer (yes/no) and one sentence explaining why.
+
+      Then: replace each weak oracle with the **strongest** possible assertion — one that fails for *any* wrong value.
+
+      💬 **Required:** For each weak oracle you fix, add a Python comment above the new assertion in this form:
+      ```python
+      # Weak version would pass if the function returned: ___
+      ```
+      Fill in a specific concrete wrong value. This is the design move that prevents Liar tests.
+
+      <details markdown="1"><summary>📖 Oracle strength — the three levels explained</summary>
+
+      The **oracle** is the assertion that decides pass/fail. The same function call can be checked at three levels of strength:
 
       | Strength | Assertion | What breaks it? |
       |---|---|---|
@@ -366,22 +392,8 @@ steps:
 
       Weak oracles look productive but verify nothing. Rushed students and AI assistants default to them because they almost always succeed — the *Liar test* anti-pattern.
 
-      ### 🎯 Two independent dimensions of test design
-
-      Notice what the table above isolates: *the input is held constant* (`xp_to_level(0)` in every row). Only the **assertion** varies. This is one whole dimension of test quality — *how strong is the oracle?* — and it lives **independently** of the other big dimension you'll meet in Step 3: *which inputs do I pick?*
-
-      | Dimension 1 — what input to test | Dimension 2 — how strong the assertion |
-      |---|---|
-      | boundary, representative, special-case | strong (`==` exact), medium (type/range), weak (`is not None`) |
-      | (Step 3's job) | (this step's job) |
-
-      A great test gets *both* right; a bad test can fail on either lever. Keep this two-dimension picture in mind through the rest of the tutorial — Step 5 will recombine them.
-
-      ⚙️ **Task 2 — make the oracle strong** (file: `test_oracle_drill.py`):
-
-      Each test has `result = xp_to_level(...)` already done. Replace the **weak** `assert isinstance(result, int)` with the **strongest** possible assertion (one that fails for *any* wrong value).
-
-      💬 **Articulate it**: Before fixing each weak oracle, add a Python comment above explaining *what bug the weak version would miss*. Writing this out beats just thinking it.
+      Notice what the table isolates: the input is held constant (`xp_to_level(0)` in every row). Only the **assertion** varies. This is one whole dimension of test quality — and it lives **independently** of the dimension you'll meet in Step 3: *which inputs to pick*. A great test gets both right.
+      </details>
 
       <details markdown="1"><summary>📖 Test names ARE documentation</summary>
 
@@ -542,18 +554,18 @@ steps:
           source = open('/tutorial/test_leveling.py').read()
           body = source.split('test_starter_with_zero_xp')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_starter_with_zero_xp still has 'pass'. A test with no assertion can never fail — meaning it can never catch a bug. Replace 'pass' with: assert xp_to_level(0) == 0"
+              "test_starter_with_zero_xp still has 'pass'. A test body with only 'pass' can never fail — it can never catch a bug. A test earns its keep by making a specific claim: call the function, compare the result to what the spec says. The spec: 0 XP means level 0. Write that claim as an assert statement."
       - description: "test_first_level_up has a real assertion"
         command: |
           source = open('/tutorial/test_leveling.py').read()
           body = source.split('test_first_level_up')[1].split('def ')[0]
           assert 'assert' in body, \
-              "test_first_level_up still has 'pass'. The spec says every 100 XP is one level — what input gets you to level 1?"
+              "test_first_level_up still has 'pass'. Look at the spec in leveling.py: how much XP gets you to exactly level 1? Compute it yourself, then write assert xp_to_level(<your input>) == <your expected level>."
       - description: "test_max_level_cap function exists"
         command: |
           source = open('/tutorial/test_leveling.py').read()
           assert 'def test_max_level_cap' in source, \
-              "Write a new function `def test_max_level_cap():` — it tests the legendary level 100. Hint: how much XP does it take to reach level 100?"
+              "Add a new test function for the level 100 cap. It follows the same structure as your other tests: def test_max_level_cap(): and one assert statement. What XP value does the spec say produces level 100? Compute it from the formula, then assert that."
       - description: "All leveling tests pass"
         command: |
           import pytest, io, sys
@@ -570,16 +582,17 @@ steps:
             text: "Open `leveling.py` and find the formula: `xp // 100` (integer division). Compute it on paper for `0`, `100`, and `10000`. Then write `assert xp_to_level(<input>) == <your_number>` for each. The 10,000-XP case is your level cap test."
       - description: "Oracle drill — strong starter oracle replaces the weak isinstance check"
         command: |
+          import re
           source = open('/tutorial/test_oracle_drill.py').read()
           body = source.split('test_oracle_strong_starter')[1].split('def ')[0]
-          assert ' 0' in body and 'isinstance' not in body, \
-              "test_oracle_strong_starter should assert equality with 0 (the level for an account with zero XP), not just isinstance."
+          assert re.search(r'==\s*0\b', body) and 'isinstance' not in body, \
+              "test_oracle_strong_starter uses isinstance, which only checks the return type. A strong oracle pins the exact value. What does the spec say xp_to_level(0) should return? Assert that exact value with ==."
       - description: "Oracle drill — strong max oracle replaces the weak isinstance check"
         command: |
           source = open('/tutorial/test_oracle_drill.py').read()
           body = source.split('test_oracle_strong_max')[1].split('def ')[0]
           assert '100' in body and 'isinstance' not in body, \
-              "test_oracle_strong_max should assert equality with 100 (the level cap when xp == 10000), not just isinstance."
+              "test_oracle_strong_max uses isinstance, which only checks type. A strong oracle pins the exact value. What does the spec say xp_to_level(10000) should return? Compute it from the formula and assert that exact value."
       - description: "Oracle drill tests all pass"
         command: |
           import pytest, io, sys
@@ -610,6 +623,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "pytest discovers files starting with `test_` (note the underscore) or ending with `_test.py`. `testing_leveling.py` matches *neither* pattern — pytest will silently skip it."
+            1: "Correct. `test_leveling.py` starts with `test_` and ends with `.py` — it matches the discovery rule. Functions inside must also start with `test_`."
             2: "There's no convention `check_*` in pytest. The discovery rule is `test_*` prefix or `*_test.py` suffix only."
             3: "Close — but pytest looks for `*_test.py` (singular) or `test_*` prefix. `leveling_tests.py` (plural \"tests\") doesn't match either."
           explanation: |
@@ -631,6 +645,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "pytest's PASSED/FAILED is not about return values. Test functions don't return anything that pytest reads — pytest only checks whether any `assert` statement raised `AssertionError`. PASSED = no assertion failed; FAILED = at least one did."
+            1: "Right. PASSED means no `AssertionError` was raised in that function; FAILED means at least one assertion produced `False`. pytest shows the exact line and the mismatched values."
             2: "A syntax error would have been reported during *collection*, not run. The fact that the line says `test_division FAILED` means the function *did* run; an assertion inside it just didn't hold."
             3: "pytest does not enforce dependency or order between tests by default — each runs independently. Test functions are isolated unless you explicitly opt into ordering plugins."
           explanation: |
@@ -663,6 +678,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "This inverts the right intuition. A type check is *cheap* but doesn't catch wrong values — `add(2, 3)` returning `0`, `42`, or any other int still passes. The \"widest category of bugs\" is exactly what `isinstance` *fails* to catch."
+            1: "Exactly. B is a strong oracle: only `5` satisfies `result == 5`. A is weak: any `int` passes `isinstance(result, int)` — `0`, `42`, `5` all look green, including wrong answers."
             2: "They are not equally strong. The whole point of *oracle strength* is that two assertions on the same function call can differ wildly in what bugs they expose. `assert isinstance(result, int)` is satisfied by infinitely many wrong values; `assert result == 5` is satisfied by exactly one correct value."
             3: "Strong oracles do not require multiple assertions — they require one *precise* assertion. A single `assert result == 5` already pins the expected behavior exactly. Padding with extra `isinstance` checks doesn't strengthen the oracle, it just adds noise."
           explanation: |
@@ -681,6 +697,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Tests do *encode* the same intent as the code they verify, but that's not duplication in the DRY sense — DRY is about avoiding *the same logic in two places that must change together*. Tests describe *what should happen*; code describes *how it happens*. Different concerns, both worth keeping."
+            1: "Right. The safety-net principle: each passing test permanently guards that behavior. Deleting it cuts a hole in the net. If someone later reverts or re-introduces the bug, there is nothing to catch it."
             2: "YAGNI (\"You Aren't Gonna Need It\") cautions against speculative *features*, not against tests for shipped behavior. A test guarding shipped behavior is the opposite of speculative — that behavior is already in production."
             3: "Deleting passing tests is *not* standard practice on any team that treats tests as a safety net. Anyone proposing this is misunderstanding the role of the test suite. The whole point is that tests stay in place to catch the regression no one anticipated."
           explanation: |
@@ -706,33 +723,13 @@ steps:
 
       💡 **The principle**: an **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
 
-      Today's function: `squad_name_valid(name)` — checking if a Fortnite / Roblox / Discord squad name is the right length. Rule: `3 ≤ len ≤ 12` characters. The **4 boundary points** sit *exactly* where partitions transition:
+      Today's function: `squad_name_valid(name)` — checking if a Fortnite / Roblox / Discord squad name is the right length. Rule: `3 ≤ len ≤ 12` characters.
 
-      ```mermaid
-      flowchart LR
-          L2["len 2<br/>❌ reject"]:::bad
-          L3["len 3<br/>✅ accept"]:::good
-          Mid["...middle of valid<br/>partition..."]:::neutral
-          L12["len 12<br/>✅ accept"]:::good
-          L13["len 13<br/>❌ reject"]:::bad
-          L2 --> L3 --> Mid --> L12 --> L13
-          classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
-          classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
-          classDef neutral fill:#fafafa,stroke:#bdbdbd,color:#757575
-      ```
-
-      Notice how the 4 critical tests pin down both transitions; the *middle* of the valid partition isn't covered by these — and doesn't need to be (one representative is enough there). The same heuristic works for **any** range you'll meet — usernames, ages, HTTP response codes, prices, retry counts. Pick the last invalid value before each transition and the first valid value after; the off-by-one bugs live exactly there. Why this works:
-
-      | Length | Expected | What this catches |
-      |---|---|---|
-      | **2** | reject | A `< 3` written as `<= 3` (off-by-one below) |
-      | **3** | accept | A `<= 3` written as `< 3` |
-      | **12** | accept | A `<= 12` written as `< 12` |
-      | **13** | reject | A `< 13` written as `<= 13` (off-by-one above) |
+      🔍 **Before writing any code:** Looking only at the spec (`3 ≤ len ≤ 12`), list the 4 input lengths you would test. Don't run anything. For each one, write a single word explaining *why this specific length matters more than its neighbor*. Hold your list — check it against the disclosure below after writing your tests.
 
       ⚙️ **Task** (`test_squad.py`): Two worked tests are provided.
 
-      💬 **Self-explain first** (do this *before* writing): Read the two provided tests carefully. *Why* does the first one assert `is True` and the second `is False`? *Why* did the author pick length `5` for "valid representative" and `2` for "just below min"? Articulating the design choices primes you to make your own.
+      💬 **Self-explain first** (do this *before* writing): Read the two provided tests carefully. *Why* does the first one assert `is True` and the second `is False`? *Why* did the author pick length `5` for "valid representative" and `2` for "just below min"? Then answer: what is *the same* about these two tests, and what is *different*? Articulating both sides primes you to make your own.
 
       Now **write four more tests**. The four stubs in the file name what each test must check; you decide the input and the expected return value.
 
@@ -764,6 +761,33 @@ steps:
       For a function whose contract says "returns a Boolean", use `is True` / `is False` — the test then catches *both* wrong values *and* wrong types. (For non-Boolean returns, prefer `==` with the exact expected value.)
       </details>
 
+      <details markdown="1"><summary>📐 Check your 4 boundary values (open after writing your tests)</summary>
+
+      The 4 critical lengths sit *exactly* where partitions transition:
+
+      ```mermaid
+      flowchart LR
+          L2["len 2<br/>❌ reject"]:::bad
+          L3["len 3<br/>✅ accept"]:::good
+          Mid["...middle of valid<br/>partition..."]:::neutral
+          L12["len 12<br/>✅ accept"]:::good
+          L13["len 13<br/>❌ reject"]:::bad
+          L2 --> L3 --> Mid --> L12 --> L13
+          classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+          classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
+          classDef neutral fill:#fafafa,stroke:#bdbdbd,color:#757575
+      ```
+
+      | Length | Expected | What this catches |
+      |---|---|---|
+      | **2** | reject | A `< 3` written as `<= 3` (off-by-one below) |
+      | **3** | accept | A `<= 3` written as `< 3` |
+      | **12** | accept | A `<= 12` written as `< 12` |
+      | **13** | reject | A `< 13` written as `<= 13` (off-by-one above) |
+
+      The *middle* of the valid partition isn't in the list — one representative there is enough. The same heuristic works for **any** numeric range: lengths, ages, prices, retry counts.
+      </details>
+
       <details markdown="1"><summary>📖 Equivalence partitioning — the deeper "why"</summary>
 
       The input space splits into three regions, each with the **same expected behavior**:
@@ -785,6 +809,10 @@ steps:
       2. *Pick one representative* per partition.
       3. *Test every boundary* — last invalid before each transition, first valid after.
       </details>
+
+      🧭 **Reflect before moving on.** Without scrolling back, answer: why is testing `squad_name_valid` at length 3 more informative than testing it at length 6? Write one sentence using the word "partition" or "boundary." If you can name the reason precisely, the concept is yours; if you reach for vague words, re-read the "Check your 4 boundary values" disclosure.
+
+      > 🔭 **Coming in Step 4:** You can now choose the right inputs with precise assertions. But tests can still break for the wrong reason — not because your function's behavior changed, but because your test looked at the wrong thing. We'll see that next.
 
 
     files:
@@ -828,7 +856,9 @@ steps:
           #     ...
 
 
-          # --- TODO: the empty string. ---
+          # --- TODO: the empty string ---
+          # Before writing: which partition does "" belong to? Is it a separate
+          # partition or the extreme of an existing one? Note your answer as a comment.
           # def test_empty_string():
           #     ...
 
@@ -944,6 +974,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "$0 and $100 sit deep inside the *no-discount* and *yes-discount* partitions — they don't pin down where the boundaries are. The spec defines the discount cutoffs at $50 (`>` flips) and $500 (`≤` flips); your boundary tests must straddle those exact values."
+            1: "Correct. $50/$51 straddles the `> $50` flip and $500/$501 straddles the `≤ $500` flip — one just-below and one at-or-just-above each boundary, which is exactly where `>` vs `>=` bugs surface."
             2: "This is \"spread your bets across the input range\" — useful for a smoke test, useless for catching off-by-one bugs. Off-by-one bugs *only* manifest at the boundary itself; quartile samples will all behave correctly even when the comparison operator is wrong."
             3: "Decimal-precision boundaries are a separate class of bug (and rarely the dominant risk for whole-dollar specs). The *primary* off-by-one risk is `> vs >=` and `<= vs <`, which lives at the integer boundary. Test 50/51 and 500/501 first; reach for cents only if the spec actually distinguishes them."
           explanation: |
@@ -961,6 +992,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Test *count* is not a measure of test *quality*. 12 tests in the same partition is roughly equivalent to one test repeated 12 times — they all hit the same code path and miss the same bugs. One boundary test catches more than ten middle-of-partition tests."
+            1: "Right. All 12 tests cluster in the middle of the valid partition (lengths 5–8). The boundaries at 2, 3, 12, and 13 are entirely untested — a `len < 12` bug instead of `len <= 12` would pass every test and slip to production."
             2: "Passing tests prove the function works *for the inputs tested*, never for inputs the suite never exercises. The classic boundary bug at length 12 (`len < 12` instead of `len <= 12`) sits *exactly* in the gap this suite leaves uncovered."
             3: "There's no magic test-count threshold for confidence. A 5-test suite with one test per partition + boundary will catch more bugs than a 50-test suite that all clusters in the middle. Quality of input choice beats quantity."
           explanation: |
@@ -979,6 +1011,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "This is conflating *partition* (a testing concept — a group of inputs with the same expected behavior) with *parallelism* (a runtime concept — work happening simultaneously). The two ideas have nothing in common; the word \"partition\" is overloaded across CS subfields."
+            1: "Correct. Inputs that all produce the same kind of behavior form one equivalence partition — testing one representative per partition is enough for the *middle*, and you spend your test budget on the *boundaries* between partitions."
             2: "Mathematical equality (`1.0 == 1`) is about value, not about *behavioral expectation*. Equivalence partitioning groups inputs that should *behave the same* under the function — different values can still be in the same partition (e.g. `\"alice\"` and `\"bob\"` are both length-5 valid usernames)."
             3: "This describes equal-width binning (a statistics concept). Equivalence partitions are defined by *behavioral boundary* — wherever the function's output classification flips — not by chopping the domain into uniform chunks."
           explanation: |
@@ -997,6 +1030,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "*Currently passing* is a weaker claim than *correctly testing*. A bare `assert squad_name_valid(\"epic\")` passes today only because `squad_name_valid` happens to return `True`. The day someone refactors it to return the name string `\"epic\"` (still truthy!), the oracle will still pass — but now it's verifying nothing meaningful."
+            1: "Right. A bare `assert <expr>` passes for any truthy return — `1`, `\"epic\"`, `[True]` would all pass, even though none of them are `True`. `is True` uses identity comparison and accepts *only* the `True` singleton."
             2: "pytest assertion messages are optional. The oracle's strength has nothing to do with whether you supplied a failure message; it has everything to do with which return values would *fail* the assertion. Bare `assert <expr>` is satisfied by every truthy value, which is the weakness here."
             3: "The input length isn't the issue — `\"epic\"` is a perfectly valid length-4 input. The oracle weakness is structural: `assert <expr>` (no comparison) accepts any truthy return value, regardless of the input."
           explanation: |
@@ -1016,6 +1050,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "The type is not the issue here: `days` is compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator."
+            1: "Correct. The bug only surfaces at exactly `days == 100` — the single boundary value where the `> 100` operator gives the wrong answer. That one-specific-value signature is the definition of a boundary bug."
             2: "It's tempting to call any wrong-`if` bug a logic error, but that's too coarse. Boundary bug is the more precise classification: this bug only manifests at *one specific value* (100), which is the diagnostic signature of a `>` vs `>=` mistake. That precision is what Step 3 is about."
             3: "*Regression* describes how a bug enters a codebase (re-introducing something previously fixed), not what kind of bug it is. The bug here might or might not be a regression — but its *type* is a boundary bug."
           explanation: |
@@ -1039,45 +1074,44 @@ steps:
       > 🎯 **Goal:** Test **WHAT** a function does, not **HOW** it does it.
       > 🧠 **Bloom's level:** *Analyze* (spot brittle tests) and *Evaluate* (judge them against the public-API contract).
 
-      💡 **Brittle vs robust** — *same observable behavior, two ways to verify it.* Imagine a `Leaderboard` class for a game. Both tests below check the exact same thing: *after recording two scores, alice is the top player.* They differ only in **how** they verify it:
+      ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). All four currently pass. You'll *discover* which are brittle and which are robust — and *how many* of each.
 
-      ```python
-      # Same setup for both
-      board = Leaderboard()
-      board.record("alice", 1000)
-      board.record("bob", 500)
+      1. **Read the four tests** in `test_brittle_audit.py`. Before running anything: *classify each test* — does it access internal state (looks inside the object) or only the public interface (calls methods that don't start with `_`)? Write your classification as a comment next to each test.
+      2. **Run the suite as-is** — all four tests pass. Good. Now do the experiment:
+      3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the three methods). The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles` still produce the same outputs.
+      4. **Before re-running:** predict how many tests will fail and which ones.
+      5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. If you were wrong, write one sentence explaining the structural difference between the surviving tests and the failing ones.
+      6. **Rewrite each broken test** using only the public API (methods that don't start with `_`). When all four pass against the refactored code, your suite is robust.
 
-      # 🚨 BRITTLE — peeks at private state to confirm alice is on top
-      assert board._scores[0] == ("alice", 1000)
+      💡 **Why this matters**: When a test only touches the public API, the production code stays free to evolve internally. The experiment you just ran is a live demonstration of the Refactoring Litmus Test (expand below to name what you discovered).
 
-      # ✅ ROBUST — uses the public API to confirm alice is on top
-      assert board.top_player() == "alice"
-      ```
-
-      The two assertions are *checking the same behavior*. But the brittle one breaks the moment someone renames `_scores`, changes its tuple shape (say to `("alice", 1000, timestamp)`), or switches storage to a heap — even though the top-player behavior is unchanged. The robust one only breaks when the **top-player behavior itself** changes — which is exactly when you *want* the test to fail.
-
-      ### 🔬 The Refactoring Litmus Test
+      <details markdown="1"><summary>🔬 The Refactoring Litmus Test — name what you just discovered</summary>
 
       > **If you refactor the internals of a function and all tests still pass → your tests are robust.**
       > **If tests break after a pure refactoring (no behavior change) → they're testing implementation.**
 
       That breakage is the symptom; the fix is to rewrite the tests, not to revert the refactor.
 
-      ⚙️ **Task** (`test_brittle_audit.py`): Four tests for a `PlaylistQueue` (think Spotify / Apple Music queue). Two are brittle, two are robust — but they aren't labeled. You'll *discover* which is which.
+      Both types of test were checking the same observable behavior: *the track was added*. They differed only in **how** they verified it. The brittle test peeked at implementation details (`_tracks`). The robust test used the public interface (`titles()`). Compare that to this pair:
 
-      1. **Run the suite as-is** — all four tests pass. Good. Now do the experiment:
-      2. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the three methods). The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles` still produce the same outputs.
-      3. **Re-run the suite**. Two tests now fail. **Those are the brittle ones** — they were testing implementation details (the name of a private attribute), not behavior. The robust ones survive the refactor because they only touch the public API.
-      4. **Rewrite each broken test** using only the public API (the methods that *don't* start with `_`). When all four pass against the refactored code, your suite is robust.
-      5. Optional: revert `_queue` back to `_tracks` and confirm your fixed tests still pass — robust tests survive both directions.
+      ```python
+      # 🚨 BRITTLE — peeks at private state
+      assert board._scores[0] == ("alice", 1000)
 
-      💡 **Why this matters**: Robust tests are the contract a class promises its callers. When the test only touches the public API, the production code stays free to evolve internally. The Refactoring Litmus Test (above) is now something you've *experienced*, not just read.
+      # ✅ ROBUST — uses the public API
+      assert board.top_player() == "alice"
+      ```
 
-      Here's what the experiment showed — the rename changed the *implementation* but **not** the public behavior, yet only the robust test survives:
+      The brittle version breaks the moment `_scores` is renamed, restructured, or replaced — even if the top-player behavior is unchanged. The robust version only breaks when the **behavior itself** changes — which is exactly when you *want* it to fail.
+      </details>
+
+      <details markdown="1"><summary>📊 What the experiment reveals — expand after completing step 5</summary>
+
+      The rename changed the *implementation* but **not** the public behavior, yet only the robust tests survive:
 
       ```mermaid
       flowchart TB
-          subgraph before["BEFORE — both tests pass"]
+          subgraph before["BEFORE — all tests pass"]
               direction LR
               b1["Brittle test<br/>queue._tracks[0]"]:::brittle
               b2["Robust test<br/>queue.titles()"]:::robust
@@ -1097,6 +1131,7 @@ steps:
           classDef good fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
           classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
       ```
+      </details>
 
       <details markdown="1"><summary>📖 Arrange-Act-Assert (AAA) — the structure of a clean test</summary>
 
@@ -1135,6 +1170,8 @@ steps:
 
       If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior.
       </details>
+
+      🧭 **Reflect before moving on.** In your own words, without scrolling back: what is the structural difference between a brittle test and a robust one? Give a concrete example — not the `PlaylistQueue` one you just worked through. If you struggle to find a new example, that's a signal to re-read the Refactoring Litmus Test above.
 
 
     files:
@@ -1243,12 +1280,12 @@ steps:
         command: |
           source = open('/tutorial/test_brittle_audit.py').read()
           assert '._tracks' not in source and '._queue' not in source, \
-              "Your tests still touch `_tracks` or `_queue` (the private attribute). The leading underscore is Python's signal: 'this is internal — could be renamed any day'. Use the public methods instead: queue.titles() returns titles, queue.track_count() returns the count, queue.total_duration() returns the total runtime."
+              "Your tests still touch `_tracks` or `_queue`. The leading underscore is Python's signal: 'this is internal — could be renamed any day.' Tests that depend on internals break whenever someone refactors — even when behavior is unchanged. Instead, verify through the same interface a real caller would use. Check the class for public methods (those not starting with `_`)."
         hints:
           - title: "Small nudge"
             text: "Search the file for `._tracks` (or `._queue` if you've already renamed). Each line that has it is in a brittle test. There are exactly two such tests."
           - title: "Strategic hint"
-            text: "Replace `queue._tracks[0][\"title\"]` with a public-method call:\n- check what's inside → `queue.titles()` (returns list of titles)\n- check the count → `queue.track_count()`\n- check the total runtime → `queue.total_duration()`"
+            text: "Replace `queue._tracks[0][\"title\"]` with a public-method call. Open `playlist.py` and look at the method definitions — any method *not* starting with `_` is part of the public API and safe to call from a test."
           - title: "Almost-spoiler — apply the AAA shape"
             text: "Each brittle test reaches into private state. Rewrite it using only the public methods.\n```python\ndef test_<behavior>():\n    queue = PlaylistQueue()\n    queue.add(<title>, <duration>)\n    assert <something_via_public_api> == <expected>\n```\nFor `test_add_track_internal_list`, the observable behavior is *the title appears when you ask for titles*. For `test_internal_list_length`, the observable behavior is *the count goes up when you add tracks*."
       - description: "Test file still contains at least 4 test functions"
@@ -1272,37 +1309,39 @@ steps:
       questions:
 
         - question: |
-            Which test is **more robust**?
+            A `UserProfile` class stores user data. Two tests check that a name is stored after creation. Which test is **more robust**?
 
             **Test A:**
             ```python
-            def test_sort_a():
-                result = sort_names(["Charlie", "Alice", "Bob"])
-                assert result == ["Alice", "Bob", "Charlie"]
+            def test_a():
+                profile = UserProfile("alice")
+                assert profile._data["name"] == "alice"
             ```
 
             **Test B:**
             ```python
-            def test_sort_b():
-                result = sort_names(["Charlie", "Alice", "Bob"])
-                assert result[0] < result[1] < result[2]
-                assert len(result) == 3
+            def test_b():
+                profile = UserProfile("alice")
+                assert profile.get_name() == "alice"
             ```
           type: single
           options:
-            - "Test A — checking the exact output is the most thorough way to verify correctness, and any deviation from the expected list reveals a bug immediately"
-            - "Test B — it verifies the behavioral property (sorted order) without hard-coding values, making it resilient to input changes"
-            - "Both are equally robust since they both test the same function with the same input data and would catch the same bugs"
-            - "Neither is robust — both tests should use mock objects to isolate the sort implementation from the comparison logic"
+            - "Test A — directly reading the storage is the most reliable way to verify the value was saved"
+            - "Test B — it verifies behavior through the public API; Test A breaks if the storage key or structure changes internally"
+            - "Both are equally robust since both assertions check the same underlying fact"
+            - "Neither — storing a name should be tested by checking the return value of the constructor itself"
           correct_index: 1
           option_feedback:
-            0: "Test A is *correct* but not *robust*. It pins down one specific input → output mapping. Change the input list to four names, and Test A breaks even though `sort_names` works perfectly. Robust here means *the test breaks only when behavior actually breaks*, which is what Test B's property check delivers."
-            2: "They behave very differently under change. Test A breaks the moment you alter the input data; Test B keeps passing because it asserts the *property* (ascending order, length preserved). On the same function with the same inputs *today* they happen to both pass — that's not the same as being equally robust."
-            3: "Mocks are for isolating *collaborators* (network calls, databases) — not for sort implementations. `sort_names` has no collaborator to mock; it just returns a value. Asserting on the returned value through the public API is exactly the right pattern here."
+            0: "Direct storage access (`_data`) is exactly the brittleness we saw with `_tracks`. The underscore signals 'implementation detail.' The day someone renames `_data` to `_store`, or changes the structure, Test A breaks even though the observable behavior (you can retrieve the name you stored) is unchanged."
+            1: "Right. Test B verifies through the public contract (`get_name()`). Internal storage can be restructured freely without breaking it. Test A is coupled to `_data` — a pure rename breaks it even when behavior is unchanged."
+            2: "They differ fundamentally under refactoring. Test A is coupled to the dict structure `_data[\"name\"]`. Test B is coupled only to the observable contract: 'after creating a profile with \"alice\", `get_name()` returns \"alice\".' One breaks during internal restructuring; the other survives it."
+            3: "Constructors in Python return `None`. Testing through the constructor's return value isn't the right path. The observable behavior is what you can read back via the public interface — that's what `get_name()` provides."
           explanation: |
-            Test A is fine for this specific input, but Test B expresses the *property* that matters:
-            the output is sorted and the same length. If you add a fourth name to the input,
-            Test A breaks but Test B still works.
+            Test A peeks at `_data`, an internal implementation detail. If someone refactors
+            `UserProfile` to store data differently, Test A breaks — even though the behavior
+            is unchanged. Test B tests through the public method `get_name()`, which is the
+            contract the class makes with callers. The Refactoring Litmus Test: does it
+            survive a pure internal refactor? Test B does. Test A does not.
 
         - question: |
             You refactor a function's internal algorithm (from bubble sort to quicksort) without changing its return value. Two of your tests break. What does this tell you?
@@ -1315,6 +1354,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "The premise of the question is \"without changing its return value\" — i.e., behavior is unchanged. So a behavior bug is ruled out. The test failures must be telling you something *other* than \"the new code is wrong\" — and that something is: the broken tests were verifying *how* the function works, not *what* it does."
+            1: "Correct. Tests breaking on a pure refactor are the diagnostic signature of brittle tests — they're coupled to the implementation (internal variable names, algorithm choice) rather than the observable behavior. Rewrite them; keep the refactor."
             2: "Reverting a sound refactor because *the tests* are too tightly coupled inverts who's in charge. The refactor is correct; the tests are the problem. Keep the refactor, fix the tests to assert on observable behavior, and you end up with cleaner code *and* a stronger suite."
             3: "Loosening assertions or adding tolerance is exactly the wrong direction — that hides the brittleness rather than fixing it. The tests aren't *too strict* in what they assert; they're asserting on *the wrong thing* (implementation, not behavior). Rewrite, don't dilute."
           explanation: |
@@ -1333,6 +1373,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Tests are *also* a design signal, not just a verifier. A test that needs 40 lines of setup is shouting that the function under test has too many dependencies — every collaborator the function reaches forces a corresponding fixture. Ignoring the smell keeps the pain."
+            1: "Correct. Excessive Setup is a design smell pointing at the *production* code — too many dependencies crammed into one function. The test is feedback; the fix belongs in the production design, not in hiding the setup behind a helper."
             2: "A helper *hides* the smell without addressing it. The test file looks shorter, but the underlying coupling is unchanged — the helper just centralizes the setup-heavy fact. The right response is to listen to what the test is telling you about the *production* design."
             3: "Adding more assertions doesn't compensate for hard-to-arrange tests; it makes them slower to run, harder to read, and more prone to verifying multiple unrelated things in one function. The number of assertions should match the number of behaviors under test, not the size of the Arrange block."
           explanation: |
@@ -1351,6 +1392,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Coverage is a necessary condition, not a sufficient one. 100% coverage with `assert result is not None` exercises every line *but verifies almost nothing* — any non-`None` return value passes, including `0`, `\"\"`, `[]`, the wrong number entirely. A higher number doesn't beat a meaningful assertion."
+            1: "Right. Coverage measures which lines *ran*; strong oracles determine whether the behavior at those lines was actually *verified*. Suite A ran everything and checked almost nothing. Suite B ran 80% and checked every result precisely."
             2: "The two suites do *not* catch the same bugs. Suite A passes for any non-`None` return — a bug that flips a return value from `42` to `0` slips through silently. Suite B catches that same bug because the value differs from the asserted expected one. Same lines exercised, vastly different bug-catching power."
             3: "Mutation testing is a great deeper technique, but the question isn't asking which *industry* metric is best — it's asking which of *these two suites* is stronger. Suite B answers that even before mutation testing enters the picture, because it exposes the foundational issue: weak oracles on full coverage verify nothing."
           explanation: |
@@ -1372,6 +1414,7 @@ steps:
             0: "`is not None` is the canonical *weak oracle*. Any non-`None` return passes — `0.0`, `\"banana\"`, `[]`. It tells you the function returned *something*, not whether it returned *the right thing*."
             1: "Type checks catch type errors only. The function could return `42.0` (wrong sum) and `isinstance` is happy. Step 2 named this the *medium-strength* oracle — better than `is not None`, still wrong-value-blind."
             2: "`> 0` is a property check, not a value check. The function could return `0.01`, `42.0`, `1000000.0` — all positive, all wrong. Property assertions are useful when you genuinely don't know the exact expected value, but for a deterministic function whose answer you can compute, pin the value."
+            3: "Exactly. `== 3.50` is the only strong oracle here — any wrong return value (`0.0`, `1.5`, `42.0`) would fail it. The other options accept large families of wrong answers."
           explanation: |
             A strong oracle pins the exact expected value — only `3.50` satisfies it. The
             others would still pass if the function returned `0.0`, `42.0`, or any positive
@@ -1388,12 +1431,41 @@ steps:
           correct_index: 1
           option_feedback:
             0: "$50 and $200 are both *deep inside* their partitions — both will pass under either `> 100` or `>= 100`, since 50 is clearly free and 200 clearly charges the fee. Boundary bugs *only* manifest at the boundary; values away from it never expose them."
+            1: "Right. 99 and 100 straddle the `>= 100` threshold. The canonical boundary bug here is `> 100` vs `>= 100` — it produces the wrong answer at exactly `amount = 100` and nowhere else."
             2: "Extreme-value tests catch overflow / representation bugs (rare in this kind of spec) but completely miss the off-by-one risk at $100. The most common bug here — confusing `>= 100` with `> 100` — produces correct behavior at $0 and $1,000,000. You'd ship the bug."
             3: "$1 and $2 are both in the *same partition* (free), so they verify the same path twice and never approach the boundary. This is the same anti-pattern as the previous Step 3 quiz: many tests crowded in one partition is roughly one test repeated."
           explanation: |
             The boundary is at 100. Testing 99 and 100 catches the canonical off-by-one
             (`> 100` vs `>= 100`). Picking values far from the boundary misses exactly
             the bugs that Boundary Value Analysis is designed to expose.
+
+        - question: |
+            **(Spaced review — Step 3)** A test reads `assert is_age_valid(18) == True`. A colleague says to use `is True` instead. What is the reason?
+
+            ```python
+            # Option A (current):
+            assert is_age_valid(18) == True
+
+            # Option B:
+            assert is_age_valid(18) is True
+            ```
+          type: single
+          options:
+            - "No difference — `== True` and `is True` behave identically for Boolean-returning functions"
+            - "`is True` catches the case where the function returns a truthy non-Boolean (like `1` or `\"yes\"`) — `== True` accepts `1 == True`, but `1 is True` fails"
+            - "`is True` is faster at runtime, which matters in large test suites"
+            - "`== True` is a syntax error in pytest; `is True` is the required form"
+          correct_index: 1
+          option_feedback:
+            0: "They behave the same *if the function returns exactly `True` or `False`*. But if someone refactors `is_age_valid` to return `1` (truthy but not Boolean), `== True` still passes (`1 == True` is `True` in Python) while `is True` fails. For a function whose contract is 'returns Boolean', that's the gap you want covered."
+            1: "Correct. `is True` uses identity — only the exact `True` singleton passes. `== True` uses equality — `1 == True` evaluates to `True` in Python, so truthy non-Booleans slip through. For specs that say 'returns Boolean', `is True` is the precise form."
+            2: "Runtime performance is not the reason. The reason is oracle precision: `is` checks identity (is this the exact `True` object?), while `==` checks equality (is this value equal to `True`?). For booleans these differ on truthy non-Boolean values."
+            3: "`== True` is valid pytest syntax. The distinction is about precision, not syntax. Both forms compile and run; only their bug-catching power differs."
+          explanation: |
+            `is True` uses identity comparison — only the literal `True` object passes.
+            `== True` uses equality — `1`, `True`, and any value where `v == True` all pass.
+            For functions whose spec says "returns a Boolean", use `is True` / `is False`
+            so the test catches both wrong values *and* wrong return types.
 
 
   # --------------------------------------------------------------------------
@@ -1451,11 +1523,13 @@ steps:
 
       You are now applying everything from Steps 1–4: behavior specification (1), pytest + oracle strength (2), partitions (3), and testing through the public function rather than internals (4).
 
-      💡 **No numeric range, no boundaries — just categorical partitions.** Step 3's heuristic (test the values just on each side of every transition) needed an *ordered* domain: lengths, ages, scores. Here `plan` is a categorical input — `"student"`, `"family"`, anything else — with no numeric ordering, so there are no "off-by-one" boundary values to pin down. **Partitioning still applies**: you test one representative per equivalence class. Boundaries are a *special case* of partitioning that only kicks in when the input space is ordered.
+      💡 **No numeric range, so no boundary values — but partitions still apply.** Step 3's boundary heuristic needed an *ordered* domain: lengths, ages, scores. Here `plan` is categorical — `"student"`, `"family"`, anything else — no numeric ordering, so there are no `>=` / `>` comparison operators and therefore no off-by-one boundary values to probe. But equivalence partitioning still applies: you test one representative per category. This is a Separation of two ideas you've used together: boundaries are a *special case* of partitioning that kicks in only when the domain is ordered.
+
+      Ask yourself: for `streaming_price`, are there any "edge-of-category" inputs worth testing beyond the three named categories? What about an unexpected string like `"premium"`, or an empty string `""`? These are the categorical equivalents of boundary probing — checking the edges of the decision logic for inputs the spec doesn't explicitly name.
 
       🪞 **Recalibrate**: At the start of Step 1 you rated your confidence (1–10) for designing a test suite from scratch. Re-rate yourself now. The gap between those numbers is what you actually learned — the *feeling* of progress is unreliable; the gap is data.
 
-      🧭 **Threshold check** — what shifted: At the start, "tests" probably felt like *checking your own homework*. If by now they feel more like **executable specifications** of behavior — *what the code is supposed to do, written in code so it can never silently rot* — you've crossed the threshold this tutorial was built for.
+      🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. If nothing changed — that's useful information too; name what would have to shift.
 
       <details markdown="1"><summary>🪞 Two independent dimensions of test design (separation)</summary>
 
@@ -1646,13 +1720,13 @@ steps:
           pattern = r'streaming_price\s*\([^)]*,\s*[\'"](?!student|family)[^\'"]*[\'"]\s*\)'
           has_other = bool(re.search(pattern, source))
           assert has_other, \
-              "All your tests use 'student' or 'family'. The third partition is *everything else* (\"\", \"individual\", \"free\", …). One representative is enough — try \"individual\" with expected `== price`."
+              "All your tests use 'student' or 'family'. Check your partition list — what should the function return for a plan it doesn't recognize? Add one test for that case: pick any representative input that isn't 'student' or 'family', compute the expected return value from the spec, and assert it."
       - description: "Tests use strong oracles (no weak 'is not None' / isinstance)"
         command: |
           source = open('/tutorial/test_streaming.py').read()
           weak = 'is not None' in source or 'isinstance(' in source
           assert not weak, \
-              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 2 warned about. Replace with the precise expected number: 20*0.50 == 10.0 for student, 20*0.70 == 14.0 for family, and == price for 'other'."
+              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 2 warned about. For each test: choose a concrete `price` input, compute the expected post-discount value yourself from the spec table, and assert that exact value with `==`."
       - description: "All tests pass against the reference implementation"
         command: |
           import pytest, io, sys
@@ -1685,6 +1759,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "$25 and $200 are deep inside their partitions. They both behave correctly under either `>= 50` or `> 50`, since 25 clearly charges and 200 clearly ships free. Boundary bugs *only* surface at the boundary itself."
+            1: "Right. $49.99 and $50 straddle the `>= $50` threshold — the same test-pair structure as the streak bug at day 100. Two values straddling a threshold expose the `>` vs `>=` family of bugs."
             2: "$0 and $1,000,000 catch a different category of bugs (representation issues, overflow). They miss the dominant off-by-one risk at $50, which is where 99% of bugs in this kind of spec live. Boundary tests come first; extreme-value tests come second."
             3: "One boundary test isn't enough; two values straddling the boundary are what expose `>` versus `>=`. With only `order = $50`, the test cannot tell whether the function is using the right operator because it observes only one side of the threshold."
           explanation: |
@@ -1703,6 +1778,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Tests passing only tells you what their *assertions* held. `assert result is not None` holds for any non-`None` value, including buggy ones. The teammate is reading the green dot and skipping the question of *what was actually verified*."
+            1: "Exactly. The fix is to pin the exact expected value with `==`. `is not None` only tells you the function returned *something* — the strong oracle tells you it returned the *right thing*."
             2: "Coverage isn't the issue here — the issue is *oracle strength*. The function might be running with full coverage *and* returning the wrong value entirely; this assertion couldn't tell you. Push back on the assertion, not on coverage."
             3: "The function name might also need work, but that's a separate critique. The immediate problem is that the test doesn't verify the function's behavior in any meaningful way — even a perfect function name wouldn't fix a `is not None` oracle."
           explanation: |
@@ -1710,19 +1786,45 @@ steps:
             pin the exact expected value.
 
         - question: |
-            What is the **single most important shift** in how you now think about testing, compared to before this tutorial?
+            You need to write your first test for a new function `parse_username(s)`. The spec: accept usernames of length 3–20, reject everything else.
+
+            What is your **first step** when designing the test suite?
           type: single
           options:
-            - "Tests are something you write *after* code is done, to check it works."
-            - "Tests *specify behavior* — they describe what the code should do, lock in progress, and let you change code without fear."
-            - "Tests are mainly about hitting 100% line coverage."
-            - "Tests are an academic exercise that doesn't apply in real projects."
+            - "Open `parse_username`'s source code and write assertions that confirm each code path runs"
+            - "Write `assert parse_username('alice') is not None` — if the function runs without crashing, it works"
+            - "Identify the partitions and boundaries: the valid range [3, 20] has two boundary pairs; pick inputs at each boundary and one representative per partition"
+            - "Start with a single test using a random username and see if it passes"
+          correct_index: 2
+          option_feedback:
+            0: "Starting from the implementation makes your tests confirm what the code *does*, not what it *should* do — the same post-hoc trap from Step 1. Start from the spec: identify the partitions, then find the boundaries."
+            1: "`is not None` is the canonical weak oracle: it passes for any non-`None` return, including wrong values. You've replaced it with strong `==` assertions precisely to avoid this."
+            2: "Exactly. Partition `s` by length: too-short (< 3), valid (3–20), too-long (> 20). The boundaries sit at lengths 2, 3, 20, 21. Pick one representative per partition plus those four boundary values — that's the Step 3 method applied cold."
+            3: "A single random test is equivalent to one middle-of-partition sample — it misses all boundaries. The skill from Step 3 is to choose inputs *deliberately*, not arbitrarily."
+          explanation: |
+            Start from the spec, not the implementation. Partition `s` by length:
+            too-short (< 3), valid (3–20), too-long (> 20). Test boundary values 2, 3, 20, 21
+            and one representative in the middle. That's the Step 3 method applied directly
+            to a new function — no peeking at the implementation required.
+
+        - question: |
+            **(Spaced review — Step 4)** You rename a private attribute `_cache` to `_store` in a class without changing any public method behavior. Three tests break immediately.
+
+            What does this tell you?
+          type: single
+          options:
+            - "The rename introduced a bug — renaming always risks changing behavior"
+            - "The three broken tests were accessing `_cache` directly — they were testing internal implementation, not observable behavior"
+            - "You should revert the rename to restore the passing tests"
+            - "Private attributes must never be renamed after the first release"
           correct_index: 1
           option_feedback:
-            0: "That keeps tests in the after-the-fact role from the start of the tutorial. Step 1 and Step 5's threshold-check prompts show why tests also guide design during development, not just verify code after it is finished."
-            2: "Coverage is a metric, not a mindset. You can have 100% coverage and still ship bugs (Step 4 showed exactly this with weak oracles). Coverage is at most a floor — what *moves the needle* is treating tests as specifications."
-            3: "That treats the examples as academic rather than transferable. The streak-badge bug at the start of Step 1 showed why tests matter; the discount task in Step 5 showed how to design them. These are the kinds of boundary-heavy functions students actually ship."
+            0: "The question specifies 'without changing any public method behavior' — behavior is unchanged by definition. Failures after a pure rename signal the tests themselves are the problem, not the rename."
+            1: "Correct. Tests that read or write private members (`_cache`, `_tracks`, `_data`) break the moment those internals are renamed or restructured — even when no behavior changes. This is the Refactoring Litmus Test: if a pure internal refactor breaks tests, those tests are brittle."
+            2: "Reverting a sound refactor because tests are brittle inverts the correct response. The refactor is valid; the tests are the problem. Rewrite the broken tests to verify behavior through the public API."
+            3: "There's no such rule — private attributes can and should be renamed freely as designs evolve. The issue is not the rename but the tests that depend on the old name instead of the public contract."
           explanation: |
-            This is the threshold concept. Once tests become **specifications of behavior**
-            (rather than after-the-fact correctness checks), you start writing them earlier
-            and treating them as design artifacts.
+            A pure refactor (no behavior change) should never break well-written tests.
+            If it does, the broken tests were coupled to internal implementation details.
+            Rewrite them to assert on observable behavior through the public API — then the
+            same refactor (or any future one) leaves the suite green.

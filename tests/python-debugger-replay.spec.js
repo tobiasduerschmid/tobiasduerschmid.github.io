@@ -53,6 +53,18 @@ for i in range(8):
 print(total)
 `;
 
+const WATCHPOINT_VALUE_CHANGE_CODE = `flag = False
+for flag in [False, True, True, False]:
+    marker = flag
+print(flag)
+`;
+
+const WATCHPOINT_NUMBER_CHANGE_CODE = `value = 1
+for value in [1, 2, 3]:
+    marker = value
+print(value)
+`;
+
 const LIVE_EDIT_CODE = `def compute():
     total = 1
     marker = total
@@ -208,7 +220,11 @@ async function debuggerState(page) {
 async function waitForDebugComplete(page) {
   await page.waitForFunction(() => {
     const ctl = window._tutorial && window._tutorial._debuggerCtl;
-    return ctl && !ctl.session && ctl.statusEl && ctl.statusEl.textContent === 'finished';
+    return ctl && !ctl.session &&
+      ctl.historyIdx === -1 &&
+      ctl.liveIdx === -1 &&
+      ctl.history && ctl.history.length === 0 &&
+      ctl.statusEl && ctl.statusEl.textContent === '';
   }, null, { timeout: DEBUG_TIMEOUT });
 }
 
@@ -540,7 +556,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
     }
   });
 
-  test('starting again after a finished run resets synced history', async ({ browser }) => {
+  test('finished runs clear live history and current chevron before starting again', async ({ browser }) => {
     const page = await browser.newPage();
     try {
       await prepareDebuggerAtBreakpoint(page, 17);
@@ -549,13 +565,31 @@ test.describe.serial('Python debugger replay variable edits', () => {
 
       const finished = await page.evaluate(() => {
         const ctl = window._tutorial._debuggerCtl;
+        const model = window._tutorial.editor.getModel();
+        const decorations = model.getAllDecorations();
         return {
           controllerHistoryLength: ctl.history.length,
           syncHistoryLength: ctl.sync.state.history.length,
+          historyIdx: ctl.historyIdx,
+          liveIdx: ctl.liveIdx,
+          syncHistoryIdx: ctl.sync.state.historyIdx,
+          syncLiveIdx: ctl.sync.state.liveIdx,
+          currentGlyphClasses: decorations
+            .map(d => String(d.options?.glyphMarginClassName || ''))
+            .filter(cls => cls.includes('tvm-debug-current-glyph')),
+          currentDecorationLines: decorations
+            .filter(d => String(d.options?.className || '').includes('tvm-debug-current-line'))
+            .map(d => d.range.startLineNumber),
         };
       });
-      expect(finished.controllerHistoryLength).toBeGreaterThan(1);
-      expect(finished.syncHistoryLength).toBe(finished.controllerHistoryLength);
+      expect(finished.controllerHistoryLength).toBe(0);
+      expect(finished.syncHistoryLength).toBe(0);
+      expect(finished.historyIdx).toBe(-1);
+      expect(finished.liveIdx).toBe(-1);
+      expect(finished.syncHistoryIdx).toBe(-1);
+      expect(finished.syncLiveIdx).toBe(-1);
+      expect(finished.currentGlyphClasses).toEqual([]);
+      expect(finished.currentDecorationLines).toEqual([]);
 
       await page.evaluate(() => window._tutorial._debuggerCtl.startSession());
       await page.waitForFunction(() => {
@@ -620,7 +654,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
     }
   });
 
-  test('data watchpoints stop on true transitions and can run backward to the hit', async ({ browser }) => {
+  test('data watchpoints stop on value changes and can run backward to the hit', async ({ browser }) => {
     const page = await browser.newPage();
     try {
       await page.goto(TUTORIAL_URL);
@@ -660,7 +694,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
         const value = snap && snap.watches && snap.watches['total >= 3'];
         return ctl && ctl.paused && snap && snap.watchpoint_origin && snap.watchpoint_origin.line === 3 &&
           value && value.repr === 'True' &&
-          /data watchpoint hit/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
       }, null, { timeout: DEBUG_TIMEOUT });
 
       const hit = await page.evaluate(() => {
@@ -693,7 +727,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
       });
       expect(hit.line).toBe(3);
       expect(hit.rawLine).toBe(4);
-      expect(hit.status).toContain('data watchpoint hit');
+      expect(hit.status).toContain('data watchpoint changed');
       expect(hit.status).toContain('watchpoints.py:3');
       expect(hit.currentDecorationLines).toEqual([3]);
       expect(hit.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-after']);
@@ -730,8 +764,115 @@ test.describe.serial('Python debugger replay variable edits', () => {
         const ctl = window._tutorial && window._tutorial._debuggerCtl;
         const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
         return ctl && snap && ctl.historyIdx === hitIdx && snap.watchpoint_origin && snap.watchpoint_origin.line === 3 &&
-          /rewound to data watchpoint/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+          /rewound to data change/.test(ctl.statusEl && ctl.statusEl.textContent || '');
       }, hit.hitIdx, { timeout: DEBUG_TIMEOUT });
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('data watchpoints use GDB-style value-change semantics', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'watch-change.py', WATCHPOINT_VALUE_CHANGE_CODE, [2]);
+      await continueToLine(page, 2, 'watch-change\\.py$');
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('watch-change.py', 2);
+        ctl.addWatchpoint('flag');
+        ctl.handleToolbarCmd('watchContinue');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const value = snap && snap.watches && snap.watches.flag;
+        return ctl && ctl.paused && snap && value && value.repr === 'True' &&
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const firstHit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          idx: ctl.historyIdx,
+          line: snap.line,
+          value: snap.watches.flag && snap.watches.flag.repr,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+        };
+      });
+      expect(firstHit.value).toBe('True');
+      expect(firstHit.status).toContain('data watchpoint changed');
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('watchContinue'));
+      await page.waitForFunction((firstIdx) => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const value = snap && snap.watches && snap.watches.flag;
+        return ctl && ctl.paused && ctl.historyIdx > firstIdx && snap &&
+          value && value.repr === 'False' &&
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, firstHit.idx, { timeout: DEBUG_TIMEOUT });
+
+      const secondHit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          idx: ctl.historyIdx,
+          line: snap.line,
+          value: snap.watches.flag && snap.watches.flag.repr,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+        };
+      });
+      expect(secondHit.idx).toBeGreaterThan(firstHit.idx);
+      expect(secondHit.value).toBe('False');
+      expect(secondHit.status).toContain('data watchpoint changed');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('numeric data watchpoints stop on truthy value changes', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'watch-number-change.py', WATCHPOINT_NUMBER_CHANGE_CODE, [2]);
+      await continueToLine(page, 2, 'watch-number-change\\.py$');
+
+      await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        ctl.removeBreakpoint('watch-number-change.py', 2);
+        ctl.addWatchpoint('value');
+        ctl.handleToolbarCmd('watchContinue');
+      });
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const value = snap && snap.watches && snap.watches.value;
+        return ctl && ctl.paused && snap && value && value.repr === '2' &&
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const firstHit = await page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        const snap = ctl.history[ctl.historyIdx];
+        return {
+          idx: ctl.historyIdx,
+          value: snap.watches.value && snap.watches.value.repr,
+          status: ctl.statusEl && ctl.statusEl.textContent,
+        };
+      });
+      expect(firstHit.value).toBe('2');
+      expect(firstHit.status).toContain('data watchpoint changed');
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('watchContinue'));
+      await page.waitForFunction((firstIdx) => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        const value = snap && snap.watches && snap.watches.value;
+        return ctl && ctl.paused && ctl.historyIdx > firstIdx && snap &&
+          value && value.repr === '3' &&
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+      }, firstHit.idx, { timeout: DEBUG_TIMEOUT });
     } finally {
       await page.close();
     }
@@ -939,7 +1080,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
         const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
         return ctl && ctl.paused && snap && snap.watchpoint_origin &&
           snap.watchpoint_origin.line === 4 &&
-          /data watchpoint hit/.test(ctl.statusEl && ctl.statusEl.textContent || '');
+          /data watchpoint changed/.test(ctl.statusEl && ctl.statusEl.textContent || '');
       }, null, { timeout: DEBUG_TIMEOUT });
 
       const hit = await page.evaluate(() => {
@@ -952,7 +1093,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
           transportWatches: ctl.session.watches,
         };
       });
-      expect(hit.rawLine).toBe(5);
+      expect(hit.rawLine).toBe(2);
       expect(hit.originLine).toBe(4);
       expect(hit.watch && hit.watch.repr).toBe('True');
       expect(hit.transportWatches).toContain('marker == 0');
@@ -995,7 +1136,7 @@ test.describe.serial('Python debugger replay variable edits', () => {
       });
       expect(state.output).toMatch(/\b28\b/);
       expect(state.watchpoints).toEqual([]);
-      expect(state.status).toBe('finished');
+      expect(state.status).toBe('');
     } finally {
       await page.close();
     }
@@ -1037,6 +1178,51 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(state.watches).toEqual([]);
       expect(state.transportWatches).toEqual([]);
       expect(state.snapshotWatches).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('any normal watch expression can become a data watchpoint', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await startDebuggerWithBreakpoints(page, 'promote-watch.py', LIVE_UPDATE_CODE, [3]);
+      await continueToLine(page, 3, 'promote-watch\\.py$');
+
+      await page.evaluate(() => window._tutorial._debuggerCtl.addNormalWatch('total'));
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && !ctl.session?.runtimeSyncInFlight &&
+          snap && snap.watches && snap.watches.total && snap.watches.total.repr === '0';
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const before = await page.evaluate(() => {
+        const root = window._tutorial.root;
+        const ctl = window._tutorial._debuggerCtl;
+        return {
+          promoteButtons: root.querySelectorAll('.tvm-debug-watch-promote').length,
+          watches: ctl.getNormalWatches(),
+          watchpoints: ctl.getEnabledWatchpoints(),
+        };
+      });
+      expect(before.promoteButtons).toBe(1);
+      expect(before.watches).toEqual(['total']);
+      expect(before.watchpoints).toEqual([]);
+
+      await page.locator('.tvm-debug-watch-promote').click();
+      await expect.poll(async () => page.evaluate(() => {
+        const ctl = window._tutorial._debuggerCtl;
+        return {
+          watches: ctl.getNormalWatches(),
+          watchpoints: ctl.getEnabledWatchpoints().map(wp => wp.expr),
+          transportWatches: ctl.session.watches,
+        };
+      })).toEqual({
+        watches: [],
+        watchpoints: ['total'],
+        transportWatches: ['total'],
+      });
     } finally {
       await page.close();
     }

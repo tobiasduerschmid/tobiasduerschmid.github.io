@@ -61,6 +61,12 @@ var textDecoder = new TextDecoder();
 var debuggerInstance = null;     // TimeTravelDebugger pyproxy
 var debuggerPySrc = null;         // raw Python source, fetched once
 
+function decodeSharedJsonBytes(offset, len) {
+  var copy = new Uint8Array(len);
+  copy.set(u8.subarray(offset, offset + len));
+  return textDecoder.decode(copy);
+}
+
 // Register handlers in the slot the base worker (`_debuggerHandlers`)
 // dispatches to. The base worker's onmessage routes any msg.type matching
 // a key here to our handler.
@@ -176,28 +182,25 @@ function handleRunDebug(msg) {
         var out = null;
         if (Atomics.load(i32, SLOT_WATCHES_DIRTY) === 1) {
           var len = Atomics.load(i32, SLOT_WATCHES_LEN);
-          var bytes = u8.subarray(WATCH_OFF, WATCH_OFF + len);
           try {
             out = out || {};
-            out.watches = JSON.parse(textDecoder.decode(bytes));
+            out.watches = JSON.parse(decodeSharedJsonBytes(WATCH_OFF, len));
           } catch (e) { /* ignore corrupt payload */ }
           Atomics.store(i32, SLOT_WATCHES_DIRTY, 0);
         }
         if (Atomics.load(i32, SLOT_BPS_DIRTY) === 1) {
           var bplen = Atomics.load(i32, SLOT_BPS_LEN);
-          var bpbytes = u8.subarray(BPS_OFF, BPS_OFF + bplen);
           try {
             out = out || {};
-            out.breakpoint_changes = JSON.parse(textDecoder.decode(bpbytes));
+            out.breakpoint_changes = JSON.parse(decodeSharedJsonBytes(BPS_OFF, bplen));
           } catch (e) { /* ignore */ }
           Atomics.store(i32, SLOT_BPS_DIRTY, 0);
         }
         if (Atomics.load(i32, SLOT_EDITS_DIRTY) === 1) {
           var eLen = Atomics.load(i32, SLOT_EDITS_LEN);
-          var eBytes = u8.subarray(EDITS_OFF, EDITS_OFF + eLen);
           try {
             out = out || {};
-            out.live_edits = JSON.parse(textDecoder.decode(eBytes));
+            out.live_edits = JSON.parse(decodeSharedJsonBytes(EDITS_OFF, eLen));
           } catch (e) { /* ignore */ }
           Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
         }
