@@ -181,14 +181,6 @@ steps:
 
       - [pytest — Get started](https://docs.pytest.org/en/stable/getting-started.html)
       - [Python — `assert` statement](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement)
-      - If you get stuck on the test, click **Show Solution** below the editor for one possible form.
-      </details>
-
-      <details markdown="1"><summary>🪞 Self-check (open after running, answer from memory)</summary>
-
-      - What two pieces of information does pytest's failure message give you? *(Discriminator: it names which test failed AND on which assertion the values diverged. If you said "pass or fail," you were thinking of the bar, not the message.)*
-      - Why is "RED for the right reason" worth distinguishing from "RED for any reason"? *(Discriminator: a `SyntaxError` proves nothing about the unit; an `ImportError` proves the unit is missing.)*
-      - If you had to write a test for a `multiply(a, b)` function from scratch, what four parts would it contain? *(Import • test_ function • arrange+act • assert.)*
       </details>
 
     files:
@@ -355,15 +347,6 @@ steps:
       - **`@dataclass` without `frozen=True`** — passes cycle 1, but cycle 2's tuple comparisons of value objects need the structural `__eq__` that frozen dataclasses provide.
       - **`if not dice: ...`** — speculative branching. The empty-tuple default already handles the empty case.
 
-      If you get genuinely stuck, click **Show Solution** below the editor for one possible form.
-      </details>
-
-      <details markdown="1"><summary>🪞 Self-check (open after green, answer from memory)</summary>
-
-      - What three things does `@dataclass` write for you that you'd otherwise type by hand?
-      - Why is `@property` a better fit than a plain method for `total_damage` *given how the test reads it*?
-      - What does `frozen=True` buy us, and which later cycle will first rely on it?
-      - What four obligations does the cycle-1 test impose — derived from reading the test alone?
       </details>
 
     files:
@@ -950,10 +933,6 @@ steps:
 
       > **Why deliberately keeping ugly code is the disciplined move.** You can clearly see duplication. Refactoring it now would be *guessing* at the right shape with one too few data points. Cycle 4's test will provide the second data point — and the loop refactor it earns is a discovery, not a guess. **Refactor toward duplication, not before it.**
 
-      Click **Show Solution** below the editor if you need one form of the test + GREEN code.
-
-      🪞 **Pause (10 seconds, after green):** the discomfort you may feel right now ("this is obviously duplicated, just *fix it*") is real. Spend 10 seconds writing down: *what would happen if you acted on it now?* (We'll see in cycle 4.)
-
     files:
       - path: "scorer.py"
         content: |
@@ -1146,8 +1125,6 @@ steps:
 
       A third hardcoded branch passes cycle 4. But cycle 5 ([1, 5]) will then need a fourth branch, cycle 6 (triple 1s) a fifth, and the loop refactor still has to happen — only now you have more code to delete. *Locally smallest* (one new `if`) is *globally largest*.
       </details>
-
-      Click **Show Solution** if you need to see one form of option B.
 
     files:
       - path: "scorer.py"
