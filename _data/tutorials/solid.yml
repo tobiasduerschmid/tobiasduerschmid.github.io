@@ -443,7 +443,7 @@ steps:
           option_feedback:
             3: "SOLID is about *axes of change* — who requests changes and why — not file size. A 400-line class serving one actor is fine; a 40-line class serving three actors is the real problem. Folk rules like \"≤60 lines per class\" *correlate* with good design but don't *cause* it; using them as the argument confuses symptom with cause."
           explanation: |
-            The first three are substantive architectural arguments — future-change risk, multi-audience coupling, and cross-team coordination cost. These are exactly what you'll hear senior engineers say in code review. The fourth option (line count) is a superficial rule of thumb; SOLID isn't about counting lines, it's about *actors* and *reasons to change*. A 400-line class serving one actor can be fine. A 40-line class serving three actors is a bomb.
+            The strongest pushback against shipping is architectural — future-change risk, multi-audience coupling, and cross-team coordination cost. These are exactly what you'll hear senior engineers say in code review. SOLID is about *actors* and *reasons to change*, not about file size: a 400-line class serving one actor can be fine, and a 40-line class serving three actors is a bomb.
 
 
   # --------------------------------------------------------------------------

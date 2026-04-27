@@ -172,7 +172,7 @@ questions:
         Lifetime management can be legitimate on its own. The risk is bundling it with global access, which spreads hidden coupling through the codebase.
       3: |
         Singleton is not primarily a performance pattern. It can be faster, slower, or irrelevant depending on initialization and access costs; performance alone is not the general critique here.
-    explanation: "**Singleton should be avoided because it hides dependencies, conflates lifetime with global access, and the 'one instance' assumption often proves false — it is not a performance issue.** The first three are all well-documented criticisms of Singleton. (1) `getInstance()` is a hardcoded dependency with no seam for test doubles. (2) Many singletons later need per-tenant, per-thread, or per-test instances. (3) POSA5 argues it conflates two concerns: lifetime management (legitimate) and global access (harmful). The fourth option is false — Singleton is about controlling instances, not about performance."
+    explanation: "**Singleton should be avoided because it hides dependencies, conflates lifetime with global access, and the 'one instance' assumption often proves false — it is not a performance issue.** Three substantive criticisms apply: (1) `getInstance()` is a hardcoded dependency with no seam for test doubles; (2) many singletons later need per-tenant, per-thread, or per-test instances; (3) POSA5 argues Singleton conflates two concerns — lifetime management (legitimate) and global access (harmful). Performance is not part of the standard critique — Singleton is about controlling instances, not about speed."
 
   - id: 10
     type: single

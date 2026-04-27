@@ -1,17 +1,18 @@
 ---
 name: quiz-format
-description: Authoring guide for the SEBook quiz YAML format — schema, pedagogy of misconception feedback, and example questions. Use this skill EVERY TIME you're creating, editing, reviewing, or generating new content for any quiz file under `_data/quizzes/*.yml` (SEBook + SEGym standalone quizzes) or `_data/tutorials/*.yml` (in-tutorial step quizzes nested under `quiz:`). Also trigger on requests like "add a quiz on X", "improve this question", "draft a few quiz questions about Y", "what's the format for option_feedback", "review my quiz", "this quiz is missing wrong-answer feedback", or any task that involves writing the `option_feedback`, `correct_indices`, `optional_indices`, `lines`, or `distractors` fields. The format has a non-obvious sparse-hash field for per-option misconception feedback that authors regularly get wrong without this guide.
+description: Authoring guide for the SEBook quiz YAML format — schema, pedagogy of misconception feedback, shuffle-safe authoring, and example questions. Use this skill EVERY TIME you're creating, editing, reviewing, or generating new content for any quiz file under `_data/quizzes/*.yml` (SEBook + SEGym standalone quizzes) or `_data/tutorials/*.yml` (in-tutorial step quizzes nested under `quiz:`). Also trigger on requests like "add a quiz on X", "improve this question", "draft a few quiz questions about Y", "what's the format for option_feedback", "review my quiz", "this quiz is missing wrong-answer feedback", "fix references to Option A/B in explanations", "audit quiz explanations for letter references", or any task that involves writing the `option_feedback`, `correct_indices`, `optional_indices`, `lines`, or `distractors` fields. The format has two non-obvious traps authors regularly hit without this guide: a sparse-hash field for per-option misconception feedback, and a shuffle mechanism that makes any "Option A/B" letter reference or "the third choice" position reference in an `explanation` unstable at render time.
 ---
 
 # SEBook quiz authoring
 
 This SEBook project has a custom YAML quiz format used in three places — SEBook chapters, SEGym workouts, and tutorial step gates — all driven by the same schema. The point of this skill is to keep quizzes pedagogically sharp, especially the per-option misconception feedback.
 
-If you only remember three things:
+If you only remember four things:
 
 1. **`option_feedback` is a sparse hash, not an array.** Keys are integer indices into `options`. Only add entries for options where you can name an actual misconception. Don't fill in entries for trivially-wrong distractors.
 2. **Per-option feedback corrects the mental model.** It is *not* a second copy of the general `explanation`. Clarify the wrong reasoning directly, point at the proximate distinction, stay under three sentences. Do not use the word "misconception" or label the error — just clarify.
 3. **Triggering rules are asymmetric.** `option_feedback[i]` only fires when option `i` was *answered* wrongly — selected when wrong (commission) or unselected when correct in multi-choice (omission). It never fires for `optional_indices` entries, and it never fires when the question is fully right.
+4. **Options shuffle at render time.** "Option A" / "the third choice" / "the last one" in an `explanation` is a position reference into the YAML order — but the student sees a randomized order. Per-option reasoning belongs in `option_feedback[i]`, where the index is bound to content, not display position. If you must mention an option in `explanation`, refer to it by its *content* ("the spread-operator approach", "the `&&` short-circuit"), never by letter or ordinal. See the **Shuffle safety** section below.
 
 For longer-form material:
 - **`references/schema.md`** — full YAML reference for `single`, `multiple`, and `parsons` types, including tutorial-step nesting and the `min_score`/`shuffle` gating fields. Read this if you're authoring an unusual question type or debugging a Liquid render issue.
@@ -78,6 +79,69 @@ DON'T:
 - Add option_feedback to `optional_indices` options — it never fires there.
 - Add option_feedback to options whose wrongness is obvious from the question text alone (a syntactically malformed distractor, a year that's clearly wrong) — there's no real reasoning to correct.
 
+## Shuffle safety: never reference options by letter or position
+
+Quiz options shuffle at render time by default — `_includes/quiz.html` and `js/tutorial-quiz.js` both run a Fisher-Yates pass on the options array before showing the question. Tutorial quizzes also shuffle the *questions* themselves (`shuffle: true` is the default, settable per-quiz). Standalone SEBook/SEGym quizzes shuffle options too.
+
+So what you wrote at `options[1]` in YAML can appear to the student as A, B, C, or D depending on the seed. The trap is anything in `explanation:` (or `question:`, or anywhere outside `option_feedback`) that names an option by its *position* in the rendered list:
+
+- **Letter labels:** "Option A", "Option B", "answer C", "choice D"
+- **Ordinals:** "the first option", "the second answer", "the third choice", "the last one"
+- **Spatial:** "the option above", "the one below"
+
+Once shuffled, none of these anchors line up with what the student sees, and the explanation becomes nonsense. This is the single most common authoring bug we hit.
+
+### The rule
+
+**Per-option reasoning belongs in `option_feedback[i]`, keyed by the option's *content* via its YAML index.** The renderer fires `option_feedback[1]` whenever the student picks the option that was at YAML index 1 — regardless of where the renderer placed it on screen. The general `explanation:` should describe only the correct answer (or the underlying principle).
+
+If you need to mention an option in `explanation`, refer to it by what it does: "the spread-operator approach", "the `&&` short-circuit", "the variant that uses `$()`". Content-anchored references survive shuffling.
+
+### Stable exceptions (these are not position references)
+
+Two cases look like position references but aren't:
+
+1. **Code-block labels inside a question body.** A question whose code snippet has `// Option A` and `// Option B` as comments is naming those *code blocks*, not answer positions. The labels are part of the question text and never shuffle. `_data/tutorials/nodejs.yml` (the Promise.all question) is the canonical example — see `references/shuffle-safety.md`.
+2. **`correct_index` / `correct_indices`** — these are renderer-internal, not student-facing.
+
+If unsure, ask: *"Will this letter or number still mean the same thing after the renderer randomizes the order?"* If no, fix it.
+
+### Quick worked example: shell pipelines
+
+Before (broken — references "Option D" and "Option B" by letter):
+
+```yaml
+correct_index: 0
+explanation: "Chaining `grep | grep | wc -l` correctly pipes each command's stdout into the next. Option D tries to use `$(...)` to pass filtered text as an argument… Option B uses `&&` (run next only if previous succeeds)…"
+```
+
+After (per-option reasoning lives in `option_feedback`, the explanation covers only the correct answer):
+
+```yaml
+correct_index: 0
+option_feedback:
+  1: "`&&` runs the next command only if the previous succeeded — it does not connect their output…"
+  2: "`>` redirects stdout to a file; here it would create a file named `grep` instead of piping…"
+  3: "`$(grep ...)` captures lines as a string and passes them as an argument to `wc -l`…"
+explanation: "Chaining `grep | grep | wc -l` pipes each command's stdout directly into the next command's stdin — the standard way to build multi-stage filters in Bash."
+```
+
+No string in the file mentions "Option A/B/C/D" by letter, and the `option_feedback` indices stay bound to the right rationale even after the renderer shuffles.
+
+### Auditing existing files
+
+To find offenders quickly:
+
+```bash
+grep -rn "Option [A-D]\b\|the \(first\|second\|third\|fourth\|last\) \(option\|answer\|choice\)" \
+  _data/tutorials _data/quizzes \
+  | grep -v "_old\." | grep -v "_backup\." | grep -v "option_feedback"
+```
+
+Watch for "Options A and B…", "option C…", "the third choice…", and ordinal phrasings. The grep filters skip backup files (`*_old.yml`, `*_backup.yml`) and the field name `option_feedback` (which contains "option" but isn't a position reference).
+
+For the full step-by-step "audit and fix" recipe, several before/after worked examples, and the canonical stable-exception case, see **`references/shuffle-safety.md`**.
+
 ## Authoring checklist
 
 Before merging a quiz file with new `option_feedback`:
@@ -91,6 +155,7 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] For multi-choice: omission feedback added on correct options where forgetting to select matters.
 - [ ] Feedback does not duplicate the `explanation:` field.
 - [ ] No second-person blame; misconception is framed in the third person.
+- [ ] **Shuffle-safe**: no letter or ordinal references ("Option A", "the third choice", "the last one", etc.) in `explanation:`, `question:`, or anywhere outside `option_feedback`. Per-option reasoning lives in `option_feedback`; the `explanation` covers only the correct answer or underlying principle.
 - [ ] For tutorial quizzes: `min_score:` set deliberately (default 0.8), or omitted if you accept the default.
 
 ## File pointers (project structure)
