@@ -106,6 +106,7 @@
       watches: cfg.watches || [],
       options: cfg.options || {},
       overrides: cfg.overrides || [],
+      exceptionBreakpoints: cfg.exceptionBreakpoints || [],
     });
   };
 

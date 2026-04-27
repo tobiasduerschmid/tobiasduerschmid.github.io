@@ -117,16 +117,22 @@
         if (!line || line < 1 || line > maxLine) continue;
         if (cur && cur.path === path && cur.line === line) continue;
         var info = bps[line] || {};
-        var glyphClass = info.condition
+        var hasModifier = !!(info.condition || info.hitCount);
+        var glyphClass = hasModifier
           ? 'tvm-bp-glyph tvm-bp-cond' + (info.condError ? ' tvm-bp-error' : '')
           : 'tvm-bp-glyph';
+        var msgParts = [];
+        if (info.condition) msgParts.push('when `' + info.condition + '`');
+        if (info.hitCount) msgParts.push('after ' + info.hitCount + ' hits');
+        var msg = msgParts.length
+          ? 'Breakpoint (' + msgParts.join(', ') + ')'
+          : 'Breakpoint';
+        if (info.condError) msg += '\n\n⚠️ ' + info.condError;
         decos.push({
           range: new monaco.Range(line, 1, line, 1),
           options: {
             glyphMarginClassName: glyphClass,
-            glyphMarginHoverMessage: { value: info.condition
-              ? 'Breakpoint (when `' + info.condition + '`)' + (info.condError ? '\n\n⚠️ ' + info.condError : '')
-              : 'Breakpoint' },
+            glyphMarginHoverMessage: { value: msg },
           },
         });
       }

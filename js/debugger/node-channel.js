@@ -101,6 +101,7 @@
           args: cfg.args || [],
           options: cfg.options || {},
           overrides: cfg.overrides || [],
+          exceptionBreakpoints: cfg.exceptionBreakpoints || [],
         };
         return self.writer.write(JSON.stringify(init) + '\n');
       })
@@ -272,6 +273,16 @@
     if (!Array.isArray(edits) || !edits.length) return true;
     this._pendingLiveEdits = (this._pendingLiveEdits || []).concat(edits);
     return true;
+  };
+
+  NodeChannel.prototype.sendExceptionBreakpoints = function (excBps) {
+    var next = (excBps || []).slice();
+    if (!this.writer) {
+      this._pendingExceptionBps = next;
+      return true;
+    }
+    this._pendingExceptionBps = null;
+    return this._writeRuntimeUpdate({ exception_breakpoints: next });
   };
 
   // Expose

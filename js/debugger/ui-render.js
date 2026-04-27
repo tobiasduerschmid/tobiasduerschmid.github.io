@@ -65,6 +65,16 @@
         "<circle cx='8.5' cy='12' r='1.35' fill='currentColor'/>" +
         "<path d='M14 7h5M14 12h5M14 17h5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
     }
+    if (name === 'playException') {
+      return svg + "<polygon points='5,4 15,12 5,20' fill='currentColor'/>" +
+        "<path d='M 18,5.5 L 18,13' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/>" +
+        "<circle cx='18' cy='17' r='1.4' fill='currentColor'/></svg>";
+    }
+    if (name === 'backException') {
+      return svg + "<polygon points='19,4 9,12 19,20' fill='currentColor'/>" +
+        "<path d='M 6,5.5 L 6,13' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/>" +
+        "<circle cx='6' cy='17' r='1.4' fill='currentColor'/></svg>";
+    }
     return '';
   }
   function debugToolbarIcon(name) {
@@ -293,7 +303,8 @@
       var b = btns[i];
       var cmd = b.getAttribute('data-cmd');
       // Reverse-time controls and Stop are always available during a session.
-      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' || cmd === 'stop');
+      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
+                      cmd === 'exceptionBack' || cmd === 'exceptionForward' || cmd === 'stop');
       b.disabled = !alwaysOn && disabled;
     }
     var statusEl = rootEl.querySelector('.tvm-debug-status');
@@ -718,7 +729,10 @@
         var info = breakpoints[path][line] || {};
         var cond = info.condition
           ? '<span class="tvm-debug-manager-condition">when ' + helpers.escape(info.condition) + '</span>'
-          : '<span class="tvm-debug-manager-muted">unconditional</span>';
+          : (info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
+        var hits = info.hitCount
+          ? '<span class="tvm-debug-manager-hitcount">after ' + info.hitCount + ' hits</span>'
+          : '';
         var err = info.condError
           ? '<span class="tvm-debug-manager-error">' + helpers.escape(info.condError) + '</span>'
           : '';
@@ -727,7 +741,7 @@
           '<span class="tvm-debug-manager-dot"></span>' +
           '<span class="tvm-debug-manager-main">' +
           '<span class="tvm-debug-manager-title">' + helpers.escape(helpers.basename(path)) + ':' + line + '</span>' +
-          cond + err +
+          cond + hits + err +
           '</span>' +
           '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
           '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
@@ -764,13 +778,43 @@
       '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
       '</div>';
 
+    var exceptionBps = state.exceptionBreakpoints || [];
+    var ebRows = exceptionBps.map(function (eb) {
+      var disabled = eb.enabled === false;
+      var typeAttr = helpers.escape(eb.type || '');
+      var modeAll = eb.mode === 'all';
+      return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
+        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint') + '">' +
+        '<input type="checkbox" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span>' +
+        '</label>' +
+        '<span class="tvm-debug-manager-main">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<span class="tvm-debug-manager-exc-modes">' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
+        '</span>' +
+        '</span>' +
+        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
+        '</div>';
+    });
+    var exceptionControls =
+      '<div class="tvm-debug-manager-actions">' +
+      '<button class="tvm-debug-manager-run" data-exc-add="1">' + debugManagerIcon('plus') + '<span>Add Exception Breakpoint</span></button>' +
+      '<button class="tvm-debug-manager-run" data-exc-run-all="1">' + debugManagerIcon('playException') + '<span>Run to Exception</span></button>' +
+      '<button class="tvm-debug-manager-run" data-exc-back-all="1">' + debugManagerIcon('backException') + '<span>Run Back to Exception</span></button>' +
+      '</div>';
+
     view.innerHTML =
       '<div class="tvm-debug-manager">' +
       renderBreakpointGroup('manager-code-breakpoints', 'Code Breakpoints',
         bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>', helpers) +
       renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
-        wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>', helpers) +
-      watchpointControls +
+        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers) +
+      renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
+        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls, helpers) +
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
@@ -889,6 +933,55 @@
     if (runAll) runAll.addEventListener('click', function () { dispatch({ type: 'runToWatchpoint' }); });
     var backAll = view.querySelector('[data-wp-back-all]');
     if (backAll) backAll.addEventListener('click', function () { dispatch({ type: 'runBackToWatchpoint' }); });
+
+    var excToggles = view.querySelectorAll('[data-exc-toggle]');
+    for (var et = 0; et < excToggles.length; et++) {
+      (function (el) {
+        el.addEventListener('change', function () { dispatch({ type: 'toggleExceptionBreakpoint', id: el.getAttribute('data-exc-toggle') }); });
+      })(excToggles[et]);
+    }
+    var excTypes = view.querySelectorAll('[data-exc-type]');
+    for (var ety = 0; ety < excTypes.length; ety++) {
+      (function (el) {
+        var commit = function () { dispatch({ type: 'editExceptionBreakpoint', id: el.getAttribute('data-exc-type'), type: el.value }); };
+        el.addEventListener('change', commit);
+        el.addEventListener('blur', commit);
+        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+      })(excTypes[ety]);
+    }
+    var excModes = view.querySelectorAll('[data-exc-mode]');
+    for (var em = 0; em < excModes.length; em++) {
+      (function (el) {
+        el.addEventListener('change', function () {
+          if (!el.checked) return;
+          dispatch({ type: 'editExceptionBreakpoint', id: el.getAttribute('data-exc-mode'), mode: el.value });
+        });
+      })(excModes[em]);
+    }
+    var excRunBtns = view.querySelectorAll('[data-exc-run]');
+    for (var er = 0; er < excRunBtns.length; er++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { dispatch({ type: 'runToExceptionBreakpoint', id: btn.getAttribute('data-exc-run') }); });
+      })(excRunBtns[er]);
+    }
+    var excBackBtns = view.querySelectorAll('[data-exc-back]');
+    for (var eb2 = 0; eb2 < excBackBtns.length; eb2++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { dispatch({ type: 'runBackToExceptionBreakpoint', id: btn.getAttribute('data-exc-back') }); });
+      })(excBackBtns[eb2]);
+    }
+    var excRemoveBtns = view.querySelectorAll('[data-exc-remove]');
+    for (var ex = 0; ex < excRemoveBtns.length; ex++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { dispatch({ type: 'removeExceptionBreakpoint', id: btn.getAttribute('data-exc-remove') }); });
+      })(excRemoveBtns[ex]);
+    }
+    var excAddBtn = view.querySelector('[data-exc-add]');
+    if (excAddBtn) excAddBtn.addEventListener('click', function () { dispatch({ type: 'addExceptionBreakpoint' }); });
+    var excRunAllBtn = view.querySelector('[data-exc-run-all]');
+    if (excRunAllBtn) excRunAllBtn.addEventListener('click', function () { dispatch({ type: 'runToExceptionBreakpoint' }); });
+    var excBackAllBtn = view.querySelector('[data-exc-back-all]');
+    if (excBackAllBtn) excBackAllBtn.addEventListener('click', function () { dispatch({ type: 'runBackToExceptionBreakpoint' }); });
   }
 
   // -- History --------------------------------------------------------------

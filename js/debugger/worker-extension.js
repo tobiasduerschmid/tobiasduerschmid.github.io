@@ -20,11 +20,12 @@
  *   [6]  edits_len        bytes length of live edits payload
  *
  * SAB layout (Uint8 view, payload regions):
- *   [WATCH_OFF .. WATCH_OFF + 32KB)  watches JSON (UTF-8)
- *   [BPS_OFF   .. BPS_OFF   + 32KB)  bps JSON (UTF-8)
- *   [EDITS_OFF .. EDITS_OFF + 32KB)  live edit JSON (UTF-8)
+ *   [WATCH_OFF  .. WATCH_OFF  + 32KB)  watches JSON (UTF-8)
+ *   [BPS_OFF    .. BPS_OFF    + 32KB)  bps JSON (UTF-8)
+ *   [EDITS_OFF  .. EDITS_OFF  + 32KB)  live edit JSON (UTF-8)
+ *   [EXCBPS_OFF .. EXCBPS_OFF + 32KB)  exception breakpoints JSON (UTF-8)
  *
- * Total SAB size: 96KB + 32 bytes header — comfortable budget.
+ * Total SAB size: 128KB + 64 bytes header — comfortable budget.
  */
 
 'use strict';
@@ -34,13 +35,15 @@
 var TTD_VERSION = '0.6.5-module-source-replay';
 self.postMessage({ type: 'log', msg: '[ttd worker] loaded v' + TTD_VERSION });
 
-var SAB_HEADER_BYTES = 32;          // 8 Int32 slots
+var SAB_HEADER_BYTES = 64;          // 16 Int32 slots
 var WATCH_REGION_BYTES = 32 * 1024;
 var BPS_REGION_BYTES = 32 * 1024;
 var EDITS_REGION_BYTES = 32 * 1024;
+var EXCBPS_REGION_BYTES = 32 * 1024;
 var WATCH_OFF = SAB_HEADER_BYTES;
 var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
 var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
+var EXCBPS_OFF = EDITS_OFF + EDITS_REGION_BYTES;
 
 var SLOT_CMD = 0;
 var SLOT_WATCHES_DIRTY = 1;
@@ -49,6 +52,8 @@ var SLOT_EDITS_DIRTY = 3;
 var SLOT_WATCHES_LEN = 4;
 var SLOT_BPS_LEN = 5;
 var SLOT_EDITS_LEN = 6;
+var SLOT_EXCBPS_DIRTY = 7;
+var SLOT_EXCBPS_LEN = 8;
 
 // Block-condition constant for Atomics.wait — we wait while [SLOT_CMD] === 0,
 // so all real commands are 1..5 (no 0).
@@ -86,6 +91,7 @@ function handleDebugInit(msg) {
   Atomics.store(i32, SLOT_WATCHES_DIRTY, 0);
   Atomics.store(i32, SLOT_BPS_DIRTY, 0);
   Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
+  Atomics.store(i32, SLOT_EXCBPS_DIRTY, 0);
 }
 
 function fetchPySrc() {
@@ -207,6 +213,14 @@ function handleRunDebug(msg) {
           } catch (e) { /* ignore */ }
           Atomics.store(i32, SLOT_EDITS_DIRTY, 0);
         }
+        if (Atomics.load(i32, SLOT_EXCBPS_DIRTY) === 1) {
+          var ebLen = Atomics.load(i32, SLOT_EXCBPS_LEN);
+          try {
+            out = out || {};
+            out.exception_breakpoints = JSON.parse(decodeSharedJsonBytes(EXCBPS_OFF, ebLen));
+          } catch (e) { /* ignore */ }
+          Atomics.store(i32, SLOT_EXCBPS_DIRTY, 0);
+        }
         // Return JSON rather than a raw JS object. Pyodide JsProxy.to_py()
         // conversion has been unreliable for nested arrays across versions,
         // and live_edits must arrive exactly or variable writeback is skipped.
@@ -225,12 +239,26 @@ function handleRunDebug(msg) {
       var optsJson = JSON.stringify(opts || {});
       var dbg = ttdMake(postPausedCb, waitForCommandCb, consumePendingCb, watchesJson, optsJson);
 
-      // Install all initial breakpoints. Each: {file, line, condition?}
+      // Install all initial breakpoints. Each: {file, line, condition?, hitCount?}
       bps.forEach(function (bp) {
         try {
-          dbg.set_break(bp.file, bp.line, false, bp.condition || null);
-        } catch (e) { /* surface? */ }
+          dbg.set_break(bp.file, bp.line, false, bp.condition || null, null, bp.hitCount || bp.hit_count || null);
+        } catch (e) {
+          // Older signatures: fall back to no hit_count.
+          try { dbg.set_break(bp.file, bp.line, false, bp.condition || null); } catch (e2) { /* surface? */ }
+        }
       });
+
+      // Initial Exception Breakpoints config — Python side reads this for
+      // pause filtering and caught/uncaught classification.
+      try {
+        var initialExcBps = msg.exceptionBreakpoints || [];
+        var setterRef = pyodide.globals.get('_ttd_set_exc_bps');
+        if (setterRef) {
+          setterRef(dbg, JSON.stringify(initialExcBps));
+          setterRef.destroy && setterRef.destroy();
+        }
+      } catch (e) { /* no setter — older python module; ignore */ }
 
       debuggerInstance = dbg;
 

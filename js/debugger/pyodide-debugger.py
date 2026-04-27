@@ -181,6 +181,9 @@ class TimeTravelDebugger(bdb.Bdb):
         self._cap_warned = False
         self._stop_flag = False
         self._runtime_breaks = {}
+        # List of {id, enabled, type, mode} from the UI. Exception events pause
+        # only if at least one entry matches; navigation uses the same predicate.
+        self._exception_breakpoints = []
 
         # Per-frame call identity so UI Step-Back-Over knows "same activation".
         self._call_counter = 0
@@ -220,7 +223,7 @@ class TimeTravelDebugger(bdb.Bdb):
         self._set_stopinfo(self.botframe, None, -1)
 
     def set_break(self, filename, lineno, temporary=False, cond=None,
-                  funcname=None):
+                  funcname=None, hit_count=None):
         if not filename or not lineno:
             return 'Breakpoint filename and line are required'
         try:
@@ -229,10 +232,21 @@ class TimeTravelDebugger(bdb.Bdb):
             return 'Breakpoint line must be a number'
         key = self.canonic(filename)
         per_file = self._runtime_breaks.setdefault(key, {})
+        try:
+            hits = int(hit_count) if hit_count else None
+        except Exception:
+            hits = None
+        if hits is not None and hits < 1:
+            hits = None
+        # Preserve the running hit counter on edits so changing the condition
+        # mid-run doesn't reset progress through a long loop.
+        prev = per_file.get(line) or {}
         per_file[line] = {
             'file': filename,
             'line': line,
             'condition': cond or None,
+            'hit_count': hits,
+            '_hits': prev.get('_hits', 0),
         }
         return None
 
@@ -290,6 +304,24 @@ class TimeTravelDebugger(bdb.Bdb):
                 self._set_caller_tracefunc(frame)
         return self.trace_dispatch
 
+    def dispatch_exception(self, frame, arg):
+        # bdb's default only fires user_exception when stop_here() is true,
+        # which is False during a normal Continue. We want EVERY exception
+        # event in user code to reach user_exception so the Exception
+        # Breakpoint filter can decide whether to pause (and so the snapshot
+        # is recorded for history navigation regardless).
+        if self._is_user_frame(frame):
+            # Pick up any in-flight Exception Breakpoint config changes the
+            # main thread wrote into the EXCBPS SAB region — without this
+            # drain, a raise can fire between line traces and miss a fresh
+            # config update by one tick.
+            self._drain_pending_updates(frame, refresh_last_watch=False,
+                                        apply_live_edits=False)
+            self.user_exception(frame, arg)
+            if self.quitting:
+                raise bdb.BdbQuit
+        return self.trace_dispatch
+
     def user_call(self, frame, args):
         if self._stop_flag:
             return
@@ -341,8 +373,33 @@ class TimeTravelDebugger(bdb.Bdb):
     def user_exception(self, frame, exc_info):
         if self._stop_flag:
             return
-        if self._snapshot(frame, 'exception', exc=exc_info[1]):
-            self._flush_and_block(frame)
+        snapped = self._snapshot(frame, 'exception', exc=exc_info[1])
+        if not snapped:
+            return
+        # Pause only if an Exception Breakpoint matches. The snapshot we just
+        # appended carries `caught` + `type`, so reuse that for the predicate.
+        last = self._buffer[-1] if self._buffer else None
+        if not self._exception_breakpoint_matches(last):
+            return
+        self._flush_and_block(frame)
+
+    def _exception_breakpoint_matches(self, snap):
+        if not snap or snap.get('event') != 'exception':
+            return False
+        info = (snap or {}).get('exception') or {}
+        exc_type = str(info.get('type') or '')
+        caught = bool(info.get('caught'))
+        for eb in (self._exception_breakpoints or []):
+            if not eb.get('enabled', True):
+                continue
+            wanted_type = (eb.get('type') or '').strip()
+            if wanted_type and wanted_type != exc_type:
+                continue
+            mode = eb.get('mode') or 'uncaught'
+            if mode == 'uncaught' and caught:
+                continue
+            return True
+        return False
 
     def _is_user_frame(self, frame):
         filename = frame.f_code.co_filename
@@ -359,6 +416,95 @@ class TimeTravelDebugger(bdb.Bdb):
             f = f.f_back
         return frames
 
+    def _frame_has_active_handler(self, frame):
+        """Best-effort: does this frame have a try/except active for the
+        current bytecode offset? Uses the public exception table on 3.11+,
+        falls back to dis-analyzing SETUP_FINALLY ranges on older pythons.
+        Conservative on failure (returns False — i.e. propagates)."""
+        if frame is None:
+            return False
+        try:
+            code = frame.f_code
+            lasti = frame.f_lasti
+        except Exception:
+            return False
+        # 3.11+: public co_exceptiontable parsing via dis.Bytecode
+        try:
+            tab = getattr(code, 'co_exceptiontable', None)
+            if tab is not None:
+                # Use private parser if available, else manual decode.
+                try:
+                    import dis
+                    entries = dis._parse_exception_table(code) if hasattr(dis, '_parse_exception_table') else []
+                except Exception:
+                    entries = []
+                for e in entries:
+                    start = getattr(e, 'start', None)
+                    end = getattr(e, 'end', None)
+                    if start is None or end is None:
+                        continue
+                    if start <= lasti < end:
+                        return True
+                # If we got the table but couldn't parse, treat absence of a
+                # parser as "unknown" → assume uncaught (conservative).
+                return False
+        except Exception:
+            pass
+        # Pre-3.11 fallback: scan f_code.co_lnotab style SETUP_FINALLY blocks.
+        # CPython 3.10 and earlier exposed handler ranges via blockstack at
+        # runtime, which isn't directly accessible from Python. Use a
+        # heuristic: scan the source for an enclosing try-block via the
+        # frame's source. Returns True if the current line falls inside any
+        # `try:` block whose body has not yet ended at this line.
+        try:
+            import linecache
+            filename = code.co_filename
+            cur_line = frame.f_lineno
+            indent_at = lambda s: len(s) - len(s.lstrip())
+            cur_src = linecache.getline(filename, cur_line)
+            if not cur_src:
+                return False
+            cur_indent = indent_at(cur_src)
+            # Walk upward; if we hit a `try:` at a strictly smaller indent
+            # before hitting any non-blank non-comment at smaller-or-equal
+            # indent that's not also `try`, we're inside a try.
+            ln = cur_line - 1
+            while ln >= 1:
+                src = linecache.getline(filename, ln)
+                if not src or not src.strip() or src.lstrip().startswith('#'):
+                    ln -= 1
+                    continue
+                ind = indent_at(src)
+                if ind < cur_indent:
+                    stripped = src.lstrip()
+                    if stripped.startswith('try:') or stripped.startswith('try '):
+                        return True
+                    # Any other smaller-indent statement closes the search.
+                    return False
+                ln -= 1
+            return False
+        except Exception:
+            return False
+
+    def _exception_will_be_caught(self, frame):
+        """True if the exception raised at `frame` will be caught somewhere
+        in its propagation up the user-frame chain. We walk outward and check
+        each frame's active handler set; if any has a handler in scope, the
+        exception is caught (or at least intercepted). If propagation reaches
+        the outermost user frame with no handler, the exception is uncaught."""
+        f = frame
+        while f is not None:
+            if self._is_user_frame(f) and self._frame_has_active_handler(f):
+                return True
+            # Stop walking once we leave user code at the outer end.
+            if f.f_back is None or not self._is_user_frame(f.f_back):
+                # Final frame; if no handler so far, uncaught.
+                if self._is_user_frame(f) and self._frame_has_active_handler(f):
+                    return True
+                return False
+            f = f.f_back
+        return False
+
     def _break_here(self, frame):
         filename = self.canonic(frame.f_code.co_filename)
         per_file = self._runtime_breaks.get(filename)
@@ -369,19 +515,28 @@ class TimeTravelDebugger(bdb.Bdb):
         if not info:
             return False
         cond = info.get('condition')
-        if not cond:
-            return True
-        try:
-            locals_for_eval = self._effective_locals(frame)
-            return bool(eval(cond, frame.f_globals, locals_for_eval))
-        except Exception as e:
-            self._post({
-                'type': 'breakpointError',
-                'file': info.get('file') or frame.f_code.co_filename,
-                'line': lineno,
-                'error': '{}: {}'.format(type(e).__name__, e),
-            })
-            return True
+        cond_passed = True
+        if cond:
+            try:
+                locals_for_eval = self._effective_locals(frame)
+                cond_passed = bool(eval(cond, frame.f_globals, locals_for_eval))
+            except Exception as e:
+                self._post({
+                    'type': 'breakpointError',
+                    'file': info.get('file') or frame.f_code.co_filename,
+                    'line': lineno,
+                    'error': '{}: {}'.format(type(e).__name__, e),
+                })
+                return True
+        if not cond_passed:
+            return False
+        # Iteration count: only count hits that pass the condition. Fire only
+        # once cumulative hits reach the configured threshold.
+        info['_hits'] = info.get('_hits', 0) + 1
+        threshold = info.get('hit_count')
+        if threshold and info['_hits'] < threshold:
+            return False
+        return True
 
     # --- snapshot construction ---------------------------------------------
 
@@ -411,6 +566,7 @@ class TimeTravelDebugger(bdb.Bdb):
             snap['exception'] = {
                 'type': type(exc).__name__,
                 'message': str(exc),
+                'caught': self._exception_will_be_caught(frame),
             }
         if retval is not None and event == 'return':
             snap['return_value'] = self._serialize(retval, self._depth)
@@ -710,6 +866,9 @@ class TimeTravelDebugger(bdb.Bdb):
                 self._buffer[-1]['watches'] = self._eval_watches(frame)
         for change in (pending.get('breakpoint_changes') or []):
             self._apply_bp_change(change)
+        new_excbps = pending.get('exception_breakpoints')
+        if new_excbps is not None:
+            self._exception_breakpoints = list(new_excbps)
         if apply_live_edits:
             self._apply_live_edits(frame, pending.get('live_edits') or [])
         return True
@@ -722,8 +881,9 @@ class TimeTravelDebugger(bdb.Bdb):
             return
         if op == 'add':
             cond = change.get('condition') or None
+            hits = change.get('hitCount') or change.get('hit_count')
             self._clear_bp_at(f, ln)
-            err = self.set_break(f, ln, cond=cond)
+            err = self.set_break(f, ln, cond=cond, hit_count=hits)
             if err:
                 self._post({'type': 'breakpointError', 'file': f,
                             'line': ln, 'error': str(err)})
@@ -732,7 +892,8 @@ class TimeTravelDebugger(bdb.Bdb):
         elif op == 'edit':
             self._clear_bp_at(f, ln)
             cond = change.get('condition') or None
-            err = self.set_break(f, ln, cond=cond)
+            hits = change.get('hitCount') or change.get('hit_count')
+            err = self.set_break(f, ln, cond=cond, hit_count=hits)
             if err:
                 self._post({'type': 'breakpointError', 'file': f,
                             'line': ln, 'error': str(err)})
@@ -1057,6 +1218,19 @@ def _ttd_make(post_paused, wait_for_command, consume_pending, watches, opts):
     needing to know Python class-construction semantics across the bridge."""
     return TimeTravelDebugger(post_paused, wait_for_command, consume_pending,
                               watches, opts)
+
+
+def _ttd_set_exc_bps(dbg, payload):
+    """JS bridge: hand the debugger the current Exception Breakpoints config
+    as a JSON string. Each entry is {id, enabled, type, mode}."""
+    try:
+        arr = json.loads(payload) if isinstance(payload, str) else payload
+    except Exception:
+        arr = []
+    try:
+        dbg._exception_breakpoints = list(arr or [])
+    except Exception:
+        pass
 
 
 def _ttd_run_with_clean_globals(dbg, code_str, filename, overrides):

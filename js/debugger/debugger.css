@@ -971,6 +971,46 @@
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+.tvm-debug-manager-hitcount {
+  color: #6d4caf;
+  font-size: 11px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.tvm-debug-manager-exception-row.disabled {
+  opacity: 0.55;
+}
+.tvm-debug-manager-exc-type {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-family: 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+  color: #1f2937;
+  background: #fff;
+}
+.tvm-debug-manager-exc-type:focus {
+  outline: 2px solid #6d4caf;
+  outline-offset: -1px;
+}
+.tvm-debug-manager-exc-modes {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #475569;
+}
+.tvm-debug-manager-exc-modes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.tvm-debug-manager-exc-modes input[type="radio"] {
+  margin: 0;
+}
 .tvm-debug-manager-error {
   color: #c0392b;
   font-family: 'Fira Code', Menlo, monospace;
@@ -1433,6 +1473,17 @@ html.dark-mode .tvm-debug-manager-title {
 html.dark-mode .tvm-debug-manager-condition,
 html.dark-mode .tvm-debug-manager-muted,
 html.dark-mode .tvm-debug-manager-value {
+  color: #cbd5e1;
+}
+html.dark-mode .tvm-debug-manager-hitcount {
+  color: #c4a8ff;
+}
+html.dark-mode .tvm-debug-manager-exc-type {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+html.dark-mode .tvm-debug-manager-exc-modes {
   color: #cbd5e1;
 }
 html.dark-mode .tvm-debug-manager-error {

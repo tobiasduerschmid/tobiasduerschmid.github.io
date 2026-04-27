@@ -130,6 +130,7 @@ function post(method, params) {
 let cfg = null;
 let watches = [];
 let breakpointMap = new Map();   // bpId (CDP) -> {file, line, condition}
+let exceptionBreakpoints = [];   // [{id, enabled, type, mode}]
 let opts = {};
 let snapshotDepth = 3;
 let maxHistory = 50000;
@@ -211,7 +212,41 @@ async function captureSnapshot(params, eventReason) {
     stack: stack,
     watches: await evalWatches(top),
   };
+  if (eventReason === 'exception' && params.data) {
+    // V8/CDP supplies `data.uncaught: boolean` and an exception RemoteObject.
+    // Best-effort extract the exception's type name (className) and message
+    // (description). Fall back to generic strings if unavailable.
+    const obj = params.data;
+    const className = obj.className || (obj.exception && obj.exception.className) || 'Error';
+    let description = obj.description || (obj.exception && obj.exception.description) || '';
+    // CDP description may include a stack trace after the first line; trim.
+    const firstLine = description.split('\n')[0];
+    let message = '';
+    const colonIdx = firstLine.indexOf(': ');
+    if (colonIdx >= 0) message = firstLine.substring(colonIdx + 2);
+    else message = firstLine;
+    snap.exception = {
+      type: className,
+      message: message,
+      caught: !obj.uncaught,
+    };
+  }
   return snap;
+}
+
+function exceptionBreakpointMatches(snap) {
+  if (!snap || snap.event !== 'exception' || !snap.exception) return false;
+  const enabled = exceptionBreakpoints.filter((eb) => eb.enabled !== false);
+  if (!enabled.length) return false;
+  const t = String(snap.exception.type || '');
+  const caught = !!snap.exception.caught;
+  for (const eb of enabled) {
+    const wantedType = (eb.type || '').trim();
+    if (wantedType && wantedType !== t) continue;
+    if ((eb.mode || 'uncaught') === 'uncaught' && caught) continue;
+    return true;
+  }
+  return false;
 }
 
 function scriptUrlToUserPath(u) {
@@ -426,8 +461,25 @@ async function evalWatches(topFrame) {
 // ---- User intent: should we surface this pause to the UI? -----------------
 
 function shouldSurfacePause(params) {
-  // Always surface user-set breakpoints (CDP marks reason='other' with hitBreakpoints)
-  if (params.hitBreakpoints && params.hitBreakpoints.length) return true;
+  // Always surface user-set breakpoints, subject to hit-count threshold.
+  // CDP already gates on the breakpoint's `condition` server-side, so any
+  // hitBreakpoints entry here represents a condition-passing hit.
+  if (params.hitBreakpoints && params.hitBreakpoints.length) {
+    let allBelowThreshold = true;
+    for (const bpId of params.hitBreakpoints) {
+      const info = breakpointMap.get(bpId);
+      if (!info) { allBelowThreshold = false; continue; }
+      info._hits = (info._hits || 0) + 1;
+      if (!info.hitCount || info._hits >= info.hitCount) allBelowThreshold = false;
+    }
+    if (allBelowThreshold) return false;
+    return true;
+  }
+  // Exception event: surface only if at least one Exception Breakpoint
+  // matches. We cannot use `params.data` directly here without a snapshot,
+  // so we attach the captureSnapshot result later. The actual filter happens
+  // in handlePaused after the snapshot is built.
+  if (params.reason === 'exception') return 'exception';
   // Surface stepping pauses based on user mode + frame depth
   if (userMode === 'stepInto') return true;
   if (userMode === 'stepOver') {
@@ -453,6 +505,9 @@ async function applyRuntimeUpdates(cmd) {
   }
   if (cmd.live_edits) {
     for (const e of cmd.live_edits) await applyLiveEdit(e);
+  }
+  if (cmd.exception_breakpoints) {
+    exceptionBreakpoints = cmd.exception_breakpoints.slice();
   }
 }
 
@@ -488,12 +543,28 @@ async function applyBpChange(ch) {
   if (ch.op === 'add') {
     const u = fileUrl(ch.file);
     try {
+      // Preserve any existing hit counter at this location across edits, so
+      // changing the condition mid-run doesn't reset progress through a loop.
+      let priorHits = 0;
+      for (const info of breakpointMap.values()) {
+        if (info.file === ch.file && info.line === ch.line) {
+          priorHits = info._hits || 0;
+          break;
+        }
+      }
+      const hitCount = ch.hitCount || ch.hit_count || null;
       const res = await post('Debugger.setBreakpointByUrl', {
         url: u,
         lineNumber: ch.line - 1,
         condition: ch.condition || undefined,
       });
-      breakpointMap.set(res.breakpointId, { file: ch.file, line: ch.line, condition: ch.condition });
+      breakpointMap.set(res.breakpointId, {
+        file: ch.file,
+        line: ch.line,
+        condition: ch.condition,
+        hitCount: hitCount && hitCount >= 1 ? hitCount : null,
+        _hits: priorHits,
+      });
     } catch (e) {
       send({ type: 'breakpointError', file: ch.file, line: ch.line, error: String(e && e.message || e) });
     }
@@ -506,7 +577,7 @@ async function applyBpChange(ch) {
     }
   } else if (ch.op === 'edit') {
     await applyBpChange({ op: 'remove', file: ch.file, line: ch.line });
-    await applyBpChange({ op: 'add', file: ch.file, line: ch.line, condition: ch.condition });
+    await applyBpChange({ op: 'add', file: ch.file, line: ch.line, condition: ch.condition, hitCount: ch.hitCount || ch.hit_count });
   }
 }
 
@@ -615,9 +686,18 @@ async function handlePaused(params) {
   snapshotBuffer.push(snap);
   totalSnapshots++;
 
-  const surface = shouldSurfacePause(params);
+  let surface = shouldSurfacePause(params);
+  if (surface === 'exception') {
+    surface = exceptionBreakpointMatches(snap);
+  }
   if (!surface) {
-    await post('Debugger.stepInto');
+    // Resume in a way that doesn't accidentally surface follow-on `step`
+    // pauses for unrelated frames.
+    if (params.reason === 'exception') {
+      await post('Debugger.resume');
+    } else {
+      await post('Debugger.stepInto');
+    }
     return;
   }
 
@@ -649,17 +729,21 @@ async function boot() {
   maxHistory = opts.max_history || 50000;
   filterGlobals = opts.filter_globals !== false;
   pendingOverrides = cfg.overrides || [];
+  exceptionBreakpoints = cfg.exceptionBreakpoints || [];
 
   log('booted, entry=' + cfg.entry + ' watches=' + JSON.stringify(watches));
 
   // Inspector setup
   await post('Debugger.enable');
   await post('Runtime.enable');
-  await post('Debugger.setPauseOnExceptions', { state: 'uncaught' });
+  // 'all' so every raised exception (caught or not) becomes an exception
+  // snapshot — that's the "every throw is a breakpoint" semantics the
+  // Exception Breakpoint toolbar buttons navigate through.
+  await post('Debugger.setPauseOnExceptions', { state: 'all' });
 
   // Set initial breakpoints
   for (const bp of (cfg.breakpoints || [])) {
-    await applyBpChange({ op: 'add', file: bp.file, line: bp.line, condition: bp.condition });
+    await applyBpChange({ op: 'add', file: bp.file, line: bp.line, condition: bp.condition, hitCount: bp.hitCount || bp.hit_count });
   }
 
   // Wire the paused handler. CDP delivers paused events while we run user code.

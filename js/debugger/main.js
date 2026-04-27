@@ -27,26 +27,32 @@
  *   Int32 [4]  watches_len
  *   Int32 [5]  bps_len
  *   Int32 [6]  edits_len
- *   Uint8 [WATCH_OFF .. +32K) watches JSON
- *   Uint8 [BPS_OFF   .. +32K) breakpoint changes JSON
- *   Uint8 [EDITS_OFF .. +32K) live edit JSON
+ *   Int32 [7]  excbps_dirty
+ *   Int32 [8]  excbps_len
+ *   Uint8 [WATCH_OFF  .. +32K) watches JSON
+ *   Uint8 [BPS_OFF    .. +32K) breakpoint changes JSON
+ *   Uint8 [EDITS_OFF  .. +32K) live edit JSON
+ *   Uint8 [EXCBPS_OFF .. +32K) exception breakpoints JSON
  */
 
 (function () {
   'use strict';
 
   // ---- SAB layout (must match worker-extension.js) ------------------------
-  var SAB_HEADER_BYTES = 32;
+  var SAB_HEADER_BYTES = 64;
   var WATCH_REGION_BYTES = 32 * 1024;
   var BPS_REGION_BYTES = 32 * 1024;
   var EDITS_REGION_BYTES = 32 * 1024;
-  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES + EDITS_REGION_BYTES;
+  var EXCBPS_REGION_BYTES = 32 * 1024;
+  var SAB_TOTAL_BYTES = SAB_HEADER_BYTES + WATCH_REGION_BYTES + BPS_REGION_BYTES + EDITS_REGION_BYTES + EXCBPS_REGION_BYTES;
   var WATCH_OFF = SAB_HEADER_BYTES;
   var BPS_OFF = WATCH_OFF + WATCH_REGION_BYTES;
   var EDITS_OFF = BPS_OFF + BPS_REGION_BYTES;
+  var EXCBPS_OFF = EDITS_OFF + EDITS_REGION_BYTES;
   var SLOT_CMD = 0;
   var SLOT_WATCHES_DIRTY = 1, SLOT_BPS_DIRTY = 2, SLOT_EDITS_DIRTY = 3;
   var SLOT_WATCHES_LEN = 4, SLOT_BPS_LEN = 5, SLOT_EDITS_LEN = 6;
+  var SLOT_EXCBPS_DIRTY = 7, SLOT_EXCBPS_LEN = 8;
   var CMD_CONTINUE = 1, CMD_STEP = 2, CMD_NEXT = 3, CMD_RETURN = 4, CMD_STOP = 5;
   var CMD_SYNC = 6;
 
@@ -78,6 +84,16 @@
       return svg + "<circle cx='8.5' cy='12' r='4' fill='none' stroke='currentColor' stroke-width='2.2'/>" +
         "<circle cx='8.5' cy='12' r='1.35' fill='currentColor'/>" +
         "<path d='M14 7h5M14 12h5M14 17h5' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg>";
+    }
+    if (name === 'playException') {
+      return svg + "<polygon points='5,4 15,12 5,20' fill='currentColor'/>" +
+        "<path d='M 18,5.5 L 18,13' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/>" +
+        "<circle cx='18' cy='17' r='1.4' fill='currentColor'/></svg>";
+    }
+    if (name === 'backException') {
+      return svg + "<polygon points='19,4 9,12 19,20' fill='currentColor'/>" +
+        "<path d='M 6,5.5 L 6,13' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/>" +
+        "<circle cx='6' cy='17' r='1.4' fill='currentColor'/></svg>";
     }
     return '';
   }
@@ -146,6 +162,11 @@
     this._pendingWatches = [];
     this.watchpoints = [];
     this._nextWatchpointId = 1;
+    // Exception Breakpoints: each is {id, enabled, type, mode} where type may be
+    // empty (match any) and mode is 'uncaught' or 'all'. Default seed below in
+    // loadPersistedExceptionBreakpoints().
+    this.exceptionBreakpoints = [];
+    this._nextExceptionBpId = 1;
 
     // History (frozen snapshots from worker). selectedFrameIdx is per-pause
     // selection within stack[].
@@ -172,6 +193,7 @@
   DebuggerController.prototype.install = function () {
     this.loadConfiguredBreakpoints();
     this.loadPersistedBreakpoints();
+    this.loadPersistedExceptionBreakpoints();
     // Sync bus FIRST so subsequent installation can publish initial state
     // and editors can attach and paint pre-set breakpoints synchronously.
     this._initSync();
@@ -288,6 +310,7 @@
       breakpoints: this._serializeBreakpoints(),
       watches: this.getNormalWatches(),
       watchpoints: this._serializeWatchpoints(),
+      exceptionBreakpoints: this._serializeExceptionBreakpoints(),
       session: this._buildSessionMeta(),
       history: this.history.slice(),
       historyIdx: this.historyIdx,
@@ -305,6 +328,7 @@
         perFile[line] = {
           condition: info.condition || null,
           condError: info.condError || null,
+          hitCount: info.hitCount || null,
         };
       });
       out[path] = perFile;
@@ -318,6 +342,17 @@
         id: wp.id,
         expr: wp.expr,
         enabled: wp.enabled !== false,
+      };
+    });
+  };
+
+  DebuggerController.prototype._serializeExceptionBreakpoints = function () {
+    return (this.exceptionBreakpoints || []).map(function (eb) {
+      return {
+        id: eb.id,
+        enabled: eb.enabled !== false,
+        type: eb.type || '',
+        mode: eb.mode === 'all' ? 'all' : 'uncaught',
       };
     });
   };
@@ -350,6 +385,9 @@
   };
   DebuggerController.prototype._publishWatchpoints = function () {
     if (this.sync) this.sync.publish({ watchpoints: this._serializeWatchpoints() });
+  };
+  DebuggerController.prototype._publishExceptionBreakpoints = function () {
+    if (this.sync) this.sync.publish({ exceptionBreakpoints: this._serializeExceptionBreakpoints() });
   };
   DebuggerController.prototype._publishSession = function () {
     if (this.sync) this.sync.publish({ session: this._buildSessionMeta() });
@@ -582,6 +620,155 @@
     return -1;
   };
 
+  // ── Exception Breakpoints CRUD ─────────────────────────────────────────
+  DebuggerController.prototype.addExceptionBreakpoint = function (params) {
+    params = params || {};
+    var type = String(params.type || '').trim();
+    var mode = params.mode === 'all' ? 'all' : 'uncaught';
+    var eb = {
+      id: this._nextExceptionBpId++,
+      enabled: params.enabled !== false,
+      type: type,
+      mode: mode,
+    };
+    this.exceptionBreakpoints.push(eb);
+    this.persistExceptionBreakpoints();
+    this.renderBreakpointManager();
+    this._publishExceptionBreakpoints();
+    this._refreshExceptionBpRuntime();
+    return eb.id;
+  };
+
+  DebuggerController.prototype.findExceptionBreakpointIndex = function (id) {
+    id = String(id == null ? '' : id);
+    for (var i = 0; i < this.exceptionBreakpoints.length; i++) {
+      if (String(this.exceptionBreakpoints[i].id) === id) return i;
+    }
+    return -1;
+  };
+
+  DebuggerController.prototype.removeExceptionBreakpoint = function (id) {
+    var idx = this.findExceptionBreakpointIndex(id);
+    if (idx < 0) return false;
+    this.exceptionBreakpoints.splice(idx, 1);
+    this.persistExceptionBreakpoints();
+    this.renderBreakpointManager();
+    this._publishExceptionBreakpoints();
+    this._refreshExceptionBpRuntime();
+    return true;
+  };
+
+  DebuggerController.prototype.toggleExceptionBreakpoint = function (id) {
+    var idx = this.findExceptionBreakpointIndex(id);
+    if (idx < 0) return false;
+    var eb = this.exceptionBreakpoints[idx];
+    eb.enabled = !(eb.enabled !== false);
+    this.persistExceptionBreakpoints();
+    this.renderBreakpointManager();
+    this._publishExceptionBreakpoints();
+    this._refreshExceptionBpRuntime();
+    return true;
+  };
+
+  DebuggerController.prototype.editExceptionBreakpoint = function (id, fields) {
+    var idx = this.findExceptionBreakpointIndex(id);
+    if (idx < 0) return false;
+    var eb = this.exceptionBreakpoints[idx];
+    if (fields && Object.prototype.hasOwnProperty.call(fields, 'type')) {
+      eb.type = String(fields.type || '').trim();
+    }
+    if (fields && (fields.mode === 'all' || fields.mode === 'uncaught')) {
+      eb.mode = fields.mode;
+    }
+    this.persistExceptionBreakpoints();
+    this.renderBreakpointManager();
+    this._publishExceptionBreakpoints();
+    this._refreshExceptionBpRuntime();
+    return true;
+  };
+
+  DebuggerController.prototype.persistExceptionBreakpoints = function () {
+    try {
+      var payload = this._serializeExceptionBreakpoints();
+      localStorage.setItem('tutorial-debug-excbps-' + this.t.tutorialId, JSON.stringify(payload));
+    } catch (e) { /* localStorage full or disabled */ }
+  };
+
+  DebuggerController.prototype.loadPersistedExceptionBreakpoints = function () {
+    var loaded = false;
+    try {
+      var raw = localStorage.getItem('tutorial-debug-excbps-' + this.t.tutorialId);
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length) {
+          var maxId = 0;
+          var self = this;
+          arr.forEach(function (eb) {
+            var id = parseInt(eb && eb.id, 10);
+            if (!isFinite(id) || id < 1) id = self._nextExceptionBpId++;
+            if (id > maxId) maxId = id;
+            self.exceptionBreakpoints.push({
+              id: id,
+              enabled: eb.enabled !== false,
+              type: String(eb.type || '').trim(),
+              mode: eb.mode === 'all' ? 'all' : 'uncaught',
+            });
+          });
+          if (maxId >= this._nextExceptionBpId) this._nextExceptionBpId = maxId + 1;
+          loaded = true;
+        }
+      }
+    } catch (e) { /* ignore */ }
+    if (!loaded && !this.exceptionBreakpoints.length) {
+      // Default: one entry that pauses on any uncaught exception. Matches the
+      // typical Python/Node "stop on uncaught" default.
+      this.exceptionBreakpoints.push({
+        id: this._nextExceptionBpId++,
+        enabled: true,
+        type: '',
+        mode: 'uncaught',
+      });
+    }
+  };
+
+  // Re-publish exception breakpoint settings to the running runtime so the
+  // pause filter updates on the fly. For channel-backed sessions (Node /
+  // Browser) we send via the channel; for the Pyodide path we write into
+  // the dedicated EXCBPS SAB region and the worker picks it up next pause.
+  DebuggerController.prototype._refreshExceptionBpRuntime = function () {
+    if (!this.session) return;
+    var payload = this._serializeExceptionBreakpoints();
+    if (this.channel && typeof this.channel.sendExceptionBreakpoints === 'function') {
+      this.channel.sendExceptionBreakpoints(payload);
+      this.markRuntimeUpdatePending && this.markRuntimeUpdatePending();
+      return;
+    }
+    var json = JSON.stringify(payload);
+    if (this.writePayload(EXCBPS_OFF, EXCBPS_REGION_BYTES, SLOT_EXCBPS_LEN, SLOT_EXCBPS_DIRTY, json, 'exception breakpoints')) {
+      this.markRuntimeUpdatePending && this.markRuntimeUpdatePending();
+    }
+  };
+
+  // Predicate used by both the runtime pause filter (for forward execution)
+  // and history navigation (for Run / Run Back to Exception Breakpoint).
+  // `snap` should have `event === 'exception'` and an `exception: {type, caught}`.
+  DebuggerController.prototype.exceptionMatchesAnyEnabled = function (snap) {
+    if (!snap || snap.event !== 'exception' || !snap.exception) return false;
+    var enabled = (this.exceptionBreakpoints || []).filter(function (eb) {
+      return eb.enabled !== false;
+    });
+    if (!enabled.length) return false;
+    var excType = String(snap.exception.type || '');
+    var caught = !!snap.exception.caught;
+    for (var i = 0; i < enabled.length; i++) {
+      var eb = enabled[i];
+      if (eb.type && eb.type !== excType) continue;
+      if (eb.mode === 'uncaught' && caught) continue;
+      return true;
+    }
+    return false;
+  };
+
   DebuggerController.prototype._resetExecutionTrace = function (resetOutput) {
     this.history = [];
     this.historyIdx = -1;
@@ -691,6 +878,35 @@
       case 'removeBreakpoint': {
         var rfn = String(action.path || '').replace(/^\/tutorial\//, '');
         if (rfn && action.line) self.removeBreakpoint(rfn, action.line);
+        break;
+      }
+      case 'addExceptionBreakpoint': {
+        self.addExceptionBreakpoint(action || {});
+        break;
+      }
+      case 'removeExceptionBreakpoint': {
+        if (action.id != null) self.removeExceptionBreakpoint(action.id);
+        break;
+      }
+      case 'toggleExceptionBreakpoint': {
+        if (action.id != null) self.toggleExceptionBreakpoint(action.id);
+        break;
+      }
+      case 'editExceptionBreakpoint': {
+        if (action.id != null) {
+          var fields = {};
+          if (Object.prototype.hasOwnProperty.call(action, 'type')) fields.type = action.type;
+          if (action.mode === 'all' || action.mode === 'uncaught') fields.mode = action.mode;
+          self.editExceptionBreakpoint(action.id, fields);
+        }
+        break;
+      }
+      case 'runToExceptionBreakpoint': {
+        self.runForwardToExceptionBreakpoint(action.id || null);
+        break;
+      }
+      case 'runBackToExceptionBreakpoint': {
+        self.runBackToExceptionBreakpoint(action.id || null);
         break;
       }
       case 'editVariable': {
@@ -1118,6 +1334,14 @@
       this.stepBackOut();
       return;
     }
+    if (cmd === 'exceptionBack') {
+      this.runBackToExceptionBreakpoint();
+      return;
+    }
+    if (cmd === 'exceptionForward') {
+      this.runForwardToExceptionBreakpoint();
+      return;
+    }
     if (cmd === 'stop') {
       this.sendCommand(CMD_STOP);
       this.setStatus('stopping…');
@@ -1487,6 +1711,100 @@
     } else {
       this.setStatus('rewound to first instruction');
     }
+  };
+
+  // ── Exception Breakpoints (navigate through recorded exception events) ──
+  // Forward and backward navigation through `event === 'exception'` snapshots
+  // that match an enabled Exception Breakpoint (type filter + uncaught/all
+  // mode). The Python tracer records an exception event at each stack level
+  // as the exception propagates, so the FIRST snapshot in a run of exception
+  // events corresponds to the throw site — that's what we jump to. Later
+  // snapshots in the same run are the propagation up the stack.
+  DebuggerController.prototype._exceptionBreakpointMatcher = function (id) {
+    var self = this;
+    if (id == null || id === '') {
+      return function (snap) { return self.exceptionMatchesAnyEnabled(snap); };
+    }
+    var idx = self.findExceptionBreakpointIndex(id);
+    if (idx < 0) {
+      return function () { return false; };
+    }
+    var eb = self.exceptionBreakpoints[idx];
+    return function (snap) {
+      if (!snap || snap.event !== 'exception' || !snap.exception) return false;
+      if (eb.enabled === false) return false;
+      if (eb.type && eb.type !== String(snap.exception.type || '')) return false;
+      if (eb.mode === 'uncaught' && snap.exception.caught) return false;
+      return true;
+    };
+  };
+
+  DebuggerController.prototype._isExceptionThrowSnapshotFor = function (idx, matchFn) {
+    var snap = this.history[idx];
+    if (!snap || snap.event !== 'exception') return false;
+    if (!matchFn(snap)) return false;
+    var prev = idx > 0 ? this.history[idx - 1] : null;
+    if (!prev || prev.event !== 'exception') return true;
+    return false;
+  };
+
+  DebuggerController.prototype.runBackToExceptionBreakpoint = function (id) {
+    if (this.historyIdx <= 0) {
+      this.setStatus('already at first instruction');
+      return;
+    }
+    var match = this._exceptionBreakpointMatcher(id);
+    var target = -1;
+    for (var i = this.historyIdx - 1; i >= 0; i--) {
+      if (this._isExceptionThrowSnapshotFor(i, match)) { target = i; break; }
+    }
+    if (target < 0) {
+      this.setStatus('no earlier matching exception in history');
+      return;
+    }
+    this.historyIdx = target;
+    this.selectedFrameIdx = -1;
+    if (this.session) {
+      this.session.preserveReverseCursorOnNextPause = target;
+    }
+    this.renderAll();
+    var snap = this.history[target];
+    var label = snap && snap.exception ? (snap.exception.type + ': ' + snap.exception.message) : 'throw';
+    this.setStatus('rewound to ' + label + ' at ' + this.basename(snap.file) + ':' + snap.line);
+  };
+
+  DebuggerController.prototype.runForwardToExceptionBreakpoint = function (id) {
+    var n = this.history.length;
+    var match = this._exceptionBreakpointMatcher(id);
+    if (this.historyIdx + 1 >= n) {
+      if (this.session && this.historyIdx === this.liveIdx) {
+        this.handleToolbarCmd('continue');
+        return;
+      }
+      this.setStatus('no later matching exception in history');
+      return;
+    }
+    var target = -1;
+    for (var i = this.historyIdx + 1; i < n; i++) {
+      if (this._isExceptionThrowSnapshotFor(i, match)) { target = i; break; }
+    }
+    if (target < 0) {
+      if (this.session && this.historyIdx === this.liveIdx) {
+        this.handleToolbarCmd('continue');
+        return;
+      }
+      this.setStatus('no later matching exception in history');
+      return;
+    }
+    this.historyIdx = target;
+    this.selectedFrameIdx = -1;
+    if (this.session) {
+      this.session.preserveReverseCursorOnNextPause = target;
+    }
+    this.renderAll();
+    var snap = this.history[target];
+    var label = snap && snap.exception ? (snap.exception.type + ': ' + snap.exception.message) : 'throw';
+    this.setStatus('jumped to ' + label + ' at ' + this.basename(snap.file) + ':' + snap.line);
   };
 
   DebuggerController.prototype.hasEnabledWatchpoints = function () {
@@ -1911,7 +2229,8 @@
     for (var i = 0; i < btns.length; i++) {
       var cmd = btns[i].getAttribute('data-cmd');
       // Step Back & Stop are always available (back is UI-only; stop must work mid-block).
-      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' || cmd === 'stop') continue;
+      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
+          cmd === 'exceptionBack' || cmd === 'exceptionForward' || cmd === 'stop') continue;
       btns[i].disabled = disabled;
     }
     this._publishSession();
@@ -1968,8 +2287,8 @@
       bps.delete(line);
       change = { op: 'remove', file: path, line: line };
     } else {
-      bps.set(line, { condition: null });
-      change = { op: 'add', file: path, line: line, condition: null };
+      bps.set(line, { condition: null, hitCount: null });
+      change = { op: 'add', file: path, line: line, condition: null, hitCount: null };
     }
     this.persistBreakpoints();
     this.refreshBpDecorations();
@@ -1992,24 +2311,27 @@
     var wasMissing = !bps.has(line);
     var current = bps.get(line);
     var existing = (current && current.condition) || '';
+    var existingHits = (current && current.hitCount) || null;
     var self = this;
-    this.showBreakpointConditionDialog(filename, line, existing, current && current.condError).then(function (result) {
+    this.showBreakpointConditionDialog(filename, line, existing, current && current.condError, existingHits).then(function (result) {
       if (!result) return;
       var cond = result.condition && result.condition.trim() ? result.condition.trim() : null;
-      bps.set(line, { condition: cond });
+      var hits = parseInt(result.hitCount, 10);
+      if (!isFinite(hits) || hits < 1) hits = null;
+      bps.set(line, { condition: cond, hitCount: hits });
       self.persistBreakpoints();
       self.refreshBpDecorations();
       self.renderBreakpointManager();
       self._publishBreakpoints();
       self.updateSessionWatches(false);
       if (self.session) {
-        var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond };
+        var change = { op: wasMissing ? 'add' : 'edit', file: path, line: line, condition: cond, hitCount: hits };
         if (self.queueBreakpointChange(change)) self.refreshBreakpointsNow();
       }
     });
   };
 
-  DebuggerController.prototype.showBreakpointConditionDialog = function (filename, line, existing, condError) {
+  DebuggerController.prototype.showBreakpointConditionDialog = function (filename, line, existing, condError, existingHitCount) {
     var old = document.querySelector('.tvm-bp-dialog-backdrop');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var self = this;
@@ -2070,14 +2392,29 @@
         error.textContent = condError;
         body.appendChild(error);
       }
+      var hitLabel = document.createElement('label');
+      hitLabel.className = 'tvm-bp-dialog-label';
+      hitLabel.setAttribute('for', 'tvm-bp-hitcount-input');
+      hitLabel.textContent = 'Iteration count (skip first N−1 hits)';
+      var hitInput = document.createElement('input');
+      hitInput.id = 'tvm-bp-hitcount-input';
+      hitInput.className = 'tvm-bp-dialog-input';
+      hitInput.type = 'number';
+      hitInput.min = '1';
+      hitInput.step = '1';
+      hitInput.value = existingHitCount ? String(existingHitCount) : '';
+      hitInput.placeholder = '1';
+      hitInput.setAttribute('autocomplete', 'off');
+      body.appendChild(hitLabel);
+      body.appendChild(hitInput);
 
       var actions = document.createElement('div');
       actions.className = 'tvm-bp-dialog-actions';
       var clear = document.createElement('button');
       clear.type = 'button';
       clear.className = 'tvm-bp-dialog-btn tvm-bp-dialog-clear';
-      clear.textContent = 'Clear Condition';
-      clear.disabled = !(existing && existing.trim());
+      clear.textContent = 'Clear';
+      clear.disabled = !((existing && existing.trim()) || existingHitCount);
       var cancel = document.createElement('button');
       cancel.type = 'button';
       cancel.className = 'tvm-bp-dialog-btn tvm-bp-dialog-cancel';
@@ -2112,7 +2449,7 @@
           close(null);
         } else if (e.key === 'Enter') {
           e.preventDefault();
-          close({ condition: input.value });
+          close({ condition: input.value, hitCount: hitInput.value });
         }
       }
 
@@ -2121,8 +2458,8 @@
         if (e.target === backdrop) close(null);
       });
       cancel.addEventListener('click', function () { close(null); });
-      clear.addEventListener('click', function () { close({ condition: '' }); });
-      save.addEventListener('click', function () { close({ condition: input.value }); });
+      clear.addEventListener('click', function () { close({ condition: '', hitCount: '' }); });
+      save.addEventListener('click', function () { close({ condition: input.value, hitCount: hitInput.value }); });
       window.setTimeout(function () {
         input.focus();
         input.select();
@@ -2266,16 +2603,22 @@
           // Suppress standalone bp on the current line (live or rewound).
           // The combined chevron+inner-dot glyph handles that slot.
           if (curFile === path && curLine === line) return;
-          var glyphClass = info.condition
+          var hasModifier = !!(info.condition || info.hitCount);
+          var glyphClass = hasModifier
             ? 'tvm-bp-glyph tvm-bp-cond' + (info.condError ? ' tvm-bp-error' : '')
             : 'tvm-bp-glyph';
+          var msgParts = [];
+          if (info.condition) msgParts.push('when `' + info.condition + '`');
+          if (info.hitCount) msgParts.push('after ' + info.hitCount + ' hits');
+          var msg = msgParts.length
+            ? 'Breakpoint (' + msgParts.join(', ') + ')'
+            : 'Breakpoint';
+          if (info.condError) msg += '\n\n⚠️ ' + info.condError;
           decos.push({
             range: new monaco.Range(line, 1, line, 1),
             options: {
               glyphMarginClassName: glyphClass,
-              glyphMarginHoverMessage: { value: info.condition
-                ? 'Breakpoint (when `' + info.condition + '`)' + (info.condError ? '\n\n⚠️ ' + info.condError : '')
-                : 'Breakpoint' },
+              glyphMarginHoverMessage: { value: msg },
             },
           });
         });
@@ -2293,7 +2636,7 @@
     var ser = [];
     this.breakpoints.forEach(function (bps, path) {
       bps.forEach(function (info, line) {
-        ser.push({ path: path, line: line, condition: info.condition || null });
+        ser.push({ path: path, line: line, condition: info.condition || null, hitCount: info.hitCount || null });
       });
     });
     try {
@@ -2310,7 +2653,9 @@
       arr.forEach(function (b) {
         var bps = self.breakpoints.get(b.path);
         if (!bps) { bps = new Map(); self.breakpoints.set(b.path, bps); }
-        bps.set(b.line, { condition: b.condition || null });
+        var hits = parseInt(b.hitCount, 10);
+        if (!isFinite(hits) || hits < 1) hits = null;
+        bps.set(b.line, { condition: b.condition || null, hitCount: hits });
       });
     } catch (e) { /* ignore */ }
   };
@@ -2334,9 +2679,11 @@
       if (!path || !line || line < 1) return;
       var condition = bp.condition == null ? null : String(bp.condition).trim();
       if (!condition) condition = null;
+      var hits = parseInt(bp && (bp.hitCount != null ? bp.hitCount : bp.hit_count), 10);
+      if (!isFinite(hits) || hits < 1) hits = null;
       var bps = self.breakpoints.get(path);
       if (!bps) { bps = new Map(); self.breakpoints.set(path, bps); }
-      bps.set(line, { condition: condition });
+      bps.set(line, { condition: condition, hitCount: hits });
     });
   };
 
@@ -2349,7 +2696,12 @@
       var maxLine = model ? model.getLineCount() : Infinity;
       bps.forEach(function (info, line) {
         if (line < 1 || line > maxLine) return;
-        out.push({ file: path, line: line, condition: info.condition || null });
+        out.push({
+          file: path,
+          line: line,
+          condition: info.condition || null,
+          hitCount: info.hitCount || null,
+        });
       });
     });
     return out;
@@ -2533,6 +2885,7 @@
         args: this.session.args || [],
         options: this.opts,
         overrides: this.session.replayOverrides || [],
+        exceptionBreakpoints: this._serializeExceptionBreakpoints(),
         pytest: runAsPytest,
         pytestArgs: runAsPytest ? this.pytestArgsForDebug(path) : null,
       });
@@ -2562,6 +2915,7 @@
       // Variable-mutation overrides recorded by the user during a previous
       // rewound state. The worker applies each at its recorded snapshot index.
       overrides: this.session.replayOverrides || [],
+      exceptionBreakpoints: this._serializeExceptionBreakpoints(),
     });
     this.setStatus('running…');
   };
@@ -3354,7 +3708,10 @@
         var info = bps.get(line) || {};
         var cond = info.condition
           ? '<span class="tvm-debug-manager-condition">when ' + self.escape(info.condition) + '</span>'
-          : '<span class="tvm-debug-manager-muted">unconditional</span>';
+          : (info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
+        var hits = info.hitCount
+          ? '<span class="tvm-debug-manager-hitcount">after ' + info.hitCount + ' hits</span>'
+          : '';
         var err = info.condError
           ? '<span class="tvm-debug-manager-error">' + self.escape(info.condError) + '</span>'
           : '';
@@ -3363,7 +3720,7 @@
           '<span class="tvm-debug-manager-dot"></span>' +
           '<span class="tvm-debug-manager-main">' +
           '<span class="tvm-debug-manager-title">' + self.escape(self.basename(path)) + ':' + line + '</span>' +
-          cond + err +
+          cond + hits + err +
           '</span>' +
           '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
           '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
@@ -3398,13 +3755,43 @@
       '<button class="tvm-debug-manager-run" data-wp-run-all="1">' + debugManagerIcon('playData') + '<span>Run to Data Change</span></button>' +
       '<button class="tvm-debug-manager-run" data-wp-back-all="1">' + debugManagerIcon('backData') + '<span>Run Back to Data Change</span></button>' +
       '</div>';
+
+    var ebRows = (this.exceptionBreakpoints || []).map(function (eb) {
+      var disabled = eb.enabled === false;
+      var typeAttr = self.escape(eb.type || '');
+      var modeAll = eb.mode === 'all';
+      return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
+        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint') + '">' +
+        '<input type="checkbox" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span>' +
+        '</label>' +
+        '<span class="tvm-debug-manager-main">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<span class="tvm-debug-manager-exc-modes">' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
+        '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
+        '</span>' +
+        '</span>' +
+        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
+        '</div>';
+    });
+    var exceptionControls =
+      '<div class="tvm-debug-manager-actions">' +
+      '<button class="tvm-debug-manager-run" data-exc-add="1">' + debugManagerIcon('plus') + '<span>Add Exception Breakpoint</span></button>' +
+      '<button class="tvm-debug-manager-run" data-exc-run-all="1">' + debugManagerIcon('playException') + '<span>Run to Exception</span></button>' +
+      '<button class="tvm-debug-manager-run" data-exc-back-all="1">' + debugManagerIcon('backException') + '<span>Run Back to Exception</span></button>' +
+      '</div>';
+
     view.innerHTML =
       '<div class="tvm-debug-manager">' +
       this.renderBreakpointManagerGroup('manager-code-breakpoints', 'Code Breakpoints',
         bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') +
       this.renderBreakpointManagerGroup('manager-data-watchpoints', 'Data Watchpoints',
-        wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') +
-      watchpointControls +
+        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls) +
+      this.renderBreakpointManagerGroup('manager-exception-breakpoints', 'Exception Breakpoints',
+        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls) +
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
@@ -3467,6 +3854,56 @@
     if (runAll) runAll.addEventListener('click', function () { self.runForwardToWatchpoint(false, null); });
     var backAll = view.querySelector('[data-wp-back-all]');
     if (backAll) backAll.addEventListener('click', function () { self.runBackToWatchpoint(null); });
+
+    var excToggles = view.querySelectorAll('[data-exc-toggle]');
+    for (var et = 0; et < excToggles.length; et++) {
+      (function (el) {
+        el.addEventListener('change', function () { self.toggleExceptionBreakpoint(el.getAttribute('data-exc-toggle')); });
+      })(excToggles[et]);
+    }
+    var excTypes = view.querySelectorAll('[data-exc-type]');
+    for (var ety = 0; ety < excTypes.length; ety++) {
+      (function (el) {
+        var commit = function () { self.editExceptionBreakpoint(el.getAttribute('data-exc-type'), { type: el.value }); };
+        el.addEventListener('change', commit);
+        el.addEventListener('blur', commit);
+        el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+      })(excTypes[ety]);
+    }
+    var excModes = view.querySelectorAll('[data-exc-mode]');
+    for (var em = 0; em < excModes.length; em++) {
+      (function (el) {
+        el.addEventListener('change', function () {
+          if (!el.checked) return;
+          self.editExceptionBreakpoint(el.getAttribute('data-exc-mode'), { mode: el.value });
+        });
+      })(excModes[em]);
+    }
+    var excRunBtns = view.querySelectorAll('[data-exc-run]');
+    for (var er = 0; er < excRunBtns.length; er++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.runForwardToExceptionBreakpoint(btn.getAttribute('data-exc-run')); });
+      })(excRunBtns[er]);
+    }
+    var excBackBtns = view.querySelectorAll('[data-exc-back]');
+    for (var eb2 = 0; eb2 < excBackBtns.length; eb2++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.runBackToExceptionBreakpoint(btn.getAttribute('data-exc-back')); });
+      })(excBackBtns[eb2]);
+    }
+    var excRemoveBtns = view.querySelectorAll('[data-exc-remove]');
+    for (var ex = 0; ex < excRemoveBtns.length; ex++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { self.removeExceptionBreakpoint(btn.getAttribute('data-exc-remove')); });
+      })(excRemoveBtns[ex]);
+    }
+    var excAddBtn = view.querySelector('[data-exc-add]');
+    if (excAddBtn) excAddBtn.addEventListener('click', function () { self.addExceptionBreakpoint({ mode: 'uncaught' }); });
+    var excRunAll = view.querySelector('[data-exc-run-all]');
+    if (excRunAll) excRunAll.addEventListener('click', function () { self.runForwardToExceptionBreakpoint(); });
+    var excBackAll = view.querySelector('[data-exc-back-all]');
+    if (excBackAll) excBackAll.addEventListener('click', function () { self.runBackToExceptionBreakpoint(); });
+
     this.wireBreakpointManagerGroups(view);
   };
 

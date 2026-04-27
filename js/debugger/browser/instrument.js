@@ -131,6 +131,45 @@
       inserts.push({ offset: stmt.start, text: hook });
     }
 
+    // Wrap `throw expr;` so __ttd.onThrow records an exception snapshot and
+    // pauses BEFORE the throw propagates. This is what makes "every throw is
+    // a breakpoint" — the Exception Breakpoint navigation buttons jump to
+    // these snapshots regardless of whether the exception is later caught.
+    function wrapThrow(stmt) {
+      if (!stmt || !stmt.argument || !stmt.loc) return;
+      var line = stmt.loc.start.line;
+      var argStart = stmt.argument.start;
+      var argEnd = stmt.argument.end;
+      // Replace `throw EXPR` with `throw __ttd.onThrow(file, line, scopeFn, (EXPR))`
+      inserts.push({
+        offset: argStart,
+        text: '__ttd.onThrow(' + JSON.stringify(file) + ', ' + line + ', ' + makeScopeFn() + ', (',
+      });
+      inserts.push({ offset: argEnd, text: '))' });
+    }
+
+    // For each try { ... } catch (...) { ... } we push a marker on a runtime
+    // stack at body entry and pop on exit (normal or exception). When
+    // __ttd.onThrow fires, it inspects the stack to set `caught: true|false`
+    // on the exception snapshot. try { } finally { } without catch DOES NOT
+    // push a marker — finally runs but the exception still propagates.
+    function wrapTryStatement(stmt) {
+      if (!stmt || !stmt.block || !stmt.block.loc) return;
+      // Only wrap when there is a catch handler that will actually intercept
+      // the exception. Bare try/finally still propagates.
+      if (!stmt.handler) return;
+      var blockOpen = stmt.block.start + 1;     // after `{`
+      var blockClose = stmt.block.end - 1;      // before `}`
+      inserts.push({
+        offset: blockOpen,
+        text: ' __ttd.onTryEnter(); try {\n',
+      });
+      inserts.push({
+        offset: blockClose,
+        text: '\n} finally { __ttd.onTryExit(); }',
+      });
+    }
+
     function descendStmt(node) {
       if (!node) return;
       if (Array.isArray(node)) { node.forEach(descendStmt); return; }
@@ -147,6 +186,18 @@
       // Inject step hook for top-level statement kinds we recognize.
       if (STMT_KINDS[node.type]) {
         injectBefore(node);
+      }
+
+      // ThrowStatement gets the line hook AND its argument wrapped so that
+      // __ttd.onThrow records the exception snapshot before propagation.
+      if (node.type === 'ThrowStatement') {
+        wrapThrow(node);
+      }
+
+      // TryStatement gets enter/exit hooks so onThrow can decide caught vs
+      // uncaught at runtime via the dynamic try-handler stack.
+      if (node.type === 'TryStatement') {
+        wrapTryStatement(node);
       }
 
       // After hooking, add `let`/`const` to scope (so subsequent statements

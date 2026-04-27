@@ -43,6 +43,7 @@ var SLOT_EDITS_LEN = 6;
 var i32 = null, u8 = null;
 var watches = [];
 var breakpoints = new Map();   // 'file:line' -> {condition?}
+var exceptionBreakpoints = []; // [{id, enabled, type, mode}]
 var opts = {};
 var snapshotDepth = 3;
 var maxHistory = 50000;
@@ -82,8 +83,15 @@ self.addEventListener('message', function (e) {
   maxHistory = opts.max_history || 50000;
   pendingOverrides = cfg.overrides || [];
   (cfg.breakpoints || []).forEach(function (bp) {
-    breakpoints.set(bp.file + ':' + bp.line, { condition: bp.condition || null });
+    var hits = parseInt(bp.hitCount || bp.hit_count, 10);
+    if (!isFinite(hits) || hits < 1) hits = null;
+    breakpoints.set(bp.file + ':' + bp.line, {
+      condition: bp.condition || null,
+      hitCount: hits,
+      _hits: 0,
+    });
   });
+  exceptionBreakpoints = (cfg.exceptionBreakpoints || []).slice();
   log('init: file=' + cfg.entry + ' watches=' + JSON.stringify(watches));
   bootRun(cfg.entry, cfg.code, cfg.files || {}, cfg.args || []);
 });
@@ -128,6 +136,9 @@ function bootRun(entryFile, code, files, args) {
       onLine: onLine,
       onCall: onCall,
       onReturn: onReturn,
+      onThrow: onThrow,
+      onTryEnter: onTryEnter,
+      onTryExit: onTryExit,
     };
     // Run!
     try {
@@ -342,14 +353,24 @@ function onLine(file, line, scopeFn) {
   var hitBp = breakpoints.has(bpKey);
   if (hitBp) {
     var info = breakpoints.get(bpKey);
+    var condPassed = true;
     if (info && info.condition) {
       try {
-        var cond = !!evalInScope(info.condition, scopeFn);
-        if (!cond) hitBp = false;
+        condPassed = !!evalInScope(info.condition, scopeFn);
       } catch (e) {
         send({ type: 'breakpointError', file: file, line: line, error: String(e.message || e) });
-        hitBp = true;
+        condPassed = true;
       }
+    }
+    if (!condPassed) {
+      hitBp = false;
+    } else if (info && info.hitCount) {
+      // Iteration count: only count condition-passing hits. Skip until the
+      // running counter reaches the configured threshold.
+      info._hits = (info._hits || 0) + 1;
+      if (info._hits < info.hitCount) hitBp = false;
+    } else if (info) {
+      info._hits = (info._hits || 0) + 1;
     }
   }
 
@@ -359,6 +380,63 @@ function onLine(file, line, scopeFn) {
   send({ type: 'paused', snapshots: snapshotBuffer });
   snapshotBuffer = [];
   pauseLoop(file, line, scopeFn);
+}
+
+// Dynamic try-handler stack: pushed on entering an instrumented `try { ... }`
+// (only when the try has a catch clause) and popped on exit. `onThrow`
+// inspects the depth to set the snapshot's caught flag.
+var tryHandlerDepth = 0;
+function onTryEnter() { tryHandlerDepth++; }
+function onTryExit() { if (tryHandlerDepth > 0) tryHandlerDepth--; }
+
+// Recorded just before a `throw` statement runs, by the AST instrumenter.
+// Treats every raised exception as an Exception Breakpoint hit (subject to
+// the user's filter): we record an exception snapshot in history (so the
+// navigation buttons can jump here) and pause the user iff the snapshot
+// matches an enabled exception breakpoint. The throw still proceeds after
+// the user resumes, so caught exceptions still reach their handlers.
+function onThrow(file, line, scopeFn, exc) {
+  if (stopFlag) throw new Error('__ttd_stop__');
+  var frame = stack[stack.length - 1] || { function: '<module>', file: file, line: line, callId: 0, scopeFn: null };
+  frame.line = line;
+  frame.scopeFn = scopeFn;
+  if (totalSnapshots >= maxHistory) return exc;
+  var snap = makeSnapshot(file, line, scopeFn);
+  snap.event = 'exception';
+  var excType = (exc && exc.constructor && exc.constructor.name) || (exc instanceof Error ? 'Error' : typeof exc);
+  var excMsg;
+  try { excMsg = (exc && exc.message != null) ? String(exc.message) : String(exc); }
+  catch (e) { excMsg = '<unrepresentable>'; }
+  snap.exception = {
+    type: excType,
+    message: excMsg,
+    caught: tryHandlerDepth > 0,
+  };
+  snapshotBuffer.push(snap);
+  totalSnapshots++;
+  if (!exceptionBreakpointMatches(snap)) {
+    return exc;
+  }
+  send({ type: 'paused', snapshots: snapshotBuffer });
+  snapshotBuffer = [];
+  pauseLoop(file, line, scopeFn);
+  return exc;
+}
+
+function exceptionBreakpointMatches(snap) {
+  if (!snap || snap.event !== 'exception' || !snap.exception) return false;
+  var enabled = (exceptionBreakpoints || []).filter(function (eb) { return eb.enabled !== false; });
+  if (!enabled.length) return false;
+  var t = String(snap.exception.type || '');
+  var caught = !!snap.exception.caught;
+  for (var i = 0; i < enabled.length; i++) {
+    var eb = enabled[i];
+    var wantedType = (eb.type || '').trim();
+    if (wantedType && wantedType !== t) continue;
+    if ((eb.mode || 'uncaught') === 'uncaught' && caught) continue;
+    return true;
+  }
+  return false;
 }
 
 function pauseLoop(file, line, scopeFn) {
@@ -392,8 +470,20 @@ function drainPendingUpdates(scopeFn) {
       var changes = JSON.parse(decodeSharedJsonBytes(BPS_OFF, blen));
       changes.forEach(function (ch) {
         var k = ch.file + ':' + ch.line;
-        if (ch.op === 'add' || ch.op === 'edit') breakpoints.set(k, { condition: ch.condition || null });
-        else if (ch.op === 'remove') breakpoints.delete(k);
+        if (ch.op === 'add' || ch.op === 'edit') {
+          var prev = breakpoints.get(k);
+          var hits = parseInt(ch.hitCount || ch.hit_count, 10);
+          if (!isFinite(hits) || hits < 1) hits = null;
+          breakpoints.set(k, {
+            condition: ch.condition || null,
+            hitCount: hits,
+            // Preserve hit counter across edits so a condition tweak doesn't
+            // restart progress through a long loop.
+            _hits: (prev && prev._hits) || 0,
+          });
+        } else if (ch.op === 'remove') {
+          breakpoints.delete(k);
+        }
       });
     } catch (e) {}
     Atomics.store(i32, SLOT_BPS_DIRTY, 0);
