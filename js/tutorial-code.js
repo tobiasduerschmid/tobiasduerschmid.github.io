@@ -6298,7 +6298,25 @@
           });
         }
 
-        // 2. Apply solution files
+        // 2. Run setup for this step before applying its solution.
+        if (st.setup_commands && st.setup_commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            p = p.then(function () {
+              var batch = st.setup_commands
+                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+                .join('\n');
+              return self._runSilent(batch);
+            });
+          }
+        }
+
+        // 3. Replay post-fileload setup in the same position as normal step load.
+        if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
+            (st.post_fileload_setup && st.post_fileload_setup.length > 0)) {
+          p = p.then(function () { return self._runPostFileloadSetup(st); });
+        }
+
+        // 4. Apply solution files
         if (st.solution && st.solution.files) {
           p = p.then(function () {
             self._suppressAutoSave = true;
@@ -6312,7 +6330,7 @@
           });
         }
 
-        // 3. Accumulate solution commands
+        // 5. Run solution commands
         if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
             p = p.then(function () {
@@ -6495,7 +6513,25 @@
           });
         }
 
-        // 2. Apply solution files
+        // 2. Run setup for this step before applying its solution.
+        if (step.setup_commands && step.setup_commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            p = p.then(function () {
+              var batch = step.setup_commands
+                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+                .join('\n');
+              return self._runSilent(batch);
+            });
+          }
+        }
+
+        // 3. Replay post-fileload setup in the same position as normal step load.
+        if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
+            (step.post_fileload_setup && step.post_fileload_setup.length > 0)) {
+          p = p.then(function () { return self._runPostFileloadSetup(step); });
+        }
+
+        // 4. Apply solution files
         if (step.solution && step.solution.files) {
           p = p.then(function () {
             self._suppressAutoSave = true;
@@ -6509,7 +6545,7 @@
           });
         }
 
-        // 3. Run this step's solution commands before later step files exist.
+        // 5. Run this step's solution commands before later step files exist.
         if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
             p = p.then(function () {
