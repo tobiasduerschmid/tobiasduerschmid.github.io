@@ -3961,12 +3961,14 @@
     this._renderTabs();
   };
 
-  // Close every editor file not listed in `step.files`. Each step's `files`
-  // array defines exactly which tabs are visible; files from previous steps
-  // are removed so the editor stays focused on what's relevant.
+  // Close editor files that are not visible for this step. Visibility can come
+  // from starter files, explicit open_file, or watched backend files.
   TutorialCode.prototype._closeNonStepFiles = function (step) {
     var stepPaths = {};
-    if (step && step.files) {
+    var visibleFiles = this._getStepVisibleFiles ? this._getStepVisibleFiles(step) : [];
+    if (visibleFiles.length > 0) {
+      visibleFiles.forEach(function (path) { stepPaths[path] = true; });
+    } else if (step && step.files) {
       step.files.forEach(function (f) { stepPaths[f.path] = true; });
     }
     var self = this;
@@ -6690,8 +6692,10 @@
       (this.postFileloadSetupCommands && this.postFileloadSetupCommands.length > 0) ||
       (step.post_fileload_setup && step.post_fileload_setup.length > 0)
     );
+    var visibleFilesRefreshScheduled = false;
     if ((hasSetup || hasPostFileload) &&
         (this.config.backend === 'v86' || this.config.backend === 'webcontainer')) {
+      visibleFilesRefreshScheduled = true;
       // Run all setup_commands silently in a single shell invocation. The
       // terminal is covered by a scoped overlay during the run; instructions
       // and the git-graph panel stay interactive. Bash skips this line at
@@ -6723,6 +6727,7 @@
         }
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
+      visibleFilesRefreshScheduled = true;
       if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       } else if (this.config.backend === 'prolog') {
@@ -6731,7 +6736,8 @@
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       }
       self._refreshStepVisibleFiles(step, { includeStepFiles: false });
-    } else if (firstVisit) {
+    }
+    if (!visibleFilesRefreshScheduled) {
       self._refreshStepVisibleFiles(step, { includeStepFiles: false });
     }
 
@@ -7602,16 +7608,7 @@
           var content = new TextDecoder('utf-8').decode(buf);
           var entry = self.editorModels[filename];
           if (!entry) {
-            var active = self.activeFileName;
-            self._suppressAutoSave = true;
-            self.openFile(filename, content);
-            self._suppressAutoSave = false;
-            entry = self.editorModels[filename];
-            if (entry) entry.lastSyncContent = content;
-            if (active && self.editorModels[active]) {
-              self._setActiveFile(active);
-              self._renderTabs();
-            }
+            return;
           } else if (entry.lastSyncContent !== content) {
             entry.lastSyncContent = content;
             if (entry.model.getValue() !== content) {
