@@ -3948,6 +3948,20 @@
     this._renderTabs();
   };
 
+  // Close every editor file not listed in `step.files`. Each step's `files`
+  // array defines exactly which tabs are visible; files from previous steps
+  // are removed so the editor stays focused on what's relevant.
+  TutorialCode.prototype._closeNonStepFiles = function (step) {
+    var stepPaths = {};
+    if (step && step.files) {
+      step.files.forEach(function (f) { stepPaths[f.path] = true; });
+    }
+    var self = this;
+    Object.keys(this.editorModels).forEach(function (path) {
+      if (!stepPaths[path]) self._closeFile(path);
+    });
+  };
+
   TutorialCode.prototype._saveCurrentFile = function () {
     if (!this.activeFileName) return;
     this._syncFileToBackend(this.activeFileName);
@@ -5981,7 +5995,22 @@
    */
   TutorialCode.prototype.saveProgress = function () {
     if (!this.autosaveType) return;
+    // Start from the previously persisted overrides so files that aren't
+    // currently open as tabs (closed during a step transition) keep their
+    // saved edits. Only files that are still in the editor get re-evaluated
+    // against their original starter content here.
     var files = {};
+    try {
+      var prevRaw = localStorage.getItem(this._storageKey());
+      if (prevRaw) {
+        var prev = JSON.parse(prevRaw);
+        if (prev && prev.files) {
+          for (var k in prev.files) {
+            if (prev.files.hasOwnProperty(k)) files[k] = prev.files[k];
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
     var self = this;
     for (var name in this.editorModels) {
       if (this.editorModels.hasOwnProperty(name)) {
@@ -5992,6 +6021,9 @@
             content: current,
             language: this.editorModels[name].model.getLanguageId()
           };
+        } else {
+          // Open file matches starter — drop any stale override for it.
+          delete files[name];
         }
       }
     }
@@ -6062,10 +6094,22 @@
   TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
     if (!files) return Promise.resolve();
     var self = this;
+    // Only restore files that belong to the current step. Each step's
+    // `files` array defines its visible tabs; saved overrides for files
+    // outside that set would re-clutter the editor with content from
+    // other steps. The override is still in localStorage and gets
+    // re-applied on revisit (see loadStep).
+    var step = this.steps[this.currentStep];
+    var stepPaths = null;
+    if (step && step.files) {
+      stepPaths = {};
+      step.files.forEach(function (f) { stepPaths[f.path] = true; });
+    }
     self._suppressAutoSave = true;
     var syncs = [];
     for (var name in files) {
       if (files.hasOwnProperty(name)) {
+        if (stepPaths && !stepPaths[name]) continue;
         self.openFile(name, files[name].content, files[name].language);
         syncs.push(Promise.resolve(self._syncFileToBackend(name)));
       }
@@ -6306,6 +6350,10 @@
     // Reveal the tutorial
     p = p.then(function () {
       self._suppressAutoSave = false;
+      // The replay loop above opened every prior step's files into the editor
+      // to sync them to the VM. Clean those tabs so only the current step's
+      // files remain visible.
+      self._closeNonStepFiles(curStep);
       if (curStep && curStep.open_file) { self._setActiveFile(curStep.open_file); }
       self._renderTabs();
       self._autoSaveProgress();
@@ -6480,6 +6528,9 @@
     //    _applySavedFiles docstring), run post_fileload_setup against the
     //    final editor state, then reveal the tutorial.
     p = p.then(function () {
+      // The replay loop above opened every prior step's files. Clean those
+      // tabs so only the current step's files remain visible after restore.
+      self._closeNonStepFiles(savedStepObj);
       return self._applySavedFiles(saved.files, saved.activeFile);
     });
     p = p.then(function () {
@@ -6538,14 +6589,40 @@
 
     this._renderStepControls(index);
 
-    // On first visit: load all files from step definition.
-    // On revisit: only load files that are missing from the editor (keeps student edits).
     var self = this;
+
+    // Persist any pending edits to localStorage before changing the tab set,
+    // so revisits can recover the student's work. Skipped during the boot-time
+    // restore sequence (which sets _suppressAutoSave for the same reason).
+    if (this.autoSaveEnabled && !this._suppressAutoSave) this._autoSaveProgress();
+
+    // Close any open files that aren't part of this step. The underlying VM
+    // filesystem is untouched, so terminal commands (`cat`, etc.) can still
+    // read those files.
+    this._closeNonStepFiles(step);
+
+    // Pull autosaved overrides so re-opening a file shows the student's
+    // last saved edits instead of the YAML starter content.
+    var savedOverrides = {};
+    if (this.autoSaveEnabled) {
+      try {
+        var raw = localStorage.getItem(this._storageKey());
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && parsed.files) savedOverrides = parsed.files;
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     if (step.files) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
-        if (firstVisit || !self.editorModels[f.path]) {
-          self.openFile(f.path, f.content, f.language, f);
+        if (!self.editorModels[f.path]) {
+          var override = savedOverrides[f.path];
+          var content = (override && typeof override.content === 'string')
+            ? override.content
+            : f.content;
+          self.openFile(f.path, content, f.language, f);
           self._syncFileToBackend(f.path);
           self._originalContent[f.path] = f.content || '';
         }

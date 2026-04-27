@@ -346,7 +346,7 @@ steps:
 
       ```python
       # The function under test (in some module):
-      def add(a, b):
+      def add(a: int, b: int) -> int:
           return a + b
 
       # The pytest test for it:
@@ -417,6 +417,28 @@ steps:
 
 
     files:
+      # Reference from Step 1 — the instructions ask the student to scan these
+      # three tests and reuse the same assertion shapes for test_leveling.py.
+      - path: "test_streaks.py"
+        content: |
+          """Tests for streaks.streak_badge — pre-written for you in Step 1.
+          Re-shown here as the model you'll mirror when writing test_leveling.py."""
+          import pytest
+          from streaks import streak_badge
+
+
+          def test_well_above_century_is_diamond():
+              assert streak_badge(150) == "💯"
+
+
+          def test_inside_fire_range_is_fire():
+              assert streak_badge(50) == "🔥"
+
+
+          def test_exactly_at_century_boundary_is_diamond():
+              assert streak_badge(100) == "💯"
+        language: "python"
+
       - path: "leveling.py"
         content: |
           """Player leveling utilities — JRPG / Pokemon style."""

@@ -1297,6 +1297,22 @@ steps:
           print(f"Squares to 5:  {squares_up_to(5)}")
         language: "python"
 
+      # Reference: completed in Step 4. Shown here so `from functions import mean`
+      # has a visible source — the tab is read-only context for the import above.
+      - path: "functions.py"
+        content: |
+          def mean(numbers):
+              """Return the arithmetic mean of a list of numbers."""
+              return sum(numbers) / len(numbers)
+
+          def label_score(score, threshold=50):
+              """Return 'pass' if score >= threshold, else 'fail'."""
+              if score >= threshold:
+                  return 'pass'
+              else:
+                  return 'fail'
+        language: "python"
+
     open_file: "listcomp.py"
 
     setup_commands:
