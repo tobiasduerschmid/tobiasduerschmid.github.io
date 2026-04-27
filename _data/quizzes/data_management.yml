@@ -1,5 +1,6 @@
 title: "Data Management Quiz"
 description: "Test your ability to reason about ACID, CAP, and the RDBMS/NoSQL trade-off in realistic scenarios — not just recite definitions."
+active: true
 questions:
   - id: 1
     type: single

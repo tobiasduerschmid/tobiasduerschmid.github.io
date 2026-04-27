@@ -1,5 +1,6 @@
 title: "State Pattern Quiz"
 description: "Test your understanding of the State pattern's design decisions, its relationship to Strategy, and the principle of polymorphism over conditions."
+active: true
 questions:
   - id: 1
     type: single

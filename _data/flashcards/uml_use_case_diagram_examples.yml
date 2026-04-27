@@ -1,5 +1,6 @@
 title: "UML Use Case Diagram Flashcards"
 description: "Quick review of UML Use Case Diagram notation and relationships."
+active: true
 cards:
   - id: 1
     question: "What does an **actor** represent in a use case diagram, and how is it drawn?"

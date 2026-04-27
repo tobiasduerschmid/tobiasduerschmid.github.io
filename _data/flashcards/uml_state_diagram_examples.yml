@@ -1,5 +1,6 @@
 title: "UML State Machine Diagram Flashcards"
 description: "Quick review of UML State Machine Diagram notation and transitions."
+active: true
 cards:
   - id: 1
     question: "What is the syntax for a **transition label** in a state machine diagram?"

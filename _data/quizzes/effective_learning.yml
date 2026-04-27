@@ -1,5 +1,6 @@
 title: "Study Tips Quiz"
 description: "Test your understanding of the evidence-based study techniques."
+active: true
 questions:
   - id: 1
     question: "After reading a chapter on algorithms three times, a student feels incredibly confident about the upcoming exam. However, they end up failing. According to learning science, what psychological trap did this student likely fall into?"

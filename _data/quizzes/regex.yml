@@ -1,5 +1,6 @@
 title: "RegEx Quiz" 
 description: "Test your understanding of regular expressions beyond basic syntax, focusing on underlying mechanics, performance, and theory." 
+active: true
 questions: 
   - id: 1 
     question: "You are tasked with extracting all data enclosed in HTML `<div>` tags. You write a regular expression, but it consistently fails on deeply nested divs (e.g., `<div><div>text</div></div>`). From a theoretical computer science perspective, why is standard RegEx the wrong tool for this?" 

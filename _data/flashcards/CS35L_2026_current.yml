@@ -1,5 +1,6 @@
 title: "Current CS 35L Flashcards"
 description: "Includes all flash cards taught until today"
+active: true
 decks:
   - user_stories
   - study_tips

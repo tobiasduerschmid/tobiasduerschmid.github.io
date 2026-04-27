@@ -1,5 +1,6 @@
 title: "React Syntax — What Does This Code Do?"
 description: "You are shown React/JSX code. Explain what it does and what it renders."
+active: true
 cards:
   - id: 1
     question: |

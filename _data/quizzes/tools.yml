@@ -1,5 +1,6 @@
 title: "Tools Master Quiz"
-description: "A comprehensive mix of all tools flashcards."
+description: "A comprehensive mix of all tools quizzes."
+active: true
 decks:
   - shell
   - git

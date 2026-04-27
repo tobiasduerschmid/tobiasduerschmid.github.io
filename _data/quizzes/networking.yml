@@ -1,5 +1,6 @@
 title: "Networking Fundamentals Quiz"
 description: "Test your understanding of network architectures, the TCP/IP protocol stack, HTTP, and how the internet works."
+active: true
 questions:
   - id: 1
     question: "In a client-server architecture, which statement is TRUE?"

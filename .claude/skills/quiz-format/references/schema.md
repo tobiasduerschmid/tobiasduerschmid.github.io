@@ -15,17 +15,21 @@ This is the long-form reference — the SKILL.md cheat sheet covers the common p
 ```yaml
 title: "Quiz Title"            # required — shown in the quiz header
 description: "One-line."        # optional — shown under the title
+active: true                    # optional, default true — set false to hide from the SE Gym library
 shuffle: true                   # optional, default true — randomizes question + option order
 questions:
   - <question>
   - <question>
 ```
 
+`active: false` only hides the quiz from the SE Gym listing (`/se-gym/`). Page embeds via `{% include quiz.html id="..." %}` and existing personal-gym entries (already saved in a learner's localStorage) keep working — the engine still has the data, the library just doesn't advertise it.
+
 There is also a meta form for assembling quizzes from sub-decks:
 
 ```yaml
 title: "Combined Quiz"
 description: "Pulls from multiple decks"
+active: true                                              # same semantics as above
 decks: [design_pattern_command, design_pattern_state]
 ```
 

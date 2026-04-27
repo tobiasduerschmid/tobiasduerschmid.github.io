@@ -1,5 +1,6 @@
 title: "UML Class Diagram Flashcards"
 description: "Quick review of UML Class Diagram notation and relationships."
+active: true
 cards:
   - id: 1
     question: "What does the following symbol represent in a class diagram?"

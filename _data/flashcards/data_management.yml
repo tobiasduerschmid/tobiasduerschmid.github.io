@@ -1,5 +1,6 @@
 title: "Data Management Flashcards"
 description: "Retrieval practice for DBMS concepts, SQL, relational algebra, transactions, ACID, CAP, and NoSQL trade-offs."
+active: true
 cards:
   - id: 1
     question: "What **four problems** does a DBMS solve that an application manipulating its own files does not solve by itself?"

@@ -1,5 +1,6 @@
 title: "Make and Makefiles Quiz" 
 description: "Test your understanding of Makefiles, including syntax rules, execution order, automatic variables, and underlying concepts like incremental compilation." 
+active: true
 questions: 
   - id: 1 
     question: "What is the primary mechanism `make` uses to determine if a target needs to be rebuilt?" 

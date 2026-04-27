@@ -1,5 +1,6 @@
 title: "Node.js Concepts Quiz"
 description: "Test your deeper understanding of JavaScript's async model, type system, and paradigm differences from C++ and Python. Includes Parsons problems, technique-selection questions, and spaced interleaving across all concepts."
+active: true
 questions:
   - id: 1
     question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"

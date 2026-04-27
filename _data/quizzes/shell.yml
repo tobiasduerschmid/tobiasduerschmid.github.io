@@ -1,5 +1,6 @@
 title: "Shell Scripting & UNIX Philosophy Quiz"
 description: "Test your conceptual understanding of shell environments, data streams, and scripting paradigms beyond basic command memorization."
+active: true
 questions:
   - id: 1
     question: "A developer needs to parse a massive log file, extract IP addresses, sort them, and count unique occurrences. Instead of writing a 500-line Python script, they use `cat | awk | sort | uniq -c`. Why is this approach fundamentally preferred in the UNIX environment?"

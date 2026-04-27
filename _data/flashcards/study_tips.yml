@@ -1,5 +1,6 @@
 title: "Study Tips Flashcards"
 description: "Test your knowledge on evidence-based study techniques!"
+active: true
 cards:
   - id: 1
     question: "Why is rereading a textbook often an ineffective study strategy?"

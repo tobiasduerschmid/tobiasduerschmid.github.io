@@ -1,5 +1,6 @@
 title: "Node.js/JavaScript Syntax — What Does This Code Do?"
 description: "You are shown JavaScript/Node.js code. Explain what it does and what it outputs."
+active: true
 cards:
   - id: 1
     question: |

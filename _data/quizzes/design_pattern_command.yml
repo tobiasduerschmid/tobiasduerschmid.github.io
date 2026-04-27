@@ -1,5 +1,6 @@
 title: "Command Pattern Quiz"
 description: "Test your understanding of Command roles, refactoring triggers, undo, macro commands, null commands, and appropriate use."
+active: true
 questions:
   - id: 1
     type: single

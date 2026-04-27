@@ -1,5 +1,6 @@
 title: "Java — Write the Code"
 description: "You are given a scenario or design problem. Write Java code that solves it. Questions target Apply, Evaluate, and Create levels — not just syntax recall."
+active: true
 cards:
 
   - id: 1

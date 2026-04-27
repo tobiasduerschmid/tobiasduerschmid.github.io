@@ -1,5 +1,6 @@
 title: "Shell Commands Flashcards" 
 description: "Which Shell command would you use for the following scenarios?" 
+active: true
 cards: 
   - id: 1 
     question: "You need to see a list of all the files and folders in your current directory. What command do you use?" 

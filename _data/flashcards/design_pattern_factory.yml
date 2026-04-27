@@ -1,5 +1,6 @@
 title: "Factory Method & Abstract Factory Flashcards"
 description: "Key concepts and comparisons for creational design patterns."
+active: true
 cards:
   - id: 1
     question: "What problem does Factory Method solve?"

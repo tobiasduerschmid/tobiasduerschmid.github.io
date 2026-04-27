@@ -1,5 +1,6 @@
 title: "AI & Learning Quiz"
 description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding."
+active: true
 questions:
   - id: 1
     question: "What is 'cognitive offloading'?"

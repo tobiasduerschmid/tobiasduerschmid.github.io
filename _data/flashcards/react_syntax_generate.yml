@@ -1,5 +1,6 @@
 title: "React Syntax — Write the Code"
 description: "You are given a task description. Write the React/JSX code that accomplishes it."
+active: true
 cards:
   - id: 1
     question: "Write a React component `Greeting` that renders an `<h1>` saying `Hello, Alice!` using a variable `name`."

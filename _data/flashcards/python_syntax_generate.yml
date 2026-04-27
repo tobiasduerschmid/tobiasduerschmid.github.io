@@ -1,5 +1,6 @@
 title: "Python Syntax — Write the Code"
 description: "You are given a task description. Write the Python code that accomplishes it."
+active: true
 cards:
   - id: 1
     question: "Print a formatted string that says `Student: Alice, GPA: 3.82` using a variable `name = \"Alice\"` and `gpa = 3.82`. Format the GPA to 2 decimal places."

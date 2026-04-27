@@ -1,5 +1,6 @@
 title: "Singleton Pattern Flashcards"
 description: "Key concepts, controversies, and modern alternatives for the Singleton design pattern."
+active: true
 cards:
   - id: 1
     question: "What are the three implementation aspects of Singleton?"

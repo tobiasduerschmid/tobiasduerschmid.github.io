@@ -1,5 +1,6 @@
 title: "Makefile Master Flashcards"
 description: "A comprehensive collection of Makefile syntax, example generation, and real-world C project snippets."
+active: true
 decks:
   - makefile_syntax
   - makefile_examples

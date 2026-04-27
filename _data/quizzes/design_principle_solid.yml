@@ -1,5 +1,6 @@
 title: "SOLID Design Principles Quiz"
 description: "Test your ability to apply and evaluate the five SOLID principles — with an emphasis on the Single Responsibility and Liskov Substitution Principles."
+active: true
 questions:
   - id: 1
     type: single

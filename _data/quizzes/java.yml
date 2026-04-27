@@ -1,5 +1,6 @@
 title: "Java Concepts Quiz"
 description: "Test your deeper understanding of Java's type system, OOP model, and design idioms. Covers false friends with C++/Python, encapsulation vs information hiding, generics, collections, and exception handling. Includes Parsons problems, technique-selection questions, and spaced interleaving across all concepts."
+active: true
 questions:
 
   - id: 1

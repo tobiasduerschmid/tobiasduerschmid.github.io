@@ -1,5 +1,6 @@
 title: "Basic RegEx Syntax Flashcards (Production/Recall)"  
 description: "Test your ability to produce the exact Regular Expression metacharacter or syntax based on its functional description."  
+active: true
 cards:  
   - id: 1  
     question: "What metacharacter asserts the start of a string?"  

@@ -1,5 +1,6 @@
 title: "Python Syntax — What Does This Code Do?"
 description: "You are shown Python code. Explain what it does and what it returns or prints."
+active: true
 cards:
   - id: 1
     question: |

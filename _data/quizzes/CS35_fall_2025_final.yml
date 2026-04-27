@@ -1,5 +1,6 @@
 title: "CS 35L Final Exam Fall 2025 MCQs"
 description: "Test your knowledge on software construction principles, design patterns, testing, security, and Git based on the CS 35L Final Exam."
+active: true
 questions:
   - id: 1
     question: "What is the primary goal of implementing information hiding in a program?"

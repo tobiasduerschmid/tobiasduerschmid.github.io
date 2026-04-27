@@ -1,5 +1,6 @@
 title: "UML State Machine Diagram Practice"
 description: "Test your ability to read and interpret UML State Machine Diagrams."
+active: true
 questions:
   - id: 1
     type: single

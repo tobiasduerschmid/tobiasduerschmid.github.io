@@ -1,5 +1,6 @@
 title: "Java — What Does This Code Do?"
 description: "You are shown Java code. Go beyond naming what it does — explain *why* it behaves that way, what design choice it reflects, or what would break if it changed."
+active: true
 cards:
 
   - id: 1

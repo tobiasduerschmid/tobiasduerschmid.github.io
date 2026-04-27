@@ -1,5 +1,6 @@
 title: "SOLID Design Principles Flashcards"
 description: "Definitions, misconceptions, and the deeper 'why' behind each SOLID principle — with extra depth on SRP and LSP."
+active: true
 cards:
   - id: 1
     question: "State the modern definition of the Single Responsibility Principle (SRP)."

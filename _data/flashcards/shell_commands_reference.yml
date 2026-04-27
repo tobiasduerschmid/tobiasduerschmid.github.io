@@ -1,5 +1,6 @@
 title: "Shell Commands — What Does It Do?"
 description: "Match each shell command to its purpose"
+active: true
 cards:
   - id: 1
     question: "What does `ls` do?"

@@ -1,5 +1,6 @@
 title: "Python Concepts Quiz"
 description: "Test your deeper understanding of Python's design choices, paradigm differences from C++, and when to use which tool."
+active: true
 questions:
   - id: 1
     question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"

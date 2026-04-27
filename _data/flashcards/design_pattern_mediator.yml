@@ -1,5 +1,6 @@
 title: "Mediator Pattern Flashcards"
 description: "Key concepts, design decisions, and the Observer vs. Mediator comparison."
+active: true
 cards:
   - id: 1
     question: "What problem does Mediator solve?"

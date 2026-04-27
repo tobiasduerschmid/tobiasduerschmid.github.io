@@ -1,5 +1,6 @@
 title: "Software Architecture Quiz"
 description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding of structural paradigms, decision-making, and architectural degradation."
+active: true
 questions:
   - id: 1
     question: "Which paradigm views software architecture primarily as 'The set of principal design decisions governing a system'?"

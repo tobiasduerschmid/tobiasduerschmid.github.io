@@ -1,5 +1,6 @@
 title: "Command Pattern Flashcards"
 description: "Key roles, refactoring triggers, undo mechanics, and trade-offs of the Command design pattern."
+active: true
 cards:
   - id: 1
     question: "What problem does the Command pattern solve?"

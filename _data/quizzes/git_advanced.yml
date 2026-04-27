@@ -1,5 +1,6 @@
 title: "Advanced Git Quiz"
 description: "Test your knowledge of advanced Git commands, debugging tools, and integration strategies."
+active: true
 questions:
   - id: 1
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"

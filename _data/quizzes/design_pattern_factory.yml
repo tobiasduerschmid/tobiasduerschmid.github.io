@@ -1,5 +1,6 @@
 title: "Factory Method & Abstract Factory Quiz"
 description: "Test your understanding of creational patterns — when to use which, design decisions, and their relationships."
+active: true
 questions:
   - id: 1
     type: single

@@ -1,5 +1,6 @@
 title: "User Stories & INVEST Principle Flashcards"
 description: "Test your knowledge on Agile user stories and the criteria for creating high-quality requirements!"
+active: true
 cards:
   - id: 1
     question: "What is the primary purpose of Acceptance Criteria in a user story?"

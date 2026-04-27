@@ -1,5 +1,6 @@
 title: "Singleton Pattern Quiz"
 description: "Test your understanding of the Singleton pattern's controversies, thread-safety mechanisms, and modern alternatives."
+active: true
 questions:
   - id: 1
     type: single

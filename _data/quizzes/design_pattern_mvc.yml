@@ -1,5 +1,6 @@
 title: "MVC Pattern Quiz"
 description: "Test your understanding of the MVC architectural pattern, its compound structure, and its modern variants."
+active: true
 questions:
   - id: 1
     type: single

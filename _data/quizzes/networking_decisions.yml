@@ -1,5 +1,6 @@
 title: "Networking: Making Decisions"
 description: "Given real-world application scenarios, choose the right network architecture, transport protocol, and application protocol. These questions test your ability to analyze trade-offs and justify design decisions."
+active: true
 questions:
   - id: 1
     question: "You are building a **group chat app** similar to WhatsApp. A user sends 'Meet me at the library' immediately followed by 'Actually cancel that — plans changed.' If these two messages arrive out of order, the recipient gets the opposite impression. Which transport protocol should you use?"

@@ -1,5 +1,6 @@
 title: "Mediator Pattern Quiz"
 description: "Test your understanding of the Mediator pattern, its trade-offs, and its relationship to Observer."
+active: true
 questions:
   - id: 1
     type: single

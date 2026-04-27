@@ -1,5 +1,6 @@
 title: "C Program Makefile Flashcards"  
 description: "Test your ability to read and understand actual Makefile snippets commonly found in real-world C projects."  
+active: true
 cards:  
   - id: 1  
     question: "Given the snippet `app: main.o network.o utils.o` followed by the command `$(CC) $(CFLAGS) $^ -o $@`, what exactly does the command evaluate to if `CC=gcc` and `CFLAGS=-Wall`?"  

@@ -1,5 +1,6 @@
 title: "Design Patterns Quiz"
 description: "Test your understanding of design patterns at the Analyze and Evaluate levels of Bloom's taxonomy. These questions go beyond pattern recognition to test design reasoning."
+active: true
 questions:
   - id: 1
     type: single

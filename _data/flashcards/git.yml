@@ -1,5 +1,6 @@
 title: "Git Commands Flashcards"
 description: "Which Git command would you use for the following scenarios?"
+active: true
 cards:
   - id: 1
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. How do you temporarily save your current work without making a messy commit?"

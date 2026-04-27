@@ -1,5 +1,6 @@
 title: "Design Patterns Fundamentals"
 description: "Core concepts, categories, and principles of design patterns in software engineering."
+active: true
 cards:
   - id: 1
     question: "What is a design pattern?"

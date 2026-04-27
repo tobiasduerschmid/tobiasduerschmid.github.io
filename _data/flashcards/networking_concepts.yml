@@ -1,5 +1,6 @@
 title: "Networking Concepts"
 description: "Review key networking concepts: architectures, protocols, HTTP, and the TCP/IP stack."
+active: true
 cards:
   - id: 1
     question: "What are the two roles in a **client-server architecture**, and who initiates the connection?"

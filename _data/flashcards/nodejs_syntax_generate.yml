@@ -1,5 +1,6 @@
 title: "Node.js/JavaScript Syntax — Write the Code"
 description: "You are given a task description. Write the JavaScript code that accomplishes it."
+active: true
 cards:
   - id: 1
     question: "Declare a mutable variable `count` set to `0` and an immutable constant `MAX` set to `200`."

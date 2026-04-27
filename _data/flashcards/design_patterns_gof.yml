@@ -1,5 +1,6 @@
 title: "GoF Design Pattern Details"
 description: "Key concepts, design decisions, and trade-offs for each individual GoF pattern covered in the course."
+active: true
 cards:
   - id: 1
     question: "What problem does the **Observer** pattern solve?"

@@ -1,5 +1,6 @@
 title: "Version Control and Git Quiz"
 description: "Test your knowledge of core version control concepts, Git architecture, branching strategies, and advanced commands."
+active: true
 questions:
   - id: 1
     question: "Which of the following best describes the core difference between centralized and distributed version control systems (like Git)?"

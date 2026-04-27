@@ -1,5 +1,6 @@
 title: "Shell Script  Parsons Problems"
 description: "Arrange the code fragments to build correct Python expressions and class definitions."
+active: true
 questions:
 
   - id: 3

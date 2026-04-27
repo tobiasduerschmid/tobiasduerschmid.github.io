@@ -1,5 +1,6 @@
 title: "React Concepts Quiz"
 description: "Test your deeper understanding of React's design philosophy, state management, and component architecture. Questions 1–7 cover tutorial material. Questions 8–10 test advanced concepts from the reference page. Questions 11–15 cover event handlers, useEffect, and state immutability."
+active: true
 questions:
   - id: 1
     question: |

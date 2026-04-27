@@ -1,5 +1,6 @@
 title: "Information Hiding Flashcards"
 description: "Key definitions, examples, trade-offs, and misconceptions of the Information Hiding principle (Parnas 1972)."
+active: true
 cards:
   - id: 1
     question: "State the **Information Hiding principle** in one sentence."

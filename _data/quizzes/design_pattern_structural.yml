@@ -1,5 +1,6 @@
 title: "Structural Patterns Quiz"
 description: "Test your understanding of Adapter, Composite, and Facade — their distinctions, design decisions, and when to apply each."
+active: true
 questions:
   - id: 1
     type: single

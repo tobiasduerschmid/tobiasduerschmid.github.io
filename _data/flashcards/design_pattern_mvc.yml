@@ -1,5 +1,6 @@
 title: "MVC Pattern Flashcards"
 description: "Key concepts for the Model-View-Controller architectural pattern and its compound structure."
+active: true
 cards:
   - id: 1
     question: "What problem does MVC solve?"

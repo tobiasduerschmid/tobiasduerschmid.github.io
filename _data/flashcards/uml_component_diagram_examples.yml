@@ -1,5 +1,6 @@
 title: "UML Component Diagram Flashcards"
 description: "Quick review of UML Component Diagram notation and architecture-level modeling."
+active: true
 cards:
   - id: 1
     question: "What does a **component** represent in a UML component diagram?"

@@ -1,5 +1,6 @@
-title: "Tools Master Quiz"
-description: "A comprehensive mix of all tools quizzes."
+title: "Tools Master Flashcards"
+description: "A comprehensive mix of all tools flashcards."
+active: true
 decks:
   - makefile_syntax
   - git

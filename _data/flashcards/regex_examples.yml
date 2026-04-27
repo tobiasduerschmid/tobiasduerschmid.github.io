@@ -1,5 +1,6 @@
 title: "RegEx Example Flashcards"  
 description: "Test your knowledge on solving common text-processing problems using Regular Expressions!"  
+active: true
 cards:  
   - id: 1  
     question: "Write a regex to validate a standard email address (e.g., user@domain.com)."  

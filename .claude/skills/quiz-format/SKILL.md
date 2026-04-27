@@ -27,6 +27,7 @@ Read these only when the task warrants — drafting your first quiz from scratch
 # _data/quizzes/<id>.yml — SEBook + SEGym
 title: "Quiz Title"
 description: "One-line description."
+active: true                  # optional, default true; set false to hide from SE Gym (embeds still work)
 questions:
   - id: 1                       # optional, used for analytics
     type: single                # 'single' (default), 'multiple', or 'parsons'

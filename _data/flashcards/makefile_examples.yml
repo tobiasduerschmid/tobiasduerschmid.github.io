@@ -1,5 +1,6 @@
 title: "Makefile Flashcards (Example Generation)"  
 description: "Test your knowledge on solving common build automation problems using Makefile syntax and rules!"  
+active: true
 cards:  
   - id: 1  
     question: "Write a basic Makefile rule to compile a single C source file (`main.c`) into an executable named `app`."  

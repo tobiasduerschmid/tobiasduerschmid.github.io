@@ -1,5 +1,6 @@
 title: "Structural Pattern Flashcards"
 description: "Key concepts for Adapter, Composite, and Facade patterns."
+active: true
 cards:
   - id: 1
     question: "What problem does Adapter solve?"

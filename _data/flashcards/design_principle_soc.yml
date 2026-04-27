@@ -1,5 +1,6 @@
 title: "Separation of Concerns Flashcards"
 description: "Key definitions, examples, trade-offs, and misconceptions of Separation of Concerns (SoC)."
+active: true
 cards:
   - id: 1
     question: "What is the Separation of Concerns (SoC) design principle?"

@@ -1,5 +1,6 @@
 title: "Makefile Flashcards (Syntax Production/Recall)"  
 description: "Test your ability to produce the exact Makefile syntax, rules, and variables based on their functional descriptions."  
+active: true
 cards:  
   - id: 1  
     question: "What is the standard syntax to define a basic build rule in a Makefile?"  

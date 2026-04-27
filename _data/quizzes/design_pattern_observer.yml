@@ -1,5 +1,6 @@
 title: "Observer Pattern Quiz"
 description: "Test your understanding of the Observer pattern's design decisions, trade-offs, and common pitfalls."
+active: true
 questions:
   - id: 1
     type: single

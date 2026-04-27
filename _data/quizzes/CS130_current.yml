@@ -1,5 +1,6 @@
 title: "Current CS 130 Quizzes"
 description: "Includes all quizzes taught until today"
+active: true
 decks:
   - user_stories
   - requirements
