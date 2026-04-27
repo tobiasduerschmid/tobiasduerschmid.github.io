@@ -204,20 +204,36 @@ questions:
   - id: 12
     type: single
     question: |
-      A project manager says: *"SQL is an industry standard, so we can swap PostgreSQL for Oracle with minimal work."* **What is the main nuance this claim ignores?**
+      A code-review web app handles pull-request approvals. When a reviewer clicks **"Approve PR"**, the system does two things:
+
+      1. Inserts a row into the `Reviews` table marking the PR as approved.
+      2. Posts a message to the team's Slack channel announcing the approval.
+
+      The database insert **succeeds and is committed**. Immediately afterward, the call to the Slack API times out — so the PR is recorded as approved but no Slack message is posted.
+
+      **Which ACID property is violated?**
     options:
-      - "SQL is not actually standardized; each vendor invented its own language."
-      - "Nothing — the claim is essentially correct. Any SQL query runs unchanged on any relational DBMS."
-      - "The ISO/IEC 9075 core is portable, but each vendor ships dialect-specific extensions (stored-procedure languages, window syntax, JSON operators, types) that a real application relies on. Migrating these is usually where the effort hides."
-    correct_index: 2
+      - "Atomicity"
+      - "Consistency"
+      - "Isolation"
+      - "Durability"
+      - "No ACID property is violated"
+    correct_index: 4
     option_feedback:
       0: |
-        SQL is standardized, but real products often rely on vendor-specific extensions around the
-        standard core.
+        It looks like atomicity because two actions were intended and only one succeeded — but atomicity
+        only governs operations *inside the same transaction*. The Slack post is not part of the database
+        transaction the developer wrote, so the approval-insertion transaction committed in full.
       1: |
-        Basic SQL can be portable, but production systems usually use dialect-specific types, functions,
-        procedural code, and JSON/window features.
-    explanation: "SQL *is* standardized (ISO/IEC 9075), and the core — basic DML/DDL, joins, group-by — is largely portable. The nuance is that production applications use a lot of non-core dialect: PL/pgSQL vs. T-SQL vs. PL/SQL, vendor-specific window-function syntax, JSON operators, procedural triggers, even type systems differ. 'SQL-compatible' is closer to 'mostly compatible on the standard subset' than to 'drop-in replaceable'."
+        Consistency means committed transactions must not violate declared database constraints (primary
+        keys, foreign keys, `CHECK`s). Inserting one approval row doesn't violate any such invariant.
+      2: |
+        Isolation is about overlapping transactions interfering with each other. Only one transaction is
+        involved in this scenario — there is no concurrency for isolation to govern.
+      3: |
+        Durability means a committed change survives a crash. The approval row was committed and is still
+        in the table after the Slack call timed out — that's durability working as intended.
+    explanation: "**No ACID property is violated, because ACID guarantees apply only *within* a transaction — and what counts as 'one transaction' is a design choice the developer makes.** This sounds like atomicity because one action succeeded and another failed, but atomicity only governs operations the developer explicitly grouped into the same transaction (a single logical unit of work). In a bank transfer, debiting account A and crediting account B *must* be one transaction because the system is incorrect unless both happen together. By contrast, recording a PR approval and posting to Slack should usually *not* be declared as one database transaction — the PR should still be marked approved even if Slack is down. The DBMS did not violate atomicity as long as the approval-insertion transaction itself committed fully and correctly."
 
   - id: 13
     type: single
