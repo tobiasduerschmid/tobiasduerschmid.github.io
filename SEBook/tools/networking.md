@@ -184,7 +184,7 @@ UDP simply "throws" messages at the receiver without establishing a connection f
 * Includes a **checksum** for error detection (mandatory in IPv6), but does not recover from errors — corrupted packets are silently discarded
 * If a message is lost, it is simply gone
 
-**UDP is ideal when speed matters more than reliability:** DNS name resolution (a fast, independent lookup where a retry is cheap — though DNS falls back to TCP when a response is too large for a single UDP packet), live GPS position broadcasts in navigation apps, and real-time game state updates (player positions and bullet trajectories in FPS games).
+**UDP is ideal when speed matters more than reliability:** DNS name resolution (a fast, independent lookup where a retry is cheap — though DNS falls back to TCP when a response is too large for a single UDP packet), live GPS position broadcasts in navigation apps, and live financial-market tick streams pushed to traders' dashboards (where a stale price is no longer worth waiting for).
 
 ```uml-sequence
 @startuml
@@ -267,10 +267,10 @@ note over client, server: Connection closed
 
 | Protocol | Best For | Examples |
 |----------|----------|----------|
-| **TCP** | Data that must arrive completely and in order | SSH sessions, pushing code to a Git repository, online banking, web browsing |
-| **UDP** | Real-time data where speed beats reliability | DNS queries (primarily), live GPS updates, real-time video calls, multiplayer game state |
+| **TCP** | Data that must arrive completely and in order | Pushing code to a Git repository, submitting an online tax return, transferring files via SFTP, web browsing |
+| **UDP** | Real-time data where speed beats reliability | DNS queries (primarily), live GPS updates, live screen sharing during remote presentations, live IoT sensor telemetry |
 
-**Competitive online games** (e.g., CS2, Valorant) use a hybrid: **UDP** for high-frequency movement and bullet trajectory updates (often 64–128 snapshots per second), since a missed snapshot is harmless — the next one arrives milliseconds later. **TCP** handles match-making, round results, inventory changes, and in-game purchases, where a lost or reordered message would corrupt game state. UDP snapshots include **absolute positions** of all objects, so a single dropped packet never causes lasting inconsistency.
+**Live online stock-trading platforms** use a hybrid: **UDP** for high-frequency price-tick broadcasts (often hundreds of updates per second per symbol), since a missed tick is harmless — the next one carries the *current* price milliseconds later. **TCP** handles trade orders, account balance updates, and trade confirmations, where a lost or reordered message would corrupt the user's account state. UDP ticks include the **absolute current price** of each symbol, so a single dropped packet never causes lasting inconsistency.
 
 # HTTP (Hypertext Transfer Protocol)
 
