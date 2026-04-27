@@ -900,7 +900,334 @@ steps:
             The distractor `return a, b` would return a tuple, not the max.
 
   # --------------------------------------------------------------------------
-  # STEP 5 — Loops
+  # STEP 5 — Type Hints: Documentation Tools Can Check
+  # Pedagogy:
+  #   Transfer Tutor     — C++ static types → Python optional annotations.
+  #   Component Skills   — annotation syntax isolated; no new logic to write.
+  #   Worked Example     — recycle Step 4 functions; add hints incrementally.
+  #   Variation Theory   — function body held constant; only annotations vary.
+  #   Desirable Difficulty — predict-before-run on a deliberately mistyped call.
+  #   Negative Transfer  — Python annotations are NOT enforced at runtime (unlike C++).
+  #   Bloom's level      — Apply (write hints) / Analyze (runtime vs static).
+  # --------------------------------------------------------------------------
+  - title: "Type Hints"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **annotate** Python functions with type hints, and **explain** why those hints are checked by tools (`mypy`, IDEs) rather than by the Python interpreter at runtime.
+
+      ## A Bridge from C++ Types
+
+      In C++, types are part of the contract the **compiler** enforces:
+
+      ```cpp
+      double mean(std::vector<double> numbers);   // compiler rejects mean("abc")
+      ```
+
+      Python lets you write the same kind of contract — but it is checked by **external tools** (`mypy`, IDEs like PyCharm and VS Code/Pyright), not by the Python interpreter. The annotations live on the function but Python itself ignores them at runtime.
+
+      ```python
+      def mean(numbers: list[float]) -> float:
+          return sum(numbers) / len(numbers)
+      ```
+
+      Read this as: *"`numbers` is annotated as a `list` of `float`; this function is annotated to return a `float`."* Python stores those annotations on `mean.__annotations__` but never raises a `TypeError` from them.
+
+      ### Built-in Generics vs. the `typing` Module
+
+      Since Python 3.9, you can use the built-in collections directly as generics — no import needed:
+
+      ```python
+      def biggest(scores: list[int]) -> int: ...
+      def lookup(table: dict[str, int], key: str) -> int: ...
+      ```
+
+      For "could be `int` or `None`" (a common case), import from `typing`:
+
+      ```python
+      from typing import Optional
+
+      def first_failing(scores: list[int], threshold: int = 50) -> Optional[int]:
+          """Return the first failing score, or None if everyone passed."""
+          ...
+      ```
+
+      `Optional[int]` is shorthand for `int | None`. (Python 3.10+ also supports `int | None` directly — both work.)
+
+      ### Predict Before You Run
+
+      What do you think happens at **runtime** when this is called with strings?
+
+      ```python
+      def add(a: int, b: int) -> int:
+          return a + b
+
+      add("hello", "world")    # ← what does Python do here?
+      ```
+
+      Predict, then try it in the editor. The answer is illuminating: Python **does not** raise a `TypeError` from the annotation. The `+` between two strings happily concatenates them. The annotation is documentation. The check happens when `mypy` (or your IDE) reads the source — not when Python runs it.
+
+      ### Task
+
+      Complete `typed_grades.py`. The functions are recycled from Step 4 — your job is to **add type hints** without changing any of the logic.
+
+      1. Add hints to `mean(numbers)` so it accepts a `list[float]` and returns a `float`.
+      2. Add hints to `label_score(score, threshold=50)` — both parameters are `int`, return is `str`. Remember the order: `name: type = default`.
+      3. Add hints to `first_failing(scores, threshold=50)` — return type is `Optional[int]` (and don't forget `from typing import Optional`).
+
+    files:
+      - path: "typed_grades.py"
+        content: |
+          # Goal: add type hints to each function. The behavior is already correct.
+          # TODO: import Optional from typing (you'll need it for first_failing)
+
+          def mean(numbers):                              # TODO: annotate numbers and return type
+              return sum(numbers) / len(numbers)
+
+          def label_score(score, threshold=50):           # TODO: annotate score, threshold, return type
+              if score >= threshold:
+                  return 'pass'
+              return 'fail'
+
+          def first_failing(scores, threshold=50):        # TODO: annotate — return type is Optional[int]
+              """Return the first score below threshold, or None if all pass."""
+              for s in scores:
+                  if s < threshold:
+                      return s
+              return None
+
+          # --- Quick self-test ---
+          print(f"Mean:           {mean([4, 8, 15, 16, 23, 42])}")
+          print(f"Label 75:       {label_score(75)}")
+          print(f"First failing:  {first_failing([90, 80, 30, 70])}")
+
+          # Predict-before-run probe (uncomment to try):
+          # print(mean(['a', 'b']))   # Does Python check the annotation? Try it.
+        language: "python"
+
+    open_file: "typed_grades.py"
+
+    solution:
+      files:
+        - path: "typed_grades.py"
+          content: |
+            from typing import Optional
+
+            def mean(numbers: list[float]) -> float:
+                return sum(numbers) / len(numbers)
+
+            def label_score(score: int, threshold: int = 50) -> str:
+                if score >= threshold:
+                    return 'pass'
+                return 'fail'
+
+            def first_failing(scores: list[int], threshold: int = 50) -> Optional[int]:
+                """Return the first score below threshold, or None if all pass."""
+                for s in scores:
+                    if s < threshold:
+                        return s
+                return None
+
+            # --- Quick self-test ---
+            print(f"Mean:           {mean([4, 8, 15, 16, 23, 42])}")
+            print(f"Label 75:       {label_score(75)}")
+            print(f"First failing:  {first_failing([90, 80, 30, 70])}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`numbers: list[float]`** uses Python 3.9+ built-in generic syntax — no `from typing import List` needed. The legacy `List[float]` still works but is verbose.
+        - **`-> float`** declares the return type. `sum(...) / len(...)` always yields a `float` in Python 3 (`/` is float division), so the annotation is honest.
+        - **`threshold: int = 50`** combines a type hint with a default value. The order is `name: type = default`.
+        - **`Optional[int]`** is the idiom for "either an `int` or `None`." It is shorthand for `int | None` (which also works on Python 3.10+).
+        - **Annotations are inert at runtime.** Try the commented `mean(['a', 'b'])` probe — Python does not raise a `TypeError` from the annotation. The exception comes from inside `sum`, when `+` between the initial `0` and a string fails. Tools like `mypy` would flag the call *before* you run it.
+        - **Annotations are stored**, though — you can inspect them: `mean.__annotations__` returns something like `{'numbers': list[float], 'return': <class 'float'>}`.
+
+    tests:
+      - description: "mean has type hints (parameter and return)"
+        command: |
+          source = open('/tutorial/typed_grades.py').read()
+          assert ': list' in source, \
+              "mean's parameter `numbers` should be annotated as `list[...]` — e.g., `numbers: list[float]`"
+          assert '-> float:' in source, \
+              "mean should be annotated to return `float` — use `-> float:`"
+        hints:
+          - text: "Use `name: type` for the parameter and `-> type:` for the return value. The arrow `->` goes between the closing paren and the colon."
+            condition: "code_missing: ->"
+          - text: "In Python 3.9+ you can write `list[float]` directly — no `from typing import List` needed."
+            condition: "code_contains: List["
+
+      - description: "label_score has type hints (score, threshold, return)"
+        command: |
+          source = open('/tutorial/typed_grades.py').read()
+          assert 'score: int' in source, \
+              "label_score's `score` parameter should be annotated `score: int`"
+          assert 'threshold: int' in source, \
+              "label_score's `threshold` parameter should be annotated `threshold: int = 50`"
+          assert '-> str:' in source, \
+              "label_score should be annotated to return `str` — use `-> str:`"
+        hints:
+          - text: "When a parameter has both a type hint AND a default value, the form is `name: type = default` — e.g., `threshold: int = 50`."
+            condition: "code_contains: threshold=50"
+
+      - description: "first_failing uses Optional for its return type"
+        command: |
+          source = open('/tutorial/typed_grades.py').read()
+          assert 'Optional' in source, \
+              "first_failing returns either an int or None — use `Optional[int]` (and import it from typing)."
+          assert 'from typing import' in source, \
+              "Add `from typing import Optional` at the top of the file."
+        hints:
+          - text: "`Optional[int]` is shorthand for `int | None`. It must be imported: `from typing import Optional`."
+            condition: "code_missing: Optional"
+
+      - description: "Annotations are real — at least 7 of them across the three functions"
+        command: |
+          import ast
+          src = open('/tutorial/typed_grades.py').read()
+          tree = ast.parse(src)
+          annotated = 0
+          for node in ast.walk(tree):
+              if isinstance(node, ast.FunctionDef):
+                  if node.returns is not None:
+                      annotated += 1
+                  for arg in node.args.args:
+                      if arg.annotation is not None:
+                          annotated += 1
+          assert annotated >= 7, \
+              f"Expected at least 7 type annotations across the three functions; found {annotated}"
+        hints:
+          - text: "Each function needs annotations on every parameter AND on the return type. Three functions × roughly 2–3 annotations each adds up to at least 7."
+
+      - description: "Behavior is unchanged: mean and label_score still work"
+        command: |
+          g = {}
+          exec(open('/tutorial/typed_grades.py').read(), g)
+          assert g['mean']([4, 8, 15, 16, 23, 42]) == 18.0, \
+              "Adding type hints should not change behavior — mean should still return 18.0"
+          assert g['label_score'](75) == 'pass'
+          assert g['label_score'](30) == 'fail'
+
+      - description: "first_failing returns first failing score (or None)"
+        command: |
+          g = {}
+          exec(open('/tutorial/typed_grades.py').read(), g)
+          assert g['first_failing']([90, 80, 30, 70]) == 30, \
+              "first_failing should return the first score strictly below threshold"
+          assert g['first_failing']([100, 90]) is None, \
+              "first_failing should return None when no score is below threshold (matches Optional[int])"
+
+    quiz:
+      title: "Type Hints — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            What is the most useful type annotation for this function?
+            ```python
+            def parse_csv_row(line):
+                return line.split(',')
+            ```
+          type: single
+          options:
+            - "`def parse_csv_row(line: str) -> list[str]:`"
+            - "`def parse_csv_row(line: str) -> str:`"
+            - "`def parse_csv_row(line: List) -> tuple[str]:`"
+            - "`def parse_csv_row(line) -> list:`"
+          correct_index: 0
+          option_feedback:
+            1: "`split(',')` returns a `list`, not a `str`. The string is the input here, not the output."
+            2: "`split()` returns a list, not a tuple. Also, capital-`L` `List` would require `from typing import List` — modern Python uses lowercase `list[str]`."
+            3: "Bare `list` is better than nothing, but `list[str]` is more informative — it tells static checkers what the *element* type is, so callers can be flagged for passing the wrong shape."
+          explanation: |
+            `str.split(',')` returns a list of strings. The Pythonic, modern annotation is
+            `list[str]` — Python 3.9+ built-in generic. Both `list[str]` and `List[str]`
+            work, but `list[str]` needs no import.
+
+        - question: |
+            What happens at **runtime** when you call `add('1', '2')` on this function?
+            ```python
+            def add(a: int, b: int) -> int:
+                return a + b
+            ```
+          type: single
+          options:
+            - "Python raises `TypeError: argument 'a' must be int, not str` because of the type annotation"
+            - "Python returns the string `'12'` — the annotation is ignored at runtime, and `'1' + '2'` is valid string concatenation"
+            - "Python raises `SyntaxError` — type annotations only work with literal types like `int(1)`"
+            - "Python silently coerces the strings to integers and returns `3`"
+          correct_index: 1
+          option_feedback:
+            0: "Annotations are stored on `add.__annotations__` but Python never raises a `TypeError` from them. That check is the job of `mypy` or your IDE, not the interpreter."
+            2: "Type annotations are part of Python's syntax (PEP 526 / PEP 3107) — there's no `SyntaxError`. The whole point is that they parse fine but are not enforced."
+            3: "Python does not auto-coerce here. `'1' + '2'` is valid string concatenation, so the function happily returns `'12'`. No coercion, no error from the interpreter."
+          explanation: |
+            Annotations are **stored** but never **checked** at runtime — Python returns
+            `'12'` (string concatenation). A static checker like `mypy` would flag the call
+            before you run it. This is the runtime-vs-static distinction at the heart of
+            type hints.
+
+        - question: |
+            Which of these does Python **actually check at runtime** when you call a function? *(Select all that apply.)*
+          type: multiple
+          options:
+            - "The number of positional arguments matches the function signature"
+            - "The type annotations on each parameter"
+            - "Whether a default parameter is provided"
+            - "Whether the value returned matches the `-> ...` annotation"
+          correct_indices: [0, 2]
+          option_feedback:
+            1: "Type annotations are *stored* but not *checked* at runtime. That is the job of `mypy` or your IDE."
+            3: "Python does not validate that the returned value matches the `-> ...` annotation. You can return anything from a function annotated `-> int`."
+          explanation: |
+            Python's interpreter checks **structural** things (argument count, default fallback)
+            but ignores **type** annotations. That is why type checkers like `mypy` exist —
+            they do at edit-time what some other languages do at compile-time.
+
+        - question: |
+            *(Spaced review — Step 4: Functions)*
+
+            Which function signature correctly combines type hints with a default parameter?
+          type: single
+          options:
+            - "`def greet(name: str, greeting = 'Hello': str) -> None:`"
+            - "`def greet(name: str, greeting: str = 'Hello') -> None:`"
+            - "`def greet(name = 'World': str, greeting: str) -> None:`"
+            - "`def greet(name, greeting): -> None  # type: str, str`"
+          correct_index: 1
+          option_feedback:
+            0: "The order is `name: type = default` — the annotation goes between the name and the equals sign, not after the default value."
+            2: "Defaulted parameters must come *after* required ones (same rule as in C++)."
+            3: "Modern Python uses inline annotations (PEP 526). The `# type:` comment style is a legacy form from before annotations were syntax."
+          explanation: |
+            The correct order is `name: type = default`. Defaults must come after required
+            parameters, and the return type goes after `->` before the colon.
+
+        - question: |
+            A teammate calls `first_n([1.5, 2.5, 3.5], 2)` against this annotated function:
+            ```python
+            def first_n(items: list[int], n: int) -> list[int]:
+                return items[:n]
+            ```
+            What does the call return at **runtime**, and what would `mypy` say at **edit-time**?
+          type: single
+          options:
+            - "Runtime: returns `[1.5, 2.5]` (annotation ignored). mypy: error — `list[float]` is not `list[int]`."
+            - "Runtime: `TypeError` (annotation enforced). mypy: error."
+            - "Runtime: returns `[1.5, 2.5]`. mypy: ok (floats can be passed where ints are expected)."
+            - "Runtime: returns `[1, 2]` (Python silently truncates floats to ints). mypy: ok."
+          correct_index: 0
+          option_feedback:
+            1: "Python does not enforce annotations at runtime — they are documentation that tools read."
+            2: "mypy treats `list[float]` and `list[int]` as distinct (they're invariant in their type parameter, per PEP 484). It would flag this call as an error."
+            3: "Python doesn't silently coerce values to match annotations. The list elements stay as floats."
+          explanation: |
+            Annotations are checked by tools (`mypy`, IDEs), not by the Python interpreter.
+            Runtime: the slice works for any indexable, so you get `[1.5, 2.5]`.
+            mypy: `list[float]` is not assignable to `list[int]` — it would flag the call as
+            an error. This is exactly why an external type checker exists.
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — Loops
   # Pedagogy:
   #   Transfer Tutor     — C++ for loops → Python for/range/enumerate.
   #   Component Skills   — loops isolated from functions (split from old Step 4).
@@ -908,6 +1235,7 @@ steps:
   #   Fading: Medium     — function signature + skeleton given, fill in loop body.
   #   Spaced Review      — quiz includes a function question (Step 4 review).
   #   Bloom's level      — Remember / Apply (quiz) + spaced review.
+  #   Type Hints         — annotated signatures (per Step 5 convention).
   # --------------------------------------------------------------------------
   - title: "Loops"
     instructions: |
@@ -1020,7 +1348,7 @@ steps:
     files:
       - path: "loops.py"
         content: |
-          def running_total(numbers):
+          def running_total(numbers: list[int]) -> list[int]:
               """Return a list of cumulative sums.
               Example: running_total([1, 2, 3]) == [1, 3, 6]
               """
@@ -1047,7 +1375,7 @@ steps:
       files:
         - path: "loops.py"
           content: |
-            def running_total(numbers):
+            def running_total(numbers: list[int]) -> list[int]:
                 """Return a list of cumulative sums.
                 Example: running_total([1, 2, 3]) == [1, 3, 6]
                 """
@@ -1180,7 +1508,7 @@ steps:
 
             What does this function return when called as `compute(10)`?
             ```python
-            def compute(x, power=2):
+            def compute(x: int, power: int = 2) -> int:
                 return x ** power
             ```
           type: single
@@ -1196,7 +1524,7 @@ steps:
             This combines two concepts: default parameters (Step 4) and the `**` operator (this step).
 
   # --------------------------------------------------------------------------
-  # STEP 6 — List Comprehensions
+  # STEP 7 — List Comprehensions
   # Pedagogy:
   #   Beacon             — list comprehension as a recognisable Python pattern.
   #   Generation Effect   — challenge presented BEFORE the explanation.
@@ -1280,13 +1608,13 @@ steps:
         content: |
           from functions import mean
 
-          def above_average(numbers):
+          def above_average(numbers: list[float]) -> list[float]:
               """Return a list of numbers strictly greater than the mean."""
               avg = mean(numbers)
               # Use a list comprehension with a condition
               pass
 
-          def squares_up_to(n):
+          def squares_up_to(n: int) -> list[int]:
               """Return [1**2, 2**2, ..., n**2] using range() and **."""
               pass
 
@@ -1297,15 +1625,16 @@ steps:
           print(f"Squares to 5:  {squares_up_to(5)}")
         language: "python"
 
-      # Reference: completed in Step 4. Shown here so `from functions import mean`
-      # has a visible source — the tab is read-only context for the import above.
+      # Reference: completed in Step 4 and annotated in Step 5. Shown here so
+      # `from functions import mean` has a visible source — the tab is read-only
+      # context for the import above.
       - path: "functions.py"
         content: |
-          def mean(numbers):
+          def mean(numbers: list[float]) -> float:
               """Return the arithmetic mean of a list of numbers."""
               return sum(numbers) / len(numbers)
 
-          def label_score(score, threshold=50):
+          def label_score(score: int, threshold: int = 50) -> str:
               """Return 'pass' if score >= threshold, else 'fail'."""
               if score >= threshold:
                   return 'pass'
@@ -1322,11 +1651,11 @@ steps:
       files:
         - path: "functions.py"
           content: |
-            def mean(numbers):
+            def mean(numbers: list[float]) -> float:
                 """Return the arithmetic mean of a list of numbers."""
                 return sum(numbers) / len(numbers)
 
-            def label_score(score, threshold=50):
+            def label_score(score: int, threshold: int = 50) -> str:
                 """Return 'pass' if score >= threshold, else 'fail'."""
                 if score >= threshold:
                     return 'pass'
@@ -1337,12 +1666,12 @@ steps:
           content: |
             from functions import mean
 
-            def above_average(numbers):
+            def above_average(numbers: list[float]) -> list[float]:
                 """Return a list of numbers strictly greater than the mean."""
                 avg = mean(numbers)
                 return [x for x in numbers if x > avg]
 
-            def squares_up_to(n):
+            def squares_up_to(n: int) -> list[int]:
                 """Return [1**2, 2**2, ..., n**2] using range() and **."""
                 return [x**2 for x in range(1, n + 1)]
 
@@ -1502,7 +1831,7 @@ steps:
             over C++'s `printf` — you get the full power of Python expressions inline.
 
   # --------------------------------------------------------------------------
-  # STEP 7 — Reading Files with open() and with
+  # STEP 8 — Reading Files with open() and with
   # Pedagogy:
   #   Transfer Tutor     — C++ file I/O → Python `open()` + `with`.
   #   Lay of the Land    — Python's "batteries included" stdlib.
@@ -1760,7 +2089,7 @@ steps:
             The distractor `f.close()` is unnecessary — `with` handles closing automatically.
 
   # --------------------------------------------------------------------------
-  # STEP 8 — Regular Expressions in Python: the re module
+  # STEP 9 — Regular Expressions in Python: the re module
   # Pedagogy:
   #   Transfer Tutor     — bridges the RegEx tutorial (grep/sed) to Python re.
   #   Fading: Minimal    — only first task is partially done; rest is independent.
@@ -2027,7 +2356,7 @@ steps:
             (as you just learned), but the list comprehension works on a list of lines.
 
   # --------------------------------------------------------------------------
-  # STEP 9 — sys.argv & stderr
+  # STEP 10 — sys.argv & stderr
   # Pedagogy:
   #   Transfer Tutor     — C argc/argv → sys.argv; std::cerr → sys.stderr.
   #   Fading: Minimal    — task description only, minimal starter code.
@@ -2333,7 +2662,7 @@ steps:
             where mixing up `'x'` and `"x"` is a compile error.
 
   # --------------------------------------------------------------------------
-  # STEP 10 — Capstone: Build a Log Analyzer
+  # STEP 11 — Capstone: Build a Log Analyzer
   # Pedagogy:
   #   Integration        — combines ALL component skills from Steps 1-9.
   #   Fading: None       — only requirements given, no scaffolding.
@@ -2412,28 +2741,28 @@ steps:
             import sys
             import re
 
-            def count_by_level(text, level):
+            def count_by_level(text: str, level: str) -> int:
                 """Return the number of lines matching the given log level."""
                 return len(re.findall(rf'{level}.*', text))
 
-            def extract_ips(text):
+            def extract_ips(text: str) -> set[str]:
                 """Return all unique IP addresses found in text."""
                 return set(re.findall(r'\d+\.\d+\.\d+\.\d+', text))
 
-            def parse_args():
+            def parse_args() -> str:
                 """Validate and return the filename argument."""
                 if len(sys.argv) < 2:
                     print("Error: no filename given", file=sys.stderr)
                     sys.exit(1)
                 return sys.argv[1]
 
-            def read_log(filename):
+            def read_log(filename: str) -> str:
                 """Read and return the full log file as a string."""
                 print(f"Reading: {filename}", file=sys.stderr)
                 with open(filename) as f:
                     return f.read()
 
-            def print_report(text):
+            def print_report(text: str) -> None:
                 """Print the analysis report to stdout."""
                 lines = text.strip().splitlines()
                 total = len(lines)
@@ -2462,6 +2791,7 @@ steps:
         - **`extract_ips(text)` with `set(...)`:** `re.findall()` returns all IP matches including duplicates. Wrapping in `set()` removes duplicates. `len(set(...))` is the Pythonic one-liner for counting unique items. The log has 2 unique IPs.
         - **`total = len(text.strip().splitlines())`:** `splitlines()` splits on newlines and handles the trailing newline correctly (unlike `split('\n')` which would include an empty string). The log has 6 lines.
         - **Function decomposition:** The capstone explicitly rewards a function-based design — each function has a single responsibility, making it testable and readable.
+        - **Type hints on every helper:** Each function carries the annotation pattern from Step 5 (`text: str`, `-> int`, `-> set[str]`, `-> None`). They don't change runtime behavior, but `mypy` would flag a caller that passed the wrong type.
 
     tests:
       - description: "Script runs without errors when given server.log"
@@ -2665,3 +2995,386 @@ steps:
             to extract every timestamp. `re.search()` finds only the first match. `re.match()` only
             checks the start of the string. `re.split()` splits the string AT the pattern,
             returning the parts between matches, not the matches themselves.
+
+  # --------------------------------------------------------------------------
+  # STEP 12 — Data Classes: Structs with Auto-Generated Plumbing
+  # Pedagogy:
+  #   Generation Effect  — see hand-written boilerplate first; feel the pain.
+  #   Worked Example     — fade across @dataclass → frozen=True → @property.
+  #   Variation Theory   — fields held constant; only the decorator level varies.
+  #   Negative Transfer  — @property is NOT a private modifier (Java/C# habit).
+  #   Desirable Difficulty — predict-before-run on FrozenInstanceError.
+  #   Spaced Review      — quiz revisits Step 7 list comprehensions in OO context.
+  #   Type Hints         — uses Step 5 annotation pattern on fields and properties.
+  #   Bloom's level      — Apply (write dataclass) / Evaluate (when to use frozen).
+  # --------------------------------------------------------------------------
+  - title: "Data Classes"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **define** value-object classes using `@dataclass`, **apply** `frozen=True` to make them immutable, **define** computed attributes with `@property`, and **explain** when each is appropriate.
+
+      ## A Bridge from C++ Structs
+
+      In C++ you would describe a 2D point with a `struct` — a small data holder, often with auto-generated comparison via `operator==` and printing via `operator<<`.
+
+      ```cpp
+      struct Point {
+          const int x;          // immutable field
+          const int y;
+          bool operator==(const Point& o) const { return x == o.x && y == o.y; }
+      };
+      ```
+
+      Plain Python classes work for this, but you have to write all the boilerplate yourself — `__init__`, `__eq__`, `__repr__`. The starter file shows that pain on purpose. Then `@dataclass` writes those three methods for you.
+
+      ```python
+      from dataclasses import dataclass
+
+      @dataclass
+      class Point:
+          x: int
+          y: int
+      ```
+
+      That tiny declaration is roughly equivalent to a 10-line hand-written class. It uses the type hints from Step 5 (`x: int`) — that's how `@dataclass` knows what fields exist and what their types are.
+
+      ### `frozen=True`: Immutability as a Design Tool
+
+      Add `frozen=True` and instances become **immutable** — like declaring all fields `const` in the C++ struct above. Trying to assign raises `FrozenInstanceError`:
+
+      ```python
+      @dataclass(frozen=True)
+      class Point:
+          x: int
+          y: int
+
+      p = Point(3, 4)
+      p.x = 99       # ❌ FrozenInstanceError — Point is immutable
+      ```
+
+      Immutability is not just a defensive habit — it makes value-object equality safe (two `Point(3, 4)` instances compare equal) and makes the instance hashable (so you can put it in a `set` or use it as a `dict` key).
+
+      ### `@property`: a Method That Looks Like an Attribute
+
+      What about derived values, like the distance from the origin? You could write a method `distance_to_origin()`. But callers would have to remember the parens. `@property` lets you define a method that is **read as an attribute** — no parens at the call site:
+
+      ```python
+      @dataclass(frozen=True)
+      class Point:
+          x: int
+          y: int
+
+          @property
+          def distance_to_origin(self) -> float:
+              return (self.x ** 2 + self.y ** 2) ** 0.5
+
+      p = Point(3, 4)
+      print(p.distance_to_origin)   # 5.0  — no parens!
+      ```
+
+      `@property` does **not** make a field private (a common Java/C# habit to drop). It just lets a computation *look* like an attribute on the outside.
+
+      ### Predict Before You Run
+
+      Once you have made `Point` frozen, what do you predict happens when this runs?
+
+      ```python
+      p = Point(3, 4)
+      p.x = 99
+      ```
+
+      Predict the exception type, then try it. The error type tells you exactly what `frozen=True` is doing under the hood.
+
+      ### Task
+
+      Complete `geometry.py`. The starter shows `PointManual` — the hand-written boilerplate version — so you can feel the contrast.
+
+      1. **TODO 1.** Define `Point` using `@dataclass` (no kwargs yet) with two `int` fields `x` and `y`.
+      2. **TODO 2.** Change to `@dataclass(frozen=True)` so `Point` is immutable.
+      3. **TODO 3.** Add a `@property distance_to_origin` that returns `(x**2 + y**2) ** 0.5` annotated `-> float`.
+
+      *Stretch (optional):* uncomment the mutation probe at the bottom and observe the `FrozenInstanceError`.
+
+    files:
+      - path: "geometry.py"
+        content: |
+          from dataclasses import dataclass
+
+          class PointManual:
+              """The OLD way: hand-written __init__, __eq__, __repr__."""
+              def __init__(self, x, y):
+                  self.x = x
+                  self.y = y
+              def __eq__(self, other):
+                  return isinstance(other, PointManual) and self.x == other.x and self.y == other.y
+              def __repr__(self):
+                  return f"PointManual(x={self.x}, y={self.y})"
+
+          # TODO 1: Define `Point` using @dataclass with int fields x and y.
+          # TODO 2: Change to @dataclass(frozen=True) so Point is immutable.
+          # TODO 3: Add a @property distance_to_origin that returns sqrt(x**2 + y**2).
+
+          # --- Quick self-test (uncomment lines as you finish each TODO) ---
+          # a = Point(3, 4)
+          # b = Point(3, 4)
+          # print(a == b)                # True (free __eq__)
+          # print(a)                     # Point(x=3, y=4) (free __repr__)
+          # print(a.distance_to_origin)  # 5.0 (computed)
+
+          # Predict-before-run probe (uncomment after TODO 2):
+          # a.x = 99                     # What exception type does this raise?
+        language: "python"
+
+    open_file: "geometry.py"
+
+    setup_commands:
+      - "import sys; sys.modules.pop('geometry', None)"
+
+    solution:
+      files:
+        - path: "geometry.py"
+          content: |
+            from dataclasses import dataclass
+
+            class PointManual:
+                """The OLD way: hand-written __init__, __eq__, __repr__."""
+                def __init__(self, x, y):
+                    self.x = x
+                    self.y = y
+                def __eq__(self, other):
+                    return isinstance(other, PointManual) and self.x == other.x and self.y == other.y
+                def __repr__(self):
+                    return f"PointManual(x={self.x}, y={self.y})"
+
+            @dataclass(frozen=True)
+            class Point:
+                x: int
+                y: int
+
+                @property
+                def distance_to_origin(self) -> float:
+                    return (self.x ** 2 + self.y ** 2) ** 0.5
+
+            # --- Quick self-test ---
+            a = Point(3, 4)
+            b = Point(3, 4)
+            print(a == b)                # True
+            print(a)                     # Point(x=3, y=4)
+            print(a.distance_to_origin)  # 5.0
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`@dataclass(frozen=True)`** writes three dunder methods for you: `__init__` (so `Point(3, 4)` works), `__eq__` (so `Point(3, 4) == Point(3, 4)` is `True`), and `__repr__` (so `print(p)` shows `Point(x=3, y=4)`). With `frozen=True` it also makes `Point` **hashable** and prevents assignment to fields after construction.
+        - **`x: int` / `y: int`** are not just documentation — `@dataclass` reads these type hints (Step 5) to figure out what fields the class has. Without the annotations, `@dataclass` would not know to generate `__init__`.
+        - **`frozen=True`** makes mutation raise `FrozenInstanceError`. The contract is: *"once constructed, a `Point` value never changes."* This is exactly what makes value-object equality safe and what makes the instance hashable.
+        - **`@property`** turns `distance_to_origin` into a *read-as-attribute* method. The test reads `p.distance_to_origin` (no parens). Without `@property`, that expression would evaluate to a *bound method object*, not a number — a confusing error mode.
+        - **Mutable defaults are forbidden.** If you ever try `events: list = []`, Python rejects the class with `ValueError: mutable default <class 'list'> is not allowed`. Use a tuple, or `field(default_factory=list)` if you really need a list.
+        - **`PointManual` stays in the file** as a contrast — it shows what the decorator saved you from writing.
+
+    tests:
+      - description: "Point is defined and constructible"
+        command: |
+          import sys
+          sys.modules.pop('geometry', None)
+          from geometry import Point
+          p = Point(3, 4)
+          assert p.x == 3 and p.y == 4, f"Point(3, 4) should have x=3, y=4; got x={p.x}, y={p.y}"
+        hints:
+          - text: "You need to define a class called `Point`. Use `@dataclass` so you don't have to write `__init__` by hand."
+            condition: "code_missing: class Point"
+          - text: "Have you imported `dataclass` from the `dataclasses` module? Look at the top of the file."
+            condition: "code_missing: from dataclasses"
+
+      - description: "Point uses @dataclass with frozen=True"
+        command: |
+          source = open('/tutorial/geometry.py').read()
+          collapsed = source.replace(' ', '')
+          assert '@dataclass(frozen=True)' in collapsed, \
+              "Use @dataclass(frozen=True) on Point — frozen makes Point immutable, hashable, and gives safe value-object equality."
+        hints:
+          - text: "Pass `frozen=True` to the decorator: `@dataclass(frozen=True)`."
+            condition: "code_missing: frozen"
+
+      - description: "Two Points with equal fields compare equal (free __eq__)"
+        command: |
+          import sys
+          sys.modules.pop('geometry', None)
+          from geometry import Point
+          assert Point(3, 4) == Point(3, 4), \
+              "Point(3, 4) should equal Point(3, 4) — @dataclass writes a structural __eq__ for you."
+          assert Point(3, 4) != Point(3, 5), \
+              "Point(3, 4) should NOT equal Point(3, 5)."
+        hints:
+          - text: "If equality is failing, check that you used `@dataclass` — the decorator writes `__eq__` based on field values."
+
+      - description: "Point is immutable: assignment raises FrozenInstanceError"
+        command: |
+          import sys
+          sys.modules.pop('geometry', None)
+          from dataclasses import FrozenInstanceError
+          from geometry import Point
+          p = Point(3, 4)
+          try:
+              p.x = 99
+              raise AssertionError("Expected FrozenInstanceError when assigning to a frozen Point's field, but the assignment succeeded.")
+          except FrozenInstanceError:
+              pass
+        hints:
+          - text: "If `p.x = 99` succeeds silently, your `Point` is not frozen. Add `frozen=True` to the decorator: `@dataclass(frozen=True)`."
+
+      - description: "distance_to_origin uses @property (not a method call)"
+        command: |
+          source = open('/tutorial/geometry.py').read()
+          assert '@property' in source, \
+              "Use @property on distance_to_origin so callers can read it as an attribute (`p.distance_to_origin`, no parens)."
+        hints:
+          - text: "How does the test access `distance_to_origin` — with or without parentheses? That is the clue: with `@property`, no parens; without, you have to call it as a method."
+            condition: "code_missing: @property"
+
+      - description: "Point(3, 4).distance_to_origin == 5.0"
+        command: |
+          import sys
+          sys.modules.pop('geometry', None)
+          from geometry import Point
+          p = Point(3, 4)
+          d = p.distance_to_origin
+          # Read as an attribute, not a method — should be a float, not a bound method
+          assert isinstance(d, float), \
+              f"`p.distance_to_origin` should be a float; got {type(d).__name__}. Did you forget @property?"
+          assert d == 5.0, \
+              f"Expected 5.0 for the 3-4-5 triangle; got {d}"
+        hints:
+          - text: "The classic 3-4-5 triangle: sqrt(3**2 + 4**2) = sqrt(25) = 5.0. Use `**` for exponentiation and `** 0.5` for square root."
+            condition: "code_missing: **"
+
+      - description: "AST check: there is a class with a dataclass decorator"
+        command: |
+          import ast
+          src = open('/tutorial/geometry.py').read()
+          tree = ast.parse(src)
+          found = False
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ClassDef) and node.name == 'Point':
+                  for dec in node.decorator_list:
+                      # @dataclass — Name node
+                      if isinstance(dec, ast.Name) and dec.id == 'dataclass':
+                          found = True
+                      # @dataclass(...) — Call node with func=Name('dataclass')
+                      if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Name) and dec.func.id == 'dataclass':
+                          found = True
+          assert found, "Point should be decorated with @dataclass (or @dataclass(frozen=True))"
+
+    quiz:
+      title: "Data Classes — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which three dunder methods does `@dataclass` write for you **by default** (no extra kwargs)?
+          type: single
+          options:
+            - "`__init__`, `__eq__`, `__repr__`"
+            - "`__init__`, `__del__`, `__str__`"
+            - "`__init__`, `__eq__`, `__hash__`"
+            - "`__new__`, `__copy__`, `__format__`"
+          correct_index: 0
+          option_feedback:
+            1: "`__del__` is for destructors (rare in Python — garbage collection handles it). `@dataclass` doesn't write either of these. `__repr__`, not `__str__`, is what `@dataclass` generates."
+            2: "Close — but `__hash__` is **only** generated when you also pass `frozen=True` (or `eq=False`). By default, a non-frozen dataclass is unhashable to discourage using mutable objects as dict keys."
+            3: "These aren't related. `@dataclass` focuses on the standard data-holder boilerplate: construction, equality, and string representation."
+          explanation: |
+            `@dataclass` writes `__init__` (so you can write `Point(3, 4)`), `__eq__` (structural
+            equality based on fields), and `__repr__` (a readable string like `Point(x=3, y=4)`).
+            `__hash__` is generated only with `frozen=True` (or `eq=False`).
+
+        - question: |
+            Given:
+            ```python
+            @dataclass(frozen=True)
+            class Point:
+                x: int
+                y: int
+
+            p = Point(3, 4)
+            p.x = 99
+            ```
+            What does the assignment `p.x = 99` do?
+          type: single
+          options:
+            - "It silently succeeds — `frozen=True` only affects equality, not assignment"
+            - "It raises `AttributeError` — the field is read-only because it has no setter"
+            - "It raises `FrozenInstanceError` — frozen dataclasses override `__setattr__` to forbid mutation"
+            - "It raises `TypeError` — `99` is not declared `int` in this context"
+          correct_index: 2
+          option_feedback:
+            0: "`frozen=True` is specifically about preventing mutation — that's its whole purpose. Equality is generated by `eq=True` (the default), separately."
+            1: "`AttributeError` is what you get from `@property` without a setter, or from accessing a missing attribute. Frozen dataclasses raise their own dedicated exception."
+            3: "Type annotations are not enforced at runtime (Step 5). The assignment fails because the class is frozen, not because of any type check."
+          explanation: |
+            `@dataclass(frozen=True)` overrides `__setattr__` to raise `FrozenInstanceError`
+            on any attempt to assign to a field. This is what gives you immutability — and
+            it's also why frozen dataclasses are hashable (immutable values can be safely
+            put into sets and dict keys).
+
+        - question: |
+            Which of these statements about `@property` are **true**? *(Select all that apply.)*
+          type: multiple
+          options:
+            - "It lets you read a method's result as an attribute, without parentheses"
+            - "It makes the underlying field private — no callers can read it"
+            - "It can be combined with a setter (using `@<name>.setter`) to control writes"
+            - "It is a special form of `__getattr__`"
+          correct_indices: [0, 2]
+          option_feedback:
+            1: "`@property` is purely about *interface shape* (`p.x` vs `p.x()`). It doesn't make anything private. Python's privacy convention is the underscore prefix (`_internal`), and even that is only a convention — there are no hard private fields."
+            3: "`@property` is implemented as a *descriptor* on the class, not via `__getattr__`. `__getattr__` is the per-instance fallback for missing attributes — completely different mechanism."
+          explanation: |
+            `@property` lets a method *look like* an attribute on the outside (no parens).
+            You can pair it with `@<name>.setter` to also control writes. It does **not**
+            make the underlying state private — that's a Java/C# habit that doesn't translate.
+            And it is a descriptor, not `__getattr__`.
+
+        - question: |
+            *(Spaced review — Step 7: List Comprehensions)*
+
+            What is `points[2]` after this line?
+            ```python
+            points = [Point(x, x * 2) for x in range(5)]
+            ```
+          type: single
+          options:
+            - "`Point(2, 2)`"
+            - "`Point(2, 4)`"
+            - "`Point(4, 8)`"
+            - "`(2, 4)` — a plain tuple, since list comprehensions don't return objects"
+          correct_index: 1
+          option_feedback:
+            0: "`x * 2` for `x = 2` is `4`, not `2`. The y-coordinate is the doubled value."
+            2: "Indexing is 0-based: `points[2]` corresponds to `x = 2`, not `x = 4`."
+            3: "List comprehensions can absolutely produce class instances. `Point(x, x*2)` is a function call expression — it constructs a `Point` for each iteration."
+          explanation: |
+            `range(5)` yields 0, 1, 2, 3, 4. The list comprehension constructs a `Point`
+            for each, with `y = x * 2`. So `points[2]` corresponds to `x = 2`, giving
+            `Point(2, 4)`. List comprehensions compose just as well with custom classes
+            as with primitives.
+
+        - question: |
+            **Evaluate.** For which use case is `@dataclass(frozen=True)` the **best** fit?
+          type: single
+          options:
+            - "A shopping cart whose items are added and removed throughout the session"
+            - "A 2D grid coordinate `(row, col)` used as a dictionary key"
+            - "A database connection that holds a socket and a transaction state"
+            - "A logger object that buffers messages and flushes them periodically"
+          correct_index: 1
+          option_feedback:
+            0: "Shopping carts mutate over time — adding/removing items requires assignment to fields or methods that change state. A frozen dataclass would block all of that."
+            2: "Connections have *identity* (this specific socket) and *changing internal state* (buffer, transaction). They are reference objects, not value objects. Frozen dataclasses fit values where two with equal fields are interchangeable — connections aren't."
+            3: "Loggers buffer messages — internal state changes constantly. Also, two loggers with equal configuration aren't interchangeable; they have identity."
+          explanation: |
+            `frozen=True` is the right fit for **value objects**: small, conceptually
+            immutable, where `Point(3, 4) == Point(3, 4)` should mean "the same value."
+            Coordinates, money amounts, dates, RGB colors all fit this pattern. Things
+            with *changing internal state* (carts, connections, loggers) are reference
+            objects — use a regular class.
