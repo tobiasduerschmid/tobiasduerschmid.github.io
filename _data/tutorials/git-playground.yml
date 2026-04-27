@@ -58,7 +58,7 @@ steps:
         B "Add README"
         C "Release 1.0"
         D "Add logging support"
-        E merge feature/parser
+        E merge feature/parser "Merge branch 'feature/parser'"
 
       branch feature/parser from C:
         F "Add tokenizer"
