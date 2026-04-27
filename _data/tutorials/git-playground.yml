@@ -38,7 +38,7 @@ steps:
       session — re-running it from a clean VM reproduces exactly the state
       you're in right now.
 
-      - **Start any project**: `git init myproject && cd myproject`.
+      - **Start any project**: `git init`.
       - **Live graph**: switch to the **Git Graph** panel to compare your
         repository to the target below.
       - **Undo the last command**: open `reproduce.sh`, delete the last line,
