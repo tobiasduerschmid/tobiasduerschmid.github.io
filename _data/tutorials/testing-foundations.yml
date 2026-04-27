@@ -328,11 +328,11 @@ steps:
       > 🎯 **Goal:** Write pytest tests, and learn to spot a *weak oracle* — an assertion that passes even when the code is wrong.
       > 🧠 **Skills you'll gain:** Write pytest tests from scratch and judge whether an assertion is strong enough to actually catch bugs.
 
-      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something. What exactly does each assertion claim? Is each one checking the *exact* expected value, or would it pass for multiple different return values? Hold your answer — you'll use it in Task 2.
+      🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. What would happen if those `==` checks were replaced with `assert result is not None`? Hold that thought.
 
-      Now open `test_leveling.py`. For each stub, predict in your head: *what behavior is this test claiming?* Run it once to see pytest's output format.
+      Now open `test_leveling.py`. Three tests are waiting — each one calls `xp_to_level(...)` on a different input (the starter at 0 XP, the first level-up, the legendary level-100 cap). Each test already has an assertion in place — but the assertions are **weak**. Run the file once: all three tests pass, even though the assertions barely pin anything down.
 
-      ⚙️ **Task 1 — write the assertions** (file: `test_leveling.py`):
+      ### 📝 The shape of a pytest test
 
       A pytest test is just a function whose name starts with `test_`, containing one or more plain `assert` statements. Here's the shape, demonstrated on a *different* function so you can see the pattern without seeing today's answer:
 
@@ -354,29 +354,7 @@ steps:
 
       **pytest convention**: both the **file name** and **function names** must start with `test_`.
 
-      Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For these stubs, Arrange and Act are already in the docstring comments; your task is only the **Assert** line.
-
-      Now apply that shape to `xp_to_level` — a classic JRPG / Pokemon-style level calculator. Three test stubs are waiting in `test_leveling.py`. For each one:
-
-      1. **Read the spec** in `leveling.py`'s docstring + body to find the leveling formula.
-      2. **Decide what input the test name pins down** (`starter_with_zero_xp` references a fresh account; `first_level_up` references the moment you cross from level 0 to 1; `max_level_cap` references the legendary level 100).
-      3. **Compute** the expected return value yourself, then write the assertion.
-
-      The third stub (`test_max_level_cap`) doesn't exist yet — you write it from scratch. **Level 100 is the max level in countless JRPGs** (Pokemon, Final Fantasy, Dragon Quest, …). What XP value puts you at *exactly* level 100? Compute it, then pin it down with a test.
-
-      ⚙️ **Task 2 — make the oracle strong** (file: `test_oracle_drill.py`):
-
-      Open `test_oracle_drill.py`. Each test has `result = xp_to_level(...)` already done. The assertion reads `assert isinstance(result, int)`.
-
-      **Before reading on or changing anything:** answer this in your head — *would `assert isinstance(result, int)` catch a bug where `xp_to_level(0)` returns `9999` instead of `0`?* Write a one-word answer (yes/no) and one sentence explaining why.
-
-      Then: replace each weak oracle with the **strongest** possible assertion — one that fails for *any* wrong value.
-
-      💬 **Required:** For each weak oracle you fix, add a Python comment above the new assertion in this form:
-      ```python
-      # Weak version would pass if the function returned: ___
-      ```
-      Fill in a specific concrete wrong value. This is the design move that prevents Liar tests.
+      Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For the three tests in `test_leveling.py`, Arrange and Act are already done — your job is only the **Assert** line.
 
       ### 📖 Oracle strength — the three levels
 
@@ -392,9 +370,25 @@ steps:
 
       Notice what the table isolates: the input is held constant (`xp_to_level(0)` in every row). Only the **assertion** varies. This is one whole dimension of test quality — and it lives **independently** of the dimension you'll meet in Step 3: *which inputs to pick*. A great test gets both right.
 
+      ⚙️ **Task — strengthen the three weak oracles** (file: `test_leveling.py`):
+
+      **Before changing anything:** answer this in your head — *would `assert isinstance(result, int)` catch a bug where `xp_to_level(0)` returns `9999` instead of `0`?* Write a one-word answer (yes/no) and one sentence explaining why.
+
+      Then for each of the three tests:
+
+      1. **Read the spec** in `leveling.py` to find the leveling formula (`xp // 100`).
+      2. **Compute** the expected return value for the input the test uses (`0`, `100`, `10000`).
+      3. **Replace** the weak `assert isinstance(result, int)` with the strongest possible assertion — `assert result == <your computed value>` — one that fails for *any* wrong value.
+
+      💬 **Required:** Above each new assertion, add a Python comment in this form:
+      ```python
+      # Weak version would pass if the function returned: ___
+      ```
+      Fill in a specific concrete wrong value. This is the design move that prevents Liar tests.
+
       <details markdown="1"><summary>📖 Test names ARE documentation</summary>
 
-      Notice that good test names *describe the behavior they verify*: `test_starter_with_zero_xp`, `test_max_level_cap`, `test_oracle_strong_max`. A failing test should read like a one-line bug report: *"max_level_cap FAILED — assert 99 == 100"*. If you can read your test names without opening the code and still know what the suite covers, your tests double as documentation.
+      Notice that good test names *describe the behavior they verify*: `test_starter_with_zero_xp`, `test_first_level_up`, `test_max_level_cap`. A failing test should read like a one-line bug report: *"max_level_cap FAILED — assert 99 == 100"*. If you can read your test names without opening the code and still know what the suite covers, your tests double as documentation.
 
       Anti-example: `test_1`, `test_xp`, `test_works`. These tell the next reader nothing.
       </details>
@@ -452,61 +446,38 @@ steps:
 
       - path: "test_leveling.py"
         content: |
-          """Tests for the leveling module — three stubs, fill them in.
+          """Tests for the leveling module — three tests with WEAK oracles.
 
-          The leveling spec is in leveling.py."""
-          import pytest
-          from leveling import xp_to_level, level_to_min_xp
+          Each test calls xp_to_level(...) on a different input. Arrange and Act
+          are done for you. Your job: replace each weak `isinstance` assertion
+          with the strongest possible oracle (==) — one that fails for any
+          incorrect value.
 
-
-          def test_starter_with_zero_xp():
-              # TODO: pin down what xp_to_level returns for a brand-new account (xp = 0).
-              pass
-
-
-          def test_first_level_up():
-              # TODO: same idea — but at the moment you cross from level 0 to level 1.
-              # Look up the spec: how much XP gets you to level 1 *exactly*?
-              pass
-
-
-          # TODO: Add a third test from scratch named  def test_max_level_cap():
-          # Level 100 is the famous JRPG max. What XP gets you there exactly?
-          # Why is 100 worth its own test?
-
-
-        language: "python"
-
-      - path: "test_oracle_drill.py"
-        content: |
-          """Fill-in-the-Oracle drill — write the STRONGEST assertion possible.
-
-          Arrange and Act are done for you. Replace the weak oracle below each
-          `result = ...` line with the strongest possible assertion on `result`.
+          The leveling spec is in leveling.py.
           """
           import pytest
           from leveling import xp_to_level
 
 
-          def test_oracle_weak_example():
-              # Arrange + Act
+          def test_starter_with_zero_xp():
+              # A brand-new account has 0 XP. The spec says: 0 XP → level 0.
               result = xp_to_level(0)
-              # Weak oracle (provided as a bad example):
-              assert result is not None   # passes for almost any return value
-
-
-          def test_oracle_strong_starter():
-              # Arrange + Act
-              result = xp_to_level(0)
-              # The spec says: 0 XP → level 0.  The expected value is 0.
               # TODO: replace this weak oracle with the strongest possible assertion.
               assert isinstance(result, int)
 
 
-          def test_oracle_strong_max():
-              # Arrange + Act
+          def test_first_level_up():
+              # The moment you cross from level 0 to level 1.
+              # Look up the spec: how much XP gets you to level 1 *exactly*?
+              result = xp_to_level(100)
+              # TODO: replace this weak oracle with the strongest possible assertion.
+              assert isinstance(result, int)
+
+
+          def test_max_level_cap():
+              # Level 100 is the famous JRPG max (Pokemon, Final Fantasy, Dragon Quest, …).
+              # What XP value puts you at *exactly* level 100?
               result = xp_to_level(10000)
-              # The spec says: 10 000 XP ÷ 100 = level 100.  The expected value is 100.
               # TODO: replace this weak oracle with the strongest possible assertion.
               assert isinstance(result, int)
 
@@ -520,73 +491,67 @@ steps:
       files:
         - path: "test_leveling.py"
           content: |
-            """Tests for the leveling module."""
-            import pytest
-            from leveling import xp_to_level, level_to_min_xp
-
-
-            def test_starter_with_zero_xp():
-                assert xp_to_level(0) == 0
-
-
-            def test_first_level_up():
-                assert xp_to_level(100) == 1
-
-
-            def test_max_level_cap():
-                assert xp_to_level(10000) == 100
-
-
-          language: "python"
-        - path: "test_oracle_drill.py"
-          content: |
-            """Fill-in-the-Oracle drill — solved."""
+            """Tests for the leveling module — strong oracles."""
             import pytest
             from leveling import xp_to_level
 
 
-            def test_oracle_weak_example():
+            def test_starter_with_zero_xp():
                 result = xp_to_level(0)
-                assert result is not None
-
-
-            def test_oracle_strong_starter():
-                result = xp_to_level(0)
+                # Weak version would pass if the function returned: 9999
                 assert result == 0
 
 
-            def test_oracle_strong_max():
+            def test_first_level_up():
+                result = xp_to_level(100)
+                # Weak version would pass if the function returned: 42
+                assert result == 1
+
+
+            def test_max_level_cap():
                 result = xp_to_level(10000)
+                # Weak version would pass if the function returned: 7
                 assert result == 100
 
 
           language: "python"
       explanation: |
-        Replace the weak `isinstance` check with a strong equality oracle: `result == 0`
-        for the starter case and `result == 100` for the max-level case. The strong oracle
-        would fail if the function returned any wrong number, not just the wrong type.
+        Replace each weak `isinstance` check with a strong equality oracle: `result == 0`
+        for the starter, `result == 1` for the first level-up, and `result == 100` for the
+        cap. The strong oracle would fail if the function returned any wrong integer, not
+        just the wrong type.
 
     tests:
       - description: "test_leveling.py runs without errors"
         command: |
           output = __run_capture('/tutorial/test_leveling.py')
-      - description: "test_starter_with_zero_xp has a real assertion (not just pass)"
+      - description: "test_starter_with_zero_xp uses a strong oracle (== 0, not isinstance)"
         command: |
+          import re
           source = open('/tutorial/test_leveling.py').read()
           body = source.split('test_starter_with_zero_xp')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_starter_with_zero_xp still has 'pass'. A test body with only 'pass' can never fail — it can never catch a bug. A test earns its keep by making a specific claim: call the function, compare the result to what the spec says. The spec: 0 XP means level 0. Write that claim as an assert statement."
-      - description: "test_first_level_up has a real assertion"
+          assert 'isinstance' not in body, \
+              "test_starter_with_zero_xp still uses `isinstance`, which only checks the return type — `9999` would pass it. A strong oracle pins the exact value. What does the spec say xp_to_level(0) should return? Assert that exact value with ==."
+          assert re.search(r'==\s*0\b', body), \
+              "test_starter_with_zero_xp doesn't yet assert the exact expected value. Replace the weak oracle with `assert result == 0` (the level a brand-new account is at)."
+      - description: "test_first_level_up uses a strong oracle (== 1, not isinstance)"
         command: |
+          import re
           source = open('/tutorial/test_leveling.py').read()
           body = source.split('test_first_level_up')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_first_level_up still has 'pass'. Look at the spec in leveling.py: how much XP gets you to exactly level 1? Compute it yourself, then write assert xp_to_level(<your input>) == <your expected level>."
-      - description: "test_max_level_cap function exists"
+          assert 'isinstance' not in body, \
+              "test_first_level_up still uses `isinstance`. A strong oracle pins the exact value. Compute what xp_to_level(100) should return from the spec, then assert that value with ==."
+          assert re.search(r'==\s*1\b', body), \
+              "test_first_level_up doesn't yet assert the exact expected level. The spec says every 100 XP earns one level — so 100 XP puts you at level... ? Replace the weak oracle with `assert result == <that number>`."
+      - description: "test_max_level_cap uses a strong oracle (== 100, not isinstance)"
         command: |
+          import re
           source = open('/tutorial/test_leveling.py').read()
-          assert 'def test_max_level_cap' in source, \
-              "Add a new test function for the level 100 cap. It follows the same structure as your other tests: def test_max_level_cap(): and one assert statement. What XP value does the spec say produces level 100? Compute it from the formula, then assert that."
+          body = source.split('def test_max_level_cap')[1].split('def ')[0]
+          assert 'isinstance' not in body, \
+              "test_max_level_cap still uses `isinstance`. A strong oracle pins the exact value. What level does 10000 XP put you at according to the spec?"
+          assert re.search(r'==\s*100\b', body), \
+              "test_max_level_cap doesn't yet assert the exact expected level. Compute it from the spec (`xp // 100`) for the input the test uses (10000), then replace the weak oracle with `assert result == <that number>`."
       - description: "All leveling tests pass"
         command: |
           import pytest, io, sys
@@ -595,37 +560,12 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some leveling tests failed:\n{output}"
         hints:
-          - title: "Small nudge"
-            text: "Inside each test function, write `assert <function call> == <expected value>`. The function is `xp_to_level`."
-          - title: "Strategic hint"
-            text: "Mirror this pattern:\n```python\ndef test_starter_with_zero_xp():\n    assert xp_to_level(0) == 0\n```\n`test_max_level_cap` needs a `def` line too."
-          - title: "Almost-spoiler — compute it yourself"
-            text: "Open `leveling.py` and find the formula: `xp // 100` (integer division). Compute it on paper for `0`, `100`, and `10000`. Then write `assert xp_to_level(<input>) == <your_number>` for each. The 10,000-XP case is your level cap test."
-      - description: "Oracle drill — strong starter oracle replaces the weak isinstance check"
-        command: |
-          import re
-          source = open('/tutorial/test_oracle_drill.py').read()
-          body = source.split('test_oracle_strong_starter')[1].split('def ')[0]
-          assert re.search(r'==\s*0\b', body) and 'isinstance' not in body, \
-              "test_oracle_strong_starter uses isinstance, which only checks the return type. A strong oracle pins the exact value. What does the spec say xp_to_level(0) should return? Assert that exact value with ==."
-      - description: "Oracle drill — strong max oracle replaces the weak isinstance check"
-        command: |
-          source = open('/tutorial/test_oracle_drill.py').read()
-          body = source.split('test_oracle_strong_max')[1].split('def ')[0]
-          assert '100' in body and 'isinstance' not in body, \
-              "test_oracle_strong_max uses isinstance, which only checks type. A strong oracle pins the exact value. What does the spec say xp_to_level(10000) should return? Compute it from the formula and assert that exact value."
-      - description: "Oracle drill tests all pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_oracle_drill.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Oracle drill tests failed:\n{output}"
-        hints:
           - title: "Strong-oracle nudge"
             text: "A *strong* oracle pins the result to one exact value. `isinstance(result, int)` accepts any int — what does it *not* check?"
+          - title: "Strategic hint"
+            text: "For each test, replace `assert isinstance(result, int)` with `assert result == <expected value>`. The expected values come from the formula `xp // 100` applied to the test's input."
           - title: "Almost-spoiler — compute, don't copy"
-            text: "Compute the level for each input from the spec (`xp // 100`): `0` and `10000`. Then replace each `assert isinstance(result, int)` with `assert result == <your_number>`."
+            text: "Compute the level for each input from the spec (`xp // 100`): `0`, `100`, `10000`. Then replace each `assert isinstance(result, int)` with `assert result == <your_number>`."
 
     quiz:
       title: "pytest Basics — Knowledge Check"
