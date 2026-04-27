@@ -386,7 +386,7 @@ steps:
       ```
       Fill in a specific concrete wrong value. This is the design move that prevents Liar tests.
 
-      <details markdown="1"><summary>📖 Oracle strength — the three levels explained</summary>
+      ### 📖 Oracle strength — the three levels
 
       The **oracle** is the assertion that decides pass/fail. The same function call can be checked at three levels of strength:
 
@@ -399,7 +399,6 @@ steps:
       Weak oracles look productive but verify nothing. Rushed students and AI assistants default to them because they almost always succeed — the *Liar test* anti-pattern.
 
       Notice what the table isolates: the input is held constant (`xp_to_level(0)` in every row). Only the **assertion** varies. This is one whole dimension of test quality — and it lives **independently** of the dimension you'll meet in Step 3: *which inputs to pick*. A great test gets both right.
-      </details>
 
       <details markdown="1"><summary>📖 Test names ARE documentation</summary>
 
@@ -791,7 +790,7 @@ steps:
       For a function whose contract says "returns a Boolean", use `is True` / `is False` — the test then catches *both* wrong values *and* wrong types. (For non-Boolean returns, prefer `==` with the exact expected value.)
       </details>
 
-      <details markdown="1"><summary>📐 Check your 4 boundary values (open after writing your tests)</summary>
+      <details markdown="1"><summary>📐 Reveal — check your 4 input lengths (open AFTER you've written them)</summary>
 
       The 4 critical lengths sit *exactly* where partitions transition:
 
@@ -818,7 +817,7 @@ steps:
       The *middle* of the valid partition isn't in the list — one representative there is enough. The same heuristic works for **any** numeric range: lengths, ages, prices, retry counts.
       </details>
 
-      <details markdown="1"><summary>📖 Equivalence partitioning — the deeper "why"</summary>
+      ### 📖 Equivalence partitioning — the deeper "why"
 
       The input space splits into three regions, each with the **same expected behavior**:
 
@@ -838,7 +837,6 @@ steps:
       1. *Partition* the input space.
       2. *Pick one representative* per partition.
       3. *Test every boundary* — last invalid before each transition, first valid after.
-      </details>
 
       🧭 **Reflect before moving on.** Without scrolling back, answer: why is testing `squad_name_valid` at length 3 more informative than testing it at length 6? Write one sentence using the word "partition" or "boundary." Then go deeper: what is the *mechanism*? What property of the code's structure means a bug at the length-3 boundary is invisible to every test at lengths 5–8, no matter how many there are? Name the code-structural reason, not just the vocabulary word.
 
@@ -1110,10 +1108,10 @@ steps:
 
       1. **Read the four tests** in `test_brittle_audit.py`. Before running anything: *classify each test* — does it access internal state (looks inside the object) or only the public interface (calls methods that don't start with `_`)? Write your classification as a comment next to each test.
       2. **Run the suite as-is** — all four tests pass. Good. Now do the experiment:
-      3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the three methods). There are exactly 4 occurrences; use find/replace to catch all of them. The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles` still produce the same outputs.
+      3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the five methods). There are exactly 6 occurrences; use find/replace to catch all of them. The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles`, `durations` still produce the same outputs.
       4. **Before re-running:** predict how many tests will fail and which ones.
       5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. Whether you were right or wrong: write one sentence tracing the causal chain — from "I renamed `_tracks`" to "exactly these tests fail." The explanation should work without running the code.
-      6. **Rewrite each broken test** using only the public API (methods that don't start with `_`). When all four pass against the refactored code, your suite is robust.
+      6. **Rewrite each broken test** using only the public API — methods that don't start with `_`. The public surface of `PlaylistQueue` is: `add`, `track_count()`, `titles()`, `durations()`, `total_duration`. Anything starting with `_` is internal and off-limits to tests. When all four pass against the refactored code, your suite is robust.
 
       <details markdown="1"><summary>📦 Two Python tools used in this step: <code>@dataclass</code> and <code>@property</code></summary>
 
@@ -1155,7 +1153,7 @@ steps:
 
       Because of `@property`, callers write `queue.total_duration` (no parentheses) instead of `queue.total_duration()`. Use `@property` for *derived* values — ones that are computed from stored state rather than stored themselves — that read naturally as a noun.
 
-      Contrast with `track_count()` and `titles()`, which are regular methods. Rule of thumb: if the value *feels like a fixed attribute of the object* (total duration is a property of the queue's current state), make it a `@property`. If it *feels like an action or a lookup with side effects*, keep it a method.
+      Contrast with `track_count()`, `titles()`, and `durations()`, which are regular methods. Rule of thumb: if the value *feels like a fixed attribute of the object* (total duration is a property of the queue's current state), make it a `@property`. If it *feels like an action or a lookup with side effects*, keep it a method.
 
       You'll see `@dataclass` and `@property` again in the TDD tutorial — where `ScoringEvent`, `BattleReport`, and `total_damage` follow the same patterns.
       </details>
@@ -1231,7 +1229,7 @@ steps:
       Every robust test fits this shape. If you can't separate Arrange from Act cleanly, the function under test is doing too much.
       </details>
 
-      <details markdown="1"><summary>🎓 Going deeper: Coverage ≠ quality</summary>
+      ### 🎓 Coverage ≠ quality
 
       **Suite A — 100% line coverage, weak oracle:**
       ```python
@@ -1247,8 +1245,7 @@ steps:
           assert q.total_duration == 393
       ```
 
-      If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior.
-      </details>
+      If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior. The same logic explains why Step 4's brittle tests passed before the rename: running the assertion is not the same as verifying the right thing.
 
       🧭 **Reflect before moving on.** In your own words, without scrolling back: what is the structural difference between a brittle test and a robust one? Give a concrete example — not the `PlaylistQueue` one you just worked through. Then trace the *causal chain*: what needs to be true about how the production code changes for a brittle test to break while a robust test survives? The explanation should work for any class or function, not just this one.
 
@@ -1283,6 +1280,10 @@ steps:
 
               def titles(self) -> list[str]:
                   return [t.title for t in self._tracks]
+
+              def durations(self) -> tuple[int, ...]:
+                  """Public, ordered, immutable view of per-track durations (seconds)."""
+                  return tuple(t.duration_seconds for t in self._tracks)
         language: "python"
 
       - path: "test_brittle_audit.py"
@@ -1344,6 +1345,7 @@ steps:
                 queue = PlaylistQueue()
                 queue.add("Espresso", 175)
                 assert "Espresso" in queue.titles()
+                assert queue.durations()[0] == 175
 
 
             def test_total_duration_sums_track_lengths():
@@ -1360,9 +1362,11 @@ steps:
                 assert queue.track_count() == 2
           language: "python"
       explanation: |
-        Replace direct `._tracks` access with public API calls (titles(), track_count()).
-        Robust tests verify what the class DOES (its observable behavior via the public
-        API), not HOW it stores state internally.
+        Replace direct `._tracks` access with public API calls (titles(), durations(),
+        track_count()). The duration assertion still holds — but now via durations()[0]
+        instead of _tracks[0].duration_seconds, so the rename experiment leaves it
+        green. Robust tests verify what the class DOES (its observable behavior via
+        the public API), not HOW it stores state internally.
 
     tests:
       - description: "Brittle tests have been fixed (no private attribute access)"
@@ -1376,7 +1380,7 @@ steps:
           - title: "Strategic hint"
             text: "Replace `queue._tracks[0].title` with a public-method call. Open `playlist.py` and look at the method definitions — any method *not* starting with `_` is part of the public API and safe to call from a test."
           - title: "Almost-spoiler — apply the AAA shape"
-            text: "Each brittle test reaches into private state. Rewrite it using only the public methods.\n```python\ndef test_<behavior>():\n    queue = PlaylistQueue()\n    queue.add(<title>, <duration>)\n    assert <something_via_public_api> == <expected>\n```\nFor `test_add_track_internal_list`, the observable behavior is *the title appears when you ask for titles*. For `test_internal_list_length`, the observable behavior is *the count goes up when you add tracks*."
+            text: "Each brittle test reaches into private state. Rewrite it using only the public methods.\n```python\ndef test_<behavior>():\n    queue = PlaylistQueue()\n    queue.add(<title>, <duration>)\n    assert <something_via_public_api> == <expected>\n```\nFor `test_add_track_internal_list`, the observable behaviors are *the title appears when you ask for titles* and *the duration appears when you ask for durations* — `queue.titles()` and `queue.durations()` give you both via the public API. For `test_internal_list_length`, the observable behavior is *the count goes up when you add tracks*."
       - description: "Test file still contains at least 4 test functions"
         command: |
           source = open('/tutorial/test_brittle_audit.py').read()
@@ -1626,7 +1630,7 @@ steps:
 
       🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. Then explain *why* that shift matters for the next function you write — what will you do differently tomorrow that you wouldn't have done before this tutorial?
 
-      <details markdown="1"><summary>🪞 Two independent dimensions of test design (separation)</summary>
+      ### 🪞 Two independent dimensions of test design
 
       Across this tutorial, two *separate* dimensions of test design have been mixed together. Naming them apart makes both clearer:
 
@@ -1648,7 +1652,6 @@ steps:
       ```
 
       A test can be *strong on input choice* (boundary-aware) but *weak on oracle* (`is not None`) — and vice versa. **Excellence is the cross-product**: pick a meaningful input *and* assert the precise expected outcome. That's why the streaming-price task above checks both partitions covered AND oracles strong.
-      </details>
 
       <details markdown="1"><summary>🧰 When to reach for which technique (a quick decision guide)</summary>
 
