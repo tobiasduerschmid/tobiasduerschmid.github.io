@@ -1,0 +1,24 @@
+{% comment %}
+  Unified site-wide cookie / privacy notice.
+
+  Edit this file to change the notice text or styling everywhere at once.
+  The detailed inventory of every cookie and localStorage key (with
+  trash-icon delete actions) lives at /cookies/ — see cookies.html.
+
+  When introducing any new browser storage (cookie, localStorage,
+  sessionStorage, IndexedDB), add an entry to cookies.html so users can
+  see and delete it. The .claude/skills/cookie-storage-tracker skill
+  enforces this for AI agents.
+{% endcomment %}
+{% unless page.url contains '/cookies' %}
+<div class="cookie-notice-wrap">
+  <p class="cookie-notice">
+    <strong>Cookie &amp; Privacy Notice:</strong>
+    This site stores a few preferences and your progress locally in your browser
+    (cookies and <code>localStorage</code>) so it works the way you left it.
+    Nothing is sent to or stored on any external server, and this site does not
+    sell, share, or disclose any user data to third parties.
+    <a href="{{ '/cookies/' | relative_url }}">View &amp; manage your data &rarr;</a>
+  </p>
+</div>
+{% endunless %}

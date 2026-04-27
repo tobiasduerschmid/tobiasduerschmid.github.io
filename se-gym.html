@@ -1626,21 +1626,11 @@ layout: sebook
     }
   </style>
 
-  {% include footer.html %}
-
-  <!-- Privacy / Cookie Notice -->
-  <div style="max-width: 860px; margin: 0 auto; padding: 0 20px; clear: both;">
-    <p class="cookie-notice">
-      <strong>Cookie &amp; Privacy Notice:</strong> SE Gym uses browser cookies to store your gym preferences and
-      browser localStorage to store per-question performance data. No personal information is collected, transmitted, or
-      stored on any external server. All data resides solely on your device and is fully under your control. You may
-      delete stored preferences by disabling <em>Activate Personal Gym</em>, or erase all performance data by disabling
-      <em>Track Performance</em> and confirming deletion. This site does not sell, share, or disclose any user data to
-      third parties.
-    </p>
-  </div>
-
-  {% include scripts.html %}
+  {% comment %}
+    Footer, cookie notice and scripts are rendered by the {{ page.layout }} layout
+    (sebook.html). Including them again here would duplicate them on the rendered
+    page — see /cookies/ for the unified inventory of stored data.
+  {% endcomment %}
 
   <!-- ==================== PAGE SCRIPT ==================== -->
   <!-- Custom UML diagram renderers -->

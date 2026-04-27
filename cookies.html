@@ -1,0 +1,764 @@
+---
+permalink: /cookies/
+title: "Your Browser Storage"
+layout: framework
+---
+
+<style>
+  .cookies-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .cookies-page h1 { margin-top: 0.6em; }
+  .cookies-page h2 {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #2774AE;
+  }
+  html.dark-mode .cookies-page h2 { border-bottom-color: #4da3ff; }
+
+  .cookies-page h3 {
+    margin-top: 1.4em;
+    font-size: 1.1em;
+    color: #555;
+  }
+  html.dark-mode .cookies-page h3 { color: #bbb; }
+
+  .cookies-intro {
+    background: #f8f9fa;
+    border-left: 3px solid #2774AE;
+    border-radius: 6px;
+    padding: 14px 18px;
+    line-height: 1.55;
+  }
+  html.dark-mode .cookies-intro {
+    background: #1e1e1e;
+    border-left-color: #4da3ff;
+    color: #ccc;
+  }
+
+  .cookies-bulk {
+    margin: 20px 0 8px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .cookies-btn {
+    background: #fff;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.9em;
+    cursor: pointer;
+    color: #24292e;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .cookies-btn:hover {
+    background: #f3f4f6;
+    border-color: #888;
+  }
+  .cookies-btn.danger {
+    background: #fdecea;
+    border-color: #f5c2c0;
+    color: #b1281e;
+  }
+  .cookies-btn.danger:hover {
+    background: #f8d7d4;
+    border-color: #d1655d;
+    color: #8a1a13;
+  }
+  html.dark-mode .cookies-btn {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  html.dark-mode .cookies-btn:hover {
+    background: #333;
+    border-color: #888;
+  }
+  html.dark-mode .cookies-btn.danger {
+    background: #3a1f1d;
+    border-color: #6b3431;
+    color: #f5a8a3;
+  }
+  html.dark-mode .cookies-btn.danger:hover {
+    background: #4a2826;
+    border-color: #8a4946;
+  }
+
+  .storage-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 8px;
+    font-size: 0.92em;
+  }
+  .storage-table th,
+  .storage-table td {
+    border: 1px solid #e1e4e8;
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .storage-table th {
+    background: #f6f8fa;
+    font-weight: 600;
+  }
+  html.dark-mode .storage-table th,
+  html.dark-mode .storage-table td {
+    border-color: #444;
+  }
+  html.dark-mode .storage-table th { background: #1e1e1e; }
+  html.dark-mode .storage-table td { background: #161616; }
+
+  .storage-key {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    color: #032f62;
+    white-space: nowrap;
+  }
+  html.dark-mode .storage-key { color: #79b8ff; }
+
+  .storage-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    color: #555;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  html.dark-mode .storage-value { color: #aaa; }
+
+  .storage-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    font-weight: 600;
+  }
+  .storage-badge.set    { background: #d4edda; color: #155724; }
+  .storage-badge.unset  { background: #e9ecef; color: #6c757d; }
+  html.dark-mode .storage-badge.set   { background: #1e3a25; color: #6cd58a; }
+  html.dark-mode .storage-badge.unset { background: #2a2a2a; color: #888; }
+
+  .trash-btn {
+    background: transparent;
+    border: 1px solid #e1e4e8;
+    border-radius: 5px;
+    padding: 5px 9px;
+    color: #b1281e;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background 0.12s ease;
+  }
+  .trash-btn:hover {
+    background: #fdecea;
+    border-color: #d1655d;
+  }
+  .trash-btn:disabled {
+    color: #bbb;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: #eee;
+  }
+  html.dark-mode .trash-btn {
+    border-color: #555;
+    color: #f5a8a3;
+  }
+  html.dark-mode .trash-btn:hover {
+    background: #3a1f1d;
+    border-color: #8a4946;
+  }
+  html.dark-mode .trash-btn:disabled {
+    color: #555;
+    border-color: #333;
+  }
+
+  .col-action  { width: 70px;  text-align: center !important; }
+  .col-status  { width: 92px;  text-align: center !important; }
+  .col-key     { width: 28%; }
+  .col-purpose { }
+
+  .cookies-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2933;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 5000;
+  }
+  .cookies-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .empty-row td {
+    color: #888;
+    font-style: italic;
+    text-align: center;
+  }
+</style>
+
+<div class="cookies-page">
+
+  <h1>Your Browser Storage</h1>
+
+  <div class="cookies-intro">
+    <p>
+      This site keeps a few small things in your browser so it remembers what you were doing &mdash;
+      your <strong>theme</strong>, <strong>tutorial progress</strong>, <strong>bookmarks</strong>,
+      audio settings, and similar UI preferences. <strong>Nothing leaves your device.</strong>
+      No personal information is collected, no analytics are sent off-site, and no data is shared
+      with third parties.
+    </p>
+    <p style="margin-bottom:0;">
+      Below is the complete inventory of every cookie and <code>localStorage</code> key this site
+      can write to your browser. Each row shows whether the value is currently set, and you can
+      delete entries individually with the <i class="fa fa-trash-can" aria-hidden="true"></i> button,
+      remove a whole category, or wipe everything.
+    </p>
+  </div>
+
+  <div class="cookies-bulk">
+    <button id="cookies-refresh" class="cookies-btn" type="button">
+      <i class="fa fa-arrows-rotate" aria-hidden="true"></i> Refresh
+    </button>
+    <button id="cookies-delete-all" class="cookies-btn danger" type="button">
+      <i class="fa fa-trash" aria-hidden="true"></i> Delete everything
+    </button>
+  </div>
+
+  <h2>Cookies</h2>
+  <p>Stored as HTTP cookies, scoped to this site only. None are session-tracking cookies; all are pure UI preferences.</p>
+
+  <h3>UI &amp; reading preferences</h3>
+  <table class="storage-table" data-category="ui-cookies">
+    <thead>
+      <tr>
+        <th class="col-key">Cookie</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="cookie" data-key="dark-mode">
+        <td class="storage-key">dark-mode</td>
+        <td>Light/dark theme preference (<code>true</code>/<code>false</code>).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="show-highlights">
+        <td class="storage-key">show-highlights</td>
+        <td>Whether yellow text highlights are visible in articles and the SE Book.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="highlights">
+        <td class="storage-key">highlights</td>
+        <td>Older alias of <code>show-highlights</code>, used on the blog index page only.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="read-aloud">
+        <td class="storage-key">read-aloud</td>
+        <td>Whether text-to-speech (read-aloud) controls are visible by default.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="uml-accent-color">
+        <td class="storage-key">uml-accent-color</td>
+        <td>Custom accent color used by UML diagram renderers in tutorials.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="ui-cookies" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete all UI cookies
+  </button>
+
+  <h3>SE Book bookmarks</h3>
+  <table class="storage-table" data-category="bookmarks-cookies">
+    <thead>
+      <tr>
+        <th class="col-key">Cookie</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="cookie" data-key="se-bookmarks-active">
+        <td class="storage-key">se-bookmarks-active</td>
+        <td>Whether the bookmarks feature is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="se-bookmarks">
+        <td class="storage-key">se-bookmarks</td>
+        <td>JSON list of pages you bookmarked in the SE Book (URL + title).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="bookmarks-cookies" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete bookmark cookies
+  </button>
+
+  <h3>SE Gym</h3>
+  <table class="storage-table" data-category="gym-cookies">
+    <thead>
+      <tr>
+        <th class="col-key">Cookie</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="cookie" data-key="se-gym-active">
+        <td class="storage-key">se-gym-active</td>
+        <td>Whether the personal gym feature is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="se-gym">
+        <td class="storage-key">se-gym</td>
+        <td>JSON list of items (questions/flashcards) you added to your personal gym.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="analyze-performance">
+        <td class="storage-key">analyze-performance</td>
+        <td>Whether per-question performance tracking is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="gym-cookies" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete SE Gym cookies
+  </button>
+
+  <h2>Browser localStorage</h2>
+  <p>
+    Stored using the browser's <code>localStorage</code> API, scoped to this site only.
+    All entries are pure preferences and progress data &mdash; never personal information.
+  </p>
+
+  <h3>Accessibility &amp; audio</h3>
+  <table class="storage-table" data-category="ui-localstorage">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="prefersReducedMotion">
+        <td class="storage-key">prefersReducedMotion</td>
+        <td>Persistent override of the OS &ldquo;reduce motion&rdquo; preference (set by visiting <code>?reduce-motion=1</code>).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="cap_volume">
+        <td class="storage-key">cap_volume</td>
+        <td>Last-used volume of the audio player (text-to-speech / podcast playback).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="cap_speed">
+        <td class="storage-key">cap_speed</td>
+        <td>Last-used playback speed of the audio player (e.g. <code>1.5</code>).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="tts-voice-name">
+        <td class="storage-key">tts-voice-name</td>
+        <td>Selected text-to-speech voice for the read-aloud feature.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="ui-localstorage" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete UI &amp; audio entries
+  </button>
+
+  <h3>SE Gym performance statistics</h3>
+  <table class="storage-table" data-category="gym-localstorage">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="se-gym-stats">
+        <td class="storage-key">se-gym-stats</td>
+        <td>Per-question seen/correct counters used to surface your most-difficult questions. Only written when <em>Track Performance</em> is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="gym-localstorage" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete performance statistics
+  </button>
+
+  <h3>Tutorial progress &amp; debugger state</h3>
+  <p>
+    These keys are <em>per-tutorial</em> &mdash; one entry per tutorial you have ever opened. Static keys are listed first; dynamic keys (those including a tutorial id or page path) are discovered from your browser and listed at the end.
+  </p>
+  <table class="storage-table" data-category="tutorial-static">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="tutorial-autosave">
+        <td class="storage-key">tutorial-autosave</td>
+        <td>Whether autosave is enabled for tutorials.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <table class="storage-table" data-category="tutorial-dynamic" id="tutorial-dynamic-table">
+    <thead>
+      <tr>
+        <th class="col-key">Key (with prefix)</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody id="tutorial-dynamic-body">
+      <tr class="empty-row"><td colspan="4">Scanning your browser&hellip;</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.85em; color:#666; margin-top:-4px;">
+    <em>Prefixes:</em>
+    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code &amp; current step &middot;
+    <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
+    <code>tutorial-popout-state-&lt;path&gt;</code> &mdash; detached editor crash-recovery snapshot &middot;
+    <code>tutorial-debug-bps-&lt;id&gt;</code> &mdash; debugger breakpoints &middot;
+    <code>tutorial-debug-watchpoint-remove-choice-&lt;id&gt;</code> &mdash; remembered watchpoint removal choice &middot;
+    <code>tutorial-debug-section-&lt;id&gt;-&lt;name&gt;</code> &amp;
+    <code>tutorial-debug-subsection-&lt;id&gt;-&lt;name&gt;</code> &mdash; debugger panel collapse/expand state.
+  </p>
+  <button class="cookies-btn danger" data-clear-category="tutorial-static" data-clear-prefixes="tutorial-progress-,tutorial-editor-split-,tutorial-popout-state-,tutorial-debug-bps-,tutorial-debug-watchpoint-remove-choice-,tutorial-debug-section-,tutorial-debug-subsection-" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete all tutorial state
+  </button>
+
+  <h3>Standalone tutorials</h3>
+  <table class="storage-table" data-category="standalone-tutorials">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="regex-tutorial-progress">
+        <td class="storage-key">regex-tutorial-progress</td>
+        <td>Completed exercises in the regex tutorial.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="regex-tutorial-advanced-progress">
+        <td class="storage-key">regex-tutorial-advanced-progress</td>
+        <td>Completed exercises in the advanced regex tutorial.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="standalone-tutorials" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete standalone-tutorial progress
+  </button>
+
+  <h2>Where else does this site store data?</h2>
+  <p>
+    For full transparency: the site uses no <code>sessionStorage</code> persistently
+    (only briefly during a one-time migration of the reduced-motion preference into
+    <code>localStorage</code>) and no <code>IndexedDB</code>. The only third-party
+    requests come from the public CDNs that serve fonts, FontAwesome icons, jQuery,
+    Bootstrap, and Mermaid &mdash; none of which we send any user data to.
+    Cookies set on a different origin (such as YouTube embeds) are governed by
+    those services' own privacy policies and cannot be controlled from this page.
+  </p>
+
+</div>
+
+<div id="cookies-toast" class="cookies-toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // -------- Cookie helpers --------
+  function readCookie(name) {
+    var prefix = name + '=';
+    var parts  = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var c = parts[i];
+      while (c.charAt(0) === ' ') c = c.substring(1);
+      if (c.indexOf(prefix) === 0) {
+        return decodeURIComponent(c.substring(prefix.length));
+      }
+    }
+    return null;
+  }
+  function deleteCookie(name) {
+    // Belt-and-suspenders: kill it on every plausible path/domain
+    // combination so it sticks regardless of how it was originally set.
+    var bases = [
+      'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/',
+      'max-age=0; path=/'
+    ];
+    for (var i = 0; i < bases.length; i++) {
+      document.cookie = name + '=; ' + bases[i] + '; SameSite=Lax';
+      document.cookie = name + '=; ' + bases[i] + '; SameSite=Lax; Secure';
+    }
+  }
+
+  // -------- localStorage helpers --------
+  function readLS(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function deleteLS(key) {
+    try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+  }
+
+  // -------- Toast --------
+  var toastEl = document.getElementById('cookies-toast');
+  var toastTimer = null;
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('show');
+    }, 2200);
+  }
+
+  // -------- Render a single row --------
+  function renderRow(row) {
+    var storage = row.getAttribute('data-storage');
+    var key     = row.getAttribute('data-key');
+    var statusCell = row.querySelector('.status-cell');
+    var actionCell = row.querySelector('.action-cell');
+
+    var value = (storage === 'cookie') ? readCookie(key) : readLS(key);
+    var isSet = (value !== null && value !== '');
+
+    // Status badge (with tooltip showing actual value)
+    var safeValue = isSet ? value : '';
+    if (safeValue.length > 120) safeValue = safeValue.slice(0, 120) + '…';
+    statusCell.innerHTML = isSet
+      ? '<span class="storage-badge set" title="' + escapeAttr(safeValue) + '">set</span>'
+      : '<span class="storage-badge unset">not set</span>';
+
+    // Trash button
+    actionCell.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'trash-btn';
+    btn.innerHTML = '<i class="fa fa-trash-can" aria-hidden="true"></i>';
+    btn.setAttribute('aria-label', 'Delete ' + key);
+    btn.title = isSet ? ('Delete ' + key) : (key + ' is not set');
+    btn.disabled = !isSet;
+    btn.addEventListener('click', function () {
+      if (storage === 'cookie') deleteCookie(key);
+      else deleteLS(key);
+      renderRow(row);
+      toast('Deleted ' + key);
+    });
+    actionCell.appendChild(btn);
+  }
+
+  function escapeAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // -------- Render dynamic per-tutorial keys --------
+  var DYNAMIC_PREFIXES = [
+    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial progress (code &amp; current step)' },
+    { prefix: 'tutorial-editor-split-',                   label: 'Tutorial split-pane editor preference' },
+    { prefix: 'tutorial-popout-state-',                   label: 'Detached editor crash-recovery snapshot' },
+    { prefix: 'tutorial-debug-bps-',                      label: 'Debugger breakpoints' },
+    { prefix: 'tutorial-debug-watchpoint-remove-choice-', label: 'Watchpoint removal preference' },
+    { prefix: 'tutorial-debug-section-',                  label: 'Debugger section collapse/expand state' },
+    { prefix: 'tutorial-debug-subsection-',               label: 'Debugger subsection collapse/expand state' }
+  ];
+
+  function describeDynamicKey(key) {
+    for (var i = 0; i < DYNAMIC_PREFIXES.length; i++) {
+      if (key.indexOf(DYNAMIC_PREFIXES[i].prefix) === 0) {
+        return DYNAMIC_PREFIXES[i].label;
+      }
+    }
+    return null;
+  }
+
+  function renderDynamicTutorialKeys() {
+    var body = document.getElementById('tutorial-dynamic-body');
+    if (!body) return;
+    var found = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        var label = describeDynamicKey(k);
+        if (label) found.push({ key: k, label: label });
+      }
+    } catch (e) { /* localStorage unavailable */ }
+
+    body.innerHTML = '';
+    if (found.length === 0) {
+      var tr = document.createElement('tr');
+      tr.className = 'empty-row';
+      tr.innerHTML = '<td colspan="4">No per-tutorial state stored in your browser.</td>';
+      body.appendChild(tr);
+      return;
+    }
+
+    found.sort(function (a, b) { return a.key < b.key ? -1 : 1; });
+    for (var j = 0; j < found.length; j++) {
+      var row = document.createElement('tr');
+      row.setAttribute('data-storage', 'localStorage');
+      row.setAttribute('data-key', found[j].key);
+      row.innerHTML =
+        '<td class="storage-key">' + escapeAttr(found[j].key) + '</td>' +
+        '<td>' + found[j].label + '</td>' +
+        '<td class="status-cell"></td>' +
+        '<td class="action-cell"></td>';
+      body.appendChild(row);
+      renderRow(row);
+    }
+  }
+
+  // -------- Render everything --------
+  function renderAll() {
+    var rows = document.querySelectorAll('tr[data-storage][data-key]');
+    for (var i = 0; i < rows.length; i++) renderRow(rows[i]);
+    renderDynamicTutorialKeys();
+  }
+
+  // -------- Bulk delete --------
+  function deleteRowEntry(row) {
+    var storage = row.getAttribute('data-storage');
+    var key     = row.getAttribute('data-key');
+    if (storage === 'cookie') deleteCookie(key);
+    else deleteLS(key);
+  }
+
+  function deleteByPrefixes(prefixList) {
+    var deleted = 0;
+    try {
+      // Snapshot keys first because removeItem mutates the index.
+      var keys = [];
+      for (var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      for (var j = 0; j < keys.length; j++) {
+        var k = keys[j];
+        if (!k) continue;
+        for (var p = 0; p < prefixList.length; p++) {
+          if (k.indexOf(prefixList[p]) === 0) {
+            localStorage.removeItem(k);
+            deleted++;
+            break;
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+    return deleted;
+  }
+
+  document.addEventListener('click', function (ev) {
+    var target = ev.target.closest && ev.target.closest('[data-clear-category]');
+    if (!target) return;
+
+    var category = target.getAttribute('data-clear-category');
+    var prefixCsv = target.getAttribute('data-clear-prefixes') || '';
+
+    var rows = document.querySelectorAll('table[data-category="' + category + '"] tr[data-storage][data-key]');
+    if (!rows.length && !prefixCsv) return;
+
+    if (!confirm('Delete all entries in this category? This cannot be undone.')) return;
+
+    var n = 0;
+    for (var i = 0; i < rows.length; i++) { deleteRowEntry(rows[i]); n++; }
+
+    if (prefixCsv) {
+      var prefixes = prefixCsv.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      n += deleteByPrefixes(prefixes);
+    }
+
+    renderAll();
+    toast('Deleted ' + n + ' entr' + (n === 1 ? 'y' : 'ies'));
+  });
+
+  // -------- Refresh --------
+  document.getElementById('cookies-refresh').addEventListener('click', function () {
+    renderAll();
+    toast('Refreshed');
+  });
+
+  // -------- Delete everything --------
+  document.getElementById('cookies-delete-all').addEventListener('click', function () {
+    if (!confirm(
+      'Delete EVERY cookie and localStorage entry this site has stored in your browser?\n\n' +
+      'This will sign you out of any preferences, lose your tutorial progress, and clear ' +
+      'bookmarks/SE Gym data. It cannot be undone.'
+    )) return;
+
+    // Cookies: every key we know about, plus a sweep of whatever else is on document.cookie.
+    var cookieParts = document.cookie.split(';');
+    for (var i = 0; i < cookieParts.length; i++) {
+      var nameEq = cookieParts[i].split('=')[0];
+      if (nameEq) deleteCookie(nameEq.trim());
+    }
+
+    // localStorage: nuke it entirely.
+    try { localStorage.clear(); } catch (e) { /* ignore */ }
+    try { sessionStorage.clear(); } catch (e) { /* ignore */ }
+
+    renderAll();
+    toast('All site storage deleted');
+  });
+
+  // -------- Init --------
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  } else {
+    renderAll();
+  }
+})();
+</script>
