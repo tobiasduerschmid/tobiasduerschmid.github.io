@@ -1719,7 +1719,7 @@ steps:
           - text: "Write `self._log_start(count)` right after capturing the count."
             condition: "default"
 
-      - description: "run_digest contains a for loop that encloses an if/else"
+      - description: "run_digest contains a for loop that encloses an if/else with correct conditions"
         command: |
           import ast
           source = open('/tutorial/step6/chatbot.py').read()
@@ -1743,8 +1743,10 @@ steps:
           assert ok, \
               "The if guard should call `self._is_announcement(post)` — that becomes `alt [bot._is_announcement(post)]` in the diagram (the generator rewrites `self` to the caller's object name)."
         hints:
+          - text: "`bot._is_announcement(post)` references `bot`, but `bot` isn't defined inside `DiscordBot` — it's not a parameter of `run_digest`, a local, or a class attribute. `bot` is the variable name the *caller* uses to hold this instance; from inside the method, refer to the current instance as `self`. The diagram shows `bot.` only because PlantUML rewrites `self` to the caller's object name when rendering."
+            condition: "code_contains: bot._is_announcement"
           - text: "Two fragments nest here: outer `loop` → inner `alt`. What Python indentation produces that order?"
-            condition: "default"
+            condition: "code_not_matches: /for [^\\n]+:\\n[ \\t]+if /"
           - text: "Structure: `for post in posts:` then inside `if self._is_announcement(post): ... else: ...`."
             condition: "default"
 
