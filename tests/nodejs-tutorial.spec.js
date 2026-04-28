@@ -2,13 +2,14 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
+  applySolution,
   passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
 } = require('./tutorial-helpers');
 
 /**
- * Tests: Node.js Essentials Interactive Tutorial (browser-JS backend)
+ * Tests: Node.js Essentials Interactive Tutorial (WebContainer Node backend)
  *
  * Two serial describe blocks share one page each — the tutorial boots only
  * twice per run (instead of once per test).
@@ -19,7 +20,7 @@ const {
  */
 
 const TUTORIAL_URL     = '/SEBook/tools/nodejs-tutorial';
-const BOOT_TIMEOUT     = 30_000;
+const BOOT_TIMEOUT     = 60_000;
 const TEST_RUN_TIMEOUT = 20_000;
 
 const config = loadTutorialConfig('nodejs');
@@ -63,7 +64,7 @@ test.describe.serial('Node.js Tutorial', () => {
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('output panel is present — no xterm terminal for browser backend', async () => {
+  test('output panel is present — WebContainer runs through the tutorial output pane', async () => {
     await expect(page.locator('.tvm-output-panel')).toBeVisible();
     await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
   });
@@ -98,6 +99,46 @@ test.describe.serial('Node.js Tutorial', () => {
     await page.locator('.tvm-clear-btn').click();
     const text = await page.locator('.tvm-output-pre').textContent();
     expect(text?.trim() ?? '').toBe('');
+  });
+
+  test('Express HTTP client reaches the WebContainer Node server', async () => {
+    await page.goto(`${TUTORIAL_URL}?instructor-mode=true`);
+    await waitForTutorialReady(page);
+    await page.locator('.tvm-step-btn').nth(4).click();
+    await applySolution(page);
+    await page.locator('.tvm-run-btn').click();
+    await expect(page.locator('.tvm-output-pre'))
+      .toContainText('Express server listening on port 3000', { timeout: TEST_RUN_TIMEOUT });
+    await page.locator('.tvm-http-send-btn').click();
+    await expect(page.locator('.tvm-http-response-body'))
+      .toContainText('Hello from Express!', { timeout: TEST_RUN_TIMEOUT });
+  });
+
+  test('debugger keeps Express server alive and pauses inside router handlers', async () => {
+    await page.goto(`${TUTORIAL_URL}?instructor-mode=true`);
+    await waitForTutorialReady(page);
+    await page.locator('.tvm-step-btn').nth(6).click();
+    await applySolution(page);
+    await page.evaluate(() => {
+      const ctl = window._tutorial._debuggerCtl;
+      ctl.breakpoints.clear();
+      ctl.toggleBreakpoint('studentRoutes.js', 13);
+    });
+    await page.locator('.tvm-debug-btn').click();
+    await expect(page.locator('.tvm-debug-toolbar')).toBeVisible({ timeout: TEST_RUN_TIMEOUT });
+    await expect(page.locator('.tvm-debug-status'))
+      .toContainText(/paused|server/i, { timeout: TEST_RUN_TIMEOUT });
+    await page.evaluate(() => {
+      const ctl = window._tutorial._debuggerCtl;
+      if (ctl.statusEl && /paused/i.test(ctl.statusEl.textContent || '')) ctl.handleToolbarCmd('continue');
+    });
+    await expect(page.locator('.tvm-debug-status'))
+      .toContainText(/server/i, { timeout: TEST_RUN_TIMEOUT });
+    await page.locator('.tvm-left-tab[data-panel="steps"]').click();
+    await page.locator('.tvm-http-send-btn').click();
+    await expect(page.locator('.tvm-debug-status'))
+      .toContainText(/paused at breakpoint at studentRoutes\.js:13/i, { timeout: TEST_RUN_TIMEOUT });
+    await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('stop'));
   });
 
   test('syntax errors appear in output', async () => {

@@ -204,12 +204,14 @@
     // editor read-only logic. Same call is also used by popped-out editors.
     this._installEditorAttachments();
     // Pick a transport channel based on backend. Pyodide uses a Web Worker +
-    // SharedArrayBuffer (legacy in-place code below). Webcontainer (Node.js)
-    // uses NodeChannel — spawns a Node process and talks JSON-over-stdio.
-    // Browser uses BrowserChannel — spawns a same-origin iframe with shared
-    // SAB and acorn-instrumented user code.
+    // SharedArrayBuffer (legacy in-place code below). BrowserChannel uses
+    // acorn instrumentation and also backs WebContainer tutorials because
+    // WebContainer's in-browser Node inspector does not reliably service CDP
+    // pause/step commands.
     var backend = this.t.config && this.t.config.backend;
-    if (backend === 'webcontainer' && window.SEBookNodeChannel) {
+    if (backend === 'webcontainer' && window.SEBookBrowserChannel) {
+      this.channel = new window.SEBookBrowserChannel(this, this.t);
+    } else if (backend === 'webcontainer' && window.SEBookNodeChannel) {
       this.channel = new window.SEBookNodeChannel(this, this.t);
     } else if (backend === 'browser' && window.SEBookBrowserChannel) {
       this.channel = new window.SEBookBrowserChannel(this, this.t);
@@ -2838,7 +2840,8 @@
     // BrowserChannel module loaded (no async runtime to wait on).
     var backend = this.t.config && this.t.config.backend;
     if (!this.channel && !this.t._worker) { alert('Pyodide not ready yet'); return; }
-    if (this.channel && backend === 'webcontainer' && !this.t._webcontainer) {
+    var usingNodeChannel = this.channel && window.SEBookNodeChannel && this.channel instanceof window.SEBookNodeChannel;
+    if (usingNodeChannel && backend === 'webcontainer' && !this.t._webcontainer) {
       alert('WebContainer is not ready yet'); return;
     }
 
@@ -2925,6 +2928,7 @@
         watches: this.session.watches,
         args: this.session.args || [],
         options: this.opts,
+        serverMode: !!(step && step.http_client),
         overrides: this.session.replayOverrides || [],
         exceptionBreakpoints: this._serializeExceptionBreakpoints(),
         pytest: runAsPytest,

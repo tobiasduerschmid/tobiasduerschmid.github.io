@@ -116,6 +116,13 @@ send({ type: 'log', msg: '[ttd-browser] runtime v' + TTD_BROWSER_VERSION + ' loa
 
 // ---- Bootstrap: load acorn, instrument, run -------------------------
 
+function normalizeModulePath(path) {
+  return String(path || '')
+    .replace(/^\/tutorial\//, '')
+    .replace(/^\/+/, '')
+    .replace(/\\/g, '/');
+}
+
 function bootRun(entryFile, code, files, args) {
   log('bootRun begin: entry=' + entryFile + ' codeLen=' + (code || '').length + ' breakpoints=' + breakpoints.size);
   loadAcorn().then(function () {
@@ -203,7 +210,7 @@ function setupNodeMocks(files) {
   // rest is mock filesystem content.
   var jsFiles = {}, fsFiles = {};
   Object.keys(files || {}).forEach(function (path) {
-    var bare = path.replace(/^\/tutorial\//, '').replace(/^\//, '');
+    var bare = normalizeModulePath(path);
     if (/\.js$/.test(bare)) jsFiles[bare] = files[path];
     else fsFiles[bare] = files[path];
   });
@@ -346,13 +353,22 @@ function setupNodeMocks(files) {
       };
     }
     if (typeof m === 'string' && m.indexOf('./') === 0) {
-      var mkey = m.replace(/^\.\//, '').replace(/\.js$/, '');
+      var mkey = normalizeModulePath(m.replace(/^\.\//, '')).replace(/\.js$/, '');
       if (Object.prototype.hasOwnProperty.call(moduleCache, mkey)) return moduleCache[mkey];
       var msrc = jsFiles[mkey + '.js'] || jsFiles[mkey];
       if (msrc === undefined) throw new Error('Cannot find module: ' + m);
       var mod = { exports: {} };
       moduleCache[mkey] = mod.exports;
-      (new Function('require', 'module', 'exports', msrc))(self.require, mod, mod.exports);
+      var moduleFile = mkey + '.js';
+      var instrumentedSrc = msrc;
+      if (typeof self.__ttdInstrument === 'function') {
+        try {
+          instrumentedSrc = self.__ttdInstrument(msrc, '/tutorial/' + moduleFile);
+        } catch (e) {
+          throw new Error('Parse error in ' + moduleFile + ': ' + (e && e.message || e));
+        }
+      }
+      (new Function('require', 'module', 'exports', instrumentedSrc))(self.require, mod, mod.exports);
       moduleCache[mkey] = mod.exports;
       return mod.exports;
     }
@@ -478,7 +494,7 @@ function onReturn() {
   if (stack.length) stack.pop();
 }
 
-function onLine(file, line, scopeFn) {
+function onLine(file, line, scopeFn, forceSurface) {
   if (stopFlag) {
     throw new Error('__ttd_stop__');
   }
@@ -533,7 +549,7 @@ function onLine(file, line, scopeFn) {
     }
   }
 
-  var surface = hitBp || shouldSurfaceForStep();
+  var surface = !!forceSurface || hitBp || shouldSurfaceForStep();
   if (!surface) return;
 
   send({ type: 'paused', snapshots: snapshotBuffer });
