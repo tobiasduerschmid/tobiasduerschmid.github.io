@@ -3697,3 +3697,39 @@ body.lecture-mode .tutorial-page {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================================
+   Git gutter — colored bars in the Monaco line-decorations gutter showing
+   added (green), modified (blue), and deleted (red) lines vs HEAD.
+   Activated by `git_gutter: true` in the tutorial YAML.
+   ============================================================================ */
+.tvm-gg-added,
+.tvm-gg-modified,
+.tvm-gg-deleted {
+  width: 3px !important;
+  margin-left: 3px;
+}
+.tvm-gg-added {
+  background: #28a745;
+}
+.tvm-gg-modified {
+  background: #2472c8;
+}
+.tvm-gg-deleted {
+  /* Red wedge at the bottom of the line where the deletion happened */
+  background: linear-gradient(to bottom, transparent 50%, #cd3131 50%);
+}
+
+/* Dark theme uses slightly brighter variants. */
+.tvm-dark-mode .tvm-gg-added,
+[data-theme="dark"] .tvm-gg-added {
+  background: #4ec9b0;
+}
+.tvm-dark-mode .tvm-gg-modified,
+[data-theme="dark"] .tvm-gg-modified {
+  background: #569cd6;
+}
+.tvm-dark-mode .tvm-gg-deleted,
+[data-theme="dark"] .tvm-gg-deleted {
+  background: linear-gradient(to bottom, transparent 50%, #f14c4c 50%);
+}

@@ -2,6 +2,7 @@ title: "Debugging Python: From Symptom to Fix"
 description: "Learn debugging as a distinct, learnable skill — not as accidental tinkering. You'll work three real Python bugs (recursive boundary, data-representation, temporal ordering) using a hypothesis-driven process and the time-travel debugger's breakpoints, conditional breakpoints, watch expressions, and history scrubber. Ends with an interleaved triage drill and an independent transfer challenge."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true
 pytest: true
 

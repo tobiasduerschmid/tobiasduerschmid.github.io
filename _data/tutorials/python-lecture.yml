@@ -5,6 +5,7 @@ instructor_mode: true
 disable_quiz: false
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 
 require_tests: true
 autosave_type: files

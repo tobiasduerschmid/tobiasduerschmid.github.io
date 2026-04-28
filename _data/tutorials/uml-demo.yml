@@ -2,6 +2,7 @@ title: "UML Diagram Demo"
 description: "Demonstrates the live UML class diagram and sequence diagram feature."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true
 require_tests: false
 

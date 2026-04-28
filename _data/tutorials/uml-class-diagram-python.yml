@@ -2,6 +2,7 @@ title: "UML Class Diagrams in Python"
 description: "Learn to read and create UML class diagrams by writing Python code that matches target diagrams. Starting from single classes and building to full system architectures, you will discover how UML makes invisible design decisions visible."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true
 uml_position: bottom-left
 uml_default_view: true

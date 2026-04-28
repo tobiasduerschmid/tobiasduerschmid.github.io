@@ -5,6 +5,14 @@ backend: pyodide
 debugger: true
 pytest: true
 
+# Editor IDE features:
+#   linter: true      → live pyflakes diagnostics in the Monaco gutter
+#                       (squigglies for undefined names, unused imports, etc.)
+#   git_gutter: true  → +/-/~ markers next to changed lines vs HEAD
+#                       (requires git_graph; see below)
+linter: true
+git_gutter: true
+
 # Show code (left) and tests (right) side by side. Files prefixed `test_`
 # auto-route to the right pane; `scorer.py` lands on the left.
 editor_split: true

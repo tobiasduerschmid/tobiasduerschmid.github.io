@@ -2,6 +2,7 @@ title: "Code Smells & Refactoring — A Music Streaming App"
 description: "Identify smells in real Python code and apply named refactorings safely. The first refactoring you do by hand to anchor the safety dance; the rest you drive with Monaco's tool support so you can spend your time thinking instead of typing. Tests stay green throughout. Live UML class diagrams make the structural change visible. Built around a music streaming codebase you incrementally clean up over ten steps."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true
 pytest: true
 

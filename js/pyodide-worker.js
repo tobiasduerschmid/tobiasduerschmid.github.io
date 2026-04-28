@@ -139,8 +139,11 @@ self.onmessage = function (e) {
     writeFile(msg.id, msg.path, msg.content);
   } else if (msg.type === 'read') {
     readFile(msg.id, msg.path);
-  } else if (msg.type === 'gitInit'   || msg.type === 'gitRun' ||
-             msg.type === 'gitGetState' || msg.type === 'gitListDir') {
+  } else if (msg.type === 'lint') {
+    lintCode(msg.id, msg.path, msg.code);
+  } else if (msg.type === 'gitInit'    || msg.type === 'gitRun' ||
+             msg.type === 'gitGetState' || msg.type === 'gitListDir' ||
+             msg.type === 'gitReadAtRef') {
     _routeGitMessage(msg);
   }
 };
@@ -275,6 +278,140 @@ function readFile(id, path) {
   }
 }
 
+// ---- Linting (pyflakes + ast.parse for syntax) -----------------------------
+//
+// Returns Monaco-shaped markers: {severity, startLineNumber, startColumn,
+// endLineNumber, endColumn, message, source, code}. Pyflakes catches
+// undefined names, unused imports, redefinitions, and a dozen other
+// classic bug patterns; ast.parse covers SyntaxError before pyflakes can
+// even run.
+//
+// Loaded lazily on the first lint message — tutorials without diagnostics
+// pay nothing.
+
+var _linterReady = false;
+var _linterLoadPromise = null;
+
+function _ensureLinter() {
+  if (_linterReady) return Promise.resolve();
+  if (_linterLoadPromise) return _linterLoadPromise;
+
+  _linterLoadPromise = (function () {
+    // Step 1: try the bundled package (pyodide ships pyflakes in some
+    // versions but not all). If that throws, fall through to micropip.
+    return pyodide.loadPackage('pyflakes').catch(function (err) {
+      console.warn('[lint] loadPackage("pyflakes") failed, falling back to micropip:', err && err.message || err);
+      // Step 2: micropip pulls from PyPI. Pure-Python wheel, ~30 KB, fast.
+      return pyodide.loadPackage('micropip').then(function () {
+        return pyodide.runPythonAsync(
+          'import micropip\n' +
+          'await micropip.install("pyflakes")\n'
+        );
+      });
+    }).then(function () {
+      // Step 3: inject the lint helper. Use ast.parse for SyntaxError +
+      // pyflakes Checker for everything else. Falls back to ast-only if the
+      // pyflakes import didn't actually take.
+      var bootstrapCode = [
+        'import ast as _ast, json as _json',
+        '_HAS_PYFLAKES = False',
+        'try:',
+        '    from pyflakes.checker import Checker as _PyflakesChecker',
+        '    _HAS_PYFLAKES = True',
+        'except ImportError:',
+        '    _PyflakesChecker = None',
+        '',
+        'def __lint(source, filename):',
+        '    out = []',
+        '    try:',
+        '        tree = _ast.parse(source, filename)',
+        '    except SyntaxError as e:',
+        '        out.append({',
+        '            "severity": "error",',
+        '            "line": e.lineno or 1,',
+        '            "col": (e.offset or 1),',
+        '            "endLine": e.end_lineno or e.lineno or 1,',
+        '            "endCol": (e.end_offset or (e.offset or 1) + 1),',
+        '            "message": e.msg or "syntax error",',
+        '            "code": "SyntaxError",',
+        '        })',
+        '        return _json.dumps(out)',
+        '    if _HAS_PYFLAKES:',
+        '        try:',
+        '            checker = _PyflakesChecker(tree, filename)',
+        '            for msg in checker.messages:',
+        '                try:',
+        '                    text = msg.message % msg.message_args',
+        '                except Exception:',
+        '                    text = str(msg)',
+        '                out.append({',
+        '                    "severity": "warning",',
+        '                    "line": msg.lineno or 1,',
+        '                    "col": (msg.col or 0) + 1,',
+        '                    "endLine": msg.lineno or 1,',
+        '                    "endCol": (msg.col or 0) + 1,',
+        '                    "message": text,',
+        '                    "code": type(msg).__name__,',
+        '                })',
+        '        except Exception as e:',
+        '            out.append({',
+        '                "severity": "info",',
+        '                "line": 1, "col": 1, "endLine": 1, "endCol": 1,',
+        '                "message": "linter error: " + str(e),',
+        '                "code": "LinterError",',
+        '            })',
+        '    return _json.dumps(out)',
+      ].join('\n');
+      pyodide.runPython(bootstrapCode);
+      // Verify the helper actually got registered before signalling ready.
+      var probe = pyodide.globals.get('__lint');
+      if (!probe) {
+        throw new Error('lint helper __lint not registered');
+      }
+      probe.destroy();
+      _linterReady = true;
+      console.info('[lint] pyflakes-based linter ready');
+    });
+  })().catch(function (err) {
+    console.error('[lint] linter setup failed:', err && err.stack || err && err.message || err);
+    _linterLoadPromise = null;  // allow a future retry
+    throw err;
+  });
+
+  return _linterLoadPromise;
+}
+
+function lintCode(id, path, code) {
+  if (!pyodide) {
+    self.postMessage({ type: 'lint_done', id: id, path: path, markers: [] });
+    return;
+  }
+  _ensureLinter().then(function () {
+    var fn = pyodide.globals.get('__lint');
+    if (!fn) {
+      self.postMessage({
+        type: 'lint_done', id: id, path: path, markers: [],
+        error: '__lint not registered',
+      });
+      return;
+    }
+    var json;
+    try {
+      json = fn(code || '', path || '<input>');
+    } finally {
+      fn.destroy();
+    }
+    var markers;
+    try { markers = JSON.parse(json); } catch (e) { markers = []; }
+    self.postMessage({ type: 'lint_done', id: id, path: path, markers: markers });
+  }).catch(function (err) {
+    self.postMessage({
+      type: 'lint_done', id: id, path: path, markers: [],
+      error: err && err.message || String(err),
+    });
+  });
+}
+
 // ---- Git module (lazy-loaded) ----------------------------------------------
 //
 // Git support lives in /js/pyodide-git.js — a separate worker module loaded
@@ -305,20 +442,23 @@ function _ensureGitModuleLoaded() {
 
 function _routeGitMessage(msg) {
   _ensureGitModuleLoaded().then(function () {
-    if (msg.type === 'gitInit')          self.gitInit(msg.id, msg.dir);
-    else if (msg.type === 'gitRun')      self.gitRun(msg.id, msg.line, msg.cwd, msg.dir);
-    else if (msg.type === 'gitGetState') self.gitGetState(msg.id, msg.dir);
-    else if (msg.type === 'gitListDir')  self.gitListDir(msg.id, msg.path);
+    if (msg.type === 'gitInit')           self.gitInit(msg.id, msg.dir);
+    else if (msg.type === 'gitRun')       self.gitRun(msg.id, msg.line, msg.cwd, msg.dir);
+    else if (msg.type === 'gitGetState')  self.gitGetState(msg.id, msg.dir);
+    else if (msg.type === 'gitListDir')   self.gitListDir(msg.id, msg.path);
+    else if (msg.type === 'gitReadAtRef') self.gitReadAtRef(msg.id, msg.path, msg.ref || 'HEAD');
   }).catch(function (err) {
     var emsg = 'Failed to load git module: ' + (err && err.message || err);
     // Use the matching error reply type so the main thread surfaces it.
-    var replyType = msg.type === 'gitInit'      ? 'git_init_error'
-                  : msg.type === 'gitGetState'  ? 'git_state_error'
-                  : msg.type === 'gitListDir'   ? 'git_listdir'
-                                                : 'git_run_done';
+    var replyType = msg.type === 'gitInit'       ? 'git_init_error'
+                  : msg.type === 'gitGetState'   ? 'git_state_error'
+                  : msg.type === 'gitListDir'    ? 'git_listdir'
+                  : msg.type === 'gitReadAtRef'  ? 'git_read_at_ref'
+                                                 : 'git_run_done';
     var payload = { type: replyType, id: msg.id, message: emsg, error: emsg };
     if (replyType === 'git_run_done') { payload.stdout = ''; payload.stderr = emsg + '\n'; payload.exitCode = 1; payload.mutatedPaths = []; }
     if (replyType === 'git_listdir') { payload.path = msg.path; payload.entries = []; }
+    if (replyType === 'git_read_at_ref') { payload.path = msg.path; payload.content = null; }
     self.postMessage(payload);
   });
 }

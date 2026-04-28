@@ -2,6 +2,7 @@ title: "Python Essentials: Scripting & Automation"
 description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Build a solid Python mental model by mapping every concept to what you already know — and spotting where the analogies break."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 
 # Time-travel debugger opt-in (per-tutorial, default off). Enables click-to-set
 # breakpoints in the gutter, conditional breakpoints, watch expressions,

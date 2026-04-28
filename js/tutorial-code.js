@@ -113,6 +113,13 @@
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview: (backend === 'react'),    // live iframe preview for React tutorials
       umlPopupUrl: options.umlPopupUrl || '/uml-popup.html',
+      // Editor IDE features (opt-in via YAML).
+      //   linter: true / "pyflakes"  → live diagnostics in Monaco gutter
+      //   gitGutter: true            → +/-/~ markers next to changed lines
+      //                                (requires git_graph; auto-disabled if absent)
+      enableLinter:  options.linter === true || options.linter === 'pyflakes' ||
+                     options.linter === 'on'  || options.linter === 'enabled',
+      enableGitGutter: !!options.gitGutter && !!options.gitGraph,
     };
 
     this.steps = options.steps || [];
@@ -2463,6 +2470,11 @@
                 // First paint of the gitgraph (in case the user lands on
                 // graph view from a step's `view: git_graph`).
                 if (window.GitGraph) self._lightRefreshGitGraph();
+                // Now that git is initialised, retry any gutter refreshes
+                // that landed early and got the "notReady" reply.
+                if (self.config.enableGitGutter) {
+                  setTimeout(function () { self._refreshAllGitGutters(); }, 50);
+                }
               })
             : pythonSetup;
           gitSetup.then(function () { resolve(); });
@@ -3735,13 +3747,37 @@
       this.editorModels[filename] = { model: model, filename: filename, lastSyncContent: content || '' };
       var self = this;
       var saveTimer;
+      var lintTimer;
+      var gutterTimer;
       model.onDidChangeContent(function () {
+        // Lint + gutter reflect CURRENT content, regardless of who changed
+        // it — so they run even during programmatic edits (step transitions,
+        // Apply Solution, popup-driven setValue) when _suppressAutoSave is on.
+        // Save is the only thing gated by _suppressAutoSave, since we don't
+        // want programmatic changes to cascade back to disk.
+        if (self.config.enableLinter && self._isPythonFile(filename)) {
+          clearTimeout(lintTimer);
+          lintTimer = setTimeout(function () { self._lintFile(filename); }, 400);
+        }
+        if (self.config.enableGitGutter) {
+          clearTimeout(gutterTimer);
+          gutterTimer = setTimeout(function () { self._refreshGitGutter(filename); }, 300);
+        }
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
         // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
         // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
+      // Initial lint pass when the file first opens.
+      if (this.config.enableLinter && this._isPythonFile(filename)) {
+        var initSelf = self;
+        setTimeout(function () { initSelf._lintFile(filename); }, 100);
+      }
+      if (this.config.enableGitGutter) {
+        var ggSelf = self;
+        setTimeout(function () { ggSelf._refreshGitGutter(filename); }, 200);
+      }
     } else if (content !== undefined) {
       this.editorModels[filename].model.setValue(content);
     }
@@ -5914,6 +5950,218 @@
         self._refreshUMLDiagram();
       }, 1500);
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // ---- Live diagnostics (linter feature flag) -------------------------------
+  //
+  // Wired only when YAML sets `linter: true`. We:
+  //   1. Detect Python files (.py / .pyi) for lint dispatch.
+  //   2. On debounced model change, send the buffer text to the worker.
+  //   3. Worker runs ast.parse + pyflakes, returns marker dicts.
+  //   4. Convert to Monaco's MarkerData and apply via setModelMarkers.
+  TutorialCode.prototype._isPythonFile = function (filename) {
+    return /\.pyi?$/i.test(filename || '');
+  };
+
+  // ---- Git gutter (feature flag) -------------------------------------------
+  //
+  // Wired only when YAML sets `git_gutter: true` AND `git_graph: ...`. We:
+  //   1. On debounced model change, ask the worker for HEAD's content.
+  //   2. Run a JS line-diff (LCS-based) against the buffer.
+  //   3. Apply Monaco line decorations: green for added, blue for modified,
+  //      a red wedge between lines for deletion markers.
+  //   4. Re-run after every git command (a `commit` should clear the gutter,
+  //      a `checkout` should refresh it, etc.).
+
+  TutorialCode.prototype._refreshGitGutter = function (filename) {
+    if (!this.config.enableGitGutter) return;
+    var entry = this.editorModels[filename];
+    if (!entry || !entry.model || entry.model.isDisposed()) return;
+    if (this.config.backend !== 'pyodide') return;
+    var self = this;
+    var dir = this.gitGraphPath || '/tutorial';
+    this._postWorker(
+      { type: 'gitReadAtRef', path: dir + '/' + filename, ref: 'HEAD' },
+      function (msg) {
+        if (msg.type !== 'git_read_at_ref') return;
+        var ent = self.editorModels[filename];
+        if (!ent || !ent.model || ent.model.isDisposed()) return;
+        // Git isn't initialised yet (or hit a non-NotFound error) — leave the
+        // existing gutter alone instead of flipping every line to "added".
+        if (msg.notReady) {
+          self._gitGutterPending = self._gitGutterPending || {};
+          self._gitGutterPending[filename] = true;
+          return;
+        }
+        var current = ent.model.getValue();
+        var head = msg.content;
+        var diff = (head === null)
+          ? { added: _allLineNumbers(current), modified: [], deleted: [] }
+          : _gitGutterDiff(head, current);
+        var decorations = [];
+        diff.added.forEach(function (ln) {
+          decorations.push({
+            range: new monaco.Range(ln, 1, ln, 1),
+            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-added' },
+          });
+        });
+        diff.modified.forEach(function (ln) {
+          decorations.push({
+            range: new monaco.Range(ln, 1, ln, 1),
+            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-modified' },
+          });
+        });
+        diff.deleted.forEach(function (ln) {
+          decorations.push({
+            range: new monaco.Range(Math.max(1, ln), 1, Math.max(1, ln), 1),
+            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-deleted' },
+          });
+        });
+        ent._gitGutterIds = ent.model.deltaDecorations(ent._gitGutterIds || [], decorations);
+      }
+    );
+  };
+
+  TutorialCode.prototype._refreshAllGitGutters = function () {
+    if (!this.config.enableGitGutter) return;
+    var self = this;
+    Object.keys(this.editorModels || {}).forEach(function (fn) {
+      self._refreshGitGutter(fn);
+    });
+  };
+
+  // Return [1, 2, ..., N] for an N-line buffer (used when a file has no
+  // HEAD counterpart — every line is "added").
+  function _allLineNumbers(text) {
+    var n = (text || '').split('\n').length;
+    if (text && text.charAt(text.length - 1) === '\n') n -= 1;
+    var out = [];
+    for (var i = 1; i <= n; i++) out.push(i);
+    return out;
+  }
+
+  // LCS-based line diff; classifies each current-buffer line as
+  // unchanged / added / modified, and records positions where head lines were
+  // deleted. "Modified" = an ADD that immediately follows a DEL in the edit
+  // sequence. Sufficient for tutorial-sized files; not Myers-optimal.
+  function _gitGutterDiff(headText, curText) {
+    var head = (headText || '').split('\n');
+    var cur  = (curText  || '').split('\n');
+    if (head.length && head[head.length - 1] === '') head.pop();
+    if (cur.length  && cur[cur.length - 1]  === '') cur.pop();
+
+    var n = head.length, m = cur.length;
+    // For very large files, bail out — O(n*m) DP is too slow.
+    if (n * m > 1000000) return { added: [], modified: [], deleted: [] };
+
+    var dp = [];
+    for (var i = 0; i <= n; i++) dp.push(new Int32Array(m + 1));
+    for (var i2 = 1; i2 <= n; i2++) {
+      var hi = head[i2 - 1];
+      for (var j = 1; j <= m; j++) {
+        dp[i2][j] = hi === cur[j - 1]
+          ? dp[i2 - 1][j - 1] + 1
+          : Math.max(dp[i2 - 1][j], dp[i2][j - 1]);
+      }
+    }
+    // Backtrack — produce ops in reverse, then flip.
+    var ops = [];
+    var i3 = n, j3 = m;
+    while (i3 > 0 && j3 > 0) {
+      if (head[i3 - 1] === cur[j3 - 1]) { ops.push({ op: 'eq', cur: j3 }); i3--; j3--; }
+      else if (dp[i3 - 1][j3] >= dp[i3][j3 - 1]) { ops.push({ op: 'del', atCur: j3 }); i3--; }
+      else { ops.push({ op: 'add', cur: j3 }); j3--; }
+    }
+    while (i3 > 0) { ops.push({ op: 'del', atCur: 0 }); i3--; }
+    while (j3 > 0) { ops.push({ op: 'add', cur: j3 }); j3--; }
+    ops.reverse();
+
+    var added = {}, modified = {}, deleted = {};
+    for (var k = 0; k < ops.length; k++) {
+      var o = ops[k];
+      if (o.op === 'add') {
+        // Pair with an immediately-preceding DEL → mark as modified.
+        var prev = ops[k - 1];
+        if (prev && prev.op === 'del' && !prev.consumed) {
+          modified[o.cur] = true;
+          prev.consumed = true;
+        } else {
+          added[o.cur] = true;
+        }
+      }
+    }
+    // Pure DELs (no following ADD) become deletion markers attached to the
+    // current-buffer line where the head line would have appeared.
+    for (var k2 = 0; k2 < ops.length; k2++) {
+      var o2 = ops[k2];
+      if (o2.op === 'del' && !o2.consumed) {
+        // atCur is the j-index of the position in the current buffer where
+        // the deleted head line was relative to. Mark the line that follows
+        // (or line 1 if at the very start).
+        var ln = o2.atCur > 0 ? o2.atCur : 1;
+        deleted[ln] = true;
+      }
+    }
+    return {
+      added: Object.keys(added).map(Number).sort(function (a, b) { return a - b; }),
+      modified: Object.keys(modified).map(Number).sort(function (a, b) { return a - b; }),
+      deleted: Object.keys(deleted).map(Number).sort(function (a, b) { return a - b; }),
+    };
+  }
+
+  TutorialCode.prototype._lintFile = function (filename) {
+    var entry = this.editorModels[filename];
+    if (!entry || !entry.model || entry.model.isDisposed()) return;
+    if (this.config.backend !== 'pyodide') return;
+    var code = entry.model.getValue();
+    var self = this;
+    this._postWorker(
+      { type: 'lint', path: '/tutorial/' + filename, code: code },
+      function (msg) {
+        if (msg.type !== 'lint_done') return;
+        // Surface worker-side linter setup failures so they're visible in
+        // the dev console (otherwise empty markers look like "all clean"
+        // when really pyflakes never loaded).
+        if (msg.error) {
+          if (!self._lintErrorLogged) {
+            self._lintErrorLogged = true;
+            console.warn('[lint] worker error:', msg.error);
+          }
+        }
+        var ent = self.editorModels[filename];
+        if (!ent || !ent.model || ent.model.isDisposed()) return;
+        var markers = (msg.markers || []).map(function (m) {
+          // Map our worker severity strings to Monaco's MarkerSeverity enum.
+          var sev = m.severity === 'error' ? 8 :
+                    m.severity === 'warning' ? 4 :
+                    m.severity === 'info' ? 2 : 1;
+          // Make sure end position covers at least one character — Monaco
+          // collapses zero-width markers and the squiggle disappears.
+          var line = m.line || 1;
+          var col = m.col || 1;
+          var endLine = m.endLine || line;
+          var endCol = m.endCol || col;
+          if (endLine === line && endCol <= col) {
+            // Extend to the end of the offending word, or just one character.
+            var lineText = ent.model.getLineContent(line) || '';
+            var match = lineText.substring(col - 1).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+            endCol = col + (match ? match[0].length : 1);
+          }
+          return {
+            severity: sev,
+            startLineNumber: line,
+            startColumn: col,
+            endLineNumber: endLine,
+            endColumn: endCol,
+            message: m.message || '',
+            source: 'pyflakes',
+            code: m.code || undefined,
+          };
+        });
+        monaco.editor.setModelMarkers(ent.model, 'pyflakes', markers);
+      }
+    );
   };
 
   // ---------------------------------------------------------------------------
@@ -8113,6 +8361,11 @@
    * Other backends with gitGraphPath unset are no-ops.
    */
   TutorialCode.prototype._refreshGitGraph = function () {
+    // Piggy-back: any codepath that refreshes the graph also refreshes the
+    // git gutter. Covers step transitions, apply-solution, setup commands,
+    // and external Refresh-button clicks — none of which go through
+    // _dispatchGitTermLine where the gutter hook used to live.
+    if (this.config.enableGitGutter) this._refreshAllGitGutters();
     if (!this.booted || !window.GitGraph) return;
     if (this._gitGraphRefreshing) return;
     var backend = this.config.backend;
@@ -8721,6 +8974,9 @@
     }).then(function () {
       // Re-render gitgraph after every git command.
       self._refreshGitGraph();
+      // Refresh git gutter — HEAD may have moved (commit/checkout/reset/...),
+      // changing what the buffer is "modified" relative to.
+      if (self.config.enableGitGutter) self._refreshAllGitGutters();
       self._gitTermBusy = false;
     }).catch(function (err) {
       self.gitTerm.write('\x1b[31mfatal: ' + (err && err.message || err) + '\x1b[0m\r\n');

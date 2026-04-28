@@ -2,6 +2,7 @@ title: "UML Sequence Diagrams in Python"
 description: "Learn to read and create UML sequence diagrams by writing Python code that matches target diagrams. Starting from a few objects exchanging messages and building up to branches and loops, you will see how sequence diagrams turn invisible runtime behavior into a picture."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true
 uml_position: bottom-left
 uml_default_view: true

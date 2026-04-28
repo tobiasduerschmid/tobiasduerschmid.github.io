@@ -330,7 +330,14 @@
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
         javaWorkerPath:   '{{ "/js/java-worker.js"   | relative_url }}',
         gitGraphPath: config.git_graph || null,
+        gitGraph: !!config.git_graph,
         gitSetupCommands: config.git_setup || [],
+        // Editor IDE features (opt-in via YAML).
+        //   linter: true        → live diagnostics in Monaco gutter (pyflakes)
+        //   git_gutter: true    → +/-/~ markers next to changed lines
+        //                         (requires git_graph; auto-disabled if absent)
+        linter:    config.linter || false,
+        gitGutter: config.git_gutter || false,
         userCommandListener:       config.user_command_listener || null,
         postFileloadSetupCommands: config.post_fileload_setup     || [],
         uml_diagram: config.uml_diagram || false,

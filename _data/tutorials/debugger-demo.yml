@@ -2,6 +2,7 @@ title: "Time-Travel Debugger Demo"
 description: "A minimal one-step playground for exercising the time-travel Python debugger. The bundled program calls a chain of functions, mutates a list, and computes a small statistic — enough surface to set breakpoints, step into/over/out, watch expressions, hover over identifiers, and scrub backward through history. See plan: .claude/plans/what-would-be-options-temporal-ritchie.md."
 
 backend: pyodide
+linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true
 
 # Smaller-than-default snapshot cap so the cap-warning UX is easy to trigger

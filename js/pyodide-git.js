@@ -424,6 +424,77 @@ function gitListDir(id, path) {
   }
 }
 
+// Read a file's content as it exists at <ref> (default HEAD). Powers the git
+// gutter feature: the main thread diffs the editor buffer against this to
+// paint added/modified/deleted line markers.
+//
+// Replies:
+//   { content: <string> }            — file content at <ref>
+//   { content: null }                — file is not at <ref> (untracked / new)
+//   { content: null, notReady: true} — git isn't initialized yet; main thread
+//                                       should leave the gutter alone (vs. the
+//                                       null case where every line is "added")
+function gitReadAtRef(id, filepath, ref) {
+  var fs = _gitFsAdapter;
+  var dir = _gitDir;
+  // Strip the dir prefix so iso-git can find the blob by repo-relative path.
+  var rel = filepath;
+  var prefix = dir.replace(/\/$/, '') + '/';
+  if (rel.indexOf(prefix) === 0) rel = rel.substring(prefix.length);
+  if (!_git) {
+    self.postMessage({
+      type: 'git_read_at_ref', id: id, path: filepath,
+      content: null, notReady: true,
+    });
+    return;
+  }
+
+  // iso-git's readBlob requires an actual SHA-1 oid — passing 'HEAD' rejects
+  // with InvalidOidError. Resolve the ref to a commit oid first, then read
+  // the blob at that path within the commit's tree.
+  _git.resolveRef({ fs: fs, dir: dir, ref: ref || 'HEAD' })
+    .catch(function (err) {
+      // No commits yet (the ref doesn't resolve) — treat as "no HEAD",
+      // not as "git not ready". File is effectively brand-new.
+      var msg = String(err && err.message || err);
+      var noCommits = /not found|could not find|does not exist|no such ref|cannot resolve/i.test(msg);
+      if (noCommits) return null;
+      throw err;
+    })
+    .then(function (commitOid) {
+      if (!commitOid) {
+        // No HEAD resolution → file is "new" (no comparison baseline).
+        self.postMessage({ type: 'git_read_at_ref', id: id, path: filepath, content: null });
+        return null;
+      }
+      return _git.readBlob({ fs: fs, dir: dir, oid: commitOid, filepath: rel })
+        .then(function (b) {
+          var text = '';
+          try { text = new TextDecoder().decode(b.blob); }
+          catch (e) { text = ''; }
+          self.postMessage({ type: 'git_read_at_ref', id: id, path: filepath, content: text });
+        })
+        .catch(function (err) {
+          // File doesn't exist at this commit (untracked / newly added) →
+          // null content, NOT notReady.  Anything else → leave gutter alone.
+          var msg = String(err && err.message || err);
+          var notFound = (err && (err.code === 'NotFoundError' || err.name === 'NotFoundError'))
+                      || /could not find|notfound|not found|does not exist/i.test(msg);
+          self.postMessage({
+            type: 'git_read_at_ref', id: id, path: filepath,
+            content: null, notReady: !notFound,
+          });
+        });
+    })
+    .catch(function (err) {
+      // Unexpected error during resolve → treat as notReady.
+      self.postMessage({
+        type: 'git_read_at_ref', id: id, path: filepath,
+        content: null, notReady: true,
+      });
+    });
+}
+
 // ---- Git command router ----------------------------------------------------
 //
 // Tokenizer + dispatch for a strict allowlist of subcommands. Echoes git-like
