@@ -480,19 +480,20 @@ steps:
             **Fix-then-refactor.** Fix the bug in each duplicate first, with tests passing for each location. Only then refactor to consolidate — the consolidated helper now contains the corrected formula. This is one of the most useful sequencing rules in the refactoring toolkit.
 
         - question: |
-            **Three** near-identical functions, **one** bug introduced in two of them. How many places did you change to fix it?
+            **Transfer — operational cost of duplication.** Next month the team adds two more royalty methods, both copying the same buggy formula from the existing duplicates. **No refactor happens in between.** When a developer finally notices the bug after that, how many code lines must they touch to fix every broken method?
           type: single
           options:
-            - "1 — the test suite caught it once"
-            - "2 — the same bug appeared in two places"
-            - "3 — every duplicate had to be inspected"
-            - "0 — the original test passed without any changes"
-          correct_index: 1
+            - "1 — the bug lives in shared code, so one fix propagates everywhere"
+            - "2 — only the methods that were already broken today need fixing; the new ones stay wrong"
+            - "4 — every method that contains the bug must be edited separately"
+            - "0 — the test suite reverts the duplicates automatically"
+          correct_index: 2
           option_feedback:
-            0: "The original test passed only because it covered one of the three functions. Once the table was extended, two new failures appeared — one per buggy duplicate."
-            2: "All three functions had to be inspected to confirm correctness, but only two needed code changes. The cost-of-duplication count is the number of places that *changed*, which is the count of duplicates that contained the bug."
+            0: "There is no shared helper yet — that is exactly what Step 4's **Extract Function** introduces. Until then, the formula lives independently in each method and N copies means N edits."
+            1: "All four methods contain the same broken formula and all four affect production payouts. Leaving the new ones uncorrected ships a known regression."
+            3: "Tests run code; they don't rewrite it. The N-edit cost falls on the developer every time."
           explanation: |
-            The cost of duplication is empirical: it equals the number of duplicates that contain the same bug. Step 4 will introduce **Extract Function** to consolidate three places into one, so the next bug is found and fixed exactly once.
+            Cost-of-fix scales **linearly** with the number of buggy duplicates (N). Today N is 2; two more copies makes N = 4. Step 4's **Extract Function** collapses N to 1 — one helper, one fix, no matter how many callers depend on the formula. That gap — N edits before, 1 edit after, summed across every future bug in the shared logic — is the operational reason duplication multiplies the cost of every future bug.
 
 
   # ==========================================================================
@@ -970,7 +971,7 @@ steps:
           type: single
           options:
             - "Run the tests once at the end to confirm nothing broke"
-            - "Run the tests before AND after each structural change"
+            - "Run the tests between every two structural changes — green, change, green"
             - "Write new tests after each refactoring to cover the new structure"
             - "No tests are needed if the IDE supports the refactoring"
           correct_index: 1
@@ -979,7 +980,7 @@ steps:
             2: "Refactoring is by definition behavior-preserving — the existing tests should still cover the unchanged behavior. New tests follow new behavior, not refactorings."
             3: "Even tool-driven refactorings can fail in edge cases (missed call sites, dynamic references). The test suite is the safety net regardless of how the structural change happens."
           explanation: |
-            **Green → change → green** is the rhythm. Each structural change happens between two green test runs; if the second run fails, you know exactly which change to revert.
+            **Green → change → green** is the rhythm. The "green" *after* one change is the "green" *before* the next, so the cost is one test run per change, not two. If the second green ever turns red, you know exactly which change to revert.
 
         - question: |
             Which of the following is the **best** sign that a function is too long?
@@ -1097,7 +1098,7 @@ steps:
           return "error_login_required"
       ```
 
-      A reasonable-looking simplification:
+      A colleague reviewing the code proposes this simplification:
 
       ```python
       def play_decision(self, is_logged_in: bool, is_offline: bool) -> str:
@@ -1106,9 +1107,15 @@ steps:
           return "error_login_required"
       ```
 
-      It compiles. The happy-path test passes. Looks clean. **It's wrong.**
+      It compiles. The existing happy-path test (`assert gates.play_decision(True, False) == "stream"`) passes. **Before reading on, decide for yourself — is this simplification behavior-preserving?** Take 30 seconds. Sketch a 4-row truth table over `(is_logged_in, is_offline)` covering all four combinations. Walk both versions through each row. Find a row where they disagree — or convince yourself they never do.
 
-      The original returned `"play_cached"` for `(is_logged_in=True, is_offline=True)`. The simplified version returns `"error_login_required"` for the same input. We've silently *dropped a branch*.
+      *(Don't peek. The reveal is in the next paragraph.)*
+
+      ---
+
+      The colleague's simplification is **wrong**. The original returns `"play_cached"` for `(is_logged_in=True, is_offline=True)`. The simplified version returns `"error_login_required"` for the same input. The branch where you're logged in *and* offline got silently dropped. That's the **IfsMerged trap**: collapsing nested `if`s into a single `and` is safe *only when* the inner `else` returns the same value as the outer fall-through. Here it doesn't — the inner `else` returns `"play_cached"`, but the outer fall-through returns `"error_login_required"`.
+
+      If you missed it during the prediction: that's the point. Empirical studies of code review show this is one of the most common classes of regression introduced *during simplification* — exactly because the change *looks* obvious. The truth table is the safety net.
 
       ## Why a happy-path test misses this
 
@@ -2027,20 +2034,20 @@ steps:
       questions:
 
         - question: |
-            **Retrieval / prediction.** After Extract Function, which **three** regions of `filters.py` will have changed?
+            **Retrieval / prediction.** After Extract Function, which **four** regions of `filters.py` will have changed compared to the starter?
           type: single
           options:
-            - "Imports, function definitions, return statements"
-            - "The new helper definition, the body of the first filter, the body of the second filter"
-            - "Imports, the helper, and the test file"
-            - "Only the body of one filter — the tool handles the rest automatically"
+            - "Function definitions, return statements, imports, the test file"
+            - "The `Callable` import, the new `_apply_filter` helper, the body of `apply_genre_filter`, the body of `apply_artist_filter`"
+            - "Imports, the helper, the test file, and the `__init__`"
+            - "Only one filter body — the tool propagates the rest automatically"
           correct_index: 1
           option_feedback:
-            0: "Imports may or may not change (only if `Callable` gets added). Function definitions and return statements aren't a useful taxonomy of *regions*."
-            2: "The test file shouldn't change at all — that's the behavior preservation property. Editing tests during a refactor signals that behavior changed, not just structure."
-            3: "The tool extracts a region into a helper, but the second duplicate still has the old body until it gets replaced with a delegating call. That second replacement is a human task."
+            0: "'Function definitions and return statements' is not a useful taxonomy of *regions* — every Python file has those. The test file shouldn't change at all (that's the behavior-preservation property). The four concrete regions are the new import, the helper, and the two delegating bodies."
+            2: "The test file shouldn't change — that's the behavior-preservation property. `__init__` is unchanged because the helper is a method, not a new field."
+            3: "The tool extracts the first region into a helper, but the second duplicate still has the old body until it gets replaced with a delegating call. That second replacement is a human task."
           explanation: |
-            **New helper, first delegator, second delegator.** Each duplicate becomes a single-line delegating call. The test file should not change — if it did, you changed behavior, not just structure.
+            **One new import, one new helper, two delegators.** Each duplicate body shrinks to a single-line `return self._apply_filter(lambda t: ...)`. The `Callable` import is needed because the helper's signature gains a callable parameter. The test file should not change — if it did, you changed behavior, not just structure.
 
         - question: |
             **Spacing back to Step 1.** Suppose Step 1's `royalty_song`, `royalty_podcast`, `royalty_audiobook` (with the bug `+` in two of them) had been refactored *before* the bug was discovered — extracted into a single `_royalty(plays, rate)` helper. What would have happened?
@@ -2075,20 +2082,20 @@ steps:
             **Judgment beats rules.** Sandi Metz: "Duplication is far cheaper than the wrong abstraction." When unsure, wait for the third occurrence. When the variation is one obvious dimension, extract early.
 
         - question: |
-            What name does the **tool** assign to the extracted function if you don't type one?
+            **Apply.** Imagine `MusicLibrary` grows a third filter, `apply_album_filter(album)`, also written as a sort-and-truncate over a single-field equality predicate. Using the helper you extracted in this step, what's the smallest body the new filter needs?
           type: single
           options:
-            - "Whatever Python's pyflakes infers automatically"
-            - "A default like `extracted_function_1` or similar"
-            - "The tool requires you to type a name — it cannot proceed without one"
-            - "The tool guesses based on the variable types"
-          correct_index: 2
+            - "Re-extract `_apply_filter` again — the existing helper only handles two predicates"
+            - "`return self._apply_filter(lambda t: t['album'] == album)` — one delegating line"
+            - "Copy the body of `apply_genre_filter` and edit the predicate — the helper isn't reusable"
+            - "Override `_apply_filter` in a subclass that knows about albums"
+          correct_index: 1
           option_feedback:
-            0: "Pyflakes is a linter; it doesn't name functions. Naming is the tool user's responsibility."
-            1: "If a tool defaulted to `extracted_function_1`, students would accept the default and produce code that's harder to read than the original. The tool deliberately doesn't do this."
-            3: "Type-based guessing produces names like `process_dict_list` — accurate but useless. Names should describe *intent*, not types."
+            0: "The helper accepts any `Callable[[Dict], bool]` predicate — it already handles the third case. Re-extracting would duplicate the helper, which is the smell you just removed."
+            2: "Copy-paste reintroduces the duplication you just killed. Each new filter is a one-liner *because* the variation (the predicate) is captured by a parameter."
+            3: "Subclassing would couple the album filter to a hierarchy that doesn't exist. The lambda parameter is the right seam — it's why the helper accepts a `Callable`, not a string."
           explanation: |
-            **Naming is the load-bearing decision.** The tool refuses to proceed without a name because choosing a name forces you to articulate what the helper *is*. That articulation is the heart of the refactoring.
+            **The Rule of Three's payoff.** The third filter is now a one-liner because the helper captured the variation (the predicate) as a parameter. That's the lifetime savings of Extract Function: every future filter that fits the shape costs one line, not seven. If the new filter *didn't* fit the shape — say it needed to truncate at 100 instead of 50 — that would be a signal the abstraction is too narrow, and the new filter would push the helper toward a second parameter.
 
 
   # ==========================================================================
@@ -2136,9 +2143,9 @@ steps:
 
       *(One class, one method with eight flat parameters. After the refactor, four of these will be replaced by an `AlbumInfo` parameter object — and you'll see a new `AlbumInfo` box appear in the live UML next to `TrackCatalog`.)*
 
-      ## A 30-second `@dataclass` primer
+      ## A 60-second `@dataclass` primer (predict, then peek)
 
-      Python's `@dataclass` decorator generates `__init__`, `__repr__`, and `__eq__` for you from a list of typed field declarations. It looks like this:
+      Python's `@dataclass` decorator generates `__init__`, `__repr__`, and `__eq__` for you from a list of typed field declarations:
 
       ```python
       from dataclasses import dataclass
@@ -2149,7 +2156,22 @@ steps:
           y: int
       ```
 
-      That's the entire class. `Point(x=3, y=4)` works. `Point(3, 4) == Point(3, 4)` returns `True`. No constructor body, no boilerplate. The tool will generate one for you in a moment — recognize it; don't try to derive it.
+      That's the entire class. **Before reading further**, take 30 seconds and predict: what auto-generated `__init__` does Python write for you? What does `print(Point(3, 4))` print? Does `Point(3, 4) == Point(3, 4)` return `True` or `False`? Write your answers down — the desugared form is in the next paragraph.
+
+      Behind the scenes, `@dataclass` rewrites the class to roughly:
+
+      ```python
+      class Point:
+          def __init__(self, x: int, y: int) -> None:
+              self.x = x
+              self.y = y
+          def __repr__(self) -> str:
+              return f"Point(x={self.x}, y={self.y})"
+          def __eq__(self, other) -> bool:
+              return isinstance(other, Point) and (self.x, self.y) == (other.x, other.y)
+      ```
+
+      So `Point(x=3, y=4)` works, `print(Point(3, 4))` reads `Point(x=3, y=4)`, and `Point(3, 4) == Point(3, 4)` returns `True` — all without you typing any boilerplate. The tool will produce exactly this shape for `AlbumInfo` in a moment. Recognize it, don't try to derive it.
 
       ## Sketch `AlbumInfo` BEFORE invoking the tool
 
@@ -2660,6 +2682,32 @@ steps:
 
       > 💡 **Diagnostic.** Read the body of any method. Does it touch `self` at all? If not — or if it touches `self` only as a delegator — the method probably belongs on the *other* object whose data it does touch.
 
+      ### Not every cross-class access is Feature Envy
+
+      A common confusion: cross-class field access alone is **not** the diagnostic. It's the *one-sidedness* that matters. Compare:
+
+      ```python
+      # Feature Envy — single method, zero self-state
+      class Player:
+          def compute_remaining_seconds(self, track: Track) -> int:
+              return track.duration_sec - track.current_position    # only Track fields
+
+      # Inappropriate Intimacy — two classes reaching deep into each other
+      class Player:
+          def adjust_for_track(self, track: Track) -> None:
+              if track.duration_sec > 600 and track.current_position == 0:
+                  self.volume = max(self.volume - 5, 0)
+                  track.last_play_volume = self.volume               # writes Track field
+
+      class Track:
+          def adjust_for_player(self, player: Player) -> None:
+              if player.volume < 10:
+                  self.playback_speed = 0.9                          # mutates self
+                  player.eq_preset = "soft"                          # writes Player field
+      ```
+
+      **Feature Envy** has *one* asymmetric arrow — the fix is **Move Method**, and that's what this step trains. **Inappropriate Intimacy** has arrows in *both* directions — moving one method just relocates the problem; the structural fix is to introduce a mediating object (or, often, to merge the two classes if they're really one concept). Recognize the difference before you reach for Move Method, because the wrong fix on Inappropriate Intimacy makes things worse.
+
       ## Run the move
 
       Place your cursor inside `compute_remaining_seconds`, then **Refactor: Move Method…** with target class `Track`. Same flow as Step 4's Extract Function — preview, accept. Watch the live UML in the bottom-left: the method migrates from `Player` to `Track`, and the `Player → Track` "uses" arrow disappears because `Player` no longer reaches into `Track` for this calculation.
@@ -3149,6 +3197,22 @@ steps:
             3: "Parameter count is unrelated. Factories with parameters, factories with none — both can legitimately live on the calling class."
           explanation: |
             **The diagnostic catches Feature Envy candidates, but judgment decides.** "Uses zero host state" makes a method *a candidate for Move Method*, not *a guaranteed instance of the smell*. Factories, default constructors, and pure-policy synthesizers live where the API surface is, not where the data is.
+
+        - question: |
+            **Variation Theory — Feature Envy vs Inappropriate Intimacy.** `Player.adjust_for_track(track)` reads several `track` fields *and* writes `track.last_play_volume`. `Track.adjust_for_player(player)` reads `player.volume` *and* writes `player.eq_preset`. What's the smell, and what's the right fix?
+          type: single
+          options:
+            - "Feature Envy on both sides — apply Move Method twice"
+            - "Inappropriate Intimacy — Move Method just relocates the problem; the fix is structural (mediating object, or merge if they're really one concept)"
+            - "Neither — mutual writes between domain objects are normal in OO design"
+            - "Long Parameter List — introduce a `PlaybackContext` parameter object"
+          correct_index: 1
+          option_feedback:
+            0: "Move Method is the fix for *one-sided* envy. With two-sided coupling, moving each method to the other class produces *two* envious methods on swapped homes. The smell isn't where the methods live — it's that two classes know each other's internals."
+            2: "Tightly coupled mutual writes are a maintenance hazard: every change to one class can ripple into the other unpredictably. OO designs that survive long-term keep cross-class writes thin and explicit."
+            3: "Parameter clumps are a different smell. Here the issue isn't the call shape; it's that the bodies of both methods reach across the class boundary in opposite directions."
+          explanation: |
+            **One arrow vs two.** Feature Envy is one-sided — a method on the wrong class. Move Method fixes it. Inappropriate Intimacy has arrows in *both* directions — moving one method just makes the other class envious. The structural fix is different: introduce a mediator that owns the cross-cutting logic, or, when the two classes are really one concept, merge them. Diagnose before you reach for the tool.
 
         - question: |
             **Mid-tutorial mix — Step 1 callback.** You've just discovered that two functions have the same arithmetic bug. According to what you practiced in Step 1, what's the correct order of operations?
@@ -3905,6 +3969,8 @@ steps:
 
       > **Learning objective.** After this step you will be able to (a) recognize a type-conditional that begs for polymorphism, (b) use Monaco's **Refactor: Move Method** to migrate each branch into a subclass's overridden method, and (c) explain when *not* to use polymorphism (a small `match` statement is sometimes fine).
 
+      > 🟥 **Heads-up — the safety dance changes shape for this one step.** Steps 1–7 ran **green → change → green**: tests stayed passing throughout. Step 8 deliberately starts from **red**. The starter declares `Track` as `@abstractmethod` and three empty subclasses; every subclass-specific test fails *at construction* because none of the subclasses override `play` yet. You'll fill in each subclass's `play` body, watching the failures clear one at a time. This is **interface-first refactoring**: declare the target shape, let tests fail loudly until the shape is real, finish green. The *external* behavior of the procedural `play(track_kind, ...)` wrapper is identical at the start and at the end — that's the behavior-preserving promise — but the *internal* migration runs through red. The discipline is the same: tiny steps, tests as your map. The starting color is the only thing that's different.
+
       Open `tracks.py`. The `play` function has an `if/elif` chain over `track_kind`:
 
       ```python
@@ -3974,11 +4040,11 @@ steps:
       The starter `tracks.py` already declares `Track`, `Song`, `Podcast`, `Audiobook` as a hierarchy with `Track.play(user)` as `@abstractmethod`. **Run the test suite first** — most tests will fail. The shape of those failures is your map for what to do next:
 
       - `test_track_cannot_be_instantiated` **passes** — the abstract base contract is wired correctly. `Track(...)` raises `TypeError`. ✓
-      - `test_subclass_dispatch_calls_subclass_play` **fails** — Song/Podcast.play return `None` because the starter bodies are stubs.
-      - The per-subclass behavior tests **fail** for the same reason.
-      - `Audiobook` can't be instantiated at all — its `play` method is intentionally missing, demonstrating that `@abstractmethod` enforces subclass overrides at *instantiation* time. The error message tells you exactly what to add.
+      - `test_subclass_dispatch_calls_subclass_play` and every per-subclass behavior test **fail at construction** — none of `Song`, `Podcast`, `Audiobook` override `play`, so each `SubclassName(...)` raises `TypeError: Can't instantiate abstract class … with abstract method 'play'`. The error message names exactly what's missing.
 
-      Now you have a punch list. For each branch of the original `play(track_kind, ...)` function, move the body into the corresponding subclass's `play(self, user)` method (replacing `track.X` with `self.X`). Finally, replace the original `play` function body with `return track.play(user)`.
+      That uniform failure *is* `@abstractmethod` enforcement working as designed: the hierarchy refuses to instantiate any subclass that hasn't fulfilled the contract. Each test you fix is one subclass acquiring its `play` body.
+
+      Now you have a punch list. For each branch of the original `play(track_kind, ...)` function, add a `def play(self, user: User) -> str:` to the corresponding subclass and move the body in (replacing `track.X` with `self.X`). Finally, replace the original `play` function body with `return track.play(user)`.
 
       Tool-wise, this is just **Refactor: Move Method** done three times — same flow you used in Steps 6 and 7. Some branches may be easier to copy/paste because the conditional pattern doesn't always select cleanly for tool-driven moves; that's fine.
 
@@ -4033,24 +4099,22 @@ steps:
 
           @dataclass
           class Song(Track):
-              # TODO: implement play() — songs respect repeat_mode.
-              # If repeat_mode is True, return f"playing song {self.track_id} on repeat"
+              # TODO: override play(self, user: User) -> str — songs respect repeat_mode.
+              # If self.repeat_mode is True, return f"playing song {self.track_id} on repeat"
               # otherwise return f"playing song {self.track_id}"
-              def play(self, user: User) -> str:
-                  pass
+              pass
 
 
           @dataclass
           class Podcast(Track):
-              # TODO: implement play() — podcasts auto-resume from last_position.
+              # TODO: override play(self, user: User) -> str — podcasts auto-resume from last_position.
               # Return f"resuming podcast {self.track_id} at {self.last_position}s"
-              def play(self, user: User) -> str:
-                  pass
+              pass
 
 
           @dataclass
           class Audiobook(Track):
-              # TODO: implement play() — audiobooks adjust playback speed.
+              # TODO: override play(self, user: User) -> str — audiobooks adjust playback speed.
               # Return f"playing audiobook {self.track_id} at {self.playback_speed}x speed"
               pass
 
