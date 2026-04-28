@@ -9442,6 +9442,12 @@
     this._httpResponseMetaEl.innerHTML = '';
     this._httpEmptyEl.style.display = 'none';
 
+    var dbg = this._debuggerCtl;
+    if (dbg && dbg.session && dbg.channel && typeof dbg.channel.sendHttpRequest === 'function' &&
+        dbg.channel.sendHttpRequest({ method: method, url: url, body: body })) {
+      return;
+    }
+
     if (this._jsRunnerFrame && this._jsRunnerFrame.contentWindow) {
       this._jsRunnerFrame.contentWindow.postMessage({
         type: 'http_request',

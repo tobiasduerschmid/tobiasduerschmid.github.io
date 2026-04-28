@@ -65,6 +65,8 @@ var userMode = null;
 var stepBaseDepth = 0;
 var TEXT_DECODER = new TextDecoder();
 var TEXT_ENCODER = new TextEncoder();
+var serverHandler = null;
+var serverListening = false;
 
 function send(msg) { self.postMessage({ __ttd: true, payload: msg }); }
 function log(m) { send({ type: 'log', msg: '[ttd-browser] ' + m }); }
@@ -77,7 +79,17 @@ function decodeSharedJsonBytes(offset, len) {
 // ---- Init handshake ---------------------------------------------------
 
 self.addEventListener('message', function (e) {
-  if (!e.data || !e.data.__ttd_init) return;
+  if (!e.data) return;
+  if (e.data.__ttd_http_request) {
+    handleHttpRequest(e.data.request || {});
+    return;
+  }
+  if (e.data.__ttd_control && e.data.cmd === 5) {
+    stopFlag = true;
+    send({ type: 'debugComplete', exitCode: 0 });
+    return;
+  }
+  if (!e.data.__ttd_init) return;
   var cfg = e.data;
   i32 = new Int32Array(cfg.sab);
   u8 = new Uint8Array(cfg.sab);
@@ -148,6 +160,10 @@ function bootRun(entryFile, code, files, args) {
     try {
       var fn = new Function(instrumented);
       fn();
+      if (serverHandler || serverListening) {
+        send({ type: 'serverReady' });
+        return;
+      }
       send({ type: 'debugComplete', exitCode: 0 });
     } catch (err) {
       if (err && err.message === '__ttd_stop__') {
@@ -192,7 +208,6 @@ function setupNodeMocks(files) {
     else fsFiles[bare] = files[path];
   });
   var moduleCache = {};
-  var serverHandler = null;
 
   function matchRoute(pat, url) {
     if (!pat || pat === '*') return {};
@@ -229,6 +244,7 @@ function setupNodeMocks(files) {
           serverHandler = h;
           return { listen: function (p, hh, c) {
             var cb = typeof hh === 'function' ? hh : c;
+            serverListening = true;
             console.log('HTTP server listening on port ' + p);
             if (cb) cb();
           } };
@@ -256,6 +272,38 @@ function setupNodeMocks(files) {
             var actualCb = typeof host === 'function' ? host : cb;
             console.log('Express server listening on port ' + port);
             if (actualCb) actualCb();
+            serverListening = true;
+            serverHandler = function (req, res) {
+              installExpressResponseHelpers(res);
+              var found = null;
+              var foundParams = {};
+              outer: for (var ri = 0; ri < routes.length; ri++) {
+                var r = routes[ri];
+                if (r.m === 'MOUNT') {
+                  var pfx = r.p;
+                  var sub = req.url;
+                  if (sub === pfx) sub = '/';
+                  else if (sub.indexOf(pfx + '/') === 0) sub = sub.slice(pfx.length);
+                  else continue;
+                  for (var rj = 0; rj < r.router.length; rj++) {
+                    var sr = r.router[rj];
+                    if (sr.m === req.method) {
+                      var sp = matchRoute(sr.p, sub);
+                      if (sp !== null) { found = sr.h; foundParams = sp; break outer; }
+                    }
+                  }
+                } else if (r.m === req.method) {
+                  var rp = matchRoute(r.p, req.url);
+                  if (rp !== null) { found = r.h; foundParams = rp; break; }
+                }
+              }
+              if (found) {
+                req.params = foundParams;
+                return found(req, res);
+              }
+              res.writeHead(404);
+              return res.end('404 Not Found');
+            };
           },
         };
         return app;
@@ -310,6 +358,113 @@ function setupNodeMocks(files) {
     }
     throw new Error('Module not found: ' + m);
   };
+}
+
+function installExpressResponseHelpers(res) {
+  if (!res || res.__expressHelpersInstalled) return res;
+  res.__expressHelpersInstalled = true;
+  res.status = function (s) {
+    this._status = s;
+    this.writeHead(s);
+    return this;
+  };
+  res.json = function (obj) {
+    this.writeHead(this._status || 200);
+    this.end(JSON.stringify(obj, null, 2));
+    return this;
+  };
+  res.send = function (body) {
+    if (typeof body === 'object') return this.json(body);
+    this.end(String(body));
+    return this;
+  };
+  return res;
+}
+
+function normalizeHttpUrl(rawUrl) {
+  rawUrl = String(rawUrl || '/');
+  if (rawUrl.indexOf('http') === 0) {
+    try {
+      var u = new URL(rawUrl);
+      rawUrl = u.pathname + u.search;
+    } catch (e) {}
+  }
+  return rawUrl || '/';
+}
+
+function parseQueryString(qs) {
+  var query = {};
+  if (!qs) return query;
+  qs.split('&').forEach(function (p) {
+    if (!p) return;
+    var pair = p.split('=');
+    var key = decodeURIComponent((pair[0] || '').replace(/\+/g, ' '));
+    if (!key) return;
+    query[key] = decodeURIComponent((pair.slice(1).join('=') || '').replace(/\+/g, ' '));
+  });
+  return query;
+}
+
+function parseHttpBody(body) {
+  if (typeof body !== 'string') return body;
+  try {
+    var trimmed = body.trim();
+    if (trimmed.indexOf('{') === 0 || trimmed.indexOf('[') === 0) return JSON.parse(body);
+  } catch (e) {}
+  return body;
+}
+
+function makeMockResponse(onEnd) {
+  return {
+    _body: '',
+    _status: 200,
+    _ended: false,
+    writeHead: function (s) {
+      if (s) this._status = s;
+      return this;
+    },
+    write: function (chunk) {
+      this._body += chunk == null ? '' : String(chunk);
+      return this;
+    },
+    end: function (body) {
+      if (this._ended) return this;
+      if (body != null) this._body += String(body);
+      this._ended = true;
+      onEnd(this._status || 200, this._body);
+      return this;
+    },
+  };
+}
+
+function handleHttpRequest(data) {
+  if (!serverHandler) {
+    send({ type: 'http_response', status: 503, body: 'Error: Server is not running. Click Debug, then continue until the server starts.' });
+    return;
+  }
+  var rawUrl = normalizeHttpUrl(data.url || '/');
+  var urlParts = rawUrl.split('?');
+  var req = {
+    method: String(data.method || 'GET').toUpperCase(),
+    url: urlParts[0] || '/',
+    query: parseQueryString(urlParts[1] || ''),
+    params: {},
+    body: parseHttpBody(data.body),
+    headers: data.headers || {},
+  };
+  var res = installExpressResponseHelpers(makeMockResponse(function (status, body) {
+    send({ type: 'http_response', status: status, body: body });
+  }));
+  try {
+    var ret = serverHandler(req, res);
+    if (ret && typeof ret.then === 'function') {
+      ret.catch(function (err) {
+        if (!res._ended) res.status(500).send(err && (err.stack || err.message) || String(err));
+      });
+    }
+  } catch (err2) {
+    if (!res._ended) res.status(500).send(err2 && (err2.stack || err2.message) || String(err2));
+  }
 }
 
 // ---- Step hooks -----------------------------------------------------

@@ -134,6 +134,14 @@
         this.tutorial._appendOutput(msg.text || '', 'stdout');
       }
     }
+    else if (msg.type === 'http_response') {
+      if (this.tutorial && typeof this.tutorial._handleHttpResponse === 'function') {
+        this.tutorial._handleHttpResponse(msg);
+      }
+    }
+    else if (msg.type === 'serverReady') {
+      if (c && typeof c.setStatus === 'function') c.setStatus('server running');
+    }
     else if (msg.type === 'log') console.log('[ttd]', msg.msg);
     else if (msg.type === 'debuggerError') console.error('[debugger]', msg.message);
   };
@@ -144,6 +152,9 @@
     if (!this.i32) return;
     Atomics.store(this.i32, SLOT_CMD, cmdCode);
     Atomics.notify(this.i32, SLOT_CMD, 1);
+    if (cmdCode === 5 && this.worker) {
+      try { this.worker.postMessage({ __ttd_control: true, cmd: 5 }); } catch (e) {}
+    }
   };
 
   BrowserChannel.prototype.sendWatches = function (watches) {
@@ -164,6 +175,17 @@
 
   BrowserChannel.prototype.sendExceptionBreakpoints = function (excBps) {
     return this._writeJson(EXCBPS_OFF, EXCBPS_REGION_BYTES, SLOT_EXCBPS_LEN, SLOT_EXCBPS_DIRTY, excBps || [], 'exception breakpoints');
+  };
+
+  BrowserChannel.prototype.sendHttpRequest = function (req) {
+    if (!this.worker) return false;
+    try {
+      this.worker.postMessage({ __ttd_http_request: true, request: req || {} });
+      return true;
+    } catch (e) {
+      console.warn('[BrowserChannel] failed to send HTTP request:', e && e.message || e);
+      return false;
+    }
   };
 
   BrowserChannel.prototype._mergePendingArray = function (offset, lenSlot, dirtySlot, additions) {

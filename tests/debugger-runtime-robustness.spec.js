@@ -41,6 +41,7 @@ function loadScriptInVm(relativePath, extra = {}) {
     Boolean,
     Array,
     Object,
+    URL,
     Map,
     WeakMap,
     Set,
@@ -124,5 +125,72 @@ test.describe('debugger runtime robustness', () => {
     expect(Atomics.load(channel.i32, CHANNEL_LAYOUT.SLOT_EXCBPS_DIRTY)).toBe(1);
     expect(readSharedJson(channel.u8, channel.i32, CHANNEL_LAYOUT.EXCBPS_OFF, CHANNEL_LAYOUT.SLOT_EXCBPS_LEN))
       .toEqual(exceptionBreakpoints);
+  });
+
+  test('browser channel forwards HTTP requests to the debug worker and dispatches responses', () => {
+    const handled = [];
+    const workerMessages = [];
+    const sandbox = loadScriptInVm('js/debugger/browser-channel.js');
+    const Channel = sandbox.window.SEBookBrowserChannel;
+    const channel = new Channel({}, {
+      _handleHttpResponse: msg => handled.push(msg),
+    });
+    channel.worker = { postMessage: msg => workerMessages.push(msg) };
+
+    expect(channel.sendHttpRequest({
+      method: 'POST',
+      url: 'http://localhost:3000/students',
+      body: '{"name":"Ada"}',
+    })).toBe(true);
+
+    expect(workerMessages).toEqual([{
+      __ttd_http_request: true,
+      request: {
+        method: 'POST',
+        url: 'http://localhost:3000/students',
+        body: '{"name":"Ada"}',
+      },
+    }]);
+
+    channel._dispatchMessage({ type: 'http_response', status: 201, body: '{"ok":true}' });
+    expect(handled).toEqual([{ type: 'http_response', status: 201, body: '{"ok":true}' }]);
+  });
+
+  test('browser runtime serves Express routes over debugger HTTP messages', () => {
+    const sandbox = loadScriptInVm('js/debugger/browser/runtime.js');
+    sandbox.setupNodeMocks({});
+    const express = sandbox.self.require('express');
+    const app = express();
+    app.use(express.json());
+    app.get('/students/:id', (req, res) => {
+      res.json({ id: req.params.id, passing: req.query.passing });
+    });
+    app.post('/students', (req, res) => {
+      res.status(201).json({ received: req.body });
+    });
+    app.listen(3000);
+
+    sandbox.handleHttpRequest({
+      method: 'GET',
+      url: 'http://localhost:3000/students/42?passing=true',
+    });
+    sandbox.handleHttpRequest({
+      method: 'POST',
+      url: 'http://localhost:3000/students',
+      body: '{"name":"Ada","grade":99}',
+    });
+
+    const responses = sandbox.messages
+      .map(msg => msg && msg.payload)
+      .filter(msg => msg && msg.type === 'http_response');
+    expect(responses).toHaveLength(2);
+    expect(responses[0]).toMatchObject({
+      status: 200,
+      body: JSON.stringify({ id: '42', passing: 'true' }, null, 2),
+    });
+    expect(responses[1]).toMatchObject({
+      status: 201,
+      body: JSON.stringify({ received: { name: 'Ada', grade: 99 } }, null, 2),
+    });
   });
 });
