@@ -2683,14 +2683,136 @@
   /** Append text to Python output panel. type: 'stdout' | 'stderr' | 'info' */
   TutorialCode.prototype._appendOutput = function (text, type) {
     if (!this.outputPre) return;
-    var span = document.createElement('span');
-    span.className = 'tvm-out-' + (type || 'stdout');
-    span.textContent = text;
-    this.outputPre.appendChild(span);
-    // Auto-scroll
+    var wrapper = document.createElement('span');
+    wrapper.className = 'tvm-out-' + (type || 'stdout');
+    // Parse ANSI escape codes (used by pytest, rich, click, colorama, etc.)
+    // and render as styled child spans.  Plain text without ANSI codes goes
+    // straight in via textContent so we don't pay the parsing cost on every
+    // print() call.
+    if (text && text.indexOf('\x1b[') !== -1) {
+      _ansiToDom(text, wrapper, this._isDarkMode());
+    } else {
+      wrapper.textContent = text;
+    }
+    this.outputPre.appendChild(wrapper);
     var container = this.outputPre.parentElement;
     if (container) container.scrollTop = container.scrollHeight;
   };
+
+  // ANSI -> DOM parser. Handles SGR (Select Graphic Rendition) sequences:
+  //   \x1b[<n>;<n>;…m  set color/style attributes
+  //   \x1b[<n>m        single attribute
+  //   \x1b[m / \x1b[0m reset all
+  // Everything else (cursor moves, clears, etc.) is dropped — we just want
+  // colors. This is sufficient for pytest, rich, click, colorama output.
+  //
+  // Two palettes: a darker "light-theme-friendly" set tuned for readability
+  // on white backgrounds, and a brighter "dark-theme" set. Both are taken
+  // from VS Code's terminal palette — battle-tested for legibility.
+  var _ANSI_LIGHT = {
+    fg: {
+      30: '#000000', 31: '#cd3131', 32: '#00bc00', 33: '#949800',
+      34: '#0451a5', 35: '#bc05bc', 36: '#0598bc', 37: '#555555',
+      90: '#666666', 91: '#cd3131', 92: '#14ce14', 93: '#b5ba00',
+      94: '#0451a5', 95: '#bc05bc', 96: '#0598bc', 97: '#a5a5a5',
+    },
+    bg: {
+      40: '#000000', 41: '#cd3131', 42: '#00bc00', 43: '#949800',
+      44: '#0451a5', 45: '#bc05bc', 46: '#0598bc', 47: '#cccccc',
+      100: '#666666', 101: '#cd3131', 102: '#14ce14', 103: '#b5ba00',
+      104: '#0451a5', 105: '#bc05bc', 106: '#0598bc', 107: '#dddddd',
+    },
+  };
+  var _ANSI_DARK = {
+    fg: {
+      30: '#666666', 31: '#f14c4c', 32: '#23d18b', 33: '#f5f543',
+      34: '#3b8eea', 35: '#d670d6', 36: '#29b8db', 37: '#e5e5e5',
+      90: '#888888', 91: '#ff6b6b', 92: '#5af78e', 93: '#fffd76',
+      94: '#5fb3ff', 95: '#ff8aff', 96: '#56d4f0', 97: '#ffffff',
+    },
+    bg: {
+      40: '#000000', 41: '#cd3131', 42: '#0dbc79', 43: '#e5e510',
+      44: '#2472c8', 45: '#bc3fbc', 46: '#11a8cd', 47: '#e5e5e5',
+      100: '#666666', 101: '#f14c4c', 102: '#23d18b', 103: '#f5f543',
+      104: '#3b8eea', 105: '#d670d6', 106: '#29b8db', 107: '#ffffff',
+    },
+  };
+
+  function _ansiToDom(text, parent, isDark) {
+    var palette = isDark ? _ANSI_DARK : _ANSI_LIGHT;
+    var fgMap = palette.fg, bgMap = palette.bg;
+    // Match SGR escape sequences:  ESC '[' digits/semicolons 'm'
+    var re = /\x1b\[([0-9;]*)m/g;
+    var lastIdx = 0;
+    var style = { fg: null, bg: null, bold: false, dim: false, italic: false, underline: false };
+    var match;
+    function emit(chunk) {
+      if (!chunk) return;
+      var span = document.createElement('span');
+      var css = '';
+      if (style.fg) css += 'color:' + style.fg + ';';
+      if (style.bg) css += 'background:' + style.bg + ';';
+      if (style.bold) css += 'font-weight:bold;';
+      if (style.dim) css += 'opacity:0.6;';
+      if (style.italic) css += 'font-style:italic;';
+      if (style.underline) css += 'text-decoration:underline;';
+      if (css) span.style.cssText = css;
+      span.textContent = chunk;
+      parent.appendChild(span);
+    }
+    while ((match = re.exec(text)) !== null) {
+      emit(text.substring(lastIdx, match.index));
+      var codes = match[1] === '' ? [0] : match[1].split(';').map(function (s) { return parseInt(s, 10) || 0; });
+      // Walk codes; some are stateful (38;5;N for 256-color, 38;2;R;G;B for truecolor).
+      for (var i = 0; i < codes.length; i++) {
+        var c = codes[i];
+        if (c === 0)               { style = { fg: null, bg: null, bold: false, dim: false, italic: false, underline: false }; continue; }
+        if (c === 1)               { style.bold = true; continue; }
+        if (c === 2)               { style.dim = true; continue; }
+        if (c === 3)               { style.italic = true; continue; }
+        if (c === 4)               { style.underline = true; continue; }
+        if (c === 22)              { style.bold = false; style.dim = false; continue; }
+        if (c === 23)              { style.italic = false; continue; }
+        if (c === 24)              { style.underline = false; continue; }
+        if (c === 39)              { style.fg = null; continue; }
+        if (c === 49)              { style.bg = null; continue; }
+        if (fgMap[c])              { style.fg = fgMap[c]; continue; }
+        if (bgMap[c])              { style.bg = bgMap[c]; continue; }
+        // 38;5;N (256-color fg) / 48;5;N (256-color bg)
+        if (c === 38 && codes[i + 1] === 5) { style.fg = _xterm256(codes[i + 2]); i += 2; continue; }
+        if (c === 48 && codes[i + 1] === 5) { style.bg = _xterm256(codes[i + 2]); i += 2; continue; }
+        // 38;2;R;G;B (truecolor)
+        if (c === 38 && codes[i + 1] === 2) {
+          style.fg = 'rgb(' + codes[i + 2] + ',' + codes[i + 3] + ',' + codes[i + 4] + ')';
+          i += 4; continue;
+        }
+        if (c === 48 && codes[i + 1] === 2) {
+          style.bg = 'rgb(' + codes[i + 2] + ',' + codes[i + 3] + ',' + codes[i + 4] + ')';
+          i += 4; continue;
+        }
+        // Unknown — skip
+      }
+      lastIdx = match.index + match[0].length;
+    }
+    emit(text.substring(lastIdx));
+  }
+
+  // Map xterm 256-color palette index to CSS color.
+  function _xterm256(n) {
+    if (n < 16) {
+      var basic = ['#000','#a00','#0a0','#a50','#00a','#a0a','#0aa','#aaa',
+                   '#555','#f55','#5f5','#ff5','#55f','#f5f','#5ff','#fff'];
+      return basic[n];
+    }
+    if (n < 232) {
+      n -= 16;
+      var r = Math.floor(n / 36), g = Math.floor((n % 36) / 6), b = n % 6;
+      var lvl = [0, 95, 135, 175, 215, 255];
+      return 'rgb(' + lvl[r] + ',' + lvl[g] + ',' + lvl[b] + ')';
+    }
+    var v = 8 + (n - 232) * 10;
+    return 'rgb(' + v + ',' + v + ',' + v + ')';
+  }
 
   TutorialCode.prototype._clearOutput = function () {
     if (this.outputPre) this.outputPre.innerHTML = '';
@@ -8244,10 +8366,14 @@
         return;
       }
       if (ch === '\x7f' || ch === '\b') { this._gitDeleteBackward(); i++; continue; }
+      if (ch === '\x09')                { this._gitTermTabComplete(); i++; continue; } // Tab
       if (ch === '\x01')                { this._gitCursorHome();    i++; continue; } // Ctrl+A
       if (ch === '\x05')                { this._gitCursorEnd();     i++; continue; } // Ctrl+E
+      if (ch === '\x0b')                { this._gitKillToEnd();     i++; continue; } // Ctrl+K
       if (ch === '\x15')                { this._gitKillLine();      i++; continue; } // Ctrl+U
       if (ch === '\x0c')                { this._gitClearScreen();   i++; continue; } // Ctrl+L
+      if (ch === '\x04')                { i++; continue; }                            // Ctrl+D (ignore EOF)
+      if (ch === '\x03')                { this._gitTermLineBuf = ''; this._gitTermCursorPos = 0; this.gitTerm.write('^C\r\n'); this._writeGitPrompt(); return; } // Ctrl+C
       if (ch < ' ')                     { i++; continue; }                            // ignore other ctrls
 
       // ---- Printable: insert at cursor -----------------------------------
@@ -8324,12 +8450,193 @@
   };
 
   TutorialCode.prototype._gitKillLine = function () {
-    // Move to start, erase to end-of-line, drop the buffer.
     this._gitCursorHome();
     this.gitTerm.write('\x1b[K');
     this._gitTermLineBuf = '';
     this._gitTermCursorPos = 0;
   };
+
+  TutorialCode.prototype._gitKillToEnd = function () {
+    var buf = this._gitTermLineBuf;
+    var pos = this._gitTermCursorPos;
+    this._gitTermLineBuf = buf.substring(0, pos);
+    this.gitTerm.write('\x1b[K');
+  };
+
+  // ---- Tab completion -------------------------------------------------------
+  //
+  // Contexts and candidates:
+  //   [empty / first word]          → all known commands
+  //   git <Tab>                     → git subcommands
+  //   git <sub> ... <Tab>           → file paths in the working tree
+  //   <unix-cmd> ... <Tab>          → file paths in the working tree
+  //
+  // Single match → insert remainder inline.
+  // Multiple matches → complete to the common prefix; if already at common
+  //   prefix (or second Tab at same position), list all on a new line.
+
+  var _GIT_SUBCOMMANDS = [
+    'add','am','annotate','apply','archive','bisect','blame','branch',
+    'cat-file','checkout','cherry-pick','clean','clone','commit','config',
+    'describe','diff','fetch','for-each-ref','fsck','gc','grep','help',
+    'init','log','ls-files','ls-remote','ls-tree','merge','merge-base',
+    'mv','notes','prune','pull','push','rebase','reflog','remote',
+    'repack','reset','restore','revert','rev-list','rev-parse','revert',
+    'rm','show','show-ref','stash','status','submodule','switch','symbolic-ref',
+    'tag','update-ref','verify-commit','version','whatchanged',
+  ];
+  var _ALL_COMMANDS = [
+    'git','ls','cat','echo','head','tail','grep','find','wc','diff',
+    'sort','uniq','mkdir','rmdir','rm','cp','mv','touch','which',
+    'pwd','cd','clear','help','env','printf','date','basename','dirname',
+    'realpath','true','false','python','python3','pytest',
+  ];
+
+  TutorialCode.prototype._gitTermTabComplete = function () {
+    var self = this;
+    var buf = this._gitTermLineBuf;
+    var cursor = this._gitTermCursorPos;
+    var lineUpToCursor = buf.substring(0, cursor);
+
+    // Tokenise the text up to the cursor.
+    var tokens = this._gitTokenize(lineUpToCursor);
+    var onSpace = lineUpToCursor.length > 0 && /\s$/.test(lineUpToCursor);
+    var currentWord = (!onSpace && tokens.length) ? tokens[tokens.length - 1] : '';
+    var priorTokens = (!onSpace && tokens.length) ? tokens.slice(0, -1) : tokens;
+
+    var doubleTab = (this._lastTabLine === lineUpToCursor);
+    this._lastTabLine = lineUpToCursor;
+
+    var promise;
+    if (priorTokens.length === 0) {
+      // Completing the command name.
+      promise = Promise.resolve(
+        _ALL_COMMANDS.filter(function (c) { return c.indexOf(currentWord) === 0; })
+      );
+    } else if (priorTokens[0] === 'git' && priorTokens.length === 1) {
+      // Completing a git subcommand.
+      promise = Promise.resolve(
+        _GIT_SUBCOMMANDS.filter(function (c) { return c.indexOf(currentWord) === 0; })
+      );
+    } else if (priorTokens[0] === 'git' && priorTokens[1] === 'remote' && priorTokens.length === 2) {
+      // git remote <sub>
+      var rsubs = ['add','get-url','prune','remove','rename','set-head','set-url','show','update'];
+      promise = Promise.resolve(rsubs.filter(function (c) { return c.indexOf(currentWord) === 0; }));
+    } else if (priorTokens[0] === 'git' && priorTokens[1] === 'stash' && priorTokens.length === 2) {
+      var ssubs = ['apply','branch','clear','drop','list','pop','push','show'];
+      promise = Promise.resolve(ssubs.filter(function (c) { return c.indexOf(currentWord) === 0; }));
+    } else {
+      // Completing a file/directory path.
+      promise = self._gitCompletePathAsync(currentWord);
+    }
+
+    promise.then(function (candidates) {
+      if (!candidates || !candidates.length) return;
+
+      if (candidates.length === 1) {
+        var suffix = candidates[0].substring(currentWord.length);
+        if (!suffix) return;
+        var newBuf = buf.substring(0, cursor) + suffix + buf.substring(cursor);
+        self._gitReplaceLine(newBuf);
+        self._lastTabLine = newBuf; // next Tab in same spot won't re-list
+        return;
+      }
+
+      var common = _commonPrefix(candidates);
+      if (common.length > currentWord.length) {
+        var suffix2 = common.substring(currentWord.length);
+        var newBuf2 = buf.substring(0, cursor) + suffix2 + buf.substring(cursor);
+        self._gitReplaceLine(newBuf2);
+        self._lastTabLine = newBuf2;
+      } else if (doubleTab || common.length === currentWord.length) {
+        // Show the list below the current line.
+        self.gitTerm.write('\r\n');
+        // Print in columns, up to terminal width.
+        var cols = (self.gitTerm.cols || 80);
+        var maxLen = candidates.reduce(function (m, c) { return Math.max(m, c.length); }, 0);
+        var colW = maxLen + 2;
+        var perRow = Math.max(1, Math.floor(cols / colW));
+        for (var row = 0; row < Math.ceil(candidates.length / perRow); row++) {
+          var line = '';
+          for (var col = 0; col < perRow; col++) {
+            var idx = row * perRow + col;
+            if (idx >= candidates.length) break;
+            line += candidates[idx] + ' '.repeat(colW - candidates[idx].length);
+          }
+          self.gitTerm.write(line.trimRight() + '\r\n');
+        }
+        self._writeGitPrompt();
+        self.gitTerm.write(buf);
+        if (self._gitTermCursorPos < buf.length) {
+          self.gitTerm.write(self._cursorBack(buf.length - self._gitTermCursorPos));
+        }
+        self._lastTabLine = '';  // reset so next Tab from same spot re-lists
+      }
+    });
+  };
+
+  // Split currentWord into a directory part and basename prefix, list the
+  // directory via gitListDir, filter by prefix, and return completions.
+  TutorialCode.prototype._gitCompletePathAsync = function (currentWord) {
+    var self = this;
+    // Strip leading ./ for cleaner display.
+    var displayWord = currentWord;
+    if (displayWord.indexOf('./') === 0) displayWord = displayWord.substring(2);
+
+    var slashIdx = currentWord.lastIndexOf('/');
+    var dirPart, basePart;
+    if (slashIdx === -1) {
+      dirPart = this._gitTermCwd;
+      basePart = currentWord;
+    } else {
+      var rawDir = currentWord.substring(0, slashIdx + 1); // includes trailing /
+      // Resolve relative to cwd.
+      dirPart = rawDir.charAt(0) === '/'
+        ? rawDir.replace(/\/+$/, '') || '/'
+        : (this._gitTermCwd + '/' + rawDir).replace(/\/+$/, '') || '/';
+      // Normalise ../ etc. (simple stack-based resolve).
+      var parts = dirPart.split('/').filter(Boolean);
+      var stack = [];
+      parts.forEach(function (p) {
+        if (p === '..') stack.pop();
+        else if (p !== '.') stack.push(p);
+      });
+      dirPart = '/' + stack.join('/');
+      basePart = currentWord.substring(slashIdx + 1);
+    }
+
+    var prefixInResult = slashIdx === -1 ? '' : currentWord.substring(0, slashIdx + 1);
+
+    return new Promise(function (resolve) {
+      self._postWorker({ type: 'gitListDir', path: dirPart }, function (msg) {
+        if (!msg || !msg.entries) return resolve([]);
+        var entries = msg.entries.filter(function (e) {
+          return e.name.indexOf(basePart) === 0 && e.name.charAt(0) !== '.';
+        });
+        // Sort: dirs first, then files.
+        entries.sort(function (a, b) {
+          if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+          return a.name < b.name ? -1 : 1;
+        });
+        var completions = entries.map(function (e) {
+          return prefixInResult + e.name + (e.isDir ? '/' : '');
+        });
+        resolve(completions);
+      });
+    });
+  };
+
+  function _commonPrefix(strs) {
+    if (!strs.length) return '';
+    var prefix = strs[0];
+    for (var i = 1; i < strs.length; i++) {
+      while (strs[i].indexOf(prefix) !== 0) {
+        prefix = prefix.substring(0, prefix.length - 1);
+        if (!prefix) return '';
+      }
+    }
+    return prefix;
+  }
 
   TutorialCode.prototype._gitClearScreen = function () {
     this.gitTerm.clear();
@@ -8399,13 +8706,8 @@
     if (verb === 'cd')    { return this._gitTermCd(tokens.slice(1)); }
     if (verb === 'ls')    { return this._gitTermLs(tokens.slice(1)); }
 
-    if (verb !== 'git') {
-      this.gitTerm.write(verb + ': command not found (type `help` to see what works here)\r\n');
-      return Promise.resolve();
-    }
-
-    // git ... → flush dirty Monaco buffers into the FS so iso-git sees the
-    // student's latest edits, then dispatch via worker.
+    // Everything else (git, find, cat, echo, grep, …) → worker.
+    // Flush dirty Monaco buffers first so the FS is up to date.
     this._gitTermBusy = true;
     return this._flushAllToFS().then(function () {
       return self._runGitLine(trimmed);
@@ -8487,17 +8789,37 @@
   TutorialCode.prototype._gitTermWriteHelp = function () {
     var lines = [
       'Lightweight terminal — supported commands:',
-      '  git <subcommand>',
-      '    init, status, add, commit, log, branch, switch, checkout,',
-      '    merge, rm, mv, reset, restore, config, tag, diff, show, stash,',
-      '    cherry-pick, revert, bisect, reflog',
-      '  cd <dir>                 change working directory',
-      '  ls [dir]                 list files',
-      '  pwd                      print working directory',
-      '  clear                    clear the screen',
-      '  help                     show this message',
       '',
-      'Edit files in the editor on the right; `git add` will see your changes.',
+      '  git <subcommand>         full git support (init, add, commit, log, …)',
+      '',
+      '  File system:',
+      '    ls [-al] [dir]         list directory',
+      '    pwd                    print working directory',
+      '    cd <dir>               change directory',
+      '    cat [-n] <file>        print file contents',
+      '    head/tail [-n N] <f>   first/last N lines',
+      '    find [dir] [-name p]   find files',
+      '    grep [-rinv] <pat> <f> search text',
+      '    wc [-lwc] <file>       word/line/byte count',
+      '    diff <a> <b>           compare two files',
+      '    sort/uniq <file>       sort or deduplicate',
+      '',
+      '  File ops:',
+      '    touch, mkdir [-p], rmdir, rm [-rf], cp [-r], mv',
+      '',
+      '  Shell helpers:',
+      '    echo [-n] <text>       print text',
+      '    printf <fmt> [args]    formatted print',
+      '    which <cmd>            locate a command',
+      '    basename/dirname <p>   path components',
+      '    realpath <p>           absolute path',
+      '    date [+<fmt>]          current date/time',
+      '    env                    show environment',
+      '    true / false / :       exit-code helpers',
+      '    clear                  clear the screen',
+      '    help                   this message',
+      '',
+      'Edit files in the editor; git add will see your changes.',
       '',
     ];
     this.gitTerm.write(lines.join('\r\n'));
