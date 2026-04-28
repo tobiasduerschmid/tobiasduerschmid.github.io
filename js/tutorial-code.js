@@ -419,7 +419,6 @@
           });
           mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         }
-        self._hideLoading();
         if (self.steps.length > 0) {
           // URL hash (e.g. #express-routing) is explicit user intent — always honour it
           var hashStep = self._resolveStepFromHash();
@@ -449,18 +448,14 @@
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
               self._restoreCommandsAndFiles(saved).then(function () {
-                self._resumeBackgroundSync();
-                self._refreshPrompt();
-                self._refreshGitGraph();
-                // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
-                // force-resets _muteCount to 0; doing it after a _runSilent(cd)
-                // would race with the gg-daemon hookCmd that _refreshGitGraph
-                // queues, leaving _muteCount stuck at -1 (terminal stays muted,
-                // user can't see their keystrokes).
                 var curStep = self.steps[saved.step];
-                if (curStep && curStep.step_dir) {
-                  self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
-                }
+                return self._runStepDir(curStep).then(function () {
+                  return self._refreshPrompt();
+                }).then(function () {
+                  self._hideLoading();
+                  self._resumeBackgroundSync();
+                  self._refreshGitGraph();
+                });
               }, function (err) {
                 self._resumeBackgroundSync();
                 self._showError('Failed to restore progress: ' + (err && err.message || err));
@@ -471,13 +466,14 @@
                 self._suppressAutoSave = false;
                 // Persist the correctly-restored state immediately
                 self._autoSaveProgress();
-                self._resumeBackgroundSync();
-                self._refreshPrompt();
-                self._refreshGitGraph();
                 var curStep = self.steps[saved.step];
-                if (curStep && curStep.step_dir) {
-                  self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
-                }
+                return self._runStepDir(curStep).then(function () {
+                  return self._refreshPrompt();
+                }).then(function () {
+                  self._hideLoading();
+                  self._resumeBackgroundSync();
+                  self._refreshGitGraph();
+                });
               }, function (err) {
                 self._resumeBackgroundSync();
                 self._showError('Failed to restore progress: ' + (err && err.message || err));
@@ -490,8 +486,12 @@
               for (var hi = 0; hi <= hashStep; hi++) self._stepsUnlocked.add(hi);
             }
             self.loadStep(hashStep >= 0 ? hashStep : 0);
-            self._refreshPrompt();
+            Promise.resolve(self._refreshPrompt()).then(function () {
+              self._hideLoading();
+            });
           }
+        } else {
+          self._hideLoading();
         }
       })
       .catch(function (err) {
@@ -2729,6 +2729,12 @@
 
   TutorialCode.prototype._refreshPrompt = function () {
     if (this.config.backend === 'v86') {
+      if (this._silentRunning || (this._silentQueue && this._silentQueue.length > 0)) {
+        var self = this;
+        return this._runSilent(':').then(function () {
+          return self._refreshPrompt();
+        });
+      }
       if (this.term) this.term.clear();
       this._muteCount = 0;
       this._promptDetectBuf = '';
@@ -2736,9 +2742,11 @@
         this.emulator.serial0_send('\n');
         this._schedulePromptRedrawFallback();
       }
+      return this._waitForTerminalText(2500);
     } else if (this.config.backend === 'webcontainer') {
       if (this._shellWriter) this._shellWriter.write('\n');
     }
+    return Promise.resolve();
   };
 
   TutorialCode.prototype._terminalHasVisibleText = function () {
@@ -2761,6 +2769,25 @@
       if (self._terminalHasVisibleText()) return;
       self.emulator.serial0_send('\n');
     }, 250);
+  };
+
+  TutorialCode.prototype._waitForTerminalText = function (timeoutMs) {
+    var self = this;
+    var started = Date.now();
+    return new Promise(function (resolve) {
+      function check() {
+        if (self._terminalHasVisibleText()) {
+          resolve(true);
+          return;
+        }
+        if (Date.now() - started >= (timeoutMs || 0)) {
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 50);
+      }
+      check();
+    });
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
@@ -3053,7 +3080,7 @@
           clearTimeout(timer);
           var idx = self._silentListeners.indexOf(reg);
           if (idx >= 0) self._silentListeners.splice(idx, 1);
-          self._muteCount--;
+          self._muteCount = Math.max(0, self._muteCount - 1);
           entry.resolve();
           self._drainSilentQueue();
         }
@@ -3066,7 +3093,7 @@
       self.emulator.remove_listener('serial0-output-byte', onByte);
       var idx = self._silentListeners.indexOf(reg);
       if (idx >= 0) self._silentListeners.splice(idx, 1);
-      self._muteCount--;
+      self._muteCount = Math.max(0, self._muteCount - 1);
       entry.resolve();
       self._drainSilentQueue();
     }, 30000);
@@ -7902,17 +7929,13 @@
         }).then(function () {
           return self._updateUserCmdListener(curStep);
         }).then(function () {
+          return self._runStepDir(curStep);
+        }).then(function () {
           self._autoSaveProgress();
+          return self._refreshPrompt();
+        }).then(function () {
           self._hideLoading();
           self._refreshGitGraph();
-          self._refreshPrompt();
-          // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
-          // force-resets _muteCount to 0; doing it after a _runSilent(cd)
-          // races with the gg-daemon hookCmd that _refreshGitGraph queues,
-          // leaving _muteCount stuck at -1 (terminal stays muted).
-          if (curStep.step_dir) {
-            self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
-          }
         });
       });
     }
@@ -7987,17 +8010,11 @@
       if (curStep && curStep.open_file) { self._setActiveFile(curStep.open_file); }
       self._renderTabs();
       self._autoSaveProgress();
-      self._hideLoading();
-      self._refreshGitGraph();
       // Clear terminal, unmute, and show a fresh prompt after the silent replay
-      self._refreshPrompt();
-      // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
-      // force-resets _muteCount to 0; doing it after a _runSilent(cd)
-      // races with the gg-daemon hookCmd that _refreshGitGraph queues,
-      // leaving _muteCount stuck at -1 (terminal stays muted).
-      if (curStep && curStep.step_dir) {
-        self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
-      }
+      return self._refreshPrompt().then(function () {
+        self._hideLoading();
+        self._refreshGitGraph();
+      });
     });
 
     return p;
@@ -8057,7 +8074,6 @@
           return self._updateUserCmdListener(savedStepObj);
         }).then(function () {
           self._autoSaveProgress();
-          self._hideLoading();
         });
       });
     }
@@ -8136,7 +8152,6 @@
     p = p.then(function () { return self._runPostFileloadSetup(savedStepObj); });
     p = p.then(function () { return self._refreshStepVisibleFiles(savedStepObj); });
     p = p.then(function () { return self._updateUserCmdListener(savedStepObj); });
-    p = p.then(function () { self._hideLoading(); });
 
     return p;
   };
