@@ -3706,30 +3706,33 @@ body.lecture-mode .tutorial-page {
 .tvm-gg-added,
 .tvm-gg-modified,
 .tvm-gg-deleted {
-  width: 3px !important;
-  margin-left: 3px;
+  /* Monaco's linesDecorations gutter creates a div sized to the line height.
+     Force a visible vertical bar within it via fixed width + full height +
+     left margin. !important beats Monaco's per-decoration overrides. */
+  width: 4px !important;
+  margin-left: 4px !important;
+  height: 100% !important;
+  z-index: 5;
 }
 .tvm-gg-added {
-  background: #28a745;
+  background-color: #28a745 !important;
 }
 .tvm-gg-modified {
-  background: #2472c8;
+  background-color: #2472c8 !important;
 }
 .tvm-gg-deleted {
-  /* Red wedge at the bottom of the line where the deletion happened */
-  background: linear-gradient(to bottom, transparent 50%, #cd3131 50%);
+  /* Red wedge at the bottom of the line where the deletion happened. */
+  background: linear-gradient(to bottom, transparent 60%, #cd3131 60%) !important;
 }
 
-/* Dark theme uses slightly brighter variants. */
-.tvm-dark-mode .tvm-gg-added,
-[data-theme="dark"] .tvm-gg-added {
-  background: #4ec9b0;
+/* Dark theme uses brighter variants for contrast. The site puts `.dark-mode`
+   on <html>, so target html.dark-mode (descendant combinator). */
+html.dark-mode .tvm-gg-added {
+  background-color: #4ec9b0 !important;
 }
-.tvm-dark-mode .tvm-gg-modified,
-[data-theme="dark"] .tvm-gg-modified {
-  background: #569cd6;
+html.dark-mode .tvm-gg-modified {
+  background-color: #569cd6 !important;
 }
-.tvm-dark-mode .tvm-gg-deleted,
-[data-theme="dark"] .tvm-gg-deleted {
-  background: linear-gradient(to bottom, transparent 50%, #f14c4c 50%);
+html.dark-mode .tvm-gg-deleted {
+  background: linear-gradient(to bottom, transparent 60%, #f14c4c 60%) !important;
 }
