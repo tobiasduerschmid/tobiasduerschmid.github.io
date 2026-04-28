@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VM snapshot harness</title>
+<style>
+  body { font-family: monospace; padding: 16px; background: #111; color: #ddd; }
+  #log { white-space: pre-wrap; max-height: 70vh; overflow: auto; background: #000; padding: 8px; border: 1px solid #333; }
+  .ok { color: #5f5; } .err { color: #f55; }
+</style>
+</head>
+<body>
+<h2>v86 snapshot harness</h2>
+<p>Boots the tutorial VM with the production config, waits for the shell prompt, then exposes <code>window.__saveState()</code>.</p>
+<p>Status: <span id="status">starting…</span></p>
+<div id="log"></div>
+<script src="/assets/v86/libv86.js"></script>
+<script>
+'use strict';
+
+// MUST match tutorial-vm.js _bootVM exactly so the captured snapshot is valid
+// for the production VM constructor. Drift here = corrupt snapshot at restore.
+var MEMORY_MB = 256;
+var V86_PATH  = '/assets/v86';
+var VM_PATH   = '/vm/dist';
+
+var logEl = document.getElementById('log');
+var statusEl = document.getElementById('status');
+
+function logLine(s, cls) {
+  var span = document.createElement('span');
+  if (cls) span.className = cls;
+  span.textContent = s + '\n';
+  logEl.appendChild(span);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setStatus(s, cls) {
+  statusEl.textContent = s;
+  statusEl.className = cls || '';
+}
+
+window.__vmReady = false;
+window.__vmError = null;
+
+var emulator = new V86({
+  wasm_path: V86_PATH + '/v86.wasm',
+  memory_size: MEMORY_MB * 1024 * 1024,
+  vga_memory_size: 2 * 1024 * 1024,
+  bios:    { url: V86_PATH + '/seabios.bin' },
+  vga_bios:{ url: V86_PATH + '/vgabios.bin' },
+  bzimage: { url: VM_PATH  + '/bzImage' },
+  initrd:  { url: VM_PATH  + '/rootfs.cpio.gz' },
+  cmdline: 'console=ttyS0 rw quiet',
+  autostart: true,
+  disable_keyboard: true,
+  disable_mouse: true,
+  disable_speaker: true,
+  screen_dummy: true,
+  filesystem: {},
+});
+
+window.__emulator = emulator;
+
+// Mirror the prompt-detection logic from tutorial-vm.js so we capture state at
+// the same moment production considers the VM "booted".
+var bootBuf = '';
+var promptSeen = false;
+
+emulator.add_listener('serial0-output-byte', function (byte) {
+  var ch = String.fromCharCode(byte);
+  bootBuf += ch;
+  // Cap buffer so the harness doesn't accrete unbounded boot output.
+  if (bootBuf.length > 16384) bootBuf = bootBuf.slice(-8192);
+  if (!promptSeen && (bootBuf.includes('$ ') || bootBuf.includes('# ') || bootBuf.includes(':~'))) {
+    promptSeen = true;
+    setStatus('booted, settling…', 'ok');
+    logLine('[harness] shell prompt detected', 'ok');
+    // Give the kernel a beat to finish any pending I/O before snapshot.
+    // Without this, save_state() can race in-flight 9p / virtio messages.
+    setTimeout(function () {
+      window.__vmReady = true;
+      setStatus('ready — call __saveState()', 'ok');
+      logLine('[harness] window.__vmReady = true', 'ok');
+    }, 1500);
+  }
+});
+
+setTimeout(function () {
+  if (!promptSeen) {
+    window.__vmError = 'boot prompt not detected within 60s';
+    setStatus(window.__vmError, 'err');
+    logLine('[harness] ' + window.__vmError, 'err');
+  }
+}, 60000);
+
+// __saveState() captures the state and triggers a browser download. The
+// driver script (vm/build-snapshot.js) catches the download event and writes
+// the file to vm/dist/state.bin — much faster than serializing a 256 MB
+// ArrayBuffer through Playwright's page.evaluate boundary.
+window.__saveState = async function () {
+  if (!window.__vmReady) throw new Error('VM not ready');
+  setStatus('saving state…');
+  var buf = await emulator.save_state();
+  var blob = new Blob([buf], { type: 'application/octet-stream' });
+  var url  = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'state.bin';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  setStatus('saved (' + buf.byteLength + ' bytes)', 'ok');
+  logLine('[harness] save_state -> ' + buf.byteLength + ' bytes', 'ok');
+  return buf.byteLength;
+};
+</script>
+</body>
+</html>

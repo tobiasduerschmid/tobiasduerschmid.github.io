@@ -90,6 +90,7 @@ encoding: utf-8
 exclude:
   - vm/setup.sh
   - vm/build-rootfs.sh
+  - vm/build-snapshot.js
   - vm/overlay
   - vm/Makefile
 

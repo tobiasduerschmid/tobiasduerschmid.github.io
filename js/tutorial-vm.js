@@ -76,6 +76,13 @@
       vmPath: options.vmPath || '/vm/dist',
       memoryMB: options.memoryMB || 256,
       fontSize: options.fontSize || 14,
+      // Restore from a pre-booted snapshot if available, skipping the kernel
+      // boot. Set useSnapshot: false to force a fresh boot.
+      useSnapshot: options.useSnapshot !== false,
+      // Snapshot is gzip-compressed on disk (3x smaller than raw) and
+      // decompressed via DecompressionStream before handing to v86, since
+      // v86 itself doesn't auto-decompress initial_state.
+      snapshotName: options.snapshotName || 'state.bin.gz',
     };
 
     this.steps = options.steps || [];
@@ -563,18 +570,35 @@
 
   // ---- Virtual Machine (v86) ------------------------------------------------
 
+  // Fetch the gzipped snapshot, decompress in-browser, and return a Blob URL
+  // suitable for v86's initial_state. Returns null if disabled, missing,
+  // or DecompressionStream isn't available (older browsers).
+  TutorialVM.prototype._loadSnapshot = function () {
+    if (!this.config.useSnapshot) return Promise.resolve(null);
+    if (typeof DecompressionStream === 'undefined') return Promise.resolve(null);
+    var url = this.config.vmPath + '/' + this.config.snapshotName;
+    return fetch(url).then(function (r) {
+      if (!r.ok) return null;
+      var stream = r.body.pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).arrayBuffer();
+    }).then(function (buf) {
+      if (!buf) return null;
+      return URL.createObjectURL(new Blob([buf]));
+    }).catch(function () { return null; });
+  };
+
   TutorialVM.prototype._bootVM = function () {
     var self = this;
-    return new Promise(function (resolve, reject) {
+    return self._loadSnapshot().then(function (snapshotUrl) {
+      self._usingSnapshot = !!snapshotUrl;
+      return new Promise(function (resolve, reject) {
       try {
-        self.emulator = new V86({
+        var v86Config = {
           wasm_path: self.config.v86Path + '/v86.wasm',
           memory_size: self.config.memoryMB * 1024 * 1024,
           vga_memory_size: 2 * 1024 * 1024,
           bios: { url: self.config.v86Path + '/seabios.bin' },
           vga_bios: { url: self.config.v86Path + '/vgabios.bin' },
-          bzimage: { url: self.config.vmPath + '/bzImage' },
-          initrd: { url: self.config.vmPath + '/rootfs.cpio.gz' },
           cmdline: 'console=ttyS0 rw quiet',
           autostart: true,
           disable_keyboard: true,
@@ -582,7 +606,16 @@
           disable_speaker: true,
           screen_dummy: true,
           filesystem: {},
-        });
+        };
+        if (snapshotUrl) {
+          // Snapshot already contains the kernel + extracted initrd in RAM,
+          // so skip the bzImage + rootfs.cpio.gz fetches (~44 MB saved).
+          v86Config.initial_state = { url: snapshotUrl };
+        } else {
+          v86Config.bzimage = { url: self.config.vmPath + '/bzImage' };
+          v86Config.initrd  = { url: self.config.vmPath + '/rootfs.cpio.gz' };
+        }
+        self.emulator = new V86(v86Config);
 
         // Wire xterm input → serial port, and monitor for chmod +x
         self.term.onData(function (data) {
@@ -629,6 +662,15 @@
         }
         self.emulator.add_listener('serial0-output-byte', onBoot);
 
+        // When restoring from snapshot, the kernel and shell are already up
+        // and won't re-emit boot output. Nudge with a newline so the shell
+        // prints a fresh prompt that onBoot can detect.
+        if (snapshotUrl) {
+          setTimeout(function () {
+            if (!promptDetected) self.emulator.serial0_send('\n');
+          }, 500);
+        }
+
         // Timeout — resolve anyway after 30s
         setTimeout(function () {
           if (!promptDetected) {
@@ -641,6 +683,7 @@
       } catch (err) {
         reject(err);
       }
+      });
     });
   };
 

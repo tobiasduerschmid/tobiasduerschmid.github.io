@@ -105,6 +105,10 @@
       vmPath: options.vmPath || '/vm/dist',
       memoryMB: options.memoryMB || 256,
       fontSize: options.fontSize || 14,
+      // Restore from a pre-booted snapshot (gzipped) if available, skipping
+      // the kernel boot. Set useSnapshot: false to force a fresh boot.
+      useSnapshot: options.useSnapshot !== false,
+      snapshotName: options.snapshotName || 'state.bin.gz',
       workerPath: options.workerPath || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
@@ -1990,7 +1994,14 @@
   var THEMES = {
     dark: {
       monaco: 'sebook-dark',
-      xterm: { background: '#1e1e1e', foreground: '#d4d4d4', cursor: '#d4d4d4', selectionBackground: '#264f78' }
+      xterm: {
+        background: '#1e1e1e', foreground: '#d4d4d4', cursor: '#d4d4d4', selectionBackground: '#264f78',
+        black: '#1e1e1e', red: '#f44747', green: '#6a9955', yellow: '#d7ba7d', blue: '#569cd6',
+        magenta: '#c586c0', cyan: '#4ec9b0', white: '#d4d4d4',
+        brightBlack: '#808080', brightRed: '#f44747', brightGreen: '#b5cea8',
+        brightYellow: '#d7ba7d', brightBlue: '#9cdcfe', brightMagenta: '#c586c0',
+        brightCyan: '#4fc1ff', brightWhite: '#e6e6e6'
+      }
     },
     light: {
       monaco: 'sebook-light',
@@ -2015,6 +2026,10 @@
     if (this.term) {
       if (typeof this.term.setOption === 'function') this.term.setOption('theme', theme.xterm);
       else this.term.options.theme = theme.xterm;
+    }
+    if (this.gitTerm) {
+      if (typeof this.gitTerm.setOption === 'function') this.gitTerm.setOption('theme', theme.xterm);
+      else this.gitTerm.options.theme = theme.xterm;
     }
   };
 
@@ -2088,24 +2103,49 @@
   };
 
   // ---- v86 backend (identical to original tutorial-vm.js) -------------------
+  TutorialCode.prototype._loadSnapshot = function () {
+    if (!this.config.useSnapshot) return Promise.resolve(null);
+    if (typeof DecompressionStream === 'undefined') return Promise.resolve(null);
+    var url = this.config.vmPath + '/' + this.config.snapshotName;
+    return fetch(url).then(function (r) {
+      if (!r.ok) return null;
+      var stream = r.body.pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).arrayBuffer();
+    }).then(function (buf) {
+      return buf ? URL.createObjectURL(new Blob([buf])) : null;
+    }).catch(function () { return null; });
+  };
+
   TutorialCode.prototype._initV86 = function () {
     var self = this;
     this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026');
-    return new Promise(function (resolve, reject) {
+    return self._loadSnapshot().then(function (snapshotUrl) {
+      self._usingSnapshot = !!snapshotUrl;
+      if (snapshotUrl) {
+        self._showLoading('Restoring VM snapshot\u2026');
+      }
+      return new Promise(function (resolve, reject) {
       try {
-        self.emulator = new V86({
+        var v86Config = {
           wasm_path: self.config.v86Path + '/v86.wasm',
           memory_size: self.config.memoryMB * 1024 * 1024,
           vga_memory_size: 2 * 1024 * 1024,
           bios: { url: self.config.v86Path + '/seabios.bin' },
           vga_bios: { url: self.config.v86Path + '/vgabios.bin' },
-          bzimage: { url: self.config.vmPath + '/bzImage' },
-          initrd: { url: self.config.vmPath + '/rootfs.cpio.gz' },
           cmdline: 'console=ttyS0 rw quiet',
           autostart: true, disable_keyboard: true,
           disable_mouse: true, disable_speaker: true, screen_dummy: true,
           filesystem: {},
-        });
+        };
+        if (snapshotUrl) {
+          // Snapshot already contains the kernel + extracted initrd in RAM,
+          // so skip the bzImage + rootfs.cpio.gz fetches (~44 MB saved).
+          v86Config.initial_state = { url: snapshotUrl };
+        } else {
+          v86Config.bzimage = { url: self.config.vmPath + '/bzImage' };
+          v86Config.initrd  = { url: self.config.vmPath + '/rootfs.cpio.gz' };
+        }
+        self.emulator = new V86(v86Config);
 
         // xterm ↔ serial
         self.term.onData(function (data) {
@@ -2153,6 +2193,17 @@
               if (self._currentView === 'git_graph' && !self._gitGraphRefreshing) {
                 self._maybeAutoRefreshGitGraph();
               }
+              // Git gutter: any user command may have moved HEAD (commit /
+              // checkout / reset) or changed the working tree (checkout / mv
+              // / external editor). Schedule a debounced refresh so we don't
+              // spam the silent-command queue when the user types many
+              // commands in quick succession.
+              if (self.config.enableGitGutter) {
+                clearTimeout(self._gitGutterPromptTimer);
+                self._gitGutterPromptTimer = setTimeout(function () {
+                  self._refreshAllGitGutters();
+                }, 250);
+              }
             }
           }
         });
@@ -2167,6 +2218,16 @@
           }
         }
         self.emulator.add_listener('serial0-output-byte', onBoot);
+
+        // After snapshot restore, the shell is already running and won't
+        // re-emit boot output. Nudge with a newline so onBoot can detect
+        // the fresh prompt the shell prints in response.
+        if (snapshotUrl) {
+          setTimeout(function () {
+            if (!promptDetected) self.emulator.serial0_send('\n');
+          }, 500);
+        }
+
         setTimeout(function () {
           if (!promptDetected) {
             self.emulator.remove_listener('serial0-output-byte', onBoot);
@@ -2176,6 +2237,7 @@
           }
         }, 30000);
       } catch (err) { reject(err); }
+      });
     });
   };
 
@@ -3572,6 +3634,9 @@
       // when the time-travel debugger is opted in — otherwise an empty grey
       // column would appear next to line numbers in non-debugger tutorials.
       glyphMargin: !!this.debuggerEnabled,
+      // Reserve a wider line-decorations gutter when the git-gutter feature
+      // is on so our 4px-wide bar with 4px margin always fits.
+      lineDecorationsWidth: this.config.enableGitGutter ? 14 : 10,
     };
   };
 
@@ -6106,27 +6171,40 @@
     var cmd = '( cd ' + repoRoot + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + tmpVMPath + ' )';
 
     return this._runSilent(cmd)
-      .then(function () { return new Promise(function (r) { setTimeout(r, 80); }); })
+      .then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
       .then(function () { return self.emulator.read_file(read9pPath); })
       .then(function (buf) {
         // Cleanup (fire-and-forget; cleanup failure is harmless).
         self._runSilent('rm -f ' + tmpVMPath);
-        if (!buf || buf.length === 0) return { content: null, notReady: false };
+        if (!buf || buf.length === 0) {
+          if (!self._gitGutterDiagLogged) {
+            self._gitGutterDiagLogged = true;
+            console.info('[git-gutter] empty buf for', filename, '- treating as no HEAD blob');
+          }
+          return { content: null, notReady: false };
+        }
         var text = '';
         try { text = new TextDecoder('utf-8').decode(buf); }
         catch (e) { return { content: null, notReady: true }; }
         var idx = text.lastIndexOf(marker);
         if (idx === -1) {
-          // No marker → git show failed (file not at HEAD or no HEAD yet).
+          if (!self._gitGutterDiagLogged) {
+            self._gitGutterDiagLogged = true;
+            console.info('[git-gutter] no marker for', filename, '— file not at HEAD');
+          }
           return { content: null, notReady: false };
         }
-        // The blob's bytes are everything before the marker. `echo <marker>`
-        // appends "<marker>\n" so we slice on the marker's start position.
+        if (!self._gitGutterDiagLogged) {
+          self._gitGutterDiagLogged = true;
+          console.info('[git-gutter] read', idx, 'bytes for', filename, 'at HEAD');
+        }
         return { content: text.substring(0, idx), notReady: false };
       })
-      .catch(function () {
-        // 9p read failed (file may not have flushed yet) → leave the gutter
-        // alone, mark as pending so the next refresh retries.
+      .catch(function (err) {
+        if (!self._gitGutterDiagLogged) {
+          self._gitGutterDiagLogged = true;
+          console.warn('[git-gutter] read failed for', filename, ':', err && err.message || err);
+        }
         self._runSilent('rm -f ' + tmpVMPath).catch(function () {});
         return { content: null, notReady: true };
       });

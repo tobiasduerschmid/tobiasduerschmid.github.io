@@ -214,13 +214,14 @@
   {% assign tutorial_reset_type = tutorial_data.reset_type | default: 'files' %}
 
   {%- comment -%}
-    The COI service worker (adds COOP/COEP=credentialless headers) is needed by:
-      - WebContainers backend (always)
-      - Any tutorial with the time-travel debugger enabled, because the debugger
-        relies on SharedArrayBuffer + Atomics.wait — even on the browser backend
-        where we share a SAB with a sandboxed iframe.
+    The COI service worker is needed by:
+      - WebContainers backend (always — needs SharedArrayBuffer)
+      - Tutorials with the time-travel debugger (SharedArrayBuffer + Atomics.wait)
+      - v86 backend — not for COI itself, but to enable the SW's VM-asset cache
+        (state.bin.gz alone is ~50 MB; cache-first beats GH Pages' 10-min HTTP
+        cache for repeat visits and is more eviction-resistant on mobile).
   {%- endcomment -%}
-  {% if tutorial_backend == 'webcontainer' or tutorial_data.debugger %}
+  {% if tutorial_backend == 'webcontainer' or tutorial_backend == 'v86' or tutorial_data.debugger %}
   <!-- Register Cross-Origin Isolation service worker.
        WebContainers needs it always; the time-travel debugger needs it for
        SharedArrayBuffer + Atomics.wait (used to block the pyodide worker on

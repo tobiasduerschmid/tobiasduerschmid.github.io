@@ -512,16 +512,30 @@ layout: framework
       <code>localStorage</code>; nothing else is written to <code>sessionStorage</code>.
     </li>
     <li>
-      <strong><code>IndexedDB</code></strong>, <strong>WebSQL</strong>, <strong>Cache API</strong>
-      (<code>caches.open</code>), <strong>File System Access API</strong>
+      <strong><code>IndexedDB</code></strong>, <strong>WebSQL</strong>,
+      <strong>File System Access API</strong>
       (<code>showDirectoryPicker</code>, <code>showSaveFilePicker</code>) &mdash; <strong>not used</strong>. No data is stored here at all.
     </li>
     <li>
+      <strong>Cache API</strong> (<code>caches.open</code>) &mdash; the service worker (see below)
+      stores the in-browser Linux VM's static assets here under cache key
+      <code>vm-assets-v1</code>: the post-boot snapshot
+      (<code>vm/dist/state.bin.gz</code>, ~50&nbsp;MB), the kernel
+      (<code>bzImage</code>), the root filesystem (<code>rootfs.cpio.gz</code>), and the
+      v86 engine + BIOS files (<code>v86.wasm</code>, <code>libv86.js</code>,
+      <code>seabios.bin</code>, <code>vgabios.bin</code>). They are byte-for-byte copies of
+      what the server already ships &mdash; no per-user data. Clearing site data in
+      your browser settings removes them; the next tutorial load will refetch.
+    </li>
+    <li>
       <strong>Service worker</strong> &mdash; tutorials that need cross-origin isolation
-      (e.g. WebContainers-backed exercises) register
-      <a href="{{ '/coi-serviceworker.js' | relative_url }}"><code>coi-serviceworker.js</code></a>,
-      whose <em>only</em> job is to inject <code>COOP</code> / <code>COEP</code> response headers.
-      It does not cache responses, store request bodies, or persist anything.
+      (e.g. WebContainers-backed exercises) and tutorials using the in-browser Linux VM
+      register
+      <a href="{{ '/coi-serviceworker.js' | relative_url }}"><code>coi-serviceworker.js</code></a>.
+      It (a) injects <code>COOP</code> / <code>COEP</code> response headers so
+      <code>SharedArrayBuffer</code> works on GitHub Pages, and (b) caches the VM
+      assets described above so repeat visits skip the multi-MB downloads.
+      It does not store any per-user data.
     </li>
     <li>
       <strong><code>BroadcastChannel</code></strong> &mdash; used as in-memory messaging between

@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+/**
+ * Boots the tutorial VM in a headless Chromium via the snapshot harness page,
+ * waits for the shell prompt, calls v86's save_state(), and writes the result
+ * to vm/dist/state.bin.
+ *
+ * Prereqs:
+ *   1. Jekyll dev server running (make run) on $JEKYLL_PORT (default 4000).
+ *   2. vm/dist/bzImage and vm/dist/rootfs.cpio.gz built (./vm/setup.sh).
+ *   3. Playwright Chromium installed (npx playwright install chromium).
+ *
+ * Usage:
+ *   node vm/build-snapshot.js
+ *   JEKYLL_PORT=4001 node vm/build-snapshot.js
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const zlib = require('zlib');
+const { pipeline } = require('stream/promises');
+const { chromium } = require('playwright');
+
+const PORT = process.env.JEKYLL_PORT || '4000';
+const URL  = `http://127.0.0.1:${PORT}/vm/snapshot/`;
+const OUT  = path.join(__dirname, 'dist', 'state.bin.gz');
+
+(async () => {
+  console.log(`[snapshot] navigating ${URL}`);
+  const browser = await chromium.launch({
+    // SharedArrayBuffer needs cross-origin isolation; the COI service worker
+    // sets the right headers in production but headless Chromium starts before
+    // the SW activates, so force the flags directly.
+    args: [
+      '--enable-features=SharedArrayBuffer',
+      '--disable-web-security',
+    ],
+  });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  page.on('console', (msg) => console.log(`[page:${msg.type()}] ${msg.text()}`));
+  page.on('pageerror', (err) => console.error(`[page:error] ${err.message}`));
+
+  await page.goto(URL, { waitUntil: 'load' });
+
+  console.log('[snapshot] waiting for VM boot (up to 90s)…');
+  await page.waitForFunction(
+    () => window.__vmReady === true || window.__vmError,
+    null,
+    { timeout: 90_000 }
+  );
+
+  const err = await page.evaluate(() => window.__vmError);
+  if (err) {
+    console.error(`[snapshot] VM did not boot: ${err}`);
+    await browser.close();
+    process.exit(1);
+  }
+
+  console.log('[snapshot] VM booted, calling save_state()…');
+
+  // The harness's __saveState() builds a Blob and triggers a download — the
+  // download event ships hundreds of MB out of the page without serializing
+  // through page.evaluate's JSON boundary.
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  const downloadPromise = page.waitForEvent('download', { timeout: 120_000 });
+  const reportedSize = await page.evaluate(() => window.__saveState());
+  console.log(`[snapshot] page reports ${reportedSize} bytes raw; awaiting download…`);
+  const download = await downloadPromise;
+
+  // Stream the download through gzip directly into state.bin.gz — avoids
+  // staging a 150+ MB raw file on disk. zlib.constants.Z_BEST_COMPRESSION (9)
+  // takes a few extra seconds but trims another ~10% off the wire size.
+  await pipeline(
+    await download.createReadStream(),
+    zlib.createGzip({ level: zlib.constants.Z_BEST_COMPRESSION }),
+    fs.createWriteStream(OUT)
+  );
+
+  const stat = fs.statSync(OUT);
+  console.log(`[snapshot] wrote ${OUT} (${(stat.size/1024/1024).toFixed(1)} MB gzipped from ${reportedSize} bytes raw)`);
+
+  await browser.close();
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -1,4 +1,4 @@
-.PHONY: init-submodules install build check test clean run pdf latex all vm-setup vm-build
+.PHONY: init-submodules install build check test clean run pdf latex all vm-setup vm-build vm-snapshot
 
 JEKYLL_PORT ?= $(shell ruby -e 'require "socket"; port = 4000; loop do; begin; TCPServer.new("127.0.0.1", port).close; puts port; break; rescue Errno::EADDRINUSE; port += 1; rescue Errno::EACCES, Errno::EPERM; puts port; break; end; end')
 
@@ -51,3 +51,12 @@ vm-setup:
 
 vm-build:
 	./vm/build-rootfs.sh
+
+# Boot the VM in headless Chromium and dump a post-boot snapshot to
+# vm/dist/state.bin. Drops the in-page boot from ~30s to ~2s. Requires
+# `make run` in another terminal (Playwright drives the live Jekyll site).
+# JEKYLL_PORT here defaults to 4000 — the auto-detect logic above picks a
+# *free* port, but vm-snapshot needs to target the *running* Jekyll instance.
+SNAPSHOT_PORT ?= 4000
+vm-snapshot:
+	JEKYLL_PORT=$(SNAPSHOT_PORT) node vm/build-snapshot.js
