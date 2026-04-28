@@ -2198,7 +2198,14 @@
               // / external editor). Schedule a debounced refresh so we don't
               // spam the silent-command queue when the user types many
               // commands in quick succession.
-              if (self.config.enableGitGutter) {
+              //
+              // Skip while a refresh is already in flight — each gutter refresh
+              // queues N silent commands (one per open file), and every silent
+              // command's marker-detected unmute leaves a fresh prompt visible
+              // to this listener. Without the guard, that prompt schedules
+              // another refresh in 250ms, which schedules another, forever.
+              // Mirrors the !_gitGraphRefreshing check just above.
+              if (self.config.enableGitGutter && !self._gitGutterRefreshing) {
                 clearTimeout(self._gitGutterPromptTimer);
                 self._gitGutterPromptTimer = setTimeout(function () {
                   self._refreshAllGitGutters();
@@ -6212,9 +6219,21 @@
 
   TutorialCode.prototype._refreshAllGitGutters = function () {
     if (!this.config.enableGitGutter) return;
+    if (this._gitGutterRefreshing) return;
     var self = this;
-    Object.keys(this.editorModels || {}).forEach(function (fn) {
-      self._refreshGitGutter(fn);
+    self._gitGutterRefreshing = true;
+    var promises = Object.keys(this.editorModels || {}).map(function (fn) {
+      // _refreshGitGutter is fire-and-forget today; wrap defensively so a
+      // future refactor that returns a Promise still settles the gate.
+      try { return Promise.resolve(self._refreshGitGutter(fn)); }
+      catch (e) { return Promise.resolve(); }
+    });
+    // Settle delay: once all gutter queries finish, bash still emits one
+    // final prompt that the persistent listener will detect. Hold the gate
+    // for an extra 250ms so that prompt doesn't re-schedule us. Real user
+    // commands (typed > 250ms after a refresh) still trigger as expected.
+    Promise.all(promises).catch(function () {}).then(function () {
+      setTimeout(function () { self._gitGutterRefreshing = false; }, 250);
     });
   };
 
