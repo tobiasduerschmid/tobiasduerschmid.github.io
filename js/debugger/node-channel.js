@@ -72,6 +72,16 @@
       this._fail('WebContainer is not booted yet');
       return;
     }
+    var init = {
+      entry: cfg.filename,
+      breakpoints: cfg.breakpoints || [],
+      watches: cfg.watches || [],
+      args: cfg.args || [],
+      options: cfg.options || {},
+      serverMode: !!cfg.serverMode,
+      overrides: cfg.overrides || [],
+      exceptionBreakpoints: cfg.exceptionBreakpoints || [],
+    };
     // Fetch the runner source on each start (cache-busted) so dev iteration
     // on runner.js rolls out without WebContainer needing a reset.
     var runnerUrl = '/js/debugger/node/runner.js?v=' + Date.now();
@@ -82,31 +92,25 @@
       })
       .then(function (runnerSrc) {
         // Ensure /tutorial/.ttd exists, then write runner + user files.
-        return self.wc.fs.mkdir('/tutorial/.ttd', { recursive: true })
-          .then(function () { return self.wc.fs.writeFile('/tutorial/.ttd/runner.js', runnerSrc); })
+        var ensureRuntime = self.tutorial && typeof self.tutorial._ensureWebContainerNodeRuntime === 'function'
+          ? self.tutorial._ensureWebContainerNodeRuntime()
+          : Promise.resolve();
+        return ensureRuntime.then(function () { return self.wc.fs.mkdir('tutorial/.ttd', { recursive: true }); })
+          .then(function () { return self.wc.fs.writeFile('tutorial/.ttd/runner.js', runnerSrc); })
+          .then(function () { return self.wc.fs.writeFile('tutorial/.ttd/init.json', JSON.stringify(init)); })
           .then(function () { return self._writeUserFiles(cfg.files || {}); });
       })
       .then(function () {
-        // Spawn node; use --no-warnings to keep stdout clean.
-        return self.wc.spawn('node', ['--no-warnings', '/tutorial/.ttd/runner.js']);
+        return self.wc.spawn('node', ['tutorial/.ttd/runner.js', 'tutorial/.ttd/init.json']);
       })
       .then(function (proc) {
         self.process = proc;
         self.writer = proc.input.getWriter();
         self._startReadingStdout(proc.output.getReader());
-        // Initial JSON config — must be the first line on stdin so the runner
-        // doesn't block forever on `readLineSync`.
-        var init = {
-          entry: cfg.filename,
-          breakpoints: cfg.breakpoints || [],
-          watches: cfg.watches || [],
-          args: cfg.args || [],
-          options: cfg.options || {},
-          overrides: cfg.overrides || [],
-          exceptionBreakpoints: cfg.exceptionBreakpoints || [],
-        };
-        return self.writer.write(JSON.stringify(init) + '\n')
-          .then(function () { self._flushPendingRuntimeUpdates(); });
+        if (self.controller && typeof self.controller.setStatus === 'function') {
+          self.controller.setStatus(init.serverMode ? 'server starting…' : 'running…');
+        }
+        self._flushPendingRuntimeUpdates();
       })
       .catch(function (err) {
         self._fail('Failed to start Node debug: ' + (err && err.message || err));
@@ -154,8 +158,11 @@
           }
           return;
         }
-        // result.value is Uint8Array
-        self._stdoutBuf += self._decoder.decode(result.value, { stream: true });
+        // WebContainer streams may yield strings or Uint8Array chunks depending
+        // on SDK/runtime version.
+        self._stdoutBuf += typeof result.value === 'string'
+          ? result.value
+          : self._decoder.decode(result.value, { stream: true });
         self._processStdoutBuffer();
         loop();
       }).catch(function (err) {
@@ -334,6 +341,11 @@
     }
     this._pendingExceptionBps = null;
     return this._writeRuntimeUpdate({ exception_breakpoints: next });
+  };
+
+  NodeChannel.prototype.sendHttpRequest = function (req) {
+    if (!this.tutorial || typeof this.tutorial._sendWebContainerHttpRequest !== 'function') return false;
+    return this.tutorial._sendWebContainerHttpRequest(req || {});
   };
 
   // Expose

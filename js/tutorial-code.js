@@ -164,7 +164,7 @@
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
       // Derived flags
-      useTerminal: (backend === 'v86' || backend === 'webcontainer'),
+      useTerminal: (backend === 'v86' || (backend === 'webcontainer' && options.terminal === true)),
       usePreview: (backend === 'react'),    // live iframe preview for React tutorials
       umlPopupUrl: options.umlPopupUrl || '/uml-popup.html',
       // Editor IDE features (opt-in via YAML).
@@ -275,6 +275,9 @@
     this._webcontainer = null;
     this._shellProcess = null;
     this._shellWriter = null;
+    this._webcontainerRunProcess = null;
+    this._webcontainerServerUrls = {};
+    this._webcontainerServerReadyUnsub = null;
 
     // Git graph state
     this.gitGraphPath = options.gitGraphPath || null;
@@ -2382,7 +2385,17 @@
     var backend = this.config.backend;
     if (backend === 'v86') return this._initV86();
     if (backend === 'pyodide') return this._initPyodide();
-    if (backend === 'webcontainer') return this._initWebContainer();
+    if (backend === 'webcontainer') {
+      var self = this;
+      return this._initWebContainer().catch(function (err) {
+        self._webcontainerUnavailableReason = err && (err.message || String(err)) || 'unknown error';
+        console.warn('[TutorialCode] WebContainer unavailable; falling back to browser backend:', err);
+        self.config.backend = 'browser';
+        self.config.useTerminal = false;
+        self._showLoading('WebContainer unavailable — using browser Node sandbox…');
+        return self._initBrowserBackend();
+      });
+    }
     if (backend === 'react') return this._initReactBackend();
     if (backend === 'browser') return this._initBrowserBackend();
     if (backend === 'sql') return this._initSQL();
@@ -3538,6 +3551,27 @@
       return;
     }
 
+    if (backend === 'webcontainer') {
+      self._clearOutput();
+      self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+      var wcRunBtn = self.root.querySelector('.tvm-run-btn');
+      var wcStopBtn = self.root.querySelector('.tvm-stop-btn');
+      if (wcRunBtn) { wcRunBtn.disabled = true; wcRunBtn.textContent = '\u23f3 Running\u2026'; }
+      if (wcStopBtn) { wcStopBtn.style.display = 'inline-block'; }
+      self._runWebContainerNodeFile(filename, {
+        serverStep: !!(step && step.http_client),
+        echoOutput: true,
+      }).then(function () {
+        if (wcRunBtn) { wcRunBtn.disabled = false; wcRunBtn.textContent = '\u25b6 ' + self._effectiveRunLabel(); }
+        if (wcStopBtn) { wcStopBtn.style.display = 'none'; }
+      }).catch(function (err) {
+        self._appendOutput(String(err && err.message || err) + '\n', 'err');
+        if (wcRunBtn) { wcRunBtn.disabled = false; wcRunBtn.textContent = '\u25b6 ' + self._effectiveRunLabel(); }
+        if (wcStopBtn) { wcStopBtn.style.display = 'none'; }
+      });
+      return;
+    }
+
     if (backend === 'sql') {
       var sqlPath = '/tutorial/' + filename;
       this._syncFileToBackend(filename, function () {
@@ -3650,6 +3684,72 @@
     });
   };
 
+  TutorialCode.prototype._syncAllEditorFilesToWebContainer = function () {
+    var self = this;
+    var files = Object.keys(this.editorModels || {});
+    var chain = Promise.resolve();
+    files.forEach(function (file) {
+      chain = chain.then(function () { return self._syncFileToBackend(file); });
+    });
+    return chain;
+  };
+
+  TutorialCode.prototype._runWebContainerNodeFile = function (filename, opts) {
+    opts = opts || {};
+    var self = this;
+    if (!this._webcontainer) return Promise.reject(new Error('WebContainer is not ready yet'));
+    if (this._webcontainerRunProcess) {
+      try { this._webcontainerRunProcess.kill(); } catch (e) { }
+      this._webcontainerRunProcess = null;
+    }
+    return this._syncAllEditorFilesToWebContainer()
+      .then(function () { return self._ensureWebContainerNodeRuntime(); })
+      .then(function () {
+        return self._webcontainer.spawn('node', [filename], { cwd: '/tutorial' });
+      })
+      .then(function (proc) {
+        self._webcontainerRunProcess = proc;
+        var output = '';
+        var reader = proc.output.getReader();
+        var settled = false;
+        return new Promise(function (resolve) {
+          function finish(exitCode) {
+            if (settled) return;
+            settled = true;
+            if (self._webcontainerRunProcess === proc) self._webcontainerRunProcess = null;
+            try { reader.cancel(); } catch (e) { }
+            resolve({ exitCode: exitCode == null ? 0 : exitCode, output: output });
+          }
+          (function readLoop() {
+            reader.read().then(function (result) {
+              if (result.done) return;
+              var text = result.value || '';
+              output += text;
+              if (opts.echoOutput) self._appendOutput(text, 'out');
+              readLoop();
+            }).catch(function () {});
+          })();
+          proc.exit.then(function (exitCode) {
+            finish(exitCode);
+          }).catch(function () {
+            finish(1);
+          });
+          if (opts.serverStep) {
+            setTimeout(function () {
+              if (opts.keepAlive) return;
+              try { proc.kill(); } catch (e) { }
+              finish(0);
+            }, opts.serverTimeout || 3600000);
+          } else if (opts.timeout) {
+            setTimeout(function () {
+              try { proc.kill(); } catch (e) { }
+              finish(124);
+            }, opts.timeout);
+          }
+        });
+      });
+  };
+
   // Match `test_*.py` (prefix convention) or `*_test.py` (suffix convention).
   TutorialCode.prototype._isPytestFile = function (filename) {
     if (!filename) return false;
@@ -3712,17 +3812,36 @@
       return WebContainer.boot();
     }).then(function (wc) {
       self._webcontainer = wc;
+      self._webcontainerServerUrls = {};
+      if (wc && typeof wc.on === 'function') {
+        try {
+          self._webcontainerServerReadyUnsub = wc.on('server-ready', function (port, url) {
+            self._webcontainerServerUrls[String(port)] = url;
+            if (self._debuggerCtl && self._debuggerCtl.session && typeof self._debuggerCtl.setStatus === 'function') {
+              self._debuggerCtl.setStatus('server running');
+            }
+          });
+        } catch (e) { /* older WebContainer API shape */ }
+      }
 
       // Pre-create /tutorial directory
       return wc.fs.mkdir('tutorial', { recursive: true }).then(function () {
-        return self._startWebContainerShell();
+        return self.config.useTerminal ? self._startWebContainerShell() : Promise.resolve();
       });
     }).then(function () {
       self.booted = true;
 
       // Run setup commands in the shell
       if (self.setupCommands.length > 0) {
-        self.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
+        if (self.config.useTerminal) {
+          self.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
+        } else {
+          var setupChain = Promise.resolve();
+          self.setupCommands.forEach(function (cmd) {
+            setupChain = setupChain.then(function () { return self._runWebContainerShellCommand(cmd); });
+          });
+          return setupChain.then(function () { return delay(300); });
+        }
       }
       return delay(300);
     });
@@ -3755,6 +3874,139 @@
     });
   };
 
+  TutorialCode.prototype._runWebContainerShellCommand = function (cmd) {
+    if (!this._webcontainer) return Promise.resolve({ exitCode: 1, output: '' });
+    return this._webcontainer.spawn('sh', ['-c', cmd], { cwd: '/tutorial' })
+      .then(function (proc) {
+        var output = '';
+        var reader = proc.output.getReader();
+        (function readLoop() {
+          reader.read().then(function (result) {
+            if (result.done) return;
+            output += result.value || '';
+            readLoop();
+          }).catch(function () {});
+        })();
+        return proc.exit.then(function (exitCode) {
+          try { reader.cancel(); } catch (e) {}
+          return { exitCode: exitCode, output: output };
+        });
+      });
+  };
+
+  TutorialCode.prototype._ensureWebContainerNodeRuntime = function () {
+    if (!this._webcontainer) return Promise.resolve();
+    var wc = this._webcontainer;
+    var expressPath = 'tutorial/node_modules/express/index.js';
+    var shim = [
+      "'use strict';",
+      "const http = require('http');",
+      "function parseQuery(search) {",
+      "  const out = {};",
+      "  if (!search) return out;",
+      "  for (const part of search.split('&')) {",
+      "    if (!part) continue;",
+      "    const pieces = part.split('=');",
+      "    const key = decodeURIComponent((pieces.shift() || '').replace(/\\+/g, ' '));",
+      "    if (!key) continue;",
+      "    out[key] = decodeURIComponent((pieces.join('=') || '').replace(/\\+/g, ' '));",
+      "  }",
+      "  return out;",
+      "}",
+      "function matchRoute(pattern, pathname) {",
+      "  if (!pattern || pattern === '*') return {};",
+      "  const pp = String(pattern).split('/');",
+      "  const up = String(pathname).split('/');",
+      "  if (pp.length !== up.length) return null;",
+      "  const params = {};",
+      "  for (let i = 0; i < pp.length; i++) {",
+      "    if (pp[i] && pp[i][0] === ':') params[pp[i].slice(1)] = decodeURIComponent(up[i]);",
+      "    else if (pp[i] !== up[i]) return null;",
+      "  }",
+      "  return params;",
+      "}",
+      "function makeRouter() {",
+      "  const routes = [];",
+      "  return {",
+      "    get: (p, h) => routes.push({ method: 'GET', path: p, handler: h }),",
+      "    post: (p, h) => routes.push({ method: 'POST', path: p, handler: h }),",
+      "    put: (p, h) => routes.push({ method: 'PUT', path: p, handler: h }),",
+      "    delete: (p, h) => routes.push({ method: 'DELETE', path: p, handler: h }),",
+      "    all: (p, h) => ['GET', 'POST', 'PUT', 'DELETE'].forEach(method => routes.push({ method, path: p, handler: h })),",
+      "    use: function(p, h) { if (typeof p === 'function') { h = p; p = '*'; } if (h && h.__routes) routes.push({ method: 'MOUNT', path: p, router: h.__routes }); else if (h) routes.push({ method: 'USE', path: p, handler: h }); },",
+      "    __routes: routes",
+      "  };",
+      "}",
+      "function decorateResponse(res) {",
+      "  res.status = function(code) { this.statusCode = code; return this; };",
+      "  res.json = function(obj) { if (!this.headersSent) this.setHeader('Content-Type', 'application/json'); this.end(JSON.stringify(obj, null, 2)); return this; };",
+      "  res.send = function(body) { if (body && typeof body === 'object') return this.json(body); this.end(String(body)); return this; };",
+      "  return res;",
+      "}",
+      "function dispatch(routes, req, res) {",
+      "  const parsed = new URL(req.url, 'http://localhost');",
+      "  req.path = parsed.pathname;",
+      "  req.query = parseQuery(parsed.search.slice(1));",
+      "  for (const route of routes) {",
+      "    if (route.method === 'MOUNT') {",
+      "      let sub = req.path;",
+      "      if (sub === route.path) sub = '/';",
+      "      else if (sub.indexOf(route.path + '/') === 0) sub = sub.slice(route.path.length);",
+      "      else continue;",
+      "      const prevPath = req.path;",
+      "      req.path = sub;",
+      "      for (const child of route.router) {",
+      "        if (child.method !== req.method) continue;",
+      "        const params = matchRoute(child.path, sub);",
+      "        if (params !== null) { req.params = params; return child.handler(req, res); }",
+      "      }",
+      "      req.path = prevPath;",
+      "    } else if (route.method === req.method) {",
+      "      const params = matchRoute(route.path, req.path);",
+      "      if (params !== null) { req.params = params; return route.handler(req, res); }",
+      "    }",
+      "  }",
+      "  res.statusCode = 404;",
+      "  res.end('Cannot ' + req.method + ' ' + req.path);",
+      "}",
+      "function express() {",
+      "  const routes = [];",
+      "  const app = makeRouter();",
+      "  app.__routes = routes;",
+      "  app.get = (p, h) => routes.push({ method: 'GET', path: p, handler: h });",
+      "  app.post = (p, h) => routes.push({ method: 'POST', path: p, handler: h });",
+      "  app.put = (p, h) => routes.push({ method: 'PUT', path: p, handler: h });",
+      "  app.delete = (p, h) => routes.push({ method: 'DELETE', path: p, handler: h });",
+      "  app.all = (p, h) => ['GET', 'POST', 'PUT', 'DELETE'].forEach(method => routes.push({ method, path: p, handler: h }));",
+      "  app.use = function(p, h) { if (typeof p === 'function') { h = p; p = '*'; } if (h && h.__routes) routes.push({ method: 'MOUNT', path: p, router: h.__routes }); else if (h) routes.push({ method: 'USE', path: p, handler: h }); };",
+      "  app.listen = function(port, host, cb) {",
+      "    if (typeof host === 'function') { cb = host; host = undefined; }",
+      "    const server = http.createServer((req, res) => {",
+      "      decorateResponse(res);",
+      "      let raw = '';",
+      "      req.on('data', chunk => { raw += chunk; });",
+      "      req.on('end', () => {",
+      "        try { req.body = raw && /^\\s*[\\[{]/.test(raw) ? JSON.parse(raw) : raw; } catch (e) { req.body = raw; }",
+      "        Promise.resolve(dispatch(routes, req, res)).catch(err => { if (!res.writableEnded) res.status(500).send(err && (err.stack || err.message) || String(err)); });",
+      "      });",
+      "    });",
+      "    return server.listen(port, host, cb);",
+      "  };",
+      "  return app;",
+      "}",
+      "express.Router = makeRouter;",
+      "express.json = () => (req, res, next) => next && next();",
+      "module.exports = express;",
+      ""
+    ].join('\n');
+    return wc.fs.readFile(expressPath, 'utf8')
+      .then(function () {})
+      .catch(function () {
+        return wc.fs.mkdir('tutorial/node_modules/express', { recursive: true })
+          .then(function () { return wc.fs.writeFile(expressPath, shim); });
+      });
+  };
+
   // ---- React backend (in-browser JSX live preview) --------------------------
   TutorialCode.prototype._initReactBackend = function () {
     this.booted = true;
@@ -3774,6 +4026,17 @@
    * `onDone()` fires 1.5 s after the iframe loads (enough for short async code).
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._webcontainerRunProcess) {
+      try { this._webcontainerRunProcess.kill(); } catch (e) { }
+      this._webcontainerRunProcess = null;
+      var runBtnWc = this.root && this.root.querySelector('.tvm-run-btn');
+      var stopBtnWc = this.root && this.root.querySelector('.tvm-stop-btn');
+      if (runBtnWc && (!this._debuggerCtl || !this._debuggerCtl.session)) {
+        runBtnWc.disabled = false;
+        runBtnWc.textContent = '\u25b6 ' + this._effectiveRunLabel();
+      }
+      if (stopBtnWc) stopBtnWc.style.display = 'none';
+    }
     if (this._jsFinish) {
       this._jsFinish();
       this._jsFinish = null;
@@ -4238,7 +4501,7 @@
     return {
       language: this.config.backend === 'pyodide' ? 'python' :
         this.config.backend === 'react' ? 'jsx' :
-          this.config.backend === 'browser' ? 'javascript' :
+          (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'javascript' :
             this.config.backend === 'prolog' ? 'prolog' :
               this.config.backend === 'java' ? 'java' : 'shell-sebook',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
@@ -4268,8 +4531,8 @@
   // .claude/plans/what-would-be-options-temporal-ritchie.md for architecture.
   TutorialCode.prototype._loadDebuggerModule = function () {
     var self = this;
-    var needsNodeChannel = self.config.backend === 'webcontainer';
-    var needsBrowserChannel = self.config.backend === 'browser';
+    var needsNodeChannel = false;
+    var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -4313,8 +4576,10 @@
         if (window.SEBookDebugger) return null;
         return loadScriptOnce('/js/debugger/main.js?v=' + dbgAssetVersion);
       });
-      // Webcontainer tutorials also need the node-channel adapter so the
-      // controller can spawn + drive a Node process for debugging.
+      // The WebContainer runtime is used for Run/Test, but its in-browser Node
+      // inspector does not reliably support CDP pause/step commands. Debugging
+      // webcontainer JavaScript therefore uses the same instrumented browser
+      // channel as the browser backend.
       if (needsNodeChannel) {
         p = p.then(function () {
           if (window.SEBookNodeChannel) return null;
@@ -8038,7 +8303,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'prolog' || this.config.backend === 'java') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -8571,7 +8836,8 @@
     runNext(0);
   };
 
-  // WebContainers — same marker approach, but spawns 'sh' instead of serial
+  // WebContainers — run the current Node file with real Node, then evaluate
+  // the same JS assertion snippets used by the browser-backend Node tutorial.
   TutorialCode.prototype._runTestsWebContainer = function () {
     var self = this;
     var step = this.steps[this.currentStep];
@@ -8579,47 +8845,43 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
 
-    var script = tests.map(function (t, i) {
-      return '( ' + t.command + ' ) 2>/dev/null; printf "\\n__TRESULT_' + i + '_%d__\\n" $?';
-    }).join('; ') + '; echo "__TDONE__"';
-
-    this._webcontainer.spawn('sh', ['-c', script], { cwd: '/tutorial' })
-      .then(function (proc) {
-        var output = '';
-        var testTimeout;
-        var reader = proc.output.getReader();
-        var cleanup = function () {
-          clearTimeout(testTimeout);
-          try { reader.cancel(); } catch (e) { }
-          try { proc.kill(); } catch (e) { }
-        };
-
-        testTimeout = setTimeout(function () {
-          console.warn('WebContainer test timeout exceeded (15s). Force canceling.');
-          cleanup();
-          parseResults(output);
-        }, 15000);
-
-        (function readLoop() {
-          reader.read().then(function (result) {
-            if (result.done) { cleanup(); parseResults(output); return; }
-            output += result.value;
-            if (output.includes('__TDONE__')) { cleanup(); parseResults(output); return; }
-            readLoop();
-          }).catch(function () { cleanup(); parseResults(output); });
-        })();
-      }).catch(function (err) {
-        self._renderTestResults(tests, new Array(tests.length).fill(null));
-        console.error('WC test spawn failed:', err);
-      });
-
-    function parseResults(output) {
-      var results = new Array(tests.length).fill(null);
-      var re = /__TRESULT_(\d+)_(\d+)__/g, m;
-      while ((m = re.exec(output)) !== null)
-        results[parseInt(m[1])] = (parseInt(m[2]) === 0);
-      self._renderTestResults(tests, results);
+    var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+    var filename = runFile || (step.files && step.files[0] && step.files[0].path) || '';
+    var source = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
+    var files = {};
+    for (var key in this.editorModels) {
+      if (this.editorModels.hasOwnProperty(key)) {
+        files[key] = this.editorModels[key].model.getValue();
+      }
     }
+
+    this._runWebContainerNodeFile(filename, {
+      serverStep: !!(step && step.http_client),
+      serverTimeout: 1500,
+      timeout: 3500,
+      echoOutput: false,
+    }).then(function (run) {
+      var output = run.output || '';
+      var results = [];
+      for (var i = 0; i < tests.length; i++) {
+        try {
+          var code = self._stripCode(source);
+          /* jshint evil:true */
+          var fn = new Function('output', 'source', 'code', 'assert', 'files', tests[i].command);
+          fn(output, source, code, function assertFn(cond, msg) {
+            if (!cond) throw new Error(msg || 'Assertion failed');
+          }, files);
+          results[i] = true;
+        } catch (e) {
+          results[i] = false;
+          console.warn('WebContainer test ' + i + ' failed:', e.message);
+        }
+      }
+      self._renderTestResults(tests, results);
+    }).catch(function (err) {
+      self._renderTestResults(tests, new Array(tests.length).fill(null));
+      console.error('WC test run failed:', err);
+    });
   };
 
   // React — each test.command is evaluated as JS; `frame` is the preview iframe
@@ -10195,6 +10457,11 @@
       return;
     }
 
+    if (this.config.backend === 'webcontainer' && this._webcontainer) {
+      this._sendWebContainerHttpRequest({ method: method, url: url, body: body });
+      return;
+    }
+
     if (this._jsRunnerFrame && this._jsRunnerFrame.contentWindow) {
       this._jsRunnerFrame.contentWindow.postMessage({
         type: 'http_request',
@@ -10206,6 +10473,83 @@
       this._httpResponseBodyEl.textContent = 'Error: Server is not running. Click "\u25b6 Run" first to start the Node.js process.';
       this._httpResponseBodyEl.style.color = '#e55';
     }
+  };
+
+  TutorialCode.prototype._webContainerRequestTarget = function (rawUrl) {
+    rawUrl = String(rawUrl || '/');
+    var port = '3000';
+    var path = rawUrl || '/';
+    if (/^https?:\/\//i.test(rawUrl)) {
+      try {
+        var parsed = new URL(rawUrl);
+        port = parsed.port || '3000';
+        path = parsed.pathname + parsed.search;
+      } catch (e) { /* keep defaults */ }
+    }
+    if (path.charAt(0) !== '/') path = '/' + path;
+    return { port: port, path: path };
+  };
+
+  TutorialCode.prototype._sendWebContainerHttpRequest = function (req) {
+    var target = this._webContainerRequestTarget(req && req.url);
+    if (!this._webcontainer || !target) {
+      this._handleHttpResponse({
+        status: 503,
+        body: 'Error: Server is not running yet. Click Run or Debug, then wait for port 3000 to open.',
+      });
+      return false;
+    }
+    var method = String(req.method || 'GET').toUpperCase();
+    var payload = {
+      method: method,
+      port: Number(target.port || 3000),
+      path: target.path || '/',
+      body: method === 'GET' ? '' : (req.body || ''),
+    };
+    var clientScript = [
+      "const http = require('http');",
+      "const reqData = " + JSON.stringify(payload) + ";",
+      "const body = reqData.body || '';",
+      "const headers = body ? {'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)} : {};",
+      "const request = http.request({host:'127.0.0.1', port:reqData.port, path:reqData.path, method:reqData.method, headers}, (res) => {",
+      "  let out = '';",
+      "  res.setEncoding('utf8');",
+      "  res.on('data', chunk => out += chunk);",
+      "  res.on('end', () => console.log(JSON.stringify({status:res.statusCode || 0, body:out})));",
+      "});",
+      "request.on('error', err => console.log(JSON.stringify({status:0, body:'Error: ' + (err && err.message || err)})));",
+      "if (body) request.write(body);",
+      "request.end();",
+    ].join('\n');
+    var self = this;
+    this._webcontainer.spawn('node', ['-e', clientScript], { cwd: '/tutorial' })
+      .then(function (proc) {
+        var output = '';
+        var reader = proc.output.getReader();
+        (function readLoop() {
+          reader.read().then(function (result) {
+            if (result.done) return;
+            output += result.value || '';
+            readLoop();
+          }).catch(function () {});
+        })();
+        return proc.exit.then(function () {
+          try { reader.cancel(); } catch (e) {}
+          var lines = output.trim().split(/\n/).filter(Boolean);
+          var last = lines[lines.length - 1] || '';
+          try {
+            self._handleHttpResponse(JSON.parse(last));
+          } catch (e) {
+            self._handleHttpResponse({ status: 0, body: output || 'Error: empty HTTP client response' });
+          }
+        });
+      }).catch(function (err) {
+        self._handleHttpResponse({
+          status: 0,
+          body: 'Error: ' + (err && err.message || err),
+        });
+      });
+    return true;
   };
 
   TutorialCode.prototype._handleHttpResponse = function (data) {

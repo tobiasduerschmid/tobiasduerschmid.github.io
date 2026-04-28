@@ -41,6 +41,7 @@
     IfStatement: 1, ForStatement: 1, ForInStatement: 1, ForOfStatement: 1,
     WhileStatement: 1, DoWhileStatement: 1, SwitchStatement: 1,
     ThrowStatement: 1, TryStatement: 1, BreakStatement: 1, ContinueStatement: 1,
+    DebuggerStatement: 1,
     BlockStatement: 0,   // descended into; no own injection
     FunctionDeclaration: 1,
   };
@@ -119,7 +120,7 @@
       return out;
     }
 
-    function injectBefore(stmt) {
+    function injectBefore(stmt, forceSurface) {
       if (!stmt || !stmt.loc) return;
       var line = stmt.loc.start.line;
       var col = stmt.loc.start.column;
@@ -127,7 +128,8 @@
       // Inherit indentation by reading the spaces before the statement
       var lineStart = stmt.start - col;
       indent = source.substring(lineStart, lineStart + col).replace(/[^\s]/g, ' ');
-      var hook = '__ttd.onLine(' + JSON.stringify(file) + ', ' + line + ', ' + makeScopeFn() + ');\n' + indent;
+      var hook = '__ttd.onLine(' + JSON.stringify(file) + ', ' + line + ', ' + makeScopeFn() +
+        (forceSurface ? ', true' : '') + ');\n' + indent;
       inserts.push({ offset: stmt.start, text: hook });
     }
 
@@ -170,6 +172,21 @@
       });
     }
 
+    function descendNestedFunctions(node) {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(descendNestedFunctions); return; }
+      if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+        descendStmt(node);
+        return;
+      }
+      for (var k in node) {
+        if (k === 'loc' || k === 'start' || k === 'end' || k === 'parent') continue;
+        var child = node[k];
+        if (!child || typeof child !== 'object') continue;
+        descendNestedFunctions(child);
+      }
+    }
+
     function descendStmt(node) {
       if (!node) return;
       if (Array.isArray(node)) { node.forEach(descendStmt); return; }
@@ -185,7 +202,7 @@
 
       // Inject step hook for top-level statement kinds we recognize.
       if (STMT_KINDS[node.type]) {
-        injectBefore(node);
+        injectBefore(node, node.type === 'DebuggerStatement');
       }
 
       // ThrowStatement gets the line hook AND its argument wrapped so that
@@ -276,9 +293,18 @@
           }
           break;
         case 'ExpressionStatement':
+          descendNestedFunctions(node.expression);
+          break;
         case 'VariableDeclaration':
+          (node.declarations || []).forEach(function (d) { descendNestedFunctions(d && d.init); });
+          break;
         case 'ReturnStatement':
+          descendNestedFunctions(node.argument);
+          break;
         case 'ThrowStatement':
+          descendNestedFunctions(node.argument);
+          break;
+        case 'DebuggerStatement':
         case 'BreakStatement':
         case 'ContinueStatement':
           // Leaf statements — already injected before; nothing to descend.

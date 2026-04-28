@@ -47,26 +47,6 @@ function send(msg) {
   process.stdout.write(PROTO_PREFIX + JSON.stringify(msg) + PROTO_SUFFIX);
 }
 
-// Read one line from stdin synchronously. Used only at startup to grab the
-// initial config; afterwards we use async stdin readline so the inspector
-// event loop stays responsive.
-function readLineSync() {
-  const buf = Buffer.alloc(1);
-  let line = '';
-  while (true) {
-    let n;
-    try { n = fs.readSync(0, buf, 0, 1, null); }
-    catch (e) {
-      if (e.code === 'EAGAIN') continue;
-      throw e;
-    }
-    if (n === 0) return null;
-    const ch = buf.toString('utf8', 0, 1);
-    if (ch === '\n') return line;
-    line += ch;
-  }
-}
-
 // Async command queue: parent's commands arrive as JSON lines on stdin.
 // `awaitCommand()` returns a Promise resolved when the next command arrives.
 const commandQueue = [];
@@ -74,17 +54,7 @@ const commandWaiters = [];
 let stdinBuffer = '';
 let runtimeUpdateChain = Promise.resolve();
 
-function queueRuntimeUpdate(msg) {
-  runtimeUpdateChain = runtimeUpdateChain
-    .then(() => applyRuntimeUpdates(msg))
-    .catch((e) => {
-      send({ type: 'debuggerError', message: 'runtime update error: ' + String(e && e.stack || e) });
-    });
-  return runtimeUpdateChain;
-}
-
-function handleCommandChunk(chunk) {
-  stdinBuffer += chunk.toString('utf8');
+function processCommandBuffer() {
   let nl;
   while ((nl = stdinBuffer.indexOf('\n')) !== -1) {
     const line = stdinBuffer.slice(0, nl);
@@ -92,6 +62,12 @@ function handleCommandChunk(chunk) {
     if (!line.trim()) continue;
     let msg;
     try { msg = JSON.parse(line); } catch (e) { continue; }
+    if (msg.code === 5) {
+      stopFlag = true;
+      send({ type: 'debugComplete', exitCode: 0 });
+      setImmediate(() => process.exit(0));
+      continue;
+    }
     if (msg.update_only) {
       queueRuntimeUpdate(msg);
       continue;
@@ -105,8 +81,39 @@ function handleCommandChunk(chunk) {
   }
 }
 
+function queueRuntimeUpdate(msg) {
+  runtimeUpdateChain = runtimeUpdateChain
+    .then(() => applyRuntimeUpdates(msg))
+    .catch((e) => {
+      send({ type: 'debuggerError', message: 'runtime update error: ' + String(e && e.stack || e) });
+    });
+  return runtimeUpdateChain;
+}
+
+function handleCommandChunk(chunk) {
+  stdinBuffer += chunk.toString('utf8');
+  processCommandBuffer();
+}
+
 function startCommandReader() {
   process.stdin.on('data', handleCommandChunk);
+  processCommandBuffer();
+}
+
+function readInitialLine() {
+  return new Promise((resolve) => {
+    function onData(chunk) {
+      stdinBuffer += chunk.toString('utf8');
+      const nl = stdinBuffer.indexOf('\n');
+      if (nl === -1) return;
+      const line = stdinBuffer.slice(0, nl);
+      stdinBuffer = stdinBuffer.slice(nl + 1);
+      process.stdin.removeListener('data', onData);
+      resolve(line);
+    }
+    process.stdin.on('data', onData);
+    if (typeof process.stdin.resume === 'function') process.stdin.resume();
+  });
 }
 
 function awaitCommand() {
@@ -479,6 +486,7 @@ function shouldSurfacePause(params) {
     if (allBelowThreshold) return false;
     return true;
   }
+  if (params.reason === 'debugCommand' || looksLikeDebuggerStatement(params)) return true;
   // Exception event: surface only if at least one Exception Breakpoint
   // matches. We cannot use `params.data` directly here without a snapshot,
   // so we attach the captureSnapshot result later. The actual filter happens
@@ -497,6 +505,20 @@ function shouldSurfacePause(params) {
   }
   if (userMode === 'sync') return true;
   return false;
+}
+
+function looksLikeDebuggerStatement(params) {
+  if (!params || params.reason !== 'other') return false;
+  const top = params.callFrames && params.callFrames[0];
+  if (!top || !top.url || !top.location) return false;
+  const file = scriptUrlToUserPath(top.url);
+  if (!file || file.indexOf('/tutorial/') !== 0) return false;
+  try {
+    const line = fs.readFileSync(file, 'utf8').split(/\r?\n/)[top.location.lineNumber] || '';
+    return /\bdebugger\s*;?/.test(line);
+  } catch (e) {
+    return false;
+  }
 }
 
 // ---- Apply UI commands -----------------------------------------------------
@@ -720,8 +742,12 @@ async function handlePaused(params) {
 // ---- Boot ------------------------------------------------------------------
 
 async function boot() {
-  // Initial config — one JSON line on stdin
-  const initLine = readLineSync();
+  // Initial config. WebContainer stdin can behave like terminal input, so the
+  // channel normally passes a JSON file path as argv[2]. The stdin line remains
+  // as a fallback for older/manual launchers.
+  const initLine = process.argv[2]
+    ? fs.readFileSync(process.argv[2], 'utf8')
+    : await readInitialLine();
   if (!initLine) {
     send({ type: 'debugComplete', exitCode: 1, error: 'no init config received' });
     process.exit(1);
@@ -776,6 +802,10 @@ async function boot() {
     // Surface as a final exception snapshot, then complete with non-zero exit.
     send({ type: 'log', msg: '[ttd-node] uncaught: ' + String(e && e.stack || e) });
     exitCode = 1;
+  }
+  if (cfg.serverMode && exitCode === 0) {
+    send({ type: 'log', msg: '[ttd-node] server mode active; waiting for HTTP requests' });
+    return;
   }
   send({ type: 'debugComplete', exitCode: exitCode });
   // Drain final stdout/stderr by giving the event loop a tick

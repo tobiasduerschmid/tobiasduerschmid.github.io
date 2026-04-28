@@ -193,4 +193,123 @@ test.describe('debugger runtime robustness', () => {
       body: JSON.stringify({ received: { name: 'Ada', grade: 99 } }, null, 2),
     });
   });
+
+  test('browser runtime instruments required JavaScript modules with tutorial paths', () => {
+    const sandbox = loadScriptInVm('js/debugger/browser/runtime.js');
+    const instrumented = [];
+    sandbox.self.__ttdInstrument = (source, file) => {
+      instrumented.push({ source, file });
+      return `exports.__instrumentedFile = ${JSON.stringify(file)};\n${source}`;
+    };
+
+    sandbox.setupNodeMocks({
+      '/tutorial/studentRoutes.js': 'exports.answer = 42;',
+    });
+
+    const mod = sandbox.self.require('./studentRoutes');
+    const cached = sandbox.self.require('./studentRoutes.js');
+
+    expect(mod).toEqual({ __instrumentedFile: '/tutorial/studentRoutes.js', answer: 42 });
+    expect(cached).toBe(mod);
+    expect(instrumented).toEqual([{
+      source: 'exports.answer = 42;',
+      file: '/tutorial/studentRoutes.js',
+    }]);
+  });
+
+  test('browser instrumenter turns debugger statements into forced debugger pauses', () => {
+    const sandbox = loadScriptInVm('js/debugger/browser/instrument.js', {
+      self: {
+        postMessage: () => {},
+        addEventListener: () => {},
+        acorn: {
+          parse: () => ({
+            body: [{
+              type: 'DebuggerStatement',
+              start: 0,
+              end: 'debugger;'.length,
+              loc: { start: { line: 1, column: 0 } },
+            }],
+          }),
+        },
+      },
+    });
+
+    const out = sandbox.self.__ttdInstrument('debugger;', '/tutorial/app.js');
+
+    expect(out).toContain('__ttd.onLine("/tutorial/app.js", 1, function () { return {}; }, true);');
+    expect(out).toContain('debugger;');
+  });
+
+  test('browser instrumenter instruments callback bodies inside route registrations', () => {
+    const source = "router.get('/', (req, res) => {\n  res.json(students);\n});";
+    const arrowStart = source.indexOf('(req, res)');
+    const bodyStart = source.indexOf('{');
+    const bodyEnd = source.lastIndexOf('}') + 1;
+    const handlerStart = source.indexOf('res.json');
+    const sandbox = loadScriptInVm('js/debugger/browser/instrument.js', {
+      self: {
+        postMessage: () => {},
+        addEventListener: () => {},
+        acorn: {
+          parse: () => ({
+            body: [{
+              type: 'ExpressionStatement',
+              start: 0,
+              end: source.length,
+              loc: { start: { line: 1, column: 0 } },
+              expression: {
+                type: 'CallExpression',
+                arguments: [{
+                  type: 'ArrowFunctionExpression',
+                  start: arrowStart,
+                  end: bodyEnd,
+                  id: null,
+                  params: [{ type: 'Identifier', name: 'req' }, { type: 'Identifier', name: 'res' }],
+                  loc: { start: { line: 1, column: arrowStart } },
+                  body: {
+                    type: 'BlockStatement',
+                    start: bodyStart,
+                    end: bodyEnd,
+                    loc: { start: { line: 1, column: bodyStart } },
+                    body: [{
+                      type: 'ExpressionStatement',
+                      start: handlerStart,
+                      end: source.indexOf(';', handlerStart) + 1,
+                      loc: { start: { line: 2, column: 2 } },
+                      expression: { type: 'CallExpression', arguments: [] },
+                    }],
+                  },
+                }],
+              },
+            }],
+          }),
+        },
+      },
+    });
+
+    const out = sandbox.self.__ttdInstrument(source, '/tutorial/studentRoutes.js');
+
+    expect(out).toContain('__ttd.onCall("<anonymous>", "/tutorial/studentRoutes.js", 1);');
+    expect(out).toContain('__ttd.onLine("/tutorial/studentRoutes.js", 2,');
+  });
+
+  test('browser runtime surfaces forced line pauses without a breakpoint', () => {
+    const sandbox = loadScriptInVm('js/debugger/browser/runtime.js');
+    const sab = new SharedArrayBuffer(sandbox.EXCBPS_OFF + sandbox.EXCBPS_REGION_BYTES);
+    sandbox.i32 = new Int32Array(sab);
+    sandbox.u8 = new Uint8Array(sab);
+    Atomics.store(sandbox.i32, 0, 1);
+
+    sandbox.onLine('/tutorial/studentRoutes.js', 13, () => ({ students: [1, 2, 3] }), true);
+
+    const paused = sandbox.messages
+      .map(msg => msg && msg.payload)
+      .filter(msg => msg && msg.type === 'paused');
+    expect(paused).toHaveLength(1);
+    expect(paused[0].snapshots[0]).toMatchObject({
+      file: '/tutorial/studentRoutes.js',
+      line: 13,
+    });
+  });
 });
