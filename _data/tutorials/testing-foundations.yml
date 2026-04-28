@@ -1480,8 +1480,8 @@ steps:
 
             def test_common_potion_has_correct_card():
                 result = build_loot_card("Healing Potion", 3, "common")
-                # Assert ONLY on the spec-mandated fields. `created_at` is not
-                # in the spec, so we don't pin it.
+                # Assert ONLY on the spec-mandated fields — anything outside
+                # the spec is an implementation detail and must not be pinned.
                 assert result["name"] == "Healing Potion"
                 assert result["qty"] == 3
                 assert result["rarity"] == "common"
