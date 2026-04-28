@@ -120,15 +120,16 @@ test.describe.serial('React Tutorial', () => {
   test('preview updates after saving editor content', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    const before = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
     await setEditorContent(page, [
       'function App() { return <h1>Changed</h1>; }',
       'const root = ReactDOM.createRoot(document.getElementById("root"));',
       'root.render(<App />);',
     ].join('\n'));
     await saveAndWaitForPreview(page);
-    const after = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(after).not.toBe(before);
+    // _patchReactPreview hot-reloads via postMessage once Babel is loaded —
+    // srcdoc stays the same, so check the rendered DOM inside the iframe.
+    const frame = page.frameLocator('.tvm-preview-frame');
+    await expect(frame.locator('h1')).toHaveText('Changed', { timeout: 5_000 });
   });
 
   test('refresh button rebuilds the preview', async () => {
