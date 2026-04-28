@@ -14,7 +14,7 @@ Refactoring acts as a counterforce to this entropy. It should be conducted whene
 The primary trigger for refactoring is the identification of **"Bad Code Smells"**—symptoms in the source code that indicate deeper design problems. Common smells include:
 
 *   **Duplicated Code:** Copying and pasting logic across different classes, which increases the risk of inconsistent updates.
-*   **Long Method / Large Class:** Violations of the **Single Responsibility Principle**, where a single unit of code tries to do too many things.
+*   **Long Method / Large Class:** Violations of the [**Single Responsibility Principle**](/SEBook/designprinciples/solid.html#single-responsibility-principle-srp), where a single unit of code tries to do too many things.
 *   **Divergent Change:** Occurs when one class is commonly changed in different ways for different reasons (e.g., changing database logic and financial formulas in the same file).
 *   **Shotgun Surgery:** The opposite of divergent change; it occurs when a single design change requires small modifications across many different classes.
 *   **Primitive Obsession:** Using primitive types like strings or integers to represent complex concepts (e.g., formatting a customer name or a currency unit) instead of dedicated objects.
@@ -26,7 +26,7 @@ Refactoring involves applying specific, named transformations to address code sm
 *   **Extract Class:** When a class suffers from **Divergent Change**, developers take the specific code regions that change for different reasons and move them into separate, specialized classes.
 *   **Inline Class:** The inverse of Extract Class; if a class is not "paying for itself" in terms of maintenance costs (a **Lazy Class**), its features are moved into another class and the original is deleted.
 *   **Introduce Parameter Object:** To solve **Data Clumps**, developers replace a long list of primitive parameters with a single object (e.g., replacing `start: Date, end: Date` with a `DateRange` object).
-*   **Replace Conditional with Polymorphism:** One of the most powerful transformations, this involves taking a complex switch statement or if-else block and moving each branch into an overriding method in a subclass. This often results in the implementation of the **Strategy** or **State** design patterns.
+*   **Replace Conditional with Polymorphism:** One of the most powerful transformations, this involves taking a complex switch statement or if-else block and moving each branch into an overriding method in a subclass. This often results in the implementation of the **Strategy** or [**State**](/SEBook/designpatterns/state.html) design patterns.
 *   **Hide Delegate:** To reduce unnecessary coupling (**Inappropriate Intimacy**), a server class is modified to act as a go-between, preventing the client from having to navigate deep chains of method calls across multiple objects.
 
 # The Safety Net: Testing and Process
@@ -40,7 +40,7 @@ Key rules for safe refactoring include:
 #  Refactoring in the Age of Generative AI
 Modern **Generative AI (GenAI)** tools are highly effective at implementing these transformations because they have been trained on classic refactoring catalogs. A developer can explicitly prompt an AI agent to **"Replace this conditional with polymorphism"** or **"Refactor this to use the Strategy pattern"**.
 
-However, the **Supervisor Mentality** remains critical. AI agents have limited context windows and may struggle with system-level refactorings that span an entire code base. The human engineer’s role is to identify *when* a refactoring is needed and to orchestrate the AI through small, verifiable steps, running tests after every AI-generated change to ensure correctness. By keeping **Information Hiding** and modularity in mind, developers can limit the context required for any single refactoring, making both themselves and their AI assistants more effective.
+However, the **Supervisor Mentality** remains critical. AI agents have limited context windows and may struggle with system-level refactorings that span an entire code base. The human engineer’s role is to identify *when* a refactoring is needed and to orchestrate the AI through small, verifiable steps, running tests after every AI-generated change to ensure correctness. By keeping [**Information Hiding**](/SEBook/designprinciples/informationhiding.html) and modularity in mind, developers can limit the context required for any single refactoring, making both themselves and their AI assistants more effective.
 
 # Practice This
 

@@ -9,7 +9,7 @@ Consider a compiler that represents programs as Abstract Syntax Trees (ASTs). Th
 # Problem
 Distributing all these diverse operations directly across the node classes of the AST would heavily clutter the structure. 
 *   **Pollution of Elements:** The core purpose of an AST node is to represent syntax, not to perform type-checking or code generation. Adding these behaviors pollutes the elements.
-*   **Violation of Open/Closed Principle:** Every time a new operation is required (e.g., a new code optimization pass), you have to modify every single node class in the hierarchy.
+*   **Violation of [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp):** Every time a new operation is required (e.g., a new code optimization pass), you have to modify every single node class in the hierarchy.
 
 # Solution
 The **Visitor Pattern** represents an operation to be performed on the elements of an object structure. It lets you define a new operation without changing the classes of the elements on which it operates.
@@ -21,7 +21,7 @@ The key participants are:
 2.  **ConcreteVisitor:** Implements the operations declared by the `Visitor`, providing the algorithm and accumulating state as it traverses the structure.
 3.  **Element:** Defines an `accept` operation that takes a visitor as an argument.
 4.  **ConcreteElement:** Implements the `accept` operation by calling back to the specific `visit` method on the visitor that corresponds to its own class.
-5.  **ObjectStructure:** A composite or collection that can enumerate its elements.
+5.  **ObjectStructure:** A [composite](/SEBook/designpatterns/composite.html) or collection that can enumerate its elements.
 
 > [!WARNING]
 > If the element classes (the object structure) change frequently, this pattern is a poor choice. Adding a new `ConcreteElement` requires adding a corresponding operation to the `Visitor` interface and updating every single `ConcreteVisitor`.

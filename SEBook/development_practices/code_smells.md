@@ -25,7 +25,7 @@ As the name suggests, this smell occurs when a single method or function grows t
 
 ### 3. Large Class
 Similar to a long method, a large class is a class that has grown unwieldy by taking on too many responsibilities. 
-* **The Problem:** Large classes violate the Single Responsibility Principle. They often have too many instance variables and methods, making them monolithic and hard to modify without unintended side effects.
+* **The Problem:** Large classes violate the [Single Responsibility Principle](/SEBook/designprinciples/solid.html#single-responsibility-principle-srp). They often have too many instance variables and methods, making them monolithic and hard to modify without unintended side effects.
 * **The Solution:** Extract related variables and methods into their own separate classes. 
 
 ### 4. Long Parameter List
@@ -55,6 +55,6 @@ Data clumps are groups of variables that are always seen together throughout the
 
 ## How to Handle Code Smells
 
-The primary cure for code smells is **Refactoring**—the process of changing a software system in such a way that it does not alter the external behavior of the code yet improves its internal structure. 
+The primary cure for code smells is [**Refactoring**](/SEBook/development_practices/refactoring.html)—the process of changing a software system in such a way that it does not alter the external behavior of the code yet improves its internal structure. 
 
 By familiarizing yourself with these smells, you can train your "developer nose" to spot poor design early. Integrating continuous refactoring into your daily workflow ensures that your codebase remains clean, modular, and adaptable to change.

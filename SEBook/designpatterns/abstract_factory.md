@@ -13,7 +13,7 @@ The primary challenge arises when a system needs to be independent of how its pr
 *   **Tight Coupling:** If the `Pizza` class directly instantiates concrete ingredient classes, it becomes "intimate" with every regional variation, making it incredibly difficult to add a new region like Los Angeles without modifying existing code.
 
 # Solution
-The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. *Note: It is a common misconception to refer to this as a "factory of factories." A system where factories produce other factories introduces unnecessary complexity and defeats the purpose of the pattern.* A much better mental model is to think of it as a **"Product Family Factory"** or an **"Ingredients Factory."** Structurally, a single Abstract Factory interface simply contains a collection of multiple **Factory Methods**—one for each product in the family. 
+The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. *Note: It is a common misconception to refer to this as a "factory of factories." A system where factories produce other factories introduces unnecessary complexity and defeats the purpose of the pattern.* A much better mental model is to think of it as a **"Product Family Factory"** or an **"Ingredients Factory."** Structurally, a single Abstract Factory interface simply contains a collection of multiple [**Factory Methods**](/SEBook/designpatterns/factory_method.html)—one for each product in the family. 
 
 The design pattern involves these roles:
 1.  **Abstract Factory Interface:** Defining an interface (e.g., `PizzaIngredientFactory`) with a creation method for each type of product in the family (e.g., `createDough()`, `createSauce()`).
@@ -393,7 +393,7 @@ Applying the Abstract Factory pattern results in several significant architectur
 
 Understanding when each creational pattern applies requires examining *which sub-problem of object creation* each one solves:
 
-| | **Factory Method** | **Abstract Factory** | **Builder** |
+| | **[Factory Method](/SEBook/designpatterns/factory_method.html)** | **Abstract Factory** | **[Builder](/SEBook/designpatterns/builder.html)** |
 |---|---|---|---|
 | **Focus** | One product type | Family of related product types | Complex product with many parts |
 | **Mechanism** | Inheritance (subclass overrides) | Composition (client receives factory object) | Step-by-step construction algorithm |

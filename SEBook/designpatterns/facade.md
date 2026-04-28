@@ -10,7 +10,7 @@ In modern software construction, we often build systems composed of multiple com
 When a client needs to interact with a set of complex subsystems, several issues arise:
 1.  **High Complexity:** To perform a single logical action like "Watch a Movie," the client might have to execute a long sequence of manual steps—turning on the popper, dimming lights, lowering the screen, configuring the projector input, and finally starting the DVD player.
 2.  **Maintenance Nightmares:** If the movie finishes, the user has to perform all those steps again in reverse order. If a component is upgraded (e.g., replacing a DVD player with a streaming device), every client that uses the system must learn a new, slightly different procedure.
-3.  **Tight Coupling:** The client code becomes "intimate" with every single class in the subsystem. This violates the principle of **Information Hiding**, as the client must understand the internal low-level details of how each device operates just to use the system.
+3.  **Tight Coupling:** The client code becomes "intimate" with every single class in the subsystem. This violates the principle of [**Information Hiding**](/SEBook/designprinciples/informationhiding.html), as the client must understand the internal low-level details of how each device operates just to use the system.
 
 # Solution
 The **Façade Pattern** provides a unified interface to a set of interfaces in a subsystem. It defines a higher-level interface that makes the subsystem easier to use by wrapping complexity behind a single, simplified object.

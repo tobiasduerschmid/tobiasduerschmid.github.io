@@ -180,7 +180,7 @@ With this split, three UIs can drive the *same* engine. And a headless test suit
 
 ## Example 3 — Model–View–Controller (MVC)
 
-MVC is the most famous application of SoC to user-facing software *(Dobrean & Dioşan, 2019, SEKE)*:
+[MVC](/SEBook/designpatterns/mvc.html) is the most famous application of SoC to user-facing software *(Dobrean & Dioşan, 2019, SEKE)*:
 
 | Component      | Concern                                                         |
 |----------------|-----------------------------------------------------------------|
@@ -274,9 +274,9 @@ Knowing the principle is not the same as knowing the moves. Here are the recurri
 1. **Modules, namespaces, packages.** The crudest and most fundamental tool — put things in different files and folders and you already get something.
 2. **Interfaces and abstract types.** Define *what* one layer needs from another as a contract, not a concrete class. Pure SoC.
 3. **Dependency inversion.** The high-level concern depends on an abstraction it *owns*; the low-level detail implements the abstraction. This lets you swap implementations.
-4. **Layered architecture.** Strict "depends-only-downward" rules between layers.
-5. **Events and callbacks.** The Application Layer doesn't call the UI; instead the UI *subscribes* (Observer pattern). The Subject never knows the concrete subscriber.
-6. **MVC / MVVM / MVP family.** Structural patterns that formalize common UI-domain separations.
+4. **[Layered architecture](/SEBook/architectural_styles/layers.html).** Strict "depends-only-downward" rules between layers.
+5. **Events and callbacks.** The Application Layer doesn't call the UI; instead the UI *subscribes* ([Observer pattern](/SEBook/designpatterns/observer.html)). The Subject never knows the concrete subscriber.
+6. **[MVC](/SEBook/designpatterns/mvc.html) / MVVM / MVP family.** Structural patterns that formalize common UI-domain separations.
 7. **Aspect-oriented programming (AOP).** For **crosscutting concerns** (logging, security, transactions) that naturally touch every module, AOP lets you declare them in one place and weave them across the codebase *(Marin et al., 2009)*.
 
 # When the Seam Is Hard to Find: Crosscutting Concerns

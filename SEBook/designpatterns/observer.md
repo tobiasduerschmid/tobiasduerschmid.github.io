@@ -9,7 +9,7 @@ layout: sebook
 
 In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly.
 
-If the dependent objects constantly check the core object for changes (polling), it wastes valuable CPU cycles and resources. Conversely, if the core object is hard-coded to directly update all its dependent objects, the classes become tightly coupled. Every time you need to add or remove a dependent object, you have to modify the core object's code, violating the [Open/Closed Principle](https://tobiasduerschmid.github.io/SEBook/solid.html#open/closed-principle).
+If the dependent objects constantly check the core object for changes (polling), it wastes valuable CPU cycles and resources. Conversely, if the core object is hard-coded to directly update all its dependent objects, the classes become tightly coupled. Every time you need to add or remove a dependent object, you have to modify the core object's code, violating the [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp).
 
 The core problem is: **How can a one-to-many dependency between objects be maintained efficiently without making the objects tightly coupled?**
 

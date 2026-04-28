@@ -123,9 +123,9 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 
 MVC is one of the most important examples of a **pattern compound**—a combination of patterns where the whole is greater than the sum of its parts. Understanding MVC at the compound level reveals why it works:
 
-1. **Observer** (Model ↔ View): The model broadcasts change notifications; views subscribe and update themselves. This enables multiple synchronized views of the same data without the model knowing anything about the views.
+1. [**Observer**](/SEBook/designpatterns/observer.html) (Model ↔ View): The model broadcasts change notifications; views subscribe and update themselves. This enables multiple synchronized views of the same data without the model knowing anything about the views.
 2. **Strategy** (View ↔ Controller): The view delegates input handling to a controller object. Because the controller is a Strategy, it can be swapped at runtime—for example, replacing a standard editing controller with a read-only controller.
-3. **Composite** (View internals): The view itself is often a tree of nested UI components (windows containing panels containing buttons). The Composite pattern allows operations like `render()` to propagate through this tree uniformly.
+3. [**Composite**](/SEBook/designpatterns/composite.html) (View internals): The view itself is often a tree of nested UI components (windows containing panels containing buttons). The Composite pattern allows operations like `render()` to propagate through this tree uniformly.
 
 The **emergent property** of this compound is a clean three-way separation where each component can be developed, tested, and replaced independently. No individual pattern achieves this alone—it is the *combination* of Observer (data synchronization), Strategy (input flexibility), and Composite (UI structure) that makes MVC powerful.
 

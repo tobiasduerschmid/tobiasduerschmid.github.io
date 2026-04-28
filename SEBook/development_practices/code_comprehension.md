@@ -90,7 +90,7 @@ While modularity isolates complexity, excessive abstraction can severely damage 
 Design patterns serve a dual, somewhat paradoxical role in comprehension:
 
 * **As a High-Level Language:** Patterns provide a "theory of the design" {% cite Gamma1995 %}. Stating that a component uses a "Command Processor" pattern immediately conveys top-down intent and behavioral dynamics to peers without requiring a bottom-up explanation.
-* **As a Source of Cognitive Load:** Despite assumptions that patterns improve understandability, empirical studies reveal they often *do not* {% cite Khomh2018 %}. Patterns introduce extra layers of abstraction and implicit coupling (e.g., the Observer pattern), which can increase cognitive load and make code harder for maintainers to learn and debug {% cite Mohammed2016 %}.
+* **As a Source of Cognitive Load:** Despite assumptions that patterns improve understandability, empirical studies reveal they often *do not* {% cite Khomh2018 %}. Patterns introduce extra layers of abstraction and implicit coupling (e.g., the [Observer pattern](/SEBook/designpatterns/observer.html)), which can increase cognitive load and make code harder for maintainers to learn and debug {% cite Mohammed2016 %}.
 
 # Actionable Practices for Top-Down Comprehension
 

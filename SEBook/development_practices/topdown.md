@@ -55,7 +55,7 @@ At the code level, top-down comprehension is achieved by strictly organizing the
 * **Domain-Oriented Terminology:** Utilizing an Ubiquitous Language provides a direct mapping to real-world concepts, triggering domain schemata instantly.
 
 **Architectural Signposts and Design Patterns**
-Software design patterns are a shared vocabulary that acts as a cognitive shortcut. Seeing a class named `ReportVisitor` triggers the Visitor pattern schema, allowing the developer to understand the collaborative structure without reading the implementation. However, misapplying a pattern destroys top-down comprehension. If business logic is hidden inside a Factory pattern, the reader's schema fails, forcing an exhausting revert to bottom-up reading.
+Software [design patterns](/SEBook/designpatterns.html) are a shared vocabulary that acts as a cognitive shortcut. Seeing a class named `ReportVisitor` triggers the [Visitor pattern](/SEBook/designpatterns/visitor.html) schema, allowing the developer to understand the collaborative structure without reading the implementation. However, misapplying a pattern destroys top-down comprehension. If business logic is hidden inside a [Factory pattern](/SEBook/designpatterns/factory_method.html), the reader's schema fails, forcing an exhausting revert to bottom-up reading.
 
 
 #  Divergent Perspectives: The Opportunistic Switch

@@ -966,7 +966,7 @@ Students often confuse Information Hiding with neighboring ideas. Drawing the di
 | **[Single Responsibility (SRP)](/SEBook/designprinciples/solid.html)** | A class should have one reason to change. | SRP is Information Hiding restated for the *class* level — one class hides one secret, so it has one reason to change. |
 | **[Dependency Inversion (DIP)](/SEBook/designprinciples/solid.html)** | High-level policy depends on abstractions; details depend on those abstractions. | DIP is the *mechanism* most commonly used to keep secrets hidden across architectural layers. |
 | **Low Coupling / High Cohesion** | Modules should depend on each other little, and contain related things. | The metrics by which you measure whether Information Hiding succeeded. |
-| **Open/Closed Principle (OCP)** | Open for extension, closed for modification. | When secrets are well hidden, *adding* a new variant (e.g., `StripeGateway`) extends the system without modifying any existing module — the OCP payoff. |
+| **[Open/Closed Principle (OCP)](/SEBook/designprinciples/solid.html#openclosed-principle-ocp)** | Open for extension, closed for modification. | When secrets are well hidden, *adding* a new variant (e.g., `StripeGateway`) extends the system without modifying any existing module — the OCP payoff. |
 
 A useful slogan, attributed to Robert C. Martin: **"Gather together the things that change for the same reasons. Separate those things that change for different reasons".** That single sentence captures Information Hiding, SRP, and SoC simultaneously.
 
@@ -976,8 +976,8 @@ Knowing what to hide is one skill; knowing the *moves* to actually hide it is an
 
 1. **Interfaces and abstract types.** Define a contract (`PaymentGateway`) and write all clients against it; let one concrete class (`PayPalGateway`) implement it. The decision "we use PayPal" lives in exactly one file plus the dependency-injection wiring.
 2. **Dependency Inversion.** Don't reach down into low-level modules from high-level ones. Define the abstraction the high-level module *needs* and let the low-level module implement it. (See [DIP](/SEBook/designprinciples/solid.html).)
-3. **Facade pattern.** Wrap a complex subsystem behind a simple interface; clients see only the facade. Common when a third-party library is itself a tangled mess.
-4. **Adapter pattern.** Wrap an external API in your own interface so the rest of the code is insulated from its quirks.
+3. **[Facade pattern](/SEBook/designpatterns/facade.html).** Wrap a complex subsystem behind a simple interface; clients see only the facade. Common when a third-party library is itself a tangled mess.
+4. **[Adapter pattern](/SEBook/designpatterns/adapter.html).** Wrap an external API in your own interface so the rest of the code is insulated from its quirks.
 5. **Repository / Gateway pattern.** Hide the storage decision (SQL? NoSQL? in-memory?) behind a domain-shaped interface (`OrderRepository.findById(id)`).
 6. **Modules, packages, namespaces.** The crudest mechanism — putting things in different files and folders — already provides a unit of hiding, especially when paired with strong language-level visibility.
 7. **Access modifiers.** `private`, `protected`, internal-only modules in Rust/Go/Swift, JavaScript closures. The enforcement layer that prevents accidental leakage.

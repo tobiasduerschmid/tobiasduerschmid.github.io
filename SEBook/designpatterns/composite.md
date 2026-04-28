@@ -107,10 +107,10 @@ Adding a parent reference to `Component` enables upward traversal (e.g., "which 
 
 The Composite pattern frequently appears as a building block in larger pattern compounds, because many patterns need to operate on tree structures:
 
-* **Composite + Builder:** The Builder pattern can construct complex Composite structures step by step. The Composite's `Component` acts as the Builder's product, and the Builder handles the complexity of assembling the recursive tree.
-* **Composite + Visitor:** When many distinct operations need to be performed on a Composite structure without modifying its classes, the Visitor pattern provides a clean separation of concerns. This is especially useful when new operations are added frequently but new leaf types are rare.
+* **Composite + Builder:** The [Builder](/SEBook/designpatterns/builder.html) pattern can construct complex Composite structures step by step. The Composite's `Component` acts as the Builder's product, and the Builder handles the complexity of assembling the recursive tree.
+* **Composite + Visitor:** When many distinct operations need to be performed on a Composite structure without modifying its classes, the [Visitor](/SEBook/designpatterns/visitor.html) pattern provides a clean separation of concerns. This is especially useful when new operations are added frequently but new leaf types are rare.
 * **Composite + Iterator:** An Iterator can traverse the Composite tree in different orders (depth-first, breadth-first) without exposing the tree's internal structure to the client.
-* **Composite + Command:** A Composite Command groups multiple command objects into a tree, allowing hierarchical undo/redo operations and macro commands that execute sub-commands in sequence.
+* **Composite + Command:** A [Composite Command](/SEBook/designpatterns/command.html) groups multiple command objects into a tree, allowing hierarchical undo/redo operations and macro commands that execute sub-commands in sequence.
 
 These compounds are so common that recognizing the Composite pattern is often the first step toward identifying a larger architectural pattern at work.
 

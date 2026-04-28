@@ -34,7 +34,7 @@ To achieve true semantic interoperability, engineers must rigorously define the 
 
 
 # Architectural Tactics and Patterns
-When systems must interact but possess incompatible interfaces, the **Adapter design pattern** is the primary solution. An adapter component acts as a translator, sitting between two systems to convert data formats (syntactic translation) or map different meanings and units (semantic translation). This approach allows the systems to interoperate without requiring changes to their core business logic.
+When systems must interact but possess incompatible interfaces, the [**Adapter design pattern**](/SEBook/designpatterns/adapter.html) is the primary solution. An adapter component acts as a translator, sitting between two systems to convert data formats (syntactic translation) or map different meanings and units (semantic translation). This approach allows the systems to interoperate without requiring changes to their core business logic.
 
 In modern **microservices** architectures, interoperability is managed through **Bounded Contexts**. Each service handles its own data model for an entity, and interfaces are kept minimal—often sharing only a unique identifier like a User ID—to separate concerns and reduce the complexity of interactions.
 

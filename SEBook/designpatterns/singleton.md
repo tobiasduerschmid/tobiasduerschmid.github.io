@@ -211,7 +211,7 @@ Applying the Singleton Pattern results in several important architectural outcom
 *   **Controlled Access:** The pattern provides a single point of access that can be easily managed and updated.
 *   **Resource Efficiency:** It prevents the system from being cluttered with redundant, resource-intensive objects.
 *   **The Risk of "Singleitis":** A major drawback is the tendency for developers to overuse the pattern. Using a Singleton just for easy global access can lead to a hard-to-maintain design with high coupling, where it becomes unclear which classes depend on the Singleton and why.
-*   **Complexity in Testing:** Singletons can be difficult to mock during unit testing because they maintain state throughout the lifespan of the application. A `static getInstance()` call is a *hardcoded dependency*—there is no seam where a test double can be injected. This is why the pattern is considered an anti-pattern in test-driven development.
+*   **Complexity in Testing:** Singletons can be difficult to mock during unit testing because they maintain state throughout the lifespan of the application. A `static getInstance()` call is a *hardcoded dependency*—there is no seam where a [test double](/SEBook/testing/testdoubles.html) can be injected. This is why the pattern is considered an anti-pattern in [test-driven development](/SEBook/testing/tdd.html).
 
 # A Pattern with a "Weak Solution"
 

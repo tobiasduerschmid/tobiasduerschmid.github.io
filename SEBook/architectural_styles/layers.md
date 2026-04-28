@@ -62,7 +62,7 @@ Every architectural style is a prefabricated set of constraints designed to elic
 ## Code-Level Mechanics: Managing the Upward Flow
 A recurring dilemma in layered architectures is managing asynchronous events. If a lower layer (like a network sensor) detects an error or receives data, how does it notify the upper layer (the UI) if upward uses are strictly forbidden? 
 
-To maintain the integrity of the hierarchy, architects employ *callbacks* or the *Observer/Publish-Subscribe* pattern. The lower layer defines an abstract interface (a listener). The upper layer implements this interface and passes a reference (the callback) down to the lower layer. The lower layer can then trigger the callback without ever knowing the identity or existence of the upper layer, preserving the one-way coupling constraint.
+To maintain the integrity of the hierarchy, architects employ *callbacks* or the [*Observer*](/SEBook/designpatterns/observer.html)/[*Publish-Subscribe*](/SEBook/architectural_styles/pubsub.html) pattern. The lower layer defines an abstract interface (a listener). The upper layer implements this interface and passes a reference (the callback) down to the lower layer. The lower layer can then trigger the callback without ever knowing the identity or existence of the upper layer, preserving the one-way coupling constraint.
 
 ## Divergent Perspectives and Modern Evolution
 

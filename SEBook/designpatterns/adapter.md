@@ -14,7 +14,7 @@ The primary challenge occurs when we want to use an existing class, but its inte
 *   **Vendor Lock-in:** We are using a vendor class that we cannot modify, yet its method names or parameters don't align with our system's requirements.
 *   **Syntactic and Semantic Mismatches:** Two interfaces might differ in syntax (e.g., `getDistance()` in inches vs. `getLength()` in meters) or semantics (e.g., a method that performs a similar action but with different side effects).
 
-Without an adapter, we would be forced to rewrite our existing system code to accommodate every new vendor or legacy class, which violates the **Open/Closed Principle** and creates tight coupling.
+Without an adapter, we would be forced to rewrite our existing system code to accommodate every new vendor or legacy class, which violates the [**Open/Closed Principle**](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) and creates tight coupling.
 
 # Solution
 The **Adapter Pattern** solves this by creating a class that converts the interface of an "Adaptee" class into the "Target" interface that the "Client" expects. 
@@ -325,7 +325,7 @@ testDuck(new TurkeyAdapter(new WildTurkey()));
 # Consequences
 Applying the Adapter pattern results in several significant architectural trade-offs:
 *   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing the Adaptee to evolve independently without breaking the client code.
-*   **Information Hiding:** It follows the Information Hiding principle by concealing the "secret" that the system is using a legacy component.
+*   **Information Hiding:** It follows the [Information Hiding](/SEBook/designprinciples/informationhiding.html) principle by concealing the "secret" that the system is using a legacy component.
 *   **Flexibility vs. Complexity:** While adapters make a system more flexible, they add a layer of indirection that can make it harder to trace the execution flow of the program since the client doesn't know which object is actually receiving the signal.
 
 # Design Decisions
