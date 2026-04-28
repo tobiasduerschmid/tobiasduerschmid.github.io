@@ -5978,49 +5978,158 @@
     if (!this.config.enableGitGutter) return;
     var entry = this.editorModels[filename];
     if (!entry || !entry.model || entry.model.isDisposed()) return;
-    if (this.config.backend !== 'pyodide') return;
     var self = this;
-    var dir = this.gitGraphPath || '/tutorial';
-    this._postWorker(
-      { type: 'gitReadAtRef', path: dir + '/' + filename, ref: 'HEAD' },
-      function (msg) {
-        if (msg.type !== 'git_read_at_ref') return;
-        var ent = self.editorModels[filename];
-        if (!ent || !ent.model || ent.model.isDisposed()) return;
-        // Git isn't initialised yet (or hit a non-NotFound error) — leave the
-        // existing gutter alone instead of flipping every line to "added".
-        if (msg.notReady) {
-          self._gitGutterPending = self._gitGutterPending || {};
-          self._gitGutterPending[filename] = true;
-          return;
-        }
-        var current = ent.model.getValue();
-        var head = msg.content;
-        var diff = (head === null)
-          ? { added: _allLineNumbers(current), modified: [], deleted: [] }
-          : _gitGutterDiff(head, current);
-        var decorations = [];
-        diff.added.forEach(function (ln) {
-          decorations.push({
-            range: new monaco.Range(ln, 1, ln, 1),
-            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-added' },
-          });
-        });
-        diff.modified.forEach(function (ln) {
-          decorations.push({
-            range: new monaco.Range(ln, 1, ln, 1),
-            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-modified' },
-          });
-        });
-        diff.deleted.forEach(function (ln) {
-          decorations.push({
-            range: new monaco.Range(Math.max(1, ln), 1, Math.max(1, ln), 1),
-            options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-deleted' },
-          });
-        });
-        ent._gitGutterIds = ent.model.deltaDecorations(ent._gitGutterIds || [], decorations);
+
+    // Skip files that aren't inside the git repo. editorModels keys are
+    // relative to /tutorial; the repo root is gitGraphPath. If the file
+    // lives outside the repo root (e.g. /tutorial/notes.md while git_graph
+    // is /tutorial/myproject), `git show HEAD:<path>` would never find it.
+    var repoRoot = this.gitGraphPath || '/tutorial';
+    var absPath = '/tutorial/' + filename;
+    if (absPath.indexOf(repoRoot.replace(/\/$/, '') + '/') !== 0 &&
+        absPath !== repoRoot) {
+      return;
+    }
+
+    // Fetch HEAD's content for this file via whichever backend is in play.
+    // Both paths resolve to {content, notReady}:
+    //   content === <string>  → file is at HEAD; diff against current buffer
+    //   content === null      → file is NOT at HEAD (untracked / new file)
+    //   notReady === true     → backend isn't ready yet; leave gutter alone
+    var headPromise;
+    if (this.config.backend === 'pyodide') {
+      headPromise = new Promise(function (resolve) {
+        // Send the absolute path under /tutorial; the worker strips the
+        // repo-root prefix itself to get the iso-git-relative path.
+        self._postWorker(
+          { type: 'gitReadAtRef', path: absPath, ref: 'HEAD' },
+          function (msg) {
+            if (!msg || msg.type !== 'git_read_at_ref') {
+              return resolve({ content: null, notReady: true });
+            }
+            resolve({ content: msg.content, notReady: !!msg.notReady });
+          }
+        );
+      });
+    } else if (this.config.backend === 'v86') {
+      headPromise = this._v86GitFileAtHead(filename);
+    } else {
+      return;  // other backends (sql, prolog, java, react) have no git
+    }
+
+    headPromise.then(function (result) {
+      var ent = self.editorModels[filename];
+      if (!ent || !ent.model || ent.model.isDisposed()) return;
+      if (result.notReady) {
+        self._gitGutterPending = self._gitGutterPending || {};
+        self._gitGutterPending[filename] = true;
+        return;
       }
-    );
+      var current = ent.model.getValue();
+      var head = result.content;
+      var diff = (head === null)
+        ? { added: _allLineNumbers(current), modified: [], deleted: [] }
+        : _gitGutterDiff(head, current);
+      var decorations = [];
+      diff.added.forEach(function (ln) {
+        decorations.push({
+          range: new monaco.Range(ln, 1, ln, 1),
+          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-added' },
+        });
+      });
+      diff.modified.forEach(function (ln) {
+        decorations.push({
+          range: new monaco.Range(ln, 1, ln, 1),
+          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-modified' },
+        });
+      });
+      diff.deleted.forEach(function (ln) {
+        decorations.push({
+          range: new monaco.Range(Math.max(1, ln), 1, Math.max(1, ln), 1),
+          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-deleted' },
+        });
+      });
+      ent._gitGutterIds = ent.model.deltaDecorations(ent._gitGutterIds || [], decorations);
+    });
+  };
+
+  // v86 backend: read <filename> at HEAD by shelling `git show` into a
+  // temp file on the 9p mount, then reading that file from JS.
+  //
+  // Returns a Promise of {content, notReady}:
+  //   content === <string>   — exact bytes of the blob at HEAD
+  //   content === null       — file not at HEAD (untracked / never committed)
+  //   notReady === true      — VM not booted / read failed; gutter left alone
+  //
+  // Uses a unique-per-call temp filename so concurrent refreshes for
+  // different files don't race on a shared buffer. _runSilent serialises
+  // the writes through _silentQueue, so each .then(read) sees its own file.
+  TutorialCode.prototype._v86GitFileAtHead = function (filename) {
+    var self = this;
+    if (!this.emulator || !this.emulator.read_file) {
+      return Promise.resolve({ content: null, notReady: true });
+    }
+    var repoRoot = this.gitGraphPath || '/tutorial';
+    // editorModels keys are relative to /tutorial; convert to a repo-relative
+    // path by stripping the repo-root prefix. e.g.:
+    //   gitGraphPath=/tutorial/myproject, filename=myproject/hero_registry.py
+    //   → absPath=/tutorial/myproject/hero_registry.py, repoRel=hero_registry.py
+    var absPath = '/tutorial/' + filename;
+    var rootPrefix = repoRoot.replace(/\/$/, '') + '/';
+    var repoRel;
+    if (absPath.indexOf(rootPrefix) === 0) {
+      repoRel = absPath.substring(rootPrefix.length);
+    } else if (absPath === repoRoot) {
+      return Promise.resolve({ content: null, notReady: false });  // dir, not file
+    } else {
+      // Outside the repo — gutter is meaningless here.
+      return Promise.resolve({ content: null, notReady: false });
+    }
+
+    // Unique tag avoids collision with anything the user's file might contain.
+    var tag = Math.random().toString(36).substr(2, 12);
+    var marker = '__GG_END_' + tag + '__';
+    var tmpRel = '.git/__gutter_' + tag;
+    var tmpVMPath = repoRoot + '/' + tmpRel;
+    // 9p mount is rooted at /tutorial in the VM → drop that prefix for JS reads.
+    var read9pPath = repoRoot.replace(/^\/tutorial/, '') + '/' + tmpRel;
+    if (read9pPath.charAt(0) !== '/') read9pPath = '/' + read9pPath;
+
+    // Single-quote the path for `git show HEAD:'<rel>'`. Tutorial filenames
+    // don't contain single quotes; we still escape defensively.
+    var safeRel = repoRel.replace(/'/g, "'\\''");
+    // Subshell:
+    //   ( git show HEAD:'<rel>' && echo <marker> ) > .git/__gutter_<tag>
+    // If git show fails (no HEAD / file not at HEAD), the && short-circuits
+    // and the marker is NOT written → main thread sees an empty/marker-less
+    // file and treats it as "no HEAD blob".
+    var cmd = '( cd ' + repoRoot + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + tmpVMPath + ' )';
+
+    return this._runSilent(cmd)
+      .then(function () { return new Promise(function (r) { setTimeout(r, 80); }); })
+      .then(function () { return self.emulator.read_file(read9pPath); })
+      .then(function (buf) {
+        // Cleanup (fire-and-forget; cleanup failure is harmless).
+        self._runSilent('rm -f ' + tmpVMPath);
+        if (!buf || buf.length === 0) return { content: null, notReady: false };
+        var text = '';
+        try { text = new TextDecoder('utf-8').decode(buf); }
+        catch (e) { return { content: null, notReady: true }; }
+        var idx = text.lastIndexOf(marker);
+        if (idx === -1) {
+          // No marker → git show failed (file not at HEAD or no HEAD yet).
+          return { content: null, notReady: false };
+        }
+        // The blob's bytes are everything before the marker. `echo <marker>`
+        // appends "<marker>\n" so we slice on the marker's start position.
+        return { content: text.substring(0, idx), notReady: false };
+      })
+      .catch(function () {
+        // 9p read failed (file may not have flushed yet) → leave the gutter
+        // alone, mark as pending so the next refresh retries.
+        self._runSilent('rm -f ' + tmpVMPath).catch(function () {});
+        return { content: null, notReady: true };
+      });
   };
 
   TutorialCode.prototype._refreshAllGitGutters = function () {
