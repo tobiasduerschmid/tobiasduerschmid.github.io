@@ -5,6 +5,7 @@ require_tests: true
 autosave_type: commands-and-files
 reset_type: commands
 git_graph: /tutorial/myproject
+git_gutter: true  # +/-/~ markers in the editor gutter vs HEAD
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"

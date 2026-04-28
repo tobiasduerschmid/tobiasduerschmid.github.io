@@ -94,7 +94,7 @@ steps:
     instructions: |
       ## Welcome — what this tutorial trains
 
-      You're a CS2 student who already knows Python and pytest. You haven't yet learned the *discipline* of changing existing code without breaking it. That discipline has a name — **refactoring** — and a lot of structure to it. Over the next ten steps you'll learn:
+      You already know Python and pytest. You haven't yet learned the *discipline* of changing existing code without breaking it. That discipline has a name — **refactoring** — and a lot of structure to it. Over the next ten steps you'll learn:
 
       - How to recognize a handful of high-impact **code smells** in real Python.
       - How to apply named **refactorings** that fix each smell safely.
