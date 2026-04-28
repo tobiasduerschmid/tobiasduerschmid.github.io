@@ -95,7 +95,7 @@
       .join('\n');
   }
 
-  var V86_SNAPSHOT_CACHE_VERSION = 2;
+  var V86_SNAPSHOT_CACHE_VERSION = 3;
 
   function hashString(s) {
     var h = 2166136261;
@@ -452,6 +452,15 @@
                 self._resumeBackgroundSync();
                 self._refreshPrompt();
                 self._refreshGitGraph();
+                // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
+                // force-resets _muteCount to 0; doing it after a _runSilent(cd)
+                // would race with the gg-daemon hookCmd that _refreshGitGraph
+                // queues, leaving _muteCount stuck at -1 (terminal stays muted,
+                // user can't see their keystrokes).
+                var curStep = self.steps[saved.step];
+                if (curStep && curStep.step_dir) {
+                  self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
+                }
               }, function (err) {
                 self._resumeBackgroundSync();
                 self._showError('Failed to restore progress: ' + (err && err.message || err));
@@ -465,6 +474,10 @@
                 self._resumeBackgroundSync();
                 self._refreshPrompt();
                 self._refreshGitGraph();
+                var curStep = self.steps[saved.step];
+                if (curStep && curStep.step_dir) {
+                  self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
+                }
               }, function (err) {
                 self._resumeBackgroundSync();
                 self._showError('Failed to restore progress: ' + (err && err.message || err));
@@ -2949,6 +2962,24 @@
       return this._runSilent(cmd);
     }
     return Promise.resolve();
+  };
+
+  TutorialCode.prototype._runStepSetupCommands = function (step, opts) {
+    if (!step || !step.setup_commands || step.setup_commands.length === 0) {
+      return Promise.resolve();
+    }
+    if (this.config.backend !== 'v86' && this.config.backend !== 'webcontainer') {
+      return Promise.resolve();
+    }
+    return this._runBackgroundShell(tutorialShellBatch(step.setup_commands), opts || { timeout: 120000 });
+  };
+
+  TutorialCode.prototype._runStepDir = function (step) {
+    if (!step || !step.step_dir) return Promise.resolve();
+    if (this.config.backend !== 'v86' && this.config.backend !== 'webcontainer') {
+      return Promise.resolve();
+    }
+    return this._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir));
   };
 
   TutorialCode.prototype._probeRPCDaemon = function () {
@@ -7738,13 +7769,9 @@
           });
         }
 
-        if (st.setup_commands && st.setup_commands.length > 0) {
-          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            p = p.then(function () {
-              return self._runBackgroundShell(tutorialShellBatch(st.setup_commands), { timeout: 120000 });
-            });
-          }
-        }
+        p = p.then(function () {
+          return self._runStepSetupCommands(st, { timeout: 120000 });
+        });
 
         if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
             (st.post_fileload_setup && st.post_fileload_setup.length > 0)) {
@@ -7876,9 +7903,16 @@
           return self._updateUserCmdListener(curStep);
         }).then(function () {
           self._autoSaveProgress();
-          self._refreshPrompt();
           self._hideLoading();
           self._refreshGitGraph();
+          self._refreshPrompt();
+          // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
+          // force-resets _muteCount to 0; doing it after a _runSilent(cd)
+          // races with the gg-daemon hookCmd that _refreshGitGraph queues,
+          // leaving _muteCount stuck at -1 (terminal stays muted).
+          if (curStep.step_dir) {
+            self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
+          }
         });
       });
     }
@@ -7923,21 +7957,16 @@
       p = p.then(function () { return self._syncStepFiles(curStep, { setActive: false }); });
     }
 
-    // Accumulate current step's setup_commands
-    if (curStep && curStep.setup_commands && curStep.setup_commands.length > 0) {
-      if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-        p = p.then(function () {
-          var batch = tutorialShellBatch(curStep.setup_commands);
-          return self._runBackgroundShell(batch, { timeout: 120000 });
-        });
-      }
-    }
+    p = p.then(function () {
+      return self._runStepSetupCommands(curStep, { timeout: 120000 });
+    });
 
     // Run post_fileload_setup AFTER all setup/solution commands so e.g.
     // `bash build-git.sh` replays against the final VM state.
     p = p.then(function () { return self._runPostFileloadSetup(curStep); });
     p = p.then(function () { return self._refreshStepVisibleFiles(curStep); });
     p = p.then(function () { return self._updateUserCmdListener(curStep); });
+    p = p.then(function () { return self._runStepDir(curStep); });
 
     // Quiesce the shell before snapshotting: a no-op silent command forces
     // one more prompt round-trip after the batched replay, guaranteeing the
@@ -7958,10 +7987,17 @@
       if (curStep && curStep.open_file) { self._setActiveFile(curStep.open_file); }
       self._renderTabs();
       self._autoSaveProgress();
-      // Clear terminal, unmute, and show a fresh prompt after the silent replay
-      self._refreshPrompt();
       self._hideLoading();
       self._refreshGitGraph();
+      // Clear terminal, unmute, and show a fresh prompt after the silent replay
+      self._refreshPrompt();
+      // step_dir cd MUST come AFTER _refreshPrompt. _refreshPrompt
+      // force-resets _muteCount to 0; doing it after a _runSilent(cd)
+      // races with the gg-daemon hookCmd that _refreshGitGraph queues,
+      // leaving _muteCount stuck at -1 (terminal stays muted).
+      if (curStep && curStep.step_dir) {
+        self._runSilent('[ "$(pwd)" = ' + shellQuote(curStep.step_dir) + ' ] || cd ' + shellQuote(curStep.step_dir));
+      }
     });
 
     return p;
@@ -8066,6 +8102,17 @@
     if (savedStepObj && savedStepObj.files) {
       p = p.then(function () { return self._syncStepFiles(savedStepObj, { setActive: false }); });
     }
+
+    p = p.then(function () {
+      return self._runStepSetupCommands(savedStepObj, { timeout: 120000 });
+    });
+    // Cache the clean entry state, not merely "prior steps replayed". This
+    // mirrors reset: current-step setup and post-fileload setup run on starter
+    // files before the student's autosaved overrides are applied below.
+    p = p.then(function () { return self._runPostFileloadSetup(savedStepObj); });
+    p = p.then(function () { return self._refreshStepVisibleFiles(savedStepObj); });
+    p = p.then(function () { return self._updateUserCmdListener(savedStepObj); });
+    p = p.then(function () { return self._runStepDir(savedStepObj); });
 
     // Quiesce before snapshot — see _resetStepWithCommandsSlow for rationale.
     p = p.then(function () { return self._runSilent(':'); });
@@ -8220,18 +8267,19 @@
       p.then(function () {
         return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
       }).then(function () {
+        return self._runStepDir(step);
+      }).then(function () {
+        var cachePromise = Promise.resolve();
+        // Cache the clean "entry state" of this step so future Reset /
+        // autosave-restore operations can skip replay entirely. The snapshot
+        // is taken after setup/post-fileload and the final step_dir barrier.
+        if (self._canCacheLiveStepEntrySnapshot(index)) {
+          cachePromise = self._saveStepEntrySnapshot(index, { persist: false });
+        }
+        return cachePromise;
+      }).then(function () {
         self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
-        // Cache the clean "entry state" of this step so future Reset /
-        // autosave-restore operations can skip replay entirely.
-        if (self._canCacheLiveStepEntrySnapshot(index)) {
-          self._saveStepEntrySnapshot(index, { persist: false });
-        }
-        if (step.step_dir) {
-          return self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir)).then(function () {
-            if (self.emulator) self.emulator.serial0_send('\n');
-          });
-        }
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
       visibleFilesRefreshScheduled = true;
@@ -8257,9 +8305,7 @@
     if (step.step_dir && !self._isBackgroundSyncPaused() &&
         (this.config.backend === 'v86' || this.config.backend === 'webcontainer') &&
         !(hasSetup || hasPostFileload)) {
-      self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir)).then(function () {
-        if (self.emulator) self.emulator.serial0_send('\n');
-      });
+      self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir));
     }
 
     // Configure query input for Prolog backend

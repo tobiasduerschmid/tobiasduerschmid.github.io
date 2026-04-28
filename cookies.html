@@ -512,14 +512,16 @@ layout: framework
       <code>localStorage</code>; nothing else is written to <code>sessionStorage</code>.
     </li>
     <li>
-      <strong><code>IndexedDB</code></strong>, <strong>WebSQL</strong>,
-      <strong>File System Access API</strong>
-      (<code>showDirectoryPicker</code>, <code>showSaveFilePicker</code>) &mdash; <strong>not used</strong>. No data is stored here at all.
+      <strong><code>IndexedDB</code></strong> &mdash; v86 tutorials may store compressed VM
+      reset snapshots in database <code>sebook-tutorial-vm-snapshots</code>, object store
+      <code>snapshots</code>. These records are per-browser tutorial state used to speed up
+      reset and restore flows. <strong>WebSQL</strong> and <strong>File System Access API</strong>
+      (<code>showDirectoryPicker</code>, <code>showSaveFilePicker</code>) are not used.
     </li>
     <li>
       <strong>Cache API</strong> (<code>caches.open</code>) &mdash; the service worker (see below)
       stores the in-browser Linux VM's static assets here under cache key
-      <code>vm-assets-v1</code>: the post-boot snapshot
+      <code>vm-assets-v2</code>: the post-boot snapshot
       (<code>vm/dist/state.bin.gz</code>, ~50&nbsp;MB), the kernel
       (<code>bzImage</code>), the root filesystem (<code>rootfs.cpio.gz</code>), and the
       v86 engine + BIOS files (<code>v86.wasm</code>, <code>libv86.js</code>,
