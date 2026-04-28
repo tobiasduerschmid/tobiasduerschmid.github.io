@@ -2261,6 +2261,33 @@
       '</div>';
     }
 
+    // Step 0: reconcile the stash shelf to its FINAL state BEFORE any FLIP
+    // measurements. The shelf is a flex sibling of the strip with
+    // `flex: 0 1 280px`; while it exists, the strip shrinks from full-width
+    // (~800px) to ~490px and every column's natural left position shifts.
+    // If we created the shelf mid-diff (via ensureZoneContainer below) or
+    // removed it at the end (via the cleanup that used to run after step 5),
+    // oldRects (step 1) and newRect (step 5) would be measured under
+    // different layouts — the FLIP delta would then encode that layout
+    // shift, making rows visually snap to the squeezed-layout column
+    // position before sliding to their real destination (the bug that read
+    // as "untracked → staged skips through 'not staged'"). Doing this here
+    // keeps the column geometry stable across both measurements.
+    var stashedDesired = (wt && wt.stashed) || [];
+    var existingShelf = wb.querySelector('.git-workbench-shelf');
+    var hasShelfLeavers = existingShelf &&
+      existingShelf.querySelectorAll('.git-workbench-stash-entry').length > 0;
+    var keepShelf = stashedDesired.length > 0 || hasShelfLeavers;
+    if (keepShelf && !existingShelf) {
+      var freshShelf = document.createElement('aside');
+      freshShelf.className = 'git-workbench-shelf';
+      freshShelf.setAttribute('aria-label', 'Stash');
+      freshShelf.innerHTML = '<header class="git-workbench-shelf-header">Stash</header><ul class="git-workbench-rows"></ul>';
+      wb.appendChild(freshShelf);
+    } else if (!keepShelf && existingShelf) {
+      existingShelf.parentNode.removeChild(existingShelf);
+    }
+
     // Step 1: record current row positions for FLIP. If the row has a zero
     // rect (parent was display:none — e.g. the tutorial's graph panel was
     // hidden until the user switched views), skip it so the FLIP later
@@ -2302,15 +2329,10 @@
 
     function ensureZoneContainer(zoneName) {
       if (zoneName === 'stashed') {
+        // Shelf existence is reconciled in Step 0 above; here we just look
+        // it up. If it isn't present, the caller has nothing to add anyway.
         var shelf = wb.querySelector('.git-workbench-shelf');
-        if (!shelf) {
-          shelf = document.createElement('aside');
-          shelf.className = 'git-workbench-shelf';
-          shelf.setAttribute('aria-label', 'Stash');
-          shelf.innerHTML = '<header class="git-workbench-shelf-header">Stash</header><ul class="git-workbench-rows"></ul>';
-          wb.appendChild(shelf);
-        }
-        return shelf.querySelector('.git-workbench-rows');
+        return shelf ? shelf.querySelector('.git-workbench-rows') : null;
       }
       return wb.querySelector('.git-workbench-zone--' + zoneName + ' .git-workbench-rows');
     }
@@ -2318,6 +2340,7 @@
     for (var zi = 0; zi < zones.length; zi++) {
       var zoneName = zones[zi];
       var zoneList = desired[zoneName];
+      if (!zoneList.length) continue;  // nothing to add — leavers handled in step 4
       var zoneContainer = ensureZoneContainer(zoneName);
       if (!zoneContainer) continue;
       for (var i = 0; i < zoneList.length; i++) {
@@ -2468,13 +2491,17 @@
       })(newRowEls[surviveKey]);
     }
 
-    // Remove stash shelf entirely if empty, matching the spec.
-    var shelf = wb.querySelector('.git-workbench-shelf');
-    if (shelf) {
-      var shelfRows = shelf.querySelectorAll('.git-workbench-stash-entry');
-      if (shelfRows.length === 0) {
-        shelf.parentNode.removeChild(shelf);
-      }
+    // Defensive: in reduced-motion mode `_removeWorkbenchRow` removes leavers
+    // synchronously inside step 4, so a shelf that step 0 retained (because
+    // it had leavers at the time) may now be empty. Step 0 of the *next*
+    // render would clean it up, but we don't want a 280px-wide empty aside
+    // hanging around in the meantime. In normal motion mode the leavers
+    // still carry an `exiting` class here, so this is a no-op.
+    var trailingShelf = wb.querySelector('.git-workbench-shelf');
+    if (trailingShelf &&
+        trailingShelf.querySelectorAll('.git-workbench-stash-entry').length === 0 &&
+        (!wt.stashed || wt.stashed.length === 0)) {
+      trailingShelf.parentNode.removeChild(trailingShelf);
     }
   };
 
