@@ -3001,10 +3001,20 @@
     if (followupCmd) this.session.afterRuntimeSync = followupCmd;
     if (this.session.runtimeSyncInFlight) return;
     this.session.runtimeSyncInFlight = true;
-    this.session.runtimeSyncTargetVersion = this.session.runtimeUpdateVersion || 0;
     this.disableStepButtons(true);
     this.setStatus(status || 'applying…');
-    this.sendCommand(CMD_SYNC);
+    // Defer the CMD_SYNC notify to a microtask so that all synchronous SAB
+    // writes from the current task (e.g. removeBreakpoint+addWatchpoint+
+    // handleToolbarCmd) complete BEFORE the worker is woken up. Otherwise
+    // the worker can race ahead and read SAB while a subsequent main-thread
+    // _writeJson is mid-fill, causing JSON.parse to fail and the DIRTY flag
+    // to be silently reset — losing the update entirely.
+    var self = this;
+    queueMicrotask(function () {
+      if (!self.session || !self.session.runtimeSyncInFlight) return;
+      self.session.runtimeSyncTargetVersion = self.session.runtimeUpdateVersion || 0;
+      self.sendCommand(CMD_SYNC);
+    });
   };
 
   DebuggerController.prototype.markRuntimeUpdatePending = function () {
