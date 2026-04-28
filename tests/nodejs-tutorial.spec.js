@@ -172,6 +172,10 @@ test.describe.serial('Node.js Tutorial', () => {
   // --- Quiz flow (also unlocks step 2 for the navigation test) ---
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
+    // Earlier tests in this serial block (Express HTTP, debugger) navigate to
+    // later steps in instructor-mode. Reset to step 1 before exercising the
+    // step-1 → step-2 flow.
+    await page.locator('.tvm-step-btn').first().click();
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
