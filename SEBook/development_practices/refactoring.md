@@ -26,7 +26,7 @@ Refactoring involves applying specific, named transformations to address code sm
 *   **Extract Class:** When a class suffers from **Divergent Change**, developers take the specific code regions that change for different reasons and move them into separate, specialized classes.
 *   **Inline Class:** The inverse of Extract Class; if a class is not "paying for itself" in terms of maintenance costs (a **Lazy Class**), its features are moved into another class and the original is deleted.
 *   **Introduce Parameter Object:** To solve **Data Clumps**, developers replace a long list of primitive parameters with a single object (e.g., replacing `start: Date, end: Date` with a `DateRange` object).
-*   **Replace Conditional with Polymorphism:** One of the most powerful transformations, this involves taking a complex switch statement or if-else block and moving each branch into an overriding method in a subclass. This often results in the implementation of the **Strategy** or [**State**](/SEBook/designpatterns/state.html) design patterns.
+*   **Replace Conditional with Polymorphism:** One of the most powerful transformations, this involves taking a complex switch statement or if-else block and moving each branch into an overriding method in a subclass. This often results in the implementation of the [**Strategy**](/SEBook/designpatterns/strategy.html) or [**State**](/SEBook/designpatterns/state.html) design patterns.
 *   **Hide Delegate:** To reduce unnecessary coupling (**Inappropriate Intimacy**), a server class is modified to act as a go-between, preventing the client from having to navigate deep chains of method calls across multiple objects.
 
 # The Safety Net: Testing and Process
@@ -38,7 +38,7 @@ Key rules for safe refactoring include:
 *   **Make frequent checkpoints:** Commit to version control after every successful step.
 
 #  Refactoring in the Age of Generative AI
-Modern **Generative AI (GenAI)** tools are highly effective at implementing these transformations because they have been trained on classic refactoring catalogs. A developer can explicitly prompt an AI agent to **"Replace this conditional with polymorphism"** or **"Refactor this to use the Strategy pattern"**.
+Modern **Generative AI (GenAI)** tools are highly effective at implementing these transformations because they have been trained on classic refactoring catalogs. A developer can explicitly prompt an AI agent to **"Replace this conditional with polymorphism"** or **"Refactor this to use the [Strategy pattern](/SEBook/designpatterns/strategy.html)"**.
 
 However, the **Supervisor Mentality** remains critical. AI agents have limited context windows and may struggle with system-level refactorings that span an entire code base. The human engineer’s role is to identify *when* a refactoring is needed and to orchestrate the AI through small, verifiable steps, running tests after every AI-generated change to ensure correctness. By keeping [**Information Hiding**](/SEBook/designprinciples/informationhiding.html) and modularity in mind, developers can limit the context required for any single refactoring, making both themselves and their AI assistants more effective.
 

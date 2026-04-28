@@ -924,7 +924,7 @@ Content "*" -- "1..*" Genre : classifiedBy
 
 ### Example 5: Strategy Pattern — Pluggable Payment Processing
 
-**Scenario:** A shopping cart needs to support multiple payment methods (credit card, PayPal, crypto) and let users switch between them at runtime. This is the **Strategy design pattern** — and a class diagram is the canonical way to document it.
+**Scenario:** A shopping cart needs to support multiple payment methods (credit card, PayPal, crypto) and let users switch between them at runtime. This is the [**Strategy design pattern**](/SEBook/designpatterns/strategy.html) — and a class diagram is the canonical way to document it.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface PaymentStrategy {

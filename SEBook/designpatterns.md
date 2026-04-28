@@ -35,6 +35,7 @@ The GoF (Gang of Four) design patterns are organized into three categories based
 * [**Façade**](/SEBook/designpatterns/facade.html): Provides a unified interface to a set of interfaces in a subsystem, making the subsystem easier to use.
 
 **Behavioral Patterns** address the problem of *object interaction and responsibility*—how objects communicate and distribute work:
+* [**Strategy**](/SEBook/designpatterns/strategy.html): Defines a family of algorithms, encapsulates each one, and makes them interchangeable at runtime, letting the algorithm vary independently from clients that use it.
 * [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that dependent objects are automatically notified and updated whenever the subject's state changes.
 * [**Command**](/SEBook/designpatterns/command.html): Encapsulates a request as an object, allowing invokers to be configured with different actions and supporting undo, queuing, logging, and macro commands.
 * [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
@@ -188,7 +189,7 @@ Here are some examples of architectural patterns that we describe in more detail
 ## The Benefits of a Shared Toolbox
 Just as a mechanic must know their toolbox, a software engineer must know design patterns intimately—understanding their advantages, disadvantages, and knowing precisely when (and when not) to use them.
 
-*   **A Common Language for Communication:** The primary challenge in multi-person software development is communication. Patterns solve this by providing a robust, shared vocabulary. If an engineer suggests using the "Observer" or "Strategy" pattern, the team instantly understands the problem, the proposed architecture, and the resulting interactions without needing a lengthy explanation.
+*   **A Common Language for Communication:** The primary challenge in multi-person software development is communication. Patterns solve this by providing a robust, shared vocabulary. If an engineer suggests using the "[Observer](/SEBook/designpatterns/observer.html)" or "[Strategy](/SEBook/designpatterns/strategy.html)" pattern, the team instantly understands the problem, the proposed architecture, and the resulting interactions without needing a lengthy explanation.
 *   **Capturing Design Intent:** When you encounter a design pattern in existing code, it communicates not only *what* the software does, but *why* it was designed that way. 
 *   **Reusable Experience:** Patterns are abstractions of design experience gathered by seasoned practitioners. By studying them, developers can rely on tried-and-tested methods to build flexible and maintainable systems instead of reinventing the wheel.
 
@@ -292,7 +293,7 @@ Common code smells that suggest specific patterns:
 | Code Smell | Suggested Pattern | Why |
 |------------|-------------------|-----|
 | Large `if/else` or `switch` on object state | [State](/SEBook/designpatterns/state.html) | Replace conditional logic with polymorphic state objects |
-| Duplicated conditional logic choosing algorithms | Strategy | Extract varying algorithms into interchangeable objects |
+| Conditional dispatch selecting between alternative algorithms | [Strategy](/SEBook/designpatterns/strategy.html) | Extract varying algorithms into interchangeable objects |
 | Large conditional dispatcher routing requests or actions | [Command](/SEBook/designpatterns/command.html) | Replace branch-by-branch dispatch with a configurable map of command objects |
 | Complex object creation with many conditionals | [Factory Method](/SEBook/designpatterns/factory_method.html) or [Abstract Factory](/SEBook/designpatterns/abstract_factory.html) | Separate creation logic from usage logic |
 | Client tightly coupled to incompatible third-party API | [Adapter](/SEBook/designpatterns/adapter.html) | Translate the foreign interface behind a wrapper |
@@ -306,8 +307,8 @@ The **Rule of Three** provides a useful heuristic: do not apply a pattern until 
 ## Patterns Within Patterns: Core Principles
 When analyzing various design patterns, you will begin to notice recurring micro-architectures. Design patterns are often built upon fundamental software engineering principles:
 
-*   **Delegation over Inheritance:** Subclassing can lead to rigid designs and code duplication (e.g., trying to create an inheritance tree for cars that can be electric, gas, hybrid, and also either drive or fly). Patterns like Strategy, State, and Bridge solve this by extracting varying behaviors into separate classes and delegating responsibilities to them.
-*   **Polymorphism over Conditions:** Patterns frequently replace complex `if/else` or `switch` statements with polymorphic objects. For instance, instead of conditional logic checking the state of an algorithm, the Strategy pattern uses interchangeable objects to represent different execution paths.
+*   **Delegation over Inheritance:** Subclassing can lead to rigid designs and code duplication (e.g., trying to create an inheritance tree for cars that can be electric, gas, hybrid, and also either drive or fly). Patterns like [Strategy](/SEBook/designpatterns/strategy.html), [State](/SEBook/designpatterns/state.html), and Bridge solve this by extracting varying behaviors into separate classes and delegating responsibilities to them.
+*   **Polymorphism over Conditions:** Patterns frequently replace complex `if/else` or `switch` statements with polymorphic objects. For instance, instead of conditional logic checking the state of an algorithm, the [Strategy pattern](/SEBook/designpatterns/strategy.html) uses interchangeable objects to represent different execution paths.
 *   **Additional Layers of Indirection:** To reduce strong coupling between interacting components, patterns like the Mediator or Facade introduce an intermediate object to handle communication. While this centralizes logic and improves changeability, it can create long traces of method calls that are harder to debug.
 
 

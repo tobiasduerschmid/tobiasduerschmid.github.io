@@ -16,6 +16,8 @@ topics:
     icon: null
     url: /SEBook/designpatterns.html
     subtopics:
+      - name: Strategy
+        url: /SEBook/designpatterns/strategy.html
       - name: Observer
         url: /SEBook/designpatterns/observer.html
       - name: Command

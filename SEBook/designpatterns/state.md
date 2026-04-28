@@ -407,7 +407,7 @@ A pedagogically effective way to internalize this insight is the "Before and Aft
 
 # State vs. Strategy: Same Structure, Different Intent
 
-The State and Strategy patterns have nearly identical UML class diagrams—a context delegating to an abstract interface with multiple concrete implementations. The difference is entirely in **intent**:
+The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nearly identical UML class diagrams—a context delegating to an abstract interface with multiple concrete implementations. The difference is entirely in **intent**:
 * **State:** The context object's behavior changes *implicitly* as its internal state transitions. The client typically does not choose which state object is active.
 * **Strategy:** The client *explicitly* selects which algorithm to use. There are no automatic transitions between strategies.
 

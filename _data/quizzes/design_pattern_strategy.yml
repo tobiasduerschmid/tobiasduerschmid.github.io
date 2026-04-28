@@ -1,0 +1,149 @@
+title: "Strategy Pattern Quiz"
+description: "Test your understanding of the Strategy pattern's structure, its composition-over-inheritance principle, and the often-confused boundary with the State pattern."
+active: true
+questions:
+  - id: 1
+    type: single
+    question: |
+      A team is designing an e-commerce checkout system. Customers can pay by credit card, PayPal, gift card, or bank transfer. The CTO wants to add support for cryptocurrency next quarter without modifying any existing checkout code. Which design best fits?
+    options:
+      - "A `Checkout` class with an `if/else` chain on a `paymentType` string parameter, with one new branch per payment method."
+      - "A `PaymentMethod` interface with concrete classes `CreditCardPayment`, `PayPalPayment`, etc.; `Checkout` holds a `PaymentMethod` reference and delegates `pay()` to it."
+      - "An abstract `Checkout` class with subclasses `CreditCardCheckout`, `PayPalCheckout`, `GiftCardCheckout`, each overriding the `pay()` method."
+      - "A `Checkout` class with one method per payment type (`payByCreditCard`, `payByPayPal`, ...) and the client picks which to call."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Adding cryptocurrency means *modifying* the existing `if/else` chain — a violation of the Open/Closed Principle, which is exactly the smell Strategy addresses. Each new payment type becomes another conditional branch in a method that already does too much.
+      2: |
+        Subclassing `Checkout` per payment type couples checkout-flow logic to payment-method logic. A user cannot change payment method on the same checkout (different `Checkout` *instance*), and shared checkout logic must be re-inherited or duplicated. Strategy fixes both by composing payment with checkout.
+      3: |
+        One method per payment type pushes the conditional logic into every caller — they all need an `if/else` to choose which method to invoke. The whole point of Strategy is to give the client a single uniform call (`checkout.pay()`) regardless of method.
+    explanation: "**Strategy with `PaymentMethod` as the interface and concrete classes per method is the right fit.** Adding cryptocurrency means writing a new `CryptoPayment` class implementing `PaymentMethod` — no existing code changes (Open/Closed). The client picks which strategy to construct; `Checkout` delegates `pay()` to it without knowing the payment type."
+
+  - id: 2
+    type: single
+    question: |
+      Consider this UML structure: a `Context` class holds a reference to an interface, and several concrete classes implement that interface. The Context delegates an operation to the held implementation, which can be swapped via a setter. **Both** the State and Strategy patterns have exactly this structure. What actually distinguishes them?
+    options:
+      - "State has a finite number of concrete classes; Strategy can have unboundedly many."
+      - "State uses inheritance for the concrete classes; Strategy uses composition."
+      - "State changes its concrete implementation *implicitly* via internal transitions; Strategy's implementation is *explicitly* selected by the client."
+      - "State is a creational pattern; Strategy is a behavioral pattern."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Both patterns can have any number of concrete classes — that's not the distinguishing axis. A state machine with three states is still State; a sort routine with ten comparators is still Strategy.
+      1: |
+        Both patterns use composition — the Context *has-a* State or *has-a* Strategy. Concrete State and Concrete Strategy classes typically realize an interface (composition between Context and Strategy/State); subclassing inside the State or Strategy hierarchies is incidental.
+      3: |
+        Both are behavioral patterns in the GoF catalog. Creational patterns deal with *how objects are created* (Factory Method, Singleton, Builder), not how they delegate behavior.
+    explanation: "**The distinguishing axis is *who decides the next implementation*.** In State, the Context's own internal logic transitions between concrete states (e.g., `NoQuarterState.insertQuarter()` calls `context.setState(new HasQuarterState())`). In Strategy, the client picks the implementation (`new Sort(new QuickSortStrategy())`) and strategies do not transition between each other. The UML is the same; the *intent* differs."
+
+  - id: 3
+    type: multiple
+    question: |
+      Which of the following are **valid reasons** to use the Strategy pattern? Select all that apply.
+    options:
+      - "A class has multiple `if`/`switch` branches selecting between alternative algorithms."
+      - "Different variants of an algorithm have different time/space trade-offs and the client should be able to choose."
+      - "An algorithm uses internal data structures that clients should not know about."
+      - "There is only one algorithm today, but management said there *might* be a second one in three years."
+      - "Several related classes differ only in how they perform one specific behavior."
+    correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        This is the *canonical* Strategy refactoring trigger from Refactoring to Patterns: replace conditional dispatch with polymorphic strategy objects. **Forgetting this case means missing the most common in-the-wild driver for Strategy.**
+      1: |
+        Strategy excels at exposing implementation choices to clients. **Forgetting this case means missing one of the explicit Applicability criteria from the GoF catalog.**
+      2: |
+        Hiding algorithm-specific data is a direct Applicability case from the GoF catalog. The Strategy interface gives clients a clean façade while ConcreteStrategies own their internal data structures.
+      3: |
+        Speculative abstraction is over-engineering. The Rule of Three says: don't introduce Strategy until you have at least three concrete variants or a concrete plan for runtime swapping. Building flexibility for changes that may never come is the textbook example of premature abstraction.
+      4: |
+        Different classes that vary only in one behavior is a strong Strategy signal — instead of N subclasses each overriding one method, one Context class composes with one of N strategies. **Forgetting this case means missing the Applicability bullet most relevant to the SimUDuck refactoring.**
+    explanation: "**Strategy is justified by present complexity (conditional dispatch, varying behavior, hidden data, multiple subclasses differing in one axis) — not by speculative future flexibility.** All four 'present complexity' cases are Applicability criteria from the GoF catalog. Speculation alone is the textbook anti-pattern: wait until you have at least three concrete variants or a concrete plan for runtime swapping."
+
+  - id: 4
+    type: single
+    question: |
+      In Head First Design Patterns' SimUDuck example, a first attempt puts `fly()` and `quack()` directly on the `Duck` superclass. This is then refactored to use `Flyable` and `Quackable` interfaces. Why is the *interface* approach **still** considered inferior to a Strategy-based design?
+    options:
+      - "Interfaces in Java cannot have any methods, so `Flyable` would be empty."
+      - "Every class implementing `Flyable` must reimplement `fly()` itself, so two ducks that fly identically must duplicate the code."
+      - "Interfaces cannot be passed as parameters at runtime, so the behavior cannot be swapped."
+      - "Java does not allow a class to implement more than one interface, so a duck cannot be both `Flyable` and `Quackable`."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Java interfaces *can* declare abstract methods (and since Java 8, default methods too). The `Flyable` interface in the example has a `fly()` method. Empty interfaces (marker interfaces) are a separate, valid concept.
+      2: |
+        Interfaces *can* be referenced and passed at runtime — that's how dependency injection works. The interface approach's failure mode is duplicated implementation across implementing classes, not lack of runtime flexibility.
+      3: |
+        Java permits implementing any number of interfaces (this is the classic motivation for interfaces vs. single-inheritance classes). Multiple inheritance of *interfaces* has never been the issue.
+    explanation: "**Plain interfaces fix the inheritance problem (no unwanted `fly()` on `RubberDuck`) but lose code reuse.** Two ducks that share an identical fly behavior must each provide their own `fly()` implementation. Strategy fixes both at once: a `FlyWithWings` ConcreteStrategy is implemented *once* and shared by every duck that flies normally — composition gives you both targeted behavior assignment *and* code reuse."
+
+  - id: 5
+    type: single
+    question: |
+      A `Compositor` interface defines `compose(natural[], stretch[], shrink[], width, breaks[])`. Three ConcreteStrategies implement it: `SimpleCompositor` (greedy), `TeXCompositor` (paragraph-optimal), and `ArrayCompositor` (fixed-width grids). The `SimpleCompositor` ignores the `stretch` and `shrink` arrays entirely. Which Strategy *consequence* does this illustrate?
+    options:
+      - "Strategies eliminate conditional statements."
+      - "Communication overhead between Strategy and Context — the shared interface forces Context to compute and pass data some ConcreteStrategies don't use."
+      - "Increased number of objects."
+      - "Clients must be aware of different Strategies."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The example doesn't show conditional code being eliminated — that's a different consequence. Here the Context uniformly hands every Compositor the same data; the issue is that some of that data is wasted.
+      2: |
+        The number of Compositor instances isn't what's at stake here — the issue is wasted preparation work for unused parameters, not class count.
+      3: |
+        Clients must know strategies differ — but that's about *which* strategy to pick, not about wasted parameters in the shared interface. The example illustrates Context-side cost, not client-side cost.
+    explanation: "**This is the *communication overhead* consequence from the GoF Consequences list.** Because the Strategy interface is shared by all ConcreteStrategies, the Context must prepare data sufficient for the most demanding strategy — and simpler ones (like `SimpleCompositor`) waste that preparation. The fix is either to accept the overhead or tighten the coupling between Strategy and Context to allow strategy-specific interfaces."
+
+  - id: 6
+    type: single
+    question: |
+      A teammate writes:
+
+      ```java
+      class FlyNullObject implements FlyBehavior {
+          public void fly() { /* do nothing */ }
+      }
+      ```
+
+      Why is this preferable to leaving the `flyBehavior` field as `null` and writing `if (flyBehavior != null) flyBehavior.fly();` in the Context?
+    options:
+      - "It's faster — empty method calls are optimized away by the JIT."
+      - "The `null` check would throw `NullPointerException` on the very first call."
+      - "It keeps the call site uniform (`flyBehavior.fly()`) — no null checks scattered through the Context code, and the design intent of 'this duck does not fly' is encoded in a real type instead of a missing reference."
+      - "It satisfies Java's strict-mode requirement that all interface fields be non-null at construction time."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Performance is not the primary motivation — and JIT optimization is unrelated. The Null Object pattern is about *design clarity* (uniform call sites, explicit intent), not micro-optimization. Don't conflate "removes a check" with "is faster overall" — the call still happens.
+      1: |
+        A correctly-written `if (flyBehavior != null)` guard does not throw — it skips the call. The objection to null checks is design-level (scattered branches, hidden intent), not a runtime crash. If anything, *forgetting* the check is the bug; the Null Object eliminates the need to remember it.
+      3: |
+        Java has no such "strict-mode" rule. Fields can be `null` by default. Frameworks like Kotlin enforce non-nullable types at the language level, but that's not Java behavior, and it's not the reason for using Null Object.
+    explanation: "**Null Object turns 'absence of behavior' into a real, polymorphic implementation of behavior.** The Context's call site stays uniform (`flyBehavior.fly()`) without scattered null guards, and the design intent — 'this duck does not fly' — is encoded as a named type (`FlyNullObject`) rather than as a missing reference. This is the same reason `Optional<T>.empty()` beats raw nulls in modern APIs."
+
+  - id: 7
+    type: single
+    question: |
+      Which of the following common library mechanisms is **NOT** a use of the Strategy pattern?
+    options:
+      - "Passing a `Comparator<T>` to `Collections.sort()` to control sort order."
+      - "Configuring an HTTP client with a `RetryPolicy` (no retry, exponential backoff, fixed-interval)."
+      - "Subclassing `JFrame` to override `paintComponent` for a custom window."
+      - "Plugging a custom `AuthenticationProvider` into Spring Security to handle login."
+    correct_index: 2
+    option_feedback:
+      0: |
+        `Comparator` is the textbook Strategy: a small interface with one method, multiple ConcreteStrategies (natural order, by-field, custom rules), passed in at the call site to vary behavior. Java's standard library uses Strategy explicitly here.
+      1: |
+        `RetryPolicy` is Strategy in the 'Policy' sense (the GoF's alternate name). The HTTP client (Context) delegates retry decisions to whichever Policy is configured.
+      3: |
+        Spring's `AuthenticationProvider` is Strategy: Spring (Context) delegates authentication to whichever provider you plug in, without knowing whether it's LDAP, OAuth, or password-based.
+    explanation: "**Subclassing `JFrame` to override `paintComponent` is Template Method, not Strategy.** The base class fixes the rendering algorithm skeleton (`paint`/`paintComponent`/`paintChildren`) and subclasses override individual steps via inheritance. Strategy uses *composition* — the Context holds an external Strategy object that can be swapped at runtime. The two patterns are easy to confuse: both vary parts of an algorithm; Template Method does it via inheritance, Strategy via composition."

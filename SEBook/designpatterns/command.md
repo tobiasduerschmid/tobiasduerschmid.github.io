@@ -642,7 +642,7 @@ The pattern earns its complexity when requests need a lifecycle: configure, exec
 
 | Pattern | Similarity | Difference |
 |---|---|---|
-| Strategy | Both wrap behavior behind a common interface. | Strategy selects an algorithm; Command represents a request that may have lifecycle state such as undo, queuing, or logging. |
+| [Strategy](/SEBook/designpatterns/strategy.html) | Both wrap behavior behind a common interface. | Strategy selects an algorithm; Command represents a request that may have lifecycle state such as undo, queuing, or logging. |
 | [Observer](/SEBook/designpatterns/observer.html) | Both decouple senders from receivers. | Observer broadcasts a change to many listeners; Command packages one request for one invoker to execute. |
 | [Mediator](/SEBook/designpatterns/mediator.html) | Both can reduce direct coupling between objects. | Mediator centralizes coordination rules; Command decentralizes actions into request objects. |
 | [Composite](/SEBook/designpatterns/composite.html) | Macro commands compose commands into a tree or list. | Composite is the structural mechanism; Command is the behavioral intent. |

@@ -9,3 +9,4 @@ decks:
   - uml_sequence_diagram_examples
   - uml_state_diagram_examples
   - uml_use_case_diagram_examples
+  - design_pattern_strategy

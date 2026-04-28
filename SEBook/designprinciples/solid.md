@@ -125,7 +125,7 @@ note right of PaymentProcessor
 end note
 @enduml'></div>
 
-  **Fix:** Program against an interface using the Strategy Pattern. Create a `PaymentMethod` interface and separate `CreditCardPayment` and `PayPalPayment` classes.
+  **Fix:** Program against an interface using the [Strategy Pattern](/SEBook/designpatterns/strategy.html). Create a `PaymentMethod` interface and separate `CreditCardPayment` and `PayPalPayment` classes.
 
 * **Drawing Shapes Problem:**
   A `drawAllShapes()` method evaluates a `ShapeType` enum to draw. Adding a `Triangle` forces modification of the loop.

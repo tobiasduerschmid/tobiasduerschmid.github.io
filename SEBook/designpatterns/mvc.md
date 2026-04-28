@@ -26,7 +26,7 @@ To resolve these forces, the MVC pattern divides an interactive application into
 To maintain consistency without introducing tight coupling, MVC relies heavily on a change-propagation mechanism. The components interact through an orchestration of lower-level design patterns, making MVC a true "compound pattern".
 
 * First, the relationship between the Model and the View utilizes the *[Observer](/SEBook/designpatterns/observer.html)* pattern. The model acts as the subject, and the views (and sometimes controllers) register as *Observers*. When the model undergoes a state change, it broadcasts a notification, prompting the views to query the model for updated data and redraw themselves.
-* Second, the relationship between the View and the Controller utilizes the Strategy pattern. The controller encapsulates the strategy for handling user input, allowing the view to delegate all input response behavior. This allows software engineers to easily swap controllers at runtime if different behavior is required (e.g., swapping a standard controller for a read-only controller).
+* Second, the relationship between the View and the Controller utilizes the [Strategy](/SEBook/designpatterns/strategy.html) pattern. The controller encapsulates the strategy for handling user input, allowing the view to delegate all input response behavior. This allows software engineers to easily swap controllers at runtime if different behavior is required (e.g., swapping a standard controller for a read-only controller).
 * Third, the view often employs the *[Composite](/SEBook/designpatterns/composite.html)* pattern to manage complex, nested user interface elements, such as windows containing panels, which in turn contain buttons.
 
 ## UML Role Diagram
@@ -124,7 +124,7 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 MVC is one of the most important examples of a **pattern compound**—a combination of patterns where the whole is greater than the sum of its parts. Understanding MVC at the compound level reveals why it works:
 
 1. [**Observer**](/SEBook/designpatterns/observer.html) (Model ↔ View): The model broadcasts change notifications; views subscribe and update themselves. This enables multiple synchronized views of the same data without the model knowing anything about the views.
-2. **Strategy** (View ↔ Controller): The view delegates input handling to a controller object. Because the controller is a Strategy, it can be swapped at runtime—for example, replacing a standard editing controller with a read-only controller.
+2. [**Strategy**](/SEBook/designpatterns/strategy.html) (View ↔ Controller): The view delegates input handling to a controller object. Because the controller is a Strategy, it can be swapped at runtime—for example, replacing a standard editing controller with a read-only controller.
 3. [**Composite**](/SEBook/designpatterns/composite.html) (View internals): The view itself is often a tree of nested UI components (windows containing panels containing buttons). The Composite pattern allows operations like `render()` to propagate through this tree uniformly.
 
 The **emergent property** of this compound is a clean three-way separation where each component can be developed, tested, and replaced independently. No individual pattern achieves this alone—it is the *combination* of Observer (data synchronization), Strategy (input flexibility), and Composite (UI structure) that makes MVC powerful.
