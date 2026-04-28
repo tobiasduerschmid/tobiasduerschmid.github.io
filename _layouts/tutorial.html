@@ -217,9 +217,9 @@
     The COI service worker is needed by:
       - WebContainers backend (always — needs SharedArrayBuffer)
       - Tutorials with the time-travel debugger (SharedArrayBuffer + Atomics.wait)
-      - v86 backend — not for COI itself, but to enable the SW's VM-asset cache
-        (state.bin.gz alone is ~50 MB; cache-first beats GH Pages' 10-min HTTP
-        cache for repeat visits and is more eviction-resistant on mobile).
+      - v86 backend — not for COI itself, but to enable the SW's validated
+        VM-asset cache (state.bin.gz alone is ~50 MB; Cache Storage avoids
+        repeat downloads, while validator checks prevent stale snapshots).
   {%- endcomment -%}
   {% if tutorial_backend == 'webcontainer' or tutorial_backend == 'v86' or tutorial_data.debugger %}
   <!-- Register Cross-Origin Isolation service worker.
@@ -324,7 +324,7 @@
         disableQuiz: {{ tutorial_data.disable_quiz | default: false | jsonify }},
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
-        memoryMB: {{ page.memory_mb  | default: 256 }},
+        memoryMB: {{ page.memory_mb  | default: 192 }},
         fontSize: {{ page.font_size  | default: 14 }},
         workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',

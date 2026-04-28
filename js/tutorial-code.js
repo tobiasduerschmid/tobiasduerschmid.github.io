@@ -13,8 +13,7 @@
  * The UI (Monaco editor, split panels, step navigation, quizzes, tests) is
  * identical across backends. Only the execution layer differs.
  *
- * This file intentionally replaces tutorial-vm.js for new tutorials.
- * Existing tutorials (v86) continue to work unchanged via backend: 'v86'.
+ * This file is the single tutorial runtime, including the v86 backend.
  */
 (function () {
   'use strict';
@@ -72,6 +71,51 @@
 
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+  function shellQuote(s) {
+    return "'" + String(s).replace(/'/g, "'\\''") + "'";
+  }
+
+  function b64EncodeUtf8(s) {
+    var bytes = new TextEncoder().encode(String(s));
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+
+  function b64DecodeUtf8(s) {
+    var bin = atob(String(s || ''));
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function tutorialShellBatch(commands) {
+    return (commands || [])
+      .map(function (cmd) { return String(cmd).replace(/^git /, 'git --no-pager '); })
+      .join('\n');
+  }
+
+  var V86_SNAPSHOT_CACHE_VERSION = 2;
+
+  function hashString(s) {
+    var h = 2166136261;
+    s = String(s || '');
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  function responseValidatorId(response) {
+    if (!response || !response.headers) return '';
+    return [
+      response.headers.get('ETag') || '',
+      response.headers.get('Last-Modified') || '',
+      response.headers.get('Content-Length') || ''
+    ].join('|');
+  }
+
   var LANG_MAP = {
     sh: 'shell-sebook', bash: 'shell-sebook', zsh: 'shell-sebook',
     py: 'python', js: 'javascript', jsx: 'jsx', json: 'json',
@@ -103,7 +147,13 @@
       backend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
-      memoryMB: options.memoryMB || 256,
+      // 192 MB strikes the right balance: enough headroom for Linux to
+      // unpack the ~30 MB-compressed initramfs into tmpfs (which expands to
+      // ~120 MB) without panicking, while still saving ~25% on save_state /
+      // restore_state cost vs 256. 128 MB triggers "Initramfs unpacking
+      // failed: write error" → kernel panic; don't lower further without
+      // also slimming the rootfs.
+      memoryMB: options.memoryMB || 192,
       fontSize: options.fontSize || 14,
       // Restore from a pre-booted snapshot (gzipped) if available, skipping
       // the kernel boot. Set useSnapshot: false to force a fresh boot.
@@ -161,6 +211,17 @@
     this._resetInProgress = false;    // guard against concurrent resetStep() calls
     this._visFilterMarker = null;     // string to suppress from xterm output
     this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
+    this._rpcPending = {};            // virtio-console RPC id -> callbacks
+    this._rpcBuf = '';                // partial virtio-console line buffer
+    this._rpcSeq = 0;
+    this._rpcAvail = undefined;
+    this._rpcAvailPromise = null;
+    this._rpcNegativeUntil = 0;
+    this._rpcListenerInstalled = false;
+    this._backgroundShellCwd = null;
+    this._snapshotDBPromise = null;
+    this._snapshotCacheIdentity = null;
+    this._vmSnapshotAssetId = '';
 
     // xterm state
     this.term = null;
@@ -222,8 +283,16 @@
     this._currentView = 'editor';
     this._gitGraphAutoRefreshTimer = null;
     this._gitGraphRefreshing = false;
+    this._lastGitGraphStateText = null;
+    this._gitGraphStateDirty = false;
+    this._gitGraphRefreshPending = false;
+    this._gitGraphRefreshGeneration = 0;
     this._gitGraphHookInstalled = false;
+    this._gitGraphHookMode = null;
     this._promptDetectBuf = '';
+    this._promptRedrawTimer = null;
+    this._backgroundSyncPauseCount = 0;
+    this._restartFileWatchOnResume = false;
 
     // User-command listener (git-playground pattern). When configured globally
     // or per-step, each user-typed terminal command is piped (as stdin) to
@@ -231,7 +300,7 @@
     // _setupFilesystem — backend-run commands are excluded by HISTIGNORE so
     // only real user input flows through.
     this.userCommandListener = options.userCommandListener || null;
-    this._activeUserCmdListener = null;
+    this._activeUserCmdListener = '';
 
     // Post-fileload setup commands. Run silently AFTER a step's files have
     // been synced to the VM (first-visit, reset, and autosave-restore paths).
@@ -372,18 +441,32 @@
             // end-of-step _autoSaveProgress cannot clobber localStorage with
             // starter-file content before the saved files have been applied.
             self._suppressAutoSave = true;
+            self._pauseBackgroundSync();
             self.loadStep(saved.step);
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
               self._restoreCommandsAndFiles(saved).then(function () {
+                self._resumeBackgroundSync();
                 self._refreshPrompt();
+                self._refreshGitGraph();
+              }, function (err) {
+                self._resumeBackgroundSync();
+                self._showError('Failed to restore progress: ' + (err && err.message || err));
+                console.error('TutorialCode restore error:', err);
               });
             } else {
-              self._applySavedFiles(saved.files, saved.activeFile);
-              self._suppressAutoSave = false;
-              // Persist the correctly-restored state immediately
-              self._autoSaveProgress();
-              self._refreshPrompt();
+              self._applySavedFiles(saved.files, saved.activeFile).then(function () {
+                self._suppressAutoSave = false;
+                // Persist the correctly-restored state immediately
+                self._autoSaveProgress();
+                self._resumeBackgroundSync();
+                self._refreshPrompt();
+                self._refreshGitGraph();
+              }, function (err) {
+                self._resumeBackgroundSync();
+                self._showError('Failed to restore progress: ' + (err && err.message || err));
+                console.error('TutorialCode restore error:', err);
+              });
             }
           } else {
             if (hashStep >= 0) {
@@ -399,6 +482,193 @@
         self._showError('Failed to start tutorial: ' + err.message);
         console.error('TutorialCode error:', err);
       });
+  };
+
+  // ---------------------------------------------------------------------------
+  // v86 snapshot cache (IndexedDB)
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._snapshotCacheKey = function (kind, step) {
+    if (this.config.backend !== 'v86') return null;
+    if (typeof indexedDB === 'undefined') return null;
+    if (!this._snapshotCacheIdentity) {
+      var stepShape = (this.steps || []).map(function (s) {
+        return {
+          title: s.title || '',
+          files: (s.files || []).map(function (f) {
+            return [f.path, f.content || '', f.language || '', !!f.persistent].join('\u0001');
+          }),
+          setup: s.setup_commands || [],
+          post: s.post_fileload_setup || [],
+          solutionFiles: ((s.solution && s.solution.files) || []).map(function (f) {
+            return [f.path, f.content || '', f.language || ''].join('\u0001');
+          }),
+          solutionCommands: (s.solution && s.solution.commands) || [],
+        };
+      });
+      this._snapshotCacheIdentity = hashString(JSON.stringify({
+        version: V86_SNAPSHOT_CACHE_VERSION,
+        tutorialId: this.tutorialId,
+        memoryMB: this.config.memoryMB,
+        snapshotName: this.config.snapshotName,
+        vmSnapshotAssetId: this._vmSnapshotAssetId || '',
+        setupCommands: this.setupCommands,
+        steps: stepShape,
+      }));
+    }
+    return [
+      'v86',
+      V86_SNAPSHOT_CACHE_VERSION,
+      this.tutorialId,
+      this.config.memoryMB,
+      this.config.snapshotName,
+      this._snapshotCacheIdentity,
+      kind,
+      step == null ? '' : step
+    ].join('|');
+  };
+
+  TutorialCode.prototype._openSnapshotDB = function () {
+    if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+    if (this._snapshotDBPromise) return this._snapshotDBPromise;
+    this._snapshotDBPromise = new Promise(function (resolve) {
+      var req;
+      try {
+        req = indexedDB.open('sebook-tutorial-vm-snapshots', 1);
+      } catch (e) {
+        resolve(null);
+        return;
+      }
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains('snapshots')) {
+          db.createObjectStore('snapshots', { keyPath: 'key' });
+        }
+      };
+      req.onerror = function () { resolve(null); };
+      req.onsuccess = function () { resolve(req.result); };
+    });
+    return this._snapshotDBPromise;
+  };
+
+  TutorialCode.prototype._packSnapshotState = function (state) {
+    if (!state) return Promise.resolve(null);
+    if (typeof CompressionStream === 'undefined') {
+      return Promise.resolve({ format: 'raw', data: state.slice ? state.slice(0) : state });
+    }
+    try {
+      var stream = new Blob([state]).stream().pipeThrough(new CompressionStream('gzip'));
+      return new Response(stream).arrayBuffer().then(function (buf) {
+        return { format: 'gzip', data: buf };
+      });
+    } catch (e) {
+      return Promise.resolve({ format: 'raw', data: state.slice ? state.slice(0) : state });
+    }
+  };
+
+  TutorialCode.prototype._unpackSnapshotState = function (record) {
+    if (!record || !record.data) return Promise.resolve(null);
+    if (record.format !== 'gzip') return Promise.resolve(record.data);
+    if (typeof DecompressionStream === 'undefined') return Promise.resolve(null);
+    try {
+      var stream = new Blob([record.data]).stream().pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).arrayBuffer();
+    } catch (e) {
+      return Promise.resolve(null);
+    }
+  };
+
+  TutorialCode.prototype._loadCachedSnapshot = function (kind, step) {
+    var key = this._snapshotCacheKey(kind, step);
+    if (!key) return Promise.resolve(null);
+    var self = this;
+    return this._openSnapshotDB().then(function (db) {
+      if (!db) return null;
+      return new Promise(function (resolve) {
+        var tx;
+        try { tx = db.transaction('snapshots', 'readonly'); }
+        catch (e) { resolve(null); return; }
+        var req = tx.objectStore('snapshots').get(key);
+        req.onerror = function () { resolve(null); };
+        req.onsuccess = function () {
+          var rec = req.result;
+          if (!rec || rec.version !== V86_SNAPSHOT_CACHE_VERSION) {
+            resolve(null);
+            return;
+          }
+          self._unpackSnapshotState(rec).then(resolve, function () { resolve(null); });
+        };
+      });
+    }).catch(function () { return null; });
+  };
+
+  TutorialCode.prototype._storeCachedSnapshot = function (kind, step, state) {
+    var key = this._snapshotCacheKey(kind, step);
+    if (!key || !state) return Promise.resolve();
+    var self = this;
+    return this._openSnapshotDB().then(function (db) {
+      if (!db) return null;
+      return self._packSnapshotState(state).then(function (packed) {
+        if (!packed || !packed.data) return null;
+        return new Promise(function (resolve) {
+          var tx;
+          try { tx = db.transaction('snapshots', 'readwrite'); }
+          catch (e) { resolve(null); return; }
+          tx.objectStore('snapshots').put({
+            key: key,
+            version: V86_SNAPSHOT_CACHE_VERSION,
+            tutorialId: self.tutorialId,
+            kind: kind,
+            step: step,
+            format: packed.format,
+            data: packed.data,
+            createdAt: Date.now()
+          });
+          tx.oncomplete = function () { resolve(true); };
+          tx.onerror = function () { resolve(null); };
+          tx.onabort = function () { resolve(null); };
+        });
+      });
+    }).catch(function () { return null; });
+  };
+
+  TutorialCode.prototype._isBackgroundSyncPaused = function () {
+    return this._backgroundSyncPauseCount > 0;
+  };
+
+  TutorialCode.prototype._markGitGraphStateDirty = function () {
+    if (!this.gitGraphPath) return;
+    this._gitGraphStateDirty = true;
+    this._gitGraphRefreshPending = true;
+    this._gitGraphRefreshGeneration++;
+    this._gitGraphRefreshing = false;
+    this._lastGitGraphStateText = null;
+    if (this.gitGraphContainerEl) this.gitGraphContainerEl.innerHTML = '';
+  };
+
+  TutorialCode.prototype._pauseBackgroundSync = function () {
+    this._backgroundSyncPauseCount++;
+    this._markGitGraphStateDirty();
+    clearTimeout(this._gitGraphAutoRefreshTimer);
+    clearTimeout(this._gitGutterPromptTimer);
+    if (this._reverseSyncTimer) {
+      this._restartFileWatchOnResume = true;
+      this._stopFileWatch();
+    }
+  };
+
+  TutorialCode.prototype._resumeBackgroundSync = function () {
+    if (this._backgroundSyncPauseCount > 0) this._backgroundSyncPauseCount--;
+    if (this._backgroundSyncPauseCount !== 0) return;
+    var refreshGraph = this._gitGraphRefreshPending || this._gitGraphStateDirty;
+    this._gitGraphRefreshPending = false;
+    if (this._restartFileWatchOnResume && this.config.backend === 'v86' && this.booted) {
+      this._restartFileWatchOnResume = false;
+      this._startFileWatch(2000);
+    }
+    if (refreshGraph && this.gitGraphPath && this.booted) {
+      this._refreshGitGraph();
+    }
   };
 
   TutorialCode.prototype.destroy = function () {
@@ -618,7 +888,7 @@
       '<div class="tvm-loading-spinner"></div>' +
       '<div class="tvm-loading-text">Loading\u2026</div>' +
       '</div>' +
-      '<div class="tvm-container" style="display:none">' +
+      '<div class="tvm-container" style="visibility:hidden">' +
       '<div class="tvm-instructions-panel">' +
       (useLeftUml
         ? '<div class="tvm-left-tab-bar">' +
@@ -1226,13 +1496,19 @@
       this.loadingEl.style.display = 'flex';
       this.loadingEl.querySelector('.tvm-loading-text').textContent = msg;
     }
-    if (this.containerEl) this.containerEl.style.display = 'none';
+    if (this.containerEl) {
+      this.containerEl.style.display = '';
+      this.containerEl.style.visibility = 'hidden';
+    }
   };
 
   TutorialCode.prototype._hideLoading = function () {
     var self = this;
     if (this.loadingEl) this.loadingEl.style.display = 'none';
-    if (this.containerEl) this.containerEl.style.display = '';
+    if (this.containerEl) {
+      this.containerEl.style.display = '';
+      this.containerEl.style.visibility = '';
+    }
     requestAnimationFrame(function () {
       if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
       if (self.editor) self.editor.layout();
@@ -1276,13 +1552,17 @@
    * snapshot directly, skipping the replay entirely.
    * No-op for non-v86 backends or if save_state is unavailable.
    */
-  TutorialCode.prototype._saveStepEntrySnapshot = function (idx) {
+  TutorialCode.prototype._saveStepEntrySnapshot = function (idx, opts) {
     var self = this;
+    opts = opts || {};
     if (self.resetType !== 'commands') return Promise.resolve();
     if (!self.emulator || !self.emulator.save_state) return Promise.resolve();
     if (idx == null || idx < 0) return Promise.resolve();
     return self.emulator.save_state().then(function (state) {
       self._stepEntrySnapshots[idx] = state;
+      if (opts.persist !== false) {
+        self._storeCachedSnapshot('step-entry', idx, state);
+      }
     }).catch(function () { /* ignore snapshot failures */ });
   };
 
@@ -1307,19 +1587,28 @@
   TutorialCode.prototype._restoreStepEntrySnapshot = function (idx) {
     var self = this;
     var state = self._stepEntrySnapshots[idx];
-    if (!state || !self.emulator || !self.emulator.restore_state) {
+    if (!self.emulator || !self.emulator.restore_state) {
       return Promise.resolve(false);
     }
-    return self.emulator.restore_state(state).then(function () {
-      self._resetSerialState();
-      // Defensive: if the snapshot was taken with residual input in-flight
-      // (unterminated quote, heredoc, or PS2 continuation), sending Ctrl-C
-      // clears it before any caller queues new commands. Harmless on a
-      // clean prompt. One byte, no round-trip wait.
-      if (self.emulator && self.emulator.serial0_send) {
-        self.emulator.serial0_send('\x03');
-      }
-      return true;
+    var statePromise = state
+      ? Promise.resolve(state)
+      : self._loadCachedSnapshot('step-entry', idx).then(function (cached) {
+          if (cached) self._stepEntrySnapshots[idx] = cached;
+          return cached;
+        });
+    return statePromise.then(function (snapshot) {
+      if (!snapshot) return false;
+      return self.emulator.restore_state(snapshot).then(function () {
+        self._resetSerialState();
+        // Defensive: if the snapshot was taken with residual input in-flight
+        // (unterminated quote, heredoc, or PS2 continuation), sending Ctrl-C
+        // clears it before any caller queues new commands. Harmless on a
+        // clean prompt. One byte, no round-trip wait.
+        if (self.emulator && self.emulator.serial0_send) {
+          self.emulator.serial0_send('\x03');
+        }
+        return true;
+      }).catch(function () { return false; });
     }).catch(function () { return false; });
   };
 
@@ -2102,26 +2391,31 @@
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
-  // ---- v86 backend (identical to original tutorial-vm.js) -------------------
+  // ---- v86 backend ----------------------------------------------------------
   TutorialCode.prototype._loadSnapshot = function () {
     if (!this.config.useSnapshot) return Promise.resolve(null);
     if (typeof DecompressionStream === 'undefined') return Promise.resolve(null);
+    var self = this;
     var url = this.config.vmPath + '/' + this.config.snapshotName;
     return fetch(url).then(function (r) {
       if (!r.ok) return null;
+      self._vmSnapshotAssetId = responseValidatorId(r);
       var stream = r.body.pipeThrough(new DecompressionStream('gzip'));
       return new Response(stream).arrayBuffer();
     }).then(function (buf) {
-      return buf ? URL.createObjectURL(new Blob([buf])) : null;
+      // Feed v86 the ArrayBuffer directly. A blob URL makes v86 fetch the
+      // already-decompressed state a second time, adding avoidable copy/IO
+      // overhead on the startup path.
+      return buf || null;
     }).catch(function () { return null; });
   };
 
   TutorialCode.prototype._initV86 = function () {
     var self = this;
     this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026');
-    return self._loadSnapshot().then(function (snapshotUrl) {
-      self._usingSnapshot = !!snapshotUrl;
-      if (snapshotUrl) {
+    return self._loadSnapshot().then(function (snapshotBuffer) {
+      self._usingSnapshot = !!snapshotBuffer;
+      if (snapshotBuffer) {
         self._showLoading('Restoring VM snapshot\u2026');
       }
       return new Promise(function (resolve, reject) {
@@ -2135,17 +2429,19 @@
           cmdline: 'console=ttyS0 rw quiet',
           autostart: true, disable_keyboard: true,
           disable_mouse: true, disable_speaker: true, screen_dummy: true,
+          virtio_console: true,
           filesystem: {},
         };
-        if (snapshotUrl) {
+        if (snapshotBuffer) {
           // Snapshot already contains the kernel + extracted initrd in RAM,
           // so skip the bzImage + rootfs.cpio.gz fetches (~44 MB saved).
-          v86Config.initial_state = { url: snapshotUrl };
+          v86Config.initial_state = { buffer: snapshotBuffer };
         } else {
           v86Config.bzimage = { url: self.config.vmPath + '/bzImage' };
           v86Config.initrd  = { url: self.config.vmPath + '/rootfs.cpio.gz' };
         }
         self.emulator = new V86(v86Config);
+        if (self._initRPCChannel) self._initRPCChannel();
 
         // xterm ↔ serial
         self.term.onData(function (data) {
@@ -2205,7 +2501,7 @@
               // to this listener. Without the guard, that prompt schedules
               // another refresh in 250ms, which schedules another, forever.
               // Mirrors the !_gitGraphRefreshing check just above.
-              if (self.config.enableGitGutter && !self._gitGutterRefreshing) {
+              if (self.config.enableGitGutter && !self._gitGutterRefreshing && !self._isBackgroundSyncPaused()) {
                 clearTimeout(self._gitGutterPromptTimer);
                 self._gitGutterPromptTimer = setTimeout(function () {
                   self._refreshAllGitGutters();
@@ -2229,7 +2525,7 @@
         // After snapshot restore, the shell is already running and won't
         // re-emit boot output. Nudge with a newline so onBoot can detect
         // the fresh prompt the shell prints in response.
-        if (snapshotUrl) {
+        if (snapshotBuffer) {
           setTimeout(function () {
             if (!promptDetected) self.emulator.serial0_send('\n');
           }, 500);
@@ -2250,6 +2546,9 @@
 
   TutorialCode.prototype._setupFilesystem = function () {
     var self = this;
+    if (self._usingSnapshot) {
+      self._showLoading('Preparing tutorial\u2026');
+    }
     // Sync terminal dimensions so bash/readline wraps at the correct column
     var cols = (this._pendingStty && this._pendingStty.cols) || (this.term && this.term.cols) || 80;
     var rows = (this._pendingStty && this._pendingStty.rows) || (this.term && this.term.rows) || 24;
@@ -2284,29 +2583,69 @@
         '__LAST_HISTCMD="$num"; ' +
         'printf "%s\\n" "$cmd" | eval "$__USER_CMD_LISTENER"; ' +
       '}; ' +
-      'PROMPT_COMMAND="__record_user_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
-    var initScript = ['cd /tutorial',
-                      'export HISTCONTROL=ignoreboth',
-                      'export HISTIGNORE=' + histIgnore,
-                      'stty cols ' + cols + ' rows ' + rows,
-                      userCmdHook]
-                     .concat(self.setupCommands)
-                     .join('; ');
-    // Stay muted after setup — _refreshPrompt will clear and unmute once
-    // the full restore sequence (files + commands) has finished.
-    return self._runSilent(initScript).then(function () {
-      // Wipe the bootstrap line itself — up to this point the student has
-      // not typed anything, so clearing history is safe and guarantees the
-      // up-arrow starts empty.
-      return self._runSilent('history -c');
-    }).then(function () {
-      // Snapshot the VM right after boot + setup commands so "commands" resets
-      // can restore to a clean filesystem before replaying solutions.
+      'case ";$PROMPT_COMMAND;" in *";__record_user_cmd;"*) ;; *) PROMPT_COMMAND="__record_user_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
+    var setupCommands = self.setupCommands || [];
+    var setupBatch = setupCommands.join('\n');
+    var startDir = self.gitGraphPath
+      ? 'cd ' + shellQuote(self.gitGraphPath) + ' 2>/dev/null || cd /tutorial'
+      : 'cd /tutorial';
+    var initParts = [startDir,
+                     'export LANG=C.UTF-8',
+                     'export LESSCHARSET=utf-8',
+                     'export HISTCONTROL=ignoreboth',
+                     'export HISTIGNORE=' + histIgnore,
+                     'stty cols ' + cols + ' rows ' + rows,
+                     userCmdHook];
+    function runInteractiveInit(extraCommands) {
+      var parts = initParts.slice();
+      if (extraCommands && extraCommands.length) parts = parts.concat(extraCommands);
+      return self._runSilent(parts.join('\n')).then(function () {
+        return self._runSilent('history -c');
+      });
+    }
+    function saveInitialState() {
       if (self.resetType === 'commands' && self.emulator && self.emulator.save_state) {
         return self.emulator.save_state().then(function (state) {
           self._initialVMState = state;
+          self._storeCachedSnapshot('initial', 0, state);
         });
       }
+      return Promise.resolve();
+    }
+    function installInitialShellHooks() {
+      if (self.gitGraphPath) return self._installGitGraphPromptHook();
+      return Promise.resolve();
+    }
+    var cachedInitial = Promise.resolve(false);
+    if (self.resetType === 'commands' && self.emulator && self.emulator.restore_state) {
+      cachedInitial = self._loadCachedSnapshot('initial', 0).then(function (state) {
+        if (!state) return false;
+        return self.emulator.restore_state(state).then(function () {
+          self._initialVMState = state;
+          self._resetSerialState('cached initial VM state');
+          return runInteractiveInit()
+            .then(installInitialShellHooks)
+            .then(function () { return true; });
+        }).catch(function () { return false; });
+      });
+    }
+    // Stay muted after setup — _refreshPrompt will clear and unmute once
+    // the full restore sequence (files + commands) has finished.
+    return cachedInitial.then(function (restoredFromCache) {
+      if (restoredFromCache) return Promise.resolve();
+      var setupPromise = Promise.resolve(false);
+      if (setupBatch && self.config.backend === 'v86') {
+        setupPromise = self._probeRPCDaemon().then(function (avail) {
+          if (!avail) return false;
+          return self._runRPC(setupBatch, { timeout: 60000 }).then(
+            function () { return true; },
+            function () { return false; }
+          );
+        });
+      }
+      return setupPromise.then(function (setupRanOutOfBand) {
+        return runInteractiveInit(setupRanOutOfBand ? [] : setupCommands);
+      }).then(installInitialShellHooks).then(saveInitialState);
     });
   };
 
@@ -2339,14 +2678,15 @@
       });
     }
     self._silentListeners = [];
-    // Set to 1 (not 0) because _refreshPrompt will do the final decrement
-    // to 0 after the restore sequence finishes.  Setting 0 here would cause
-    // _refreshPrompt's _muteCount-- to underflow to -1, permanently muting
-    // all terminal output.
+    // Keep output muted until the restore sequence finishes. _refreshPrompt
+    // will set this back to 0 and redraw the prompt exactly once.
     this._muteCount = 1;
     this._silentQueue = [];
     this._silentRunning = false;
     this._gitGraphHookInstalled = false;
+    this._gitGraphHookMode = null;
+    this._activeUserCmdListener = '';
+    this._resetRPCState('VM restored');
     // Clear the in-flight refresh guard. An active _refreshGitGraph chain
     // was waiting on a _runSilent(dumpCmd) whose listener we just removed,
     // so its .then that would have cleared this flag will never fire —
@@ -2364,11 +2704,37 @@
   TutorialCode.prototype._refreshPrompt = function () {
     if (this.config.backend === 'v86') {
       if (this.term) this.term.clear();
-      this._muteCount--;  // drop from 1 → 0; everything after this is visible
-      if (this.emulator) this.emulator.serial0_send('\n');
+      this._muteCount = 0;
+      this._promptDetectBuf = '';
+      if (this.emulator) {
+        this.emulator.serial0_send('\n');
+        this._schedulePromptRedrawFallback();
+      }
     } else if (this.config.backend === 'webcontainer') {
       if (this._shellWriter) this._shellWriter.write('\n');
     }
+  };
+
+  TutorialCode.prototype._terminalHasVisibleText = function () {
+    if (!this.term || !this.term.buffer || !this.term.buffer.active) return false;
+    var buffer = this.term.buffer.active;
+    for (var i = 0; i < buffer.length; i++) {
+      var line = buffer.getLine(i);
+      if (line && line.translateToString(true).trim()) return true;
+    }
+    return false;
+  };
+
+  TutorialCode.prototype._schedulePromptRedrawFallback = function () {
+    var self = this;
+    clearTimeout(this._promptRedrawTimer);
+    this._promptRedrawTimer = setTimeout(function () {
+      if (self.config.backend !== 'v86') return;
+      if (!self.emulator || !self.term) return;
+      if (self._muteCount !== 0) return;
+      if (self._terminalHasVisibleText()) return;
+      self.emulator.serial0_send('\n');
+    }, 250);
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
@@ -2378,6 +2744,228 @@
       if (this._shellWriter) this._shellWriter.write(cmd + '\n');
     }
     // pyodide: no interactive shell command
+  };
+
+  // ---------------------------------------------------------------------------
+  // RPC daemon — out-of-band channel for background sync queries
+  //
+  // Why: v86 has one serial port shared by user input, user output, and (until
+  // now) every "silent" sync command we ran from JS. Muting the terminal while
+  // a silent command was in flight ate the user's keystroke echoes if they
+  // typed concurrently. The daemon (vm/overlay/gg-daemon, started by /init)
+  // runs in a separate process, communicating with JS via virtio-console:
+  //
+  //   JS      → daemon: R <id> <base64 shell script>
+  //   daemon  → JS:     D <id> <exit-code> <base64 stdout+stderr>
+  //   daemon  → JS:     G <base64 repo path> <base64 git graph state>
+  //
+  // No serial traffic. No muting. Zero interference with user typing.
+  //
+  // Old snapshots (without the daemon or virtio console) still work: probe
+  // failures fall back to _runSilent. Negative results are only throttled
+  // briefly so an early race cannot permanently disable the daemon path.
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._initRPCChannel = function () {
+    if (!this.emulator || this._rpcListenerInstalled) return;
+    var self = this;
+    this._rpcListenerInstalled = true;
+    this.emulator.add_listener('virtio-console0-output-bytes', function (bytes) {
+      var chunk = '';
+      try { chunk = new TextDecoder('utf-8').decode(bytes); }
+      catch (e) { return; }
+      self._rpcBuf += chunk;
+      var idx;
+      while ((idx = self._rpcBuf.indexOf('\n')) !== -1) {
+        var line = self._rpcBuf.slice(0, idx).replace(/\r$/, '');
+        self._rpcBuf = self._rpcBuf.slice(idx + 1);
+        if (line) self._handleRPCLine(line);
+      }
+      if (self._rpcBuf.length > 1024 * 1024) self._rpcBuf = '';
+    });
+  };
+
+  TutorialCode.prototype._handleRPCLine = function (line) {
+    var parts = line.split(' ');
+    var kind = parts[0];
+    if (kind === 'D') {
+      var id = parts[1];
+      var status = parseInt(parts[2] || '0', 10);
+      var payload = parts.slice(3).join('');
+      var pending = this._rpcPending && this._rpcPending[id];
+      if (!pending) return;
+      delete this._rpcPending[id];
+      clearTimeout(pending.timer);
+      var text = '';
+      try { text = b64DecodeUtf8(payload); }
+      catch (e) { text = ''; }
+      pending.resolve({ status: isNaN(status) ? 0 : status, text: text });
+      return;
+    }
+    if (kind === 'G') {
+      var repo = '';
+      var state = '';
+      try {
+        repo = b64DecodeUtf8(parts[1] || '');
+        state = b64DecodeUtf8(parts.slice(2).join(''));
+      } catch (e2) { return; }
+      var currentRepo = this.gitGraphPath || '/tutorial';
+      if (repo && repo !== currentRepo) return;
+      if (this._isBackgroundSyncPaused() || this._gitGraphStateDirty) {
+        this._gitGraphRefreshPending = true;
+        return;
+      }
+      this._lastGitGraphStateText = state;
+      if (this._currentView === 'git_graph' && this.booted && window.GitGraph) {
+        this._renderGitGraphFromText(state);
+      }
+    }
+  };
+
+  TutorialCode.prototype._resetRPCState = function (reason) {
+    Object.keys(this._rpcPending || {}).forEach(function (id) {
+      var p = this._rpcPending[id];
+      clearTimeout(p.timer);
+      p.reject(new Error(reason || 'RPC reset'));
+    }, this);
+    this._rpcPending = {};
+    this._rpcBuf = '';
+    this._rpcAvail = undefined;
+    this._rpcAvailPromise = null;
+    this._rpcNegativeUntil = 0;
+    this._backgroundShellCwd = null;
+  };
+
+  TutorialCode.prototype._pingRPCDaemon = function (timeoutMs) {
+    var self = this;
+    if (!this.emulator || !this.emulator.bus || !this.emulator.bus.send) {
+      return Promise.resolve(false);
+    }
+    self._initRPCChannel();
+    var id = 'p' + (++self._rpcSeq).toString(36) + Date.now().toString(36);
+    return new Promise(function (resolve) {
+      var timer = setTimeout(function () {
+        delete self._rpcPending[id];
+        resolve(false);
+      }, timeoutMs || 500);
+      self._rpcPending[id] = {
+        timer: timer,
+        resolve: function (result) { resolve(result.status === 0 && result.text === 'PONG'); },
+        reject: function () { resolve(false); },
+      };
+      try {
+        self.emulator.bus.send('virtio-console0-input-bytes', new TextEncoder().encode('P ' + id + '\n'));
+      } catch (e) {
+        clearTimeout(timer);
+        delete self._rpcPending[id];
+        resolve(false);
+      }
+    });
+  };
+
+  TutorialCode.prototype._runRPCResult = function (cmd, opts) {
+    opts = opts || {};
+    var timeoutMs = opts.timeout || 30000;
+    if (this.config.backend !== 'v86') {
+      return Promise.reject(new Error('RPC: only available on v86 backend'));
+    }
+    if (!this.emulator || !this.emulator.bus || !this.emulator.bus.send) {
+      return Promise.reject(new Error('RPC: virtio console not ready'));
+    }
+    var self = this;
+    self._initRPCChannel();
+    var id = 'r' + (++self._rpcSeq).toString(36) + Date.now().toString(36);
+    var line = 'R ' + id + ' ' + b64EncodeUtf8(cmd) + '\n';
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () {
+        delete self._rpcPending[id];
+        reject(new Error('RPC timeout: ' + cmd.slice(0, 60)));
+      }, timeoutMs);
+      self._rpcPending[id] = { timer: timer, resolve: resolve, reject: reject };
+      try {
+        self.emulator.bus.send('virtio-console0-input-bytes', new TextEncoder().encode(line));
+      } catch (e) {
+        clearTimeout(timer);
+        delete self._rpcPending[id];
+        reject(e);
+      }
+    });
+  };
+
+  // Keep _runRPC's public behavior as "resolve stdout text". Internally,
+  // _runRPCResult can inspect exit status for probes or future callers.
+  TutorialCode.prototype._runRPC = function (cmd, opts) {
+    return this._runRPCResult(cmd, opts).then(function (result) {
+      return result.text;
+    });
+  };
+
+  TutorialCode.prototype._runRPCShellWithCwd = function (cmd, opts) {
+    var self = this;
+    var marker = '__TVM_CWD_' + Math.random().toString(36).substr(2, 10) + '__';
+    var cwd = self._backgroundShellCwd || '/tutorial';
+    var wrapped = [
+      'cd ' + shellQuote(cwd) + ' 2>/dev/null || cd /tutorial',
+      cmd,
+      'printf "\\n' + marker + '%s\\n" "$PWD"'
+    ].join('\n');
+    return self._runRPCResult(wrapped, opts).then(function (result) {
+      var text = result.text || '';
+      var idx = text.lastIndexOf(marker);
+      if (idx !== -1) {
+        var before = text.slice(0, idx).replace(/\n$/, '');
+        var after = text.slice(idx + marker.length);
+        var nextCwd = (after.split(/\r?\n/)[0] || '').trim();
+        if (/^\/tutorial(?:\/|$)/.test(nextCwd)) {
+          self._backgroundShellCwd = nextCwd;
+        }
+        return before;
+      }
+      return text;
+    });
+  };
+
+  TutorialCode.prototype._runBackgroundShell = function (cmd, opts) {
+    var self = this;
+    if (this.config.backend === 'v86') {
+      return this._probeRPCDaemon().then(function (avail) {
+        return avail ? self._runRPCShellWithCwd(cmd, opts || { timeout: 60000 }) : self._runSilent(cmd);
+      });
+    }
+    if (this.config.backend === 'webcontainer') {
+      return this._runSilent(cmd);
+    }
+    return Promise.resolve();
+  };
+
+  TutorialCode.prototype._probeRPCDaemon = function () {
+    if (this.config.backend !== 'v86') return Promise.resolve(false);
+    if (this._rpcAvail === true) return Promise.resolve(true);
+    if (this._rpcAvailPromise) return this._rpcAvailPromise;
+    if (Date.now() < (this._rpcNegativeUntil || 0)) return Promise.resolve(false);
+
+    var self = this;
+    var attempts = 0;
+    function tryProbe() {
+      attempts++;
+      return self._pingRPCDaemon(400).then(function (ok) {
+        if (ok) return true;
+        if (attempts >= 5) return false;
+        return delay(100).then(tryProbe);
+      });
+    }
+    this._rpcAvailPromise = tryProbe().then(function (ok) {
+      self._rpcAvailPromise = null;
+      if (ok) {
+        self._rpcAvail = true;
+        console.info('[gg-daemon] alive on virtio console');
+        return true;
+      }
+      self._rpcNegativeUntil = Date.now() + 1000;
+      console.info('[gg-daemon] not available yet — using legacy _runSilent path');
+      return false;
+    });
+    return this._rpcAvailPromise;
   };
 
   /**
@@ -2463,6 +3051,29 @@
   TutorialCode.prototype._runVisible = function (cmd) {
     var self = this;
     if (this.config.backend === 'v86') {
+      var useScript = (/<<|\n/.test(cmd) || String(cmd).length > 160);
+      if (useScript && this.emulator && this.emulator.create_file) {
+        var scriptTag = Math.random().toString(36).substr(2, 10);
+        var scriptRel = '.tvm-visible-' + scriptTag + '.sh';
+        var scriptVMPath = '/tutorial/' + scriptRel;
+        var bytes = new TextEncoder().encode(String(cmd).replace(/\s+$/, '') + '\n');
+        return this.emulator.create_file('/' + scriptRel, bytes).then(function () {
+          return self._runVisible('. ' + shellQuote(scriptVMPath) + '; rm -f ' + shellQuote(scriptVMPath));
+        }).catch(function () {
+          return self._runVisibleInline(cmd);
+        });
+      }
+      return self._runVisibleInline(cmd);
+    } else if (this.config.backend === 'webcontainer') {
+      self.sendCommand(cmd);
+      return delay(800);
+    }
+    return Promise.resolve();
+  };
+
+  TutorialCode.prototype._runVisibleInline = function (cmd) {
+    var self = this;
+    if (this.config.backend === 'v86') {
       return new Promise(function (resolve) {
         var marker = '__VIS_' + Math.random().toString(36).substr(2, 8);
         var buf = '';
@@ -2488,13 +3099,16 @@
           resolve();
         }, 30000);
         // Arm the filter before sending so the echo is suppressed immediately
-        self._visFilterMarker = ' #' + marker;
+        var multiline = /<<|\n/.test(cmd);
+        self._visFilterMarker = (multiline ? ': #' : ' #') + marker;
         self._visFilterBuf = '';
-        self.sendCommand(' ' + cmd + ' #' + marker);
+        if (multiline) {
+          self.sendCommand(' ' + cmd);
+          self.sendCommand(': #' + marker);
+        } else {
+          self.sendCommand(' ' + cmd + ' #' + marker);
+        }
       });
-    } else if (this.config.backend === 'webcontainer') {
-      self.sendCommand(cmd);
-      return delay(800);
     }
     return Promise.resolve();
   };
@@ -6089,39 +6703,104 @@
       return;  // other backends (sql, prolog, java, react) have no git
     }
 
-    headPromise.then(function (result) {
-      var ent = self.editorModels[filename];
-      if (!ent || !ent.model || ent.model.isDisposed()) return;
-      if (result.notReady) {
-        self._gitGutterPending = self._gitGutterPending || {};
-        self._gitGutterPending[filename] = true;
-        return;
-      }
-      var current = ent.model.getValue();
-      var head = result.content;
-      var diff = (head === null)
-        ? { added: _allLineNumbers(current), modified: [], deleted: [] }
-        : _gitGutterDiff(head, current);
-      var decorations = [];
-      diff.added.forEach(function (ln) {
-        decorations.push({
-          range: new monaco.Range(ln, 1, ln, 1),
-          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-added' },
-        });
+    return headPromise.then(function (result) {
+      self._applyGitGutterResult(filename, result);
+    });
+  };
+
+  TutorialCode.prototype._applyGitGutterResult = function (filename, result) {
+    var ent = this.editorModels[filename];
+    if (!ent || !ent.model || ent.model.isDisposed()) return;
+    if (result.notReady) {
+      this._gitGutterPending = this._gitGutterPending || {};
+      this._gitGutterPending[filename] = true;
+      return;
+    }
+    var current = ent.model.getValue();
+    var head = result.content;
+    var diff = (head === null)
+      ? { added: _allLineNumbers(current), modified: [], deleted: [] }
+      : _gitGutterDiff(head, current);
+    var decorations = [];
+    diff.added.forEach(function (ln) {
+      decorations.push({
+        range: new monaco.Range(ln, 1, ln, 1),
+        options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-added' },
       });
-      diff.modified.forEach(function (ln) {
-        decorations.push({
-          range: new monaco.Range(ln, 1, ln, 1),
-          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-modified' },
-        });
+    });
+    diff.modified.forEach(function (ln) {
+      decorations.push({
+        range: new monaco.Range(ln, 1, ln, 1),
+        options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-modified' },
       });
-      diff.deleted.forEach(function (ln) {
-        decorations.push({
-          range: new monaco.Range(Math.max(1, ln), 1, Math.max(1, ln), 1),
-          options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-deleted' },
-        });
+    });
+    diff.deleted.forEach(function (ln) {
+      decorations.push({
+        range: new monaco.Range(Math.max(1, ln), 1, Math.max(1, ln), 1),
+        options: { isWholeLine: false, linesDecorationsClassName: 'tvm-gg-deleted' },
       });
-      ent._gitGutterIds = ent.model.deltaDecorations(ent._gitGutterIds || [], decorations);
+    });
+    ent._gitGutterIds = ent.model.deltaDecorations(ent._gitGutterIds || [], decorations);
+  };
+
+  TutorialCode.prototype._v86RepoRelForFile = function (filename) {
+    var repoRoot = this.gitGraphPath || '/tutorial';
+    var absPath = '/tutorial/' + filename;
+    var rootPrefix = repoRoot.replace(/\/$/, '') + '/';
+    if (absPath.indexOf(rootPrefix) === 0) {
+      return absPath.substring(rootPrefix.length);
+    }
+    return null;
+  };
+
+  TutorialCode.prototype._v86GitFilesAtHead = function (filenames) {
+    var self = this;
+    var repoRoot = this.gitGraphPath || '/tutorial';
+    var items = [];
+    filenames.forEach(function (filename) {
+      var repoRel = self._v86RepoRelForFile(filename);
+      if (repoRel) items.push({ filename: filename, repoRel: repoRel });
+    });
+    if (items.length === 0) return Promise.resolve({});
+
+    var body = [
+      'cd ' + shellQuote(repoRoot) + ' || exit 0',
+      'GIT_OPTIONAL_LOCKS=0',
+      'export GIT_OPTIONAL_LOCKS'
+    ];
+    items.forEach(function (item) {
+      body.push('p=' + shellQuote(item.repoRel));
+      body.push('k=$(printf "%s" "$p" | base64 | tr -d "\\n")');
+      body.push('tmp="/run/gg/blob-$$"');
+      body.push('if git cat-file -e "HEAD:$p" 2>/dev/null && git show "HEAD:$p" > "$tmp" 2>/dev/null; then printf "F %s " "$k"; base64 "$tmp" | tr -d "\\n"; printf "\\n"; else printf "N %s\\n" "$k"; fi');
+      body.push('rm -f "$tmp"');
+    });
+    var cmd = body.join('\n');
+
+    return this._runRPC(cmd, { timeout: 30000 }).then(function (text) {
+      var byRel = {};
+      items.forEach(function (item) {
+        byRel[item.repoRel] = { filename: item.filename, result: { content: null, notReady: false } };
+      });
+      String(text || '').split(/\n/).forEach(function (line) {
+        if (!line) return;
+        var m = line.match(/^([FN])\s+(\S+)(?:\s+(\S+))?$/);
+        if (!m) return;
+        var rel;
+        try { rel = b64DecodeUtf8(m[2]); } catch (e) { return; }
+        if (!byRel[rel]) return;
+        if (m[1] === 'F') {
+          try { byRel[rel].result = { content: b64DecodeUtf8(m[3] || ''), notReady: false }; }
+          catch (e2) { byRel[rel].result = { content: null, notReady: true }; }
+        } else {
+          byRel[rel].result = { content: null, notReady: false };
+        }
+      });
+      var out = {};
+      Object.keys(byRel).forEach(function (rel) {
+        out[byRel[rel].filename] = byRel[rel].result;
+      });
+      return out;
     });
   };
 
@@ -6146,14 +6825,8 @@
     // path by stripping the repo-root prefix. e.g.:
     //   gitGraphPath=/tutorial/myproject, filename=myproject/hero_registry.py
     //   → absPath=/tutorial/myproject/hero_registry.py, repoRel=hero_registry.py
-    var absPath = '/tutorial/' + filename;
-    var rootPrefix = repoRoot.replace(/\/$/, '') + '/';
-    var repoRel;
-    if (absPath.indexOf(rootPrefix) === 0) {
-      repoRel = absPath.substring(rootPrefix.length);
-    } else if (absPath === repoRoot) {
-      return Promise.resolve({ content: null, notReady: false });  // dir, not file
-    } else {
+    var repoRel = this._v86RepoRelForFile(filename);
+    if (!repoRel) {
       // Outside the repo — gutter is meaningless here.
       return Promise.resolve({ content: null, notReady: false });
     }
@@ -6170,69 +6843,127 @@
     // Single-quote the path for `git show HEAD:'<rel>'`. Tutorial filenames
     // don't contain single quotes; we still escape defensively.
     var safeRel = repoRel.replace(/'/g, "'\\''");
-    // Subshell:
-    //   ( git show HEAD:'<rel>' && echo <marker> ) > .git/__gutter_<tag>
-    // If git show fails (no HEAD / file not at HEAD), the && short-circuits
-    // and the marker is NOT written → main thread sees an empty/marker-less
-    // file and treats it as "no HEAD blob".
-    var cmd = '( cd ' + repoRoot + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + tmpVMPath + ' )';
 
-    return this._runSilent(cmd)
-      .then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
-      .then(function () { return self.emulator.read_file(read9pPath); })
-      .then(function (buf) {
-        // Cleanup (fire-and-forget; cleanup failure is harmless).
-        self._runSilent('rm -f ' + tmpVMPath);
-        if (!buf || buf.length === 0) {
+    return self._probeRPCDaemon().then(function (rpcAvail) {
+      if (rpcAvail) {
+        // RPC path: daemon captures stdout to resp-<id>; JS reads it. No
+        // temp file in the user's repo, no muting, no race with user typing.
+        // The marker pattern still distinguishes "git show succeeded" from
+        // "git show failed" — without it, an empty-file blob and a non-existent
+        // blob look identical from the resp content.
+        var cmd = '( cd ' + shellQuote(repoRoot) + ' && git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' )';
+        return self._runRPC(cmd).then(function (text) {
+          var idx = text.lastIndexOf(marker);
+          if (idx === -1) {
+            if (!self._gitGutterDiagLogged) {
+              self._gitGutterDiagLogged = true;
+              console.info('[git-gutter] (rpc) no marker for', filename, '— file not at HEAD');
+            }
+            return { content: null, notReady: false };
+          }
+          // text up to (but not including) the marker. The marker is preceded
+          // by '\n' from `echo`, so trim that one newline if present.
+          var content = text.substring(0, idx);
+          if (content.charAt(content.length - 1) === '\n') content = content.slice(0, -1);
           if (!self._gitGutterDiagLogged) {
             self._gitGutterDiagLogged = true;
-            console.info('[git-gutter] empty buf for', filename, '- treating as no HEAD blob');
+            console.info('[git-gutter] (rpc) read', content.length, 'bytes for', filename, 'at HEAD');
           }
-          return { content: null, notReady: false };
-        }
-        var text = '';
-        try { text = new TextDecoder('utf-8').decode(buf); }
-        catch (e) { return { content: null, notReady: true }; }
-        var idx = text.lastIndexOf(marker);
-        if (idx === -1) {
+          return { content: content, notReady: false };
+        }).catch(function (err) {
           if (!self._gitGutterDiagLogged) {
             self._gitGutterDiagLogged = true;
-            console.info('[git-gutter] no marker for', filename, '— file not at HEAD');
+            console.warn('[git-gutter] (rpc) failed for', filename, ':', err && err.message || err);
           }
-          return { content: null, notReady: false };
-        }
-        if (!self._gitGutterDiagLogged) {
-          self._gitGutterDiagLogged = true;
-          console.info('[git-gutter] read', idx, 'bytes for', filename, 'at HEAD');
-        }
-        return { content: text.substring(0, idx), notReady: false };
-      })
-      .catch(function (err) {
-        if (!self._gitGutterDiagLogged) {
-          self._gitGutterDiagLogged = true;
-          console.warn('[git-gutter] read failed for', filename, ':', err && err.message || err);
-        }
-        self._runSilent('rm -f ' + tmpVMPath).catch(function () {});
-        return { content: null, notReady: true };
-      });
+          return { content: null, notReady: true };
+        });
+      }
+
+      // Legacy fallback (no daemon): write to a temp file in .git/, read via
+      // 9p, parse for the marker. Same behavior as before the RPC migration.
+      var cmd = '( cd ' + shellQuote(repoRoot) + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + shellQuote(tmpVMPath) + ' )';
+      return self._runSilent(cmd)
+        .then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
+        .then(function () { return self.emulator.read_file(read9pPath); })
+        .then(function (buf) {
+          // Cleanup (fire-and-forget; cleanup failure is harmless).
+          self._runSilent('rm -f ' + shellQuote(tmpVMPath));
+          if (!buf || buf.length === 0) {
+            if (!self._gitGutterDiagLogged) {
+              self._gitGutterDiagLogged = true;
+              console.info('[git-gutter] empty buf for', filename, '- treating as no HEAD blob');
+            }
+            return { content: null, notReady: false };
+          }
+          var text = '';
+          try { text = new TextDecoder('utf-8').decode(buf); }
+          catch (e) { return { content: null, notReady: true }; }
+          var idx = text.lastIndexOf(marker);
+          if (idx === -1) {
+            if (!self._gitGutterDiagLogged) {
+              self._gitGutterDiagLogged = true;
+              console.info('[git-gutter] no marker for', filename, '— file not at HEAD');
+            }
+            return { content: null, notReady: false };
+          }
+          if (!self._gitGutterDiagLogged) {
+            self._gitGutterDiagLogged = true;
+            console.info('[git-gutter] read', idx, 'bytes for', filename, 'at HEAD');
+          }
+          return { content: text.substring(0, idx), notReady: false };
+        })
+        .catch(function (err) {
+          if (!self._gitGutterDiagLogged) {
+            self._gitGutterDiagLogged = true;
+            console.warn('[git-gutter] read failed for', filename, ':', err && err.message || err);
+          }
+          self._runSilent('rm -f ' + shellQuote(tmpVMPath)).catch(function () {});
+          return { content: null, notReady: true };
+        });
+    });
   };
 
   TutorialCode.prototype._refreshAllGitGutters = function () {
     if (!this.config.enableGitGutter) return;
+    if (this._isBackgroundSyncPaused()) return;
     if (this._gitGutterRefreshing) return;
     var self = this;
     self._gitGutterRefreshing = true;
-    var promises = Object.keys(this.editorModels || {}).map(function (fn) {
-      // _refreshGitGutter is fire-and-forget today; wrap defensively so a
-      // future refactor that returns a Promise still settles the gate.
-      try { return Promise.resolve(self._refreshGitGutter(fn)); }
-      catch (e) { return Promise.resolve(); }
-    });
+    var files = Object.keys(this.editorModels || {});
+    var work;
+    if (this.config.backend === 'v86') {
+      var repoFiles = files.filter(function (fn) { return !!self._v86RepoRelForFile(fn); });
+      work = self._probeRPCDaemon().then(function (avail) {
+        if (!avail || repoFiles.length === 0) {
+          return Promise.all(files.map(function (fn) {
+            try { return Promise.resolve(self._refreshGitGutter(fn)); }
+            catch (e) { return Promise.resolve(); }
+          }));
+        }
+        return self._v86GitFilesAtHead(repoFiles).then(function (results) {
+          repoFiles.forEach(function (fn) {
+            self._applyGitGutterResult(fn, results[fn] || { content: null, notReady: true });
+          });
+        }).catch(function () {
+          return Promise.all(files.map(function (fn) {
+            try { return Promise.resolve(self._refreshGitGutter(fn)); }
+            catch (e) { return Promise.resolve(); }
+          }));
+        });
+      });
+    } else {
+      work = Promise.all(files.map(function (fn) {
+        // _refreshGitGutter is fire-and-forget today; wrap defensively so a
+        // future refactor that returns a Promise still settles the gate.
+        try { return Promise.resolve(self._refreshGitGutter(fn)); }
+        catch (e) { return Promise.resolve(); }
+      }));
+    }
     // Settle delay: once all gutter queries finish, bash still emits one
     // final prompt that the persistent listener will detect. Hold the gate
     // for an extra 250ms so that prompt doesn't re-schedule us. Real user
     // commands (typed > 250ms after a refresh) still trigger as expected.
-    Promise.all(promises).catch(function () {}).then(function () {
+    Promise.resolve(work).catch(function () {}).then(function () {
       setTimeout(function () { self._gitGutterRefreshing = false; }, 250);
     });
   };
@@ -6502,9 +7233,7 @@
         // Batch into a single shell invocation so we only pay one marker +
         // prompt-wait round-trip regardless of command count. --no-pager is
         // injected per-command so interactive pagers don't stall the chain.
-        var batch = solution.commands
-          .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-          .join('; ');
+        var batch = tutorialShellBatch(solution.commands);
         p = p.then(function () { return self._runVisible(batch); });
       } else if (this.config.backend === 'pyodide') {
         p = p.then(function () {
@@ -6717,6 +7446,71 @@
     return Promise.all(syncs);
   };
 
+  TutorialCode.prototype._replayPriorStepsForCommands = function (targetStep) {
+    if (!targetStep || targetStep <= 0) return Promise.resolve();
+    return this._replayPriorStepsViaFrontend(targetStep);
+  };
+
+  TutorialCode.prototype._replayPriorStepsViaFrontend = function (targetStep) {
+    var self = this;
+    var p = Promise.resolve();
+    for (var i = 0; i < targetStep; i++) {
+      (function (stepIdx) {
+        var st = self.steps[stepIdx];
+        if (!st) return;
+
+        if (st.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            st.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language, f);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+              self._originalContent[f.path] = f.content || '';
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        if (st.setup_commands && st.setup_commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            p = p.then(function () {
+              return self._runBackgroundShell(tutorialShellBatch(st.setup_commands), { timeout: 120000 });
+            });
+          }
+        }
+
+        if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
+            (st.post_fileload_setup && st.post_fileload_setup.length > 0)) {
+          p = p.then(function () { return self._runPostFileloadSetup(st); });
+        }
+
+        if (st.solution && st.solution.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            st.solution.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language, f);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            p = p.then(function () {
+              return self._runBackgroundShell(tutorialShellBatch(st.solution.commands), { timeout: 120000 });
+            });
+          }
+        }
+      })(i);
+    }
+    return p;
+  };
+
   /**
    * Reset the current step to its original starter-code files.
    * When resetType is "commands", replays all prior solutions + setup_commands
@@ -6735,8 +7529,12 @@
 
     if (self.resetType === 'commands') {
       self._resetInProgress = true;
+      self._pauseBackgroundSync();
       var p = self._resetStepWithCommands();
-      var clear = function () { self._resetInProgress = false; };
+      var clear = function () {
+        self._resetInProgress = false;
+        self._resumeBackgroundSync();
+      };
       if (p && typeof p.then === 'function') {
         p.then(clear, clear);
       } else {
@@ -6776,7 +7574,7 @@
     // step (from a prior visit or a previous reset), just restore it. One
     // WASM call replaces restoring _initialVMState + replaying every prior
     // step + running this step's setup. This is the common case.
-    if (self._stepEntrySnapshots[targetStep]) {
+    if (self.config.backend === 'v86' && self.emulator && self.emulator.restore_state) {
       self._showLoading('Resetting step\u2026');
       return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
         if (!ok) return self._resetStepWithCommandsSlow();
@@ -6813,9 +7611,7 @@
           return self._updateUserCmdListener(curStep);
         }).then(function () {
           self._autoSaveProgress();
-          if (self.term) self.term.clear();
-          self._muteCount = 0;
-          if (self.emulator) self.emulator.serial0_send('\n');
+          self._refreshPrompt();
           self._hideLoading();
           self._refreshGitGraph();
         });
@@ -6853,74 +7649,7 @@
       });
     }
 
-    // Apply each prior step in chronological order. For Git tutorials the
-    // timing of file writes matters: a later step's file content must not
-    // exist before an earlier step's commit command runs.
-    for (var i = 0; i < targetStep; i++) {
-      (function (stepIdx) {
-        var st = self.steps[stepIdx];
-        if (!st) return;
-
-        // 1. Apply step starter files
-        if (st.files) {
-          p = p.then(function () {
-            self._suppressAutoSave = true;
-            var syncs = [];
-            st.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language, f);
-              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-              self._originalContent[f.path] = f.content || '';
-            });
-            self._suppressAutoSave = false;
-            return Promise.all(syncs);
-          });
-        }
-
-        // 2. Run setup for this step before applying its solution.
-        if (st.setup_commands && st.setup_commands.length > 0) {
-          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            p = p.then(function () {
-              var batch = st.setup_commands
-                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-                .join('\n');
-              return self._runSilent(batch);
-            });
-          }
-        }
-
-        // 3. Replay post-fileload setup in the same position as normal step load.
-        if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
-            (st.post_fileload_setup && st.post_fileload_setup.length > 0)) {
-          p = p.then(function () { return self._runPostFileloadSetup(st); });
-        }
-
-        // 4. Apply solution files
-        if (st.solution && st.solution.files) {
-          p = p.then(function () {
-            self._suppressAutoSave = true;
-            var syncs = [];
-            st.solution.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language, f);
-              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-            });
-            self._suppressAutoSave = false;
-            return Promise.all(syncs);
-          });
-        }
-
-        // 5. Run solution commands
-        if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
-          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            p = p.then(function () {
-              var batch = st.solution.commands
-                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-                .join('\n');
-              return self._runSilent(batch);
-            });
-          }
-        }
-      })(i);
-    }
+    p = p.then(function () { return self._replayPriorStepsForCommands(targetStep); });
 
     // Apply current step's starter files (honoring `persistent: true` so the
     // student's build-git.sh edits survive reset).
@@ -6933,10 +7662,8 @@
     if (curStep && curStep.setup_commands && curStep.setup_commands.length > 0) {
       if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
         p = p.then(function () {
-          var batch = curStep.setup_commands
-            .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-            .join('\n');
-          return self._runSilent(batch);
+          var batch = tutorialShellBatch(curStep.setup_commands);
+          return self._runBackgroundShell(batch, { timeout: 120000 });
         });
       }
     }
@@ -6967,9 +7694,7 @@
       self._renderTabs();
       self._autoSaveProgress();
       // Clear terminal, unmute, and show a fresh prompt after the silent replay
-      if (self.term) self.term.clear();
-      self._muteCount = 0;
-      if (self.emulator) self.emulator.serial0_send('\n');
+      self._refreshPrompt();
       self._hideLoading();
       self._refreshGitGraph();
     });
@@ -7010,7 +7735,7 @@
     // Fast path: we already have a cached clean entry-state for this step.
     // (Cached during an earlier reset in this session, or seeded by a prior
     // normal progression.) One WASM call replaces the full replay below.
-    if (self._stepEntrySnapshots[targetStep]) {
+    if (self.config.backend === 'v86' && self.emulator && self.emulator.restore_state) {
       self._showLoading('Restoring your progress\u2026');
       return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
         if (!ok) return self._restoreCommandsAndFilesSlow(saved);
@@ -7069,73 +7794,7 @@
       });
     }
 
-    // Replay each step in chronological order. Git restore depends on the
-    // same ordering as reset: starter files, solution files, then commands.
-    for (var i = 0; i < targetStep; i++) {
-      (function (stepIdx) {
-        var step = self.steps[stepIdx];
-        if (!step) return;
-
-        // 1. Apply step starter files
-        if (step.files) {
-          p = p.then(function () {
-            self._suppressAutoSave = true;
-            var syncs = [];
-            step.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language, f);
-              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-              self._originalContent[f.path] = f.content || '';
-            });
-            self._suppressAutoSave = false;
-            return Promise.all(syncs);
-          });
-        }
-
-        // 2. Run setup for this step before applying its solution.
-        if (step.setup_commands && step.setup_commands.length > 0) {
-          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            p = p.then(function () {
-              var batch = step.setup_commands
-                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-                .join('\n');
-              return self._runSilent(batch);
-            });
-          }
-        }
-
-        // 3. Replay post-fileload setup in the same position as normal step load.
-        if ((self.postFileloadSetupCommands && self.postFileloadSetupCommands.length > 0) ||
-            (step.post_fileload_setup && step.post_fileload_setup.length > 0)) {
-          p = p.then(function () { return self._runPostFileloadSetup(step); });
-        }
-
-        // 4. Apply solution files
-        if (step.solution && step.solution.files) {
-          p = p.then(function () {
-            self._suppressAutoSave = true;
-            var syncs = [];
-            step.solution.files.forEach(function (f) {
-              self.openFile(f.path, f.content, f.language, f);
-              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-            });
-            self._suppressAutoSave = false;
-            return Promise.all(syncs);
-          });
-        }
-
-        // 5. Run this step's solution commands before later step files exist.
-        if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
-          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            p = p.then(function () {
-              var batch = step.solution.commands
-                .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-                .join('\n');
-              return self._runSilent(batch);
-            });
-          }
-        }
-      })(i);
-    }
+    p = p.then(function () { return self._replayPriorStepsForCommands(targetStep); });
 
     // 4. Apply the saved step's starter files (persistent-aware).
     var savedStepObj = self.steps[targetStep];
@@ -7261,7 +7920,9 @@
 
     // Keep the shell-side user-command listener in sync with the current step,
     // independent of firstVisit vs. revisit.
-    self._updateUserCmdListener(step);
+    if (!self._isBackgroundSyncPaused()) {
+      self._updateUserCmdListener(step);
+    }
 
     var hasSetup = firstVisit && step.setup_commands && step.setup_commands.length > 0;
     var hasPostFileload = firstVisit && (
@@ -7269,7 +7930,9 @@
       (step.post_fileload_setup && step.post_fileload_setup.length > 0)
     );
     var visibleFilesRefreshScheduled = false;
-    if ((hasSetup || hasPostFileload) &&
+    if (self._isBackgroundSyncPaused()) {
+      visibleFilesRefreshScheduled = true;
+    } else if ((hasSetup || hasPostFileload) &&
         (this.config.backend === 'v86' || this.config.backend === 'webcontainer')) {
       visibleFilesRefreshScheduled = true;
       // Run all setup_commands silently in a single shell invocation. The
@@ -7280,9 +7943,7 @@
       self._showTerminalLoading('Preparing step\u2026');
       var p = Promise.resolve();
       if (hasSetup) {
-        var setupBatch = step.setup_commands
-          .map(function (c) { return c.trim(); })
-          .join('; ');
+        var setupBatch = tutorialShellBatch(step.setup_commands.map(function (c) { return String(c).trim(); }));
         p = p.then(function () { return self._runSilent(setupBatch); });
       }
       // post_fileload_setup runs AFTER setup_commands. For git-playground this
@@ -7299,7 +7960,12 @@
         // Cache the clean "entry state" of this step so future Reset /
         // autosave-restore operations can skip replay entirely.
         if (self._canCacheLiveStepEntrySnapshot(index)) {
-          self._saveStepEntrySnapshot(index);
+          self._saveStepEntrySnapshot(index, { persist: false });
+        }
+        if (step.step_dir) {
+          return self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir)).then(function () {
+            if (self.emulator) self.emulator.serial0_send('\n');
+          });
         }
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
@@ -7317,7 +7983,19 @@
       self._refreshStepVisibleFiles(step, { includeStepFiles: false });
     }
 
-    if (this.config.backend === 'v86') this._startFileWatch(2000);
+    if (this.config.backend === 'v86' && !this._isBackgroundSyncPaused()) this._startFileWatch(2000);
+
+    // step_dir: cd to the configured directory if not already there.
+    // Runs visibly in the terminal so the user sees their prompt land in the
+    // right place. Skipped when setup_commands already handled the cd above,
+    // and skipped when the terminal is paused (background sync / snapshot replay).
+    if (step.step_dir && !self._isBackgroundSyncPaused() &&
+        (this.config.backend === 'v86' || this.config.backend === 'webcontainer') &&
+        !(hasSetup || hasPostFileload)) {
+      self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir)).then(function () {
+        if (self.emulator) self.emulator.serial0_send('\n');
+      });
+    }
 
     // Configure query input for Prolog backend
     if (this.config.backend === 'prolog') {
@@ -7651,7 +8329,7 @@
     else if (backend === 'java') this._runTestsJava();
   };
 
-  // v86 — same marker approach as original tutorial-vm.js
+  // v86 test runner — marker-delimited output from the interactive shell.
   TutorialCode.prototype._runTestsV86 = function () {
     var self = this;
     var step = this.steps[this.currentStep];
@@ -8205,7 +8883,7 @@
     var self = this;
     this._stopFileWatch();
     this._reverseSyncTimer = setInterval(function () {
-      if (self.booted) self._pollWatchedFiles();
+      if (self.booted && !self._isBackgroundSyncPaused()) self._pollWatchedFiles();
     }, intervalMs || 2000);
   };
 
@@ -8271,22 +8949,54 @@
    * interaction.
    */
   TutorialCode.prototype._installGitGraphPromptHook = function () {
-    if (this._gitGraphHookInstalled) return;
-    this._gitGraphHookInstalled = true;
     var p = this.gitGraphPath || '/tutorial';
-    // The hook: a small function appended to PROMPT_COMMAND.
-    // It only runs git commands when inside a git repo.
-    var hookCmd =
-      '__gg_dump() { ' +
-      '( cd ' + p + ' 2>/dev/null && [ -d .git ] && ' +
-      '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
-      'echo "===BRANCH==="; git branch 2>/dev/null; ' +
-      'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
-      'echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; ' +
-      'echo "===STASH==="; git stash list 2>/dev/null; ' +
-      '} > ' + p + '/.git/gitgraph_state 2>/dev/null ); }; ' +
-      'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
-    this._runSilent(hookCmd);
+    var self = this;
+
+    // One stable PROMPT_COMMAND entry: __gg_prompt. Reinstalling only
+    // redefines that function, so we can upgrade from legacy to daemon mode
+    // later without stacking duplicate prompt hooks.
+    return self._probeRPCDaemon().then(function (rpcAvail) {
+      var mode = rpcAvail ? 'rpc' : 'legacy';
+      if (self._gitGraphHookInstalled && self._gitGraphHookMode === mode) {
+        return Promise.resolve();
+      }
+      var hookCmd;
+      if (rpcAvail) {
+        hookCmd =
+          '__gg_repo=' + shellQuote(p) + '; ' +
+          '__gg_fifo=/run/gg/tick.fifo; ' +
+          'mkdir -p /run/gg 2>/dev/null; ' +
+          '__gg_kick() { ' +
+          'if [ -p "$__gg_fifo" ]; then ' +
+          'printf "%s\\n" "$__gg_repo" > "$__gg_fifo" 2>/dev/null || true; ' +
+          'else ' +
+          'printf "%s\\n" "$__gg_repo" > /run/gg/tick 2>/dev/null; ' +
+          '__gg_pid=$(cat /run/gg/tick.pid 2>/dev/null || true); ' +
+          '[ -n "$__gg_pid" ] && kill -USR1 "$__gg_pid" 2>/dev/null || true; ' +
+          'fi; ' +
+          '}; ' +
+          '__gg_prompt() { __gg_kick; }; ' +
+          'case ";$PROMPT_COMMAND;" in *";__gg_prompt;"*) ;; *) PROMPT_COMMAND="__gg_prompt${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
+      } else {
+        hookCmd =
+          '__gg_repo=' + shellQuote(p) + '; ' +
+          '__gg_dump() { ' +
+          '( cd "$__gg_repo" 2>/dev/null && [ -d .git ] && ' +
+          '{ GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; ' +
+          'echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
+          'echo "===BRANCH==="; git branch 2>/dev/null; ' +
+          'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
+          'echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; ' +
+          'echo "===STASH==="; git stash list 2>/dev/null; ' +
+          '} > "$__gg_repo/.git/gitgraph_state" 2>/dev/null ); }; ' +
+          '__gg_prompt() { __gg_dump; }; ' +
+          'case ";$PROMPT_COMMAND;" in *";__gg_prompt;"*) ;; *) PROMPT_COMMAND="__gg_prompt${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
+      }
+      return self._runSilent(hookCmd).then(function () {
+        self._gitGraphHookInstalled = true;
+        self._gitGraphHookMode = mode;
+      });
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -8328,7 +9038,7 @@
     var stepCmds = (step && step.post_fileload_setup) || [];
     var all = globalCmds.concat(stepCmds).map(function (c) { return String(c).trim(); }).filter(Boolean);
     if (all.length === 0) return Promise.resolve();
-    return this._runSilent(all.join('; '));
+    return this._runSilent(all.join('\n'));
   };
 
   TutorialCode.prototype._getStepVisibleFiles = function (step, opts) {
@@ -8452,9 +9162,15 @@
    */
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
-    return this._runSilent(
-      '( cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + p + '/.git/gitgraph_state 2>/dev/null )'
-    );
+    var cmd = '( cd ' + shellQuote(p) + ' && { GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + shellQuote(p + '/.git/gitgraph_state') + ' 2>/dev/null )';
+    var self = this;
+    // RPC path: daemon runs the dump, gitgraph_state is fresh when the
+    // returned Promise resolves. The cmd's stdout is empty (everything is
+    // redirected to gitgraph_state), so we don't use the resp content —
+    // we only need the "done" signal that the daemon finished.
+    return self._probeRPCDaemon().then(function (avail) {
+      return avail ? self._runRPC(cmd) : self._runSilent(cmd);
+    });
   };
 
   /**
@@ -8567,6 +9283,10 @@
    * Other backends with gitGraphPath unset are no-ops.
    */
   TutorialCode.prototype._refreshGitGraph = function () {
+    if (this._isBackgroundSyncPaused()) {
+      this._gitGraphRefreshPending = true;
+      return;
+    }
     // Piggy-back: any codepath that refreshes the graph also refreshes the
     // git gutter. Covers step transitions, apply-solution, setup commands,
     // and external Refresh-button clicks — none of which go through
@@ -8578,7 +9298,10 @@
     if (backend !== 'v86' && backend !== 'pyodide') return;
     this._gitGraphRefreshing = true;
     var self = this;
-    var safetyTimer = setTimeout(function () { self._gitGraphRefreshing = false; }, 10000);
+    var generation = this._gitGraphRefreshGeneration;
+    var safetyTimer = setTimeout(function () {
+      if (generation === self._gitGraphRefreshGeneration) self._gitGraphRefreshing = false;
+    }, 10000);
 
     if (backend === 'v86') {
       this._installGitGraphPromptHook();
@@ -8587,25 +9310,33 @@
         .then(function () { return new Promise(function (resolve) { setTimeout(resolve, 150); }); })
         .then(function () { return self.emulator.read_file(stateReadPath); })
         .then(function (buf) {
+          if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused()) return;
           clearTimeout(safetyTimer);
           self._gitGraphRefreshing = false;
-          self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+          var text = new TextDecoder('utf-8').decode(buf);
+          self._lastGitGraphStateText = text;
+          self._gitGraphStateDirty = false;
+          self._gitGraphRefreshPending = false;
+          self._renderGitGraphFromText(text);
         })
         .catch(function () {
           clearTimeout(safetyTimer);
-          self._gitGraphRefreshing = false;
+          if (generation === self._gitGraphRefreshGeneration) self._gitGraphRefreshing = false;
         });
       return;
     }
 
     // pyodide
     this._pyodideGetGitState().then(function (state) {
+      if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused()) return;
       clearTimeout(safetyTimer);
       self._gitGraphRefreshing = false;
+      self._gitGraphStateDirty = false;
+      self._gitGraphRefreshPending = false;
       self._renderGitGraphFromState(state);
     }).catch(function () {
       clearTimeout(safetyTimer);
-      self._gitGraphRefreshing = false;
+      if (generation === self._gitGraphRefreshGeneration) self._gitGraphRefreshing = false;
     });
   };
 
@@ -8615,18 +9346,31 @@
    *   pyodide   → identical to full refresh (worker call is already cheap; no separate cache needed)
    */
   TutorialCode.prototype._lightRefreshGitGraph = function () {
+    if (this._isBackgroundSyncPaused() || this._gitGraphStateDirty) {
+      this._gitGraphRefreshPending = true;
+      return;
+    }
     if (!this.booted || !window.GitGraph) return;
     var backend = this.config.backend;
     var self = this;
+    var generation = this._gitGraphRefreshGeneration;
     if (backend === 'v86') {
+      if (this._lastGitGraphStateText) {
+        this._renderGitGraphFromText(this._lastGitGraphStateText);
+        return;
+      }
       var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
       this.emulator.read_file(stateReadPath)
-        .then(function (buf) { self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf)); })
+        .then(function (buf) {
+          if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused() || self._gitGraphStateDirty) return;
+          self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+        })
         .catch(function () { /* file doesn't exist yet — ignore */ });
       return;
     }
     if (backend === 'pyodide') {
       this._pyodideGetGitState().then(function (state) {
+        if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused() || self._gitGraphStateDirty) return;
         self._renderGitGraphFromState(state);
       }).catch(function () { /* repo not initialized yet — ignore */ });
     }
@@ -9380,17 +10124,20 @@
 
   /**
    * Auto-refresh: called from the serial output listener when a shell
-   * prompt is detected.  Just reads the file that PROMPT_COMMAND
-   * already updated — instant, no serial interaction.
+   * prompt is detected. In daemon mode the graph usually updates first via
+   * a pushed G frame on virtio-console; this light read is a low-cost fallback
+   * for legacy snapshots and missed notifications.
    */
   TutorialCode.prototype._maybeAutoRefreshGitGraph = function () {
+    if (this._isBackgroundSyncPaused()) return;
     if (this._currentView === 'git_graph' && this.booted) {
       var self = this;
       clearTimeout(this._gitGraphAutoRefreshTimer);
-      // Short delay to let the 9p write from PROMPT_COMMAND propagate
+      // Short delay to let legacy 9p prompt writes propagate. Keep it low so
+      // graph view still feels immediate when the daemon push is unavailable.
       this._gitGraphAutoRefreshTimer = setTimeout(function () {
         self._lightRefreshGitGraph();
-      }, 300);
+      }, 50);
     }
   };
 

@@ -1006,27 +1006,38 @@
     this._setSvgSize(newDims.width, newDims.height);
   };
 
-  // Pin the workbench's min-height to the LARGEST height it will ever need
-  // across every state the lab transitions through. The panel sits above
-  // the SVG in the graph host, so any time a row is added or removed its
-  // natural height changes, which pulls the SVG below it up or down and
-  // feels like a jolt on every click. Pinning to max-across-all-states
-  // from the VERY FIRST render means the first click never grows the pin
-  // — without this, `git add -A` and similar transitions that introduce
-  // rows on the first press would grow the workbench once then stay
-  // pinned, producing a one-time visible jolt only on the first press.
+  // Stable-layout mode: pin the workbench's min-height to the LARGEST
+  // height it will ever need across every state the lab transitions
+  // through. The panel sits above the SVG in the graph host, so any time
+  // a row is added or removed its natural height changes, which pulls
+  // the SVG below it up or down and feels like a jolt on every click.
+  // Pinning to max-across-all-states from the VERY FIRST render means
+  // the first click never grows the pin — without this, `git add -A`
+  // and similar transitions that introduce rows on the first press
+  // would grow the workbench once then stay pinned, producing a
+  // one-time visible jolt only on the first press.
   //
-  // The reserved height comes from `reserveForStates`, which measures
-  // each state's workbench by rendering it into an off-layout probe. If
-  // the caller didn't reserve, we fall back to growing the pin on demand
-  // (the old max-ever behaviour) so this method is still correct in
-  // isolation.
+  // Stable mode is opt-in via `reserveForStates`: callers that know
+  // every state the graph will transition through (the SEBook command
+  // labs in git-command-lab.js) call it up front, which measures each
+  // state's workbench into an off-layout probe and stores the max in
+  // `_reservedWorkbenchH`. The presence of that reservation is the
+  // signal — no separate flag.
+  //
+  // Without a reservation we are in DYNAMIC mode (the tutorial view,
+  // where the user runs arbitrary git commands and we don't know future
+  // states): we clear any pin so the workbench shrinks back when files
+  // are removed instead of leaving a tall empty zone above the graph.
   GitGraph.prototype._lockWorkbenchHeight = function () {
     var wb = this.container && this.container.querySelector('.git-workbench');
     if (!wb) return;
+    if (!this._reservedWorkbenchH) {
+      if (wb.style.minHeight) wb.style.minHeight = '';
+      return;
+    }
     var natural = wb.getBoundingClientRect().height;
     if (natural <= 0) return;
-    var target = Math.max(natural, this._reservedWorkbenchH || 0);
+    var target = Math.max(natural, this._reservedWorkbenchH);
     var curPin = parseFloat(wb.style.minHeight) || 0;
     if (target > curPin) wb.style.minHeight = target + 'px';
   };

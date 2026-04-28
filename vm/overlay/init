@@ -46,6 +46,15 @@ for param_i in 1 2 3 4 5; do
     sleep 1
 done
 
+# Start the gg-daemon in the background. It serves JS-side RPC requests over
+# /dev/hvc0 (virtio console), so user-shell muting never collides with gutter /
+# git-graph queries. Started after /run and /tutorial exist; the daemon waits
+# for /dev/hvc0 internally. Backgrounded with all stdio detached.
+if [ -x /usr/local/bin/gg-daemon ]; then
+    log "starting gg-daemon"
+    setsid /usr/local/bin/gg-daemon </dev/null >/dev/null 2>&1 &
+fi
+
 log "looking for shell..."
 
 # Find a working shell — try bash, fall back to sh

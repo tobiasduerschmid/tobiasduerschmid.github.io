@@ -1,0 +1,161 @@
+#!/bin/sh
+# gg-daemon - background RPC server for tutorial-code.js sync queries.
+#
+# v86 exposes ttyS0 for the user's interactive shell. Background git graph /
+# gutter work must not use that same serial stream, because terminal muting can
+# eat the user's keystroke echoes. This daemon uses the separate virtio console
+# device instead:
+#
+#   JS -> daemon:  R <id> <base64 shell script>
+#   daemon -> JS:  D <id> <exit-code> <base64 stdout+stderr>
+#   daemon -> JS:  G <base64 repo path> <base64 git graph state>
+#
+# Prompt notifications are guest-local: the user's PROMPT_COMMAND writes the
+# repo path to /run/gg/tick, and this daemon consumes it. Nothing in the prompt
+# path touches ttyS0 or /dev/hvc0.
+
+set -u
+
+HVC=/dev/hvc0
+RUN=/run/gg
+TICK=$RUN/tick
+FIFO=$RUN/tick.fifo
+PIDFILE=$RUN/tick.pid
+LOCK=$RUN/send.lock
+
+mkdir -p "$RUN" 2>/dev/null || true
+rm -rf "$LOCK" "$FIFO" 2>/dev/null || true
+
+b64_file() {
+  base64 "$1" 2>/dev/null | tr -d '\n'
+}
+
+b64_text() {
+  printf '%s' "$1" | base64 2>/dev/null | tr -d '\n'
+}
+
+send_line() {
+  line=$1
+  mkdir -p "$RUN" 2>/dev/null || true
+  while ! mkdir "$LOCK" 2>/dev/null; do
+    sleep 0.01
+  done
+  printf '%s\n' "$line" > "$HVC" 2>/dev/null || true
+  rmdir "$LOCK" 2>/dev/null || true
+}
+
+dump_git_state() {
+  repo=${1:-/tutorial}
+  case "$repo" in
+    /tutorial|/tutorial/*) ;;
+    *) repo=/tutorial ;;
+  esac
+  [ -d "$repo/.git" ] || return 0
+
+  out="$RUN/state.$$"
+  (
+    cd "$repo" 2>/dev/null && {
+      GIT_OPTIONAL_LOCKS=0
+      export GIT_OPTIONAL_LOCKS
+      echo "===LOG==="
+      git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null
+      echo "===BRANCH==="
+      git branch 2>/dev/null
+      echo "===HEAD==="
+      git symbolic-ref HEAD 2>/dev/null || echo detached
+      echo "===STATUS==="
+      git status --porcelain=v1 2>/dev/null
+      echo "===STASH==="
+      git stash list 2>/dev/null
+    }
+  ) > "$out" 2>/dev/null || : > "$out"
+
+  cp "$out" "$repo/.git/gitgraph_state" 2>/dev/null || true
+  repo64=$(b64_text "$repo")
+  state64=$(b64_file "$out")
+  send_line "G $repo64 $state64"
+  rm -f "$out"
+}
+
+tick_loop() {
+  mkdir -p "$RUN" 2>/dev/null || true
+  rm -f "$FIFO" 2>/dev/null || true
+  mkfifo "$FIFO" 2>/dev/null || exit 1
+
+  # Open read-write so prompt hooks can write without blocking even while this
+  # worker is busy dumping the previous graph state. The FIFO buffer coalesces
+  # short repo-path notifications without touching ttyS0.
+  exec 4<> "$FIFO" || exit 1
+  while IFS= read -r repo <&4; do
+    [ -n "$repo" ] || continue
+    dump_git_state "$repo"
+  done
+  exec 4<&- 4>&-
+}
+
+handle_request() {
+  id=$1
+  payload=$2
+  script="$RUN/req-$id.sh"
+  out="$RUN/out-$id"
+  decode_err="$RUN/decode-$id.err"
+
+  if printf '%s' "$payload" | base64 -d > "$script" 2> "$decode_err"; then
+    ( bash "$script" > "$out" 2>&1 )
+    status=$?
+  else
+    status=64
+    cp "$decode_err" "$out" 2>/dev/null || : > "$out"
+  fi
+
+  out64=$(b64_file "$out")
+  send_line "D $id $status $out64"
+  rm -f "$script" "$out" "$decode_err" 2>/dev/null || true
+}
+
+wait_for_hvc() {
+  while [ ! -e "$HVC" ]; do
+    sleep 0.1
+  done
+}
+
+while true; do
+  wait_for_hvc
+  mkdir -p "$RUN" 2>/dev/null || true
+  rm -rf "$LOCK" 2>/dev/null || true
+
+  tick_loop &
+  tick_pid=$!
+  printf '%s\n' "$tick_pid" > "$PIDFILE" 2>/dev/null || true
+
+  # Keep a persistent read fd. If the device is reset across snapshot restore,
+  # the read loop can exit; the outer loop reopens it and restarts the ticker.
+  if exec 3< "$HVC"; then
+    while IFS= read -r line <&3; do
+      set -- $line
+      case "${1:-}" in
+        R)
+          id=${2:-}
+          payload=${3:-}
+          case "$id" in
+            *[!A-Za-z0-9_-]*|'') ;;
+            *) handle_request "$id" "$payload" ;;
+          esac
+          ;;
+        P)
+          id=${2:-}
+          case "$id" in
+            *[!A-Za-z0-9_-]*|'') ;;
+            *) send_line "D $id 0 $(b64_text PONG)" ;;
+          esac
+          ;;
+      esac
+    done
+    exec 3<&-
+  fi
+
+  kill "$tick_pid" 2>/dev/null || true
+  wait "$tick_pid" 2>/dev/null || true
+  rm -f "$PIDFILE" "$FIFO" 2>/dev/null || true
+  sleep 0.2
+done

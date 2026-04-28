@@ -18,9 +18,10 @@
 <script>
 'use strict';
 
-// MUST match tutorial-vm.js _bootVM exactly so the captured snapshot is valid
-// for the production VM constructor. Drift here = corrupt snapshot at restore.
-var MEMORY_MB = 256;
+// MUST match tutorial-code.js memoryMB default exactly.
+// v86 snapshots embed the memory configuration; restoring with a different
+// memory_size is undefined behavior. Drift = corrupt snapshot at restore.
+var MEMORY_MB = 192;
 var V86_PATH  = '/assets/v86';
 var VM_PATH   = '/vm/dist';
 
@@ -57,15 +58,17 @@ var emulator = new V86({
   disable_mouse: true,
   disable_speaker: true,
   screen_dummy: true,
+  virtio_console: true,
   filesystem: {},
 });
 
 window.__emulator = emulator;
 
-// Mirror the prompt-detection logic from tutorial-vm.js so we capture state at
+// Mirror the prompt-detection logic from tutorial-code.js so we capture state at
 // the same moment production considers the VM "booted".
 var bootBuf = '';
 var promptSeen = false;
+window.__bootBuf = function () { return bootBuf; };
 
 emulator.add_listener('serial0-output-byte', function (byte) {
   var ch = String.fromCharCode(byte);

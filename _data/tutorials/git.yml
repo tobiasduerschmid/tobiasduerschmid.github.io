@@ -163,6 +163,7 @@ steps:
   # STEP 2: First commit — git add, git commit
   # --------------------------------------------------------------------------
   - title: "Your First Commit"
+    step_dir: /tutorial/myproject
     instructions: |
       ### Creating and tracking files
 
@@ -341,6 +342,7 @@ steps:
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
   - title: "The Edit-Stage-Commit Cycle"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Modifying tracked files
@@ -518,6 +520,7 @@ steps:
   # STEP 4: Staging strategies — individual, wildcard, directory, all
   # --------------------------------------------------------------------------
   - title: "Staging Strategies"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Controlling what goes into a commit
@@ -731,6 +734,7 @@ steps:
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
   - title: "Unstaging and Undoing Changes"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Ctrl+Z for Git (kind of)
@@ -887,6 +891,7 @@ steps:
   # STEP 6: .gitignore
   # --------------------------------------------------------------------------
   - title: "Ignoring Files with .gitignore"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Not everything belongs in version control
@@ -1122,6 +1127,7 @@ steps:
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
   # --------------------------------------------------------------------------
   - title: "Inspecting History"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Reading the story of your project
@@ -1292,6 +1298,7 @@ steps:
   # STEP 7.5: Mid-tutorial mini-capstone — unguided consolidation
   # --------------------------------------------------------------------------
   - title: "Mini-Capstone: Clean Up a Messy Repository"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Boss level: no hand-holding
@@ -1454,6 +1461,7 @@ steps:
   # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
   - title: "Branching"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Parallel universes for your code
@@ -1722,6 +1730,7 @@ steps:
   # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
   - title: "Merging Branches"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Integrating your work
@@ -2014,6 +2023,7 @@ steps:
   # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### Merge conflicts: scary name, totally normal
@@ -2181,6 +2191,7 @@ steps:
   # STEP 11: Resolving a merge conflict
   # --------------------------------------------------------------------------
   - title: "Resolving a Merge Conflict"
+    step_dir: /tutorial/myproject
     view: editor
     instructions: |
       ### The conflict
@@ -2501,6 +2512,7 @@ steps:
   # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
   - title: "Safe Undo with git revert"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Undoing committed mistakes safely
@@ -2880,6 +2892,7 @@ steps:
   # STEP 13: Working with Remotes
   # --------------------------------------------------------------------------
   - title: "Working with Remotes"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Time to go online
@@ -3079,6 +3092,7 @@ steps:
   # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Capstone Git Project and Review & Best Practices"
+    step_dir: /tutorial/myproject
     view: git_graph
     setup_commands:
       - "cd /tutorial/colleague-copy && git pull && grep -q 'def status_report' hero_registry.py || (echo '' >> hero_registry.py && echo 'def status_report(hero):' >> hero_registry.py && echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py && echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py && git add hero_registry.py && git commit -m 'Add status report function' && git push); true && cd /tutorial/myproject/ && git config pull.rebase false"
@@ -3533,6 +3547,7 @@ steps:
   # STEP 15: Celebration — final quiz
   # --------------------------------------------------------------------------
   - title: "Git Mastery — Final Review"
+    step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
       ### Congratulations — you've completed the Git tutorial!

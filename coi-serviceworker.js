@@ -12,13 +12,13 @@
  * or when the time-travel debugger is enabled. On first registration the page
  * reloads once so the SW becomes the controller.
  *
- * Bump VM_CACHE when shipping a new state.bin.gz / rootfs / kernel — the
- * activate handler deletes any cache entry under a different key, so users on
- * the previous version get fresh bytes on next visit.
+ * VM assets are cached in Cache Storage but revalidated against the server's
+ * validators before use. This keeps repeat visits fast without relying on
+ * manual cache-key bumps whenever state.bin.gz / rootfs / kernel changes.
  */
 'use strict';
 
-var VM_CACHE = 'vm-assets-v1';
+var VM_CACHE = 'vm-assets-v2';
 
 // Match same-origin VM asset paths exactly so unrelated requests (HTML, CSS,
 // page-specific JSON) keep going through the COI rewrite path below.
@@ -38,6 +38,79 @@ self.addEventListener('activate', function (e) {
   );
 });
 
+function validatorHeaders(response) {
+  if (!response) return {};
+  return {
+    etag: response.headers.get('ETag') || response.headers.get('etag') || '',
+    lastModified: response.headers.get('Last-Modified') || response.headers.get('last-modified') || '',
+    length: response.headers.get('Content-Length') || response.headers.get('content-length') || '',
+  };
+}
+
+function sameValidators(cached, fresh) {
+  var a = validatorHeaders(cached);
+  var b = validatorHeaders(fresh);
+  if (a.etag && b.etag) return a.etag === b.etag;
+  if (a.lastModified && b.lastModified) {
+    if (a.lastModified !== b.lastModified) return false;
+    return !a.length || !b.length || a.length === b.length;
+  }
+  return false;
+}
+
+function requestWithMethod(request, method, headers) {
+  return new Request(request.url, {
+    method: method,
+    headers: headers || request.headers,
+    cache: 'no-store',
+    credentials: request.credentials,
+    mode: request.mode,
+    redirect: request.redirect,
+    referrer: request.referrer,
+    referrerPolicy: request.referrerPolicy,
+  });
+}
+
+function fetchAndCacheVMAsset(cache, request) {
+  return fetch(requestWithMethod(request, 'GET')).then(function (response) {
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  });
+}
+
+function conditionalFetchVMAsset(cache, request, cached) {
+  var headers = new Headers(request.headers);
+  var validators = validatorHeaders(cached);
+  if (validators.etag) headers.set('If-None-Match', validators.etag);
+  if (validators.lastModified) headers.set('If-Modified-Since', validators.lastModified);
+
+  return fetch(requestWithMethod(request, 'GET', headers)).then(function (response) {
+    if (response.status === 304 && cached) return cached;
+    if (response.ok) {
+      cache.put(request, response.clone());
+      return response;
+    }
+    return cached || response;
+  });
+}
+
+function handleVMAssetRequest(request) {
+  return caches.open(VM_CACHE).then(function (cache) {
+    return cache.match(request).then(function (cached) {
+      if (!cached) return fetchAndCacheVMAsset(cache, request);
+
+      return fetch(requestWithMethod(request, 'HEAD')).then(function (headResponse) {
+        if (headResponse.ok && sameValidators(cached, headResponse)) return cached;
+        if (headResponse.ok) return fetchAndCacheVMAsset(cache, request);
+        return conditionalFetchVMAsset(cache, request, cached);
+      }).catch(function () {
+        return conditionalFetchVMAsset(cache, request, cached)
+          .catch(function () { return cached; });
+      });
+    });
+  });
+}
+
 self.addEventListener('fetch', function (e) {
   // Skip non-GET and opaque cache-only requests that would cause errors
   if (e.request.method !== 'GET') return;
@@ -50,25 +123,13 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
 
-  // VM assets: cache-first, opportunistically populate on miss. These files
-  // are large (state.bin.gz is ~50 MB) and stable across a deploy, so the
-  // cache is the right strategy. We don't pre-fetch on install — the page's
-  // own fetch is the trigger, avoiding a duplicate download on first visit.
+  // VM assets: Cache Storage with cheap validator checks. The snapshot is
+  // large enough that browser HTTP cache policy alone is not reliable, but a
+  // pure cache-first strategy can keep serving obsolete VM states after a
+  // deploy. HEAD avoids downloading the body when cached bytes are current;
+  // conditional GET is the standards-compliant fallback if HEAD is unavailable.
   if (VM_ASSET_RE.test(url.pathname)) {
-    e.respondWith(
-      caches.match(e.request).then(function (cached) {
-        if (cached) return cached;
-        return fetch(e.request).then(function (response) {
-          if (response.ok) {
-            var clone = response.clone();
-            caches.open(VM_CACHE).then(function (cache) {
-              cache.put(e.request, clone);
-            });
-          }
-          return response;
-        });
-      })
-    );
+    e.respondWith(handleVMAssetRequest(e.request));
     return;
   }
 

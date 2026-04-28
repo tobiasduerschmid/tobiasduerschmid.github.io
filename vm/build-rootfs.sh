@@ -40,6 +40,12 @@ docker run --rm --platform linux/386 \
         tree \
         musl-dev
 
+    # Alpine package/app-link details can vary; tutorials and tests use the
+    # portable command name `awk`, so guarantee it exists when gawk is present.
+    if [ -x /usr/bin/gawk ]; then
+        ln -sf /usr/bin/gawk /usr/bin/awk
+    fi
+
     # Build TCC (Tiny C Compiler) from source — not in Alpine repos for 386
     echo "    Installing TCC (Tiny C Compiler)..."
     apk add --no-cache gcc 2>&1 | tail -1
@@ -76,6 +82,11 @@ docker run --rm --platform linux/386 \
     # gcc wrapper that delegates to tcc
     cp /overlay/gcc /usr/bin/gcc
     chmod +x /usr/bin/gcc
+
+    # gg-daemon: in-VM RPC server for tutorial-code.js sync queries.
+    # See vm/overlay/gg-daemon for protocol details.
+    cp /overlay/gg-daemon /usr/local/bin/gg-daemon
+    chmod +x /usr/local/bin/gg-daemon
 
     # Hostname
     echo "tutorial" > /etc/hostname
