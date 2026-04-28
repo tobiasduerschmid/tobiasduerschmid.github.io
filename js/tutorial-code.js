@@ -95,7 +95,7 @@
       .join('\n');
   }
 
-  var V86_SNAPSHOT_CACHE_VERSION = 3;
+  var V86_SNAPSHOT_CACHE_VERSION = 4;
 
   function hashString(s) {
     var h = 2166136261;
@@ -450,6 +450,8 @@
               self._restoreCommandsAndFiles(saved).then(function () {
                 var curStep = self.steps[saved.step];
                 return self._runStepDir(curStep).then(function () {
+                  return self._ensureGitGraphPromptHook();
+                }).then(function () {
                   return self._refreshPrompt();
                 }).then(function () {
                   self._hideLoading();
@@ -468,6 +470,8 @@
                 self._autoSaveProgress();
                 var curStep = self.steps[saved.step];
                 return self._runStepDir(curStep).then(function () {
+                  return self._ensureGitGraphPromptHook();
+                }).then(function () {
                   return self._refreshPrompt();
                 }).then(function () {
                   self._hideLoading();
@@ -2484,7 +2488,9 @@
         self._muteCount = 1;  // mute all output until _setupFilesystem clears and unmutes
         self.emulator.add_listener('serial0-output-byte', function (byte) {
           var ch = String.fromCharCode(byte);
-          if (self._muteCount === 0) {
+          var serialMuted = self._muteCount > 0 ||
+            (self._silentListeners && self._silentListeners.length > 0);
+          if (!serialMuted) {
             if (self._visFilterMarker) {
               // Buffer all bytes until the marker appears somewhere in the stream.
               // Using indexOf lets us find the marker regardless of where it sits
@@ -2504,7 +2510,7 @@
           }
           if (self._testListening) { self._testBuffer += ch; self._parseTestOutput(); }
           // On every shell prompt: refresh open editor files and (if visible) the git graph.
-          if (self._muteCount === 0) {
+          if (!serialMuted) {
             self._promptDetectBuf = (self._promptDetectBuf || '') + ch;
             if (self._promptDetectBuf.length > 40) {
               self._promptDetectBuf = self._promptDetectBuf.slice(-40);
@@ -2731,8 +2737,8 @@
     if (this.config.backend === 'v86') {
       if (this._silentRunning || (this._silentQueue && this._silentQueue.length > 0)) {
         var self = this;
-        return this._runSilent(':').then(function () {
-          return self._refreshPrompt();
+        return this._waitForSilentIdle(2500).then(function (idle) {
+          return idle ? self._refreshPrompt() : false;
         });
       }
       if (this.term) this.term.clear();
@@ -2777,6 +2783,28 @@
     return new Promise(function (resolve) {
       function check() {
         if (self._terminalHasVisibleText()) {
+          resolve(true);
+          return;
+        }
+        if (Date.now() - started >= (timeoutMs || 0)) {
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 50);
+      }
+      check();
+    });
+  };
+
+  TutorialCode.prototype._waitForSilentIdle = function (timeoutMs) {
+    var self = this;
+    var started = Date.now();
+    return new Promise(function (resolve) {
+      function check() {
+        var pending = self._silentRunning ||
+          (self._silentQueue && self._silentQueue.length > 0) ||
+          (self._silentListeners && self._silentListeners.length > 0);
+        if (!pending) {
           resolve(true);
           return;
         }
@@ -7931,6 +7959,8 @@
         }).then(function () {
           return self._runStepDir(curStep);
         }).then(function () {
+          return self._ensureGitGraphPromptHook();
+        }).then(function () {
           self._autoSaveProgress();
           return self._refreshPrompt();
         }).then(function () {
@@ -8011,7 +8041,9 @@
       self._renderTabs();
       self._autoSaveProgress();
       // Clear terminal, unmute, and show a fresh prompt after the silent replay
-      return self._refreshPrompt().then(function () {
+      return self._ensureGitGraphPromptHook().then(function () {
+        return self._refreshPrompt();
+      }).then(function () {
         self._hideLoading();
         self._refreshGitGraph();
       });
@@ -9288,15 +9320,8 @@
         hookCmd =
           '__gg_repo=' + shellQuote(p) + '; ' +
           '__gg_fifo=/run/gg/tick.fifo; ' +
-          'mkdir -p /run/gg 2>/dev/null; ' +
           '__gg_kick() { ' +
-          'if [ -p "$__gg_fifo" ]; then ' +
-          'printf "%s\\n" "$__gg_repo" > "$__gg_fifo" 2>/dev/null || true; ' +
-          'else ' +
-          'printf "%s\\n" "$__gg_repo" > /run/gg/tick 2>/dev/null; ' +
-          '__gg_pid=$(cat /run/gg/tick.pid 2>/dev/null || true); ' +
-          '[ -n "$__gg_pid" ] && kill -USR1 "$__gg_pid" 2>/dev/null || true; ' +
-          'fi; ' +
+          '( [ -p "$__gg_fifo" ] && printf "%s\\n" "$__gg_repo" > "$__gg_fifo" ) >/dev/null 2>&1 & ' +
           '}; ' +
           '__gg_prompt() { __gg_kick; }; ' +
           'case ";$PROMPT_COMMAND;" in *";__gg_prompt;"*) ;; *) PROMPT_COMMAND="__gg_prompt${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
@@ -9319,6 +9344,16 @@
         self._gitGraphHookInstalled = true;
         self._gitGraphHookMode = mode;
       });
+    });
+  };
+
+  TutorialCode.prototype._ensureGitGraphPromptHook = function () {
+    if (this.config.backend !== 'v86' || !this.gitGraphPath || !this.booted) {
+      return Promise.resolve();
+    }
+    return this._installGitGraphPromptHook().catch(function () {
+      // Graph rendering has explicit refresh fallback paths; a failed hook
+      // install should never block tutorial restore or terminal reveal.
     });
   };
 
@@ -9627,9 +9662,9 @@
     }, 10000);
 
     if (backend === 'v86') {
-      this._installGitGraphPromptHook();
       var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
-      this._dumpGitState()
+      this._ensureGitGraphPromptHook()
+        .then(function () { return self._dumpGitState(); })
         .then(function () { return new Promise(function (resolve) { setTimeout(resolve, 150); }); })
         .then(function () { return self.emulator.read_file(stateReadPath); })
         .then(function (buf) {
