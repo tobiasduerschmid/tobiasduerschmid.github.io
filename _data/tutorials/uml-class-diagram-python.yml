@@ -299,7 +299,7 @@ steps:
 
       > *"Name mangling is intended to give classes an easy way to define 'private' instance variables... without having to worry about instance variables defined by derived classes."*
 
-      The **primary purpose** of `__` is **avoiding name clashes in deep inheritance hierarchies** (PEP 8), not privacy. It happens to make accidental external access harder, which is why many tools (and this renderer) treat it as the closest Python analogue of UML `-`. But don't reach for `__` just to "make something private" — idiomatic Python rarely uses it.
+      The **primary purpose** of `__` is **avoiding name clashes in deep inheritance hierarchies** (PEP 8), not privacy. It happens to make accidental external access harder, which is why many tools (and this renderer) treat it as the closest Python analog of UML `-`. But don't reach for `__` just to "make something private" — idiomatic Python rarely uses it.
 
       ```python
       account = BankAccount(100)
@@ -1335,7 +1335,7 @@ steps:
       | **Python pattern** | Part created **inside** `__init__` | Part **passed in** from outside |
 
       > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **exactly one** composite at a time, and is deleted with it. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal". For this tutorial we'll use the common textbook interpretation (conceptual whole-part relationship).
-      > **Aggregation is a domain decision, not a code decision.** Whether a relationship is aggregation or plain association cannot be read reliably from code alone — it depends on the *meaning* of the domain. Is a professor a part of a department or does a department merely now some professors? That answer comes from domain knowledge, not from Python syntax. This tutorial's live diagram uses heuristics, which works well as a learning scaffold — but in the real world, rely on domain knowledge rather than on tools to infer it.
+      > **Aggregation is a domain decision, not a code decision.** Whether a relationship is aggregation or plain association cannot be read reliably from code alone — it depends on the *meaning* of the domain. Is a professor a part of a department or does a department merely know some professors? That answer comes from domain knowledge, not from Python syntax. This tutorial's live diagram uses heuristics, which works well as a learning scaffold — but in the real world, rely on domain knowledge rather than on tools to infer it.
 
       ### The File System Metaphor
 
@@ -1625,7 +1625,7 @@ steps:
       | `*` (or `0..*`) | Zero or more | a collection that may be empty |
       | `1..*` | One or more | a collection that must have at least one element |
 
-      > **Style tip:** Prefer `*` over verbose `0..*`. The UML spec defines them as identical, and `*` is the more concise and widely recognised shorthand. Use the explicit `0..*` only when you want to emphasise the lower bound in context (e.g., contrasting it with `1..*` nearby).
+      > **Style tip:** Prefer `*` over verbose `0..*`. The UML spec defines them as identical, and `*` is the more concise and widely recognized shorthand. Use the explicit `0..*` only when you want to emphasize the lower bound in context (e.g., contrasting it with `1..*` nearby).
 
       ### Reading Multiplicity as a Sentence
 
@@ -2069,7 +2069,7 @@ steps:
           assert result == True, \
               "BankTransfer.process() should return True"
         hints:
-          - text: "`BankTransfer` must fulfil the same contract as `CreditCard`. Look at how `CreditCard` implements the two abstract methods — what would the `BankTransfer` versions return for its own name?"
+          - text: "`BankTransfer` must fulfill the same contract as `CreditCard`. Look at how `CreditCard` implements the two abstract methods — what would the `BankTransfer` versions return for its own name?"
             condition: "default"
           - text: "Implement `process()` and `get_name()` in BankTransfer, similar to CreditCard but returning `'Bank Transfer'` from `get_name()`."
             condition: "default"

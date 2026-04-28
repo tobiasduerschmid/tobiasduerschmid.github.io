@@ -1591,7 +1591,7 @@ steps:
             2: "These four lines are too short to be a Long Method. The smell is in the *shape* of the conditional, not the length."
             3: "Logically the conditions are exclusive, but the structure invites two separate evaluations of `is_active` — and silently breaks if a third branch is later added (e.g., `is_active is None`). The if/else makes the exclusivity explicit and atomic."
           explanation: |
-            **Confusing else** is the official name (cf. anti-patterns catalogues). Two `if`s with mutually-exclusive conditions are an `if/else` in disguise. The fix removes the duplicate condition evaluation and makes the structure more change-resistant.
+            **Confusing else** is the official name (cf. anti-patterns catalogs). Two `if`s with mutually-exclusive conditions are an `if/else` in disguise. The fix removes the duplicate condition evaluation and makes the structure more change-resistant.
 
         - question: |
             Which of these is the safest way to verify a boolean refactoring?

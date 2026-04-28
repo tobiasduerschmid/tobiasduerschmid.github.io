@@ -7,7 +7,7 @@ This is a **reference page** for React, designed to be kept open alongside the [
 
 > **New to React?** Start with the [interactive tutorial](/SEBook/tools/react-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 
-Welcome to the world of Frontend Development! Since you already have experience with Node.js, you actually have a massive head start
+Welcome to the world of Frontend Development! Since you already have experience with Node.js, you actually have a massive head start.
 
 You already know how to build the "brain" of an application—the server that crunches data, talks to a database, and serves APIs. But right now, your Express server only speaks in raw data (like JSON). UI (User Interface) development is about building the "face" of your application. It’s how your users will interact with the data your Node.js server provides.
 

@@ -24,7 +24,7 @@ cards:
 
   - id: 6
     question: "What is **encapsulation** (package wrapping) in the TCP/IP stack?"
-    answer: "Each layer wraps the higher-layer message as its **payload** and adds its own **header** — like sealing a letter inside successively larger envelopes. An HTTP message (the letter) is placed inside a TCP envelope (labelled with port numbers), which is placed inside an IP envelope (labelled with IP addresses), which is placed inside an Ethernet envelope (labelled with MAC addresses). Each envelope carries only the addressing information needed for that one delivery step."
+    answer: "Each layer wraps the higher-layer message as its **payload** and adds its own **header** — like sealing a letter inside successively larger envelopes. An HTTP message (the letter) is placed inside a TCP envelope (labeled with port numbers), which is placed inside an IP envelope (labeled with IP addresses), which is placed inside an Ethernet envelope (labeled with MAC addresses). Each envelope carries only the addressing information needed for that one delivery step."
 
   - id: 7
     question: "What is the **TCP three-way handshake** and why is it needed?"

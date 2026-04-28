@@ -177,7 +177,7 @@ Along association lines, we use numbers to define *how many* objects are involve
 |----------|---------|
 | `1` | Exactly one |
 | `0..1` | Zero or one (optional) |
-| `*` or `*` | Zero to many |
+| `*` or `0..*` | Zero to many |
 | `1..*` | One to many (at least one required) |
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
@@ -784,7 +784,7 @@ Track "*" -- "1..*" Artist : performedBy
 
 1. **Generalization (hollow triangle):** `FreeUser` and `PremiumUser` both extend `User`, inheriting `search()` and `createPlaylist()`. Only `PremiumUser` adds `download()` — a capability unlocked by upgrading. The hollow triangle always points *up* toward the parent class.
 2. **Composition (filled diamond, User → Playlist):** A `User` *owns* their playlists. Deleting a user account deletes their playlists — the parts cannot outlive the whole. The filled diamond sits on the *owner's* side.
-3. **Aggregation (hollow diamond, Playlist → Track):** A `Playlist` *contains* tracks, but tracks exist independently — the same track can appear in many playlists. Deleting a playlist does not remove the track from the catalogue.
+3. **Aggregation (hollow diamond, Playlist → Track):** A `Playlist` *contains* tracks, but tracks exist independently — the same track can appear in many playlists. Deleting a playlist does not remove the track from the catalog.
 4. **Association with multiplicity (Track → Artist):** Each track is performed by `1..*` artists — at least one (solo) or more (collaboration). This multiplicity directly encodes a real business rule.
 
 > **Analysis vs. design level:** This diagram has no visibility modifiers (`+`, `-`). That is intentional — at the analysis level we model *what things are and do*, not encapsulation decisions. Visibility is a design-level concern added in a later phase.
@@ -792,7 +792,7 @@ Track "*" -- "1..*" Artist : performedBy
 
 ### Example 2: GitHub — Pull Request Design Model
 
-**Scenario:** A design-level diagram (note the visibility modifiers) showing how GitHub's code review system could be modelled internally. Notice how an interface creates a formal contract between components.
+**Scenario:** A design-level diagram (note the visibility modifiers) showing how GitHub's code review system could be modeled internally. Notice how an interface creates a formal contract between components.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Mergeable {
@@ -875,13 +875,13 @@ Driver "0..1" -- "0..1" Order : delivers
 
 1. **`Customer "1" -- "*" Order`:** One customer can have zero orders (a new account) or many. The navigability arrow shows `Customer` holds the reference — in code, a `Customer` would have an `orders` collection field.
 2. **Composition (Order → OrderItem):** Order items only exist within an order. Cancelling the order destroys the items. The `1..*` on `OrderItem` enforces that every order must have at least one item.
-3. **`OrderItem "*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalogue.
+3. **`OrderItem "*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalog.
 4. **`Driver "0..1" -- "0..1" Order`:** A driver handles at most one active delivery at a time; an order has at most one assigned driver. Before dispatch, both sides satisfy `0` — neither requires the other to exist yet. This captures a real business constraint in two characters.
 
 
 ### Example 4: Netflix — Content Catalogue Model
 
-**Scenario:** Netflix serves two fundamentally different types of content — movies (watched once) and TV shows (composed of seasons and episodes). This diagram shows how inheritance and composition work together to model a content catalogue.
+**Scenario:** Netflix serves two fundamentally different types of content — movies (watched once) and TV shows (composed of seasons and episodes). This diagram shows how inheritance and composition work together to model a content catalog.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class Content {

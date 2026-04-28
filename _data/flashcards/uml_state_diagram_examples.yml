@@ -44,4 +44,4 @@ cards:
     question: "Does a state machine always need a **final state**?"
     answer: "No. A state machine always needs an **initial** pseudostate, but a final state is only needed if the object's lifecycle can end."
     explanation: >
-      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order, on the other hand, has a clear end-of-life (delivered, cancelled), so it needs a final state.
+      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order, on the other hand, has a clear end-of-life (delivered, canceled), so it needs a final state.

@@ -125,7 +125,7 @@ steps:
       | **Arrange + act** | Set up any input and call the unit |
       | **Assert** an observable property of the result | Pin down one thing the spec promises |
 
-      The pattern generalises; the *specifics* (what to import, call, and assert) come from the spec — and only from the spec.
+      The pattern generalizes; the *specifics* (what to import, call, and assert) come from the spec — and only from the spec.
 
       ## The dragon dice rules (reference for all 12 cycles)
 
@@ -662,7 +662,7 @@ steps:
             3: "Forcing artificial RED breaks the test/spec relationship. The test should describe the behavior the spec demands, not the failure your sequence rule expects. If the spec is already implemented, a *deliberately* failing test would be testing the wrong thing on purpose."
           explanation: |
             Both halves matter. Sometimes a test passes immediately because a prior refactor
-            generalised behavior — that is a *positive* outcome, and the test still earns its
+            generalized behavior — that is a *positive* outcome, and the test still earns its
             place by documenting that the behavior is intended. Other times the test is
             vacuously true. The way to tell is to break the production code on purpose: a
             real test will catch the break.
@@ -751,7 +751,7 @@ steps:
 
       1. **🔴 RED** — add `test_single_one_creates_dragon_flame_event` in `test_scorer.py`. From the spec ("a single die showing 1 creates a *Dragon Flame* event worth 100 damage"), translate into pytest assertions yourself. The four-part shape from cycle 1 still applies; the rules table at the top names the event and damage. **Predict** the failure category (`ImportError`? `AttributeError`? `AssertionError`?) before running.
       2. **🟢 GREEN** — pick the smallest code that turns the test green. Resist any abstraction beyond what cycle 2's single test demands. After you've made your choice, open the reveal below to compare.
-      3. **🔵 REFACTOR** — walk the cycle-1 checklist. Resist generalising; cycle 4 will earn the loop.
+      3. **🔵 REFACTOR** — walk the cycle-1 checklist. Resist generalizing; cycle 4 will earn the loop.
 
       <details markdown="1"><summary>Reveal — what we expected for RED (open after running)</summary>
 
@@ -1309,7 +1309,7 @@ steps:
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'dice == [1]' not in source and 'dice == [5]' not in source and 'dice == [1, 1]' not in source, \
-              "The whole point of cycle 4 was to retire the `if dice == [...]:` branches in favour of a generic per-die loop. Remove them."
+              "The whole point of cycle 4 was to retire the `if dice == [...]:` branches in favor of a generic per-die loop. Remove them."
 
     quiz:
       title: "Cycle 4 Quiz"
@@ -1362,7 +1362,7 @@ steps:
           option_feedback:
             1: "pytest has no opinion about your control flow. Made-up rules like \"one `if` per function\" sound TDD-flavored but aren't real — and inventing them tells you you're searching for *external* discipline instead of *internal* design judgment. The discipline lives in *why* you choose one shape over another."
             2: "\"Smallest change\" needs a time horizon. Locally smallest (one new `if`) is globally largest (you'll throw it away across cycles 5–6). TDD prefers the smallest *durable* change — which here is the loop, because it survives the next several tests."
-            3: "Bytecode equivalence (which isn't even quite true here — Python doesn't auto-optimise hardcoded branch chains into loops) is a runtime concern, not a design one. The question is what the code *says* and what the next developer *sees*, not what CPython executes."
+            3: "Bytecode equivalence (which isn't even quite true here — Python doesn't auto-optimize hardcoded branch chains into loops) is a runtime concern, not a design one. The question is what the code *says* and what the next developer *sees*, not what CPython executes."
           explanation: |
             The TDD GREEN rule is "smallest code that passes the failing test" *given the
             current direction of the design*. A third hardcoded branch is locally minimal
@@ -1415,10 +1415,10 @@ steps:
 
       | Why? | What it means |
       |---|---|
-      | A previous refactor already generalised the behavior | ✅ Positive — design is healthy |
+      | A previous refactor already generalized the behavior | ✅ Positive — design is healthy |
       | The assertion is vacuously true / missing / wrong oracle | ❌ Defect — a *Liar* test |
 
-      The mutation move is the strongest defence against AI-generated Liar tests — and it generalises to *any* passing test you didn't expect. Make it a habit; we'll come back to it.
+      The mutation move is the strongest defense against AI-generated Liar tests — and it generalizes to *any* passing test you didn't expect. Make it a habit; we'll come back to it.
       </details>
 
     files:
@@ -1928,7 +1928,7 @@ steps:
           - title: "Small nudge"
             text: "Trace `score([1, 1, 1])` through your code by hand. Does the per-die loop ever 'see' all three 1s at once? If not, what data structure would let it?"
           - title: "Strategic hint"
-            text: "The per-die loop is fundamentally per-die — it processes one die at a time and can't recognise that three 1s appeared. The structural shift is to *count* faces first (`collections.Counter`), then decide what to emit per face. Combos consume dice; leftovers still score as singles."
+            text: "The per-die loop is fundamentally per-die — it processes one die at a time and can't recognize that three 1s appeared. The structural shift is to *count* faces first (`collections.Counter`), then decide what to emit per face. Combos consume dice; leftovers still score as singles."
           - title: "Spoiler — the count-then-emit shape"
             text: "```python\ncounts = Counter(dice)\nevents = []\nif counts[1] >= 3:\n    events.append(ScoringEvent('Dragon Blast', (1, 1, 1), 1000))\n    counts[1] -= 3\nfor _ in range(counts[1]):\n    events.append(ScoringEvent('Dragon Flame', (1,), 100))\nfor _ in range(counts[5]):\n    events.append(ScoringEvent('Lightning Spark', (5,), 50))\nreturn BattleReport(tuple(events))\n```"
 
@@ -2385,7 +2385,7 @@ steps:
               return events
       ```
 
-      The method is called `apply` because it applies the rule to a counter and returns whichever events that produces. Returning a *list* (possibly empty) generalises cleanly: cycle 10 will need a single `apply()` call to emit *zero or more* events from one input.
+      The method is called `apply` because it applies the rule to a counter and returns whichever events that produces. Returning a *list* (possibly empty) generalizes cleanly: cycle 10 will need a single `apply()` call to emit *zero or more* events from one input.
       </details>
 
       ### D — Replace the blocks with data
@@ -5260,7 +5260,7 @@ steps:
       <details markdown="1"><summary>Reveal — five takeaways that travel</summary>
 
       1. **TDD is design, not testing.** The test is the contract; the implementation emerges under its pressure.
-      2. **Refactor *toward* duplication, not before it (Rule of Two).** *One* example is a guess at the shape; *two* makes the variation visible; *three or more* is duplication that has rotted. Cycle 8's timing was Rule of Two — and it generalises to every refactor you'll do.
+      2. **Refactor *toward* duplication, not before it (Rule of Two).** *One* example is a guess at the shape; *two* makes the variation visible; *three or more* is duplication that has rotted. Cycle 8's timing was Rule of Two — and it generalizes to every refactor you'll do.
       3. **Tests enable change.** Behavior-level assertions survive structural rewrites; implementation-coupled tests don't.
       4. **Coverage ≠ correctness; complement with boundary-value analysis** (zero, exactly N, 2N, between).
       5. **Listen to the test.** Pain in writing a test usually points at the production code.
@@ -5806,7 +5806,7 @@ steps:
             cycle-3 lesson on partition transitions.
 
             **Why there's no single right answer**: your *exact* ordering may differ (e.g.,
-            empty-string first as the simplest-of-all). The skill being practised here is
+            empty-string first as the simplest-of-all). The skill being practiced here is
             *generating* a structured plan from a spec — the same skill you'll use on every
             function you TDD outside this tutorial. The four candidate lists above contrast different wrong-answer patterns:
             random-instead-of-systematic, wrong-rules, and the Giant antipattern.

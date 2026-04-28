@@ -73,7 +73,7 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Faster transfer is irrelevant if the file arrives corrupted. A storage service' core promise is that
+        Faster transfer is irrelevant if the file arrives corrupted. A storage service's core promise is that
         what was uploaded is exactly what comes down again on every other device.
       2: |
         Detecting and re-requesting missing chunks on top of UDP is essentially rebuilding TCP — and getting

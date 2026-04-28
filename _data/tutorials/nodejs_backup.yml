@@ -39,7 +39,7 @@ steps:
       ### Predict Before You Code
 
       Look at `hello.js` — this is our soon-to-be hello world program.
-      In C++ your hello would would be `printf("Hello from C++!\n");`
+      In C++ your hello would be `printf("Hello from C++!\n");`
       In Python it would be `print("Hello from Python!")`.
       What might it be for JavaScript running in Node.js? Maybe a mix of both?
       Not at all. JavaScript has its own syntax for printing to the console.
@@ -52,7 +52,7 @@ steps:
       console.log("Hello from Node.js!");
       ```
 
-      Click **▶ Run** to execute the script and see the output. This excutes `node hello.js` in background.
+      Click **▶ Run** to execute the script and see the output. This executes `node hello.js` in the background.
       In this tutorial you focus just on writing Node.js. We run these commands for you.
 
     files:
@@ -151,7 +151,7 @@ steps:
       Mutable variables can be assigned different values afterwards. 
       This is useful when the value is expected to change, e.g. a counter.
       However, it also masks bugs that result from incorrect assignments.
-      Use immuatable types (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expect to change.
+      Use immutable types (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expected to change.
 
       > **Avoid using `var`** — it has "hoisting" scoping rules that violate everything you know from C++ and Python. Always use `let` or `const`.
 
@@ -217,7 +217,7 @@ steps:
               console.log("Admin check: false and 0 are different types, correctly rejected.");
           }
 
-          // What if we accidently use the same name later on in the program, how could we ensure that we always find that bug?
+          // What if we accidentally use the same name later on in the program, how could we ensure that we always find that bug?
           let MAX_STUDENTS = 200;
 
           // Bruh so many + and " characters. How could we simplify this?

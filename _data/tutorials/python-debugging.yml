@@ -2873,7 +2873,7 @@ steps:
         content: |
           # Debugging log
 
-          Fill each field as you work. Fields 1, 2, 6, 7 are labelled for you.
+          Fill each field as you work. Fields 1, 2, 6, 7 are labeled for you.
           Fields 3–5 are not — name the stage yourself, then fill in the content.
 
           1. **Symptom** (one sentence — expected vs actual): _..._

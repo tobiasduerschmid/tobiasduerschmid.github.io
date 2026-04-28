@@ -753,7 +753,7 @@ steps:
       ```
 
       Now stage the file and confirm it is staged — use the two-step
-      workflow you've practised since Step 2. You should see `hero_registry.py`
+      workflow you've practiced since Step 2. You should see `hero_registry.py`
       listed in green before moving on.
 
       You'll see `hero_registry.py` is staged (green). But wait — we don't
@@ -1247,7 +1247,7 @@ steps:
             3: "`HEAD~N` walks the parent chain *backwards* (HEAD → parent → grandparent), not a numeric index into log output. The numbering is by ancestry, not by display order — they coincide for linear history but diverge after merges."
           explanation: "`HEAD` points to the latest commit. `HEAD~1` is one commit before it, `HEAD~2` is two commits back, and so on. This relative notation lets you reference commits without copying their hash."
 
-        - question: "**[Interleaved: Revisit Step 5]** You staged `config.py` and `app.py`. You then realise `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
+        - question: "**[Interleaved: Revisit Step 5]** You staged `config.py` and `app.py`. You then realize `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
           options:
             - "`git restore config.py` — discards the edits and unstages"
             - "`git restore --staged config.py` — moves config.py off the staging area while keeping your edits"
@@ -1520,7 +1520,7 @@ steps:
 
       > 📊 **Check the Git Graph** — click the **Git Graph** tab (top right).
       > We will now create a new branch and watch the graph update in real time. 
-      > What do you you expect to see when we create the new branch? 
+      > What do you expect to see when we create the new branch?
       > Make a prediction, then watch it happen.
 
       ```bash
@@ -1801,7 +1801,7 @@ steps:
       which replays commits to produce a clean linear history instead of
       a merge commit.
 
-      ### Controlling merge behaviour: `git merge --no-ff`
+      ### Controlling merge behavior: `git merge --no-ff`
 
       By default, Git uses a fast-forward whenever it can — the branch pointer
       simply slides forward and no merge commit is created, keeping history
@@ -2285,7 +2285,7 @@ steps:
       <details>
       <summary><strong>Sidebar:</strong> Escape hatch — <code>git merge --abort</code></summary>
 
-      Sometimes you start a merge and quickly realise it's more complex than
+      Sometimes you start a merge and quickly realize it's more complex than
       expected — maybe there are dozens of conflicts, or you merged the wrong
       branch, or you just want a moment to think before committing. Git gives
       you a clean escape hatch:
@@ -2298,7 +2298,7 @@ steps:
       state they were in **before** you ran `git merge`. It's as if the merge
       never started.
 
-      **When to use it:** When you realise mid-merge that you need to step back,
+      **When to use it:** When you realize mid-merge that you need to step back,
       consult a teammate, or approach the integration differently. There is no
       shame in aborting — it's far better than committing a half-resolved mess.
 
@@ -2406,7 +2406,7 @@ steps:
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
         - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit` must be present.
         - **Test 4:** `grep -q 'print' hero_registry.py` — the mission-logging code from `main` must be present.
-        - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the safety-protocol code), then uses `sed` to add the mission-logging `print` line and update the docstring. A follow-up commit captures the combined result.
+        - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favor of the incoming branch (getting the safety-protocol code), then uses `sed` to add the mission-logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
         - **`git add` after resolution:** Signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths". This is the same `git add` as always — it just takes on this extra role during a merge.
 
@@ -3065,7 +3065,7 @@ steps:
           correct_index: 1
           explanation: "Feature branches + pull requests are the industry standard because they provide isolation (broken code doesn't affect `main`), enable code review before merging, and create a clear history of what was reviewed and approved. The trade-off is process overhead, which is worth it for most teams."
 
-        - question: "During a large merge, you know that **all** conflicting lines should be resolved in favour of the incoming feature branch. Which command avoids manual conflict resolution while still combining non-conflicting changes normally?"
+        - question: "During a large merge, you know that **all** conflicting lines should be resolved in favor of the incoming feature branch. Which command avoids manual conflict resolution while still combining non-conflicting changes normally?"
           options:
             - "`git merge feature -X ours` — keeps your current branch's version on every conflict"
             - "`git merge feature -X theirs` — keeps the incoming branch's version on every conflict"
@@ -3077,7 +3077,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
-  - title: "Captsone Git Project and Review & Best Practices"
+  - title: "Capstone Git Project and Review & Best Practices"
     view: git_graph
     setup_commands:
       - "cd /tutorial/colleague-copy && git pull && grep -q 'def status_report' hero_registry.py || (echo '' >> hero_registry.py && echo 'def status_report(hero):' >> hero_registry.py && echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py && echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py && git add hero_registry.py && git commit -m 'Add status report function' && git push); true && cd /tutorial/myproject/ && git config pull.rebase false"
@@ -3418,7 +3418,7 @@ steps:
             - "No — `.gitignore` only prevents **future** tracking; the secret still lives in history and requires tools like `git filter-repo` or BFG Repo Cleaner to fully remove"
             - "No — but `git rm .env` will delete it from all historical commits automatically"
           correct_index: 2
-          explanation: "`.gitignore` only affects future `git add` and `git status` behaviour — it never rewrites history. A cloned repository receives the full commit history including the commit that added `.env`. This is why Step 6 emphasised creating `.gitignore` **before** your first commit."
+          explanation: "`.gitignore` only affects future `git add` and `git status` behavior — it never rewrites history. A cloned repository receives the full commit history including the commit that added `.env`. This is why Step 6 emphasized creating `.gitignore` **before** your first commit."
 
         - question: "Why does `git switch` sometimes change the files you see in your file explorer?"
           options:

@@ -405,7 +405,7 @@ steps:
             text: "`style={ ... }` isn't a valid expression. Outer `{}` for the expression, inner `{}` for the object. What does the full shape look like?"
             condition: "code_matches: style=\\{\\s*background\\s*:"
           - title: "`\"color\"` is a literal string"
-            text: "`background: \"color\"` paints every badge the literal CSS colour named `color`. Drop the quotes — `color` is the prop."
+            text: "`background: \"color\"` paints every badge the literal CSS color named `color`. Drop the quotes — `color` is the prop."
             condition: "code_matches: background\\s*:\\s*['\"]color['\"]"
           - text: "JSX `style` takes an object, not a string."
             condition: "code_contains: style=\""
@@ -733,7 +733,7 @@ steps:
           type: single
           options:
             - "Nothing — props can be freely reassigned inside the component"
-            - "Props are read-only (like const function parameters) — mutating them breaks React's one-way data flow and causes unpredictable behaviour"
+            - "Props are read-only (like const function parameters) — mutating them breaks React's one-way data flow and causes unpredictable behavior"
             - "You must use `this.title` to access props in function components"
             - "The destructuring syntax `{ title }` is invalid — you must write `props.title`"
           correct_index: 1
@@ -1182,7 +1182,7 @@ steps:
   # STEP 5: Lists & Keys — Rendering Collections
   # Pedagogy:
   #   Transfer Tutor     — C++ for-loop → .map(), pointer analogy for keys.
-  #   PRIMM              — predict key-less list behaviour.
+  #   PRIMM              — predict key-less list behavior.
   #   Fading: Medium     — scaffold provided, student fills in .map().
   #   CLT: Reduced       — ONLY .map() and keys; conditionals moved to Step 6.
   #   Spaced Review      — quiz reviews props (Step 3).
@@ -1737,7 +1737,7 @@ steps:
           });
         hints:
           - title: "No `variant` prop"
-            text: "Without `variant`, all react-bootstrap buttons look identical regardless of state. Which prop switches the colour?"
+            text: "Without `variant`, all react-bootstrap buttons look identical regardless of state. Which prop switches the color?"
             condition: "code_missing: variant="
           - title: "Hard-coded variant"
             text: "`variant=\"primary\"` highlights every button. Make it depend on `filter`. Which operator picks between two values?"

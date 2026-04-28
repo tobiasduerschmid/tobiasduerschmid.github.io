@@ -211,7 +211,7 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 > <details><summary><strong>Reveal Answer</strong></summary> No. "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
 ### What to do when the user *really needs* the specific technology?
-Sometimes the required solution to does indeed have to conform to the specific technology that the customer is using in their organization. 
+Sometimes the required solution does indeed have to conform to the specific technology that the customer is using in their organization. 
 In software engineering we call this a "technical constraint". 
 In these cases user stories are usually not the ideal format to specify these requirement in, since these technical constraints are often cross-cutting and should be included in the design of many different independent features.
 User stories are a mechanism to document requirements that primarily concern the functionality of the software. 
@@ -352,7 +352,7 @@ This criterion matters for several fundamental reasons:
 **How to Evaluate It**
 To determine if a user story is appropriately sized, ask:
 1. **Is it a compound story?** Words like *and*, *or*, and *but* in the story description (e.g., "**I want to** register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one. A compound story is an "epic" that aggregates multiple easily identifiable shorter stories {% cite cohn2004user %}.
-2. **Can it be be split while still being valuable?** If a user story can be split into separate stories that are still *valuable* then this is often a good idea. If the smaller parts do not individually satisfy valuable, we still consider the larger user story "small".
+2. **Can it be split while still being valuable?** If a user story can be split into separate stories that are still *valuable* then this is often a good idea. If the smaller parts do not individually satisfy valuable, we still consider the larger user story "small".
 3. **Is it a complex, uncertain story?** If the story is large because of inherent *uncertainty* (new technology, novel algorithm), it is a complex story and should be split into a spike and an implementation story {% cite cohn2004user %}.
 
 **How to Improve It**
@@ -434,7 +434,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Independent:** Yes. It doesn't inherently rely on other features being built first.
 * **Negotiable:** Yes. The exact layout and tech used to build it are open to discussion.
 * **Valuable:** Yes. A landing page to attract a younger demographic provides clear business value.
-* **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page independent on what specific definiton of "gorgeous and modern" is used. 
+* **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page independent of what specific definition of "gorgeous and modern" is used. 
 * **Small:** Yes. Building a single landing page easily fits within a single sprint.
 * **Why it violates Testable:** "Gorgeous," "modern," and "appeals to" are completely subjective. What one developer thinks is modern, the marketing manager might think is ugly. 
 * **How to fix it:** Tie it to a specific, measurable design system or user-testing metric. *(e.g., "Acceptance Criteria: The design strictly adheres to the new V2 Brand Guidelines and passes a 5-second usability test with a 4/5 rating from a focus group of 18-24 year olds.")*
@@ -470,7 +470,7 @@ The INVEST principles matter because they act as a compass for creating high-qua
 By ensuring stories are **Independent** and **Small**, teams gain the scheduling flexibility needed to implement and release features in any order within short iterations. 
 If user stories are not independent, it becomes hard to always select the highest value user stories. 
 If they are not small, it becomes hard to select a Sprint Backlog that fits the team's velocity.  
-**Negotiable** stories promote essential dialogue between developers and stakeholders, while **Valuable** ones ensure that every effort translates into a meaningful benefit for the user. Finally, stories that are **Estimable** and **Testable** provide the clarity required for accurate sprint planning and objective verification of the finished product. In 
+**Negotiable** stories promote essential dialog between developers and stakeholders, while **Valuable** ones ensure that every effort translates into a meaningful benefit for the user. Finally, stories that are **Estimable** and **Testable** provide the clarity required for accurate sprint planning and objective verification of the finished product. In 
 [Scrum](/SEBook/process/scrum.html) and [XP](/SEBook/process/xp.html), user stories are estimated during the Planning activity. 
 
 ## FAQ on INVEST
@@ -491,7 +491,7 @@ Here are examples of user stories that isolate those specific violations of the 
 
 *   **Why it violates Testable:** Terms like "snappy" or "fast" are subjective. Without a specific metric (e.g., "loads in under 2 seconds"), there is no objective "Yes" or "No" answer to determine if the story is done. 
 *   **Why it is still Estimable:** The developers know the dashboard and its tech stack well. Regardless of how "snappy" is ultimately defined, they can estimate the effort for standard front-end optimizations (lazy loading, caching, query tuning) that would improve perceived responsiveness. The implementation work is predictable even though the acceptance threshold is not, because for all reasonable interpretations of snappy, the implementation effort is roughly the same, as these techniques are well understood and often available in libraries. 
-Note: Dependening on your personal experience with web development, you might evaluate this example as not estimable. That would also be valid judgement. In that case, check out the The Subjective UI Requirement Example above for another example.
+Note: Depending on your personal experience with web development, you might evaluate this example as not estimable. That would also be a valid judgment. In that case, check out the Subjective UI Requirement Example above for another example.
 
  **Violates Estimable but not Testable**
 **User Story:** *"**As a** safety officer, **I want** the system to **automatically identify every pedestrian** in this complex, low-light video feed **so that** I can monitor crosswalk safety without reviewing hours of footage manually."*
@@ -523,19 +523,19 @@ Small refers to the physical magnitude of the work. A story should be a manageab
 3.  **Predictability vs. Flow**: Estimability is necessary for **planning** (knowing what fits in a release), while Smallness is necessary for **flow** (ensuring work moves through the system without bottlenecks).
 
 
-### Is there often a tradeoff between Small and Valueable?
+### Is there often a tradeoff between Small and Valuable?
 Yes! 
 When writing user stories this is one of the most common trade-offs to consider. 
 The more valuable a user story is, the larger it becomes.
-When considering this trade-off the best adivce would be think of valuable as a binary dimension. Once a user story adds some reasonable value to the user, we consider it valuable. 
+When considering this trade-off the best advice would be to think of valuable as a binary dimension. Once a user story adds some reasonable value to the user, we consider it valuable. 
 So aiming to write the smallest user stories that are still valuable is often a good approach. Optimizing for small until the user story becomes not valuable anymore. 
 A user story *can* become too small when writing and estimating it takes more time than implementing it. 
-Then it should be combined with other user stories even if the smaller user story is still somewhat valauble.
+Then it should be combined with other user stories even if the smaller user story is still somewhat valuable.
 Whether a user story is "good" or "bad" is not a binary criterion, but a spectrum. 
 Aiming to reasonably improve user stories is a desirable goal, but in a practical setting, "good enough" is often sufficient while "perfect" can be a waste of time.
 
 
-### Is INVEST evaluated primarily on the main body of the user story or the acceptance criteria
+### Is INVEST evaluated primarily on the main body of the user story or the acceptance criteria?
 Since acceptance critiera define the actual scope of what defines a correct implementation of the requirement, they are the decision driver for INVEST.
 The main body can be seen as a gentle summary. But for INVEST the acceptance criteria usually "overrule" the main body of the user story. 
 

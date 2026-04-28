@@ -276,7 +276,7 @@ questions:
       0: |
         A clear start is needed, but an end is not required for objects that run indefinitely. Final states are used only when the modeled lifecycle can terminate.
       2: |
-        State machines can have final states when the lifecycle has a meaningful end, such as an order being closed or cancelled.
+        State machines can have final states when the lifecycle has a meaningful end, such as an order being closed or canceled.
       3: |
         The number of states does not decide whether a final state is needed. The lifecycle semantics do.
     explanation: "**A final state is only needed if the object's lifecycle can actually end — servers and controllers that run indefinitely do not need one.** A state machine **always** needs an initial pseudostate (the starting point), but a final state is **only needed if the object's lifecycle can end**. Many real-world objects (servers, embedded controllers) run indefinitely and never reach a final state. Objects like orders or transactions do have a clear end-of-life."

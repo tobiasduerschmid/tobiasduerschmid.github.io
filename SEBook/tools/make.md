@@ -283,7 +283,7 @@ The true power of a Makefile isn't just knowing *how* to bake the cake; it's kno
 Imagine you are halfway through assembling your cake. You have your baked chocolate layers sitting on the counter, your buttercream whipped, and your raspberry filling ready. Suddenly, you realize someone mislabeled the sugar. It's actually salt! Oh no! You need to remake everything that included sugar and everything that included these intermediate targets.
 
 * **Without a Makefile:** You would throw away *everything*. You would re-bake the chocolate layers, re-whip the buttercream, and remake the raspberry filling from scratch. This takes hours (like recompiling a massive codebase from scratch).
-* **With a Makefile:** The kitchen manager (`make`) looks at the counter. It sees that the *buttercream* is already finished and its raw ingredients haven't changed. However, it sees your new packed of sugar (a source file was updated). The manager says: **"Only remake the raspberry filling and the chocolate layers, and then reassemble the final cake. Leave the buttercream as is."**
+* **With a Makefile:** The kitchen manager (`make`) looks at the counter. It sees that the *buttercream* is already finished and its raw ingredients haven't changed. However, it sees your new packet of sugar (a source file was updated). The manager says: **"Only remake the raspberry filling and the chocolate layers, and then reassemble the final cake. Leave the buttercream as is."**
 
 
 If you look closely at the arrows of the dependency graph above and focus on the arrows leaving `[sugar.txt]`, you can immediately see the brilliance of `make`:

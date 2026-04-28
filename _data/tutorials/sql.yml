@@ -418,7 +418,7 @@ steps:
             With no join predicate, SQL pairs every row from `students` with every row from `majors`: 9 × 4 = 36 rows. This is the #1 accidental bug in multi-table queries.
 
         - question: |
-            An `JOIN ... ON s.major = m.code` between `students` (9 rows) and `majors` (4 rows) returns 8 rows. Why not 9?
+            A `JOIN ... ON s.major = m.code` between `students` (9 rows) and `majors` (4 rows) returns 8 rows. Why not 9?
           type: single
           options:
             - "JOIN always drops one row"

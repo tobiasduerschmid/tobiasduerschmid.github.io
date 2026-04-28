@@ -90,7 +90,7 @@ steps:
 
       **Reading the target:**
 
-      - `Main` is the script itself — any code outside a class or function (specifically, the body of `if __name__ == "__main__":`) becomes a synthetic lifeline labelled *Main*. You didn't declare it; the analyzer did, to represent "whoever is starting the scenario."
+      - `Main` is the script itself — any code outside a class or function (specifically, the body of `if __name__ == "__main__":`) becomes a synthetic lifeline labeled *Main*. You didn't declare it; the analyzer did, to represent "whoever is starting the scenario."
       - `bot: DiscordBot` is a specific bot instance created by `bot = DiscordBot()`
       - `channel: Channel` is a specific channel instance
       - The two dashed `<<create>>` arrows appear because `Main` constructs each object
@@ -1516,7 +1516,7 @@ steps:
       Notice every concept from Steps 1-5 appears:
 
       - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
-      - **Return value (Step 2):** the dashed arrow labelled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator includes the bound variable name because `count` is used on the next line.
+      - **Return value (Step 2):** the dashed arrow labeled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator includes the bound variable name because `count` is used on the next line.
       - **Self-call with nested activation (Step 3):** `bot -> bot: _log_start` and, inside the loop, `bot -> bot: _log_skip`.
       - **Conditional fragment (Step 4):** one `alt` inside the loop.
       - **Loop fragment (Step 5):** one outer `loop` over `posts`.
@@ -1631,7 +1631,7 @@ steps:
       explanation: |
         Every line of `run_digest` maps to one visual element:
 
-        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labelled `int` back to `bot` (Step 2).
+        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `int` back to `bot` (Step 2).
         - `self._log_start(count)` → self-arrow stacked on top of the outer `run_digest` activation box (Step 3).
         - `for post in posts:` → `loop` fragment (Step 5).
         - `if self._is_announcement(post): ... else: ...` → `alt` fragment with two compartments (Step 4).
@@ -1866,7 +1866,7 @@ steps:
             The outer box is `loop` (a `for`) and the inner box is `alt` (an `if`/`else` with both branches non-empty). Python indentation = fragment nesting: *whichever block is innermost in the code is innermost in the diagram.*
 
         - question: |
-            **Design judgement.** You want to extend this scenario to also handle a "hold the post for moderator review" case. Which is the better choice?
+            **Design judgment.** You want to extend this scenario to also handle a "hold the post for moderator review" case. Which is the better choice?
           type: single
           options:
             - "Add a third branch to the `alt` — three compartments in one diagram"

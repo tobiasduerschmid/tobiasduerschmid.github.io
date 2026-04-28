@@ -725,7 +725,7 @@ steps:
 
           As a reviewer (or administrator), I want to be able to download all submitted files for a specific application in a single compressed folder (ZIP) so that I can review the materials efficiently offline.
 
-              Given I am logged in as a registered reviewer any many submissions have been created already,
+              Given I am logged in as a registered reviewer and many submissions have been created already,
               When I navigate to the submission page of a valid submission
               Then I see a "Download All Submission Files" button,
 
@@ -734,7 +734,7 @@ steps:
               Then The system should generate and prompt me to download a single .zip file containing every file uploaded by the applicant for that submission.
 
               Given I am logged in as an applicant who created a valid submission before,
-              When I navigate to the submission page of my own own submission,
+              When I navigate to the submission page of my own submission,
               Then I do not see a "Download All Submission Files" button,
 
           <h1>Applicant Registration</h1>
@@ -749,9 +749,9 @@ steps:
 
           As an applicant, I want to be able to upload multiple files (e.g., a PDF of my paper and a separate image file) so that I can provide all the required materials for my submission in one place.
 
-              Given I am creating a new submission with a pdf and a image, and both files are under the maximum size limit,
+              Given I am creating a new submission with a pdf and an image, and both files are under the maximum size limit,
               When I select both a .pdf file and a .jpg file using the upload tool,
-              Then Both files should be successfully attached to my submission and displayed in the confirmation summary.
+              Then both files should be successfully attached to my submission and displayed in the confirmation summary.
 
           <h1>Submission Confirmation</h1>
 

@@ -1219,7 +1219,7 @@ steps:
 
       ## ✨ Python Beacon: List Comprehensions
 
-      A **list comprehension** is a compact way to build a list. Once you recognise the
+      A **list comprehension** is a compact way to build a list. Once you recognize the
       pattern, you will see it everywhere in Python code:
 
       ```python
@@ -1260,7 +1260,7 @@ steps:
       ```
 
       List comprehensions are preferred when the transformation is simple — they are a
-      recognised Python idiom that experienced readers understand at a glance.
+      recognized Python idiom that experienced readers understand at a glance.
 
       ### Predict Before You Code
 
@@ -1452,13 +1452,13 @@ steps:
           type: single
           options:
             - "List comprehensions run faster than for-loops for all input sizes"
-            - "List comprehensions are more readable and concise for simple transformations, and are a recognised Python idiom"
+            - "List comprehensions are more readable and concise for simple transformations, and are a recognized Python idiom"
             - "For-loops are deprecated in Python 3"
             - "List comprehensions avoid creating a temporary list in memory"
           correct_index: 1
           explanation: |
             List comprehensions are preferred for their **readability and conciseness** when the
-            transformation is simple. They are a recognised Python beacon — experienced Python
+            transformation is simple. They are a recognized Python beacon — experienced Python
             readers immediately understand their intent. Performance-wise, they are slightly
             faster than equivalent for-loops, but readability is the primary motivation.
 

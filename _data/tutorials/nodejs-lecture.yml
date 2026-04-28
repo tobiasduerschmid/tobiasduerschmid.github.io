@@ -89,7 +89,7 @@ steps:
             - "No — `let` and `const` are equivalent for primitive values, so there is no practical difference"
             - "Yes — `const` prevents accidental reassignment and immediately signals to every reader that the value is intentionally fixed"
             - "No — `const` has measurable runtime overhead because the engine must verify immutability on each read"
-            - "Yes — but only because linters will flag it; the runtime behaviour is identical and the change has no real benefit"
+            - "Yes — but only because linters will flag it; the runtime behavior is identical and the change has no real benefit"
           correct_index: 1
           explanation: |
             `const` makes intent explicit: any reader immediately knows the value will never change, reducing cognitive load. It also makes a future accidental reassignment a compile-time error rather than a silent bug. This is a meaningful code-quality flag, not merely a style preference.

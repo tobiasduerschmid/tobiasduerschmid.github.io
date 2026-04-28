@@ -2578,7 +2578,7 @@ steps:
 
       > **Learning objective:** Understand Java's checked/unchecked exception model and write proper try-catch-finally blocks.
 
-      > **⚠ New concept — no analogue in Python or C++:** Java uniquely divides exceptions into **checked** (compiler-enforced handling) and **unchecked** (runtime errors). Neither Python nor C++ has this distinction.
+      > **⚠ New concept — no analog in Python or C++:** Java uniquely divides exceptions into **checked** (compiler-enforced handling) and **unchecked** (runtime errors). Neither Python nor C++ has this distinction.
 
       ### The Three Philosophies
 

@@ -340,7 +340,7 @@ steps:
               console.log("Admin check: false and 0 are different types, correctly rejected.");
           }
 
-          // What if we accidently use the same name later on in the program, how could we ensure that we always find that bug?
+          // What if we accidentally use the same name later on in the program, how could we ensure that we always find that bug?
           let MAX_STUDENTS = 200;
 
           // Bruh so many + and " characters. How could we simplify this?
@@ -1565,7 +1565,7 @@ steps:
         command: "assert(code.includes('Number(') && code.includes('==='), 'Convert req.params.id with Number() and compare with ===')"
         hints:
           - title: "`int()` is Python"
-            text: "JavaScript converts strings to numbers with a capitalised built-in. What's it called?"
+            text: "JavaScript converts strings to numbers with a capitalized built-in. What's it called?"
             condition: "code_matches: \\bint\\s*\\(\\s*req\\.params"
           - title: "Prefer `Number()` over `parseInt`"
             text: "`parseInt('123abc')` silently returns `123`. The task specifies a stricter converter — which one?"

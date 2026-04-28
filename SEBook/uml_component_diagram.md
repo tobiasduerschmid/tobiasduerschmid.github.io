@@ -223,7 +223,7 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 
 **Rule of thumb:** If you can deploy it, containerize it, or replace it independently, it belongs in a component diagram. If it is an internal implementation detail (a class, a method), it belongs in a class diagram.
 
-> **Note on UML 2 changes:** Before UML 2, components were distinct from classes and often modelled physical artifacts (DLLs, JARs). UML 2 redefined components as **modular units with contractually specified interfaces** — essentially abstract units of the design, not physical files. Physical files became *artifacts*, shown on deployment diagrams. Older textbooks and diagrams you encounter in the wild may still mix the two — be aware of the distinction when reading legacy UML.
+> **Note on UML 2 changes:** Before UML 2, components were distinct from classes and often modeled physical artifacts (DLLs, JARs). UML 2 redefined components as **modular units with contractually specified interfaces** — essentially abstract units of the design, not physical files. Physical files became *artifacts*, shown on deployment diagrams. Older textbooks and diagrams you encounter in the wild may still mix the two — be aware of the distinction when reading legacy UML.
 
 ## ⚠ Common Component Diagram Mistakes
 
@@ -340,7 +340,7 @@ os_req --> ps_prov
 
 ### Example 3: CI/CD Pipeline — GitHub Actions Architecture
 
-**Scenario:** A developer pushes code; GitHub triggers a build; the build pushes an artifact and optionally deploys it. Slack notifications are a cross-cutting concern — modelled with a dependency (dashed arrow), not a port-based connector.
+**Scenario:** A developer pushes code; GitHub triggers a build; the build pushes an artifact and optionally deploys it. Slack notifications are a cross-cutting concern — modeled with a dependency (dashed arrow), not a port-based connector.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component "GitHub" {

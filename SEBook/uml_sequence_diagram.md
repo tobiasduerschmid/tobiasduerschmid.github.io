@@ -1000,7 +1000,7 @@ deactivate ws
 
 1. **Sequence before the loop:** `persist` and get `messageId` happen exactly once — before the broadcast. The diagram makes this ordering explicit: a message is saved before it is delivered to anyone.
 2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery call. In a channel with 200 members, the loop body executes 200 times. The diagram abstracts this into a single readable fragment.
-3. **`ack` after the loop:** The sender receives their acknowledgement (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once.
+3. **`ack` after the loop:** The sender receives their acknowledgment (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once.
 4. **`WebSocketGateway` as the central hub:** All messages flow in and out through the gateway. The diagram shows this hub topology clearly — every arrow touches `ws`, revealing it as the architectural bottleneck. This is a useful architectural insight visible only in the sequence diagram.
 
 ---

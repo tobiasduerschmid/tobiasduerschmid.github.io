@@ -56,7 +56,7 @@ layout shadows off     ← disable drop shadows
 
 ### Label Direction Cues
 
-On labelled edges, connectors, transitions, messages, and guards, a standalone
+On labeled edges, connectors, transitions, messages, and guards, a standalone
 `>` or `<` at the start or end of the label is rendered as a small direction
 triangle instead of text:
 
@@ -1133,7 +1133,7 @@ sourcePort --> targetPort : label
 sourcePort -down-> targetPort    ← directional hint (up/down/left/right)
 ```
 
-Standalone labelled ports can be declared at the top level and targeted by connectors:
+Standalone labeled ports can be declared at the top level and targeted by connectors:
 
 ```
 port "External API" as external_api dashed

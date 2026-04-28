@@ -52,13 +52,13 @@ In modern software construction, version control is not just a convenience — i
 >
 > **How to read this chapter.** On a first pass, read it linearly — the sections build on each other. After that, use the [Choosing the Right Tool](#choosing-the-right-tool) table at the end as your lookup index. At the end of each major section you'll find short **retrieval prompts** with collapsible answers — pause and try to answer them before revealing. They feel slow on purpose; that's the effort that makes the material stick.
 
-This page is organised by **workflow phase** — the same sequence you move through on a real project:
+This page is organized by **workflow phase** — the same sequence you move through on a real project:
 
 1. **Core Concepts** — the mental model everything else builds on.
 2. **Setup** — create or clone a repository and configure it.
 3. **Author** — write code, craft commits, manage your working tree.
 4. **Share** — branch, merge, push, pull, collaborate via pull requests and tags.
-5. **Maintain** — polish history, organise the team's branching strategy, manage submodules.
+5. **Maintain** — polish history, organize the team's branching strategy, manage submodules.
 6. **Debug** — investigate when things go wrong, and recover safely.
 
 A final section — **[Choosing the Right Tool](#choosing-the-right-tool)** — is the decision table to come back to when you know what you want to do but can't remember which command does it.
@@ -136,7 +136,7 @@ Two consequences follow immediately:
 - **Commits are immutable.** You cannot edit a commit in place — changing its content would change its SHA, so it would be a *different* commit. Every "rewrite" operation (`--amend`, `rebase`, `cherry-pick`) is really *"build a new commit with the change baked in, then move pointers to it"*. The old commit isn't edited; it's abandoned.
 - **Identity travels.** Two collaborators whose repositories contain the same content produce the same SHAs. There's no central authority deciding what counts as "the same commit" — the content decides. That's why Git can sync distributed clones without a lock server.
 
-**Snapshots, not diffs.** A common misconception is that Git stores each commit as a *diff* against its parent. It doesn't. A commit stores a **full tree snapshot** — a recursive directory listing of every tracked file at that moment, with each file's content hashed into a **blob** object. This sounds wasteful until you realise Git **deduplicates** by hash: if `README.md` is identical across 100 commits, the blob is stored *once* and all 100 tree objects reference its SHA. A 10-year-old repository with 50,000 commits typically takes only a few gigabytes because 99% of the content is shared between snapshots. The payoff: checking out any historical commit is instant — Git reads a tree, pulls the referenced blobs, writes them to disk. There's no "apply 50,000 diffs in sequence" step.
+**Snapshots, not diffs.** A common misconception is that Git stores each commit as a *diff* against its parent. It doesn't. A commit stores a **full tree snapshot** — a recursive directory listing of every tracked file at that moment, with each file's content hashed into a **blob** object. This sounds wasteful until you realize Git **deduplicates** by hash: if `README.md` is identical across 100 commits, the blob is stored *once* and all 100 tree objects reference its SHA. A 10-year-old repository with 50,000 commits typically takes only a few gigabytes because 99% of the content is shared between snapshots. The payoff: checking out any historical commit is instant — Git reads a tree, pulls the referenced blobs, writes them to disk. There's no "apply 50,000 diffs in sequence" step.
 
 </details>
 
@@ -282,7 +282,7 @@ Not every file in your project directory is *source code that belongs in version
 - **Build artefacts** — compiled binaries, `*.pyc` bytecode, `node_modules/`, `dist/`, `target/`. These are reproducible from the source and re-generated on every build. Committing them wastes repo space, creates merge conflicts on every build, and pollutes diffs.
 - **Editor / OS debris** — `.DS_Store`, `Thumbs.db`, `.idea/`, `.vscode/settings.json` (sometimes). These reflect *your* machine's setup, not the project.
 - **Local config and secrets** — `.env`, `*.pem`, database passwords, API keys. These must never enter history (see the security warning below).
-- **Huge binary files** — videos, datasets, model checkpoints. Git is optimised for text; large opaque binaries bloat the repo and can't be diffed meaningfully. Use Git LFS for those.
+- **Huge binary files** — videos, datasets, model checkpoints. Git is optimized for text; large opaque binaries bloat the repo and can't be diffed meaningfully. Use Git LFS for those.
 
 Without a `.gitignore`, Git constantly reports these files as "untracked" in `git status`, and eventually someone stages `git add -A` and commits the wrong thing. The file tells Git to **pretend these paths don't exist** — they won't show up in `git status`, won't be staged by accident, and won't be tracked.
 
@@ -312,7 +312,7 @@ Thumbs.db
 .idea/
 ```
 
-The shape generalises: **for each entry, ask "is this reproducible from source?" or "is this personal to my machine?" or "is this a secret?"** If yes to any of those, it belongs in `.gitignore`. If it's hand-authored content that's part of the project, it does not.
+The shape generalizes: **for each entry, ask "is this reproducible from source?" or "is this personal to my machine?" or "is this a secret?"** If yes to any of those, it belongs in `.gitignore`. If it's hand-authored content that's part of the project, it does not.
 
 A few defaults worth knowing for common ecosystems:
 
@@ -580,7 +580,7 @@ Whether to adopt Conventional Commits is a **team decision** — but writing imp
 
 ### Why do we need `--amend`?
 
-Because the most common "oops" in Git is noticing a typo in the commit message, or realising you forgot to `git add` a file, *seconds* after committing. Without `--amend` you'd have two bad options: leave the broken commit in history and create a follow-up ("fix typo in previous message"), or reset the branch and rebuild the commit manually. Neither is great. `--amend` gives you a dedicated "I meant this, not that" operation that replaces the tip commit with a corrected version.
+Because the most common "oops" in Git is noticing a typo in the commit message, or realizing you forgot to `git add` a file, *seconds* after committing. Without `--amend` you'd have two bad options: leave the broken commit in history and create a follow-up ("fix typo in previous message"), or reset the branch and rebuild the commit manually. Neither is great. `--amend` gives you a dedicated "I meant this, not that" operation that replaces the tip commit with a corrected version.
 
 ### What it does
 
@@ -747,7 +747,7 @@ Like `git restore` without `--staged`, this is **permanent** — `git clean -fd`
 
 1. Three files are all *uncommitted* but in different states: `a.js` is staged, `b.js` is modified-but-unstaged, `c.js` is brand-new-and-untracked. You run `git stash`. What happens to each?
 2. What's the functional difference between `git restore file.js` and `git restore --staged file.js`?
-3. You run `git clean -fd` in your project and realise too late that you had some untracked scratch notes in there. Can Git recover them? Why or why not?
+3. You run `git clean -fd` in your project and realize too late that you had some untracked scratch notes in there. Can Git recover them? Why or why not?
 
 <details markdown="1">
 <summary>Click to view answers</summary>
@@ -1148,7 +1148,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
 
 Since Git 2.34 (November 2021), the default merge strategy is **ort** (Ostensibly Recursive's Twin) — a reimplementation of the older `recursive` strategy that's faster and handles renames better. (`ort` was introduced as opt-in in Git 2.33, August 2021, and promoted to the default in 2.34.) For typical two-branch merges the output is identical; you rarely need to pick a strategy explicitly.
 
-When the default auto-resolution doesn't do what you want, **strategy options** (`-X`) tune the behaviour:
+When the default auto-resolution doesn't do what you want, **strategy options** (`-X`) tune the behavior:
 
 ```bash
 git merge feature -X ours              # on conflict, keep OUR version (current branch)
@@ -1287,7 +1287,7 @@ git log origin/main..main              # commits on local not yet on remote (unp
 git diff main origin/main              # content differences between the two
 ```
 
-**Rule of thumb:** `origin/main` is a **read-only local cache of the remote**. You never commit to it; it only moves when you `fetch`, `pull`, or `push`. In the graphs below it appears with a **dashed label** and grey colour to distinguish it from your local branch pointer.
+**Rule of thumb:** `origin/main` is a **read-only local cache of the remote**. You never commit to it; it only moves when you `fetch`, `pull`, or `push`. In the graphs below it appears with a **dashed label** and gray color to distinguish it from your local branch pointer.
 
 ## Fetching vs. Pulling — Why You Have Two Commands
 
@@ -1395,7 +1395,7 @@ You can make `--rebase` the default for a branch (`git config branch.main.rebase
 
 ## Pushing
 
-`git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the grey dashed label slides forward to catch up with your local `main`:
+`git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the gray dashed label slides forward to catch up with your local `main`:
 
 <div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git push uploads two local commits to the remote, fast-forwarding the remote branch pointer.">
 <script type="application/json">
@@ -1792,7 +1792,7 @@ All three obey the [Golden Rule](#the-golden-rule-never-rewrite-pushed-commits) 
 
 # Branching Strategies
 
-Once you can branch, merge, and open pull requests, the next question is: *how should the team organise branches?* Different answers emerge based on release cadence, team size, and tolerance for complexity. Three strategies cover most industry practice.
+Once you can branch, merge, and open pull requests, the next question is: *how should the team organize branches?* Different answers emerge based on release cadence, team size, and tolerance for complexity. Three strategies cover most industry practice.
 
 ## Gitflow
 
@@ -2174,7 +2174,7 @@ Three modes determine what happens to the working tree and staging area:
 | Mode | Branch pointer | Staging area | Working tree | Use this when… |
 |---|---|---|---|---|
 | `--soft` | moves to target | **preserved** | preserved | You want to un-commit but keep everything staged — to re-commit with a better message, or to split the commit into smaller pieces. |
-| `--mixed` (default) | moves to target | reset to target | preserved | You want to un-commit *and* un-stage, keeping your edits as plain working-tree changes to re-organise. |
+| `--mixed` (default) | moves to target | reset to target | preserved | You want to un-commit *and* un-stage, keeping your edits as plain working-tree changes to re-organize. |
 | `--hard` | moves to target | reset to target | **overwritten** | You want the commit *and* its changes gone — a full wipe back to the target. Your uncommitted work is destroyed. |
 
 Most common uses:

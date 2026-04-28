@@ -179,7 +179,7 @@ Closed --> [*]
 
 ### Example 3: Food Delivery — Order Lifecycle
 
-**Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — but it can be cancelled at any point before pickup.
+**Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — but it can be canceled at any point before pickup.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Placed : submitOrder()
