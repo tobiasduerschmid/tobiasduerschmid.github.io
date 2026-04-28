@@ -375,11 +375,23 @@
     });
 
     var head = state.head || { ref: null, hash: null, detached: false };
+    // Producers vary on whether they strip the `refs/heads/` prefix from
+    // head.ref. The renderer treats head.ref as the *displayed* branch name
+    // and computes the HEAD label's left edge from its length, so a full
+    // `refs/heads/main` (15 chars vs. 4) shoves the HEAD chip ~95px further
+    // left and pushes its body off the SVG's left edge — only the chevron
+    // tip pokes back into view. parseGitState already strips this prefix;
+    // do the same here so the pyodide backend (which writes head.ref
+    // straight from `refs/heads/<branch>`) renders identically.
+    var headRef = head.ref || null;
+    if (headRef && headRef.indexOf('refs/heads/') === 0) {
+      headRef = headRef.substring('refs/heads/'.length);
+    }
 
     return {
       commits: commits,
       branches: branches,
-      head: { ref: head.ref || null, hash: head.hash || null, detached: !!head.detached },
+      head: { ref: headRef, hash: head.hash || null, detached: !!head.detached },
       commitMap: commitMap,
       workingTree: _normalizeFilesSpec(state.files || null),
     };
