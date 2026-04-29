@@ -3240,6 +3240,249 @@ Payment ..> Invoice : references
     expect(stats.overlaps, `Overlapping pairs: ${(stats.pairs || []).join(', ')}`).toBe(0);
   });
 
+  test('compact class layout groups abstract factory dependency families readably', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram, undefined, { timeout: 30_000 });
+
+    const stats = await page.evaluate(() => {
+      const src = `@startuml
+layout compact
+
+interface TeaBrewingKit {
+  +createSteepingProfile(): SteepingProfile
+  +createBrewingVessel(): BrewingVessel
+}
+
+class GongFuBrewingKit {
+  +createSteepingProfile(): SteepingProfile
+  +createBrewingVessel(): BrewingVessel
+}
+
+class WesternBrewingKit {
+  +createSteepingProfile(): SteepingProfile
+  +createBrewingVessel(): BrewingVessel
+}
+
+interface BrewingVessel
+
+class Gaiwan
+class WesternTeapot
+
+interface SteepingProfile
+
+class MultipleShortSteeps
+class SingleLongSteep
+
+GongFuBrewingKit ..|> TeaBrewingKit
+WesternBrewingKit ..|> TeaBrewingKit
+
+Gaiwan ..|> BrewingVessel
+WesternTeapot ..|> BrewingVessel
+
+MultipleShortSteeps ..|> SteepingProfile
+SingleLongSteep ..|> SteepingProfile
+
+GongFuBrewingKit ..> Gaiwan
+GongFuBrewingKit ..> MultipleShortSteeps
+
+WesternBrewingKit ..> WesternTeapot
+WesternBrewingKit ..> SingleLongSteep
+
+note left of GongFuBrewingKit
+  return
+  new Gaiwan
+end note
+
+note bottom of WesternBrewingKit
+  return
+  new SingleLongSteep
+end note
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1200px';
+      host.style.height = '700px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      const result = {
+        width: 0,
+        height: 0,
+        xs: {},
+        ys: {},
+        methodFont: 0,
+        nameFont: 0,
+        noteFont: 0,
+        routeBoxHits: [],
+        routeCount: 0,
+        dependencyLaneYs: [],
+      };
+      if (!svg) { document.body.removeChild(host); return result; }
+
+      const viewBox = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+      result.width = viewBox[2] || 0;
+      result.height = viewBox[3] || 0;
+
+      const texts = Array.from(svg.querySelectorAll('text'));
+      const modelNames = [
+        'TeaBrewingKit', 'BrewingVessel', 'SteepingProfile',
+        'GongFuBrewingKit', 'WesternBrewingKit',
+        'Gaiwan', 'MultipleShortSteeps', 'WesternTeapot', 'SingleLongSteep'
+      ];
+      for (const name of modelNames) {
+        const txt = texts.find((t) => t.textContent.trim() === name);
+        if (!txt) continue;
+        const box = txt.getBBox();
+        result.xs[name] = box.x + box.width / 2;
+        result.ys[name] = box.y + box.height / 2;
+      }
+      const methodText = texts.find((t) => t.textContent.includes('createSteepingProfile'));
+      const nameText = texts.find((t) => t.textContent.trim() === 'TeaBrewingKit');
+      const noteText = texts.find((t) => t.textContent.trim() === 'return');
+      result.methodFont = methodText ? Number(methodText.getAttribute('font-size') || 0) : 0;
+      result.nameFont = nameText ? Number(nameText.getAttribute('font-size') || 0) : 0;
+      result.noteFont = noteText ? Number(noteText.getAttribute('font-size') || 0) : 0;
+
+      function parsePoints(raw) {
+        return (raw || '')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map((pair) => ({ x: pair[0], y: pair[1] }));
+      }
+
+      function bboxRect(name, box) {
+        return { name, l: box.x, r: box.x + box.width, t: box.y, b: box.y + box.height };
+      }
+
+      const rects = Array.from(svg.querySelectorAll('rect'));
+      const modelRects = [];
+      for (const name of modelNames) {
+        const txt = texts.find((t) => t.textContent.trim() === name);
+        if (!txt) continue;
+        const tb = txt.getBBox();
+        let best = null;
+        let bestArea = -1;
+        for (const rect of rects) {
+          const rb = rect.getBBox();
+          const contains =
+            tb.x >= rb.x - 0.5 && tb.x + tb.width <= rb.x + rb.width + 0.5 &&
+            tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
+          if (!contains) continue;
+          const area = rb.width * rb.height;
+          if (area > bestArea) { bestArea = area; best = rb; }
+        }
+        if (best) modelRects.push(bboxRect(name, best));
+      }
+      for (const [index, noteBox] of Array.from(svg.querySelectorAll('polygon.uml-note-box')).entries()) {
+        modelRects.push(bboxRect(`note:${index}`, noteBox.getBBox()));
+      }
+
+      function routeElements() {
+        const routes = [];
+        for (const line of Array.from(svg.querySelectorAll('line'))) {
+          const stroke = line.getAttribute('stroke') || '';
+          if (stroke !== '#444' && !line.classList.contains('uml-note-connector')) continue;
+          routes.push({
+            kind: 'line',
+            points: [
+              { x: Number(line.getAttribute('x1')), y: Number(line.getAttribute('y1')) },
+              { x: Number(line.getAttribute('x2')), y: Number(line.getAttribute('y2')) },
+            ],
+          });
+        }
+        for (const polyline of Array.from(svg.querySelectorAll('polyline'))) {
+          if (polyline.classList.contains('uml-note-fold')) continue;
+          const stroke = polyline.getAttribute('stroke') || '';
+          if (stroke !== '#444' && !polyline.classList.contains('uml-note-connector')) continue;
+          const points = parsePoints(polyline.getAttribute('points') || '');
+          if (points.length < 2) continue;
+          const xs = points.map((point) => point.x);
+          const ys = points.map((point) => point.y);
+          const smallArrow = points.length === 3 &&
+            Math.max(...xs) - Math.min(...xs) <= 26 &&
+            Math.max(...ys) - Math.min(...ys) <= 26 &&
+            !polyline.classList.contains('uml-note-connector');
+          if (smallArrow) continue;
+          routes.push({ kind: 'polyline', points });
+        }
+        return routes;
+      }
+
+      function segmentHitsInterior(a, b, rect) {
+        const tol = 2.5;
+        if (Math.abs(a.y - b.y) < 1) {
+          const y = a.y;
+          if (y <= rect.t + tol || y >= rect.b - tol) return false;
+          const overlap = Math.min(Math.max(a.x, b.x), rect.r - tol) - Math.max(Math.min(a.x, b.x), rect.l + tol);
+          return overlap > tol;
+        }
+        if (Math.abs(a.x - b.x) < 1) {
+          const x = a.x;
+          if (x <= rect.l + tol || x >= rect.r - tol) return false;
+          const overlap = Math.min(Math.max(a.y, b.y), rect.b - tol) - Math.max(Math.min(a.y, b.y), rect.t + tol);
+          return overlap > tol;
+        }
+        for (let step = 1; step < 20; step++) {
+          const t = step / 20;
+          const x = a.x + (b.x - a.x) * t;
+          const y = a.y + (b.y - a.y) * t;
+          if (x > rect.l + tol && x < rect.r - tol && y > rect.t + tol && y < rect.b - tol) return true;
+        }
+        return false;
+      }
+
+      const routes = routeElements();
+      result.routeCount = routes.length;
+      for (const polyline of Array.from(svg.querySelectorAll('polyline'))) {
+        if ((polyline.getAttribute('stroke') || '') !== '#444') continue;
+        if (polyline.getAttribute('stroke-dasharray') !== '8,4') continue;
+        const points = parsePoints(polyline.getAttribute('points') || '');
+        let best = null;
+        for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
+          const a = points[pointIndex], b = points[pointIndex + 1];
+          if (Math.abs(a.y - b.y) >= 1) continue;
+          const len = Math.abs(a.x - b.x);
+          if (!best || len > best.len) best = { y: Math.round(a.y), len };
+        }
+        if (best && best.len > 40) result.dependencyLaneYs.push(best.y);
+      }
+      for (const [routeIndex, route] of routes.entries()) {
+        for (let pointIndex = 0; pointIndex < route.points.length - 1; pointIndex++) {
+          for (const rect of modelRects) {
+            if (segmentHitsInterior(route.points[pointIndex], route.points[pointIndex + 1], rect)) {
+              result.routeBoxHits.push(`${routeIndex}:${pointIndex}:${rect.name}`);
+            }
+          }
+        }
+      }
+
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.width).toBeGreaterThan(0);
+    expect(stats.width).toBeLessThan(1750);
+    expect(stats.height).toBeLessThan(850);
+    expect(stats.nameFont).toBeGreaterThanOrEqual(18);
+    expect(stats.methodFont).toBeGreaterThanOrEqual(17);
+    expect(stats.noteFont).toBeGreaterThanOrEqual(16);
+    expect(stats.routeCount).toBeGreaterThanOrEqual(10);
+    expect(stats.routeBoxHits, `Routes cross model elements: ${(stats.routeBoxHits || []).join(', ')}`).toEqual([]);
+    expect(new Set(stats.dependencyLaneYs).size).toBeGreaterThanOrEqual(4);
+
+    const xs = stats.xs;
+    const ys = stats.ys;
+    expect(ys.TeaBrewingKit).toBeLessThan(ys.GongFuBrewingKit);
+    expect(ys.BrewingVessel).toBeLessThan(ys.Gaiwan);
+    expect(ys.SteepingProfile).toBeLessThan(ys.SingleLongSteep);
+    expect(Math.abs(xs.GongFuBrewingKit - xs.WesternBrewingKit)).toBeGreaterThan(120);
+  });
+
   test('UMLLayoutCore.repairOverlaps resolves a known cross-layer overlap', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
