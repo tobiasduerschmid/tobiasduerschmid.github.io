@@ -476,8 +476,8 @@ steps:
       - path: "squad.py"
         content: |
           def squad_name_valid(name: str) -> bool:
-              """Return True iff len(name) is between 3 and 12 inclusive (typical
-              gaming-platform username rule — Fortnite / Roblox / Discord-style)."""
+              """Return True if and only if len(name) is between 3 and 12 inclusive
+              (typical gaming-platform username rule — Fortnite / Roblox / Discord-style)."""
               return 3 <= len(name) <= 12
         language: "python"
 
@@ -803,7 +803,7 @@ steps:
                 qty     -> the input qty, unchanged
                 rarity  -> the input rarity, lowercased
                 label   -> "{qty}× {Rarity-capitalized} {name}"
-                is_rare -> True iff rarity is "rare", "epic", or "legendary"
+                is_rare -> True if and only if rarity is "rare", "epic", or "legendary"
               """
               normalized = rarity.lower()
               return {
@@ -1220,6 +1220,68 @@ steps:
       Every robust test fits this shape. If you can't separate Arrange from Act cleanly, the function under test is doing too much.
       </details>
 
+      ### 🚩 When Arrange dominates — the *Excessive Setup* smell
+
+      You just learned the AAA shape. The size of each section is itself a signal — and the *Arrange* section is the loudest.
+
+      Here's a test that compiles, runs, and passes. Read it, then ask: *what's wrong?*
+
+      ```python
+      def test_checkout_succeeds_for_valid_card():
+          # Arrange — 22 lines
+          db = InMemoryDatabase(); db.connect()
+          user = User(id=1, name="Alex", email="a@x.io")
+          db.users.insert(user)
+          address = Address(user_id=1, line1="221B Baker St", country="UK")
+          db.addresses.insert(address)
+          card = Card(user_id=1, last4="4242", expiry="12/30")
+          db.cards.insert(card)
+          cart = Cart(user_id=1); db.carts.insert(cart)
+          item = Item(sku="A1", name="Vinyl", price=20.0)
+          db.items.insert(item); cart.add(item)
+          tax_service = FakeTaxService(rate=0.08)
+          payment_gateway = StubGateway(approves=True)
+          email_service = NullEmailService()
+          audit_log = InMemoryAuditLog()
+          fraud_check = AlwaysPassFraudCheck()
+          inventory = StubInventory(in_stock=True)
+          feature_flags = FlagSet(enable_new_taxes=False)
+
+          # Act — 1 line
+          result = checkout(user.id, payment_gateway, tax_service, email_service,
+                            audit_log, fraud_check, inventory, feature_flags)
+
+          # Assert — 1 line
+          assert result.status == "ok"
+      ```
+
+      The Assert is fine. The Act is a single call. The **Arrange** is the problem — eight collaborators stubbed and three database tables seeded just to verify *one* outcome.
+
+      This is the *Excessive Setup* smell. Every dependency `checkout` reaches forces a corresponding fixture. Whenever you find yourself building elaborate scaffolding before you can call the function under test, the test is telling you something — but it isn't telling you to write better tests. **It's telling you to fix the *production* code.**
+
+      > 🪞 **Tests are also a design tool, not just a verifier.** A bloated Arrange section is the production code asking for refactoring. Your test file is a mirror — its size, shape, and friction reflect the design choices on the other side.
+
+      **The wrong reflex** is to hide the setup in a `setup_world()` helper. The lines disappear from the test file but the coupling stays. Now the smell is *invisible*, which is worse than visible — the next engineer never sees the warning sign.
+
+      **The right reflex** is to listen. `checkout` is doing too much. Split it: a `compute_total(cart, tax)` that needs two collaborators, a `charge(payment_gateway, total)` that needs one, plus a thin orchestrator. Each piece is then testable with a 2-line Arrange:
+
+      ```python
+      def test_total_includes_tax():
+          # Arrange
+          cart = Cart(items=[Item(price=20.0)])
+          tax = FakeTaxService(rate=0.08)
+
+          # Act
+          total = compute_total(cart, tax)
+
+          # Assert
+          assert total == 21.60
+      ```
+
+      Same domain. Same kind of assertion. *Different production design* — and the test difficulty plummets.
+
+      ✍️ **Active prompt** (write your answer before reading on): a teammate's PR adds a test with 40 lines of Arrange before a single `assert`. Do you (a) approve it because the assertion is correct, (b) ask them to extract a `setup_world()` helper, or (c) push back on the *production code* changes that drove the dependency explosion? Hold your answer — the wrap-up quiz revisits exactly this scenario.
+
       ## Part B — Over-specification (the upper bound of oracle strength)
 
       In Step 3 you wrote `assert result == {full dict}` to make the oracle as strong as possible. That was right *for that spec*. Now watch what happens when the implementation grows a new output field that the spec never mentioned.
@@ -1371,7 +1433,7 @@ steps:
                 qty     -> the input qty
                 rarity  -> the input rarity, lowercased
                 label   -> "{qty}× {Rarity-capitalized} {name}"
-                is_rare -> True iff rarity is "rare", "epic", or "legendary"
+                is_rare -> True if and only if rarity is "rare", "epic", or "legendary"
 
               The returned dict ALSO carries a `created_at` field for
               analytics. That field is NOT part of the spec — its presence
@@ -1670,7 +1732,7 @@ steps:
         - question: |
             A function `build_user_profile(name, age)` has this spec:
 
-            > Returns a dict with `name` (input), `age` (input), and `is_adult` (True iff age ≥ 18).
+            > Returns a dict with `name` (input), `age` (input), and `is_adult` (True if and only if age ≥ 18).
 
             The current implementation also returns a `cached_at` timestamp for internal caching. The spec doesn't mention `cached_at`. Which assertion is **right** — strong on the spec but not over-specified?
           type: single
@@ -1800,6 +1862,13 @@ steps:
       | `"family"` | 30% off |
       | anything else | none |
 
+      > 🔒 **You are writing tests for a fixed function — don't modify `streaming.py`.** The validator runs your tests *not* against the `streaming.py` you can see, but against a hidden reference implementation **plus three deliberately broken versions** (one with no student discount, one with no family discount, one that returns `0` for unknown plans). To get full credit, your suite must:
+      >
+      > - **pass** against the reference (your assertions match the spec), AND
+      > - **fail** against each broken version (your tests actually probe each partition).
+      >
+      > That's the working definition of "your tests cover the partitions" — they catch bugs in each one. If a check fails, the message names *which* broken version your suite missed, so you know which partition to add a test for.
+
       In `test_streaming.py`, **design a test suite from scratch**:
 
       1. **Articulate first** *(before any code)*: at the top of `test_streaming.py`, write a comment listing the partitions you see in the spec, like this:
@@ -1869,9 +1938,9 @@ steps:
       Most real functions hit several rows at once. Apply them all.
       </details>
 
-      <details markdown="1"><summary>🎲 Want a different problem? (autonomy / choice)</summary>
+      <details markdown="1"><summary>🎲 Want unguided practice on a different shape of function?</summary>
 
-      The `streaming_price` task is the recommended path. If you'd rather practice on a different shape of function, edit `streaming.py` and replace the function with **one** of:
+      The graded exercise above is `streaming_price`. Once you've completed it, try the same approach on one of these *self-graded* problems — copy the function below into a fresh file (e.g. `practice.py`) and write your own tests in `test_practice.py`. There's no validator here; judge your suite yourself against the partitioning + strong-oracle checklist you used above.
 
       ```python
       # Option A — numeric boundaries (more like Step 2)
@@ -1889,7 +1958,7 @@ steps:
           def value(self) -> int: return self._n
       ```
 
-      Then write tests that match the shape of the chosen function. The test-quality checks (strong oracles, multiple partitions, ≥ 3 functions, all pass) still apply.
+      For Option A, your partitions are *numeric ranges*; boundary value analysis from Step 2 is the dominant tool. For Option B, the function under test mutates state, so each test follows the *behavior, not implementation* pattern from Step 4 (assert through `value()`, never reach for `_n`).
       </details>
 
       <details markdown="1"><summary>🚀 What's next — pytest features you'll meet in your next project</summary>
@@ -2003,44 +2072,172 @@ steps:
           count = source.count('def test_')
           assert count >= 3, \
               f"Write at least 3 test functions (found {count}). The function has 3 partitions of `plan` — one test per partition is the floor. Each partition deserves its own named function so a failure tells you exactly which case broke."
-      - description: "Tests cover the 'student' partition"
-        command: |
-          source = open('/tutorial/test_streaming.py').read()
-          assert 'student' in source, \
-              "No test references 'student'. The 50%-off branch is one of the three partitions — leaving it untested means a regression in that branch ships silently."
-      - description: "Tests cover the 'family' partition"
-        command: |
-          source = open('/tutorial/test_streaming.py').read()
-          assert 'family' in source, \
-              "No test references 'family'. The 30%-off branch needs at least one test — same reasoning as student."
-      - description: "Tests cover the 'other' (no-discount) partition"
-        command: |
-          import re
-          source = open('/tutorial/test_streaming.py').read()
-          pattern = r'streaming_price\s*\([^)]*,\s*[\'"](?!student|family)[^\'"]*[\'"]\s*\)'
-          has_other = bool(re.search(pattern, source))
-          assert has_other, \
-              "All your tests use 'student' or 'family'. Check your partition list — what should the function return for a plan it doesn't recognize? Add one test for that case: pick any representative input that isn't 'student' or 'family', compute the expected return value from the spec, and assert it."
-      - description: "Tests use strong oracles (no weak 'is not None' / isinstance)"
+      - description: "Tests use strong oracles (no `is not None` / `isinstance` shortcuts)"
         command: |
           source = open('/tutorial/test_streaming.py').read()
           weak = 'is not None' in source or 'isinstance(' in source
           assert not weak, \
               "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 3 warned about. For each test: choose a concrete `price` input, compute the expected post-discount value yourself from the spec table, and assert that exact value with `==`."
-      - description: "All tests pass against the reference implementation"
+      - description: "Tests pass against the reference implementation (your assertions match the spec)"
         command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_streaming.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
+          import sys, io, contextlib, pytest
+          SUT_PATH = '/tutorial/streaming.py'
+          saved = open(SUT_PATH).read()
+          REFERENCE = (
+              'def streaming_price(price, plan):\n'
+              '    if plan == "student": return price * 0.50\n'
+              '    if plan == "family":  return price * 0.70\n'
+              '    return price\n'
+          )
+          def _clear_modules():
+              for name in list(sys.modules):
+                  if name == 'streaming' or name.startswith('streaming.') \
+                     or name == 'test_streaming' or name.startswith('test_streaming.'):
+                      sys.modules.pop(name, None)
+          buf = io.StringIO()
+          try:
+              with open(SUT_PATH, 'w') as f: f.write(REFERENCE)
+              _clear_modules()
+              with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=short', '-q', '--no-header'])
+          finally:
+              with open(SUT_PATH, 'w') as f: f.write(saved)
+              _clear_modules()
+          assert code == 0, (
+              "Your tests fail against the correct reference implementation of "
+              "`streaming_price` (the one matching the spec table). Re-check what "
+              "each test asserts: a $20 input gives $10.0 for student, $14.0 for "
+              "family, and $20 for any other plan.\n\n"
+              f"pytest output:\n{buf.getvalue()}"
+          )
         hints:
           - title: "What partitions?"
-            text: "Three: `\"student\"`, `\"family\"`, and *everything else*. Each deserves at least one test. `\"\"` is a nice extra edge case."
+            text: "Three: `\"student\"`, `\"family\"`, and *everything else*. Each deserves at least one test."
           - title: "Strong-oracle reminder"
             text: "Don't write `assert streaming_price(20, \"family\") is not None` — that passes for almost any return. Pin the *exact* value with `==`. The spec table above tells you the discount percentage for each partition; compute the post-discount price for a chosen input yourself."
           - title: "Almost-spoiler — compute, don't copy"
-            text: "Pick your representative price (e.g., a $20 streaming subscription). For each partition, compute the expected return value from the spec: 50% off ⇒ price × 0.50; 30% off ⇒ price × 0.70; no discount ⇒ price. Then write one test per partition with `assert streaming_price(price, plan) == <your_number>`. The shape is the same as Step 3's tests — only the function and partitions differ."
+            text: "Pick your representative price (e.g., $20). For each partition, compute the expected return value from the spec: 50% off ⇒ price × 0.50; 30% off ⇒ price × 0.70; no discount ⇒ price. Then write one test per partition with `assert streaming_price(price, plan) == <your_number>`."
+      - description: "Tests catch a bug in the 'student' partition (mutation: no student discount)"
+        command: |
+          import sys, io, contextlib, pytest
+          SUT_PATH = '/tutorial/streaming.py'
+          saved = open(SUT_PATH).read()
+          MUTANT = (
+              'def streaming_price(price, plan):\n'
+              '    if plan == "student": return price       # bug: no student discount\n'
+              '    if plan == "family":  return price * 0.70\n'
+              '    return price\n'
+          )
+          def _clear_modules():
+              for name in list(sys.modules):
+                  if name == 'streaming' or name.startswith('streaming.') \
+                     or name == 'test_streaming' or name.startswith('test_streaming.'):
+                      sys.modules.pop(name, None)
+          try:
+              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
+              _clear_modules()
+              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
+          finally:
+              with open(SUT_PATH, 'w') as f: f.write(saved)
+              _clear_modules()
+          assert code == 1, (
+              "Your suite passes against an implementation that gives the "
+              "student plan no discount (returns the full price instead of "
+              "half). None of your tests pin the 50%-off behavior. Add a "
+              "test like `assert streaming_price(20, \"student\") == 10.0`."
+          )
+      - description: "Tests catch a bug in the 'family' partition (mutation: no family discount)"
+        command: |
+          import sys, io, contextlib, pytest
+          SUT_PATH = '/tutorial/streaming.py'
+          saved = open(SUT_PATH).read()
+          MUTANT = (
+              'def streaming_price(price, plan):\n'
+              '    if plan == "student": return price * 0.50\n'
+              '    if plan == "family":  return price       # bug: no family discount\n'
+              '    return price\n'
+          )
+          def _clear_modules():
+              for name in list(sys.modules):
+                  if name == 'streaming' or name.startswith('streaming.') \
+                     or name == 'test_streaming' or name.startswith('test_streaming.'):
+                      sys.modules.pop(name, None)
+          try:
+              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
+              _clear_modules()
+              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
+          finally:
+              with open(SUT_PATH, 'w') as f: f.write(saved)
+              _clear_modules()
+          assert code == 1, (
+              "Your suite passes against an implementation that gives the "
+              "family plan no discount. None of your tests pin the 30%-off "
+              "behavior. Add a test like `assert streaming_price(20, \"family\") == 14.0`."
+          )
+      - description: "Tests catch a bug in the 'other' (no-discount) partition (mutation: returns 0)"
+        command: |
+          import sys, io, contextlib, pytest
+          SUT_PATH = '/tutorial/streaming.py'
+          saved = open(SUT_PATH).read()
+          MUTANT = (
+              'def streaming_price(price, plan):\n'
+              '    if plan == "student": return price * 0.50\n'
+              '    if plan == "family":  return price * 0.70\n'
+              '    return 0                                # bug: zero for unknown plans\n'
+          )
+          def _clear_modules():
+              for name in list(sys.modules):
+                  if name == 'streaming' or name.startswith('streaming.') \
+                     or name == 'test_streaming' or name.startswith('test_streaming.'):
+                      sys.modules.pop(name, None)
+          try:
+              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
+              _clear_modules()
+              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
+          finally:
+              with open(SUT_PATH, 'w') as f: f.write(saved)
+              _clear_modules()
+          assert code == 1, (
+              "Your suite passes against an implementation that returns 0 "
+              "for any plan that isn't 'student' or 'family'. None of your "
+              "tests probe the no-discount partition. Add a test using a "
+              "plan like \"individual\", \"premium\", or \"\" — the spec "
+              "says no discount, so `streaming_price(20, plan) == 20`."
+          )
+      - description: "Tests are not tautological — they catch a wrong-percentage bug"
+        command: |
+          import sys, io, contextlib, pytest
+          SUT_PATH = '/tutorial/streaming.py'
+          saved = open(SUT_PATH).read()
+          MUTANT = (
+              'def streaming_price(price, plan):\n'
+              '    if plan == "student": return price * 0.51   # bug: 49% off, not 50%\n'
+              '    if plan == "family":  return price * 0.71   # bug: 29% off, not 30%\n'
+              '    return price\n'
+          )
+          def _clear_modules():
+              for name in list(sys.modules):
+                  if name == 'streaming' or name.startswith('streaming.') \
+                     or name == 'test_streaming' or name.startswith('test_streaming.'):
+                      sys.modules.pop(name, None)
+          try:
+              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
+              _clear_modules()
+              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
+          finally:
+              with open(SUT_PATH, 'w') as f: f.write(saved)
+              _clear_modules()
+          assert code == 1, (
+              "Your suite passes when the discount is 49% instead of 50%, "
+              "or 29% instead of 30%. Your assertions are too loose — "
+              "possibly using `>` / `<` instead of `==`, or asserting only "
+              "the rough magnitude. For a deterministic function whose "
+              "output you can compute, pin the exact value with `==`."
+          )
 
     quiz:
       title: "Wrap-up — Knowledge Check"
