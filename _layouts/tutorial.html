@@ -369,6 +369,9 @@
         // when the Run button is clicked, and rename the button to "Test"
         // automatically when a test file is the active file.
         pytest: !!config.pytest,
+        // `playwright:` — React tutorial mode for Playwright-compatible
+        // in-browser specs that can be copied to real @playwright/test later.
+        playwright: config.playwright || null,
       });
       window._tutorial = tutorial;
       tutorial.start();

@@ -1,0 +1,527 @@
+title: "Playwright Compat Demo"
+description: "A small React tutorial that demonstrates the in-browser Playwright-compatible test runner. The spec file is shaped like real @playwright/test code so students can later copy the same ideas into a Node/Vite project."
+
+backend: react
+require_tests: true
+autosave_type: none
+editor_split: true
+run_label: "Test"
+
+playwright:
+  enabled: true
+  test_files:
+    - "tests/*.spec.js"
+  app_files:
+    - "src/App.jsx"
+    - "src/main.jsx"
+    - "src/styles.css"
+  timeout: 3000
+  reset_between_tests: true
+
+steps:
+  - title: "Run a Playwright-Style Todo Test"
+    instructions: |
+      > **Learning objective:** After this step you will be able to recognize the basic shape of a Playwright end-to-end test for a React app: navigate to the app, find elements the way a user would, perform actions, and assert what changed.
+
+      This demo uses the tutorial system's Playwright-compatible runner. It does **not** start a real browser process on the backend, but the test file is intentionally close to normal `@playwright/test`:
+
+      ```javascript
+      import { test, expect } from '@playwright/test';
+
+      test('adds a todo item', async ({ page }) => {
+        await page.goto('/');
+        await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+        await page.getByRole('button', { name: /add todo/i }).click();
+        await expect(page.getByText('Milk')).toBeVisible();
+      });
+      ```
+
+      The preview iframe acts like the browser page. The test talks to it through Playwright-style APIs such as `page.getByRole`, `locator.fill`, `locator.click`, and `expect(locator).toBeVisible()`.
+
+      ### Task
+
+      1. Open `tests/todo.spec.js`.
+      2. Click **Test** in the **Live Preview** toolbar and confirm the Playwright-style spec passes.
+      3. Read the selectors and compare them to the labels, button text, and list items in `src/App.jsx`.
+      4. Optional: add the final assertion from the solution to check that the input is cleared after adding a todo.
+      5. Click **Test My Work** to run instructor checks that inspect the app and the test file itself.
+
+      In a real local project, the same spec would live under `tests/` and run with `npx playwright test`. Here, `package.json` and `playwright.config.js` are included as reference files so students can see the normal project shape.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Playwright demo</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f6f7fb;
+            color: #1f2937;
+          }
+
+          .todo-shell {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 32px;
+          }
+
+          .todo-panel {
+            width: min(100%, 560px);
+            background: white;
+            border: 1px solid #d9dee8;
+            border-radius: 8px;
+            padding: 28px;
+            box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+          }
+
+          .eyebrow {
+            margin: 0 0 8px;
+            color: #4b5563;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
+
+          h1 {
+            margin: 0 0 24px;
+            font-size: 2rem;
+          }
+
+          label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+          }
+
+          .todo-row {
+            display: flex;
+            gap: 10px;
+          }
+
+          input {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid #b8c0cc;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font: inherit;
+          }
+
+          button {
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            background: #2563eb;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+          }
+
+          .todo-list {
+            margin: 24px 0 0;
+            padding-left: 24px;
+          }
+
+          .todo-list:empty {
+            display: none;
+          }
+
+          .todo-list li {
+            margin: 8px 0;
+          }
+
+      - path: "tests/todo.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          test('adds a todo item', async ({ page }) => {
+            await page.goto('/');
+
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            await expect(page.getByRole('listitem')).toHaveCount(1);
+            await expect(page.getByText('Milk')).toBeVisible();
+          });
+
+          test('clears the input after adding', async ({ page }) => {
+            await page.goto('/');
+
+            const input = page.getByRole('textbox', { name: /todo item/i });
+
+            await input.fill('Bread');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            await expect(input).toHaveValue('');
+            await expect(page.getByRole('listitem')).toHaveText('Bread');
+          });
+
+      - path: "playwright.config.js"
+        language: "javascript"
+        content: |
+          const { defineConfig } = require('@playwright/test');
+
+          module.exports = defineConfig({
+            testDir: './tests',
+            use: {
+              baseURL: 'http://localhost:5173',
+            },
+          });
+
+      - path: "package.json"
+        language: "json"
+        content: |
+          {
+            "scripts": {
+              "dev": "vite",
+              "test:e2e": "playwright test"
+            },
+            "dependencies": {
+              "react": "^18.2.0",
+              "react-dom": "^18.2.0"
+            },
+            "devDependencies": {
+              "@playwright/test": "^1.58.2",
+              "@vitejs/plugin-react": "^5.0.0",
+              "vite": "^7.0.0"
+            }
+          }
+
+    react_files:
+      - "src/App.jsx"
+      - "src/main.jsx"
+      - "src/styles.css"
+
+    open_file: "tests/todo.spec.js"
+
+    tests:
+      - description: "The app exposes accessible controls for Playwright locators"
+        command: |
+          const doc = frame.contentDocument;
+          const label = doc.querySelector('label[for="todo-input"]');
+          const input = doc.getElementById('todo-input');
+          const button = Array.from(doc.querySelectorAll('button'))
+            .find((node) => node.textContent.trim() === 'Add todo');
+
+          assert(label, 'Expected a label connected to #todo-input');
+          assert(input, 'Expected an input with id="todo-input"');
+          assert(button, 'Expected an Add todo button');
+
+      - description: "The Playwright spec uses role-based locators"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+
+          assert(spec.includes("from '@playwright/test'") || spec.includes('from "@playwright/test"'),
+            'Import test and expect from @playwright/test');
+          assert(spec.includes('getByRole'),
+            'Use getByRole so the test follows accessible user-facing UI');
+          assert(/getByRole\(['"]textbox['"]/.test(spec),
+            'Find the input as a textbox');
+          assert(/getByRole\(['"]button['"]/.test(spec),
+            'Find the button by role');
+
+      - description: "The Playwright spec asserts observable todo behavior"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+
+          assert(spec.includes('.fill('), 'Fill the todo input through Playwright');
+          assert(spec.includes('.click('), 'Click the Add todo button through Playwright');
+          assert(spec.includes('toHaveCount') || spec.includes('toBeVisible') || spec.includes('toHaveText'),
+            'Assert the visible result with a Playwright expect matcher');
+
+    solution:
+      files:
+        - path: "tests/todo.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('adds a todo item', async ({ page }) => {
+              await page.goto('/');
+
+              const input = page.getByRole('textbox', { name: /todo item/i });
+
+              await input.fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              await expect(page.getByRole('listitem')).toHaveCount(1);
+              await expect(page.getByText('Milk')).toBeVisible();
+              await expect(input).toHaveValue('');
+            });
+
+            test('clears the input after adding', async ({ page }) => {
+              await page.goto('/');
+
+              const input = page.getByRole('textbox', { name: /todo item/i });
+
+              await input.fill('Bread');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              await expect(input).toHaveValue('');
+              await expect(page.getByRole('listitem')).toHaveText('Bread');
+            });
+
+      explanation: |
+        The test uses user-facing locators instead of implementation details. `getByRole('textbox', { name: /todo item/i })` finds the input through its label, `getByRole('button', { name: /add todo/i })` finds the button by accessible name, and the assertions check the behavior the user can observe.
+
+  - title: "Assert That a Student Test Fails"
+    instructions: |
+      > **Learning objective:** After this step you will be able to use an instructor check that expects one student-authored Playwright test to fail.
+
+      This step intentionally gives you a buggy Todo app: it adds items, but it does **not** clear the input afterward.
+
+      A good end-to-end test for the missing behavior should fail against this buggy app. That is useful in TDD and regression testing because a test that already passes against broken code may not be testing the right thing.
+
+      ### Task
+
+      1. Open `buggy/tests/todo.spec.js`.
+      2. Click **Test** in the **Live Preview** toolbar.
+      3. Confirm that `adds a todo item` passes and `clears the input after adding` fails.
+      4. Click **Test My Work**. The instructor check passes only if the named student test fails.
+
+    playwright:
+      test_files:
+        - "buggy/tests/*.spec.js"
+      app_files:
+        - "buggy/src/App.jsx"
+        - "buggy/src/main.jsx"
+        - "buggy/src/styles.css"
+
+    files:
+      - path: "buggy/src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              // Bug for the lesson: the app should clear the input here, but does not.
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Buggy app</p>
+                  <h1>Todo Lab</h1>
+
+                  <label htmlFor="todo-input">Todo item</label>
+                  <div className="todo-row">
+                    <input
+                      id="todo-input"
+                      value={text}
+                      onChange={(event) => setText(event.target.value)}
+                      placeholder="Buy milk"
+                    />
+                    <button onClick={addTodo}>Add todo</button>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "buggy/src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "buggy/src/styles.css"
+        language: "css"
+        content: |
+          body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f6f7fb;
+            color: #1f2937;
+          }
+
+          .todo-shell {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 32px;
+          }
+
+          .todo-panel {
+            width: min(100%, 520px);
+            background: white;
+            border: 1px solid #d9dee8;
+            border-radius: 8px;
+            padding: 28px;
+          }
+
+          .eyebrow {
+            margin: 0 0 8px;
+            color: #4b5563;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+          }
+
+          .todo-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+          }
+
+          input {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid #b8c0cc;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font: inherit;
+          }
+
+          button {
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            background: #2563eb;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+          }
+
+      - path: "buggy/tests/todo.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          test('adds a todo item', async ({ page }) => {
+            await page.goto('/');
+
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+          test('clears the input after adding', async ({ page }) => {
+            await page.goto('/');
+
+            const input = page.getByRole('textbox', { name: /todo item/i });
+
+            await input.fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            await expect(input).toHaveValue('');
+          });
+
+    react_files:
+      - "buggy/src/App.jsx"
+      - "buggy/src/main.jsx"
+      - "buggy/src/styles.css"
+
+    open_file: "buggy/tests/todo.spec.js"
+
+    tests:
+      - description: "The clear-input Playwright test fails against the buggy app"
+        playwright:
+          title: "clears the input after adding"
+          should_fail: true
+
+      - description: "The failing test asserts the missing input-clearing behavior"
+        command: |
+          const spec = files['buggy/tests/todo.spec.js'] || '';
+
+          assert(spec.includes('toHaveValue'),
+            'Assert the input value after clicking Add todo');
+          assert(/toHaveValue\(['"]{2}\)/.test(spec),
+            'The test should expect the input to be empty');
+
+    solution:
+      files:
+        - path: "buggy/tests/todo.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('adds a todo item', async ({ page }) => {
+              await page.goto('/');
+
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+            });
+
+            test('clears the input after adding', async ({ page }) => {
+              await page.goto('/');
+
+              const input = page.getByRole('textbox', { name: /todo item/i });
+
+              await input.fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              await expect(input).toHaveValue('');
+            });
+
+      explanation: |
+        The instructor check uses `playwright.should_fail: true` with the test title. It passes because the student-authored test correctly exposes the missing input-clearing behavior in the buggy app.

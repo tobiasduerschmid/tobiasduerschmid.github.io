@@ -339,6 +339,10 @@
     // instead of exec'ing the file as a script. The Run button also relabels
     // itself to "Test" automatically when the active file is a test file.
     this._pytestMode = !!options.pytest;
+    this.playwrightConfig = options.playwright
+      ? (typeof options.playwright === 'object' ? options.playwright : { enabled: true })
+      : null;
+    this._playwrightMode = !!(this.playwrightConfig && this.playwrightConfig.enabled !== false);
     this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
@@ -364,6 +368,7 @@
 
     // React preview state
     this._previewFrame = null;
+    this._previewTestBtn = null;
     this._reactRebuildTimer = null;
 
     // Browser JS runner state
@@ -795,9 +800,11 @@
         '<div class="tvm-preview-header">' +
         '<span>Live Preview</span>' +
         '<div class="tvm-preview-actions">' +
+        (this._playwrightMode ? '<button class="tvm-preview-test-btn" title="Run Playwright tests from the test files">✓ Test</button>' : '') +
         '<button class="tvm-refresh-btn" title="Rebuild preview">\u21bb Refresh</button>' +
         '<button class="tvm-output-popout-btn" title="Open preview in separate window">\u29c9</button>' +
         '</div></div>' +
+        '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
         '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
@@ -1483,8 +1490,12 @@
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
     } else if (this.config.usePreview) {
       this._previewFrame = this.root.querySelector('.tvm-preview-frame');
+      this._previewTestBtn = this.root.querySelector('.tvm-preview-test-btn');
       var refreshBtn = this.root.querySelector('.tvm-refresh-btn');
       if (refreshBtn) refreshBtn.addEventListener('click', function () { self._rebuildReactPreview(); });
+      if (this._previewTestBtn) {
+        this._previewTestBtn.addEventListener('click', function () { self._runStudentPlaywrightTests(); });
+      }
     } else {
       this.outputPre = this.root.querySelector('.tvm-output-pre');
       this.outputPanel = this.root.querySelector('.tvm-output-panel');
@@ -1592,7 +1603,7 @@
     if (!this.requireTests) return false;
     for (var i = 0; i < idx; i++) {
       var step = this.steps[i];
-      if (step && step.tests && step.tests.length > 0 && !this._stepsPassed.has(i)) {
+      if (this._stepHasTests(step) && !this._stepsPassed.has(i)) {
         return false;
       }
     }
@@ -1809,7 +1820,11 @@
         });
       });
 
-      return Promise.all([v86Promise, monacoPromise]);
+      var playwrightPromise = self._playwrightMode
+        ? loadScript('/js/playwright-compat/runner.js')
+        : Promise.resolve();
+
+      return Promise.all([v86Promise, monacoPromise, playwrightPromise]);
     });
   };
 
@@ -4418,6 +4433,31 @@
     this._previewFrame.srcdoc = srcdoc;
   };
 
+  TutorialCode.prototype._getReactPreviewFileOrder = function (step) {
+    var self = this;
+    var fileOrder;
+    var pwCfg = this._playwrightStepConfig ? this._playwrightStepConfig(step) : {};
+    var appFiles = pwCfg && (pwCfg.app_files || pwCfg.appFiles);
+    if (this._playwrightMode && appFiles && appFiles.length) {
+      fileOrder = appFiles.slice();
+    } else if (step && step.react_files) {
+      fileOrder = step.react_files;
+    } else if (step && step.files) {
+      fileOrder = step.files.map(function (f) { return f.path; });
+    } else {
+      fileOrder = Object.keys(self.editorModels);
+    }
+    if (this._playwrightMode) {
+      fileOrder = fileOrder.filter(function (filename) {
+        if (self._isPlaywrightTestFile(filename, step)) return false;
+        if (/(?:^|\/)playwright\.config\.[cm]?[jt]s$/i.test(filename)) return false;
+        if (/(?:^|\/)package(?:-lock)?\.json$/i.test(filename)) return false;
+        return true;
+      });
+    }
+    return fileOrder;
+  };
+
   /**
    * Hot-patch the live preview via postMessage instead of replacing srcdoc.
    * Falls back to a full rebuild if the frame isn't ready (Babel not loaded yet).
@@ -4431,14 +4471,7 @@
 
     var self = this;
     var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
-    var fileOrder;
-    if (step && step.react_files) {
-      fileOrder = step.react_files;
-    } else if (step && step.files) {
-      fileOrder = step.files.map(function (f) { return f.path; });
-    } else {
-      fileOrder = Object.keys(self.editorModels);
-    }
+    var fileOrder = this._getReactPreviewFileOrder(step);
 
     var stepIdx = this.currentStep >= 0 ? this.currentStep : 0;
     var appAlias = 'App_s' + stepIdx;
@@ -4476,14 +4509,7 @@
 
   TutorialCode.prototype._buildReactSrcdoc = function (step) {
     var self = this;
-    var fileOrder;
-    if (step && step.react_files) {
-      fileOrder = step.react_files;
-    } else if (step && step.files) {
-      fileOrder = step.files.map(function (f) { return f.path; });
-    } else {
-      fileOrder = Object.keys(self.editorModels);
-    }
+    var fileOrder = this._getReactPreviewFileOrder(step);
 
     // Give the App component a step-unique name so it never collides across
     // steps when Babel compiles all <script type="text/babel"> tags into the
@@ -4520,6 +4546,13 @@
     var bodyBg = isDark ? '#1e1e1e' : '#fff';
     var bodyColor = isDark ? '#d4d4d4' : '#333';
     var bsTheme = isDark ? 'dark' : 'light';
+    var pwCfg = this._playwrightStepConfig ? this._playwrightStepConfig(step) : {};
+    var playwrightAgent = '';
+    if (this._playwrightMode && window.SEBookPlaywrightCompat && window.SEBookPlaywrightCompat.agentScript) {
+      playwrightAgent = '<script>\n' + window.SEBookPlaywrightCompat.agentScript({
+        testIdAttribute: pwCfg.test_id_attribute || pwCfg.testIdAttribute || 'data-testid',
+      }) + '\n<\/script>\n';
+    }
 
     return '<!DOCTYPE html>\n<html lang="en" data-bs-theme="' + bsTheme + '">\n<head>\n' +
       '<meta charset="UTF-8">\n' +
@@ -4536,6 +4569,7 @@
       '    msg + \'</div>\';\n' +
       '});\n' +
       '<\/script>\n' +
+      playwrightAgent +
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
       '<script>\n' +
@@ -5695,15 +5729,87 @@
     }, 8000);
   };
 
+  TutorialCode.prototype._playwrightStepConfig = function (step) {
+    var base = this.playwrightConfig || {};
+    var local = (step && step.playwright && typeof step.playwright === 'object') ? step.playwright : {};
+    var out = {};
+    Object.keys(base).forEach(function (key) { out[key] = base[key]; });
+    Object.keys(local).forEach(function (key) { out[key] = local[key]; });
+    return out;
+  };
+
+  TutorialCode.prototype._globToRegExp = function (glob) {
+    var s = String(glob || '').replace(/[.+^${}()|[\]\\]/g, '\\$&');
+    s = s.replace(/\*\*/g, '\u0000');
+    s = s.replace(/\*/g, '[^/]*');
+    s = s.replace(/\u0000/g, '.*');
+    return new RegExp('^' + s + '$');
+  };
+
+  TutorialCode.prototype._isPlaywrightTestFile = function (filename, step) {
+    if (!this._playwrightMode || !filename) return false;
+    var cfg = this._playwrightStepConfig(step);
+    var patterns = cfg.test_files || cfg.testFiles || [];
+    if (!Array.isArray(patterns)) patterns = [patterns];
+    if (patterns.length > 0) {
+      for (var i = 0; i < patterns.length; i++) {
+        if (this._globToRegExp(patterns[i]).test(filename)) return true;
+      }
+      return false;
+    }
+    return /(?:^|\/)tests?\//i.test(filename) || /\.(spec|test)\.[jt]sx?$/i.test(filename);
+  };
+
+  TutorialCode.prototype._getPlaywrightTestFiles = function (step) {
+    if (!this._playwrightMode) return [];
+    var seen = {};
+    var files = [];
+    function add(name) {
+      if (!name || seen[name]) return;
+      seen[name] = true;
+      files.push(name);
+    }
+    if (step && step.files) {
+      for (var i = 0; i < step.files.length; i++) {
+        if (this._isPlaywrightTestFile(step.files[i].path, step)) add(step.files[i].path);
+      }
+    }
+    Object.keys(this.editorModels || {}).forEach(function (name) {
+      if (this._isPlaywrightTestFile(name, step)) add(name);
+    }, this);
+    return files;
+  };
+
+  TutorialCode.prototype._stepHasTests = function (step) {
+    return !!(step && step.tests && step.tests.length > 0);
+  };
+
+  TutorialCode.prototype._stepHasStudentPlaywrightTests = function (step) {
+    return !!(this._playwrightMode && this._getPlaywrightTestFiles(step).length > 0);
+  };
+
+  TutorialCode.prototype._updatePreviewTestButton = function () {
+    if (!this._previewTestBtn) return;
+    var step = this.steps[this.currentStep];
+    var hasStudentTests = this._stepHasStudentPlaywrightTests(step);
+    this._previewTestBtn.style.display = hasStudentTests ? '' : 'none';
+    this._previewTestBtn.disabled = !hasStudentTests;
+  };
+
+  TutorialCode.prototype._clearStudentTestPanel = function () {
+    var panel = this.root && this.root.querySelector('.tvm-preview-test-panel');
+    if (!panel) return;
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+  };
+
   TutorialCode.prototype._buildInstructionsSnapshot = function () {
     var self = this;
     return {
       currentStep: this.currentStep,
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: !!(this.steps[this.currentStep]
-                   && this.steps[this.currentStep].tests
-                   && this.steps[this.currentStep].tests.length),
+      hasTests: this._stepHasTests(this.steps[this.currentStep]),
       nextLocked: this._isNextStepLocked(),
       steps: this.steps.map(function (step) {
         return {
@@ -5734,7 +5840,7 @@
           || this._renderMarkdown(step.instructions || ''),
       },
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
-      hasTests: !!(step.tests && step.tests.length),
+      hasTests: this._stepHasTests(step),
       nextLocked: this._isNextStepLocked(),
       fileList: fileList,
     });
@@ -8230,6 +8336,8 @@
     }
 
     this._renderStepControls(index);
+    this._clearStudentTestPanel();
+    this._updatePreviewTestButton();
 
     var self = this;
 
@@ -8528,7 +8636,7 @@
     html += index > 0
       ? '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>'
       : '<span></span>';
-    html += (step.tests && step.tests.length > 0)
+    html += this._stepHasTests(step)
       ? '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>'
       : '<span></span>';
     var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
@@ -8977,57 +9085,210 @@
     });
   };
 
-  // React — each test.command is evaluated as JS; `frame` is the preview iframe
-  TutorialCode.prototype._runTestsReact = function () {
+  TutorialCode.prototype._showStudentTestPanel = function (innerHtml) {
+    var panel = this.root && this.root.querySelector('.tvm-preview-test-panel');
+    if (!panel) {
+      this._showTestPanel(innerHtml);
+      return;
+    }
+    panel.style.display = '';
+    panel.innerHTML = innerHtml;
+  };
+
+  TutorialCode.prototype._runPlaywrightCompatSpecs = function (step) {
+    var self = this;
+    var testFiles = this._getPlaywrightTestFiles(step);
+    if (!testFiles.length) {
+      return Promise.resolve({
+        tests: [{ description: 'At least one Playwright test file is present' }],
+        results: [false],
+      });
+    }
+    if (!window.SEBookPlaywrightCompat || !window.SEBookPlaywrightCompat.run) {
+      return Promise.resolve({
+        tests: [{ description: 'Load Playwright compatibility runner' }],
+        results: [false],
+      });
+    }
+
+    var files = {};
+    Object.keys(this.editorModels || {}).forEach(function (filename) {
+      files[filename] = self.editorModels[filename].model.getValue();
+    });
+
+    var cfg = this._playwrightStepConfig(step);
+    var timeout = Number(cfg.timeout || cfg.expect_timeout || 5000);
+    function rebuildPreview() {
+      return new Promise(function (resolve) {
+        self._rebuildReactPreview(resolve);
+      });
+    }
+
+    return rebuildPreview().then(function () {
+      return window.SEBookPlaywrightCompat.run({
+        previewFrame: self._previewFrame,
+        files: files,
+        testFiles: testFiles,
+        timeout: timeout,
+        resetBetweenTests: cfg.reset_between_tests !== false && cfg.resetBetweenTests !== false,
+        rebuildPreview: rebuildPreview,
+      });
+    });
+  };
+
+  TutorialCode.prototype._runStudentPlaywrightTests = function () {
     var self = this;
     var step = this.steps[this.currentStep];
-    var tests = step && step.tests;
-    if (!tests || !tests.length) return;
-    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    if (!this._stepHasStudentPlaywrightTests(step)) return;
+    var btn = this._previewTestBtn || (this.root && this.root.querySelector('.tvm-preview-test-btn'));
+    var oldLabel = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '\u23f3 Testing\u2026';
+    }
 
-    // Rebuild a fresh preview, then run tests after React has settled
-    this._rebuildReactPreview(function () {
-      var frame = self._previewFrame;
-      var results = [];
-      var AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
-      var testTimeout;
+    this._showStudentTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running Playwright tests\u2026</div>');
+    this._runPlaywrightCompatSpecs(step).then(function (run) {
+      self._renderStudentTestResults(run.tests, run.results);
+    }).catch(function (err) {
+      console.error('Playwright compatibility run failed:', err);
+      self._renderStudentTestResults([{ description: 'Run Playwright compatibility tests' }], [false]);
+    }).then(function () {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = oldLabel || '\u2713 Test';
+      }
+    });
+  };
 
-      function runNext(i) {
-        clearTimeout(testTimeout);
-        if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+  TutorialCode.prototype._checkPlaywrightExpectation = function (test, run) {
+    var cfg = test.playwright || test.student_playwright || test.studentTest || {};
+    var expected = cfg.expected || cfg.expect || (cfg.should_fail ? 'fail' : (cfg.should_pass === false ? 'fail' : 'pass'));
+    expected = String(expected).toLowerCase();
+    if (expected === 'failed') expected = 'fail';
+    if (expected === 'passed') expected = 'pass';
 
-        testTimeout = setTimeout(function () {
-          console.warn('React test execution timed out. Asynchronous promise deadlock reached.');
-          if (self.term) {
-            self.term.write('\n\r\n\r\x1b[31;1mError: React evaluation timed out (15s).\x1b[0m\n\r');
-            self.term.write('\x1b[33mTests were unable to complete cleanly (did an awaited promise never resolve?). Please reload the page if frozen!\x1b[0m\n\r');
+    var tests = (run && run.tests) || [];
+    var results = (run && run.results) || [];
+    var targetIndex = -1;
+    if (cfg.index !== undefined && cfg.index !== null) {
+      targetIndex = Number(cfg.index);
+    } else {
+      var title = cfg.title || cfg.test_title || cfg.name || cfg.description;
+      if (!title) throw new Error('Playwright expectation needs `title` or `index`');
+      var exact = String(title);
+      for (var i = 0; i < tests.length; i++) {
+        if (tests[i] && tests[i].description === exact) { targetIndex = i; break; }
+      }
+      if (targetIndex < 0) {
+        for (var j = 0; j < tests.length; j++) {
+          if (tests[j] && tests[j].description && tests[j].description.indexOf(exact) !== -1) {
+            targetIndex = j;
+            break;
           }
-          self._renderTestResults(tests, new Array(tests.length).fill(null));
-        }, 15000);
+        }
+      }
+    }
+    if (targetIndex < 0 || targetIndex >= tests.length) {
+      throw new Error('Could not find Playwright test: ' +
+        (cfg.title || cfg.test_title || cfg.name || cfg.description || cfg.index));
+    }
+    var actualPass = results[targetIndex] === true;
+    var label = tests[targetIndex] && tests[targetIndex].description || ('test #' + targetIndex);
+    if (expected === 'fail') {
+      if (actualPass) throw new Error('Expected Playwright test "' + label + '" to fail, but it passed');
+      return true;
+    }
+    if (expected === 'pass') {
+      if (!actualPass) throw new Error('Expected Playwright test "' + label + '" to pass, but it failed');
+      return true;
+    }
+    throw new Error('Unknown Playwright expectation: ' + expected);
+  };
 
-        try {
-          var scripts = frame.contentDocument.querySelectorAll('[type="text/babel"]');
-          var source = Array.from(scripts).map(function (s) { return s.textContent; }).join('\n');
-          var code = self._stripCode(source);
-          /* jshint evil:true */
-          var fn = new AsyncFunction('frame', 'code', 'assert', tests[i].command);
-          fn(frame, code, function assertFn(cond, msg) {
-            if (!cond) throw new Error(msg || 'Assertion failed');
-          }).then(function () {
-            results[i] = true;
-            runNext(i + 1);
-          }).catch(function (e) {
+  TutorialCode.prototype._runPlaywrightExpectationTest = function (test) {
+    var step = this.steps[this.currentStep];
+    var self = this;
+    return this._runPlaywrightCompatSpecs(step).then(function (run) {
+      self._checkPlaywrightExpectation(test, run);
+    });
+  };
+
+  TutorialCode.prototype._runReactAssertionTests = function (tests) {
+    var self = this;
+    return new Promise(function (resolve) {
+      // Rebuild a fresh preview, then run tests after React has settled.
+      self._rebuildReactPreview(function () {
+        var frame = self._previewFrame;
+        var results = [];
+        var AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
+        var testTimeout;
+
+        function runNext(i) {
+          clearTimeout(testTimeout);
+          if (i >= tests.length) { resolve(results); return; }
+
+          testTimeout = setTimeout(function () {
+            console.warn('React test execution timed out. Asynchronous promise deadlock reached.');
+            if (self.term) {
+              self.term.write('\n\r\n\r\x1b[31;1mError: React evaluation timed out (15s).\x1b[0m\n\r');
+              self.term.write('\x1b[33mTests were unable to complete cleanly (did an awaited promise never resolve?). Please reload the page if frozen!\x1b[0m\n\r');
+            }
+            resolve(new Array(tests.length).fill(null));
+          }, 15000);
+
+          try {
+            if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
+              self._runPlaywrightExpectationTest(tests[i]).then(function () {
+                results[i] = true;
+                runNext(i + 1);
+              }).catch(function (e) {
+                results[i] = false;
+                console.warn('React test ' + i + ' failed:', e.message);
+                runNext(i + 1);
+              });
+              return;
+            }
+
+            var scripts = frame.contentDocument.querySelectorAll('[type="text/babel"]');
+            var source = Array.from(scripts).map(function (s) { return s.textContent; }).join('\n');
+            var code = self._stripCode(source);
+            /* jshint evil:true */
+            var files = {};
+            Object.keys(self.editorModels || {}).forEach(function (filename) {
+              files[filename] = self.editorModels[filename].model.getValue();
+            });
+            var fn = new AsyncFunction('frame', 'code', 'assert', 'files', tests[i].command);
+            fn(frame, code, function assertFn(cond, msg) {
+              if (!cond) throw new Error(msg || 'Assertion failed');
+            }, files).then(function () {
+              results[i] = true;
+              runNext(i + 1);
+            }).catch(function (e) {
+              results[i] = false;
+              console.warn('React test ' + i + ' failed:', e.message);
+              runNext(i + 1);
+            });
+          } catch (e) {
             results[i] = false;
             console.warn('React test ' + i + ' failed:', e.message);
             runNext(i + 1);
-          });
-        } catch (e) {
-          results[i] = false;
-          console.warn('React test ' + i + ' failed:', e.message);
-          runNext(i + 1);
+          }
         }
-      }
-      runNext(0);
+        runNext(0);
+      });
+    });
+  };
+
+  // React — each test.command is evaluated as JS; `frame` is the preview iframe
+  TutorialCode.prototype._runTestsReact = function () {
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    var self = this;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    this._runReactAssertionTests(tests).then(function (results) {
+      self._renderTestResults(tests, results);
     });
   };
 
@@ -9144,9 +9405,8 @@
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
-  TutorialCode.prototype._renderTestResults = function (tests, results) {
+  TutorialCode.prototype._buildTestResultsHTML = function (tests, results) {
     var self = this;
-    this._testResults = results; // store for hint engine
     var passed = results.filter(function (r) { return r === true; }).length;
     var total = tests.length, allPass = passed === total;
     var html = '<div class="tvm-test-results">';
@@ -9161,6 +9421,19 @@
         '<span class="tvm-test-desc">' + self._escapeHtml(t.description) + '</span></li>';
     });
     html += '</ul></div>';
+    return html;
+  };
+
+  TutorialCode.prototype._renderStudentTestResults = function (tests, results) {
+    var html = this._buildTestResultsHTML(tests, results);
+    this._showStudentTestPanel(html);
+  };
+
+  TutorialCode.prototype._renderTestResults = function (tests, results) {
+    this._testResults = results; // store for hint engine
+    var passed = results.filter(function (r) { return r === true; }).length;
+    var total = tests.length, allPass = passed === total;
+    var html = this._buildTestResultsHTML(tests, results);
     this._showTestPanel(html);
     if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
     if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
