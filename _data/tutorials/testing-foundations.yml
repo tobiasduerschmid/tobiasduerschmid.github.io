@@ -1906,6 +1906,8 @@ steps:
 
       Next pedagogical step: the **Test-Driven Development (TDD)** tutorial — where you write the test *before* the production code, and let failing tests drive the design. Everything from this tutorial (oracle strength, partitions, behavior testing) becomes a foundation that TDD layers a discipline on top of.
 
+      For a different next step — the same testing concepts applied to a *whole React app through a real browser* — see the **[Playwright Tutorial](/SEBook/tools/playwright-tutorial)**. It picks up exactly where this one leaves off: AAA becomes navigate-interact-assert, partitions become user-path scenarios, oracle strength shows up in `toHaveText` vs `toBeVisible`, and the *behavior vs implementation* concept gets a tactile workout against UI refactors.
+
       Where to apply these in your own work: every new function you write deserves at least one boundary test and one partition representative test, with a strong oracle, through the public API. That's the four skills of this tutorial in 30 seconds per function — and it pays for itself the first time a refactor would have shipped a regression.
       </details>
 

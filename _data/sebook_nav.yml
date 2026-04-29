@@ -188,6 +188,10 @@ topics:
         url: /SEBook/tools/testing-foundations-tutorial.html
       - name: TDD Tutorial
         url: /SEBook/tools/tdd-tutorial.html
+      - name: Test Doubles Tutorial
+        url: /SEBook/tools/test-doubles-tutorial.html
+      - name: Playwright Tutorial
+        url: /SEBook/tools/playwright-tutorial.html
   - name: Systems
     icon: null
     url: /SEBook/systems/index.html

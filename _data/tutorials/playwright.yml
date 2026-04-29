@@ -1,0 +1,2676 @@
+title: "Playwright Tutorial: End-to-End Testing for React Apps"
+description: "Translate the testing concepts from Testing Foundations into the browser. Write end-to-end tests in Playwright that test behavior, not implementation — tests that survive harmless refactors and fail for real bugs."
+
+backend: react
+require_tests: true
+autosave_type: files
+editor_split: true
+run_label: "Test"
+
+playwright:
+  enabled: true
+  test_files:
+    - "tests/*.spec.js"
+  app_files:
+    - "src/App.jsx"
+    - "src/main.jsx"
+    - "src/styles.css"
+  timeout: 3000
+  reset_between_tests: true
+
+steps:
+
+  # ==========================================================================
+  # STEP 1 — Anatomy of a Playwright test: navigate, interact, assert
+  # LO1: Use basic Playwright syntax.
+  # CLT element-interactivity audit: 3 novel elements (Playwright API, async/await,
+  # AAA → navigate-interact-assert mapping).
+  # Faded scaffolding: fully worked annotated test. Predict + modify in PRIMM.
+  # ==========================================================================
+  - title: "Anatomy of a Playwright Test: Navigate, Interact, Assert"
+    instructions: |
+      > **Learning objective.** After this step you can read a basic Playwright test for a React app and identify how each line maps onto the **Arrange / Act / Assert** pattern from Testing Foundations.
+
+      In Testing Foundations you wrote tests like this:
+
+      ```python
+      def test_valid_name_accepted():
+          assert squad_name_valid("epic") is True
+      ```
+
+      That test verifies one **function in isolation**. A Playwright test verifies a whole **React app through a real browser, the way a user experiences it**. Same AAA bones, different organism.
+
+      ### 🔄 Concept bridge
+
+      | Testing Foundations (pytest) | Playwright (e2e) |
+      | --- | --- |
+      | Arrange / Act / Assert | Navigate / Interact / Assert |
+      | Function inputs | User actions through the UI |
+      | Direct return value | Observable outcome on the page |
+      | Synchronous | Async (`await` everywhere) |
+      | Strong oracle = `==` exact match | Strong oracle = `toHaveText`, `toHaveCount`, … |
+
+      The discipline is the same. The mechanics differ.
+
+      ### Read this test (don't run yet)
+
+      ```javascript
+      import { test, expect } from '@playwright/test';
+
+      test('user can add a todo', async ({ page }) => {
+        await page.goto('/');                                                  // Navigate
+        await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');  // Interact
+        await page.getByRole('button', { name: /add todo/i }).click();         // Interact
+        await expect(page.getByRole('listitem')).toHaveText('Milk');           // Assert
+      });
+      ```
+
+      Annotations that matter:
+
+      - `async ({ page }) => { … }` — every Playwright test is async. `page` is your handle to the browser tab.
+      - `await` on every line — the browser is asynchronous. Without `await`, JavaScript races past the click before React's state has updated.
+      - `getByRole('button', { name: /add todo/i })` — finds the button **the way assistive tech finds it**: by its accessible name, not by its CSS class or DOM position.
+      - `await expect(...).toBeVisible()` — Playwright's web-first assertions **auto-wait and retry** until the condition holds (or the timeout expires). They're the right tool for asynchronous UI.
+
+      ### 🎬 Predict (in your head, before running)
+
+      1. Which lines are Navigate? Interact? Assert?
+      2. If we changed `name: /add todo/i` to `name: /save/i`, what would happen?
+
+      ### ▶ Run
+
+      Click **Test** in the Live Preview toolbar. The test passes against the demo Todo app.
+
+      ### 🔍 Investigate
+
+      Why is `await` on every line? The browser is asynchronous: clicking a button doesn't *instantly* produce the result. `await` says "wait for this to finish before moving on." Without `await`, the assertion would race past the click before React re-rendered, and the test would either fail or — worse — pass for the wrong reason.
+
+      ### ✏️ Modify
+
+      Change the assertion to look for `'Bread'` instead of `'Milk'`. **Predict the failure message before running.** Then run.
+
+      Did your prediction match the actual failure? If yes, you're building the mental model that lets you debug Playwright tests by reading them, not by guessing.
+
+      ### 📝 House rule (carry it forward)
+
+      A Playwright test reads **navigate → interact → assert**. The test title is the *spec* — what user-visible promise we're proving — not a description of clicks.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Playwright tutorial</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f6f7fb;
+            color: #1f2937;
+          }
+
+          .todo-shell {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 32px;
+          }
+
+          .todo-panel {
+            width: min(100%, 560px);
+            background: white;
+            border: 1px solid #d9dee8;
+            border-radius: 8px;
+            padding: 28px;
+            box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+          }
+
+          .eyebrow {
+            margin: 0 0 8px;
+            color: #4b5563;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
+
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+
+          input {
+            flex: 1;
+            min-width: 0;
+            background: white;
+            color: #1f2937;
+            border: 1px solid #b8c0cc;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font: inherit;
+          }
+
+          button {
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            background: #2563eb;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+          }
+
+          .todo-list { margin: 24px 0 0; padding-left: 24px; }
+          .todo-list:empty { display: none; }
+          .todo-list li { margin: 8px 0; }
+
+          /* Dark mode — the iframe inherits the host page's theme via
+             [data-bs-theme="dark"] on <html>. Mirror the site's dark palette
+             so the Todo app preview stays legible when students switch themes. */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel {
+            background: #232a36;
+            border-color: #2a323e;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+          }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input {
+            background: #2a323e;
+            color: #e6edf3;
+            border-color: #3a4351;
+          }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+
+      - path: "tests/todo.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          test('user can add a todo', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+    open_file: "tests/todo.spec.js"
+
+    tests:
+      - description: "The Playwright test passes against the demo Todo app"
+        playwright:
+          title: "user can add a todo"
+          should_fail: false
+
+      - description: "The test uses role-based locators (not CSS selectors)"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+          assert(spec.includes('getByRole'),
+            'Use getByRole — locators based on accessible roles are more durable than CSS selectors.');
+          assert(!/\.locator\(['"]\.[a-z-]+['"]\)/.test(spec),
+            'Avoid CSS class selectors like .locator(\'.add-btn\') in this step. Stay with the role-based locators shown.');
+
+      - description: "The test uses web-first assertions (await expect(...))"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+          assert(/await\s+expect\(/.test(spec),
+            'Use `await expect(...)` — web-first assertions auto-wait and retry. Manual `expect(await locator.isVisible()).toBe(true)` is the Playwright anti-pattern.');
+
+    solution:
+      files:
+        - path: "tests/todo.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('user can add a todo', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+            });
+      explanation: |
+        The test reads as **navigate → interact → assert** — the browser version of Arrange / Act / Assert. The title (`'user can add a todo'`) describes a user-visible promise, not a click sequence. Locators use accessible roles (`getByRole`) so the test isn't tied to CSS class names. The assertion uses `await expect(...).toBeVisible()` — a web-first matcher that auto-waits.
+
+    quiz:
+      title: "Anatomy of a Playwright Test — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which of these test titles best describes a **behavioral spec** (rather than a click-script)?
+          type: single
+          options:
+            - "`clicks add button and waits for list`"
+            - "`user can add a todo and see it in the list`"
+            - "`test_add_button_click`"
+            - "`test 1: form submission flow`"
+          correct_index: 1
+          option_feedback:
+            0: "This describes the *clicks the test performs*, not the *behavior the user can do*. A future developer reading a CI failure on this title can't tell what user-facing promise broke."
+            1: "Right. \"user can add a todo and see it in the list\" reads like a product promise. A failure on this test immediately tells the reader what regressed: the user can no longer add a todo."
+            2: "The `test_` prefix is fine, but the rest is tied to UI mechanics (a button click) rather than user behavior. If the button becomes a link tomorrow, this title looks wrong even though the spec is unchanged."
+            3: "Numbering tells the reader nothing. Imagine 30 of these — debugging a CI failure means opening each test to figure out what it does."
+          explanation: |
+            Test names should read like product promises, not click sequences. A good rule of thumb: if a future developer sees the test fail in CI, can they tell from the *name alone* what user-facing thing broke? If yes, the name is doing its job.
+
+        - question: |
+            Why does this Playwright assertion need `await`?
+
+            ```javascript
+            await expect(page.getByText('Milk')).toBeVisible();
+            ```
+          type: single
+          options:
+            - "JavaScript requires `await` on every line in async functions"
+            - "Browser interactions are asynchronous; `await expect(...)` auto-waits and retries until the condition holds"
+            - "`await` makes the test go faster"
+            - "Without `await`, the test won't compile"
+          correct_index: 1
+          option_feedback:
+            0: "`await` is required for *Promises*, not for every line. The reason *this* line needs it is more specific: web-first assertions like `toBeVisible()` actively wait and retry until the condition is met."
+            1: "Right. Playwright's web-first assertions auto-wait and retry up to a timeout. Without `await`, you'd skip past before React's state settles — a classic flaky-test recipe. The Playwright docs explicitly call out `expect(await locator.isVisible()).toBe(true)` as an anti-pattern: it doesn't wait."
+            2: "`await` doesn't speed anything up — if anything, it pauses execution. Its job is *correctness under async*, not performance."
+            3: "A missing `await` here compiles fine — the matcher returns a Promise that's silently ignored. The test would just behave incorrectly: silent flakiness rather than a build error."
+          explanation: |
+            `await expect(locator).matcher()` is the canonical Playwright shape. The matcher *retries* until it succeeds or hits the timeout. Without `await`, JavaScript fires the matcher and immediately moves on, ignoring whether it ever held.
+
+        - question: |
+            In the test below, which line is the **Assert** step?
+
+            ```javascript
+            test('user can add a todo', async ({ page }) => {
+              await page.goto('/');                                                  // Line 1
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');  // Line 2
+              await page.getByRole('button', { name: /add todo/i }).click();         // Line 3
+              await expect(page.getByText('Milk')).toBeVisible();                    // Line 4
+            });
+            ```
+          type: single
+          options:
+            - "Line 1 — `page.goto('/')` confirms we landed on the right page"
+            - "Line 4 — `await expect(...).toBeVisible()` checks the user-visible outcome"
+            - "Lines 2 and 3 together — they perform the action under test"
+            - "All four lines are assertions in async code"
+          correct_index: 1
+          option_feedback:
+            0: "Line 1 is **Navigate** (the e2e equivalent of Arrange). It puts the page in the starting state but doesn't verify anything."
+            1: "Right. Line 4 is the only line whose job is to *check* an outcome. The others set up state (`goto`) or perform actions (`fill`, `click`). The assertion is what confirms the user's promise was met."
+            2: "Lines 2 and 3 are **Interact** (Act): the user types into the input and clicks the button. They produce the new state but don't verify it."
+            3: "Only `expect(...)` calls are assertions. `goto`, `fill`, and `click` are commands that act on the page — they never check whether their outcome matches a spec."
+          explanation: |
+            Playwright's navigate / interact / assert is the same shape as foundations' Arrange / Act / Assert. Each test should have **one assertion phase** that verifies the user-visible promise. If you can't point to which line is the assertion, the test probably isn't proving what you think.
+
+
+  # ==========================================================================
+  # STEP 2 — The Spec Card: choosing what user paths deserve a test
+  # LO2 part A: select user-path partitions for an e2e test.
+  # CLT element-interactivity: 2 novel elements (Spec Card artifact,
+  # partition-as-user-path mapping). Builds on Step 1 syntax.
+  # Faded scaffolding: 3-of-4 tests provided; student writes the 4th.
+  # ==========================================================================
+  - title: "The Spec Card: Choosing What User Paths Deserve a Test"
+    instructions: |
+      > **Learning objective.** After this step you can write a **Spec Card** for a feature and use it to choose which user-path partitions deserve an end-to-end test (and which belong in lower test layers).
+
+      ### 🧠 Quick recall (don't scroll back)
+
+      - What's the navigate-interact-assert rhythm?
+      - What does `await` buy us in front of `expect(...)`?
+
+      ### From foundations partitions to user-path partitions
+
+      In Testing Foundations, you partitioned the **input space** of a function and picked one representative input per partition. In e2e, you partition the **user-path space** — the different user behaviors a feature has to support — and pick one representative test per partition.
+
+      Same discipline. Different domain.
+
+      ### 📋 Introducing the Spec Card
+
+      Before you write an e2e test, write down the spec it's verifying. **Five fields, fits on screen:**
+
+      ```text
+      Spec Card: User can add a todo
+
+      ✓ Behavior:        User types a name, clicks Add, sees it in the list.
+      ✓ Should pass when: CSS classes change. The Add button is restyled.
+                          The input becomes a `<textarea>`. The list becomes
+                          a table.
+      ✗ Should fail when: Adding silently drops items. Empty inputs are
+                          accepted. The input doesn't clear after add.
+      🎯 Locator contract: A textbox labeled "Todo item"; a button named
+                          "Add todo"; a list of items.
+      ✅ Oracle:          The new item is visible in the list.
+      ```
+
+      The Spec Card is the artifact you carry through the rest of the tutorial. It forces the question **what about this UI is the stable contract?** *before* you write code that can pin the wrong thing.
+
+      Notice the **"Should pass when"** line: it lists *implementation changes that should not break the test*. That's your defense against brittleness later.
+
+      ### 🎬 Predict — which user-path partitions are missing?
+
+      Three tests are pre-written in `tests/add-todo.spec.js`. They cover:
+
+      1. **Happy path** — `"Milk"` is accepted.
+      2. **Empty input** — `""` is rejected.
+      3. **Very long input** — a 200-character string is accepted.
+
+      Read the spec under `App.jsx`: the app **trims input before deciding**. Which partition is missing from the tests?
+
+      *(In your head, before reading on…)*
+
+      <details><summary>Reveal</summary>
+
+      The missing partition is **whitespace-only input** (`"   "`). After trimming, it equals `""`, so the spec says it should be rejected — exactly like the empty-string case from the partition perspective, but with a different surface input.
+
+      </details>
+
+      ### ▶ Run
+
+      Click **Test**. Three tests pass; the fourth is a `// TODO` you'll fill in next.
+
+      ### ✏️ Modify — write the missing partition test
+
+      In `tests/add-todo.spec.js`, find the `whitespace-only input is rejected` test. The Arrange / Act / Assert comments are placeholders — fill them in, following the pattern of the three tests above.
+
+      Hints (use them in order if you get stuck):
+
+      1. Look at the `empty input is rejected` test. The whitespace test is the same shape — only the input value changes.
+      2. The assertion should prove that *no* list item was added.
+      3. Use `toHaveCount(0)` on the listitems.
+
+      ### 🔍 Investigate
+
+      You now have **four tests for one feature**, each covering a different partition. Why not write a test for *every* possible input?
+
+      The foundations answer applies: representative coverage with low cost. We don't need a separate test for `"  "`, `"   "`, `"    "`, `" "`, … — they're all in the same partition (whitespace-only) and the trimming logic processes them identically. **One representative test per partition** is enough.
+
+      ### 📝 House rules added
+
+      - **Use partitions to choose user paths.** You don't need a test for every string. You need one test per behaviorally-distinct partition.
+      - **Not every test belongs in e2e.** Many edge cases live more cheaply in unit tests. Reserve e2e tests for behaviors that need full-stack browser confidence.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Playwright tutorial</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .todo-list { margin: 24px 0 0; padding-left: 24px; }
+          .todo-list:empty { display: none; }
+          .todo-list li { margin: 8px 0; }
+          /* Dark mode (iframe sets [data-bs-theme="dark"] on <html>) */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+
+      - path: "tests/add-todo.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          test('user can add a todo (happy path)', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+          test('empty input is rejected', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveCount(0);
+          });
+
+          test('very long todo is accepted', async ({ page }) => {
+            await page.goto('/');
+            const long = 'x'.repeat(200);
+            await page.getByRole('textbox', { name: /todo item/i }).fill(long);
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText(long);
+          });
+
+          // TODO: write the missing partition test here.
+          // The spec trims input before deciding whether to accept it,
+          // so whitespace-only input is in the same partition as empty input.
+          test('whitespace-only input is rejected', async ({ page }) => {
+            // Arrange: navigate to the page.
+            // Act: fill the input with whitespace, click Add todo.
+            // Assert: no list item was added.
+          });
+
+    open_file: "tests/add-todo.spec.js"
+
+    tests:
+      - description: "All four partition tests pass"
+        playwright:
+          title: "user can add a todo (happy path)"
+          should_fail: false
+
+      - description: "Empty input partition test passes"
+        playwright:
+          title: "empty input is rejected"
+          should_fail: false
+
+      - description: "Very long input partition test passes"
+        playwright:
+          title: "very long todo is accepted"
+          should_fail: false
+
+      - description: "Whitespace-only partition test passes (you wrote this one)"
+        playwright:
+          title: "whitespace-only input is rejected"
+          should_fail: false
+
+      - description: "The whitespace test actually exercises the input"
+        command: |
+          const spec = files['tests/add-todo.spec.js'] || '';
+          const whitespaceTest = spec.split("test('whitespace-only")[1] || '';
+          assert(whitespaceTest.includes('.fill('),
+            'The whitespace test should fill the input — otherwise it isn\'t exercising the partition.');
+          assert(whitespaceTest.includes('toHaveCount') || whitespaceTest.includes('toBeHidden'),
+            'Assert that no listitem was added (e.g., toHaveCount(0)).');
+
+    solution:
+      files:
+        - path: "tests/add-todo.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('user can add a todo (happy path)', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+            });
+
+            test('empty input is rejected', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveCount(0);
+            });
+
+            test('very long todo is accepted', async ({ page }) => {
+              await page.goto('/');
+              const long = 'x'.repeat(200);
+              await page.getByRole('textbox', { name: /todo item/i }).fill(long);
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText(long);
+            });
+
+            test('whitespace-only input is rejected', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('   ');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveCount(0);
+            });
+      explanation: |
+        The whitespace-only test follows the same shape as the other partition tests — only the input value changes. The assertion uses `toHaveCount(0)` to prove no list item was added. Because the spec trims input before validating, whitespace-only and empty input are in the same behavioral partition; we test one representative of each.
+
+    quiz:
+      title: "Spec Card & Partitions — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which of these scenarios is the BEST candidate for an **end-to-end** test (rather than a unit or integration test)?
+          type: single
+          options:
+            - "Validating that 47 different email-format edge cases all produce the right error message"
+            - "Verifying a guest who tries to checkout is prompted to sign in, and their cart is preserved"
+            - "Checking that the cart-total formatter rounds half-up correctly for 30 currency formats"
+            - "Confirming the API endpoint returns the right HTTP status for 12 different input shapes"
+          correct_index: 1
+          option_feedback:
+            0: "47 email validation cases is exactly what unit tests are for. Each is cheap and isolated. Running 47 full-browser e2e tests would be slow, flaky, and overkill — a single e2e test (\"invalid email shows an error\") proves the wiring works; the 47 edge cases belong in unit tests."
+            1: "Right. This needs the *full stack* — UI, routing, session, cart persistence, sign-in flow. No lower test layer covers all of those at once. This is exactly what e2e tests are best at."
+            2: "30 formatter cases are a unit-test job. They're deterministic and fast in isolation. E2E them and you'd burn minutes per CI run for coverage that pytest gets in milliseconds."
+            3: "API contract tests are an integration-layer concern, not e2e. They don't need a browser — they need a request library and the API. Doing this through e2e adds cost without adding confidence."
+          explanation: |
+            E2E tests are *expensive* confidence. Spend that budget on flows where the full integration matters: auth, routing, state-across-pages, cross-service behaviors. Push validation rules, formatters, and API contracts to lower test layers where they're cheaper and clearer.
+
+        - question: |
+            What is the purpose of the **"Should pass when"** field on a Spec Card?
+          type: single
+          options:
+            - "It lists the test cases the test should cover"
+            - "It documents UI/code changes that the test should *survive* — your defense against brittle tests"
+            - "It records the date the test was written"
+            - "It tracks who the assigned reviewer is"
+          correct_index: 1
+          option_feedback:
+            0: "Test cases (partitions) belong in the test code itself, not on the Spec Card. The Spec Card is meta — it describes *what the test is trying to prove and what should/shouldn't break it*."
+            1: "Right. **\"Should pass when\"** is the list of harmless implementation changes — CSS class renames, layout shifts, button restyles. If your test breaks under any of those, it's coupled to implementation rather than behavior. Writing this list *before* the test is your best defense against brittleness."
+            2: "The Spec Card is about specification, not metadata. Dates and authorship belong in version control."
+            3: "Reviewer assignments aren't part of the Spec Card. The card is about *what the test verifies*, not *who reviewed it*."
+          explanation: |
+            The Spec Card's **"Should pass when"** line forces you to think about the test's *durability* before you write it. If you can predict that a CSS class rename should be harmless but you choose a CSS-class locator anyway, you've already lost.
+
+        - question: |
+            **(Spaced review — Step 1)** A Playwright test contains the line:
+
+            ```javascript
+            expect(await page.getByText('Saved').isVisible()).toBe(true);
+            ```
+
+            Which is the most accurate critique?
+          type: single
+          options:
+            - "This is the canonical Playwright pattern — `isVisible()` returns a Promise that we resolve with `await`"
+            - "This is an anti-pattern — `isVisible()` doesn't auto-wait. Use `await expect(page.getByText('Saved')).toBeVisible()` instead"
+            - "The test is fine as long as the page loads quickly enough"
+            - "The `expect` should be wrapped in `await` for compilation reasons"
+          correct_index: 1
+          option_feedback:
+            0: "The Playwright docs explicitly call this an **anti-pattern**. `isVisible()` is a one-shot check — it returns immediately, with no retry. The web-first form `await expect(locator).toBeVisible()` retries until the timeout."
+            1: "Right. `isVisible()` is non-retrying — if the element isn't there *right now*, the assertion fails. The web-first form `await expect(...).toBeVisible()` retries until the condition holds or the timeout expires. The Playwright official best practices specifically call out this exact line as a thing to avoid."
+            2: "\"Loads quickly enough\" is the recipe for flaky CI: it works locally, fails on a slow build agent, and nobody can reproduce it. Use `await expect(...)` and let Playwright handle the timing."
+            3: "The compilation works either way. The issue isn't compilation — it's *correctness under async*. The non-retrying form silently produces flaky tests, which is the worst kind of failure."
+          explanation: |
+            `expect(await locator.isVisible()).toBe(true)` is the canonical Playwright anti-pattern. Always use `await expect(locator).toBeVisible()` — the web-first form auto-waits and retries.
+
+
+  # ==========================================================================
+  # STEP 3 — The locator ladder: stable contracts vs incidental UI
+  # LO2 part B (locators) + LO4 priming (locator brittleness).
+  # CLT element-interactivity: 3 novel elements (locator ladder, name regex,
+  # durability dimension).
+  # Variation Theory: contrast — same scenario, 5 different locator strategies.
+  # ==========================================================================
+  - title: "The Locator Ladder: Stable Contracts vs Incidental UI"
+    instructions: |
+      > **Learning objective.** After this step you can choose a locator that matches what's *stable* about a UI element — and explain when each rung of the locator ladder is the right choice.
+
+      ### 🧠 Quick recall
+
+      From your Spec Card in Step 2: what does the **"Locator contract"** field mean? Try to answer for the Todo app's Add button before reading on.
+
+      ### 🎯 The locator ladder
+
+      There are five common ways to find the same UI element in Playwright. Each rung depends on something *different* about the UI.
+
+      ```javascript
+      // Five ways to find the same "Add todo" button:
+
+      // Rung 1 — Role + accessible name. Mirrors how assistive tech finds it.
+      page.getByRole('button', { name: /add todo/i });
+
+      // Rung 2 — Label association (best for form controls).
+      page.getByLabel(/todo item/i);   // (this would find the input, not the button)
+
+      // Rung 3 — Visible text content.
+      page.getByText('Add todo');
+
+      // Rung 4 — Author-supplied stable test ID.
+      page.getByTestId('add-todo');
+
+      // Rung 5 — Raw CSS/DOM selector (last resort).
+      page.locator('.add-todo-btn');
+      ```
+
+      **What each rung depends on:**
+
+      | Rung | Locator | Depends on |
+      | --- | --- | --- |
+      | 1 | `getByRole` + `name:` | The button has an accessible name (HTML semantics) |
+      | 2 | `getByLabel` | A `<label for="…">` connection (forms) |
+      | 3 | `getByText` | Exact visible text |
+      | 4 | `getByTestId` | An author-added `data-testid` attribute |
+      | 5 | `.locator('.css-class')` | The DOM/CSS structure (implementation detail) |
+
+      Higher rungs depend on **accessible / user-visible** facts. Lower rungs depend on **implementation** decisions (CSS classes, DOM positions). The official Playwright docs put it bluntly: *"Your DOM can easily change … Prefer user-facing attributes to XPath or CSS selectors."*
+
+      ### 🎬 Predict — fill in this table (don't peek)
+
+      For each locator, will it survive the change in each column? Mark ✓ (still works) or ✗ (breaks).
+
+      ```text
+                                  CSS rename    Text change    DOM restructure
+                                  (.add-btn ->   ("Add todo"    (button moved
+                                   .primary)     -> "Add")       to footer)
+      ----------------------------------------------------------------------
+      1. getByRole({name:/add/i})    ?              ?              ?
+      2. getByLabel                  ?              ?              ?
+      3. getByText('Add todo')       ?              ?              ?
+      4. getByTestId('add-todo')     ?              ?              ?
+      5. .locator('.add-todo-btn')   ?              ?              ?
+      ```
+
+      ### ▶ Run
+
+      Click **Test**. All five locators currently work against the Todo app — the file `tests/locator-ladder.spec.js` has one test per rung, all passing.
+
+      ### 🔍 Investigate — reveal the answer table
+
+      ```text
+                                  CSS rename    Text change    DOM restructure
+      ----------------------------------------------------------------------
+      1. getByRole({name:/add/i})    ✓              ✗ (a)         ✓
+      2. getByLabel                  ✓              ✓ (b)         ✓
+      3. getByText('Add todo')       ✓              ✗              ✓
+      4. getByTestId('add-todo')     ✓              ✓              ✓
+      5. .locator('.add-todo-btn')   ✗              ✓              ✗ (c)
+      ```
+
+      Notes:
+      - **(a)** With a regex `/add/i`, the role locator survives "Add todo" → "Add" (regex still matches). With an exact `name: 'Add todo'` it would break. Regex tolerance is a *deliberate design choice*.
+      - **(b)** `getByLabel` finds inputs via their `<label>` — button labels don't apply, so this rung doesn't really apply to buttons. Listed for completeness.
+      - **(c)** A DOM restructure (changing the button's surrounding markup) often changes CSS-selector ancestry. Brittle.
+
+      **The pattern**: `getByTestId` is the only rung that survives a *button-text change* without exact matching. But `getByTestId` requires the *author* to have added the test ID — a code-level decision. And test IDs done badly (`<button data-testid="blue-btn-right-col">`) are just CSS coupling under another name.
+
+      ### ✏️ Modify
+
+      Open `tests/locator-ladder.spec.js`. The fifth test uses the brittle `.locator('.add-todo-btn')` form. **Rewrite it as a role-based locator** (Rung 1). Run again — your refactored test should still pass.
+
+      ### 📝 House rule
+
+      **Pick the locator that matches the *stable contract* of this UI element.** If the button label is part of the user-visible promise, use `getByRole` with a sensible regex. If the wording will change but the action is permanent, use `getByTestId` with a **semantically named** test ID. Use raw CSS only when nothing else will do — and write a comment explaining why.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Playwright tutorial</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button
+                        className="add-todo-btn"
+                        data-testid="add-todo"
+                        onClick={addTodo}
+                      >
+                        Add todo
+                      </button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          .add-todo-btn,
+          button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .todo-list { margin: 24px 0 0; padding-left: 24px; }
+          .todo-list:empty { display: none; }
+          .todo-list li { margin: 8px 0; }
+          /* Dark mode */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] .add-todo-btn,
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+
+      - path: "tests/locator-ladder.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // Rung 1 — Role + accessible name (regex-tolerant).
+          test('rung 1: getByRole finds the Add todo button', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+          // Rung 2 — getByLabel (best for inputs, but works through the form).
+          test('rung 2: getByLabel finds the input via its label', async ({ page }) => {
+            await page.goto('/');
+            await page.getByLabel(/todo item/i).fill('Bread');
+            await page.getByRole('button', { name: /add todo/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText('Bread');
+          });
+
+          // Rung 3 — getByText (couples to exact wording).
+          test('rung 3: getByText finds the button by visible text', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Eggs');
+            await page.getByText('Add todo').click();
+            await expect(page.getByRole('listitem')).toHaveText('Eggs');
+          });
+
+          // Rung 4 — getByTestId (semantic test ID).
+          test('rung 4: getByTestId finds the button via data-testid', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Cheese');
+            await page.getByTestId('add-todo').click();
+            await expect(page.getByRole('listitem')).toHaveText('Cheese');
+          });
+
+          // Rung 5 — Raw CSS class (the brittle rung — REWRITE this one!).
+          // TODO: rewrite this test to use page.getByRole instead of CSS.
+          test('rung 5: brittle CSS locator (rewrite me)', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Butter');
+            await page.locator('.add-todo-btn').click();
+            await expect(page.getByRole('listitem')).toHaveText('Butter');
+          });
+
+    open_file: "tests/locator-ladder.spec.js"
+
+    tests:
+      - description: "All five locator rungs find the button against the current app"
+        playwright:
+          title: "rung 1: getByRole finds the Add todo button"
+          should_fail: false
+
+      - description: "Rung 4 (getByTestId) works"
+        playwright:
+          title: "rung 4: getByTestId finds the button via data-testid"
+          should_fail: false
+
+      - description: "You rewrote rung 5 to use a role-based locator"
+        command: |
+          const spec = files['tests/locator-ladder.spec.js'] || '';
+          const rung5 = spec.split("rung 5:")[1] || '';
+          assert(!/\.locator\(['"]\.add-todo-btn['"]\)/.test(rung5),
+            'Rung 5 still uses .locator(\'.add-todo-btn\'). Replace it with a role-based locator (page.getByRole(\'button\', { name: /add/i })).');
+          assert(/getByRole\(['"]button['"]/.test(rung5),
+            'Rewrite rung 5 to use page.getByRole(\'button\', { name: ... }).');
+
+      - description: "The rewritten rung 5 still passes"
+        playwright:
+          title: "rung 5: brittle CSS locator (rewrite me)"
+          should_fail: false
+
+    solution:
+      files:
+        - path: "src/App.jsx"
+          language: "javascript"
+          content: |
+            function App() {
+              const [items, setItems] = React.useState([]);
+              const [text, setText] = React.useState('');
+
+              function addTodo() {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+
+                setItems([...items, trimmed]);
+                setText('');
+              }
+
+              return (
+                <main className="todo-shell">
+                  <section className="todo-panel">
+                    <p className="eyebrow">Playwright tutorial</p>
+                    <h1>Todo Lab</h1>
+
+                    <div className="todo-form">
+                      <label htmlFor="todo-input">Todo item</label>
+                      <div className="todo-row">
+                        <input
+                          id="todo-input"
+                          value={text}
+                          onChange={(event) => setText(event.target.value)}
+                          placeholder="Buy milk"
+                        />
+                        <button
+                          className="add-todo-btn"
+                          data-testid="add-todo"
+                          onClick={addTodo}
+                        >
+                          Add todo
+                        </button>
+                      </div>
+                    </div>
+
+                    <ul aria-label="Todo list" className="todo-list">
+                      {items.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                </main>
+              );
+            }
+        - path: "tests/locator-ladder.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('rung 1: getByRole finds the Add todo button', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+            });
+
+            test('rung 2: getByLabel finds the input via its label', async ({ page }) => {
+              await page.goto('/');
+              await page.getByLabel(/todo item/i).fill('Bread');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText('Bread');
+            });
+
+            test('rung 3: getByText finds the button by visible text', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Eggs');
+              await page.getByText('Add todo').click();
+              await expect(page.getByRole('listitem')).toHaveText('Eggs');
+            });
+
+            test('rung 4: getByTestId finds the button via data-testid', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Cheese');
+              await page.getByTestId('add-todo').click();
+              await expect(page.getByRole('listitem')).toHaveText('Cheese');
+            });
+
+            test('rung 5: brittle CSS locator (rewrite me)', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Butter');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveText('Butter');
+            });
+      explanation: |
+        Rung 5 was rewritten to use the role + accessible-name locator (Rung 1). Same behavior verified, but the test no longer depends on the CSS class `.add-todo-btn`. Step 5 will demonstrate why this matters when the team renames CSS classes.
+
+    quiz:
+      title: "The Locator Ladder — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which of these is the BEST locator for "the user's primary save button" — assuming the button has the visible text "Save" today, but the team has *announced* it will be renamed to "Submit" next quarter?
+          type: single
+          options:
+            - "`page.getByRole('button', { name: /save/i })`"
+            - "`page.getByText('Save')`"
+            - "`page.locator('.btn-primary')`"
+            - "`page.getByTestId('save-action')`"
+          correct_index: 3
+          option_feedback:
+            0: "`getByRole` with `name: /save/i` is great today, but next quarter when the button becomes \"Submit\", every test using this locator breaks **for a wording change** — that's a false alarm, not a regression. (You could use `name: /save|submit/i` to bridge, but that's a maintenance smell — the locator should reflect what's *stable*.)"
+            1: "`getByText('Save')` ties the test to the exact visible text. The planned rename to \"Submit\" will break every test that uses it. The test would *correctly* fail if save broke — but also fail for a harmless rewording."
+            2: "CSS class locators are the most brittle option on the ladder. They depend on styling decisions, not user-visible facts. A designer changing `.btn-primary` to `.btn-action` breaks the test for no good reason."
+            3: "Right. When the team has *announced* that wording will change but the *action* is stable, `data-testid` is the right tool: the contract becomes \"this is the save action\" rather than \"the button labeled Save.\" But the test ID has to be *semantically* named — `data-testid=\"save-action\"`, not `data-testid=\"blue-btn\"`."
+          explanation: |
+            The locator ladder isn't "always pick option 1." It's "pick the rung that matches the **stable contract** for this UI element." When wording is stable, `getByRole` is best. When wording will change but the action is permanent, `getByTestId` is right. The choice depends on *what about this UI is the promise*.
+
+        - question: |
+            Two versions of `data-testid` for the same Add Todo button — which is BETTER, and why?
+
+            Version A: `<button data-testid="primary-blue-btn-right-column">`
+            Version B: `<button data-testid="add-todo-action">`
+          type: single
+          options:
+            - "Version A — it's more descriptive"
+            - "Version B — it names the **action**, not the styling/layout. A is just CSS coupling under another name."
+            - "They're equivalent — both are test IDs"
+            - "Version A — Playwright recommends descriptive IDs"
+          correct_index: 1
+          option_feedback:
+            0: "Descriptive about *what*? Version A describes color (`blue`), styling (`primary`), and layout position (`right-column`). When the designer changes the color or moves the button, the test ID is wrong even though the behavior is unchanged."
+            1: "Right. The `data-testid` is supposed to be a *stable contract*. Naming it after styling (`primary-blue-btn`) or layout (`right-column`) means the contract drifts every time the design changes. Naming it after the **action** (`add-todo-action`) keeps the contract semantic — the test ID changes only when the *behavior* changes, which is exactly what tests should track."
+            2: "Both are syntactically test IDs, but they're not behaviorally equivalent. The whole point of `data-testid` is to be a stable contract; A pegs the contract to styling, B pegs it to behavior. Different contracts = different durability."
+            3: "Playwright's docs recommend test IDs that survive design changes. \"Descriptive\" without the right anchor (action vs styling) is worse than no test ID at all — it gives a false sense of stability."
+          explanation: |
+            Test IDs are only as durable as their *naming*. A test ID named after styling or layout is functionally equivalent to a CSS-class locator — it pins implementation. A test ID named after the action or the semantic role (`save-action`, `cart-checkout-button`) is what the docs intend: a stable contract that the test can rely on indefinitely.
+
+        - question: |
+            **(Spaced review — Step 2)** Your team is debating: should "rejecting whitespace-only input" have **its own** e2e test, or can it be tested in the same test as "rejecting empty input"?
+          type: single
+          options:
+            - "They should always be in separate tests for clarity"
+            - "It depends on how `addTodo` validates — if both go through the same code path (trim then check empty), they're in the same partition and one representative test is enough"
+            - "Whitespace cases are too edge-case for e2e and should be skipped"
+            - "Always merge edge cases into the happy-path test to save time"
+          correct_index: 1
+          option_feedback:
+            0: "Separate tests aren't *always* needed. If two scenarios are in the same behavioral partition (i.e., the code processes them identically), one test covers both. Adding a redundant test costs maintenance time without adding confidence."
+            1: "Right. The Spec Card and partition discipline tell us: if `addTodo` calls `.trim()` before checking emptiness, then `\"\"` and `\"   \"` end up in the *same partition* — both produce `\"\"` after trimming. One representative test per partition is the rule from foundations."
+            2: "Skipping the case isn't the answer. Whitespace input is a real partition (real users hit it), and a test should cover it. The question is *where* — same test, same file, or its own — and the partition rule says: same partition, one test."
+            3: "Cramming multiple partitions into one test makes failures harder to diagnose (which scenario caused the failure?) and tends to mask issues. One test per behavioral partition keeps failures targeted."
+          explanation: |
+            Partitions are the unit of test design, not individual inputs. Two inputs are in the same partition if the system processes them the same way. One representative per partition is sufficient — adding more is wasted effort, removing one is missed coverage.
+
+
+  # ==========================================================================
+  # STEP 4 — Strong assertions: the liar test in the browser
+  # LO3: Select strong assertions that catch real regressions.
+  # CLT element-interactivity: 2 novel elements (liar-test pattern in e2e,
+  # weak vs strong web-first assertions).
+  # Productive failure: weak test passes against silently buggy app.
+  # ==========================================================================
+  - title: "Strong Assertions: The Liar Test in the Browser"
+    instructions: |
+      > **Learning objective.** After this step you can recognize *weak* assertions in Playwright tests, predict when they'll lie about a buggy app, and strengthen them to catch real regressions.
+
+      ### 🧠 Quick recall
+
+      From Testing Foundations: a **liar test** had a passing green checkmark but a weak oracle that didn't actually verify the spec. What made it lie?
+
+      *(In your own words, before reading on …)*
+
+      Same pattern exists in e2e — and it's *sneakier* here because the test visibly clicks buttons, which makes it feel "more real."
+
+      ### 🎬 Predict
+
+      Read this test. The Todo app you'll run it against is **silently buggy**: it adds a list item, but the rendered text is **always empty** (the user's input is dropped between state-update and render).
+
+      ```javascript
+      test('adding a todo shows it in the list', async ({ page }) => {
+        await page.goto('/');
+        await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+        await page.getByRole('button', { name: /add todo/i }).click();
+        await expect(page.getByRole('listitem')).toHaveCount(1);
+      });
+      ```
+
+      Will this test catch the bug? Will it pass or fail?
+
+      *(Predict before running …)*
+
+      ### ▶ Run
+
+      Click **Test**.
+
+      The test **passes**. Surprise.
+
+      ### 🔍 Investigate
+
+      What did `toHaveCount(1)` actually verify? Just that **one list item exists**. It said nothing about *what's inside the item*. The bug — empty text — is invisible to this assertion.
+
+      The assertion is a **liar**: green checkmark, broken feature.
+
+      ### Three weak assertion patterns to recognize
+
+      | Weak assertion | Why it lies |
+      | --- | --- |
+      | `await expect(page.getByRole('list')).toBeVisible()` | An empty `<ul>` is still "visible" |
+      | `await expect(page.getByText('')).toBeVisible()` | Always true |
+      | `await expect(page.getByRole('listitem')).toHaveCount(1)` | Doesn't verify item *content* |
+
+      And one Playwright-specific anti-pattern from the official docs:
+
+      ```javascript
+      // ❌ Anti-pattern — non-retrying, no auto-wait:
+      expect(await page.getByText('Milk').isVisible()).toBe(true);
+
+      // ✓ Web-first form — auto-waits and retries:
+      await expect(page.getByText('Milk')).toBeVisible();
+      ```
+
+      ### ✏️ Modify
+
+      In `tests/todo.spec.js`, strengthen the assertion to **verify the item's text**, not just the count. Predict the new failure message before re-running.
+
+      Hints:
+      1. The locator `page.getByRole('listitem')` finds the list item; chain a content-checking matcher.
+      2. `toHaveText('Milk')` pins exact text; `toContainText('Milk')` pins substring.
+      3. The spec promises that the user's input appears in the list, so exact match is fine here.
+
+      ### 📝 House rule
+
+      **Assert the promise, not the plumbing.**
+
+      The *promise* is what the spec said the user would see. The *plumbing* is which DOM nodes exist, what CSS class they have, what their internal state is. A strong assertion verifies the promise; a weak assertion verifies the plumbing without verifying what the user actually gets.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          // 🐛 BUGGY APP: addTodo adds a list item, but the user's text is dropped.
+          // The list will always render empty <li> elements.
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              // Bug: should be `setItems([...items, trimmed])`.
+              // Instead we store an empty string, so the rendered <li> is empty.
+              setItems([...items, '']);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Buggy Todo Lab</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .todo-list { margin: 24px 0 0; padding-left: 24px; min-height: 24px; }
+          .todo-list li { margin: 8px 0; min-height: 1.2em; }
+          /* Dark mode */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+
+      - path: "tests/todo.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // The weak assertion below passes against the buggy app.
+          // Strengthen it so the test fails — that's the bug-catching version.
+          test('adding a todo shows it in the list', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            // ❌ Weak assertion: only checks the count.
+            await expect(page.getByRole('listitem')).toHaveCount(1);
+
+            // TODO: replace or extend the assertion above so the test
+            // catches the empty-text bug. Hint: assert the item's text.
+          });
+
+    open_file: "tests/todo.spec.js"
+
+    tests:
+      - description: "The strengthened assertion catches the empty-text bug (the test now fails)"
+        playwright:
+          title: "adding a todo shows it in the list"
+          should_fail: true
+
+      - description: "Your test asserts the item's text content (not just the count)"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+          assert(spec.includes('toHaveText') || spec.includes('toContainText'),
+            'Use toHaveText or toContainText so your assertion verifies the rendered text — not just the count.');
+          assert(spec.includes("'Milk'") || spec.includes('"Milk"') || spec.includes('Milk'),
+            'Pin the actual user input (\"Milk\") in the assertion.');
+
+      - description: "The test still uses web-first assertion form (await expect)"
+        command: |
+          const spec = files['tests/todo.spec.js'] || '';
+          assert(/await\s+expect\(/.test(spec),
+            'Use `await expect(...)` — web-first assertions retry, manual `expect(await locator.isVisible()).toBe(true)` does not.');
+
+    solution:
+      files:
+        - path: "src/App.jsx"
+          language: "javascript"
+          content: |
+            // 🐛 BUGGY APP: addTodo adds a list item, but the user's text is dropped.
+            // The list will always render empty <li> elements.
+            function App() {
+              const [items, setItems] = React.useState([]);
+              const [text, setText] = React.useState('');
+
+              function addTodo() {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+
+                // Bug: should be `setItems([...items, trimmed])`.
+                // Instead we store an empty string, so the rendered <li> is empty.
+                setItems([...items, '']);
+                setText('');
+              }
+
+              return (
+                <main className="todo-shell">
+                  <section className="todo-panel">
+                    <p className="eyebrow">Buggy Todo Lab</p>
+                    <h1>Todo Lab</h1>
+
+                    <div className="todo-form">
+                      <label htmlFor="todo-input">Todo item</label>
+                      <div className="todo-row">
+                        <input
+                          id="todo-input"
+                          value={text}
+                          onChange={(event) => setText(event.target.value)}
+                          placeholder="Buy milk"
+                        />
+                        <button onClick={addTodo}>Add todo</button>
+                      </div>
+                    </div>
+
+                    <ul aria-label="Todo list" className="todo-list">
+                      {items.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                </main>
+              );
+            }
+        - path: "tests/todo.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('adding a todo shows it in the list', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              // Strengthened assertion: verifies the item's text, not just the count.
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+            });
+      explanation: |
+        The strengthened assertion uses `toHaveText('Milk')` — it now pins the *content* of the list item, not just its existence. Against the buggy app (which renders an empty `<li>`), this assertion fails as it should: the user's promise ("the item shows up in the list") was broken, and the test now reflects that.
+
+    quiz:
+      title: "Strong Assertions — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which assertion would catch a bug where the "Mark complete" toggle *visually* updates (the item gets a strikethrough) but the underlying "remaining" counter does **not** decrement?
+          type: single
+          options:
+            - "`await expect(page.getByRole('listitem').first()).toHaveCSS('text-decoration', /line-through/)`"
+            - "`await expect(page.getByRole('status')).toContainText('2 items remaining')`"
+            - "`await expect(page.locator('.completed')).toBeVisible()`"
+            - "`await expect(page.getByRole('listitem')).toHaveCount(3)`"
+          correct_index: 1
+          option_feedback:
+            0: "This catches the *visual* effect (strikethrough) — exactly the surface that **does** update in the buggy scenario. It would pass while the counter stays wrong. A green test here is a liar test."
+            1: "Right. The counter is the **promise** — the user contract is \"remaining decrements when you mark something done.\" Asserting on `<p role=\"status\">` content directly catches a counter bug whether or not the visual style changed."
+            2: "`.completed` is a CSS class — that's plumbing, not promise. Even if it asserts visibility, it doesn't verify the counter (which is the regression we'd miss)."
+            3: "The total count of list items doesn't change when you mark one done (it changes if you *delete*). This assertion is testing a different behavior entirely."
+          explanation: |
+            "Assert the promise, not the plumbing." The promise here is that the counter reflects remaining items. If your assertion only checks visual side-effects (strikethrough, CSS classes), you've written a liar test: it passes for a render that's correct in *appearance* but wrong in *meaning*.
+
+        - question: |
+            Which of these is a Playwright **anti-pattern** that the official best-practices docs explicitly call out?
+          type: single
+          options:
+            - "`await expect(page.getByText('Saved')).toBeVisible()`"
+            - "`expect(await page.getByText('Saved').isVisible()).toBe(true)`"
+            - "`await page.getByRole('button', { name: 'Save' }).click()`"
+            - "`await page.goto('/dashboard')`"
+          correct_index: 1
+          option_feedback:
+            0: "This is the **correct** form — web-first assertion that auto-waits and retries until the condition holds or the timeout expires. The Playwright docs recommend this everywhere."
+            1: "Right. `isVisible()` returns immediately — no auto-wait, no retry. If the element renders 200ms later, this fails. The Playwright docs explicitly call this out as an anti-pattern. Use `await expect(locator).toBeVisible()` instead."
+            2: "`click()` on a Playwright locator auto-waits for the element to be actionable (visible, stable, enabled). This is the recommended way to click a button."
+            3: "`page.goto('/path')` is the standard way to navigate. Nothing wrong here."
+          explanation: |
+            The Playwright best-practices guide is direct: *"Don't use manual assertions that are not awaiting the expect."* Always use `await expect(locator).matcher()` so your test gets auto-waiting and retrying — the whole point of Playwright's web-first assertions.
+
+        - question: |
+            **(Spaced review — Step 3)** A test uses `page.locator('.add-todo-btn')` to find the Add button. The team renames the CSS class to `.primary-btn`. The behavior is unchanged. The test fails. What's the most accurate label for this failure?
+          type: single
+          options:
+            - "A real regression — the team broke the test by renaming"
+            - "A false alarm — the test was coupled to implementation, not behavior"
+            - "Operator error — someone forgot to update the CSS class name"
+            - "Flaky test — re-running it will probably pass"
+          correct_index: 1
+          option_feedback:
+            0: "A regression is when the *behavior* breaks. The behavior here is unchanged — the user can still click Add. The test broke because it pinned a styling decision (CSS class), not the behavior. That's a brittle test, not a regression catch."
+            1: "Right. The test failed for a refactor that didn't change user-visible behavior. That's the textbook **false alarm** — wasted CI time and eroded trust in the suite. A role-based locator (`getByRole('button', { name: /add/i })`) wouldn't have broken."
+            2: "It's not operator error — the test should have been written so a CSS rename couldn't break it. The fix is the locator strategy, not constantly renaming the test."
+            3: "Flakiness is intermittent failure. This is a deterministic failure caused by a deterministic implementation change. Re-running won't help; the locator needs to change."
+          explanation: |
+            From Step 5 onward (next!), we'll see this pattern in action — running tests against deliberate refactors and identifying which failures are real regressions vs false alarms. The preview: a test that breaks under a behavior-preserving refactor is brittle, not catching a bug.
+
+
+  # ==========================================================================
+  # STEP 5 — Behavior, not implementation: the brittleness gauntlet (locator side)
+  # LO4 part 1: locator-side brittleness made tactile.
+  # CLT element-interactivity: 2 novel elements (gauntlet idea, locator-coupling
+  # diagnosis).
+  # Variation Theory: contrast — same behavior, two locator strategies; refactor
+  # varies; behavior held constant.
+  # ==========================================================================
+  - title: "Behavior, Not Implementation: The Brittleness Gauntlet"
+    instructions: |
+      > **Learning objective.** After this step you can predict which tests will survive a UI refactor and which will break, classify a break as a real regression vs a false alarm, and rewrite brittle locators into durable ones.
+
+      ### 🧠 Quick recall
+
+      From Step 3 — which two locator strategies survive a CSS class rename?
+
+      *(In your head: it's `getByRole` and `getByTestId`. CSS-class locators don't.)*
+
+      Now we're going to make the brittleness **tactile**. You'll edit the app yourself and watch tests break.
+
+      ### Two tests, same behavior, two locator strategies
+
+      You have two test files in `tests/`:
+
+      - `tests/css-locator.spec.js` — uses `page.locator('.add-todo-btn')` (Rung 5)
+      - `tests/role-locator.spec.js` — uses `page.getByRole('button', { name: /add/i })` (Rung 1)
+
+      Both verify the **same behavior**: clicking Add adds a todo. Both pass against the current `App.jsx`.
+
+      ### 🎬 Predict — Round 1: CSS class rename
+
+      Imagine the design team does a styling pass and renames the button's CSS class:
+
+      ```diff
+      - <button className="add-todo-btn" onClick={addTodo}>Add todo</button>
+      + <button className="primary-btn"  onClick={addTodo}>Add todo</button>
+      ```
+
+      The user-visible behavior is **identical** — the button still says "Add todo" and still adds a todo.
+
+      Predict (in your head, before editing):
+
+      1. Will `tests/css-locator.spec.js` still pass?
+      2. Will `tests/role-locator.spec.js` still pass?
+      3. If either breaks, is the break a **real regression** or a **false alarm**?
+
+      ### ✏️ Edit App.jsx (one line)
+
+      Open `src/App.jsx`. Find the line:
+
+      ```jsx
+      <button className="add-todo-btn" onClick={addTodo}>Add todo</button>
+      ```
+
+      Change `add-todo-btn` to `primary-btn`. Just that one identifier. Save the file.
+
+      ### ▶ Run
+
+      Click **Test**.
+
+      ### 🔍 Investigate
+
+      | Test | Result | What it tells us |
+      | --- | --- | --- |
+      | `tests/css-locator.spec.js` | ❌ Fails | The test was *coupled to a styling decision*. The user-facing behavior didn't change, but the test broke. This is a **false alarm** — wasted CI time and eroded trust in the suite. |
+      | `tests/role-locator.spec.js` | ✓ Passes | The test was *coupled to the user-visible role + name*. Styling changed; behavior didn't; the test correctly didn't notice. |
+
+      The role-based test honors what's *stable* about the UI: the button has an accessible name "Add todo." Styling is incidental. The CSS-based test pinned the incidental thing.
+
+      ### 🔄 Mini-gauntlet, Round 2: button text change
+
+      Now imagine Marketing changes the button text:
+
+      ```diff
+      - <button ...>Add todo</button>
+      + <button ...>Add</button>
+      ```
+
+      Predict: will `tests/role-locator.spec.js` (using `name: /add/i`) still pass?
+
+      *(Answer: yes — the regex `/add/i` matches both "Add todo" and "Add". A `name: 'Add todo'` (exact) would have failed.)*
+
+      Discussion: was that a regression or a rewording? **Depends on whether "Add todo" specifically is part of the spec.** If the spec is "user can add a todo," the rewording is harmless. If the spec is "the button says exactly 'Add todo' for branding consistency," the rewording is a regression.
+
+      → That ambiguity is the trade-off Step 6 will tackle.
+
+      ### 📝 House rule
+
+      A test that **breaks under a refactor it shouldn't have broken under** is **brittle**. Brittleness is the cost of coupling tests to implementation details. The Spec Card's **"Should pass when"** field is your defense — write down the changes the test should survive *before* you write the test, then make sure your locators honor it.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          // 🛠 Edit this file as instructed: rename the CSS class
+          // on the Add todo button from "add-todo-btn" to "primary-btn".
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Brittleness gauntlet</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button className="add-todo-btn" onClick={addTodo}>
+                        Add todo
+                      </button>
+                    </div>
+                  </div>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          .add-todo-btn,
+          .primary-btn,
+          button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .todo-list { margin: 24px 0 0; padding-left: 24px; }
+          .todo-list:empty { display: none; }
+          .todo-list li { margin: 8px 0; }
+          /* Dark mode */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] .add-todo-btn,
+          [data-bs-theme="dark"] .primary-btn,
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+
+      - path: "tests/css-locator.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // CSS-class locator — pins .add-todo-btn (an implementation detail).
+          test('css-locator: user can add a todo', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.locator('.add-todo-btn').click();
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+      - path: "tests/role-locator.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // Role-based locator — pins the button's accessible name.
+          test('role-locator: user can add a todo', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add/i }).click();
+            await expect(page.getByRole('listitem')).toHaveText('Milk');
+          });
+
+    open_file: "src/App.jsx"
+
+    tests:
+      - description: "You renamed the CSS class on the Add todo button (add-todo-btn → primary-btn)"
+        command: |
+          const app = files['src/App.jsx'] || '';
+          assert(!/className=['"]add-todo-btn['"]/.test(app),
+            'The Add todo button still has className=\"add-todo-btn\". Rename it to \"primary-btn\" as instructed.');
+          assert(/className=['"]primary-btn['"]/.test(app),
+            'Rename the button\'s className to \"primary-btn\".');
+
+      - description: "After the rename: the CSS-locator test fails (brittle — false alarm)"
+        playwright:
+          title: "css-locator: user can add a todo"
+          should_fail: true
+
+      - description: "After the rename: the role-locator test still passes (durable)"
+        playwright:
+          title: "role-locator: user can add a todo"
+          should_fail: false
+
+    solution:
+      files:
+        - path: "src/App.jsx"
+          language: "javascript"
+          content: |
+            function App() {
+              const [items, setItems] = React.useState([]);
+              const [text, setText] = React.useState('');
+
+              function addTodo() {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+
+                setItems([...items, trimmed]);
+                setText('');
+              }
+
+              return (
+                <main className="todo-shell">
+                  <section className="todo-panel">
+                    <p className="eyebrow">Brittleness gauntlet</p>
+                    <h1>Todo Lab</h1>
+
+                    <div className="todo-form">
+                      <label htmlFor="todo-input">Todo item</label>
+                      <div className="todo-row">
+                        <input
+                          id="todo-input"
+                          value={text}
+                          onChange={(event) => setText(event.target.value)}
+                          placeholder="Buy milk"
+                        />
+                        <button className="primary-btn" onClick={addTodo}>
+                          Add todo
+                        </button>
+                      </div>
+                    </div>
+
+                    <ul aria-label="Todo list" className="todo-list">
+                      {items.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                </main>
+              );
+            }
+      explanation: |
+        After renaming the CSS class to `primary-btn`, only the role-based test still passes. The CSS-based test was coupled to the *implementation detail* (the class name); the role-based test was coupled to the *user-visible behavior* (a button with the accessible name "Add todo"). The user-facing experience didn't change, so a healthy test suite doesn't notice the rename.
+
+    quiz:
+      title: "The Brittleness Gauntlet — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A team's CI pipeline reports that test `admin can deactivate a user` failed last night. Investigation shows: a developer changed a CSS class from `.user-row-actions` to `.row-controls`. The deactivate behavior itself works perfectly. The test used `page.locator('.user-row-actions button.deactivate')`.
+
+            What's the most accurate diagnosis?
+          type: single
+          options:
+            - "The test correctly caught a regression — the CSS class was part of the public API"
+            - "The test is brittle — it's coupled to a styling decision, not user-visible behavior"
+            - "The developer should have kept the old CSS class name to maintain test compatibility"
+            - "The test failure is fine because all CSS changes are risky"
+          correct_index: 1
+          option_feedback:
+            0: "CSS classes are styling concerns, not contracts. A CSS rename almost never breaks user-visible behavior. Treating the class as a \"public API\" is the brittle assumption — it makes the test fail for reasons unrelated to the spec."
+            1: "Right. The behavior under test is \"admin can deactivate a user.\" The test broke for a *styling rename*, not a behavior change. That's the textbook definition of brittleness — coupling to implementation details rather than the spec."
+            2: "Tests should adapt to the codebase, not the other way around. Freezing internal naming so tests don't break is a maintenance anti-pattern — it accumulates technical debt purely to serve test coupling."
+            3: "The CSS change here had no functional effect. Treating every CSS change as risky leads to enormous maintenance burden and noisy CI — the team will start ignoring these failures, masking real regressions."
+          explanation: |
+            A test failure is only useful if it points to a *behavior* break. A test that fails for a styling rename, a class rename, or a DOM restructure is a **false alarm** — it costs the team time and erodes trust in the suite. Use role-based or test-ID-based locators to keep the contract stable while implementation evolves.
+
+        - question: |
+            You write a new e2e test using `getByRole('button', { name: 'Sign in' })`. A week later, the marketing team renames the button from "Sign in" to "Log in". Your test breaks.
+
+            Which is the most accurate take?
+          type: single
+          options:
+            - "False alarm. Use a regex like `name: /sign in|log in/i` so future renames don't break the test."
+            - "False alarm. The button text wasn't part of the spec. Switch to `getByTestId('signin-action')`."
+            - "Real regression. The user can no longer sign in."
+            - "It depends. If the spec promises specific button copy (e.g. for branding/legal/UX consistency), the test should fail. If the copy is incidental, switch to `getByTestId` so the next rename doesn't break the test."
+          correct_index: 3
+          option_feedback:
+            0: "A patchwork regex like `/sign in|log in/i` is a maintenance smell — every wording change adds another OR clause until the regex is unreadable. Use it as a *bridge* during a rollout, but the long-term answer depends on whether the wording is contractual."
+            1: "This is the *right answer for one case* — when wording is incidental and likely to change. But it's not the right answer for **every** case. If the brand requires \"Sign in\" specifically (legal, accessibility consistency, marketing contract), the test *should* fail when wording drifts. The decision depends on the spec."
+            2: "The user can almost certainly still sign in — the button now says \"Log in\" but does the same thing. The test broke for *wording*, not *behavior*. So this isn't a regression in the user-flow sense."
+            3: "Right. **It depends on what the spec promises.** This is the trade-off Step 6 tackles head-on. If the wording is part of the contract, fail loudly when it changes. If it's incidental, use `getByTestId('signin-action')` so the locator survives renames. Don't reflexively pick one — read the spec."
+          explanation: |
+            The locator ladder isn't \"always pick option 1.\" The right rung depends on what's *promised* by the spec. Step 6 makes this trade-off explicit by introducing the *match assertion specificity to spec specificity* principle.
+
+        - question: |
+            **(Spaced review — Step 4)** A weak assertion `await expect(page.getByRole('listitem')).toHaveCount(1)` passed against an app that renders an empty `<li>` (the user's text was dropped). Why did it pass?
+          type: single
+          options:
+            - "Because Playwright's auto-wait masked the bug"
+            - "Because `toHaveCount` only verifies the **count** of matching elements, not their **content**. The empty `<li>` counts as one matching element."
+            - "Because the app didn't actually have a bug"
+            - "Because the assertion needed `await`"
+          correct_index: 1
+          option_feedback:
+            0: "Auto-wait makes assertions retry until they hold; it doesn't change *what* they check. A count assertion verifies count, regardless of whether the count is reached immediately or after waiting."
+            1: "Right. `toHaveCount(1)` asserts \"exactly one matching listitem exists\" — and the buggy app *did* render one listitem. The fact that it was empty is exactly the gap the weak assertion missed. To catch the bug, pin the *content* with `toHaveText('Milk')`."
+            2: "The app had a real bug — it stored an empty string instead of the user's text. The weak assertion failed to detect it. That's the liar-test pattern."
+            3: "The assertion already had `await`. The issue isn't the await form — it's that `toHaveCount` is checking the wrong thing for this spec."
+          explanation: |
+            Strong assertions pin what the *spec promises*. The spec promised \"the user's text appears in the list,\" so the assertion needs to verify text content — not just that something exists. This is the same liar-test family from Testing Foundations Step 3.
+
+
+  # ==========================================================================
+  # STEP 6 — The maintenance trade-off (single-promise example)
+  # LO4 part 2 + LO3 balance — easier introduction to the harder concept.
+  # CLT element-interactivity: 2 novel elements (match-specificity-to-spec
+  # principle, 2×2 grid).
+  # Variation Theory: separation — assertion strength varies (3 levels) ×
+  # scenario varies (refactor vs bug).
+  # ==========================================================================
+  - title: "The Maintenance Trade-off: Pin the Spec, No More, No Less"
+    instructions: |
+      > **Learning objective.** After this step you can match an assertion's *strictness* to what the spec actually promises — neither over-specifying (which causes false alarms) nor under-specifying (which misses real bugs).
+
+      ### 🧠 Quick recall
+
+      - From Step 4 — what's a *liar test*?
+      - From Step 5 — when is a test break a *false alarm*?
+
+      Both questions point at the same underlying issue: a test's value depends on what it actually verifies. Step 6 puts the principle into one sentence.
+
+      ### 🎯 The principle
+
+      > **Match assertion specificity to spec specificity.**
+      > **Pin exactly what the spec promises — no more, no less.**
+
+      A *stronger* assertion is **not always** a *better* assertion. We'll see this on a deliberately simple feature first. (Step 7 generalizes it to features with multiple promises.)
+
+      ### The feature
+
+      The Todo app has a new **remaining-count** display: a `<p role="status">` showing "3 items remaining". The spec is one sentence:
+
+      > *"Show the user how many items are still pending."*
+
+      That's it. **One promise**: surface the count. Notice what's *not* in the spec:
+
+      - the exact wording ("items remaining" vs "todos pending")
+      - plurality grammar ("1 item" vs "1 items")
+      - the surrounding sentence ("You have 3…" vs just "3…")
+      - color, position, animation
+
+      ### Three candidate assertions
+
+      ```javascript
+      // Brittle (over-specified): pins exact wording, plurality, surrounding copy.
+      await expect(page.getByRole('status'))
+        .toHaveText('You have 3 items remaining across all todos');
+
+      // Goldilocks (spec-aligned): pins exactly what the spec promises.
+      await expect(page.getByRole('status')).toContainText('3');
+      await expect(page.getByRole('status')).toContainText(/item/i);
+
+      // Loose (under-specified): the status region exists; nothing more.
+      await expect(page.getByRole('status')).toBeVisible();
+      ```
+
+      ### 🎬 Predict — Scenario A: marketing changes wording
+
+      Imagine the team rewrites the status text from `"3 items remaining"` to `"3 todos pending"`. The spec is **still satisfied** — the count is still shown.
+
+      Predict (in your head, before running):
+
+      | Assertion | Will it pass? | Is the result correct? |
+      | --- | --- | --- |
+      | Brittle | ? | ? |
+      | Goldilocks | ? | ? |
+      | Loose | ? | ? |
+
+      ### 🎬 Predict — Scenario B: an off-by-one regression
+
+      Now imagine a different change: the count logic has a bug. Where the page should say "3 items remaining," it says "4 items remaining" instead.
+
+      Predict the same table.
+
+      ### ▶ Run
+
+      Click **Test**. All three tests pass against the base app. (The base app shows `"3 items remaining"` correctly.)
+
+      ### ✏️ Edit App.jsx — introduce the off-by-one bug
+
+      In `src/App.jsx`, find the line:
+
+      ```javascript
+      const remainingCount = items.length;
+      ```
+
+      Change it to:
+
+      ```javascript
+      const remainingCount = items.length + 1;
+      ```
+
+      That's the bug — the count is now wrong by one. **Predict which tests catch it before re-running.**
+
+      ### ▶ Run again
+
+      ### 🔍 Investigate — Scenario B results
+
+      | Assertion | Result | Was the result *useful*? |
+      | --- | --- | --- |
+      | Brittle | ❌ Fails | ✓ Yes — it caught the regression |
+      | Goldilocks | ❌ Fails | ✓ Yes — it caught the regression |
+      | Loose | ✓ Passes | ✗ No — it missed the bug entirely |
+
+      Now think back to **Scenario A** (the wording change). Reset the bug — change `items.length + 1` back to `items.length`. Then *imagine* the wording change happening:
+
+      | Assertion | Result under wording change | Was the result *useful*? |
+      | --- | --- | --- |
+      | Brittle | ❌ Fails | ✗ No — false alarm; spec still satisfied |
+      | Goldilocks | ✓ Passes | ✓ Yes — wording isn't part of the spec |
+      | Loose | ✓ Passes | (Trivially — but it never checked the count anyway) |
+
+      ### The 2×2 grid that crystallizes the lesson
+
+      ```text
+                            Spec is loose            Spec is tight
+                            ("show the count")       ("show '3 items remaining'")
+                          ┌───────────────────────┬───────────────────────────┐
+       Loose assertion    │   ✓  aligned          │   ✗  misses regressions    │
+                          ├───────────────────────┼───────────────────────────┤
+       Tight assertion    │   ✗  false alarms     │   ✓  aligned               │
+                          └───────────────────────┴───────────────────────────┘
+      ```
+
+      **Strength (LO3)** and **spec-fidelity (LO4)** are *different axes*. The best assertion lives **on the diagonal** — its specificity *matches* the spec's specificity.
+
+      - Loose spec + loose assertion = good. (You're pinning what's promised.)
+      - Loose spec + tight assertion = false alarms. (You're pinning *more* than promised.)
+      - Tight spec + loose assertion = misses regressions. (You're pinning *less* than promised.)
+      - Tight spec + tight assertion = good. (You're pinning the exact contract.)
+
+      The Goldilocks assertion above is on the diagonal: a loose spec, met with a loose-but-targeted assertion that still verifies the count. Brittle is *off* the diagonal in one direction; loose is off in the other.
+
+      ### 📝 House rule
+
+      **Pin exactly what the spec promises. No more, no less.**
+
+      *Don't* default to maximum strictness "just in case." Strictness is not free — every pin is a future false alarm waiting to happen. *Don't* default to minimum strictness either — every un-pinned promise is a regression waiting to slip through.
+
+      Read the spec. Decide what's promised. Pin *that*.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          // 🛠 You'll edit one line in this file to introduce the off-by-one bug.
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+              setItems([...items, trimmed]);
+              setText('');
+            }
+
+            const remainingCount = items.length;
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Todo Lab</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <p role="status" className="status-line">
+                    {remainingCount} items remaining
+                  </p>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .status-line { margin: 18px 0 0; color: #4b5563; font-weight: 600; }
+          .todo-list { margin: 12px 0 0; padding-left: 24px; }
+          .todo-list li { margin: 8px 0; }
+          /* Dark mode */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] .status-line { color: #9ca3af; }
+
+      - path: "tests/brittle.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // BRITTLE: pins exact wording, plurality, surrounding copy.
+          test('brittle: counter shows pinned exact text', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('A');
+            await page.getByRole('button', { name: /add/i }).click();
+            await page.getByRole('textbox', { name: /todo item/i }).fill('B');
+            await page.getByRole('button', { name: /add/i }).click();
+            await page.getByRole('textbox', { name: /todo item/i }).fill('C');
+            await page.getByRole('button', { name: /add/i }).click();
+            await expect(page.getByRole('status')).toHaveText('3 items remaining');
+          });
+
+      - path: "tests/goldilocks.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // GOLDILOCKS: pins exactly what the spec promises (the count + the noun).
+          test('goldilocks: counter shows the right count of items', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('A');
+            await page.getByRole('button', { name: /add/i }).click();
+            await page.getByRole('textbox', { name: /todo item/i }).fill('B');
+            await page.getByRole('button', { name: /add/i }).click();
+            await page.getByRole('textbox', { name: /todo item/i }).fill('C');
+            await page.getByRole('button', { name: /add/i }).click();
+            await expect(page.getByRole('status')).toContainText('3');
+            await expect(page.getByRole('status')).toContainText(/item/i);
+          });
+
+      - path: "tests/loose.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // LOOSE: the status region exists; nothing more.
+          // This misses the actual count!
+          test('loose: status region is visible', async ({ page }) => {
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('A');
+            await page.getByRole('button', { name: /add/i }).click();
+            await expect(page.getByRole('status')).toBeVisible();
+          });
+
+    open_file: "src/App.jsx"
+
+    tests:
+      - description: "You introduced the off-by-one bug (remainingCount = items.length + 1)"
+        command: |
+          const app = files['src/App.jsx'] || '';
+          assert(/items\.length\s*\+\s*1/.test(app),
+            'Edit App.jsx: change `const remainingCount = items.length` to `const remainingCount = items.length + 1` so the count is wrong by one.');
+
+      - description: "After the bug: brittle assertion catches it (test fails)"
+        playwright:
+          title: "brittle: counter shows pinned exact text"
+          should_fail: true
+
+      - description: "After the bug: Goldilocks assertion catches it (test fails)"
+        playwright:
+          title: "goldilocks: counter shows the right count of items"
+          should_fail: true
+
+      - description: "After the bug: loose assertion misses it (test still passes — it was never checking the count)"
+        playwright:
+          title: "loose: status region is visible"
+          should_fail: false
+
+    solution:
+      files:
+        - path: "src/App.jsx"
+          language: "javascript"
+          content: |
+            function App() {
+              const [items, setItems] = React.useState([]);
+              const [text, setText] = React.useState('');
+
+              function addTodo() {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+                setItems([...items, trimmed]);
+                setText('');
+              }
+
+              // Off-by-one bug introduced for the brittleness scenario.
+              const remainingCount = items.length + 1;
+
+              return (
+                <main className="todo-shell">
+                  <section className="todo-panel">
+                    <p className="eyebrow">Todo Lab</p>
+                    <h1>Todo Lab</h1>
+
+                    <div className="todo-form">
+                      <label htmlFor="todo-input">Todo item</label>
+                      <div className="todo-row">
+                        <input
+                          id="todo-input"
+                          value={text}
+                          onChange={(event) => setText(event.target.value)}
+                          placeholder="Buy milk"
+                        />
+                        <button onClick={addTodo}>Add todo</button>
+                      </div>
+                    </div>
+
+                    <p role="status" className="status-line">
+                      {remainingCount} items remaining
+                    </p>
+
+                    <ul aria-label="Todo list" className="todo-list">
+                      {items.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                </main>
+              );
+            }
+      explanation: |
+        With the off-by-one bug, the brittle and Goldilocks tests both fail — both pinned the count, and the count is now wrong. The loose test still passes — it only verified the status region exists, never the count. That's the lesson: a stronger assertion isn't always better, but an assertion that doesn't pin the spec at all is *worse* than no test. The Goldilocks assertion is on the diagonal: loose enough to survive a wording change, tight enough to catch a real regression.
+
+    quiz:
+      title: "The Maintenance Trade-off — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A test asserts:
+
+            ```javascript
+            await expect(page.getByRole('status')).toHaveText(
+              'Welcome back, Ada! You have 5 unread messages waiting.'
+            );
+            ```
+
+            The product spec says: *"After login, show the user a welcome message and their unread message count."*
+
+            What's the most accurate critique?
+          type: single
+          options:
+            - "It's correctly strict — it pins everything the spec promises"
+            - "It's over-specified — it pins wording, the user's name interpolation, plurality, and surrounding copy that the spec doesn't promise. Marketing can rephrase it and break the test for nothing."
+            - "It's under-specified — it should also pin the URL and page title"
+            - "It's wrong because it uses `toHaveText` instead of `toBeVisible`"
+          correct_index: 1
+          option_feedback:
+            0: "Strictness isn't free. The spec promises two things (welcome message, unread count) but this assertion pins about seven (exact wording, name interpolation, plurality grammar, sentence structure). When wording changes, the test breaks for reasons the spec doesn't care about — the over-specification trap."
+            1: "Right. The spec is loose (\"show a welcome message and unread count\"); the assertion is tight (exact full-sentence match). When marketing changes \"Welcome back\" to \"Hi\" or \"5 unread messages\" to \"5 messages waiting,\" the test breaks even though the *spec* is still satisfied. False alarm waiting to happen."
+            2: "The spec doesn't promise anything about URL or page title. Adding assertions for those pins MORE implementation, not less — making the test more brittle, not less."
+            3: "`toHaveText` is the right tool for asserting on specific text content. The problem isn't the matcher — it's *what* is being matched (over-specified text). A better fix is `toContainText` with a regex covering the bits the spec actually cares about."
+          explanation: |
+            The principle: pin exactly what the spec promises — no more, no less. Stronger assertions aren't always better; they can over-specify and create false alarms. The best assertion *matches* the spec's specificity.
+
+        - question: |
+            Which strategy BEST avoids both false alarms AND missed regressions for the spec *"the page shows the user's order ID"*?
+          type: single
+          options:
+            - "`await expect(page.getByText('Order ID: 12345 — placed at 3:42 PM')).toBeVisible()`"
+            - "`await expect(page.getByRole('region', { name: /order id/i })).toContainText(orderId)`"
+            - "`await expect(page.getByRole('region', { name: /order id/i })).toBeVisible()`"
+            - "`await expect(page.getByText('order')).toBeVisible()`"
+          correct_index: 1
+          option_feedback:
+            0: "Pinning the timestamp and the surrounding sentence is over-specification — those aren't in the spec. A wording or layout change breaks the test for reasons the spec doesn't care about."
+            1: "Right. The spec promises the *order ID* (the actual value), in a region the user can identify. Asserting that the order-ID region contains the actual order ID pins exactly that — no more, no less. The wording (\"Order ID: …\" vs \"Order #…\") is incidental and the test will survive it."
+            2: "Asserting only that the region is visible doesn't verify what's *inside* it. The spec promises the order ID specifically; a region with the wrong ID (or no ID) would pass this assertion. Under-specified."
+            3: "`getByText('order')` is too loose (matches any element with the word \"order\") and `toBeVisible()` doesn't verify content. Two ways under-specified at once."
+          explanation: |
+            The diagonal of the 2×2 grid: tight spec (the actual ID matters) → tight assertion (verify the ID). The framing region uses a *role* locator with a regex name so the wording around the ID can change without breaking the test. The ID itself is pinned because the spec says so.
+
+        - question: |
+            **(Spaced review — Step 5)** A test fails after a CSS class rename. The behavior is unchanged. The team then changes the class back to silence the test. What's the underlying problem?
+          type: single
+          options:
+            - "The team's solution is correct — keeping CSS class names stable is essential for tests to work"
+            - "The team patched the symptom (test failure) instead of the cause (test was coupled to implementation, not behavior)"
+            - "The test is correct; the team should add the old CSS class as an alias"
+            - "Reverting the CSS rename was the right call — never let a refactor break tests"
+          correct_index: 1
+          option_feedback:
+            0: "This is the brittle-test lock-in trap. If you keep CSS class names stable just for tests, you accumulate technical debt — class names that no longer reflect the design, retained only because tests grip them. The cause isn't the rename; it's the test."
+            1: "Right. The test was a CSS-locator test (Step 5 brittleness). Patching the symptom (revert rename) keeps the brittle test passing today but ensures the same trap fires again the next time someone refactors. The fix is to rewrite the locator using a stable contract (`getByRole` or a semantic `getByTestId`)."
+            2: "Aliasing is even worse — now you're maintaining two class names, one of which is dead-weight. The spec didn't change; the test should have been written against a stable locator."
+            3: "Tests should adapt to the codebase, not freeze it. Refactors are how codebases stay healthy. A test that breaks under a refactor with no behavior change is brittle — fix the test, don't ban the refactor."
+          explanation: |
+            From Step 5: brittle tests fail under refactors that don't break behavior. The fix is to rewrite the test against a stable contract, not to revert the refactor or freeze internal naming.
+
+
+  # ==========================================================================
+  # STEP 7 — Multi-promise features + scaffolded capstone
+  # LO4 deeper + capstone integration of all LOs.
+  # CLT element-interactivity: 2 novel elements (multi-promise per-promise
+  # specificity decisions, semantic vs visual contract).
+  # Variation Theory: fusion — multiple promises varying together; specificity
+  # decision per promise.
+  # Scaffolded per user feedback: Spec Card given, test stubs given, student
+  # fills in Act + Assert.
+  # ==========================================================================
+  - title: "Multi-Promise Features and the Capstone"
+    instructions: |
+      > **Learning objective.** After this step you can apply the *match assertion specificity to spec specificity* principle to a feature with **multiple** promises, choosing per-promise specificity independently. This is the real-world skill — most features have more than one thing to verify.
+
+      ### 🧠 Quick recall
+
+      From Step 6 — what does it mean to *match* assertion specificity to spec specificity? Why is a stronger assertion sometimes worse?
+
+      Step 6 had a single promise (the count). Real features usually have **multiple** promises — and you have to make a *separate* specificity decision for each one. That's the skill that distinguishes a maintainable test suite from a brittle one.
+
+      ### 🎯 The feature: "Mark as done" toggle
+
+      The Todo app now supports marking items as done. Click on a todo's button to toggle its done state. Done items show a checkmark; the remaining-count display only counts items that are *not* done.
+
+      The spec is **three promises**:
+
+      1. **Toggle state.** Clicking a todo toggles its done state.
+      2. **Count decrements.** The remaining-count display reflects only un-done items.
+      3. **Item stays visible.** Marked-done items remain in the list (not deleted).
+
+      For *each* promise, we make a specificity decision independently. Read this table — you'll fill in a similar one for the capstone:
+
+      ```text
+      Promise                       Brittle option              Goldilocks option              Loose option
+      ──────────────────────────    ──────────────────────────  ──────────────────────────     ─────────────────────────
+      1. Toggle state               toHaveClass(/todo-done/)    toHaveAttribute('aria-         (skip — but then how
+                                    (pins CSS class —           pressed', 'true') (pins        do you know the toggle
+                                    implementation detail)      semantic ARIA contract)        worked?)
+      2. Count decrements           toHaveText('2 items         getByRole('status')            toBeVisible() on the
+                                    remaining') (over-pins      .toContainText('2')            status (misses the
+                                    wording)                    (pins the number itself)       count regression)
+      3. Item stays visible         (Goldilocks IS the          getByRole('listitem')          (you can't loose-spec
+                                    target — count + visible)   .filter({hasText:'Milk'})      a deletion check —
+                                                                .toBeVisible()                  this promise is binary)
+      ```
+
+      **Notice the asymmetry.**
+
+      - Promise 2 is the same shape as Step 6: pin the count, not the wording.
+      - Promise 1 introduces a new dimension: there's a *right tool* (`aria-pressed`, the semantic contract) and a *wrong tool* (`.todo-done` CSS class). Using the wrong tool isn't more strict — it's *coupled to implementation* in a different way.
+      - Promise 3 is binary — the item either stays visible or it doesn't. Loose-spec doesn't apply when the contract is yes/no.
+
+      ### Worked example: one fully written test
+
+      Read this carefully — it applies the table above:
+
+      ```javascript
+      test('marking a todo as done decrements the count and keeps it visible', async ({ page }) => {
+        // Arrange: three todos.
+        await page.goto('/');
+        for (const t of ['Milk', 'Bread', 'Eggs']) {
+          await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+          await page.getByRole('button', { name: /add todo/i }).click();
+        }
+
+        // Act: mark "Milk" as done.
+        const milkToggle = page.getByRole('button', { name: 'Milk' });
+        await milkToggle.click();
+
+        // Assert all three promises:
+        // Promise 1 — toggle state is "done" (semantic ARIA contract).
+        await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
+
+        // Promise 2 — count decrements (pin the number, not wording).
+        await expect(page.getByRole('status')).toContainText('2');
+
+        // Promise 3 — Milk is still in the list (not deleted).
+        await expect(
+          page.getByRole('listitem').filter({ hasText: 'Milk' })
+        ).toBeVisible();
+      });
+      ```
+
+      Each assertion is on the diagonal of its own 2×2 grid. Promise 1 uses the semantic ARIA attribute (not the CSS class). Promise 2 pins the count number (not the wording). Promise 3 verifies presence (the binary contract).
+
+      ### 🎓 Capstone — write the next two tests
+
+      You're given a complete **Spec Card** and **two test stubs**. Your job: fill in Act + Assert.
+
+      ```text
+      Spec Card: Mark a todo as done
+
+      ✓ Behavior:        Clicking a todo toggles its "done" state. Done todos
+                          are visually distinct. The remaining count decrements.
+                          Marked-done todos remain in the list.
+      ✓ Should pass when: Visual styling of done items changes (color, icon,
+                          font-weight). The toggle becomes a checkbox instead
+                          of a button. The confirmation animation changes.
+      ✗ Should fail when: Marking doesn't persist between renders. Count doesn't
+                          decrement. Done items disappear from the list.
+      🎯 Locator contract: Each todo is a listitem. The toggle button has the
+                          item's text as its accessible name. The status region
+                          exposes a count.
+      ✅ Oracle:          The status count reflects the number of un-done items.
+      ```
+
+      Your two tests:
+
+      ```javascript
+      test('marking and unmarking a todo restores the count', async ({ page }) => {
+        // Arrange: one todo "Milk".
+        // Act: mark it done, then unmark it.
+        // Assert: aria-pressed is back to false; count is back to 1.
+      });
+
+      test('marking one of two todos shows count of 1', async ({ page }) => {
+        // Arrange: two todos "Milk" and "Bread".
+        // Act: mark "Milk" as done.
+        // Assert: count shows "1"; "Bread" is still un-done; "Milk" is done.
+      });
+      ```
+
+      Use the worked example as your template. Apply per-promise specificity decisions (semantic locators, pin the count, verify the toggle state).
+
+      ### 🤔 Metacognitive close
+
+      Before you submit:
+
+      - Rate your confidence on each LO from Step 1 to now. Anything still fuzzy?
+      - For your two capstone tests, ask: **what's the smallest change to App.jsx that should make my test fail? What's the smallest change that should NOT make my test fail?**
+
+      That second question is the real test of whether you've internalized the principle. If your test would fail for *anything* you can think of, it's brittle. If it would *not fail* for a real regression you can think of, it's loose. Aim for the diagonal.
+
+      ### 📝 Final house rule
+
+      A durable e2e test isn't a script of clicks. It's an executable **behavioral spec** with a thin adapter that maps user intent onto the current UI.
+
+      ### Next steps beyond this tutorial
+
+      The in-browser sandbox here doesn't host every Playwright feature. In a real Playwright project you'd also use:
+
+      - **Network mocking** (`page.route`) — mock API responses for deterministic tests.
+      - **Storage state auth** — sign in once, reuse the session across tests.
+      - **Fixtures** — share setup logic without hiding business intent.
+      - **Trace viewer** — inspect failed CI runs frame-by-frame.
+
+      The official [Playwright docs](https://playwright.dev/docs/best-practices) are the next learning artifact. Everything you've built here transfers — only the plumbing differs.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+              setItems([...items, { text: trimmed, done: false }]);
+              setText('');
+            }
+
+            function toggleDone(idx) {
+              setItems(items.map((item, i) =>
+                i === idx ? { ...item, done: !item.done } : item
+              ));
+            }
+
+            const remainingCount = items.filter((item) => !item.done).length;
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Todo Lab — Capstone</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <p role="status" className="status-line">
+                    {remainingCount} items remaining
+                  </p>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, idx) => (
+                      <li key={idx} className={item.done ? 'todo-done' : ''}>
+                        <button
+                          className="todo-toggle"
+                          onClick={() => toggleDone(idx)}
+                          aria-pressed={item.done}
+                        >
+                          {item.text}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          .todo-row > button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .status-line { margin: 18px 0 0; color: #4b5563; font-weight: 600; }
+          .todo-list { margin: 12px 0 0; padding-left: 0; list-style: none; }
+          .todo-list li { margin: 8px 0; }
+          .todo-toggle { display: block; width: 100%; text-align: left; color: #1f2937; border: 1px solid #d9dee8; border-radius: 6px; padding: 10px 12px; background: white; font: inherit; cursor: pointer; }
+          .todo-done .todo-toggle { color: #9ca3af; text-decoration: line-through; }
+          /* Dark mode */
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] .todo-row > button { background: #3b82f6; }
+          [data-bs-theme="dark"] .status-line { color: #9ca3af; }
+          [data-bs-theme="dark"] .todo-toggle { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] .todo-done .todo-toggle { color: #6b7280; }
+
+      - path: "tests/mark-done.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // Worked example — read this carefully before writing the next two.
+          test('marking a todo as done decrements the count and keeps it visible', async ({ page }) => {
+            await page.goto('/');
+            for (const t of ['Milk', 'Bread', 'Eggs']) {
+              await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+              await page.getByRole('button', { name: /add todo/i }).click();
+            }
+
+            const milkToggle = page.getByRole('button', { name: 'Milk' });
+            await milkToggle.click();
+
+            // Promise 1 — toggle state (semantic ARIA contract).
+            await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
+            // Promise 2 — count decrements (pin the number).
+            await expect(page.getByRole('status')).toContainText('2');
+            // Promise 3 — item stays visible (binary contract).
+            await expect(
+              page.getByRole('listitem').filter({ hasText: 'Milk' })
+            ).toBeVisible();
+          });
+
+          // Your turn: fill in Act + Assert.
+          test('marking and unmarking a todo restores the count', async ({ page }) => {
+            // Arrange: navigate and add one todo "Milk".
+            await page.goto('/');
+            await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+            await page.getByRole('button', { name: /add todo/i }).click();
+
+            // TODO: Act — mark Milk as done, then unmark it.
+            // TODO: Assert — Milk's aria-pressed is "false"; the status shows "1".
+          });
+
+          test('marking one of two todos shows count of 1', async ({ page }) => {
+            // Arrange: navigate and add two todos "Milk" and "Bread".
+            await page.goto('/');
+            for (const t of ['Milk', 'Bread']) {
+              await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+              await page.getByRole('button', { name: /add todo/i }).click();
+            }
+
+            // TODO: Act — mark "Milk" as done.
+            // TODO: Assert — status shows "1"; "Milk" is done; "Bread" is not done.
+          });
+
+    open_file: "tests/mark-done.spec.js"
+
+    tests:
+      - description: "Worked-example test passes (verifies the app supports mark-as-done)"
+        playwright:
+          title: "marking a todo as done decrements the count and keeps it visible"
+          should_fail: false
+
+      - description: "Your test 'marking and unmarking restores the count' passes"
+        playwright:
+          title: "marking and unmarking a todo restores the count"
+          should_fail: false
+
+      - description: "Your test 'marking one of two todos shows count of 1' passes"
+        playwright:
+          title: "marking one of two todos shows count of 1"
+          should_fail: false
+
+      - description: "You used semantic locators (no .todo-done CSS class assertion)"
+        command: |
+          const spec = files['tests/mark-done.spec.js'] || '';
+          assert(!/toHaveClass\(.*todo-done/.test(spec),
+            'Avoid asserting on the .todo-done CSS class — use the semantic aria-pressed attribute instead. The CSS class is implementation detail; aria-pressed is the contract.');
+          assert(/aria-pressed/.test(spec),
+            'Use aria-pressed to assert the toggle state — that\'s the semantic contract for a toggle button.');
+
+      - description: "Your assertions pin the count (not exact wording)"
+        command: |
+          const spec = files['tests/mark-done.spec.js'] || '';
+          // Count occurrences of toContainText with single digits in the new tests
+          const newTests = spec.split('marking and unmarking')[1] || '';
+          assert(/toContainText\(['"]\d+['"]\)/.test(newTests) ||
+                 /toContainText\(['"]\d+['"]/.test(newTests),
+            'Pin the count number with toContainText (e.g. toContainText(\'1\')), not the full sentence.');
+
+    solution:
+      files:
+        - path: "src/App.jsx"
+          language: "javascript"
+          content: |
+            function App() {
+              const [items, setItems] = React.useState([]);
+              const [text, setText] = React.useState('');
+
+              function addTodo() {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+                setItems([...items, { text: trimmed, done: false }]);
+                setText('');
+              }
+
+              function toggleDone(idx) {
+                setItems(items.map((item, i) =>
+                  i === idx ? { ...item, done: !item.done } : item
+                ));
+              }
+
+              const remainingCount = items.filter((item) => !item.done).length;
+
+              return (
+                <main className="todo-shell">
+                  <section className="todo-panel">
+                    <p className="eyebrow">Todo Lab — Capstone</p>
+                    <h1>Todo Lab</h1>
+
+                    <div className="todo-form">
+                      <label htmlFor="todo-input">Todo item</label>
+                      <div className="todo-row">
+                        <input
+                          id="todo-input"
+                          value={text}
+                          onChange={(event) => setText(event.target.value)}
+                          placeholder="Buy milk"
+                        />
+                        <button onClick={addTodo}>Add todo</button>
+                      </div>
+                    </div>
+
+                    <p role="status" className="status-line">
+                      {remainingCount} items remaining
+                    </p>
+
+                    <ul aria-label="Todo list" className="todo-list">
+                      {items.map((item, idx) => (
+                        <li key={idx} className={item.done ? 'todo-done' : ''}>
+                          <button
+                            className="todo-toggle"
+                            onClick={() => toggleDone(idx)}
+                            aria-pressed={item.done}
+                          >
+                            {item.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </main>
+              );
+            }
+        - path: "tests/mark-done.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('marking a todo as done decrements the count and keeps it visible', async ({ page }) => {
+              await page.goto('/');
+              for (const t of ['Milk', 'Bread', 'Eggs']) {
+                await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+                await page.getByRole('button', { name: /add todo/i }).click();
+              }
+
+              const milkToggle = page.getByRole('button', { name: 'Milk' });
+              await milkToggle.click();
+
+              await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
+              await expect(page.getByRole('status')).toContainText('2');
+              await expect(
+                page.getByRole('listitem').filter({ hasText: 'Milk' })
+              ).toBeVisible();
+            });
+
+            test('marking and unmarking a todo restores the count', async ({ page }) => {
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
+              await page.getByRole('button', { name: /add todo/i }).click();
+
+              const milkToggle = page.getByRole('button', { name: 'Milk' });
+
+              // Mark, then unmark.
+              await milkToggle.click();
+              await milkToggle.click();
+
+              await expect(milkToggle).toHaveAttribute('aria-pressed', 'false');
+              await expect(page.getByRole('status')).toContainText('1');
+            });
+
+            test('marking one of two todos shows count of 1', async ({ page }) => {
+              await page.goto('/');
+              for (const t of ['Milk', 'Bread']) {
+                await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+                await page.getByRole('button', { name: /add todo/i }).click();
+              }
+
+              const milkToggle = page.getByRole('button', { name: 'Milk' });
+              await milkToggle.click();
+
+              await expect(page.getByRole('status')).toContainText('1');
+              await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
+              await expect(
+                page.getByRole('button', { name: 'Bread' })
+              ).toHaveAttribute('aria-pressed', 'false');
+            });
+      explanation: |
+        Each test on the diagonal: semantic locators (`getByRole` with the item's text as the accessible name), per-promise specificity (toggle state via `aria-pressed`, count via `toContainText` of the number, item visibility via `getByRole('listitem').filter()`). None of the tests would break if the strikethrough color changes, the toggle becomes a checkbox icon, or the wording around the count changes. All three would fail if marking didn't persist or the count didn't decrement.
+
+    quiz:
+      title: "Multi-Promise Features — Capstone Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A "checkout" feature has three spec'd promises:
+
+            1. After paying, the user sees an order confirmation.
+            2. The order ID is shown so the user can reference it later.
+            3. A confirmation email is sent (verifiable via a test mailbox).
+
+            Which set of specificity choices BEST matches the spec?
+          type: single
+          options:
+            - "All three pinned with `toHaveText` (exact match) for maximum strictness"
+            - "Promise 1: Goldilocks (`toContainText(/order|confirm/i)`). Promise 2: Tight (`toHaveText` matching the actual order ID). Promise 3: Tight (assert the exact email arrived in the mailbox)."
+            - "All three with `toBeVisible()` to keep the test minimal"
+            - "Skip Promise 3 because emails are too hard to test"
+          correct_index: 1
+          option_feedback:
+            0: "Pinning Promise 1 with exact `toHaveText` means any wording change to the confirmation message (\"Order confirmed\", \"Thank you for your order\", \"Order placed\") breaks the test for no behavior reason. That's the over-specification trap."
+            1: "Right. Each promise gets the specificity its spec demands. Promise 1 (\"user sees confirmation\") is loose-specced — wording isn't promised, so Goldilocks. Promise 2 (\"order ID shown\") IS the contract — the specific ID matters. Promise 3 (\"email is sent\") is binary reality — the email either arrived or didn't, so a tight assertion against the test mailbox is appropriate."
+            2: "`toBeVisible()` for Promise 2 (\"order ID shown\") doesn't verify the ID is correct — only that *something* renders. A bug that shows a hardcoded \"ORDER-XXX\" instead of the real ID would pass this assertion. Under-specified."
+            3: "Email IS the contract for Promise 3 — skipping it means the test can't catch the most expensive failure mode (the user didn't get their receipt). Use a test mailbox or queue inspection. \"Hard to test\" is a maintenance argument, not a spec argument."
+          explanation: |
+            Multi-promise features need **per-promise** specificity decisions. Each promise has its own answer to "what exactly is this asserting, and what's allowed to change?" Pinning everything strictly creates a brittle suite; pinning everything loosely creates a leaky one. The skill is judgment: read each promise, decide its specificity independently.
+
+        - question: |
+            Your team built a notifications panel with these spec'd behaviors:
+
+            - Unread notifications show a red badge with the count.
+            - Clicking the bell icon opens the panel.
+            - Notifications are listed in reverse chronological order.
+
+            A designer changes the badge color from red to orange (no spec change). The team's e2e test fails because it asserts `await expect(badge).toHaveCSS('background-color', 'rgb(239, 68, 68)')`.
+
+            What's the right diagnosis?
+          type: single
+          options:
+            - "Real regression — the badge color is part of the spec"
+            - "False alarm — the test pinned implementation (specific RGB color) instead of the user-visible promise (the badge with a count)"
+            - "The team should add `red` and `orange` as accepted values to the assertion"
+            - "Designers shouldn't change colors without updating tests"
+          correct_index: 1
+          option_feedback:
+            0: "The spec listed says \"red badge\" — but the test failure is for a *color* change, not a missing-badge change. Was \"red\" specifically promised, or was the spec loose about the color? If the spec says \"badge with the count,\" the test should assert *that* — not the exact RGB value."
+            1: "Right. The test pinned the *RGB color value* (`rgb(239, 68, 68)`) — implementation. The spec's promise is \"badge with the count\" — the count is the contract, not the specific color shade. Asserting `getByRole('status').toContainText(unreadCount)` would survive any color change while still verifying the user-facing behavior."
+            2: "Adding multiple accepted colors is a maintenance smell — every redesign expands the OR-list. The deeper fix is to stop testing the color at all if the color isn't in the spec."
+            3: "Tests should adapt to design changes, not vice versa. If the test breaks for a design refresh that didn't change the spec, the test is brittle — that's exactly Step 5's lesson applied to assertions instead of locators."
+          explanation: |
+            The principle works on both sides — locators (Step 5) and assertions (Step 6). When an assertion pins something the spec doesn't promise (specific color, exact wording, internal classnames), it generates false alarms. The fix is to find the user-facing promise and pin only that.
+
+        - question: |
+            **(Spaced review — Steps 1–6, the integration question)** Imagine you're writing an e2e test for a new feature, **before any code exists**. Which is the most useful first step?
+          type: single
+          options:
+            - "Open the Playwright codegen tool and click through a planned flow"
+            - "Read the spec, then write a Spec Card before any test code: behavior, allowed implementation changes, required failures, locator contract, oracle"
+            - "Look at existing tests for similar features and copy the locator and assertion patterns"
+            - "Write the assertion first, then work backward to the actions"
+          correct_index: 1
+          option_feedback:
+            0: "Codegen records *clicks* — it doesn't know your spec. The result is a click-script test, exactly the anti-pattern Step 1 introduced. Codegen is useful as a starting point for *mechanics*, but not for *design decisions*. The Spec Card comes first."
+            1: "Right. The Spec Card forces you to answer the load-bearing questions *before* you write code: what does this prove? What can change without breaking it? What changes must break it? Once you've answered those, the test almost writes itself — and it's robust by construction."
+            2: "Patterns from existing tests are useful style references, but copying without thinking about *this* feature's specific spec leads to the wrong specificity for *this* test. The Spec Card forces you to think feature-specifically."
+            3: "Working backward from the assertion is good practice for AAA structure, but only after you know *what* to assert. The Spec Card answers that — its Oracle field is what you'll assert."
+          explanation: |
+            The Spec Card is the central artifact this tutorial built up to. Every test should start with one — even a small one written in 30 seconds. The cost of writing it is small; the cost of not writing it is the brittle/loose tests you've been learning to avoid.
+
