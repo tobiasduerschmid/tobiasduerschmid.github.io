@@ -576,17 +576,37 @@ body.dark-mode #uml-pg-status {
 
     textarea.addEventListener('input', scheduleRender);
 
-    // Download SVG
+    // Download SVG — produce a self-contained, portable file that renders
+    // correctly in PowerPoint, Word, Inkscape, browsers, and other SVG
+    // consumers. The renderer already inlines fills/strokes and uses SVG 1.1
+    // filter primitives (no feDropShadow); here we strip CSS that only
+    // makes sense in an HTML-embedded SVG and remove any in-page transform
+    // applied by zoom/pan.
     downloadBtn.addEventListener('click', function () {
       var svg = output.querySelector('svg');
       if (!svg) return;
 
-      // Clone and ensure standalone SVG has XML namespace
       var clone = svg.cloneNode(true);
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       if (!clone.getAttribute('xmlns:xlink')) {
         clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       }
+
+      // The in-page renderer sets `style="font-family: ...; max-width: 100%;
+      // height: auto;"` so the SVG flows nicely inside the article. The
+      // last two declarations are HTML layout hints that some renderers
+      // (notably PowerPoint) misinterpret; keep only `font-family`.
+      var rootStyle = clone.getAttribute('style') || '';
+      var fontMatch = rootStyle.match(/font-family\s*:\s*[^;]+/i);
+      if (fontMatch) {
+        clone.setAttribute('style', fontMatch[0] + ';');
+      } else {
+        clone.removeAttribute('style');
+      }
+
+      // Drop any inline transform from interactive zoom/pan that lives on
+      // the root SVG so the export reflects the diagram's intrinsic size.
+      clone.style.removeProperty('transform');
 
       var serializer = new XMLSerializer();
       var svgStr = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(clone);
