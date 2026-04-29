@@ -6757,7 +6757,7 @@
     var measureNode = this._umlMeasureTextNode;
 
     var measurements = {};
-    function measure(text, bold, fontSize) {
+    function measureOne(text, bold, fontSize) {
       if (text == null || text === '' || fontSize == null) return;
       var key = (bold ? 'B' : 'R') + '|' + fontSize + '|' + (ff || '') + '|' + text;
       if (measurements[key] !== undefined) return;
@@ -6777,6 +6777,17 @@
       var svgW = measureNode.getComputedTextLength();
       var canvasW = UMLShared.textWidth(text, bold, fontSize, ff);
       measurements[key] = Math.max(svgW, canvasW);
+    }
+
+    function measure(text, bold, fontSize) {
+      measureOne(text, bold, fontSize);
+      // The class renderer increases typography slightly for dense diagrams.
+      // Pre-measure the possible bumped sizes too so worker layout still uses
+      // the same rendered SVG metrics as the main thread.
+      if (diagramType === 'class' && fontSize != null) {
+        measureOne(text, bold, fontSize + 1);
+        measureOne(text, bold, fontSize + 2);
+      }
     }
 
     var parsed;
