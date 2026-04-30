@@ -384,7 +384,9 @@ steps:
 
       ### 📦 Commit your progress
 
-      Before moving on, lock this step into the safety net. In the embedded terminal:
+      🔍 **Before you commit, glance at the gutter.** The `+`/`~`/`-` markers in the left margin of each editor pane show what changed *since your last commit* (the RED step). The diff should be exactly the production code you just wrote — nothing else. If you see surprises, investigate before staging.
+
+      Then, in the embedded terminal:
 
       ```bash
       git add scorer.py test_scorer.py && git commit -m "GREEN: empty BattleReport with zero damage"
