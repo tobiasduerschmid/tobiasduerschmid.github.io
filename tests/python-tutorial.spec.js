@@ -2,7 +2,6 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
-  passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
 } = require('./tutorial-helpers');
@@ -36,6 +35,26 @@ async function clickRun(page) {
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
   await runBtn.click();
   await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+}
+
+/**
+ * Pyodide + linter + debugger tutorials need background work (pyflakes
+ * micropip-install on first lint, applySolution's fire-and-forget cache-clear
+ * `runCode`) to settle before the test button fires its own `runCode` — otherwise
+ * the worker's `_running` guard rejects the test code or its `loadPackagesFromImports`
+ * queues behind the in-flight micropip install. Running the active file first
+ * also primes any imports the solution declares. Same shape as the TDD and
+ * Testing Foundations specs.
+ */
+async function passCurrentStepTestsPython(page, timeout = TEST_RUN_TIMEOUT) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await page.evaluate(() => window._tutorial.applySolution());
+  await page.waitForTimeout(1_000);
+  await clickRun(page);
+  await page.waitForTimeout(500);
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
 }
 
 // =============================================================================
@@ -131,7 +150,7 @@ test.describe.serial('Python Tutorial', () => {
   // --- Quiz flow (also unlocks step 2 for the navigation test) ---
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
-    await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+    await passCurrentStepTestsPython(page, TEST_RUN_TIMEOUT);
     await page.evaluate(() => {
       const quiz = window._tutorial.steps[0].quiz;
       quiz.shuffle = false;
@@ -221,7 +240,7 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsPython(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }
