@@ -958,6 +958,101 @@ SmartHomeHub --> Sprinkler : commands
     expect(stats.crossingCount === 0 || stats.bridgeCount >= stats.crossingCount).toBe(true);
   });
 
+  test('odd inheritance fanouts center the middle subclass under the parent', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      const src = `@startuml
+interface Command {
+  +execute(): void
+  +undo(): void
+}
+class LightOnCommand {
+  -light: Light
+  +execute(): void
+  +undo(): void
+}
+class LightOffCommand {
+  -light: Light
+  +execute(): void
+  +undo(): void
+}
+class NoCommand {
+  +execute(): void
+  +undo(): void
+}
+LightOnCommand ..|> Command
+LightOffCommand ..|> Command
+NoCommand ..|> Command
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1300px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, centerDelta: null, hasStraightStem: false };
+      }
+
+      const texts = Array.from(svg.querySelectorAll('text'));
+      const rects = Array.from(svg.querySelectorAll('rect'));
+
+      function classRect(label) {
+        const text = texts.find((node) => (node.textContent || '').trim() === label);
+        if (!text) return null;
+        const tb = /** @type {SVGGraphicsElement} */ (text).getBBox();
+        let best = null;
+        let bestArea = Number.POSITIVE_INFINITY;
+        for (const rect of rects) {
+          const rb = /** @type {SVGGraphicsElement} */ (rect).getBBox();
+          const contains =
+            tb.x >= rb.x - 0.5 && tb.x + tb.width <= rb.x + rb.width + 0.5 &&
+            tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
+          if (!contains) continue;
+          const area = rb.width * rb.height;
+          if (area < bestArea) { bestArea = area; best = rb; }
+        }
+        return best;
+      }
+
+      const parent = classRect('Command');
+      const middle = classRect('LightOffCommand');
+      if (!parent || !middle) {
+        document.body.removeChild(host);
+        return { hasSvg: true, centerDelta: null, hasStraightStem: false };
+      }
+
+      const parentCx = parent.x + parent.width / 2;
+      const middleCx = middle.x + middle.width / 2;
+      const centerDelta = Math.abs(parentCx - middleCx);
+      const hasStraightStem = Array.from(svg.querySelectorAll('line')).some((line) => {
+        if ((line.getAttribute('stroke') || '') !== '#444') return false;
+        if (!line.hasAttribute('stroke-dasharray')) return false;
+        const x1 = Number(line.getAttribute('x1'));
+        const x2 = Number(line.getAttribute('x2'));
+        const y1 = Number(line.getAttribute('y1'));
+        const y2 = Number(line.getAttribute('y2'));
+        if (Math.abs(x1 - x2) > 0.5) return false;
+        if (Math.abs(x1 - middleCx) > 1.5) return false;
+        return Math.abs(Math.max(y1, y2) - middle.y) <= 2.5;
+      });
+
+      document.body.removeChild(host);
+      return { hasSvg: true, centerDelta, hasStraightStem };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.centerDelta).not.toBeNull();
+    expect(stats.centerDelta).toBeLessThanOrEqual(1);
+    expect(stats.hasStraightStem).toBe(true);
+  });
+
   test('class labels, note connectors, and aggregation diamonds stay readable', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
