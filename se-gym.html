@@ -59,7 +59,7 @@ layout: sebook
           <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
             <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
             <div style="display: inline-flex; align-items: center; gap: 12px;">
-              <input type="number" id="max-cards" value="50" min="1" max="9999">
+              <input type="number" id="max-cards" value="50" min="0" max="9999">
               <button id="start-workout-btn" class="gym-btn primary" disabled>Start Workout</button>
             </div>
           </div>
@@ -1825,7 +1825,7 @@ layout: sebook
         }
 
         // Update summary and start button
-        var maxCards = parseInt(maxCardsInput.value) || 20;
+        var maxCards = Math.max(0, isNaN(parseInt(maxCardsInput.value)) ? 20 : parseInt(maxCardsInput.value));
         var drawCount = Math.min(maxCards, totalCards);
         if (gym.length > 0 || (difficultInGym && hasDifficult)) {
           gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
@@ -2065,7 +2065,7 @@ layout: sebook
 
         shuffleArray(cards);
 
-        var maxCards = parseInt(maxCardsInput.value) || 20;
+        var maxCards = Math.max(0, isNaN(parseInt(maxCardsInput.value)) ? 20 : parseInt(maxCardsInput.value));
         if (cards.length > maxCards) {
           cards = cards.slice(0, maxCards);
         }

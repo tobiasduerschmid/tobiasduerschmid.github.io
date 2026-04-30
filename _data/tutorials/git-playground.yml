@@ -15,7 +15,7 @@ setup_commands:
   - "git config --global init.defaultBranch main"
   - "git config --global core.pager cat"
   - "git config --global pull.rebase false"
-  - "mkdir myproject && cd myproject"
+  - "cd /tutorial && mkdir myproject && cd myproject"
 
 steps:
   - title: "Build This Git Graph"
