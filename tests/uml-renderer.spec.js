@@ -54,6 +54,68 @@ deactivate b
     expect(stats.explicit).toBe(1);
   });
 
+  test('sequence first message has clear space below participant heads', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLSequenceDiagram
+      ).render(host, `@startuml
+participant atm: ATM
+participant bank: BankServer
+atm -> bank: withdraw(amount)
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { lineGap: null, labelGap: null };
+      }
+
+      const participantBottom = Math.max(...Array.from(svg.querySelectorAll('rect.uml-node-shadow'))
+        .map((rect) => ({
+          y: Number(rect.getAttribute('y')),
+          height: Number(rect.getAttribute('height')),
+        }))
+        .filter((rect) => rect.y === 20 && rect.height >= 35)
+        .map((rect) => rect.y + rect.height));
+
+      const firstMessageLine = Array.from(svg.querySelectorAll('line'))
+        .map((line) => ({
+          y1: Number(line.getAttribute('y1')),
+          y2: Number(line.getAttribute('y2')),
+          x1: Number(line.getAttribute('x1')),
+          x2: Number(line.getAttribute('x2')),
+          dash: line.getAttribute('stroke-dasharray') || '',
+        }))
+        .filter((line) => Math.abs(line.y1 - line.y2) < 0.1 && Math.abs(line.x2 - line.x1) > 40 && !line.dash)
+        .sort((a, b) => a.y1 - b.y1)[0];
+
+      const label = Array.from(svg.querySelectorAll('text'))
+        .find((text) => (text.textContent || '').trim() === 'withdraw(amount)');
+      const labelBox = label ? label.getBBox() : null;
+
+      const result = {
+        lineGap: firstMessageLine ? firstMessageLine.y1 - participantBottom : null,
+        labelGap: labelBox ? labelBox.y - participantBottom : null,
+      };
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.lineGap).not.toBeNull();
+    expect(stats.labelGap).not.toBeNull();
+    expect(stats.lineGap).toBeGreaterThanOrEqual(25);
+    expect(stats.labelGap).toBeGreaterThanOrEqual(4);
+  });
+
   test('short sequence activations close before following fragments', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
@@ -1461,10 +1523,11 @@ Squeak ..|> QuackBehavior
             return false;
           }));
           duckDiamondClassInteriorOverlaps = duckDiamonds.map((d) => {
-            if (d.side === 'right') return d.minX < duckBox.r - 1.5;
-            if (d.side === 'left') return d.maxX > duckBox.l + 1.5;
-            if (d.side === 'top') return d.maxY > duckBox.t + 1.5;
-            return d.minY < duckBox.b - 1.5;
+            const minMarkerGap = 2;
+            if (d.side === 'right') return d.minX < duckBox.r + minMarkerGap;
+            if (d.side === 'left') return d.maxX > duckBox.l - minMarkerGap;
+            if (d.side === 'top') return d.maxY > duckBox.t - minMarkerGap;
+            return d.minY < duckBox.b + minMarkerGap;
           });
         }
       }
