@@ -3319,6 +3319,7 @@ end note
         routeBoxHits: [],
         routeCount: 0,
         dependencyLaneYs: [],
+        dependencyStartXs: [],
       };
       if (!svg) { document.body.removeChild(host); return result; }
 
@@ -3442,6 +3443,7 @@ end note
         if ((polyline.getAttribute('stroke') || '') !== '#444') continue;
         if (polyline.getAttribute('stroke-dasharray') !== '8,4') continue;
         const points = parsePoints(polyline.getAttribute('points') || '');
+        if (points.length) result.dependencyStartXs.push(Math.round(points[0].x));
         let best = null;
         for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
           const a = points[pointIndex], b = points[pointIndex + 1];
@@ -3474,6 +3476,10 @@ end note
     expect(stats.routeCount).toBeGreaterThanOrEqual(10);
     expect(stats.routeBoxHits, `Routes cross model elements: ${(stats.routeBoxHits || []).join(', ')}`).toEqual([]);
     expect(new Set(stats.dependencyLaneYs).size).toBeGreaterThanOrEqual(4);
+    const dependencyStartXs = (stats.dependencyStartXs || []).slice().sort((a, b) => a - b);
+    expect(dependencyStartXs.length).toBeGreaterThanOrEqual(4);
+    expect(dependencyStartXs[1] - dependencyStartXs[0]).toBeGreaterThanOrEqual(12);
+    expect(dependencyStartXs[3] - dependencyStartXs[2]).toBeGreaterThanOrEqual(12);
 
     const xs = stats.xs;
     const ys = stats.ys;
