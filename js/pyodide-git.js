@@ -552,6 +552,89 @@ function _toRel(dir, abs) {
 }
 
 function gitRun(id, line, cwd, dir) {
+  // Split on shell sequencing operators (`&&`, `||`, `;`) before doing
+  // anything else. Each segment is then dispatched to _gitRunSingle in
+  // sequence, with the operator deciding whether to run the next segment
+  // based on the previous segment's exit code:
+  //   `cmd1 && cmd2`  — run cmd2 only if cmd1 succeeded (exit 0)
+  //   `cmd1 || cmd2`  — run cmd2 only if cmd1 failed (exit != 0)
+  //   `cmd1 ;  cmd2`  — run cmd2 unconditionally
+  // Quoted operators are ignored (`echo "a && b"` is one segment).
+  // Pipes (`|`) and subshells are still unsupported.
+  var chain = _splitChain(String(line || '').trim());
+  if (chain.length <= 1) {
+    return _gitRunSingle(id, line, cwd, dir);
+  }
+
+  var combinedStdout  = '';
+  var combinedStderr  = '';
+  var combinedMutated = [];
+  var lastExit        = 0;
+
+  function runNext(index) {
+    if (index >= chain.length) {
+      return _gitReply(id, combinedStdout, combinedStderr, lastExit, combinedMutated);
+    }
+    var step = chain[index];
+    // Skip-by-operator: && short-circuits on failure; || short-circuits on success.
+    if (step.operator === '&&' && lastExit !== 0) return runNext(index + 1);
+    if (step.operator === '||' && lastExit === 0) return runNext(index + 1);
+
+    var captureId = 'chain_' + Date.now() + '_' + index + '_' + Math.random();
+    _chainCaptures[captureId] = function (stdout, stderr, exitCode, mutatedPaths) {
+      delete _chainCaptures[captureId];
+      combinedStdout += (stdout || '');
+      combinedStderr += (stderr || '');
+      lastExit = (typeof exitCode === 'number') ? exitCode : 0;
+      if (mutatedPaths && mutatedPaths.length) {
+        combinedMutated = combinedMutated.concat(mutatedPaths);
+      }
+      runNext(index + 1);
+    };
+    _gitRunSingle(captureId, step.segment, cwd, dir);
+  }
+
+  runNext(0);
+}
+
+// Split a command line on `&&`, `||`, `;` (respecting single/double quotes).
+// Returns [{operator, segment}] where operator is null for the first segment.
+function _splitChain(line) {
+  var segments = [];
+  var cur = '';
+  var inS = false, inD = false;
+  var pendingOp = null;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (inS) {
+      if (ch === "'") inS = false;
+      cur += ch; continue;
+    }
+    if (inD) {
+      if (ch === '"') inD = false;
+      cur += ch; continue;
+    }
+    if (ch === "'") { inS = true;  cur += ch; continue; }
+    if (ch === '"') { inD = true;  cur += ch; continue; }
+    if (ch === '&' && line[i + 1] === '&') {
+      segments.push({ operator: pendingOp, segment: cur.trim() });
+      cur = ''; pendingOp = '&&'; i++; continue;
+    }
+    if (ch === '|' && line[i + 1] === '|') {
+      segments.push({ operator: pendingOp, segment: cur.trim() });
+      cur = ''; pendingOp = '||'; i++; continue;
+    }
+    if (ch === ';') {
+      segments.push({ operator: pendingOp, segment: cur.trim() });
+      cur = ''; pendingOp = ';'; continue;
+    }
+    cur += ch;
+  }
+  segments.push({ operator: pendingOp, segment: cur.trim() });
+  return segments.filter(function (s) { return s.segment.length > 0; });
+}
+
+function _gitRunSingle(id, line, cwd, dir) {
   _ensureGit(dir).then(function () {
     // Parse shell redirects (> and >>) before tokenising.
     // Supports:   cmd arg > file   and   cmd arg >> file
@@ -679,11 +762,19 @@ function _withRedirect(id, file, append, cwd, dir, fn) {
   });
 }
 
-// Override _gitReply to intercept redirect captures.
+// Override _gitReply to intercept redirect captures and chain captures.
+// Both are non-terminal: redirects siphon stdout into a file; chain captures
+// accumulate output across `&&`/`||`/`;`-separated segments before the final
+// reply goes back to the terminal.
+var _chainCaptures = {};
 var _gitReplyOrig = _gitReply;
 _gitReply = function (id, stdout, stderr, exitCode, mutatedPaths) {
   if (_redirectCaptures[id]) {
     _redirectCaptures[id](stdout, stderr, exitCode, mutatedPaths);
+    return;
+  }
+  if (_chainCaptures[id]) {
+    _chainCaptures[id](stdout, stderr, exitCode, mutatedPaths);
     return;
   }
   _gitReplyOrig(id, stdout, stderr, exitCode, mutatedPaths);
