@@ -54,6 +54,68 @@ deactivate b
     expect(stats.explicit).toBe(1);
   });
 
+  test('sequence first message has clear space below participant heads', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
+
+    const stats = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLSequenceDiagram
+      ).render(host, `@startuml
+participant atm: ATM
+participant bank: BankServer
+atm -> bank: withdraw(amount)
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { lineGap: null, labelGap: null };
+      }
+
+      const participantBottom = Math.max(...Array.from(svg.querySelectorAll('rect.uml-node-shadow'))
+        .map((rect) => ({
+          y: Number(rect.getAttribute('y')),
+          height: Number(rect.getAttribute('height')),
+        }))
+        .filter((rect) => rect.y === 20 && rect.height >= 35)
+        .map((rect) => rect.y + rect.height));
+
+      const firstMessageLine = Array.from(svg.querySelectorAll('line'))
+        .map((line) => ({
+          y1: Number(line.getAttribute('y1')),
+          y2: Number(line.getAttribute('y2')),
+          x1: Number(line.getAttribute('x1')),
+          x2: Number(line.getAttribute('x2')),
+          dash: line.getAttribute('stroke-dasharray') || '',
+        }))
+        .filter((line) => Math.abs(line.y1 - line.y2) < 0.1 && Math.abs(line.x2 - line.x1) > 40 && !line.dash)
+        .sort((a, b) => a.y1 - b.y1)[0];
+
+      const label = Array.from(svg.querySelectorAll('text'))
+        .find((text) => (text.textContent || '').trim() === 'withdraw(amount)');
+      const labelBox = label ? label.getBBox() : null;
+
+      const result = {
+        lineGap: firstMessageLine ? firstMessageLine.y1 - participantBottom : null,
+        labelGap: labelBox ? labelBox.y - participantBottom : null,
+      };
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.lineGap).not.toBeNull();
+    expect(stats.labelGap).not.toBeNull();
+    expect(stats.lineGap).toBeGreaterThanOrEqual(25);
+    expect(stats.labelGap).toBeGreaterThanOrEqual(4);
+  });
+
   test('short sequence activations close before following fragments', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
@@ -655,9 +717,13 @@ Content "0..*" -- "1..*" Genre : classifiedBy
       const route = Array.from(svg.querySelectorAll('polyline'))
         .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
         .find((points) =>
-          points.length === 3 &&
-          Math.abs(points[0].y - points[1].y) <= tol &&
-          Math.abs(points[1].x - points[2].x) <= tol
+          points.length >= 3 &&
+          (
+            (Math.abs(points[0].y - points[1].y) <= tol &&
+              Math.abs(points[1].x - points[2].x) <= tol) ||
+            (Math.abs(points[0].x - points[1].x) <= tol &&
+              Math.abs(points[1].y - points[2].y) <= tol)
+          )
         );
 
       const texts = Array.from(svg.querySelectorAll('text'));
@@ -681,7 +747,7 @@ Content "0..*" -- "1..*" Genre : classifiedBy
         foundRoute: true,
         foundMultiplicity: true,
         foundLabel: true,
-        elbowY: route[0].y,
+        elbowY: Math.abs(route[0].x - route[1].x) <= tol ? route[1].y : route[0].y,
         multiplicityCenterY: multBox.y + multBox.height / 2,
         labelCenterY: labelBox.y + labelBox.height / 2,
       };
@@ -982,9 +1048,19 @@ class NoCommand {
   +execute(): void
   +undo(): void
 }
+class Light {
+  +on(): void
+  +off(): void
+}
 LightOnCommand ..|> Command
 LightOffCommand ..|> Command
 NoCommand ..|> Command
+LightOnCommand --> Light : on off
+LightOffCommand --> Light : off on
+note bottom of NoCommand
+  Null Object: every slot has
+  safe behavior before setup.
+end note
 @enduml`;
 
       const host = document.createElement('div');
@@ -1008,7 +1084,7 @@ NoCommand ..|> Command
         if (!text) return null;
         const tb = /** @type {SVGGraphicsElement} */ (text).getBBox();
         let best = null;
-        let bestArea = Number.POSITIVE_INFINITY;
+        let bestArea = -1;
         for (const rect of rects) {
           const rb = /** @type {SVGGraphicsElement} */ (rect).getBBox();
           const contains =
@@ -1016,7 +1092,7 @@ NoCommand ..|> Command
             tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
           if (!contains) continue;
           const area = rb.width * rb.height;
-          if (area < bestArea) { bestArea = area; best = rb; }
+          if (area > bestArea) { bestArea = area; best = rb; }
         }
         return best;
       }
@@ -1051,6 +1127,130 @@ NoCommand ..|> Command
     expect(stats.centerDelta).not.toBeNull();
     expect(stats.centerDelta).toBeLessThanOrEqual(1);
     expect(stats.hasStraightStem).toBe(true);
+  });
+
+  test('mixed state hierarchies keep the median subclass aligned with the interface', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      const src = `@startuml
+layout landscape
+class GumballMachine {
+  -state: State
+  +insertQuarter(): void
+  +turnCrank(): void
+  +releaseBall(): void
+  +setState(state: State): void
+}
+interface State {
+  +insertQuarter(machine: GumballMachine): void
+  +turnCrank(machine: GumballMachine): void
+}
+class NoQuarterState
+class HasQuarterState
+class SoldState
+GumballMachine --> State : delegates
+NoQuarterState ..|> State
+HasQuarterState ..|> State
+SoldState ..|> State
+NoQuarterState --> GumballMachine : setState(...)
+HasQuarterState --> GumballMachine : releaseBall(), setState(...)
+SoldState --> GumballMachine : setState(...)
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1500px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, centerDelta: null, routeRatios: [] };
+      }
+
+      const texts = Array.from(svg.querySelectorAll('text'));
+      const rects = Array.from(svg.querySelectorAll('rect'));
+
+      function classRect(label) {
+        const text = texts.find((node) => (node.textContent || '').trim() === label);
+        if (!text) return null;
+        const tb = /** @type {SVGGraphicsElement} */ (text).getBBox();
+        let best = null;
+        let bestArea = -1;
+        for (const rect of rects) {
+          const rb = /** @type {SVGGraphicsElement} */ (rect).getBBox();
+          const contains =
+            tb.x >= rb.x - 0.5 && tb.x + tb.width <= rb.x + rb.width + 0.5 &&
+            tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
+          if (!contains) continue;
+          const area = rb.width * rb.height;
+          if (area > bestArea) { bestArea = area; best = rb; }
+        }
+        return best;
+      }
+
+      function parsePoints(raw) {
+        return (raw || '').trim().split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map(([x, y]) => ({ x, y }));
+      }
+
+      function routeLength(points) {
+        let len = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+          len += Math.abs(points[i + 1].x - points[i].x) + Math.abs(points[i + 1].y - points[i].y);
+        }
+        return len;
+      }
+
+      const state = classRect('State');
+      const middle = classRect('HasQuarterState');
+      const machine = classRect('GumballMachine');
+      if (!state || !middle || !machine) {
+        document.body.removeChild(host);
+        return { hasSvg: true, centerDelta: null, routeRatios: [] };
+      }
+
+      const centerDelta = Math.abs((state.x + state.width / 2) - (middle.x + middle.width / 2));
+      const routeRatios = [];
+      for (const routeEl of Array.from(svg.querySelectorAll('polyline, line'))) {
+        if ((routeEl.getAttribute('stroke') || '') !== '#444') continue;
+        if (routeEl.hasAttribute('stroke-dasharray')) continue;
+        let points = [];
+        if (routeEl.tagName.toLowerCase() === 'line') {
+          points = [
+            { x: Number(routeEl.getAttribute('x1')), y: Number(routeEl.getAttribute('y1')) },
+            { x: Number(routeEl.getAttribute('x2')), y: Number(routeEl.getAttribute('y2')) },
+          ];
+        } else {
+          points = parsePoints(routeEl.getAttribute('points') || '');
+        }
+        if (points.length < 2) continue;
+        const start = points[0];
+        const end = points[points.length - 1];
+        const startsAtConcrete = start.y >= middle.y - 3 &&
+          start.y <= middle.y + middle.height + 3;
+        const endsAtMachine = end.x >= machine.x - 3 && end.x <= machine.x + machine.width + 3 &&
+          end.y >= machine.y - 3 && end.y <= machine.y + machine.height + 3;
+        if (!startsAtConcrete || !endsAtMachine) continue;
+        const direct = Math.abs(start.x - end.x) + Math.abs(start.y - end.y);
+        if (direct > 0) routeRatios.push(routeLength(points) / direct);
+      }
+
+      document.body.removeChild(host);
+      return { hasSvg: true, centerDelta, routeRatios };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.centerDelta).not.toBeNull();
+    expect(stats.centerDelta).toBeLessThanOrEqual(1);
+    expect(stats.routeRatios.length).toBeGreaterThanOrEqual(1);
+    expect(Math.max(...stats.routeRatios)).toBeLessThan(2.75);
   });
 
   test('class labels, note connectors, and aggregation diamonds stay readable', async ({ page }) => {
@@ -1095,6 +1295,11 @@ NoCommand ..|> Command
           if (area > bestArea) { bestArea = area; best = rb; }
         }
         return best;
+      }
+
+      function rectsOverlap(a, b, pad = 0) {
+        return a.r + pad > b.l && a.l - pad < b.r &&
+          a.b + pad > b.t && a.t - pad < b.b;
       }
 
       const mediatorSrc = `@startuml
@@ -1228,6 +1433,7 @@ Squeak ..|> QuackBehavior
       let duckDiamondOrientations = [];
       let duckDiamondConnections = [];
       let duckDiamondInteriorHits = [];
+      let duckDiamondClassInteriorOverlaps = [];
       if (strategy.svg) {
         const duckBox = textBox(strategy.svg, 'Duck');
         if (duckBox) {
@@ -1316,9 +1522,46 @@ Squeak ..|> QuackBehavior
             }
             return false;
           }));
+          duckDiamondClassInteriorOverlaps = duckDiamonds.map((d) => {
+            const minMarkerGap = 2;
+            if (d.side === 'right') return d.minX < duckBox.r + minMarkerGap;
+            if (d.side === 'left') return d.maxX > duckBox.l - minMarkerGap;
+            if (d.side === 'top') return d.maxY > duckBox.t - minMarkerGap;
+            return d.minY < duckBox.b + minMarkerGap;
+          });
         }
       }
       document.body.removeChild(strategy.host);
+
+      const noteDiamondSrc = `@startuml
+layout horizontal
+class RemoteControl {
+  -slot: Command
+}
+interface Command {
+  +execute(): void
+}
+RemoteControl o--> Command : stores
+note right of RemoteControl
+  The invoker does not know
+  which receiver method runs.
+end note
+@enduml`;
+      const noteDiamond = render(noteDiamondSrc);
+      let noteAnchorDiamondOverlaps = [];
+      if (noteDiamond.svg) {
+        const diamonds = Array.from(noteDiamond.svg.querySelectorAll('polygon'))
+          .map((polygon) => parsePoints(polygon.getAttribute('points') || ''))
+          .filter((points) => points.length === 4)
+          .map((points) => {
+            const xs = points.map((p) => p.x);
+            const ys = points.map((p) => p.y);
+            return { l: Math.min(...xs), r: Math.max(...xs), t: Math.min(...ys), b: Math.max(...ys) };
+          });
+        const anchors = Array.from(noteDiamond.svg.querySelectorAll('circle.uml-note-anchor')).map((circle) => bbox(circle));
+        noteAnchorDiamondOverlaps = anchors.map((anchor) => diamonds.some((diamond) => rectsOverlap(anchor, diamond, 2)));
+      }
+      document.body.removeChild(noteDiamond.host);
 
       return {
         labelsInside,
@@ -1328,6 +1571,8 @@ Squeak ..|> QuackBehavior
         duckDiamondOrientations,
         duckDiamondConnections,
         duckDiamondInteriorHits,
+        duckDiamondClassInteriorOverlaps,
+        noteAnchorDiamondOverlaps,
       };
     });
 
@@ -1341,6 +1586,9 @@ Squeak ..|> QuackBehavior
     expect(stats.duckDiamondConnections.length).toBeGreaterThanOrEqual(2);
     expect(stats.duckDiamondConnections.every(Boolean)).toBe(true);
     expect(stats.duckDiamondInteriorHits.every((hit) => !hit)).toBe(true);
+    expect(stats.duckDiamondClassInteriorOverlaps.every((hit) => !hit)).toBe(true);
+    expect(stats.noteAnchorDiamondOverlaps.length).toBeGreaterThanOrEqual(1);
+    expect(stats.noteAnchorDiamondOverlaps.every((hit) => !hit)).toBe(true);
   });
 
   test('class note routing in observer layouts stays clear of relationship routes', async ({ page }) => {
