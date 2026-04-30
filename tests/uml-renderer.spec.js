@@ -958,6 +958,473 @@ SmartHomeHub --> Sprinkler : commands
     expect(stats.crossingCount === 0 || stats.bridgeCount >= stats.crossingCount).toBe(true);
   });
 
+  test('class labels, note connectors, and aggregation diamonds stay readable', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      function render(src) {
+        const host = document.createElement('div');
+        host.style.width = '1300px';
+        host.style.position = 'absolute';
+        host.style.left = '-10000px';
+        document.body.appendChild(host);
+        /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+        const svg = host.querySelector('svg');
+        return { host, svg };
+      }
+
+      function parsePoints(raw) {
+        return (raw || '').trim().split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map(([x, y]) => ({ x, y }));
+      }
+
+      function bbox(el) {
+        const b = /** @type {SVGGraphicsElement} */ (el).getBBox();
+        return { l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height, w: b.width, h: b.height };
+      }
+
+      function textBox(svg, label) {
+        const text = Array.from(svg.querySelectorAll('text')).find((node) => (node.textContent || '').trim() === label);
+        if (!text) return null;
+        const tb = bbox(text);
+        let best = null;
+        let bestArea = -1;
+        for (const rect of Array.from(svg.querySelectorAll('rect'))) {
+          const rb = bbox(rect);
+          const contains = tb.l >= rb.l - 1 && tb.r <= rb.r + 1 && tb.t >= rb.t - 26 && tb.b <= rb.b + 90;
+          if (!contains) continue;
+          const area = rb.w * rb.h;
+          if (area > bestArea) { bestArea = area; best = rb; }
+        }
+        return best;
+      }
+
+      const mediatorSrc = `@startuml
+layout landscape
+interface SmartHomeMediator {
+  +notify(sender: Object, event: String): void
+}
+class SmartHomeHub
+class AlarmClock {
+  -mediator: SmartHomeMediator
+}
+class CoffeeMaker {
+  -mediator: SmartHomeMediator
+}
+class Calendar {
+  -mediator: SmartHomeMediator
+  +isWeekday(): bool
+}
+class Sprinkler {
+  -mediator: SmartHomeMediator
+}
+SmartHomeHub ..|> SmartHomeMediator
+AlarmClock --> SmartHomeMediator
+CoffeeMaker --> SmartHomeMediator
+Calendar --> SmartHomeMediator
+Sprinkler --> SmartHomeMediator
+SmartHomeHub --> CoffeeMaker : commands
+SmartHomeHub --> Calendar : queries
+SmartHomeHub --> Sprinkler : commands
+@enduml`;
+      const mediator = render(mediatorSrc);
+      const labelsInside = [];
+      if (mediator.svg) {
+        const vb = (mediator.svg.getAttribute('viewBox') || '0 0 0 0').split(/\s+/).map(Number);
+        for (const text of Array.from(mediator.svg.querySelectorAll('text'))) {
+          const value = (text.textContent || '').trim();
+          if (value !== 'commands' && value !== 'queries') continue;
+          const b = bbox(text);
+          labelsInside.push(b.l >= vb[0] - 0.5 && b.r <= vb[0] + vb[2] + 0.5 &&
+            b.t >= vb[1] - 0.5 && b.b <= vb[1] + vb[3] + 0.5);
+        }
+      }
+      document.body.removeChild(mediator.host);
+
+      const noteSrc = `@startuml
+class Account {
+  +owner: String
+  +balance: double
+  +deposit(amount: double)
+  +withdraw(amount: double)
+}
+note right of Account.owner: Must not be \`null\` or empty
+note right of Account.withdraw: Throws \`InsufficientFundsException\`
+@enduml`;
+      const note = render(noteSrc);
+      const noteConnectors = note.svg
+        ? Array.from(note.svg.querySelectorAll('polyline.uml-note-connector, line.uml-note-connector')).map((line) => {
+          if (line.tagName.toLowerCase() === 'line') {
+            return [
+              { x: Number(line.getAttribute('x1')), y: Number(line.getAttribute('y1')) },
+              { x: Number(line.getAttribute('x2')), y: Number(line.getAttribute('y2')) },
+            ];
+          }
+          return parsePoints(line.getAttribute('points') || '');
+        })
+        : [];
+      const noteConnectorBoxHits = [];
+      if (note.svg) {
+        const accountBox = textBox(note.svg, 'Account');
+        function segmentHitsInterior(a, b, rect) {
+          if (!rect) return false;
+          const tol = 2.5;
+          if (Math.abs(a.y - b.y) < 1) {
+            const y = a.y;
+            if (y <= rect.t + tol || y >= rect.b - tol) return false;
+            const overlap = Math.min(Math.max(a.x, b.x), rect.r - tol) -
+              Math.max(Math.min(a.x, b.x), rect.l + tol);
+            return overlap > tol;
+          }
+          if (Math.abs(a.x - b.x) < 1) {
+            const x = a.x;
+            if (x <= rect.l + tol || x >= rect.r - tol) return false;
+            const overlap = Math.min(Math.max(a.y, b.y), rect.b - tol) -
+              Math.max(Math.min(a.y, b.y), rect.t + tol);
+            return overlap > tol;
+          }
+          return false;
+        }
+        for (let ci = 0; ci < noteConnectors.length; ci++) {
+          for (let pi = 0; pi < noteConnectors[ci].length - 1; pi++) {
+            if (segmentHitsInterior(noteConnectors[ci][pi], noteConnectors[ci][pi + 1], accountBox)) {
+              noteConnectorBoxHits.push(`${ci}:${pi}`);
+            }
+          }
+        }
+      }
+      document.body.removeChild(note.host);
+
+      const strategySrc = `@startuml
+layout landscape
+abstract class Duck {
+  - flyBehavior: FlyBehavior
+  - quackBehavior: QuackBehavior
+  + performFly(): void
+  + performQuack(): void
+  + setFlyBehavior(fb: FlyBehavior): void
+  + {abstract} display(): void
+}
+class MallardDuck
+class RubberDuck
+interface FlyBehavior {
+  + fly(): void
+}
+class FlyWithWings
+class FlyNullObject
+interface QuackBehavior {
+  + quack(): void
+}
+class Quack
+class Squeak
+MallardDuck --|> Duck
+RubberDuck --|> Duck
+Duck o--> FlyBehavior : flyBehavior
+Duck o--> QuackBehavior : quackBehavior
+FlyWithWings ..|> FlyBehavior
+FlyNullObject ..|> FlyBehavior
+Quack ..|> QuackBehavior
+Squeak ..|> QuackBehavior
+@enduml`;
+      const strategy = render(strategySrc);
+      let duckDiamondOrientations = [];
+      let duckDiamondConnections = [];
+      let duckDiamondInteriorHits = [];
+      if (strategy.svg) {
+        const duckBox = textBox(strategy.svg, 'Duck');
+        if (duckBox) {
+          const routeSegments = [];
+          for (const el of Array.from(strategy.svg.querySelectorAll('polyline, line'))) {
+            if ((el.getAttribute('stroke') || '') !== '#444') continue;
+            let points;
+            if (el.tagName.toLowerCase() === 'line') {
+              points = [
+                { x: Number(el.getAttribute('x1')), y: Number(el.getAttribute('y1')) },
+                { x: Number(el.getAttribute('x2')), y: Number(el.getAttribute('y2')) },
+              ];
+            } else {
+              points = parsePoints(el.getAttribute('points') || '');
+            }
+            for (let i = 0; i < points.length - 1; i++) {
+              routeSegments.push({ p0: points[i], p1: points[i + 1] });
+            }
+          }
+
+          const duckDiamonds = Array.from(strategy.svg.querySelectorAll('polygon'))
+            .map((polygon) => parsePoints(polygon.getAttribute('points') || ''))
+            .filter((points) => points.length === 4)
+            .map((points) => {
+              const xs = points.map((p) => p.x);
+              const ys = points.map((p) => p.y);
+              return {
+                cx: (Math.min(...xs) + Math.max(...xs)) / 2,
+                cy: (Math.min(...ys) + Math.max(...ys)) / 2,
+                w: Math.max(...xs) - Math.min(...xs),
+                h: Math.max(...ys) - Math.min(...ys),
+                minX: Math.min(...xs),
+                maxX: Math.max(...xs),
+                minY: Math.min(...ys),
+                maxY: Math.max(...ys),
+              };
+            })
+            .map((d) => {
+              const distances = [
+                { side: 'left', distance: Math.abs(d.cx - duckBox.l) },
+                { side: 'right', distance: Math.abs(d.cx - duckBox.r) },
+                { side: 'top', distance: Math.abs(d.cy - duckBox.t) },
+                { side: 'bottom', distance: Math.abs(d.cy - duckBox.b) },
+              ].sort((a, b) => a.distance - b.distance);
+              return { ...d, side: distances[0].side, distance: distances[0].distance };
+            })
+            .filter((d) => d.distance <= 34 &&
+              d.cx >= duckBox.l - 34 && d.cx <= duckBox.r + 34 &&
+              d.cy >= duckBox.t - 34 && d.cy <= duckBox.b + 34);
+          duckDiamondOrientations = duckDiamonds
+            .map((d) => d.side === 'left' || d.side === 'right' ? d.w > d.h : d.h > d.w);
+          duckDiamondConnections = duckDiamonds.map((d) => routeSegments.some((segment) => {
+            const a = segment.p0;
+            const b = segment.p1;
+            if (d.side === 'left' || d.side === 'right') {
+              if (Math.abs(a.y - b.y) >= 1 || Math.abs(a.y - d.cy) > 2.5) return false;
+              const minX = Math.min(a.x, b.x);
+              const maxX = Math.max(a.x, b.x);
+              const farTip = d.side === 'right' ? d.maxX : d.minX;
+              const outwardEnd = d.side === 'right' ? maxX : minX;
+              return Math.abs(minX - farTip) <= 5 || Math.abs(maxX - farTip) <= 5 ||
+                (d.side === 'right' ? outwardEnd > farTip + 8 : outwardEnd < farTip - 8);
+            }
+            if (Math.abs(a.x - b.x) >= 1 || Math.abs(a.x - d.cx) > 2.5) return false;
+            const minY = Math.min(a.y, b.y);
+            const maxY = Math.max(a.y, b.y);
+            const farTip = d.side === 'bottom' ? d.maxY : d.minY;
+            const outwardEnd = d.side === 'bottom' ? maxY : minY;
+            return Math.abs(minY - farTip) <= 5 || Math.abs(maxY - farTip) <= 5 ||
+              (d.side === 'bottom' ? outwardEnd > farTip + 8 : outwardEnd < farTip - 8);
+          }));
+          duckDiamondInteriorHits = duckDiamonds.map((d) => routeSegments.some((segment) => {
+            const a = segment.p0;
+            const b = segment.p1;
+            if (Math.abs(a.y - b.y) < 1) {
+              if (a.y <= d.minY + 2 || a.y >= d.maxY - 2) return false;
+              const overlap = Math.min(Math.max(a.x, b.x), d.maxX - 2) -
+                Math.max(Math.min(a.x, b.x), d.minX + 2);
+              return overlap > 1;
+            }
+            if (Math.abs(a.x - b.x) < 1) {
+              if (a.x <= d.minX + 2 || a.x >= d.maxX - 2) return false;
+              const overlap = Math.min(Math.max(a.y, b.y), d.maxY - 2) -
+                Math.max(Math.min(a.y, b.y), d.minY + 2);
+              return overlap > 1;
+            }
+            return false;
+          }));
+        }
+      }
+      document.body.removeChild(strategy.host);
+
+      return {
+        labelsInside,
+        noteConnectorCount: noteConnectors.length,
+        directNoteConnectors: noteConnectors.filter((points) => points.length === 2 && Math.abs(points[0].y - points[1].y) < 1).length,
+        noteConnectorBoxHits,
+        duckDiamondOrientations,
+        duckDiamondConnections,
+        duckDiamondInteriorHits,
+      };
+    });
+
+    expect(stats.labelsInside.length).toBeGreaterThanOrEqual(3);
+    expect(stats.labelsInside.every(Boolean)).toBe(true);
+    expect(stats.noteConnectorCount).toBe(2);
+    expect(stats.directNoteConnectors).toBe(2);
+    expect(stats.noteConnectorBoxHits).toEqual([]);
+    expect(stats.duckDiamondOrientations.length).toBeGreaterThanOrEqual(2);
+    expect(stats.duckDiamondOrientations.every(Boolean)).toBe(true);
+    expect(stats.duckDiamondConnections.length).toBeGreaterThanOrEqual(2);
+    expect(stats.duckDiamondConnections.every(Boolean)).toBe(true);
+    expect(stats.duckDiamondInteriorHits.every((hit) => !hit)).toBe(true);
+  });
+
+  test('class note routing in observer layouts stays clear of relationship routes', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      const src = `@startuml
+layout horizontal
+
+class NewsChannel {
+  -_subscribers: list[Subscriber]
+  -_latest_post: str
+  +follow(subscriber: Subscriber)
+  +unfollow(subscriber: Subscriber)
+  +publish_post(text: str)
+  +get_latest_post(): str
+  -_notify_subscribers()
+}
+
+abstract class Subscriber <<ABC>> {
+  +update()
+}
+
+class MobileApp {
+  -_channel: NewsChannel
+  +update()
+}
+
+class EmailDigest {
+  -_channel: NewsChannel
+  +update()
+}
+
+NewsChannel "1" -- "*" Subscriber : _subscribers
+MobileApp --|> Subscriber
+EmailDigest --|> Subscriber
+MobileApp --> NewsChannel : _channel
+EmailDigest --> NewsChannel : _channel
+
+note right of NewsChannel._notify_subscribers
+  for subscriber in self._subscribers:
+      subscriber.update()
+end note
+
+note bottom of MobileApp.update
+  post = self._channel.get_latest_post()
+end note
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1200px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, noteRouteCount: 0, relationRouteCount: 0, crossings: [] };
+      }
+
+      function parsePoints(raw) {
+        return (raw || '').trim().split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map(([x, y]) => ({ x, y }));
+      }
+
+      function segmentsConflict(a0, a1, b0, b1) {
+        const ah = Math.abs(a0.y - a1.y) < 1;
+        const av = Math.abs(a0.x - a1.x) < 1;
+        const bh = Math.abs(b0.y - b1.y) < 1;
+        const bv = Math.abs(b0.x - b1.x) < 1;
+        const tol = 2;
+        if (ah && bv) {
+          return b0.x > Math.min(a0.x, a1.x) + tol &&
+            b0.x < Math.max(a0.x, a1.x) - tol &&
+            a0.y > Math.min(b0.y, b1.y) + tol &&
+            a0.y < Math.max(b0.y, b1.y) - tol;
+        }
+        if (av && bh) return segmentsConflict(b0, b1, a0, a1);
+        if (ah && bh && Math.abs(a0.y - b0.y) < 1) {
+          const overlap = Math.min(Math.max(a0.x, a1.x), Math.max(b0.x, b1.x)) -
+            Math.max(Math.min(a0.x, a1.x), Math.min(b0.x, b1.x));
+          return overlap > 8;
+        }
+        if (av && bv && Math.abs(a0.x - b0.x) < 1) {
+          const overlap = Math.min(Math.max(a0.y, a1.y), Math.max(b0.y, b1.y)) -
+            Math.max(Math.min(a0.y, a1.y), Math.min(b0.y, b1.y));
+          return overlap > 8;
+        }
+        return false;
+      }
+
+      function routeSegments(route) {
+        const segments = [];
+        for (let i = 0; i < route.points.length - 1; i++) {
+          segments.push({ route: route.index, segment: i, p0: route.points[i], p1: route.points[i + 1] });
+        }
+        return segments;
+      }
+
+      const noteRoutes = Array.from(svg.querySelectorAll('polyline.uml-note-connector, line.uml-note-connector'))
+        .map((el, index) => {
+          if (el.tagName.toLowerCase() === 'line') {
+            return {
+              index,
+              points: [
+                { x: Number(el.getAttribute('x1')), y: Number(el.getAttribute('y1')) },
+                { x: Number(el.getAttribute('x2')), y: Number(el.getAttribute('y2')) },
+              ],
+            };
+          }
+          return { index, points: parsePoints(el.getAttribute('points') || '') };
+        })
+        .filter((route) => route.points.length >= 2);
+
+      const relationRoutes = [];
+      for (const el of Array.from(svg.querySelectorAll('polyline, line'))) {
+        if (el.classList.contains('uml-note-connector')) continue;
+        if ((el.getAttribute('stroke') || '') !== '#444') continue;
+        let points;
+        if (el.tagName.toLowerCase() === 'line') {
+          points = [
+            { x: Number(el.getAttribute('x1')), y: Number(el.getAttribute('y1')) },
+            { x: Number(el.getAttribute('x2')), y: Number(el.getAttribute('y2')) },
+          ];
+        } else {
+          points = parsePoints(el.getAttribute('points') || '');
+        }
+        if (points.length < 2) continue;
+        const xs = points.map((point) => point.x);
+        const ys = points.map((point) => point.y);
+        const smallDecoration = points.length <= 3 &&
+          Math.max(...xs) - Math.min(...xs) <= 28 &&
+          Math.max(...ys) - Math.min(...ys) <= 28;
+        if (smallDecoration) continue;
+        relationRoutes.push({ index: relationRoutes.length, points });
+      }
+
+      const noteSegments = noteRoutes.flatMap(routeSegments);
+      const relationSegments = relationRoutes.flatMap(routeSegments);
+      const noteVerticalSpans = noteRoutes.map((route) => {
+        const ys = route.points.map((point) => point.y);
+        return Math.max(...ys) - Math.min(...ys);
+      });
+      const crossings = [];
+      for (const noteSegment of noteSegments) {
+        for (const relationSegment of relationSegments) {
+          if (segmentsConflict(noteSegment.p0, noteSegment.p1, relationSegment.p0, relationSegment.p1)) {
+            crossings.push({
+              noteRoute: noteSegment.route,
+              noteSegment: noteSegment.segment,
+              relationRoute: relationSegment.route,
+              relationSegment: relationSegment.segment,
+            });
+          }
+        }
+      }
+
+      document.body.removeChild(host);
+      return {
+        hasSvg: true,
+        noteRouteCount: noteRoutes.length,
+        relationRouteCount: relationRoutes.length,
+        noteVerticalSpans,
+        crossings,
+      };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.noteRouteCount).toBe(2);
+    expect(stats.relationRouteCount).toBeGreaterThanOrEqual(5);
+    expect(Math.max(...stats.noteVerticalSpans)).toBeLessThan(90);
+    expect(stats.crossings, `Note connector crossings: ${JSON.stringify(stats.crossings)}`).toEqual([]);
+  });
+
   test('class associations avoid intermediate class boxes', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
@@ -1896,6 +2363,178 @@ PaymentService ..> NotificationService : sendReceipt
     expect(stats.ifaceLabelsClearSymbols).toBe(true);
     expect(stats.microLabelsClear).toBe(true);
     expect(stats.sendConfirmationSingleLine).toBe(true);
+  });
+
+  test('component connectors do not pass through unrelated ports', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
+
+    const stats = await page.evaluate(() => {
+      const src = `@startuml
+component Gateway {
+  portout "out1" as g_out1
+  portout "out2" as g_out2
+}
+component Auth {
+  portin "in" as a_in
+  portout "out1" as a_out1
+  portout "out2" as a_out2
+}
+component Users {
+  portin "/users" as u_p1
+  portin "/users" as u_p2
+  portin "/users/unsubscribe/{userId}" as u_p3
+}
+component Clubs {
+  portin "/clubs" as c_p1
+  portin "/clubs/event-reference/{eventId}" as c_p2
+  portin "/clubs/roles/{clubId}/{userId}" as c_p3
+  portout "out1" as c_out1
+}
+component Events {
+  portin "/events" as e_p1
+  portin "/events/template-data/{templateId}" as e_p2
+  portout "out1" as e_out1
+  portout "out2" as e_out2
+}
+component Notifications {
+  portin "/notifications/event-update" as n_p1
+  portout "out1" as n_out1
+  portout "out2" as n_out2
+}
+g_out1 --> c_p1 : POST
+g_out2 --> u_p2 : POST
+a_out1 --> u_p1 : GET
+a_out2 --> c_p3 : GET
+c_out1 --> e_p1 : GET
+e_out1 --> c_p2 : GET
+e_out2 --> n_p1 : POST
+n_out1 --> e_p2 : GET
+n_out2 --> u_p3 : POST
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1700px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLComponentDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      if (!svg) {
+        document.body.removeChild(host);
+        return { hasSvg: false, routeCount: 0, portCount: 0, portTransitViolations: [] };
+      }
+
+      function box(el) {
+        const b = /** @type {SVGGraphicsElement} */ (el).getBBox();
+        return { l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
+      }
+
+      function parsePoints(raw) {
+        return (raw || '').trim().split(/\s+/)
+          .map((pair) => pair.split(',').map(Number))
+          .filter((pair) => pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]))
+          .map(([x, y]) => ({ x, y }));
+      }
+
+      const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map(box);
+      const portSquares = Array.from(svg.querySelectorAll('rect'))
+        .filter((rect) =>
+          !rect.classList.contains('uml-component-box') &&
+          Math.abs(Number(rect.getAttribute('width')) - 10) < 0.1 &&
+          Math.abs(Number(rect.getAttribute('height')) - 10) < 0.1
+        )
+        .map(box)
+        .filter((port) => componentBoxes.some((component) => {
+          const borderPad = 6;
+          const overlapsY = port.b >= component.t - 2 && port.t <= component.b + 2;
+          const overlapsX = port.r >= component.l - 2 && port.l <= component.r + 2;
+          return (overlapsY && (Math.abs(port.l - component.l) <= borderPad || Math.abs(port.r - component.r) <= borderPad)) ||
+            (overlapsX && (Math.abs(port.t - component.t) <= borderPad || Math.abs(port.b - component.b) <= borderPad));
+        }));
+
+      const routes = Array.from(svg.querySelectorAll('polyline'))
+        .filter((polyline) => (polyline.getAttribute('stroke') || '') === '#444')
+        .map((polyline, index) => ({ index, points: parsePoints(polyline.getAttribute('points') || '') }))
+        .filter((route) => {
+          if (route.points.length < 2) return false;
+          const xs = route.points.map((point) => point.x);
+          const ys = route.points.map((point) => point.y);
+          return !(route.points.length <= 3 &&
+            Math.max(...xs) - Math.min(...xs) <= 28 &&
+            Math.max(...ys) - Math.min(...ys) <= 28);
+        });
+
+      function pointTouchesPort(point, port) {
+        const pad = 7;
+        return point.x >= port.l - pad && point.x <= port.r + pad &&
+          point.y >= port.t - pad && point.y <= port.b + pad;
+      }
+
+      function segmentPassesPortInterior(a, b, port) {
+        const pad = 1.5;
+        if (Math.abs(a.y - b.y) < 1) {
+          const y = a.y;
+          if (y <= port.t + pad || y >= port.b - pad) return false;
+          const overlap = Math.min(Math.max(a.x, b.x), port.r - pad) -
+            Math.max(Math.min(a.x, b.x), port.l + pad);
+          return overlap > 1;
+        }
+        if (Math.abs(a.x - b.x) < 1) {
+          const x = a.x;
+          if (x <= port.l + pad || x >= port.r - pad) return false;
+          const overlap = Math.min(Math.max(a.y, b.y), port.b - pad) -
+            Math.max(Math.min(a.y, b.y), port.t + pad);
+          return overlap > 1;
+        }
+        for (let step = 1; step < 12; step++) {
+          const t = step / 12;
+          const x = a.x + (b.x - a.x) * t;
+          const y = a.y + (b.y - a.y) * t;
+          if (x > port.l + pad && x < port.r - pad && y > port.t + pad && y < port.b - pad) return true;
+        }
+        return false;
+      }
+
+      const portTransitViolations = [];
+      for (const route of routes) {
+        const first = route.points[0];
+        const last = route.points[route.points.length - 1];
+        const endpointPortIndexes = new Set();
+        portSquares.forEach((port, index) => {
+          if (pointTouchesPort(first, port) || pointTouchesPort(last, port)) endpointPortIndexes.add(index);
+        });
+        for (let i = 0; i < route.points.length - 1; i++) {
+          for (let portIndex = 0; portIndex < portSquares.length; portIndex++) {
+            if (endpointPortIndexes.has(portIndex)) continue;
+            if (!segmentPassesPortInterior(route.points[i], route.points[i + 1], portSquares[portIndex])) continue;
+            portTransitViolations.push({
+              route: route.index,
+              segment: i,
+              port: portIndex,
+              x1: Math.round(route.points[i].x),
+              y1: Math.round(route.points[i].y),
+              x2: Math.round(route.points[i + 1].x),
+              y2: Math.round(route.points[i + 1].y),
+            });
+          }
+        }
+      }
+
+      document.body.removeChild(host);
+      return {
+        hasSvg: true,
+        routeCount: routes.length,
+        portCount: portSquares.length,
+        portTransitViolations,
+      };
+    });
+
+    expect(stats.hasSvg).toBe(true);
+    expect(stats.routeCount).toBe(9);
+    expect(stats.portCount).toBeGreaterThanOrEqual(16);
+    expect(stats.portTransitViolations, `Port transits: ${JSON.stringify(stats.portTransitViolations)}`).toEqual([]);
   });
 
   test.fixme('component port routing avoids unnecessary empty U-loops between neighboring ports', async ({ page }) => {
@@ -3468,7 +4107,7 @@ end note
     });
 
     expect(stats.width).toBeGreaterThan(0);
-    expect(stats.width).toBeLessThan(1750);
+    expect(stats.width).toBeLessThan(1700);
     expect(stats.height).toBeLessThan(850);
     expect(stats.nameFont).toBeGreaterThanOrEqual(18);
     expect(stats.methodFont).toBeGreaterThanOrEqual(17);
