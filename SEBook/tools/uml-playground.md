@@ -1137,12 +1137,29 @@ html.dark-mode #uml-pg-error {
             item.parent = models[i].id.split('.')[0];
             item.parentBox = findRenderedBox(svg, { id: item.parent, label: item.parent });
             if (item.parentBox) {
-              item.portSide = box.x + box.width / 2 <= item.parentBox.x + item.parentBox.width / 2 ? 'left' : 'right';
+              var pcx = box.x + box.width / 2;
+              var pcy = box.y + box.height / 2;
+              var sideDistances = [
+                { side: 'left', distance: Math.abs(pcx - item.parentBox.x) },
+                { side: 'right', distance: Math.abs(pcx - (item.parentBox.x + item.parentBox.width)) },
+                { side: 'top', distance: Math.abs(pcy - item.parentBox.y) },
+                { side: 'bottom', distance: Math.abs(pcy - (item.parentBox.y + item.parentBox.height)) }
+              ];
+              sideDistances.sort(function (a, b) { return a.distance - b.distance; });
+              item.portSide = sideDistances[0].side;
             }
           }
           found.push(item);
         }
       }
+      Array.prototype.slice.call(svg.querySelectorAll('[data-layout-kind="edge-label"][data-layout-id]')).forEach(function (el) {
+        if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) return;
+        var id = el.getAttribute('data-layout-id') || '';
+        if (!id) return;
+        var box = unionElementsBox(svg, [el]);
+        if (!box) return;
+        found.push({ id: id, label: textOf(el) || id, axis: 'label', box: box });
+      });
       return found;
     }
 
@@ -1151,7 +1168,8 @@ html.dark-mode #uml-pg-error {
       var existingPositions = readLayoutPositions(textarea.value);
       for (var i = 0; i < editables.length; i++) {
         var item = editables[i];
-        if (item.axis === 'branch-label' && item.id !== selectedLayoutId && !existingPositions[item.id]) continue;
+        if ((item.axis === 'branch-label' || item.axis === 'label') &&
+            item.id !== selectedLayoutId && !existingPositions[item.id]) continue;
         positions[item.id] = {
           x: item.axis === 'x' || item.axis === 'port' ? item.box.x + item.box.width / 2 : item.box.x,
           y: item.axis === 'port' ? item.box.y + item.box.height / 2 : item.box.y
@@ -1377,13 +1395,35 @@ html.dark-mode #uml-pg-error {
     function constrainedPortPosition(item, x, y) {
       if (!item || item.axis !== 'port' || !item.parentBox) return { x: x, y: y };
       var box = item.parentBox;
-      var side = item.portSide || (item.box.x + item.box.width / 2 <= box.x + box.width / 2 ? 'left' : 'right');
-      var minY = box.y + 8;
-      var maxY = box.y + box.height - 8;
-      return {
-        x: side === 'left' ? box.x : box.x + box.width,
-        y: Math.max(minY, Math.min(maxY, y))
-      };
+      var inset = 8;
+      var minX = box.x + inset;
+      var maxX = box.x + box.width - inset;
+      var minY = box.y + inset;
+      var maxY = box.y + box.height - inset;
+      if (maxX < minX) {
+        minX = box.x;
+        maxX = box.x + box.width;
+      }
+      if (maxY < minY) {
+        minY = box.y;
+        maxY = box.y + box.height;
+      }
+      function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, v));
+      }
+      var choices = [
+        { side: 'left', x: box.x, y: clamp(y, minY, maxY), distance: Math.abs(x - box.x) },
+        { side: 'right', x: box.x + box.width, y: clamp(y, minY, maxY), distance: Math.abs(x - (box.x + box.width)) },
+        { side: 'top', x: clamp(x, minX, maxX), y: box.y, distance: Math.abs(y - box.y) },
+        { side: 'bottom', x: clamp(x, minX, maxX), y: box.y + box.height, distance: Math.abs(y - (box.y + box.height)) }
+      ];
+      choices.sort(function (a, b) {
+        if (Math.abs(a.distance - b.distance) > 0.75) return a.distance - b.distance;
+        if (a.side === item.portSide) return -1;
+        if (b.side === item.portSide) return 1;
+        return 0;
+      });
+      return { x: choices[0].x, y: choices[0].y, side: choices[0].side };
     }
 
     function installRouteEditor(svg, layer) {
@@ -1452,11 +1492,21 @@ html.dark-mode #uml-pg-error {
         return;
       }
 
+      editables.sort(function (a, b) {
+        function rank(item) {
+          if (!item) return 0;
+          if (item.axis === 'port') return 3;
+          if (item.axis === 'label' || item.axis === 'branch-label') return 2;
+          return 1;
+        }
+        return rank(a) - rank(b);
+      });
+
       editables.forEach(function (item) {
         var rect = document.createElementNS(ns, 'rect');
         rect.setAttribute('class', 'uml-pg-edit-hitbox' +
           (item.axis === 'port' ? ' is-port' : '') +
-          (item.axis === 'branch-label' ? ' is-label' : '') +
+          (item.axis === 'branch-label' || item.axis === 'label' ? ' is-label' : '') +
           (item.id === selectedLayoutId ? ' is-selected' : ''));
         rect.setAttribute('data-layout-id', item.id);
         rect.setAttribute('x', item.box.x);
@@ -1701,7 +1751,7 @@ html.dark-mode #uml-pg-error {
         var editables = findEditableElements(output.querySelector('svg'));
         var positions = collectPositions(editables);
         var selectedItem = editables.find(function (item) { return item.id === selectedLayoutId; });
-        if (selectedItem && selectedItem.axis === 'branch-label') {
+        if (selectedItem && (selectedItem.axis === 'branch-label' || selectedItem.axis === 'label')) {
           delete positions[selectedLayoutId];
           textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions);
           setSelectedLayoutId(null);

@@ -44,7 +44,17 @@ async function selectEditMode(page, mode) {
 }
 
 async function dragLocatorCenter(page, locator, dx, dy) {
-  const box = await locator.boundingBox();
+  let box = null;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await locator.scrollIntoViewIfNeeded({ timeout: 2000 });
+      box = await locator.boundingBox({ timeout: 2000 });
+      if (box) break;
+    } catch (error) {
+      if (attempt === 3) throw error;
+    }
+    await page.waitForTimeout(100);
+  }
   expect(box, 'drag target should have a bounding box').not.toBeNull();
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
@@ -234,12 +244,14 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
 
     function dataBox(id, tagFilter) {
       let box = null;
+      let side = null;
       for (const el of Array.from(svg.querySelectorAll('[data-layout-id]'))) {
         if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
         if (el.getAttribute('data-layout-id') !== id) continue;
         if (tagFilter && !tagFilter(el)) continue;
         const b = el.getBBox();
         box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
+        side = el.getAttribute('data-port-side') || side;
       }
       if (!box) return null;
       return {
@@ -249,6 +261,7 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
         height: box.height,
         cx: box.x + box.width / 2,
         cy: box.y + box.height / 2,
+        side,
       };
     }
 
@@ -266,6 +279,75 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
       targetComponent: dataBox(targetId.split('.')[0], (el) => el.classList.contains('uml-component-box')),
     };
   }, { sourceId, targetId });
+}
+
+async function componentPortInfo(page, id) {
+  return page.evaluate((layoutId) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    const [componentId] = layoutId.split('.');
+
+    function union(a, b) {
+      if (!a) return b;
+      const x1 = Math.min(a.x, b.x);
+      const y1 = Math.min(a.y, b.y);
+      const x2 = Math.max(a.x + a.width, b.x + b.width);
+      const y2 = Math.max(a.y + a.height, b.y + b.height);
+      return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    }
+
+    function dataBox(id, tagFilter) {
+      let box = null;
+      let side = null;
+      for (const el of Array.from(svg.querySelectorAll('[data-layout-id]'))) {
+        if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
+        if (el.getAttribute('data-layout-id') !== id) continue;
+        if (tagFilter && !tagFilter(el)) continue;
+        const b = el.getBBox();
+        box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
+        side = el.getAttribute('data-port-side') || side;
+      }
+      if (!box) return null;
+      return {
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+        cx: box.x + box.width / 2,
+        cy: box.y + box.height / 2,
+        side,
+      };
+    }
+
+    const port = dataBox(layoutId, (el) => el.tagName.toLowerCase() === 'rect');
+    const component = dataBox(componentId, (el) => el.classList.contains('uml-component-box'));
+    return port && component ? { ...port, component } : null;
+  }, id);
+}
+
+async function componentLabelInfo(page, id = 'label:edge-0') {
+  return page.evaluate((layoutId) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    const label = svg.querySelector(`[data-layout-kind="edge-label"][data-layout-id="${layoutId}"]`);
+    if (!label) return null;
+    const b = label.getBBox();
+    return {
+      id: layoutId,
+      text: label.textContent.replace(/\s+/g, ' ').trim(),
+      x: b.x,
+      y: b.y,
+      width: b.width,
+      height: b.height,
+      cx: b.x + b.width / 2,
+      cy: b.y + b.height / 2,
+    };
+  }, id);
+}
+
+function expectEndpointTouchesPort(endpoint, port) {
+  expect(endpoint.x).toBeGreaterThanOrEqual(port.x - 2);
+  expect(endpoint.x).toBeLessThanOrEqual(port.x + port.width + 2);
+  expect(endpoint.y).toBeGreaterThanOrEqual(port.y - 2);
+  expect(endpoint.y).toBeLessThanOrEqual(port.y + port.height + 2);
 }
 
 test.describe('ArchUML visual layout metadata', () => {
@@ -341,6 +423,53 @@ A --> B
       { x: 144, y: 44 },
       { x: 144, y: 104 },
     ]);
+  });
+
+  test('normal component renderer replays saved connector label positions', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!window.UMLComponentDiagram && !!window.UMLShared);
+
+    const labelBox = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      document.body.appendChild(host);
+
+      window.UMLComponentDiagram.render(host, `@startuml
+@layout schema=1 renderer="archuml-visual-editor"
+node "label:edge-0" x=72 y=88
+@endlayout
+component Frontend {
+  portout "httpOut" as f_out
+}
+component Backend {
+  portin "httpIn" as b_in
+}
+f_out --> b_in : REST / JSON
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      const label = svg.querySelector('[data-layout-kind="edge-label"][data-layout-id="label:edge-0"]');
+      const rect = label.getBoundingClientRect();
+      const pt1 = svg.createSVGPoint();
+      pt1.x = rect.left;
+      pt1.y = rect.top;
+      const pt2 = svg.createSVGPoint();
+      pt2.x = rect.right;
+      pt2.y = rect.bottom;
+      const ctm = svg.getScreenCTM().inverse();
+      const a = pt1.matrixTransform(ctm);
+      const b = pt2.matrixTransform(ctm);
+      document.body.removeChild(host);
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        text: label.textContent.replace(/\s+/g, ' ').trim(),
+      };
+    });
+
+    expect(labelBox.text).toContain('REST / JSON');
+    expect(labelBox.x).toBeCloseTo(72, 0);
+    expect(labelBox.y).toBeCloseTo(88, 0);
   });
 
   test('normal renderers replay saved positions for data-backed diagrams', async ({ page }) => {
@@ -705,10 +834,8 @@ test.describe('UML playground visual editor', () => {
     expect(after, 'component route should survive component drag').not.toBeNull();
     expect(after.sourceComponent.x).toBeGreaterThan(before.sourceComponent.x + 50);
     expect(after.sourcePort.cx).toBeGreaterThan(before.sourcePort.cx + 50);
-    expect(after.sourceEndpoint.x).toBeCloseTo(after.sourcePort.x + after.sourcePort.width, 1);
-    expect(after.sourceEndpoint.y).toBeCloseTo(after.sourcePort.cy, 1);
-    expect(after.targetEndpoint.x).toBeCloseTo(after.targetPort.x, 1);
-    expect(after.targetEndpoint.y).toBeCloseTo(after.targetPort.cy, 1);
+    expectEndpointTouchesPort(after.sourceEndpoint, after.sourcePort);
+    expectEndpointTouchesPort(after.targetEndpoint, after.targetPort);
 
     const source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toMatch(/component\s+Frontend\s+@pos\(\d+,\s*\d+\)/);
@@ -720,23 +847,99 @@ test.describe('UML playground visual editor', () => {
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
 
-    const before = await componentConnectionInfo(page);
+    const before = await componentConnectionInfo(page, 'Backend.b_eventout', 'EventBus.eb_in');
     expect(before, 'component route should expose port endpoints').not.toBeNull();
 
-    const portHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_in"]');
+    const portHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_eventout"]');
     await expect(portHandle).toHaveCount(1);
+    await dragLocatorCenter(page, portHandle, 38, -34);
+
+    const after = await componentConnectionInfo(page, 'Backend.b_eventout', 'EventBus.eb_in');
+    expect(after, 'component route should survive port drag').not.toBeNull();
+    expect(after.sourcePort.side).toBe('right');
+    expect(after.sourcePort.cy).toBeLessThan(before.sourcePort.cy - 20);
+    expectEndpointTouchesPort(after.sourceEndpoint, after.sourcePort);
+    expectEndpointTouchesPort(after.targetEndpoint, after.targetPort);
+    expect(after.points).not.toEqual(before.points);
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('node "Backend.b_eventout" x=');
+  });
+
+  test('dragging component ports can move to another edge and reroute connectors', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'component');
+    await page.uncheck('#uml-pg-snap');
+    await selectEditMode(page, 'nodes');
+
+    const before = await componentConnectionInfo(page);
+    expect(before, 'component route should expose port endpoints').not.toBeNull();
+    const portHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_in"]');
     await dragLocatorCenter(page, portHandle, 90, -34);
 
     const after = await componentConnectionInfo(page);
-    expect(after, 'component route should survive port drag').not.toBeNull();
-    expect(after.targetPort.cx).toBeCloseTo(after.targetComponent.x, 1);
-    expect(after.targetPort.cy).toBeLessThan(before.targetPort.cy - 20);
-    expect(after.targetEndpoint.x).toBeCloseTo(after.targetPort.x, 1);
-    expect(after.targetEndpoint.y).toBeCloseTo(after.targetPort.cy, 1);
+    expect(after, 'component route should survive cross-edge port drag').not.toBeNull();
+    expect(after.targetPort.side).toBe('top');
+    expect(Math.abs(after.targetPort.cy - after.targetComponent.y)).toBeLessThanOrEqual(2);
+    expectEndpointTouchesPort(after.targetEndpoint, after.targetPort);
     expect(after.points).not.toEqual(before.points);
 
     const source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toContain('node "Backend.b_in" x=');
+  });
+
+  test('dragging component ports can swap order on the same edge', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'component');
+    await page.uncheck('#uml-pg-snap');
+    await selectEditMode(page, 'nodes');
+
+    const dbBefore = await componentPortInfo(page, 'Backend.b_dbout');
+    const eventBefore = await componentPortInfo(page, 'Backend.b_eventout');
+    expect(dbBefore, 'dbOut port should be visible').not.toBeNull();
+    expect(eventBefore, 'eventOut port should be visible').not.toBeNull();
+    expect(dbBefore.side).toBe('right');
+    expect(eventBefore.side).toBe('right');
+    expect(eventBefore.cy).toBeGreaterThan(dbBefore.cy);
+
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_eventout"]'), 38, -50);
+
+    const dbAfter = await componentPortInfo(page, 'Backend.b_dbout');
+    const eventAfter = await componentPortInfo(page, 'Backend.b_eventout');
+    const eventRoute = await componentConnectionInfo(page, 'Backend.b_eventout', 'EventBus.eb_in');
+    expect(dbAfter.side).toBe('right');
+    expect(eventAfter.side).toBe('right');
+    expect(eventAfter.cy).toBeLessThan(dbAfter.cy);
+    expectEndpointTouchesPort(eventRoute.sourceEndpoint, eventRoute.sourcePort);
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('node "Backend.b_eventout" x=');
+  });
+
+  test('dragging component connector labels emits label positions and replays them', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'component');
+    await page.uncheck('#uml-pg-snap');
+    await selectEditMode(page, 'nodes');
+
+    const labelHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="label:edge-0"]');
+    await expect(labelHandle).toHaveCount(1);
+    const before = await componentLabelInfo(page, 'label:edge-0');
+    expect(before, 'connector label should expose a movable handle').not.toBeNull();
+
+    await dragLocatorCenter(page, labelHandle, 46, -24);
+
+    const after = await componentLabelInfo(page, 'label:edge-0');
+    expect(after.text).toContain('REST / JSON');
+    expect(after.x).toBeGreaterThan(before.x + 30);
+    expect(after.y).toBeLessThan(before.y - 10);
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('node "label:edge-0" x=');
+
+    await page.locator('#uml-pg-reset-one').click();
+    const resetSource = await page.locator('#uml-pg-input').inputValue();
+    expect(resetSource).not.toContain('node "label:edge-0" x=');
   });
 
   test('dragging line segments emits route metadata and reset selected removes it', async ({ page }) => {
