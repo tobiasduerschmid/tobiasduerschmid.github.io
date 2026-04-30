@@ -1,4 +1,5 @@
 // @ts-check
+const fs = require('fs');
 const { test, expect } = require('@playwright/test');
 
 const PLAYGROUND_URL = '/SEBook/tools/uml-playground';
@@ -27,6 +28,17 @@ const ROUTE_EDIT_TYPES = [
   'er',
   'gitgraph',
 ];
+
+const CUSTOM_POSITION_CLASS_DIAGRAM = `@startuml
+layout square
+abstract class Animal @pos(-20, 30) { +name: str; +{abstract} speak(): str }
+class Dog @pos(217, 228) { +breed: str; +speak(): str }
+class Cat @pos(30, 228) { +indoor: bool; +speak(): str }
+interface Trainable @pos(216, 30) { +train(cmd: str): bool }
+Dog --|> Animal
+Cat --|> Animal
+Dog ..|> Trainable
+@enduml`;
 
 async function openPlayground(page) {
   await page.goto(PLAYGROUND_URL);
@@ -730,6 +742,33 @@ test.describe('UML playground visual editor', () => {
     expect(styles.preview.background).toBe('rgb(26, 37, 53)');
     expect(styles.resetDisabled.background).toBe('rgb(27, 38, 53)');
     expect(styles.resetDisabled.color).toBe('rgb(113, 131, 153)');
+  });
+
+  test('SVG export omits visual edit overlays for custom-position diagrams', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.locator('#uml-pg-input').fill(CUSTOM_POSITION_CLASS_DIAGRAM);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('Trainable');
+    });
+
+    await expect(page.locator('.uml-pg-edit-layer .uml-pg-edit-hitbox')).toHaveCount(4);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#uml-pg-download').click();
+    const download = await downloadPromise;
+    const path = await download.path();
+    expect(path, 'download should produce a local SVG file').not.toBeNull();
+    const svgText = fs.readFileSync(path, 'utf8');
+
+    expect(svgText).toContain('Animal');
+    expect(svgText).toContain('Trainable');
+    expect(svgText).toContain('fill="#d0ddef"');
+    expect(svgText).toContain('stroke="#4060a0"');
+    expect(svgText).not.toContain('uml-pg-edit-layer');
+    expect(svgText).not.toContain('uml-pg-edit-hitbox');
+    expect(svgText).not.toContain('uml-pg-editing');
   });
 
   test('exposes element handles for every playground diagram type', async ({ page }) => {

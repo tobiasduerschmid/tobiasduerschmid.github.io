@@ -1808,6 +1808,10 @@ html.dark-mode #uml-pg-error {
       if (!clone.getAttribute('xmlns:xlink')) {
         clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       }
+      clone.classList.remove('uml-pg-editing');
+      Array.prototype.slice.call(clone.querySelectorAll('.uml-pg-edit-layer')).forEach(function (layer) {
+        if (layer.parentNode) layer.parentNode.removeChild(layer);
+      });
 
       // The in-page renderer sets `style="font-family: ...; max-width: 100%;
       // height: auto;"` so the SVG flows nicely inside the article. The
