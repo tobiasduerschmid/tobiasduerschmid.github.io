@@ -139,7 +139,7 @@ steps:
 
       The pattern generalizes; the *specifics* (what to import, call, and assert) come from the spec — and only from the spec.
 
-      ## The dragon dice rules (reference for all 12 cycles)
+      ## The dragon dice rules (reference for all seven cycles)
 
       | Roll | Event | Damage |
       |------|-------|--------|
