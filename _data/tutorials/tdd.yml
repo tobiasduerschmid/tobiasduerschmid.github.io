@@ -1,5 +1,5 @@
 title: "TDD with pytest — Dragon Dice Battle"
-description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — ten tiny tests, one design pressure at a time, plus a final transfer cycle (FizzBuzz) that proves the rhythm carries to a brand-new problem. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
+description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — seven tiny tests, one design pressure at a time, plus a final transfer cycle (FizzBuzz) that proves the rhythm carries to a brand-new problem. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
 
 backend: pyodide
 debugger: true
@@ -35,7 +35,7 @@ git_setup:
 # Global setup: install pytest, expose /tutorial on sys.path, and patch the
 # pytest module cache so each `pytest.main(...)` call sees the latest source
 # rather than a stale import. The module name list MUST include every project
-# module the student edits — `scorer` for cycles 1-10, `fizzbuzz` for the
+# module the student edits — `scorer` for cycles 1-7, `fizzbuzz` for the
 # transfer cycle.
 setup_commands:
   - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
@@ -86,7 +86,7 @@ steps:
       - **Singles** — a `1` becomes one *Dragon Flame* (100 damage); a `5` becomes one *Lightning Spark* (50). Other face values, on their own, score nothing.
       - **Triples (combos)** — three matching dice trigger a bigger event that *consumes* its dice. Three 1s become **one** *Dragon Blast* (1000) instead of three Dragon Flames; three 2s become a *Goblin Swarm*; and so on. Whatever the combos don't consume keeps scoring as singles, so `[1, 1, 1, 1, 5]` produces *one* Dragon Blast (consuming three 1s) **plus** a leftover Dragon Flame **plus** a Lightning Spark — for 1150 total damage. The full ruleset is in the table further down.
 
-      Your goal across the ten Dragon-Dice cycles is to grow a `score(dice)` function that turns any roll into a `BattleReport` — its `total_damage` and the ordered tuple of `ScoringEvent`s it produced. **You will not look at the full ruleset and write it all at once.** TDD adds **one rule at a time**, each one earned by a test that demands it. After cycle 10 an eleventh *transfer* cycle reapplies the same rhythm to a totally unrelated problem (FizzBuzz), as proof the discipline carries beyond this domain.
+      Your goal across the seven Dragon-Dice cycles is to grow a `score(dice)` function that turns any roll into a `BattleReport` — its `total_damage` and the ordered tuple of `ScoringEvent`s it produced. **You will not look at the full ruleset and write it all at once.** TDD adds **one rule at a time**, each one earned by a test that demands it. After cycle 7 an eighth *transfer* cycle reapplies the same rhythm to a totally unrelated problem (FizzBuzz), as proof the discipline carries beyond this domain.
 
       ## Test-Driven Development in one minute
 
@@ -123,7 +123,7 @@ steps:
 
       **The general pattern.** Code-first writes a function and *then* asks "what should it do?" Test-first writes a behavioral commitment and *then* asks "what's the simplest code that delivers that?" The first habit lets implementation choices smuggle themselves into your sense of what the spec was. The second prevents that — the spec is on disk, in code, before any implementation can pollute it. (Janzen & Saiedian's ICSE 2007 study of 230+ programmers: even programmers who tried test-first once kept reverting to code-first afterward; the habit is *that* sticky. Naming it here, so you can notice it in yourself, is half the work.)
 
-      So you might still resist test-first today. Notice the resistance. The goal of these ten cycles is to give you the *felt experience* of small-step rhythm — after which you'll be choosing test-first because it works, not because we said so. (And per Fucci et al. 2017: even if you sometimes write the code an instant before the test, the *granularity* and *rhythm* are where TDD's measured benefits come from. So don't worry about being a purist; worry about being incremental.)
+      So you might still resist test-first today. Notice the resistance. The goal of these seven cycles is to give you the *felt experience* of small-step rhythm — after which you'll be choosing test-first because it works, not because we said so. (And per Fucci et al. 2017: even if you sometimes write the code an instant before the test, the *granularity* and *rhythm* are where TDD's measured benefits come from. So don't worry about being a purist; worry about being incremental.)
       </details>
 
       ## The shape of every pytest test
@@ -152,7 +152,7 @@ steps:
       | Triple 5 | Lightning Storm | 500 |
       | Triple 6 | Demon Strike | 600 |
 
-      Triples consume three dice; leftover 1s and 5s still score as singles. Dice are integers 1–6. **Today you implement only the empty-roll case.** Nine more cycles add the rest, and a final **transfer cycle** (a different problem entirely) proves the rhythm carries.
+      Triples consume three dice; leftover 1s and 5s still score as singles. Dice are integers 1–6. **Today you implement only the empty-roll case.** Six more cycles add the rest, and a final **transfer cycle** (a different problem entirely) proves the rhythm carries.
 
       ## Commit after every step (the safety-net habit)
 
@@ -165,7 +165,7 @@ steps:
 
       ## Your test list (Canon TDD step 1)
 
-      Kent Beck's *Canon TDD* (December 2023) starts with **a written list of behaviors you want the code to have** — *before* writing any tests. The list isn't a contract; it's a thinking tool. New behaviors get appended as they occur to you; ones you finish get struck through; ones that turn out to be already-implemented (the cycle 4 bonus mixed-dice test, cycle 6's leftover guardrail) get a checkmark with no code change.
+      Kent Beck's *Canon TDD* (December 2023) starts with **a written list of behaviors you want the code to have** — *before* writing any tests. The list isn't a contract; it's a thinking tool. New behaviors get appended as they occur to you; ones you finish get struck through; ones that turn out to be already-implemented (the bonus mixed-dice test in cycle 4, the bonus leftover guardrail in cycle 5) get a checkmark with no code change.
 
       Here are the first three items, *in the order the cycles will tackle them*:
 
@@ -518,7 +518,7 @@ steps:
           source = open('/tutorial/scorer.py').read()
           # The current test does not need any of these. Adding them would be
           # speculative design — code with no test demanding it.
-          for forbidden in ['ScoringEvent', 'Counter(', 'COMBO_RULES', 'SINGLE_RULES', 'validate_dice']:
+          for forbidden in ['ScoringEvent', 'Counter(', 'COMBO_RULES', 'SINGLE_RULES']:
               assert forbidden not in source, \
                   f"`{forbidden}` is not yet demanded by any test — remove it. The GREEN rule is *smallest* code that passes. Future cycles will add what they need."
 
@@ -961,12 +961,12 @@ steps:
       - description: "Implementation has not jumped ahead to a loop or rule objects"
         command: |
           source = open('/tutorial/scorer.py').read()
-          # If a student has already written the cycle-4 loop or cycle-7 rule
+          # If a student has already written the cycle-4 loop or cycle-6 rule
           # objects, they have over-engineered. The next cycle's test is what
           # earns those refactors.
           for forbidden in ['ComboRule', 'SingleRule', 'COMBO_RULES', 'SINGLE_RULES']:
               assert forbidden not in source, \
-                  f"`{forbidden}` belongs to a later cycle (cycle 7). Right now the smallest GREEN is `if dice == [1]:` — let the loop and the rule objects emerge under pressure from later tests."
+                  f"`{forbidden}` belongs to a later cycle (cycle 6). Right now the smallest GREEN is `if dice == [1]:` — let the loop and the rule objects emerge under pressure from later tests."
 
     # NO QUIZ — focus on the rhythm; the next quiz is two cycles away.
 
@@ -1189,7 +1189,7 @@ steps:
 
       <details markdown="1"><summary>Reveal — what happens when option A wins (open after running)</summary>
 
-      A third hardcoded branch passes cycle 4. But mixed dice (`[1, 5]`) will then need a fourth branch, cycle 5 (triple 1s) a fifth, and the loop refactor still has to happen — only now you have more code to delete. *Locally smallest* (one new `if`) is *globally largest*.
+      A third hardcoded branch passes cycle 4. But the bonus mixed-dice case (`[1, 5]`) needs a fourth branch — and cycle 5 (triple 1s) cannot be satisfied by *any* hardcoded branch because the structure has to change. The loop refactor still has to happen, only now you have more code to delete first. *Locally smallest* (one new `if`) is *globally largest*.
       </details>
 
       <details markdown="1"><summary>Why the mutation move matters</summary>
@@ -1454,7 +1454,7 @@ steps:
             A teammate looks at your cycle-4 GREEN code and says: *"Why didn't you just add a third `if dice == [1, 1]:` branch? It would have passed the test."* What is the **most accurate** rebuttal?
           type: single
           options:
-            - "A third branch would have passed cycle 4, but the duplication would have got worse, cycle 5 would have demanded a fourth branch, and the eventual loop refactor would still have to happen — only with more code to delete"
+            - "A third branch would have passed cycle 4, but the duplication would have got worse, the bonus mixed-dice case would have demanded a fourth branch, and the eventual loop refactor would still have to happen — only with more code to delete"
             - "A third branch is forbidden by pytest — only one `if` statement per function is allowed in TDD code"
             - "The teammate is right and you should rewrite — TDD always prefers the smallest change, and one new `if` is smaller than rewriting the function"
             - "It does not matter — both approaches produce the same byte code after Python compiles them"
@@ -1509,6 +1509,7 @@ steps:
       1. **🔴 RED** — add `test_three_ones_create_dragon_blast_instead_of_three_flames`. **Predict** what kind of failure pytest will show (`ImportError`, `AttributeError`, `AssertionError` — and what the message will likely contain). Run.
       2. **🟢 GREEN** — *before reaching for code*: open the per-die loop in `score()`. **Spend 90 seconds writing a one-sentence answer to:** *what about the loop's structure makes this test impossible to satisfy with a local edit?* Then make the structural change.
       3. **🔵 REFACTOR** — re-run; the previous five tests survived a *full body rewrite* of `score`.
+      4. **🟢 Bonus guardrail** — your GREEN code subtracts the consumed dice (`counts[1] -= 3`) so leftovers still score as singles. That behavior is currently *implicit* — no test would catch a future refactor that forgets it. Add `test_dragon_blast_plus_leftover_flame_and_spark` (`score([1, 1, 1, 1, 5])` → one Blast, one leftover Flame, one Spark = 1150 damage). It should pass for free; verify with the cycle-4 mutation move (mutate `counts[1] -= 3` to `counts[1] -= 4`, watch the new test fail, revert).
 
       <details markdown="1"><summary>Reveal — one shape that handles per-face-count thinking (open after you've tried)</summary>
 
@@ -1720,13 +1721,31 @@ steps:
                 assert report.events == (
                     ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
                 )
+
+
+            def test_dragon_blast_plus_leftover_flame_and_spark():
+                # Pin down the leftover behavior `counts[1] -= 3` produces:
+                # `[1, 1, 1, 1, 5]` should yield one Blast, one leftover Flame,
+                # one Spark. Without this guardrail, a future refactor could
+                # silently drop the leftover bookkeeping.
+                report = score([1, 1, 1, 1, 5])
+
+                assert report.total_damage == 1150
+                assert report.events == (
+                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
+                    ScoringEvent("Dragon Flame", (1,), 100),
+                    ScoringEvent("Lightning Spark", (5,), 50),
+                )
           language: "python"
       explanation: |
         The structural shift: count occurrences with `Counter`, run the combo check
         first, subtract the consumed dice, then emit singles for what's left. The
         five previous tests act as the safety net for the rewrite — and all five
         still pass because counting-and-emitting is observationally equivalent to
-        the per-die loop for non-combo cases.
+        the per-die loop for non-combo cases. The bonus
+        `test_dragon_blast_plus_leftover_flame_and_spark` is a *guardrail* — it
+        pins down the implicit leftover behavior so a future refactor can't
+        silently break it.
 
     tests:
       - description: "test_three_ones_create_dragon_blast_instead_of_three_flames function exists"
@@ -1734,6 +1753,12 @@ steps:
           source = open('/tutorial/test_scorer.py').read()
           assert 'def test_three_ones_create_dragon_blast_instead_of_three_flames' in source, \
               "Add the test function `test_three_ones_create_dragon_blast_instead_of_three_flames`"
+
+      - description: "test_dragon_blast_plus_leftover_flame_and_spark function exists (the bonus guardrail)"
+        command: |
+          source = open('/tutorial/test_scorer.py').read()
+          assert 'def test_dragon_blast_plus_leftover_flame_and_spark' in source, \
+              "Add the bonus guardrail test `test_dragon_blast_plus_leftover_flame_and_spark` — it pins down the leftover behavior produced by `counts[1] -= 3`"
 
       - description: "Implementation uses Counter (the count-then-emit shape)"
         command: |
@@ -1747,7 +1772,7 @@ steps:
           assert 'Dragon Blast' in source, \
               "The new event name `Dragon Blast` must be emitted by score() when the roll contains three 1s"
 
-      - description: "All six tests pass"
+      - description: "All seven tests pass"
         command: |
           import pytest, io, sys
           old = sys.stdout
@@ -1783,7 +1808,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Assertion length isn't the diagnostic. A test can have a one-line assertion and still be design-breaking; another test can be huge but locally satisfiable. The diagnostic is whether the *current structure* can be patched, or whether the structure itself has to change."
-            2: "Cycle 5 doesn't use `pytest.raises` — that's cycle 9. The design-breaking property here has nothing to do with exception handling. (You may be confusing two different cycles' lessons.)"
+            2: "Cycle 5 doesn't use `pytest.raises`. The design-breaking property here has nothing to do with exception handling — it's about per-die iteration vs. per-face counting."
             3: "Pytest has no special runner for any number of dice. This is invented machinery. The structural-pressure phenomenon is about *your code*'s shape, not pytest's internals — those are entirely separate concerns."
           explanation: |
             A *design-breaking* test is one no local edit can satisfy. The cycle-4 loop is
@@ -1822,11 +1847,12 @@ steps:
           option_feedback:
             0: "The next cycle isn't the reason. Cycle 5's GREEN should be motivated by the *spec* (\"combos consume dice; leftovers score as singles\"), not by speculative future tests. Forward-anticipation is exactly the speculation TDD asks you to avoid."
             2: "Counter has no caching. Reads are pure dict lookups; values aren't stale unless you change them. This invents machinery to explain a code line whose real motivation is *domain semantics*, not a Python quirk."
-            3: "These produce *different* behavior at scale. With six 1s, `counts[1] -= 3` after the first Blast leaves 3 for a *second* Blast (that's cycle 8's hidden bug, foreshadowed). `counts[1] = 0` would emit only one Blast and silently drop the second. The difference is the cycle-8 lesson — it's not stylistic at all."
+            3: "These produce *different* behavior at scale. With six 1s, `counts[1] -= 3` after the first Blast leaves 3 for a *second* Blast (that's cycle 7's hidden bug, foreshadowed). `counts[1] = 0` would emit only one Blast and silently drop the second. The difference is the cycle-7 lesson — it's not stylistic at all."
           explanation: |
             "Combos consume dice, leftovers still score as singles" is one of the rules. The
             subtraction isn't a Python quirk — it is the domain rule made explicit in the
-            code. Cycle 6's test will verify exactly this leftover behavior.
+            code. The bonus guardrail test you write at the end of this cycle pins down
+            exactly this leftover behavior.
 
         - question: |
             A teammate suggests "let's just add `if Counter(dice)[1] >= 3: ...` at the top of the existing per-die loop." Why is that *not* the same as the count-then-emit refactor we did?
@@ -1849,304 +1875,18 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 8 — Cycle 6: Combo + leftover singles (no production change!)
-  # Pedagogy:
-  #   Variation theory     — same shape, exercises the leftover bookkeeping.
-  #   Documentation tests  — tests that pin down behavior the design already has.
-  #   No quiz — light cycle to consolidate before the rule-object refactor.
-  # --------------------------------------------------------------------------
-  - title: "Cycle 6 — Combo with Leftover Singles"
-    instructions: |
-      > **Spec:** `score([1, 1, 1, 1, 5])` produces one Dragon Blast plus *one* leftover Flame and a Lightning Spark.
-
-      Cycle 5's `counts[1] -= 3` already handles this — but until a test asserts it, the leftover behavior is only *implicitly* correct. A future refactor could break it silently. Cycle 6 turns implicit correctness into an explicit guardrail.
-
-      🪞 **Pause (before you start, no peeking back):** which earlier cycle taught you the *mutation move* you're about to repeat? Hold your answer.
-
-      ## Your task
-
-      1. **🔴 RED** — add `test_dragon_blast_plus_leftover_flame_and_spark`. **Predict** whether it passes immediately, then run.
-      2. **🟢 GREEN** — make whatever change is needed (possibly none).
-      3. **🔵 REFACTOR + mutation check** — apply the cycle-4 mutation move. **Pick a line in `score()`** whose change should make cycle 6 fail. Mutate it. Run. Did cycle 6 catch it? Revert.
-
-      <details markdown="1"><summary>Why guardrail tests matter</summary>
-
-      The most common way a TDD suite degrades over time is *implicit correctness silently rotting into implicit incorrectness*. A behavior the code does today, but no test asserts, can disappear in a refactor — and nobody notices until a customer reports the bug. The discipline: when you spot behavior that "just works," ask if a future refactor could break it. If yes, write the test that protects it.
-      </details>
-
-      🪞 **Cycle 4 bonus / Cycle 6 contrast (after green):** Cycle 4's bonus mixed-dice test was a free pass. Cycle 6's leftover test is also a free pass. *Same* in both: ______. *Different* in both: ______. (Hint for "different": one of these two is a *guardrail*, the other isn't. Which?)
-
-      ---
-
-      ### 📦 Commit your progress
-
-      Before moving on, commit this cycle. Stage **only the files you actually changed** (test_scorer.py) and write a short message — recommended: `Cycle 6: leftover-singles guardrail`.
-
-    files:
-      - path: "scorer.py"
-        content: |
-          from collections import Counter
-          from dataclasses import dataclass
-
-
-          @dataclass(frozen=True)
-          class ScoringEvent:
-              name: str
-              dice_used: tuple
-              damage: int
-
-
-          @dataclass(frozen=True)
-          class BattleReport:
-              events: tuple = ()
-
-              @property
-              def total_damage(self) -> int:
-                  return sum(event.damage for event in self.events)
-
-
-          def score(dice: list[int]) -> BattleReport:
-              counts = Counter(dice)
-              events = []
-
-              if counts[1] >= 3:
-                  events.append(ScoringEvent("Dragon Blast", (1, 1, 1), 1000))
-                  counts[1] -= 3
-
-              for _ in range(counts[1]):
-                  events.append(ScoringEvent("Dragon Flame", (1,), 100))
-
-              for _ in range(counts[5]):
-                  events.append(ScoringEvent("Lightning Spark", (5,), 50))
-
-              return BattleReport(tuple(events))
-        language: "python"
-
-      - path: "test_scorer.py"
-        content: |
-          """Cycles 1–6 — adding the leftover-singles guardrail."""
-          from scorer import score, ScoringEvent
-
-
-          def test_empty_roll_has_zero_damage_and_no_events():
-              report = score([])
-
-              assert report.total_damage == 0
-              assert report.events == ()
-
-
-          def test_single_one_creates_dragon_flame_event():
-              report = score([1])
-
-              assert report.total_damage == 100
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_single_five_creates_lightning_spark_event():
-              report = score([5])
-
-              assert report.total_damage == 50
-              assert report.events == (
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_two_ones_create_two_dragon_flames():
-              report = score([1, 1])
-
-              assert report.total_damage == 200
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_one_and_five_create_two_different_events():
-              report = score([1, 5])
-
-              assert report.total_damage == 150
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_three_ones_create_dragon_blast_instead_of_three_flames():
-              report = score([1, 1, 1])
-
-              assert report.total_damage == 1000
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-              )
-
-
-          # TODO (RED): write test_dragon_blast_plus_leftover_flame_and_spark
-          #             score([1, 1, 1, 1, 5]) should return total_damage == 1150
-          #             with a Dragon Blast, then a Dragon Flame, then a Lightning Spark
-        language: "python"
-
-    open_file: "test_scorer.py"
-    run_file: "test_scorer.py"
-
-    solution:
-      files:
-        - path: "scorer.py"
-          content: |
-            from collections import Counter
-            from dataclasses import dataclass
-
-
-            @dataclass(frozen=True)
-            class ScoringEvent:
-                name: str
-                dice_used: tuple
-                damage: int
-
-
-            @dataclass(frozen=True)
-            class BattleReport:
-                events: tuple = ()
-
-                @property
-                def total_damage(self) -> int:
-                    return sum(event.damage for event in self.events)
-
-
-            def score(dice: list[int]) -> BattleReport:
-                counts = Counter(dice)
-                events = []
-
-                if counts[1] >= 3:
-                    events.append(ScoringEvent("Dragon Blast", (1, 1, 1), 1000))
-                    counts[1] -= 3
-
-                for _ in range(counts[1]):
-                    events.append(ScoringEvent("Dragon Flame", (1,), 100))
-
-                for _ in range(counts[5]):
-                    events.append(ScoringEvent("Lightning Spark", (5,), 50))
-
-                return BattleReport(tuple(events))
-          language: "python"
-
-        - path: "test_scorer.py"
-          content: |
-            """Cycles 1–6 — leftover bookkeeping protected by a guardrail test."""
-            from scorer import score, ScoringEvent
-
-
-            def test_empty_roll_has_zero_damage_and_no_events():
-                report = score([])
-
-                assert report.total_damage == 0
-                assert report.events == ()
-
-
-            def test_single_one_creates_dragon_flame_event():
-                report = score([1])
-
-                assert report.total_damage == 100
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_single_five_creates_lightning_spark_event():
-                report = score([5])
-
-                assert report.total_damage == 50
-                assert report.events == (
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_two_ones_create_two_dragon_flames():
-                report = score([1, 1])
-
-                assert report.total_damage == 200
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_one_and_five_create_two_different_events():
-                report = score([1, 5])
-
-                assert report.total_damage == 150
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_three_ones_create_dragon_blast_instead_of_three_flames():
-                report = score([1, 1, 1])
-
-                assert report.total_damage == 1000
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                )
-
-
-            def test_dragon_blast_plus_leftover_flame_and_spark():
-                report = score([1, 1, 1, 1, 5])
-
-                assert report.total_damage == 1150
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-          language: "python"
-      explanation: |
-        Cycle 5's `counts[1] -= 3` already produces the right output. Cycle 6's test
-        documents that intent — converting an implicit correctness into an explicit
-        guardrail. Mutate `-= 3` to `-= 4` on purpose to confirm the test catches it.
-
-    tests:
-      - description: "test_dragon_blast_plus_leftover_flame_and_spark function exists"
-        command: |
-          source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_dragon_blast_plus_leftover_flame_and_spark' in source, \
-              "Add the test function `test_dragon_blast_plus_leftover_flame_and_spark`"
-
-      - description: "All seven tests pass without any production change"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout
-          sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_scorer.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old
-          output = buf.getvalue()
-          print(output)
-          assert code == 0, \
-              f"All seven tests should pass — cycle 6's test passes for free thanks to cycle 5's `counts[1] -= 3`:\n{output}"
-
-      - description: "scorer.py still uses Counter (cycle 5's structure is intact)"
-        command: |
-          source = open('/tutorial/scorer.py').read()
-          assert 'Counter' in source, \
-              "Do not regress to a per-die loop — the count-then-emit shape from cycle 5 is the design that lets cycle 6's test pass for free."
-
-    # NO QUIZ — light cycle, consolidating before cycle 7's big refactor.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 9 — Cycle 7: Three 2s + RULE OBJECTS REFACTOR + QUIZ
+  # STEP 8 — Cycle 6: Three 2s + RULE OBJECTS REFACTOR + QUIZ
   # Pedagogy:
   #   Listening to the test  — adding a fourth combo branch is painful, on purpose.
   #   Extract data from code — ComboRule + SingleRule with apply() method.
   #   Open-Closed Principle  — new behavior = new data, not new branches.
   #   Quiz                   — checks "listen to the test" interpretation.
   # --------------------------------------------------------------------------
-  - title: "Cycle 7 — Goblin Swarm → Discover Rule Objects (Big Refactor)"
+  - title: "Cycle 6 — Goblin Swarm → Discover Rule Objects (Big Refactor)"
     instructions: |
       > **Spec:** three 2s combine into a *Goblin Swarm* (200 damage).
 
-      Cycle 7 is structurally the most important cycle in this tutorial. The current code handles **one** combo (Dragon Blast). Cycle 7 will give you a **second** — and the design pressure of having two will teach you the right abstraction.
+      Cycle 6 is structurally the most important cycle in this tutorial. The current code handles **one** combo (Dragon Blast). Cycle 6 will give you a **second** — and the design pressure of having two will teach you the right abstraction.
 
       The cycle has three phases. Do them in order.
 
@@ -2225,7 +1965,7 @@ steps:
               return events
       ```
 
-      The method is called `apply` because it applies the rule to a counter and returns whichever events that produces. Returning a *list* (possibly empty) generalizes cleanly: cycle 8 will need a single `apply()` call to emit *zero or more* events from one input.
+      The method is called `apply` because it applies the rule to a counter and returns whichever events that produces. Returning a *list* (possibly empty) generalizes cleanly: cycle 7 will need a single `apply()` call to emit *zero or more* events from one input.
       </details>
 
       ### D — Replace the blocks with data
@@ -2286,7 +2026,7 @@ steps:
 
       ### 📦 Commit your progress
 
-      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 7: rule objects + all six combos as data`.
+      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 6: rule objects + all six combos as data`.
 
     files:
       - path: "scorer.py"
@@ -2330,7 +2070,7 @@ steps:
 
       - path: "test_scorer.py"
         content: |
-          """Cycles 1–7 — Goblin Swarm forces the rule-object refactor."""
+          """Cycles 1–6 — Goblin Swarm forces the rule-object refactor."""
           from scorer import score, ScoringEvent
 
 
@@ -2500,7 +2240,7 @@ steps:
 
         - path: "test_scorer.py"
           content: |
-            """Cycles 1–7 — rule objects power the design; all six combos are data."""
+            """Cycles 1–6 — rule objects power the design; all six combos are data."""
             import pytest
             from scorer import score, ScoringEvent
 
@@ -2619,7 +2359,7 @@ steps:
         command: |
           source = open('/tutorial/scorer.py').read()
           assert 'class SingleRule' in source, \
-              "Cycle 7's refactor introduces a `SingleRule` dataclass — the per-occurrence sibling of `ComboRule`."
+              "Cycle 6's refactor introduces a `SingleRule` dataclass — the per-occurrence sibling of `ComboRule`."
 
       - description: "COMBO_RULES registry includes all six triple combos (Phase F: cash in the OCP win)"
         command: |
@@ -2679,7 +2419,7 @@ steps:
             text: "```python\nCOMBO_RULES = (\n    ComboRule(1, 3, 'Dragon Blast', 1000),\n    ComboRule(2, 3, 'Goblin Swarm', 200),\n)\n\ndef score(dice: list[int]) -> BattleReport:\n    counts = Counter(dice)\n    events = []\n    for rule in COMBO_RULES:\n        events.extend(rule.apply(counts))\n    # ... singles loops still here for now ...\n    return BattleReport(tuple(events))\n```\nPhase F just appends to `COMBO_RULES`; this body never changes."
 
     quiz:
-      title: "Cycle 7 Quiz"
+      title: "Cycle 6 Quiz"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2700,7 +2440,7 @@ steps:
           explanation: |
             "Listen to the test" is a foundational TDD heuristic: when adding a test or a
             branch hurts disproportionately, the structure is telling you something. In
-            cycle 7, the pain of imagining six more `if counts[X] >= 3:` branches was the
+            cycle 6, the pain of imagining six more `if counts[X] >= 3:` branches was the
             signal. The fix was a structural shift to data, not more code.
 
         - question: |
@@ -2726,19 +2466,19 @@ steps:
             A teammate says: *"You should have done the rule-object refactor in cycle 5, when you first introduced combos. Why wait?"* What is the **most defensible** answer?
           type: single
           options:
-            - "Refactoring earlier would have been wrong — the rule-object shape only became visible after cycle 7's test added a *second* combo, and refactoring with one example is guessing at the right shape"
+            - "Refactoring earlier would have been wrong — the rule-object shape only became visible after cycle 6's test added a *second* combo, and refactoring with one example is guessing at the right shape"
             - "Cycle 5 was technically possible but pytest had not yet released support for dataclasses, so the refactor would have failed at import time"
             - "It is a stylistic preference — both orderings produce identical code in the end and one is not measurably better than the other"
             - "Earlier refactoring is always better; the tutorial's order is artificial and you should always do the biggest refactor as soon as you can"
           correct_index: 0
           option_feedback:
             1: "Pytest supports dataclasses (and has for years), and pytest support wouldn't dictate when to refactor anyway. This invents history to dodge the design question. The answer has to be about *information available to the designer*, not tooling availability."
-            2: "Order matters because *what you knew when* matters. With one combo (cycle 5), the abstraction is a guess; with two (cycle 7), the common shape is *visible*. Refactoring at cycle 5 picks the shape based on speculation; refactoring at cycle 7 picks it based on evidence. Same final code, very different epistemic standing."
+            2: "Order matters because *what you knew when* matters. With one combo (cycle 5), the abstraction is a guess; with two (cycle 6), the common shape is *visible*. Refactoring at cycle 5 picks the shape based on speculation; refactoring at cycle 6 picks it based on evidence. Same final code, very different epistemic standing."
             3: "\"Earlier is always better\" is the universal-rule trap. With one example you can't see the shape; refactoring early commits you to a guess that the next cycle may invalidate. The TDD discipline is *refactor toward duplication*, not before it — which is the Rule of Three (or Two, in this tutorial), not \"as soon as possible.\""
           explanation: |
             Two data points are the minimum for seeing the right *shape* of an abstraction.
             With only `Dragon Blast` (cycle 5), you'd be guessing whether the variation is
-            "the die that triggers" or "the count required" or "the name." Cycle 7's
+            "the die that triggers" or "the count required" or "the name." Cycle 6's
             `Goblin Swarm` provides the second data point, and only then is `ComboRule(die,
             count, name, damage)` a *discovery* rather than a *guess*. Refactor *toward*
             duplication, not *before* it.
@@ -2765,13 +2505,13 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 10 — Cycle 8: Six 1s = TWO Dragon Blasts (HIDDEN EDGE CASE) + QUIZ
+  # STEP 9 — Cycle 7: Six 1s = TWO Dragon Blasts (HIDDEN EDGE CASE) + QUIZ
   # Pedagogy:
   #   Productive failure   — the "obvious" code has a bug; the test reveals it.
   #   Boundary thinking    — three is enough; six is two combos worth.
   #   Quiz                 — checks "TDD finds bugs you didn't know you had."
   # --------------------------------------------------------------------------
-  - title: "Cycle 8 — Six 1s → Two Dragon Blasts (Hidden Bug)"
+  - title: "Cycle 7 — Six 1s → Two Dragon Blasts (Hidden Bug)"
     instructions: |
       > **Spec:** `score([1, 1, 1, 1, 1, 1])` produces **two** Dragon Blasts (2000 damage).
 
@@ -2790,7 +2530,7 @@ steps:
 
       1. **🔴 RED** — add `test_six_ones_create_two_dragon_blasts` asserting 2000 damage and two Blast events. Run; see the wrong events tuple.
       2. **🟢 GREEN** — fix `ComboRule.apply` so it can emit *zero or more* combos per call, with the correct leftover bookkeeping. *Before you code*, write the formula on paper for: how many full combos do `n` dice of one face produce? How many leftover dice?
-      3. **🔵 REFACTOR** — re-run. Especially gratifying: cycle 6's leftover guardrail still passes — the fix only changed behavior on cases no prior test pinned down.
+      3. **🔵 REFACTOR** — re-run. Especially gratifying: cycle 5's leftover guardrail still passes — the fix only changed behavior on cases no prior test pinned down.
 
       <details markdown="1"><summary>Why this matters: coverage vs. boundary thinking</summary>
 
@@ -2803,7 +2543,7 @@ steps:
 
       ### 📦 Commit your progress
 
-      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 8: fix multi-combo bug (six 1s = two Blasts)`.
+      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 7: fix multi-combo bug (six 1s = two Blasts)`.
 
     files:
       - path: "scorer.py"
@@ -2891,7 +2631,7 @@ steps:
 
       - path: "test_scorer.py"
         content: |
-          """Cycles 1–8 — surfacing the multi-combo edge case."""
+          """Cycles 1–7 — surfacing the multi-combo edge case."""
           import pytest
           from scorer import score, ScoringEvent
 
@@ -3084,7 +2824,7 @@ steps:
 
         - path: "test_scorer.py"
           content: |
-            """Cycles 1–8 — multi-combo edge case fixed."""
+            """Cycles 1–7 — multi-combo edge case fixed."""
             import pytest
             from scorer import score, ScoringEvent
 
@@ -3191,9 +2931,10 @@ steps:
       explanation: |
         The fix in ComboRule.apply: replace the one-shot `if` with a per-combo loop
         driven by floor division (`counts[self.die] // self.count`), and replace
-        the subtraction with modulo (`counts[self.die] %= self.count`). Cycle 6's
-        guardrail still passes because `4 % 3 == 1` matches the previous `4 - 3 ==
-        1` for that specific input — the disagreement is only on multi-combo cases.
+        the subtraction with modulo (`counts[self.die] %= self.count`). Cycle 5's
+        bonus leftover guardrail still passes because `4 % 3 == 1` matches the
+        previous `4 - 3 == 1` for that specific input — the disagreement is only
+        on multi-combo cases.
 
     tests:
       - description: "test_six_ones_create_two_dragon_blasts function exists"
@@ -3214,7 +2955,7 @@ steps:
           assert '%= self.count' in source.replace(' ', ' ') or '%=self.count' in source.replace(' ', ''), \
               "ComboRule.apply must reduce counts[self.die] using `%= self.count` — modulo is the right operator when combos can repeat."
 
-      - description: "All tests pass (cycle 6's guardrail and the new multi-combo case)"
+      - description: "All tests pass (cycle 5's leftover guardrail and the new multi-combo case)"
         command: |
           import pytest, io, sys
           old = sys.stdout
@@ -3224,7 +2965,7 @@ steps:
           output = buf.getvalue()
           print(output)
           assert code == 0, \
-              f"Some tests failed. Read which one — is it the new six-1s test (your formula is wrong), or cycle 6's guardrail (your formula broke a behavior the previous code got right)?\n{output}"
+              f"Some tests failed. Read which one — is it the new six-1s test (your formula is wrong), or cycle 5's bonus leftover guardrail (your formula broke a behavior the previous code got right)?\n{output}"
         hints:
           - title: "Small nudge"
             text: "How many full combos do `n` dice of one face produce? How many leftover dice? Write the formula on paper before changing any code."
@@ -3234,24 +2975,24 @@ steps:
             text: "```python\ndef apply(self, counts: Counter) -> list[ScoringEvent]:\n    events = []\n    number_of_combos = counts[self.die] // self.count\n    for _ in range(number_of_combos):\n        dice_used = tuple([self.die] * self.count)\n        events.append(ScoringEvent(self.name, dice_used, self.damage))\n    counts[self.die] %= self.count\n    return events\n```"
 
     quiz:
-      title: "Cycle 8 Quiz"
+      title: "Cycle 7 Quiz"
       min_score: 0.8
       shuffle: true
       questions:
 
         - question: |
-            The "one Dragon Blast for any number of 1s ≥ 3" bug was sitting in your code from cycle 5 onward — *four cycles*. Why did no previous test catch it?
+            The "one Dragon Blast for any number of 1s ≥ 3" bug was sitting in your code from cycle 5 onward — *three cycles*. Why did no previous test catch it?
           type: single
           options:
             - "pytest's collection algorithm has a known issue with bugs that span multiple cycles, so it deferred reporting"
             - "Every previous test used at most three of a face (three 1s, three 2s, etc.). The bug only manifests when the count of a face is at least *six*. The suite had no such input, so the defect lived undisturbed"
             - "The bug only manifests on Tuesdays, and the previous test runs happened on other days"
-            - "Cycle 5's `if counts[1] >= 3:` is correct — there was no bug; cycle 8 changed the requirement"
+            - "Cycle 5's `if counts[1] >= 3:` is correct — there was no bug; cycle 7 changed the requirement"
           correct_index: 1
           option_feedback:
             0: "There is no such pytest issue. Bugs aren't \"deferred\" by the collection algorithm — they exist or don't based on whether a test exercises the buggy input. The reason this bug hid for four cycles is *purely about which inputs got tested*, not about pytest internals."
-            2: "Bugs are deterministic functions of input, not of date. (Time-dependent bugs do exist — e.g., daylight savings — but the cycle-8 bug isn't one of them; it depends only on the dice list.)"
-            3: "Cycle 8 didn't change the rule. The spec was \"three 1s = one Dragon Blast, leftovers score as singles\" all along. The bug is that for six 1s, the *cycle-5 code* emits 1 Blast + 3 Flames, when the spec says 2 Blasts + 0 Flames. The defect was always there; only cycle 8's test surfaced it."
+            2: "Bugs are deterministic functions of input, not of date. (Time-dependent bugs do exist — e.g., daylight savings — but the cycle-7 bug isn't one of them; it depends only on the dice list.)"
+            3: "Cycle 7 didn't change the rule. The spec was \"three 1s = one Dragon Blast, leftovers score as singles\" all along. The bug is that for six 1s, the *cycle-5 code* emits 1 Blast + 3 Flames, when the spec says 2 Blasts + 0 Flames. The defect was always there; only cycle 7's test surfaced it."
           explanation: |
             Boundary thinking. Every previous combo test gave the rule *exactly* `count`
             dice. The bug was on the boundary where `counts[X] >= 2 * count`. Without a test
@@ -3260,18 +3001,18 @@ steps:
             empirical TDD studies report.
 
         - question: |
-            What is the **most defensible** general lesson from cycle 8 about test-suite design?
+            What is the **most defensible** general lesson from cycle 7 about test-suite design?
           type: single
           options:
             - "Always test every input combinatorially — only complete coverage of the input space catches all bugs"
-            - "Coverage by line is what matters; cycle 8's bug was in code already covered, so coverage didn't help. The lesson is to *also* think about boundary cases (`exactly N`, `2N`, `between N and 2N`, `0`) per behavior"
+            - "Coverage by line is what matters; cycle 7's bug was in code already covered, so coverage didn't help. The lesson is to *also* think about boundary cases (`exactly N`, `2N`, `between N and 2N`, `0`) per behavior"
             - "Never use floor-division and modulo in production code — they are too easy to get wrong"
             - "TDD is unreliable; this bug proves that even careful test-first development can miss things, so we should add manual QA after every cycle"
           correct_index: 1
           option_feedback:
             0: "Combinatorial coverage is **infeasible** for any nontrivial input space (six 1–6 dice already gives `6^6 = 46656` possibilities; ten dice would be 60 million). The lesson isn't \"test more,\" it's \"test *the right boundaries*.\" One well-chosen test on `2N` catches the bug; thousands of random inputs in the same partition don't."
-            2: "This blames the operator instead of the test design. `//` and `%` are correct primitives for this exact problem — a *cycle-8 test* would catch a wrong implementation just as readily as a wrong subtraction. The remedy is more careful test-input selection, not avoiding correct Python features."
-            3: "Inverts the lesson. The bug *was caught*, in cycle 8, by a TDD-style test. The takeaway isn't \"TDD is unreliable\" — it's \"TDD's effectiveness depends on which inputs your tests probe.\" Adding manual QA on top of a test suite that misses boundaries doesn't fix the root cause; better boundary-value test selection does."
+            2: "This blames the operator instead of the test design. `//` and `%` are correct primitives for this exact problem — a *cycle-7 test* would catch a wrong implementation just as readily as a wrong subtraction. The remedy is more careful test-input selection, not avoiding correct Python features."
+            3: "Inverts the lesson. The bug *was caught*, in cycle 7, by a TDD-style test. The takeaway isn't \"TDD is unreliable\" — it's \"TDD's effectiveness depends on which inputs your tests probe.\" Adding manual QA on top of a test suite that misses boundaries doesn't fix the root cause; better boundary-value test selection does."
           explanation: |
             *Coverage* told us we executed the line. It did not tell us whether the line
             was right *for all relevant inputs*. Boundary-value analysis (the partition
@@ -3280,27 +3021,27 @@ steps:
             boundary" input — and a healthy suite probes each.
 
         - question: |
-            Cycle 6's guardrail (`[1, 1, 1, 1, 5]`) still passes after cycle 8's refactor. Why? Be precise.
+            Cycle 5's bonus leftover guardrail (`[1, 1, 1, 1, 5]`) still passes after cycle 7's refactor. Why? Be precise.
           type: single
           options:
             - "Because pytest skips guardrail tests after they pass once — they are stored as cached green results"
             - "Because for `counts[1] = 4`, the old `counts[1] -= 3` and the new `counts[1] %= 3` both leave 1 in the counter — the two implementations agree on this specific input even though they disagree on `counts[1] >= 6`"
-            - "Because cycle 6's test is parameterized, and pytest reruns parameterized tests with looser tolerances"
-            - "Because cycle 6's test has been deleted by the cycle 8 refactor — the green count went down, not up"
+            - "Because the leftover test is parameterized, and pytest reruns parameterized tests with looser tolerances"
+            - "Because the leftover test has been deleted by the cycle 7 refactor — the green count went down, not up"
           correct_index: 1
           option_feedback:
             0: "Pytest doesn't cache test results between runs. Every `pytest` invocation re-executes every selected test from scratch. Made-up framework behavior — the explanation needs to come from the code's semantics."
-            2: "Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason cycle 6 still passes is *mathematical* (the two operations agree on 4), not framework-related."
-            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* because cycle 8 added a new passing test. The code is what gets restructured during refactoring; the tests remain as guards."
+            2: "Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason the guardrail still passes is *mathematical* (the two operations agree on 4), not framework-related."
+            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* because cycle 7 added a new passing test. The code is what gets restructured during refactoring; the tests remain as guards."
           explanation: |
             This is a subtle but important point: a refactor does not have to *change every
             output*. The two implementations of `apply` produce the same answer for any
             input where the old answer was correct — and only the new answer is correct
-            where the old was wrong. That is what makes the cycle-8 fix a *generalisation*
+            where the old was wrong. That is what makes the cycle-7 fix a *generalisation*
             rather than a *replacement*.
 
         - question: |
-            A teammate looks at cycle 8's fix and says: *"This bug only existed because we extracted ComboRule. If we'd kept the inline `if counts[1] >= 3:` from cycle 5, we wouldn't have had this issue."* Are they right?
+            A teammate looks at cycle 7's fix and says: *"This bug only existed because we extracted ComboRule. If we'd kept the inline `if counts[1] >= 3:` from cycle 5, we wouldn't have had this issue."* Are they right?
           type: single
           options:
             - "Yes — the rule-object refactor introduced complexity that produced the bug. Inline code would have been simpler and safer"
@@ -3321,1029 +3062,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 11 — Cycle 9: Invalid dice raise an error
-  # Pedagogy:
-  #   Robustness testing  — one of the most-undertaught topics in the literature.
-  #   pytest.raises       — the right idiom for "this input should error."
-  #   No quiz — narrow, technique-focused cycle.
-  # --------------------------------------------------------------------------
-  - title: "Cycle 9 — Invalid Dice Raise an Error"
-    instructions: |
-      > **Spec:** `score([1, 2, 9])` raises `ValueError("Die values must be between 1 and 6")`. Dice are integers 1–6.
-
-      ## Your task
-
-      1. **🔴 RED** — add `test_invalid_die_value_raises_error` using `pytest.raises(ValueError, match=...)`. **Predict** the failure: will the test fail because no exception is raised, the wrong exception is raised, or the wrong message?
-      2. **🟢 GREEN** — make the test pass. *Before you implement*, decide: **where does validation live?** Inside `score()`? In a helper? On `BattleReport`? Each choice is defensible. Pick one, implement, run.
-      3. **🔵 REFACTOR** — checklist; constants like `VALID_DICE` keep the rule explicit.
-
-      <details markdown="1"><summary>Why <code>match=</code> matters</summary>
-
-      Without `match=`, the test would accept *any* `ValueError` — even one with no message, or the wrong message. With it, the test pins down the *contract*: the function raises and explains *why*. That's an oracle for the error case, not just for success.
-      </details>
-
-      🪞 **Pause (after green):** validation is *typically* what students reach for first when starting on a new function — yet here it arrives in cycle 9, not cycle 1. **Why was leaving validation out of cycle 1 the right move?** (Hint: revisit cycle 1's test list — was "invalid input" on it?)
-
-      <details markdown="1"><summary>Compare your answer — the rule that travels</summary>
-
-      Happy-path-only suites are the single most common smell in student-written test code (per testing-education research). The deeper lesson: line coverage doesn't catch missing error handling. A function that silently processes invalid input passes every happy-path assertion. Only an invalid-input test asks "does the boundary actually error?"
-
-      **The rule that travels:** if a behavior isn't on the test list, code for it isn't earned. Validation is no exception — it joins the list when the spec demands it, not when habit suggests it.
-      </details>
-
-      ---
-
-      ### 📦 Commit your progress
-
-      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 9: invalid-dice validation`.
-
-    files:
-      - path: "scorer.py"
-        content: |
-          from collections import Counter
-          from dataclasses import dataclass
-
-
-          @dataclass(frozen=True)
-          class ScoringEvent:
-              name: str
-              dice_used: tuple
-              damage: int
-
-
-          @dataclass(frozen=True)
-          class BattleReport:
-              events: tuple = ()
-
-              @property
-              def total_damage(self) -> int:
-                  return sum(event.damage for event in self.events)
-
-
-          @dataclass(frozen=True)
-          class ComboRule:
-              die: int
-              count: int
-              name: str
-              damage: int
-
-              def apply(self, counts: Counter) -> list[ScoringEvent]:
-                  events = []
-
-                  number_of_combos = counts[self.die] // self.count
-
-                  for _ in range(number_of_combos):
-                      dice_used = tuple([self.die] * self.count)
-                      events.append(ScoringEvent(self.name, dice_used, self.damage))
-
-                  counts[self.die] %= self.count
-
-                  return events
-
-
-          @dataclass(frozen=True)
-          class SingleRule:
-              die: int
-              name: str
-              damage: int
-
-              def apply(self, counts: Counter) -> list[ScoringEvent]:
-                  events = []
-
-                  for _ in range(counts[self.die]):
-                      events.append(ScoringEvent(self.name, (self.die,), self.damage))
-
-                  return events
-
-
-          COMBO_RULES = (
-              ComboRule(1, 3, "Dragon Blast", 1000),
-              ComboRule(2, 3, "Goblin Swarm", 200),
-              ComboRule(3, 3, "Orc Charge", 300),
-              ComboRule(4, 3, "Troll Smash", 400),
-              ComboRule(5, 3, "Lightning Storm", 500),
-              ComboRule(6, 3, "Demon Strike", 600),
-          )
-
-          SINGLE_RULES = (
-              SingleRule(1, "Dragon Flame", 100),
-              SingleRule(5, "Lightning Spark", 50),
-          )
-
-
-          def score(dice: list[int]) -> BattleReport:
-              counts = Counter(dice)
-              events = []
-
-              for rule in COMBO_RULES:
-                  events.extend(rule.apply(counts))
-
-              for rule in SINGLE_RULES:
-                  events.extend(rule.apply(counts))
-
-              return BattleReport(tuple(events))
-        language: "python"
-
-      - path: "test_scorer.py"
-        content: |
-          """Cycles 1–9 — adding input validation."""
-          import pytest
-          from scorer import score, ScoringEvent
-
-
-          def test_empty_roll_has_zero_damage_and_no_events():
-              report = score([])
-
-              assert report.total_damage == 0
-              assert report.events == ()
-
-
-          def test_single_one_creates_dragon_flame_event():
-              report = score([1])
-
-              assert report.total_damage == 100
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_single_five_creates_lightning_spark_event():
-              report = score([5])
-
-              assert report.total_damage == 50
-              assert report.events == (
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_two_ones_create_two_dragon_flames():
-              report = score([1, 1])
-
-              assert report.total_damage == 200
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_one_and_five_create_two_different_events():
-              report = score([1, 5])
-
-              assert report.total_damage == 150
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_three_ones_create_dragon_blast_instead_of_three_flames():
-              report = score([1, 1, 1])
-
-              assert report.total_damage == 1000
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-              )
-
-
-          def test_dragon_blast_plus_leftover_flame_and_spark():
-              report = score([1, 1, 1, 1, 5])
-
-              assert report.total_damage == 1150
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_three_twos_create_goblin_swarm():
-              report = score([2, 2, 2])
-
-              assert report.total_damage == 200
-              assert report.events == (
-                  ScoringEvent("Goblin Swarm", (2, 2, 2), 200),
-              )
-
-
-          @pytest.mark.parametrize(
-              "roll, expected_event",
-              [
-                  ([3, 3, 3], ScoringEvent("Orc Charge", (3, 3, 3), 300)),
-                  ([4, 4, 4], ScoringEvent("Troll Smash", (4, 4, 4), 400)),
-                  ([5, 5, 5], ScoringEvent("Lightning Storm", (5, 5, 5), 500)),
-                  ([6, 6, 6], ScoringEvent("Demon Strike", (6, 6, 6), 600)),
-              ],
-          )
-          def test_other_triples_create_combo_events(roll, expected_event):
-              report = score(roll)
-
-              assert report.total_damage == expected_event.damage
-              assert report.events == (expected_event,)
-
-
-          def test_six_ones_create_two_dragon_blasts():
-              report = score([1, 1, 1, 1, 1, 1])
-
-              assert report.total_damage == 2000
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-              )
-
-
-          # TODO (RED): write test_invalid_die_value_raises_error
-          #             score([1, 2, 9]) should raise ValueError("Die values must be between 1 and 6")
-          #             Use `with pytest.raises(ValueError, match="..."): score([1, 2, 9])`
-        language: "python"
-
-    open_file: "scorer.py"
-    run_file: "test_scorer.py"
-
-    solution:
-      files:
-        - path: "scorer.py"
-          content: |
-            from collections import Counter
-            from dataclasses import dataclass
-
-
-            VALID_DICE = {1, 2, 3, 4, 5, 6}
-
-
-            @dataclass(frozen=True)
-            class ScoringEvent:
-                name: str
-                dice_used: tuple
-                damage: int
-
-
-            @dataclass(frozen=True)
-            class BattleReport:
-                events: tuple = ()
-
-                @property
-                def total_damage(self) -> int:
-                    return sum(event.damage for event in self.events)
-
-
-            @dataclass(frozen=True)
-            class ComboRule:
-                die: int
-                count: int
-                name: str
-                damage: int
-
-                def apply(self, counts: Counter) -> list[ScoringEvent]:
-                    events = []
-
-                    number_of_combos = counts[self.die] // self.count
-
-                    for _ in range(number_of_combos):
-                        dice_used = tuple([self.die] * self.count)
-                        events.append(ScoringEvent(self.name, dice_used, self.damage))
-
-                    counts[self.die] %= self.count
-
-                    return events
-
-
-            @dataclass(frozen=True)
-            class SingleRule:
-                die: int
-                name: str
-                damage: int
-
-                def apply(self, counts: Counter) -> list[ScoringEvent]:
-                    events = []
-
-                    for _ in range(counts[self.die]):
-                        events.append(ScoringEvent(self.name, (self.die,), self.damage))
-
-                    return events
-
-
-            COMBO_RULES = (
-                ComboRule(1, 3, "Dragon Blast", 1000),
-                ComboRule(2, 3, "Goblin Swarm", 200),
-                ComboRule(3, 3, "Orc Charge", 300),
-                ComboRule(4, 3, "Troll Smash", 400),
-                ComboRule(5, 3, "Lightning Storm", 500),
-                ComboRule(6, 3, "Demon Strike", 600),
-            )
-
-            SINGLE_RULES = (
-                SingleRule(1, "Dragon Flame", 100),
-                SingleRule(5, "Lightning Spark", 50),
-            )
-
-
-            def validate_dice(dice: list[int]) -> None:
-                for die in dice:
-                    if die not in VALID_DICE:
-                        raise ValueError("Die values must be between 1 and 6")
-
-
-            def score(dice: list[int]) -> BattleReport:
-                validate_dice(dice)
-
-                counts = Counter(dice)
-                events = []
-
-                for rule in COMBO_RULES:
-                    events.extend(rule.apply(counts))
-
-                for rule in SINGLE_RULES:
-                    events.extend(rule.apply(counts))
-
-                return BattleReport(tuple(events))
-          language: "python"
-
-        - path: "test_scorer.py"
-          content: |
-            """Cycles 1–9 — invalid dice now raise."""
-            import pytest
-            from scorer import score, ScoringEvent
-
-
-            def test_empty_roll_has_zero_damage_and_no_events():
-                report = score([])
-
-                assert report.total_damage == 0
-                assert report.events == ()
-
-
-            def test_single_one_creates_dragon_flame_event():
-                report = score([1])
-
-                assert report.total_damage == 100
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_single_five_creates_lightning_spark_event():
-                report = score([5])
-
-                assert report.total_damage == 50
-                assert report.events == (
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_two_ones_create_two_dragon_flames():
-                report = score([1, 1])
-
-                assert report.total_damage == 200
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_one_and_five_create_two_different_events():
-                report = score([1, 5])
-
-                assert report.total_damage == 150
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_three_ones_create_dragon_blast_instead_of_three_flames():
-                report = score([1, 1, 1])
-
-                assert report.total_damage == 1000
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                )
-
-
-            def test_dragon_blast_plus_leftover_flame_and_spark():
-                report = score([1, 1, 1, 1, 5])
-
-                assert report.total_damage == 1150
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_three_twos_create_goblin_swarm():
-                report = score([2, 2, 2])
-
-                assert report.total_damage == 200
-                assert report.events == (
-                    ScoringEvent("Goblin Swarm", (2, 2, 2), 200),
-                )
-
-
-            @pytest.mark.parametrize(
-                "roll, expected_event",
-                [
-                    ([3, 3, 3], ScoringEvent("Orc Charge", (3, 3, 3), 300)),
-                    ([4, 4, 4], ScoringEvent("Troll Smash", (4, 4, 4), 400)),
-                    ([5, 5, 5], ScoringEvent("Lightning Storm", (5, 5, 5), 500)),
-                    ([6, 6, 6], ScoringEvent("Demon Strike", (6, 6, 6), 600)),
-                ],
-            )
-            def test_other_triples_create_combo_events(roll, expected_event):
-                report = score(roll)
-
-                assert report.total_damage == expected_event.damage
-                assert report.events == (expected_event,)
-
-
-            def test_six_ones_create_two_dragon_blasts():
-                report = score([1, 1, 1, 1, 1, 1])
-
-                assert report.total_damage == 2000
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                )
-
-
-            def test_invalid_die_value_raises_error():
-                with pytest.raises(ValueError, match="Die values must be between 1 and 6"):
-                    score([1, 2, 9])
-          language: "python"
-      explanation: |
-        Add a `validate_dice` helper called at the top of `score`. The helper raises
-        ValueError with a message that names the boundary, so the test can pin the
-        message down with `match=`.
-
-    tests:
-      - description: "test_invalid_die_value_raises_error function exists"
-        command: |
-          source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_invalid_die_value_raises_error' in source, \
-              "Add the test function `test_invalid_die_value_raises_error`"
-
-      - description: "Test uses pytest.raises with a match= argument"
-        command: |
-          source = open('/tutorial/test_scorer.py').read()
-          assert 'pytest.raises' in source and 'match=' in source, \
-              "Use `with pytest.raises(ValueError, match=...): score([1, 2, 9])` — the `match=` argument pins down the error message"
-
-      - description: "validate_dice (or equivalent input check) is present in scorer.py"
-        command: |
-          source = open('/tutorial/scorer.py').read()
-          assert 'raise ValueError' in source, \
-              "Implement validation by raising ValueError when a die is not in 1–6"
-
-      - description: "All tests pass, including invalid-input"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout
-          sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_scorer.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old
-          output = buf.getvalue()
-          print(output)
-          assert code == 0, \
-              f"All tests should pass — including the new invalid-input case:\n{output}"
-
-      - description: "Validation rejects an out-of-range die at runtime"
-        command: |
-          import importlib, sys
-          if 'scorer' in sys.modules:
-              del sys.modules['scorer']
-          import scorer as _s
-          raised = False
-          try:
-              _s.score([1, 2, 9])
-          except ValueError:
-              raised = True
-          assert raised, \
-              "score([1, 2, 9]) must raise ValueError. The validate_dice helper has not been wired in correctly."
-
-    # NO QUIZ — narrow, technique-focused cycle.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 12 — Cycle 10: Battle report has a human-readable summary
-  # Pedagogy:
-  #   Behavior on an existing object — second responsibility for BattleReport.
-  #   String formatting under test  — the test pins down the exact format.
-  #   No quiz — last cycle; the next step is the comprehensive Big Picture quiz.
-  # --------------------------------------------------------------------------
-  - title: "Cycle 10 — Human-Readable Battle Summary"
-    instructions: |
-      > **Spec:** `report.summary()` returns a one-line string like `"Dragon Blast (1000) + Lightning Spark (50) = 1050"`. An empty report returns `"No damage."`.
-
-      Ten cycles in. Cycle 10 is the only one that adds behavior to `BattleReport` itself rather than to `score`. *Where* a behavior lives is a design decision — putting `summary` on the report keeps formatting close to the data.
-
-      🪞 **Sketch first (15 seconds, before any code):** *where does `summary()` live — on `BattleReport`, on `ScoringEvent`, or as a free function? Method or property?* What does the test you're about to write commit you to about that choice? This is the last cycle where the design decision is *yours* to make consciously.
-
-      ## Your task
-
-      1. **🔴 RED** — add `test_battle_report_has_human_readable_summary`. **Predict** the failure category. Run.
-      2. **🟢 GREEN** — implement your choice. Handle empty events as a special case and join `name (damage)` segments with `" + "` for non-empty.
-      3. **🔵 REFACTOR** — final checklist. Re-run; all 14+ tests should be green. **You just completed ten TDD cycles.**
-
-      <details markdown="1"><summary>Reveal — one common Python convention (open after implementing)</summary>
-
-      Properties signal *cheap, side-effect-free derived values*. `summary()` is cheap, but the empty-case branch and the f-string assembly do nontrivial work. Convention: methods for derived strings; properties for derived numbers and booleans. We chose a method. Either would work — but be consistent within a project.
-      </details>
-
-      ---
-
-      ### 📦 Commit your progress
-
-      Before moving on, commit this cycle. Stage **only the files you actually changed** (scorer.py test_scorer.py) and write a short message — recommended: `Cycle 10: human-readable summary`.
-
-    files:
-      - path: "scorer.py"
-        content: |
-          from collections import Counter
-          from dataclasses import dataclass
-
-
-          VALID_DICE = {1, 2, 3, 4, 5, 6}
-
-
-          @dataclass(frozen=True)
-          class ScoringEvent:
-              name: str
-              dice_used: tuple
-              damage: int
-
-
-          @dataclass(frozen=True)
-          class BattleReport:
-              events: tuple = ()
-
-              @property
-              def total_damage(self) -> int:
-                  return sum(event.damage for event in self.events)
-
-
-          @dataclass(frozen=True)
-          class ComboRule:
-              die: int
-              count: int
-              name: str
-              damage: int
-
-              def apply(self, counts: Counter) -> list[ScoringEvent]:
-                  events = []
-
-                  number_of_combos = counts[self.die] // self.count
-
-                  for _ in range(number_of_combos):
-                      dice_used = tuple([self.die] * self.count)
-                      events.append(ScoringEvent(self.name, dice_used, self.damage))
-
-                  counts[self.die] %= self.count
-
-                  return events
-
-
-          @dataclass(frozen=True)
-          class SingleRule:
-              die: int
-              name: str
-              damage: int
-
-              def apply(self, counts: Counter) -> list[ScoringEvent]:
-                  events = []
-
-                  for _ in range(counts[self.die]):
-                      events.append(ScoringEvent(self.name, (self.die,), self.damage))
-
-                  return events
-
-
-          COMBO_RULES = (
-              ComboRule(1, 3, "Dragon Blast", 1000),
-              ComboRule(2, 3, "Goblin Swarm", 200),
-              ComboRule(3, 3, "Orc Charge", 300),
-              ComboRule(4, 3, "Troll Smash", 400),
-              ComboRule(5, 3, "Lightning Storm", 500),
-              ComboRule(6, 3, "Demon Strike", 600),
-          )
-
-          SINGLE_RULES = (
-              SingleRule(1, "Dragon Flame", 100),
-              SingleRule(5, "Lightning Spark", 50),
-          )
-
-
-          def validate_dice(dice: list[int]) -> None:
-              for die in dice:
-                  if die not in VALID_DICE:
-                      raise ValueError("Die values must be between 1 and 6")
-
-
-          def score(dice: list[int]) -> BattleReport:
-              validate_dice(dice)
-
-              counts = Counter(dice)
-              events = []
-
-              for rule in COMBO_RULES:
-                  events.extend(rule.apply(counts))
-
-              for rule in SINGLE_RULES:
-                  events.extend(rule.apply(counts))
-
-              return BattleReport(tuple(events))
-        language: "python"
-
-      - path: "test_scorer.py"
-        content: |
-          """Cycles 1–10 — adding the human-readable summary."""
-          import pytest
-          from scorer import score, ScoringEvent
-
-
-          def test_empty_roll_has_zero_damage_and_no_events():
-              report = score([])
-
-              assert report.total_damage == 0
-              assert report.events == ()
-
-
-          def test_single_one_creates_dragon_flame_event():
-              report = score([1])
-
-              assert report.total_damage == 100
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_single_five_creates_lightning_spark_event():
-              report = score([5])
-
-              assert report.total_damage == 50
-              assert report.events == (
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_two_ones_create_two_dragon_flames():
-              report = score([1, 1])
-
-              assert report.total_damage == 200
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Dragon Flame", (1,), 100),
-              )
-
-
-          def test_one_and_five_create_two_different_events():
-              report = score([1, 5])
-
-              assert report.total_damage == 150
-              assert report.events == (
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_three_ones_create_dragon_blast_instead_of_three_flames():
-              report = score([1, 1, 1])
-
-              assert report.total_damage == 1000
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-              )
-
-
-          def test_dragon_blast_plus_leftover_flame_and_spark():
-              report = score([1, 1, 1, 1, 5])
-
-              assert report.total_damage == 1150
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                  ScoringEvent("Dragon Flame", (1,), 100),
-                  ScoringEvent("Lightning Spark", (5,), 50),
-              )
-
-
-          def test_three_twos_create_goblin_swarm():
-              report = score([2, 2, 2])
-
-              assert report.total_damage == 200
-              assert report.events == (
-                  ScoringEvent("Goblin Swarm", (2, 2, 2), 200),
-              )
-
-
-          @pytest.mark.parametrize(
-              "roll, expected_event",
-              [
-                  ([3, 3, 3], ScoringEvent("Orc Charge", (3, 3, 3), 300)),
-                  ([4, 4, 4], ScoringEvent("Troll Smash", (4, 4, 4), 400)),
-                  ([5, 5, 5], ScoringEvent("Lightning Storm", (5, 5, 5), 500)),
-                  ([6, 6, 6], ScoringEvent("Demon Strike", (6, 6, 6), 600)),
-              ],
-          )
-          def test_other_triples_create_combo_events(roll, expected_event):
-              report = score(roll)
-
-              assert report.total_damage == expected_event.damage
-              assert report.events == (expected_event,)
-
-
-          def test_six_ones_create_two_dragon_blasts():
-              report = score([1, 1, 1, 1, 1, 1])
-
-              assert report.total_damage == 2000
-              assert report.events == (
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                  ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-              )
-
-
-          def test_invalid_die_value_raises_error():
-              with pytest.raises(ValueError, match="Die values must be between 1 and 6"):
-                  score([1, 2, 9])
-
-
-          # TODO (RED): write test_battle_report_has_human_readable_summary
-          #             score([1, 1, 1, 5]).summary() should equal
-          #             "Dragon Blast (1000) + Lightning Spark (50) = 1050"
-        language: "python"
-
-    open_file: "scorer.py"
-    run_file: "test_scorer.py"
-
-    solution:
-      files:
-        - path: "scorer.py"
-          content: |
-            from collections import Counter
-            from dataclasses import dataclass
-
-
-            VALID_DICE = {1, 2, 3, 4, 5, 6}
-
-
-            @dataclass(frozen=True)
-            class ScoringEvent:
-                name: str
-                dice_used: tuple
-                damage: int
-
-
-            @dataclass(frozen=True)
-            class BattleReport:
-                events: tuple = ()
-
-                @property
-                def total_damage(self) -> int:
-                    return sum(event.damage for event in self.events)
-
-                def summary(self) -> str:
-                    if not self.events:
-                        return "No damage."
-
-                    event_text = " + ".join(
-                        f"{event.name} ({event.damage})" for event in self.events
-                    )
-
-                    return f"{event_text} = {self.total_damage}"
-
-
-            @dataclass(frozen=True)
-            class ComboRule:
-                die: int
-                count: int
-                name: str
-                damage: int
-
-                def apply(self, counts: Counter) -> list[ScoringEvent]:
-                    events = []
-
-                    number_of_combos = counts[self.die] // self.count
-
-                    for _ in range(number_of_combos):
-                        dice_used = tuple([self.die] * self.count)
-                        events.append(ScoringEvent(self.name, dice_used, self.damage))
-
-                    counts[self.die] %= self.count
-
-                    return events
-
-
-            @dataclass(frozen=True)
-            class SingleRule:
-                die: int
-                name: str
-                damage: int
-
-                def apply(self, counts: Counter) -> list[ScoringEvent]:
-                    events = []
-
-                    for _ in range(counts[self.die]):
-                        events.append(ScoringEvent(self.name, (self.die,), self.damage))
-
-                    return events
-
-
-            COMBO_RULES = (
-                ComboRule(1, 3, "Dragon Blast", 1000),
-                ComboRule(2, 3, "Goblin Swarm", 200),
-                ComboRule(3, 3, "Orc Charge", 300),
-                ComboRule(4, 3, "Troll Smash", 400),
-                ComboRule(5, 3, "Lightning Storm", 500),
-                ComboRule(6, 3, "Demon Strike", 600),
-            )
-
-            SINGLE_RULES = (
-                SingleRule(1, "Dragon Flame", 100),
-                SingleRule(5, "Lightning Spark", 50),
-            )
-
-
-            def validate_dice(dice: list[int]) -> None:
-                for die in dice:
-                    if die not in VALID_DICE:
-                        raise ValueError("Die values must be between 1 and 6")
-
-
-            def score(dice: list[int]) -> BattleReport:
-                validate_dice(dice)
-
-                counts = Counter(dice)
-                events = []
-
-                for rule in COMBO_RULES:
-                    events.extend(rule.apply(counts))
-
-                for rule in SINGLE_RULES:
-                    events.extend(rule.apply(counts))
-
-                return BattleReport(tuple(events))
-          language: "python"
-
-        - path: "test_scorer.py"
-          content: |
-            """Cycles 1–10 — ten cycles, all green."""
-            import pytest
-            from scorer import score, ScoringEvent
-
-
-            def test_empty_roll_has_zero_damage_and_no_events():
-                report = score([])
-
-                assert report.total_damage == 0
-                assert report.events == ()
-
-
-            def test_single_one_creates_dragon_flame_event():
-                report = score([1])
-
-                assert report.total_damage == 100
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_single_five_creates_lightning_spark_event():
-                report = score([5])
-
-                assert report.total_damage == 50
-                assert report.events == (
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_two_ones_create_two_dragon_flames():
-                report = score([1, 1])
-
-                assert report.total_damage == 200
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                )
-
-
-            def test_one_and_five_create_two_different_events():
-                report = score([1, 5])
-
-                assert report.total_damage == 150
-                assert report.events == (
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_three_ones_create_dragon_blast_instead_of_three_flames():
-                report = score([1, 1, 1])
-
-                assert report.total_damage == 1000
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                )
-
-
-            def test_dragon_blast_plus_leftover_flame_and_spark():
-                report = score([1, 1, 1, 1, 5])
-
-                assert report.total_damage == 1150
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                    ScoringEvent("Dragon Flame", (1,), 100),
-                    ScoringEvent("Lightning Spark", (5,), 50),
-                )
-
-
-            def test_three_twos_create_goblin_swarm():
-                report = score([2, 2, 2])
-
-                assert report.total_damage == 200
-                assert report.events == (
-                    ScoringEvent("Goblin Swarm", (2, 2, 2), 200),
-                )
-
-
-            @pytest.mark.parametrize(
-                "roll, expected_event",
-                [
-                    ([3, 3, 3], ScoringEvent("Orc Charge", (3, 3, 3), 300)),
-                    ([4, 4, 4], ScoringEvent("Troll Smash", (4, 4, 4), 400)),
-                    ([5, 5, 5], ScoringEvent("Lightning Storm", (5, 5, 5), 500)),
-                    ([6, 6, 6], ScoringEvent("Demon Strike", (6, 6, 6), 600)),
-                ],
-            )
-            def test_other_triples_create_combo_events(roll, expected_event):
-                report = score(roll)
-
-                assert report.total_damage == expected_event.damage
-                assert report.events == (expected_event,)
-
-
-            def test_six_ones_create_two_dragon_blasts():
-                report = score([1, 1, 1, 1, 1, 1])
-
-                assert report.total_damage == 2000
-                assert report.events == (
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                    ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
-                )
-
-
-            def test_invalid_die_value_raises_error():
-                with pytest.raises(ValueError, match="Die values must be between 1 and 6"):
-                    score([1, 2, 9])
-
-
-            def test_battle_report_has_human_readable_summary():
-                report = score([1, 1, 1, 5])
-
-                assert report.summary() == (
-                    "Dragon Blast (1000) + Lightning Spark (50) = 1050"
-                )
-          language: "python"
-      explanation: |
-        Add a `summary` method to BattleReport. Empty events return "No damage.";
-        otherwise join `name (damage)` segments with " + " and append `= total`.
-
-    tests:
-      - description: "test_battle_report_has_human_readable_summary function exists"
-        command: |
-          source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_battle_report_has_human_readable_summary' in source, \
-              "Add the test function `test_battle_report_has_human_readable_summary`"
-
-      - description: "BattleReport.summary method is defined"
-        command: |
-          source = open('/tutorial/scorer.py').read()
-          assert 'def summary' in source, \
-              "Add a `summary` method to BattleReport"
-
-      - description: "Empty report returns 'No damage.'"
-        command: |
-          import importlib, sys
-          if 'scorer' in sys.modules:
-              del sys.modules['scorer']
-          import scorer as _s
-          empty = _s.score([])
-          assert empty.summary() == "No damage.", \
-              f"score([]).summary() should equal 'No damage.', got {empty.summary()!r}"
-
-      - description: "All ten cycles' tests pass — the journey is green"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout
-          sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_scorer.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old
-          output = buf.getvalue()
-          print(output)
-          assert code == 0, \
-              f"All tests across all ten cycles should pass:\n{output}"
-
-    # NO QUIZ — the comprehensive Big Picture quiz is the next (final) step.
-
-
-  # ==========================================================================
-  # STEP 13 — TRANSFER CYCLE: TDD on FizzBuzz (different domain, same rhythm)
+  # STEP 10 — TRANSFER CYCLE: TDD on FizzBuzz (different domain, same rhythm)
   #
   # Pedagogy:
   #   Variation Theory     — same TDD pattern applied to a *totally* different
@@ -4356,7 +3075,7 @@ steps:
   #   Canon TDD step 1     — student is now responsible for writing the test
   #                          list themselves (they saw the discipline modeled
   #                          in Step 1; here they apply it).
-  #   Compression          — ten Dragon-Dice cycles condensed to roughly
+  #   Compression          — seven Dragon-Dice cycles condensed to roughly
   #                          four FizzBuzz mini-cycles in one step. The
   #                          condensation is itself the test of mastery.
   #   Threshold check      — Janzen & Saiedian's "residual effect": this
@@ -4368,7 +3087,7 @@ steps:
   # ==========================================================================
   - title: "Transfer Cycle — TDD on FizzBuzz (Different Domain, Same Rhythm)"
     instructions: |
-      You've completed ten cycles of TDD on dice scoring. The risk: *"TDD only works because Dragon Dice is a naturally compositional domain."* The way to disprove that risk is to apply the same rhythm to a completely unrelated problem — right now, in compressed form.
+      You've completed seven cycles of TDD on dice scoring. The risk: *"TDD only works because Dragon Dice is a naturally compositional domain."* The way to disprove that risk is to apply the same rhythm to a completely unrelated problem — right now, in compressed form.
 
       ## The classic spec — FizzBuzz
 
@@ -4383,7 +3102,7 @@ steps:
 
       ## Canon TDD step 1 — write your own test list
 
-      Before reading any further, take 60 seconds and **write your own test list**. What behaviors does the spec define? Order them from *simplest* to *most design-breaking* — the way the Dragon Dice tutorial implicitly did across cycles 1–10. **You did this implicitly throughout — now you do it explicitly.**
+      Before reading any further, take 60 seconds and **write your own test list**. What behaviors does the spec define? Order them from *simplest* to *most design-breaking* — the way the Dragon Dice tutorial implicitly did across cycles 1–7. **You did this implicitly throughout — now you do it explicitly.**
 
       <details markdown="1"><summary>📋 One possible test list (open ONLY after you've written your own — 60 seconds first)</summary>
 
@@ -4616,13 +3335,13 @@ steps:
           options:
             - "Cycle 5 (Triple 1s = Dragon Blast). Both are *design-breaking tests* — the simplest code that passed earlier tests cannot be tweaked locally to satisfy the new test; the structure has to acknowledge a combined case before earlier cases."
             - "Cycle 1 (Empty roll). Both are the simplest case anyone could write."
-            - "Cycle 9 (Invalid dice). Both involve special-case error handling."
-            - "Cycle 10 (Summary). Both produce formatted string output."
+            - "Cycle 4 (Repeated singles). Both are about handling duplicates of the same input."
+            - "Cycle 6 (Goblin Swarm). Both are about adding a second example that reveals an abstraction."
           correct_index: 0
           option_feedback:
             1: "Cycle 1 was the *simplest* case (the empty input), not a structural pivot. FizzBuzz's empty-list test (`fizzbuzz(0) == []`) is the cycle-1 parallel — but `multiple of 15` is structurally hard, not trivially simple. The match here is on *structural pressure*, not on \"first cycle of the tutorial.\""
-            2: "Cycle 9 is about robustness (raise on bad input). FizzBuzz's `multiple of 15` doesn't raise; it returns a *correct value the prior code couldn't produce*. That's a different kind of design moment — error handling versus structural restructuring."
-            3: "Cycle 10 was about *adding behavior to the existing object* (a `summary()` method). FizzBuzz's `% 15` test isn't about adding a new method; it's about the previous code being structurally unable to produce the right answer for an input it already accepts."
+            2: "Cycle 4 is about generalizing per-input handling into a loop — a refactor, not a structural pivot. The new test (`[1, 1]`) is satisfiable by either a third hardcoded branch *or* a loop. FizzBuzz's `multiple of 15` test cannot be satisfied by either of the two prior conditional shapes; it forces a re-ordering. Different kind of design moment."
+            3: "Cycle 6 (Goblin Swarm) is about *abstraction discovery* — the second example reveals the right shape for a refactor. FizzBuzz's `multiple of 15` isn't about extracting a `Rule` object; it's about the previous code being structurally unable to produce the right answer at all. Structural pivot, not abstraction extraction."
           explanation: |
             Cycle 5 is the right parallel. The signature of a design-breaking test: previous cycles produced code that looks correct, but the *new* test cannot be satisfied by a local edit — the structure has to change. For Dragon Dice that meant moving from per-die iteration to count-then-emit. For FizzBuzz that meant either reordering the conditionals (so `% 15` is checked first) or switching to a compositional string builder. Either way, the existing structure had to accept a behavior the previous tests didn't anticipate. **That feeling — "I can't tweak this; I have to restructure" — is a TDD rhythm invariant, not a Dragon-Dice quirk.**
 
@@ -4637,7 +3356,7 @@ steps:
           correct_index: 0
           option_feedback:
             1: "Speed-by-parallelism is a fabricated technical justification. Pytest parallelism (with `pytest-xdist`) saves seconds on large suites — nowhere near the order of magnitude that would make TDD net-faster than typing. The argument has to stand on *durable design value*, not on runtime tricks."
-            2: "Tests don't catch all bugs. Cycle 8 of this tutorial showed a defect surviving four cycles of green tests. The honest claim is that tests catch the behaviors they actually check, which is narrower than \"all bugs\" and still enormously valuable for regression."
+            2: "Tests don't catch all bugs. Cycle 7 of this tutorial (the hidden six-1s bug) showed a defect surviving four cycles of green tests. The honest claim is that tests catch the behaviors they actually check, which is narrower than \"all bugs\" and still enormously valuable for regression."
             3: "Dismissing the question avoids the engineering tradeoff. TDD's case is empirical (Microsoft/IBM, Erdogmus, Janzen & Saiedian — all measured studies), not faith-based. A teammate who hears \"it's a religion\" walks away thinking the practice has no defense; that's the opposite of what the evidence supports."
           explanation: |
             The honest answer combines two things: (a) for *small* problems with experienced devs, the time cost of TDD is roughly the same as ad-hoc coding — the same number of tests get written either way, just in a different order; (b) the *durable* benefit is the test suite as a regression net plus the rhythm of small steps preventing speculative complexity. On a toy, the gain is small. On long-lived code modified by multiple people it's the difference between a 39–91% drop in pre-release defects (Microsoft/IBM, Williams et al. 2008) and not. TDD isn't a religion — it's a tradeoff with strong empirical evidence in specific contexts (long-lived, multi-author, behavior-rich domains). FizzBuzz lets you *practice* the rhythm cheaply, where the stakes are low.
@@ -4660,16 +3379,16 @@ steps:
 
 
   # ==========================================================================
-  # STEP 14 — THE BIG PICTURE
+  # STEP 11 — THE BIG PICTURE
   #
-  # Synthesizes the journey: ten Dragon-Dice cycles plus the FizzBuzz
+  # Synthesizes the journey: seven Dragon-Dice cycles plus the FizzBuzz
   # transfer. When TDD shines vs. when it doesn't, the anti-pattern taxonomy,
   # the empirical case, and a final quiz that mixes spaced retrieval across
   # earlier cycles with new application questions requiring analysis and evaluation.
   # ==========================================================================
-  - title: "The Big Picture — Ten Cycles and a Transfer"
+  - title: "The Big Picture — Seven Cycles and a Transfer"
     instructions: |
-      Ten Dragon-Dice cycles. Then an eleventh on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*.
+      Seven Dragon-Dice cycles. Then an eighth on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*.
 
       ---
 
@@ -4717,11 +3436,11 @@ steps:
       <details markdown="1"><summary>Reveal — five takeaways that travel</summary>
 
       1. **TDD is design, not testing.** The test is the contract; the implementation emerges under its pressure.
-      2. **Refactor *toward* duplication, not before it (Rule of Two).** *One* example is a guess at the shape; *two* makes the variation visible; *three or more* is duplication that has rotted. Cycle 7's timing was Rule of Two — and it generalizes to every refactor you'll do.
+      2. **Refactor *toward* duplication, not before it (Rule of Two).** *One* example is a guess at the shape; *two* makes the variation visible; *three or more* is duplication that has rotted. Cycle 6's timing was Rule of Two — and it generalizes to every refactor you'll do.
       3. **Tests enable change.** Behavior-level assertions survive structural rewrites; implementation-coupled tests don't.
       4. **Coverage ≠ correctness; complement with boundary-value analysis** (zero, exactly N, 2N, between).
       5. **Listen to the test.** Pain in writing a test usually points at the production code.
-      6. **If a behavior isn't on the test list, code for it isn't earned** (validation is no exception — cycle 9).
+      6. **If a behavior isn't on the test list, code for it isn't earned.** Speculative scaffolding (validation, error handling, hypothetical inputs) waits until a test demands it.
       </details>
 
       <details markdown="1"><summary>Reveal — when TDD shines, when it's overkill</summary>
@@ -4766,7 +3485,7 @@ steps:
       | Same studies | **15–35% longer** initial development; offset by reduced debugging |
       | Erdogmus et al. (2005) | Test-first students wrote **more tests** AND were **more productive** per test |
       | Janzen & Saiedian (ICSE 2007) | Even programmers who *resisted* test-first adopted it more after exposure — the **Residual Effect** |
-      | Fucci et al. (2017) | TDD's benefit comes from **granularity + uniformity**, not strict test-first ordering — your ten tiny cycles embody both |
+      | Fucci et al. (2017) | TDD's benefit comes from **granularity + uniformity**, not strict test-first ordering — your seven tiny cycles embody both |
 
       Caveat: mixed for solo programmers on short tasks. Strongest in team settings, with CI, on long-lived systems.
       </details>
@@ -4793,14 +3512,11 @@ steps:
     files:
       - path: "scorer.py"
         content: |
-          # The full, ten-cycle implementation lives here. Use this step's
+          # The full, seven-cycle implementation lives here. Use this step's
           # editor to scroll through what you built — every line is justified by
           # a test in test_scorer.py. There is no speculative code.
           from collections import Counter
           from dataclasses import dataclass
-
-
-          VALID_DICE = {1, 2, 3, 4, 5, 6}
 
 
           @dataclass(frozen=True)
@@ -4817,16 +3533,6 @@ steps:
               @property
               def total_damage(self) -> int:
                   return sum(event.damage for event in self.events)
-
-              def summary(self) -> str:
-                  if not self.events:
-                      return "No damage."
-
-                  event_text = " + ".join(
-                      f"{event.name} ({event.damage})" for event in self.events
-                  )
-
-                  return f"{event_text} = {self.total_damage}"
 
 
           @dataclass(frozen=True)
@@ -4880,15 +3586,7 @@ steps:
           )
 
 
-          def validate_dice(dice: list[int]) -> None:
-              for die in dice:
-                  if die not in VALID_DICE:
-                      raise ValueError("Die values must be between 1 and 6")
-
-
           def score(dice: list[int]) -> BattleReport:
-              validate_dice(dice)
-
               counts = Counter(dice)
               events = []
 
@@ -4903,7 +3601,7 @@ steps:
 
       - path: "test_scorer.py"
         content: |
-          """All ten cycles, all green. Read it as a contract."""
+          """All seven cycles, all green. Read it as a contract."""
           import pytest
           from scorer import score, ScoringEvent
 
@@ -5006,19 +3704,6 @@ steps:
                   ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
                   ScoringEvent("Dragon Blast", (1, 1, 1), 1000),
               )
-
-
-          def test_invalid_die_value_raises_error():
-              with pytest.raises(ValueError, match="Die values must be between 1 and 6"):
-                  score([1, 2, 9])
-
-
-          def test_battle_report_has_human_readable_summary():
-              report = score([1, 1, 1, 5])
-
-              assert report.summary() == (
-                  "Dragon Blast (1000) + Lightning Spark (50) = 1050"
-              )
         language: "python"
 
     open_file: "scorer.py"
@@ -5030,9 +3715,6 @@ steps:
           content: |
             from collections import Counter
             from dataclasses import dataclass
-
-
-            VALID_DICE = {1, 2, 3, 4, 5, 6}
 
 
             @dataclass(frozen=True)
@@ -5049,16 +3731,6 @@ steps:
                 @property
                 def total_damage(self) -> int:
                     return sum(event.damage for event in self.events)
-
-                def summary(self) -> str:
-                    if not self.events:
-                        return "No damage."
-
-                    event_text = " + ".join(
-                        f"{event.name} ({event.damage})" for event in self.events
-                    )
-
-                    return f"{event_text} = {self.total_damage}"
 
 
             @dataclass(frozen=True)
@@ -5112,15 +3784,7 @@ steps:
             )
 
 
-            def validate_dice(dice: list[int]) -> None:
-                for die in dice:
-                    if die not in VALID_DICE:
-                        raise ValueError("Die values must be between 1 and 6")
-
-
             def score(dice: list[int]) -> BattleReport:
-                validate_dice(dice)
-
                 counts = Counter(dice)
                 events = []
 
@@ -5133,12 +3797,12 @@ steps:
                 return BattleReport(tuple(events))
           language: "python"
       explanation: |
-        The final implementation as it stood at the end of cycle 10. Use this step
+        The final implementation as it stood at the end of cycle 7. Use this step
         for reading and reflection — there are no new tasks, just the comprehensive
         knowledge check that follows.
 
     tests:
-      - description: "All ten cycles' tests still green"
+      - description: "All seven cycles' tests still green"
         command: |
           import pytest, io, sys
           old = sys.stdout
@@ -5168,10 +3832,10 @@ steps:
           option_feedback:
             0: "TDD does not primarily target coverage; coverage is a side effect. A line written under test pressure usually does end up covered, but framing TDD as a coverage technique inverts the causation and misses the design role tests play."
             2: "Speed-of-shipping isn't the case for TDD on small features (initial development is 15–35% *slower* per Microsoft/IBM). The case is on **long-lived code with multiple authors**, where the regression net pays back many-fold. \"Faster shipping\" oversells; the honest claim is *defect reduction over time*."
-            3: "This frames the same issue around coverage from a different angle. The lesson the tutorial built across 10+1 cycles is design pressure, not coverage. Cycle 8 specifically showed how 100%-covered code can still be wrong."
+            3: "This frames the same issue around coverage from a different angle. The lesson the tutorial built across 7+1 cycles is design pressure, not coverage. Cycle 7 specifically showed how 100%-covered code can still be wrong."
           explanation: |
-            The threshold concept of the tutorial: TDD is design, not testing. Cycle 7's
-            rule-object refactor *emerged* under cycle-7's test pressure, not from a
+            The threshold concept of the tutorial: TDD is design, not testing. Cycle 6's
+            rule-object refactor *emerged* under cycle-6's test pressure, not from a
             whiteboard. The test suite is a (valuable) byproduct.
 
         - question: |
@@ -5218,7 +3882,7 @@ steps:
             behavior via the public API.
 
         - question: |
-            The "one Dragon Blast for any count ≥ 3" bug lived in cycles 5–10. Why didn't *line coverage* catch it?
+            The "one Dragon Blast for any count ≥ 3" bug lived in cycles 5 and 6 before cycle 7 surfaced it. Why didn't *line coverage* catch it?
           type: single
           options:
             - "Coverage caught it; pytest ignored the warning"
@@ -5228,7 +3892,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Coverage tools don't \"catch bugs\" — they measure which lines were exercised. There's no \"warning\" to ignore. The bug went undetected because no test gave the buggy line an *input that would trigger the wrong output*, not because pytest filtered something out."
-            2: "There's no `--strict` mode for coverage that would have caught this. Even 100% line + branch + path coverage would have missed cycle-8's bug, because *every line ran* on every prior test — the *input space* is what the suite under-explored, and no coverage flag changes that."
+            2: "There's no `--strict` mode for coverage that would have caught this. Even 100% line + branch + path coverage would have missed cycle-7's bug, because *every line ran* on every prior test — the *input space* is what the suite under-explored, and no coverage flag changes that."
             3: "Coverage tools do measure exception code; that's not the limit at issue. The actual limit is conceptual: coverage measures *line execution*, not *correctness across the input space*. That's why boundary thinking complements coverage rather than being subsumed by it."
           explanation: |
             Coverage tells you the line *ran*, not that it was *right*. Every prior combo
@@ -5252,15 +3916,14 @@ steps:
           option_feedback:
             1: "Random testing belongs more naturally to property-based testing; Hypothesis is great for that. It does not substitute for a behaviorally named test list. With 50 random strings there is no record of which behaviors are pinned down, no boundary discipline, and no readable test names that double as documentation; the boundary `len == 8` may even be missed by chance."
             2: "None of these tests come from the password spec; they check ambient properties like `is not None` and `returns a bool`. \"Returns a bool\" is implicit in the type annotation, and `is not None` passes for almost any non-None return. The test list must come from the rules the function implements, not from generic Python-correctness checks."
-            3: "One test asserting all four rules at once is exactly the Giant antipattern from the Step 16 taxonomy. When it fails, it is hard to tell which rule is broken, and the failure message has to cover every assertion. The TDD discipline is one test per behavior, so the test name itself documents which rule that test pins down."
+            3: "One test asserting all four rules at once is exactly the Giant antipattern from the test-smell taxonomy. When it fails, it is hard to tell which rule is broken, and the failure message has to cover every assertion. The TDD discipline is one test per behavior, so the test name itself documents which rule that test pins down."
           explanation: |
-            **Why option A wins**: it follows the same shape as Dragon Dice's ten cycles —
+            **Why option A wins**: it follows the same shape as Dragon Dice's seven cycles —
             simplest case first (typical valid input), then *each rule rejected* in isolation
             (no digit, no symbol, too short), then *boundaries on the length range* (7 invalid,
-            8 valid, 64 valid, 65 invalid — the same `>` vs `>=` discipline as cycle 1's
-            grade bug), then the *empty-string* edge. Each test name reads like a one-line
-            bug report. Notice how the boundary-pair pattern (7/8 and 64/65) matches the
-            cycle-3 lesson on partition transitions.
+            8 valid, 64 valid, 65 invalid — the boundary-pair discipline from the Testing
+            Foundations prerequisite), then the *empty-string* edge. Each test name reads
+            like a one-line bug report.
 
             **Why there's no single right answer**: your *exact* ordering may differ (e.g.,
             empty-string first as the simplest-of-all). The skill being practiced here is

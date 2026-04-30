@@ -19,7 +19,7 @@ const {
  *
  * Note: The final step ("The Big Picture") has no tests — it is a reflection
  * step with no automated verification. No YAML-driven test is generated for it.
- * Tutorial has 14 steps: Cycle 1 (split into RED/GREEN/REFACTOR), Cycles 2–10
+ * Tutorial has 11 steps: Cycle 1 (split into RED/GREEN/REFACTOR), Cycles 2–7
  * on Dragon Dice scoring, a Transfer Cycle (FizzBuzz), and the Big Picture
  * synthesis. Prerequisite content lives in the Testing Foundations tutorial.
  */
