@@ -4204,9 +4204,9 @@ end note
     expect(stats.width).toBeGreaterThan(0);
     expect(stats.width).toBeLessThan(1700);
     expect(stats.height).toBeLessThan(850);
-    expect(stats.nameFont).toBeGreaterThanOrEqual(18);
-    expect(stats.methodFont).toBeGreaterThanOrEqual(17);
-    expect(stats.noteFont).toBeGreaterThanOrEqual(16);
+    expect(stats.nameFont).toBeGreaterThanOrEqual(19);
+    expect(stats.methodFont).toBeGreaterThanOrEqual(18);
+    expect(stats.noteFont).toBeGreaterThanOrEqual(17);
     expect(stats.routeCount).toBeGreaterThanOrEqual(10);
     expect(stats.routeBoxHits, `Routes cross model elements: ${(stats.routeBoxHits || []).join(', ')}`).toEqual([]);
     expect(new Set(stats.dependencyLaneYs).size).toBeGreaterThanOrEqual(4);
