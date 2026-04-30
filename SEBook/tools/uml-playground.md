@@ -33,6 +33,22 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="landscape">Landscape</option>
       <option value="portrait">Portrait</option>
     </select>
+    <label class="uml-pg-check" for="uml-pg-edit">
+      <input type="checkbox" id="uml-pg-edit">
+      Visual edit
+    </label>
+    <label for="uml-pg-edit-mode">Edit:</label>
+    <select id="uml-pg-edit-mode">
+      <option value="nodes" selected>Elements</option>
+      <option value="lines">Lines</option>
+    </select>
+    <label class="uml-pg-check" for="uml-pg-snap">
+      <input type="checkbox" id="uml-pg-snap" checked>
+      Snap
+    </label>
+    <button id="uml-pg-reset-one" title="Reset selected layout override" disabled>Reset Selected</button>
+    <button id="uml-pg-reset-layout" title="Remove layout overrides">Reset Layout</button>
+    <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
     <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
     <span id="uml-pg-status"></span>
   </div>
@@ -74,7 +90,8 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
 }
 
 #uml-pg-type,
-#uml-pg-layout {
+#uml-pg-layout,
+#uml-pg-edit-mode {
   font-size: 0.88em;
   padding: 3px 8px;
   border: 1px solid #b0bdd4;
@@ -92,6 +109,36 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s;
+}
+
+#uml-pg-reset-one,
+#uml-pg-reset-layout,
+#uml-pg-copy-source {
+  font-size: 0.88em;
+  padding: 3px 10px;
+  background: #fff;
+  color: #26415f;
+  border: 1px solid #b0bdd4;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#uml-pg-reset-one:hover,
+#uml-pg-reset-layout:hover,
+#uml-pg-copy-source:hover {
+  background: #f5f8fc;
+}
+
+#uml-pg-reset-one:disabled {
+  color: #8a96a8;
+  background: #f3f5f8;
+  cursor: not-allowed;
+}
+
+.uml-pg-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 #uml-pg-download:hover {
@@ -152,6 +199,62 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   padding: 0;
 }
 
+#uml-pg-output svg.uml-pg-editing {
+  touch-action: none;
+  user-select: none;
+}
+
+.uml-pg-edit-hitbox {
+  fill: rgba(39, 116, 174, 0.04);
+  stroke: rgba(39, 116, 174, 0.72);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+}
+
+.uml-pg-edit-hitbox.is-selected {
+  fill: rgba(39, 116, 174, 0.10);
+  stroke: #2774AE;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.uml-pg-edit-hitbox.is-port {
+  fill: rgba(39, 174, 96, 0.08);
+  stroke: rgba(39, 174, 96, 0.78);
+}
+
+.uml-pg-edit-hitbox.is-port.is-selected {
+  fill: rgba(39, 174, 96, 0.16);
+  stroke: #27ae60;
+}
+
+.uml-pg-edit-hitbox.is-label {
+  fill: rgba(243, 156, 18, 0.08);
+  stroke: rgba(210, 126, 8, 0.78);
+}
+
+.uml-pg-edit-hitbox.is-label.is-selected {
+  fill: rgba(243, 156, 18, 0.16);
+  stroke: #d27e08;
+}
+
+.uml-pg-edge-hitbox {
+  fill: none;
+  stroke: rgba(39, 116, 174, 0.52);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+  pointer-events: stroke;
+}
+
+.uml-pg-edge-hitbox.is-selected {
+  stroke: rgba(39, 116, 174, 0.82);
+}
+
 #uml-pg-error {
   color: #c0392b;
   font-size: 0.85em;
@@ -164,42 +267,78 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
 }
 
 /* Dark mode support */
-body.dark-mode #uml-playground-wrap {
+html.dark-mode #uml-playground-wrap {
   border-color: #3a4a60;
+  background: #101827;
 }
 
-body.dark-mode #uml-playground-toolbar {
+html.dark-mode #uml-playground-toolbar {
   background: #1e2c3e;
   border-color: #3a4a60;
 }
 
-body.dark-mode #uml-playground-toolbar label {
+html.dark-mode #uml-playground-toolbar label {
   color: #b0c4d8;
 }
 
-body.dark-mode #uml-pg-type,
-body.dark-mode #uml-pg-layout {
+html.dark-mode #uml-pg-type,
+html.dark-mode #uml-pg-layout,
+html.dark-mode #uml-pg-edit-mode {
   background: #243347;
   border-color: #3a4a60;
   color: #d0e0f0;
 }
 
-body.dark-mode #uml-pg-input {
+html.dark-mode #uml-pg-reset-one,
+html.dark-mode #uml-pg-reset-layout,
+html.dark-mode #uml-pg-copy-source {
+  background: #243347;
+  border-color: #3a4a60;
+  color: #d0e0f0;
+}
+
+html.dark-mode #uml-pg-reset-one:hover,
+html.dark-mode #uml-pg-reset-layout:hover,
+html.dark-mode #uml-pg-copy-source:hover {
+  background: #2c3f57;
+}
+
+html.dark-mode #uml-pg-reset-one:disabled {
+  background: #1b2635;
+  border-color: #303d50;
+  color: #718399;
+}
+
+html.dark-mode #uml-pg-download:disabled {
+  background: #35546d;
+  color: #c4d4e2;
+}
+
+html.dark-mode .uml-pg-check input {
+  accent-color: #7cc4ff;
+}
+
+html.dark-mode #uml-pg-input {
   background: #141e2b;
   color: #d0e0f0;
   border-color: #3a4a60;
 }
 
-body.dark-mode #uml-pg-editor-pane {
+html.dark-mode #uml-pg-editor-pane {
   border-color: #3a4a60;
 }
 
-body.dark-mode #uml-pg-preview-pane {
+html.dark-mode #uml-pg-preview-pane {
   background: #1a2535;
 }
 
-body.dark-mode #uml-pg-status {
-  color: #6688aa;
+html.dark-mode #uml-pg-status {
+  color: #8fb2d2;
+}
+
+html.dark-mode #uml-pg-error {
+  color: #ffd6d1;
+  background: #3a1d23;
 }
 
 @media (max-width: 700px) {
@@ -450,12 +589,21 @@ body.dark-mode #uml-pg-status {
     var output = document.getElementById('uml-pg-output');
     var errorBox = document.getElementById('uml-pg-error');
     var downloadBtn = document.getElementById('uml-pg-download');
+    var editToggle = document.getElementById('uml-pg-edit');
+    var editModeSelect = document.getElementById('uml-pg-edit-mode');
+    var snapToggle = document.getElementById('uml-pg-snap');
+    var resetOneBtn = document.getElementById('uml-pg-reset-one');
+    var resetLayoutBtn = document.getElementById('uml-pg-reset-layout');
+    var copySourceBtn = document.getElementById('uml-pg-copy-source');
     var status = document.getElementById('uml-pg-status');
 
     if (!typeSelect || !layoutSelect || !textarea || !output) return;
 
     var debounceTimer = null;
     var currentType = typeSelect.value;
+    var selectedLayoutId = null;
+    var selectedLayoutKind = null;
+    var dragState = null;
 
     function normalizeLineEndings(text) {
       return (text || '').replace(/\r\n?/g, '\n');
@@ -486,13 +634,308 @@ body.dark-mode #uml-pg-status {
       return filtered.join('\n');
     }
 
+    function stripLayoutMetadata(text) {
+      var lines = normalizeLineEndings(text).split('\n');
+      var out = [];
+      var inLayout = false;
+      for (var i = 0; i < lines.length; i++) {
+        var raw = lines[i];
+        var trimmed = raw.trim();
+        if (/^@layout\b/i.test(trimmed)) { inLayout = true; continue; }
+        if (/^@endlayout\b/i.test(trimmed)) { inLayout = false; continue; }
+        if (inLayout) continue;
+        out.push(raw.replace(/\s+@pos\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)/i, ''));
+      }
+      return out.join('\n');
+    }
+
+    function unquoteId(text) {
+      return String(text || '').trim().replace(/^"((?:[^"\\]|\\.)*)"$/, '$1').replace(/\\"/g, '"');
+    }
+
+    function addElement(list, seen, id, label, axis) {
+      id = unquoteId(id);
+      label = unquoteId(label || id);
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      list.push({ id: id, label: label, axis: axis || 'xy' });
+    }
+
+    function sequenceDisplay(id, label) {
+      id = unquoteId(id);
+      label = unquoteId(label || id);
+      if (label.charAt(0) === ':') return label.replace(/^:\s*/, ': ');
+      return id !== label ? id + ': ' + label : label;
+    }
+
+    function parseComponentPortLine(line) {
+      var m = String(line || '').trim().match(/^(portin|portout|port|provide|require)\s+"([^"]+)"(?:\s+as\s+(\S+))?/i) ||
+        String(line || '').trim().match(/^(portin|portout|port|provide|require)\s+(\S+?)(?:\s+as\s+(\S+))?(?:\s+dashed)?$/i);
+      if (!m) return null;
+      return { label: m[2], alias: m[3] || m[2] };
+    }
+
+    function collectModelElements(text, type) {
+      var lines = stripLayoutMetadata(text).split('\n');
+      var elements = [];
+      var seen = {};
+      var componentContext = null;
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line || line === '@startuml' || line === '@enduml' || /^layout\s+/i.test(line)) continue;
+        if (type === 'component' && line === '}') {
+          componentContext = null;
+          continue;
+        }
+        var m;
+
+        if (type === 'class') {
+          m = line.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+        } else if (type === 'sequence') {
+          m = line.match(/^(participant|actor)\s+(.+)$/i);
+          if (m) {
+            var decl = m[2].replace(/\s*\{.*$/, '').trim();
+            var asIdx = decl.indexOf(' as ');
+            var colonIdx = decl.indexOf(':');
+            var id, label;
+            if (asIdx !== -1) {
+              id = decl.substring(0, asIdx).trim();
+              label = decl.substring(asIdx + 4).trim();
+            } else if (colonIdx !== -1) {
+              id = decl.substring(0, colonIdx).trim();
+              label = decl.substring(colonIdx + 1).trim();
+            } else {
+              id = decl;
+              label = decl;
+            }
+            addElement(elements, seen, id, sequenceDisplay(id, label), 'x');
+          }
+          m = line.match(/^(\S+)\s*(?:[-.]+[>x]|<[-.]+)\s*(\S+)/);
+          if (m) {
+            addElement(elements, seen, m[1], m[1], 'x');
+            addElement(elements, seen, m[2].replace(/:.*$/, ''), m[2].replace(/:.*$/, ''), 'x');
+          }
+          m = line.match(/^(?:activate|deactivate|destroy|create(?:\s+participant)?)\s+(\S+)/i);
+          if (m) addElement(elements, seen, m[1], m[1], 'x');
+        } else if (type === 'state') {
+          m = line.match(/^state\s+("[^"]+"|\S+)/i);
+          if (m) addElement(elements, seen, m[1], m[1]);
+          m = line.match(/^(\S+)\s+[-.]+>+\s+(\S+)/);
+          if (m) {
+            if (m[1] !== '[*]') addElement(elements, seen, m[1], m[1]);
+            if (m[2] !== '[*]') addElement(elements, seen, m[2], m[2]);
+          }
+        } else if (type === 'component') {
+          m = line.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) {
+            var componentId = m[2] || unquoteId(m[1]).replace(/^\[|\]$/g, '');
+            addElement(elements, seen, componentId, m[1]);
+            if (line.indexOf('{') !== -1) {
+              componentContext = componentId;
+              var inlineBody = line.match(/\{([^}]*)\}/);
+              if (inlineBody) {
+                var portRe = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+?))(?:\s+as\s+(\S+))?(?=\s+(?:portin|portout|port|provide|require)\b|\s*$)/ig;
+                var pm;
+                while ((pm = portRe.exec(inlineBody[1])) !== null) {
+                  var inlinePortLabel = pm[2] || pm[3];
+                  var inlinePortAlias = pm[4] || inlinePortLabel;
+                  addElement(elements, seen, componentId + '.' + inlinePortAlias, inlinePortLabel, 'port');
+                }
+                componentContext = null;
+              }
+            }
+            continue;
+          }
+          if (componentContext) {
+            var port = parseComponentPortLine(line);
+            if (port) addElement(elements, seen, componentContext + '.' + port.alias, port.label, 'port');
+          }
+        } else if (type === 'deployment') {
+          m = line.match(/^node\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+        } else if (type === 'usecase') {
+          m = line.match(/^actor\s+("[^"]+"|\S+)/i);
+          if (m) addElement(elements, seen, m[1], m[1]);
+          m = line.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+        } else if (type === 'activity') {
+          var quoted = line.match(/"([^"]+)"/);
+          if (quoted) addElement(elements, seen, quoted[1], quoted[1]);
+        } else if (type === 'freeform') {
+          m = line.match(/^box(?:\s+[a-z]+)?\s+"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)/i);
+          if (m) addElement(elements, seen, m[2], m[1].replace(/\\n/g, '\n'));
+        } else if (type === 'gitgraph') {
+          m = line.match(/^branch\s+([^:\s]+)(?:\s+(?:from|at)\s+\S+)?\s*:?\s*$/i);
+          if (m) {
+            addElement(elements, seen, 'branch:' + m[1], m[1], 'branch-label');
+            continue;
+          }
+          m = line.match(/^\s*(\S+)(?:\s+merge\s+\S+)?(?:\s+"((?:[^"\\]|\\.)*)")?\s*$/i);
+          if (m && !/^(branch|head|@startuml|@enduml)\b/i.test(m[1])) addElement(elements, seen, m[1], m[1]);
+        } else if (type === 'venn') {
+          m = line.match(/^set\s+(.+)$/i);
+          if (m) addElement(elements, seen, m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, ''), m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, ''));
+        } else if (type === 'er') {
+          m = line.match(/^(entity|relationship)\s+("[^"]+"|\S+)/i);
+          if (m) addElement(elements, seen, m[2], m[2]);
+        }
+      }
+      return elements;
+    }
+
+    function insertPos(line, pos) {
+      var suffix = ' @pos(' + Math.round(pos.x) + ', ' + Math.round(pos.y || 0) + ')';
+      var brace = line.match(/(\s*\{.*)$/);
+      if (brace) return line.slice(0, -brace[1].length) + suffix + brace[1];
+      return line + suffix;
+    }
+
+    function cloneRoutes(routes) {
+      var copy = {};
+      Object.keys(routes || {}).forEach(function (id) {
+        var route = routes[id];
+        if (!route || !route.points || route.points.length < 2) return;
+        copy[id] = {
+          points: route.points.map(function (p) { return { x: Number(p.x), y: Number(p.y) }; })
+        };
+      });
+      return copy;
+    }
+
+    function clonePositions(positions) {
+      var copy = {};
+      Object.keys(positions || {}).forEach(function (id) {
+        var pos = positions[id];
+        if (!pos || pos.x === undefined || pos.y === undefined) return;
+        copy[id] = { x: Number(pos.x), y: Number(pos.y) };
+      });
+      return copy;
+    }
+
+    function readLayoutPositions(text) {
+      if (!window.UMLShared || !window.UMLShared.extractLayoutMetadata) return {};
+      return clonePositions(window.UMLShared.extractLayoutMetadata(text).layout.positions);
+    }
+
+    function readLayoutRoutes(text) {
+      if (!window.UMLShared || !window.UMLShared.extractLayoutMetadata) return {};
+      return cloneRoutes(window.UMLShared.extractLayoutMetadata(text).layout.routes);
+    }
+
+    function routePointsToString(points) {
+      if (window.UMLShared && window.UMLShared.layoutRoutePointsToString) {
+        return window.UMLShared.layoutRoutePointsToString(points);
+      }
+      return (points || []).map(function (p) {
+        return Math.round(p.x) + ',' + Math.round(p.y);
+      }).join(' ');
+    }
+
+    function appendLayoutBlock(out, positions, routes) {
+      var block = [];
+      Object.keys(positions || {}).forEach(function (id) {
+        var p = positions[id];
+        block.push('node "' + id.replace(/"/g, '\\"') + '" x=' + Math.round(p.x) + ' y=' + Math.round(p.y || 0));
+      });
+      Object.keys(routes || {}).forEach(function (id) {
+        var route = routes[id];
+        if (!route || !route.points || route.points.length < 2) return;
+        block.push('edge "' + id.replace(/"/g, '\\"') + '" points="' + routePointsToString(route.points) + '"');
+      });
+      if (!block.length) return;
+
+      var insertAt = 0;
+      while (insertAt < out.length && !out[insertAt].trim()) insertAt++;
+      if (out[insertAt] && out[insertAt].trim() === '@startuml') insertAt++;
+      out.splice.apply(out, [insertAt, 0].concat(['@layout schema=1 renderer="archuml-visual-editor"'], block, ['@endlayout']));
+    }
+
+    function declarationIdForLine(line, type) {
+      var clean = line.trim();
+      var m;
+      if (type === 'class') {
+        m = clean.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        return m ? unquoteId(m[2] || m[1]) : null;
+      }
+      if (type === 'sequence') {
+        m = clean.match(/^(participant|actor)\s+(.+)$/i);
+        if (!m) return null;
+        var decl = m[2].trim();
+        var asIdx = decl.indexOf(' as ');
+        var colonIdx = decl.indexOf(':');
+        return unquoteId(asIdx !== -1 ? decl.substring(0, asIdx) : (colonIdx !== -1 ? decl.substring(0, colonIdx) : decl));
+      }
+      if (type === 'state') {
+        m = clean.match(/^state\s+("[^"]+"|\S+)/i);
+        return m ? unquoteId(m[1]) : null;
+      }
+      if (type === 'component') {
+        m = clean.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        return m ? unquoteId(m[2] || m[1]) : null;
+      }
+      if (type === 'deployment') {
+        m = clean.match(/^node\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        return m ? unquoteId(m[2] || m[1]) : null;
+      }
+      if (type === 'usecase') {
+        m = clean.match(/^actor\s+("[^"]+"|\S+)/i);
+        if (m) return unquoteId(m[1]);
+        m = clean.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        return m ? unquoteId(m[2] || m[1]) : null;
+      }
+      if (type === 'freeform') {
+        m = clean.match(/^box(?:\s+[a-z]+)?\s+"(?:[^"\\]|\\.)*"\s+as\s+(\S+)/i);
+        return m ? unquoteId(m[1]) : null;
+      }
+      if (type === 'er') {
+        m = clean.match(/^(entity|relationship)\s+("[^"]+"|\S+)/i);
+        return m ? unquoteId(m[2]) : null;
+      }
+      if (type === 'gitgraph') {
+        m = clean.match(/^\s*(\S+)(?:\s+merge\s+\S+|\s+"(?:[^"\\]|\\.)*"|\s*)$/);
+        return m && !/^(branch|head|@startuml|@enduml)\b/i.test(m[1]) ? unquoteId(m[1]) : null;
+      }
+      if (type === 'venn') {
+        m = clean.match(/^set\s+(.+)$/i);
+        return m ? unquoteId(m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, '')) : null;
+      }
+      return null;
+    }
+
+    function writePositionsIntoSource(text, type, positions, routeOverrides) {
+      var routes = routeOverrides || readLayoutRoutes(text);
+      var lines = stripLayoutMetadata(text).split('\n');
+      var remaining = {};
+      Object.keys(positions || {}).forEach(function (id) { remaining[id] = positions[id]; });
+      var out = [];
+
+      for (var i = 0; i < lines.length; i++) {
+        var id = declarationIdForLine(lines[i], type);
+        if (id && remaining[id]) {
+          out.push(insertPos(lines[i], remaining[id]));
+          delete remaining[id];
+        } else {
+          out.push(lines[i]);
+        }
+      }
+
+      var leftover = Object.keys(remaining);
+      var blockPositions = {};
+      leftover.forEach(function (id) { blockPositions[id] = remaining[id]; });
+      appendLayoutBlock(out, blockPositions, routes);
+
+      return out.join('\n');
+    }
+
     function isGitgraph(type) {
       return (type || typeSelect.value) === 'gitgraph';
     }
 
     function ignoresLayout(type) {
       var t = type || typeSelect.value;
-      return t === 'gitgraph' || t === 'venn' || t === 'er';
+      return t === 'gitgraph' || t === 'venn';
     }
 
     function updateLayoutVisibility() {
@@ -504,6 +947,643 @@ body.dark-mode #uml-pg-status {
     function exampleText(type, layoutMode) {
       if (ignoresLayout(type)) return EXAMPLES[type] || '';
       return applyLayoutDirective(EXAMPLES[type] || '', layoutMode);
+    }
+
+    function svgPoint(svg, clientX, clientY) {
+      var pt = svg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      var ctm = svg.getScreenCTM();
+      return ctm ? pt.matrixTransform(ctm.inverse()) : { x: clientX, y: clientY };
+    }
+
+    function clientRectToSvgBox(svg, rect) {
+      var p1 = svgPoint(svg, rect.left, rect.top);
+      var p2 = svgPoint(svg, rect.right, rect.bottom);
+      var x = Math.min(p1.x, p2.x);
+      var y = Math.min(p1.y, p2.y);
+      return { x: x, y: y, width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y) };
+    }
+
+    function cssTranslateOffset(svg, el) {
+      var dx = 0;
+      var dy = 0;
+      var cur = el;
+      while (cur && cur !== svg && cur.nodeType === 1) {
+        var styleTransform = cur.style ? (cur.style.transform || '') : '';
+        styleTransform.replace(/translate\(\s*(-?\d+(?:\.\d+)?)px(?:\s*,\s*|\s+)(-?\d+(?:\.\d+)?)px\s*\)/g, function (_, x, y) {
+          dx += Number(x);
+          dy += Number(y);
+          return '';
+        });
+        cur = cur.parentNode;
+      }
+      if (!dx && !dy) return { x: 0, y: 0 };
+      var ctm = svg && svg.getScreenCTM ? svg.getScreenCTM() : null;
+      return {
+        x: dx / (ctm && ctm.a ? ctm.a : 1),
+        y: dy / (ctm && ctm.d ? ctm.d : 1)
+      };
+    }
+
+    function elementSvgBox(svg, el) {
+      if (!el || !el.getBoundingClientRect) return safeBBox(el);
+      var rect = el.getBoundingClientRect();
+      var box = (!rect || rect.width <= 0 || rect.height <= 0) ? safeBBox(el) : clientRectToSvgBox(svg, rect);
+      if (!box) return null;
+      var cssOffset = cssTranslateOffset(svg, el);
+      if (cssOffset.x || cssOffset.y) {
+        box = { x: box.x + cssOffset.x, y: box.y + cssOffset.y, width: box.width, height: box.height };
+      }
+      return box;
+    }
+
+    function safeBBox(el) {
+      try {
+        var b = el.getBBox();
+        if (!isFinite(b.x) || !isFinite(b.y) || b.width <= 0 || b.height <= 0) return null;
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function textOf(el) {
+      return (el.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function containsPoint(box, x, y, pad) {
+      pad = pad || 0;
+      return x >= box.x - pad && x <= box.x + box.width + pad &&
+        y >= box.y - pad && y <= box.y + box.height + pad;
+    }
+
+    function containsBox(outer, inner, pad) {
+      pad = pad || 0;
+      return inner.x >= outer.x - pad &&
+        inner.y >= outer.y - pad &&
+        inner.x + inner.width <= outer.x + outer.width + pad &&
+        inner.y + inner.height <= outer.y + outer.height + pad;
+    }
+
+    function unionBox(a, b) {
+      var x1 = Math.min(a.x, b.x);
+      var y1 = Math.min(a.y, b.y);
+      var x2 = Math.max(a.x + a.width, b.x + b.width);
+      var y2 = Math.max(a.y + a.height, b.y + b.height);
+      return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    }
+
+    function layoutElementsForId(svg, id) {
+      id = String(id || '');
+      return Array.prototype.slice.call(svg.querySelectorAll('[data-layout-id]')).filter(function (el) {
+        return el.getAttribute('data-layout-id') === id && !el.closest('defs') && !el.closest('.uml-pg-edit-layer');
+      });
+    }
+
+    function layoutBoundsElementsForId(svg, id) {
+      id = String(id || '');
+      return Array.prototype.slice.call(svg.querySelectorAll('[data-layout-bounds-id]')).filter(function (el) {
+        return el.getAttribute('data-layout-bounds-id') === id && !el.closest('defs') && !el.closest('.uml-pg-edit-layer');
+      });
+    }
+
+    function unionElementsBox(svg, elements) {
+      var dataBox = null;
+      elements.forEach(function (el) {
+        var box = elementSvgBox(svg, el);
+        if (box) dataBox = dataBox ? unionBox(dataBox, box) : box;
+      });
+      return dataBox;
+    }
+
+    function expandStackedRects(svg, box) {
+      var rects = Array.prototype.slice.call(svg.querySelectorAll('rect')).map(function (r) {
+        return { el: r, box: elementSvgBox(svg, r) };
+      }).filter(function (r) { return r.box; });
+      var expanded = box;
+      var changed = true;
+      while (changed) {
+        changed = false;
+        for (var i = 0; i < rects.length; i++) {
+          var rb = rects[i].box;
+          var sameColumn = Math.abs(rb.x - expanded.x) < 1.5 && Math.abs(rb.width - expanded.width) < 1.5;
+          var touches = rb.y <= expanded.y + expanded.height + 1.5 && rb.y + rb.height >= expanded.y - 1.5;
+          if (sameColumn && touches && !containsBox(expanded, rb, 0.5)) {
+            expanded = unionBox(expanded, rb);
+            changed = true;
+          }
+        }
+      }
+      return expanded;
+    }
+
+    function findRenderedBox(svg, element) {
+      var dataEls = layoutElementsForId(svg, element.id);
+      if (dataEls.length) {
+        var bounds = layoutBoundsElementsForId(svg, element.id);
+        var dataBox = unionElementsBox(svg, bounds.length ? bounds : dataEls);
+        if (dataBox) return dataBox;
+      }
+
+      var labels = [element.label, element.id].filter(Boolean).map(function (s) {
+        return String(s).replace(/\s+/g, ' ').trim();
+      });
+      var texts = Array.prototype.slice.call(svg.querySelectorAll('text')).filter(function (t) {
+        var txt = textOf(t);
+        return labels.some(function (label) { return txt === label || txt.indexOf(label) !== -1; });
+      });
+      if (!texts.length) return null;
+
+      var shapes = Array.prototype.slice.call(svg.querySelectorAll('rect,circle,ellipse,polygon,path')).filter(function (el) {
+        return !el.closest('.uml-pg-edit-layer') && !el.closest('defs');
+      }).map(function (el) {
+        return { el: el, box: elementSvgBox(svg, el) };
+      }).filter(function (item) { return item.box; });
+
+      var best = null;
+      for (var ti = 0; ti < texts.length; ti++) {
+        var tb = elementSvgBox(svg, texts[ti]);
+        if (!tb) continue;
+        var cx = tb.x + tb.width / 2;
+        var cy = tb.y + tb.height / 2;
+        for (var si = 0; si < shapes.length; si++) {
+          var sb = shapes[si].box;
+          if (!containsPoint(sb, cx, cy, 4)) continue;
+          var area = sb.width * sb.height;
+          if (area < Math.max(80, tb.width * tb.height * 1.2)) continue;
+          if (!best || area < best.area) {
+            best = { box: sb, area: area };
+          }
+        }
+        if (!best) {
+          best = { box: { x: tb.x - 12, y: tb.y - 10, width: tb.width + 24, height: tb.height + 20 }, area: 0 };
+        }
+      }
+
+      return best ? expandStackedRects(svg, best.box) : null;
+    }
+
+    function findEditableElements(svg) {
+      if (!svg) return [];
+      var models = collectModelElements(textarea.value, typeSelect.value);
+      var found = [];
+      for (var i = 0; i < models.length; i++) {
+        if (models[i].axis === 'none') continue;
+        var box = findRenderedBox(svg, models[i]);
+        if (box) {
+          var item = { id: models[i].id, label: models[i].label, axis: models[i].axis, box: box, parent: models[i].parent };
+          if (models[i].axis === 'port') {
+            item.parent = models[i].id.split('.')[0];
+            item.parentBox = findRenderedBox(svg, { id: item.parent, label: item.parent });
+            if (item.parentBox) {
+              item.portSide = box.x + box.width / 2 <= item.parentBox.x + item.parentBox.width / 2 ? 'left' : 'right';
+            }
+          }
+          found.push(item);
+        }
+      }
+      return found;
+    }
+
+    function collectPositions(editables) {
+      var positions = {};
+      var existingPositions = readLayoutPositions(textarea.value);
+      for (var i = 0; i < editables.length; i++) {
+        var item = editables[i];
+        if (item.axis === 'branch-label' && item.id !== selectedLayoutId && !existingPositions[item.id]) continue;
+        positions[item.id] = {
+          x: item.axis === 'x' || item.axis === 'port' ? item.box.x + item.box.width / 2 : item.box.x,
+          y: item.axis === 'port' ? item.box.y + item.box.height / 2 : item.box.y
+        };
+      }
+      return positions;
+    }
+
+    function withTemporaryAutoSvg(text, type, callback) {
+      var renderer = RENDERERS[type];
+      if (!renderer) return null;
+      var host = document.createElement('div');
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      host.style.top = '-10000px';
+      host.style.width = output.getBoundingClientRect().width + 'px';
+      host.style.visibility = 'hidden';
+      document.body.appendChild(host);
+      try {
+        renderer(host, stripLayoutMetadata(text));
+        var svg = host.querySelector('svg');
+        return svg ? callback(svg) : null;
+      } catch (e) {
+        return null;
+      } finally {
+        host.remove();
+      }
+    }
+
+    function autoLayoutPositions(text, type) {
+      return withTemporaryAutoSvg(text, type, function (svg) {
+        var models = collectModelElements(stripLayoutMetadata(text), type);
+        var found = [];
+        for (var i = 0; i < models.length; i++) {
+          if (models[i].axis === 'none') continue;
+          var box = findRenderedBox(svg, models[i]);
+          if (box) found.push({ id: models[i].id, label: models[i].label, axis: models[i].axis, box: box });
+        }
+        return collectPositions(found);
+      }) || {};
+    }
+
+    function collectMoveParts(svg, box, id) {
+      var dataEls = layoutElementsForId(svg, id);
+      if (dataEls.length) {
+        if ((typeSelect.value || '') === 'component' && String(id).indexOf('.') === -1) {
+          Array.prototype.slice.call(svg.querySelectorAll('[data-layout-id]')).forEach(function (el) {
+            var childId = el.getAttribute('data-layout-id') || '';
+            if (childId.indexOf(id + '.') === 0 && !el.closest('defs') && !el.closest('.uml-pg-edit-layer')) {
+              dataEls.push(el);
+            }
+          });
+        }
+        if ((typeSelect.value || '') === 'gitgraph') {
+          var explicitPositions = readLayoutPositions(textarea.value);
+          Array.prototype.slice.call(svg.querySelectorAll('[data-layout-id][data-layout-anchor]')).forEach(function (el) {
+            var labelId = el.getAttribute('data-layout-id') || '';
+            if (el.getAttribute('data-layout-anchor') !== id || explicitPositions[labelId]) return;
+            if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) return;
+            if (dataEls.indexOf(el) === -1) dataEls.push(el);
+          });
+        }
+        return dataEls.map(function (el) {
+          return {
+            el: el,
+            transform: el.getAttribute('transform') || '',
+            styleTransform: el.style ? (el.style.transform || '') : ''
+          };
+        });
+      }
+
+      var selector = 'rect,circle,ellipse,polygon,path,line,polyline,text';
+      return Array.prototype.slice.call(svg.querySelectorAll(selector)).filter(function (el) {
+        if (el.closest('.uml-pg-edit-layer') || el.closest('defs')) return false;
+        var b = elementSvgBox(svg, el);
+        if (!b) return false;
+        return containsBox(box, b, 3) || containsPoint(box, b.x + b.width / 2, b.y + b.height / 2, 3);
+      }).map(function (el) {
+        return {
+          el: el,
+          transform: el.getAttribute('transform') || '',
+          styleTransform: el.style ? (el.style.transform || '') : ''
+        };
+      });
+    }
+
+    function clearEditLayer() {
+      var svg = output.querySelector('svg');
+      if (!svg) return;
+      var layer = svg.querySelector('.uml-pg-edit-layer');
+      if (layer) layer.remove();
+      svg.classList.remove('uml-pg-editing');
+    }
+
+    function setSelectedLayoutId(id, kind) {
+      selectedLayoutId = id || null;
+      selectedLayoutKind = selectedLayoutId ? (kind || 'node') : null;
+      if (resetOneBtn) resetOneBtn.disabled = !selectedLayoutId;
+      var layer = output.querySelector('.uml-pg-edit-layer');
+      if (!layer) return;
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edit-hitbox')).forEach(function (rect) {
+        rect.classList.toggle('is-selected', selectedLayoutKind === 'node' && rect.getAttribute('data-layout-id') === selectedLayoutId);
+      });
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox')).forEach(function (line) {
+        line.classList.toggle('is-selected', selectedLayoutKind === 'route' && line.getAttribute('data-layout-id') === selectedLayoutId);
+      });
+    }
+
+    function clonePoints(points) {
+      return (points || []).map(function (p) { return { x: Number(p.x), y: Number(p.y) }; });
+    }
+
+    function setRouteOverlaySegment(seg, p1, p2) {
+      seg.setAttribute('x1', p1.x);
+      seg.setAttribute('y1', p1.y);
+      seg.setAttribute('x2', p2.x);
+      seg.setAttribute('y2', p2.y);
+    }
+
+    function syncRouteOverlays(layer, routeId, points) {
+      if (!layer) return;
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox[data-route-id="' + routeId + '"]')).forEach(function (seg) {
+        var idx = Number(seg.getAttribute('data-segment-index'));
+        if (seg.getAttribute('data-locked-endpoints') === 'true' && points.length === 4 && idx === 0) {
+          setRouteOverlaySegment(seg, points[1], points[2]);
+          return;
+        }
+        if (!points[idx] || !points[idx + 1]) return;
+        setRouteOverlaySegment(seg, points[idx], points[idx + 1]);
+      });
+    }
+
+    function findEditableRoutes(svg) {
+      if (!window.UMLShared || !window.UMLShared.collectEditableRoutes) return [];
+      return window.UMLShared.collectEditableRoutes(svg);
+    }
+
+    function applyRoutePoints(route, points) {
+      if (window.UMLShared && window.UMLShared.setRoutePointsForElement) {
+        route.element = window.UMLShared.setRoutePointsForElement(route.element, points) || route.element;
+      }
+    }
+
+    function collectConnectedRoutes(svg, id) {
+      return findEditableRoutes(svg).filter(function (route) {
+        return routeEndpointBelongsTo(route.source, id) || routeEndpointBelongsTo(route.target, id);
+      }).map(function (route) {
+        return {
+          route: route,
+          points: clonePoints(route.points),
+          source: route.source,
+          target: route.target
+        };
+      });
+    }
+
+    function routeEndpointBelongsTo(endpoint, id) {
+      if (!endpoint || !id) return false;
+      if (endpoint === id) return true;
+      return (typeSelect.value || '') === 'component' && endpoint.indexOf(id + '.') === 0;
+    }
+
+    function applyConnectedRouteDelta(routes, id, dx, dy) {
+      (routes || []).forEach(function (entry) {
+        var next = clonePoints(entry.points);
+        if (routeEndpointBelongsTo(entry.source, id) && next[0]) {
+          next[0].x += dx;
+          next[0].y += dy;
+        }
+        if (routeEndpointBelongsTo(entry.target, id) && next[next.length - 1]) {
+          var end = next.length - 1;
+          next[end].x += dx;
+          next[end].y += dy;
+        }
+        applyRoutePoints(entry.route, next);
+      });
+    }
+
+    function routeElementTag(route) {
+      return route && route.element && route.element.tagName ? route.element.tagName.toLowerCase() : '';
+    }
+
+    function routeUsesLockedEndpoints(route) {
+      if ((typeSelect.value || '') === 'sequence') return false;
+      return routeElementTag(route) !== 'rect';
+    }
+
+    function editableRouteSegmentIndices(route, lockedEndpoints) {
+      var count = route && route.points ? route.points.length : 0;
+      if (count < 2) return [];
+      if (!lockedEndpoints) {
+        var all = [];
+        for (var ai = 0; ai < count - 1; ai++) all.push(ai);
+        return all;
+      }
+      if (count === 2) return [0];
+      var inner = [];
+      for (var ii = 1; ii < count - 2; ii++) inner.push(ii);
+      return inner;
+    }
+
+    function anchoredTwoPointRoute(points, moveX, moveY) {
+      var a = points[0];
+      var b = points[1];
+      var segDx = b.x - a.x;
+      var segDy = b.y - a.y;
+      if (Math.abs(segDx) >= Math.abs(segDy)) {
+        return [
+          { x: a.x, y: a.y },
+          { x: a.x, y: a.y + moveY },
+          { x: b.x, y: b.y + moveY },
+          { x: b.x, y: b.y }
+        ];
+      }
+      return [
+        { x: a.x, y: a.y },
+        { x: a.x + moveX, y: a.y },
+        { x: b.x + moveX, y: b.y },
+        { x: b.x, y: b.y }
+      ];
+    }
+
+    function constrainedPortPosition(item, x, y) {
+      if (!item || item.axis !== 'port' || !item.parentBox) return { x: x, y: y };
+      var box = item.parentBox;
+      var side = item.portSide || (item.box.x + item.box.width / 2 <= box.x + box.width / 2 ? 'left' : 'right');
+      var minY = box.y + 8;
+      var maxY = box.y + box.height - 8;
+      return {
+        x: side === 'left' ? box.x : box.x + box.width,
+        y: Math.max(minY, Math.min(maxY, y))
+      };
+    }
+
+    function installRouteEditor(svg, layer) {
+      var routes = findEditableRoutes(svg);
+      var ns = 'http://www.w3.org/2000/svg';
+      var handleCount = 0;
+
+      routes.forEach(function (route) {
+        var lockedEndpoints = routeUsesLockedEndpoints(route);
+        var segmentIndices = editableRouteSegmentIndices(route, lockedEndpoints);
+        segmentIndices.forEach(function (i) {
+          var seg = document.createElementNS(ns, 'line');
+          seg.setAttribute('class', 'uml-pg-edge-hitbox' + (route.id === selectedLayoutId && selectedLayoutKind === 'route' ? ' is-selected' : ''));
+          seg.setAttribute('data-layout-id', route.id);
+          seg.setAttribute('data-route-id', route.id);
+          seg.setAttribute('data-segment-index', String(i));
+          seg.setAttribute('data-locked-endpoints', lockedEndpoints ? 'true' : 'false');
+          setRouteOverlaySegment(seg, route.points[i], route.points[i + 1]);
+          seg.addEventListener('pointerdown', function (event) {
+            event.preventDefault();
+            var start = svgPoint(svg, event.clientX, event.clientY);
+            var segmentIndex = Number(event.currentTarget.getAttribute('data-segment-index'));
+            var locked = event.currentTarget.getAttribute('data-locked-endpoints') === 'true';
+            setSelectedLayoutId(route.id, 'route');
+            dragState = {
+              kind: 'route',
+              svg: svg,
+              layer: layer,
+              route: route,
+              segmentIndex: segmentIndex,
+              lockedEndpoints: locked,
+              start: start,
+              points: clonePoints(route.points)
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          });
+          layer.appendChild(seg);
+          handleCount++;
+        });
+      });
+
+      if (!routes.length || !handleCount) {
+        status.textContent = 'No editable lines detected for this diagram yet.';
+      } else {
+        status.textContent = 'Drag a highlighted line segment.';
+      }
+    }
+
+    function installVisualEditor() {
+      var svg = output.querySelector('svg');
+      if (!svg || !editToggle || !editToggle.checked) {
+        clearEditLayer();
+        return;
+      }
+
+      clearEditLayer();
+      svg.classList.add('uml-pg-editing');
+      var editables = findEditableElements(svg);
+      var ns = 'http://www.w3.org/2000/svg';
+      var layer = document.createElementNS(ns, 'g');
+      layer.setAttribute('class', 'uml-pg-edit-layer');
+      svg.appendChild(layer);
+
+      if (editModeSelect && editModeSelect.value === 'lines') {
+        installRouteEditor(svg, layer);
+        return;
+      }
+
+      editables.forEach(function (item) {
+        var rect = document.createElementNS(ns, 'rect');
+        rect.setAttribute('class', 'uml-pg-edit-hitbox' +
+          (item.axis === 'port' ? ' is-port' : '') +
+          (item.axis === 'branch-label' ? ' is-label' : '') +
+          (item.id === selectedLayoutId ? ' is-selected' : ''));
+        rect.setAttribute('data-layout-id', item.id);
+        rect.setAttribute('x', item.box.x);
+        rect.setAttribute('y', item.box.y);
+        rect.setAttribute('width', item.box.width);
+        rect.setAttribute('height', item.box.height);
+        rect.addEventListener('pointerdown', function (event) {
+          event.preventDefault();
+          var start = svgPoint(svg, event.clientX, event.clientY);
+          setSelectedLayoutId(item.id, 'node');
+          dragState = {
+            svg: svg,
+            rect: rect,
+            item: item,
+            start: start,
+            box: item.box,
+            positions: collectPositions(editables),
+            parts: collectMoveParts(svg, item.box, item.id),
+            connectedRoutes: collectConnectedRoutes(svg, item.id)
+          };
+          rect.setPointerCapture(event.pointerId);
+        });
+        layer.appendChild(rect);
+      });
+
+      if (!editables.length) {
+        status.textContent = 'No movable elements detected for this diagram yet.';
+      } else {
+        status.textContent = 'Drag a highlighted element.';
+      }
+    }
+
+    function updateDrag(event, finish) {
+      if (!dragState) return;
+      var now = svgPoint(dragState.svg, event.clientX, event.clientY);
+      if (dragState.kind === 'route') {
+        var routeDx = now.x - dragState.start.x;
+        var routeDy = now.y - dragState.start.y;
+        var nextPoints = clonePoints(dragState.points);
+        var si = dragState.segmentIndex;
+        var a = dragState.points[si];
+        var b = dragState.points[si + 1];
+        var segDx = b.x - a.x;
+        var segDy = b.y - a.y;
+        var moveX = routeDx;
+        var moveY = routeDy;
+
+        if (Math.abs(segDx) >= Math.abs(segDy) * 1.4) {
+          moveX = 0;
+        } else if (Math.abs(segDy) >= Math.abs(segDx) * 1.4) {
+          moveY = 0;
+        }
+        if (snapToggle && snapToggle.checked) {
+          if (moveX) moveX = Math.round((a.x + moveX) / 10) * 10 - a.x;
+          if (moveY) moveY = Math.round((a.y + moveY) / 10) * 10 - a.y;
+        }
+        if (dragState.lockedEndpoints && dragState.points.length === 2) {
+          nextPoints = anchoredTwoPointRoute(dragState.points, moveX, moveY);
+        } else {
+          nextPoints[si] = { x: a.x + moveX, y: a.y + moveY };
+          nextPoints[si + 1] = { x: b.x + moveX, y: b.y + moveY };
+        }
+        applyRoutePoints(dragState.route, nextPoints);
+        syncRouteOverlays(dragState.layer, dragState.route.id, nextPoints);
+
+        if (finish) {
+          var routes = readLayoutRoutes(textarea.value);
+          routes[dragState.route.id] = { points: nextPoints };
+          var editables = findEditableElements(dragState.svg);
+          textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, collectPositions(editables), routes);
+          dragState = null;
+          renderDiagram();
+        }
+        return;
+      }
+
+      var dx = now.x - dragState.start.x;
+      var dy = dragState.item.axis === 'x' ? 0 : now.y - dragState.start.y;
+      var basePos = dragState.positions[dragState.item.id];
+      var nextX = basePos.x + dx;
+      var nextY = basePos.y + dy;
+      if (dragState.item.axis === 'port') {
+        var constrained = constrainedPortPosition(dragState.item, nextX, nextY);
+        nextX = constrained.x;
+        nextY = constrained.y;
+      }
+      if (snapToggle && snapToggle.checked) {
+        if (dragState.item.axis !== 'port') nextX = Math.round(nextX / 10) * 10;
+        nextY = Math.round(nextY / 10) * 10;
+        if (dragState.item.axis === 'port') {
+          var resnapped = constrainedPortPosition(dragState.item, nextX, nextY);
+          nextX = resnapped.x;
+          nextY = resnapped.y;
+        }
+      }
+      var visualDx = dragState.item.axis === 'x'
+        ? nextX - basePos.x
+        : dragState.item.axis === 'port'
+          ? nextX - basePos.x
+          : nextX - dragState.box.x;
+      var visualDy = dragState.item.axis === 'x' ? 0 : (dragState.item.axis === 'port' ? nextY - basePos.y : nextY - dragState.box.y);
+
+      dragState.rect.setAttribute('x', dragState.box.x + visualDx);
+      dragState.rect.setAttribute('y', dragState.box.y + visualDy);
+      dragState.parts.forEach(function (part) {
+        if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
+          var cssT = 'translate(' + visualDx + 'px,' + visualDy + 'px)';
+          part.el.style.transform = part.styleTransform ? part.styleTransform + ' ' + cssT : cssT;
+        } else {
+          var t = 'translate(' + visualDx + ' ' + visualDy + ')';
+          part.el.setAttribute('transform', part.transform ? part.transform + ' ' + t : t);
+        }
+      });
+      applyConnectedRouteDelta(dragState.connectedRoutes, dragState.item.id, visualDx, visualDy);
+
+      if (finish) {
+        dragState.positions[dragState.item.id] = { x: nextX, y: nextY };
+        textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions);
+        dragState.parts.forEach(function (part) {
+          if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
+            if (part.el.style) part.el.style.transform = part.styleTransform;
+          } else if (part.transform) part.el.setAttribute('transform', part.transform);
+          else part.el.removeAttribute('transform');
+        });
+        dragState = null;
+        renderDiagram();
+      }
     }
 
     // Load initial example
@@ -534,6 +1614,7 @@ body.dark-mode #uml-pg-status {
         if (svg) {
           downloadBtn.disabled = false;
           status.textContent = '';
+          installVisualEditor();
         } else {
           downloadBtn.disabled = true;
           status.textContent = 'No diagram produced.';
@@ -548,6 +1629,7 @@ body.dark-mode #uml-pg-status {
       errorBox.textContent = 'Error: ' + msg;
       errorBox.style.display = 'block';
       output.innerHTML = '';
+      clearEditLayer();
       status.textContent = '';
     }
 
@@ -575,6 +1657,91 @@ body.dark-mode #uml-pg-status {
     });
 
     textarea.addEventListener('input', scheduleRender);
+
+    document.addEventListener('pointermove', function (event) {
+      if (dragState) updateDrag(event, false);
+    });
+
+    document.addEventListener('pointerup', function (event) {
+      if (dragState) updateDrag(event, true);
+    });
+
+    if (editToggle) {
+      editToggle.addEventListener('change', function () {
+        if (!editToggle.checked) {
+          dragState = null;
+          setSelectedLayoutId(null);
+          clearEditLayer();
+        } else {
+          installVisualEditor();
+        }
+      });
+    }
+
+    if (editModeSelect) {
+      editModeSelect.addEventListener('change', function () {
+        dragState = null;
+        setSelectedLayoutId(null);
+        installVisualEditor();
+      });
+    }
+
+    if (resetOneBtn) {
+      resetOneBtn.addEventListener('click', function () {
+        if (!selectedLayoutId) return;
+        if (selectedLayoutKind === 'route') {
+          var routes = readLayoutRoutes(textarea.value);
+          delete routes[selectedLayoutId];
+          var editablesForRouteReset = findEditableElements(output.querySelector('svg'));
+          textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, collectPositions(editablesForRouteReset), routes);
+          setSelectedLayoutId(null);
+          renderDiagram();
+          return;
+        }
+        var editables = findEditableElements(output.querySelector('svg'));
+        var positions = collectPositions(editables);
+        var selectedItem = editables.find(function (item) { return item.id === selectedLayoutId; });
+        if (selectedItem && selectedItem.axis === 'branch-label') {
+          delete positions[selectedLayoutId];
+          textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions);
+          setSelectedLayoutId(null);
+          renderDiagram();
+          return;
+        }
+        var autoPositions = autoLayoutPositions(textarea.value, typeSelect.value);
+        if (autoPositions[selectedLayoutId]) positions[selectedLayoutId] = autoPositions[selectedLayoutId];
+        else delete positions[selectedLayoutId];
+        textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions);
+        setSelectedLayoutId(null);
+        renderDiagram();
+      });
+    }
+
+    if (resetLayoutBtn) {
+      resetLayoutBtn.addEventListener('click', function () {
+        textarea.value = stripLayoutMetadata(textarea.value);
+        setSelectedLayoutId(null);
+        renderDiagram();
+      });
+    }
+
+    if (copySourceBtn) {
+      copySourceBtn.addEventListener('click', function () {
+        var text = textarea.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            status.textContent = 'Copied ArchUML.';
+            setTimeout(function () { status.textContent = ''; }, 1800);
+          }, function () {
+            textarea.focus();
+            textarea.select();
+          });
+        } else {
+          textarea.focus();
+          textarea.select();
+        }
+      });
+    }
 
     // Download SVG — produce a self-contained, portable file that renders
     // correctly in PowerPoint, Word, Inkscape, browsers, and other SVG

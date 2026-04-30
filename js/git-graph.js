@@ -1191,7 +1191,7 @@
       var newParent = rebaseMap[parts[1]] || parts[1];
       var newKey = newChild + '__' + newParent;
       if (newKey !== k) {
-        edgeEntry.g.setAttribute('data-edge-key', newKey);
+        this._setEdgeMetadata(edgeEntry, newKey);
       }
       rekeyedEdges[newKey] = edgeEntry;
     }
@@ -1246,7 +1246,7 @@
         if (oldKey.split('__')[0] !== req2.cm.hash) continue;
         delete this._edgeEls[oldKey];
         this._edgeEls[req2.key] = oldEntry;
-        oldEntry.g.setAttribute('data-edge-key', req2.key);
+        this._setEdgeMetadata(oldEntry, req2.key);
         req2.satisfied = true;
         newKeys[req2.key] = true;
         this._updateEdge(oldEntry, req2.x1, req2.y1, req2.x2, req2.y2, req2.color);
@@ -1281,6 +1281,9 @@
     var g = this._svgEl('g', {
       'class': 'git-graph-edge',
       'data-edge-key': key,
+      'data-layout-source': key.split('__')[0],
+      'data-layout-target': key.split('__')[1],
+      'data-route-style': 'gitgraph',
     });
     var shaft = this._svgEl('path', {
       d: this._edgePathD(x1, y1, x2, y2),
@@ -1299,6 +1302,15 @@
     return {
       g: g, shaft: shaft, head: head, x1: x1, y1: y1, x2: x2, y2: y2, color: color,
     };
+  };
+
+  GitGraph.prototype._setEdgeMetadata = function (entry, key) {
+    if (!entry || !entry.g) return;
+    var parts = String(key || '').split('__');
+    entry.g.setAttribute('data-edge-key', key);
+    entry.g.setAttribute('data-layout-source', parts[0] || '');
+    entry.g.setAttribute('data-layout-target', parts[1] || '');
+    entry.g.setAttribute('data-route-style', 'gitgraph');
   };
 
   // Stroke-dashoffset trick to "draw in" a new edge.
@@ -1519,6 +1531,7 @@
     var g = this._svgEl('g', {
       'class': classes,
       'data-hash': cm.hash,
+      'data-layout-id': cm.hash,
     });
     g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
 
@@ -1528,6 +1541,7 @@
         cx: 0, cy: 0, r: NODE_RADIUS + 5,
         fill: 'none', stroke: cm.branchColor, 'stroke-width': 2, 'stroke-opacity': 0.4,
         'class': 'git-graph-head-glow',
+        'data-layout-id': cm.hash,
       });
       g.appendChild(glow);
     }
@@ -1537,6 +1551,7 @@
       cx: 0, cy: 0, r: NODE_RADIUS,
       fill: nodeColor, stroke: nodeSecondary, 'stroke-width': 2.5,
       'class': 'git-graph-node',
+      'data-layout-id': cm.hash,
     });
     g.appendChild(circle);
 
@@ -1545,6 +1560,7 @@
       x: 0, y: hd.dy, 'text-anchor': 'middle',
       fill: nodeSecondary, 'font-size': hd.fontSize, 'font-weight': 600,
       'class': 'git-graph-hash',
+      'data-layout-id': cm.hash,
     });
     hashText.textContent = hd.text;
     g.appendChild(hashText);
@@ -1553,6 +1569,7 @@
       x: NODE_RADIUS + 54, y: 5,
       fill: 'var(--git-graph-text, #000000)', 'font-size': 13,
       'class': 'git-graph-message',
+      'data-layout-id': cm.hash,
     });
     msgText.textContent = this._truncate(cm.message, 50);
     g.appendChild(msgText);
@@ -1695,9 +1712,9 @@
         var wrapperY = cy - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
         var commitRelY = cy - wrapperY;
         var labelColor = this._labelColorFor(br2.name, commit);
-        this._renderLabelGroup(key, cx, wrapperY, br2.hash, function (g, gThis) {
-          gThis._buildBranchLabelContent(g, br2.name, labelColor, commitRelY, br2.remote);
-        });
+        this._renderLabelGroup(key, cx, wrapperY, br2.hash, function (g, gThis, layoutId) {
+          gThis._buildBranchLabelContent(g, br2.name, labelColor, commitRelY, br2.remote, layoutId);
+        }, null, key, br2.hash);
       }
     }
 
@@ -1743,7 +1760,7 @@
       var headTargetId = head.hash + '@' + (head.detached ? '(detached)' : head.ref);
       this._renderLabelGroup(key2, wrapperX, wrapperY, headTargetId, function (g, gThis) {
         gThis._buildHeadContent(g, isDetached, color, commitRelX, commitRelY);
-      }, 'git-graph-label-g--head');
+      }, 'git-graph-label-g--head', key2, head.hash);
     }
 
     for (var k in this._labelEls) {
@@ -1753,21 +1770,28 @@
     }
   };
 
-  GitGraph.prototype._renderLabelGroup = function (key, cx, cy, targetHash, fillFn, extraClass) {
+  GitGraph.prototype._renderLabelGroup = function (key, cx, cy, targetHash, fillFn, extraClass, layoutId, anchorId) {
     var entry = this._labelEls[key];
     var self = this;
     if (!entry) {
       var classes = 'git-graph-label-g entering' + (extraClass ? ' ' + extraClass : '');
-      var g = this._svgEl('g', {
+      var attrs = {
         'class': classes,
         'data-label-key': key,
-      });
+      };
+      if (layoutId) attrs['data-layout-id'] = layoutId;
+      if (anchorId) attrs['data-layout-anchor'] = anchorId;
+      var g = this._svgEl('g', attrs);
       g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
       this._labelsLayer.appendChild(g);
       entry = { g: g, cx: cx, cy: cy, targetHash: targetHash };
       this._labelEls[key] = entry;
       setTimeout(function () { g.classList.remove('entering'); }, 400);
     } else {
+      if (layoutId) entry.g.setAttribute('data-layout-id', layoutId);
+      else entry.g.removeAttribute('data-layout-id');
+      if (anchorId) entry.g.setAttribute('data-layout-anchor', anchorId);
+      else entry.g.removeAttribute('data-layout-anchor');
       if (entry._removalTimer) {
         clearTimeout(entry._removalTimer);
         entry._removalTimer = null;
@@ -1795,7 +1819,7 @@
       }
     }
     while (entry.g.firstChild) entry.g.removeChild(entry.g.firstChild);
-    fillFn(entry.g, self);
+    fillFn(entry.g, self, layoutId);
   };
 
   // Label content is drawn centered at wrapper origin (y=0); the stack offset
@@ -1803,7 +1827,7 @@
   // commitRelY is the commit's y in wrapper-local coords — used by the
   // dashed L-connector to route from the label tip (y=0) down/up to the
   // actual commit position.
-  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, commitRelY, isRemote) {
+  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, commitRelY, isRemote, layoutId) {
     var PTR_DEPTH = LABEL_HEIGHT / 2;
     var TIP_TO_NODE = 4;
 
@@ -1815,7 +1839,8 @@
     var tipXL = -NODE_RADIUS - TIP_TO_NODE;
     var brXL = tipXL - brW;
     var brD = this._pointerPath(brXL, labelY, brW, LABEL_HEIGHT);
-    g.appendChild(this._svgEl('path', {
+    var chip = this._svgEl('g', layoutId ? { 'data-layout-bounds-id': layoutId } : {});
+    chip.appendChild(this._svgEl('path', {
       d: brD,
       fill: 'var(--git-graph-bg, #fafbfc)', stroke: 'none',
       'class': 'git-graph-label-bg',
@@ -1826,7 +1851,7 @@
       stroke: color, 'stroke-width': 1.5,
     };
     if (isRemote) borderAttrs['stroke-dasharray'] = '4 3';
-    g.appendChild(this._svgEl('path', borderAttrs));
+    chip.appendChild(this._svgEl('path', borderAttrs));
     var tL = this._svgEl('text', {
       x: brXL + textW / 2, y: labelMidY + 4,
       'text-anchor': 'middle', fill: color, 'font-size': 13,
@@ -1834,7 +1859,8 @@
       'class': 'git-graph-branch-label',
     });
     tL.textContent = name;
-    g.appendChild(tL);
+    chip.appendChild(tL);
+    g.appendChild(chip);
     g.appendChild(this._lConnectorEl(tipXL, labelMidY, -NODE_RADIUS - 2, commitRelY || 0, color, true));
   };
 
@@ -1884,6 +1910,7 @@
       return this._svgEl('line', {
         x1: x1, y1: y1, x2: x2, y2: y2,
         stroke: color, 'stroke-width': 1.5, 'stroke-opacity': 0.6, 'stroke-dasharray': '3,2',
+        'class': 'git-graph-label-connector',
       });
     }
     var pts = horizFirst
@@ -1892,6 +1919,7 @@
     return this._svgEl('polyline', {
       points: pts, fill: 'none', stroke: color,
       'stroke-width': 1.5, 'stroke-opacity': 0.6, 'stroke-dasharray': '3,2',
+      'class': 'git-graph-label-connector',
     });
   };
 
@@ -1935,7 +1963,10 @@
         var x2 = ep.x;
         var y2 = ep.y;
         var color = cm.branchColor;
-        svg += '<g class="git-graph-edge">' +
+        var edgeKey = cm.hash + '__' + parent.hash;
+        svg += '<g class="git-graph-edge" data-edge-key="' + this._escapeXml(edgeKey) + '" ' +
+          'data-layout-source="' + this._escapeXml(cm.hash) + '" data-layout-target="' + this._escapeXml(parent.hash) + '" ' +
+          'data-route-style="gitgraph">' +
           '<path d="' + this._edgePathD(x1, y1, x2, y2) + '" ' +
           'fill="none" stroke="' + color + '" stroke-width="3" stroke-opacity="0.7" class="git-graph-edge-shaft"/>' +
           '<path d="' + ARROW_PATH + '" transform="' + this._edgeHeadTransform(x1, y1, x2, y2) + '" ' +
@@ -1959,28 +1990,28 @@
       if (isHead) {
         svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (NODE_RADIUS + 5) + '" ' +
           'fill="none" stroke="' + color + '" stroke-width="2" stroke-opacity="0.4" ' +
-          'class="git-graph-head-glow"/>';
+          'class="git-graph-head-glow" data-layout-id="' + this._escapeXml(cm.hash) + '"/>';
       }
 
       // Main node circle
       var secondary = cm.highlightSecondary || '#fff';
       svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
-        'fill="' + color + '" stroke="' + secondary + '" stroke-width="2.5" class="git-graph-node"/>';
+        'fill="' + color + '" stroke="' + secondary + '" stroke-width="2.5" class="git-graph-node" data-layout-id="' + this._escapeXml(cm.hash) + '"/>';
 
       // Texture overlay
       if (cm.texture) {
         svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
-          'fill="url(#git-tx-' + cm.texture + ')" stroke="none"/>';
+          'fill="url(#git-tx-' + cm.texture + ')" stroke="none" data-layout-id="' + this._escapeXml(cm.hash) + '"/>';
       }
 
       var hd = _hashDisplay(cm.shortHash);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
-        'fill="' + secondary + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
+        'fill="' + secondary + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
         this._escapeXml(hd.text) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 54;
       svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
-        'fill="var(--git-graph-text, #000000)" font-size="13" class="git-graph-message">' +
+        'fill="var(--git-graph-text, #000000)" font-size="13" class="git-graph-message" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';
     }
     return svg;
@@ -2013,13 +2044,15 @@
     function lConnector(x1, y1, x2, y2, color, horizFirst) {
       if (Math.abs(y1 - y2) < 1) {
         return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' +
-          'stroke="' + color + '" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2"/>';
+          'stroke="' + color + '" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2" ' +
+          'class="git-graph-label-connector"/>';
       }
       var pts = horizFirst
         ? (x1 + ',' + y1 + ' ' + x2 + ',' + y1 + ' ' + x2 + ',' + y2)   // horiz first
         : (x1 + ',' + y1 + ' ' + x1 + ',' + y2 + ' ' + x2 + ',' + y2);  // vert first
       return '<polyline points="' + pts + '" fill="none" stroke="' + color + '" ' +
-        'stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2"/>';
+        'stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2" ' +
+        'class="git-graph-label-connector"/>';
     }
 
     for (var hash in labelsByCommit) {
@@ -2040,14 +2073,20 @@
         var tipX        = cx - NODE_RADIUS - TIP_TO_NODE;
         var brX         = tipX - brW;
         var brD         = this._pointerPath(brX, labelY, brW, LABEL_HEIGHT);
+        var labelId     = 'branch:' + br.name;
 
-        svg += '<path d="' + brD + '" fill="' + LABEL_BG + '" stroke="none"/>';
+        svg += '<g class="git-graph-label-g" data-label-key="' + this._escapeXml(labelId) + '" ' +
+          'data-layout-id="' + this._escapeXml(labelId) + '" data-layout-anchor="' + this._escapeXml(br.hash) + '">';
+        svg += '<g data-layout-bounds-id="' + this._escapeXml(labelId) + '">';
+        svg += '<path d="' + brD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
         svg += '<path d="' + brD + '" ' +
           'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
         svg += '<text x="' + (brX + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
           'text-anchor="middle" fill="' + color + '" font-size="13" font-weight="700" ' +
           'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
+        svg += '</g>';
         svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
+        svg += '</g>';
 
         if (isHeadBr) {
           var headTextW = 4 * 8.5 + 18;
@@ -2056,13 +2095,16 @@
           var headX     = headTipX - headW;
           var headD     = this._pointerPath(headX, labelY, headW, LABEL_HEIGHT);
 
-          svg += '<path d="' + headD + '" fill="' + LABEL_BG + '" stroke="none"/>';
+          svg += '<g class="git-graph-label-g git-graph-label-g--head" data-label-key="head" ' +
+            'data-layout-id="head" data-layout-anchor="' + this._escapeXml(br.hash) + '">';
+          svg += '<path d="' + headD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
           svg += '<path d="' + headD + '" ' +
             'fill="' + HEAD_COLOR + '" fill-opacity="0.95" stroke="' + color + '" stroke-width="1.5"/>';
           svg += '<text x="' + (headX + headTextW / 2) + '" y="' + (labelMidY + 4) + '" ' +
             'text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">HEAD</text>';
           svg += '<line x1="' + headTipX + '" y1="' + labelMidY + '" ' +
             'x2="' + brX + '" y2="' + labelMidY + '" stroke="' + color + '" stroke-width="1.5"/>';
+          svg += '</g>';
         }
       }
     }
@@ -2085,12 +2127,15 @@
       var htipX = hcx - NODE_RADIUS - TIP_TO_NODE;
       var hX    = htipX - hW;
       var hD    = this._pointerPath(hX, hlabelY, hW, LABEL_HEIGHT);
-      svg += '<path d="' + hD + '" fill="' + LABEL_BG + '" stroke="none"/>';
+      svg += '<g class="git-graph-label-g git-graph-label-g--head" data-label-key="head" ' +
+        'data-layout-id="head" data-layout-anchor="' + this._escapeXml(head.hash) + '">';
+      svg += '<path d="' + hD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
       svg += '<path d="' + hD + '" ' +
         'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
       svg += '<text x="' + (hX + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
         'text-anchor="middle" fill="' + DC + '" font-size="13" font-weight="700">HEAD</text>';
       svg += lConnector(htipX, hlabelMidY, hcx - NODE_RADIUS - 2, hcy, DC, true);
+      svg += '</g>';
     }
 
     return svg;
