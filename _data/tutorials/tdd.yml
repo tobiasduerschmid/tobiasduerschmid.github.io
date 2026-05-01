@@ -1149,13 +1149,39 @@ steps:
 
       - description: "Implementation still has the second hardcoded branch (no premature refactor to loop)"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
           # We expect TWO if-branches checking specific dice lists. A student
           # who jumped to a `for die in dice:` loop has refactored without a
           # justifying test — exactly the move cycle 4 will earn the right to.
-          has_branches = 'dice == [1]' in source and 'dice == [5]' in source
-          assert has_branches, \
-              "Cycle 3's smallest GREEN is to add a second `if dice == [5]:` branch. The loop refactor belongs in cycle 4 — once a test exists that *requires* it. Restore both hardcoded branches for now."
+          tree = ast.parse(source)
+          score_fn = next((n for n in ast.walk(tree)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
+          assert score_fn is not None, "Define a `score` function in scorer.py"
+          param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
+
+          def list_eq_targets(fn, name):
+              targets = []
+              for n in ast.walk(fn):
+                  if (isinstance(n, ast.Compare)
+                          and isinstance(n.left, ast.Name) and n.left.id == name
+                          and len(n.ops) == 1 and isinstance(n.ops[0], ast.Eq)
+                          and isinstance(n.comparators[0], ast.List)):
+                      values = []
+                      ok = True
+                      for elt in n.comparators[0].elts:
+                          if isinstance(elt, ast.Constant):
+                              values.append(elt.value)
+                          else:
+                              ok = False
+                              break
+                      if ok:
+                          targets.append(tuple(values))
+              return targets
+
+          targets = list_eq_targets(score_fn, param)
+          assert (1,) in targets and (5,) in targets, \
+              f"Cycle 3's smallest GREEN is to add a second `if {param} == [5]:` branch. The loop refactor belongs in cycle 4 — once a test exists that *requires* it. Restore both hardcoded branches for now."
 
     # NO QUIZ — duplication is the lesson; cycle 4 will pay for it.
 
@@ -1400,16 +1426,42 @@ steps:
 
       - description: "Implementation iterates over dice (loop refactor was applied)"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
-          collapsed = source.replace(' ', '')
-          assert 'fordieindice' in collapsed or 'foreachdieindice' in collapsed or 'fordie' in collapsed, \
-              "Cycle 4's refactor replaces the hardcoded `if dice == [...]:` branches with a per-die `for` loop. Without that, adding a third hardcoded branch (`if dice == [1, 1]:`) just makes the duplication worse."
+          tree = ast.parse(source)
+          score_fn = next((n for n in ast.walk(tree)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
+          assert score_fn is not None, "Define a `score` function in scorer.py"
+          param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
+          # Accept any loop variable name (e.g. `for die in rolls:`, `for d in rolls:`).
+          has_loop = any(
+              isinstance(n, ast.For) and isinstance(n.iter, ast.Name) and n.iter.id == param
+              for n in ast.walk(score_fn)
+          )
+          assert has_loop, \
+              f"Cycle 4's refactor replaces the hardcoded `if {param} == [...]:` branches with a per-die `for` loop. Without that, adding a third hardcoded branch (`if {param} == [1, 1]:`) just makes the duplication worse."
 
       - description: "Hardcoded list-equality branches are gone (the duplication was paid down)"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
-          assert 'dice == [1]' not in source and 'dice == [5]' not in source and 'dice == [1, 1]' not in source, \
-              "The whole point of cycle 4 was to retire the `if dice == [...]:` branches in favor of a generic per-die loop. Remove them."
+          tree = ast.parse(source)
+          score_fn = next((n for n in ast.walk(tree)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
+          assert score_fn is not None, "Define a `score` function in scorer.py"
+          param = score_fn.args.args[0].arg if score_fn.args.args else 'dice'
+
+          # Any `<param> == [...]` comparison against a list literal is the smell
+          # cycle 4 set out to remove.
+          has_list_eq = any(
+              (isinstance(n, ast.Compare)
+               and isinstance(n.left, ast.Name) and n.left.id == param
+               and len(n.ops) == 1 and isinstance(n.ops[0], ast.Eq)
+               and isinstance(n.comparators[0], ast.List))
+              for n in ast.walk(score_fn)
+          )
+          assert not has_list_eq, \
+              f"The whole point of cycle 4 was to retire the `if {param} == [...]:` branches in favor of a generic per-die loop. Remove them."
 
     quiz:
       title: "Cycle 4 Quiz"
