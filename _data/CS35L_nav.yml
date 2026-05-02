@@ -24,6 +24,8 @@ topics:
         url: /SEBook/tools/python.html
       - name: Python Tutorial
         url: /SEBook/tools/python-tutorial.html
+      - name: Debugging Python Tutorial
+        url: /SEBook/tools/python-debugging.html
       - name: Node.js
         url: /SEBook/tools/nodejs.html
       - name: Node.js Tutorial
@@ -36,6 +38,8 @@ topics:
         url: /SEBook/tools/git.html
       - name: Git Tutorial
         url: /SEBook/tools/git-tutorial.html
+      - name: Advanced Git Tutorial
+        url: /SEBook/tools/git-advanced-tutorial.html
       - name: Make
         url: /SEBook/tools/make.html
       - name: Make Tutorial
@@ -82,8 +86,12 @@ topics:
     icon: null
     url: /SEBook/testing.html
     subtopics:
+      - name: Testing Foundations Tutorial
+        url: /SEBook/tools/testing-foundations-tutorial.html
       - name: Test-Driven Development (TDD)
         url: /SEBook/testing/tdd.html
+      - name: TDD Tutorial
+        url: /SEBook/tools/tdd-tutorial.html
       - name: Test Doubles
         url: /SEBook/testing/testdoubles.html
 
@@ -103,4 +111,3 @@ topics:
         url: /SEBook/uml_state_diagram.html
       - name: Component Diagrams
         url: /SEBook/uml_component_diagram.html
-
