@@ -423,6 +423,9 @@ async function runFocusAudit(page) {
       }
 
       const computed = getComputedStyle(active);
+      const focusables = document.querySelectorAll(
+        'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
       // Monaco editor and xterm terminal are "application" widgets that
       // render their own focus visualization (blinking cursor, selection
       // highlight) on a canvas the audit can't introspect. Their hidden
@@ -433,6 +436,7 @@ async function runFocusAudit(page) {
       const isApplicationWidget = !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen');
       return {
         cssPath: cssPath(active),
+        focusIndex: Array.prototype.indexOf.call(focusables, active),
         rectWidth: rect.width,
         rectHeight: rect.height,
         intersectsViewport,
@@ -444,8 +448,9 @@ async function runFocusAudit(page) {
     });
 
     if (!stop) break;
-    if (seen.has(stop.cssPath)) break;
-    seen.add(stop.cssPath);
+    const stopKey = `${stop.focusIndex}:${stop.cssPath}`;
+    if (seen.has(stopKey)) break;
+    seen.add(stopKey);
 
     if (stop.isApplicationWidget) continue;
 
@@ -541,7 +546,7 @@ async function runFocusAudit(page) {
       };
     });
     if (!stop) break;
-    const key = `${stop.tag}#${stop.id}.${stop.klass}`;
+    const key = `${stop.idx}:${stop.tag}#${stop.id}.${stop.klass}`;
     consecutiveSame = (key === lastKey) ? consecutiveSame + 1 : 0;
     lastKey = key;
     reverseSeen.push(key);
@@ -833,6 +838,28 @@ function runDomAudit() {
       findings.push({ criterion: '1.1.1', severity: 'fail', message: `Image is missing alt text: ${shortNode(img)}` });
     }
   });
+  document.querySelectorAll('a[href]').forEach((link) => {
+    if (!isVisible(link)) return;
+    if (!elementHasMeaningfulContent(link)) {
+      findings.push({
+        criterion: '2.4.4',
+        severity: 'fail',
+        message: `Link contains no text or image alt content: ${shortNode(link)}`,
+      });
+    }
+    const nonImageText = textExcludingImages(link);
+    link.querySelectorAll('img[src]').forEach((img) => {
+      if (!isVisible(img)) return;
+      const alt = normalize(img.getAttribute('alt') || '');
+      if (!nonImageText && !alt) {
+        findings.push({
+          criterion: '1.1.1',
+          severity: 'fail',
+          message: `Linked image is the only link content but has empty or missing alt text: ${shortNode(img)}`,
+        });
+      }
+    });
+  });
   document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
     if (!isVisible(heading)) return;
     if (!elementHasMeaningfulContent(heading)) {
@@ -957,6 +984,7 @@ function runDomAudit() {
       lang: document.documentElement.lang || null,
       mainCount,
       imageCount: document.querySelectorAll('img[src]').length,
+      linkedImageCount: document.querySelectorAll('a[href] img[src]').length,
       interactiveCount: document.querySelectorAll(interactiveSelector).length,
       duplicateIdsObserved: duplicateIds.slice(0, 50),
       notApplicableCriteria,
@@ -1011,6 +1039,13 @@ function runDomAudit() {
     const clone = el.cloneNode(true);
     if (!(clone instanceof HTMLElement)) return '';
     clone.querySelectorAll('[aria-hidden="true"], .sr-only, .visually-hidden, script, style').forEach((node) => node.remove());
+    return normalize(clone.textContent || '');
+  }
+
+  function textExcludingImages(el) {
+    const clone = el.cloneNode(true);
+    if (!(clone instanceof HTMLElement)) return '';
+    clone.querySelectorAll('img, picture, svg, [role="img"], script, style').forEach((node) => node.remove());
     return normalize(clone.textContent || '');
   }
 

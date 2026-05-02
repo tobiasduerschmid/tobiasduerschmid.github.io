@@ -1,10 +1,11 @@
+{% assign thumbnail_alt = p.thumbnail_alt | default: p.title | default: "Linked thumbnail" %}
 {% if p.flickr %}<a href="https://www.flickr.com/photos/{{ site.flickr_user }}/sets/{{ p.flickr }}/" target="_blank"
   class="thumbnail flickr" id="{{ p.flickr }}">
   <span class="label label-danger top-right">Flickr</span>
-  <img src="{{ p.thumbnail }}" alt="">
+  <img src="{{ p.thumbnail }}" alt="{{ thumbnail_alt | escape }} photo gallery">
 </a>{% else %}<div class="thumbnail">
   <a href="{% if p.image %}{{ p.image }}{% else %}{{ p.thumbnail }}{% endif %}" title="{{ p.title }}"
     data-animate="fadeInUp" data-gallery>
-    <img src="{{ p.thumbnail }}" alt="">
+    <img src="{{ p.thumbnail }}" alt="{{ thumbnail_alt | escape }}">
   </a>
 </div>{% endif %}
