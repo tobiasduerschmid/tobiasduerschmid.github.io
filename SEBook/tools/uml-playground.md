@@ -761,8 +761,17 @@ html.dark-mode #uml-pg-error {
           m = line.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
         } else if (type === 'activity') {
-          var quoted = line.match(/"([^"]+)"/);
-          if (quoted) addElement(elements, seen, quoted[1], quoted[1]);
+          // A line like `"Receive Order" --> "Validate Payment"` declares two
+          // movable activity nodes. Capture every quoted token, not just the
+          // first — otherwise nodes that only appear as the target of a
+          // transition (e.g. `"Validate Payment"` above, which never appears
+          // again as the start of another transition) silently lose their
+          // movable handle.
+          var quotedRe = /"([^"]+)"/g;
+          var quotedMatch;
+          while ((quotedMatch = quotedRe.exec(line)) !== null) {
+            addElement(elements, seen, quotedMatch[1], quotedMatch[1]);
+          }
         } else if (type === 'freeform') {
           m = line.match(/^box(?:\s+[a-z]+)?\s+"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)/i);
           if (m) addElement(elements, seen, m[2], m[1].replace(/\\n/g, '\n'));
@@ -1089,11 +1098,26 @@ html.dark-mode #uml-pg-error {
       var labels = [element.label, element.id].filter(Boolean).map(function (s) {
         return String(s).replace(/\s+/g, ' ').trim();
       });
-      var texts = Array.prototype.slice.call(svg.querySelectorAll('text')).filter(function (t) {
-        var txt = textOf(t);
-        return labels.some(function (label) { return txt === label || txt.indexOf(label) !== -1; });
+      var allTexts = Array.prototype.slice.call(svg.querySelectorAll('text')).filter(function (t) {
+        return !t.closest('.uml-pg-edit-layer') && !t.closest('defs');
       });
-      if (!texts.length) return null;
+
+      // Split candidate texts into exact and partial matches. The text-based
+      // heuristic must prefer texts that are *equal* to the label over texts
+      // that only contain it as a substring — otherwise an actor named
+      // `User` happily latches on to a use case `"Manage Users"` (because
+      // "Manage Users" contains "User"), and the resulting hitbox sits on
+      // top of the wrong shape with no way to drag the actor itself.
+      var exactTexts = allTexts.filter(function (t) {
+        var txt = textOf(t);
+        return labels.some(function (label) { return txt === label; });
+      });
+      var partialTexts = allTexts.filter(function (t) {
+        var txt = textOf(t);
+        if (labels.some(function (label) { return txt === label; })) return false;
+        return labels.some(function (label) { return txt.indexOf(label) !== -1; });
+      });
+      if (!exactTexts.length && !partialTexts.length) return null;
 
       var shapes = Array.prototype.slice.call(svg.querySelectorAll('rect,circle,ellipse,polygon,path')).filter(function (el) {
         return !el.closest('.uml-pg-edit-layer') && !el.closest('defs');
@@ -1101,26 +1125,38 @@ html.dark-mode #uml-pg-error {
         return { el: el, box: elementSvgBox(svg, el) };
       }).filter(function (item) { return item.box; });
 
-      var best = null;
-      for (var ti = 0; ti < texts.length; ti++) {
-        var tb = elementSvgBox(svg, texts[ti]);
-        if (!tb) continue;
-        var cx = tb.x + tb.width / 2;
-        var cy = tb.y + tb.height / 2;
-        for (var si = 0; si < shapes.length; si++) {
-          var sb = shapes[si].box;
-          if (!containsPoint(sb, cx, cy, 4)) continue;
-          var area = sb.width * sb.height;
-          if (area < Math.max(80, tb.width * tb.height * 1.2)) continue;
-          if (!best || area < best.area) {
-            best = { box: sb, area: area };
+      function bestForTexts(texts) {
+        var local = null;
+        for (var ti = 0; ti < texts.length; ti++) {
+          var tb = elementSvgBox(svg, texts[ti]);
+          if (!tb) continue;
+          var cx = tb.x + tb.width / 2;
+          var cy = tb.y + tb.height / 2;
+          var foundShape = false;
+          for (var si = 0; si < shapes.length; si++) {
+            var sb = shapes[si].box;
+            if (!containsPoint(sb, cx, cy, 4)) continue;
+            var area = sb.width * sb.height;
+            if (area < Math.max(80, tb.width * tb.height * 1.2)) continue;
+            // Real shape always beats a text-bounds fallback (which carries
+            // area=0 and would otherwise dominate via `area < best.area`).
+            if (!local || local.fallback || area < local.area) {
+              local = { box: sb, area: area, fallback: false };
+            }
+            foundShape = true;
+          }
+          if (!foundShape && !local) {
+            local = {
+              box: { x: tb.x - 12, y: tb.y - 10, width: tb.width + 24, height: tb.height + 20 },
+              area: 0,
+              fallback: true
+            };
           }
         }
-        if (!best) {
-          best = { box: { x: tb.x - 12, y: tb.y - 10, width: tb.width + 24, height: tb.height + 20 }, area: 0 };
-        }
+        return local;
       }
 
+      var best = bestForTexts(exactTexts) || bestForTexts(partialTexts);
       return best ? expandStackedRects(svg, best.box) : null;
     }
 

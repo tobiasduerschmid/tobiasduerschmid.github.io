@@ -1238,4 +1238,59 @@ test.describe('UML playground visual editor', () => {
     expect(source).not.toContain('@layout');
     expect(source).not.toContain('@endlayout');
   });
+
+  test('use case actor handles do not collide with use case ellipses that share substring labels', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'usecase');
+    await selectEditMode(page, 'nodes');
+
+    const boxes = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const out = {};
+      Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox')).forEach((h) => {
+        out[h.getAttribute('data-layout-id')] = {
+          x: Number(h.getAttribute('x')),
+          y: Number(h.getAttribute('y')),
+          w: Number(h.getAttribute('width')),
+          h: Number(h.getAttribute('height')),
+        };
+      });
+      return out;
+    });
+
+    // The default usecase example has UC4 = "Manage Users", which contains
+    // the substring "User". Without the exact-match preference fix, the
+    // User actor's hitbox would land on top of the UC4 ellipse.
+    expect(boxes.User, 'User actor handle should exist').toBeTruthy();
+    expect(boxes.UC4, 'Manage Users handle should exist').toBeTruthy();
+    const userCenterX = boxes.User.x + boxes.User.w / 2;
+    const userCenterY = boxes.User.y + boxes.User.h / 2;
+    const insideUC4 =
+      userCenterX >= boxes.UC4.x &&
+      userCenterX <= boxes.UC4.x + boxes.UC4.w &&
+      userCenterY >= boxes.UC4.y &&
+      userCenterY <= boxes.UC4.y + boxes.UC4.h;
+    expect(insideUC4, 'User actor handle should not sit inside the UC4 ellipse').toBe(false);
+  });
+
+  test('activity diagram exposes handles for nodes that only appear as transition targets', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'activity');
+    await selectEditMode(page, 'nodes');
+
+    const ids = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+        .map((h) => h.getAttribute('data-layout-id'));
+    });
+
+    // "Validate Payment" appears only as the target of a transition
+    // (`"Receive Order" --> "Validate Payment"`), never as a source —
+    // exactly the case that the single-quoted-token regex used to miss.
+    expect(ids).toContain('Receive Order');
+    expect(ids).toContain('Validate Payment');
+    expect(ids).toContain('Process Order');
+    expect(ids).toContain('Reject Order');
+    expect(ids).toContain('Ship Order');
+  });
 });
