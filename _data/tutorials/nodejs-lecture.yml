@@ -358,7 +358,7 @@ steps:
 
       ### Task
 
-      Click **▶ Run** to start the server, then use the **HTTP Client** on the right to send a `GET` request to `http://localhost:8080/` and observe the response.
+      Click **Run** to start the server, then use the **HTTP Client** widget to send a `GET` request to `http://localhost:8080/` and observe the response.
 
     files:
       - path: "server.js"

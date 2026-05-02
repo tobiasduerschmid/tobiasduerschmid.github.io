@@ -21,7 +21,8 @@
   </style>
 </head>
 <body>
-  <div class="tvm-uml-left-view" style="height:100%">
+  <h1 class="sr-only">UML Diagram popout</h1>
+  <main class="tvm-uml-left-view" aria-label="UML diagram popout" style="height:100%">
     <div class="tvm-diagram-toolbar">
       <button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>
       <button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>
@@ -41,7 +42,7 @@
       <div class="tvm-diagram-content" id="diagramContent" style="display:none"></div>
       <div class="popup-status" id="popupStatus">Waiting for diagram from tutorial&hellip;</div>
     </div>
-  </div>
+  </main>
 
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}"></script>
   <script>

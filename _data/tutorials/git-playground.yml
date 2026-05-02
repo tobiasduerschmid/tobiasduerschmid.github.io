@@ -35,7 +35,7 @@ steps:
       ## Reproduce the target graph
 
       Every command you run in the terminal is appended to `reproduce.sh` (the
-      tab on the left). The script is the single source of truth for your
+      tab). The script is the single source of truth for your
       session — re-running it from a clean VM reproduces exactly the state
       you're in right now.
 
@@ -43,7 +43,7 @@ steps:
       - **Live graph**: switch to the **Git Graph** panel to compare your
         repository to the target below.
       - **Undo the last command**: open `reproduce.sh`, delete the last line,
-        then click **Reset Current Step** in the top bar. The VM rewinds to
+        then click **Reset Current Step**. The VM rewinds to
         post-boot and replays the (shorter) script — a one-command undo
         without any bespoke button.
       - **Full restart**: clear `reproduce.sh` entirely and click Reset.
@@ -83,4 +83,3 @@ steps:
       Two things to watch out for and make sure you get right:
         * The top merge must be a real merge commit, not a fast-forward. This means you have to commit Add logging support on main before you merge feature/parser. Otherwise git fast-forwards and no merge commit is created.
         * The experiment branch is never merged. Create it, commit to it, and leave it alone. Don’t delete it.
-

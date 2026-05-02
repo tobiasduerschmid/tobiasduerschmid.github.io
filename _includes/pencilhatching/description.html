@@ -53,8 +53,13 @@
       document.querySelectorAll('#carousel-example-generic img.ph-compare').forEach(function (img) {
         var orig = img.getAttribute('data-ph-original');
         var rend = img.getAttribute('data-ph-rendered');
-        function showOriginal() { img.src = orig; }
-        function showRendered() { img.src = rend; }
+        var renderedAlt = img.getAttribute('alt') || 'Pencil hatching result.';
+        var resultNum = renderedAlt.match(/Pencil hatching result\s+(\d+)/i);
+        var originalAlt = resultNum
+          ? 'Original photo before pencil hatching result ' + resultNum[1] + '.'
+          : 'Original photo before pencil hatching.';
+        function showOriginal() { img.src = orig; img.alt = originalAlt; }
+        function showRendered() { img.src = rend; img.alt = renderedAlt; }
         img.addEventListener('pointerdown', showOriginal);
         img.addEventListener('pointerup', showRendered);
         img.addEventListener('pointerleave', showRendered);

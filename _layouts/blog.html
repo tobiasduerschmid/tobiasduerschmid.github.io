@@ -10,7 +10,7 @@
   {% assign is_blog_index = true %}
   {% endif %}
 
-  <article class="post-content">
+  <div class="post-content">
 
     <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Main navigation">
       <div class="container-fluid">
@@ -54,31 +54,22 @@
       <main id="main-content" tabindex="-1" style="flex: 1; padding: 00px">
         <div class="container">
           <div class="row">
-            {% if is_blog_index %}
+            {% comment %}
+              Render the post content as-is. Kramdown's auto_ids attaches an
+              `id` to each markdown heading, which the navbar TOC links to —
+              no extra <section> wrapping needed. (An earlier version split
+              content by `<h2` to wrap each section explicitly, but that
+              fractured the DOM whenever an include like quiz.html emitted
+              its own h2: the section closer landed mid-container, leaving
+              orphaned <div>s and breaking quiz initialization.)
+            {% endcomment %}
             {{ content }}
-            {% else %}
-            <!-- DEBUG-CONTENT-START -->{{ content | escape }}<!-- DEBUG-CONTENT-END -->
-            {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
-              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
-              split: '</h2>' | first | replace: '</h2' , '' %} {% assign section_content=section | split: '</h2>' | last
-              %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
-              replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
-              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
-              replace: '?' , '' | replace: '!' , '' | replace: '</h2' , '' %} <section id="{{ section_id }}">
-              <h2>{{ heading_text }}</h2>{{ section_content }}
-              </section>
-              {% endif %}
-              {% else %}
-              {{ section }}
-              {% endif %}
-              {% endfor %}
-            {% endif %}
 
           </div>
         </div>
       </main>
     </div>
-  </article>
+  </div>
 
   {% include footer.html %}
 

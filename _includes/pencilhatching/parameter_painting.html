@@ -4,18 +4,12 @@
     $(this).siblings().addClass("active");
   });
 
-  function changeImage(image, src, title)
+  function changeImage(image, src, alt)
   {
     var img = document.getElementById(image);
     img.src=src;
-    img.title=title;
-    return false;
-  }
-
-  function changeImage(image, src)
-  {
-    var img = document.getElementById(image);
-    img.src=src;
+    img.alt=alt;
+    img.title=alt;
     return false;
   }
 
@@ -27,35 +21,35 @@
       <p>Ist der Parameter "Striche drehen" ausgewählt, so kann man die Richtung der Striche in das Bild hinein malen. D.h. die Richtung, in die man wischt wird als neue Strich-Richtung für diesen Bereich gewählt. Somit kann man die automatisch Fluss-Analyse korrigieren oder verfeinern.</p>
     </div>    
     <div class="col-md-6">
-      <img id="img_1" src="img/pencilhatching/painting_global.jpg" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Before parameter painting">
+      <img id="img_1" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Global parameter adjustment applied across the whole image before local parameter painting.">
       <div class="btn-group btn-group-justified" role="group" aria-label="Exchange image">
         <div class="btn-group">
-          <button class="btn btn-default" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_org.jpg', 'The original image');">Original</button>
+          <button class="btn btn-default" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_org.jpg', 'Original photo before parameter painting.');">Original</button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-default active visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Before parameter painting');">global</button>
-          <button class="btn btn-default active hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Before parameter painting');">global adjustment</button>
+          <button class="btn btn-default active visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Global parameter adjustment applied across the whole image before local parameter painting.');">global</button>
+          <button class="btn btn-default active hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Global parameter adjustment applied across the whole image before local parameter painting.');">global adjustment</button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'After parameter painting');">local</button>
-          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'After parameter painting');">local adjustment</button>
+          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'Local parameter painting selectively adjusts different areas of the pencil-hatched image.');">local</button>
+          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'Local parameter painting selectively adjusts different areas of the pencil-hatched image.');">local adjustment</button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'After parameter painting');">Rotation</button>
-          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'After parameter painting');">rotated strokes</button>
+          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'Parameter painting rotates stroke directions in selected image regions.');">Rotation</button>
+          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'Parameter painting rotates stroke directions in selected image regions.');">rotated strokes</button>
         </div>
       </div>
       <br><!--
-      <img id="img_2" src="img/pencilhatching/painting_global.jpg" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Das Bild vor dem Parameter Painting">
+      <img id="img_2" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Global parameter adjustment applied across the whole image before local parameter painting.">
       <div class="btn-group btn-group-justified" role="group" aria-label="Bild austauschen">
         <div class="btn-group">
-          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_org.jpg', 'Das Originalfoto');">Original</button>
+          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_org.jpg', 'Original photo before parameter painting.');">Original</button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-default active" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_global.jpg', 'Das Bild vor dem Parameter Painting');">Global</button>
+          <button class="btn btn-default active" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_global.jpg', 'Global parameter adjustment applied across the whole image before local parameter painting.');">Global</button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_local.jpg', 'Das Bild nach dem Parameter Painting');">Lokal</button>
+          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_local.jpg', 'Local parameter painting selectively adjusts different areas of the pencil-hatched image.');">Lokal</button>
         </div>
       </div>-->
       <br>
@@ -65,7 +59,7 @@
       <p>Ist der Parameter "Striche drehen" ausgewählt, so kann man die Richtung der Striche in das Bild hinein malen. D.h. die Richtung, in die man wischt wird als neue Strich-Richtung für diesen Bereich gewählt. Somit kann man die automatisch Fluss-Analyse korrigieren oder verfeiern.</p>
     </div>
     <div class="col-md-6">
-      <img src="img/pencilhatching/parameter/stroke_width_1.jpg" onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'" class="img-responsive img-rounded" align="right" data-toggle="tooltip">
+      <img src="img/pencilhatching/parameter/stroke_width_1.jpg" alt="Direction painting example with thin pencil strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'; this.alt='Original photo before the direction painting example.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Direction painting example with thin pencil strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Direction painting example with thin pencil strokes.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip">
       <center><p>Direction Painting</p></center>
     </div>
   </div>-->

@@ -51,7 +51,11 @@ layout: blog
         </div>
 
         {% if page.audio %}
-        {% include audio_player.html src=page.audio %}
+        {% include audio_player.html
+            src=page.audio
+            transcript=page.transcript
+            transcript_url=page.transcript_url
+            transcript_label=page.transcript_label %}
         {% endif %}
 
         <div class="blog-post-content">

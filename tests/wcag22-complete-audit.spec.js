@@ -79,10 +79,15 @@ function allTargetUrls() {
   const htmlFiles = walk(SITE_ROOT).filter((file) => file.endsWith('.html'));
   const urls = htmlFiles.map(urlFromSiteFile).filter(Boolean);
   const tutorialSet = new Set(sourceTutorialUrls());
+  // Info pages bundle the accessibility-relevant reference pages a user
+  // can land on directly: the storage inventory at /cookies/, the keyboard
+  // shortcut reference at /shortcuts/, and the abbreviation glossary at
+  // /glossary/. Each of these is reachable from the footer.
+  const INFO_PAGE_URLS = new Set(['/cookies/', '/shortcuts/', '/glossary/']);
   const groups = {
     home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
     errorPages: urls.filter((url) => url === '/404.html'),
-    cookies: urls.filter((url) => url === '/cookies/'),
+    infoPages: urls.filter((url) => INFO_PAGE_URLS.has(url)),
     tutorials: urls.filter((url) => tutorialSet.has(url)),
     sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
     seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/')),
@@ -1231,6 +1236,13 @@ function runDomAudit() {
       const isSvgText = parent.namespaceURI === 'http://www.w3.org/2000/svg';
       const fgValue = isSvgText ? style.fill : style.color;
       const fg = parseColor(fgValue);
+      // SVG text rendered with `paint-order: stroke` and an opaque
+      // contrasting stroke uses the stroke as a halo backdrop (see
+      // sequence-message labels, fragment guards, venn region labels).
+      // effectiveBackground() can only see sibling fills, not strokes,
+      // so it underestimates contrast for these labels. If the halo
+      // itself clears AA against the fill, the visual is legible.
+      if (isSvgText && haloProvidesContrast(parent, fg)) continue;
       const bg = effectiveBackground(parent);
       if (!fg || !bg) continue;
       // Element-level opacity composites the text colour with the backdrop.
@@ -1268,6 +1280,14 @@ function runDomAudit() {
       seen.add(el);
       const style = getComputedStyle(el);
       const fg = parseColor(style.fill) || parseColor(el.getAttribute('fill') || '');
+      // SVG text rendered with `paint-order: stroke` and a substantial,
+      // mostly-opaque stroke uses the stroke as a halo against arbitrary
+      // sibling fills (sequence-message labels, venn region labels, fragment
+      // guards). The halo is the actual visual backdrop; effectiveBackground
+      // can't see it because it composites only sibling fills. If both the
+      // stroked-halo-vs-fg AND the halo-vs-effective-bg contrasts clear AA,
+      // the text is legible — skip the under-the-halo contrast check.
+      if (haloProvidesContrast(el, fg)) return;
       const bg = effectiveBackground(el);
       if (!fg || !bg) return;
       const ratio = contrastRatio(fg, bg);
@@ -1284,6 +1304,38 @@ function runDomAudit() {
       }
     });
     return result.slice(0, 200);
+  }
+
+  // SVG text legibility halo: when the renderer uses
+  //   <text paint-order="stroke" stroke="<bg-tone>" stroke-width="3">
+  // the stroke paints UNDER the fill, providing the same visual function
+  // as a backing rect. effectiveBackground() can't see strokes (it only
+  // composites sibling fills), so the audit miscalibrates these labels.
+  // Credit the halo when:
+  //   - paint-order resolves to "stroke" first
+  //   - stroke is a parsable colour (not "none")
+  //   - stroke-opacity is reasonably opaque (≥ 0.6)
+  //   - stroke-width is wide enough to actually cover the glyph (≥ 2 css px)
+  //   - fill-vs-stroke contrast clears 4.5:1 (so the glyph reads against the halo)
+  function haloProvidesContrast(el, fg) {
+    if (!fg) return false;
+    const style = getComputedStyle(el);
+    // `paint-order: stroke` (or set via attribute) computes to a token
+    // list with "stroke" before "fill" — accept either. Default
+    // ordering is `fill stroke markers`, which we DO NOT credit.
+    const paintOrderRaw = (el.getAttribute('paint-order') || style.paintOrder || '').trim().toLowerCase();
+    if (!paintOrderRaw) return false;
+    const fillIdx = paintOrderRaw.indexOf('fill');
+    const strokeIdx = paintOrderRaw.indexOf('stroke');
+    if (strokeIdx === -1) return false;
+    if (fillIdx !== -1 && fillIdx < strokeIdx) return false;
+    const strokeColor = parseColor(style.stroke || '') || parseColor(el.getAttribute('stroke') || '');
+    if (!strokeColor) return false;
+    const strokeWidth = parseFloat(style.strokeWidth || el.getAttribute('stroke-width') || '0');
+    if (!Number.isFinite(strokeWidth) || strokeWidth < 2) return false;
+    const strokeOpacity = parseFloat(style.strokeOpacity || el.getAttribute('stroke-opacity') || '1');
+    if (!Number.isFinite(strokeOpacity) || strokeOpacity < 0.6) return false;
+    return contrastRatio(fg, strokeColor) >= 4.5;
   }
 
   function svgElementIsVisible(el) {

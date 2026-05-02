@@ -1,6 +1,35 @@
+{%- comment -%}
+Audio player + (optional) transcript disclosure.
+
+Parameters:
+  src               Required. URL of the audio file (passed to <source>).
+  transcript        Optional. HTML or plain text. If present, rendered inside
+                    a collapsible <details> below the player and announced
+                    via aria-controls so screen-reader users can choose to
+                    skip it. Use this for short transcripts that fit inline.
+  transcript_url    Optional. URL to a separate page containing the full
+                    transcript. Use this for long transcripts. Either
+                    `transcript` or `transcript_url` (or both) may be set.
+  transcript_label  Optional. Override the default disclosure label
+                    ("Read transcript"). Useful when there are multiple
+                    audio embeds on one page.
+  player_id         Optional. Stable ID prefix used for aria-controls. Auto-
+                    generated if not provided.
+
+Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
+  Audio-only content needs a text alternative. A transcript surface satisfies
+  that requirement and lets users who can't or don't want to listen still
+  follow along. We surface it as a <details> so it's keyboard-operable by
+  default and doesn't take up space until requested.
+{%- endcomment -%}
+
+{%- assign _player_id = include.player_id | default: 'cap-' | append: include.src | slugify -%}
+{%- assign _transcript_id = _player_id | append: '-transcript' -%}
+{%- assign _transcript_label = include.transcript_label | default: 'Read transcript' -%}
 
 <div class="cap" role="region" aria-label="Audio player">
-    <audio class="cap__audio" preload="metadata">
+    <audio class="cap__audio" preload="metadata"
+        {%- if include.transcript or include.transcript_url %} aria-describedby="{{ _transcript_id }}"{% endif -%}>
         <source src="{{ include.src }}" type="audio/mpeg">
     </audio>
 
@@ -49,3 +78,17 @@
         </div>
     </div>
 </div>
+
+{%- if include.transcript or include.transcript_url -%}
+<details class="cap-transcript" id="{{ _transcript_id }}">
+    <summary class="cap-transcript__toggle">{{ _transcript_label }}</summary>
+    <div class="cap-transcript__body">
+        {%- if include.transcript -%}
+            {{ include.transcript }}
+        {%- endif -%}
+        {%- if include.transcript_url -%}
+            <p class="cap-transcript__link"><a href="{{ include.transcript_url | relative_url }}">Open the full transcript on a separate page</a>.</p>
+        {%- endif -%}
+    </div>
+</details>
+{%- endif -%}

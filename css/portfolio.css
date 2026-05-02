@@ -232,7 +232,7 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 	padding: 8px 16px;
 	font-size: 0.95em;
 	transition: all 0.3s ease;
-	border: 1px solid #ccc;
+	border: 1px solid #767676;
 	background-color: #fff;
 	color: #333;
 }
@@ -244,7 +244,7 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 .filter-btn.active {
 	background-color: #FFD100;
 	color: black;
-	border-color: #FFD100;
+	border: 2px solid #8a6d00;
 }
 
 
@@ -929,7 +929,7 @@ html.dark-mode .toggle-label {
 }
 
 html.dark-mode .slider {
-	background-color: #444;
+	background-color: #888;
 }
 
 html.dark-mode input:checked+.slider {
@@ -955,7 +955,7 @@ html.dark-mode .question-text {
 
 html.dark-mode .quiz-option {
 	background-color: #252525 !important;
-	border-color: #444 !important;
+	border-color: #737373 !important;
 	color: #e0e0e0 !important;
 }
 
@@ -1037,7 +1037,7 @@ html.dark-mode .blog-post-excerpt-link:hover .blog-post-excerpt {
 
 html.dark-mode .filter-btn {
 	background-color: #252525 !important;
-	border-color: #444 !important;
+	border-color: #737373 !important;
 	color: #e0e0e0 !important;
 }
 
@@ -1048,7 +1048,7 @@ html.dark-mode .filter-btn:hover {
 html.dark-mode .filter-btn.active {
 	background-color: #FFD100 !important;
 	color: #000 !important;
-	border-color: #FFD100 !important;
+	border-color: #8a6d00 !important;
 }
 
 html.dark-mode .post-date,
@@ -1170,7 +1170,7 @@ html.dark-mode .switch input:focus-visible+.slider {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: #ccc;
+	background-color: #767676;
 	transition: .4s;
 }
 
@@ -1335,11 +1335,11 @@ html.dark-mode-transition *:after {
 }
 
 .correct-btn {
-	background: #28a745;
+	background: #1f7a3d;
 }
 
 .correct-btn:hover {
-	background: #218838;
+	background: #186430;
 }
 
 .incorrect-btn {

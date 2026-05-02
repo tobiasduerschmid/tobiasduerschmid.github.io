@@ -8621,11 +8621,57 @@
   TutorialCode.prototype._renderStepNav = function () {
     var self = this;
     this.stepNavEl.innerHTML = '';
+
+    // WCAG 3 §2.9 (process completion): communicate progress at every step.
+    // A polite live region announces "Step X of Y, Z completed" on each step
+    // change without stealing focus, plus a visible progress bar gives
+    // sighted users at-a-glance progress.
+    var totalSteps = this.steps.length;
+    var completedCount = 0;
+    if (this._stepsUnlocked && typeof this._stepsUnlocked.size === 'number') {
+      // _stepsUnlocked includes step 0 + every step the user has reached.
+      // Treat "unlocked" as "started", so completed = unlocked − 1 (the
+      // currently-active step isn't done yet) but never go below 0.
+      completedCount = Math.max(0, this._stepsUnlocked.size - 1);
+    }
+    var currentStepNumber = this.currentStep + 1;
+    var progressPercent = totalSteps > 0
+      ? Math.round((completedCount / totalSteps) * 100)
+      : 0;
+
+    var progressBar = document.createElement('div');
+    progressBar.className = 'tvm-step-progress';
+    progressBar.setAttribute('role', 'progressbar');
+    progressBar.setAttribute('aria-label', 'Tutorial progress');
+    progressBar.setAttribute('aria-valuemin', '0');
+    progressBar.setAttribute('aria-valuemax', String(totalSteps));
+    progressBar.setAttribute('aria-valuenow', String(completedCount));
+    progressBar.setAttribute('aria-valuetext',
+      'Step ' + currentStepNumber + ' of ' + totalSteps + ', ' + completedCount + ' completed');
+    var progressFill = document.createElement('div');
+    progressFill.className = 'tvm-step-progress__fill';
+    progressFill.style.width = progressPercent + '%';
+    progressBar.appendChild(progressFill);
+    this.stepNavEl.appendChild(progressBar);
+
+    var statusEl = document.createElement('output');
+    statusEl.className = 'tvm-step-status';
+    statusEl.setAttribute('role', 'status');
+    statusEl.setAttribute('aria-live', 'polite');
+    statusEl.textContent = 'Step ' + currentStepNumber + ' of ' + totalSteps;
+    this.stepNavEl.appendChild(statusEl);
+
     this.steps.forEach(function (step, i) {
       var btn = document.createElement('button');
       var unlocked = self.instructorMode || self._stepsUnlocked.has(i);
       btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked');
-      btn.textContent = i + 1; btn.title = unlocked ? step.title : step.title + ' (locked)';
+      btn.textContent = i + 1;
+      var srLabel = unlocked
+        ? 'Step ' + (i + 1) + ': ' + step.title
+        : 'Step ' + (i + 1) + ': ' + step.title + ' (locked, complete the previous step to unlock)';
+      btn.title = unlocked ? step.title : step.title + ' (locked)';
+      btn.setAttribute('aria-label', srLabel);
+      if (i === self.currentStep) btn.setAttribute('aria-current', 'step');
       if (unlocked) {
         btn.addEventListener('click', function () { self.loadStep(i); });
       } else {

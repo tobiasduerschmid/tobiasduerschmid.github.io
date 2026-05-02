@@ -274,7 +274,7 @@ In a Makefile, the **rule** or **command** is the specific action the compiler m
 
 This can be visualized as a dependency graph:
 
-![cake_dependency_graph](/img/cake_dependency_graph.svg)
+![Dependency graph: the final cake depends on chocolate layers, raspberry filling, and buttercream; chocolate layers depend on flour, sugar, and eggs; raspberry filling depends on raspberries and sugar; buttercream depends on butter and powdered sugar.](/img/cake_dependency_graph.svg)
 
 ### The Real Magic: Incremental Baking (Why we use Makefiles)
 

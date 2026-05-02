@@ -19,7 +19,7 @@ steps:
       This tutorial demonstrates the **UML Diagram** tab. Look at the tab bar above
       the editor — you should see a **UML Diagram** tab.
 
-      The code on the right defines a simple class hierarchy: `Animal` is the base
+      The code editor defines a simple class hierarchy: `Animal` is the base
       class, with `Dog` and `Cat` as subclasses.
 
       **Try it:**

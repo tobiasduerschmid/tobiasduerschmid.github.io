@@ -92,7 +92,7 @@ steps:
       1. **Read `test_streaks.py`.** What behavior is each test checking? Notice the third test pins down `streak_badge(100)` — the spec says 100 days and up earns 💯.
       2. **Run the tests** (Run button). One test will fail. **That's a win** 🎯 — the test just caught a real bug. Read the failure carefully: pytest tells you exactly which assertion failed and what value came back instead.
       3. **Fix `streaks.py`** so all three tests pass. *Don't touch the test file* — production code is what we change; tests describe what the code *should* do.
-      4. **Run again.** Three green checks. The fix is now permanently guarded by the test — if anyone ever reverts to the old comparison, the safety net catches it instantly.
+      4. **Run again.** Three passing tests. The fix is now permanently guarded by the test — if anyone ever reverts to the old comparison, the safety net catches it instantly.
 
       That whole loop is the rhythm you'll see in every later step:
 
@@ -756,7 +756,7 @@ steps:
       | **Weak — single-field** | `assert result["is_rare"] is False` | The other four fields could all be wrong. |
       | **Strong — full equality** | `assert result == {"name": "Healing Potion", "qty": 3, "rarity": "common", "label": "3× Common Healing Potion", "is_rare": False}` | Only the exact spec-mandated dict satisfies it. |
 
-      Each weak form is satisfying to write — you get a green check — and each verifies almost nothing. That's the **Liar test** anti-pattern: an assertion that *looks* like a test but lies about how thoroughly the function was checked. Rushed engineers and AI assistants gravitate to weak oracles because they almost always pass. The cost shows up later, when a real bug ships and the green test couldn't have caught it.
+      Each weak form is satisfying to write — the test reports **PASS** — and each verifies almost nothing. That's the **Liar test** anti-pattern: an assertion that *looks* like a test but lies about how thoroughly the function was checked. Rushed engineers and AI assistants gravitate to weak oracles because they almost always pass. The cost shows up later, when a real bug ships and the passing test couldn't have caught it.
 
       Notice what the table holds constant: same function, same inputs. Only the **assertion** varies. That's the dimension you're learning here — and it lives independently of *which inputs to pick* (Step 2's lesson). A great test gets both right.
 
@@ -2274,7 +2274,7 @@ steps:
             - "Disagree — the test is fine but the function name should change."
           correct_index: 1
           option_feedback:
-            0: "Tests passing only tells you what their *assertions* held. `assert result is not None` holds for any non-`None` value, including buggy ones. The teammate is reading the green dot and skipping the question of *what was actually verified*."
+            0: "Tests passing only tells you what their *assertions* held. `assert result is not None` holds for any non-`None` value, including buggy ones. The teammate is reading the **PASS** result and skipping the question of *what was actually verified*."
             1: "Exactly. The fix is to pin the exact expected value with `==`. `is not None` only tells you the function returned *something* — the strong oracle tells you it returned the *right thing*."
             2: "Coverage isn't the issue here — the issue is *oracle strength*. The function might be running with full coverage *and* returning the wrong value entirely; this assertion couldn't tell you. Push back on the assertion, not on coverage."
             3: "The function name might also need work, but that's a separate critique. The immediate problem is that the test doesn't verify the function's behavior in any meaningful way — even a perfect function name wouldn't fix a `is not None` oracle."

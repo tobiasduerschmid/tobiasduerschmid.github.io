@@ -682,7 +682,7 @@ The ref `refs/stash` (exposed as `stash@{0}`) points at `w`. Neither `main` nor 
 <div data-git-command-lab-multi role="region" aria-label="Interactive multi-step commit-graph demo: git stash saves uncommitted work, lets you switch branches for a hotfix, and pop the stash to restore it on return.">
 <script type="application/json">
 {
-  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The shelf on the right is just a friendlier view of the same data.",
+  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The stash shelf is just a friendlier view of the same data.",
   "initialState": {
     "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
@@ -1633,7 +1633,7 @@ The single-step card above shows rebase as a finished magic trick — two commit
     },
     {
       "command": "git log --graph --all --oneline",
-      "description": "**Pedagogical pause.** This command doesn't change anything — it just asks Git to print the same DAG you see in the graph panel above. `--all` means \"every branch\", and `--graph` draws the fork as ASCII art.\n\nSpend a moment here. The two arrows pointing at **B** are the whole story of divergence: one commit, two children, two branch pointers living in their own worlds. Any merge or rebase from here on is just a strategy for reconciling these two universes.",
+      "description": "**Pedagogical pause.** This command doesn't change anything — it just asks Git to print the same DAG shown by the **Git Graph** panel. `--all` means \"every branch\", and `--graph` draws the fork as ASCII art.\n\nSpend a moment here. The two arrows pointing at **B** are the whole story of divergence: one commit, two children, two branch pointers living in their own worlds. Any merge or rebase from here on is just a strategy for reconciling these two universes.",
       "state": {
         "log": "D000000000000000000000000000000000000000|B000000000000000000000000000000000000000|D|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|C|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|\nA000000000000000000000000000000000000000||A|",
         "branches": "* main\n  feature",
@@ -1864,7 +1864,7 @@ The pin itself is stored in the superproject's tree as a **"gitlink"** entry —
 
 </details>
 
-The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree on the left; changed rows get a yellow burst so you can see exactly what the command touched.
+The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree; the changed rows are announced in the lab status and also flash briefly so you can see exactly what the command touched.
 
 <div data-fs-command-lab-multi role="region" aria-label="Interactive multi-step filesystem demo: git submodule add nests an external repository inside a superproject, recording it as a gitlink in the parent.">
 <script type="application/json">

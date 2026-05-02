@@ -145,14 +145,23 @@ layout: sebook
   }
 
   #no-bookmarks-msg {
-    color: #666;
+    color: #555;
     font-style: italic;
     margin: 0;
+  }
+
+  .bookmarks-intro {
+    color: #555;
+    margin-bottom: 20px;
   }
 
   html.dark-mode .bookmarks-controls {
     background: #1e2a35;
     border-color: #3a4a5a;
+  }
+
+  html.dark-mode .bookmarks-intro {
+    color: #b0b8c4;
   }
 
   html.dark-mode .bookmarks-info-btn {
@@ -183,7 +192,7 @@ layout: sebook
 </style>
 
 <div id="bookmarks-app">
-  <p style="color:#666; margin-bottom:20px;">Bookmark SEBook pages for quick access. Enable bookmarks below, then use the <i class="fa-regular fa-bookmark"></i> icon on any SEBook page to save it here.</p>
+  <p class="bookmarks-intro">Bookmark SEBook pages for quick access. Enable bookmarks below, then use the <i class="fa-regular fa-bookmark"></i> icon on any SEBook page to save it here.</p>
 
   <div class="bookmarks-controls">
     <div class="bookmarks-toggle-row">

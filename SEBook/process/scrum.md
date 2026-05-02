@@ -5,6 +5,7 @@ layout: sebook
 
 {% include audio_player.html src="/SEBook/process/scrum.m4a" %}
 
+<p class="audio-transcript-note"><strong>Audio transcript:</strong> The Scrum Theory section below is an equivalent text alternative for this audio summary.</p>
 
 While many organizations claim to be "Agile", the ==vast majority (roughly 63%) implement the Scrum framework==. 
 
@@ -19,6 +20,8 @@ To make empiricism actionable, Scrum rests on three core pillars:
 
 # Scrum Roles
 {% include audio_player.html src="/SEBook/process/scrum_roles.m4a" %}
+
+<p class="audio-transcript-note"><strong>Audio transcript:</strong> The Scrum Roles section below is an equivalent text alternative for this audio summary.</p>
 
 Scrum defines three specific roles that are intentionally designed to exist in tension to ensure both speed and quality:
 

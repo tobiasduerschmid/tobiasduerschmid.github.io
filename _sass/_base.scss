@@ -179,6 +179,24 @@ a {
     }
 }
 
+.form-control {
+    border-color: #767676;
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+    border-color: #005587;
+    box-shadow: none;
+    outline: 3px solid #2774AE;
+    outline-offset: 2px;
+}
+
+html.dark-mode .form-control {
+    background: #1c2533;
+    color: #e6edf3;
+    border-color: #6a737d;
+}
+
 // WCAG 1.4.1 (Use of Color): links in body-text contexts must be distinguishable
 // from surrounding text without relying on colour alone. Underline anchors that
 // sit inside prose containers; navigation, sidebar, post-list, and explicitly
@@ -204,7 +222,7 @@ blockquote {
     border-left: 4px solid $grey-color-light;
     padding-left: calc($spacing-unit / 2);
     font-size: 18px;
-    letter-spacing: -1px;
+    letter-spacing: normal;
     font-style: italic;
 
     > :last-child {

@@ -17,6 +17,7 @@
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
+    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     html:not(.dark-mode) body { background: #fff; color: #222; }
     .tpp-bar {
       display: flex; align-items: center; gap: 10px;
@@ -41,6 +42,8 @@
   </style>
 </head>
 <body>
+  <h1 class="sr-only">Editor pane popout</h1>
+  <main aria-label="Editor pane popout">
   <div class="tpp-bar">
     <span class="tpp-pane-name" id="paneNameEl">&hellip;</span>
     <span class="tpp-status" id="statusEl">Connecting&hellip;</span>
@@ -50,6 +53,7 @@
     <div id="editorRoot"></div>
     <div class="tpp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
+  </main>
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>

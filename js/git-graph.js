@@ -2091,10 +2091,15 @@
 
   /**
    * Static convenience: render data to an SVG string without allocating
-   * a real container. Useful for embedding inside other renderers.
+   * a real live container. Pass `host` (an element already in the DOM)
+   * so the colour helpers can read the page's `--git-graph-bg` from its
+   * computed style — without it, branch-label text fills bake the
+   * light-mode default and stay illegible after a dark-mode toggle.
    */
-  GitGraph.renderToSVG = function (data) {
-    return new GitGraph(null).toSVG(data);
+  GitGraph.renderToSVG = function (data, host) {
+    var g = new GitGraph(null);
+    if (host) g.container = host;
+    return g.toSVG(data);
   };
 
   GitGraph.prototype._cx = function (col) {

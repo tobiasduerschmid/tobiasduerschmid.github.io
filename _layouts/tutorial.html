@@ -12,7 +12,7 @@
     <div class="container-fluid">
       <div class="navbar-header page-scroll" style="display: flex; align-items: center; height: 45px;">
         <a id="seBookBtn" class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
-          <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;"></i> SE Book
+          <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;" aria-hidden="true"></i> SE Book
         </a>
         <span class="navbar-brand" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; color: #fff; font-size: 20px; font-weight: 600; margin-left: 5px;">
           {{ page.title }}
@@ -21,7 +21,7 @@
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
         <label id="autoSaveLabel" style="display:none; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
                title="Automatically save step and code so you can resume later">
-          <i class="fa-solid fa-floppy-disk"></i> Auto-save
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Auto-save
           <span class="tvm-dark-toggle-wrap">
             <input type="checkbox" id="autoSaveToggle" checked style="display:none;">
             <span class="tvm-dark-toggle-track">
@@ -32,22 +32,22 @@
         <a id="resetStepBtn" href="#"
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:none; align-items:center; gap:5px;"
            title="Reset current step to original code">
-          <i class="fa fa-undo"></i> Reset Current Step
+          <i class="fa fa-undo" aria-hidden="true"></i> Reset Current Step
         </a>
         <a id="solutionBtn" href="#"
            style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
            title="Apply solution for current step">
-          <i class="fa fa-key"></i> Solution
+          <i class="fa fa-key" aria-hidden="true"></i> Solution
         </a>
         <a id="printBtn" href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
-          <i class="fa fa-print"></i> Print
+          <i class="fa fa-print" aria-hidden="true"></i> Print
         </a>
         <button id="tts-read-btn" title="Read current step aloud" aria-label="Read Aloud: read current step aloud"
           style="background:none; border:none; color:#fff;
                  padding:3px 11px; cursor:pointer;
                  font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px;">
-          <i class="fa fa-volume-up"></i> Read Aloud
+          <i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud
         </button>
         <label id="darkModeLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">
           Dark mode
@@ -464,13 +464,13 @@
            align-items:center; gap:12px; flex-wrap:wrap;
            box-shadow:0 -2px 10px rgba(0,0,0,0.45);">
     <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
-      <i class="fa fa-volume-up"></i> Reading aloud
+      <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
     <button id="tts-playpause" title="Pause / Resume" aria-label="Pause or resume reading aloud"
       style="background:transparent; border:2px solid #2774AE; color:#fff;
              border-radius:50%; width:34px; height:34px; cursor:pointer;
              display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
-      <i class="fa fa-pause"></i>
+      <i class="fa fa-pause" aria-hidden="true"></i>
     </button>
     <button id="tts-slower" title="Slower"
       style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
@@ -497,7 +497,7 @@
       style="background:rgba(200,50,50,0.18); border:1px solid rgba(220,80,80,0.45);
              color:#f99; border-radius:6px; padding:4px 12px; cursor:pointer;
              font-size:12px; font-weight:700; margin-left:auto;">
-      <i class="fa fa-stop"></i> Stop
+      <i class="fa fa-stop" aria-hidden="true"></i> Stop
     </button>
   </div>
 
@@ -586,13 +586,13 @@
           bar.style.display = (speaking || paused) ? 'flex' : 'none';
           if (playPauseBtn) {
             playPauseBtn.innerHTML = paused
-              ? '<i class="fa fa-play"></i>'
-              : '<i class="fa fa-pause"></i>';
+              ? '<i class="fa fa-play" aria-hidden="true"></i>'
+              : '<i class="fa fa-pause" aria-hidden="true"></i>';
             playPauseBtn.title = paused ? 'Resume' : 'Pause';
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up"></i> Read Aloud';
+            readBtn.innerHTML = '<i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud';
             readBtn.style.background = 'none';
             readBtn.style.color = '';
           }
@@ -610,7 +610,7 @@
             : TTSPlayer.extractText(document.querySelector('.tutorial-page'));
           if (!text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop"></i> Stop';
+          readBtn.innerHTML = '<i class="fa fa-stop" aria-hidden="true"></i> Stop';
           readBtn.style.background = 'rgba(200,50,50,0.3)';
           readBtn.style.color = '#f99';
           TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });

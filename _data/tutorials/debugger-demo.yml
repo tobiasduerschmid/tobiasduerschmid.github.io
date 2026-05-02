@@ -44,12 +44,12 @@ steps:
       3. Use **Step Into** (F11) to dive into `compute_score`. Watch the
          **Call Stack** tab grow. Click frames to inspect each.
       4. Use **Step Over** (F10) a few times, then hit **Step Back** (Shift+F10)
-         to rewind. Notice the gutter arrow turns gray when you're rewound.
+         to rewind. Notice that the debugger is no longer in the live execution state; sighted users also see the gutter marker change appearance.
       5. Open the **Watch** tab and add `len(records)` and `sum(scores) / max(len(scores), 1)`.
       6. **Hover** over any identifier in the editor while paused — the value
          appears in a tooltip.
       7. Add a **conditional breakpoint** on the loop body: right-click the
-         red dot in the gutter and enter `record["grade"] == "A"`.
+         breakpoint marker in the gutter and enter `record["grade"] == "A"`.
       8. Drag the **History** scrubber to navigate the entire execution timeline.
 
       ### Parameters experiment

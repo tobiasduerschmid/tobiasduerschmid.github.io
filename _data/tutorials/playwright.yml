@@ -1098,7 +1098,7 @@ steps:
 
       ### 🧠 Quick recall
 
-      From Testing Foundations: a **liar test** had a passing green checkmark but a weak oracle that didn't actually verify the spec. What made it lie?
+      From Testing Foundations: a **liar test** had a **PASS** result but a weak oracle that didn't actually verify the spec. What made it lie?
 
       *(In your own words, before reading on …)*
 
@@ -1131,7 +1131,7 @@ steps:
 
       What did `toHaveCount(1)` actually verify? Just that **one list item exists**. It said nothing about *what's inside the item*. The bug — empty text — is invisible to this assertion.
 
-      The assertion is a **liar**: green checkmark, broken feature.
+      The assertion is a **liar**: **PASS** result, broken feature.
 
       ### Three weak assertion patterns to recognize
 
@@ -2673,4 +2673,3 @@ steps:
             3: "Working backward from the assertion is good practice for AAA structure, but only after you know *what* to assert. The Spec Card answers that — its Oracle field is what you'll assert."
           explanation: |
             The Spec Card is the central artifact this tutorial built up to. Every test should start with one — even a small one written in 30 seconds. The cost of writing it is small; the cost of not writing it is the brittle/loose tests you've been learning to avoid.
-

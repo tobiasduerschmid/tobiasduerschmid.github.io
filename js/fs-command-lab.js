@@ -296,6 +296,25 @@
     var other = slotB;
     var initialized = false;
     var previousText = null;
+    var announcer = document.createElement('div');
+    announcer.className = 'sr-only';
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    wrapper.appendChild(announcer);
+
+    function announceChangedRows(text, changedIndices) {
+      if (!changedIndices || !changedIndices.length) return;
+      var rows = String(text || '')
+        .split('\n')
+        .map(function (line) { return line.replace(/[`*_\[\]()]/g, '').trim(); })
+        .filter(Boolean);
+      var names = changedIndices
+        .map(function (idx) { return rows[idx]; })
+        .filter(Boolean)
+        .slice(0, 4);
+      if (!names.length) return;
+      announcer.textContent = 'Changed rows: ' + names.join(', ');
+    }
 
     function renderInitial(text) {
       window.UMLFolderTreeDiagram.render(current, text);
@@ -308,6 +327,7 @@
 
       // Highlight rows that changed vs. the previously-rendered state.
       var changed = computeChangedIndices(previousText, text);
+      announceChangedRows(text, changed);
       applyRowBursts(other, changed);
 
       // Swap which slot contributes to layout height. We do NOT lock or

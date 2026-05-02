@@ -5,7 +5,6 @@
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url("git-graph.css");
 
 /* ───────────────────────────────────────────
    Tutorial navbar button hover/focus colours
@@ -1292,8 +1291,9 @@ html:not(.dark-mode) .tvm-out-term-tab:hover { color: #1a1a1a; background: #ebed
 html:not(.dark-mode) .tvm-out-term-tab.active { color: #1a1a1a; background: #fff; }
 html:not(.dark-mode) .tvm-git-terminal-container { background: #ffffff; }
 
-/* git-graph.css (imported at the top of this file) holds the core widget
-   styles and delta animations, shared with the SEBook command-lab. */
+/* git-graph.css (loaded separately by pages that render the graph widget)
+   holds the core widget styles and delta animations, shared with the
+   SEBook command-lab. */
 
 /* The interactive tutorial graph has no SVG-inversion filter, so override the
    defaults from uml-diagram.css to give explicit dark-mode colors here. */
@@ -1361,6 +1361,22 @@ html:not(.dark-mode) .tvm-git-graph-container {
 .tvm-uml-bottom-left-view {
   background: #1e1e2e;
   color: #ccc;
+  /* Theme the embedded UML SVG to match the dark workspace surface so
+     class boxes, headers, and method text render legibly without
+     relying on the global `filter: invert(...)` that the SEBook layout
+     applies to standalone UML containers. The audit otherwise reads the
+     workspace dark bg through and flags `#222`-on-`#1e1e2e` (~1.1:1)
+     for every method line. */
+  --uml-stroke: #6e8ec0;
+  --uml-text: #e8edf3;
+  --uml-fill: #2a2a3e;
+  --uml-header-fill: #38384e;
+  --uml-line: #6a7180;
+  --uml-secondary-line: #8a92a3;
+  --uml-secondary-fill: #2f2f44;
+  --uml-annotation-text: #b6becd;
+  --uml-label-fill: rgba(20, 20, 30, 0.94);
+  --uml-label-stroke: rgba(110, 142, 192, 0.4);
 }
 
 .tvm-uml-left-view {
@@ -1681,6 +1697,18 @@ html:not(.dark-mode) .tvm-uml-left-view,
 html:not(.dark-mode) .tvm-uml-bottom-left-view {
   background: #fff;
   color: #333;
+  /* Light-mode UML colours — match the SEBook static-diagram defaults so
+     the workspace SVG looks consistent with diagrams in tutorial copy. */
+  --uml-stroke: #4060a0;
+  --uml-text: #222;
+  --uml-fill: #fff;
+  --uml-header-fill: #d0ddef;
+  --uml-line: #444;
+  --uml-secondary-line: #6c7c8d;
+  --uml-secondary-fill: #eef4fa;
+  --uml-annotation-text: #5a6573;
+  --uml-label-fill: rgba(255, 255, 255, 0.94);
+  --uml-label-stroke: rgba(64, 96, 160, 0.18);
 }
 
 html:not(.dark-mode) .tvm-uml-bottom-left-view {
@@ -2519,6 +2547,48 @@ html:not(.dark-mode) .tvm-http-empty-state {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Visible progress bar — sits next to the step buttons. Width is set
+   inline by JS based on completed-step count. WCAG 1.4.11 non-text
+   contrast: #0078d4 fill on #1c1c20 track is 4.97:1, well over 3:1. */
+.tvm-step-progress {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 6px;
+  background: #1c1c20;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 8px;
+}
+.tvm-step-progress__fill {
+  height: 100%;
+  background: #0078d4;
+  width: 0%;
+  transition: width 0.25s ease;
+}
+html:not(.dark-mode) .tvm-step-progress {
+  background: #e6e9ef;
+  border-color: #b9c0c9;
+}
+html:not(.dark-mode) .tvm-step-progress__fill {
+  background: #0066b8;
+}
+
+/* "Step X of Y" status text — sighted users get a compact label, screen
+   readers get the announcement via role="status" aria-live="polite".
+   Color #c9d2dc on #141416 = 11.6:1; #2c3138 on #f5f6f8 = 12.5:1. */
+.tvm-step-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9d2dc;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+html:not(.dark-mode) .tvm-step-status {
+  color: #2c3138;
 }
 
 .tvm-step-btn {

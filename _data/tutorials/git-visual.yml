@@ -76,11 +76,11 @@ steps:
     instructions: |
       ## Your First Graph
 
-      Look at the **Git Graph** panel on the right! You can see your first
+      Look at the **Git Graph** panel. You can see your first
       commit as a node, with the `main` branch label pointing to it.
 
       The graph shows:
-      - **Colored circles** = commits (with abbreviated SHA hash)
+      - Each **node** in the graph represents a commit, labeled with an abbreviated SHA hash.
       - **Labels** = branch names pointing to commits
       - **HEAD** = which branch you're currently on
 

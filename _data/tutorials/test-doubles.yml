@@ -82,7 +82,7 @@ steps:
       ⚙️ **Task** — three small moves:
 
       1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28")` returns `True`. **Predict**: will it pass today? Will it pass tomorrow? Why?
-      2. **Run** the test (▶ button). It passes today (April 28, 2026). 🎉 — and that green dot is *misleading*. Tomorrow the same code with no changes will fail.
+      2. **Run** the test. It passes today (April 28, 2026) — and that **PASS** result is *misleading*. Tomorrow the same code with no changes will fail.
       3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Step 2 will show how a stub fills it.
 
       ```mermaid

@@ -42,7 +42,7 @@ steps:
       3. **Step Into** (F11) into `computeScore`. Watch the **Call Stack**
          tab grow. Click frames to inspect each.
       4. **Step Back** (Shift+F10) to rewind through history. Notice the
-         gutter arrow turns gray when rewound.
+         gutter marker changes appearance when rewound.
       5. **Watch** tab → add `records.length` and `scores.reduce((a,b)=>a+b,0) / Math.max(scores.length, 1)`.
       6. **Hover** an identifier in the editor while paused.
       7. Right-click a breakpoint dot → enter a condition like `record.grade === 'A'`.

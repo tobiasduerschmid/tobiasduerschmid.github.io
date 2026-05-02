@@ -13,8 +13,8 @@
     {% if reviews.size > 0 %}
 		<div class="row">
 			<div class="col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
-			  <fieldset>
-			  <legend>Reviews</legend>
+			  <section class="activities-group" aria-labelledby="activities-reviews-heading">
+			  <h3 id="activities-reviews-heading">Reviews</h3>
 			  {% assign previousconf = '0' %}
 			  {% for r in reviews %}
 			  	<div class="row">
@@ -28,7 +28,7 @@
 		          </div>
 		        </div>
 			  {% endfor %}
-			  </fieldset>
+			  </section>
 		    </div>
 		</div>
 		<br>
@@ -40,12 +40,13 @@
     {% for t in activities %}
 	<div class="row">
 		<div class="col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
-		  <fieldset>
-		  <legend>{{ t.title}}</legend>
+		  {% assign activity_id = t.title | slugify | prepend: 'activity-' %}
+		  <section class="activities-group" aria-labelledby="{{ activity_id }}">
+		  <h3 id="{{ activity_id }}">{{ t.title}}</h3>
 		  <div class="col-sm-12">
 			{{ t.content}}
 		  </div>
-		  </fieldset>
+		  </section>
 	    </div>
 	</div>
 	<br>

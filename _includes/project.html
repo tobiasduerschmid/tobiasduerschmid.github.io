@@ -1,12 +1,12 @@
   {% assign m =  projects.size | modulo: 2 %}
   {% if p == projects.first and m == 1 %}
-    <div class="col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}">
+    <div class="col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}" role="listitem">
   {% else %}
  	{% assign i_2 =  i | modulo: 2 %}
   	{% if i_2 == 1 %}
-  	<div class="col-md-5 col-md-offset-0 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}">
+  	<div class="col-md-5 col-md-offset-0 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}" role="listitem">
   	{% else  %}
-  	<div class="col-md-5 col-md-offset-1 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}">
+  	<div class="col-md-5 col-md-offset-1 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1" id="project-{{ p.key }}" role="listitem">
   	{% endif %}	
   {% endif %}
   

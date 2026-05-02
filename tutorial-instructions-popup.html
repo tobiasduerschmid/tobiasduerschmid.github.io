@@ -16,6 +16,7 @@
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     body { display: flex; flex-direction: column; }
+    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     .tip-bar {
       display: flex; align-items: center; gap: 10px;
       padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
@@ -41,6 +42,8 @@
   </style>
 </head>
 <body>
+  <h1 class="sr-only">Instructions popout</h1>
+  <main aria-label="Tutorial instructions popout">
   <div class="tip-bar">
     <span>Instructions</span>
     <span class="tip-status" id="statusEl">Connecting&hellip;</span>
@@ -58,6 +61,7 @@
     </div>
     <div class="tip-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>

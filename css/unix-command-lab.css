@@ -54,7 +54,7 @@ html.dark-mode .unix-lab__desc { color: #fff; }
   font-size: 13px;
   line-height: 1.45;
   padding: 8px 10px;
-  border: 1px solid #c4cbd3;
+  border: 1px solid #767676;
   border-radius: 4px;
   background-color: #ffffff;
   color: #1f2d3d;
@@ -75,7 +75,7 @@ html.dark-mode .unix-lab__desc { color: #fff; }
    dark-mode textarea. Set explicit placeholder colours for both modes so
    the hint text is readable without looking like entered content. */
 .unix-lab__predict-input::placeholder {
-  color: #9aa6b2;
+  color: #5a6573;
   opacity: 1;     /* Firefox lowers placeholder opacity by default — undo that. */
 }
 html.dark-mode .unix-lab__predict {
@@ -86,10 +86,10 @@ html.dark-mode .unix-lab__predict-label { color: #4a9fd9; }
 html.dark-mode .unix-lab__predict-input {
   background-color: #1c2533;
   color: #e6edf3;
-  border-color: #3a4556;
+  border-color: #6a737d;
 }
 html.dark-mode .unix-lab__predict-input::placeholder {
-  color: #6b7686;
+  color: #9aa6b2;
 }
 html.dark-mode .unix-lab__predict-input:focus {
   border-color: #4a9fd9;
@@ -171,8 +171,8 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   color: #1e5f8d;
 }
 .unix-lab__panel-tag--overwrite { background-color: #fde8e8; color: #b03a2e; }
-.unix-lab__panel-tag--append    { background-color: #e6f4ea; color: #1a7d5a; }
-.unix-lab__panel-tag--create    { background-color: #fff4d6; color: #8a6d1e; }
+.unix-lab__panel-tag--append    { background-color: #e6f4ea; color: #16704c; }
+.unix-lab__panel-tag--create    { background-color: #fff4d6; color: #75591a; }
 .unix-lab__panel-tag--modify    { background-color: #e3eef8; color: #1e5f8d; }
 
 .unix-lab__panel-body {
@@ -189,7 +189,7 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
 .unix-lab__panel-body + .unix-lab__panel-body {
   border-top: 1px dashed #d8dde2;
 }
-.unix-lab__panel-body--muted { color: #9aa6b2; background-color: #f8f9fa; }
+.unix-lab__panel-body--muted { color: #5a6573; background-color: #f8f9fa; }
 .unix-lab__panel-body--strike { text-decoration: line-through; text-decoration-color: rgba(154, 166, 178, 0.5); }
 
 .unix-lab__panel-empty {

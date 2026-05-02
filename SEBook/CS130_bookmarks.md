@@ -71,6 +71,15 @@ layout: sebook
     text-decoration: none;
   }
 
+  .cs130-intro {
+    color: #555;
+    margin-bottom: 20px;
+  }
+
+  html.dark-mode .cs130-intro {
+    color: #b0b8c4;
+  }
+
   html.dark-mode .cs130-topic-link {
     background: #1e2a35;
     color: #FFD100;
@@ -108,8 +117,7 @@ layout: sebook
 </style>
 
 <div id="cs130-bookmarks">
-  <p style="color:#555; margin-bottom:20px;">Pages from the SEBook covered in CS 130 Software Engineering.</p>
-  <style>html.dark-mode #cs130-bookmarks > p:first-of-type { color: #b0b0b0 !important; }</style>
+  <p class="cs130-intro">Pages from the SEBook covered in CS 130 Software Engineering.</p>
 
   {% for topic in site.data.CS130_nav.topics %}
   <div class="cs130-topic-group">

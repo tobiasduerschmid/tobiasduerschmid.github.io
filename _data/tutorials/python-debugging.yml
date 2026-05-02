@@ -284,13 +284,13 @@ steps:
 
       ### 1. *"Where is execution right now?"* → Breakpoint
 
-      Click the gutter (the empty space to the left of the line numbers) next to **line 8** in `tour.py` (the line `total += score`). A red dot appears — that's a breakpoint.
+      Click the gutter next to **line 8** in `tour.py` (the line `total += score`). A breakpoint marker appears — that's the breakpoint you'll edit later.
 
-      Click **Debug**. Execution pauses *before* line 8 runs, with a yellow arrow in the gutter. The current line is highlighted.
+      Click **Debug**. Execution pauses *before* line 8 runs; the debugger reports the current paused line, and sighted users also see an arrow marker in the gutter. The current line is highlighted.
 
       ### 2. *"What does this variable hold right now?"* → Variables tab + hover
 
-      Look at the **Variables** tab (right side). You'll see locals like `score` and `total`. Each value has a type badge (`int`, `list`, `dict`).
+      Look at the **Variables** tab. You'll see locals like `score` and `total`. Each value has a type badge (`int`, `list`, `dict`).
 
       Now **hover over `score`** in the editor. A tooltip shows the value. The same trick works on any identifier in the source — no need to dig through the panel.
 
@@ -302,7 +302,7 @@ steps:
 
       ### 4. *"Which iteration first violates an invariant?"* → Conditional breakpoint
 
-      Right-click the red dot on line 8 → **Edit Breakpoint** → enter `score < 0` as the condition. Click **Continue** (F5).
+      Right-click the breakpoint marker you placed on line 8 → **Edit Breakpoint** → enter `score < 0` as the condition. Click **Continue** (F5).
 
       Execution flies through every iteration where `score >= 0` and pauses *only* at the iteration where `score < 0` (line 8). That's the iteration where the invariant first fails.
 
@@ -316,7 +316,7 @@ steps:
 
       ### 6. *"What was this variable BEFORE this line ran?"* → History scrubber
 
-      Drag the **History** scrubber (the timeline at the bottom) backward by 5-10 ticks. Watch `total` rewind in the Variables tab. Drag forward — it advances. The arrow gutter turns gray when you're rewound (you're not at "live" execution anymore).
+      Drag the **History** scrubber backward by 5-10 ticks. Watch `total` rewind in the Variables tab. Drag forward — it advances. The debugger switches from live execution to a rewound history state; sighted users also see the gutter marker change appearance.
 
       This is the time-travel feature. You can move to any moment in the program's history without restarting.
 
@@ -866,7 +866,7 @@ steps:
 
       ### 3. Stop only on the suspicious account — conditional breakpoint
 
-      Set a breakpoint at the start of `apply_transaction` (the `before = balances.get(...)` line). Right-click the red dot → **Edit Breakpoint** → enter a condition that pauses only for the suspicious account. What predicate on `tx` discriminates ACCT-202 from the other accounts?
+      Set a breakpoint at the start of `apply_transaction` (the `before = balances.get(...)` line). Right-click that breakpoint marker → **Edit Breakpoint** → enter a condition that pauses only for the suspicious account. What predicate on `tx` discriminates ACCT-202 from the other accounts?
 
       <details><summary>Predicate answer</summary>
 
@@ -1747,7 +1747,7 @@ steps:
       - **Start here:** `checkout_app/checkout_service.py` (the orchestrator) and the **Sequence Diagram** tab.
       - **Tests + entry point:** `test_checkout.py`, `checkout_main.py`.
 
-      Plus a tab on the right: **Sequence Diagram**, refreshed live as you edit.
+      Plus a **Sequence Diagram** tab, refreshed live as you edit.
 
       ### 1. Symptom
 

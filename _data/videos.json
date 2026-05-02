@@ -2,9 +2,25 @@
 	"show" : false,
 	"videos" :
 	[ 
-		{ "link" : "https://www.youtube.com/embed/sUfTNU5Jb-A" }, 
-		{ "link" : "https://www.youtube.com/embed/yv8N1tIce84" }, 
-		{ "link" : "https://www.youtube.com/embed/KCVB4R1wiEc" },
-		{ "link" : "https://www.youtube.com/embed/cGFwQ4Xmhr0" }
+		{
+			"id" : "sUfTNU5Jb-A",
+			"title" : "ROSDiscover ICSA conference talk video",
+			"description" : "Video description: This recorded conference talk presents ROSDiscover, a static analysis approach for recovering ROS run-time architecture from code and launch files. The visual track primarily shows presentation slides with the paper title, architecture-recovery workflow, examples of ROS component connections, and evaluation results; the spoken talk explains the same research claims and examples."
+		},
+		{
+			"id" : "yv8N1tIce84",
+			"title" : "ProsumerFX mobile image stylization video",
+			"description" : "Video description: This prerecorded video demonstrates ProsumerFX, a mobile app for creating and sharing parameterizable image stylization effects. The visual track shows app screens, photo previews, controls for configuring effects, and before-and-after stylized results."
+		},
+		{
+			"id" : "KCVB4R1wiEc",
+			"title" : "Interactive image filtering with multiple levels of control video",
+			"description" : "Video description: This prerecorded video demonstrates a mobile image-filtering framework with preset selection, global parameter adjustment, and local on-screen painting for fine control. The visual track shows source photos, filter controls, and stylized results such as oil paint and watercolor effects."
+		},
+		{
+			"id" : "cGFwQ4Xmhr0",
+			"title" : "Pencil Hatching app demo video",
+			"description" : "Video description: The demo shows the Pencil Hatching Android app turning photographs into black-and-white pencil drawings. A user opens a photo, previews a sketched version, changes drawing presets and parameters, and compares the original image with progressively denser hatched results."
+		}
 	]
 }

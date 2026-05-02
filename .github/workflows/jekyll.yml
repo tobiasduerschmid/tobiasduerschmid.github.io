@@ -2,14 +2,48 @@ name: Deploy Jekyll site to Pages
 
 on:
   push:
-    branches: ["master"] # Replace with your default branch name
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages-${{ github.ref }}"
+  cancel-in-progress: false
+
 jobs:
+  # The full WCAG 2.2 AA audit takes 30–75 minutes. Gate it on a commit-message
+  # marker so most pushes/PRs stay fast. Add "[WCAG audit]" to the head commit
+  # message to opt in. Deploys still go out when the audit is skipped — the
+  # deploy job's `if:` treats a skipped audit as a pass.
+  decide-audit:
+    runs-on: ubuntu-latest
+    outputs:
+      run_audit: ${{ steps.check.outputs.run_audit }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check head commit message for "[WCAG audit]" marker
+        id: check
+        run: |
+          msg="$(git log -1 --pretty=%B)"
+          echo "Head commit message:"
+          echo "$msg"
+          if printf '%s' "$msg" | grep -qF '[WCAG audit]'; then
+            echo "Marker found — will run WCAG audit."
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Marker not found — skipping WCAG audit."
+            echo "run_audit=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -26,11 +60,43 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.0' # Specify your Ruby version
-          bundler-cache: true # runs 'bundle install' and caches gems
+          ruby-version: '3.3.0'
+          bundler-cache: true
 
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v4
+
+      - name: Build with Jekyll
+        run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - name: Upload artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+
+  audit-accessibility:
+    needs: decide-audit
+    if: needs.decide-audit.outputs.run_audit == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Initialize submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,24 +105,54 @@ jobs:
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: |
-          npm install
-          npx playwright install --with-deps chromium
+        run: npm ci || npm install
 
-      - name: Build with Jekyll
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build site for audit
         run: bundle exec jekyll build
         env:
           JEKYLL_ENV: production
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Run WCAG 2.2 AA audit
+        run: npx playwright test tests/wcag22-complete-audit.spec.js tests/wcag22-source-implementation-sweep.spec.js tests/accessibility.spec.js
+        env:
+          WCAG_AUDIT_FULL_SWEEP: '1'
+          CI: 'true'
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wcag-audit-report
+          path: tmp/wcag22-*.json
+          if-no-files-found: warn
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: warn
 
   deploy:
+    # Deploy to Pages when:
+    #   - the event is a push to master AND
+    #   - the build succeeded AND
+    #   - the audit either succeeded or was skipped (no marker in commit message)
+    if: |
+      always()
+      && github.event_name == 'push'
+      && github.ref == 'refs/heads/master'
+      && needs.build.result == 'success'
+      && (needs.audit-accessibility.result == 'success' || needs.audit-accessibility.result == 'skipped')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, audit-accessibility]
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

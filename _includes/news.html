@@ -9,11 +9,12 @@
     </div>
     {% assign curDate = site.time | date: '%s' %}
     {% assign news = site.data.news.news | sort:"date" %}
+    <div role="list" aria-label="Recent news">
     {% for n in news reversed %}
     {% assign newsDate = n.date | date: '%s' %}
     {% if newsDate <= curDate %} {% assign duration_sec=curDate | minus: newsDate %} {% assign
       duration_days=duration_sec | divided_by: 60 | divided_by: 60 | divided_by: 24 %} {% if duration_days
-      <=site.data.news.max_days %} <div class="row">
+      <=site.data.news.max_days %} <div class="row" role="listitem">
       <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
         <h3>{{ n.date | date : "%d %b. %Y" }}</h3>
       </div>
@@ -29,6 +30,7 @@
   {% endif %}
   {% endif %}
   {% endfor %}
+    </div>
   </div>
 
 

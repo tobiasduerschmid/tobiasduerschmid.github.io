@@ -124,6 +124,7 @@ html.dark-mode .fs-command-lab text[font-style="italic"] {
 .fs-command-lab__output--visible {
   opacity: 1;
   max-height: 260px;
+  overflow-y: auto;
   padding: 8px 12px;
 }
 html.dark-mode .fs-command-lab__output {
@@ -149,7 +150,7 @@ html.dark-mode .fs-command-lab__output {
 }
 .fs-command-lab__exit--ok {
   background-color: #e6f4ea;
-  color: #1a7d5a;
+  color: #16704c;
   border-color: #b6e0c4;
 }
 .fs-command-lab__exit--err {

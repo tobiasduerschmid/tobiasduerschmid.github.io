@@ -54,9 +54,38 @@
     });
   }
 
+  function enhanceTables() {
+    document.querySelectorAll('table').forEach((table, index) => {
+      table.querySelectorAll('thead th').forEach((th) => {
+        if (!th.hasAttribute('scope')) th.setAttribute('scope', 'col');
+      });
+      table.querySelectorAll('tbody tr > th').forEach((th) => {
+        if (!th.hasAttribute('scope')) th.setAttribute('scope', 'row');
+      });
+
+      if (table.querySelector(':scope > caption')) return;
+
+      let label = '';
+      const previous = table.previousElementSibling;
+      if (previous && /^H[1-6]$/i.test(previous.tagName)) {
+        label = previous.textContent.trim();
+      }
+      if (!label) {
+        const sectionHeading = table.closest('section, article, main')?.querySelector('h1, h2, h3, h4, h5, h6');
+        if (sectionHeading) label = sectionHeading.textContent.trim();
+      }
+
+      const caption = document.createElement('caption');
+      caption.className = 'sr-only';
+      caption.textContent = label ? label + ' table' : 'Data table ' + (index + 1);
+      table.insertBefore(caption, table.firstChild);
+    });
+  }
+
   function run() {
     try { makeScrollableCodeBlocksFocusable(); } catch (e) { /* non-fatal */ }
     try { deroleCarouselListboxes(); } catch (e) { /* non-fatal */ }
+    try { enhanceTables(); } catch (e) { /* non-fatal */ }
   }
 
   // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and

@@ -83,7 +83,7 @@ steps:
 
       As you edit, keep one eye on `_format_grade()`. It is used by **three** other methods: `get_grade_summary()`, `generate_report()`, *and* `send_grade_notification()`. Any format change you make ripples into *all three* outputs simultaneously — even though each one has a different audience (academic display vs. registrar's report vs. student email). **The friction you feel is the point.** SOLID is five ways to defuse exactly this kind of ripple.
 
-      > **Errors are the lesson.** You will almost certainly break something on the first attempt. That's normal — read the message, adjust, re-run. If you want a reference after your attempt, hit the "Solution" button in the top bar to compare. The point isn't to guess the perfect patch; it's to feel how the design resists you.
+      > **Errors are the lesson.** You will almost certainly break something on the first attempt. That's normal — read the message, adjust, re-run. If you want a reference after your attempt, hit the **Solution** button to compare. The point isn't to guess the perfect patch; it's to feel how the design resists you.
 
       ### Reflect → Fill in the Ownership
 

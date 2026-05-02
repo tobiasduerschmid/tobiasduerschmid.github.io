@@ -1,8 +1,8 @@
 {% if projects.size > 0 %}
   {% assign i = 0 %}
-  <div class="row">
+  <div class="row" role="list" aria-label="{{ legend | escape }}">
   {% if all_projects.size != projects.size %}
-    <legend>{{ legend }}</legend>
+    <h3 class="projects-group-heading" role="listitem">{{ legend }}</h3>
   {% endif %}
   {% for p in projects reversed %}
       {% include project.html %}

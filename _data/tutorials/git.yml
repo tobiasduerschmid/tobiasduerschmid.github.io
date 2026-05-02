@@ -22,7 +22,7 @@ steps:
   - title: "Your First Repository"
     instructions: |
       Welcome to the **Git Tutorial**! You've got a code editor
-      (top) and a real Linux terminal (bottom) on the right. Files you
+      (top) and a real Linux terminal in the workspace. Files you
       edit are automatically synced to the VM. Let's get into it.
 
       ### Why version control?
@@ -1527,7 +1527,7 @@ steps:
 
       ### Task 2: Create and switch to a new branch
 
-      > 📊 **Check the Git Graph** — click the **Git Graph** tab (top right).
+      > 📊 **Check the Git Graph** — click the **Git Graph** tab.
       > We will now create a new branch and watch the graph update in real time. 
       > What do you expect to see when we create the new branch?
       > Make a prediction, then watch it happen.
@@ -2223,7 +2223,7 @@ steps:
       workflow many times; no command list provided.
 
       > 🔀 **Check the Git Graph:** After your commit, click **Git Graph** in the
-      > toggle above the editor. You'll see a new commit appear at the top of
+      > toggle in the editor toolbar. You'll see a new commit appear at the top of
       > `main` — a visual record that your mission-logging change now lives on
       > the branch. Switch back to **Editor** when you're ready to continue.
 

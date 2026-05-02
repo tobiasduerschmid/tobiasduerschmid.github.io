@@ -10,7 +10,9 @@
       </div>
     </div>
     
-    {% include publications.html %}
+    <div role="list" aria-label="{{ include.title | escape }}">
+      {% include publications.html %}
+    </div>
 
   </div>
 </section>

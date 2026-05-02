@@ -195,9 +195,41 @@
     return true;
   }
 
+  // Pull a leading "caption:" line out of the diagram source so the diagram
+  // can be wrapped in <figure><figcaption> without double-rendering the line.
+  // Supports two equivalent forms (a mermaid comment or a plain leading line):
+  //   %% caption: A flowchart of order processing
+  //   caption: A flowchart of order processing
+  // Returns { caption: string|null, source: string } where source is the
+  // diagram text with the caption line removed.
+  function extractCaption(text) {
+    if (!text) return { caption: null, source: '' };
+    var lines = text.split('\n');
+    var firstNonBlank = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].trim() !== '') { firstNonBlank = i; break; }
+    }
+    if (firstNonBlank === -1) return { caption: null, source: text };
+    var head = lines[firstNonBlank];
+    var match = head.match(/^\s*(?:%%\s*)?caption\s*:\s*(.+?)\s*$/i);
+    if (!match) return { caption: null, source: text };
+    var rest = lines.slice();
+    rest.splice(firstNonBlank, 1);
+    return { caption: match[1], source: rest.join('\n') };
+  }
+
   // Public: convert ```mermaid fenced code blocks under `rootEl` into rendered
-  // <div class="mermaid"> SVG. Idempotent across re-renders because we replace
-  // the <pre> wrapper each time. Retries once if mermaid is still loading.
+  // <figure><div class="mermaid"></div><figcaption></figcaption></figure>.
+  // Idempotent across re-renders because we replace the <pre> wrapper each
+  // time. Retries once if mermaid is still loading.
+  //
+  // Accessibility (WCAG 2.2 §1.1.1, WCAG 3 figure caption requirements):
+  // every diagram is wrapped in a <figure> so it's announced as a figure by
+  // screen readers, and given an explicit text alternative. If the source
+  // begins with a `caption:` line (or `%% caption:`), that line becomes the
+  // <figcaption> AND the SVG's accessible name. Otherwise we fall back to a
+  // generic label like "Mermaid flowchart" so the diagram is at least named —
+  // authors should add real captions over time.
   function render(rootEl) {
     if (!rootEl) return;
     var blocks = rootEl.querySelectorAll('pre > code.language-mermaid');
@@ -207,10 +239,29 @@
       var code = blocks[i];
       var pre = code.parentElement;
       if (!pre || !pre.parentElement) continue;
+      var parsed = extractCaption(code.textContent);
+      var caption = parsed.caption;
+      var hasExplicitCaption = !!caption;
+      var displayedCaption = caption || guessMermaidLabel(parsed.source);
+
+      var figure = document.createElement('figure');
+      figure.className = 'sebook-figure sebook-figure--mermaid';
       var div = document.createElement('div');
       div.className = 'mermaid';
-      div.textContent = code.textContent;
-      pre.parentElement.replaceChild(div, pre);
+      div.setAttribute('role', 'img');
+      div.setAttribute('aria-label', displayedCaption);
+      div.textContent = parsed.source;
+      figure.appendChild(div);
+
+      var figcaption = document.createElement('figcaption');
+      figcaption.className = 'sebook-figure__caption';
+      if (!hasExplicitCaption) {
+        figcaption.classList.add('sebook-figure__caption--auto');
+      }
+      figcaption.textContent = displayedCaption;
+      figure.appendChild(figcaption);
+
+      pre.parentElement.replaceChild(figure, pre);
       divs.push(div);
     }
     var run = function () {
@@ -219,6 +270,32 @@
     };
     if (window.mermaid && window.mermaid.run) run();
     else setTimeout(function () { if (window.mermaid && window.mermaid.run) run(); }, 500);
+  }
+
+  // Heuristic fallback when no explicit caption was provided. Look at the
+  // first directive line to figure out the diagram type, then return a short
+  // human-readable label. Better than nothing for a screen reader.
+  function guessMermaidLabel(source) {
+    var firstLine = '';
+    var lines = (source || '').split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i].trim();
+      if (!ln || ln.indexOf('%%') === 0) continue;
+      firstLine = ln.toLowerCase();
+      break;
+    }
+    if (firstLine.indexOf('sequencediagram') === 0) return 'Mermaid sequence diagram';
+    if (firstLine.indexOf('classdiagram') === 0)    return 'Mermaid class diagram';
+    if (firstLine.indexOf('statediagram') === 0)    return 'Mermaid state diagram';
+    if (firstLine.indexOf('erdiagram') === 0)       return 'Mermaid entity-relationship diagram';
+    if (firstLine.indexOf('gantt') === 0)           return 'Mermaid gantt chart';
+    if (firstLine.indexOf('pie') === 0)             return 'Mermaid pie chart';
+    if (firstLine.indexOf('journey') === 0)         return 'Mermaid user journey diagram';
+    if (firstLine.indexOf('mindmap') === 0)         return 'Mermaid mind map';
+    if (firstLine.indexOf('timeline') === 0)        return 'Mermaid timeline';
+    if (firstLine.indexOf('gitgraph') === 0)        return 'Mermaid git graph';
+    if (firstLine.indexOf('flowchart') === 0 || firstLine.indexOf('graph') === 0) return 'Mermaid flowchart';
+    return 'Mermaid diagram';
   }
 
   // Auto-initialize on script load if mermaid is already present (typical when

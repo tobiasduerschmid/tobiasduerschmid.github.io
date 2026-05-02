@@ -27,7 +27,7 @@
 .tvm-tutor-icon { font-size: 1.1em; }
 .tvm-tutor-toggle {
   margin-left: auto;
-  background: none; border: none; color: #8080a0;
+  background: none; border: none; color: #9090b0;
   font-size: 0.85em; cursor: pointer; padding: 0;
   transition: transform 0.2s;
 }
@@ -38,7 +38,7 @@
 .tvm-tutor-status {
   padding: 12px 14px;
   font-size: 0.85em;
-  color: #8080a0;
+  color: #9090b0;
   text-align: center;
 }
 .tvm-tutor-status a {
@@ -122,7 +122,7 @@ html:not(.dark-mode) .tvm-tutor-msg.assistant pre { background: rgba(0,0,0,0.05)
 .tvm-tutor-msg.user {
   background: #2a2a38;
   color: #d0d0e0;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a6573;
   align-self: flex-end;
 }
 .tvm-tutor-msg code {
@@ -187,7 +187,7 @@ html:not(.dark-mode) .tvm-tutor-header { background: #f4f4f8; color: #444; borde
 html:not(.dark-mode) .tvm-tutor-header:hover { background: #eaeaf0; }
 html:not(.dark-mode) .tvm-tutor-msg.assistant { background: #eef4fa; color: #333; border-color: #c8d8e8; }
 html:not(.dark-mode) .tvm-tutor-msg.user { background: #f0f0f4; color: #333; border-color: #d8d8e0; }
-html:not(.dark-mode) .tvm-tutor-input { background: #f8f8fc; border-color: #c0c0c8; color: #333; }
+html:not(.dark-mode) .tvm-tutor-input { background: #f8f8fc; border-color: #767676; color: #333; }
 html:not(.dark-mode) .tvm-tutor-input-row { background: #fafafa; border-color: #d0d0d8; }
 html:not(.dark-mode) .tvm-tutor-status { color: #666; }
 html:not(.dark-mode) .tvm-tutor-msg code { background: rgba(0,0,0,0.06); }

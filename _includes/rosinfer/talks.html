@@ -1,24 +1,27 @@
 
   <div class="row">
   <div class="col-sm-8 col-sm-offset-2">
-    <fieldset>
+    <section class="rosinfer-talk-media" aria-label="Presentation slides">
       <div class="col-sm-12">
         <p style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%"></p>
-        <iframe src="https://www.slideshare.net/slideshow/embed_code/key/4DHOK4O6GuZphv?hostedIn=slideshare&page=upload" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" marginwidth="0" marginheight="0" scrolling="no"></iframe>
+        <iframe title="Architectural model inference presentation slides" src="https://www.slideshare.net/slideshow/embed_code/key/4DHOK4O6GuZphv?hostedIn=slideshare&page=upload" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" marginwidth="0" marginheight="0" scrolling="no"></iframe>
         </p>
         <h3 class="page-header">The slides to the presentation can be found <a href="https://www.slideshare.net/TobiasDrschmid1/architectural-model-inference-from-code-for-rosbased-robotics-systems" target="_blank">here</a></h3>
         </div>
-  </fieldset>
+  </section>
     </div>
   </div>
 
   <div class="row">
 	  <div class="col-sm-8 col-sm-offset-2">
-	    <fieldset>
+	    <section class="rosinfer-talk-media" aria-label="Conference talk video">
         <div class="col-sm-12">
-          <p style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/sUfTNU5Jb-A" frameborder="0"> </iframe></p>
+          {% capture rosinfer_talk_description %}
+          <p><strong>Video description:</strong> This recorded conference talk presents ROSDiscover, a static analysis approach for recovering ROS run-time architecture from code and launch files. The visual track primarily shows presentation slides with the paper title, architecture-recovery workflow, examples of ROS component connections, and evaluation results; the spoken talk explains the same research claims and examples.</p>
+          {% endcapture %}
+          {% include youtube_embed.html id="sUfTNU5Jb-A" title="ROSDiscover ICSA conference talk video" description=rosinfer_talk_description %}
 		</div>
-		</fieldset>
+		</section>
       </div>
     </div>
   

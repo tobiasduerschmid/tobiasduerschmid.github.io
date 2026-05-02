@@ -9,7 +9,7 @@ permalink: /SEBook/tools/uml-playground
 
 # UML Playground
 
-Edit the diagram spec on the left and see the rendered SVG update live on the right. Switch between diagram types using the selector, then download the SVG when you're happy with the result.
+Edit the **Diagram spec** textarea and the playground re-renders the SVG output live. Switch between diagram types using the selector, then download the SVG when you're happy with the result.
 
 <div id="uml-playground-wrap">
   <div id="uml-playground-toolbar">
@@ -385,16 +385,22 @@ html.dark-mode .uml-pg-syntax-help {
   color: #d0e0f0;
 }
 
-html.dark-mode .uml-pg-syntax-help-link {
-  /* Was #3d8bc9 → 3.58:1 against white text. UCLA blue lifts the ratio
-     to ~4.9:1 while keeping the link visually distinctive. */
+html.dark-mode .uml-pg-syntax-help-link,
+html.dark-mode a.uml-pg-syntax-help-link:visited {
+  /* The global `html.dark-mode a` rule paints links UCLA gold (#FFD100),
+     which on a UCLA-blue background only hits ~3.5:1 — below 4.5:1.
+     Override with white-on-blue (~5.1:1) and chain `:visited` so the
+     style sticks even after the user has clicked through to the
+     reference page. */
   background: #2774AE;
   color: #fff;
 }
 
 html.dark-mode .uml-pg-syntax-help-link:hover,
 html.dark-mode .uml-pg-syntax-help-link:focus {
-  background: #5ba3dc;
+  /* Slightly darker than the default UCLA blue so the hover affordance
+     reads in dark mode while keeping ≥4.5:1 against white text. */
+  background: #1f5d8a;
   color: #fff;
 }
 

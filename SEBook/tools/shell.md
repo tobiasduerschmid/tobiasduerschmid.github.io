@@ -294,7 +294,7 @@ Play each card to see the command's effect; click again to undo. The description
 
 #### Walkthrough: file handling in action
 
-Step through a realistic session to see each command's effect on the directory tree. New or changed rows get a yellow burst; the `(you are here)` marker tracks the current working directory.
+Step through a realistic session to see each command's effect on the directory tree. New or changed rows are announced in the lab status and also flash briefly; the `(you are here)` marker tracks the current working directory.
 
 <div data-fs-command-lab-multi role="region" aria-label="Interactive multi-step folder-tree demo: starting from an empty project directory, each step adds files and subdirectories to build up a typical project layout.">
 <script type="application/json">

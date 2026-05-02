@@ -4,6 +4,92 @@ const { test, expect } = require('@playwright/test');
 /** @typedef {{ x: number, y: number, width: number, height: number }} BoxRect */
 
 test.describe('UML renderer regressions', () => {
+  test('sequence lifelines are unfiltered so Chrome paints them', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);
+
+    const stats = await page.evaluate(async () => {
+      const host = document.createElement('div');
+      host.style.width = '900px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+
+      /** @type {{ render: (container: HTMLElement, text: string) => void }} */ (
+        /** @type {any} */ (window).UMLSequenceDiagram
+      ).render(host, `@startuml
+participant client: Client
+participant server: Server
+client -> server: SYN
+server --> client: SYN-ACK
+client -> server: ACK
+@enduml`);
+
+      const svg = host.querySelector('svg');
+      const lifelines = Array.from(host.querySelectorAll('svg line.uml-sequence-lifeline'));
+
+      async function countPaintedLifelinePixels() {
+        if (!svg || lifelines.length === 0) return [];
+        const viewBox = svg.viewBox.baseVal;
+        const width = Math.ceil(viewBox && viewBox.width ? viewBox.width : Number(svg.getAttribute('width')));
+        const height = Math.ceil(viewBox && viewBox.height ? viewBox.height : Number(svg.getAttribute('height')));
+        const data = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        try {
+          const image = new Image();
+          await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = reject;
+            image.src = url;
+          });
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return [];
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(image, 0, 0, width, height);
+          return lifelines.map((line) => {
+            const x = Math.round(Number(line.getAttribute('x1')));
+            const y1 = Math.ceil(Number(line.getAttribute('y1'))) + 2;
+            const y2 = Math.floor(Number(line.getAttribute('y2'))) - 2;
+            let painted = 0;
+            for (let y = y1; y <= y2; y += 1) {
+              for (let dx = -1; dx <= 1; dx += 1) {
+                const pixel = ctx.getImageData(x + dx, y, 1, 1).data;
+                if ((255 - pixel[0]) + (255 - pixel[1]) + (255 - pixel[2]) > 60) {
+                  painted += 1;
+                  break;
+                }
+              }
+            }
+            return painted;
+          });
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
+
+      const result = {
+        count: lifelines.length,
+        filtered: lifelines.filter((line) => line.hasAttribute('filter')).length,
+        dashed: lifelines.filter((line) => line.getAttribute('stroke-dasharray') === '6,4').length,
+        vertical: lifelines.filter((line) => line.getAttribute('x1') === line.getAttribute('x2')).length,
+        paintedPixels: await countPaintedLifelinePixels(),
+      };
+      document.body.removeChild(host);
+      return result;
+    });
+
+    expect(stats.count).toBe(2);
+    expect(stats.filtered).toBe(0);
+    expect(stats.dashed).toBe(2);
+    expect(stats.vertical).toBe(2);
+    expect(stats.paintedPixels.every((count) => count > 20)).toBe(true);
+  });
+
   test('sequence activations are explicit only', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLSequenceDiagram);

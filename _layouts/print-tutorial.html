@@ -570,6 +570,20 @@
       .step-solution { page-break-inside: avoid; }
     }
 
+    /* The print-tutorial layout pins `body { background: #fff }` regardless
+       of `html.dark-mode` — there is no print dark mode. Stylesheets like
+       uml-diagram.css and css/main.css ship `html.dark-mode .X` rules that
+       lighten text colour on the assumption the page bg has flipped to
+       dark, which makes those colours unreadable on the still-white print
+       body. Pin the light-mode equivalents back here so a stray
+       `html.dark-mode` class (set by other pages' theme persistence or by
+       the WCAG audit toggling dark mode for a contrast pass) doesn't
+       degrade contrast in print view. */
+    html.dark-mode .uml-gitgraph-fallback-error { color: #b00000; }
+    html.dark-mode .uml-gitgraph-fallback-empty { color: #555; }
+    html.dark-mode .sebook-figure__caption { color: #444; }
+    html.dark-mode .sebook-figure__caption--auto { color: #5a5a5a; }
+
     @media screen and (max-width: 640px) {
       body {
         width: 100%;

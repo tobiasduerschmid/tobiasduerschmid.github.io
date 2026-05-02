@@ -16,6 +16,7 @@
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
+    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     html:not(.dark-mode) body { background: #fff; color: #222; }
     .top-bar {
       display: flex; align-items: center; gap: 8px;
@@ -75,6 +76,8 @@
   </style>
 </head>
 <body>
+  <h1 class="sr-only">Output popout</h1>
+  <main aria-label="Tutorial output popout">
   <div class="top-bar">
     <span class="kind-name" id="kindEl">&hellip;</span>
     <div class="actions" id="actionsEl">
@@ -97,6 +100,7 @@
       sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
     <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
+  </main>
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script>

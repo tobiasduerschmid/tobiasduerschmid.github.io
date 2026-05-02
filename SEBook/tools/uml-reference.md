@@ -5,7 +5,18 @@ permalink: /SEBook/tools/uml-reference
 no_auto_uml: true
 ---
 
-<p style="color:#666;font-style:italic;margin-bottom:1.5em;">Diagrams render after the page loads. Scroll to see each one.</p>
+<p class="uml-reference-intro">Diagrams render after the page loads. Scroll to see each one.</p>
+
+<style>
+  .uml-reference-intro {
+    color: #555;
+    font-style: italic;
+    margin-bottom: 1.5em;
+  }
+  html.dark-mode .uml-reference-intro {
+    color: #b0b8c4;
+  }
+</style>
 
 {% capture ref_md %}{% include REFERENCE.md %}{% endcapture %}
 {% assign ref_md = ref_md | replace: '](../git-graph.js)', '](/js/git-graph.js)' %}

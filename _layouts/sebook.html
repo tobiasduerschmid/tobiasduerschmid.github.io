@@ -35,7 +35,7 @@
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <article class="post-content">
+  <div class="post-content">
 
     <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Main navigation">
       <div class="container-fluid">
@@ -352,13 +352,13 @@
           <div style="display: flex; align-items: center;">
             <button id="tts-read-btn" aria-label="Read Aloud: read page aloud using text-to-speech"
               style="background:none; border:1px solid #2774AE; color:#2774AE; border-radius:6px; padding:4px 12px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">
-              <i class="fa fa-volume-up" style="margin-right:5px;"></i>Read Aloud
+              <i class="fa fa-volume-up" style="margin-right:5px;" aria-hidden="true"></i>Read Aloud
             </button>
           </div>
           {% if site.bookmarks %}
           <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none; align-items:center;">
             <button id="bookmarkPageBtn" aria-label="Bookmark this page" style="background:none; border:none; cursor:pointer; padding:0 2px; font-size:1.3em; color:#2774AE; line-height:1; vertical-align:middle; min-width:34px; min-height:34px; display:inline-flex; align-items:center; justify-content:center;">
-              <i id="bookmarkIcon" class="fa-regular fa-bookmark"></i>
+              <i id="bookmarkIcon" class="fa-regular fa-bookmark" aria-hidden="true"></i>
             </button>
           </div>
           {% endif %}
@@ -366,14 +366,17 @@
 
         <div class="container">
           <div class="row">
+            {% assign section_heading_count = 0 %}
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
               %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
               split: '</h1>' | first | replace: '</h1' , '' %} {% assign section_content=section | split: '</h1>' | last
               %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
               replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
               | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
-              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %} <section id="{{ section_id }}">
-              <h1>{{ heading_text }}</h1>{{ section_content }}
+              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %}
+              {% assign section_heading_count = section_heading_count | plus: 1 %}
+              <section id="{{ section_id }}">
+              {% if section_heading_count == 1 %}<h1>{{ heading_text }}</h1>{% else %}<h2>{{ heading_text }}</h2>{% endif %}{{ section_content }}
               </section>
               {% endif %}
               {% else %}
@@ -400,7 +403,7 @@
         {% endif %}
       </main>
     </div>
-  </article>
+  </div>
 
   <script>
     (function () {
@@ -658,13 +661,13 @@
            align-items:center; gap:12px; flex-wrap:wrap;
            box-shadow:0 -2px 10px rgba(0,0,0,0.45);">
     <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
-      <i class="fa fa-volume-up"></i> Reading aloud
+      <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
     <button id="tts-playpause" title="Pause / Resume" aria-label="Pause or resume reading aloud"
       style="background:transparent; border:2px solid #2774AE; color:#fff;
              border-radius:50%; width:34px; height:34px; cursor:pointer;
              display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
-      <i class="fa fa-pause"></i>
+      <i class="fa fa-pause" aria-hidden="true"></i>
     </button>
     <button id="tts-slower" title="Slower"
       style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
@@ -691,7 +694,7 @@
       style="background:rgba(200,50,50,0.18); border:1px solid rgba(220,80,80,0.45);
              color:#f99; border-radius:6px; padding:4px 12px; cursor:pointer;
              font-size:12px; font-weight:700; margin-left:auto;">
-      <i class="fa fa-stop"></i> Stop
+      <i class="fa fa-stop" aria-hidden="true"></i> Stop
     </button>
   </div>
 
@@ -780,13 +783,13 @@
           bar.style.display = (speaking || paused) ? 'flex' : 'none';
           if (playPauseBtn) {
             playPauseBtn.innerHTML = paused
-              ? '<i class="fa fa-play"></i>'
-              : '<i class="fa fa-pause"></i>';
+              ? '<i class="fa fa-play" aria-hidden="true"></i>'
+              : '<i class="fa fa-pause" aria-hidden="true"></i>';
             playPauseBtn.title = paused ? 'Resume' : 'Pause';
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up" style="margin-right:5px;"></i>Read Aloud';
+            readBtn.innerHTML = '<i class="fa fa-volume-up" style="margin-right:5px;" aria-hidden="true"></i>Read Aloud';
             readBtn.style.color = '#2774AE';
             readBtn.style.borderColor = '#2774AE';
           }
@@ -801,7 +804,7 @@
           var text = TTSPlayer.extractText(content);
           if (!text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop" style="margin-right:5px;"></i>Stop Reading';
+          readBtn.innerHTML = '<i class="fa fa-stop" style="margin-right:5px;" aria-hidden="true"></i>Stop Reading';
           readBtn.style.color = '#c0392b';
           readBtn.style.borderColor = '#c0392b';
           TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });

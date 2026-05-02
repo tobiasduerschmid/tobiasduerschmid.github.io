@@ -1,8 +1,8 @@
 {% assign previousyear = '0' %}
 {% for p in publications reversed %}
 {% assign currentyear = p.date | date: '%Y' %}
-{% if currentyear != previousyear %}<div>
-  <legend>{{ p.date | date: '%Y' }}</legend>
+{% if currentyear != previousyear %}<div role="listitem">
+  <h3 class="pub-year-heading">{{ p.date | date: '%Y' }}</h3>
 </div>{% endif %}
 {% assign previousyear = currentyear %}
 {% assign co_authors = site.data.co_authors.authors %}
@@ -12,7 +12,7 @@
 {% assign pDate = p.date | date: '%s' %}
 
 
-<div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
+<div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}" role="listitem">
   <div class="col-sm-2 col-md-offset-1">
     {% include thumbnail.html %}
   </div>

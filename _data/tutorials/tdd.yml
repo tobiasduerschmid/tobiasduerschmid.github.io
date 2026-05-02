@@ -1235,7 +1235,7 @@ steps:
       3. **🔵 REFACTOR + mutation check** — re-run; the previous three tests are your safety net. Then **prove they actually catch regressions** with the ten-second *mutation move*: temporarily change a line in `scorer.py` (e.g., `if die == 1:` → `if die == 99:`), rerun pytest, watch a test fail, then **revert**. A test that doesn't fail when the production code breaks is a *Liar test* — it's not pinning down the behavior you think it is.
       4. **🟢 Bonus check** — add `test_one_and_five_create_two_different_events` (mixed dice `[1, 5]` → one Flame + one Spark). **Predict** whether you'll need to change `scorer.py`. The new loop *should* handle this for free — but the test makes that promise explicit.
 
-      🪞 **Pause (after green):** in *one sentence*, what did the green checkmarks just tell you that you'd otherwise have had to verify by hand? Hold your answer; the cycle quiz returns to it.
+      🪞 **Pause (after green):** in *one sentence*, what did the passing test results just tell you that you'd otherwise have had to verify by hand? Hold your answer; the cycle quiz returns to it.
 
       <details markdown="1"><summary>Reveal — what happens when option A wins (open after running)</summary>
 
@@ -1517,7 +1517,7 @@ steps:
           option_feedback:
             0: "*\"Refactor on first sight of duplication\"* sounds disciplined, but with one example, you're guessing the abstraction's shape. Two examples reveal the *common* parts; one is just a special case dressed as a pattern. Beck's *Rule of Three* (popularised by Fowler) is the same idea — refactor toward duplication, not before it."
             2: "Performance is not the reason. Python's interpreter compiles both forms to similar bytecode, and the difference is microseconds at most. Confusing a *design* discipline with a *performance* concern muddles two unrelated questions."
-            3: "Order *is* the lesson. Refactor-before-test gives you no safety net during the structural change; refactor-after-test gives you green checkmarks proving behavior was preserved. The same final code is reached, but only one path *guarantees* the path was safe."
+            3: "Order *is* the lesson. Refactor-before-test gives you no safety net during the structural change; refactor-after-test gives you passing test results proving behavior was preserved. The same final code is reached, but only one path *guarantees* the path was safe."
 
         - question: |
             You replaced the hardcoded branches with a `for` loop and ran pytest. All four tests passed. What did the test suite just do for you that you would otherwise have had to do manually?
@@ -1533,7 +1533,7 @@ steps:
             2: "Tests don't change your code. They run it and observe the result. (You may be confusing the test suite with mutation testing tools or auto-formatters — those are *different* tools running *outside* the suite.)"
             3: "Git history logs changes. The test suite *enforces* behavior. Conflating the two means you lose the live regression-catching property — a log doesn't fail a build when you break something; a test does."
           explanation: |
-            *Tests enable change.* The four green checkmarks are not just "tests passed" —
+            *Tests enable change.* The four passing test results are not just "tests passed" —
             they are "the empty case still works, single 1 still works, single 5 still
             works, and `[1, 1]` works for the first time." Without the suite, you would
             have to convince yourself of each line by reading.
@@ -4120,4 +4120,3 @@ steps:
 
             If you found yourself drafting your own list before scrolling to the options —
             even better. That's exactly Canon TDD step 1 in your hands.
-

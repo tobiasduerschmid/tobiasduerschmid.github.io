@@ -30,7 +30,7 @@ steps:
 
       > **Learning objective:** After this step you will be able to **identify** the three compartments of a UML class box and **write** a Python class that matches a given diagram.
 
-      > **💡 Light mode recommended.** The UML diagrams in this tutorial are easier to read on a light background. If you are in dark mode, consider switching via the toggle in the top-right corner.
+      > **💡 Light mode recommended.** The UML diagrams in this tutorial are easier to read on a light background. If you are in dark mode, consider switching with the **Dark mode** toggle in the tutorial navbar.
 
       > **Heads up — learning UML feels weird at first.** You are about to map two things that look very different: boxes with symbols on one side, Python code on the other. The first few connections take effort to see. If a notation feels arbitrary, that's normal — keep going. By Step 4 you'll be reading diagrams as fluently as you read code.
 
