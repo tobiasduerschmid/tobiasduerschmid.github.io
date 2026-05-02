@@ -108,7 +108,8 @@ layout: sebook
 </style>
 
 <div id="cs35l-bookmarks">
-  <p style="color:#666; margin-bottom:20px;">Pages from the SEBook covered in CS 35L Software Construction.</p>
+  <p style="color:#555; margin-bottom:20px;">Pages from the SEBook covered in CS 35L Software Construction.</p>
+  <style>html.dark-mode #cs35l-bookmarks > p:first-of-type { color: #b0b0b0 !important; }</style>
 
   {% for topic in site.data.CS35L_nav.topics %}
   <div class="cs35l-topic-group">

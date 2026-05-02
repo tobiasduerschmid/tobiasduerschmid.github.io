@@ -11,17 +11,34 @@
     // scroll it without tabindex (WCAG 2.1.1, axe rule
     // scrollable-region-focusable). We mark every highlighted pre as
     // focusable; the visible focus ring comes from the global :focus-visible
-    // rule. We also add an aria-label so screen readers announce the region.
+    // rule.
+    //
+    // We deliberately do NOT add aria-label / role="region": the visible
+    // content of a <pre> IS the announced text, and an aria-label like
+    // "java code" would (1) mismatch the visible text (WCAG 2.5.3 Label in
+    // Name) and (2) hide the actual code from screen-reader announcement.
+    //
+    // We also skip blocks that live inside an aria-hidden ancestor — those
+    // are intentionally hidden from AT (e.g. tab-panel back-faces, alternate
+    // language tabs) and a focusable element inside aria-hidden is itself a
+    // WCAG 4.1.2 violation.
     const blocks = document.querySelectorAll('.highlight > pre, .highlighter-rouge .highlight pre, pre.highlight');
     blocks.forEach((pre) => {
       if (pre.hasAttribute('tabindex')) return;
+      if (pre.closest('[aria-hidden="true"]')) return;
       pre.setAttribute('tabindex', '0');
-      if (!pre.hasAttribute('role')) pre.setAttribute('role', 'region');
-      if (!pre.hasAttribute('aria-label')) {
-        const lang = (pre.closest('[class*="language-"]')?.className || '')
-          .match(/language-([a-z0-9_-]+)/i);
-        pre.setAttribute('aria-label', lang ? `${lang[1]} code` : 'Code');
-      }
+    });
+
+    // Scrollable tutorial step content (rendered by the tutorial JS) and
+    // the editor tab row both produce horizontal-overflow regions that axe
+    // flags as `scrollable-region-focusable`. Same fix.
+    const otherScrollable = document.querySelectorAll(
+      '.tvm-step-content-wrap, .tvm-editor-tabs',
+    );
+    otherScrollable.forEach((el) => {
+      if (el.hasAttribute('tabindex')) return;
+      if (el.closest('[aria-hidden="true"]')) return;
+      el.setAttribute('tabindex', '0');
     });
   }
 

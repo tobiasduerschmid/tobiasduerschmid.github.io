@@ -24,7 +24,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   role="region" aria-label="{{ quiz_data.title | escape }} quiz">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h3>{{ quiz_data.title }}</h3>
+      <h2>{{ quiz_data.title }}</h2>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}"
         aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">

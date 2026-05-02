@@ -108,7 +108,8 @@ layout: sebook
 </style>
 
 <div id="cs130-bookmarks">
-  <p style="color:#666; margin-bottom:20px;">Pages from the SEBook covered in CS 130 Software Engineering.</p>
+  <p style="color:#555; margin-bottom:20px;">Pages from the SEBook covered in CS 130 Software Engineering.</p>
+  <style>html.dark-mode #cs130-bookmarks > p:first-of-type { color: #b0b0b0 !important; }</style>
 
   {% for topic in site.data.CS130_nav.topics %}
   <div class="cs130-topic-group">

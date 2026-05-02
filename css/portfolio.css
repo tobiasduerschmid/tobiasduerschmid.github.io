@@ -793,6 +793,71 @@ html.dark-mode .highlight .c,
 html.dark-mode .highlight .cm,
 html.dark-mode .highlight .c1,
 html.dark-mode .highlight .cs { color: #6a9955; font-style: italic; }
+/* .cp = Comment.Preproc (e.g. `#include`, `#define`). Inherits comment-green
+   in Monaco VS Dark — was previously falling through to the light-mode
+   #008000 which produced ~1.15:1 against #1e1e1e. */
+html.dark-mode .highlight .cp { color: #c586c0; }
+
+/* Read-aloud and bookmark buttons share an inline UCLA-blue
+   (`color:#2774AE`) which sits at ~3.74:1 against the dark page
+   background and fails 1.4.3. Override globally with the brighter blue we
+   already use for cookie-notice / link accents. The inline style's
+   specificity forces !important here. */
+html.dark-mode #tts-read-btn,
+html.dark-mode #bookmarkPageBtn {
+	color: #5fa8d3 !important;
+	border-color: #5fa8d3 !important;
+}
+
+/* Inline language tabs (Java / C++ / Python / TypeScript) shipped without
+   any styling, so they inherited the page's currentColor on a transparent
+   background — ~1.15:1 contrast in dark mode and ~3:1 in light mode (both
+   fail 1.4.3). Style them as a real tablist. */
+.inline-language-tabs {
+	display: inline-flex;
+	gap: 4px;
+	padding: 4px;
+	margin: 8px 0 0;
+	border: 1px solid #d0d0d6;
+	border-radius: 6px;
+	background: #f6f7f9;
+}
+.inline-language-tabs button[role="tab"] {
+	border: 1px solid transparent;
+	background: transparent;
+	color: #1a1a1a;
+	padding: 4px 12px;
+	border-radius: 4px;
+	font-size: 0.92em;
+	font-weight: 500;
+	cursor: pointer;
+	min-height: 28px;
+}
+.inline-language-tabs button[role="tab"]:hover,
+.inline-language-tabs button[role="tab"]:focus-visible {
+	background: #e6e8ec;
+}
+.inline-language-tabs button[role="tab"][aria-selected="true"] {
+	background: #2774AE;
+	color: #fff;
+	border-color: #2774AE;
+}
+html.dark-mode .inline-language-tabs {
+	border-color: #3a3a4a;
+	background: #1f1f28;
+}
+html.dark-mode .inline-language-tabs button[role="tab"] {
+	color: #e6edf3;
+}
+html.dark-mode .inline-language-tabs button[role="tab"]:hover,
+html.dark-mode .inline-language-tabs button[role="tab"]:focus-visible {
+	background: #2a2a38;
+}
+html.dark-mode .inline-language-tabs button[role="tab"][aria-selected="true"] {
+	background: #4da3ff;
+	color: #0a0a14;
+	border-color: #4da3ff;
+}
 html.dark-mode .highlight .k,
 html.dark-mode .highlight .kd,
 html.dark-mode .highlight .kp,

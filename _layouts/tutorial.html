@@ -656,10 +656,14 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
 
-  <!-- Privacy / Cookie Notice -->
-  <div style="max-width: 1100px; margin: 24px auto 12px; padding: 0 20px;">
-    {% include cookie-notice.html %}
-  </div>
+  <!-- Privacy / Cookie Notice intentionally omitted here.
+       Tutorial pages render `.tutorial-page` as `position: fixed` covering
+       the viewport from 45px to the bottom (see css/tutorial.css), so any
+       footer-style notice is permanently obscured AND unreachable by
+       keyboard (WCAG 2.4.11). The notice is shown on the SEBook landing
+       page, the index, blog, and every other layout that has room for it,
+       and a direct link to /cookies/ is the single source of truth. -->
+
 
 </body>
 </html>

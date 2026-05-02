@@ -387,7 +387,7 @@
             <hr>
             <div class="container">
               <div class="row">
-                <h3>References</h3>
+                <h2>References</h2>
                 {% bibliography --cited %}
               </div>
             </div>
@@ -859,6 +859,12 @@
         var isActivePanel = panels[j].getAttribute('data-language-panel') === language;
         panels[j].classList.toggle('is-active', isActivePanel);
         panels[j].setAttribute('aria-hidden', isActivePanel ? 'false' : 'true');
+        // Pair aria-hidden with `inert` so focusable content inside an
+        // inactive panel (notably the Rouge code blocks marked tabindex=0
+        // by accessibility-fixes.js) is removed from the focus and AT
+        // tree, satisfying WCAG 4.1.2.
+        if (isActivePanel) panels[j].removeAttribute('inert');
+        else panels[j].setAttribute('inert', '');
       }
     }
 

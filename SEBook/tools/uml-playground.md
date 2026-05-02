@@ -386,7 +386,9 @@ html.dark-mode .uml-pg-syntax-help {
 }
 
 html.dark-mode .uml-pg-syntax-help-link {
-  background: #3d8bc9;
+  /* Was #3d8bc9 → 3.58:1 against white text. UCLA blue lifts the ratio
+     to ~4.9:1 while keeping the link visually distinctive. */
+  background: #2774AE;
   color: #fff;
 }
 

@@ -714,12 +714,15 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border: 1px solid #3a3a52;
   border-radius: 3px;
   background: #1f1f2a;
-  color: #9ba8c0;
+  color: #b9c5d8;
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
-  opacity: 0.55;
+  /* Was opacity: 0.55 which dropped the rendered contrast to ~3:1 in dark
+     mode and ~2.6:1 in light mode (WCAG 1.4.3 fail). The full-opacity
+     muted-blue/grey keeps the "subtle" feel without the contrast hit. */
+  opacity: 0.92;
   font-family: inherit;
   min-width: 24px;
   min-height: 24px;
@@ -1152,7 +1155,9 @@ html:not(.dark-mode) .tvm-editor-pane-divider {
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #777;
+  /* Bumped from #777 (~4.04:1 against the workspace's #1f1f2a) to #a0a8b8
+     which clears 4.5:1 in dark mode and stays legible in light mode. */
+  color: #a0a8b8;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -1652,7 +1657,9 @@ html:not(.dark-mode) .tvm-git-graph-container {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #5b6472;
+  /* Bumped from #5b6472 (~2.74:1 against the workspace's dark bg) so the
+     empty-state copy clears 4.5:1. */
+  color: #aab2c0;
   font-family: system-ui, sans-serif;
   font-size: 14px;
   text-align: center;

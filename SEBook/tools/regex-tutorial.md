@@ -147,6 +147,21 @@ layout: sebook
 :root.dark-mode .rt-goal { color: #ccc; }
 :root.dark-mode .rt-delim { color: #bbb; }
 :root.dark-mode .rt-self-explain { background: #1a2a3a; border-color: #3a5a7a; }
+
+/* Dark-mode contrast bumps for legacy rules that hard-coded light-theme
+   colours (failed WCAG 1.4.3). */
+:root.dark-mode .rt-test-pass { color: #5dd66c; }
+:root.dark-mode .rt-test-pass .rt-test-label { color: #5dd66c; }
+:root.dark-mode .rt-test-fail { color: #ff6b78; }
+:root.dark-mode .rt-test-fail .rt-test-label { color: #ff6b78; }
+:root.dark-mode .rt-viz-rl { color: #b0b0b0; }
+:root.dark-mode .rt-viz-counter { color: #b0b0b0; }
+:root.dark-mode .rt-viz-sc-label { color: #ddd; }
+:root.dark-mode .rt-test-input { color: #ddd; }
+:root.dark-mode .rt-se-title { color: #7ec8e3; }
+:root.dark-mode .rt-se-think { color: #aaa; }
+:root.dark-mode .rt-se-answer > summary { color: #7ec8e3; }
+:root.dark-mode .rt-se-answer p { color: #ccc; }
 :root.dark-mode .rt-se-title { color: #7ec8e3; }
 :root.dark-mode .rt-se-question { color: #ddd; }
 :root.dark-mode .rt-se-think { color: #999; }

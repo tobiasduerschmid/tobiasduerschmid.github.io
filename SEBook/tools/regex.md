@@ -71,7 +71,9 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
 }
 .dark-mode .qr-token {
   background: #2d2d2d;
-  color: #e06c75;
+  /* #e06c75 was at ~4.31:1 against #2d2d2d (just shy of WCAG 4.5:1).
+     Brightening to #f87a85 lifts it to ~5.3:1. */
+  color: #f87a85;
 }
 .qr-desc {
   flex: 1;
