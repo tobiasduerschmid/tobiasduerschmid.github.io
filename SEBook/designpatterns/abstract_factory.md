@@ -404,10 +404,10 @@ Understanding when each creational pattern applies requires examining *which sub
 
 A telling interview question from Head First Design Patterns captures the relationship: *"Factory Method uses classes to create; Abstract Factory uses objects. That's totally different!"* Factory Method relies on **inheritance**—you extend a creator and override the factory method. Abstract Factory relies on **object composition**—you pass a factory object to the client, and the factory creates the products.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_factory" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_factory" %}

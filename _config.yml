@@ -93,6 +93,9 @@ exclude:
   - vm/build-snapshot.js
   - vm/overlay
   - vm/Makefile
+  - tmp
+  - test-results
+  - playwright-report
 
 # Build settings
 strongdown: kramdown

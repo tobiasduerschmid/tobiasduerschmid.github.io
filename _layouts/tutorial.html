@@ -284,6 +284,8 @@
 
   <!-- Initialize tutorial with data from _data/tutorials/ -->
   <script>
+    window.SEBookGlossaryAbbr = {{ site.data.glossary | jsonify | replace: "</script", "<\/script" }};
+
     document.addEventListener('DOMContentLoaded', function () {
       var config = {{ tutorial_data | jsonify | replace: "</script", "<\/script" }};
       // Server-side markdown rendering (Rouge syntax highlighting). The replace-filter

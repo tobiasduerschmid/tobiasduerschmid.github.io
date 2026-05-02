@@ -31,12 +31,11 @@
             {% unless is_blog_index %}
             <!-- Extract h2 headings from content -->
             {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
-              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
-              split: '</h2>' | first | replace: '</h2' , '' | strip_html | strip %} {% if heading_text !="" %} {% assign
-              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
-              replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
-              replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {%
-              assign heading_text_short=heading_text | split: ':' | first %} <li><a class="page-scroll"
+              %} {% assign heading_and_content = section | split: '>' %} {% assign heading_attrs = heading_and_content[0]
+              %} {% assign heading_text = heading_and_content[1] | split: '</h2>' | first | replace: '</h2' , '' |
+              strip_html | strip %} {% if heading_text != "" and heading_attrs contains 'id="' %} {% assign heading_id =
+              heading_attrs | split: 'id="' | last | split: '"' | first %} {% assign heading_text_short = heading_text |
+              split: ':' | first %} <li><a class="page-scroll"
                 href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
               {% endif %}

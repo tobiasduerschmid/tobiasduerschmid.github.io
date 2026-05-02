@@ -211,6 +211,22 @@ html.dark-mode .form-control {
     text-decoration: underline;
 }
 
+abbr[title] {
+    border-bottom: 1px dotted currentColor;
+    cursor: help;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+}
+
+html.abbr-underlines-disabled abbr[title],
+:is(h1, h2, h3, h4, h5, h6) abbr[title] {
+    border-bottom: 0;
+    cursor: inherit;
+    text-decoration: none;
+}
+
 
 
 

@@ -2364,7 +2364,7 @@ A condensed checklist. Each item links back to its full section.
 * **Review [branching strategy](#branching-strategies) with your team.** Short-lived branches beat long-lived ones every time, regardless of which strategy you pick.
 * **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within Git's retention window (configured via `gc.reflogExpire` / `gc.reflogExpireUnreachable`). Don't panic, reflog first.
 
-# Quiz
+## Quiz
 
 ## Basic Git
 {% include flashcards.html id="git_basic" %}

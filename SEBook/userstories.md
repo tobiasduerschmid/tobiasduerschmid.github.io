@@ -653,7 +653,7 @@ Recent advancements in Large Language Models (LLMs) have introduced new capabili
 - **The Power of Prompting**: The quality of automated generation is highly sensitive to prompt design. Using a "Meta-Few-Shot" approach—combining structural rules with explicit positive and negative examples—can push LLM success rates significantly higher, even surpassing manual human generation in semantic accuracy {% cite santos2025chatgpt %}.
 --> 
 
-# Quiz
+## Quiz
 
 
 {% include flashcards.html id="user_stories" %}

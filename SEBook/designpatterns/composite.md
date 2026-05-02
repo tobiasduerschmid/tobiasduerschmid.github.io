@@ -337,10 +337,10 @@ allMenus.print();
   </div>
 </div>
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_structural" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_structural" %}

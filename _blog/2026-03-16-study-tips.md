@@ -114,9 +114,9 @@ Adopting all of the strategies listed above is nearly impossible if you operate 
 
 As you just learned, recalling what you just learned is the best way to form lasting memory. Use these flashcards and the quiz below to test your knowledge and start forming memory via active retrieval. Revisit them every once in a while to further strengthen your memory.
 
-{% include flashcards.html id="study_tips" %}
+{% include flashcards.html id="study_tips" heading_level=3 %}
 
-{% include quiz.html id="effective_learning" %}
+{% include quiz.html id="effective_learning" heading_level=3 %}
 
 ==After getting foundational knowledge, now it's time for you to apply these tips in the courses you are taking (especially the more challenging courses)! Try to slowly integrate these learning practices into your study sessions and let them guide your approach to learning!==
 

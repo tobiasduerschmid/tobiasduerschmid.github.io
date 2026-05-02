@@ -1,0 +1,740 @@
+---
+permalink: /settings/
+title: "My Settings"
+layout: framework
+info_nav: true
+info_nav_title: "My Settings"
+---
+
+<style>
+  .settings-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .settings-page h1 { margin-top: 0.6em; }
+  .settings-page h2 {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #2774AE;
+  }
+  html.dark-mode .settings-page h2 { border-bottom-color: #4da3ff; }
+
+  .settings-intro {
+    background: #f8f9fa;
+    border-left: 3px solid #2774AE;
+    border-radius: 6px;
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .settings-intro {
+    background: #1e1e1e;
+    border-left-color: #4da3ff;
+    color: #ccc;
+  }
+  .settings-intro p:last-child {
+    margin-bottom: 0;
+  }
+
+  .settings-form {
+    display: block;
+  }
+  .settings-section {
+    border: 0;
+    margin: 0 0 24px;
+    padding: 0;
+  }
+  .settings-section legend {
+    display: block;
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    font-size: 1.35em;
+    font-weight: 700;
+    color: inherit;
+  }
+  .settings-list {
+    border-top: 1px solid #e1e4e8;
+  }
+  html.dark-mode .settings-list { border-top-color: #444; }
+
+  .setting-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px);
+    gap: 18px;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  html.dark-mode .setting-row { border-bottom-color: #444; }
+
+  .setting-name {
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .setting-description {
+    margin: 0;
+    color: #555;
+    line-height: 1.45;
+  }
+  html.dark-mode .setting-description { color: #b0b0b0; }
+  .setting-storage {
+    display: block;
+    margin-top: 6px;
+    color: #6a737d;
+    font-size: 0.9em;
+  }
+  html.dark-mode .setting-storage { color: #a8b3c2; }
+  .setting-storage code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .setting-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .setting-check {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-height: 32px;
+    font-weight: 600;
+  }
+  .setting-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+  }
+  .setting-control select,
+  .setting-control input[type="text"],
+  .setting-control input[type="color"] {
+    min-height: 38px;
+    border: 1px solid #c0c4ca;
+    border-radius: 6px;
+    background: #fff;
+    color: #1f2328;
+  }
+  .setting-control select,
+  .setting-control input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+  }
+  .setting-control input[type="color"] {
+    width: 64px;
+    padding: 3px;
+  }
+  html.dark-mode .setting-control select,
+  html.dark-mode .setting-control input[type="text"],
+  html.dark-mode .setting-control input[type="color"] {
+    background: #1f1f1f;
+    border-color: #555;
+    color: #e8e8e8;
+  }
+  .setting-control select:focus,
+  .setting-control input:focus,
+  .settings-btn:focus {
+    outline: 2px solid #2774AE;
+    outline-offset: 2px;
+  }
+  html.dark-mode .setting-control select:focus,
+  html.dark-mode .setting-control input:focus,
+  html.dark-mode .settings-btn:focus {
+    outline-color: #4da3ff;
+  }
+
+  .settings-range-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-range-line input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+  .settings-value {
+    min-width: 52px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #24292e;
+  }
+  html.dark-mode .settings-value { color: #e8e8e8; }
+  .settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .settings-btn {
+    min-height: 34px;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    background: #fff;
+    color: #24292e;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .settings-btn:hover {
+    background: #f3f4f6;
+    border-color: #888;
+  }
+  html.dark-mode .settings-btn {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  html.dark-mode .settings-btn:hover {
+    background: #333;
+    border-color: #888;
+  }
+
+  .settings-note {
+    margin: 4px 0 0;
+    color: #555;
+    font-size: 0.92em;
+  }
+  html.dark-mode .settings-note { color: #b0b0b0; }
+  .settings-status {
+    min-height: 1.4em;
+    margin: 18px 0 0;
+    color: #276419;
+    font-weight: 600;
+  }
+  html.dark-mode .settings-status { color: #8bd17c; }
+
+  @media (max-width: 680px) {
+    .settings-page {
+      padding: 0 12px 48px;
+    }
+    .setting-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+</style>
+
+<article class="settings-page">
+  <h1>My Settings</h1>
+
+  <div class="settings-intro">
+    <p>
+      These are the preferences this site lets you change. They are stored only in
+      your browser as cookies or <code>localStorage</code>; nothing is sent to a server.
+    </p>
+    <p>
+      To inspect or delete raw stored values, use
+      <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
+    </p>
+  </div>
+
+  <form class="settings-form" id="settings-form">
+    <fieldset class="settings-section">
+      <legend>Appearance and motion</legend>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Dark mode</p>
+            <p class="setting-description">Use the site's dark color theme.</p>
+            <span class="setting-storage">Cookie: <code>dark-mode</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-dark-mode">
+              <input type="checkbox" id="setting-dark-mode" data-setting="darkMode">
+              Dark mode
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Text highlights</p>
+            <p class="setting-description">Show highlighted passages in articles and SEBook pages.</p>
+            <span class="setting-storage">Cookie: <code>show-highlights</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-highlights">
+              <input type="checkbox" id="setting-highlights" data-setting="highlights">
+              Show highlights
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Motion preference</p>
+            <p class="setting-description">Follow your operating system's reduced-motion preference, or always reduce optional animations on this site.</p>
+            <span class="setting-storage">localStorage: <code>prefersReducedMotion</code></span>
+          </div>
+          <div class="setting-control">
+            <label for="setting-reduced-motion" class="setting-name">Reduced motion</label>
+            <select id="setting-reduced-motion" data-setting="reducedMotion">
+              <option value="system">Follow system setting</option>
+              <option value="reduce">Always reduce motion on this site</option>
+            </select>
+            <p class="settings-note" id="reduced-motion-note"></p>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Glossary abbreviation underlines</p>
+            <p class="setting-description">Show visible dotted underlines on glossary abbreviations in body content. Headings never receive automatic abbreviation markup.</p>
+            <span class="setting-storage">localStorage: <code>abbr-underlines</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-abbr-underlines">
+              <input type="checkbox" id="setting-abbr-underlines" data-setting="abbrUnderlines">
+              Underline glossary abbreviations
+            </label>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
+      <legend>Reading and audio</legend>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Read-aloud controls</p>
+            <p class="setting-description">Show text-to-speech controls on supported pages.</p>
+            <span class="setting-storage">Cookie: <code>read-aloud</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-read-aloud">
+              <input type="checkbox" id="setting-read-aloud" data-setting="readAloud">
+              Show read-aloud controls
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Read-aloud voice</p>
+            <p class="setting-description">Choose the browser voice used by the read-aloud feature.</p>
+            <span class="setting-storage">localStorage: <code>tts-voice-name</code></span>
+          </div>
+          <div class="setting-control">
+            <label for="setting-tts-voice" class="setting-name">Voice</label>
+            <select id="setting-tts-voice" data-setting="ttsVoice">
+              <option value="">Browser default</option>
+            </select>
+            <p class="settings-note" id="tts-voice-note">Voice choices depend on your browser and operating system.</p>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Audio volume</p>
+            <p class="setting-description">Default volume for embedded audio players.</p>
+            <span class="setting-storage">localStorage: <code>cap_volume</code></span>
+          </div>
+          <div class="setting-control">
+            <label for="setting-audio-volume" class="setting-name">Volume</label>
+            <div class="settings-range-line">
+              <input type="range" id="setting-audio-volume" min="0" max="1" step="0.05" data-setting="audioVolume">
+              <output class="settings-value" id="setting-audio-volume-value" for="setting-audio-volume"></output>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Audio speed</p>
+            <p class="setting-description">Default playback speed for embedded audio players.</p>
+            <span class="setting-storage">localStorage: <code>cap_speed</code></span>
+          </div>
+          <div class="setting-control">
+            <label for="setting-audio-speed" class="setting-name">Playback speed</label>
+            <select id="setting-audio-speed" data-setting="audioSpeed">
+              <option value="0.75">0.75x</option>
+              <option value="1">1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
+      <legend>Tutorials and diagrams</legend>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Tutorial autosave</p>
+            <p class="setting-description">Automatically save tutorial code and current step in this browser.</p>
+            <span class="setting-storage">localStorage: <code>tutorial-autosave</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-tutorial-autosave">
+              <input type="checkbox" id="setting-tutorial-autosave" data-setting="tutorialAutosave">
+              Autosave tutorial work
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">UML accent color</p>
+            <p class="setting-description">Custom accent color used by supported UML diagram renderers.</p>
+            <span class="setting-storage">Cookie: <code>uml-accent-color</code></span>
+          </div>
+          <div class="setting-control">
+            <label for="setting-uml-color" class="setting-name">Accent color</label>
+            <div class="settings-actions">
+              <input type="color" id="setting-uml-color" value="#2774AE" data-setting="umlColor">
+              <button class="settings-btn" type="button" id="setting-uml-color-reset">Use default</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
+      <legend>Personal study tools</legend>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">SEBook bookmarks</p>
+            <p class="setting-description">Show bookmark controls on SEBook pages.</p>
+            <span class="setting-storage">Cookie: <code>se-bookmarks-active</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-bookmarks">
+              <input type="checkbox" id="setting-bookmarks" data-setting="bookmarks">
+              Enable bookmarks
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">SE Gym</p>
+            <p class="setting-description">Enable the personal question and flashcard gym.</p>
+            <span class="setting-storage">Cookie: <code>se-gym-active</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-se-gym">
+              <input type="checkbox" id="setting-se-gym" data-setting="seGym">
+              Enable SE Gym
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Performance tracking</p>
+            <p class="setting-description">Track seen/correct counts locally so SE Gym can surface your most difficult questions.</p>
+            <span class="setting-storage">Cookie: <code>analyze-performance</code>; localStorage: <code>se-gym-stats</code></span>
+          </div>
+          <div class="setting-control">
+            <label class="setting-check" for="setting-performance">
+              <input type="checkbox" id="setting-performance" data-setting="performance">
+              Track performance locally
+            </label>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
+      <legend>Per-page tutorial state</legend>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Tutorial editor layout</p>
+            <p class="setting-description">Individual tutorials remember editor split sizes, popout recovery state, debugger breakpoints, and collapsed debugger panels on the page where you change them.</p>
+            <span class="setting-storage">localStorage prefixes: <code>tutorial-editor-split-</code>, <code>tutorial-popout-state-</code>, <code>tutorial-debug-bps-</code>, <code>tutorial-debug-watchpoint-remove-choice-</code>, <code>tutorial-debug-section-</code>, <code>tutorial-debug-subsection-</code></span>
+          </div>
+          <div class="setting-control">
+            <p class="settings-note">
+              Change these inside each tutorial. Delete stored values from
+              <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Tutorial progress and code</p>
+            <p class="setting-description">When autosave is enabled, tutorial code, current step, and standalone tutorial progress are saved per tutorial.</p>
+            <span class="setting-storage">localStorage prefixes/keys: <code>tutorial-progress-</code>, <code>regex-tutorial-progress</code>, <code>regex-tutorial-advanced-progress</code></span>
+          </div>
+          <div class="setting-control">
+            <p class="settings-note">
+              Use Tutorial autosave above to choose whether new tutorial work is saved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <p class="settings-status" id="settings-status" role="status" aria-live="polite"></p>
+</article>
+
+<script>
+(function () {
+  'use strict';
+
+  var COOKIE_DAYS = 365;
+  var DEFAULT_UML_COLOR = '#2774AE';
+  var statusEl = document.getElementById('settings-status');
+
+  function readCookie(name) {
+    var prefix = name + '=';
+    var parts = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var c = parts[i].trim();
+      if (c.indexOf(prefix) === 0) return decodeURIComponent(c.substring(prefix.length));
+    }
+    return null;
+  }
+
+  function writeCookie(name, value) {
+    var maxAge = COOKIE_DAYS * 24 * 60 * 60;
+    document.cookie = name + '=' + encodeURIComponent(value) + '; max-age=' + maxAge + '; path=/; SameSite=Lax';
+  }
+
+  function clearCookie(name) {
+    document.cookie = name + '=; max-age=0; path=/; SameSite=Lax';
+  }
+
+  function readLS(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  function writeLS(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
+  }
+
+  function clearLS(key) {
+    try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+  }
+
+  function announce(message) {
+    if (!statusEl) return;
+    statusEl.textContent = message;
+  }
+
+  function setCheckbox(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.checked = !!value;
+  }
+
+  function getSystemReduceMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function syncReducedMotionNote() {
+    var note = document.getElementById('reduced-motion-note');
+    if (!note) return;
+    note.textContent = getSystemReduceMotion()
+      ? 'Your system currently asks sites to reduce motion.'
+      : 'Your system currently allows standard motion.';
+  }
+
+  function applyReducedMotionMode(mode) {
+    var reduce = mode === 'reduce' || (mode === 'system' && getSystemReduceMotion());
+    document.documentElement.classList.toggle('prm-reduce', reduce);
+    window.__prefersReducedMotion = function () { return reduce; };
+  }
+
+  function applyAbbrUnderlineMode(enabled) {
+    document.documentElement.classList.toggle('abbr-underlines-disabled', !enabled);
+  }
+
+  function syncVolumeOutput() {
+    var input = document.getElementById('setting-audio-volume');
+    var output = document.getElementById('setting-audio-volume-value');
+    if (!input || !output) return;
+    output.textContent = Math.round(parseFloat(input.value || '1') * 100) + '%';
+  }
+
+  function normalizeColor(value) {
+    if (/^#[0-9a-fA-F]{6}$/.test(value || '')) return value.toUpperCase();
+    return DEFAULT_UML_COLOR;
+  }
+
+  function populateVoices() {
+    var select = document.getElementById('setting-tts-voice');
+    var note = document.getElementById('tts-voice-note');
+    if (!select) return;
+
+    var saved = readLS('tts-voice-name') || '';
+    var voices = [];
+    if ('speechSynthesis' in window) {
+      voices = window.speechSynthesis.getVoices() || [];
+    }
+
+    var oldValue = select.value || saved;
+    select.innerHTML = '<option value="">Browser default</option>';
+    voices.sort(function (a, b) {
+      return (a.lang + a.name).localeCompare(b.lang + b.name);
+    }).forEach(function (voice) {
+      var option = document.createElement('option');
+      option.value = voice.name;
+      option.textContent = voice.name + (voice.lang ? ' (' + voice.lang + ')' : '');
+      select.appendChild(option);
+    });
+
+    if (saved && !voices.some(function (voice) { return voice.name === saved; })) {
+      var savedOption = document.createElement('option');
+      savedOption.value = saved;
+      savedOption.textContent = saved + ' (saved voice)';
+      select.appendChild(savedOption);
+    }
+
+    select.value = saved || oldValue || '';
+    if (note && !voices.length && 'speechSynthesis' in window) {
+      note.textContent = 'Voice choices are still loading; this list will update when the browser provides them.';
+    } else if (note && !('speechSynthesis' in window)) {
+      note.textContent = 'This browser does not expose speech-synthesis voices.';
+    }
+  }
+
+  function loadSettings() {
+    setCheckbox('setting-dark-mode', readCookie('dark-mode') === 'true');
+
+    var highlights = readCookie('show-highlights');
+    if (highlights === null) highlights = readCookie('highlights');
+    setCheckbox('setting-highlights', highlights !== 'false');
+
+    setCheckbox('setting-read-aloud', readCookie('read-aloud') === 'true');
+    setCheckbox('setting-bookmarks', readCookie('se-bookmarks-active') === 'true');
+    setCheckbox('setting-se-gym', readCookie('se-gym-active') === 'true');
+    setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
+
+    var reducedSelect = document.getElementById('setting-reduced-motion');
+    if (reducedSelect) {
+      reducedSelect.value = readLS('prefersReducedMotion') === '1' ? 'reduce' : 'system';
+      applyReducedMotionMode(reducedSelect.value);
+      syncReducedMotionNote();
+    }
+
+    var abbrUnderlines = readLS('abbr-underlines') !== 'false';
+    setCheckbox('setting-abbr-underlines', abbrUnderlines);
+    applyAbbrUnderlineMode(abbrUnderlines);
+
+    var volume = document.getElementById('setting-audio-volume');
+    if (volume) {
+      var savedVolume = parseFloat(readLS('cap_volume'));
+      volume.value = isFinite(savedVolume) ? String(Math.max(0, Math.min(1, savedVolume))) : '1';
+      syncVolumeOutput();
+    }
+
+    var speed = document.getElementById('setting-audio-speed');
+    if (speed) speed.value = readLS('cap_speed') || '1';
+
+    setCheckbox('setting-tutorial-autosave', readLS('tutorial-autosave') !== 'false');
+
+    var color = document.getElementById('setting-uml-color');
+    if (color) color.value = normalizeColor(readCookie('uml-accent-color'));
+
+    populateVoices();
+  }
+
+  function handleChange(event) {
+    var target = event.target;
+    if (!target || !target.getAttribute) return;
+    var setting = target.getAttribute('data-setting');
+    if (!setting) return;
+
+    if (setting === 'darkMode') {
+      writeCookie('dark-mode', target.checked ? 'true' : 'false');
+      document.documentElement.classList.toggle('dark-mode', target.checked);
+      announce('Dark mode setting saved.');
+    } else if (setting === 'highlights') {
+      writeCookie('show-highlights', target.checked ? 'true' : 'false');
+      writeCookie('highlights', target.checked ? 'true' : 'false');
+      document.documentElement.classList.toggle('highlights-disabled', !target.checked);
+      announce('Highlight setting saved.');
+    } else if (setting === 'readAloud') {
+      writeCookie('read-aloud', target.checked ? 'true' : 'false');
+      document.documentElement.classList.toggle('read-aloud-enabled', target.checked);
+      announce('Read-aloud setting saved.');
+    } else if (setting === 'bookmarks') {
+      writeCookie('se-bookmarks-active', target.checked ? 'true' : 'false');
+      announce('Bookmark setting saved.');
+    } else if (setting === 'seGym') {
+      writeCookie('se-gym-active', target.checked ? 'true' : 'false');
+      announce('SE Gym setting saved.');
+    } else if (setting === 'performance') {
+      writeCookie('analyze-performance', target.checked ? 'true' : 'false');
+      announce('Performance tracking setting saved.');
+    } else if (setting === 'reducedMotion') {
+      if (target.value === 'reduce') writeLS('prefersReducedMotion', '1');
+      else clearLS('prefersReducedMotion');
+      applyReducedMotionMode(target.value);
+      syncReducedMotionNote();
+      announce('Motion setting saved.');
+    } else if (setting === 'abbrUnderlines') {
+      if (target.checked) clearLS('abbr-underlines');
+      else writeLS('abbr-underlines', 'false');
+      applyAbbrUnderlineMode(target.checked);
+      announce('Abbreviation underline setting saved.');
+    } else if (setting === 'ttsVoice') {
+      if (target.value) writeLS('tts-voice-name', target.value);
+      else clearLS('tts-voice-name');
+      announce('Read-aloud voice setting saved.');
+    } else if (setting === 'audioVolume') {
+      writeLS('cap_volume', target.value);
+      syncVolumeOutput();
+      announce('Audio volume setting saved.');
+    } else if (setting === 'audioSpeed') {
+      writeLS('cap_speed', target.value);
+      announce('Audio speed setting saved.');
+    } else if (setting === 'tutorialAutosave') {
+      writeLS('tutorial-autosave', target.checked ? 'true' : 'false');
+      announce('Tutorial autosave setting saved.');
+    } else if (setting === 'umlColor') {
+      writeCookie('uml-accent-color', normalizeColor(target.value));
+      announce('UML accent color saved.');
+    }
+  }
+
+  var form = document.getElementById('settings-form');
+  if (form) {
+    form.addEventListener('change', handleChange);
+    form.addEventListener('input', function (event) {
+      if (event.target && event.target.getAttribute('data-setting') === 'audioVolume') {
+        handleChange(event);
+      }
+    });
+  }
+
+  var resetColor = document.getElementById('setting-uml-color-reset');
+  if (resetColor) {
+    resetColor.addEventListener('click', function () {
+      clearCookie('uml-accent-color');
+      var color = document.getElementById('setting-uml-color');
+      if (color) color.value = DEFAULT_UML_COLOR;
+      announce('UML accent color reset to the site default.');
+    });
+  }
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+  }
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.addEventListener) mq.addEventListener('change', function () {
+      syncReducedMotionNote();
+      var select = document.getElementById('setting-reduced-motion');
+      if (select) applyReducedMotionMode(select.value);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadSettings);
+  } else {
+    loadSettings();
+  }
+})();
+</script>

@@ -5,6 +5,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% endcomment %}
 
 {% assign quiz_data = site.data.quizzes[include.id] %}
+{% assign quiz_heading_tag = 'h2' %}
+{% if include.heading_level == 3 or include.heading_level == '3' %}
+{% assign quiz_heading_tag = 'h3' %}
+{% endif %}
 
 {% if quiz_data %}
 {% if quiz_data.decks %}
@@ -24,7 +28,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   role="region" aria-label="{{ quiz_data.title | escape }} quiz">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h2>{{ quiz_data.title }}</h2>
+      <{{ quiz_heading_tag }}>{{ quiz_data.title }}</{{ quiz_heading_tag }}>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}"
         aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
@@ -145,6 +149,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     margin: 12px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     font-family: 'Inter', sans-serif;
+    position: relative;
   }
 
   .quiz-header h3 {
@@ -465,17 +470,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .quiz-title-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    padding-right: 46px;
   }
 
+  .quiz-title-row h2,
   .quiz-title-row h3 {
-    flex: 1;
     margin: 0;
   }
 
-  .se-gym-toggle {
+  .quiz-container .se-gym-toggle {
     background: none;
     border: 2px solid #ccc;
     border-radius: 50%;
@@ -488,8 +491,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
     color: #999;
     font-size: 14px;
     transition: all 0.2s;
-    flex-shrink: 0;
     padding: 0;
+    position: absolute;
+    top: 16px;
+    right: 16px;
   }
 
   .se-gym-toggle:hover {

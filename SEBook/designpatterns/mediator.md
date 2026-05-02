@@ -361,10 +361,10 @@ In practice, the two patterns are often **combined**: colleagues use Observer-st
 * **Per-conversation mediator:** A new mediator is created for each interaction session (common in chat applications or wizard-style UIs).
 * **Global mediator:** A single mediator manages all interactions in a subsystem (the smart home example). Simpler but increases the risk of the god class problem.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_mediator" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_mediator" %}

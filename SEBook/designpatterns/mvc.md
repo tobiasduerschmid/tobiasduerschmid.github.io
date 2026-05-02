@@ -380,10 +380,10 @@ new TaskController(model).addNewTask("Combine Observer with MVC");
   </div>
 </div>
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_mvc" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_mvc" %}

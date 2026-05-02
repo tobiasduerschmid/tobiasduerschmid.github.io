@@ -69,7 +69,7 @@ test.describe('Interactive Quiz Verification', () => {
 
   test('Quiz initialization and basic flow', async ({ page }) => {
     // 1. Check if quiz title is correct
-    await expect(page.locator('.quiz-header h3')).toHaveText('Review Quiz');
+    await expect(page.locator('.quiz-header h2')).toHaveText('Review Quiz');
 
     // 2. Answer first question correctly
     // Question 1 correct answer is index 1 ("Using external tools...")

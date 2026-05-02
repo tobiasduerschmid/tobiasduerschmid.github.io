@@ -1608,7 +1608,7 @@ RegEx allows you to match sub-strings in a longer sequence. Critical to this are
 
 Shell scripting is an indispensable skill for anyone working in tech. By viewing the shell as a set of modular tools (the "Infinity Stones" of your development environment), you can combine simple operations to perform massive, complex tasks with minimal effort. Start small by automating a daily chore on your machine, and before you know it, you will be weaving complex UNIX tools together with ease!
 
-# Quiz
+## Quiz
 
 {% include flashcards.html id="shell_commands_reference" %}
 

@@ -150,6 +150,7 @@
       padding: 12px 16px;
       overflow-x: auto;
       margin: 10px 0;
+      min-height: 24px;
     }
 
     .step-instructions pre code {
@@ -178,6 +179,12 @@
       margin: 0;
       padding: 12px 16px;
       overflow-x: auto;
+      min-height: 24px;
+    }
+
+    .step-instructions pre.highlight,
+    .starter-file-content pre.highlight {
+      min-height: 24px;
     }
 
     .step-instructions .highlight pre code,
@@ -361,6 +368,7 @@
       overflow-x: auto;
       white-space: pre;
       color: #333333;
+      min-height: 24px;
     }
 
     .starter-file-content .highlight {
@@ -622,6 +630,8 @@
       .starter-file pre,
       .step-instructions .highlight pre,
       .starter-file-content .highlight pre,
+      .step-instructions pre.highlight,
+      .starter-file-content pre.highlight,
       .step-solution-commands pre,
       .step-instructions pre code,
       .starter-file pre code,
@@ -828,14 +838,14 @@
           <div class="print-parsons-label">Correct order:</div>
           <ol class="print-parsons-lines">
             {% for line in q.lines %}
-            <li class="print-parsons-line"><code>{{ line }}</code></li>
+            <li class="print-parsons-line"><code>{{ line | xml_escape }}</code></li>
             {% endfor %}
           </ol>
           {% if q.distractors %}
           <div class="print-parsons-label">Distractors (not used):</div>
           <ul class="print-parsons-lines">
             {% for d in q.distractors %}
-            <li class="print-parsons-line print-parsons-distractor"><code>{{ d }}</code></li>
+            <li class="print-parsons-line print-parsons-distractor"><code>{{ d | xml_escape }}</code></li>
             {% endfor %}
           </ul>
           {% endif %}
@@ -885,17 +895,30 @@
 
   <script>
     (function () {
+      function makeScrollableCodeFocusable() {
+        document.querySelectorAll('pre').forEach(function (pre, index) {
+          if (pre.scrollWidth <= pre.clientWidth && pre.scrollHeight <= pre.clientHeight) return;
+          if (!pre.hasAttribute('tabindex')) pre.setAttribute('tabindex', '0');
+          if (!pre.hasAttribute('aria-label')) pre.setAttribute('aria-label', 'Scrollable code block ' + (index + 1));
+        });
+      }
+
       function renderUmlDiagrams() {
         if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
           window.UMLShared.renderAll();
+          makeScrollableCodeFocusable();
         } else {
           setTimeout(renderUmlDiagrams, 80);
         }
       }
 
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', renderUmlDiagrams);
+        document.addEventListener('DOMContentLoaded', function () {
+          makeScrollableCodeFocusable();
+          renderUmlDiagrams();
+        });
       } else {
+        makeScrollableCodeFocusable();
         renderUmlDiagrams();
       }
     })();

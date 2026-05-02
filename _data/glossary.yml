@@ -19,10 +19,30 @@
   description: A set of properties that database transactions are expected to satisfy. Atomicity means a transaction either completes fully or has no effect; Consistency means the database moves between valid states; Isolation means concurrent transactions don't interfere; Durability means committed changes survive crashes.
   related: [SQL, CRUD]
 
+- term: ABC
+  definition: Abstract Base Class
+  description: A class that defines a shared interface or contract but is not meant to be instantiated directly. In Python, ABCs are commonly created with the abc module and abstractmethod decorators.
+  related: [OOP]
+
+- term: AI
+  definition: Artificial Intelligence
+  description: Software techniques that make systems perform tasks associated with human intelligence, such as classification, planning, natural-language processing, or code generation.
+  related: [LLM]
+
 - term: API
   definition: Application Programming Interface
   description: A contract that lets one piece of software call another. APIs hide implementation details and expose a stable surface — function names, parameter types, and return values — that callers can depend on.
   related: [REST, HTTP, SDK]
+
+- term: AST
+  definition: Abstract Syntax Tree
+  description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
+  related: [OOP]
+
+- term: CAP
+  definition: Consistency, Availability, Partition tolerance
+  description: A theorem about distributed systems that says when a network partition occurs, a system must choose between returning only consistent, up-to-date data and remaining available for every request.
+  related: [ACID]
 
 - term: CD
   definition: Continuous Delivery (or Continuous Deployment)
@@ -33,6 +53,16 @@
   definition: Continuous Integration
   description: The practice of merging every developer's work into a shared mainline frequently — usually several times a day — and running automated tests on each merge to catch integration problems early.
   related: [CD, TDD]
+
+- term: CLI
+  definition: Command-Line Interface
+  description: A text-based interface where users type commands instead of clicking graphical controls. Shells, Git, package managers, and many developer tools expose CLIs.
+  related: [UI, OS]
+
+- term: CPU
+  definition: Central Processing Unit
+  description: The processor that executes machine instructions. CPU speed and workload shape performance for compute-heavy programs.
+  related: [OS, RAM]
 
 - term: CRUD
   definition: Create, Read, Update, Delete
@@ -49,15 +79,65 @@
   description: The language used to describe the presentation (colors, layout, typography) of HTML documents.
   related: [HTML, DOM]
 
+- term: CSV
+  definition: Comma-Separated Values
+  description: A plain-text tabular data format where each record is a line and fields are separated by commas. CSV is common for imports, exports, spreadsheets, and simple data pipelines.
+  related: [JSON, XML]
+
+- term: DBMS
+  definition: Database Management System
+  description: Software that stores, queries, indexes, and protects persistent data. A DBMS handles concerns such as transactions, concurrency, durability, and query planning.
+  related: [SQL, ACID]
+
+- term: DI
+  definition: Dependency Injection
+  description: A design technique where collaborators are provided to an object from the outside instead of being constructed internally. DI makes code easier to test and swap because dependencies are explicit.
+  related: [DIP, OOP]
+
+- term: DIP
+  definition: Dependency Inversion Principle
+  description: The SOLID principle that high-level policy should depend on abstractions, not concrete low-level details. The abstractions should be shaped by the high-level module's needs.
+  related: [SOLID, OOP, DI]
+
+- term: DNS
+  definition: Domain Name System
+  description: The distributed naming system that translates human-readable domain names, such as example.com, into IP addresses that network devices can route to.
+  related: [IP, UDP, TCP]
+
 - term: DOM
   definition: Document Object Model
   description: The in-memory tree representation of an HTML or XML document that scripts manipulate. Browser DOM APIs let JavaScript add, remove, and modify nodes.
   related: [HTML, CSS]
 
+- term: FTP
+  definition: File Transfer Protocol
+  description: An application-layer protocol for transferring files between hosts. Modern systems often prefer SSH-based or HTTPS-based transfer mechanisms for encrypted workflows.
+  related: [TCP, SSH, HTTPS]
+
+- term: FIFO
+  definition: First In, First Out
+  description: An ordering policy where the item that has waited the longest is processed first, as in a queue.
+  related: [LIFO]
+
+- term: GC
+  definition: Garbage Collection
+  description: Automatic memory management that reclaims objects no longer reachable by a program, reducing manual allocation errors at the cost of runtime overhead.
+  related: [JVM, RAII]
+
 - term: GoF
   definition: Gang of Four
   description: The four authors of the 1994 book "Design Patterns" — Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides — and, by extension, the catalog of 23 object-oriented design patterns the book described.
   related: [OOP, MVC]
+
+- term: gRPC
+  definition: gRPC Remote Procedure Calls
+  description: A high-performance remote procedure call framework commonly used for service-to-service communication. gRPC typically uses Protocol Buffers and HTTP/2.
+  related: [RPC, API, HTTP]
+
+- term: GUI
+  definition: Graphical User Interface
+  description: A visual interface made of windows, buttons, menus, icons, and other graphical controls. GUIs contrast with command-line interfaces.
+  related: [UI, CLI]
 
 - term: HTML
   definition: HyperText Markup Language
@@ -69,25 +149,125 @@
   description: The application-layer protocol the web is built on. Clients send request messages (with a method like GET or POST and a URL); servers respond with status codes and bodies.
   related: [REST, API, HTML]
 
+- term: HTTPS
+  definition: HyperText Transfer Protocol Secure
+  description: HTTP protected by TLS encryption. HTTPS is the default for public web pages and is essential when credentials, personal data, or private messages cross a network.
+  related: [HTTP, TLS]
+
+- term: I/O
+  definition: Input/Output
+  description: Communication between a program and the outside world, such as reading files, writing terminal output, sending network requests, or receiving user input.
+  related: [OS, CLI]
+
+- term: ID
+  definition: Identifier
+  description: A value used to distinguish one object, record, user, process, or resource from another.
+  related: [UID, PID]
+
+- term: IDE
+  definition: Integrated Development Environment
+  description: A programming environment that combines editing, running, debugging, navigation, and project tooling into one application.
+  related: [CLI, UI]
+
+- term: INVEST
+  definition: Independent, Negotiable, Valuable, Estimable, Small, Testable
+  description: A checklist for evaluating whether a user story is small enough, clear enough, and useful enough for an Agile team to discuss, estimate, implement, and test.
+  related: [XP]
+
+- term: IP
+  definition: Internet Protocol
+  description: The network-layer protocol responsible for addressing and routing packets between machines across interconnected networks.
+  related: [TCP, UDP, DNS]
+
+- term: IPv4
+  definition: Internet Protocol version 4
+  description: The older 32-bit version of IP, commonly written as four decimal octets such as 192.168.1.42.
+  related: [IP]
+
+- term: IPv6
+  definition: Internet Protocol version 6
+  description: The newer 128-bit version of IP, designed to provide vastly more address space than IPv4.
+  related: [IP]
+
+- term: ISP
+  definition: Interface Segregation Principle or Internet Service Provider
+  description: In design-principle content, ISP usually means Interface Segregation Principle, where clients should not depend on methods they do not use. In networking content, ISP can mean Internet Service Provider.
+  related: [SOLID, DNS]
+
+- term: JIT
+  definition: Just-In-Time
+  description: A compilation strategy that turns code into machine code while a program is running, often using runtime information to optimize hot paths.
+  related: [V8]
+
+- term: JS
+  definition: JavaScript
+  description: The programming language used by browsers and Node.js to add behavior to web pages, build applications, and run server-side JavaScript programs.
+  related: [HTML, DOM, JSX]
+
 - term: JSON
   definition: JavaScript Object Notation
   description: A lightweight, text-based data interchange format with a JavaScript-derived syntax. JSON is used widely for configuration files and HTTP payloads.
   related: [API, REST, YAML]
+
+- term: JSX
+  definition: JavaScript XML
+  description: A JavaScript syntax extension used by React to write HTML-like markup inside JavaScript. JSX is compiled into ordinary JavaScript calls.
+  related: [JS, HTML, DOM]
+
+- term: JVM
+  definition: Java Virtual Machine
+  description: The runtime that loads Java bytecode, manages memory, and executes Java programs across different operating systems.
+  related: [VM, GC]
 
 - term: JWT
   definition: JSON Web Token
   description: A compact, signed token format used for authentication and information exchange. A JWT is three Base64url-encoded segments — header, payload, and signature — separated by dots.
   related: [OAuth, JSON, API]
 
+- term: LLM
+  definition: Large Language Model
+  description: A machine-learning model trained on large text and code corpora to predict and generate language, answer questions, summarize, translate, and assist with programming tasks.
+  related: [AI]
+
+- term: LIFO
+  definition: Last In, First Out
+  description: An ordering policy where the most recently added item is processed first, as in a stack.
+  related: [FIFO]
+
+- term: LSP
+  definition: Liskov Substitution Principle
+  description: The SOLID principle that objects of a subtype should be usable anywhere the supertype is expected without breaking the program's promised behavior.
+  related: [SOLID, OOP]
+
 - term: MVC
   definition: Model-View-Controller
   description: A user-interface architecture that separates the data and business rules (the Model), the presentation (the View), and the input handling and orchestration (the Controller).
   related: [GoF, OOP]
 
+- term: NAT
+  definition: Network Address Translation
+  description: A networking technique that rewrites IP address or port information as packets pass through a router or firewall, often allowing many private devices to share one public address.
+  related: [IP]
+
+- term: NFC
+  definition: Near Field Communication
+  description: A short-range wireless communication technology often used for tap-to-pay, access badges, device pairing, and physical tags that trigger digital actions.
+  related: [QR, URL]
+
+- term: NoSQL
+  definition: Not Only SQL
+  description: A family of non-relational database systems, such as document, key-value, wide-column, and graph stores, often chosen for flexible schemas or horizontal scale.
+  related: [SQL, DBMS]
+
 - term: OAuth
   definition: Open Authorization
   description: An authorization framework that lets a user grant a third-party application limited access to their resources on another service, without sharing their password.
   related: [JWT, API]
+
+- term: OCP
+  definition: Open/Closed Principle
+  description: The SOLID principle that software entities should be open for extension but closed for modification, so new variants can be added without editing stable existing code.
+  related: [SOLID, OOP]
 
 - term: OOP
   definition: Object-Oriented Programming
@@ -99,35 +279,150 @@
   description: A technique that translates between objects in code and rows in a relational database. ORMs let developers manipulate persistent data using language-native types instead of writing SQL by hand.
   related: [SQL, ACID, CRUD]
 
+- term: OS
+  definition: Operating System
+  description: System software that manages hardware, files, memory, processes, networking, and device access for applications.
+  related: [CLI, I/O, VM]
+
+- term: PDF
+  definition: Portable Document Format
+  description: A file format for preserving document layout across devices, printers, and operating systems.
+  related: [ZIP]
+
+- term: PID
+  definition: Process Identifier
+  description: A numeric identifier assigned by an operating system to a running process.
+  related: [ID, OS]
+
+- term: POP
+  definition: Post Office Protocol
+  description: An application-layer protocol used by email clients to retrieve messages from a mail server.
+  related: [SMTP, TCP]
+
+- term: POSIX
+  definition: Portable Operating System Interface
+  description: A family of standards for Unix-like operating system interfaces, including shell behavior, filesystem conventions, and system APIs.
+  related: [OS, CLI]
+
 - term: PR
   definition: Pull Request
   description: A request to merge a branch of code into another branch — usually a long-lived integration branch like main or master. Pull requests are the unit of code review on GitHub, GitLab, and similar platforms.
   related: [CI, CD]
+
+- term: PVM
+  definition: Python Virtual Machine
+  description: The runtime model that executes Python bytecode after source code has been compiled by the Python interpreter.
+  related: [VM]
+
+- term: QR
+  definition: Quick Response
+  description: A two-dimensional barcode format that can encode text such as a URL, identifier, or short instruction for scanning by a camera.
+  related: [URL, NFC]
+
+- term: RAII
+  definition: Resource Acquisition Is Initialization
+  description: A resource-management idiom, common in C++, where acquiring a resource is tied to object lifetime and cleanup happens automatically when the object is destroyed.
+  related: [GC]
+
+- term: RAM
+  definition: Random Access Memory
+  description: Fast, temporary memory used by running programs to store data and instructions while the computer is powered on.
+  related: [CPU, OS]
+
+- term: RDBMS
+  definition: Relational Database Management System
+  description: A DBMS based on relational tables, schemas, keys, and SQL queries.
+  related: [DBMS, SQL]
+
+- term: RegEx
+  definition: Regular Expression
+  description: A pattern language for matching, validating, searching, or transforming text.
+  related: []
 
 - term: REST
   definition: Representational State Transfer
   description: An architectural style for distributed hypermedia systems. REST APIs expose resources at predictable URLs and use HTTP methods (GET, POST, PUT, DELETE) for the standard operations on them.
   related: [HTTP, API, CRUD]
 
+- term: RGB
+  definition: Red, Green, Blue
+  description: A color model that represents colors as combinations of red, green, and blue light, commonly used for screens and CSS colors.
+  related: [CSS]
+
+- term: RPC
+  definition: Remote Procedure Call
+  description: A communication style where code invokes a procedure on another process or machine as if it were a local function call.
+  related: [API, gRPC]
+
 - term: SDK
   definition: Software Development Kit
   description: A collection of tools, libraries, documentation, and sample code that helps developers build applications for a specific platform or against a specific service.
   related: [API]
 
+- term: SEO
+  definition: Search Engine Optimization
+  description: The practice of making web content easier for search engines to discover, understand, and rank.
+  related: [HTML]
+
+- term: SHA
+  definition: Secure Hash Algorithm
+  description: A family of cryptographic hash algorithms. Git commonly refers to object identifiers as SHAs because commit and object names are derived from secure hashes.
+  related: []
+
+- term: SMS
+  definition: Short Message Service
+  description: The text-message protocol used by mobile networks for short messages, often integrated into software through notification APIs.
+  related: [API]
+
+- term: SMTP
+  definition: Simple Mail Transfer Protocol
+  description: An application-layer protocol used to send and relay email between mail servers.
+  related: [TCP, POP]
+
 - term: SOLID
   definition: Single-responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion
   description: An acronym for five object-oriented design principles popularised by Robert C. Martin. The principles guide how to keep classes small, loosely coupled, and easy to change.
-  related: [OOP, GoF]
+  related: [SRP, OCP, LSP, ISP, DIP, OOP]
+
+- term: SoC
+  definition: Separation of Concerns
+  description: A design principle that separates a system into distinct parts, each responsible for a different concern, so changes and reasoning stay localized.
+  related: [SRP, OOP]
+
+- term: SPA
+  definition: Single Page Application
+  description: A web application that loads one HTML shell and updates the interface client-side as users navigate, instead of requesting a full new page for every view.
+  related: [HTML, DOM]
 
 - term: SQL
   definition: Structured Query Language
   description: The standard language for querying and modifying data in relational databases. SQL statements include SELECT (read), INSERT (create), UPDATE (modify), and DELETE (remove).
   related: [ACID, CRUD, ORM]
 
+- term: SRP
+  definition: Single Responsibility Principle
+  description: The SOLID principle that a class or module should have one reason to change, usually framed as serving one cohesive actor or concern.
+  related: [SOLID, SoC]
+
 - term: SSH
   definition: Secure Shell
   description: A cryptographic protocol for securely operating network services over an unsecured network. Most commonly used for remote command-line login and file transfer.
   related: [TLS]
+
+- term: SSL
+  definition: Secure Sockets Layer
+  description: The older cryptographic protocol family that preceded TLS. The term still appears colloquially in phrases such as SSL certificates, though modern HTTPS uses TLS.
+  related: [TLS, HTTPS]
+
+- term: SSR
+  definition: Server-Side Rendering
+  description: A web rendering approach where the server sends already-rendered HTML for a page, improving initial load and search indexing for many content-heavy sites.
+  related: [HTML, SPA]
+
+- term: SUT
+  definition: System Under Test
+  description: The component or system whose behavior a test is exercising. Test doubles often replace collaborators around the SUT.
+  related: [TDD]
 
 - term: TCP
   definition: Transmission Control Protocol
@@ -142,12 +437,22 @@
 - term: TLS
   definition: Transport Layer Security
   description: A cryptographic protocol that provides authenticated, encrypted communication between two parties over a network. HTTPS is HTTP carried over TLS.
-  related: [HTTP, SSH]
+  related: [HTTP, HTTPS, SSH]
+
+- term: TTL
+  definition: Time To Live
+  description: A limit on how long data should be considered valid or how far a network packet may travel. In DNS, TTL controls how long resolvers can cache an answer.
+  related: [DNS]
 
 - term: UDP
   definition: User Datagram Protocol
   description: A transport-layer protocol that provides connectionless, unreliable, message-oriented communication. Used where low latency matters more than guaranteed delivery — for example, real-time video, games, and DNS lookups.
-  related: [TCP]
+  related: [TCP, DNS]
+
+- term: UID
+  definition: Unique Identifier
+  description: An identifier intended to be unique within a particular system, table, dataset, or namespace.
+  related: [ID]
 
 - term: UI
   definition: User Interface
@@ -162,12 +467,27 @@
 - term: URL
   definition: Uniform Resource Locator
   description: The address of a resource on the web. A URL identifies the protocol (https), the host (example.com), an optional path (/page), and optional query parameters and fragment.
-  related: [HTTP, HTML]
+  related: [HTTP, HTTPS, HTML]
 
 - term: UX
   definition: User Experience
   description: The full experience a user has with a product — discovery, learning, regular use, recovery from errors. UI is one part of UX.
   related: [UI]
+
+- term: V8
+  definition: V8 JavaScript engine
+  description: Google's JavaScript engine used by Chrome and Node.js. It compiles and runs JavaScript, including just-in-time optimization.
+  related: [JS, JIT]
+
+- term: VM
+  definition: Virtual Machine
+  description: A software execution environment that abstracts an underlying machine or runtime, such as the JVM for Java bytecode or the Python virtual machine for Python bytecode.
+  related: [OS, JVM, PVM]
+
+- term: WIP
+  definition: Work In Progress
+  description: A label for unfinished work, often used for temporary commits, draft branches, or pull requests that are not ready for review.
+  related: [PR]
 
 - term: XML
   definition: Extensible Markup Language
@@ -188,3 +508,8 @@
   definition: YAML Ain't Markup Language
   description: A human-readable data serialisation format using indentation for structure. YAML is widely used for configuration files; this very file is YAML.
   related: [JSON, XML]
+
+- term: ZIP
+  definition: ZIP archive format
+  description: A compressed archive file format commonly used to bundle one or more files into a single downloadable file.
+  related: [PDF]

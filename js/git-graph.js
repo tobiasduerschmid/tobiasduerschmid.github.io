@@ -1850,6 +1850,8 @@
     var hashText = this._svgEl('text', {
       x: 0, y: hd.dy, 'text-anchor': 'middle',
       fill: hashTextFill, 'font-size': hd.fontSize, 'font-weight': 600,
+      stroke: nodeColor, 'stroke-width': 3, 'stroke-opacity': 0.85,
+      'stroke-linejoin': 'round', 'paint-order': 'stroke',
       'class': 'git-graph-hash',
       'data-layout-id': cm.hash,
     });
@@ -2314,7 +2316,9 @@
       var hd = _hashDisplay(cm.shortHash);
       var hashFill = _pickReadableOn(color);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
-        'fill="' + hashFill + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
+        'fill="' + hashFill + '" font-size="' + hd.fontSize + '" font-weight="700" ' +
+        'stroke="' + color + '" stroke-width="3" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
+        'class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
         this._escapeXml(hd.text) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 54;

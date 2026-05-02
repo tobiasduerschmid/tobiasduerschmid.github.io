@@ -366,10 +366,10 @@ These three patterns all "wrap" another object, but with different intents:
 
 The key discriminator: Adapter changes *what* the interface looks like. Facade changes *how much* of the interface you see. Decorator changes *what the object does* through the same interface.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_structural" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_structural" %}

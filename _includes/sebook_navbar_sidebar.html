@@ -254,6 +254,7 @@
     document.querySelectorAll('.sebook-nav-link').forEach(function (link) {
       if (link.getAttribute('href') === currentPath) {
         link.classList.add('current');
+        link.setAttribute('aria-current', 'page');
         currentTopicItem = link.closest('.sebook-nav-item');
         foundCurrent = true;
       }
@@ -263,6 +264,7 @@
       document.querySelectorAll('.sebook-nav-sublink').forEach(function (link) {
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('current');
+          link.setAttribute('aria-current', 'page');
           const subitem = link.closest('.sebook-nav-subitem');
           currentSubtopicItem = subitem;
           currentTopicItem = subitem.closest('.sebook-nav-item');
@@ -275,6 +277,7 @@
       document.querySelectorAll('.sebook-nav-itemlink').forEach(function (link) {
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('current');
+          link.setAttribute('aria-current', 'page');
           const itemLeaf = link.closest('.sebook-nav-item-leaf');
           const subitem = itemLeaf.closest('.sebook-nav-subitem');
           currentSubtopicItem = subitem;

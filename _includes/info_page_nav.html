@@ -1,0 +1,10 @@
+{% assign info_nav_title = include.title | default: page.title %}
+<nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top info-page-nav" id="navnav" aria-label="Main navigation">
+  <div class="container-fluid">
+    <div class="navbar-header page-scroll">
+      <a class="navbar-brand page-scroll" href="{{ page.url | relative_url }}">{{ info_nav_title }}</a>
+      <span class="navbar-brand info-page-nav-separator" aria-hidden="true">|</span>
+      <a class="navbar-brand page-scroll" href="{{ '/' | relative_url }}">{{ site.author }}</a>
+    </div>
+  </div>
+</nav>

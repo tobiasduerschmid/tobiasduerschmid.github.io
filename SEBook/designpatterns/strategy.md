@@ -541,10 +541,10 @@ Strategy is not free. Skip it when:
 
 As with all design patterns, keep [the Rule of Three](/SEBook/designpatterns.html#design-patterns-and-refactoring) in mind: don't introduce Strategy until you have at least three concrete variants or a clear plan for runtime swapping. The simplest code is usually the smartest design.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_strategy" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_strategy" %}

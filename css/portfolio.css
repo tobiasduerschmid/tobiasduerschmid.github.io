@@ -1173,6 +1173,7 @@ html.dark-mode legend {
 	height: 100%;
 	margin: 0;
 	cursor: pointer;
+	pointer-events: auto;
 }
 
 .switch input:focus-visible {
@@ -1199,6 +1200,7 @@ html.dark-mode .switch input:focus-visible+.slider {
 	bottom: 0;
 	background-color: #767676;
 	transition: .4s;
+	pointer-events: none;
 }
 
 .slider:before {

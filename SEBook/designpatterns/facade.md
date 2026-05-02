@@ -370,10 +370,10 @@ The Facade is often confused with Adapter and Mediator because all three involve
 
 A Facade simplifies; an Adapter translates; a Mediator coordinates. If the intermediary simply delegates without adding coordination logic, it is a Facade. If it translates between incompatible interfaces, it is an Adapter. If it manages bidirectional communication and control flow between peers, it is a Mediator.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_structural" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_structural" %}

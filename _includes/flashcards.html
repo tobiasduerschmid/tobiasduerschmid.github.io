@@ -5,6 +5,10 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% endcomment %}
 
 {% assign flashcard_data = site.data.flashcards[include.id] %}
+{% assign flashcard_heading_tag = 'h2' %}
+{% if include.heading_level == 3 or include.heading_level == '3' %}
+{% assign flashcard_heading_tag = 'h3' %}
+{% endif %}
 
 {% if flashcard_data %}
 {% if flashcard_data.decks %}
@@ -23,7 +27,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
   role="region" aria-label="{{ flashcard_data.title | escape }} flashcards">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h2>{{ flashcard_data.title }}</h2>
+      <{{ flashcard_heading_tag }}>{{ flashcard_data.title }}</{{ flashcard_heading_tag }}>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
         aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
@@ -90,6 +94,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     margin: 12px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     font-family: 'Inter', sans-serif;
+    position: relative;
   }
 
   .flashcard-card {
@@ -257,17 +262,15 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .quiz-title-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    padding-right: 46px;
   }
 
+  .quiz-title-row h2,
   .quiz-title-row h3 {
-    flex: 1;
     margin: 0;
   }
 
-  .se-gym-toggle {
+  .flashcards-container .se-gym-toggle {
     background: none;
     border: 2px solid #ccc;
     border-radius: 50%;
@@ -280,8 +283,10 @@ Data source: _data/flashcards/{{ include.id }}.yml
     color: #999;
     font-size: 14px;
     transition: all 0.2s;
-    flex-shrink: 0;
     padding: 0;
+    position: absolute;
+    top: 16px;
+    right: 16px;
   }
 
   .se-gym-toggle:hover {

@@ -48,11 +48,98 @@ test.describe('Shortcuts page', () => {
 });
 
 test.describe('Footer accessibility links', () => {
-  test('home page footer links to Glossary, Shortcuts, and Browser storage', async ({ page }) => {
+  test('home page footer links to Glossary, Shortcuts, My Settings, and Browser storage', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('footer a[href$="/glossary/"]').first()).toBeVisible();
     await expect(page.locator('footer a[href$="/shortcuts/"]').first()).toBeVisible();
+    await expect(page.locator('footer a[href$="/settings/"]').first()).toBeVisible();
     await expect(page.locator('footer a[href$="/cookies/"]').first()).toBeVisible();
+  });
+});
+
+test.describe('Settings page', () => {
+  test('renders user-facing settings and writes preferences locally', async ({ page }) => {
+    await page.goto('/settings/');
+    await expect(page.locator('h1')).toHaveText('My Settings');
+    await expect(page.getByLabel('Dark mode')).toBeVisible();
+    await expect(page.getByLabel('Reduced motion')).toBeVisible();
+    await expect(page.getByLabel('Underline glossary abbreviations')).toBeVisible();
+    await expect(page.getByLabel('Autosave tutorial work')).toBeVisible();
+    await expect(page.locator('text=Per-page tutorial state')).toBeVisible();
+
+    await page.getByLabel('Dark mode').check();
+    await expect(page.locator('html')).toHaveClass(/dark-mode/);
+    expect(await page.evaluate(() => document.cookie)).toContain('dark-mode=true');
+
+    await page.getByLabel('Reduced motion').selectOption('reduce');
+    expect(await page.evaluate(() => localStorage.getItem('prefersReducedMotion'))).toBe('1');
+    await expect(page.locator('html')).toHaveClass(/prm-reduce/);
+
+    await page.getByLabel('Underline glossary abbreviations').uncheck();
+    expect(await page.evaluate(() => localStorage.getItem('abbr-underlines'))).toBe('false');
+    await expect(page.locator('html')).toHaveClass(/abbr-underlines-disabled/);
+
+    await page.getByLabel('Autosave tutorial work').uncheck();
+    expect(await page.evaluate(() => localStorage.getItem('tutorial-autosave'))).toBe('false');
+  });
+});
+
+test.describe('Automatic glossary abbreviations', () => {
+  test('renders SEBook glossary terms and plural forms as abbr elements', async ({ page }) => {
+    await page.goto('/SEBook/userstories.html');
+    await expect(page.locator('main p abbr[title="Independent, Negotiable, Valuable, Estimable, Small, Testable"], main p abbr[data-original-title="Independent, Negotiable, Valuable, Estimable, Small, Testable"]').first()).toHaveText('INVEST');
+    await expect(page.locator('main abbr[title="Application Programming Interface"], main abbr[data-original-title="Application Programming Interface"]').filter({ hasText: 'APIs' }).first()).toHaveText('APIs');
+    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await expect(page.locator('main pre abbr')).toHaveCount(0);
+    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+
+    await page.goto('/SEBook/systems/');
+    await expect(page.locator('main p abbr[title="Consistency, Availability, Partition tolerance"], main p abbr[data-original-title="Consistency, Availability, Partition tolerance"]').first()).toHaveText('CAP');
+    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+
+    await page.goto('/SEBook/tools/networking.html');
+    await expect(page.locator('main abbr[title="Internet Protocol"], main abbr[data-original-title="Internet Protocol"]').filter({ hasText: 'IP' }).first()).toHaveText('IP');
+    await expect(page.locator('main abbr[title="Domain Name System"], main abbr[data-original-title="Domain Name System"]').filter({ hasText: 'DNS' }).first()).toHaveText('DNS');
+    await expect(page.locator('main abbr[title="Operating System"], main abbr[data-original-title="Operating System"]').filter({ hasText: 'OS' }).first()).toHaveText('OS');
+    await expect(page.locator('main abbr[title="HyperText Transfer Protocol Secure"], main abbr[data-original-title="HyperText Transfer Protocol Secure"]').filter({ hasText: 'HTTPS' }).first()).toHaveText('HTTPS');
+    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+  });
+
+  test('renders tutorial instructions with glossary abbreviations', async ({ page }) => {
+    await page.goto('/SEBook/tools/sql-tutorial');
+    const sql = page.locator('.tvm-step-instructions p abbr[title="Structured Query Language"], .tvm-step-instructions p abbr[data-original-title="Structured Query Language"]').first();
+    await expect(sql).toHaveText('SQL');
+    await expect(sql).toHaveAttribute('data-no-tooltip', 'true');
+    await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
+    await expect(page.locator('.tvm-step-instructions abbr[tabindex]')).toHaveCount(0);
+
+    await page.goto('/SEBook/tools/react-tutorial');
+    const jsx = page.locator('.tvm-step-instructions abbr[title="JavaScript XML"], .tvm-step-instructions abbr[data-original-title="JavaScript XML"]').filter({ hasText: 'JSX' }).first();
+    await expect(jsx).toHaveText('JSX');
+    await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
+    await expect(page.locator('.tvm-step-instructions abbr[tabindex]')).toHaveCount(0);
+  });
+
+  test('renders blog post glossary abbreviations', async ({ page }) => {
+    await page.goto('/blog/evidence-based-study-tips-for-college-students/');
+    await expect(page.locator('main p abbr[title="HyperText Markup Language"], main p abbr[data-original-title="HyperText Markup Language"]').first()).toHaveText('HTML');
+    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await expect(page.locator('main code abbr')).toHaveCount(0);
+    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+  });
+
+  test('honors abbreviation underline setting without rendering abbreviations in headings', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('abbr-underlines', 'false'));
+    await page.goto('/SEBook/tools/networking.html');
+
+    const ip = page.locator('main abbr[title="Internet Protocol"], main abbr[data-original-title="Internet Protocol"]').filter({ hasText: 'IP' }).first();
+    await expect(ip).toHaveText('IP');
+    await expect(page.locator('html')).toHaveClass(/abbr-underlines-disabled/);
+    expect(await ip.evaluate((el) => getComputedStyle(el).textDecorationLine)).not.toContain('underline');
+    expect(await ip.evaluate((el) => getComputedStyle(el).borderBottomStyle)).toBe('none');
+    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
   });
 });
 

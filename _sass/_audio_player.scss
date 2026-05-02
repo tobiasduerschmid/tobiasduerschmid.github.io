@@ -57,6 +57,12 @@
         cursor: pointer;
         transition: height 0.15s ease;
 
+        &:focus-visible {
+            outline: 3px solid #FFD100;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 2px #111827;
+        }
+
         &:hover {
             background: linear-gradient(
                 to bottom,
@@ -235,6 +241,12 @@
         outline: none;
         cursor: pointer;
 
+        &:focus-visible {
+            outline: 3px solid #FFD100;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 2px #111827;
+        }
+
         &::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -274,6 +286,12 @@
                 rgba(0, 0, 0, 0.34) 13px,
                 transparent 13px
             );
+        }
+
+        .cap__progress:focus-visible,
+        .cap__volume-slider:focus-visible {
+            outline-color: #005587;
+            box-shadow: 0 0 0 2px #fff;
         }
     }
 

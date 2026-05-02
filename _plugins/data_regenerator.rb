@@ -13,12 +13,17 @@ module Jekyll
   module DataRegenerator
     QUIZ_INCLUDE_RE       = /\{%\s*include\s+quiz\.html\s+id=["']([^"']+)["']/
     FLASHCARDS_INCLUDE_RE = /\{%\s*include\s+flashcards\.html\s+id=["']([^"']+)["']/
+    AUTO_ABBR_LAYOUTS      = %w[sebook sebook-combined tutorial print-tutorial blog-post]
 
     def self.collect_deps(doc, source)
       deps = []
 
       if (tut = doc.data["tutorial"])
         deps << File.join(source, "_data", "tutorials", "#{tut}.yml")
+      end
+
+      if AUTO_ABBR_LAYOUTS.include?(doc.data["layout"].to_s)
+        deps << File.join(source, "_data", "glossary.yml")
       end
 
       content = doc.respond_to?(:content) ? doc.content.to_s : ""

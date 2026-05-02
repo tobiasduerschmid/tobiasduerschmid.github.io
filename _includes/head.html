@@ -2,7 +2,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Early highlight initialization to prevent blinking -->
+  <!-- Early display-preference initialization to prevent blinking -->
   <script>
     (function () {
       var nameEQ = "show-highlights=";
@@ -26,6 +26,11 @@
       if (dark) {
         document.documentElement.classList.add('dark-mode');
       }
+      try {
+        if (localStorage.getItem('abbr-underlines') === 'false') {
+          document.documentElement.classList.add('abbr-underlines-disabled');
+        }
+      } catch (e) {}
     })();
   </script>
 

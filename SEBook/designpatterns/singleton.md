@@ -234,10 +234,10 @@ In all other cases, prefer DI with singleton scope. As Feathers puts it: *"If yo
 * When it is used to create global state—making it impossible to reason about what depends on what.
 * When it blocks unit testing by making dependencies invisible and unmockable.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_singleton" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_singleton" %}

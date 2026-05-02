@@ -2,6 +2,8 @@
 permalink: /cookies/
 title: "Your Browser Storage"
 layout: framework
+info_nav: true
+info_nav_title: "Browser storage"
 ---
 
 <style>
@@ -417,6 +419,12 @@ layout: framework
       <tr data-storage="localStorage" data-key="prefersReducedMotion">
         <td class="storage-key">prefersReducedMotion</td>
         <td>Persistent override of the OS &ldquo;reduce motion&rdquo; preference (set by visiting <code>?reduce-motion=1</code>).</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="abbr-underlines">
+        <td class="storage-key">abbr-underlines</td>
+        <td>Whether glossary abbreviations are visibly underlined (<code>false</code> hides the underline; unset uses the site default).</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>

@@ -317,15 +317,15 @@ The Gang of Four patterns are generic to object-oriented programming, but patter
 *   **Domain-Specific Patterns:** Certain industries (like Game Development, Android Apps, or Security) have their own highly tailored patterns. Because these patterns make assumptions about a specific domain, they generally carry fewer negative consequences within their niche, but they require the team to actually possess domain expertise.
 *   **Application-Specific Patterns:** Every distinct software project will eventually develop its own localized patterns—agreed-upon conventions and structures unique to that team. Identifying and documenting these implicit patterns is one of the most critical steps when a new developer joins an existing codebase, as it massively improves program comprehension.
 
-# Flashcards
+
+
+# Conclusion
+Design patterns are the foundational building blocks of robust software architecture. However, they are a substitute for neither domain expertise nor critical thought. The mark of an expert engineer is not knowing how to implement every pattern, but possessing the wisdom to evaluate trade-offs, carefully observe the context, and know exactly when the simplest code is actually the smartest design.
+
+# Quiz & Flashcards 
 
 {% include flashcards.html id="design_patterns" %}
 
 {% include flashcards.html id="design_patterns_gof" %}
 
-# Quiz
-
 {% include quiz.html id="design_patterns" %}
-
-# Conclusion
-Design patterns are the foundational building blocks of robust software architecture. However, they are a substitute for neither domain expertise nor critical thought. The mark of an expert engineer is not knowing how to implement every pattern, but possessing the wisdom to evaluate trade-offs, carefully observe the context, and know exactly when the simplest code is actually the smartest design.

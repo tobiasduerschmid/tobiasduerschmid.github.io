@@ -2,6 +2,7 @@
 permalink: /glossary/
 title: "Glossary"
 layout: framework
+info_nav: true
 ---
 
 <style>
@@ -209,58 +210,37 @@ layout: framework
   </nav>
 
   <ul class="glossary-list" id="glossary-list">
-    {% assign current_letter = "" %}
-    {% for entry in sorted_glossary %}
-      {% assign first_char = entry.term | slice: 0, 1 | upcase %}
-      {% if first_char != current_letter %}
-        {% assign current_letter = first_char %}
+    {% for letter in letters %}
+      {% assign letter_anchor_emitted = false %}
+      {% for entry in sorted_glossary %}
+        {% assign first_char = entry.term | slice: 0, 1 | upcase %}
+        {% if first_char != letter %}
+          {% continue %}
+        {% endif %}
+        <li
+          class="glossary-entry"
+          data-term="{{ entry.term | downcase }}"
+          data-definition="{{ entry.definition | downcase }}"
+          data-description="{{ entry.description | default: '' | downcase }}"
+        >
+          <h2 class="glossary-term"{% unless letter_anchor_emitted %} id="letter-{{ letter | downcase }}"{% endunless %}>
+            <a class="glossary-anchor" href="#term-{{ entry.term | downcase }}" id="term-{{ entry.term | downcase }}">{{ entry.term }}</a>
+          </h2>
+          <p class="glossary-definition">{{ entry.definition }}</p>
+          {% if entry.description %}
+            <p class="glossary-description">{{ entry.description }}</p>
+          {% endif %}
+          {% if entry.related %}
+            <p class="glossary-related">
+              <strong>Related:</strong>
+              {% for related_term in entry.related %}
+                <a href="#term-{{ related_term | downcase }}">{{ related_term }}</a>{% unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            </p>
+          {% endif %}
+        </li>
         {% assign letter_anchor_emitted = true %}
-        <li
-          class="glossary-entry"
-          data-term="{{ entry.term | downcase }}"
-          data-definition="{{ entry.definition | downcase }}"
-          data-description="{{ entry.description | default: '' | downcase }}"
-        >
-          <h2 class="glossary-term" id="letter-{{ first_char | downcase }}">
-            <a class="glossary-anchor" href="#term-{{ entry.term | downcase }}" id="term-{{ entry.term | downcase }}">{{ entry.term }}</a>
-          </h2>
-          <p class="glossary-definition">{{ entry.definition }}</p>
-          {% if entry.description %}
-            <p class="glossary-description">{{ entry.description }}</p>
-          {% endif %}
-          {% if entry.related %}
-            <p class="glossary-related">
-              <strong>Related:</strong>
-              {% for related_term in entry.related %}
-                <a href="#term-{{ related_term | downcase }}">{{ related_term }}</a>{% unless forloop.last %}, {% endunless %}
-              {% endfor %}
-            </p>
-          {% endif %}
-        </li>
-      {% else %}
-        <li
-          class="glossary-entry"
-          data-term="{{ entry.term | downcase }}"
-          data-definition="{{ entry.definition | downcase }}"
-          data-description="{{ entry.description | default: '' | downcase }}"
-        >
-          <h2 class="glossary-term">
-            <a class="glossary-anchor" href="#term-{{ entry.term | downcase }}" id="term-{{ entry.term | downcase }}">{{ entry.term }}</a>
-          </h2>
-          <p class="glossary-definition">{{ entry.definition }}</p>
-          {% if entry.description %}
-            <p class="glossary-description">{{ entry.description }}</p>
-          {% endif %}
-          {% if entry.related %}
-            <p class="glossary-related">
-              <strong>Related:</strong>
-              {% for related_term in entry.related %}
-                <a href="#term-{{ related_term | downcase }}">{{ related_term }}</a>{% unless forloop.last %}, {% endunless %}
-              {% endfor %}
-            </p>
-          {% endif %}
-        </li>
-      {% endif %}
+      {% endfor %}
     {% endfor %}
   </ul>
 

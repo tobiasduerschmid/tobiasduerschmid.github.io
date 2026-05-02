@@ -110,7 +110,7 @@
 
     html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '">';
     html += '<div class="quiz-header">';
-    if (quiz.title) html += '<div class="quiz-title-row"><h3>' + escapeHtml(quiz.title) + '</h3></div>';
+    if (quiz.title) html += '<div class="quiz-title-row"><h2>' + escapeHtml(quiz.title) + '</h2></div>';
     html += '<div class="quiz-progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>';
     html += '<div class="quiz-questions">';
     questions.forEach(function (q, qi) {

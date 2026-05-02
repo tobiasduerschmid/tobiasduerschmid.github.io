@@ -806,7 +806,7 @@
         '</div></div>' +
         '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
-        '<iframe class="tvm-preview-frame" title="Live preview" sandbox="allow-scripts allow-same-origin"></iframe>' +
+        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
     } else if (this._umlPositionRight && this._umlDiagramEnabled && !this._outputPositionBottomLeft) {
       // Right-positioned UML, default Output placement: output + UML share a
@@ -1490,6 +1490,15 @@
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
     } else if (this.config.usePreview) {
       this._previewFrame = this.root.querySelector('.tvm-preview-frame');
+      if (this._previewFrame && !this._previewFrame.getAttribute('title')) {
+        this._previewFrame.setAttribute('title', 'Live preview');
+      }
+      if (this._previewFrame && !this._previewFrame.getAttribute('aria-label')) {
+        this._previewFrame.setAttribute('aria-label', 'Live preview');
+      }
+      if (this._previewFrame) {
+        this._previewFrame.setAttribute('data-no-tooltip', 'true');
+      }
       this._previewTestBtn = this.root.querySelector('.tvm-preview-test-btn');
       var refreshBtn = this.root.querySelector('.tvm-refresh-btn');
       if (refreshBtn) refreshBtn.addEventListener('click', function () { self._rebuildReactPreview(); });
@@ -5815,8 +5824,7 @@
       steps: this.steps.map(function (step) {
         return {
           title: step.title || '',
-          instructionsHTML: step.instructionsHTML
-            || self._renderMarkdown(step.instructions || ''),
+          instructionsHTML: self._stepInstructionsHTML(step),
         };
       }),
     };
@@ -5837,8 +5845,7 @@
       stepIndex: this.currentStep,
       stepData: {
         title: step.title || '',
-        instructionsHTML: step.instructionsHTML
-          || this._renderMarkdown(step.instructions || ''),
+        instructionsHTML: this._stepInstructionsHTML(step),
       },
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(step),
@@ -6745,9 +6752,12 @@
       var svgNS = 'http://www.w3.org/2000/svg';
       var host = document.createElementNS(svgNS, 'svg');
       host.setAttribute('style', 'font-family: ' + (ff || '') + ';');
+      host.setAttribute('aria-hidden', 'true');
+      host.setAttribute('focusable', 'false');
       host.style.position = 'absolute';
       host.style.left = '-9999px';
       host.style.top = '-9999px';
+      host.style.opacity = '0';
       var textNode = document.createElementNS(svgNS, 'text');
       host.appendChild(textNode);
       document.body.appendChild(host);
@@ -8347,8 +8357,9 @@
 
     var html = '<h2>' + this._escapeHtml(step.title) + '</h2>';
     html += '<div class="tvm-step-instructions">' +
-      (step.instructionsHTML || this._renderMarkdown(step.instructions || '')) + '</div>';
+      this._stepInstructionsHTML(step) + '</div>';
     this.stepContentEl.innerHTML = html;
+    this._initTooltips(this.stepContentEl);
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
     // Render any inline UML diagrams embedded in the instructions markdown
@@ -8737,6 +8748,7 @@
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
     });
+    html = this._autoAbbrHtml(html);
     this._lastQuizHTML = { stepIndex: stepIndex, html: html, minScore: quiz.min_score, isFinalQuiz: isFinalQuiz };
 
     if (this.quizPanelEl) {
@@ -8750,6 +8762,7 @@
         isFinalQuiz: isFinalQuiz,
         onPass: function (idx) { self._completeQuiz(idx); },
       });
+      this._initTooltips(this.quizPanelEl);
     }
     this.stepControlsEl.innerHTML =
       '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" aria-label="Back to step (leave quiz)">\u2190 Back to Step</button>' +
@@ -8798,16 +8811,21 @@
     return window.SebookQuiz.shuffle(arr);
   };
   TutorialCode.prototype._buildQuizHTML = function (stepIndex, quiz) {
-    return window.SebookQuiz.buildHTML({
+    return this._autoAbbrHtml(window.SebookQuiz.buildHTML({
       stepIndex: stepIndex, quiz: quiz,
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
-    });
+    }));
   };
 
   // ---------------------------------------------------------------------------
   // Markdown + HTML utilities
   // ---------------------------------------------------------------------------
+  TutorialCode.prototype._stepInstructionsHTML = function (step) {
+    if (!step) return '';
+    return this._autoAbbrHtml(step.instructionsHTML || this._renderMarkdown(step.instructions || ''));
+  };
+
   TutorialCode.prototype._renderMarkdown = function (text) {
     if (!text) return '';
     return window.marked ? window.marked.parse(text)
@@ -8821,6 +8839,113 @@
     if (window.SebookMermaid && window.SebookMermaid.render) {
       window.SebookMermaid.render(rootEl);
     }
+  };
+
+  TutorialCode.prototype._autoAbbrHtml = function (html) {
+    if (!html) return '';
+    var glossary = window.SEBookGlossaryAbbr || [];
+    if (!glossary.length) return html;
+
+    if (!this._autoAbbrMatcher) this._autoAbbrMatcher = this._buildAutoAbbrMatcher(glossary);
+    var matcher = this._autoAbbrMatcher;
+    if (!matcher || !matcher.regex) return html;
+
+    var skipTags = {
+      a: true, abbr: true, button: true, code: true, kbd: true, option: true,
+      pre: true, samp: true, script: true, select: true, style: true,
+      svg: true, textarea: true,
+      h1: true, h2: true, h3: true, h4: true, h5: true, h6: true,
+    };
+    var voidTags = {
+      area: true, base: true, br: true, col: true, embed: true, hr: true,
+      img: true, input: true, link: true, meta: true, param: true,
+      source: true, track: true, wbr: true,
+    };
+    var skipStack = [];
+
+    function openingName(tag) {
+      if (/^<\s*(?:\/|!|\?)/.test(tag)) return null;
+      var match = tag.match(/^<\s*([A-Za-z][\w:-]*)/);
+      return match ? match[1].toLowerCase() : null;
+    }
+    function closingName(tag) {
+      var match = tag.match(/^<\s*\/\s*([A-Za-z][\w:-]*)/);
+      return match ? match[1].toLowerCase() : null;
+    }
+    function isVoid(name, tag) {
+      return !!voidTags[name] || /\/\s*>$/.test(tag);
+    }
+    function startsSkip(name, tag) {
+      return !!skipTags[name] ||
+        /\bid\s*=\s*(['"])references\1/i.test(tag) ||
+        /\bclass\s*=\s*(['"])[^'"]*\bbibliography\b/i.test(tag);
+    }
+    function escapeAttr(value) {
+      var div = document.createElement('div');
+      div.textContent = value == null ? '' : String(value);
+      return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function replaceText(text) {
+      return text.replace(matcher.regex, function (_, prefix, word) {
+        var entry = matcher.forms[word];
+        if (!entry) return prefix + word;
+        return prefix + '<abbr title="' +
+          escapeAttr(entry.definition) + '" data-no-tooltip="true">' + word + '</abbr>';
+      });
+    }
+
+    return String(html).split(/(<[^>]+>)/g).map(function (token) {
+      if (token.charAt(0) !== '<') {
+        return skipStack.length ? token : replaceText(token);
+      }
+
+      var closing = closingName(token);
+      if (closing) {
+        if (skipStack[skipStack.length - 1] === closing) skipStack.pop();
+        return token;
+      }
+
+      var name = openingName(token);
+      if (!name || isVoid(name, token)) return token;
+      if (skipStack.length) skipStack.push(name);
+      else if (startsSkip(name, token)) skipStack.push(name);
+      return token;
+    }).join('');
+  };
+
+  TutorialCode.prototype._buildAutoAbbrMatcher = function (glossary) {
+    var forms = {};
+    function escapeRegex(value) {
+      return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    glossary.forEach(function (entry) {
+      if (!entry || !entry.term || !entry.definition) return;
+      var term = String(entry.term);
+      forms[term] = entry;
+      if (!/[sS]$/.test(term)) forms[term + 's'] = entry;
+    });
+
+    var alternatives = Object.keys(forms).sort(function (a, b) {
+      return b.length - a.length || a.localeCompare(b);
+    }).map(escapeRegex);
+
+    if (!alternatives.length) return null;
+    return {
+      forms: forms,
+      regex: new RegExp('(^|[^A-Za-z0-9_])(' + alternatives.join('|') + ')(?=$|[^A-Za-z0-9_])', 'g'),
+    };
+  };
+
+  TutorialCode.prototype._initTooltips = function (rootEl) {
+    if (!rootEl || !window.jQuery || !jQuery.fn || !jQuery.fn.tooltip) return;
+    jQuery(rootEl)
+      .find('[data-toggle="tooltip"], [title]:not([data-no-tooltip])')
+      .tooltip({
+        trigger: 'hover focus',
+        delay: { show: 100, hide: 250 },
+        container: 'body',
+      });
   };
 
   TutorialCode.prototype._escapeHtml = function (str) {

@@ -390,10 +390,10 @@ A common source of confusion is when to use Factory Method vs. the other creatio
 
 An important insight: **factory methods often lurk inside Abstract Factories**. Each creation method in an Abstract Factory (e.g., `createDough()`, `createSauce()`) is itself a factory method. The Abstract Factory defines the interface; the concrete factory subclasses implement each method—which is exactly the Factory Method pattern applied to multiple products.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_factory" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_factory" %}

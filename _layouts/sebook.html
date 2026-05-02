@@ -56,12 +56,11 @@
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
-              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
-              split: '</h1>' | first | replace: '</h1' , '' %} {% if heading_text !="" %} {% assign
-              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
-              replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
-              replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {%
-              assign heading_text_short=heading_text | split: ':' | first %} <li><a class="page-scroll"
+              %} {% assign heading_and_content = section | split: '>' %} {% assign heading_attrs = heading_and_content[0]
+              %} {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1' , '' %} {%
+              if heading_text != "" and heading_attrs contains 'id="' %} {% assign heading_id = heading_attrs | split:
+              'id="' | last | split: '"' | first %} {% assign heading_text_short = heading_text | split: ':' | first %}
+              <li><a class="page-scroll"
                 href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
               {% endif %}
@@ -125,7 +124,14 @@
           .inline-language-tabs button:hover,
           .inline-language-tabs button:focus {
             border-color: #2774AE;
+            outline: 3px solid #2774AE;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px #fff;
+          }
+
+          .inline-language-tabs button:focus:not(:focus-visible) {
             outline: none;
+            box-shadow: none;
           }
 
           .inline-language-tabs button[aria-selected="true"] {
@@ -145,6 +151,14 @@
           .inline-language-panel pre {
             margin-top: 12px;
             max-height: 680px;
+            scroll-margin-top: 96px;
+          }
+
+          .inline-language-panel pre:focus,
+          #main-content pre[tabindex]:focus {
+            outline: 3px solid #2774AE;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 2px #fff;
           }
 
           html.dark-mode .inline-language-switcher {
@@ -159,6 +173,19 @@
 
           html.dark-mode .inline-language-tabs button {
             color: #f9fafb;
+          }
+
+          html.dark-mode .inline-language-tabs button:hover,
+          html.dark-mode .inline-language-tabs button:focus {
+            outline-color: #FFD100;
+            border-color: #FFD100;
+            box-shadow: 0 0 0 2px #111827;
+          }
+
+          html.dark-mode .inline-language-panel pre:focus,
+          html.dark-mode #main-content pre[tabindex]:focus {
+            outline-color: #FFD100;
+            box-shadow: 0 0 0 2px #111827;
           }
 
           @media screen and (max-width: 640px) {
@@ -368,12 +395,14 @@
           <div class="row">
             {% assign section_heading_count = 0 %}
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
-              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
-              split: '</h1>' | first | replace: '</h1' , '' %} {% assign section_content=section | split: '</h1>' | last
-              %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
-              replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
-              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
-              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %}
+              %} {% assign heading_and_content = section | split: '>' %} {% assign heading_attrs = heading_and_content[0]
+              %} {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1' , '' %}
+              {% assign section_content = section | split: '</h1>' | last %} {% if heading_text != "" %} {% if
+              heading_attrs contains 'id="' %} {% assign section_id = heading_attrs | split: 'id="' | last | split: '"'
+              | first %} {% else %} {% assign section_id = heading_text | downcase | replace: ' ' , '-' | replace:
+              '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' |
+              replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
+              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %} {% endif %}
               {% assign section_heading_count = section_heading_count | plus: 1 %}
               <section id="{{ section_id }}">
               {% if section_heading_count == 1 %}<h1>{{ heading_text }}</h1>{% else %}<h2>{{ heading_text }}</h2>{% endif %}{{ section_content }}

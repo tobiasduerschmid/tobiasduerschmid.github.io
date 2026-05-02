@@ -26,7 +26,7 @@ mistyped terms don't render as <abbr title="">.
   {%- endif -%}
 {%- endfor -%}
 {%- if _abbr_entry -%}
-<abbr tabindex="0" data-toggle="tooltip" title="{{ _abbr_entry.definition | escape }}">{{ _abbr_text }}</abbr>
+<abbr title="{{ _abbr_entry.definition | escape }}" data-no-tooltip="true">{{ _abbr_text }}</abbr>
 {%- else -%}
 {{ _abbr_text }}
 {%- endif -%}

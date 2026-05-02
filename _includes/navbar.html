@@ -18,10 +18,10 @@
         <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
         {% if site.data.sebook.show %}
 
-        <li><a href="/SEBook"> | SE Book | </a></li>
+        <li><a href="/SEBook"{% if page.url contains '/SEBook' %} aria-current="page"{% endif %}> | SE Book | </a></li>
         {% endif %}
         {% if site.data.blog.show %}
-        <li><a href="/blog">| Blog | </a></li>
+        <li><a href="/blog"{% if page.url contains '/blog' %} aria-current="page"{% endif %}>| Blog | </a></li>
         {% endif %}
 
         {% if site.data.news.show %}

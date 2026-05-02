@@ -413,10 +413,10 @@ The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nea
 
 A useful heuristic: if the concrete implementations *transition between each other* based on internal logic, it is State. If the client *selects* the concrete implementation at configuration time, it is Strategy.
 
-# Flashcards
+## Flashcards
 
 {% include flashcards.html id="design_pattern_state" %}
 
-# Quiz
+## Quiz
 
 {% include quiz.html id="design_pattern_state" %}

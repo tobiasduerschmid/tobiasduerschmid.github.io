@@ -81,9 +81,9 @@ function allTargetUrls() {
   const tutorialSet = new Set(sourceTutorialUrls());
   // Info pages bundle the accessibility-relevant reference pages a user
   // can land on directly: the storage inventory at /cookies/, the keyboard
-  // shortcut reference at /shortcuts/, and the abbreviation glossary at
-  // /glossary/. Each of these is reachable from the footer.
-  const INFO_PAGE_URLS = new Set(['/cookies/', '/shortcuts/', '/glossary/']);
+  // shortcut reference at /shortcuts/, the abbreviation glossary at /glossary/,
+  // and the user preferences page at /settings/. Each is reachable from the footer.
+  const INFO_PAGE_URLS = new Set(['/cookies/', '/shortcuts/', '/glossary/', '/settings/']);
   const groups = {
     home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
     errorPages: urls.filter((url) => url === '/404.html'),
@@ -429,7 +429,7 @@ async function runFocusAudit(page) {
 
       const computed = getComputedStyle(active);
       const focusables = document.querySelectorAll(
-        'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])',
       );
       // Monaco editor and xterm terminal are "application" widgets that
       // render their own focus visualization (blinking cursor, selection
@@ -534,13 +534,14 @@ async function runFocusAudit(page) {
       // can be any of the first/last few elements depending on visibility,
       // skip-link state, or scroll position.
       const focusables = document.querySelectorAll(
-        'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])',
       );
       const idx = Array.prototype.indexOf.call(focusables, active);
       const atDocumentStart = idx >= 0 && idx < 5;
       const atDocumentEnd = idx >= 0 && idx > focusables.length - 6;
       const isApplicationWidget = !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen');
       return {
+        idx,
         tag: active.localName,
         id: active.id,
         klass: active.className && typeof active.className === 'string'
@@ -885,6 +886,12 @@ function runDomAudit() {
     if (!iframe.getAttribute('title')) findings.push({ criterion: '4.1.2', severity: 'fail', message: `Iframe is missing title: ${shortNode(iframe)}` });
   });
 
+  const vagueLinkText = new Set([
+    'here', 'click here', 'click', 'read more', 'more', 'see more',
+    'see this', 'see here', 'this', 'this link', 'learn more', 'details',
+    'link', 'go', 'continue',
+  ]);
+
   document.querySelectorAll(interactiveSelector).forEach((el) => {
     if (!isVisible(el)) return;
     const name = accessibleName(el);
@@ -900,6 +907,16 @@ function runDomAudit() {
     const labelText = visibleText(el);
     if (hasAuthorName(el) && name && isWordsLabel(labelText) && !name.toLowerCase().includes(labelText.trim().toLowerCase())) {
       findings.push({ criterion: '2.5.3', severity: 'review', message: `Accessible name may not include visible label "${visibleText(el).trim()}": ${shortNode(el)}` });
+    }
+    if (el.matches('a[href]') && name) {
+      const normalized = name.toLowerCase().replace(/[\s.,!?…]+$/g, '').trim();
+      if (vagueLinkText.has(normalized)) {
+        findings.push({
+          criterion: '2.4.4',
+          severity: 'fail',
+          message: `Link text "${name}" does not describe the link's purpose. Replace with text that identifies the destination: ${shortNode(el)}`,
+        });
+      }
     }
   });
 
@@ -1181,6 +1198,7 @@ function runDomAudit() {
     document.querySelectorAll(selector).forEach((el) => {
       if (!isVisible(el)) return;
       if (isDisabled(el)) return;
+      if (el.localName === 'abbr' && !el.matches('a, button, [role], [onclick], [onkeydown]')) return;
       if (el.closest('.monaco-editor, mjx-container')) return;
       const rect = el.getBoundingClientRect();
       const style = getComputedStyle(el);
