@@ -387,19 +387,11 @@ steps:
 
       Drag the **History** scrubber backward by 5-10 ticks. Watch `total` rewind in the Variables tab. Drag forward — it advances. The debugger switches from live execution to a rewound history state; sighted users also see the gutter marker change appearance.
 
-      This is the time-travel feature. You can move to any moment in the program's history without restarting.
-
-      ### 7. *"Are these two variables actually the same object?"* → Aliasing badge
-
-      `register_score` has a `students=[]` default argument. **Predict:** does `register_score` create a fresh student list on each call, or reuse the same list every time? After `main()` finishes, what do you expect the default `students` argument to contain — and how many entries?
-
-      Now run to completion (Continue twice). In the Variables tab, expand `defaults` and the inner `students` list inside `register_score`. They share an `oid` and a `↔` alias badge — they're the same list. Compare to your prediction.
-
-      If your prediction was wrong, complete this sentence before moving on: *"I assumed the list was ___, but the debugger shows ___ because ___."* That sentence is a hypothesis about your own mental model of how Python default arguments work.
+      This is the time-travel feature. You can move to any moment in the program's history without restarting. You'll drill it deliberately in the **Backward Tour** before Case 3.
 
       ### 🪞 Reflect
 
-      Close the editor. From memory, list the seven moves. For each, name the **debugging question** it answers. If you can't, that move isn't yet yours — flag it for revisit.
+      Close the editor. From memory, list the six moves. For each, name the **debugging question** it answers. If you can't, that move isn't yet yours — flag it for revisit.
 
       Carry this forward: for any new debugger feature you encounter, name the question it answers. If you can't, you don't need it yet.
 
@@ -418,10 +410,6 @@ steps:
                   total += score
               return total / len(scores)
 
-          def register_score(name, value, students=[]):
-              students.append({"name": name, "score": value})
-              return students
-
           def main():
               raw = [
                   ("Ada", [95, 88, 92]),
@@ -431,10 +419,8 @@ steps:
                   ("Margaret", [85, 89, 87]),
               ]
               scores = []
-              defaults = []
               for name, raw_scores in raw:
                   score = compute_score(raw_scores)
-                  defaults = register_score(name, score)
                   scores.append(score)
               average = process_scores(scores)
               print(f"average score: {average:.2f}")
@@ -448,7 +434,7 @@ steps:
 
     solution:
       explanation: |
-        There's no fix to apply — this step is procedural drill. The aliasing trap on line 14 (`students=[]` default argument shared across calls) is a real Python gotcha worth remembering: default arguments are evaluated **once** at function-definition time, not on each call. The standard fix in production code is `students=None` plus `if students is None: students = []`. We don't fix it here; we just notice that the debugger's `↔` badge would tell us about it.
+        There's no fix to apply — this step is procedural drill. The six moves above answer the most common forward-debugging questions. The history scrubber gets its own dedicated drill in the **Backward Tour** before Case 3, where backward localization actually pays off.
 
     quiz:
       title: "Tour — Quick Retrieval"
@@ -486,23 +472,7 @@ steps:
             2: "This works but requires re-executing the entire program from scratch. If the program takes 30 seconds — or an hour — to run, you pay that cost every time you want to inspect a different moment. The scrubber rewinds through the recorded trace instantly, no rerun needed."
             3: "Hover is the same as Watch — it shows the value at the current pause, not the past."
           explanation: |
-            **Time-travel.** The scrubber lets you slide back through any moment in the run without re-executing.
-
-        - question: |
-            "I just changed `x` and `y` looks different too — are they secretly the same object?" Which tool answers it?
-          type: single
-          options:
-            - "Hover both variables and compare values"
-            - "Check the `oid` and `↔` badge in the Variables tab"
-            - "Set a conditional breakpoint"
-            - "Drag the History scrubber"
-          correct_index: 1
-          option_feedback:
-            0: "Identical values can come from different objects (e.g., two equal lists). Identity is a stronger property than value equality."
-            2: "A conditional breakpoint pauses on a predicate; it doesn't surface object identity."
-            3: "The scrubber shows past values; aliasing is about *current* identity."
-          explanation: |
-            **Object identity ≠ equality.** The `↔` alias badge and matching `oid` mean two names point at the *same* object — modifying one will appear to modify the other.
+            **Time-travel.** The scrubber lets you slide back through any moment in the run without re-executing. (You'll drill backward localization specifically in the Backward Tour before Case 3.)
 
         - question: |
             The tour file's line-14 `def enroll(student, students=[])` lights up the `↔` aliasing badge across calls. Why?
@@ -533,6 +503,8 @@ steps:
   - title: "Case 1 — Maze Pathfinder (Boundary Bug)"
     instructions: |
       > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
+
+      > 📋 **Open `debugging_log.md` and fill each field as you work.** The first time, the log carries you stage by stage. Cases 2 and 3 fade this scaffolding — by Case 3 you'll name three of the stages yourself. Committing each stage to writing is the difference between *thinking* the cycle and *doing* the cycle.
 
       ### 📂 What you have
 
@@ -736,6 +708,21 @@ steps:
               path = find_path(BATTERY_LIMIT_MAZE, max_steps=10)
               assert path is not None, "A 10-step path exists and should be accepted."
               assert len(path) - 1 == 10
+
+      - path: "debugging_log.md"
+        language: "markdown"
+        content: |
+          # Debugging log — Case 1 (Maze Pathfinder)
+
+          The 7 stages match the cycle from Step 1. Fill each field as you work.
+
+          1. **Symptom** — one sentence, expected vs actual: _..._
+          2. **Predict** — at the moment a recursive call has just stepped onto the goal cell on an exact-budget run, what should `steps_used` and `max_steps` be? Which of the two early checks should fire? _..._
+          3. **Evidence** — which tool you used, what cue you were watching, what value you actually observed when paused on the goal cell: _..._
+          4. **Hypothesis** — one sentence; name the *check* and the *timing* (format: *"\<which check\> \<does what\> \<when\>."*): _..._
+          5. **Localize** — which line is the first divergence between intended and actual behavior, and one sentence on why each of the other candidates is *not* it: _..._
+          6. **Fix** — file, line, the minimal change: _..._
+          7. **Verify** — `pytest` exit code, which tests pass; any regressions in the under-budget rejection case? _..._
 
     open_file: "pathfinder.py"
     run_file: "test_pathfinder.py"
@@ -944,6 +931,8 @@ steps:
   - title: "Case 2 — Ledger Reconciliation (Data Representation Bug)"
     instructions: |
       > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
+
+      > 📋 **Keep filling `debugging_log.md`.** Fields are now name-only — refer to Case 1's log if you need the per-stage prompts. Writing forces commitment; commitment is what makes the cycle yours.
 
       > 🔀 **Before you start:** Case 1 had a bug you could trace by reading two `if` checks in one function. Is that true here? Spend 30 seconds predicting: what *kind* of thing is wrong, and what will the evidence-collection move look like?
       >
@@ -1174,6 +1163,21 @@ steps:
               assert kinds <= {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}, \
                   f"unexpected transaction kind(s) loaded: {kinds}"
 
+      - path: "debugging_log.md"
+        language: "markdown"
+        content: |
+          # Debugging log — Case 2 (Ledger Reconciliation)
+
+          Same 7-stage form, names only. If you're stuck on what a stage demands, reread Case 1's log.
+
+          1. **Symptom**: _..._
+          2. **Predict**: _..._
+          3. **Evidence**: _..._
+          4. **Hypothesis**: _..._
+          5. **Localize**: _..._
+          6. **Fix**: _..._
+          7. **Verify**: _..._
+
     open_file: "ledger.py"
     run_file: "test_ledger.py"
 
@@ -1401,12 +1405,170 @@ steps:
 
 
   # ===========================================================================
-  # STEP 5 — Case 3: Course Waitlist (Temporal Bug, back-in-time)
+  # STEP 5 — Backward Tour (history scrubber on a correct trace, no bug)
+  # Pedagogy:
+  #   Tool fluency on correct code BEFORE deploying on a bug — same pattern
+  #     as the forward Debugger Tour (Step 2).
+  #   Component-skill isolation — practice the backward-localization motor
+  #     pattern (anchor → rewind → first divergence) before Case 3 demands it.
+  #   Bloom's level — Remember / Apply.
+  # ===========================================================================
+  - title: "Backward Tour — Time-Travel Drill"
+    instructions: |
+      > 🎯 **Goal:** Drill the *backward* moves. Stepping forward through code is the default; rewinding from a final state to find when something *first* changed is a different motor pattern. There's no bug — `counter.py` runs correctly.
+
+      Click **Debug** to start.
+
+      ### 1. *"What was the final state?"* → Run to completion, then anchor
+
+      Click **Debug** *without setting any breakpoints*. The program runs to completion. The debugger pauses at the last line.
+
+      In the **Variables** tab, expand `state`. Note `count` and the length of `history`. **This is your anchor** — every move below is relative to this final state. Anchoring on a known wrong final state is exactly what Case 3 will ask of you.
+
+      ### 2. *"Rewind one event"* → Scrub backward by one tick
+
+      Drag the **History** scrubber backward by one tick. Watch `count` change in the Variables tab. The arrow gutter turns gray when you're rewound — *you're not at "live" execution anymore*.
+
+      Verify: `count` should now equal what it was *just before* the last event. Cross-check against `history[-2]`.
+
+      ### 3. *"What was `count` after exactly N events?"* → Scrub to a specific moment
+
+      Scrub backward until `len(state["history"])` shows `3`. Read `state["count"]`. That's the value after exactly 3 events were applied.
+
+      **Predict** before scrubbing further: what was `count` after exactly 5 events? Now scrub to `len == 5` and verify against your prediction.
+
+      ### 4. *"When did `count` first go negative?"* → Anchor + walk backward to first divergence
+
+      Look at `history` — each entry is `(event, count_after)`. Scan for the first negative second element. That moment is where `count` first turned negative.
+
+      Now use the scrubber to *visit* that moment: drag backward until `state["count"]` first shows a negative value. **This is the localization move you'll use in Case 3** — anchoring on a known state, rewinding to the *first* moment that state appeared.
+
+      ### 5. *"What was `count` immediately before the reset event?"* → Predicate-driven scrub
+
+      The simulator includes a `reset` event that zeros `count`. Find the entry `("reset", 0)` in `history`. Scrub to one tick *before* that reset fired. What was `count`?
+
+      ### 6. *"Forward again to live"* → Scrub all the way forward
+
+      Drag the scrubber all the way to the right. The arrow gutter returns to its normal color — you're back at "live" execution. Edits will run from this point if you make any.
+
+      ### 🪞 Reflect
+
+      From memory, name the four scrubber moves:
+
+      1. Run to end, inspect the **anchor** state
+      2. Scrub backward one tick (per-event rewind)
+      3. Scrub to a specific tick (jump by a marker like `len(history) == N`)
+      4. Scrub backward until a predicate first holds — *this is the move for Case 3*
+
+      The shape is always: **anchor on a known state, walk backward to find when it first appeared.**
+
+    files:
+      - path: "counter.py"
+        language: "python"
+        content: |
+          # Backward Tour — no bug. Exercise the history scrubber.
+          #
+          # A tiny event-driven counter. Each event modifies `count`.
+          # `history` records (event_name, count_after_event) for every step.
+
+          def apply_event(state, event):
+              if event == "inc":
+                  state["count"] += 1
+              elif event == "dec":
+                  state["count"] -= 1
+              elif event == "double":
+                  state["count"] *= 2
+              elif event == "neg":
+                  state["count"] = -state["count"]
+              elif event == "reset":
+                  state["count"] = 0
+              else:
+                  raise ValueError(f"unknown event {event!r}")
+              state["history"].append((event, state["count"]))
+
+
+          def main():
+              state = {"count": 1, "history": []}
+              events = ["inc", "double", "neg", "double", "inc", "reset", "inc", "inc"]
+              for event in events:
+                  apply_event(state, event)
+              return state
+
+
+          main()
+
+    open_file: "counter.py"
+
+    require_tests: false
+
+    solution:
+      explanation: |
+        There's no fix to apply — this step builds the **backward-localization motor pattern**. The four moves above (anchor, rewind one, jump to a tick, scrub until predicate) are the same moves Case 3 will demand on a real bug.
+
+        **Why backward, not forward?** When the *symptom* is visible at the end of execution but the *cause* is somewhere in the middle of a long event stream, anchoring on the wrong final state and rewinding walks you directly to the divergence. Stepping forward forces you to inspect every event — including the early ones that produced no symptom — before reaching the bad one. That's wasted attention for a bug class the scrubber is designed for.
+
+    quiz:
+      title: "Backward Tour — Quick Retrieval"
+      min_score: 0.75
+      shuffle: true
+      questions:
+
+        - question: |
+            "I want to find the first event in a 50-event stream that produced a wrong state." Which scrubber move fits best?
+          type: single
+          options:
+            - "Step Over forward from the start until something looks wrong"
+            - "Run to completion, anchor on the wrong final state, scrub backward until the state matches the spec"
+            - "Set a conditional breakpoint at the start of the loop"
+            - "Hover the variable in the editor"
+          correct_index: 1
+          option_feedback:
+            0: "Forward stepping forces you to inspect early events that produced no symptom. The first 30 events may all be correct; you'd waste attention before reaching the divergence."
+            2: "A conditional breakpoint helps when you can describe the *cue* in advance (e.g., 'when count goes negative'). When you only know the *final symptom* and the cause's shape is unclear, scrubbing is more direct."
+            3: "Hover shows the value at the *current* paused moment. It can't move you through history."
+          explanation: |
+            **Anchor on the wrong final state, scrub backward until it matches the spec.** The first tick where the state is *correct again* is the one immediately before the bug fired. This is the canonical backward-localization move.
+
+        - question: |
+            *"What was `count` after exactly 4 events?"* — which scrubber move answers this?
+          type: single
+          options:
+            - "Drag the scrubber until `len(state['history'])` shows `4`"
+            - "Restart and step over 4 times"
+            - "Hover `count` in the editor"
+            - "Set a breakpoint at line 4"
+          correct_index: 0
+          option_feedback:
+            1: "This works but requires re-running the program from scratch. The scrubber moves through the recorded trace instantly — no rerun needed."
+            2: "Hover shows the value at the *current* paused moment, not at a specific past tick."
+            3: "Line numbers and event counts aren't the same. A breakpoint on line 4 fires every time line 4 runs — once per iteration — which doesn't directly answer 'after 4 events'."
+          explanation: |
+            **Scrub to a specific tick** by reading a marker (here, `len(history)`). Pick a state property that monotonically increases (event count, log length, step number) so each tick is identifiable from the Variables tab.
+
+        - question: |
+            After scrubbing backward, the arrow gutter turns gray. What does that mean?
+          type: single
+          options:
+            - "The program crashed"
+            - "You're inspecting a past state — not 'live' execution. Edits won't take effect from this rewound point until you scrub forward to the end again"
+            - "The debugger has lost the recording"
+            - "You've reached the start of the program"
+          correct_index: 1
+          option_feedback:
+            0: "A crash would be reported as a traceback, not a UI state change."
+            2: "The recording is intact — gray indicates *position*, not loss."
+            3: "The scrubber's leftmost position is the start; gray applies whenever you're not at the rightmost (live) position."
+          explanation: |
+            **Gray = rewound.** You're inspecting a recorded past state. Drag the scrubber all the way to the right to return to live execution. This visual cue prevents the confusion of "why isn't my edit running?" — the answer is always "scrub forward first, then run."
+
+
+  # ===========================================================================
+  # STEP 6 — Case 3: Course Waitlist (Temporal Bug, back-in-time)
   # Source: debugging_case_studies/case3_waitlist_time_travel/ (waitlist.py
   #   and test_waitlist.py only — trace tooling replaced by the in-browser
   #   history scrubber).
   # Pedagogy:
-  #   New technique — back-in-time / history scrubber.
+  #   New technique — back-in-time / history scrubber (drilled in Step 5).
   #   Historical localization BEFORE line-level localization.
   #   First-divergence reasoning (research §"Hypothesis-driven localization").
   #   Bloom's level — Analyze / Evaluate.
@@ -1414,6 +1576,8 @@ steps:
   - title: "Case 3 — Course Waitlist (Temporal Bug)"
     instructions: |
       > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
+
+      > 📋 **`debugging_log.md` — three stages are now unlabeled.** Name them yourself before filling them in. Naming the stage you're in is the move that keeps the cycle from collapsing into tinkering.
 
       > 🔀 **Before you start:** In Cases 1 and 2, you could find the bug by reaching one specific line with a breakpoint. Will that work here? Spend 30 seconds predicting: what *kind* of thing might be wrong, and will a single well-placed breakpoint be enough to find it?
       >
@@ -1621,6 +1785,28 @@ steps:
               math220 = state["MATH220"]
               assert math220.enrolled == ["Noor Ali"]
               assert math220.waitlist == []
+
+      - path: "debugging_log.md"
+        language: "markdown"
+        content: |
+          # Debugging log — Case 3 (Course Waitlist)
+
+          Stages 1, 2, 6, 7 are labeled. Stages 3-5 are not — *name the stage yourself*, then fill in the content.
+
+          1. **Symptom** (one sentence — expected vs actual): _..._
+          2. **Predict** (which end of the waitlist should `pop()` remove from, given FIFO?): _..._
+          3. **[Stage name?]**: _..._
+          4. **[Stage name?]**: _..._
+          5. **[Stage name?]**: _..._
+          6. **Fix**: _..._
+          7. **Verify**: _..._
+
+          <details><summary>Field labels 3-5 (open only after you've named them yourself)</summary>
+
+          3. Evidence
+          4. Hypothesis
+          5. Localize
+          </details>
 
     open_file: "waitlist.py"
     run_file: "test_waitlist.py"
@@ -1890,7 +2076,7 @@ steps:
 
 
   # ===========================================================================
-  # STEP 6 — Case 4: Event-Driven Checkout (Sequence Diagram Inference)
+  # STEP 7 — Case 4: Event-Driven Checkout (Sequence Diagram Inference)
   # Source: debugging_case_studies/case4_sequence_diagram_checkout/
   #   - The case study's `trace_uml.py` and `generate_sequence_diagram.py`
   #     are intentionally NOT included — the tutorial's built-in sequence
@@ -2793,7 +2979,7 @@ steps:
 
 
   # ===========================================================================
-  # STEP 7 — Interleaved Technique-Selection Drill
+  # STEP 8 — Interleaved Technique-Selection Drill
   # Pedagogy:
   #   Interleaving — mixed scenarios force discrimination of bug families.
   #   Retrieval practice — quiz-only step, no editing, anchored on judgment.
@@ -3022,7 +3208,7 @@ steps:
 
 
   # ===========================================================================
-  # STEP 8 — Transfer Challenge + Reflection
+  # STEP 9 — Transfer Challenge + Reflection
   # Pedagogy:
   #   Transfer — same conceptual bug family as Case 2 (data-representation),
   #     different surface code. Tests that the student can apply the cycle
@@ -3249,11 +3435,7 @@ steps:
 
     quiz:
       title: "Transfer & Reflection"
-      # Audit fix: bumped from 0.5 → 0.75. The 7-stage retrieval question (Q2) is
-      # the *only* recall test for the cycle in the entire tutorial, and at 0.5
-      # a student could pass with that exact item wrong. Expanded from 2 to 5
-      # questions to make 0.75 forgiving of one borderline answer (4/5 = 0.80 passes).
-      min_score: 0.75
+      min_score: 0.8
       shuffle: false
       questions:
 

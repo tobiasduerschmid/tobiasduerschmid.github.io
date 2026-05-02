@@ -90,9 +90,11 @@ steps:
 
     </details>
 
-    ### Task 1: Prove a branch is a 41-byte pointer
+    ### Task 1: What is a branch internally?
 
-    **Predict first:** what's in `.git/refs/heads/main`? A commit list? A snapshot?
+    Git stores all data in files inside the `.git` folder. 
+    The branch `main` is stored in `.git/refs/heads/main`.
+    **Predict first:** what's inside the file `.git/refs/heads/main`? A commit list? A snapshot?
 
     ```bash
     cd /tutorial/myproject
@@ -101,7 +103,7 @@ steps:
     cat .git/HEAD
     ```
 
-    Each branch file is **one line** — a commit SHA. `HEAD` is
+    Each branch file is **one line** — a commit hash (aka commit SHA). `HEAD` is
     `ref: refs/heads/main` — a pointer to a pointer.
 
     ```gitgraph
@@ -120,7 +122,7 @@ steps:
 
     ```bash
     git switch --detach HEAD~1
-    cat .git/HEAD        # now a raw 40-char SHA, not a ref
+    cat .git/HEAD        # now a raw SHA, not a ref
     ```
 
     **Detached HEAD** = HEAD pinned to a commit, not a branch. Watch the
@@ -138,15 +140,6 @@ steps:
     ```bash
     git switch main
     ```
-
-    ### ✍️ Before moving on (30-second self-test)
-
-    Without scrolling up, answer:
-
-    1. How many bytes is a branch?
-    2. What's the *physical* difference between attached and detached HEAD?
-
-    Got both? You've internalized the schema this whole tutorial rests on.
   solution:
     commands:
     - cd /tutorial/myproject
@@ -206,14 +199,14 @@ steps:
         0: This answer treats a branch like a folder copy — branch creation never duplicates files; only one ref file is written.
         2: This answer confuses a branch with a remote; branches are local refs in `.git/refs/heads/`, not network connections.
         3: This answer treats a branch like a backup archive rather than a single-line pointer file.
-      explanation: A branch is just a tiny file holding a 40-character SHA. That is why `git switch -c new-branch` is instantaneous — Git does not copy files, it writes one line of text.
+      explanation: A branch is just a tiny file holding a SHA. That is why `git switch -c new-branch` is instantaneous — Git does not copy files, it writes one line of text.
     - question: Which statements about **Detached HEAD** state are true? (Select all that apply)
       type: multiple
       options:
       - '`HEAD` points directly to a commit hash instead of a branch name'
       - Any commit you make in detached HEAD is automatically saved to the nearest branch
       - Commits made here are orphaned unless you anchor them with a branch before leaving
-      - '`.git/HEAD` contains a 40-char SHA rather than a line like `ref: refs/heads/main`'
+      - '`.git/HEAD` contains a commit SHA rather than a line like `ref: refs/heads/main`'
       correct_indices:
       - 0
       - 2
@@ -245,7 +238,7 @@ steps:
         2: This answer overwrites working-tree files without moving HEAD; not destructive to history but stomps your editor state.
         3: This answer is the "burning down the repo" antipattern — far more destructive than the read-only detached HEAD it replaces.
       explanation: '`git switch --detach` enters read-only-feeling detached HEAD at any commit. You can look around freely; `git switch main` returns you unchanged. `git reset --hard` would rewrite your current branch — destructive. `git checkout <sha> .` overwrites files without moving HEAD.'
-    - question: Put in order the steps to safely inspect an old commit and return to normal operation.
+    - question: Put in order the steps to safely inspect an old commit, look at a python file, and return to normal operation.
       type: parsons
       display: block
       lines:
@@ -505,7 +498,7 @@ steps:
     cd /tutorial/myproject
     ```
 
-    **Identical 40-char SHA.** Same bytes → same hash, always, everywhere.
+    **Identical SHA.** Same bytes → same hash, always, everywhere.
     That's why Git deduplicates across branches and history for free.
 
     ### Task 3: Byte-exact means byte-exact
@@ -557,7 +550,7 @@ steps:
     - cd /tutorial/myproject
     explanation: |
       - **`HEAD~n`:** n commits back along the first-parent chain. `HEAD~0` is HEAD itself, `HEAD~1` is its parent, `HEAD~2` its grandparent. `HEAD^` is equivalent to `HEAD~1`. For a merge commit, `HEAD^2` accesses the *second* parent (the merged-in branch tip).
-      - **`git rev-parse`:** Converts any ref (relative, symbolic, short SHA) into a full 40-character SHA. Plumbing-level tool used internally by nearly every porcelain command.
+      - **`git rev-parse`:** Converts any ref (relative, symbolic, short SHA) into a full SHA. Plumbing-level tool used internally by nearly every porcelain command.
       - **`git hash-object`:** Computes the SHA Git would assign to content. Feeding the same bytes always produces the same hash — that is what makes Git content-addressable.
       - **Why it matters:** Every advanced command later (rebase, cherry-pick, bisect) is just moving ref pointers across this immutable object graph. Once you see commits as *hashed snapshots*, not *edits*, nothing in Git is mysterious.
   tests:
@@ -667,7 +660,7 @@ steps:
       display: block
       lines:
       - 'echo "hello world" | git hash-object --stdin         # in your main repo'
-      - '# note the 40-char SHA — call it SHA-A'
+      - '# note the SHA — call it SHA-A'
       - 'cd /tmp && git init -q other && cd other             # fresh unrelated repo'
       - 'echo "hello world" | git hash-object --stdin         # same bytes'
       - '# output is IDENTICAL — call it SHA-B; SHA-A == SHA-B'
@@ -2994,7 +2987,7 @@ steps:
     |---|---|
     | **Submodule** | A nested Git repo inside an outer Git repo |
     | **`.gitmodules`** | Plain-text config file in the outer repo listing each submodule's path + URL |
-    | **Gitlink** | A tree entry with mode `160000` whose "content" is a 40-char commit SHA (instead of file bytes) |
+    | **Gitlink** | A tree entry with mode `160000` whose "content" is a commit SHA (instead of file bytes) |
 
     Two more terms (`Pinned SHA`, `--recursive`) are introduced inline as
     they come up; the full glossary is at the bottom of this step.
@@ -3126,7 +3119,7 @@ steps:
     |---|---|
     | **Submodule** | A nested Git repo inside an outer Git repo |
     | **`.gitmodules`** | Plain-text config file in the outer repo listing each submodule's path + URL |
-    | **Gitlink** | A tree entry with mode `160000` whose "content" is a 40-char commit SHA (instead of file bytes) |
+    | **Gitlink** | A tree entry with mode `160000` whose "content" is a commit SHA (instead of file bytes) |
     | **Pinned SHA** | The exact commit of the submodule the outer repo wants checked out at the gitlink path |
     | **`--recursive`** | Clone flag that fetches submodules at clone-time (otherwise the folder is empty) |
 
@@ -3141,7 +3134,7 @@ steps:
     - "cd /tutorial/myproject && git switch -q main 2>/dev/null && git reset --hard HEAD; if [ ! -f .gitmodules ]; then git submodule add /tutorial/math-utils.git vendor/math-utils && git commit -m 'Add math-utils submodule at v0.1.0'; fi; if [ ! -d /tutorial/colleague-clone ]; then cd /tutorial && git clone --recursive myproject colleague-clone; fi"
     explanation: |
       - **`git submodule add <url> <path>`:** Clones the URL into the path AND creates a `.gitmodules` entry describing that submodule (its path + URL). Both the `.gitmodules` file and the gitlink pointer must be committed.
-      - **Gitlink vs regular file:** a submodule entry has Git mode `160000` (instead of `100644` for a regular file). Its content is not bytes — it is a 40-char commit SHA indicating *which commit* of the submodule's repo should be checked out here.
+      - **Gitlink vs regular file:** a submodule entry has Git mode `160000` (instead of `100644` for a regular file). Its content is not bytes — it is a commit SHA indicating *which commit* of the submodule's repo should be checked out here.
       - **`git clone --recursive`:** Clones the outer repo and all submodules in one command. Forgetting this leaves empty submodule folders until `git submodule update --init --recursive`.
   tests:
   - description: myproject has a math-utils submodule
@@ -3172,7 +3165,7 @@ steps:
     - question: What does a Git submodule actually store in the outer repository?
       options:
       - A full copy of the submodule's files tracked like normal files
-      - A gitlink — a 40-character commit SHA pinning which commit of the submodule's repo should be checked out at that path, plus a `.gitmodules` entry with the URL
+      - A gitlink — a commit SHA pinning which commit of the submodule's repo should be checked out at that path, plus a `.gitmodules` entry with the URL
       - Nothing — submodules are purely a runtime concept
       - A symbolic link to the submodule's directory
       correct_index: 1
@@ -3606,7 +3599,7 @@ steps:
     explanation: |
       - **`modified: <path> (modified content)`:** the submodule's working directory is dirty — untracked or unstaged changes inside the submodule. The outer repo cannot show the diff; you must `cd` into the submodule to see it with plain `git diff`.
       - **`modified: <path> (new commits)`:** the submodule's HEAD has moved to a new commit, but the outer repo still points at the old pinned SHA. Resolve by either `git add <path>` + commit (to bump) or `git submodule update` (to reset the submodule back to the pinned SHA).
-      - **The outer diff for a submodule is always just one line:** `-Subproject commit <old>` / `+Subproject commit <new>`. That is the only thing the outer repo records about a submodule change — two 40-char SHAs.
+      - **The outer diff for a submodule is always just one line:** `-Subproject commit <old>` / `+Subproject commit <new>`. That is the only thing the outer repo records about a submodule change — two SHAs.
       - **`git submodule update --init --recursive`:** deterministic reset. Every submodule is forced back to the SHA the outer tree pins. Run after every `git pull` that touches submodule-tracked paths.
   tests:
   - description: On main branch
@@ -4063,7 +4056,7 @@ steps:
         2: This answer assumes the commit message reliably announces deletions; messages don't index by content.
         3: This answer shows only the most recent commit, not the historical regression spanning many commits.
       explanation: Blame attributes *existing* lines only — a missing line is invisible to it. Bisect operates on behavioral outcomes (did the test pass or fail?) regardless of whether the change was an addition, modification, or deletion. This is why the capstone you just finished started with bisect, not blame — the bug could just as easily have been a deletion, and starting with bisect generalizes.
-    - question: '**[Interleaves Steps 3, 11, 13]** A submodule is stored in the outer repo as a gitlink entry (mode `160000`) containing a 40-character SHA. That SHA references which kind of Git object?'
+    - question: '**[Interleaves Steps 3, 11, 13]** A submodule is stored in the outer repo as a gitlink entry (mode `160000`) containing a SHA. That SHA references which kind of Git object?'
       options:
       - A blob object containing the submodule's files
       - A tree object for the submodule's root directory
@@ -4074,7 +4067,7 @@ steps:
         0: This answer confuses commit objects with blob objects; gitlinks pin commits, which then resolve to trees and blobs.
         1: This answer confuses commit objects with tree objects; only a commit captures the snapshot identity.
         3: This answer confuses commit objects with tag objects; tags reference commits but aren't stored in gitlinks.
-      explanation: 'The gitlink pins a *commit* SHA (in the submodule''s repo). That commit deterministically resolves to a tree, which resolves to blobs — so one SHA is equivalent to a full content snapshot. Same object-model reasoning as Step 3 — snapshot-identity is carried by the commit SHA, which is why "one 40-char pin" is enough information to reconstruct the entire submodule''s state.'
+      explanation: 'The gitlink pins a *commit* SHA (in the submodule''s repo). That commit deterministically resolves to a tree, which resolves to blobs — so one SHA is equivalent to a full content snapshot. Same object-model reasoning as Step 3 — snapshot-identity is carried by the commit SHA, which is why "one pin" is enough information to reconstruct the entire submodule''s state.'
     - question: '**[Interleaves Steps 8, 9, 10]** Which of these operations are **forbidden** on a branch that has been pushed and is shared with teammates? Select all that apply.'
       type: multiple
       options:
