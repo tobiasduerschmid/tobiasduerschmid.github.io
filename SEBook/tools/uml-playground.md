@@ -343,6 +343,59 @@ html.dark-mode #uml-pg-error {
   background: #3a1d23;
 }
 
+.uml-pg-syntax-help {
+  margin: 1.5em 0;
+  padding: 1em 1.2em;
+  background: #eef4fb;
+  border: 1px solid #c0d4ec;
+  color: #1a1a1a;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex-wrap: wrap;
+}
+
+.uml-pg-syntax-help-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.uml-pg-syntax-help-link {
+  white-space: nowrap;
+  padding: 7px 16px;
+  background: #2774AE;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.uml-pg-syntax-help-link:hover,
+.uml-pg-syntax-help-link:focus {
+  background: #1f5d8a;
+  color: #fff;
+  text-decoration: none;
+}
+
+html.dark-mode .uml-pg-syntax-help {
+  background: #1e2c3e;
+  border-color: #3a4a60;
+  color: #d0e0f0;
+}
+
+html.dark-mode .uml-pg-syntax-help-link {
+  background: #3d8bc9;
+  color: #fff;
+}
+
+html.dark-mode .uml-pg-syntax-help-link:hover,
+html.dark-mode .uml-pg-syntax-help-link:focus {
+  background: #5ba3dc;
+  color: #fff;
+}
+
 @media (max-width: 700px) {
   #uml-playground-body {
     flex-direction: column;
@@ -1887,9 +1940,9 @@ html.dark-mode #uml-pg-error {
 
 ---
 
-<div style="margin:1.5em 0;padding:1em 1.2em;background:#eef4fb;border:1px solid #c0d4ec;border-radius:6px;display:flex;align-items:center;gap:1em;flex-wrap:wrap;">
-  <div style="flex:1;min-width:200px;">
+<div class="uml-pg-syntax-help">
+  <div class="uml-pg-syntax-help-text">
     <strong>Need syntax help?</strong> The full ArchUML syntax reference with live rendered examples is available on a dedicated page.
   </div>
-  <a href="/SEBook/tools/uml-reference" target="_blank" style="white-space:nowrap;padding:7px 16px;background:#2774AE;color:#fff;border-radius:4px;text-decoration:none;font-weight:600;font-size:0.9em;">Open Syntax Reference ↗</a>
+  <a class="uml-pg-syntax-help-link" href="/SEBook/tools/uml-reference" target="_blank">Open Syntax Reference ↗</a>
 </div>
