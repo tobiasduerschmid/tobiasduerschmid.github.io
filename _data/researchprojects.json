@@ -87,7 +87,7 @@
     },
   { "key"       : "writingguide",
       "title"     : "Writing Guide",
-      "url"       : "writingguide.html",
+      "url"       : "/writingguide.html",
       "subtitle"  : "Scientific Writing Guide for Non-PhD Students",
       "pages" : 
       [
@@ -118,7 +118,7 @@
       },
       {
       	"name" : "SOLID Design Principles",
-      	"path" : "SEBook/solid.html"
+        "path" : "SEBook/designprinciples/solid.html"
       }
       ]
     },

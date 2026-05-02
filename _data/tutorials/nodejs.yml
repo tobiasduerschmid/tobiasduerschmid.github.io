@@ -3071,7 +3071,7 @@ steps:
 
       ### Strengthen Your Memory
 
-      > **Tomorrow, take the [Node.js Concepts Quiz](/SEBook/tools/nodejs-quiz).** It covers async reasoning, type traps, and technique selection across all 10 steps. Taking it after a gap — not immediately — is deliberate: the spacing effect means your brain consolidates knowledge between sessions, making retrieval stronger and more durable.
+      > **Tomorrow, revisit the concept checks in this Node.js tutorial.** They cover async reasoning, type traps, and technique selection across all 10 steps. Taking them after a gap — not immediately — is deliberate: the spacing effect means your brain consolidates knowledge between sessions, making retrieval stronger and more durable.
 
     files:
       - path: "done.js"

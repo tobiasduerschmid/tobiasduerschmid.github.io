@@ -20,9 +20,11 @@
       <div class="col-md-8 col-sm-10">
         <p>{{ n.text}}</p>
       </div>
+      {% if n.icon %}
       <div class="col-md-1 text-left">
-        <p><img class='img-responsive' src='{{ n.icon }}'></p>
+        <p><img class="img-responsive" src="{{ n.icon }}" alt="{{ n.icon_alt | default: '' }}"></p>
       </div>
+      {% endif %}
   </div>
   {% endif %}
   {% endif %}

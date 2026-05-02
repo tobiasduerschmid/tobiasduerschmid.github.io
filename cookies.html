@@ -91,6 +91,7 @@ layout: framework
 
   .storage-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin: 12px 0 8px;
     font-size: 0.92em;
@@ -101,6 +102,7 @@ layout: framework
     padding: 9px 11px;
     text-align: left;
     vertical-align: top;
+    overflow-wrap: anywhere;
   }
   .storage-table th {
     background: #f6f8fa;
@@ -117,9 +119,15 @@ layout: framework
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.92em;
     color: #032f62;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   html.dark-mode .storage-key { color: #79b8ff; }
+
+  .cookies-page code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 
   .storage-value {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -142,9 +150,9 @@ layout: framework
     font-weight: 600;
   }
   .storage-badge.set    { background: #d4edda; color: #155724; }
-  .storage-badge.unset  { background: #e9ecef; color: #6c757d; }
+  .storage-badge.unset  { background: #e9ecef; color: #4b5563; }
   html.dark-mode .storage-badge.set   { background: #1e3a25; color: #6cd58a; }
-  html.dark-mode .storage-badge.unset { background: #2a2a2a; color: #888; }
+  html.dark-mode .storage-badge.unset { background: #2a2a2a; color: #cbd5e1; }
 
   .trash-btn {
     background: transparent;
@@ -206,9 +214,33 @@ layout: framework
   }
 
   .empty-row td {
-    color: #888;
+    color: #555f6d;
     font-style: italic;
     text-align: center;
+  }
+  html.dark-mode .empty-row td { color: #cbd5e1; }
+
+  @media (max-width: 560px) {
+    .cookies-page {
+      padding: 0 12px 48px;
+    }
+
+    .storage-table {
+      font-size: 0.84em;
+    }
+
+    .storage-table th,
+    .storage-table td {
+      padding: 8px 6px;
+    }
+
+    .col-status { width: 76px; }
+    .col-action { width: 56px; }
+
+    .storage-badge {
+      padding: 2px 5px;
+      font-size: 0.72em;
+    }
   }
 </style>
 

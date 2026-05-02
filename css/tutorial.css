@@ -1390,16 +1390,17 @@ html:not(.dark-mode) .tvm-git-graph-container {
   padding: 1px;
 }
 .tvm-diagram-zoom-btn {
-  padding: 2px 7px;
+  padding: 2px 8px;
   border: none;
   border-radius: 2px;
   background: transparent;
-  color: #7a8aa0;
+  color: #b6c4d8;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   line-height: 1.4;
-  min-width: 22px;
+  min-width: 24px;
+  min-height: 24px;
   text-align: center;
   transition: background 0.1s, color 0.1s;
 }
@@ -1409,7 +1410,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
 }
 .tvm-diagram-zoom-label {
   font-size: 11px;
-  color: #6a7a90;
+  color: #c2cee0;
   min-width: 38px;
   text-align: center;
   font-weight: 600;
@@ -1642,7 +1643,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #888;
+  color: #5b6472;
   font-family: system-ui, sans-serif;
   font-size: 14px;
   text-align: center;
@@ -1685,14 +1686,14 @@ html:not(.dark-mode) .tvm-diagram-zoom-controls {
   border-color: #cdd0d8;
 }
 html:not(.dark-mode) .tvm-diagram-zoom-btn {
-  color: #5a6270;
+  color: #3f4856;
 }
 html:not(.dark-mode) .tvm-diagram-zoom-btn:hover {
   background: #d8dce6;
   color: #222;
 }
 html:not(.dark-mode) .tvm-diagram-zoom-label {
-  color: #6a7080;
+  color: #4b5563;
   border-color: #cdd0d8;
 }
 html:not(.dark-mode) .tvm-diagram-fullscreen-btn,
@@ -1734,7 +1735,7 @@ html:not(.dark-mode) .tvm-diagram-color-reset-btn:hover {
   border-color: #b0b6c4;
 }
 html:not(.dark-mode) .tvm-diagram-empty {
-  color: #778;
+  color: #4b5563;
 }
 html:not(.dark-mode) .tvm-diagram-fullscreen-overlay {
   background: #fff;

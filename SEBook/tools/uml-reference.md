@@ -8,6 +8,7 @@ no_auto_uml: true
 <p style="color:#666;font-style:italic;margin-bottom:1.5em;">Diagrams render after the page loads. Scroll to see each one.</p>
 
 {% capture ref_md %}{% include REFERENCE.md %}{% endcapture %}
+{% assign ref_md = ref_md | replace: '](../git-graph.js)', '](/js/git-graph.js)' %}
 {{ ref_md | escape_chevrons_in_pre | markdownify }}
 
 <script>

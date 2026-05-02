@@ -2072,7 +2072,7 @@ steps:
 
       🔭 **Where this leads in the rest of the curriculum:**
       - **[`solid.yml`](/SEBook/tools/solid-tutorial)** — *Dependency Inversion* makes doubles trivial: define an interface, have the SUT depend on it, swap implementations at test time. Most painful mocks are caused by skipped DIP.
-      - **[`observer-pattern.yml`](/SEBook/tools/observer-pattern-tutorial)** — the Observer pattern is essentially a spy made into a permanent design feature.
+      - **[`observer-pattern.yml`](/SEBook/designpatterns/observer-tutorial)** — the Observer pattern is essentially a spy made into a permanent design feature.
       - **TDD with doubles** — the next natural sequel: TDD where the SUT *has* collaborators from the start. Red phase becomes "decide what to double, then write the failing test."
 
       🪞 **Recalibrate.** Look back at Step 1 — the test that passed today and would have failed tomorrow. Your toolkit now has six things to do instead of "ship and pray":

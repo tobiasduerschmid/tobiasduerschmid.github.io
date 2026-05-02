@@ -10,6 +10,14 @@ const REPORT_PATH = path.join(ROOT, 'tmp', 'wcag22-audit-results.json');
 const MAX_PAGES_PER_FEATURE = Number(process.env.WCAG_AUDIT_PAGE_LIMIT || 0);
 const FULL_SWEEP = process.env.WCAG_AUDIT_FULL_SWEEP === '1';
 const URL_FILTER = process.env.WCAG_AUDIT_URL_FILTER ? new RegExp(process.env.WCAG_AUDIT_URL_FILTER) : null;
+const CONFORMANCE_TARGET = {
+  standard: 'WCAG',
+  version: '2.2',
+  level: 'AA',
+  label: 'WCAG 2.2 AA',
+  includesCriterionLevels: ['A', 'AA'],
+  note: 'WCAG Level AA conformance requires satisfying both Level A and Level AA success criteria.',
+};
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -37,9 +45,14 @@ function sourceTutorialUrls() {
     rel = rel.replace(/\.(md|html)$/, '.html');
     urls.add(`/${rel}`);
 
-    const printIndex = path.join(SITE_ROOT, rel.replace(/\.html$/, '/print/index.html'));
+    const printPath = rel.replace(/\.html$/, '/print');
+    const printIndex = path.join(SITE_ROOT, `${printPath}/index.html`);
+    const printHtml = path.join(SITE_ROOT, `${printPath}.html`);
     if (fs.existsSync(printIndex)) {
-      urls.add(`/${rel.replace(/\.html$/, '/print/')}`);
+      urls.add(`/${printPath}/`);
+    }
+    if (fs.existsSync(printHtml)) {
+      urls.add(`/${printPath}.html`);
     }
   }
   return [...urls].sort();
@@ -50,6 +63,9 @@ function allTargetUrls() {
   const urls = htmlFiles.map(urlFromSiteFile).filter(Boolean);
   const tutorialSet = new Set(sourceTutorialUrls());
   const groups = {
+    home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
+    errorPages: urls.filter((url) => url === '/404.html'),
+    cookies: urls.filter((url) => url === '/cookies/'),
     tutorials: urls.filter((url) => tutorialSet.has(url)),
     sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
     seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/')),
@@ -124,7 +140,7 @@ const WCAG_22_AA = [
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(FULL_SWEEP ? 10 * 60 * 1000 : 3 * 60 * 1000);
 
-test('WCAG 2.2 A/AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
+test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
   const groups = allTargetUrls();
   const context = await browser.newContext({
     colorScheme: 'light',
@@ -134,7 +150,14 @@ test('WCAG 2.2 A/AA page audit matrix is complete for requested feature areas', 
   const page = await context.newPage();
   const report = {
     generatedAt: new Date().toISOString(),
-    checkedCriteria: WCAG_22_AA.map(([id, level, name]) => ({ id, level, name })),
+    conformanceTarget: CONFORMANCE_TARGET,
+    conformanceResult: null,
+    checkedCriteria: WCAG_22_AA.map(([id, level, name]) => ({
+      id,
+      criterionLevel: level,
+      name,
+      requiredForConformance: CONFORMANCE_TARGET.label,
+    })),
     groups: {},
     failures: [],
   };
@@ -167,6 +190,12 @@ test('WCAG 2.2 A/AA page audit matrix is complete for requested feature areas', 
       const pageRecord = {
         url,
         status: response ? response.status() : null,
+        conformance: {
+          target: CONFORMANCE_TARGET.label,
+          status: findings.length ? 'needs-review-or-fix' : 'passes',
+          criteriaEvaluated: WCAG_22_AA.length,
+          criterionLevelsIncluded: CONFORMANCE_TARGET.includesCriterionLevels,
+        },
         findingCount: findings.length,
         findings,
         evidence: { ...desktop.evidence, ...focus.evidence, ...mobile.evidence },
@@ -179,6 +208,14 @@ test('WCAG 2.2 A/AA page audit matrix is complete for requested feature areas', 
     }
   }
 
+  report.conformanceResult = {
+    target: CONFORMANCE_TARGET.label,
+    status: report.failures.length ? 'needs-review-or-fix' : 'passes',
+    criteriaEvaluatedPerPage: WCAG_22_AA.length,
+    criterionLevelsIncluded: CONFORMANCE_TARGET.includesCriterionLevels,
+    findingCount: report.failures.length,
+  };
+
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
   await context.close();
@@ -186,8 +223,9 @@ test('WCAG 2.2 A/AA page audit matrix is complete for requested feature areas', 
   const summary = Object.entries(report.groups)
     .map(([feature, data]) => `${feature}: ${data.pageCount} page(s)`)
     .join(', ');
-  console.log(`WCAG 2.2 A/AA audit report written to ${REPORT_PATH}`);
+  console.log(`${CONFORMANCE_TARGET.label} audit report written to ${REPORT_PATH}`);
   console.log(`Scope: ${summary}`);
+  console.log(`Conformance: ${report.conformanceResult.status}`);
   console.log(`Findings: ${report.failures.length}`);
 
   expect(
@@ -201,8 +239,9 @@ function buildCriteriaMatrix(findings, evidence) {
     const related = findings.filter((finding) => finding.criterion === id);
     return {
       id,
-      level,
+      criterionLevel: level,
       name,
+      requiredForConformance: CONFORMANCE_TARGET.label,
       status: related.length ? 'needs-review-or-fix' : evidence.notApplicableCriteria?.includes(id) ? 'not-applicable' : 'checked',
       findingCount: related.length,
     };
@@ -535,7 +574,7 @@ function runDomAudit() {
   function visibleText(el) {
     const clone = el.cloneNode(true);
     if (!(clone instanceof HTMLElement)) return '';
-    clone.querySelectorAll('[aria-hidden="true"], script, style').forEach((node) => node.remove());
+    clone.querySelectorAll('[aria-hidden="true"], .sr-only, .visually-hidden, script, style').forEach((node) => node.remove());
     return normalize(clone.textContent || '');
   }
 
@@ -544,8 +583,10 @@ function runDomAudit() {
   }
 
   function isVisible(el) {
+    if (el.closest('.sr-only, .visually-hidden, [aria-hidden="true"]')) return false;
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    if (style.clip === 'rect(0px, 0px, 0px, 0px)' || style.clipPath === 'inset(50%)') return false;
     const rect = el.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   }
@@ -610,6 +651,7 @@ function runDomAudit() {
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         const parent = node.parentElement;
         if (!parent || !isVisible(parent)) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('.sr-only, .visually-hidden, [aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
         if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },

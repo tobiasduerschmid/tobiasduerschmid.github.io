@@ -105,7 +105,7 @@
       },
       {
       	"name" : "SOLID Design Principles",
-      	"path" : "SEBook/solid.html"
+        "path" : "SEBook/designprinciples/solid.html"
       }
       ]
     },

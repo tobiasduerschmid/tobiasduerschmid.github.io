@@ -4922,7 +4922,7 @@ steps:
       You've covered method-level smells (Long Method, Duplication, Boolean anti-patterns), data-level smells (Long Parameter List, Feature Envy), and class-level smells (God Class, type-conditional dispatch). The next layer is **design principles** — the rules of thumb that make smells less likely to appear in the first place. Two suggested follow-ups:
 
       - **[SOLID design principles tutorial](/SEBook/tools/solid-tutorial)** — single-responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion. The vocabulary the smells in this tutorial implicitly invoked.
-      - **[Observer pattern tutorial](/SEBook/tools/observer-tutorial)** — one of many design patterns; an example of how design principles solidify into reusable structural recipes.
+      - **[Observer pattern tutorial](/SEBook/designpatterns/observer-tutorial)** — one of many design patterns; an example of how design principles solidify into reusable structural recipes.
 
     files:
       - path: "playlist.py"
@@ -5312,7 +5312,7 @@ steps:
 
         **What you've completed.** Across ten steps you've practiced six refactorings on increasingly complex code, with tests preserving behavior at every step, and UML diagrams making structural changes visible. You've used Monaco's tool support to skip the typing and focus on judgment. You've internalized that refactoring is a *discipline*, not a bag of tricks — every move comes with a justification, an invariant, and a test that confirms the invariant.
 
-        **Next steps.** [SOLID design principles](/SEBook/tools/solid-tutorial) → why these smells appear in the first place. [Observer pattern](/SEBook/tools/observer-tutorial) → how design principles crystallize into reusable patterns.
+        **Next steps.** [SOLID design principles](/SEBook/tools/solid-tutorial) → why these smells appear in the first place. [Observer pattern](/SEBook/designpatterns/observer-tutorial) → how design principles crystallize into reusable patterns.
 
     tests:
       - description: "Memo: all four sections filled in"
