@@ -10,10 +10,6 @@ Hands-on, in-browser tutorials covering languages, tools, design patterns,
 testing, and other software-engineering topics. Each tutorial runs in your
 browser — no install required — and saves your progress locally.
 
-This index is auto-generated from the YAML files in `_data/tutorials/`.
-Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
-(they set `exclude_from_index: true` in their YAML).
-
 <div class="tutorials-index" role="list">
   {% comment %}
     Build a sorted list of (title, description, url) triples by joining each
@@ -57,19 +53,24 @@ Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
 </div>
 
 <style>
+  /* Reflow at 320 CSS px (WCAG 2.2 SC 1.4.10): the column floor is the
+     smaller of 100% and 280px, so the grid never forces a horizontal
+     scroll even on the narrowest supported viewport. */
   .tutorials-index-list {
     list-style: none;
     padding: 0;
     margin: 24px 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 18px;
   }
 
+  /* Border #6a737d on #ffffff = ~4.7:1 contrast — clears WCAG 2.2 SC
+     1.4.11 Non-text Contrast (3:1) by a healthy margin. */
   .tutorial-card {
-    border: 1px solid #d0d7de;
+    border: 1px solid #6a737d;
     border-radius: 8px;
-    padding: 16px 18px;
+    padding: 18px 20px;
     background: #ffffff;
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
   }
@@ -80,9 +81,14 @@ Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
     box-shadow: 0 2px 8px rgba(39, 116, 174, 0.15);
   }
 
+  /* Override sebook.html's global `h2 { -webkit-text-stroke: 1px black }`
+     — at small sizes inside cards the stroke fattens the type and hurts
+     legibility. Using bold + an explicit 1.25rem (20px) size satisfies
+     the "large text" threshold in WCAG, so the #2774AE-on-white ratio
+     of ~5:1 passes SC 1.4.3 Contrast (Minimum) for AA. */
   .tutorial-card-title {
-    margin: 0 0 8px;
-    font-size: 1.15rem;
+    margin: 0 0 10px;
+    font-size: 1.25rem;
     line-height: 1.3;
     color: #2774AE;
     -webkit-text-stroke: 0;
@@ -93,21 +99,34 @@ Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
     text-decoration: none;
   }
 
-  .tutorial-card-title a:hover,
-  .tutorial-card-title a:focus {
+  .tutorial-card-title a:hover {
     text-decoration: underline;
   }
 
+  /* Explicit focus ring (WCAG 2.2 SC 2.4.7 Focus Visible / SC 2.4.11
+     Focus Not Obscured): 2px solid outline with 2px offset, in the
+     same blue family as the title — high contrast on both white and
+     dark backgrounds. */
+  .tutorial-card-title a:focus-visible {
+    outline: 2px solid #2774AE;
+    outline-offset: 2px;
+    border-radius: 3px;
+    text-decoration: underline;
+  }
+
+  /* Body text at 1rem (16px, browser default) — comfortable read size,
+     matches the rest of the SE Book. #24292f on white = ~15:1 contrast. */
   .tutorial-card-desc {
     margin: 0;
     color: #24292f;
-    font-size: 0.95rem;
+    font-size: 1rem;
     line-height: 1.5;
   }
 
   html.dark-mode .tutorial-card {
     background: #1f2937;
-    border-color: #4b5563;
+    /* #9aa1a8 on #1f2937 = ~5.7:1 contrast — clears SC 1.4.11. */
+    border-color: #9aa1a8;
   }
 
   html.dark-mode .tutorial-card:hover,
@@ -116,8 +135,13 @@ Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
     box-shadow: 0 2px 8px rgba(139, 184, 232, 0.2);
   }
 
+  /* #8bb8e8 on #1f2937 = ~7:1 contrast — clears AAA for normal text. */
   html.dark-mode .tutorial-card-title {
     color: #8bb8e8;
+  }
+
+  html.dark-mode .tutorial-card-title a:focus-visible {
+    outline-color: #8bb8e8;
   }
 
   html.dark-mode .tutorial-card-desc {

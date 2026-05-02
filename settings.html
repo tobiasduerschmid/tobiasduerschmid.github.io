@@ -12,11 +12,21 @@ info_nav_title: "My Settings"
     margin: 0 auto;
     padding: 0 20px 60px;
   }
-  .settings-page h1 { margin-top: 0.6em; }
+  /* Tame the framework / Bootstrap inherited h1 sizing — ~60px reads
+     as shouting on a settings page. clamp() keeps the title responsive
+     without ever exploding past 2rem (32px). */
+  .settings-page h1 {
+    margin: 0.6em 0 0.4em;
+    font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2rem);
+    line-height: 1.25;
+    -webkit-text-stroke: 0;
+  }
   .settings-page h2 {
     margin-top: 1.8em;
     padding-bottom: 6px;
     border-bottom: 2px solid #2774AE;
+    font-size: 1.35rem;
+    line-height: 1.3;
   }
   html.dark-mode .settings-page h2 { border-bottom-color: #4da3ff; }
 
@@ -45,13 +55,17 @@ info_nav_title: "My Settings"
     margin: 0 0 24px;
     padding: 0;
   }
+  /* Section legend acts as the section heading. 1.2rem (~19px) gives
+     a clear hierarchy below the page title without dominating the
+     setting names below it. */
   .settings-section legend {
     display: block;
     width: 100%;
     margin: 0 0 10px;
     padding: 0;
     border: 0;
-    font-size: 1.35em;
+    font-size: 1.2rem;
+    line-height: 1.3;
     font-weight: 700;
     color: inherit;
   }
