@@ -1,6 +1,10 @@
 title: "Node.js Lecture"
 description: "Code walkthroughs from the CS 35L Lecture 5 — Client Server & Node.js. Covers JavaScript basics, JSON, blocking vs. non-blocking I/O, the built-in http module, and Express.js routing."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 backend: browser
 # Time-travel debugger (browser-backend impl: sandboxed iframe + acorn AST
 # instrumentation + SAB sync pause). Same UI as the Python/Node demos.

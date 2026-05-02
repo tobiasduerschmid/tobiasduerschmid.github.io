@@ -1,6 +1,10 @@
 title: "Visual Git Tutorial"
 description: "Learn Git with a live visual commit graph — see branches and commits update in real time"
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 require_tests: true
 autosave_type: commands-and-files
 git_graph: /tutorial

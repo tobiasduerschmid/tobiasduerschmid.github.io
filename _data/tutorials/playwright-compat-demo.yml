@@ -1,6 +1,10 @@
 title: "Playwright Compat Demo"
 description: "A small React tutorial that demonstrates the in-browser Playwright-compatible test runner. The spec file is shaped like real @playwright/test code so students can later copy the same ideas into a Node/Vite project."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 backend: react
 require_tests: true
 autosave_type: none

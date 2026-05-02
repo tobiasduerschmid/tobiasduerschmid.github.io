@@ -1,6 +1,10 @@
 title: "UML Diagram Demo"
 description: "Demonstrates the live UML class diagram and sequence diagram feature."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true

@@ -1,6 +1,10 @@
 title: "Shell Scripting"
 description: "Learn the basics of shell scripting in an interactive Linux environment"
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 steps:
   - title: "Your First Script"
     instructions: |
