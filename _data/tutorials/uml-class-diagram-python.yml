@@ -1328,7 +1328,7 @@ steps:
 
       Both composition and aggregation model a "whole-part" relationship. The difference is **ownership and lifecycle**:
 
-      | | Composition (filled diamond) | Aggregation (hollow diamond) |
+      | Aspect | Composition (filled diamond) | Aggregation (hollow diamond) |
       |---|---|---|
       | **Symbol** | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> filled diamond | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> hollow diamond |
       | **Ownership** | Whole **owns** the part exclusively (no sharing) | Whole **references** the part (can be shared) |

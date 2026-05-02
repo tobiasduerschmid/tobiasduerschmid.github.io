@@ -1010,7 +1010,7 @@ steps:
 
       ### Encapsulation ≠ Information Hiding
 
-      | | Encapsulation | Information Hiding |
+      | Question | Encapsulation | Information Hiding |
       |---|---|---|
       | **What it is** | A language technique — bundling data and methods with access modifiers | A design principle — hiding *decisions likely to change* behind stable interfaces |
       | **Mechanism** | `private`, `protected`, `public` keywords | Interface design that exposes *what*, not *how* |

@@ -22,7 +22,7 @@ steps:
 
       You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, Twitch, and even parts of VS Code. Here is how it fits into your mental model:
 
-      | | C++ | Python | JavaScript (Node.js) |
+      | Aspect | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
       | Typing | Static | Dynamic | Dynamic |
       | Memory | Manual (`new`/`delete`) | GC (reference counting) | GC (V8 engine) |
@@ -291,7 +291,7 @@ steps:
       console.log(typeof student); // "object" (yes, this is a known JS quirk)
       ```
 
-      | | `undefined` | `null` |
+      | Concept | `undefined` | `null` |
       |---|---|---|
       | **Meaning** | "no value was assigned yet" | "intentionally empty" |
       | **When you see it** | Uninitialized variables, missing function arguments, `req.query.missing` | You (or an API) explicitly set it |
@@ -1390,7 +1390,7 @@ steps:
 
       > **What is `app.use(express.json())`?** Express does not read request bodies by default — they arrive as raw bytes. `express.json()` is **middleware**: a function that runs *before* your route handler and converts the raw JSON bytes into a JavaScript object. Without it, `req.body` would be `undefined`. Think of it as a translator that runs between the incoming HTTP request and your handler callback.
 
-      | | GET + Query Params | GET + Route Params | POST + Body |
+      | Request shape | GET + Query Params | GET + Route Params | POST + Body |
       |---|---|---|---|
       | **Data in** | URL: `?key=value` | URL: `/path/:param` | Request body (hidden) |
       | **Use for** | Filtering, searching | Identifying ONE resource | Creating/modifying data |

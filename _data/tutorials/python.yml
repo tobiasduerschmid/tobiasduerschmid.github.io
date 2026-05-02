@@ -36,7 +36,7 @@ steps:
 
       You already write C++ and shell scripts. Here is how Python fits into your toolkit:
 
-      | | C++ | Bash | Python |
+      | Aspect | C++ | Bash | Python |
       |---|---|---|---|
       | Typing | Static (`int x`) | Untyped strings | **Dynamic** (`x = 5`) |
       | Memory | Manual (`new`/`delete`) | N/A | Garbage-collected |

@@ -339,7 +339,7 @@ Applying the Mediator pattern involves significant trade-offs:
 
 These two behavioral patterns are frequently confused because both deal with communication between objects. The key distinction is **where the coordination logic lives**:
 
-| | **[Observer](/SEBook/designpatterns/observer.html)** | **Mediator** |
+| Aspect | **[Observer](/SEBook/designpatterns/observer.html)** | **Mediator** |
 |---|---|---|
 | **Communication** | One-to-many: subject broadcasts, observers decide how to react | Many-to-many: colleagues report events, mediator decides what to do |
 | **Intelligence** | *Distributed*: each observer contains its own reaction logic | *Centralized*: the mediator contains all coordination logic |

@@ -34,7 +34,7 @@ layout: null
   <h2>1. TypeScript Classes — All Relationship Types</h2>
   <div class="test-case">
     <div class="test-source">
-      <label>TypeScript Source</label>
+      <label for="src1">TypeScript Source</label>
       <textarea id="src1">
 interface Serializable {
   serialize(): string;
@@ -104,7 +104,7 @@ class Canvas {
   <h2>2. Constructor Injection — Aggregation vs Composition</h2>
   <div class="test-case">
     <div class="test-source">
-      <label>TypeScript Source</label>
+      <label for="src2">TypeScript Source</label>
       <textarea id="src2">
 class Database {
   query(sql: string): string[] { return []; }
@@ -150,7 +150,7 @@ class UserService {
   <h2>3. Sequence Diagram — Method Calls &amp; Control Flow</h2>
   <div class="test-case">
     <div class="test-source">
-      <label>TypeScript Source</label>
+      <label for="src3">TypeScript Source</label>
       <textarea id="src3">
 class OrderValidator {
   validate(order: Order): boolean {
@@ -209,7 +209,7 @@ service.processOrder(order);
   <h2>4. Interfaces, Enums, and Inheritance Hierarchy</h2>
   <div class="test-case">
     <div class="test-source">
-      <label>TypeScript Source</label>
+      <label for="src4">TypeScript Source</label>
       <textarea id="src4">
 enum Priority { Low, Medium, High, Critical }
 
@@ -260,7 +260,7 @@ class Epic extends Task {
   <h2>5. Plain JavaScript — ES6 Classes</h2>
   <div class="test-case">
     <div class="test-source">
-      <label>JavaScript Source</label>
+      <label for="src5">JavaScript Source</label>
       <textarea id="src5">
 class EventEmitter {
   #listeners = {};

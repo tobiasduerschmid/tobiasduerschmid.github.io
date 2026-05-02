@@ -29,7 +29,7 @@ Historically, JavaScript was trapped inside the web browser. It was strictly a f
 
 Here is how JavaScript (via Node.js) fits into your mental model from C++ and Python:
 
-| | C++ | Python | JavaScript (Node.js) |
+| Aspect | C++ | Python | JavaScript (Node.js) |
 |---|---|---|---|
 | Typing | Static | Dynamic | Dynamic |
 | Memory | Manual (`new`/`delete`) | GC (reference counting) | GC (V8 engine) |
@@ -128,7 +128,7 @@ console.log(student);     // null
 console.log(typeof student); // "object" (a famous JS bug that can never be fixed)
 ```
 
-| | `undefined` | `null` |
+| Concept | `undefined` | `null` |
 |---|---|---|
 | **Meaning** | "no value was assigned yet" | "intentionally empty" |
 | **When you see it** | Uninitialized variables, missing function args, `req.query.missing` | You (or an API) explicitly set it |

@@ -285,7 +285,7 @@ Shape r = new Rectangle(3, 4);
 
 **Compared to C++ and Python:**
 
-| | C++ | Python | Java |
+| Aspect | C++ | Python | Java |
 |---|---|---|---|
 | Mechanism | Pure virtual functions / abstract class | Duck typing (no enforcement) | `interface` keyword, compiler-enforced |
 | Multiple inheritance | Yes (`virtual` base classes) | Yes (MRO) | A class can `implement` multiple interfaces |
@@ -353,7 +353,7 @@ for (Vehicle v : fleet) {
 
 **When to use interface vs abstract class:**
 
-| | Interface | Abstract Class |
+| Aspect | Interface | Abstract Class |
 |---|---|---|
 | Methods | Abstract (+ `default` in Java 8+) | Abstract AND concrete |
 | Fields | Only `static final` constants | Instance fields allowed |
@@ -543,7 +543,7 @@ public int divide(int a, int b) {
 
 **Compared to Python and C++:**
 
-| | Python | C++ | Java |
+| Aspect | Python | C++ | Java |
 |---|---|---|---|
 | Philosophy | EAFP — catch freely | Exceptions are expensive; prefer error codes | Checked exceptions = compiler-enforced contract |
 | Enforcement | None — errors discovered at runtime | `noexcept` exists but rarely enforced | Compiler rejects unhandled checked exceptions |

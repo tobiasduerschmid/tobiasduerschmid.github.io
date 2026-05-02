@@ -833,7 +833,7 @@ Information Hiding is the *principle*; **coupling** and **cohesion** are the *me
 
 When secrets are well hidden, coupling drops (because clients only know the interface) and cohesion rises (because everything in a module exists to support that one hidden decision). When secrets leak, the opposite happens.
 
-| | High Coupling, Low Cohesion (bad) | Low Coupling, High Cohesion (good) |
+| Aspect | High Coupling, Low Cohesion (bad) | Low Coupling, High Cohesion (good) |
 |---|---|---|
 | **Change** | Ripples through many modules | Stays inside one module |
 | **Understanding** | You must load many modules into memory at once | You can reason about one module in isolation |

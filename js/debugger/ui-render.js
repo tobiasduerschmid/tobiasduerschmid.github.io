@@ -678,7 +678,7 @@
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" />' +
+      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" title="Watch expression" aria-label="Watch expression" />' +
       '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
       '</div>' +
       (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : '');
@@ -771,7 +771,7 @@
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
@@ -791,7 +791,7 @@
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
-        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
         '<span class="tvm-debug-manager-exc-modes">' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
@@ -998,7 +998,7 @@
     }
     var n = state.history.length;
     var html = '<div class="tvm-debug-history-controls">' +
-      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + hi + '">' +
+      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + hi + '" title="Execution history position" aria-label="Execution history position">' +
       '<span class="tvm-debug-history-pos">' + (hi + 1) + ' / ' + n + '</span>' +
       (hi === state.liveIdx
         ? '<span class="tvm-debug-history-live">● live</span>'

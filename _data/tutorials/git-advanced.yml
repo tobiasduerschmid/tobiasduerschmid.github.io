@@ -229,7 +229,7 @@ steps:
 
     ### `log --all` vs `reflog` — the load-bearing distinction
 
-    |  | `git log --all` | `git reflog` |
+    | Question | `git log --all` | `git reflog` |
     |---|---|---|
     | Walks | Commits reachable from refs | Every position HEAD occupied |
     | Sees orphans? | No (unreachable = invisible) | Yes (reachability irrelevant) |

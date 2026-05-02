@@ -21,7 +21,7 @@ steps:
 
       You already know two languages. JavaScript powers everything from Discord and Spotify's web player to Netflix's backend. Here is how it fits into your mental model:
 
-      | | C++ | Python | JavaScript (Node.js) |
+      | Aspect | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
       | Typing | Static | Dynamic | Dynamic |
       | Memory | Manual (`new`/`delete`) | GC (reference counting) | GC (V8 engine) |

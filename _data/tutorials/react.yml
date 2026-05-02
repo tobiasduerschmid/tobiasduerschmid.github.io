@@ -42,7 +42,7 @@ steps:
       }
       ```
 
-      | | Imperative (Vanilla JS / C++) | Declarative (React) |
+      | Aspect | Imperative (Vanilla JS / C++) | Declarative (React) |
       |---|---|---|
       | **Mindset** | *How* to reach the state | *What* the state should look like |
       | **Analogy** | Turn-by-turn GPS directions | Dropping a pin on the destination |

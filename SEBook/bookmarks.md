@@ -192,6 +192,7 @@ layout: sebook
         <span class="bookmarks-info-btn" tabindex="0" aria-label="Info about bookmarks">?<span class="bookmarks-info-tooltip">When activated, a bookmark icon appears in the toolbar of every SEBook page. Click it to add or remove the page from your bookmarks list. Bookmarks are stored in a local browser cookie and are not shared with any server.</span></span>
       </span>
       <label class="switch">
+        <span class="sr-only">Toggle bookmarks activation</span>
         <input type="checkbox" id="activateBookmarksToggle" aria-label="Toggle bookmarks activation">
         <span class="slider round"></span>
       </label>

@@ -728,7 +728,7 @@ steps:
 
       🧭 **Bridge from Step 2.** A stub *answers* the SUT's questions. A spy *also records* what the SUT did. The new conceptual move:
 
-      | | Stub (Step 2) | Spy (Step 3) |
+      | Aspect | Stub (Step 2) | Spy (Step 3) |
       |---|---|---|
       | What the test asserts on | The SUT's **return value** | The recorded **calls** on the spy |
       | What the SUT looks like | A function that returns something | Often a method that returns `None` (fire-and-forget) |
@@ -1603,7 +1603,7 @@ steps:
 
       Read the *second pair of tests* in the file: `test_loose_mock_accepts_wrong_call` and `test_autospec_rejects_wrong_call`. Both run successfully — but they verify *very different* things.
 
-      | | Loose Mock (no spec) | Autospec'd Mock |
+      | Concern | Loose Mock (no spec) | Autospec'd Mock |
       |---|---|---|
       | Setup | `with patch("X") as m:` | `with patch("X", autospec=True) as m:` |
       | What `m(wrong_args)` does | Silently records the call | Raises `TypeError` because the real function's signature is enforced |

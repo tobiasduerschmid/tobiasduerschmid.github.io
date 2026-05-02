@@ -46,7 +46,7 @@ In practice, most systems that need P2P benefits use a **hybrid** approach: some
 
 ### Comparing Architectures
 
-| | Client-Server | Peer-to-Peer | Hybrid |
+| Aspect | Client-Server | Peer-to-Peer | Hybrid |
 |---|---|---|---|
 | **Structure** | Centralized | Decentralized | Mixed |
 | **Single point of failure** | Yes (the server) | No | Partial |
@@ -256,7 +256,7 @@ note over client, server: Connection closed
 
 ## TCP vs. UDP — Trade-Offs at a Glance
 
-| | TCP | UDP |
+| Aspect | TCP | UDP |
 |---|---|---|
 | **Message order** | Preserved | Any order |
 | **Error detection** | Included (checksums) | Included (checksums), but no error *recovery* |

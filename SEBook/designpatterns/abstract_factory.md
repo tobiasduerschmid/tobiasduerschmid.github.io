@@ -393,7 +393,7 @@ Applying the Abstract Factory pattern results in several significant architectur
 
 Understanding when each creational pattern applies requires examining *which sub-problem of object creation* each one solves:
 
-| | **[Factory Method](/SEBook/designpatterns/factory_method.html)** | **Abstract Factory** | **[Builder](/SEBook/designpatterns/builder.html)** |
+| Comparison point | **[Factory Method](/SEBook/designpatterns/factory_method.html)** | **Abstract Factory** | **[Builder](/SEBook/designpatterns/builder.html)** |
 |---|---|---|---|
 | **Focus** | One product type | Family of related product types | Complex product with many parts |
 | **Mechanism** | Inheritance (subclass overrides) | Composition (client receives factory object) | Step-by-step construction algorithm |

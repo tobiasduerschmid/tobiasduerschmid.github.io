@@ -502,7 +502,7 @@ NoSQL is not one system but four broad families, each optimized for a different 
 
 ## Trade-offs vs. RDBMS
 
-|  | Relational (RDBMS) | NoSQL (typical) |
+| Concern | Relational (RDBMS) | NoSQL (typical) |
 |---|---|---|
 | **Schema** | Strict and enforced | Flexible, often schema-on-read |
 | **Transactions** | Full ACID across multiple rows/tables | Often limited to single-record; many systems relax isolation |

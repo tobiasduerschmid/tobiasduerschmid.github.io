@@ -1208,7 +1208,7 @@ Remote servers typically host **bare repositories** (created with `git init --ba
 
 They sound similar and both "get code from a remote," which causes endless confusion. They do fundamentally different jobs:
 
-| | `git clone <url>` | `git pull` |
+| Question | `git clone <url>` | `git pull` |
 |---|---|---|
 | **When you run it** | Once per project, to get started | Repeatedly, to catch up with teammates' commits |
 | **Needs an existing local repo?** | **No** — you run it outside of any repo | **Yes** — you run it inside the repo |

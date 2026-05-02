@@ -839,6 +839,12 @@ function runDomAudit() {
       findings.push({ criterion: '2.4.6', severity: 'fail', message: `Visible heading has no text or image alt content: ${shortNode(heading)}` });
     }
   });
+  document.querySelectorAll('th, [role="columnheader"], [role="rowheader"]').forEach((header) => {
+    if (!isVisible(header)) return;
+    if (!elementHasMeaningfulContent(header)) {
+      findings.push({ criterion: '1.3.1', severity: 'fail', message: `Visible table header has no text or image alt content: ${shortNode(header)}` });
+    }
+  });
   document.querySelectorAll('input[type="image"]').forEach((input) => {
     if (!accessibleName(input)) findings.push({ criterion: '1.1.1', severity: 'fail', message: `Image input is missing accessible name: ${shortNode(input)}` });
   });
@@ -866,7 +872,6 @@ function runDomAudit() {
   });
 
   document.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]), select, textarea').forEach((el) => {
-    if (!isVisible(el)) return;
     if (!accessibleName(el)) {
       findings.push({ criterion: '3.3.2', severity: 'fail', message: `Form control is missing a label or instructions: ${shortNode(el)}` });
     }
@@ -894,7 +899,7 @@ function runDomAudit() {
       return;
     }
     if (!control) return;
-    if (!labelHasMeaningfulContent(label) && !accessibleName(control)) {
+    if (!labelHasMeaningfulContent(label)) {
       findings.push({ criterion: '3.3.2', severity: 'fail', message: `Form label is associated with a control but has no text or image alt content: ${shortNode(label)}` });
     }
   });

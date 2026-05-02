@@ -853,7 +853,7 @@ steps:
       @enduml
       </code></pre>
 
-      | | SPA | SSR |
+      | Aspect | SPA | SSR |
       |---|---|---|
       | **Server compute** | Low | High |
       | **Initial load time** | Slow (JS must download first) | Fast (pre-rendered HTML) |

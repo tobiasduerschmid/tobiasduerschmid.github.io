@@ -36,6 +36,7 @@ layout: sebook
                 you to add flash cards and quizzes to your personal gym stored in a local cookie.</span></span>
           </span>
           <label class="switch">
+            <span class="sr-only">Toggle personal gym activation</span>
             <input type="checkbox" id="activatePersonalGymToggle" aria-label="Toggle personal gym activation">
             <span class="slider round"></span>
           </label>
@@ -52,6 +53,7 @@ layout: sebook
                   data remains on your local device and is not shared with the provider of the site.</span></span>
             </span>
             <label class="switch">
+              <span class="sr-only">Toggle performance analysis</span>
               <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
               <span class="slider round"></span>
             </label>
@@ -198,6 +200,7 @@ layout: sebook
             <i class="fa-solid fa-upload"></i> Upload Tutorial Progress
           </button>
           <input type="file" id="upload-tutorial-progress-input" accept="application/json,.json"
+            title="Upload tutorial progress JSON" aria-label="Upload tutorial progress JSON"
             style="display:none;" />
         </div>
       </div>
