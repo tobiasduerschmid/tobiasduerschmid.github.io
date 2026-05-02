@@ -72,44 +72,40 @@ info_nav_title: "My Settings"
 
   .setting-name {
     font-weight: 700;
-    margin: 0 0 4px;
+    margin: 0 0 6px;
+    font-size: 1.05rem;
   }
   .setting-description {
     margin: 0;
-    color: #555;
-    line-height: 1.45;
+    color: #393f47;
+    line-height: 1.5;
   }
-  html.dark-mode .setting-description { color: #b0b0b0; }
-  .setting-storage {
-    display: block;
-    margin-top: 6px;
-    color: #6a737d;
-    font-size: 0.9em;
-  }
-  html.dark-mode .setting-storage { color: #a8b3c2; }
-  .setting-storage code {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
+  html.dark-mode .setting-description { color: #d8dde3; }
+  .setting-description + .setting-description { margin-top: 6px; }
 
   .setting-control {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-  }
-  .setting-check {
-    display: flex;
     gap: 10px;
+    align-items: flex-start;
+  }
+  /* Toggle row uses the site-wide .switch component (see css/portfolio.css)
+     so it matches the SE Gym and SEBook navbar toggles. The visible
+     status text on the right of the slider tells users at a glance
+     whether the option is on or off without forcing them to read the
+     slider position. */
+  .setting-toggle-row {
+    display: inline-flex;
     align-items: center;
+    gap: 12px;
     min-height: 32px;
+  }
+  .setting-toggle-status {
     font-weight: 600;
+    color: #393f47;
+    min-width: 28px;
   }
-  .setting-check input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin: 0;
-  }
+  html.dark-mode .setting-toggle-status { color: #e8edf2; }
   .setting-control select,
   .setting-control input[type="text"],
   .setting-control input[type="color"] {
@@ -206,6 +202,10 @@ info_nav_title: "My Settings"
   }
   html.dark-mode .settings-status { color: #8bd17c; }
 
+  /* Rows that hold purely informational copy (no input on the right)
+     stretch full-width so the explanation can breathe. */
+  .setting-row-full { grid-template-columns: 1fr; }
+
   @media (max-width: 680px) {
     .settings-page {
       padding: 0 12px 48px;
@@ -222,55 +222,75 @@ info_nav_title: "My Settings"
 
   <div class="settings-intro">
     <p>
-      These are the preferences this site lets you change. They are stored only in
-      your browser as cookies or <code>localStorage</code>; nothing is sent to a server.
+      Make this site work the way you like it. Everything here is private to
+      this browser — your choices stay on your device and aren't sent anywhere.
     </p>
     <p>
-      To inspect or delete raw stored values, use
+      Power users who want to peek at or wipe the raw saved data can use
       <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
     </p>
   </div>
 
   <form class="settings-form" id="settings-form">
     <fieldset class="settings-section">
-      <legend>Appearance and motion</legend>
+      <legend>How the site looks and moves</legend>
       <div class="settings-list">
         <div class="setting-row">
           <div>
             <p class="setting-name">Dark mode</p>
-            <p class="setting-description">Use the site's dark color theme.</p>
-            <span class="setting-storage">Cookie: <code>dark-mode</code></span>
+            <p class="setting-description">
+              Switch the whole site to a dark color theme. Easier on your
+              eyes if you're reading at night, in a dim room, or for long
+              study sessions. Off by default.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-dark-mode">
-              <input type="checkbox" id="setting-dark-mode" data-setting="darkMode">
-              Dark mode
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Dark mode</span>
+                <input type="checkbox" id="setting-dark-mode" data-setting="darkMode" data-status-target="setting-dark-mode-status" aria-label="Dark mode">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-dark-mode-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
             <p class="setting-name">Text highlights</p>
-            <p class="setting-description">Show highlighted passages in articles and SEBook pages.</p>
-            <span class="setting-storage">Cookie: <code>show-highlights</code></span>
+            <p class="setting-description">
+              The SEBook and articles use yellow highlights to call out the
+              key sentence in long sections. Turn this off if you'd rather
+              read everything at the same visual weight (e.g. when printing
+              or annotating yourself).
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-highlights">
-              <input type="checkbox" id="setting-highlights" data-setting="highlights">
-              Show highlights
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Text highlights</span>
+                <input type="checkbox" id="setting-highlights" data-setting="highlights" data-status-target="setting-highlights-status" aria-label="Show text highlights">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-highlights-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Motion preference</p>
-            <p class="setting-description">Follow your operating system's reduced-motion preference, or always reduce optional animations on this site.</p>
-            <span class="setting-storage">localStorage: <code>prefersReducedMotion</code></span>
+            <p class="setting-name">Motion</p>
+            <p class="setting-description">
+              Some pages use small animations (fades, slides, transitions).
+              Choose <em>Follow system setting</em> to respect your OS-level
+              "reduce motion" preference, or pick <em>Always reduce motion</em>
+              to keep this site calm regardless of OS settings — useful if
+              motion makes you queasy or distracted.
+            </p>
           </div>
           <div class="setting-control">
-            <label for="setting-reduced-motion" class="setting-name">Reduced motion</label>
+            <label for="setting-reduced-motion" class="sr-only">Motion</label>
             <select id="setting-reduced-motion" data-setting="reducedMotion">
               <option value="system">Follow system setting</option>
               <option value="reduce">Always reduce motion on this site</option>
@@ -281,45 +301,65 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Glossary abbreviation underlines</p>
-            <p class="setting-description">Show visible dotted underlines on glossary abbreviations in body content. Headings never receive automatic abbreviation markup.</p>
-            <span class="setting-storage">localStorage: <code>abbr-underlines</code></span>
+            <p class="setting-name">Glossary underlines</p>
+            <p class="setting-description">
+              Course-specific abbreviations like <abbr>SOLID</abbr> or
+              <abbr>TDD</abbr> get a dotted underline so you can hover (or
+              tap on mobile) for a quick definition. Turn this off if the
+              underlines feel busy — the hover definitions still work.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-abbr-underlines">
-              <input type="checkbox" id="setting-abbr-underlines" data-setting="abbrUnderlines">
-              Underline glossary abbreviations
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Glossary underlines</span>
+                <input type="checkbox" id="setting-abbr-underlines" data-setting="abbrUnderlines" data-status-target="setting-abbr-underlines-status" aria-label="Glossary underlines">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-abbr-underlines-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
       </div>
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Reading and audio</legend>
+      <legend>Reading aloud and audio</legend>
       <div class="settings-list">
         <div class="setting-row">
           <div>
-            <p class="setting-name">Read-aloud controls</p>
-            <p class="setting-description">Show text-to-speech controls on supported pages.</p>
-            <span class="setting-storage">Cookie: <code>read-aloud</code></span>
+            <p class="setting-name">Read-aloud button</p>
+            <p class="setting-description">
+              Show the "Read aloud" button at the top of articles and SEBook
+              pages. Click it and the page is read to you using your
+              browser's text-to-speech voice — handy for studying on a walk,
+              while cooking, or as an extra pass over dense material.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-read-aloud">
-              <input type="checkbox" id="setting-read-aloud" data-setting="readAloud">
-              Show read-aloud controls
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Read-aloud button</span>
+                <input type="checkbox" id="setting-read-aloud" data-setting="readAloud" data-status-target="setting-read-aloud-status" aria-label="Show read-aloud button">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-read-aloud-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
             <p class="setting-name">Read-aloud voice</p>
-            <p class="setting-description">Choose the browser voice used by the read-aloud feature.</p>
-            <span class="setting-storage">localStorage: <code>tts-voice-name</code></span>
+            <p class="setting-description">
+              Pick which voice the Read-aloud button uses. The voices
+              available come from your browser and operating system —
+              Chrome and Safari ship the largest selections, Firefox is more
+              limited. If a voice sounds robotic, try a different one.
+            </p>
           </div>
           <div class="setting-control">
-            <label for="setting-tts-voice" class="setting-name">Voice</label>
+            <label for="setting-tts-voice" class="sr-only">Read-aloud voice</label>
             <select id="setting-tts-voice" data-setting="ttsVoice">
               <option value="">Browser default</option>
             </select>
@@ -329,12 +369,15 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Audio volume</p>
-            <p class="setting-description">Default volume for embedded audio players.</p>
-            <span class="setting-storage">localStorage: <code>cap_volume</code></span>
+            <p class="setting-name">Audio clip volume</p>
+            <p class="setting-description">
+              Default volume for the inline audio clips that play short
+              concept explanations on SEBook pages. Drop it lower if you're
+              in a quiet room or studying with friends.
+            </p>
           </div>
           <div class="setting-control">
-            <label for="setting-audio-volume" class="setting-name">Volume</label>
+            <label for="setting-audio-volume" class="sr-only">Audio clip volume</label>
             <div class="settings-range-line">
               <input type="range" id="setting-audio-volume" min="0" max="1" step="0.05" data-setting="audioVolume">
               <output class="settings-value" id="setting-audio-volume-value" for="setting-audio-volume"></output>
@@ -344,12 +387,15 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Audio speed</p>
-            <p class="setting-description">Default playback speed for embedded audio players.</p>
-            <span class="setting-storage">localStorage: <code>cap_speed</code></span>
+            <p class="setting-name">Audio clip speed</p>
+            <p class="setting-description">
+              Default playback speed for inline audio clips. Bumping to 1.25x
+              or 1.5x is a real time-saver on a re-listen — start at 1x,
+              speed up once you're familiar with the material.
+            </p>
           </div>
           <div class="setting-control">
-            <label for="setting-audio-speed" class="setting-name">Playback speed</label>
+            <label for="setting-audio-speed" class="sr-only">Audio clip speed</label>
             <select id="setting-audio-speed" data-setting="audioSpeed">
               <option value="0.75">0.75x</option>
               <option value="1">1x</option>
@@ -367,26 +413,40 @@ info_nav_title: "My Settings"
       <div class="settings-list">
         <div class="setting-row">
           <div>
-            <p class="setting-name">Tutorial autosave</p>
-            <p class="setting-description">Automatically save tutorial code and current step in this browser.</p>
-            <span class="setting-storage">localStorage: <code>tutorial-autosave</code></span>
+            <p class="setting-name">Save my tutorial work</p>
+            <p class="setting-description">
+              When this is on, the code you write in any tutorial — plus the
+              step you're on — is saved automatically so you can close the
+              tab and pick up exactly where you left off. Turn it off if
+              you're using a shared computer and don't want your work to
+              persist after you close the browser.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-tutorial-autosave">
-              <input type="checkbox" id="setting-tutorial-autosave" data-setting="tutorialAutosave">
-              Autosave tutorial work
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Save my tutorial work</span>
+                <input type="checkbox" id="setting-tutorial-autosave" data-setting="tutorialAutosave" data-status-target="setting-tutorial-autosave-status" aria-label="Save my tutorial work">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-tutorial-autosave-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">UML accent color</p>
-            <p class="setting-description">Custom accent color used by supported UML diagram renderers.</p>
-            <span class="setting-storage">Cookie: <code>uml-accent-color</code></span>
+            <p class="setting-name">UML diagram color</p>
+            <p class="setting-description">
+              The interactive UML diagrams across the site (class, sequence,
+              state, …) use this color for their accents and edges. The
+              default UCLA blue suits most people, but if you want
+              higher contrast, use your school's color, or just want
+              something fun, change it here.
+            </p>
           </div>
           <div class="setting-control">
-            <label for="setting-uml-color" class="setting-name">Accent color</label>
+            <label for="setting-uml-color" class="sr-only">UML diagram color</label>
             <div class="settings-actions">
               <input type="color" id="setting-uml-color" value="#2774AE" data-setting="umlColor">
               <button class="settings-btn" type="button" id="setting-uml-color-reset">Use default</button>
@@ -397,78 +457,113 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Personal study tools</legend>
+      <legend>Bookmarks, gym, and progress</legend>
       <div class="settings-list">
         <div class="setting-row">
           <div>
             <p class="setting-name">SEBook bookmarks</p>
-            <p class="setting-description">Show bookmark controls on SEBook pages.</p>
-            <span class="setting-storage">Cookie: <code>se-bookmarks-active</code></span>
+            <p class="setting-description">
+              Adds a small bookmark icon next to each SEBook page heading so
+              you can save the spots you want to revisit (e.g. before an
+              exam) and a sidebar listing them. Bookmarks live only in this
+              browser.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-bookmarks">
-              <input type="checkbox" id="setting-bookmarks" data-setting="bookmarks">
-              Enable bookmarks
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">SEBook bookmarks</span>
+                <input type="checkbox" id="setting-bookmarks" data-setting="bookmarks" data-status-target="setting-bookmarks-status" aria-label="SEBook bookmarks">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-bookmarks-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
             <p class="setting-name">SE Gym</p>
-            <p class="setting-description">Enable the personal question and flashcard gym.</p>
-            <span class="setting-storage">Cookie: <code>se-gym-active</code></span>
+            <p class="setting-description">
+              Turn on your personal study gym — pick the quizzes and
+              flashcard sets you want to drill, then the gym shuffles them
+              into a workout. Great for spaced practice the week before an
+              exam. Off by default; opt in here.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-se-gym">
-              <input type="checkbox" id="setting-se-gym" data-setting="seGym">
-              Enable SE Gym
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">SE Gym</span>
+                <input type="checkbox" id="setting-se-gym" data-setting="seGym" data-status-target="setting-se-gym-status" aria-label="SE Gym">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-se-gym-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Performance tracking</p>
-            <p class="setting-description">Track seen/correct counts locally so SE Gym can surface your most difficult questions.</p>
-            <span class="setting-storage">Cookie: <code>analyze-performance</code>; localStorage: <code>se-gym-stats</code></span>
+            <p class="setting-name">Track which questions trip me up</p>
+            <p class="setting-description">
+              Lets the SE Gym keep a private tally of how often you see each
+              quiz or flashcard question and how often you get it right. The
+              gym then surfaces a "Difficult Questions" workout for the
+              ones you keep missing. The data never leaves this browser.
+            </p>
           </div>
           <div class="setting-control">
-            <label class="setting-check" for="setting-performance">
-              <input type="checkbox" id="setting-performance" data-setting="performance">
-              Track performance locally
-            </label>
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Track difficult questions</span>
+                <input type="checkbox" id="setting-performance" data-setting="performance" data-status-target="setting-performance-status" aria-label="Track which questions trip me up">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-performance-status" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
       </div>
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Per-page tutorial state</legend>
+      <legend>What each tutorial remembers</legend>
       <div class="settings-list">
-        <div class="setting-row">
+        <div class="setting-row setting-row-full">
           <div>
-            <p class="setting-name">Tutorial editor layout</p>
-            <p class="setting-description">Individual tutorials remember editor split sizes, popout recovery state, debugger breakpoints, and collapsed debugger panels on the page where you change them.</p>
-            <span class="setting-storage">localStorage prefixes: <code>tutorial-editor-split-</code>, <code>tutorial-popout-state-</code>, <code>tutorial-debug-bps-</code>, <code>tutorial-debug-watchpoint-remove-choice-</code>, <code>tutorial-debug-section-</code>, <code>tutorial-debug-subsection-</code></span>
-          </div>
-          <div class="setting-control">
-            <p class="settings-note">
-              Change these inside each tutorial. Delete stored values from
-              <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
+            <p class="setting-name">Tutorial layout and breakpoints</p>
+            <p class="setting-description">
+              Each tutorial separately remembers a few things you set <em>on
+              that tutorial</em>: how you split the editor and output panes,
+              which side panels you popped out, the breakpoints you placed
+              in the time-travel debugger, and which debugger sections you
+              expanded or collapsed.
+            </p>
+            <p class="setting-description">
+              Change these inside the tutorial itself — drag the splitters,
+              click the popout buttons, set breakpoints on the gutter. To
+              wipe a tutorial's memory and start fresh, open
+              <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>
+              and delete the entries for that tutorial.
             </p>
           </div>
         </div>
 
-        <div class="setting-row">
+        <div class="setting-row setting-row-full">
           <div>
             <p class="setting-name">Tutorial progress and code</p>
-            <p class="setting-description">When autosave is enabled, tutorial code, current step, and standalone tutorial progress are saved per tutorial.</p>
-            <span class="setting-storage">localStorage prefixes/keys: <code>tutorial-progress-</code>, <code>regex-tutorial-progress</code>, <code>regex-tutorial-advanced-progress</code></span>
-          </div>
-          <div class="setting-control">
-            <p class="settings-note">
-              Use Tutorial autosave above to choose whether new tutorial work is saved.
+            <p class="setting-description">
+              When <em>Save my tutorial work</em> (above) is on, every
+              tutorial saves the code you typed and the step you're on, so
+              you can come back later and resume. The standalone Regex
+              Crossword and other mini-tutorials save progress the same way.
+            </p>
+            <p class="setting-description">
+              Use the <em>Save my tutorial work</em> switch to control whether
+              <em>new</em> work is saved. To erase already-saved progress for
+              a specific tutorial, use
+              <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
             </p>
           </div>
         </div>
@@ -525,7 +620,17 @@ info_nav_title: "My Settings"
 
   function setCheckbox(id, value) {
     var el = document.getElementById(id);
-    if (el) el.checked = !!value;
+    if (!el) return;
+    el.checked = !!value;
+    syncToggleStatus(el);
+  }
+
+  function syncToggleStatus(input) {
+    if (!input) return;
+    var targetId = input.getAttribute('data-status-target');
+    if (!targetId) return;
+    var target = document.getElementById(targetId);
+    if (target) target.textContent = input.checked ? 'On' : 'Off';
   }
 
   function getSystemReduceMotion() {
@@ -645,6 +750,8 @@ info_nav_title: "My Settings"
     if (!target || !target.getAttribute) return;
     var setting = target.getAttribute('data-setting');
     if (!setting) return;
+
+    if (target.type === 'checkbox') syncToggleStatus(target);
 
     if (setting === 'darkMode') {
       writeCookie('dark-mode', target.checked ? 'true' : 'false');
