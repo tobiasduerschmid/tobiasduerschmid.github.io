@@ -829,7 +829,7 @@ html.dark-mode .highlight .vg,
 html.dark-mode .highlight .vi { color: #9cdcfe; }
 html.dark-mode .highlight .nb,
 html.dark-mode .highlight .bp { color: #569cd6; } /* Blue for builtins (set, echo) to match Monaco Shell */
-html.dark-mode .highlight .nt { color: #f44747; } /* Red for options (-e, +x) to match Monaco Shell */
+html.dark-mode .highlight .nt { color: #ff6363; } /* Red for options (-e, +x) to match Monaco Shell — bumped from #f44747 to clear 4.5:1 against #1e1e1e */
 html.dark-mode .highlight .o { color: #d4d4d4; }
 
 
@@ -1293,6 +1293,12 @@ html.dark-mode .flashcard-explanation {
 	padding: 10px 14px;
 	margin: 20px 0 10px 0;
 	line-height: 1.5;
+}
+
+/* WCAG 1.4.1: link must be distinguishable from surrounding text without
+   relying on colour alone. Underline the link inside the cookie notice. */
+.cookie-notice a[href] {
+	text-decoration: underline;
 }
 
 html.dark-mode .cookie-notice {

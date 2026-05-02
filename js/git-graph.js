@@ -83,7 +83,144 @@
   // Each GitGraph gets a unique arrow-marker id so multiple graphs on the
   // same page (e.g. the 7-step print grid) don't collide on element ids.
   var _instanceCounter = 0;
+  var _liveInstances = [];
+  var _themeObserver = null;
+  function _ensureThemeObserver() {
+    if (_themeObserver || typeof MutationObserver === 'undefined' || !document.documentElement) return;
+    _themeObserver = new MutationObserver(function (mutations) {
+      var classChanged = mutations.some(function (m) {
+        return m.type === 'attributes' && m.attributeName === 'class';
+      });
+      if (!classChanged) return;
+      // Re-render every live instance with its last data so colour helpers
+      // pick up the new `--git-graph-bg` and re-derive readable text fills.
+      for (var i = _liveInstances.length - 1; i >= 0; i--) {
+        var inst = _liveInstances[i];
+        if (!inst.container || !document.documentElement.contains(inst.container)) {
+          _liveInstances.splice(i, 1);
+          continue;
+        }
+        if (inst._data) {
+          try { inst.render(inst._data); } catch (e) { /* ignore re-render errors */ }
+        }
+      }
+    });
+    _themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  }
   function _snapHalf(v) { return Math.round(v * 2) / 2; }
+
+  // Colour helpers used to keep SVG text legible against the branch palette.
+  // The graph paints text on top of branch-coloured circles and tinted chips,
+  // and several palette entries (gold, green) have light luminance — so a
+  // hard-coded white or branch-colour text fill drops below WCAG 1.4.3 AA.
+  function _hexToRgb(hex) {
+    if (!hex) return null;
+    var h = hex.trim().replace(/^#/, '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (h.length !== 6 || /[^0-9a-f]/i.test(h)) return null;
+    return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+  }
+  function _rgbToHex(c) {
+    var to2 = function (n) { var s = Math.max(0, Math.min(255, Math.round(n))).toString(16); return s.length === 1 ? '0' + s : s; };
+    return '#' + to2(c.r) + to2(c.g) + to2(c.b);
+  }
+  function _channelLin(n) {
+    var c = n / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function _relLuminance(rgb) {
+    return 0.2126 * _channelLin(rgb.r) + 0.7152 * _channelLin(rgb.g) + 0.0722 * _channelLin(rgb.b);
+  }
+  function _contrast(a, b) {
+    var la = _relLuminance(a), lb = _relLuminance(b);
+    var lighter = Math.max(la, lb), darker = Math.min(la, lb);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+  // Pick whichever of black/white gives the higher contrast against `bgHex`,
+  // returning a near-black (#1a1a1a) when dark wins so we match the rest of
+  // the diagram chrome rather than introducing pure black.
+  function _pickReadableOn(bgHex) {
+    var bg = _hexToRgb(bgHex) || { r: 255, g: 255, b: 255 };
+    var dark = { r: 26, g: 26, b: 26 };
+    var light = { r: 255, g: 255, b: 255 };
+    return _contrast(dark, bg) >= _contrast(light, bg) ? '#1a1a1a' : '#ffffff';
+  }
+  function _rgbToHsl(c) {
+    var r = c.r / 255, g = c.g / 255, b = c.b / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return { h: h, s: s, l: l };
+  }
+  function _hslToRgb(h, s, l) {
+    var r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      var hue2rgb = function (p, q, t) {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      var p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return { r: r * 255, g: g * 255, b: b * 255 };
+  }
+  // Adjust `hex` along its HSL lightness axis (darken or lighten, whichever
+  // direction reaches the contrast target faster) until it has at least
+  // `target` contrast against `againstHex`. Used for branch labels where
+  // we want the text to keep the brand hue but be readable in either theme.
+  function _adjustForContrast(hex, againstHex, target) {
+    var rgb = _hexToRgb(hex);
+    var bg = _hexToRgb(againstHex);
+    if (!rgb || !bg) return hex;
+    if (_contrast(rgb, bg) >= target) return hex;
+    var hsl = _rgbToHsl(rgb);
+    var bgL = _rgbToHsl(bg).l;
+    // If the background is light, darken the foreground; if dark, lighten it.
+    var dir = bgL > 0.5 ? -1 : 1;
+    for (var step = 1; step <= 80; step++) {
+      var l = Math.max(0, Math.min(1, hsl.l + dir * step * 0.015));
+      var candidate = _hslToRgb(hsl.h, hsl.s, l);
+      if (_contrast(candidate, bg) >= target) return _rgbToHex(candidate);
+      if (l <= 0 || l >= 1) break;
+    }
+    return dir < 0 ? '#1a1a1a' : '#ffffff';
+  }
+  // Read the current label background from the CSS custom property. Falls
+  // back to the light-mode default if the variable isn't set yet (e.g. when
+  // the helper is called before the host is mounted).
+  function _currentLabelBg(host) {
+    if (!host || typeof getComputedStyle !== 'function') return '#fafbfc';
+    var v = getComputedStyle(host).getPropertyValue('--git-graph-bg').trim();
+    return v || '#fafbfc';
+  }
+  // Branch label chips paint a translucent fill of the branch colour over the
+  // page background, so the *visual* backdrop the text sits on is brand-tinted —
+  // not pure page bg. Composite the chip fill at `opacity` over `bgHex` so the
+  // contrast helper sees the same colour the eye does.
+  function _compositeOver(topHex, bottomHex, topOpacity) {
+    var top = _hexToRgb(topHex), bottom = _hexToRgb(bottomHex);
+    if (!top || !bottom) return bottomHex;
+    var a = topOpacity;
+    return _rgbToHex({
+      r: top.r * a + bottom.r * (1 - a),
+      g: top.g * a + bottom.g * (1 - a),
+      b: top.b * a + bottom.b * (1 - a),
+    });
+  }
 
   // Promote an element to its own compositor layer just before we mutate its
   // `transform` (which kicks in the CSS transition), then drop the hint once
@@ -111,6 +248,13 @@
     this._data = null;
     this._animating = false;
     this._arrowId = 'git-graph-arrow-' + (++_instanceCounter);
+    // Register the live instance so the dark-mode observer can ask each one to
+    // redraw when the user toggles the theme — we bake colours into SVG attrs
+    // at render time, so nothing else picks up the new `--git-graph-bg` value.
+    if (container) {
+      _liveInstances.push(this);
+      _ensureThemeObserver();
+    }
     this._paddingLeft = PADDING_LEFT;
     // Pre-reserved layout dimensions — set by `reserveForStates` so the
     // first render already knows the widest left padding, widest SVG
@@ -1556,9 +1700,10 @@
     g.appendChild(circle);
 
     var hd = _hashDisplay(cm.shortHash);
+    var hashTextFill = _pickReadableOn(nodeColor);
     var hashText = this._svgEl('text', {
       x: 0, y: hd.dy, 'text-anchor': 'middle',
-      fill: nodeSecondary, 'font-size': hd.fontSize, 'font-weight': 600,
+      fill: hashTextFill, 'font-size': hd.fontSize, 'font-weight': 600,
       'class': 'git-graph-hash',
       'data-layout-id': cm.hash,
     });
@@ -1583,6 +1728,7 @@
     return {
       g: g, glow: glow, circle: circle, hashText: hashText, msgText: msgText,
       cx: cx, cy: cy, isHead: isHead, color: nodeColor, secondary: nodeSecondary,
+      hashTextFill: hashTextFill,
       message: cm.message, shortHash: cm.shortHash,
     };
   };
@@ -1604,10 +1750,14 @@
       entry.circle.setAttribute('fill', nodeColor);
       if (entry.glow) entry.glow.setAttribute('stroke', nodeColor);
       entry.color = nodeColor;
+      var newHashFill = _pickReadableOn(nodeColor);
+      if (entry.hashTextFill !== newHashFill) {
+        entry.hashText.setAttribute('fill', newHashFill);
+        entry.hashTextFill = newHashFill;
+      }
     }
     if (entry.secondary !== nodeSecondary) {
       entry.circle.setAttribute('stroke', nodeSecondary);
-      entry.hashText.setAttribute('fill', nodeSecondary);
       entry.secondary = nodeSecondary;
     }
     if (entry.message !== cm.message) {
@@ -1852,9 +2002,10 @@
     };
     if (isRemote) borderAttrs['stroke-dasharray'] = '4 3';
     chip.appendChild(this._svgEl('path', borderAttrs));
+    var brChipBg = _compositeOver(color, _currentLabelBg(this.container), isRemote ? 0.10 : 0.22);
     var tL = this._svgEl('text', {
       x: brXL + textW / 2, y: labelMidY + 4,
-      'text-anchor': 'middle', fill: color, 'font-size': 13,
+      'text-anchor': 'middle', fill: _adjustForContrast(color, brChipBg, 4.5), 'font-size': 13,
       'font-weight': isRemote ? 400 : 700, 'font-style': isRemote ? 'italic' : 'normal',
       'class': 'git-graph-branch-label',
     });
@@ -1870,7 +2021,12 @@
     var headW = headTextW + PTR_DEPTH;
     var fillColor = isDetached ? color : '#ffffff';
     var fillOpacity = isDetached ? 0.25 : 0.95;
-    var textColor = isDetached ? color : '#1a1a1a';
+    // Detached HEAD chip composites `color` at 0.25 opacity over the page bg.
+    // Match the visual backdrop when picking text colour so contrast is honest.
+    var headChipBg = isDetached
+      ? _compositeOver(color, _currentLabelBg(this.container), fillOpacity)
+      : _currentLabelBg(this.container);
+    var textColor = isDetached ? _adjustForContrast(color, headChipBg, 4.5) : '#1a1a1a';
 
     var d = this._pointerPath(-headW, -LABEL_HEIGHT / 2, headW, LABEL_HEIGHT);
 
@@ -2005,8 +2161,9 @@
       }
 
       var hd = _hashDisplay(cm.shortHash);
+      var hashFill = _pickReadableOn(color);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
-        'fill="' + secondary + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
+        'fill="' + hashFill + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
         this._escapeXml(hd.text) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 54;
@@ -2081,8 +2238,9 @@
         svg += '<path d="' + brD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
         svg += '<path d="' + brD + '" ' +
           'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
+        var brChipBgStr = _compositeOver(color, _currentLabelBg(this.container), 0.22);
         svg += '<text x="' + (brX + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
-          'text-anchor="middle" fill="' + color + '" font-size="13" font-weight="700" ' +
+          'text-anchor="middle" fill="' + _adjustForContrast(color, brChipBgStr, 4.5) + '" font-size="13" font-weight="700" ' +
           'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
         svg += '</g>';
         svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
@@ -2133,7 +2291,7 @@
       svg += '<path d="' + hD + '" ' +
         'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
       svg += '<text x="' + (hX + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
-        'text-anchor="middle" fill="' + DC + '" font-size="13" font-weight="700">HEAD</text>';
+        'text-anchor="middle" fill="' + _adjustForContrast(DC, _compositeOver(DC, _currentLabelBg(this.container), 0.25), 4.5) + '" font-size="13" font-weight="700">HEAD</text>';
       svg += lConnector(htipX, hlabelMidY, hcx - NODE_RADIUS - 2, hcy, DC, true);
       svg += '</g>';
     }

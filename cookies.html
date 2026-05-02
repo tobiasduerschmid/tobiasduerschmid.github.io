@@ -129,6 +129,16 @@ layout: framework
     overflow-wrap: anywhere;
   }
 
+  /* Prefix-list footnote under each table — pre-existing inline style was
+     #666 which fell to 3.26:1 in dark mode. Class-scoped so it themes
+     properly. */
+  .cookies-prefix-note {
+    font-size: 0.85em;
+    color: #555;
+    margin-top: -4px;
+  }
+  html.dark-mode .cookies-prefix-note { color: #b0b0b0; }
+
   .storage-value {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
@@ -492,7 +502,7 @@ layout: framework
       <tr class="empty-row"><td colspan="4">Scanning your browser&hellip;</td></tr>
     </tbody>
   </table>
-  <p style="font-size:0.85em; color:#666; margin-top:-4px;">
+  <p class="cookies-prefix-note">
     <em>Prefixes:</em>
     <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code &amp; current step &middot;
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;

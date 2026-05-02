@@ -1181,7 +1181,7 @@ Use `-X theirs` when integrating generated or vendored files where the incoming 
 
 Git really shines once you're sharing work with other people. This section opens with the two questions that trip up most newcomers.
 
-### What's the difference between a local and a remote repository?
+## What's the difference between a local and a remote repository?
 
 A **local repository** is the one on your laptop — the `.git/` folder inside your project directory. It's where your commits actually live while you work, and everything in this chapter up to now has only touched it.
 
@@ -2122,7 +2122,7 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 
 Mistakes reach your history eventually — a buggy commit, an accidental merge, an embarrassing message. Git provides two opposing tools for undoing committed work, plus a safety net that makes both survivable.
 
-### Why do we need two ways to "undo" a commit?
+## Why do we need two ways to "undo" a commit?
 
 Because there are two genuinely different situations, and they call for opposite strategies:
 

@@ -179,6 +179,17 @@ a {
     }
 }
 
+// WCAG 1.4.1 (Use of Color): links in body-text contexts must be distinguishable
+// from surrounding text without relying on colour alone. Underline anchors that
+// sit inside prose containers; navigation, sidebar, post-list, and explicitly
+// button/skip-link styled anchors keep their non-underlined treatment because
+// they have other affordances (layout, headings, hover, background).
+:is(.post-content, #main-content)
+    :is(p, blockquote, dd, td, th, figcaption, summary, li)
+    a[href]:not(.post-link, .skip-link, .button, .btn) {
+    text-decoration: underline;
+}
+
 
 
 
@@ -215,6 +226,13 @@ details summary {
     &:hover {
         text-decoration: underline;
     }
+}
+
+// Dark-mode summary text — UCLA blue at ~3.74:1 against the dark page bg fails
+// 1.4.3. Use a lighter blue that clears 4.5:1 and matches the cookie-notice
+// dark-mode accent (#4da3ff) used elsewhere on the site.
+html.dark-mode details summary {
+    color: #5fa8d3;
 }
 
 /**

@@ -1,11 +1,28 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const AxeBuilder = require('@axe-core/playwright').default;
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ROOT = path.join(ROOT, '_site');
-const REPORT_PATH = path.join(ROOT, 'tmp', 'wcag22-audit-results.json');
+const REPORT_PATH = path.join(ROOT, 'tmp', process.env.WCAG_AUDIT_REPORT_NAME || 'wcag22-audit-results.json');
+
+// Rules we already cover with calibrated custom checks. Disabling the axe
+// equivalent avoids double-reporting, since our versions are tuned for this
+// codebase (e.g. Monaco / MathJax exceptions for target-size, SVG <text>
+// support for color-contrast, dark-mode-aware contrast, link-in-text-block
+// matching the project's underline conventions).
+const AXE_RULES_HANDLED_LOCALLY = ['target-size', 'color-contrast', 'link-in-text-block'];
+
+// axe-core tags every WCAG-mapped rule with `wcagXYZ` (e.g. `wcag111`,
+// `wcag1410`, `wcag2411`). Build a reverse lookup so we can attach each axe
+// violation to the exact success criterion it maps to.
+const AXE_TAG_TO_CRITERION = (() => {
+  const map = new Map();
+  // Filled in once WCAG_22_AA is declared below.
+  return map;
+})();
 
 const MAX_PAGES_PER_FEATURE = Number(process.env.WCAG_AUDIT_PAGE_LIMIT || 0);
 const FULL_SWEEP = process.env.WCAG_AUDIT_FULL_SWEEP === '1';
@@ -137,8 +154,18 @@ const WCAG_22_AA = [
   ['4.1.3', 'AA', 'Status Messages'],
 ];
 
+for (const [id] of WCAG_22_AA) {
+  AXE_TAG_TO_CRITERION.set(`wcag${id.replace(/\./g, '')}`, id);
+}
+
 test.describe.configure({ mode: 'serial' });
-test.setTimeout(FULL_SWEEP ? 20 * 60 * 1000 : 5 * 60 * 1000);
+// Each page now does six passes (custom DOM light + dark, axe light + dark,
+// keyboard-driven focus walk, mobile reload at 320px), so a ~150-page sweep
+// runs roughly 30–60 min. Default 75 min for FULL_SWEEP; allow override for
+// slower runners via WCAG_AUDIT_TIMEOUT_MS.
+const AUDIT_TIMEOUT_MS = Number(process.env.WCAG_AUDIT_TIMEOUT_MS)
+  || (FULL_SWEEP ? 75 * 60 * 1000 : 5 * 60 * 1000);
+test.setTimeout(AUDIT_TIMEOUT_MS);
 
 test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
   const groups = allTargetUrls();
@@ -171,32 +198,76 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       await page.setViewportSize({ width: 1280, height: 900 });
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
+
+      // Light-mode DOM audit (custom checks).
       const desktop = await page.evaluate(runDomAudit);
-      let darkMode = { findings: [], evidence: {} };
-      if (url === '/404.html') {
-        await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-        darkMode = await page.evaluate(runDomAudit);
-        await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
-      }
+
+      // axe-core, light mode. Run with all WCAG 2.2 AA tags. axe complements
+      // our custom checks by covering ARIA validity, list/table/dl markup,
+      // language validity, meta-refresh, etc. — areas the custom checker
+      // doesn't address.
+      const axeLight = await runAxeAudit(page);
+
+      // Dark-mode pass — flip the theme and re-run the DOM audit, but keep
+      // only theme-sensitive findings (color contrast, use-of-color, non-text
+      // contrast). All other findings would duplicate the light-mode run.
+      // Project rule (CLAUDE.md / AGENTS.md): every page must work in both
+      // modes, not just /404.html.
+      await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+      await settleLoadedPage(page);
+      const darkRaw = await page.evaluate(runDomAudit);
+      const axeDark = await runAxeAudit(page);
+      await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+      await settleLoadedPage(page);
+      const darkMode = {
+        findings: darkRaw.findings
+          .filter((f) => f.criterion === '1.4.1' || f.criterion === '1.4.3' || f.criterion === '1.4.11')
+          .map((finding) => ({ ...finding, message: `Dark mode: ${finding.message}` })),
+        evidence: darkRaw.evidence,
+      };
+      const axeDarkContrast = {
+        findings: axeDark.findings
+          .filter((f) => f.criterion === '1.4.3' || f.criterion === '1.4.11' || f.criterion === '1.4.1')
+          .map((finding) => ({ ...finding, message: `Dark mode: ${finding.message}` })),
+      };
+
+      // Focus audit — uses real Playwright Tab presses (the previous
+      // implementation dispatched synthetic KeyboardEvents, which do NOT
+      // move focus in browsers, so the tab walker was effectively a no-op).
       const focus = await runFocusAudit(page);
+
+      // Mobile / reflow / text-spacing audit at 320px.
       await page.setViewportSize({ width: 320, height: 900 });
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
-      const mobile = await page.evaluate(runMobileAudit);
+      const mobileLight = await page.evaluate(runMobileAudit);
+      // Run again under dark mode at 320px — page.goto resets the class so we
+      // re-apply it, then audit reflow + target-size against the dark theme too.
+      await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+      await settleLoadedPage(page);
+      const mobileDark = await page.evaluate(runMobileAudit);
+      await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+      const mobile = {
+        findings: [
+          ...mobileLight.findings,
+          ...mobileDark.findings
+            .filter((f) => f.criterion === '1.4.3' || f.criterion === '2.5.8' || f.criterion === '1.4.10')
+            .map((f) => ({ ...f, message: `Dark mode @320px: ${f.message}` })),
+        ],
+        evidence: { ...mobileLight.evidence, darkModeAt320Checked: true },
+      };
+
       const findings = [
         ...desktop.findings,
-        ...darkMode.findings.map((finding) => ({
-          ...finding,
-          message: `Dark mode: ${finding.message}`,
-        })),
+        ...axeLight.findings,
+        ...darkMode.findings,
+        ...axeDarkContrast.findings,
         ...focus.findings,
         ...mobile.findings,
-        ...pageErrors.map((message) => ({
-          criterion: '4.1.2',
-          severity: 'review',
-          message: `Runtime page error may affect programmatic name/role/value: ${message}`,
-        })),
       ];
+      // Runtime page errors are recorded as evidence but no longer mapped
+      // onto WCAG 4.1.2 — a JS error doesn't necessarily mean a Name/Role/
+      // Value violation, and conflating the two skewed the criterion matrix.
       const pageRecord = {
         url,
         status: response ? response.status() : null,
@@ -208,7 +279,16 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
         },
         findingCount: findings.length,
         findings,
-        evidence: { ...desktop.evidence, postJavascriptDomChecked: true, darkMode404Checked: url === '/404.html', ...focus.evidence, ...mobile.evidence },
+        runtimePageErrors: pageErrors,
+        evidence: {
+          ...desktop.evidence,
+          postJavascriptDomChecked: true,
+          darkModeChecked: true,
+          axeRulesEvaluated: axeLight.evidence?.rulesEvaluated ?? null,
+          axeDarkRulesEvaluated: axeDark.evidence?.rulesEvaluated ?? null,
+          ...focus.evidence,
+          ...mobile.evidence,
+        },
         criteria: buildCriteriaMatrix(findings, desktop.evidence),
       };
       report.groups[feature].pages.push(pageRecord);
@@ -266,92 +346,211 @@ function buildCriteriaMatrix(findings, evidence) {
 }
 
 async function runFocusAudit(page) {
-  return page.evaluate(async () => {
-    const findings = [];
-    const seen = new Set();
-    const limit = 220;
-    const firstFocusable = document.querySelector('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    if (firstFocusable && !firstFocusable.matches('.skip-link')) {
-      findings.push({
-        criterion: '2.4.1',
-        severity: 'fail',
-        message: 'The first focusable control is not the skip link, so keyboard users may not be able to bypass repeated navigation first.',
-      });
-    }
-    for (let i = 0; i < limit; i += 1) {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
-      const before = document.activeElement;
-      if (!before) break;
-      if (before instanceof HTMLElement) before.blur();
-      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+  // Drive Tab from Playwright's keyboard API. Synthetic KeyboardEvents
+  // dispatched from inside `page.evaluate` do NOT advance focus in real
+  // browsers, so the previous implementation was effectively a no-op.
+  const findings = [];
+  const seen = new Set();
+  const limit = 220;
+
+  const firstFocusableInfo = await page.evaluate(() => {
+    const el = document.querySelector(
+      'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (!el) return null;
+    return { isSkipLink: el.matches('.skip-link') };
+  });
+  if (firstFocusableInfo && !firstFocusableInfo.isSkipLink) {
+    findings.push({
+      criterion: '2.4.1',
+      severity: 'fail',
+      message: 'The first focusable control is not the skip link, so keyboard users may not be able to bypass repeated navigation first.',
+    });
+  }
+
+  // Park focus at the top of the document so the first Tab lands on the
+  // first focusable element regardless of where the previous test ended up.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo(0, 0);
+  });
+
+  for (let i = 0; i < limit; i += 1) {
+    await page.keyboard.press('Tab');
+    const stop = await page.evaluate(() => {
       const active = document.activeElement;
-      if (!(active instanceof HTMLElement) || active === document.body) break;
-      const key = cssPath(active);
-      if (seen.has(key)) break;
-      seen.add(key);
+      if (!(active instanceof HTMLElement)) return null;
+      if (active === document.body || active === document.documentElement) return null;
+
+      const cssPath = (el) => {
+        if (el.id) return `#${CSS.escape(el.id)}`;
+        const parts = [];
+        let node = el;
+        while (node && node.nodeType === 1 && parts.length < 4) {
+          let part = node.localName;
+          if (node.classList && node.classList.length) {
+            part += `.${[...node.classList].slice(0, 2).map((c) => CSS.escape(c)).join('.')}`;
+          }
+          parts.unshift(part);
+          node = node.parentElement;
+        }
+        return parts.join(' > ');
+      };
+
       const rect = active.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) {
-        findings.push({
-          criterion: '2.4.7',
-          severity: 'fail',
-          message: `Focused element has no visible focus box: ${key}`,
-        });
-        continue;
-      }
-      const intersectsViewport = rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth;
-      if (!intersectsViewport) {
-        findings.push({
-          criterion: '2.4.11',
-          severity: 'fail',
-          message: `Focused element is outside the viewport: ${key}`,
-        });
-      }
-      const visiblePoint = findVisiblePoint(active, rect);
-      if (!visiblePoint) {
-        findings.push({
-          criterion: '2.4.11',
-          severity: 'fail',
-          message: `Focused element appears fully obscured by author-created content: ${key}`,
-        });
-      }
-      const outline = getComputedStyle(active).outlineStyle;
-      const boxShadow = getComputedStyle(active).boxShadow;
-      if (outline === 'none' && boxShadow === 'none') {
-        findings.push({
-          criterion: '2.4.7',
-          severity: 'review',
-          message: `Focused element has no computed outline or box-shadow; verify focus indicator is visible: ${key}`,
-        });
-      }
-    }
-    return { findings, evidence: { tabStopsChecked: seen.size } };
+      const intersectsViewport = rect.bottom > 0 && rect.right > 0
+        && rect.top < innerHeight && rect.left < innerWidth;
 
-    function cssPath(el) {
-      if (el.id) return `#${CSS.escape(el.id)}`;
-      const parts = [];
-      let node = el;
-      while (node && node.nodeType === 1 && parts.length < 4) {
-        let part = node.localName;
-        if (node.classList && node.classList.length) part += `.${[...node.classList].slice(0, 2).map((c) => CSS.escape(c)).join('.')}`;
-        parts.unshift(part);
-        node = node.parentElement;
-      }
-      return parts.join(' > ');
-    }
-
-    function findVisiblePoint(el, rect) {
-      const xs = [rect.left + rect.width / 2, rect.left + 2, rect.right - 2].filter((x) => x >= 0 && x < innerWidth);
-      const ys = [rect.top + rect.height / 2, rect.top + 2, rect.bottom - 2].filter((y) => y >= 0 && y < innerHeight);
+      // Hit-test a few candidate points to see whether the focused element is
+      // visible at all under fixed/sticky chrome (covers WCAG 2.4.11).
+      const xs = [rect.left + rect.width / 2, rect.left + 2, rect.right - 2]
+        .filter((x) => x >= 0 && x < innerWidth);
+      const ys = [rect.top + rect.height / 2, rect.top + 2, rect.bottom - 2]
+        .filter((y) => y >= 0 && y < innerHeight);
+      let visible = false;
       for (const x of xs) {
         for (const y of ys) {
           const top = document.elementFromPoint(x, y);
-          if (top && (top === el || el.contains(top))) return { x, y };
+          if (top && (top === active || active.contains(top))) { visible = true; break; }
         }
+        if (visible) break;
       }
-      return null;
+
+      const computed = getComputedStyle(active);
+      // Monaco editor and xterm terminal are "application" widgets that
+      // render their own focus visualization (blinking cursor, selection
+      // highlight) on a canvas the audit can't introspect. Their hidden
+      // <textarea> input intentionally has no outline / box-shadow and is
+      // intentionally covered by the editor surface — that's how Monaco /
+      // xterm work. Skip the visibility / outline checks for those, but
+      // still record that we tab-stopped through them.
+      const isApplicationWidget = !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen');
+      return {
+        cssPath: cssPath(active),
+        rectWidth: rect.width,
+        rectHeight: rect.height,
+        intersectsViewport,
+        visible,
+        outlineStyle: computed.outlineStyle,
+        boxShadow: computed.boxShadow,
+        isApplicationWidget,
+      };
+    });
+
+    if (!stop) break;
+    if (seen.has(stop.cssPath)) break;
+    seen.add(stop.cssPath);
+
+    if (stop.isApplicationWidget) continue;
+
+    if (stop.rectWidth === 0 || stop.rectHeight === 0) {
+      findings.push({
+        criterion: '2.4.7',
+        severity: 'fail',
+        message: `Focused element has no visible focus box: ${stop.cssPath}`,
+      });
+      continue;
     }
+    if (!stop.intersectsViewport) {
+      findings.push({
+        criterion: '2.4.11',
+        severity: 'fail',
+        message: `Focused element is outside the viewport: ${stop.cssPath}`,
+      });
+    }
+    if (!stop.visible) {
+      findings.push({
+        criterion: '2.4.11',
+        severity: 'fail',
+        message: `Focused element appears fully obscured by author-created content: ${stop.cssPath}`,
+      });
+    }
+    if (stop.outlineStyle === 'none' && stop.boxShadow === 'none') {
+      findings.push({
+        criterion: '2.4.7',
+        severity: 'review',
+        message: `Focused element has no computed outline or box-shadow; verify focus indicator is visible: ${stop.cssPath}`,
+      });
+    }
+  }
+
+  // Reverse pass — Shift+Tab from the last visited stop should be able to
+  // walk back to (or past) the start. Catches one-way focus traps where a
+  // custom widget swallows Shift+Tab (e.g. it intercepts keydown without
+  // checking shiftKey) and never returns focus to the document order.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   });
+  // Park focus at the bottom by tabbing to the last seen stop (or further),
+  // then walk Shift+Tab the same number of stops we walked forward.
+  const reverseLimit = Math.min(seen.size + 4, limit);
+  for (let i = 0; i < reverseLimit; i += 1) {
+    await page.keyboard.press('Tab');
+  }
+  const reverseSeen = new Set();
+  for (let i = 0; i < reverseLimit + 4; i += 1) {
+    await page.keyboard.press('Shift+Tab');
+    const stop = await page.evaluate(() => {
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement) || active === document.body || active === document.documentElement) return null;
+      return { tag: active.localName, id: active.id, klass: active.className && typeof active.className === 'string' ? active.className.split(/\s+/).slice(0, 2).join('.') : '' };
+    });
+    if (!stop) break;
+    const key = `${stop.tag}#${stop.id}.${stop.klass}`;
+    if (reverseSeen.has(key)) {
+      // Looping on the same element after Shift+Tab → reverse focus is trapped.
+      findings.push({
+        criterion: '2.1.2',
+        severity: 'fail',
+        message: `Reverse-tab focus stuck on ${key}; Shift+Tab does not move focus.`,
+      });
+      break;
+    }
+    reverseSeen.add(key);
+  }
+
+  return { findings, evidence: { tabStopsChecked: seen.size, reverseStopsChecked: reverseSeen.size } };
+}
+
+async function runAxeAudit(page) {
+  // Tag-only filter selects every rule that maps to a Level A or AA criterion
+  // we care about. We then drop rules we already cover in `runDomAudit` to
+  // avoid duplicate reports.
+  let result;
+  try {
+    result = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .disableRules(AXE_RULES_HANDLED_LOCALLY)
+      .analyze();
+  } catch (error) {
+    return {
+      findings: [{
+        criterion: '4.1.2',
+        severity: 'review',
+        message: `axe-core run failed: ${error && error.message ? error.message : error}`,
+      }],
+      evidence: { rulesEvaluated: 0, axeError: true },
+    };
+  }
+
+  const findings = [];
+  for (const violation of result.violations) {
+    const wcagTag = (violation.tags || []).find((t) => AXE_TAG_TO_CRITERION.has(t));
+    if (!wcagTag) continue; // Skip best-practice / experimental rules.
+    const criterion = AXE_TAG_TO_CRITERION.get(wcagTag);
+    const severity = (violation.impact === 'critical' || violation.impact === 'serious')
+      ? 'fail' : 'review';
+    for (const node of violation.nodes) {
+      const target = Array.isArray(node.target) ? node.target.join(' ') : String(node.target || '');
+      const summary = (node.failureSummary || violation.help || '').replace(/\s+/g, ' ').trim();
+      findings.push({
+        criterion,
+        severity,
+        message: `[axe ${violation.id}] ${summary} — ${target}`.slice(0, 600),
+      });
+    }
+  }
+  return { findings, evidence: { rulesEvaluated: (result.passes?.length || 0) + (result.violations?.length || 0) } };
 }
 
 function runMobileAudit() {
@@ -383,6 +582,37 @@ function runMobileAudit() {
     });
   }
   style.remove();
+
+  // 2.5.8 Target Size at 320px — interactive controls can shrink below the
+  // 24×24 minimum when mobile breakpoints reduce padding or stack layouts.
+  // Re-run the same target-size logic the desktop audit uses, but at this
+  // viewport — desktop-only checks miss controls that only get small here.
+  const mobileTargetSelector = [
+    'a[href]', 'button', 'input:not([type="hidden"])', 'select', 'textarea',
+    '[role="button"]', '[role="link"]', '[role="checkbox"]', '[role="radio"]',
+    '[role="tab"]', '[role="menuitem"]', '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+  document.querySelectorAll(mobileTargetSelector).forEach((el) => {
+    if (el.closest('[disabled], [aria-disabled="true"], button:disabled, .monaco-editor, mjx-container, .sr-only, .visually-hidden, [aria-hidden="true"]')) return;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return;
+    if (el.localName === 'a' && cs.display === 'inline') return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    if (el.localName === 'a' && rect.height < 24 && (el.parentElement?.textContent || '').trim().length > (el.textContent || '').trim().length) return;
+    const userAgentControl = ['input', 'select', 'textarea'].includes(el.localName) && !el.className;
+    if (userAgentControl) return;
+    if (rect.width < 24 || rect.height < 24) {
+      const id = el.id ? `#${el.id}` : '';
+      const cls = el.className && typeof el.className === 'string' ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}` : '';
+      findings.push({
+        criterion: '2.5.8',
+        severity: 'fail',
+        message: `@320px: interactive target is smaller than 24x24 CSS px (${Math.round(rect.width)}x${Math.round(rect.height)}): <${el.localName}${id}${cls}>`,
+      });
+    }
+  });
+
   return {
     findings,
     evidence: {
@@ -426,6 +656,90 @@ function runDomAudit() {
   } else {
     const target = document.querySelector(skip.getAttribute('href'));
     if (!target) findings.push({ criterion: '2.4.1', severity: 'fail', message: `Skip link target ${skip.getAttribute('href')} does not exist.` });
+  }
+
+  // Heading structure (1.3.1, 2.4.6, 2.4.3) — top-level <h1> present, no
+  // skipped levels, no positive tabindex disrupting focus order, and no
+  // empty / image-only headings without an alt.
+  const visibleHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+    .filter((h) => isVisible(h));
+  // Visible OR sr-only h1 satisfies 1.3.1 — assistive tech reads the
+  // structural h1 regardless of visual styling, and a visually-hidden h1 is a
+  // common pattern when the page title is already shown elsewhere (navbar,
+  // hero) and a duplicate visual heading would be redundant.
+  if (document.querySelectorAll('h1').length === 0) {
+    findings.push({ criterion: '1.3.1', severity: 'fail', message: 'Page is missing a top-level <h1> heading.' });
+  }
+  let prevLevel = 0;
+  for (const heading of visibleHeadings) {
+    const level = Number(heading.localName.charAt(1));
+    if (prevLevel && level > prevLevel + 1) {
+      findings.push({
+        criterion: '1.3.1',
+        severity: 'fail',
+        message: `Heading level skips from h${prevLevel} to h${level}: ${shortNode(heading)}`,
+      });
+    }
+    prevLevel = level;
+    // Positive tabindex on a heading inserts it into the tab sequence and
+    // disrupts focus order — fails 2.4.3.
+    const ti = Number(heading.getAttribute('tabindex'));
+    if (ti > 0) {
+      findings.push({
+        criterion: '2.4.3',
+        severity: 'fail',
+        message: `Heading has positive tabindex (${ti}) which disrupts focus order: ${shortNode(heading)}`,
+      });
+    }
+    // Empty / image-only-with-no-alt headings — covered loosely by 2.4.6 which
+    // is checked elsewhere, but tighten here so an `<h2><img></h2>` without
+    // alt can't slip through `elementHasMeaningfulContent`.
+    const txt = (heading.textContent || '').trim();
+    if (!txt) {
+      const imgs = [...heading.querySelectorAll('img, [role="img"]')];
+      const meaningful = imgs.some((img) => (img.getAttribute('alt') || img.getAttribute('aria-label') || '').trim());
+      if (!meaningful) {
+        findings.push({
+          criterion: '2.4.6',
+          severity: 'fail',
+          message: `Visible heading has no meaningful text or image alt: ${shortNode(heading)}`,
+        });
+      }
+    }
+  }
+
+  // 2.2.1 Timing Adjustable — flag any meta-refresh that auto-redirects.
+  document.querySelectorAll('meta[http-equiv]').forEach((meta) => {
+    if ((meta.getAttribute('http-equiv') || '').toLowerCase() === 'refresh') {
+      findings.push({
+        criterion: '2.2.1',
+        severity: 'fail',
+        message: `meta http-equiv="refresh" auto-redirects without a user-controllable timer: ${meta.getAttribute('content') || ''}`,
+      });
+    }
+  });
+
+  // 1.4.4 Resize Text — viewport meta must not block zoom-to-200%.
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport) {
+    const content = (viewport.getAttribute('content') || '').toLowerCase();
+    const userScalable = /user-scalable\s*=\s*(no|0)/.test(content);
+    const maxScaleMatch = content.match(/maximum-scale\s*=\s*([\d.]+)/);
+    const maxScale = maxScaleMatch ? Number(maxScaleMatch[1]) : null;
+    if (userScalable) {
+      findings.push({
+        criterion: '1.4.4',
+        severity: 'fail',
+        message: 'Viewport meta sets user-scalable=no, which blocks pinch-zoom.',
+      });
+    }
+    if (maxScale !== null && maxScale < 2) {
+      findings.push({
+        criterion: '1.4.4',
+        severity: 'fail',
+        message: `Viewport meta sets maximum-scale=${maxScale}; users cannot zoom text to 200%.`,
+      });
+    }
   }
 
   const referencedIds = collectReferencedIds();
@@ -550,10 +864,6 @@ function runDomAudit() {
     }
   });
 
-  document.querySelectorAll('[role="status"], [aria-live]').forEach((el) => {
-    if (!isVisible(el) && !el.classList.contains('sr-only')) return;
-  });
-
   const autoplayingMedia = [...document.querySelectorAll('audio, video')].filter((el) => el.autoplay);
   if (autoplayingMedia.length) {
     findings.push({ criterion: '1.4.2', severity: 'fail', message: `${autoplayingMedia.length} media element(s) autoplay audio/video.` });
@@ -567,6 +877,7 @@ function runDomAudit() {
   const targetFindings = targetSizeFindings(interactiveSelector);
   findings.push(...targetFindings);
   findings.push(...contrastFindings());
+  findings.push(...linkUseOfColorFindings());
 
   if (!document.querySelector('audio, video')) {
     notApplicableCriteria.push('1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2');
@@ -663,6 +974,14 @@ function runDomAudit() {
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
     if (style.clip === 'rect(0px, 0px, 0px, 0px)' || /^inset\((50|100)%\)$/.test(style.clipPath)) return false;
+    // Opacity cascades visually but not computationally — `getComputedStyle(child).opacity`
+    // stays 1 even when an ancestor has opacity:0, so check the chain explicitly.
+    let n = el.parentElement;
+    while (n) {
+      const ps = getComputedStyle(n);
+      if (Number(ps.opacity) === 0 || ps.visibility === 'hidden' || ps.display === 'none') return false;
+      n = n.parentElement;
+    }
     const rect = el.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   }
@@ -743,7 +1062,9 @@ function runDomAudit() {
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         const parent = node.parentElement;
         if (!parent || !isVisible(parent)) return NodeFilter.FILTER_REJECT;
-        if (parent.closest('.sr-only, .visually-hidden, [aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
+        // Skip text genuinely removed from the visual tree, but keep aria-hidden visible
+        // content — color-contrast applies to all sighted users regardless of AT exposure.
+        if (parent.closest('.sr-only, .visually-hidden')) return NodeFilter.FILTER_REJECT;
         if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },
@@ -752,12 +1073,27 @@ function runDomAudit() {
       const parent = walker.currentNode.parentElement;
       if (!parent || seen.has(parent)) continue;
       if (parent.closest('[disabled], [aria-disabled="true"], button:disabled, input:disabled, select:disabled, textarea:disabled')) continue;
+      // Skip elements under a CSS `filter: invert(...)` ancestor — getComputedStyle
+      // reports the *original* fg/bg, not the post-filter perception, so the ratio
+      // would be a false negative or false positive against what the eye sees.
+      // Inversion preserves luminance ratio; the project pattern (Mermaid / ArchUML
+      // / UML) trusts this and themes via filter rather than per-element overrides.
+      if (hasFilterInvertAncestor(parent)) continue;
       seen.add(parent);
       const style = getComputedStyle(parent);
-      const fg = parseColor(style.color);
+      // SVG text uses `fill`, not `color`. Branch on that so SVG glyphs are checked too.
+      const isSvgText = parent.namespaceURI === 'http://www.w3.org/2000/svg';
+      const fgValue = isSvgText ? style.fill : style.color;
+      const fg = parseColor(fgValue);
       const bg = effectiveBackground(parent);
       if (!fg || !bg) continue;
-      const ratio = contrastRatio(fg, bg);
+      // Element-level opacity composites the text colour with the backdrop.
+      // (CSS `opacity` cascades multiplicatively up the tree; we approximate by
+      // walking ancestors and accumulating the product, since ratio < 1 means
+      // less ink reaches the eye.)
+      const cumulativeOpacity = readEffectiveOpacity(parent);
+      const fgOnBg = compositeRgba({ ...fg, a: (fg.a == null ? 1 : fg.a) * cumulativeOpacity }, bg);
+      const ratio = contrastRatio(fgOnBg, bg);
       const fontSize = parseFloat(style.fontSize);
       const fontWeight = Number(style.fontWeight) || (style.fontWeight === 'bold' ? 700 : 400);
       const large = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
@@ -770,17 +1106,240 @@ function runDomAudit() {
         });
       }
     }
-    return result.slice(0, 50);
+    // Walk SVG <text> / <tspan> separately — TreeWalker rooted at document.body may include
+    // them, but their default `display` reads as `inline`/`block` only after layout, and
+    // their text nodes can be skipped by `isVisible(parent)` rect checks on inline SVG glyphs.
+    document.querySelectorAll('svg text, svg tspan').forEach((el) => {
+      if (seen.has(el)) return;
+      if (!normalize(el.textContent || '')) return;
+      if (el.closest('.sr-only, .visually-hidden')) return;
+      if (!svgElementIsVisible(el)) return;
+      if (hasFilterInvertAncestor(el)) return;
+      seen.add(el);
+      const style = getComputedStyle(el);
+      const fg = parseColor(style.fill) || parseColor(el.getAttribute('fill') || '');
+      const bg = effectiveBackground(el);
+      if (!fg || !bg) return;
+      const ratio = contrastRatio(fg, bg);
+      const fontSize = parseFloat(style.fontSize) || 16;
+      const fontWeight = Number(style.fontWeight) || (style.fontWeight === 'bold' ? 700 : 400);
+      const large = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
+      const min = large ? 3 : 4.5;
+      if (ratio < min) {
+        result.push({
+          criterion: '1.4.3',
+          severity: 'fail',
+          message: `SVG text contrast ${ratio.toFixed(2)}:1 is below ${min}:1 for "${normalize(el.textContent || '').slice(0, 70)}" in ${shortNode(el)}`,
+        });
+      }
+    });
+    return result.slice(0, 200);
+  }
+
+  function svgElementIsVisible(el) {
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    // Walk ancestors for opacity:0 / visibility:hidden / display:none — opacity
+    // doesn't cascade computationally and we'd otherwise contrast-check text in
+    // hidden tabs, popovers, or off-screen popouts.
+    let n = el.parentElement;
+    while (n) {
+      const ps = getComputedStyle(n);
+      if (Number(ps.opacity) === 0 || ps.visibility === 'hidden' || ps.display === 'none') return false;
+      n = n.parentElement;
+    }
+    const rect = el.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) return true;
+    // SVG <text> sometimes reports zero rect when transformed; fall back to the host <svg>.
+    const host = el.ownerSVGElement;
+    if (host) {
+      const hostRect = host.getBoundingClientRect();
+      return hostRect.width > 0 && hostRect.height > 0;
+    }
+    return false;
+  }
+
+  function hasFilterInvertAncestor(el) {
+    let n = el;
+    while (n) {
+      // Check element-style filter first (faster), then computed if not set.
+      const filter = (n.style && n.style.filter) || getComputedStyle(n).filter;
+      if (filter && filter !== 'none') {
+        // We only want to skip *inversion* filters (the project pattern for diagrams).
+        // Other filters (drop-shadow, blur) don't change colours measurably and should
+        // still be subject to contrast checks.
+        if (/invert\s*\(\s*1(?:\s*|\.0+)?\)|invert\s*\(\s*100%\s*\)/.test(filter)) return true;
+      }
+      n = n.parentElement;
+    }
+    return false;
+  }
+
+  function linkUseOfColorFindings() {
+    const result = [];
+    const inContextSelector = 'p, li, blockquote, dd, td, th, figcaption, summary';
+    // Patterns where colour-only links are still a 1.4.1 problem even though
+    // they aren't strictly "in a paragraph": breadcrumbs, pagination, chip
+    // lists, related-posts. WCAG-wise these are still groups of links that
+    // need a non-colour distinction (underline, border, icon, or background).
+    const chipLikeContainers = [
+      '.breadcrumb', '[role="navigation"][aria-label*="breadcrumb" i]',
+      '.pagination', '[role="navigation"][aria-label*="pagination" i]',
+      '.chip-list', '.tag-list', '.tags', '.categories',
+      '.related-posts', '.related',
+    ].join(',');
+    document.querySelectorAll(`${inContextSelector.split(',').map((s) => `${s.trim()} a[href]`).join(',')}`).forEach((link) => {
+      if (!isVisible(link)) return;
+      // Skip the obvious chrome contexts EXCEPT when the link is inside a
+      // chip-like grouping where 1.4.1 still applies.
+      if (link.closest('nav, header, footer, [role="navigation"], #sidebar') && !link.closest(chipLikeContainers)) return;
+      if (link.closest('.post-list, .skip-link, .post-link')) return;
+      // Only flag links that sit *inside* surrounding text — a paragraph that contains nothing
+      // but the link is effectively a standalone link (1.4.1 doesn't apply the same way),
+      // unless the link is inside a chip-like list where each entry is colour-only.
+      const parent = link.parentElement;
+      if (!parent) return;
+      const parentText = normalize(parent.textContent || '');
+      const linkText = normalize(link.textContent || '');
+      if (!linkText) return;
+      const insideChipContext = !!link.closest(chipLikeContainers);
+      if (parentText === linkText && !insideChipContext) return;
+      const linkStyle = getComputedStyle(link);
+      const parentStyle = getComputedStyle(parent);
+      // Non-color signals that distinguish the link from surrounding text.
+      const decoLine = (linkStyle.textDecorationLine || linkStyle.textDecoration || '').toLowerCase();
+      const parentDeco = (parentStyle.textDecorationLine || parentStyle.textDecoration || '').toLowerCase();
+      const linkUnderlined = decoLine.includes('underline') && !parentDeco.includes('underline');
+      const borderBottom = parseFloat(linkStyle.borderBottomWidth || '0') > 0
+        && linkStyle.borderBottomStyle && linkStyle.borderBottomStyle !== 'none';
+      const fontWeightDiff = Math.abs(
+        (Number(linkStyle.fontWeight) || 400) - (Number(parentStyle.fontWeight) || 400),
+      ) >= 200;
+      const fontStyleDiff = linkStyle.fontStyle !== parentStyle.fontStyle;
+      const backgroundDiff = linkStyle.backgroundColor !== parentStyle.backgroundColor
+        && linkStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' && linkStyle.backgroundColor !== 'transparent';
+      const hasIconChild = link.querySelector('img, svg, picture, [class*="icon"]');
+      if (linkUnderlined || borderBottom || fontWeightDiff || fontStyleDiff || backgroundDiff || hasIconChild) return;
+      // The link's only distinguishing trait is color. WCAG 1.4.1 fails unless the link colour
+      // also has ≥3:1 contrast with the surrounding text colour AND a non-color signal on focus
+      // — verifying the focus state programmatically is out of scope here, so flag for review.
+      const linkFg = parseColor(linkStyle.color);
+      const parentFg = parseColor(parentStyle.color);
+      let extraInfo = '';
+      if (linkFg && parentFg) {
+        const ratio = contrastRatio(linkFg, parentFg);
+        extraInfo = ` (link/text colour ratio ${ratio.toFixed(2)}:1)`;
+      }
+      result.push({
+        criterion: '1.4.1',
+        severity: 'fail',
+        message: `In-text link relies on colour alone to be distinguished from surrounding text${extraInfo}: ${shortNode(link)}`,
+      });
+    });
+    return result.slice(0, 200);
   }
 
   function effectiveBackground(el) {
-    let node = el;
-    while (node) {
-      const color = parseColor(getComputedStyle(node).backgroundColor);
-      if (color && color.a > 0.95) return color;
-      node = node.parentElement;
+    // For SVG text, the visual backdrop is whatever shape (circle / rect / path)
+    // the text is painted on top of, not the HTML ancestor's CSS background. Look
+    // through siblings whose rendered bounds OVERLAP the text — only those count
+    // as a visual backdrop. (A sibling circle to the left of the text doesn't
+    // count even though it's a preceding sibling of the same group.) When the
+    // shape has fill-opacity < 1, blend it with the next backdrop down.
+    if (el.namespaceURI === 'http://www.w3.org/2000/svg') {
+      const textRect = el.getBoundingClientRect();
+      if (textRect.width > 0 && textRect.height > 0) {
+        const candidates = collectOverlappingSvgFills(el, textRect);
+        if (candidates.length) {
+          let acc = htmlAncestorBackground(el);
+          for (const fill of candidates) {
+            acc = compositeOver(fill, acc);
+            if (!acc) break;
+          }
+          return acc;
+        }
+      }
     }
-    return { r: 255, g: 255, b: 255, a: 1 };
+    return htmlAncestorBackground(el);
+
+    function collectOverlappingSvgFills(target, targetRect) {
+      const out = [];
+      let host = target.parentElement;
+      while (host && host instanceof Element && host.namespaceURI === 'http://www.w3.org/2000/svg') {
+        const siblings = Array.from(host.children);
+        const idx = siblings.indexOf(target.parentElement === host ? target : target.closest('g, text') || target);
+        const limit = idx === -1 ? siblings.length : idx;
+        for (let i = 0; i < limit; i += 1) {
+          const sib = siblings[i];
+          if (!(sib instanceof Element)) continue;
+          if (!['circle', 'rect', 'path', 'polygon', 'ellipse', 'g'].includes(sib.localName)) continue;
+          // Quick reject: must overlap the text box.
+          if (!rectOverlap(sib.getBoundingClientRect(), targetRect)) continue;
+          if (sib.localName === 'g') {
+            // Recurse into groups: a group might wrap a chip (rect/path) containing the text.
+            for (const inner of sib.querySelectorAll('circle, rect, path, polygon, ellipse')) {
+              if (!rectOverlap(inner.getBoundingClientRect(), targetRect)) continue;
+              const fill = readSvgFill(inner);
+              if (fill) out.push(fill);
+            }
+          } else {
+            const fill = readSvgFill(sib);
+            if (fill) out.push(fill);
+          }
+        }
+        host = host.parentElement;
+      }
+      // Paint order: earlier siblings render first, later overlap them. Composite from bottom up.
+      return out;
+    }
+
+    function readSvgFill(node) {
+      const style = getComputedStyle(node);
+      const fillStr = style.fill || node.getAttribute('fill') || '';
+      if (!fillStr || fillStr === 'none') return null;
+      const rgba = parseColor(fillStr);
+      if (!rgba) return null;
+      const opacityAttr = parseFloat(node.getAttribute('fill-opacity'));
+      const opacity = Number.isFinite(opacityAttr) ? opacityAttr : (parseFloat(style.fillOpacity) || 1);
+      const a = (rgba.a == null ? 1 : rgba.a) * opacity;
+      return { r: rgba.r, g: rgba.g, b: rgba.b, a };
+    }
+
+    function compositeOver(top, bottom) {
+      // If the top layer is fully opaque the backdrop is irrelevant — we can
+      // ignore an unknown `bottom` and still produce a defensible color.
+      if (top && top.a >= 0.999) return { r: top.r, g: top.g, b: top.b, a: 1 };
+      // Otherwise we need a known bottom to blend against. If we don't have
+      // one, signal the caller to skip the contrast check rather than guess.
+      if (!bottom) return null;
+      const a = top.a + bottom.a * (1 - top.a);
+      if (a <= 0) return null;
+      return {
+        r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
+        g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
+        b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
+        a,
+      };
+    }
+
+    function rectOverlap(a, b) {
+      return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    }
+
+    function htmlAncestorBackground(node) {
+      // Walk up looking for an opaque ancestor. If we find none, return null
+      // and let the caller skip the contrast check rather than assume white —
+      // defaulting to white produced false-positive failures in dark mode
+      // when the page background sat behind a gradient or image we couldn't
+      // inspect.
+      let n = node;
+      while (n) {
+        const color = parseColor(getComputedStyle(n).backgroundColor);
+        if (color && color.a > 0.95) return color;
+        n = n.parentElement;
+      }
+      return null;
+    }
   }
 
   function parseColor(value) {
@@ -792,6 +1351,38 @@ function runDomAudit() {
       g: Number(parts[1]),
       b: Number(parts[2]),
       a: parts[3] == null ? 1 : Number(parts[3]),
+    };
+  }
+
+  // Walk ancestors and multiply CSS `opacity` values together. CSS opacity
+  // cascades by composition: a 50% parent over a 50% child shows the child at
+  // 25% of full ink. We treat that as foreground alpha for contrast purposes.
+  function readEffectiveOpacity(el) {
+    let n = el;
+    let acc = 1;
+    while (n && n.nodeType === 1) {
+      const o = parseFloat(getComputedStyle(n).opacity);
+      if (Number.isFinite(o) && o >= 0 && o < 1) acc *= o;
+      if (acc <= 0) break;
+      n = n.parentElement;
+    }
+    return acc;
+  }
+
+  // Composite a translucent fg over an opaque bg using the standard "over" op.
+  // Used so the contrast ratio reflects what the eye sees, not the raw
+  // colour value when CSS opacity has reduced the ink reaching the surface.
+  function compositeRgba(top, bottom) {
+    const ta = top.a == null ? 1 : top.a;
+    if (ta >= 0.999) return { r: top.r, g: top.g, b: top.b, a: 1 };
+    const ba = bottom.a == null ? 1 : bottom.a;
+    const a = ta + ba * (1 - ta);
+    if (a <= 0) return { r: 255, g: 255, b: 255, a: 1 };
+    return {
+      r: (top.r * ta + bottom.r * ba * (1 - ta)) / a,
+      g: (top.g * ta + bottom.g * ba * (1 - ta)) / a,
+      b: (top.b * ta + bottom.b * ba * (1 - ta)) / a,
+      a,
     };
   }
 
