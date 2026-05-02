@@ -20,7 +20,7 @@
 			  	<div class="row">
 		          <div class="col-md-2 col-sm-2 text-right">
 		          	{% assign currentconf = r.conference_short %}
-				    {% if currentconf != previousconf %}<h4>{{ r.conference_short }} {{ r.year }}</h4>{% endif %}
+				    {% if currentconf != previousconf %}<h3>{{ r.conference_short }} {{ r.year }}</h3>{% endif %}
 				    {% assign previousconf = currentconf %}
 		          </div>
 		          <div class="col-md-10 col-sm-10">

@@ -17,7 +17,7 @@
     {% include thumbnail.html %}
   </div>
   <div class="col-sm-8">
-    <h4 class="title">{{ p.title }}</h4>
+    <h3 class="title">{{ p.title }}</h3>
     <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {%
         endif %}{% assign found = false %}{% for a in co_authors %}{% if a.key == author %}{% assign found = true %}{%
         if a.website %}<a class="author" data-toggle="tooltip" title="{{ a.note }}" href="{{ a.website }}">{{ a.name
