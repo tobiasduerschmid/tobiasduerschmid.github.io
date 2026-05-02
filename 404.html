@@ -1,0 +1,101 @@
+---
+layout: framework
+title: Page Not Found
+permalink: /404.html
+sitemap: false
+---
+
+<style>
+  .not-found-page {
+    max-width: 760px;
+    margin: 7rem auto 5rem;
+    padding: 0 1.5rem;
+    color: #1f2937;
+  }
+
+  .not-found-eyebrow {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: #00598c;
+  }
+
+  .not-found-page h1 {
+    margin: 0 0 1rem;
+    color: #111827;
+    font-size: 2.5rem;
+    line-height: 1.15;
+  }
+
+  .not-found-page p {
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  .not-found-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .not-found-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 2px solid #00598c;
+    border-radius: 6px;
+    color: #00598c;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .not-found-actions a:first-child {
+    background: #00598c;
+    color: #ffffff;
+  }
+
+  .not-found-actions a:focus,
+  .not-found-actions a:hover {
+    outline: 3px solid #ffbf00;
+    outline-offset: 3px;
+    background: #003b5c;
+    border-color: #003b5c;
+    color: #ffffff;
+  }
+
+  @media (max-width: 480px) {
+    .not-found-page {
+      margin-top: 4rem;
+      padding: 0 1rem;
+    }
+
+    .not-found-page h1 {
+      font-size: 2rem;
+    }
+
+    .not-found-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<section class="not-found-page" aria-labelledby="not-found-title">
+  <span class="not-found-eyebrow">404</span>
+  <h1 id="not-found-title">Page not found</h1>
+  <p>
+    The page you requested could not be found. It may have moved, or the address may have been typed incorrectly.
+  </p>
+  <p>
+    These links lead back to the main areas of the site.
+  </p>
+  <nav class="not-found-actions" aria-label="Page not found navigation">
+    <a href="/">Home</a>
+    <a href="/SEBook/">SEBook</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+</section>
