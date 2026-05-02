@@ -10,10 +10,6 @@ Hands-on, in-browser tutorials covering languages, tools, design patterns,
 testing, and other software-engineering topics. Each tutorial runs in your
 browser — no install required — and saves your progress locally.
 
-This index is auto-generated from the YAML files in `_data/tutorials/`.
-Demo pages, lecture walkthroughs, and playgrounds are intentionally excluded
-(they set `exclude_from_index: true` in their YAML).
-
 <div class="tutorials-index" role="list">
   {% comment %}
     Build a sorted list of (title, description, url) triples by joining each
