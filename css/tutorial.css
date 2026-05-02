@@ -59,7 +59,7 @@ html.dark-mode #tts-read-btn {
   display: inline-block;
   width: 34px;
   height: 18px;
-  background: #555;
+  background: #7d7d7d;
   border-radius: 9px;
   position: relative;
   cursor: pointer;
@@ -68,7 +68,7 @@ html.dark-mode #tts-read-btn {
 }
 
 .tvm-dark-toggle-wrap input:checked + .tvm-dark-toggle-track {
-  background: #0078d4;
+  background: #1a8be8;
 }
 
 .tvm-dark-toggle-thumb {
@@ -185,14 +185,14 @@ html, body {
 .tvm-uml-bottom-left-splitter {
   flex: 0 0 4px;
   flex-shrink: 0;
-  background: #2a2a2e;
+  background: #5a5a5e;
   cursor: row-resize;
   transition: background 0.15s;
   z-index: 10;
 }
 .tvm-uml-bottom-left-splitter:hover,
 .tvm-uml-bottom-left-splitter.active {
-  background: #0078d4;
+  background: #1a8be8;
 }
 
 .tvm-uml-bottom-left-view {
@@ -280,7 +280,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
   border-radius: 4px;
   font-size: 0.88em;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a5a78;
 }
 
 /* Rouge wraps fenced code blocks in a .highlight div — treat it like a pre */
@@ -523,7 +523,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 
 .tvm-tab.detached {
   font-style: italic;
-  color: #777;
+  color: #a0a0a0;
   cursor: pointer;
   background: repeating-linear-gradient(
     -45deg, transparent, transparent 6px,
@@ -533,7 +533,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-tab-detached-badge {
   font-size: 10px;
   font-weight: 600;
-  color: #6a7a90;
+  color: #9aa6b2;
   background: #20202c;
   padding: 1px 5px;
   border-radius: 3px;
@@ -547,7 +547,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-instructions-popout-btn {
   margin-left: auto;
   padding: 3px 7px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #252538;
   color: #95a5ba;
@@ -581,7 +581,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 }
 .tvm-instructions-detached-placeholder .tvm-btn-reattach {
   padding: 3px 8px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   background: #252538;
   color: #c8d4e4;
@@ -716,7 +716,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-editor-pane-popout-btn {
   margin-left: 8px;
   padding: 1px 6px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #1f1f2a;
   color: #b9c5d8;
@@ -816,7 +816,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-output-popout-btn {
   margin-left: 6px;
   padding: 1px 7px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #1f1f2a;
   color: #9ba8c0;
@@ -868,7 +868,7 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
   gap: 8px;
   padding: 6px 10px;
   background: #20202c;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 6px;
   font-size: 12px;
   color: #aab4c5;
@@ -885,7 +885,7 @@ html:not(.dark-mode) .tvm-output-popout-btn:hover {
   font-weight: 600;
 }
 .tvm-output-detached-chip .tvm-tab-reattach {
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   background: #1f1f2a;
   color: #c8d4e4;
@@ -922,7 +922,7 @@ html:not(.dark-mode) .tvm-output-detached-chip .tvm-tab-reattach:hover {
 .tvm-output-detached-indicator .tvm-tab-detached-badge { opacity: 0.85; }
 .tvm-output-detached-indicator .tvm-tab-reattach {
   opacity: 1;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #1f1f2a;
   color: #c8d4e4;
@@ -951,7 +951,7 @@ html:not(.dark-mode) .tvm-output-detached-indicator .tvm-tab-reattach:hover {
 .tvm-pane-detached-indicator .tvm-tab-detached-badge { opacity: 0.85; }
 .tvm-pane-detached-indicator .tvm-tab-reattach {
   opacity: 1;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #1f1f2a;
   color: #c8d4e4;
@@ -1343,7 +1343,7 @@ html:not(.dark-mode) .tvm-git-graph-header {
 }
 html:not(.dark-mode) .tvm-git-graph-refresh,
 html:not(.dark-mode) .tvm-git-graph-popout-btn {
-  border-color: #bbb;
+  border-color: #767676;
   color: #555;
 }
 html:not(.dark-mode) .tvm-git-graph-refresh:hover,
@@ -1421,7 +1421,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
   gap: 1px;
   margin-left: auto;
   background: #252538;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   padding: 1px;
 }
@@ -1452,13 +1452,13 @@ html:not(.dark-mode) .tvm-git-graph-container {
   font-weight: 600;
   user-select: none;
   padding: 0 2px;
-  border-left: 1px solid #3a3a52;
-  border-right: 1px solid #3a3a52;
+  border-left: 1px solid #5a5a78;
+  border-right: 1px solid #5a5a78;
 }
 .tvm-diagram-fullscreen-btn,
 .tvm-diagram-popout-btn {
   padding: 3px 7px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #252538;
   color: #95a5ba;
@@ -1476,7 +1476,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
 }
 .tvm-diagram-refresh-btn {
   padding: 3px 10px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #252538;
   color: #95a5ba;
@@ -1497,7 +1497,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
   box-sizing: border-box;
   width: 26px;
   height: 26px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   cursor: pointer;
   margin-left: 3px;
@@ -1514,7 +1514,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border: 1px solid #3a3a52;
+  border: 1px solid #5a5a78;
   border-radius: 3px;
   background: #252538;
   color: #95a5ba;
@@ -1620,8 +1620,8 @@ html:not(.dark-mode) .tvm-git-graph-container {
   font-weight: 600;
   user-select: none;
   padding: 0 2px;
-  border-left: 1px solid #3a3a52;
-  border-right: 1px solid #3a3a52;
+  border-left: 1px solid #5a5a78;
+  border-right: 1px solid #5a5a78;
 }
 .tvm-diagram-fs-close {
   padding: 4px 12px;
@@ -1964,7 +1964,7 @@ html:not(.dark-mode) .tvm-terminal-loading {
 .tvm-stop-btn,
 .tvm-clear-btn {
   padding: 3px 10px;
-  border: 1px solid #3a3a44;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
@@ -2024,7 +2024,7 @@ html:not(.dark-mode) .tvm-terminal-loading {
 /* Arguments input styling */
 .tvm-args-input {
   background: #0e0e10;
-  border: 1px solid #3a3a44;
+  border: 1px solid #5a5a78;
   color: #ccc;
   padding: 3px 8px;
   border-radius: 4px;
@@ -2034,7 +2034,7 @@ html:not(.dark-mode) .tvm-terminal-loading {
 }
 html:not(.dark-mode) .tvm-args-input {
   background: #fff;
-  border-color: #bbb;
+  border-color: #767676;
   color: #333;
 }
 .tvm-args-input:focus {
@@ -2045,7 +2045,7 @@ html:not(.dark-mode) .tvm-args-input {
 /* Stream filter styling */
 .tvm-stream-filter {
   background: #141414;
-  border: 1px solid #3a3a44;
+  border: 1px solid #5a5a78;
   color: #888;
   padding: 3px 6px;
   border-radius: 4px;
@@ -2054,7 +2054,7 @@ html:not(.dark-mode) .tvm-args-input {
 }
 html:not(.dark-mode) .tvm-stream-filter {
   background: #f3f3f3;
-  border-color: #bbb;
+  border-color: #767676;
   color: #555;
 }
 
@@ -2094,7 +2094,7 @@ html:not(.dark-mode) .tvm-stream-filter {
 .tvm-sql-table tbody tr:nth-child(even) { background: #16161e; }
 .tvm-sql-table tbody tr:nth-child(odd)  { background: #0e0e15; }
 .tvm-sql-null  { color: #888; font-style: italic; }
-.tvm-sql-empty { color: #777; font-style: italic; text-align: center; }
+.tvm-sql-empty { color: #a0a0a0; font-style: italic; text-align: center; }
 
 /* Light mode SQL table overrides */
 html:not(.dark-mode) .tvm-sql-table th,
@@ -2111,7 +2111,7 @@ html:not(.dark-mode) .tvm-output-pre   { color: #383a42; }
 html:not(.dark-mode) .tvm-out-stdout   { color: #383a42; }
 html:not(.dark-mode) .tvm-out-stderr   { color: #c0392b; }
 html:not(.dark-mode) .tvm-out-info     { color: #0070c1; }
-html:not(.dark-mode) .tvm-clear-btn    { color: #555; border-color: #bbb; }
+html:not(.dark-mode) .tvm-clear-btn    { color: #555; border-color: #767676; }
 html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #999; }
 
 /* ───────────────────────────────────────────
@@ -2165,7 +2165,7 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
 .tvm-refresh-btn,
 .tvm-preview-test-btn {
   padding: 3px 10px;
-  border: 1px solid #3a3a44;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
@@ -2387,7 +2387,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
 .tvm-http-method-select {
   background: #2a2a38;
   color: #7ec8e3;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
@@ -2399,7 +2399,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
   flex: 1;
   background: #141416;
   color: #e8e8f0;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a5a78;
   border-radius: 4px;
   font-size: 12px;
   font-family: var(--tvm-font-mono);
@@ -2550,33 +2550,6 @@ html:not(.dark-mode) .tvm-http-empty-state {
   align-items: center;
 }
 
-/* Visible progress bar — sits next to the step buttons. Width is set
-   inline by JS based on completed-step count. WCAG 1.4.11 non-text
-   contrast: #0078d4 fill on #1c1c20 track is 4.97:1, well over 3:1. */
-.tvm-step-progress {
-  flex: 0 0 auto;
-  width: 80px;
-  height: 6px;
-  background: #1c1c20;
-  border: 1px solid #3a3a44;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-right: 8px;
-}
-.tvm-step-progress__fill {
-  height: 100%;
-  background: #0078d4;
-  width: 0%;
-  transition: width 0.25s ease;
-}
-html:not(.dark-mode) .tvm-step-progress {
-  background: #e6e9ef;
-  border-color: #b9c0c9;
-}
-html:not(.dark-mode) .tvm-step-progress__fill {
-  background: #0066b8;
-}
-
 /* "Step X of Y" status text — sighted users get a compact label, screen
    readers get the announcement via role="status" aria-live="polite".
    Color #c9d2dc on #141416 = 11.6:1; #2c3138 on #f5f6f8 = 12.5:1. */
@@ -2661,7 +2634,7 @@ html:not(.dark-mode) .tvm-step-status {
 }
 
 .tvm-btn-next:disabled {
-  background: #555;
+  background: #6c757d;
   color: #999;
   cursor: not-allowed;
   transform: none;
@@ -2704,7 +2677,7 @@ html:not(.dark-mode) .tvm-step-status {
 .tvm-test-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid #3a3a48;
+  border: 2px solid #5a5a78;
   border-top-color: #1a7f3c;
   border-radius: 50%;
   animation: tvm-spin 0.7s linear infinite;
@@ -2850,9 +2823,9 @@ html:not(.dark-mode) .tvm-step-status {
    Layout overrides
 ─────────────────────────────────────────── */
 .tutorial-page {
-  /* Pin to exact viewport edges below the fixed navbar — robust in fullscreen */
+  /* Pin to viewport edges below the fixed navbar, whose height can change at zoom. */
   position: fixed !important;
-  top: 45px !important;
+  top: var(--tutorial-navbar-height, 45px) !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
@@ -3224,7 +3197,7 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 /* ---- Quiz card (matches quiz.html structure) ---- */
 .tvm-quiz-panel .quiz-container {
   background: #1c1c28;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a5a78;
   border-radius: 12px;
   padding: 12px;
   margin: 0;
@@ -3271,7 +3244,7 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   border-radius: 3px;
   font-size: 0.87em;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  border: 1px solid #3a3a48;
+  border: 1px solid #5a5a78;
 }
 .tvm-quiz-panel .question-text pre,
 .tvm-quiz-panel .explanation-text pre {
@@ -3298,7 +3271,7 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   display: flex;
   align-items: center;
   padding: 6px 12px;
-  border: 1.5px solid #3a3a4a;
+  border: 1.5px solid #6a737d;
   border-radius: 6px;
   background: #22222e;
   text-align: left;
@@ -3329,6 +3302,16 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   background: rgba(180, 40, 40, 0.15);
   color: #f09090;
 }
+.tvm-quiz-panel .quiz-option.correct::after,
+.tvm-quiz-panel .quiz-option.incorrect::after {
+  margin-left: auto;
+  padding-left: 12px;
+  font-weight: 800;
+  font-size: 1.1em;
+  line-height: 1;
+}
+.tvm-quiz-panel .quiz-option.correct::after { content: "✓"; }
+.tvm-quiz-panel .quiz-option.incorrect::after { content: "✗"; }
 /* Light-mode default — dark text on light amber */
 .tvm-quiz-panel .option-feedback {
   margin: 4px 0 8px 28px;
@@ -3363,7 +3346,7 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
   display: none;
   width: 14px;
   height: 14px;
-  border: 1.5px solid #555570;
+  border: 1.5px solid #6a737d;
   border-radius: 3px;
   margin-right: 10px;
   flex-shrink: 0;
@@ -3525,13 +3508,21 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 }
 .parsons-grip { color: #b8b8c8; font-size: 0.8em; flex-shrink: 0; }
 .parsons-line.parsons-correct {
-  border-color: #3a8a3a;
+  border-color: #4fa34f;
   background: rgba(58, 138, 58, 0.15);
 }
 .parsons-line.parsons-incorrect {
   border-color: #cc4444;
   background: rgba(204, 68, 68, 0.12);
 }
+.parsons-line.parsons-correct::before,
+.parsons-line.parsons-incorrect::before {
+  font-weight: 800;
+  min-width: 1em;
+  text-align: center;
+}
+.parsons-line.parsons-correct::before { content: "✓"; }
+.parsons-line.parsons-incorrect::before { content: "✗"; }
 .parsons-actions {
   display: flex;
   gap: 8px;
@@ -3632,7 +3623,7 @@ html:not(.dark-mode) .tvm-quiz-panel .explanation-text pre code {
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option {
   background: white;
-  border-color: #e1e4e8;
+  border-color: #767676;
   color: #1a1a1a;
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option:hover:not([disabled]):not(.selected) {
@@ -3645,7 +3636,7 @@ html:not(.dark-mode) .tvm-quiz-panel .quiz-option.selected {
   box-shadow: 0 0 0 1px #2774AE;
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option.correct {
-  border-color: #28a745;
+  border-color: #1f7a35;
   background: #e6ffed;
   color: #155724;
 }
@@ -3654,7 +3645,7 @@ html:not(.dark-mode) .tvm-quiz-panel .quiz-option.incorrect {
   background: #ffeef0;
   color: #721c24;
 }
-html:not(.dark-mode) .tvm-quiz-panel .option-checkbox { background: white; border-color: #d1d5da; }
+html:not(.dark-mode) .tvm-quiz-panel .option-checkbox { background: white; border-color: #767676; }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option.selected .option-checkbox {
   background: #2774AE;
   border-color: #2774AE;
@@ -3750,12 +3741,12 @@ body.lecture-mode #navnav {
 }
 body.lecture-mode #navnav .navbar-header,
 body.lecture-mode #navnav .navbar-right {
-  height: 23px !important;
+  min-height: 23px;
 }
 body.lecture-mode #navnav .navbar-brand {
   font-size: 13px !important;
   padding-left: 10px !important;
-  line-height: 23px;
+  line-height: 1.4;
 }
 body.lecture-mode #navnav .navbar-right {
   padding-right: 10px !important;
@@ -3768,7 +3759,7 @@ body.lecture-mode #navnav .navbar-right label {
   font-size: 11px !important;
 }
 body.lecture-mode .tutorial-page {
-  top: 23px !important;
+  top: var(--tutorial-navbar-height, 23px) !important;
 }
 
 /* ── Print: compact quiz layout ─────────────────────────────────────────── */

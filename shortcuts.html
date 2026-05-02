@@ -1,0 +1,331 @@
+---
+permalink: /shortcuts/
+title: "Keyboard Shortcuts"
+layout: framework
+---
+
+<style>
+  .shortcuts-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .shortcuts-page h1 { margin-top: 0.6em; }
+  .shortcuts-page h2 {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #2774AE;
+  }
+  html.dark-mode .shortcuts-page h2 { border-bottom-color: #4da3ff; }
+
+  .shortcuts-intro {
+    background: #f8f9fa;
+    border-left: 3px solid #2774AE;
+    border-radius: 6px;
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .shortcuts-intro {
+    background: #1e1e1e;
+    border-left-color: #4da3ff;
+    color: #ccc;
+  }
+
+  .shortcuts-toc {
+    margin: 12px 0 28px;
+    padding: 12px 18px;
+    background: #f6f8fa;
+    border-radius: 6px;
+  }
+  html.dark-mode .shortcuts-toc { background: #1e1e1e; color: #ddd; }
+  .shortcuts-toc ul { margin: 6px 0 0; padding-left: 20px; }
+  .shortcuts-toc li { margin: 3px 0; }
+
+  .shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 24px;
+  }
+  .shortcuts-table caption {
+    text-align: left;
+    font-weight: 600;
+    padding: 6px 0;
+    color: #24292e;
+  }
+  html.dark-mode .shortcuts-table caption { color: #e0e0e0; }
+  .shortcuts-table th,
+  .shortcuts-table td {
+    border: 1px solid #d0d7de;
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .shortcuts-table th {
+    background: #f6f8fa;
+    font-weight: 600;
+  }
+  html.dark-mode .shortcuts-table th,
+  html.dark-mode .shortcuts-table td {
+    border-color: #444;
+  }
+  html.dark-mode .shortcuts-table th { background: #1e1e1e; color: #e0e0e0; }
+  html.dark-mode .shortcuts-table td { background: #161616; color: #d0d0d0; }
+
+  .shortcuts-page kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    background: #fafbfc;
+    border: 1px solid #c0c4ca;
+    border-radius: 4px;
+    padding: 2px 6px;
+    box-shadow: inset 0 -1px 0 #c0c4ca;
+    color: #1f2328;
+    white-space: nowrap;
+    display: inline-block;
+    margin: 1px 0;
+  }
+  html.dark-mode .shortcuts-page kbd {
+    background: #2a2a2a;
+    border-color: #555;
+    box-shadow: inset 0 -1px 0 #555;
+    color: #e8e8e8;
+  }
+
+  .shortcuts-keys-cell { white-space: normal; }
+  .shortcuts-keys-cell .key-sep { color: #555; padding: 0 4px; }
+  html.dark-mode .shortcuts-keys-cell .key-sep { color: #b0b0b0; }
+
+  .shortcuts-note {
+    font-size: 0.92em;
+    color: #555;
+    margin-top: -8px;
+    margin-bottom: 22px;
+  }
+  html.dark-mode .shortcuts-note { color: #b0b0b0; }
+</style>
+
+<article class="shortcuts-page">
+  <h1>Keyboard shortcuts</h1>
+
+  <div class="shortcuts-intro">
+    <p>Most interactive widgets on this site can be operated entirely from the keyboard. This page lists every custom keyboard shortcut. Standard browser shortcuts (<kbd>Tab</kbd> to move focus, <kbd>Enter</kbd> to activate buttons and links, <kbd>Space</kbd> to toggle controls, etc.) are not repeated here.</p>
+    <p>On macOS, use <kbd>Cmd</kbd> wherever you see <kbd>Ctrl</kbd>. Both modifiers work everywhere.</p>
+  </div>
+
+  <nav class="shortcuts-toc" aria-label="Sections on this page">
+    <strong>On this page:</strong>
+    <ul>
+      <li><a href="#tutorials">Tutorials &amp; SEBook</a></li>
+      <li><a href="#debugger">Step-through debugger</a></li>
+      <li><a href="#command-labs">Command labs (filesystem, git)</a></li>
+      <li><a href="#refactoring">Refactoring engine</a></li>
+      <li><a href="#chat">Tutor chat</a></li>
+      <li><a href="#diagrams">UML &amp; diagram viewers</a></li>
+      <li><a href="#quizzes">Quizzes &amp; Parsons problems</a></li>
+      <li><a href="#popouts">Popout windows &amp; modals</a></li>
+      <li><a href="#tooltips">Tooltips</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="tutorials">Tutorials &amp; SEBook</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts for tutorial pages and SEBook navigation.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>P</kbd></td>
+        <td>Open the print-friendly view of the current tutorial.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&larr;</kbd><span class="key-sep">/</span><kbd>&rarr;</kbd></td>
+        <td>In the SEBook language toggle, move between languages.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Home</kbd><span class="key-sep">/</span><kbd>End</kbd></td>
+        <td>In the SEBook language toggle, jump to the first or last language.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd><span class="key-sep">/</span><kbd>Space</kbd></td>
+        <td>On the SEBook sidebar toggle button, open or close the sidebar.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Close an open SEBook sidebar section.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="debugger">Step-through debugger</h2>
+  <p class="shortcuts-note">Used in Python, Node, and Java tutorials. The debugger panel must be focused for these to take effect.</p>
+  <table class="shortcuts-table">
+    <caption>Step controls in the inline debugger.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F5</kbd></td>
+        <td>Continue execution to the next breakpoint or until the program ends.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F5</kbd></td>
+        <td>Stop the debugger.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F5</kbd></td>
+        <td>Run backwards to the previous breakpoint.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F10</kbd></td>
+        <td>Step over the next line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F10</kbd></td>
+        <td>Step backwards over the previous line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F10</kbd></td>
+        <td>Step backwards out of the current function.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F11</kbd></td>
+        <td>Step into the next function call.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>F11</kbd></td>
+        <td>Step out of the current function (or step backwards on return).</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd></td>
+        <td>Confirm a value entered in a watch or breakpoint input field.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Cancel and close the active input field without saving.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="command-labs">Command labs (filesystem, git)</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts for the filesystem and git command labs.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Close the lab modal and return to the tutorial.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="refactoring">Refactoring engine</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts inside refactoring dialogs (Rename, Extract Method, etc.).</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd></td>
+        <td>Apply the refactoring with the values you entered.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Cancel the refactoring and close the dialog without changes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="chat">Tutor chat</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts inside the in-tutorial chat input.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd></td>
+        <td>Send the current message.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Shift</kbd><span class="key-sep">+</span><kbd>Enter</kbd></td>
+        <td>Insert a newline without sending.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="diagrams">UML &amp; diagram viewers</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts for fullscreen UML and ArchUML diagrams.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Close the fullscreen diagram view.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span> scroll</td>
+        <td>Zoom the diagram in or out.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="quizzes">Quizzes &amp; Parsons problems</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts for quizzes and code-arrangement (Parsons) problems.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Space</kbd><span class="key-sep">/</span><kbd>Enter</kbd></td>
+        <td>In a Parsons problem, move the focused line between the bank and the solution.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&uarr;</kbd><span class="key-sep">/</span><kbd>&darr;</kbd></td>
+        <td>In a Parsons problem, reorder the focused line within the solution area.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="popouts">Popout windows &amp; modals</h2>
+  <table class="shortcuts-table">
+    <caption>Shortcuts that work inside any popout, modal, or overlay.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Close the popout, modal, or overlay and return focus to the trigger element.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="tooltips">Tooltips</h2>
+  <table class="shortcuts-table">
+    <caption>Global tooltip controls.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Hide all visible tooltips.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="conflicts">Conflicts with browser and operating system shortcuts</h2>
+  <p>The shortcuts above are scoped to specific widgets — they only fire while the widget is focused. None of them override browser-wide shortcuts (such as <kbd>Ctrl</kbd>+<kbd>T</kbd> for a new tab or <kbd>Ctrl</kbd>+<kbd>W</kbd> for closing a tab) or operating system shortcuts. The debugger keys (<kbd>F5</kbd>, <kbd>F10</kbd>, <kbd>F11</kbd>) shadow the browser&rsquo;s reload and devtools shortcuts; this only happens while the debugger panel has focus, so click outside the debugger if you need the browser&rsquo;s default behaviour.</p>
+
+  <h2 id="reporting">Reporting accessibility issues</h2>
+  <p>If a shortcut on this page does not work, or if you encounter an interactive widget that cannot be operated by keyboard, please <a href="https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/issues">open an issue on GitHub</a>.</p>
+</article>

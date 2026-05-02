@@ -42,6 +42,8 @@ layout: sebook
     border-radius: 50%;
     background: #555;
     color: #fff;
+    border: none;
+    padding: 0;
     font-size: 0.75em;
     font-weight: 700;
     cursor: pointer;
@@ -54,7 +56,17 @@ layout: sebook
   .bookmarks-info-btn:hover,
   .bookmarks-info-btn:focus {
     background: #333;
+    outline: 3px solid #2774AE;
+    outline-offset: 2px;
+  }
+
+  .bookmarks-info-btn:focus:not(:focus-visible) {
     outline: none;
+  }
+
+  .bookmarks-info-btn:focus-visible {
+    outline: 3px solid #2774AE;
+    outline-offset: 2px;
   }
 
   .bookmarks-info-tooltip {
@@ -72,7 +84,7 @@ layout: sebook
     max-width: 85vw;
     line-height: 1.4;
     z-index: 100;
-    pointer-events: none;
+    pointer-events: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   }
 
@@ -86,7 +98,9 @@ layout: sebook
   }
 
   .bookmarks-info-btn:hover .bookmarks-info-tooltip,
-  .bookmarks-info-btn:focus .bookmarks-info-tooltip {
+  .bookmarks-info-btn:focus .bookmarks-info-tooltip,
+  .bookmarks-info-btn:focus-within .bookmarks-info-tooltip,
+  .bookmarks-info-btn.active .bookmarks-info-tooltip {
     display: block;
   }
 
@@ -173,6 +187,10 @@ layout: sebook
     background: #888;
   }
 
+  html.dark-mode .bookmarks-info-btn:focus-visible {
+    outline-color: #FFD100;
+  }
+
   html.dark-mode .bookmark-item {
     background: #1e2a35;
     border-color: #3a4a5a;
@@ -198,7 +216,7 @@ layout: sebook
     <div class="bookmarks-toggle-row">
       <span class="bookmarks-info">
         <span class="toggle-label">Activate Bookmarks</span>
-        <span class="bookmarks-info-btn" tabindex="0" aria-label="Info about bookmarks">?<span class="bookmarks-info-tooltip">When activated, a bookmark icon appears in the toolbar of every SEBook page. Click it to add or remove the page from your bookmarks list. Bookmarks are stored in a local browser cookie and are not shared with any server.</span></span>
+        <button type="button" class="bookmarks-info-btn" aria-expanded="false" aria-label="Info about bookmarks">?<span class="bookmarks-info-tooltip">When activated, a bookmark icon appears in the toolbar of every SEBook page. Click it to add or remove the page from your bookmarks list. Bookmarks are stored in a local browser cookie and are not shared with any server.</span></button>
       </span>
       <label class="switch">
         <span class="sr-only">Toggle bookmarks activation</span>
@@ -263,6 +281,25 @@ layout: sebook
     var noMsg = document.getElementById('no-bookmarks-msg');
 
     if (!toggle || !listSection || !listContainer || !noMsg) return;
+
+    document.querySelectorAll('.bookmarks-info-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var open = !btn.classList.contains('active');
+        document.querySelectorAll('.bookmarks-info-btn.active').forEach(function (other) {
+          other.classList.remove('active');
+          other.setAttribute('aria-expanded', 'false');
+        });
+        btn.classList.toggle('active', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      btn.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+          btn.classList.remove('active');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.focus();
+        }
+      });
+    });
 
     var active = SEBookmarks.isBookmarksActive();
     toggle.checked = active;

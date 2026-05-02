@@ -32,8 +32,8 @@ layout: sebook
         <div class="controls-row toggle-row" style="justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="toggle-label">Activate Personal Gym</span>
-            <span class="info-btn" tabindex="0" aria-label="Info about personal gym">?<span class="info-tooltip" aria-hidden="true">Allows
-                you to add flash cards and quizzes to your personal gym stored in a local cookie.</span></span>
+            <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym">?<span class="info-tooltip">Allows
+                you to add flash cards and quizzes to your personal gym stored in a local cookie.</span></button>
           </span>
           <label class="switch">
             <span class="sr-only">Toggle personal gym activation</span>
@@ -45,12 +45,12 @@ layout: sebook
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
-              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span
-                  class="info-tooltip" aria-hidden="true">Allows SE Gym to track your performance on each question to be stored locally in
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking">?<span
+                  class="info-tooltip">Allows SE Gym to track your performance on each question to be stored locally in
                   your browser's localStorage to enable you to easily revisit the questions you often get wrong. This
                   will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
-                  data remains on your local device and is not shared with the provider of the site.</span></span>
+                  data remains on your local device and is not shared with the provider of the site.</span></button>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle performance analysis</span>
@@ -439,6 +439,8 @@ layout: sebook
       border-radius: 50%;
       background: #555;
       color: #fff;
+      border: none;
+      padding: 0;
       font-size: 0.75em;
       font-weight: 700;
       cursor: pointer;
@@ -451,7 +453,17 @@ layout: sebook
     .info-btn:hover,
     .info-btn:focus {
       background: #555;
+      outline: 3px solid #2774AE;
+      outline-offset: 2px;
+    }
+
+    .info-btn:focus:not(:focus-visible) {
       outline: none;
+    }
+
+    .info-btn:focus-visible {
+      outline: 3px solid #2774AE;
+      outline-offset: 2px;
     }
 
     .info-tooltip {
@@ -470,7 +482,7 @@ layout: sebook
       max-width: 85vw;
       line-height: 1.4;
       z-index: 100;
-      pointer-events: none;
+      pointer-events: auto;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
@@ -485,6 +497,7 @@ layout: sebook
 
     .info-btn:hover .info-tooltip,
     .info-btn:focus .info-tooltip,
+    .info-btn:focus-within .info-tooltip,
     .info-btn.active .info-tooltip {
       display: block;
     }
@@ -496,6 +509,10 @@ layout: sebook
     html.dark-mode .info-btn:hover,
     html.dark-mode .info-btn:focus {
       background: #888;
+    }
+
+    html.dark-mode .info-btn:focus-visible {
+      outline-color: #FFD100;
     }
 
     /* Confirm Modal */
@@ -607,7 +624,7 @@ layout: sebook
     /* Controls */
     #gym-controls {
       background: #f8f9fa;
-      border: 1px solid #e1e4e8;
+      border: 1px solid #767676;
       border-radius: 10px;
       padding: 16px;
       margin-bottom: 20px;
@@ -629,7 +646,7 @@ layout: sebook
     .controls-row input[type="number"] {
       width: 80px;
       padding: 6px 10px;
-      border: 1.5px solid #d1d5da;
+      border: 1.5px solid #767676;
       border-radius: 6px;
       font-size: 0.95em;
       font-weight: 600;
@@ -689,7 +706,7 @@ layout: sebook
       display: flex;
       align-items: center;
       padding: 12px 15px;
-      border: 1px solid #e1e4e8;
+      border: 1px solid #767676;
       border-radius: 8px;
       margin-bottom: 8px;
       background: #fff;
@@ -748,7 +765,7 @@ layout: sebook
 
     .gym-add-btn {
       background: none;
-      border: 2px solid #ccc;
+      border: 2px solid #767676;
       border-radius: 50%;
       width: 34px;
       height: 34px;
@@ -770,8 +787,8 @@ layout: sebook
     }
 
     .gym-add-btn.in-gym {
-      background: #28a745;
-      border-color: #28a745;
+      background: #1f7a35;
+      border-color: #1f7a35;
       color: white;
     }
 
@@ -853,7 +870,7 @@ layout: sebook
       display: flex;
       align-items: center;
       padding: 6px 12px;
-      border: 1.5px solid #e1e4e8;
+      border: 1.5px solid #767676;
       border-radius: 6px;
       background: white;
       text-align: left;
@@ -875,7 +892,7 @@ layout: sebook
     }
 
     .workout-quiz-card .quiz-option.correct {
-      border-color: #28a745;
+      border-color: #1f7a35;
       background: #e6ffed;
       color: #155724;
     }
@@ -885,6 +902,18 @@ layout: sebook
       background: #ffeef0;
       color: #721c24;
     }
+
+    .workout-quiz-card .quiz-option.correct::after,
+    .workout-quiz-card .quiz-option.incorrect::after {
+      margin-left: auto;
+      padding-left: 12px;
+      font-weight: 800;
+      font-size: 1.1em;
+      line-height: 1;
+    }
+
+    .workout-quiz-card .quiz-option.correct::after { content: "✓"; }
+    .workout-quiz-card .quiz-option.incorrect::after { content: "✗"; }
 
     /* Per-option clarification (hidden by default; revealed when wrongly answered) */
     .workout-quiz-card .option-feedback {
@@ -919,7 +948,7 @@ layout: sebook
       display: none;
       width: 14px;
       height: 14px;
-      border: 1.5px solid #d1d5da;
+      border: 1.5px solid #767676;
       border-radius: 3px;
       margin-right: 10px;
       flex-shrink: 0;
@@ -1029,12 +1058,12 @@ layout: sebook
       min-height: 48px; padding: 8px; border-radius: 6px;
       display: flex; flex-direction: column; gap: 4px;
     }
-    .parsons-bank { background: #f5f5f8; border: 1px dashed #ccc; }
-    .parsons-target { background: #f0f8f0; border: 2px dashed #6a6; }
+    .parsons-bank { background: #f5f5f8; border: 1px dashed #6a737d; }
+    .parsons-target { background: #f0f8f0; border: 2px dashed #1f7a35; }
     .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.8em; }
     .parsons-line {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
+      padding: 6px 10px; background: #fff; border: 1px solid #767676; border-radius: 4px;
       cursor: grab; font-size: 0.9em; transition: border-color 0.2s, background 0.2s;
       user-select: none;
     }
@@ -1046,8 +1075,16 @@ layout: sebook
       padding: 0 !important; border: none !important;
     }
     .parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
-    .parsons-line.parsons-correct { border-color: #28a745; background: #e6ffed; }
+    .parsons-line.parsons-correct { border-color: #1f7a35; background: #e6ffed; }
     .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
+    .parsons-line.parsons-correct::before,
+    .parsons-line.parsons-incorrect::before {
+      font-weight: 800;
+      min-width: 1em;
+      text-align: center;
+    }
+    .parsons-line.parsons-correct::before { content: "✓"; }
+    .parsons-line.parsons-incorrect::before { content: "✗"; }
     .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
     .parsons-check-btn, .parsons-reset-btn {
       padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;
@@ -1173,11 +1210,11 @@ layout: sebook
     }
 
     .workout-flashcard .correct-btn {
-      background: #28a745;
+      background: #1f7a3d;
     }
 
     .workout-flashcard .correct-btn:hover {
-      background: #218838;
+      background: #186430;
     }
 
     .workout-flashcard .incorrect-btn {
@@ -1315,7 +1352,7 @@ layout: sebook
 
     html.dark-mode #gym-controls {
       background: #252525;
-      border-color: #444;
+      border-color: #737373;
     }
 
     html.dark-mode .controls-row label {
@@ -1455,7 +1492,7 @@ layout: sebook
     html.dark-mode .parsons-label { color: #aaa; }
     html.dark-mode .parsons-bank { background: #1a1a1a; border-color: #444; }
     html.dark-mode .parsons-target { background: #1a2e1a; border-color: #28a745; }
-    html.dark-mode .parsons-line { background: #252525; border-color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    html.dark-mode .parsons-line { background: #252525; border-color: #737373; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     html.dark-mode .parsons-line:hover { border-color: #4da3ff; background: #2c2c2c; }
     html.dark-mode .parsons-line code { color: #e0e0e0; }
     html.dark-mode .parsons-grip { color: #b8b8c8; }
@@ -1919,16 +1956,31 @@ layout: sebook
       maxCardsInput.addEventListener('input', refreshLibrary);
 
       // ---- Info button click toggle (for touch devices) ----
-      var infoBtn = document.querySelector('.info-btn');
-      if (infoBtn) {
+      document.querySelectorAll('.info-btn').forEach(function (infoBtn) {
         infoBtn.addEventListener('click', function (e) {
           e.stopPropagation();
-          this.classList.toggle('active');
+          var open = !this.classList.contains('active');
+          document.querySelectorAll('.info-btn.active').forEach(function (other) {
+            other.classList.remove('active');
+            other.setAttribute('aria-expanded', 'false');
+          });
+          this.classList.toggle('active', open);
+          this.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
-        document.addEventListener('click', function () {
+        infoBtn.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' || e.keyCode === 27) {
+            this.classList.remove('active');
+            this.setAttribute('aria-expanded', 'false');
+            this.focus();
+          }
+        });
+      });
+      document.addEventListener('click', function () {
+        document.querySelectorAll('.info-btn.active').forEach(function (infoBtn) {
           infoBtn.classList.remove('active');
+          infoBtn.setAttribute('aria-expanded', 'false');
         });
-      }
+      });
 
       // ---- Start Hard Workout Button ----
       document.getElementById('start-hard-workout-btn').addEventListener('click', function () {

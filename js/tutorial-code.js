@@ -6877,6 +6877,9 @@
       if (window.UMLShared && typeof UMLShared.autoFitSVG === 'function') {
         try { UMLShared.autoFitSVG(el); } catch (_) {}
       }
+      if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+        try { UMLShared.applySvgAccessibility(el, diagramType, syntax); } catch (_) {}
+      }
       var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
       self._applyUMLZoom(el, self._umlZoom, zoomLabel);
     }
@@ -6886,6 +6889,9 @@
         var R = (diagramType === 'sequence') ? window.UMLSequenceDiagram : window.UMLClassDiagram;
         if (!R) { self._showUMLError('UML renderer not loaded.'); return; }
         R.render(el, syntax);
+        if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+          try { UMLShared.applySvgAccessibility(el, diagramType, syntax); } catch (_) {}
+        }
         var zoomLabel = self._umlContainer ? self._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
         self._applyUMLZoom(el, self._umlZoom, zoomLabel);
       } catch (e) {
@@ -7038,13 +7044,20 @@
         var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
         if (seqSyntax && window.UMLSequenceDiagram) {
           UMLSequenceDiagram.render(this._umlFsContentEl, seqSyntax);
+          if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+            UMLShared.applySvgAccessibility(this._umlFsContentEl, 'sequence', seqSyntax);
+          }
         } else {
           this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No sequence diagram available.</div>';
         }
       } else {
         var classSyntax = this._umlLastDiagrams.classDiagram;
         if (classSyntax && window.UMLClassDiagram) {
-          UMLClassDiagram.render(this._umlFsContentEl, this._applyTutorialClassLayout(classSyntax));
+          var laidOutClassSyntax = this._applyTutorialClassLayout(classSyntax);
+          UMLClassDiagram.render(this._umlFsContentEl, laidOutClassSyntax);
+          if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+            UMLShared.applySvgAccessibility(this._umlFsContentEl, 'class', laidOutClassSyntax);
+          }
         } else {
           this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No class diagram available.</div>';
         }
@@ -8622,37 +8635,9 @@
     var self = this;
     this.stepNavEl.innerHTML = '';
 
-    // WCAG 3 §2.9 (process completion): communicate progress at every step.
-    // A polite live region announces "Step X of Y, Z completed" on each step
-    // change without stealing focus, plus a visible progress bar gives
-    // sighted users at-a-glance progress.
+    // Communicate progress at every step without stealing focus.
     var totalSteps = this.steps.length;
-    var completedCount = 0;
-    if (this._stepsUnlocked && typeof this._stepsUnlocked.size === 'number') {
-      // _stepsUnlocked includes step 0 + every step the user has reached.
-      // Treat "unlocked" as "started", so completed = unlocked − 1 (the
-      // currently-active step isn't done yet) but never go below 0.
-      completedCount = Math.max(0, this._stepsUnlocked.size - 1);
-    }
     var currentStepNumber = this.currentStep + 1;
-    var progressPercent = totalSteps > 0
-      ? Math.round((completedCount / totalSteps) * 100)
-      : 0;
-
-    var progressBar = document.createElement('div');
-    progressBar.className = 'tvm-step-progress';
-    progressBar.setAttribute('role', 'progressbar');
-    progressBar.setAttribute('aria-label', 'Tutorial progress');
-    progressBar.setAttribute('aria-valuemin', '0');
-    progressBar.setAttribute('aria-valuemax', String(totalSteps));
-    progressBar.setAttribute('aria-valuenow', String(completedCount));
-    progressBar.setAttribute('aria-valuetext',
-      'Step ' + currentStepNumber + ' of ' + totalSteps + ', ' + completedCount + ' completed');
-    var progressFill = document.createElement('div');
-    progressFill.className = 'tvm-step-progress__fill';
-    progressFill.style.width = progressPercent + '%';
-    progressBar.appendChild(progressFill);
-    this.stepNavEl.appendChild(progressBar);
 
     var statusEl = document.createElement('output');
     statusEl.className = 'tvm-step-status';
@@ -8701,14 +8686,14 @@
       ? '<button class="tvm-btn tvm-btn-prev" aria-label="Previous step">\u2190 Previous</button>'
       : '<span></span>';
     html += this._stepHasTests(step)
-      ? '<button class="tvm-btn tvm-btn-test" aria-label="Test my work \u2014 run the tests for this step">\u2713 Test My Work</button>'
+      ? '<button class="tvm-btn tvm-btn-test" aria-label="\u2713 Test My Work \u2014 run the tests for this step">\u2713 Test My Work</button>'
       : '<span></span>';
     var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
       && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next" aria-label="Next step"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
+      ? '<button class="tvm-btn tvm-btn-next" aria-label="Next \u2192 step"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;

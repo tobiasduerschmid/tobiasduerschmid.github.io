@@ -109,6 +109,76 @@
   }
   function _snapHalf(v) { return Math.round(v * 2) / 2; }
 
+  function _plainText(value) {
+    return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+  }
+
+  function _plural(count, singular, plural) {
+    return count + ' ' + (count === 1 ? singular : (plural || singular + 's'));
+  }
+
+  function _list(items, limit) {
+    var clean = [];
+    for (var i = 0; i < (items || []).length; i++) {
+      var item = _plainText(items[i]);
+      if (item) clean.push(item);
+    }
+    if (!clean.length) return '';
+    var max = limit || clean.length;
+    var shown = clean.slice(0, max);
+    var text = shown.join('; ');
+    if (clean.length > shown.length) text += '; and ' + (clean.length - shown.length) + ' more';
+    return text;
+  }
+
+  function _commitByHash(data, hash) {
+    if (!data || !hash) return null;
+    if (data.commitMap && data.commitMap[hash]) return data.commitMap[hash];
+    var commits = data.commits || [];
+    for (var i = 0; i < commits.length; i++) {
+      if (commits[i].hash === hash) return commits[i];
+    }
+    return null;
+  }
+
+  function _commitSummary(cm) {
+    if (!cm) return '';
+    var hash = cm.shortHash || (cm.hash ? cm.hash.substring(0, 7) : '');
+    return hash + (cm.message ? ': ' + cm.message : '');
+  }
+
+  function _branchSummary(data, br) {
+    if (!br) return '';
+    var commit = _commitByHash(data, br.hash);
+    return br.name + (commit ? ' at ' + _commitSummary(commit) : '');
+  }
+
+  function _workingTreeSummary(workingTree) {
+    if (!workingTree) return '';
+    var zones = [
+      { key: 'staged', label: 'staged file' },
+      { key: 'unstaged', label: 'unstaged file' },
+      { key: 'untracked', label: 'untracked file' },
+      { key: 'stashed', label: 'stashed entry' }
+    ];
+    var counts = [];
+    var examples = [];
+    for (var i = 0; i < zones.length; i++) {
+      var zone = zones[i];
+      var rows = workingTree[zone.key] || [];
+      if (!rows.length) continue;
+      counts.push(_plural(rows.length, zone.label));
+      for (var r = 0; r < rows.length && examples.length < 8; r++) {
+        var row = rows[r];
+        var name = row.path || row.ref || row.message || '';
+        if (name) examples.push(zone.key + ' ' + name);
+      }
+    }
+    if (!counts.length) return 'Working tree is clean.';
+    return 'Working tree has ' + counts.join(', ') + '. ' +
+      (examples.length ? 'Files and entries: ' + examples.join('; ') + '.' : '');
+  }
+
   // Colour helpers used to keep SVG text legible against the branch palette.
   // The graph paints text on top of branch-coloured circles and tinted chips,
   // and several palette entries (gold, green) have light luminance — so a
@@ -265,6 +335,47 @@
     this._reservedWorkbenchH  = 0;
     this._perfLite = shouldUsePerfLite();
   }
+
+  GitGraph.describeData = function (data) {
+    data = data || {};
+    var commits = data.commits || [];
+    var branches = data.branches || [];
+    var head = data.head || {};
+    var headCommit = _commitByHash(data, head.hash);
+
+    var label = 'Git commit graph';
+    if (head.ref) label += ' with HEAD on ' + head.ref;
+    else if (head.detached && headCommit) label += ' with detached HEAD at ' + (headCommit.shortHash || headCommit.hash);
+    if (commits.length) label += ' showing ' + _plural(commits.length, 'commit');
+
+    var parts = ['Git graph specification.'];
+    if (head.ref && headCommit) {
+      parts.push('HEAD is on branch ' + head.ref + ' at commit ' + _commitSummary(headCommit) + '.');
+    } else if (head.detached && headCommit) {
+      parts.push('HEAD is detached at commit ' + _commitSummary(headCommit) + '.');
+    } else {
+      parts.push('HEAD position is not available.');
+    }
+    if (branches.length) {
+      parts.push('Branches: ' + _list(branches.map(function (br) { return _branchSummary(data, br); }), 10) + '.');
+    }
+    if (commits.length) {
+      parts.push('Commits, newest first: ' + _list(commits.map(_commitSummary), 12) + '.');
+    }
+    var merges = commits.filter(function (cm) { return (cm.parents || []).length > 1; });
+    if (merges.length) {
+      parts.push('Merge commits: ' + _list(merges.map(function (cm) {
+        return _commitSummary(cm) + ' with ' + _plural(cm.parents.length, 'parent');
+      }), 6) + '.');
+    }
+    var wt = _workingTreeSummary(data.workingTree);
+    if (wt) parts.push(wt);
+
+    return {
+      label: _plainText(label),
+      description: _plainText(parts.join(' '))
+    };
+  };
 
   // Pre-compute the layout dimensions this graph will need across EVERY
   // state the lab will transition through, so the first render already
@@ -1027,6 +1138,8 @@
 
     var width = this._paddingLeft + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(commits) + 24;
     var height = PADDING_TOP + (commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM;
+    var a11y = GitGraph.describeData(data);
+    var descId = this._arrowId + '-desc';
 
     // viewBox is essential — without it, `max-width: 100%; height: auto`
     // (from uml-diagram.css) can't preserve aspect ratio when the container
@@ -1034,8 +1147,11 @@
     // gets clipped.
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
       'viewBox="0 0 ' + width + ' ' + height + '" overflow="visible" ' +
+      'role="img" aria-label="' + this._escapeXml(a11y.label) + '" aria-describedby="' + this._escapeXml(descId) + '" ' +
       'class="git-graph-svg' + (this._perfLite ? ' git-graph-svg--perf-lite' : '') + '" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
 
+    svg += '<title>' + this._escapeXml(a11y.label) + '</title>';
+    svg += '<desc id="' + this._escapeXml(descId) + '">' + this._escapeXml(a11y.description) + '</desc>';
     svg += this._textureDefsMarkup();
 
     // Layer order matches the live renderer: edges → labels → nodes.
@@ -1099,6 +1215,7 @@
     }
 
     this._diffRender(data);
+    this._applyAccessibility(data);
     this._lockWorkbenchHeight();
   };
 
@@ -1269,6 +1386,35 @@
     this._nodeEls = {};
     this._edgeEls = {};
     this._labelEls = {};
+  };
+
+  GitGraph.prototype._applyAccessibility = function (data) {
+    if (!this._svgRoot) return;
+    var a11y = GitGraph.describeData(data);
+    var descId = this._arrowId + '-desc';
+    this._svgRoot.setAttribute('role', 'img');
+    this._svgRoot.setAttribute('aria-label', a11y.label);
+    this._svgRoot.setAttribute('aria-describedby', descId);
+
+    var title = null;
+    var desc = null;
+    for (var i = 0; i < this._svgRoot.childNodes.length; i++) {
+      var child = this._svgRoot.childNodes[i];
+      if (child.nodeType !== 1 || !child.tagName) continue;
+      var tag = child.tagName.toLowerCase();
+      if (tag === 'title') title = child;
+      else if (tag === 'desc' && child.getAttribute('id') === descId) desc = child;
+    }
+    if (!title) {
+      title = this._svgEl('title', {});
+      this._svgRoot.insertBefore(title, this._svgRoot.firstChild);
+    }
+    if (!desc) {
+      desc = this._svgEl('desc', { id: descId });
+      this._svgRoot.insertBefore(desc, title.nextSibling);
+    }
+    title.textContent = a11y.label;
+    desc.textContent = a11y.description;
   };
 
   GitGraph.prototype._diffRender = function (data) {

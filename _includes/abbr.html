@@ -1,0 +1,32 @@
+{%- comment -%}
+Render an <abbr> element whose title attribute is looked up in
+_data/glossary.yml. Keeps abbreviation expansions consistent across the site —
+edit the expansion in one place (the YAML file), and every {% include
+abbr.html term="..." %} on the site updates.
+
+Usage:
+  {% include abbr.html term="REST" %}
+    -> <abbr title="Representational State Transfer">REST</abbr>
+
+  {% include abbr.html term="REST" text="REST APIs" %}
+    -> <abbr title="Representational State Transfer">REST APIs</abbr>
+
+If the term isn't in the glossary, the include falls back to rendering the
+plain text (and warns at build time via Jekyll's --verbose output) so
+mistyped terms don't render as <abbr title="">.
+{%- endcomment -%}
+
+{%- assign _abbr_term = include.term -%}
+{%- assign _abbr_text = include.text | default: include.term -%}
+{%- assign _abbr_entry = nil -%}
+{%- for _entry in site.data.glossary -%}
+  {%- if _entry.term == _abbr_term -%}
+    {%- assign _abbr_entry = _entry -%}
+    {%- break -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if _abbr_entry -%}
+<abbr tabindex="0" data-toggle="tooltip" title="{{ _abbr_entry.definition | escape }}">{{ _abbr_text }}</abbr>
+{%- else -%}
+{{ _abbr_text }}
+{%- endif -%}

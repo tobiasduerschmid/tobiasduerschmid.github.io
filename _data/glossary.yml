@@ -1,0 +1,190 @@
+# Glossary of CS terms and abbreviations.
+#
+# Used by:
+#   - {% include abbr.html term="UML" %}      → renders <abbr title="...">UML</abbr>
+#   - /glossary/                              → public reference page
+#
+# Each entry:
+#   term:        the short form (e.g. "UML"). Required.
+#   definition:  the expansion that goes in the abbr title attribute.
+#                Keep it short — assistive tech reads this aloud. Required.
+#   description: optional longer explanation, shown on the glossary page.
+#                Plain text only (no Markdown) so it works in YAML and HTML.
+#   related:     optional list of other terms (must match a term: above).
+#
+# Sorted alphabetically by term for easy scanning.
+
+- term: ACID
+  definition: Atomicity, Consistency, Isolation, Durability
+  description: A set of properties that database transactions are expected to satisfy. Atomicity means a transaction either completes fully or has no effect; Consistency means the database moves between valid states; Isolation means concurrent transactions don't interfere; Durability means committed changes survive crashes.
+  related: [SQL, CRUD]
+
+- term: API
+  definition: Application Programming Interface
+  description: A contract that lets one piece of software call another. APIs hide implementation details and expose a stable surface — function names, parameter types, and return values — that callers can depend on.
+  related: [REST, HTTP, SDK]
+
+- term: CD
+  definition: Continuous Delivery (or Continuous Deployment)
+  description: The practice of keeping software in a state where it can be released at any time. Continuous Deployment goes one step further and actually releases every change automatically once it passes the pipeline.
+  related: [CI, TDD]
+
+- term: CI
+  definition: Continuous Integration
+  description: The practice of merging every developer's work into a shared mainline frequently — usually several times a day — and running automated tests on each merge to catch integration problems early.
+  related: [CD, TDD]
+
+- term: CRUD
+  definition: Create, Read, Update, Delete
+  description: The four basic operations on persistent storage. Most data-driven applications expose some form of CRUD interface for the entities they manage.
+  related: [SQL, REST, API]
+
+- term: CSRF
+  definition: Cross-Site Request Forgery
+  description: A web security vulnerability in which an attacker tricks a logged-in user's browser into sending an unwanted request to a site they're authenticated with. CSRF tokens and SameSite cookies are common defenses.
+  related: [XSS, HTTP]
+
+- term: CSS
+  definition: Cascading Style Sheets
+  description: The language used to describe the presentation (colors, layout, typography) of HTML documents.
+  related: [HTML, DOM]
+
+- term: DOM
+  definition: Document Object Model
+  description: The in-memory tree representation of an HTML or XML document that scripts manipulate. Browser DOM APIs let JavaScript add, remove, and modify nodes.
+  related: [HTML, CSS]
+
+- term: GoF
+  definition: Gang of Four
+  description: The four authors of the 1994 book "Design Patterns" — Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides — and, by extension, the catalog of 23 object-oriented design patterns the book described.
+  related: [OOP, MVC]
+
+- term: HTML
+  definition: HyperText Markup Language
+  description: The markup language used to structure web pages. HTML elements describe meaning (heading, paragraph, list, link); CSS describes presentation; JavaScript describes behaviour.
+  related: [CSS, DOM, HTTP]
+
+- term: HTTP
+  definition: HyperText Transfer Protocol
+  description: The application-layer protocol the web is built on. Clients send request messages (with a method like GET or POST and a URL); servers respond with status codes and bodies.
+  related: [REST, API, HTML]
+
+- term: JSON
+  definition: JavaScript Object Notation
+  description: A lightweight, text-based data interchange format with a JavaScript-derived syntax. JSON is used widely for configuration files and HTTP payloads.
+  related: [API, REST, YAML]
+
+- term: JWT
+  definition: JSON Web Token
+  description: A compact, signed token format used for authentication and information exchange. A JWT is three Base64url-encoded segments — header, payload, and signature — separated by dots.
+  related: [OAuth, JSON, API]
+
+- term: MVC
+  definition: Model-View-Controller
+  description: A user-interface architecture that separates the data and business rules (the Model), the presentation (the View), and the input handling and orchestration (the Controller).
+  related: [GoF, OOP]
+
+- term: OAuth
+  definition: Open Authorization
+  description: An authorization framework that lets a user grant a third-party application limited access to their resources on another service, without sharing their password.
+  related: [JWT, API]
+
+- term: OOP
+  definition: Object-Oriented Programming
+  description: A programming paradigm built around objects — bundles of state and behaviour — interacting through method calls. Inheritance, encapsulation, and polymorphism are its three classical pillars.
+  related: [GoF, UML, MVC]
+
+- term: ORM
+  definition: Object-Relational Mapping
+  description: A technique that translates between objects in code and rows in a relational database. ORMs let developers manipulate persistent data using language-native types instead of writing SQL by hand.
+  related: [SQL, ACID, CRUD]
+
+- term: PR
+  definition: Pull Request
+  description: A request to merge a branch of code into another branch — usually a long-lived integration branch like main or master. Pull requests are the unit of code review on GitHub, GitLab, and similar platforms.
+  related: [CI, CD]
+
+- term: REST
+  definition: Representational State Transfer
+  description: An architectural style for distributed hypermedia systems. REST APIs expose resources at predictable URLs and use HTTP methods (GET, POST, PUT, DELETE) for the standard operations on them.
+  related: [HTTP, API, CRUD]
+
+- term: SDK
+  definition: Software Development Kit
+  description: A collection of tools, libraries, documentation, and sample code that helps developers build applications for a specific platform or against a specific service.
+  related: [API]
+
+- term: SOLID
+  definition: Single-responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion
+  description: An acronym for five object-oriented design principles popularised by Robert C. Martin. The principles guide how to keep classes small, loosely coupled, and easy to change.
+  related: [OOP, GoF]
+
+- term: SQL
+  definition: Structured Query Language
+  description: The standard language for querying and modifying data in relational databases. SQL statements include SELECT (read), INSERT (create), UPDATE (modify), and DELETE (remove).
+  related: [ACID, CRUD, ORM]
+
+- term: SSH
+  definition: Secure Shell
+  description: A cryptographic protocol for securely operating network services over an unsecured network. Most commonly used for remote command-line login and file transfer.
+  related: [TLS]
+
+- term: TCP
+  definition: Transmission Control Protocol
+  description: A transport-layer protocol that provides reliable, ordered, byte-stream communication between two hosts. HTTP, SSH, and most other application protocols run on top of TCP.
+  related: [UDP, HTTP]
+
+- term: TDD
+  definition: Test-Driven Development
+  description: A development workflow in which the developer writes a failing test first, then writes the smallest amount of code that makes the test pass, then refactors. The cycle repeats one tiny step at a time.
+  related: [CI, CD]
+
+- term: TLS
+  definition: Transport Layer Security
+  description: A cryptographic protocol that provides authenticated, encrypted communication between two parties over a network. HTTPS is HTTP carried over TLS.
+  related: [HTTP, SSH]
+
+- term: UDP
+  definition: User Datagram Protocol
+  description: A transport-layer protocol that provides connectionless, unreliable, message-oriented communication. Used where low latency matters more than guaranteed delivery — for example, real-time video, games, and DNS lookups.
+  related: [TCP]
+
+- term: UI
+  definition: User Interface
+  description: The part of a system a user sees and operates — buttons, text fields, layouts, the keyboard and pointer behaviour. Distinct from User Experience (UX), which covers the full journey including non-visual flow and content.
+  related: [UX, MVC]
+
+- term: UML
+  definition: Unified Modeling Language
+  description: A standardised graphical notation for modelling object-oriented software. UML defines a family of diagram types — class, sequence, state, activity, use case — that depict different views of a system.
+  related: [OOP, GoF]
+
+- term: URL
+  definition: Uniform Resource Locator
+  description: The address of a resource on the web. A URL identifies the protocol (https), the host (example.com), an optional path (/page), and optional query parameters and fragment.
+  related: [HTTP, HTML]
+
+- term: UX
+  definition: User Experience
+  description: The full experience a user has with a product — discovery, learning, regular use, recovery from errors. UI is one part of UX.
+  related: [UI]
+
+- term: XML
+  definition: Extensible Markup Language
+  description: A text-based markup format with explicit tags. XML is more verbose than JSON but supports schemas, namespaces, and mixed content; it is still common in configuration files and document formats.
+  related: [JSON, HTML]
+
+- term: XP
+  definition: Extreme Programming
+  description: A lightweight Agile methodology emphasising short iterations, pair programming, test-driven development, and continuous integration.
+  related: [TDD, CI]
+
+- term: XSS
+  definition: Cross-Site Scripting
+  description: A web security vulnerability in which an attacker injects JavaScript into a page that other users will load. XSS lets the attacker run code in the victim's browser session.
+  related: [CSRF, HTML]
+
+- term: YAML
+  definition: YAML Ain't Markup Language
+  description: A human-readable data serialisation format using indentation for structure. YAML is widely used for configuration files; this very file is YAML.
+  related: [JSON, XML]

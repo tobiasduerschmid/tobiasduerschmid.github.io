@@ -13,7 +13,7 @@ layout: blog
   <div class="row" style="margin-top: 30px; margin-bottom: 40px;">
     <div class="col-lg-10 col-lg-offset-1">
       <div id="category-filter" class="text-center">
-        <button id="cat-all" class="btn btn-default filter-btn active" data-category="all"
+        <button id="cat-all" class="btn btn-default filter-btn active" data-category="all" aria-pressed="true"
           onclick="filterByCategory('all')">
           All Posts
         </button>
@@ -28,7 +28,7 @@ layout: blog
 
         {% assign sorted_categories = categories | sort %}
         {% for category in sorted_categories %}
-        <button id="cat-{{ category | slugify }}" class="btn btn-default filter-btn"
+        <button id="cat-{{ category | slugify }}" class="btn btn-default filter-btn" aria-pressed="false"
           data-category="{{ category | slugify }}" onclick="filterByCategory('{{ category | slugify }}')">
           {{ category }}
         </button>
@@ -102,8 +102,10 @@ layout: blog
     buttons.forEach(btn => {
       if (btn.getAttribute('data-category') === category) {
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
       }
     });
 

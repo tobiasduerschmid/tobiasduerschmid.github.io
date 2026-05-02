@@ -1,0 +1,315 @@
+---
+permalink: /glossary/
+title: "Glossary"
+layout: framework
+---
+
+<style>
+  .glossary-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .glossary-page h1 { margin-top: 0.6em; }
+  .glossary-page h2 {
+    margin-top: 1.6em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #2774AE;
+  }
+  html.dark-mode .glossary-page h2 { border-bottom-color: #4da3ff; }
+
+  .glossary-intro {
+    background: #f8f9fa;
+    border-left: 3px solid #2774AE;
+    border-radius: 6px;
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .glossary-intro {
+    background: #1e1e1e;
+    border-left-color: #4da3ff;
+    color: #ccc;
+  }
+
+  .glossary-search-wrap {
+    margin: 18px 0 24px;
+  }
+  .glossary-search-label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .glossary-search {
+    width: 100%;
+    max-width: 420px;
+    padding: 9px 12px;
+    border: 1px solid #c0c4ca;
+    border-radius: 6px;
+    font-size: 1em;
+    background: #ffffff;
+    color: #1f2328;
+  }
+  html.dark-mode .glossary-search {
+    background: #1f1f1f;
+    border-color: #555;
+    color: #e8e8e8;
+  }
+  .glossary-search:focus {
+    outline: 2px solid #2774AE;
+    outline-offset: 2px;
+  }
+  html.dark-mode .glossary-search:focus { outline-color: #4da3ff; }
+
+  .glossary-status {
+    margin: 8px 0 0;
+    color: #555;
+    font-size: 0.92em;
+    min-height: 1.2em;
+  }
+  html.dark-mode .glossary-status { color: #b0b0b0; }
+
+  .glossary-jump {
+    margin: 8px 0 24px;
+    padding: 10px 14px;
+    background: #f6f8fa;
+    border-radius: 6px;
+    line-height: 2;
+  }
+  html.dark-mode .glossary-jump { background: #1e1e1e; }
+  .glossary-jump a {
+    display: inline-block;
+    min-width: 26px;
+    text-align: center;
+    margin: 0 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .glossary-jump a:hover,
+  .glossary-jump a:focus {
+    background: #e1e7ed;
+    text-decoration: underline;
+  }
+  html.dark-mode .glossary-jump a:hover,
+  html.dark-mode .glossary-jump a:focus { background: #2a2a2a; }
+  .glossary-jump a.is-empty {
+    color: #999;
+    pointer-events: none;
+  }
+  html.dark-mode .glossary-jump a.is-empty { color: #666; }
+
+  .glossary-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .glossary-entry {
+    padding: 14px 0;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  html.dark-mode .glossary-entry { border-bottom-color: #2a2a2a; }
+  .glossary-entry:last-child { border-bottom: none; }
+  .glossary-entry[hidden] { display: none; }
+
+  .glossary-term {
+    font-weight: 700;
+    font-size: 1.15em;
+    margin: 0 0 4px;
+  }
+  .glossary-term .glossary-anchor {
+    color: inherit;
+    text-decoration: none;
+  }
+  .glossary-term .glossary-anchor:hover,
+  .glossary-term .glossary-anchor:focus {
+    text-decoration: underline;
+  }
+  .glossary-definition {
+    color: #333;
+    font-size: 0.98em;
+    margin: 0 0 6px;
+    font-style: italic;
+  }
+  html.dark-mode .glossary-definition { color: #c8c8c8; }
+  .glossary-description {
+    margin: 0;
+    line-height: 1.5;
+  }
+  .glossary-related {
+    margin: 6px 0 0;
+    font-size: 0.9em;
+    color: #555;
+  }
+  html.dark-mode .glossary-related { color: #b0b0b0; }
+  .glossary-related a { color: inherit; }
+
+  .glossary-empty {
+    margin: 24px 0;
+    padding: 18px;
+    background: #f6f8fa;
+    border-radius: 6px;
+    color: #555;
+    text-align: center;
+  }
+  html.dark-mode .glossary-empty {
+    background: #1e1e1e;
+    color: #b0b0b0;
+  }
+</style>
+
+<article class="glossary-page">
+  <h1>Glossary</h1>
+
+  <div class="glossary-intro">
+    <p>This is the complete list of abbreviations and short technical terms that appear across the SEBook, tutorials, and blog posts. The same definitions are surfaced inline as <code>&lt;abbr&gt;</code> tooltips when an abbreviation is used in body text — hover over (or focus) any abbreviation on the site to see its expansion.</p>
+  </div>
+
+  <div class="glossary-search-wrap">
+    <label for="glossary-search" class="glossary-search-label">Filter terms</label>
+    <input
+      type="search"
+      id="glossary-search"
+      class="glossary-search"
+      placeholder="Type to filter (e.g. REST, ACID, Continuous)"
+      autocomplete="off"
+      spellcheck="false"
+      aria-describedby="glossary-search-status"
+    >
+    <p
+      id="glossary-search-status"
+      class="glossary-status"
+      role="status"
+      aria-live="polite"
+    >Showing all {{ site.data.glossary | size }} terms.</p>
+  </div>
+
+  {% assign sorted_glossary = site.data.glossary | sort: "term" %}
+
+  {% comment %} Build the A–Z jump list. Each letter links to the first
+     entry with that initial; letters with no entries are inert. {% endcomment %}
+  {% assign letters = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z" | split: "," %}
+  <nav class="glossary-jump" aria-label="Jump to letter">
+    {% for letter in letters %}
+      {% assign has_entry = false %}
+      {% for entry in sorted_glossary %}
+        {% assign first_char = entry.term | slice: 0, 1 | upcase %}
+        {% if first_char == letter %}
+          {% assign has_entry = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+      {% if has_entry %}
+        <a href="#letter-{{ letter | downcase }}">{{ letter }}</a>
+      {% else %}
+        <a class="is-empty" aria-disabled="true" tabindex="-1">{{ letter }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  <ul class="glossary-list" id="glossary-list">
+    {% assign current_letter = "" %}
+    {% for entry in sorted_glossary %}
+      {% assign first_char = entry.term | slice: 0, 1 | upcase %}
+      {% if first_char != current_letter %}
+        {% assign current_letter = first_char %}
+        {% assign letter_anchor_emitted = true %}
+        <li
+          class="glossary-entry"
+          data-term="{{ entry.term | downcase }}"
+          data-definition="{{ entry.definition | downcase }}"
+          data-description="{{ entry.description | default: '' | downcase }}"
+        >
+          <h2 class="glossary-term" id="letter-{{ first_char | downcase }}">
+            <a class="glossary-anchor" href="#term-{{ entry.term | downcase }}" id="term-{{ entry.term | downcase }}">{{ entry.term }}</a>
+          </h2>
+          <p class="glossary-definition">{{ entry.definition }}</p>
+          {% if entry.description %}
+            <p class="glossary-description">{{ entry.description }}</p>
+          {% endif %}
+          {% if entry.related %}
+            <p class="glossary-related">
+              <strong>Related:</strong>
+              {% for related_term in entry.related %}
+                <a href="#term-{{ related_term | downcase }}">{{ related_term }}</a>{% unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            </p>
+          {% endif %}
+        </li>
+      {% else %}
+        <li
+          class="glossary-entry"
+          data-term="{{ entry.term | downcase }}"
+          data-definition="{{ entry.definition | downcase }}"
+          data-description="{{ entry.description | default: '' | downcase }}"
+        >
+          <h2 class="glossary-term">
+            <a class="glossary-anchor" href="#term-{{ entry.term | downcase }}" id="term-{{ entry.term | downcase }}">{{ entry.term }}</a>
+          </h2>
+          <p class="glossary-definition">{{ entry.definition }}</p>
+          {% if entry.description %}
+            <p class="glossary-description">{{ entry.description }}</p>
+          {% endif %}
+          {% if entry.related %}
+            <p class="glossary-related">
+              <strong>Related:</strong>
+              {% for related_term in entry.related %}
+                <a href="#term-{{ related_term | downcase }}">{{ related_term }}</a>{% unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            </p>
+          {% endif %}
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+
+  <p class="glossary-empty" id="glossary-empty" hidden>No terms match your filter.</p>
+</article>
+
+<script>
+  (function() {
+    'use strict';
+    var input = document.getElementById('glossary-search');
+    var list = document.getElementById('glossary-list');
+    var empty = document.getElementById('glossary-empty');
+    var status = document.getElementById('glossary-search-status');
+    if (!input || !list || !status) return;
+
+    var entries = list.querySelectorAll('.glossary-entry');
+    var totalCount = entries.length;
+    var initialMessage = 'Showing all ' + totalCount + ' terms.';
+
+    function applyFilter() {
+      var query = input.value.trim().toLowerCase();
+      var visible = 0;
+      entries.forEach(function(entry) {
+        if (!query) {
+          entry.hidden = false;
+          visible += 1;
+          return;
+        }
+        var term = entry.getAttribute('data-term') || '';
+        var definition = entry.getAttribute('data-definition') || '';
+        var description = entry.getAttribute('data-description') || '';
+        var match = term.indexOf(query) !== -1
+          || definition.indexOf(query) !== -1
+          || description.indexOf(query) !== -1;
+        entry.hidden = !match;
+        if (match) visible += 1;
+      });
+      if (empty) empty.hidden = visible !== 0;
+      if (!query) {
+        status.textContent = initialMessage;
+      } else if (visible === 0) {
+        status.textContent = 'No terms match "' + input.value.trim() + '".';
+      } else if (visible === 1) {
+        status.textContent = '1 term matches "' + input.value.trim() + '".';
+      } else {
+        status.textContent = visible + ' terms match "' + input.value.trim() + '".';
+      }
+    }
+
+    input.addEventListener('input', applyFilter);
+  })();
+</script>

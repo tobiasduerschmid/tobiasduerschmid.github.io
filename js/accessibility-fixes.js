@@ -82,10 +82,18 @@
     });
   }
 
+  function distinguishCitationLinks() {
+    document.querySelectorAll('a.citation').forEach((link, index) => {
+      if (link.className.split(/\s+/).some((name) => /^citation-ref-\d+$/.test(name))) return;
+      link.classList.add('citation-ref-' + (index + 1));
+    });
+  }
+
   function run() {
     try { makeScrollableCodeBlocksFocusable(); } catch (e) { /* non-fatal */ }
     try { deroleCarouselListboxes(); } catch (e) { /* non-fatal */ }
     try { enhanceTables(); } catch (e) { /* non-fatal */ }
+    try { distinguishCitationLinks(); } catch (e) { /* non-fatal */ }
   }
 
   // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and

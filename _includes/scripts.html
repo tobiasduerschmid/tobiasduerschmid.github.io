@@ -35,7 +35,11 @@
   $(document).ready(function () {
     // Tooltips: trigger on hover AND keyboard focus so keyboard users can
     // reach them (SC 2.1.1). Esc dismisses without losing focus (SC 1.4.13).
-    $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover focus' });
+    $('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip({
+      trigger: 'hover focus',
+      delay: { show: 100, hide: 250 },
+      container: 'body'
+    });
     $(document).on('keydown.a11yTooltip', function (e) {
       if (e.key === 'Escape' || e.keyCode === 27) {
         $('[data-toggle="tooltip"]').tooltip('hide');

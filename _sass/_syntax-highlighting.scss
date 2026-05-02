@@ -6,21 +6,21 @@
     background: #fff;
     @extend %vertical-rhythm;
 
-    .c     { color: #008000; font-style: italic } // Comment → Monaco vs green
+    .c     { color: #006400; font-style: italic } // Comment → accessible green
     .err   { color: #a61717; background-color: #e3d2d2 } // Error
     .k     { color: #0000ff } // Keyword → Monaco vs blue
     .o     { color: #000000 } // Operator
-    .cm    { color: #008000; font-style: italic } // Comment.Multiline
-    .cp    { color: #008000 } // Comment.Preproc
-    .c1    { color: #008000; font-style: italic } // Comment.Single
-    .cs    { color: #008000; font-style: italic } // Comment.Special
+    .cm    { color: #006400; font-style: italic } // Comment.Multiline
+    .cp    { color: #006400 } // Comment.Preproc
+    .c1    { color: #006400; font-style: italic } // Comment.Single
+    .cs    { color: #006400; font-style: italic } // Comment.Special
     .gd    { color: #000; background-color: #fdd } // Generic.Deleted
-    .gd .x { color: #000; background-color: #faa } // Generic.Deleted.Specific
+    .gd .x { color: #000; background-color: #faa; text-decoration: line-through } // Generic.Deleted.Specific
     .ge    { font-style: italic } // Generic.Emph
     .gr    { color: #a00 } // Generic.Error
     .gh    { color: #555 } // Generic.Heading
     .gi    { color: #000; background-color: #dfd } // Generic.Inserted
-    .gi .x { color: #000; background-color: #afa } // Generic.Inserted.Specific
+    .gi .x { color: #000; background-color: #afa; text-decoration: underline; text-underline-offset: 2px } // Generic.Inserted.Specific
     .go    { color: #555 } // Generic.Output
     .gp    { color: #555 } // Generic.Prompt
     .gs    { font-weight: bold } // Generic.Strong
@@ -44,7 +44,7 @@
     .nt    { color: #800000 } // Name.Tag
     .nv    { color: #001080 } // Name.Variable → Monaco vs navy
     .ow    { color: #0000ff } // Operator.Word → Monaco vs blue
-    .w     { color: #bbb } // Text.Whitespace
+    .w     { color: inherit } // Text.Whitespace
     .mf    { color: #006b35 } // Literal.Number.Float
     .mh    { color: #006b35 } // Literal.Number.Hex
     .mi    { color: #006b35 } // Literal.Number.Integer

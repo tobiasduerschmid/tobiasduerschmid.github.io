@@ -28,10 +28,14 @@
     }
     html:not(.dark-mode) .tdp-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; }
     .tdp-title { font-weight: 600; }
-    .tdp-status { color: #888; font-size: 11.5px; margin-left: auto; }
-    .tdp-status.ok { color: #4caf50; }
-    .tdp-status.warn { color: #d4a017; }
+    .tdp-status { color: #5a5a5a; font-size: 11.5px; margin-left: auto; }
+    .tdp-status.ok { color: #1f7a35; }
+    .tdp-status.warn { color: #75591a; }
     .tdp-status.bad { color: #c0392b; }
+    html.dark-mode .tdp-status { color: #a0a0a0; }
+    html.dark-mode .tdp-status.ok { color: #4caf50; }
+    html.dark-mode .tdp-status.warn { color: #d4a017; }
+    html.dark-mode .tdp-status.bad { color: #ff8a8a; }
     .tdp-toolbar-host {
       display: flex; align-items: center; gap: 4px; padding: 6px 12px;
       background: #1a1a1c; border-bottom: 1px solid #2a2a2e; flex-shrink: 0;

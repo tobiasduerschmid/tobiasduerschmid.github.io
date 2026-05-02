@@ -10,7 +10,7 @@
   <!-- Navbar — same style as SEBook but simplified -->
   <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Tutorial navigation">
     <div class="container-fluid">
-      <div class="navbar-header page-scroll" style="display: flex; align-items: center; height: 45px;">
+      <div class="navbar-header page-scroll" style="display: flex; align-items: center; min-height: 45px;">
         <a id="seBookBtn" class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
           <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;" aria-hidden="true"></i> SE Book
         </a>
@@ -18,7 +18,7 @@
           {{ page.title }}
         </span>
       </div>
-      <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
+      <div class="navbar-right" style="display:flex; align-items:center; min-height:45px; padding-right:16px; gap:14px;">
         <label id="autoSaveLabel" style="display:none; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
                title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Auto-save
@@ -73,6 +73,7 @@
         if (nav.offsetHeight > SINGLE_LINE) {
           nav.classList.add('tutorial-nav-compact');
         }
+        document.documentElement.style.setProperty('--tutorial-navbar-height', nav.offsetHeight + 'px');
       }
       if (window.ResizeObserver) {
         new ResizeObserver(check).observe(nav);
@@ -155,7 +156,7 @@
       <p id="autosaveConfirmDesc" style="margin:0 0 8px; font-size:14px; line-height:1.5; color:#444;">
         Do you want to delete all saved progress for this tutorial and reset the current step files?
       </p>
-      <p style="margin:0 0 24px; font-size:13px; line-height:1.5; color:#888;">
+      <p style="margin:0 0 24px; font-size:13px; line-height:1.5; color:#666;">
         Selecting <strong>No</strong> will just turn off auto-save — your progress is kept but won't be updated.
       </p>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -453,6 +454,10 @@
           var el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
+        setTimeout(function () {
+          var nav = document.getElementById('navnav');
+          if (nav) document.documentElement.style.setProperty('--tutorial-navbar-height', nav.offsetHeight + 'px');
+        }, 0);
       }
     });
   </script>
@@ -655,6 +660,28 @@
        crossorigin=anonymous required for COEP=credentialless contexts. -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      function initTooltips() {
+        if (!window.jQuery || !jQuery.fn.tooltip) return;
+        jQuery('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip({
+          trigger: 'hover focus',
+          delay: { show: 100, hide: 250 },
+          container: 'body'
+        });
+        jQuery(document).on('keydown.a11yTooltip', function (event) {
+          if (event.key === 'Escape' || event.keyCode === 27) {
+            jQuery('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip('hide');
+          }
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTooltips);
+      } else {
+        initTooltips();
+      }
+    })();
+  </script>
 
   <!-- Privacy / Cookie Notice intentionally omitted here.
        Tutorial pages render `.tutorial-page` as `position: fixed` covering

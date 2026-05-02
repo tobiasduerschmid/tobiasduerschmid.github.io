@@ -186,6 +186,12 @@ Edit the **Diagram spec** textarea and the playground re-renders the SVG output 
   box-sizing: border-box;
 }
 
+#uml-pg-input:focus-visible {
+  outline: 3px solid #2774AE;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
 #uml-pg-preview-pane {
   flex: 1;
   overflow: auto;
@@ -324,6 +330,11 @@ html.dark-mode #uml-pg-input {
   background: #141e2b;
   color: #d0e0f0;
   border-color: #3a4a60;
+}
+
+html.dark-mode #uml-pg-input:focus-visible {
+  outline-color: #FFD100;
+  box-shadow: inset 0 0 0 2px #000;
 }
 
 html.dark-mode #uml-pg-editor-pane {

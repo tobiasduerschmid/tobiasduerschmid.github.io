@@ -1,0 +1,37 @@
+{%- comment -%}
+Accessible YouTube embed.
+
+Parameters:
+  id                    Required. YouTube video ID.
+  title                 Required. Accessible frame title.
+  description           Required for video-only or synchronized media whose
+                        visuals carry information not present in the audio.
+  audio_described_url   Optional. Link to an audio-described alternate version.
+
+WCAG notes:
+  - 1.2.1 / 1.2.3 / 1.2.5: adjacent description provides a media alternative
+    for visual content when an authored audio-described version is unavailable.
+  - 1.2.2: cc_load_policy asks YouTube to show captions when they exist.
+  - 4.1.2 / 2.4.1: title gives the iframe an accessible name.
+{%- endcomment -%}
+
+<figure class="youtube-embed">
+  <div class="embed-responsive embed-responsive-16by9">
+    <iframe
+      title="{{ include.title | escape }}"
+      src="https://www.youtube.com/embed/{{ include.id | escape }}?rel=0&amp;showinfo=0&amp;cc_load_policy=1&amp;cc_lang_pref=en"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen></iframe>
+  </div>
+  {%- if include.description -%}
+  <figcaption class="youtube-embed__description">
+    {{ include.description }}
+  </figcaption>
+  {%- endif -%}
+  {%- if include.audio_described_url -%}
+  <p class="youtube-embed__described-link">
+    <a href="{{ include.audio_described_url | escape }}">Watch the audio-described version</a>.
+  </p>
+  {%- endif -%}
+</figure>
