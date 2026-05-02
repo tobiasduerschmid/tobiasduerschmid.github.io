@@ -16,7 +16,7 @@
         {% include thumbnail.html %}
       </div>
       <div class="col-sm-9">
-        <h4>{{ p.title }}</h4>
+        <h3>{{ p.title }}</h3>
         <p>{% for author in p.authors %}{% if author == p.authors.last and p.authors.count > 1 %}and {% endif %}{{ author }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}<br><span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span></p>
         <p>{{ p.caption }}</p>
         <p>

@@ -13,7 +13,7 @@
   {% assign thumbnail_src = p.thumbnail %}
   {% assign thumbnail_alt = p.title %}
   {% assign thumbnail_flickr = p.flickr %}
-  <h4 class="mt-1">{{ p.title | escape }}</h4>
+  <h3 class="mt-1">{{ p.title | escape }}</h3>
   {% include thumbnail.html %}
   <p>{{ p.caption.[page.lang] }}</p>
   <p>{% if p.bibtex %}<a data-toggle="modal" href="#bibtex-{{ p.key }}">BibTex</a>{% if p.downloads %}, {% endif %}{% endif %}
