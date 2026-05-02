@@ -136,7 +136,7 @@ html, body {
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #778;
+  color: #aeb4c6;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -208,7 +208,7 @@ html:not(.dark-mode) .tvm-left-tab-bar {
   border-bottom-color: #dde1e8;
 }
 html:not(.dark-mode) .tvm-left-tab {
-  color: #8090a8;
+  color: #526276;
 }
 html:not(.dark-mode) .tvm-left-tab:hover {
   color: #445;
@@ -707,11 +707,16 @@ html:not(.dark-mode) .tvm-left-tab.active {
   background: #1f1f2a;
   color: #9ba8c0;
   font-size: 12px;
-  line-height: 1.3;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
   opacity: 0.55;
   font-family: inherit;
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .tvm-editor-pane-tab-row:hover .tvm-editor-pane-popout-btn { opacity: 1; }
 .tvm-editor-pane-popout-btn:hover {
@@ -799,10 +804,15 @@ html:not(.dark-mode) .tvm-left-tab.active {
   background: #1f1f2a;
   color: #9ba8c0;
   font-size: 12px;
-  line-height: 1.3;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
   font-family: inherit;
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .tvm-output-popout-btn:hover {
   background: #303046; color: #e0e8f0; border-color: #5a5a78;
@@ -1065,7 +1075,7 @@ html:not(.dark-mode) .tvm-editor-pane-label {
   border-right-color: #d4d4d4;
 }
 
-html:not(.dark-mode) .tvm-editor-pane-label[data-pane="left"]  { color: #3b8f55; }
+html:not(.dark-mode) .tvm-editor-pane-label[data-pane="left"]  { color: #176d34; }
 html:not(.dark-mode) .tvm-editor-pane-label[data-pane="right"] { color: #b45050; }
 
 html:not(.dark-mode) .tvm-editor-pane-popout-btn {
@@ -2112,20 +2122,21 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
   transition: background 0.15s, border-color 0.15s;
   letter-spacing: 0.03em;
   background: transparent;
-  color: #61dafb;
-  border-color: #61dafb55;
+  color: #8ee8ff;
+  border-color: rgba(142, 232, 255, 0.62);
+  min-height: 24px;
 }
 .tvm-refresh-btn:hover,
-.tvm-preview-test-btn:hover { background: rgba(97,218,251,0.1); border-color: #61dafb; }
+.tvm-preview-test-btn:hover { background: rgba(142,232,255,0.12); border-color: #8ee8ff; }
 
 .tvm-preview-test-btn {
-  color: #73e096;
-  border-color: rgba(115,224,150,0.45);
+  color: #a4f5bd;
+  border-color: rgba(164,245,189,0.62);
 }
 
 .tvm-preview-test-btn:hover {
-  background: rgba(115,224,150,0.1);
-  border-color: #73e096;
+  background: rgba(164,245,189,0.12);
+  border-color: #a4f5bd;
 }
 
 .tvm-preview-test-btn:disabled {
@@ -2178,11 +2189,32 @@ html.dark-mode .tvm-preview-frame     { background: #1e1e1e; }
 /* Light mode: preview panel header matches other panels */
 html:not(.dark-mode) .tvm-preview-header { background: #e8e8ec; border-bottom-color: #ccc; color: #555; }
 html:not(.dark-mode) .tvm-preview-header::before { background: #0078d4; box-shadow: 0 0 6px rgba(0,120,212,0.5); }
-html:not(.dark-mode) .tvm-refresh-btn { color: #0078d4; border-color: #0078d466; }
-html:not(.dark-mode) .tvm-refresh-btn:hover { background: rgba(0,120,212,0.08); border-color: #0078d4; }
-html:not(.dark-mode) .tvm-preview-test-btn { color: #1a7f3c; border-color: rgba(26,127,60,0.4); }
+html:not(.dark-mode) .tvm-refresh-btn { color: #005587; border-color: rgba(0,85,135,0.58); }
+html:not(.dark-mode) .tvm-refresh-btn:hover { background: rgba(0,85,135,0.08); border-color: #005587; }
+html:not(.dark-mode) .tvm-preview-test-btn { color: #176d34; border-color: rgba(23,109,52,0.55); }
 html:not(.dark-mode) .tvm-preview-test-btn:hover { background: rgba(26,127,60,0.08); border-color: #1a7f3c; }
 html:not(.dark-mode) .tvm-preview-test-panel { background: #f7f8fb; border-bottom-color: #d0d0e0; }
+
+html:not(.dark-mode) .monaco-editor .mtk1,
+html:not(.dark-mode) .monaco-editor .bracket-highlighting-1 {
+  color: #1f2328 !important;
+}
+
+html:not(.dark-mode) .monaco-editor .mtk4 {
+  color: #005f73 !important;
+}
+
+html:not(.dark-mode) .monaco-editor .mtk21 {
+  color: #333333 !important;
+}
+
+.tvm-args-label {
+  color: #d4d8e2 !important;
+}
+
+html:not(.dark-mode) .tvm-args-label {
+  color: #555555 !important;
+}
 
 /* ───────────────────────────────────────────
    Right-side UML tab layout (uml_position: right)
@@ -2213,7 +2245,7 @@ html:not(.dark-mode) .tvm-preview-test-panel { background: #f7f8fb; border-botto
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #778;
+  color: #aeb4c6;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -2258,7 +2290,7 @@ html:not(.dark-mode) .tvm-right-tab-bar {
   background: #e8e8ec;
   border-bottom-color: #ccc;
 }
-html:not(.dark-mode) .tvm-right-tab { color: #8090a8; }
+html:not(.dark-mode) .tvm-right-tab { color: #526276; }
 html:not(.dark-mode) .tvm-right-tab:hover { color: #445; }
 html:not(.dark-mode) .tvm-right-tab.active {
   color: #1a3a5a;
@@ -3363,7 +3395,7 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 .parsons-separator {
   text-align: center;
   padding: 6px;
-  color: #5a5a7a;
+  color: #b8b8c8;
   font-size: 0.8em;
 }
 .parsons-line {
@@ -3389,7 +3421,7 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
   background: transparent;
   padding: 0;
 }
-.parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
+.parsons-grip { color: #b8b8c8; font-size: 0.8em; flex-shrink: 0; }
 .parsons-line.parsons-correct {
   border-color: #3a8a3a;
   background: rgba(58, 138, 58, 0.15);
@@ -3432,7 +3464,8 @@ html:not(.dark-mode) .parsons-line { background: #fff; border-color: #ddd; }
 html:not(.dark-mode) .parsons-line:hover { background: #e8f0ff; border-color: #0078d4; }
 html:not(.dark-mode) .parsons-line code { color: #333; }
 html:not(.dark-mode) .parsons-label { color: #666; }
-html:not(.dark-mode) .parsons-separator { color: #888; }
+html:not(.dark-mode) .parsons-separator { color: #555; }
+html:not(.dark-mode) .parsons-grip { color: #555; }
 html:not(.dark-mode) .parsons-reset-btn { background: #eee; color: #333; }
 .tvm-quiz-panel .score-display {
   font-size: 1.9em;

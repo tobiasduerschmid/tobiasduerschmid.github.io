@@ -48,7 +48,7 @@ no_auto_uml: true
 
     var ph = document.createElement('div');
     ph.className = 'uml-lazy-placeholder';
-    ph.style.cssText = 'min-height:60px;padding:12px;color:#999;font-size:0.82em;border:1px solid #e0e0e0;border-radius:4px;margin:0.5em 0;';
+    ph.style.cssText = 'min-height:60px;padding:12px;color:#555;font-size:0.82em;border:1px solid #d0d0d0;border-radius:4px;margin:0.5em 0;';
     ph.textContent = 'Diagram loading…';
     pre.parentElement.replaceChild(ph, pre);
     lazies.push({ el: ph, type: type, spec: spec, rendered: false });

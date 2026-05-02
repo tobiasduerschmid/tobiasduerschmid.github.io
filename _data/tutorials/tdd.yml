@@ -274,11 +274,17 @@ steps:
         fails with an ImportError. That import error is the deliverable.
 
     tests:
-      - description: "test_empty_roll_has_zero_damage_and_no_events function exists"
+      - description: "test_empty_roll_has_zero_damage_and_no_events function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_empty_roll_has_zero_damage_and_no_events' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_empty_roll_has_zero_damage_and_no_events'), None)
+          assert fn is not None, \
               "Define a test function called test_empty_roll_has_zero_damage_and_no_events in test_scorer.py"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_empty_roll_has_zero_damage_and_no_events` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "Test asserts on report.total_damage == 0 (the observable oracle)"
         command: |
@@ -670,11 +676,17 @@ steps:
           assert code == 0, \
               f"REFACTOR must keep the bar green. If a refactor breaks a test, undo it and try again — the test suite is the safety net.\n{output}"
 
-      - description: "Cycle 1's test is still present (the refactor did not delete behavior)"
+      - description: "Cycle 1's test is still present with its assertion(s) (the refactor did not delete behavior)"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_empty_roll_has_zero_damage_and_no_events' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_empty_roll_has_zero_damage_and_no_events'), None)
+          assert fn is not None, \
               "Cycle 1's test was deleted. REFACTOR changes structure, not behavior — and certainly not the tests that verify behavior."
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "Cycle 1's test still exists but its assertions were removed. The test body must keep at least one `assert` so behavior is still pinned down."
 
     quiz:
       title: "First Quiz — The Red-Green-Refactor Rhythm"
@@ -925,11 +937,17 @@ steps:
         signal to refactor into a loop. Until then, the duplication is fine.
 
     tests:
-      - description: "test_single_one_creates_dragon_flame_event function exists"
+      - description: "test_single_one_creates_dragon_flame_event function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_single_one_creates_dragon_flame_event' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_single_one_creates_dragon_flame_event'), None)
+          assert fn is not None, \
               "Add the test function `test_single_one_creates_dragon_flame_event` from the worked example"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_single_one_creates_dragon_flame_event` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "ScoringEvent class is defined in scorer.py"
         command: |
@@ -1129,11 +1147,17 @@ steps:
         that earns the loop.
 
     tests:
-      - description: "test_single_five_creates_lightning_spark_event function exists"
+      - description: "test_single_five_creates_lightning_spark_event function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_single_five_creates_lightning_spark_event' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_single_five_creates_lightning_spark_event'), None)
+          assert fn is not None, \
               "Add the test function `test_single_five_creates_lightning_spark_event`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_single_five_creates_lightning_spark_event` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "All three tests pass"
         command: |
@@ -1400,17 +1424,29 @@ steps:
         mutation move proves it's not vacuous.
 
     tests:
-      - description: "test_two_ones_create_two_dragon_flames function exists"
+      - description: "test_two_ones_create_two_dragon_flames function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_two_ones_create_two_dragon_flames' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_two_ones_create_two_dragon_flames'), None)
+          assert fn is not None, \
               "Add the test function `test_two_ones_create_two_dragon_flames`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_two_ones_create_two_dragon_flames` exists but has no `assert` — add at least one assertion that pins the behavior."
 
-      - description: "test_one_and_five_create_two_different_events function exists (bonus check after the refactor)"
+      - description: "test_one_and_five_create_two_different_events function exists with at least one assert (bonus check after the refactor)"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_one_and_five_create_two_different_events' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_one_and_five_create_two_different_events'), None)
+          assert fn is not None, \
               "Add the bonus test function `test_one_and_five_create_two_different_events` — it makes the loop's mixed-dice promise explicit"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_one_and_five_create_two_different_events` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "All five tests pass"
         command: |
@@ -1800,17 +1836,29 @@ steps:
         silently break it.
 
     tests:
-      - description: "test_three_ones_create_dragon_blast_instead_of_three_flames function exists"
+      - description: "test_three_ones_create_dragon_blast_instead_of_three_flames function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_three_ones_create_dragon_blast_instead_of_three_flames' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_three_ones_create_dragon_blast_instead_of_three_flames'), None)
+          assert fn is not None, \
               "Add the test function `test_three_ones_create_dragon_blast_instead_of_three_flames`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_three_ones_create_dragon_blast_instead_of_three_flames` exists but has no `assert` — add at least one assertion that pins the behavior."
 
-      - description: "test_dragon_blast_plus_leftover_flame_and_spark function exists (the bonus guardrail)"
+      - description: "test_dragon_blast_plus_leftover_flame_and_spark function exists with at least one assert (the bonus guardrail)"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_dragon_blast_plus_leftover_flame_and_spark' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_dragon_blast_plus_leftover_flame_and_spark'), None)
+          assert fn is not None, \
               "Add the bonus guardrail test `test_dragon_blast_plus_leftover_flame_and_spark` — it pins down the leftover behavior produced by `counts[1] -= 3`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_dragon_blast_plus_leftover_flame_and_spark` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "Implementation uses Counter (the count-then-emit shape)"
         command: |
@@ -2395,11 +2443,17 @@ steps:
         in `COMBO_RULES`, with one parametrized test covering all four.
 
     tests:
-      - description: "test_three_twos_create_goblin_swarm function exists"
+      - description: "test_three_twos_create_goblin_swarm function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_three_twos_create_goblin_swarm' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_three_twos_create_goblin_swarm'), None)
+          assert fn is not None, \
               "Add the test function `test_three_twos_create_goblin_swarm`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_three_twos_create_goblin_swarm` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "ComboRule class is defined"
         command: |
@@ -2421,16 +2475,37 @@ steps:
               assert combo_name in source, \
                   f"COMBO_RULES is missing `{combo_name}` — Phase F asks you to append the four remaining triples (Orc Charge, Troll Smash, Lightning Storm, Demon Strike) as data, no edits to `score()`"
 
-      - description: "test_other_triples_create_combo_events function exists (Phase F parametrized test)"
+      - description: "test_other_triples_create_combo_events function exists with at least one assert (Phase F parametrized test)"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_other_triples_create_combo_events' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_other_triples_create_combo_events'), None)
+          assert fn is not None, \
               "Phase F asks you to add a parametrized test `test_other_triples_create_combo_events` covering Orc Charge, Troll Smash, Lightning Storm, and Demon Strike"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_other_triples_create_combo_events` exists but has no `assert` — add at least one assertion that pins the behavior."
 
       - description: "Phase F test uses @pytest.mark.parametrize"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert '@pytest.mark.parametrize' in source, \
+          tree = ast.parse(source)
+
+          def is_parametrize(dec):
+              target = dec.func if isinstance(dec, ast.Call) else dec
+              if isinstance(target, ast.Attribute) and target.attr == 'parametrize':
+                  return True
+              if isinstance(target, ast.Name) and target.id == 'parametrize':
+                  return True
+              return False
+
+          has_decorator = any(
+              isinstance(n, ast.FunctionDef) and any(is_parametrize(d) for d in n.decorator_list)
+              for n in ast.walk(tree)
+          )
+          assert has_decorator, \
               "Use `@pytest.mark.parametrize` for the four-combo test — not a `for` loop inside a single test function. Each row should report as a separate test result."
 
       - description: "SINGLE_RULES registry exists with Dragon Flame and Lightning Spark"
@@ -2440,15 +2515,33 @@ steps:
 
       - description: "score() body iterates over rules (no hardcoded counts[1] etc., no per-combo branches)"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
-          # If the student forgot to refactor score(), you'd still see the old
-          # `if counts[1] >= 3:` literal. Reject it.
-          assert 'counts[1] >= 3' not in source, \
+          tree = ast.parse(source)
+          score_fn = next((n for n in ast.walk(tree)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'score'), None)
+          assert score_fn is not None, "Define a `score` function in scorer.py"
+
+          # The pre-refactor smell: a `>=` comparison driving combo emission inside
+          # score(). Catch any `<subscript> >= <int>` regardless of the variable
+          # name (counts / tally / c / etc.).
+          smell = next(
+              (n for n in ast.walk(score_fn)
+               if isinstance(n, ast.Compare)
+               and len(n.ops) == 1 and isinstance(n.ops[0], ast.GtE)
+               and isinstance(n.left, ast.Subscript)
+               and isinstance(n.comparators[0], ast.Constant)
+               and isinstance(n.comparators[0].value, int)),
+              None,
+          )
+          assert smell is None, \
               "After the rule-object refactor, `score()` should not contain hardcoded combo checks like `if counts[1] >= 3:`. The combo logic now lives in `ComboRule.apply` and is driven by the COMBO_RULES registry."
+
           # Phase F's OCP win means score() doesn't mention any combo by name.
-          score_body = source.split('def score(')[1] if 'def score(' in source else ''
+          score_strings = [n.value for n in ast.walk(score_fn)
+                           if isinstance(n, ast.Constant) and isinstance(n.value, str)]
           for combo_name in ['Orc Charge', 'Troll Smash', 'Lightning Storm', 'Demon Strike']:
-              assert combo_name not in score_body, \
+              assert not any(combo_name in s for s in score_strings), \
                   f"`score()` should not mention `{combo_name}` directly — it lives in `COMBO_RULES`. Phase F's lesson: new combos cost zero edits to `score()`."
 
       - description: "All tests pass (8 individual + 4 parametrized rows)"
@@ -2989,23 +3082,65 @@ steps:
         on multi-combo cases.
 
     tests:
-      - description: "test_six_ones_create_two_dragon_blasts function exists"
+      - description: "test_six_ones_create_two_dragon_blasts function exists with at least one assert"
         command: |
+          import ast
           source = open('/tutorial/test_scorer.py').read()
-          assert 'def test_six_ones_create_two_dragon_blasts' in source, \
+          tree = ast.parse(source)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'test_six_ones_create_two_dragon_blasts'), None)
+          assert fn is not None, \
               "Add the test function `test_six_ones_create_two_dragon_blasts`"
+          assert any(isinstance(n, ast.Assert) for n in ast.walk(fn)), \
+              "`test_six_ones_create_two_dragon_blasts` exists but has no `assert` — add at least one assertion that pins the behavior."
 
-      - description: "ComboRule.apply uses floor-division (// self.count) for multi-combo"
+      - description: "ComboRule.apply uses floor-division (or divmod) for multi-combo"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
-          assert '// self.count' in source.replace(' ', ' ') or '//self.count' in source.replace(' ', ''), \
-              "ComboRule.apply must compute the number of combos as `counts[self.die] // self.count`. Without floor-division, six 1s only produces one Dragon Blast."
+          tree = ast.parse(source)
+          combo_cls = next((n for n in ast.walk(tree)
+                            if isinstance(n, ast.ClassDef) and n.name == 'ComboRule'), None)
+          assert combo_cls is not None, "Define a `ComboRule` class in scorer.py"
+          apply_fn = next((n for n in ast.walk(combo_cls)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'apply'), None)
+          assert apply_fn is not None, "Give `ComboRule` an `apply(self, counts)` method"
 
-      - description: "ComboRule.apply uses modulo (%= self.count) for the leftover"
+          def uses_op_or_divmod(fn, op_type):
+              for n in ast.walk(fn):
+                  if isinstance(n, (ast.BinOp, ast.AugAssign)) and isinstance(n.op, op_type):
+                      return True
+                  if (isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                          and n.func.id == 'divmod'):
+                      return True
+              return False
+
+          assert uses_op_or_divmod(apply_fn, ast.FloorDiv), \
+              "ComboRule.apply must compute the number of combos with floor-division (e.g. `counts[self.die] // self.count` or `divmod(...)`). Without it, six 1s only produces one Dragon Blast."
+
+      - description: "ComboRule.apply uses modulo (or divmod) for the leftover"
         command: |
+          import ast
           source = open('/tutorial/scorer.py').read()
-          assert '%= self.count' in source.replace(' ', ' ') or '%=self.count' in source.replace(' ', ''), \
-              "ComboRule.apply must reduce counts[self.die] using `%= self.count` — modulo is the right operator when combos can repeat."
+          tree = ast.parse(source)
+          combo_cls = next((n for n in ast.walk(tree)
+                            if isinstance(n, ast.ClassDef) and n.name == 'ComboRule'), None)
+          assert combo_cls is not None, "Define a `ComboRule` class in scorer.py"
+          apply_fn = next((n for n in ast.walk(combo_cls)
+                           if isinstance(n, ast.FunctionDef) and n.name == 'apply'), None)
+          assert apply_fn is not None, "Give `ComboRule` an `apply(self, counts)` method"
+
+          def uses_op_or_divmod(fn, op_type):
+              for n in ast.walk(fn):
+                  if isinstance(n, (ast.BinOp, ast.AugAssign)) and isinstance(n.op, op_type):
+                      return True
+                  if (isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                          and n.func.id == 'divmod'):
+                      return True
+              return False
+
+          assert uses_op_or_divmod(apply_fn, ast.Mod), \
+              "ComboRule.apply must reduce the count with modulo (e.g. `counts[self.die] %= self.count` or `divmod(...)`) — modulo is the right operator when combos can repeat."
 
       - description: "All tests pass (cycle 5's leftover guardrail and the new multi-combo case)"
         command: |

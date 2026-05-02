@@ -37,10 +37,10 @@ layout: sebook
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: #888;
+    background: #555;
     color: #fff;
     font-size: 0.75em;
     font-weight: 700;
@@ -53,7 +53,7 @@ layout: sebook
 
   .bookmarks-info-btn:hover,
   .bookmarks-info-btn:focus {
-    background: #555;
+    background: #333;
     outline: none;
   }
 

@@ -19,12 +19,12 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign all_questions = quiz_data.questions %}
 {% endif %}
 
-<div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
+<div class="quiz-container" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}"
-  role="region" aria-labelledby="quiz-{{ include.id }}-title">
+  role="region" aria-label="{{ quiz_data.title | escape }} quiz">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h3 id="quiz-{{ include.id }}-title">{{ quiz_data.title }}</h3>
+      <h3>{{ quiz_data.title }}</h3>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}"
         aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
@@ -44,18 +44,16 @@ Data source: _data/quizzes/{{ include.id }}.yml
   <div class="quiz-questions">
     {% for q in all_questions %}
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
-      id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}"
+      data-type="{{ q.type | default: 'single' }}"
       data-question-id="{{ q.id }}">
       <div class="question-text">{{ q.question | markdownify }}</div>
       {% if q.type == 'parsons' %}
       <div class="parsons-container{% if q.display == 'inline' %} parsons-inline{% endif %}">
-        <div class="parsons-label" id="parsons-label-{{ include.id }}-{{ forloop.index0 }}">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}. Keyboard: focus a line and press Space or Enter to move it between the bank and the answer area. Use Arrow Up or Arrow Down to reorder within the answer area.</div>
+        <div class="parsons-label">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}. Keyboard: focus a line and press Space or Enter to move it between the bank and the answer area. Use Arrow Up or Arrow Down to reorder within the answer area.</div>
         <div class="parsons-bank" role="list"
-          aria-labelledby="parsons-label-{{ include.id }}-{{ forloop.index0 }}"
           aria-label="Available lines (bank)"></div>
         <div class="parsons-separator" aria-hidden="true"><span>{% if q.display == 'inline' %}&rarr; Drop here &rarr;{% else %}&darr; Drop here &darr;{% endif %}</span></div>
         <div class="parsons-target" role="list"
-          aria-labelledby="parsons-label-{{ include.id }}-{{ forloop.index0 }}"
           aria-label="Answer area (correct order here)"></div>
         <div class="parsons-actions">
           <button type="button" class="parsons-check-btn">Check Order</button>
@@ -503,7 +501,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
   .parsons-bank { background: #f5f5f8; border: 1.5px dashed #6b7078; }
   .parsons-target { background: #f0f8f0; border: 2px dashed #2f7a2f; }
-  .parsons-separator { text-align: center; padding: 6px; color: #888; font-size: 0.8em; }
+  .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.8em; }
   .parsons-line {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
@@ -516,7 +514,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.92em;
     white-space: pre; color: #333; background: transparent; padding: 0;
   }
-  .parsons-grip { color: #aaa; font-size: 0.8em; flex-shrink: 0; }
+  .parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
   .parsons-line.parsons-correct { border-color: #28a745; background: #e6ffed; }
   .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
   .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
@@ -538,14 +536,14 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
   .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
   /* Dark mode overrides for Parsons */
-  html.dark-mode .parsons-label { color: #8888a0; }
+  html.dark-mode .parsons-label { color: #b8b8c8; }
   html.dark-mode .parsons-bank { background: #1a1a28; border-color: #444; }
   html.dark-mode .parsons-target { background: #1c2a1c; border-color: #3a6e3a; }
-  html.dark-mode .parsons-separator { color: #5a5a7a; }
+  html.dark-mode .parsons-separator { color: #b8b8c8; }
   html.dark-mode .parsons-line { background: #2a2a3e; border-color: #444; }
   html.dark-mode .parsons-line:hover { border-color: #0078d4; background: #2a2a50; }
   html.dark-mode .parsons-line code { color: #e0e0f0; }
-  html.dark-mode .parsons-grip { color: #555; }
+  html.dark-mode .parsons-grip { color: #b8b8c8; }
   html.dark-mode .parsons-line.parsons-correct { border-color: #3a8a3a; background: rgba(58,138,58,0.15); }
   html.dark-mode .parsons-line.parsons-incorrect { border-color: #cc4444; background: rgba(204,68,68,0.12); }
   html.dark-mode .parsons-reset-btn { background: #333; color: #ccc; }
@@ -585,7 +583,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
 <script>
   (function () {
     const quizId = "{{ include.id }}";
-    const container = document.getElementById(`quiz-${quizId}`);
+    const script = document.currentScript;
+    let container = script ? script.previousElementSibling : null;
+    while (container && (!container.classList || !container.classList.contains('quiz-container'))) {
+      container = container.previousElementSibling;
+    }
     if (!container) return;
 
     const progressBar = container.querySelector('.progress-fill');

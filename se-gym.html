@@ -32,7 +32,7 @@ layout: sebook
         <div class="controls-row toggle-row" style="justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="toggle-label">Activate Personal Gym</span>
-            <span class="info-btn" tabindex="0" aria-label="Info about personal gym">?<span class="info-tooltip">Allows
+            <span class="info-btn" tabindex="0" aria-label="Info about personal gym">?<span class="info-tooltip" aria-hidden="true">Allows
                 you to add flash cards and quizzes to your personal gym stored in a local cookie.</span></span>
           </span>
           <label class="switch">
@@ -45,7 +45,7 @@ layout: sebook
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
               <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span
-                  class="info-tooltip">Allows SE Gym to track your performance on each question to be stored locally in
+                  class="info-tooltip" aria-hidden="true">Allows SE Gym to track your performance on each question to be stored locally in
                   your browser's localStorage to enable you to easily revisit the questions you often get wrong. This
                   will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
@@ -431,10 +431,10 @@ layout: sebook
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: #888;
+      background: #555;
       color: #fff;
       font-size: 0.75em;
       font-weight: 700;
@@ -732,7 +732,7 @@ layout: sebook
 
     .gym-item-count {
       font-size: 0.85em;
-      color: #888;
+      color: #555;
       margin-left: 4px;
     }
 
@@ -753,7 +753,7 @@ layout: sebook
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: #999;
+      color: #555;
       font-size: 16px;
       transition: all 0.2s;
       flex-shrink: 0;
@@ -778,7 +778,7 @@ layout: sebook
     }
 
     .empty-gym-msg {
-      color: #999;
+      color: #555;
       font-style: italic;
       padding: 16px;
       text-align: center;
@@ -1028,7 +1028,7 @@ layout: sebook
     }
     .parsons-bank { background: #f5f5f8; border: 1px dashed #ccc; }
     .parsons-target { background: #f0f8f0; border: 2px dashed #6a6; }
-    .parsons-separator { text-align: center; padding: 6px; color: #888; font-size: 0.8em; }
+    .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.8em; }
     .parsons-line {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 6px 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
@@ -1042,7 +1042,7 @@ layout: sebook
       white-space: pre; color: #333; background: transparent !important; 
       padding: 0 !important; border: none !important;
     }
-    .parsons-grip { color: #aaa; font-size: 0.8em; flex-shrink: 0; }
+    .parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
     .parsons-line.parsons-correct { border-color: #28a745; background: #e6ffed; }
     .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
     .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
@@ -1345,11 +1345,11 @@ layout: sebook
     }
 
     html.dark-mode .gym-item-count {
-      color: #888;
+      color: #aaa;
     }
 
     html.dark-mode .empty-gym-msg {
-      color: #666;
+      color: #aaa;
       border-color: #444;
     }
 
@@ -1455,8 +1455,8 @@ layout: sebook
     html.dark-mode .parsons-line { background: #252525; border-color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     html.dark-mode .parsons-line:hover { border-color: #4da3ff; background: #2c2c2c; }
     html.dark-mode .parsons-line code { color: #e0e0e0; }
-    html.dark-mode .parsons-grip { color: #666; }
-    html.dark-mode .parsons-separator { color: #666; }
+    html.dark-mode .parsons-grip { color: #b8b8c8; }
+    html.dark-mode .parsons-separator { color: #b8b8c8; }
     html.dark-mode .parsons-line.parsons-correct { border-color: #28a745; background: #1a3a2a; }
     html.dark-mode .parsons-line.parsons-incorrect { border-color: #dc3545; background: #3d1a1a; }
     html.dark-mode .parsons-line.parsons-correct code { color: #98fb98; }

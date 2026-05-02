@@ -26,6 +26,113 @@
   h4 {
     font-weight: bold;
   }
+
+  #main-content {
+    min-width: 0;
+  }
+
+  @media screen and (max-width: 640px) {
+    #main-content.container {
+      width: 100%;
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    #main-content > .row,
+    #main-content .row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    #main-content,
+    #main-content > .row,
+    #main-content section,
+    #main-content p,
+    #main-content li,
+    #main-content a,
+    #main-content strong,
+    #main-content em {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    #main-content pre,
+    #main-content code,
+    #main-content .highlight pre,
+    #main-content .highlight code {
+      max-width: 100%;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    #main-content table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    #main-content img,
+    #main-content canvas,
+    #main-content iframe {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+
+    #main-content svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+
+    #main-content .uml-class-diagram-container,
+    #main-content .uml-sequence-diagram-container,
+    #main-content .uml-state-diagram-container,
+    #main-content .uml-component-diagram-container,
+    #main-content .uml-deployment-diagram-container,
+    #main-content .uml-usecase-diagram-container,
+    #main-content .uml-activity-diagram-container {
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    #main-content .uml-class-diagram-container svg,
+    #main-content .uml-sequence-diagram-container svg,
+    #main-content .uml-state-diagram-container svg,
+    #main-content .uml-component-diagram-container svg,
+    #main-content .uml-deployment-diagram-container svg,
+    #main-content .uml-usecase-diagram-container svg,
+    #main-content .uml-activity-diagram-container svg {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden;
+    }
+
+    #main-content mjx-container {
+      display: inline-block !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      vertical-align: middle;
+    }
+
+    #main-content mjx-container[display="true"] {
+      display: block !important;
+    }
+
+    #navnav .navbar-header {
+      max-width: 100%;
+    }
+
+    #navnav .navbar-brand {
+      max-width: calc(100vw - 78px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
@@ -81,19 +188,31 @@
 
           {% assign current_topic = site.pages | where: "url", topic.url | first %}
           {% include header_project.html title=topic.name %}
+          {% if current_topic.path contains '.html' %}
+          {{ current_topic.content | liquid }}
+          {% else %}
           {{ current_topic.content | liquid | markdownify }}
+          {% endif %}
 
           {% if topic.subtopics %}
           {% for subtopic in topic.subtopics %}
           {% include header_project.html title=subtopic.name %}
           {% assign current_subtopic = site.pages | where: "url", subtopic.url | first %}
+          {% if current_subtopic.path contains '.html' %}
+          {{ current_subtopic.content | liquid }}
+          {% else %}
           {{ current_subtopic.content | liquid | markdownify }}
+          {% endif %}
           {% if subtopic.items %}
           {% for item in subtopic.items %}
 
           {% include header_project.html title=item.name %}
           {% assign current_item = site.pages | where: "url", item.url | first %}
+          {% if current_item.path contains '.html' %}
+          {{ current_item.content | liquid }}
+          {% else %}
           {{ current_item.content | liquid | markdownify }}
+          {% endif %}
           {% endfor %}
           {% endif %}
           {% endfor %}

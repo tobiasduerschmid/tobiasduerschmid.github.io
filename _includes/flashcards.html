@@ -19,11 +19,11 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% assign all_cards = flashcard_data.cards %}
 {% endif %}
 
-<div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}"
-  role="region" aria-labelledby="flashcards-{{ include.id }}-title">
+<div class="flashcards-container" data-quiz-id="{{ include.id }}"
+  role="region" aria-label="{{ flashcard_data.title | escape }} flashcards">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h3 id="flashcards-{{ include.id }}-title">{{ flashcard_data.title }}</h3>
+      <h3>{{ flashcard_data.title }}</h3>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
         aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
@@ -42,20 +42,17 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   <div class="flashcards-list">
     {% for card in all_cards %}
-    <div class="flashcard-card" data-card-id="{{ card.id }}" data-card-index="{{ forloop.index0 }}"
-      id="flash-{{ include.id }}-{{ forloop.index0 }}">
+    <div class="flashcard-card" data-card-id="{{ card.id }}" data-card-index="{{ forloop.index0 }}">
       <div class="flashcard-question">{{ card.question | markdownify }}</div>
 
-      <div class="flashcard-answer-container hidden"
-        id="flash-answer-{{ include.id }}-{{ forloop.index0 }}">
+      <div class="flashcard-answer-container hidden">
         <div class="flashcard-answer">{{ card.answer | markdownify }}</div>
         <div class="flashcard-explanation">{{ card.explanation | markdownify }}</div>
       </div>
 
       <div class="flashcard-actions">
         <button type="button" class="show-answer-btn"
-          aria-expanded="false"
-          aria-controls="flash-answer-{{ include.id }}-{{ forloop.index0 }}">Show Answer</button>
+          aria-expanded="false">Show Answer</button>
         <div class="assessment-buttons hidden" role="group" aria-label="Did you get it right?">
           <button type="button" class="assess-btn correct-btn" aria-label="I got it right" title="I got it right!">
             <span aria-hidden="true">✔</span>
@@ -427,7 +424,11 @@ Data source: _data/flashcards/{{ include.id }}.yml
 <script>
   (function () {
     const fcId = "{{ include.id }}";
-    const container = document.getElementById(`flashcards-${fcId}`);
+    const script = document.currentScript;
+    let container = script ? script.previousElementSibling : null;
+    while (container && (!container.classList || !container.classList.contains('flashcards-container'))) {
+      container = container.previousElementSibling;
+    }
     if (!container) return;
 
     const progressBar = container.querySelector('.progress-fill');

@@ -13,6 +13,25 @@
 
     *, *::before, *::after { box-sizing: border-box; }
 
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 12px;
+      z-index: 1000;
+      padding: 8px 12px;
+      background: #005587;
+      color: #fff;
+      border-radius: 4px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      left: 12px;
+      outline: 3px solid #ffbf00;
+      outline-offset: 2px;
+    }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 14px;
@@ -58,6 +77,13 @@
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
+    }
+
+    .step-instructions button,
+    .step-code button,
+    .step button {
+      min-width: 24px;
+      min-height: 24px;
     }
 
     .step {
@@ -191,7 +217,7 @@
     .step-instructions .highlight .nn,
     .starter-file-content .highlight .kt,
     .starter-file-content .highlight .nc,
-    .starter-file-content .highlight .nn { color: #267f99; }
+    .starter-file-content .highlight .nn { color: #005f73; }
 
     .step-instructions .highlight .m,
     .step-instructions .highlight .mf,
@@ -204,7 +230,7 @@
     .starter-file-content .highlight .mh,
     .starter-file-content .highlight .mi,
     .starter-file-content .highlight .mo,
-    .starter-file-content .highlight .il { color: #098658; }
+    .starter-file-content .highlight .il { color: #006b35; }
 
     .step-instructions .highlight .s,
     .step-instructions .highlight .s1,
@@ -239,7 +265,7 @@
     .starter-file-content .highlight .nb,
     .starter-file-content .highlight .bp,
     .starter-file-content .highlight .n,
-    .starter-file-content .highlight .nf { color: #267f99; }
+    .starter-file-content .highlight .nf { color: #005f73; }
 
     .step-instructions .highlight .nt,
     .starter-file-content .highlight .nt { color: #a31515; }
@@ -302,7 +328,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.07em;
-      color: #7070a0;
+      color: #565682;
       margin-bottom: 8px;
     }
 
@@ -399,7 +425,7 @@
 
     .print-quiz-q-type {
       font-size: 0.72em;
-      color: #7070a0;
+      color: #565682;
       margin-left: 5px;
       font-weight: 400;
     }
@@ -531,7 +557,7 @@
     .print-parsons-label {
       font-size: 0.72em;
       font-weight: 600;
-      color: #7070a0;
+      color: #565682;
       margin-bottom: 2px;
     }
 
@@ -542,6 +568,80 @@
       a { text-decoration: none; }
       .print-quiz { page-break-inside: avoid; }
       .step-solution { page-break-inside: avoid; }
+    }
+
+    @media screen and (max-width: 640px) {
+      body {
+        width: 100%;
+        max-width: none;
+        padding: 18px 14px;
+      }
+
+      .print-header h1 {
+        font-size: 1.45em;
+        line-height: 1.25;
+      }
+
+      .step-header {
+        align-items: flex-start;
+      }
+
+      main,
+      .step,
+      .step-instructions,
+      .starter-files,
+      .starter-file,
+      .starter-file-content,
+      .step-solution,
+      .print-quiz {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .step-title {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .step-instructions pre,
+      .starter-file pre,
+      .step-instructions .highlight pre,
+      .starter-file-content .highlight pre,
+      .step-solution-commands pre,
+      .step-instructions pre code,
+      .starter-file pre code,
+      .step-instructions .highlight code,
+      .starter-file-content .highlight code,
+      .step-solution-commands code {
+        max-width: 100%;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: normal;
+      }
+
+      .step-instructions table,
+      .starter-file-content table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .step-instructions img,
+      .step-instructions svg,
+      .starter-file-content img,
+      .starter-file-content svg,
+      .starter-file-content canvas {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+
+      .starter-file-name,
+      .step-instructions code,
+      .starter-file-content code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
     }
 
     /* Solution blocks (instructor mode) */
@@ -581,9 +681,10 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <div class="print-controls">
-    <button type="button" onclick="window.print()" aria-label="Print or save this tutorial as PDF">
+    <button type="button" onclick="window.print()" aria-label="Print / Save as PDF">
       <i class="fa fa-print" aria-hidden="true"></i> Print / Save as PDF
     </button>
   </div>
@@ -592,14 +693,26 @@
     if (window.location.search.indexOf('autoprint=1') !== -1) {
       window.addEventListener('load', function () { window.print(); });
     }
-    // Instructor mode: reveal solution blocks after DOM is ready
-    if (window.location.search.indexOf('instructor-mode=true') !== -1) {
-      document.addEventListener('DOMContentLoaded', function () {
+    function normalizeExampleButtons() {
+      document.querySelectorAll('.step button').forEach(function (button, index) {
+        if (!button.textContent.trim() && !button.getAttribute('aria-label') && !button.getAttribute('aria-labelledby')) {
+          button.setAttribute('aria-label', 'Tutorial example button ' + (index + 1));
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      normalizeExampleButtons();
+      if (window.MutationObserver) {
+        new MutationObserver(normalizeExampleButtons).observe(document.body, { childList: true, subtree: true });
+      }
+      // Instructor mode: reveal solution blocks after DOM is ready
+      if (window.location.search.indexOf('instructor-mode=true') !== -1) {
         document.querySelectorAll('.step-solution').forEach(function (el) {
           el.style.display = '';
         });
-      });
-    }
+      }
+    });
   </script>
 
   {% assign tutorial_data = site.data.tutorials[page.tutorial] %}

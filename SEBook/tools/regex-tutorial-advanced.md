@@ -27,7 +27,7 @@ layout: sebook
 
 /* ── Input ──────────────────────────────────────────────────────── */
 .rt-input-wrap { display: flex; align-items: center; gap: 4px; margin-bottom: 0.8em; }
-.rt-delim { font-family: 'Courier New', Courier, monospace; font-size: 1.2em; color: #888; font-weight: 700; }
+.rt-delim { font-family: 'Courier New', Courier, monospace; font-size: 1.2em; color: #555; font-weight: 700; }
 .rt-input { font-family: 'Courier New', Courier, monospace; font-size: 1.05em; border: 2px solid #ccc; border-radius: 4px; padding: 0.4em 0.6em; flex: 1; min-width: 0; transition: border-color 0.2s; }
 .rt-input:focus { border-color: #2774AE; outline: none; box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15); }
 .rt-input-fixer .rt-input { border-color: #dc3545; background: #fff5f5; }
@@ -39,13 +39,13 @@ layout: sebook
 .rt-tests { margin-bottom: 1em; }
 .rt-test { padding: 0.25em 0; font-size: 0.92em; transition: color 0.2s; }
 .rt-test-icon { display: inline-block; width: 1.2em; text-align: center; }
-.rt-test-pass { color: #28a745; }
+.rt-test-pass { color: #1f7a34; }
 .rt-test-pass .rt-test-icon { font-weight: bold; }
 .rt-test-fail { color: #dc3545; }
 .rt-test-fail .rt-test-icon { font-weight: bold; }
 .rt-test-input { font-size: 0.95em; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
 .rt-test-label { color: #666; font-size: 0.9em; }
-.rt-test-pass .rt-test-label { color: #28a745; }
+.rt-test-pass .rt-test-label { color: #1f7a34; }
 .rt-test-fail .rt-test-label { color: #dc3545; }
 
 /* ── Action Buttons ────────────────────────────────────────────── */
@@ -92,7 +92,7 @@ layout: sebook
 .rt-viz-btn { padding: 0.3em 0.8em; border: 1px solid #adb5bd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.15s; }
 .rt-viz-btn:hover { background: #e9ecef; }
 .rt-viz-btn-p { font-weight: 600; border-color: #2774AE; color: #2774AE; }
-.rt-viz-counter { font-size: 0.82em; color: #888; margin-left: 0.4em; }
+.rt-viz-counter { font-size: 0.82em; color: #555; margin-left: 0.4em; }
 
 /* Visualizer highlights */
 .rt-viz-hl-re { background: #FFD100; color: #000; padding: 1px 2px; border-radius: 2px; font-weight: 700; }
@@ -145,7 +145,7 @@ layout: sebook
 :root.dark-mode .rt-btn-clear { background: #3a1a1a; color: #e87e7e; }
 :root.dark-mode .rt-btn-clear:hover { background: #4a2a2a; }
 :root.dark-mode .rt-goal { color: #ccc; }
-:root.dark-mode .rt-delim { color: #888; }
+:root.dark-mode .rt-delim { color: #bbb; }
 :root.dark-mode .rt-self-explain { background: #1a2a3a; border-color: #3a5a7a; }
 :root.dark-mode .rt-se-title { color: #7ec8e3; }
 :root.dark-mode .rt-se-question { color: #ddd; }

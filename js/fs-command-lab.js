@@ -712,7 +712,7 @@
     var backBtn = document.createElement('button');
     backBtn.type = 'button';
     backBtn.className = 'fs-command-lab__btn-back';
-    backBtn.setAttribute('aria-label', 'Previous step');
+    backBtn.setAttribute('aria-label', 'Back to previous step');
     var backIcon = document.createElement('span');
     backIcon.className = 'fs-command-lab__icon';
     backIcon.setAttribute('aria-hidden', 'true');

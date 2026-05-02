@@ -148,6 +148,57 @@ layout: blog
     padding: 15px;
     border-radius: 5px;
     overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .blog-post-content img,
+  .blog-post-content video,
+  .blog-post-content svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .blog-post-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  @media (max-width: 640px) {
+    .blog-post-container,
+    .blog-post-content,
+    .blog-post-content p,
+    .blog-post-content li,
+    .blog-post-content a,
+    .blog-post-content strong,
+    .blog-post-content em {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    .blog-post-header h1 {
+      font-size: 2em;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .blog-post-content pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .blog-post-content code {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .blog-post-footer .btn {
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+    }
   }
 
   .blog-post-footer {

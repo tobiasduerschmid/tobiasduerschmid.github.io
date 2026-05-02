@@ -802,11 +802,11 @@
         '<div class="tvm-preview-actions">' +
         (this._playwrightMode ? '<button class="tvm-preview-test-btn" title="Run Playwright tests from the test files">✓ Test</button>' : '') +
         '<button class="tvm-refresh-btn" title="Rebuild preview">\u21bb Refresh</button>' +
-        '<button class="tvm-output-popout-btn" title="Open preview in separate window">\u29c9</button>' +
+        '<button class="tvm-output-popout-btn" title="Open preview in separate window" aria-label="Open preview in separate window">\u29c9</button>' +
         '</div></div>' +
         '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
-        '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
+        '<iframe class="tvm-preview-frame" title="Live preview" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
     } else if (this._umlPositionRight && this._umlDiagramEnabled && !this._outputPositionBottomLeft) {
       // Right-positioned UML, default Output placement: output + UML share a
@@ -827,7 +827,7 @@
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
         '</div>';
 
@@ -850,7 +850,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window" aria-label="Open output in separate window">⧉</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
         '</div>' +
@@ -876,7 +876,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window" aria-label="Open output in separate window">⧉</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>';
 
@@ -943,7 +943,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -953,7 +953,7 @@
       '<div class="tvm-http-sidebar-view" style="display:none">' +
       '<div class="tvm-http-toolbar">' +
       '<select class="tvm-http-method-select"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>' +
-      '<input type="text" class="tvm-http-url-input" placeholder="http://localhost:3000/" value="/">' +
+      '<input type="text" class="tvm-http-url-input" placeholder="http://localhost:3000/" value="/" aria-label="Request URL">' +
       '<button class="tvm-http-send-btn"><i class="fa fa-paper-plane"></i> Send</button>' +
       '</div>' +
       '<div class="tvm-http-content">' +
@@ -982,7 +982,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -1003,7 +1003,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -1047,7 +1047,7 @@
         ? '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="left">' +
             '<span class="tvm-editor-pane-label-text">Code</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window">⧉</button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window" aria-label="Open code pane in separate window">⧉</button>' +
           '</div>' +
           '<div class="tvm-editor-tabs"></div>' +
           '</div>'
@@ -1060,7 +1060,7 @@
           '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="right">' +
             '<span class="tvm-editor-pane-label-text">Tests</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window">⧉</button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window" aria-label="Open tests pane in separate window">⧉</button>' +
           '</div>' +
           '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
           '</div>' +
@@ -1090,7 +1090,7 @@
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
       '</div>' +
       '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
-      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input"></label>' +
+      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
       '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
@@ -1137,7 +1137,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">⛶</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">⧉</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">↻ Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">↻</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -4161,6 +4161,7 @@
     var frame = document.createElement('iframe');
     frame.style.cssText = 'display:none;position:absolute;left:-9999px;width:1px;height:1px;';
     frame.setAttribute('sandbox', 'allow-scripts');
+    frame.setAttribute('title', 'Hidden JavaScript execution sandbox');
     document.body.appendChild(frame);
     this._jsRunnerFrame = frame;
 

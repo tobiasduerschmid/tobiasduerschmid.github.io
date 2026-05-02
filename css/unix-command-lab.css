@@ -128,12 +128,12 @@ html.dark-mode .unix-lab__predict-input[readonly] {
 .unix-lab__col--out { align-items: stretch; }
 
 .unix-lab__arrow {
-  color: #9aa6b2;
+  color: #555;
   font-size: 18px;
   line-height: 1;
   user-select: none;
 }
-html.dark-mode .unix-lab__arrow { color: #5a6573; }
+html.dark-mode .unix-lab__arrow { color: #b0bac6; }
 
 /* ----- Panels (stdin, stdout, stderr, files, env) ----- */
 .unix-lab__panel {
@@ -196,7 +196,7 @@ html.dark-mode .unix-lab__arrow { color: #5a6573; }
   padding: 8px 10px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
   font-size: 12.5px;
-  color: #9aa6b2;
+  color: #555;
   font-style: italic;
   background-color: #ffffff;
 }
@@ -290,7 +290,7 @@ html.dark-mode .unix-lab__arrow { color: #5a6573; }
   text-align: center;
   font-size: 13px;
   font-style: italic;
-  color: #9aa6b2;
+  color: #555;
   background-color: #f8f9fa;
   border: 1px dashed #d8dde2;
   border-radius: 6px;
@@ -711,7 +711,7 @@ html.dark-mode .unix-lab__placeholder,
 html.dark-mode .unix-lab__no-inputs {
   background-color: #141c28;
   border-color: #2f3a4a;
-  color: #6b7686;
+  color: #b0bac6;
 }
 html.dark-mode .unix-lab__exit--ok { background-color: rgba(74, 222, 128, 0.12); color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
 html.dark-mode .unix-lab__exit--err { background-color: rgba(241, 148, 138, 0.12); color: #f1948a; border-color: rgba(241, 148, 138, 0.3); }

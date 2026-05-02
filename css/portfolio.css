@@ -41,7 +41,7 @@ section {
 /* Use a:visited too — browsers have a special high-priority rule for visited state */
 a,
 a:visited {
-	color: #2774AE;
+	color: #005587;
 	text-decoration: underline;
 	transition: all 0.2s ease;
 	border-radius: 4px;
@@ -257,6 +257,13 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 .navbar a:focus,
 .nav a:focus {
 	text-decoration: none !important;
+}
+
+.badge,
+.category-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 24px;
 }
 
 /* Danger Text Styling - UCLA Yellow Background */

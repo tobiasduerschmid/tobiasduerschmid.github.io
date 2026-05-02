@@ -75,7 +75,7 @@
     <div id="sebook-content-wrapper" style="display: flex; min-height: calc(100vh - 60px);">
       <!-- Mobile Sidebar Toggle -->
       <button id="sidebar-toggle" type="button"
-        aria-label="Show table of contents" aria-expanded="false" aria-controls="sidebar"
+        aria-label="Menu: show table of contents" aria-expanded="false" aria-controls="sidebar"
         style="display: none; position: fixed; top: 60px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
         <span aria-hidden="true">☰</span> Menu
       </button>
@@ -247,6 +247,7 @@
               width: 100% !important;
               padding: 15px !important;
               overflow-x: hidden;
+              min-width: 0 !important;
             }
 
             /* Prevent fixed Bootstrap container widths */
@@ -261,6 +262,62 @@
               margin-left: 0 !important;
               margin-right: 0 !important;
               margin-bottom: 15px !important;
+            }
+
+            #main-content pre,
+            #main-content code,
+            #main-content .highlight pre {
+              max-width: 100%;
+              white-space: pre-wrap;
+              overflow-wrap: anywhere;
+            }
+
+            #main-content table {
+              display: block;
+              max-width: 100%;
+              overflow-x: auto;
+            }
+
+            #main-content img,
+            #main-content svg {
+              max-width: 100%;
+              height: auto;
+            }
+
+            #main-content .uml-class-diagram-container,
+            #main-content .uml-sequence-diagram-container,
+            #main-content .uml-state-diagram-container,
+            #main-content .uml-component-diagram-container,
+            #main-content .uml-deployment-diagram-container,
+            #main-content .uml-usecase-diagram-container,
+            #main-content .uml-activity-diagram-container {
+              max-width: 100%;
+              overflow-x: auto;
+              overflow-y: hidden;
+            }
+
+            #main-content .uml-class-diagram-container svg,
+            #main-content .uml-sequence-diagram-container svg,
+            #main-content .uml-state-diagram-container svg,
+            #main-content .uml-component-diagram-container svg,
+            #main-content .uml-deployment-diagram-container svg,
+            #main-content .uml-usecase-diagram-container svg,
+            #main-content .uml-activity-diagram-container svg {
+              width: 100% !important;
+              max-width: 100% !important;
+              overflow: hidden;
+            }
+
+            #main-content mjx-container {
+              display: inline-block !important;
+              max-width: 100% !important;
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              vertical-align: middle;
+            }
+
+            #main-content mjx-container[display="true"] {
+              display: block !important;
             }
           }
         </style>
@@ -290,14 +347,14 @@
             </label>
           </div>
           <div style="display: flex; align-items: center;">
-            <button id="tts-read-btn" aria-label="Read page aloud using text-to-speech"
+            <button id="tts-read-btn" aria-label="Read Aloud: read page aloud using text-to-speech"
               style="background:none; border:1px solid #2774AE; color:#2774AE; border-radius:6px; padding:4px 12px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">
               <i class="fa fa-volume-up" style="margin-right:5px;"></i>Read Aloud
             </button>
           </div>
           {% if site.bookmarks %}
           <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none; align-items:center;">
-            <button id="bookmarkPageBtn" aria-label="Bookmark this page" style="background:none; border:none; cursor:pointer; padding:0 2px; font-size:1.3em; color:#2774AE; line-height:1; vertical-align:middle;">
+            <button id="bookmarkPageBtn" aria-label="Bookmark this page" style="background:none; border:none; cursor:pointer; padding:0 2px; font-size:1.3em; color:#2774AE; line-height:1; vertical-align:middle; min-width:34px; min-height:34px; display:inline-flex; align-items:center; justify-content:center;">
               <i id="bookmarkIcon" class="fa-regular fa-bookmark"></i>
             </button>
           </div>
@@ -352,7 +409,7 @@
       function syncToggleState() {
         var open = sidebar.classList.contains('open');
         toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggleBtn.setAttribute('aria-label', open ? 'Hide table of contents' : 'Show table of contents');
+        toggleBtn.setAttribute('aria-label', open ? 'Menu: hide table of contents' : 'Menu: show table of contents');
       }
       syncToggleState();
 

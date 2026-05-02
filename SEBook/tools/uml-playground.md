@@ -34,7 +34,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="portrait">Portrait</option>
     </select>
     <label class="uml-pg-check" for="uml-pg-edit">
-      <input type="checkbox" id="uml-pg-edit">
+      <input type="checkbox" id="uml-pg-edit" aria-label="Visual edit">
       Visual edit
     </label>
     <label for="uml-pg-edit-mode">Edit:</label>
@@ -43,7 +43,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="lines">Lines</option>
     </select>
     <label class="uml-pg-check" for="uml-pg-snap">
-      <input type="checkbox" id="uml-pg-snap" checked>
+      <input type="checkbox" id="uml-pg-snap" aria-label="Snap to layout grid" checked>
       Snap
     </label>
     <button id="uml-pg-reset-one" title="Reset selected layout override" disabled>Reset Selected</button>
@@ -55,7 +55,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
 
   <div id="uml-playground-body">
     <div id="uml-pg-editor-pane">
-      <textarea id="uml-pg-input" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+      <textarea id="uml-pg-input" aria-label="ArchUML diagram source" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
     </div>
     <div id="uml-pg-preview-pane">
       <div id="uml-pg-output" class="uml-class-diagram-container"></div>
@@ -109,6 +109,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s;
+  min-height: 24px;
 }
 
 #uml-pg-reset-one,
@@ -121,6 +122,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   border: 1px solid #b0bdd4;
   border-radius: 4px;
   cursor: pointer;
+  min-height: 24px;
 }
 
 #uml-pg-reset-one:hover,
@@ -152,7 +154,7 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
 
 #uml-pg-status {
   font-size: 0.8em;
-  color: #888;
+  color: #555;
   margin-left: 4px;
 }
 

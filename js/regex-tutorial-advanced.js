@@ -514,14 +514,14 @@
 
   function renderFreeInput(ex) {
     return '<div class="rt-input-wrap"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Regular expression for ' + esc(ex.title || ex.id) + '" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
       '<span class="rt-delim">/g</span></div>';
   }
 
   function renderFixerInput(ex) {
     return '<div class="rt-fixer-label">Broken regex (edit to fix):</div>' +
       '<div class="rt-input-wrap rt-input-fixer"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken regular expression for ' + esc(ex.title || ex.id) + '" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
       '<span class="rt-delim">/g</span></div>' +
       (ex.hint ? '<details class="rt-hint"><summary>Why is it broken?</summary><p>' + ex.hint + '</p></details>' : '');
   }
