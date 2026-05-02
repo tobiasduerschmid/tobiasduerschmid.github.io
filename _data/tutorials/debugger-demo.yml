@@ -1,6 +1,10 @@
 title: "Time-Travel Debugger Demo"
 description: "A minimal one-step playground for exercising the time-travel Python debugger. The bundled program calls a chain of functions, mutates a list, and computes a small statistic — enough surface to set breakpoints, step into/over/out, watch expressions, hover over identifiers, and scrub backward through history. See plan: .claude/plans/what-would-be-options-temporal-ritchie.md."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true

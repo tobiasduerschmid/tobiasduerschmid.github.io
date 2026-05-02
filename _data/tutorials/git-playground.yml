@@ -1,6 +1,10 @@
 title: "Git Playground"
 description: "An open-ended Git sandbox. Every command you type is recorded into reproduce.sh so you can replay, tweak, and step back through your session."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 require_tests: false
 autosave_type: commands-and-files
 reset_type: commands

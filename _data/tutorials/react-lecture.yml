@@ -1,6 +1,10 @@
 title: "React Lecture"
 description: "Build a UCLA Monopoly game step by step — covering JSX, the map function, components & props, state with useState, and the Virtual DOM."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 backend: react
 
 instructor_mode: true

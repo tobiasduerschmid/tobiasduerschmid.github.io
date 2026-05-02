@@ -1,6 +1,10 @@
 title: "Time-Travel Debugger Demo (Node.js)"
 description: "Same time-travel debugger UI as the Python demo, this time on the in-browser JS sandbox used by the rest of the SEBook Node.js tutorials. Set breakpoints in the Monaco gutter, step through code, scrub the History scrubber, watch expressions, hover identifiers, and edit variable values mid-flight or rewound."
 
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
 # `browser` (sandboxed iframe) — same backend as nodejs.yml so the debugger
 # experience is consistent with the other Node.js tutorials.
 backend: browser
