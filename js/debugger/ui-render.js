@@ -754,10 +754,11 @@
     var wpRows = watchpoints.map(function (wp) {
       var v = snap && snap.watches ? snap.watches[wp.expr] : null;
       var disabled = wp.enabled === false;
+      var toggleLabel = disabled ? 'Enable data watchpoint' : 'Disable data watchpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable data watchpoint' : 'Disable data watchpoint') + '">' +
-        '<input type="checkbox" data-wp-toggle="' + helpers.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
-        '<span></span>' +
+        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<input type="checkbox" aria-label="' + toggleLabel + '" data-wp-toggle="' + helpers.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
         '<span class="tvm-debug-manager-title">' + helpers.escape(wp.expr) + '</span>' +
@@ -783,10 +784,11 @@
       var disabled = eb.enabled === false;
       var typeAttr = helpers.escape(eb.type || '');
       var modeAll = eb.mode === 'all';
+      var toggleLabel = disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + (disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint') + '">' +
-        '<input type="checkbox" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
-        '<span></span>' +
+        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<input type="checkbox" aria-label="' + toggleLabel + '" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
+        '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
         '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +

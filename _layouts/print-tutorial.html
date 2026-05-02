@@ -734,7 +734,7 @@
     </div>
 
     <div class="step-instructions">
-      {{ step.instructions | markdownify }}
+      {{ step.instructions | markdownify | replace: ' id="', ' data-print-id="' }}
     </div>
 
     {% if step.files %}
@@ -747,7 +747,7 @@
         {% if print_lang %}
           {% capture fenced_content %}~~~{{ print_lang }}
 {{ file.content }}~~~{% endcapture %}
-          <div class="starter-file-content">{{ fenced_content | markdownify }}</div>
+          <div class="starter-file-content">{{ fenced_content | markdownify | replace: ' id="', ' data-print-id="' }}</div>
         {% else %}
         <pre>{{ file.content }}</pre>
         {% endif %}
@@ -770,7 +770,7 @@
         {% if sol_lang %}
           {% capture sol_fenced %}~~~{{ sol_lang }}
 {{ file.content }}~~~{% endcapture %}
-          <div class="starter-file-content">{{ sol_fenced | markdownify }}</div>
+          <div class="starter-file-content">{{ sol_fenced | markdownify | replace: ' id="', ' data-print-id="' }}</div>
         {% else %}
         <pre>{{ file.content | xml_escape }}</pre>
         {% endif %}
@@ -786,7 +786,7 @@
       {% endif %}
       {% if step.solution.explanation %}
       <div class="step-solution-explanation">
-        {{ step.solution.explanation | markdownify }}
+        {{ step.solution.explanation | markdownify | replace: ' id="', ' data-print-id="' }}
       </div>
       {% endif %}
     </div>
@@ -806,7 +806,7 @@
         {% for q in quiz.questions %}
         <div class="print-quiz-question">
           <p class="print-quiz-q-text">
-            {{ forloop.index }}. {{ q.question | markdownify | remove: '<p>' | remove: '</p>' | strip }}
+            {{ forloop.index }}. {{ q.question | markdownify | replace: ' id="', ' data-print-id="' | remove: '<p>' | remove: '</p>' | strip }}
             {% if q.type == 'multiple' %}<span class="print-quiz-q-type">(select all that apply)</span>{% endif %}
             {% if q.type == 'parsons' %}<span class="print-quiz-q-type">(arrange in order)</span>{% endif %}
           </p>
@@ -848,16 +848,16 @@
             {% endif %}
             <li class="print-quiz-option{% if is_correct %} correct{% endif %}">
               <span class="print-quiz-option-marker{% if q.type == 'multiple' %} multi{% endif %}"></span>
-              <span>{{ opt | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span>
+              <span>{{ opt | markdownify | replace: ' id="', ' data-print-id="' | remove: '<p>' | remove: '</p>' | strip }}</span>
               {% if opt_fb %}
-              <div class="print-quiz-option-feedback">{{ opt_fb | markdownify }}</div>
+              <div class="print-quiz-option-feedback">{{ opt_fb | markdownify | replace: ' id="', ' data-print-id="' }}</div>
               {% endif %}
             </li>
             {% endfor %}
           </ul>
           {% endif %}
           {% if q.explanation %}
-          <div class="print-quiz-explanation">{{ q.explanation | markdownify }}</div>
+          <div class="print-quiz-explanation">{{ q.explanation | markdownify | replace: ' id="', ' data-print-id="' }}</div>
           {% endif %}
         </div>
         {% endfor %}

@@ -827,7 +827,7 @@
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
         '</div>';
 
@@ -943,7 +943,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -982,7 +982,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -1003,7 +1003,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
@@ -1090,7 +1090,7 @@
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
       '</div>' +
       '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
-      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
+      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
       '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
@@ -1137,7 +1137,7 @@
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">⛶</button>' +
           '<button class="tvm-diagram-popout-btn" title="Open in separate window">⧉</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">↻ Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">↻</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +

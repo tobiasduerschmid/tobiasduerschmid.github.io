@@ -524,6 +524,12 @@ a.thumbnail:visited {
 	transition: transform 0.2s ease, clip-path 0s linear 0s;
 }
 
+html.dark-mode .skip-link,
+html.dark-mode .skip-link:visited {
+	background: #FFD100;
+	color: #000 !important;
+}
+
 .bib-link,
 .bib-link:visited,
 a.citation,

@@ -138,7 +138,7 @@ const WCAG_22_AA = [
 ];
 
 test.describe.configure({ mode: 'serial' });
-test.setTimeout(FULL_SWEEP ? 10 * 60 * 1000 : 3 * 60 * 1000);
+test.setTimeout(FULL_SWEEP ? 20 * 60 * 1000 : 5 * 60 * 1000);
 
 test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
   const groups = allTargetUrls();
@@ -170,15 +170,25 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       page.on('pageerror', (error) => pageErrors.push(String(error && error.message ? error.message : error)));
       await page.setViewportSize({ width: 1280, height: 900 });
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-      await page.waitForLoadState('networkidle', { timeout: 3_000 }).catch(() => {});
+      await settleLoadedPage(page);
       const desktop = await page.evaluate(runDomAudit);
+      let darkMode = { findings: [], evidence: {} };
+      if (url === '/404.html') {
+        await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+        darkMode = await page.evaluate(runDomAudit);
+        await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+      }
       const focus = await runFocusAudit(page);
       await page.setViewportSize({ width: 320, height: 900 });
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-      await page.waitForLoadState('networkidle', { timeout: 3_000 }).catch(() => {});
+      await settleLoadedPage(page);
       const mobile = await page.evaluate(runMobileAudit);
       const findings = [
         ...desktop.findings,
+        ...darkMode.findings.map((finding) => ({
+          ...finding,
+          message: `Dark mode: ${finding.message}`,
+        })),
         ...focus.findings,
         ...mobile.findings,
         ...pageErrors.map((message) => ({
@@ -198,7 +208,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
         },
         findingCount: findings.length,
         findings,
-        evidence: { ...desktop.evidence, ...focus.evidence, ...mobile.evidence },
+        evidence: { ...desktop.evidence, postJavascriptDomChecked: true, darkMode404Checked: url === '/404.html', ...focus.evidence, ...mobile.evidence },
         criteria: buildCriteriaMatrix(findings, desktop.evidence),
       };
       report.groups[feature].pages.push(pageRecord);
@@ -233,6 +243,13 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
     report.failures.slice(0, 80).map((f) => `${f.feature} ${f.url} [${f.criterion}] ${f.message}`).join('\n'),
   ).toHaveLength(0);
 });
+
+async function settleLoadedPage(page) {
+  await page.waitForLoadState('load', { timeout: 5_000 }).catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+  await page.waitForTimeout(750);
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
 
 function buildCriteriaMatrix(findings, evidence) {
   return WCAG_22_AA.map(([id, level, name]) => {
@@ -413,18 +430,46 @@ function runDomAudit() {
 
   const referencedIds = collectReferencedIds();
   const ids = new Map();
+  const duplicateIds = [];
   document.querySelectorAll('[id]').forEach((el) => {
     ids.set(el.id, (ids.get(el.id) || 0) + 1);
   });
   for (const [id, count] of ids) {
-    if (count > 1 && referencedIds.has(id)) {
-      findings.push({ criterion: '4.1.2', severity: 'fail', message: `Duplicate id "${id}" appears ${count} times.` });
+    if (count > 1) {
+      const referenced = referencedIds.has(id);
+      duplicateIds.push({ id, count, referenced });
+      if (referenced) {
+        findings.push({ criterion: '4.1.2', severity: 'fail', message: `Duplicate id "${id}" appears ${count} times and is referenced by another element.` });
+      }
     }
   }
+
+  document.querySelectorAll('[aria-label], [aria-labelledby], [aria-describedby], [aria-controls], [aria-owns], [role]').forEach((el) => {
+    for (const attr of ['aria-label', 'aria-labelledby', 'aria-describedby', 'aria-controls', 'aria-owns', 'role']) {
+      if (!el.hasAttribute(attr)) continue;
+      if (!normalize(el.getAttribute(attr) || '')) {
+        findings.push({ criterion: '4.1.2', severity: 'fail', message: `${attr} is empty on ${shortNode(el)}` });
+      }
+    }
+  });
+
+  document.querySelectorAll('[aria-hidden="true"]').forEach((hiddenRoot) => {
+    const hiddenFocusables = [...hiddenRoot.querySelectorAll(interactiveSelector)].filter((el) => isProgrammaticallyFocusable(el));
+    if (hiddenRoot.matches(interactiveSelector) && isProgrammaticallyFocusable(hiddenRoot)) hiddenFocusables.unshift(hiddenRoot);
+    hiddenFocusables.forEach((el) => {
+      findings.push({ criterion: '4.1.2', severity: 'fail', message: `Focusable control is inside aria-hidden content: ${shortNode(el)}` });
+    });
+  });
 
   document.querySelectorAll('img[src]').forEach((img) => {
     if (!img.hasAttribute('alt') && img.getAttribute('role') !== 'presentation' && img.getAttribute('aria-hidden') !== 'true') {
       findings.push({ criterion: '1.1.1', severity: 'fail', message: `Image is missing alt text: ${shortNode(img)}` });
+    }
+  });
+  document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+    if (!isVisible(heading)) return;
+    if (!elementHasMeaningfulContent(heading)) {
+      findings.push({ criterion: '2.4.6', severity: 'fail', message: `Visible heading has no text or image alt content: ${shortNode(heading)}` });
     }
   });
   document.querySelectorAll('input[type="image"]').forEach((input) => {
@@ -463,6 +508,27 @@ function runDomAudit() {
     const purposeLooksPersonal = type === 'email' || /email|e-mail|name|tel|phone|address|postal|zip/.test(name);
     if (purposeLooksPersonal && !el.getAttribute('autocomplete')) {
       findings.push({ criterion: '1.3.5', severity: 'fail', message: `Input appears to collect personal data but has no autocomplete purpose: ${shortNode(el)}` });
+    }
+  });
+
+  document.querySelectorAll('fieldset').forEach((fieldset) => {
+    if (!isVisible(fieldset)) return;
+    const legend = fieldset.querySelector(':scope > legend');
+    if (!legend || !elementHasMeaningfulContent(legend)) {
+      findings.push({ criterion: '1.3.1', severity: 'fail', message: `Visible fieldset is missing a meaningful legend: ${shortNode(fieldset)}` });
+    }
+  });
+
+  document.querySelectorAll('label').forEach((label) => {
+    if (!(label instanceof HTMLLabelElement)) return;
+    const control = label.control;
+    if (label.hasAttribute('for') && !control) {
+      findings.push({ criterion: '3.3.2', severity: 'fail', message: `Form label references a missing control: ${shortNode(label)}` });
+      return;
+    }
+    if (!control) return;
+    if (!labelHasMeaningfulContent(label) && !accessibleName(control)) {
+      findings.push({ criterion: '3.3.2', severity: 'fail', message: `Form label is associated with a control but has no text or image alt content: ${shortNode(label)}` });
     }
   });
 
@@ -523,6 +589,7 @@ function runDomAudit() {
       mainCount,
       imageCount: document.querySelectorAll('img[src]').length,
       interactiveCount: document.querySelectorAll(interactiveSelector).length,
+      duplicateIdsObserved: duplicateIds.slice(0, 50),
       notApplicableCriteria,
     },
   };
@@ -578,6 +645,15 @@ function runDomAudit() {
     return normalize(clone.textContent || '');
   }
 
+  function labelHasMeaningfulContent(label) {
+    const clone = label.cloneNode(true);
+    if (!(clone instanceof HTMLElement)) return false;
+    clone.querySelectorAll('input, select, textarea, button, script, style').forEach((node) => node.remove());
+    const text = normalize(clone.textContent || '');
+    const imageText = [...clone.querySelectorAll('img[alt]')].map((img) => img.getAttribute('alt') || '').join(' ');
+    return Boolean(text || normalize(imageText));
+  }
+
   function normalize(text) {
     return text.replace(/\s+/g, ' ').trim();
   }
@@ -586,9 +662,25 @@ function runDomAudit() {
     if (el.closest('.sr-only, .visually-hidden, [aria-hidden="true"]')) return false;
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
-    if (style.clip === 'rect(0px, 0px, 0px, 0px)' || style.clipPath === 'inset(50%)') return false;
+    if (style.clip === 'rect(0px, 0px, 0px, 0px)' || /^inset\((50|100)%\)$/.test(style.clipPath)) return false;
     const rect = el.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
+  }
+
+  function isProgrammaticallyFocusable(el) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (isDisabled(el)) return false;
+    const tabindex = el.getAttribute('tabindex');
+    if (tabindex !== null) return Number(tabindex) >= 0;
+    if (el instanceof HTMLAnchorElement) return Boolean(el.getAttribute('href'));
+    if (el instanceof HTMLButtonElement || el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) return true;
+    return false;
+  }
+
+  function elementHasMeaningfulContent(el) {
+    const text = normalize(el.textContent || '');
+    const imageText = [...el.querySelectorAll('img[alt]')].map((img) => img.getAttribute('alt') || '').join(' ');
+    return Boolean(text || normalize(imageText));
   }
 
   function isDisabled(el) {
