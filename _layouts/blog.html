@@ -5,6 +5,10 @@
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
   <a href="#main-content" class="skip-link">Skip to main content</a>
+  {% assign is_blog_index = false %}
+  {% if page.url == '/blog/' %}
+  {% assign is_blog_index = true %}
+  {% endif %}
 
   <article class="post-content">
 
@@ -24,10 +28,11 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse" id="primary-nav-collapse">
           <ul class="nav navbar-nav navbar-right">
+            {% unless is_blog_index %}
             <!-- Extract h2 headings from content -->
             {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
               %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
-              split: '</h2>' | first | replace: '</h2' , '' %} {% if heading_text !="" %} {% assign
+              split: '</h2>' | first | replace: '</h2' , '' | strip_html | strip %} {% if heading_text !="" %} {% assign
               heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
               replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
               replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {%
@@ -36,6 +41,7 @@
               {% endif %}
               {% endif %}
               {% endfor %}
+            {% endunless %}
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -48,6 +54,10 @@
       <main id="main-content" tabindex="-1" style="flex: 1; padding: 00px">
         <div class="container">
           <div class="row">
+            {% if is_blog_index %}
+            {{ content }}
+            {% else %}
+            <!-- DEBUG-CONTENT-START -->{{ content | escape }}<!-- DEBUG-CONTENT-END -->
             {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
               %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
               split: '</h2>' | first | replace: '</h2' , '' %} {% assign section_content=section | split: '</h2>' | last
@@ -62,6 +72,7 @@
               {{ section }}
               {% endif %}
               {% endfor %}
+            {% endif %}
 
           </div>
         </div>

@@ -595,7 +595,7 @@ try {
 
 ## Top 10 Java Best Practices
 
-#### 1. Always use `.equals()` for object comparison, never `==`
+### 1. Always use `.equals()` for object comparison, never `==`
 
 ```java
 // ✓ Always correct
@@ -608,7 +608,7 @@ if (name == "Alice") { ... }
 
 The same applies to all wrapper types (`Integer`, `Double`, etc.) and any object.
 
-#### 2. Make fields `private`; validate in setters and constructors
+### 2. Make fields `private`; validate in setters and constructors
 
 ```java
 // ✓ Encapsulation with validation — callers can't bypass the contract
@@ -622,7 +622,7 @@ public void deposit(double amount) {
 public double balance;
 ```
 
-#### 3. Use primitives for accumulation, wrappers only when required
+### 3. Use primitives for accumulation, wrappers only when required
 
 ```java
 // ✓ Primitive — no boxing overhead
@@ -636,7 +636,7 @@ for (int score : scores) { sum += score; }  // boxes sum on every iteration
 
 Use wrapper types only when required: generics (`List<Integer>`), nullable values, or calling methods (`.compareTo()`).
 
-#### 4. Declare variables as interface types, not concrete classes
+### 4. Declare variables as interface types, not concrete classes
 
 ```java
 // ✓ Interface type — easy to swap implementation
@@ -647,7 +647,7 @@ Map<String, Integer> scores = new HashMap<>();
 ArrayList<String> names = new ArrayList<>();
 ```
 
-#### 5. Program to the interface, not the implementation
+### 5. Program to the interface, not the implementation
 
 Design method parameters and return types as interfaces. This enables polymorphism and makes code easier to test:
 
@@ -659,7 +659,7 @@ public double average(List<Integer> scores) { ... }
 public double average(ArrayList<Integer> scores) { ... }
 ```
 
-#### 6. Use `@Override` when overriding methods
+### 6. Use `@Override` when overriding methods
 
 `@Override` is optional, but it tells the compiler to verify that you're actually overriding a parent method. Without it, a typo in the method name silently creates a new method instead of overriding:
 
@@ -668,7 +668,7 @@ public double average(ArrayList<Integer> scores) { ... }
 public String toString() { ... }   // compiler error if toString is misspelled
 ```
 
-#### 7. Handle checked exceptions at the right level
+### 7. Handle checked exceptions at the right level
 
 Don't catch exceptions before you can actually handle them. If a method can't recover from a failure, let it propagate:
 
@@ -688,7 +688,7 @@ try {
 }
 ```
 
-#### 8. Use `getOrDefault()` instead of null checks on Maps
+### 8. Use `getOrDefault()` instead of null checks on Maps
 
 ```java
 // ✓ Safe and concise
@@ -701,7 +701,7 @@ if (scores.containsKey("Alice")) {
 }
 ```
 
-#### 9. Hide design decisions behind stable interfaces (Parnas 1972)
+### 9. Hide design decisions behind stable interfaces (Parnas 1972)
 
 Each class should hide a **secret** — a design decision likely to change. When something changes, exactly one class changes:
 
@@ -717,7 +717,7 @@ public String getLetterGrade(int score) {
 if (score >= 90) letter = "A";  // in main, not in GradeReport
 ```
 
-#### 10. Choose the right collection for the job
+### 10. Choose the right collection for the job
 
 | If you need… | Use |
 |---|---|

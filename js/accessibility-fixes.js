@@ -59,9 +59,20 @@
     try { deroleCarouselListboxes(); } catch (e) { /* non-fatal */ }
   }
 
+  // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and
+  // Rouge code blocks inside dynamically-rendered content are inserted
+  // AFTER DOMContentLoaded by the tutorial JS. Re-run the patch a few times
+  // post-load to catch them — but don't keep a long-lived MutationObserver
+  // wired to document.body, since the tutorial's init burst fires hundreds
+  // of mutations and the constant querySelectorAll(...) sweep adds up.
+  function scheduleLatePasses() {
+    [200, 800, 2500, 6000].forEach((ms) => setTimeout(run, ms));
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
+    document.addEventListener('DOMContentLoaded', () => { run(); scheduleLatePasses(); }, { once: true });
   } else {
     run();
+    scheduleLatePasses();
   }
 })();

@@ -821,7 +821,7 @@
         '<div class="tvm-diagram-zoom-controls">' +
         '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
         '<span class="tvm-diagram-zoom-label">100%</span>' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
         '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
         '</div>' +
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
@@ -841,8 +841,8 @@
         '<div class="tvm-output-header">' +
         '<div class="tvm-output-actions">' +
         '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
-        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" />' +
-        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams">' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams" aria-label="Filter output streams">' +
         '<option value="all">All Output</option>' +
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
@@ -867,8 +867,8 @@
         '<span>Output</span>' +
         '<div class="tvm-output-actions">' +
         '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
-        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" />' +
-        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams">' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams" aria-label="Filter output streams">' +
         '<option value="all">All Output</option>' +
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
@@ -926,7 +926,7 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
-      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window">⧉</button>' +
+      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window" aria-label="Open instructions in separate window">⧉</button>' +
       '</div>' +
       '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
       (useBelowUml
@@ -937,7 +937,7 @@
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
@@ -952,7 +952,7 @@
       '<div class="tvm-http-splitter" style="display:none"></div>' +
       '<div class="tvm-http-sidebar-view" style="display:none">' +
       '<div class="tvm-http-toolbar">' +
-      '<select class="tvm-http-method-select"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>' +
+      '<select class="tvm-http-method-select" aria-label="HTTP request method"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>' +
       '<input type="text" class="tvm-http-url-input" placeholder="http://localhost:3000/" value="/" aria-label="Request URL">' +
       '<button class="tvm-http-send-btn"><i class="fa fa-paper-plane"></i> Send</button>' +
       '</div>' +
@@ -976,7 +976,7 @@
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
@@ -997,7 +997,7 @@
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
@@ -1129,16 +1129,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">−</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out" aria-label="Zoom out">−</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">✕</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom" aria-label="Reset zoom">✕</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">⛶</button>' +
-          '<button class="tvm-diagram-popout-btn" title="Open in separate window">⧉</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen" aria-label="Toggle fullscreen diagram view">⛶</button>' +
+          '<button class="tvm-diagram-popout-btn" title="Open in separate window" aria-label="Open diagram in separate window">⧉</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">↻ Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">↻</button>' +
+          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color" aria-label="Reset diagram accent colour to default">↻</button>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -8645,18 +8645,24 @@
     var nextLocked = !nextStepUnlocked;
 
     var html = '';
+    // Add aria-labels alongside the visible text so screen-reader and
+    // voice-control users get a clearer name (and so accessibility scanners
+    // like WAVE annotate these step-control buttons rather than treating
+    // them as unlabelled). The aria-label intentionally CONTAINS the
+    // visible text (WCAG 2.5.3 Label in Name) \u2014 "Previous step" includes
+    // "Previous", etc.
     html += index > 0
-      ? '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>'
+      ? '<button class="tvm-btn tvm-btn-prev" aria-label="Previous step">\u2190 Previous</button>'
       : '<span></span>';
     html += this._stepHasTests(step)
-      ? '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>'
+      ? '<button class="tvm-btn tvm-btn-test" aria-label="Test my work \u2014 run the tests for this step">\u2713 Test My Work</button>'
       : '<span></span>';
     var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
       && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
+      ? '<button class="tvm-btn tvm-btn-next" aria-label="Next step"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;
@@ -8715,7 +8721,7 @@
       });
     }
     this.stepControlsEl.innerHTML =
-      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back">\u2190 Back to Step</button>' +
+      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" aria-label="Back to step (leave quiz)">\u2190 Back to Step</button>' +
       '<span class="tvm-quiz-status">Question 1\u2009/\u2009' + quiz.questions.length + '</span>' +
       '<span></span>';
     var back = this.stepControlsEl.querySelector('.tvm-quiz-back');

@@ -87,7 +87,7 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
 }
 </style>
 
-# Quick Reference
+## Quick Reference
 
 <div class="qr-container">
   <!-- Literal Characters -->
@@ -167,7 +167,7 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
   </div>
 </div>
 
-# Overview
+## Overview
 
 ## The Core Purpose of RegEx
 
@@ -402,7 +402,7 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
    * **Match Saved!** The group "IP" successfully holds `"10.0.4.19"`.
 
 
-# Advanced
+## Advanced
 
 ## Advanced Pattern Control: Greediness vs. Laziness
 
@@ -528,7 +528,7 @@ HTML allows for infinitely nested tags (e.g., `<div><div><span></span></div></di
 
 Regular Expressions might look intimidating, but they are incredibly logical once you break them down into their component parts. By mastering anchors, character classes, quantifiers, and groups, you can drastically reduce the amount of code you write for data validation and text manipulation. Start small, practice in online tools like Regex101, and slowly incorporate them into your daily software development workflow!
 
-# Quiz
+## Quiz
 
 {% include flashcards.html id="regex_basics" %}
 

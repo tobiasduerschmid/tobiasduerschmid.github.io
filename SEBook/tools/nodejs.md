@@ -7,7 +7,7 @@ This is a **reference page** for JavaScript and Node.js, designed to be kept ope
 
 > **New to Node.js?** Start with the [interactive tutorial](/SEBook/tools/nodejs-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 
-### The Syntax and Semantics: A Familiar Hybrid
+## The Syntax and Semantics: A Familiar Hybrid
 If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers Discord, Spotify's web player, Netflix's backend, and most of the interactive web you use daily.
 
 * **From C++, JS inherits its syntax:** You will feel right at home with curly braces `{}`, semicolons `;`, `if/else` statements, `for` and `while` loops, and `switch` statements. 
@@ -22,7 +22,7 @@ const name = "UCLA"; // A constant that cannot be reassigned
 
 > **Never use `var`** — it has function-scoped hoisting rules that violate the block-scope behavior you learned in C++ and Python. Always prefer `let` or `const`.
 
-### What is Node.js? (Taking off the Training Wheels)
+## What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
 **Node.js is a runtime environment that takes JavaScript out of the browser and lets it run directly on your computer's operating system.** It embeds Google's **V8 engine** to execute code, but also includes a powerful C library called **libuv** to handle the asynchronous event loop and system-level tasks like file I/O and networking. This means you can use JavaScript to write backend servers just like you would with Python or C++.
@@ -51,7 +51,7 @@ console.log("Hello from Node.js!");
 
 
 
-### The Paradigm Shift: Asynchronous Programming
+## The Paradigm Shift: Asynchronous Programming
 Here is the largest "threshold concept" you must cross: **JavaScript is fundamentally asynchronous and single-threaded.**
 
 In C++ or Python, if you make a network request or read a file, your code typically stops and waits (blocks) until that task finishes. 
@@ -59,13 +59,13 @@ In Node.js, blocking the main thread is a cardinal sin. Instead, Node.js uses an
 
 *Mental Model Adjustment:* You must stop thinking of your code as executing strictly top-to-bottom. You are now setting up "listeners" and "callbacks" that react to events as they finish.
 
-### NPM: The Node Package Manager
+## NPM: The Node Package Manager
 If you remember using `#include <vector>` in C++ or `import requests` (via `pip`) in Python, Node.js has **NPM**.
 NPM is a massive ecosystem of open-source packages. Whenever you start a new Node.js project, you will run:
 * `npm init` (creates a `package.json` file to track your dependencies)
 * `npm install <package_name>` (downloads code into a `node_modules` folder)
 
-### Worked Example: A Simple Client-Server Setup
+## Worked Example: A Simple Client-Server Setup
 Let's look at how you would set up a basic web server in Node.js using a popular framework called **Express** (which you would install via `npm install express`). 
 
 Notice the syntax connections to C++ and Python:
@@ -98,7 +98,7 @@ app.listen(port, () => {
 1.  **Arrow Functions `(req, res) => { ... }`:** This is a concise way to write an anonymous function. You are passing a function as an argument to `app.get()`. This is how JS handles asynchronous events: "When someone makes a GET request to this URL, run this block of code."
 2.  **`req` and `res`:** These represent the HTTP Request and HTTP Response objects, abstracting away the raw network sockets you would have to manage manually in lower-level C++.
 
-### The `===` Trap: Type Coercion
+## The `===` Trap: Type Coercion
 
 JavaScript has TWO equality operators. **Only ever use `===`:**
 
@@ -114,7 +114,7 @@ console.log(0 === false); // false ← correct
 
 This is **negative transfer**: your `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
 
-### JavaScript's Two "Nothings": `null` vs `undefined`
+## JavaScript's Two "Nothings": `null` vs `undefined`
 
 C++ has `nullptr`. Python has `None`. JavaScript has **two** distinct values meaning "nothing":
 
@@ -137,7 +137,7 @@ console.log(typeof student); // "object" (a famous JS bug that can never be fixe
 
 **Watch out:** `null == undefined` is `true` (coercion!), but `null === undefined` is `false`. One more reason to always use `===`.
 
-### Control Flow Syntax
+## Control Flow Syntax
 
 JavaScript's control flow looks like C++ (braces required), not Python (no colons/indentation):
 
@@ -163,7 +163,7 @@ for (const name of names) {
 }
 ```
 
-### Functions as First-Class Values
+## Functions as First-Class Values
 
 In C++ you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings.
 
@@ -178,7 +178,7 @@ const greet  = (name) => `Hello, ${name}!`;
 const double = n => n * 2;           // Parens optional for single param
 ```
 
-### `.map()`, `.filter()`, `.reduce()`
+## `.map()`, `.filter()`, `.reduce()`
 
 These array methods take callback functions — the same "functions as values" concept. They are the JavaScript equivalents of Python's `map()`, `filter()`, and `functools.reduce()`:
 
@@ -200,7 +200,7 @@ const missing = students.find(s => s.id === 99); // undefined
 
 Understanding callbacks is essential — all of Node.js's async operations notify you they are finished by calling a function you provided.
 
-### Destructuring: Unpacking Values
+## Destructuring: Unpacking Values
 
 JavaScript has compact syntax for extracting values from arrays and objects:
 
@@ -218,7 +218,7 @@ function startServer({ host, port }) {
 }
 ```
 
-### Formatting Output: `.toFixed()` and `.padEnd()`
+## Formatting Output: `.toFixed()` and `.padEnd()`
 
 Two utilities you will use when formatting output:
 
@@ -236,10 +236,10 @@ console.log("Bob".padEnd(7) + "| 42");     // "Bob    | 42"
 console.log("42".padStart(5));   // "   42"
 ```
 
-### Ready to Practice?
+## Ready to Practice?
 Head to the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial) for hands-on exercises with immediate feedback — no setup required.
 
-### The Event Loop in Detail
+## The Event Loop in Detail
 
 The Event Loop is best understood with the **Restaurant Metaphor**:
 
@@ -261,7 +261,7 @@ console.log("C");                        // runs immediately
 
 This is why blocking the main thread with a long synchronous operation is catastrophic in Node.js — it prevents ALL other requests, timers, and I/O callbacks from being processed.
 
-### Modern Asynchrony: Promises and Async/Await
+## Modern Asynchrony: Promises and Async/Await
 In the earlier example, we mentioned that Node.js uses "callbacks" to handle events. However, nesting multiple callbacks inside one another leads to a notoriously difficult-to-read structure known as "Callback Hell." 
 
 To manage cognitive load and make asynchronous code easier to reason about, modern JavaScript introduced **Promises** (conceptually similar to `std::future` in C++) and the `async/await` syntax.
@@ -348,7 +348,7 @@ console.log("All done!");
 
 `.forEach()` ignores the Promises returned by its async callbacks — it has no mechanism to wait for them. This is one of the most common async bugs in JavaScript.
 
-### Data Representation: JavaScript Objects and JSON
+## Data Representation: JavaScript Objects and JSON
 If you understand Python dictionaries, you already understand the *general structure* of JavaScript Objects. Unlike C++, where you must define a `struct` or `class` before instantiating an object, JavaScript allows you to create objects on the fly using key-value pairs. 
 
 **Wait, what about JSON?**
@@ -368,18 +368,18 @@ console.log(student.courses[2]); // Outputs: CS35L
 ```
 JSON is simply this exact object structure serialized into a string format so it can be sent over an HTTP network request. 
 
-### Tips for Mastering JS/Node.js
+## Tips for Mastering JS/Node.js
 Here is how you should approach mastering this new ecosystem:
 
 * **Utilize Pair Programming:** Don't learn Node.js in isolation. Sit at a single screen with a peer (one "Driver" typing, one "Navigator" reviewing and strategizing). Research shows pair programming significantly increases confidence and code quality while reducing frustration for novices transitioning to a new language paradigm {% cite mcdowell2006pair cockburn2000costs williams2000all %}.
 * **Embrace [Test-Driven Development (TDD)](/SEBook/testing/tdd.html):** In Python, you might have used `pytest`; in C++, `gtest`. In JavaScript, frameworks like **Jest** are the standard. Before you write a complex API endpoint in Express, write a test for what it *should* do. This acts as a formative assessment, giving you immediate, automated feedback on whether your mental model of the code aligns with reality.
 * **Avoid "Vibe Coding" with AI:** While Large Language Models (LLMs) can generate Node.js boilerplate instantly, relying on them before you understand the asynchronous Event Loop will lead to "unsound abstractions." Use AI to *explain* confusing syntax or error messages, but do not let it rob you of the cognitive struggle required to build your own notional machine of how JavaScript executes.
 
-### Top 10 JavaScript & Node.js Best Practices
+## Top 10 JavaScript & Node.js Best Practices
 
 These are the most important conventions and idioms that experienced JavaScript developers follow. Internalizing them will make your code more predictable, less error-prone, and immediately recognizable as modern JavaScript.
 
-#### 1. Default to `const`, Use `let` Only When Reassigning, Never Use `var`
+### 1. Default to `const`, Use `let` Only When Reassigning, Never Use `var`
 
 `const` prevents accidental reassignment and signals intent. `let` is for values that genuinely change. `var` has broken scoping rules — never use it.
 
@@ -402,7 +402,7 @@ console.log(x);  // 20 — surprised?
 
 **Note:** `const` prevents reassignment, not mutation. A `const` array can still be `.push()`-ed to. To prevent mutation, use `Object.freeze()`.
 
-#### 2. Always Use `===` (Strict Equality), Never `==`
+### 2. Always Use `===` (Strict Equality), Never `==`
 
 JavaScript's `==` performs implicit type coercion, producing dangerous surprises. `===` checks both value AND type — matching the behavior you expect from C++ and Python.
 
@@ -420,7 +420,7 @@ JavaScript's `==` performs implicit type coercion, producing dangerous surprises
 
 The same applies to `!==` (use it) vs `!=` (avoid it).
 
-#### 3. Use `async`/`await` for Asynchronous Code
+### 3. Use `async`/`await` for Asynchronous Code
 
 Modern JavaScript uses `async`/`await` for asynchronous operations. It reads like synchronous code while remaining non-blocking. Always wrap `await` in `try`/`catch`.
 
@@ -443,7 +443,7 @@ fetchA((err, a) => {
 });
 ```
 
-#### 4. Use `Promise.all()` for Independent Async Operations
+### 4. Use `Promise.all()` for Independent Async Operations
 
 When two operations do not depend on each other, run them concurrently. Sequential `await` wastes time.
 
@@ -459,7 +459,7 @@ const users = await fetchUsers();   // waits...
 const posts = await fetchPosts();   // then waits again
 ```
 
-#### 5. Use Template Literals for String Formatting
+### 5. Use Template Literals for String Formatting
 
 Backtick strings with `${expression}` are JavaScript's equivalent of Python's f-strings. They are more readable and less error-prone than `+` concatenation.
 
@@ -476,7 +476,7 @@ const msg = name + " scored " + score + " points";
 
 Template literals also support multi-line strings and arbitrary expressions inside `${}`.
 
-#### 6. Use Arrow Functions for Callbacks
+### 6. Use Arrow Functions for Callbacks
 
 Arrow functions are concise and lexically bind `this` (they inherit `this` from the enclosing scope, avoiding a common class of bugs).
 
@@ -494,7 +494,7 @@ const doubled = numbers.map(function(n) { return n * 2; });
 
 **When NOT to use arrow functions:** Object methods that need their own `this`, and constructor functions.
 
-#### 7. Use Destructuring to Extract Values
+### 7. Use Destructuring to Extract Values
 
 Destructuring makes code more concise and self-documenting by extracting values from objects and arrays in one step.
 
@@ -515,7 +515,7 @@ const name = student.name;
 const grade = student.grade;
 ```
 
-#### 8. Never Block the Event Loop
+### 8. Never Block the Event Loop
 
 Node.js is single-threaded. Blocking the main thread prevents ALL other requests, timers, and callbacks from executing. Always use asynchronous I/O.
 
@@ -529,7 +529,7 @@ const data = fs.readFileSync("data.json", "utf8");
 
 For CPU-intensive work, offload to Worker Threads instead of running it on the main thread.
 
-#### 9. Use Optional Chaining (`?.`) and Nullish Coalescing (`??`)
+### 9. Use Optional Chaining (`?.`) and Nullish Coalescing (`??`)
 
 These modern operators replace verbose null-checking patterns and make code more robust.
 
@@ -549,7 +549,7 @@ const city = user && user.address && user.address.city;
 const port = config.port || 3000;           // if port is 0, uses 3000!
 ```
 
-#### 10. Use `.map()`, `.filter()`, `.reduce()` Instead of Manual Loops
+### 10. Use `.map()`, `.filter()`, `.reduce()` Instead of Manual Loops
 
 These array methods are more declarative, less error-prone, and do not mutate the original array. They are the JavaScript equivalents of Python's `map()`, `filter()`, and `functools.reduce()`.
 
@@ -578,7 +578,7 @@ for (let i = 0; i < students.length; i++) {
 Use regular `for` loops when you need early termination (`break`), when performance on very large arrays matters, or when the logic is too complex for a single chain.
 
 
-### Test Your Knowledge
+## Test Your Knowledge
 
 {% include flashcards.html id="nodejs_syntax_explain" %}
 

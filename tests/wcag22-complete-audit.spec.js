@@ -902,6 +902,18 @@ function runDomAudit() {
     if (!accessibleName(el)) {
       findings.push({ criterion: '3.3.2', severity: 'fail', message: `Form control is missing a label or instructions: ${shortNode(el)}` });
     }
+    // WAVE "Unlabeled form control with title" alert: a form control whose only
+    // accessible name comes from `title` is fragile — title is a tooltip, not a
+    // label, and screen-reader behaviour varies (some announce title only on
+    // hover, others not at all). Require a real label / aria-label / aria-
+    // labelledby / wrapping <label>; treat title-only as a 3.3.2 failure too.
+    if (controlReliesOnTitleOnly(el)) {
+      findings.push({
+        criterion: '3.3.2',
+        severity: 'fail',
+        message: `Form control's only accessible name comes from title attribute (WAVE: "Unlabeled form control with title"): ${shortNode(el)}`,
+      });
+    }
     const type = (el.getAttribute('type') || '').toLowerCase();
     const name = `${el.getAttribute('name') || ''} ${el.getAttribute('id') || ''}`.toLowerCase();
     const purposeLooksPersonal = type === 'email' || /email|e-mail|name|tel|phone|address|postal|zip/.test(name);
@@ -1027,6 +1039,36 @@ function runDomAudit() {
 
   function hasAuthorName(el) {
     return el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby');
+  }
+
+  function controlReliesOnTitleOnly(el) {
+    // Has title that contributes a meaningful name?
+    const title = normalize(el.getAttribute('title') || '');
+    if (!title) return false;
+    // Any other source of accessible name?
+    if (normalize(el.getAttribute('aria-label') || '')) return false;
+    if (el.getAttribute('aria-labelledby')) return false;
+    if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) {
+      if (el.labels && el.labels.length) {
+        for (const label of el.labels) {
+          if (normalize(label.textContent || '')) return false;
+        }
+      }
+    }
+    if (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)) {
+      const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+      if (lbl && normalize(lbl.textContent || '')) return false;
+    }
+    if (el.closest('label')) {
+      const lbl = el.closest('label');
+      const clone = lbl.cloneNode(true);
+      // Strip the form control itself and other interactive children to leave only the label text.
+      clone.querySelectorAll('input, select, textarea, button').forEach((n) => n.remove());
+      if (normalize(clone.textContent || '')) return false;
+    }
+    if (el instanceof HTMLInputElement && ['submit', 'button', 'reset'].includes(el.type) && normalize(el.value || '')) return false;
+    if (el instanceof HTMLImageElement && normalize(el.alt || '')) return false;
+    return true;
   }
 
   function isWordsLabel(text) {

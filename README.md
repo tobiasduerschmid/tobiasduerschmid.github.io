@@ -3,11 +3,11 @@ Homepage
 Portfolio optimized for researchers and those who strive for a minimal, file-based "content management" (**Datafolio**).
 The complete site's content is based on a json/xml file per section (e.g., ```contact.json```, ```projects.json```, ```publications.json```, ```talks.json```, and ```teaching.json```) as well as the pages ```_config.yml``` information. 
 
-#### Examples
+## Examples
 
 * [Daniel Limberger](http://www.daniellimberger.de)
 
-#### Features
+## Features
 
 * fully responsive, one-page design with scroll navigation
 * provides sections for publications, projects, talks/keynotes, teaching, and contact
@@ -22,6 +22,6 @@ The complete site's content is based on a json/xml file per section (e.g., ```co
 * supports vimeo and youtube video playback
 * yields valid html5
 
-#### Dependencies
+## Dependencies
 
 Datafolio uses [Jekyll](http://jekyllrb.com/), [Bootstrap](http://getbootstrap.com/), [Bootswatch](http://bootswatch.com/) themes, [spin.js](http://fgnass.github.io/spin.js/), and [blueimp-gallery](https://github.com/blueimp/Bootstrap-Image-Gallery).

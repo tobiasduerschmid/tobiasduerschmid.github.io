@@ -509,10 +509,16 @@ html:not(.dark-mode) .tvm-left-tab.active {
   cursor: pointer;
   padding: 1px 4px;
   border-radius: 3px;
-  color: #888;
+  /* WCAG 1.4.11 (Non-text Contrast): the popout glyph must clear 3:1 against
+     the tab background. The previous #888 at opacity 0.6 composited to ~#b7b7b7
+     against the light tab bg (~1.95:1, fail) and ~#5e5e6a against the dark tab
+     bg (~3.0:1, borderline). Bumping opacity to 1.0 once visible and using
+     palette colours that already pass 3:1 in both modes. Light-mode override
+     lives in the `html:not(.dark-mode)` block below. */
+  color: #b9c5d8;
 }
 .tvm-tab:hover .tvm-tab-popout,
-.tvm-tab.detached .tvm-tab-reattach { opacity: 0.6; }
+.tvm-tab.detached .tvm-tab-reattach { opacity: 1; }
 .tvm-tab-popout:hover,
 .tvm-tab-reattach:hover { opacity: 1 !important; color: #e0e0f0; background: #383848; }
 
@@ -2969,11 +2975,17 @@ html:not(.dark-mode) .tvm-tab:hover:not(.active) {
 }
 
 html:not(.dark-mode) .tvm-tab-popout,
-html:not(.dark-mode) .tvm-tab-reattach { color: #888; }
+html:not(.dark-mode) .tvm-tab-reattach {
+  /* #888 was 3.54:1 against #fff at full opacity, fine for non-text — but the
+     base rule starts at opacity 0 and faded to 0.6 on hover, dropping the
+     visible composite to ~1.95:1. Now that opacity goes straight to 1.0,
+     keep the colour dark enough to clear 3:1 against the tab-row bg. */
+  color: #5a6573;
+}
 html:not(.dark-mode) .tvm-tab-popout:hover,
 html:not(.dark-mode) .tvm-tab-reattach:hover {
   background: #e0e0e0;
-  color: #333;
+  color: #1f2530;
 }
 html:not(.dark-mode) .tvm-tab.detached {
   color: #888;
@@ -3306,7 +3318,10 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 .tvm-quiz-panel .option-label {
   font-weight: 800;
   margin-right: 12px;
-  color: #7090a0;
+  /* WCAG 1.4.3: #7090a0 on the dark panel bg #22222e was ~4.68:1 — marginal.
+     #9aa6b5 lifts to ~5.7:1 while keeping the muted-blue label hue. Light-mode
+     override sits at line ~3589. */
+  color: #9aa6b5;
   font-size: 0.88em;
   flex-shrink: 0;
 }
@@ -3574,7 +3589,8 @@ html:not(.dark-mode) .tvm-quiz-panel .quiz-option.selected .option-checkbox {
   background: #2774AE;
   border-color: #2774AE;
 }
-html:not(.dark-mode) .tvm-quiz-panel .option-label { color: #6a737d; }
+/* WCAG 1.4.3: #6a737d on white was ~4.82:1 — bumped to #5a6573 (~5.9:1). */
+html:not(.dark-mode) .tvm-quiz-panel .option-label { color: #5a6573; }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-explanation {
   background: #f8f9fa;
   border-left-color: #2774AE;

@@ -5,7 +5,7 @@
    Color system — UCLA brand palette:
      --gold        #FFD100  primary (button backgrounds, focus emphasis)
      --gold-hover  #FFB81C  darker gold for solid-button hover
-     --gold-deep   #946B0C  dark gold used AS text on white (5.0:1 contrast — AA)
+     --gold-deep   #7a5800  dark gold used AS text on white (5.0:1 contrast — AA)
      --gold-soft   #FFE066  lighter gold for dark-mode accent text
      --on-gold     #1A1A1A  near-black text on gold backgrounds (14:1 contrast)
 
@@ -96,7 +96,7 @@
 .tvm-debug-toolbar .tvm-debug-step {
   background: transparent;
   border: 1px solid transparent;
-  color: #946B0C;
+  color: #7a5800;
   border-radius: 3px;
   padding: 2px 7px;
   font-size: 12px;
@@ -327,7 +327,7 @@
 }
 .tvm-bp-dialog-input:focus,
 .tvm-bp-dialog-hitcount-input:focus {
-  border-color: #946B0C;
+  border-color: #7a5800;
   box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.32);
   background: #fff;
 }
@@ -388,7 +388,7 @@
 .tvm-bp-dialog-clear {
   margin-right: auto;
   background: transparent;
-  color: #946B0C;
+  color: #7a5800;
   border-color: rgba(148, 107, 12, 0.35);
 }
 .tvm-bp-dialog-clear:hover:not(:disabled) {
@@ -547,13 +547,17 @@
   transition: background-color 120ms;
 }
 .tvm-dbg-section-head:hover { background: rgba(255, 209, 0, 0.30); }
-.tvm-dbg-section-head .fa { color: #946B0C; font-size: 14px; }
+/* WCAG 1.4.3: #7a5800 on #f1f1f1 = ~4.26:1, fails the 4.5:1 minimum. Darken
+   to #7a5800 (~5.4:1) so the section icons still read as UCLA gold/brown
+   without dropping below the contrast threshold. The hover-state amber bg
+   has even higher contrast against the same text. */
+.tvm-dbg-section-head .fa { color: #7a5800; font-size: 14px; }
 .tvm-dbg-section-chevron {
   display: inline-block;
   font-size: 12px;
   width: 14px;
   transition: transform 120ms ease;
-  color: #946B0C;
+  color: #7a5800;
 }
 .tvm-dbg-section.collapsed .tvm-dbg-section-chevron { transform: rotate(-90deg); }
 .tvm-dbg-section-title { flex: 1; }
@@ -598,7 +602,7 @@
   font-size: 9px;
   width: 10px;
   transition: transform 120ms ease;
-  color: #946B0C;
+  color: #7a5800;
 }
 .tvm-debug-subsection.collapsed .tvm-debug-subsection-chevron { transform: rotate(-90deg); }
 .tvm-debug-subsection-title { flex: 1; }
@@ -606,7 +610,9 @@
 .tvm-debug-subsection.collapsed .tvm-debug-subsection-body { display: none; }
 
 .tvm-debug-empty {
-  color: #777;                    /* darker for AA contrast on #fafafa */
+  /* WCAG 1.4.3: #777 on #fafafa = 4.48:1 — fails the 4.5:1 minimum by a hair.
+     Italic muted-grey style is preserved with #6a6a6a (~5.1:1). */
+  color: #6a6a6a;
   font-style: italic;
   text-align: center;
   padding: 20px;
@@ -614,7 +620,7 @@
 }
 
 .tvm-debug-empty-row {
-  color: #777;
+  color: #6a6a6a;
   font-style: italic;
   padding: 4px 8px;
   font-size: 12px;
@@ -669,7 +675,7 @@
   display: inline-block;
   width: 14px;
   font-size: 9px;
-  color: #946B0C;
+  color: #7a5800;
   cursor: pointer;
   user-select: none;
 }
@@ -683,7 +689,7 @@
   min-width: 60px;
 }
 .tvm-debug-var-type {
-  color: #777;
+  color: #6a6a6a;
   font-size: 10px;
   font-style: italic;
 }
@@ -707,7 +713,7 @@
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
   font-size: 13px;
   padding: 1px 4px;
-  border: 1px solid #946B0C;
+  border: 1px solid #7a5800;
   border-radius: 3px;
   background: #fff;
   color: #b34700;
@@ -719,7 +725,7 @@
 .tvm-debug-var-edit-pending {
   background: rgba(255, 209, 0, 0.40);
   color: #1A1A1A;
-  border-bottom: 1px dashed #946B0C;
+  border-bottom: 1px dashed #7a5800;
   font-style: italic;
 }
 .tvm-debug-var-edit-pending::after {
@@ -736,7 +742,7 @@
   font-family: -apple-system, sans-serif;
 }
 .tvm-debug-truncated {
-  color: #777;
+  color: #6a6a6a;
   font-style: italic;
   padding: 2px 0;
   font-size: 11px;
@@ -780,7 +786,7 @@
   flex: 0 0 130px;
   word-break: break-all;
 }
-.tvm-debug-watch-arrow { color: #777; }
+.tvm-debug-watch-arrow { color: #6a6a6a; }
 .tvm-debug-watch-val {
   color: #b34700;
   flex: 1;
@@ -806,7 +812,7 @@
   height: 16px;
 }
 .tvm-debug-watch-promote {
-  color: #946B0C;
+  color: #7a5800;
 }
 .tvm-debug-watch-promote:hover {
   background: rgba(255, 209, 0, 0.18);
@@ -835,7 +841,7 @@
 }
 .tvm-debug-watch-input:focus {
   outline: none;
-  border-color: #946B0C;
+  border-color: #7a5800;
   box-shadow: 0 0 0 2px rgba(255, 209, 0, 0.40);
 }
 .tvm-debug-watch-add-btn {
@@ -875,7 +881,7 @@
 }
 .tvm-debug-watchpoint-input:focus {
   outline: none;
-  border-color: #946B0C;
+  border-color: #7a5800;
   box-shadow: 0 0 0 2px rgba(255, 209, 0, 0.40);
 }
 .tvm-debug-watchpoint-add-btn,
@@ -896,7 +902,7 @@
 }
 .tvm-debug-manager-run {
   background: transparent;
-  color: #946B0C;
+  color: #7a5800;
   border: 1px solid rgba(148, 107, 12, 0.34);
 }
 .tvm-debug-watchpoint-add-btn:hover,
@@ -934,7 +940,7 @@
   background: rgba(255, 209, 0, 0.12);
 }
 .tvm-debug-manager-chevron {
-  color: #946B0C;
+  color: #7a5800;
   font-size: 11px;
   transition: transform 120ms ease;
 }
@@ -1062,7 +1068,7 @@
   border: 1px solid rgba(148, 107, 12, 0.26);
   border-radius: 4px;
   background: transparent;
-  color: #946B0C;
+  color: #7a5800;
   cursor: pointer;
 }
 .tvm-debug-manager-svg {
@@ -1141,14 +1147,14 @@
 .tvm-debug-history-item.active .tvm-debug-history-ev,
 .tvm-debug-history-item.active .tvm-debug-history-loc { color: #1A1A1A; }
 .tvm-debug-history-i {
-  color: #777;
+  color: #6a6a6a;
   min-width: 36px;
   text-align: right;
 }
 .tvm-debug-history-ev {
   width: 14px;
   text-align: center;
-  color: #946B0C;
+  color: #7a5800;
   font-weight: 700;
 }
 .tvm-debug-history-loc { color: #2c3e50; }

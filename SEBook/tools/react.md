@@ -14,7 +14,7 @@ You already know how to build the "brain" of an application—the server that cr
 To help you learn React, we are going to bridge what you already know (functions, state, and servers) to how React thinks about the screen.
 
 
-### The Core Paradigm Shift: Declarative vs. Imperative
+## The Core Paradigm Shift: Declarative vs. Imperative
 
 In C++ or Python, you are used to writing **imperative** code. You write step-by-step instructions:
 * *Find the button in the window.*
@@ -33,7 +33,7 @@ $$UI = f(Data)$$
 When the data changes, React automatically re-runs your function and efficiently updates the screen for you. You never manually touch the screen; you only update the data.
 
 
-### The Building Blocks: Components
+## The Building Blocks: Components
 
 In Python or C++, you don't write your entire program in one massive `main()` function. You break it down into smaller, reusable functions or classes. 
 
@@ -57,7 +57,7 @@ function UserProfile() {
 }
 ```
 
-#### What is that HTML doing inside JavaScript?!
+### What is that HTML doing inside JavaScript?!
 You are looking at **JSX** (JavaScript XML). It is a special syntax extension for React. Under the hood, a compiler (like Babel) transforms those HTML-like tags into plain JavaScript function calls:
 
 ```jsx
@@ -72,7 +72,7 @@ React.createElement('button', { className: 'btn-primary', disabled: false }, 'Sa
 
 Notice the `{username}` syntax? Just like f-strings in Python (`f"Hello {username}"`), JSX allows you to seamlessly inject JavaScript variables directly into your UI using curly braces `{}`.
 
-### Adding Memory: State
+## Adding Memory: State
 
 A UI isn't very useful if it can't change. In a C++ class, you use member variables to keep track of an object's current status. In React, we use **State**.
 
@@ -104,12 +104,12 @@ function LikeButton() {
 }
 ```
 
-#### Breaking down `useState`:
+### Breaking down `useState`:
 `useState` is a special React function (called a "Hook"). It returns an array with two things:
 1. `likes`: The current value (like a standard variable).
 2. `setLikes`: A setter function. **Crucial rule:** You cannot just do `likes++` like you would in C++. You *must* use the setter function (`setLikes`). Calling the setter is what alerts React to re-render the UI with the new data.
 
-#### Functional updates — the `prev` pattern
+### Functional updates — the `prev` pattern
 
 When new state depends on the old state, always pass a function to the setter instead of the current value. This avoids **stale closure** bugs, where a callback captures an outdated snapshot of the variable:
 
@@ -123,13 +123,13 @@ setLikes(prev => prev + 1);
 
 A **stale closure** occurs when an event handler closes over a value that was current when the component rendered but has since been superseded by newer state. The `prev =>` pattern sidesteps this because React resolves the function at the moment the update is applied, not at the moment the handler was created.
 
-#### State batching
+### State batching
 
 React batches multiple `setState` calls that happen in the same event handler into a single re-render. This is an optimisation — you will not see intermediate states. If you call `setA(1); setB(2);` in one click handler, the component re-renders once with both changes applied.
 
 
 
-### Putting it Together: Connecting Frontend to Backend
+## Putting it Together: Connecting Frontend to Backend
 
 How does this connect to what you already know? 
 
@@ -172,7 +172,7 @@ function Dashboard() {
 }
 ```
 
-### Props: Passing Data Into Components
+## Props: Passing Data Into Components
 
 Components without data are static. **Props** let you pass data into a component, exactly like function arguments:
 
@@ -202,7 +202,7 @@ Key props rules:
 String props can use quotes (`title="Hello"`); all other types need braces (`price={99.99}`, `active={true}`).
 
 
-### JSX Rules — Where HTML Instincts Break
+## JSX Rules — Where HTML Instincts Break
 
 JSX looks like HTML but is actually JavaScript. These rules catch most beginners:
 
@@ -217,7 +217,7 @@ JSX looks like HTML but is actually JavaScript. These rules catch most beginners
 
 
 
-### Lists, Keys, and Conditional Rendering
+## Lists, Keys, and Conditional Rendering
 
 In C++ you render lists with `for` loops. In React, you use `.map()` to transform data arrays into JSX:
 
@@ -258,7 +258,7 @@ These are plain JavaScript — React adds nothing special — but they are the i
 > **Watch out**: `{count && <Badge />}` renders the number `0` when `count` is `0`, because `0` is a valid React node. Use `{count > 0 && <Badge />}` instead.
 
 
-### Composition Over Inheritance
+## Composition Over Inheritance
 
 In C++ and Java, you reuse code via inheritance (`class Dog : Animal`). React uses **composition** — building complex UIs by combining small, generic components:
 
@@ -281,12 +281,12 @@ function ProfileCard({ user }) {
 
 The `children` prop lets any content be nested inside a component, making it a composable container — analogous to C++ templates or Python's `*args`.
 
-#### Prop drilling
+### Prop drilling
 
 When a value must pass through several intermediate components that don't use it themselves — only to reach a deeply nested child — the pattern is called **prop drilling**. It works, but it couples every layer in between to data it doesn't care about, making refactoring painful. For small trees, prop drilling is fine. When it becomes unwieldy, the typical solutions are lifting state to a closer ancestor or using a context/state-management library.
 
 
-### Thinking in React
+## Thinking in React
 
 React's official methodology for building a new UI:
 
@@ -296,7 +296,7 @@ React's official methodology for building a new UI:
 4. **Determine where state lives** — the lowest common ancestor that needs it
 5. **Add inverse data flow** — children call callback functions passed as props
 
-### Lifting State Up
+## Lifting State Up
 
 When two sibling components need the same data, move the state to their **lowest common ancestor** and pass it down as props:
 
@@ -315,7 +315,7 @@ function Parent() {
 `SearchBar` calls `onChange(e.target.value)` to notify the parent. The parent updates state, which triggers a re-render of both components. This is "inverse data flow" — data flows down via props, notifications flow up via callbacks.
 
 
-### Top 10 React Best Practices
+## Top 10 React Best Practices
 
 These are the most important habits to build early. Every one of them prevents real bugs that trip up beginners — and professionals.
 
@@ -378,7 +378,7 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 2. **Only call hooks inside React function components** (or custom hooks) — never in plain JavaScript utility functions, class methods, or event listeners outside of a component.
 
 
-### Glossary
+## Glossary
 
 | Term | Definition |
 |------|-----------|
@@ -400,7 +400,7 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 | **Prop drilling** | Passing a prop through several intermediate components that don't use it, just to reach a deeply nested child that does. |
 
 
-### Summary
+## Summary
 1. **Components:** UI is broken down into reusable JavaScript functions.
 2. **JSX:** We write HTML-like syntax inside JS to describe UI, compiled to `React.createElement` calls.
 3. **Props:** Data flows one-way from parent to child. Props are read-only.
@@ -410,10 +410,10 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 7. **Composition:** Build complex UIs by combining small components via the `children` prop.
 8. **Integration:** React runs in the user's browser, acting as the client that makes HTTP requests to your Node.js/Express server.
 
-### Ready to Practice?
+## Ready to Practice?
 Head to the [React Tutorial](/SEBook/tools/react-tutorial) for hands-on exercises with immediate feedback — no setup required.
 
-### Test Your Knowledge
+## Test Your Knowledge
 
 {% include flashcards.html id="react_syntax_explain" %}
 

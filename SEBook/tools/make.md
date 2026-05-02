@@ -3,7 +3,7 @@ title: Makefiles & GNU Make
 layout: sebook
 ---
 
-# Motivation
+## Motivation
 
 Imagine you are building a small C program. It just has one file, `main.c`. To compile it, you simply open your terminal and type:
 
@@ -61,7 +61,7 @@ Ultimately, Makefiles are heavily relied upon because they:
 4. **Document dependencies**, making it perfectly clear how all the individual pieces of a software system fit together.
 
 
-# The Cake Analogy
+## The Cake Analogy
 
 Think of Makefiles as a recipe book for baking a complex, multi-layered cake. 
 Let's make a spectacular three-tier chocolate cake with raspberry filling and buttercream frosting. 
@@ -315,7 +315,7 @@ If your cake recipe were written as a Makefile, it would look exactly like this:
 Whenever you type `make` in your terminal, the system reads this recipe from the top down, checks what is already sitting in your "kitchen," and only does the work absolutely necessary to give you a fresh cake.
 
 
-# Makefile Syntax
+## Makefile Syntax
 
 ### How Do Makefiles Work?
 
@@ -373,7 +373,7 @@ clean:
 * **Line 13-14:** This pattern rule explains *how* to turn a `.c` file into a `.o` file. It tells Make: "To compile any object file, use the compiler to compile the first prerequisite (`$<`, which is the `.c` file) and output it to the target name (`$@`, which is the `.o` file)".
 * **Line 17-18:** The `clean` target is a convention used to remove all generated object files and the target executable, leaving only the original source files. You can execute it by running `make clean`.
 
-# Quiz
+## Quiz
 
 {% include flashcards.html id="makefile_syntax" %}
 

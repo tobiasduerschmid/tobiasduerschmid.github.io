@@ -60,7 +60,7 @@ However, whether this offloading helps or harms your education depends entirely 
 
 Based on this framework, research categorizes AI cognitive offloading into two distinct paths:
 
-#### The Bad: Detrimental Offloading (Outsourcing)
+### The Bad: Detrimental Offloading (Outsourcing)
 Detrimental offloading occurs when you use AI to bypass the *intrinsic* and *germane* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026%}. 
 In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
 
@@ -73,7 +73,7 @@ However, both studies find that these negative learning effects can be fully mit
 *   **Metacognitive Laziness:** The frictionless convenience of GenAI powerfully incentivizes "metacognitive laziness"—a state where learners willingly abdicate their self-regulatory responsibilities, such as planning an approach, monitoring their own comprehension, and critically evaluating their work, simply handing those executive functions over to the machine {% cite FanEtAl2025 yan2025distinguishing%}.
 
 
-#### The Good: Beneficial Offloading
+### The Good: Beneficial Offloading
 Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 gkintonl2025  %}. 
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025%}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025%}. 

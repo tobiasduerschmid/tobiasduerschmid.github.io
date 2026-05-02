@@ -184,7 +184,10 @@ a {
 // sit inside prose containers; navigation, sidebar, post-list, and explicitly
 // button/skip-link styled anchors keep their non-underlined treatment because
 // they have other affordances (layout, headings, hover, background).
-:is(.post-content, #main-content)
+// Scoped to #main-content only — .post-content is too broad in the SEBook
+// layout, where it wraps the sidebar nav as well, causing nav links to pick up
+// the prose underline.
+#main-content
     :is(p, blockquote, dd, td, th, figcaption, summary, li)
     a[href]:not(.post-link, .skip-link, .button, .btn) {
     text-decoration: underline;

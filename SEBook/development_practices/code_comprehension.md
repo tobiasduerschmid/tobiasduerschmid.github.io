@@ -5,7 +5,7 @@ layout: sebook
 
 This chapter explores program comprehension—the cognitive processes developers use to understand existing software. Because developers spend up to 70% of their time reading and comprehending code rather than writing it {% cite Wyrich2023 %}, optimizing for understandability is paramount. This chapter bridges cognitive psychology, neuro-software engineering, structural metrics, and architectural design to provide a holistic guide to writing brain-friendly software.
 
-# Cognitive Effects
+## Cognitive Effects
 
 Reading code is recognized as the most time-consuming activity in software maintenance, taking up approximately 58% to 70% of a developer's time {% cite Xia2017 Wyrich2023 %}. Code comprehension is an "accidental property" (controlled by the engineer) rather than an "essential property" (dictated by the problem space) {% cite Alawad2019 Brooks1987 %}. To understand how to optimize this process, we must look at how the human brain processes software.
 
@@ -54,7 +54,7 @@ While the theories of bottom-up and top-down comprehension are well established,
 *   **Systematic vs. Opportunistic Tracing:** When attempting to build a control-flow abstraction (a bottom-up task), developers display divergent strategies. Some developers use a *systematic approach*, reading the code line-by-line to build a complete mental representation before making a change {% cite Arisholm2001 %}. Others use an *opportunistic approach* (or "as-needed" strategy), studying code only when necessary, guided by clues and hypotheses to minimize the amount of code they must actually read {% cite Koenemann1991 Arisholm2001 %}. Studies show that systematic programmers struggle significantly more when dealing with deeply nested, highly modular architectures, as the constant jumping between files exhausts their working memory {% cite Arisholm2001 %}.
 *   **Novice vs. Expert Schemas:** The size and quality of a "chunk" varies wildly depending on a developer's expertise. Experts do not necessarily possess *more* schemas than novices; they possess *larger*, more interrelated schemas created through a highly automated chunking process {% cite Kolfschoten2011 %}. While novices structure their mental models based on surface-level similarities, experts categorize their knowledge based on solution models {% cite Kolfschoten2011 %}. Consequently, expert mental representations demonstrate a superior extent, depth, and level of detail, allowing them to rapidly map top-down hypotheses to bottom-up implementations {% cite Bjorklund2013 %}.
 
-# Metrics and Perception
+## Metrics and Perception
 
 Historically, the industry relied on structural metrics like McCabe's *Cyclomatic Complexity (CC)* and Halstead's volume metrics {% cite McCabe1976 Halstead1977 %}. Modern tools (e.g., SonarSource) have shifted toward *Cognitive Complexity*, which penalizes deep nesting over simple linear branches to better quantify human effort {% cite Campbell2017 %}. However, empirical and neuroscientific studies reveal divergent perspectives on metric accuracy {% cite Peitek2021 Hao2023 %}:
 
@@ -63,7 +63,7 @@ Historically, the industry relied on structural metrics like McCabe's *Cyclomati
 * **Textual Size as a Visual Heuristic:** fMRI data suggests that raw code size (Lines of Code and vocabulary size) acts as a preattentive indicator {% cite Peitek2021 %}. Developers anticipate high cognitive load simply by looking at the size of the block, driving their attention and working memory load before they even read the logic {% cite Peitek2021 Hao2023 %}.
 
 
-# Architecture-Code Gap
+## Architecture-Code Gap
 
 One of the most persistent challenges in software engineering is the misalignment of perspectives between different roles in the software lifecycle, creating a cognitive obstacle during architecture realization {% cite Rost2016 %}.
 
@@ -79,7 +79,7 @@ When dealing with eroded legacy systems, engineers use *Software Architecture Re
 While fully automated "Big Bang" remodularization tools exist, they often require thousands of unviable code changes {% cite Candela2016 %}. A highly recommended alternative is using *interactive genetic algorithms (IGAs)* or supervised search-based techniques {% cite Candela2016 %}. These utilize automated tools for basic metrics but keep the human developer "in the loop" to apply top-down domain knowledge {% cite Candela2016 %}.
 
 
-# Structural Trade-Offs
+## Structural Trade-Offs
 
 High cohesion (grouping related logic) and low coupling (minimizing dependencies) are widely considered the gold standard for understandable modules {% cite Candela2016 %}. However, empirical studies reveal critical trade-offs when pushing these concepts to their limits.
 
@@ -92,7 +92,7 @@ Design patterns serve a dual, somewhat paradoxical role in comprehension:
 * **As a High-Level Language:** Patterns provide a "theory of the design" {% cite Gamma1995 %}. Stating that a component uses a "Command Processor" pattern immediately conveys top-down intent and behavioral dynamics to peers without requiring a bottom-up explanation.
 * **As a Source of Cognitive Load:** Despite assumptions that patterns improve understandability, empirical studies reveal they often *do not* {% cite Khomh2018 %}. Patterns introduce extra layers of abstraction and implicit coupling (e.g., the [Observer pattern](/SEBook/designpatterns/observer.html)), which can increase cognitive load and make code harder for maintainers to learn and debug {% cite Mohammed2016 %}.
 
-# Actionable Practices for Top-Down Comprehension
+## Actionable Practices for Top-Down Comprehension
 
 As developers transition from junior roles to senior engineering positions, their approach to code review and design must undergo a fundamental cognitive shift. Novice reviewers naturally default to a *bottom-up* approach: reading linearly line-by-line, attempting to reconstruct the program's overall purpose by mentally compiling raw syntax {% cite Goncalves2025 %}. While this works for small patches, it rapidly leads to cognitive overload in complex systems {% cite Goncalves2025 %}.
 

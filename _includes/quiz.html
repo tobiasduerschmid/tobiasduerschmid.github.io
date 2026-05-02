@@ -344,7 +344,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .option-label {
     font-weight: 800;
     margin-right: 12px;
-    color: #6a737d;
+    /* WCAG 1.4.3: #6a737d on white sits at ~4.82:1 — barely passes the 4.5:1
+       text minimum and reads as "low contrast" against bright option text.
+       #5a6573 gives ~5.9:1, keeping the muted-grey feel. Dark-mode override
+       lives in css/portfolio.css. */
+    color: #5a6573;
   }
 
   [data-type="multiple"] .option-label {
