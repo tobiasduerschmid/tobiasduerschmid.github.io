@@ -62,6 +62,16 @@ steps:
       - `printf()` instead of `cout <<`
       - No `using namespace std;` — C has no namespaces
 
+      ### ✏️ Predict before you compile
+
+      Before running `gcc`, write down (in a comment in `hello.c`, or on paper):
+
+      1. *How many lines* of output will you see?
+      2. *What's the first character* of the first line? (Don't peek at the program output — read the format strings.)
+      3. *Why does each `printf` end with `\n`?* What would happen without it?
+
+      Commit to your three answers, *then* compile and run. The point isn't to be right; it's to lock in expectations so you can compare prediction vs. reality. Good engineers do this every time.
+
     files:
       - path: "c_project/hello.c"
         content: |
@@ -593,6 +603,19 @@ steps:
       3. **`malloc` can fail** — it returns `NULL` if there's no memory. Always check.
       4. **No constructors** — `malloc` just gives you raw bytes. You must initialize fields yourself.
 
+      <details markdown="1"><summary>📖 Style note: this tutorial follows K&R; the Linux kernel disagrees</summary>
+
+      You'll meet C codebases that *always* cast `malloc` (`(int*)malloc(...)`) and codebases that *never* cast. Both communities have logic on their side:
+
+      | Style | Argument | Used by |
+      |---|---|---|
+      | **No cast** *(this tutorial)* | The cast is redundant — `void*` converts implicitly. Worse, the cast can *mask* a forgotten `#include <stdlib.h>` (the compiler then assumes `malloc` returns `int`, and your cast silently hides the wrong-sized return). | K&R "The C Programming Language", FreeBSD, glibc, most modern style guides |
+      | **Always cast** | Makes the type explicit at the call site. Forces compatibility with C++ compilers (where the cast *is* required). Some safety-critical guides require it for code review readability. | Linux kernel, MISRA-C, some embedded firmware shops |
+
+      For this tutorial we follow K&R: no cast, plus `#include <stdlib.h>` at the top of every file that calls `malloc`. If you join a project later that uses the other style, follow that project's convention — don't fight it.
+
+      </details>
+
       ### The Pointer Lifecycle: A Mental Model
 
       Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
@@ -1058,6 +1081,19 @@ steps:
       - **No constructors/destructors** — you write init/cleanup functions yourself
       - **No inheritance** — you can nest structs for composition
 
+      ### ⚠️ Negative-transfer trap: `struct` defaults differ between C++ and C
+
+      If your C++ habit is "`struct` and `class` are basically the same", *unlearn it for C*:
+
+      | | C++ `struct` | C++ `class` | C `struct` |
+      |---|---|---|---|
+      | Default access | `public` | `private` | (no concept of access at all) |
+      | Methods | yes | yes | **no** |
+      | Constructors | yes | yes | **no** |
+      | Inheritance | yes | yes | **no** |
+
+      So when a C++ programmer writes `struct Point { double x, y; };`, they have a perfectly valid public-by-default C++ class. When you write the same line in C, you have a *passive data record* — no methods, no encapsulation, no `this`. Functions that operate on a `struct` live *outside it* and take a pointer to it as their first parameter. That convention is everything you'll do in this step.
+
       ### Declaring and Using Structs
 
       ```c
@@ -1269,9 +1305,21 @@ steps:
     instructions: |
       ### Power Unlocked: One Memory Location, Many Forms
 
-      This power is subtle but deadly useful. A union lets a single block of memory *shape-shift* between different types — like a superhero with multiple identities sharing the same body. It's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, and any system that handles multiple data types through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
+      This power is subtle but deadly useful. A union lets a single block of memory *shape-shift* between different types — like a Pokemon swapping between Fire, Water, and Electric attack types using the same move slot. It's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, every Pokemon-style "this thing can be one of N variants" system, and any code that handles multiple data shapes through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
 
-      A `union` looks like a `struct`, but with a critical difference: **all members share the same memory**. The size of a union equals the size of its *largest* member.
+      ### Motivating example: a single attack slot, three element types
+
+      Imagine a Pokemon battle engine. An *attack* can be Fire (with `burn_dmg`), Water (with `splash_radius`), or Electric (with `volts`). Each type carries different data, but a Pokemon stores them all in the *same* attack slot. You could declare three separate fields and waste two-thirds of the memory every time, *or* you could declare one union and accept that only one variant is valid at a time:
+
+      ```c
+      union AttackData {
+          int    burn_dmg;       // valid when type == FIRE
+          double splash_radius;  // valid when type == WATER
+          int    volts;          // valid when type == ELECTRIC
+      };
+      ```
+
+      This is exactly the trade-off unions make: **all members share the same memory.** The size of a union equals the size of its *largest* member.
 
       ```c
       union Value {
@@ -1282,11 +1330,11 @@ steps:
       // sizeof(union Value) == 8 (size of largest member)
       ```
 
-      At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. Reading a member you didn't last write to is undefined behavior.
+      At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. Reading a member you didn't last write to is undefined behavior — the Pokemon equivalent of "asking the Fire attack what its splash radius is."
 
       ### Tagged Unions: The C Pattern for "Variant Types"
 
-      Since the union doesn't know which member is active, you need to track it yourself. The standard pattern is a struct with a **tag** (enum) and a union:
+      Since the union doesn't know which member is active, you need to track it yourself. The standard pattern is a struct with a **tag** (enum) and a union — the tag is the Pokemon's *type*, the union holds the type-specific data:
 
       ```c
       typedef enum { TYPE_INT, TYPE_DOUBLE, TYPE_STRING } ValueType;
@@ -1301,7 +1349,15 @@ steps:
       } TaggedValue;
       ```
 
-      This is C's version of `std::variant` from C++17.
+      ### ⚠️ Negative-transfer trap: this is *not* `std::variant`
+
+      C++17 introduced `std::variant<int, double, std::string>` — a type-safe tagged union with constructors, destructors, and the `std::visit` machinery to dispatch on the active alternative. C has *none* of that. The C tagged-union pattern is what `std::variant` was *built on top of*. In C:
+
+      - You manage the tag yourself.
+      - The compiler can't help you avoid reading the wrong member.
+      - There's no `std::visit` — you write the `switch` by hand.
+
+      If you came from C++17 expecting `std::variant`-style guarantees, **uninstall that habit before this step.** The C version is hand-rolled discipline, not language support.
 
       ### Task: Build a tagged value system
 
