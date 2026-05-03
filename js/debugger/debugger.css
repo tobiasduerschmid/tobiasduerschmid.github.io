@@ -192,8 +192,8 @@
    slightly taller than the line (per design preference). */
 :root {
   --tvm-debug-glyph-margin-width: 54px;
-  --tvm-debug-glyph-safe-offset: 22px;
-  --tvm-debug-breakpoint-offset: 22px;
+  --tvm-debug-glyph-safe-offset: 27px;
+  --tvm-debug-breakpoint-offset: 27px;
 }
 .tvm-container .monaco-editor .margin-view-overlays .cgmr,
 .ttp-wrap .monaco-editor .margin-view-overlays .cgmr,

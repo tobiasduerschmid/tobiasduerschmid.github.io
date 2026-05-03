@@ -2261,9 +2261,19 @@
   DebuggerController.prototype.installGutterClickHandler = function () {
     var self = this;
     var breakpointMouseHit = window.SEBookDebuggerEditor && window.SEBookDebuggerEditor.breakpointMouseHit;
+    var stopBreakpointMouseEvent = function (e) {
+      var mouseEvent = (e && e.event) || e || {};
+      var browserEvent = mouseEvent.browserEvent || null;
+      if (mouseEvent.preventDefault) mouseEvent.preventDefault();
+      if (mouseEvent.stopPropagation) mouseEvent.stopPropagation();
+      if (browserEvent && browserEvent !== mouseEvent) {
+        if (browserEvent.preventDefault) browserEvent.preventDefault();
+        if (browserEvent.stopPropagation) browserEvent.stopPropagation();
+      }
+    };
     var hookEditor = function (editor) {
       if (!editor) return;
-      editor.onMouseDown(function (e) {
+      var handleBreakpointMouseDown = function (e) {
         var hit = breakpointMouseHit ? breakpointMouseHit(editor, e) : null;
         if (!hit && !breakpointMouseHit &&
             e.target && e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
@@ -2275,13 +2285,16 @@
         if (!hit) return;
         var filename = self.activeFileForEditor(editor);
         if (!filename) return;
-        if (e.event && e.event.preventDefault) e.event.preventDefault();
+        stopBreakpointMouseEvent(e);
         if (hit.rightButton) {
           self.editBreakpointCondition(filename, hit.line);
         } else {
           self.toggleBreakpoint(filename, hit.line);
         }
-      });
+      };
+      var dom = editor.getDomNode && editor.getDomNode();
+      if (dom) dom.addEventListener('mousedown', handleBreakpointMouseDown, true);
+      editor.onMouseDown(handleBreakpointMouseDown);
     };
     hookEditor(this.t.editor);
     if (this.t.editor2) hookEditor(this.t.editor2);

@@ -1277,7 +1277,10 @@ function _gitCmdAdd(id, args, dir, fs, cwd) {
   var pathspecs = [];
   for (var i = 0; i < args.length; i++) {
     var a = args[i];
-    if (a === '-A' || a === '--all' || a === '--no-ignore-removal') { addAll = true; ignoreRemoval = false; continue; }
+    // `--a` is a project-local alias for `-A`/`--all`. Real git doesn't
+    // accept it, but learners reach for the long-form `--` first; tolerating
+    // `--a` saves an avoidable "unknown switch" confusion.
+    if (a === '-A' || a === '--all' || a === '--a' || a === '--no-ignore-removal') { addAll = true; ignoreRemoval = false; continue; }
     if (a === '--ignore-removal' || a === '--no-all') { ignoreRemoval = true; addAll = false; continue; }
     if (a === '-u' || a === '--update')       { updateOnly = true; continue; }
     if (a === '-n' || a === '--dry-run')      { dryRun = true; continue; }

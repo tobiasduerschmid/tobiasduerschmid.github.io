@@ -10392,6 +10392,9 @@
       theme: isDark ? THEMES.dark.xterm : THEMES.light.xterm,
       scrollback: 5000,
       convertEol: true,
+      // Treat macOS Option as Meta so Option+B/F/Left/Right/Backspace generate
+      // ESC-prefixed sequences that we can interpret as readline word ops.
+      macOptionIsMeta: true,
     });
     var FitAddonClass = (window.FitAddon && window.FitAddon.FitAddon)
       ? window.FitAddon.FitAddon : window.FitAddon;
@@ -10422,8 +10425,37 @@
     // then [A on the next tick). Carry partial sequences across invocations
     // so arrow keys work reliably.
     this._gitTermEscPending = '';
+    // Single-slot kill ring populated by Ctrl+W / Ctrl+U / Ctrl+K and the
+    // Alt-Backspace / Alt-Delete word kills; consumed by Ctrl+Y (yank).
+    this._gitTermKillRing = '';
 
     this.gitTerm.onData(function (data) { self._gitTermOnData(data); });
+
+    // Translate macOS Cmd+arrow / Cmd+Backspace / Cmd+Delete chords to their
+    // readline equivalents. Browsers and the OS would otherwise consume
+    // Cmd+Left (back-nav), so we have to intercept at the keydown layer.
+    // attachCustomKeyEventHandler returns false to tell xterm.js to drop the
+    // event after we've handled it ourselves.
+    if (typeof this.gitTerm.attachCustomKeyEventHandler === 'function') {
+      this.gitTerm.attachCustomKeyEventHandler(function (ev) {
+        if (ev.type !== 'keydown') return true;
+        if (!ev.metaKey || ev.ctrlKey || ev.altKey) return true;
+        // Preserve clipboard / select-all / find-in-page chords.
+        var k = ev.key;
+        if (k === 'c' || k === 'C' || k === 'v' || k === 'V'
+            || k === 'a' || k === 'A' || k === 'f' || k === 'F'
+            || k === 'x' || k === 'X' || k === 'z' || k === 'Z'
+            || k === '+' || k === '-' || k === '=' || k === '0') {
+          return true;
+        }
+        if (k === 'ArrowLeft')   { self._gitCursorHome();         ev.preventDefault(); return false; }
+        if (k === 'ArrowRight')  { self._gitCursorEnd();          ev.preventDefault(); return false; }
+        if (k === 'Backspace')   { self._gitKillLine();           ev.preventDefault(); return false; }
+        if (k === 'Delete')      { self._gitKillToEnd();          ev.preventDefault(); return false; }
+        return true;
+      });
+    }
+
     this._writeGitPrompt();
   };
 
@@ -10451,7 +10483,7 @@
     while (i < data.length) {
       var ch = data.charAt(i);
 
-      // ---- ESC sequences (arrow keys, Home, End, Delete) -----------------
+      // ---- ESC sequences (arrow keys, Home, End, Delete, word ops) -------
       if (ch === '\x1b') {
         // Need at least 2 more bytes (intro + final). If we don't have them,
         // stash everything from `i` and wait for the next chunk.
@@ -10466,10 +10498,43 @@
           if (seq3 === 'D') { this._gitCursorLeft(); i += 3; continue; }
           if (seq3 === 'H') { this._gitCursorHome(); i += 3; continue; }
           if (seq3 === 'F') { this._gitCursorEnd(); i += 3; continue; }
-          // Delete = `\x1b[3~` (need to see the trailing `~` first)
+          // Delete = `\x1b[3~`. With Ctrl/Alt: `\x1b[3;5~` / `\x1b[3;3~`.
           if (seq3 === '3') {
             if (i + 3 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
             if (data.charAt(i + 3) === '~') { this._gitDeleteForward(); i += 4; continue; }
+            if (data.charAt(i + 3) === ';') {
+              if (i + 5 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+              var dmod = data.charAt(i + 4);
+              if (data.charAt(i + 5) === '~') {
+                // 3 = Alt, 5 = Ctrl, 7 = Ctrl+Alt — all forward-delete a word.
+                if (dmod === '3' || dmod === '5' || dmod === '7') { this._gitDeleteWordForward(); i += 6; continue; }
+                // Plain shift/etc. modifiers — fall through to forward-delete.
+                this._gitDeleteForward(); i += 6; continue;
+              }
+            }
+          }
+          // Modifier-arrow / modifier-Home / modifier-End: `\x1b[1;<mod><dir>`.
+          //   <mod> 2=Shift  3=Alt  4=Alt+Shift  5=Ctrl  6=Ctrl+Shift  7=Ctrl+Alt
+          if (seq3 === '1') {
+            if (i + 3 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+            if (data.charAt(i + 3) === ';') {
+              if (i + 5 >= data.length) { this._gitTermEscPending = data.substring(i); break; }
+              var mod = data.charAt(i + 4);
+              var dir = data.charAt(i + 5);
+              var isWordMod = (mod === '3' || mod === '4' || mod === '5' || mod === '6' || mod === '7');
+              if (dir === 'D') {
+                if (isWordMod) this._gitWordLeft(); else this._gitCursorLeft();
+                i += 6; continue;
+              }
+              if (dir === 'C') {
+                if (isWordMod) this._gitWordRight(); else this._gitCursorRight();
+                i += 6; continue;
+              }
+              if (dir === 'H') { this._gitCursorHome(); i += 6; continue; }
+              if (dir === 'F') { this._gitCursorEnd();  i += 6; continue; }
+              // Unknown modified function key — skip the whole sequence.
+              i += 6; continue;
+            }
           }
           // Unknown CSI: skip up to a final byte (letter or '~'). If we run
           // out of bytes, stash and wait.
@@ -10487,6 +10552,22 @@
           i += 3; // unknown SS3
           continue;
         }
+        // Alt-prefixed letter / control: readline word-edit family.
+        //   ESC b / ESC B          → word backward
+        //   ESC f / ESC F          → word forward
+        //   ESC d / ESC D          → delete word forward
+        //   ESC <DEL> / ESC <BS>   → delete word backward (Option+Backspace)
+        //   ESC .  /  ESC _        → yank last arg of previous history entry
+        //                              (repeated press cycles further back)
+        //   ESC c / ESC u / ESC l  → capitalize / uppercase / lowercase word
+        if (seq2 === 'b' || seq2 === 'B')      { this._gitWordLeft();              i += 2; continue; }
+        if (seq2 === 'f' || seq2 === 'F')      { this._gitWordRight();             i += 2; continue; }
+        if (seq2 === 'd' || seq2 === 'D')      { this._gitDeleteWordForward();     i += 2; continue; }
+        if (seq2 === '\x7f' || seq2 === '\b')  { this._gitDeleteWordBackward();    i += 2; continue; }
+        if (seq2 === '.' || seq2 === '_')      { this._gitYankLastArg();           i += 2; continue; }
+        if (seq2 === 'c' || seq2 === 'C')      { this._gitTransformWord('cap');    i += 2; continue; }
+        if (seq2 === 'u' || seq2 === 'U')      { this._gitTransformWord('upper');  i += 2; continue; }
+        if (seq2 === 'l' || seq2 === 'L')      { this._gitTransformWord('lower');  i += 2; continue; }
         // Unknown ESC introducer — drop ESC + next byte
         i += 2;
         continue;
@@ -10494,8 +10575,16 @@
 
       // ---- Control characters --------------------------------------------
       if (ch === '\r' || ch === '\n') {
-        var line = this._gitTermLineBuf;
+        var rawLine = this._gitTermLineBuf;
         this.gitTerm.write('\r\n');
+        // History expansion: !!, !$, !^, !* are substituted before dispatch.
+        // Bash echoes the expanded form; we do the same so learners can see
+        // what they actually invoked.
+        var expanded = this._gitExpandHistory(rawLine);
+        var line = expanded.line;
+        if (expanded.changed) {
+          this.gitTerm.write(line + '\r\n');
+        }
         if (line.trim().length) {
           this._gitTermHistory.push(line);
         }
@@ -10503,21 +10592,29 @@
         this._gitTermCursorPos = 0;
         this._gitTermHistoryIdx = -1;
         this._gitTermStashedLine = '';
+        this._gitYankNthState = null;
         this._dispatchGitTermLine(line).then(function () {
           self._writeGitPrompt();
         });
         return;
       }
-      if (ch === '\x7f' || ch === '\b') { this._gitDeleteBackward(); i++; continue; }
-      if (ch === '\x09')                { this._gitTermTabComplete(); i++; continue; } // Tab
-      if (ch === '\x01')                { this._gitCursorHome();    i++; continue; } // Ctrl+A
-      if (ch === '\x05')                { this._gitCursorEnd();     i++; continue; } // Ctrl+E
-      if (ch === '\x0b')                { this._gitKillToEnd();     i++; continue; } // Ctrl+K
-      if (ch === '\x15')                { this._gitKillLine();      i++; continue; } // Ctrl+U
-      if (ch === '\x0c')                { this._gitClearScreen();   i++; continue; } // Ctrl+L
-      if (ch === '\x04')                { i++; continue; }                            // Ctrl+D (ignore EOF)
+      if (ch === '\x7f' || ch === '\b') { this._gitDeleteBackward();    i++; continue; }
+      if (ch === '\x09')                { this._gitTermTabComplete();   i++; continue; } // Tab
+      if (ch === '\x01')                { this._gitCursorHome();        i++; continue; } // Ctrl+A
+      if (ch === '\x05')                { this._gitCursorEnd();         i++; continue; } // Ctrl+E
+      if (ch === '\x02')                { this._gitCursorLeft();        i++; continue; } // Ctrl+B
+      if (ch === '\x06')                { this._gitCursorRight();       i++; continue; } // Ctrl+F
+      if (ch === '\x0b')                { this._gitKillToEnd();         i++; continue; } // Ctrl+K
+      if (ch === '\x15')                { this._gitKillLine();          i++; continue; } // Ctrl+U
+      if (ch === '\x17')                { this._gitDeleteWordBackward();i++; continue; } // Ctrl+W
+      if (ch === '\x14')                { this._gitTransposeChars();    i++; continue; } // Ctrl+T
+      if (ch === '\x0e')                { this._gitHistoryNext();       i++; continue; } // Ctrl+N
+      if (ch === '\x10')                { this._gitHistoryPrev();       i++; continue; } // Ctrl+P
+      if (ch === '\x19')                { this._gitYank();              i++; continue; } // Ctrl+Y
+      if (ch === '\x0c')                { this._gitClearScreen();       i++; continue; } // Ctrl+L
+      if (ch === '\x04')                { i++; continue; }                                // Ctrl+D (ignore EOF)
       if (ch === '\x03')                { this._gitTermLineBuf = ''; this._gitTermCursorPos = 0; this.gitTerm.write('^C\r\n'); this._writeGitPrompt(); return; } // Ctrl+C
-      if (ch < ' ')                     { i++; continue; }                            // ignore other ctrls
+      if (ch < ' ')                     { i++; continue; }                                // ignore other ctrls
 
       // ---- Printable: insert at cursor -----------------------------------
       this._gitInsertChar(ch);
@@ -10593,17 +10690,203 @@
   };
 
   TutorialCode.prototype._gitKillLine = function () {
+    var killed = this._gitTermLineBuf;
     this._gitCursorHome();
     this.gitTerm.write('\x1b[K');
     this._gitTermLineBuf = '';
     this._gitTermCursorPos = 0;
+    if (killed) this._gitTermKillRing = killed;
   };
 
   TutorialCode.prototype._gitKillToEnd = function () {
     var buf = this._gitTermLineBuf;
     var pos = this._gitTermCursorPos;
+    var killed = buf.substring(pos);
     this._gitTermLineBuf = buf.substring(0, pos);
     this.gitTerm.write('\x1b[K');
+    if (killed) this._gitTermKillRing = killed;
+  };
+
+  // ---- Word-aware ops -----------------------------------------------------
+  // A "word" here is a maximal run of [A-Za-z0-9_]. Mirrors readline's
+  // default; matches what bash / zsh / iTerm do for Option+arrow / Alt+B / etc.
+  TutorialCode.prototype._gitFindWordStartLeft = function (pos) {
+    var buf = this._gitTermLineBuf;
+    if (pos <= 0) return 0;
+    // Skip non-word chars to the left of the cursor.
+    while (pos > 0 && !/\w/.test(buf.charAt(pos - 1))) pos--;
+    // Then skip word chars until we hit a boundary.
+    while (pos > 0 && /\w/.test(buf.charAt(pos - 1))) pos--;
+    return pos;
+  };
+
+  TutorialCode.prototype._gitFindWordEndRight = function (pos) {
+    var buf = this._gitTermLineBuf;
+    var len = buf.length;
+    if (pos >= len) return len;
+    // Skip non-word chars to the right of the cursor.
+    while (pos < len && !/\w/.test(buf.charAt(pos))) pos++;
+    // Then skip word chars until we hit a boundary.
+    while (pos < len && /\w/.test(buf.charAt(pos))) pos++;
+    return pos;
+  };
+
+  TutorialCode.prototype._gitWordLeft = function () {
+    var target = this._gitFindWordStartLeft(this._gitTermCursorPos);
+    var d = this._gitTermCursorPos - target;
+    if (d <= 0) return;
+    this.gitTerm.write(this._cursorBack(d));
+    this._gitTermCursorPos = target;
+  };
+
+  TutorialCode.prototype._gitWordRight = function () {
+    var target = this._gitFindWordEndRight(this._gitTermCursorPos);
+    var d = target - this._gitTermCursorPos;
+    if (d <= 0) return;
+    this.gitTerm.write('\x1b[' + d + 'C');
+    this._gitTermCursorPos = target;
+  };
+
+  TutorialCode.prototype._gitDeleteWordBackward = function () {
+    var pos = this._gitTermCursorPos;
+    var target = this._gitFindWordStartLeft(pos);
+    if (target >= pos) return;
+    var buf = this._gitTermLineBuf;
+    var killed = buf.substring(target, pos);
+    var tail = buf.substring(pos);
+    this._gitTermLineBuf = buf.substring(0, target) + tail;
+    this._gitTermCursorPos = target;
+    var del = pos - target;
+    // Walk left, rewrite tail, blank the now-vacant columns, walk back.
+    this.gitTerm.write(
+      this._cursorBack(del) + tail
+      + new Array(del + 1).join(' ')
+      + this._cursorBack(tail.length + del)
+    );
+    this._gitTermKillRing = killed;
+  };
+
+  TutorialCode.prototype._gitDeleteWordForward = function () {
+    var pos = this._gitTermCursorPos;
+    var target = this._gitFindWordEndRight(pos);
+    if (target <= pos) return;
+    var buf = this._gitTermLineBuf;
+    var killed = buf.substring(pos, target);
+    var tail = buf.substring(target);
+    this._gitTermLineBuf = buf.substring(0, pos) + tail;
+    var del = target - pos;
+    this.gitTerm.write(
+      tail + new Array(del + 1).join(' ')
+      + this._cursorBack(tail.length + del)
+    );
+    this._gitTermKillRing = killed;
+  };
+
+  // Swap the char before the cursor with the char at the cursor, then advance.
+  // At end-of-line, swap the two chars before the cursor (readline behavior).
+  TutorialCode.prototype._gitTransposeChars = function () {
+    var buf = this._gitTermLineBuf;
+    var pos = this._gitTermCursorPos;
+    if (buf.length < 2) return;
+    if (pos === 0) return;
+    var a, b, newPos;
+    if (pos >= buf.length) {
+      a = buf.charAt(pos - 2); b = buf.charAt(pos - 1);
+      this._gitTermLineBuf = buf.substring(0, pos - 2) + b + a;
+      newPos = pos;
+      this.gitTerm.write('\b\b' + b + a);
+    } else {
+      a = buf.charAt(pos - 1); b = buf.charAt(pos);
+      this._gitTermLineBuf = buf.substring(0, pos - 1) + b + a + buf.substring(pos + 1);
+      newPos = pos + 1;
+      this.gitTerm.write('\b' + b + a);
+    }
+    this._gitTermCursorPos = newPos;
+  };
+
+  // Insert the most recently killed text at the cursor.
+  TutorialCode.prototype._gitYank = function () {
+    var s = this._gitTermKillRing;
+    if (!s) return;
+    for (var k = 0; k < s.length; k++) this._gitInsertChar(s.charAt(k));
+  };
+
+  // Bash's Alt+. : insert the last argument of the most recent history entry.
+  // Repeated immediate presses cycle further back through history.
+  TutorialCode.prototype._gitYankLastArg = function () {
+    var hist = this._gitTermHistory;
+    if (!hist.length) return;
+    var state = this._gitYankNthState;
+    var sameSpot = state
+      && state.endPos === this._gitTermCursorPos
+      && state.lastBuf === this._gitTermLineBuf;
+    var idx = sameSpot ? state.idx - 1 : hist.length - 1;
+    if (idx < 0) return; // ran out of history
+    var prev = hist[idx];
+    var args = this._gitTokenize(prev);
+    var lastArg = args.length ? args[args.length - 1] : '';
+    if (sameSpot && state.insertedLen) {
+      // Remove the previous insertion before adding the next candidate.
+      for (var d = 0; d < state.insertedLen; d++) this._gitDeleteBackward();
+    }
+    var startPos = this._gitTermCursorPos;
+    for (var k = 0; k < lastArg.length; k++) this._gitInsertChar(lastArg.charAt(k));
+    this._gitYankNthState = {
+      idx: idx,
+      startPos: startPos,
+      endPos: this._gitTermCursorPos,
+      insertedLen: lastArg.length,
+      lastBuf: this._gitTermLineBuf,
+    };
+  };
+
+  // Alt+U / Alt+L / Alt+C — uppercase, lowercase, or capitalize the next word
+  // starting at the cursor (readline behavior).
+  TutorialCode.prototype._gitTransformWord = function (mode) {
+    var pos = this._gitTermCursorPos;
+    var target = this._gitFindWordEndRight(pos);
+    if (target <= pos) return;
+    var buf = this._gitTermLineBuf;
+    // Skip leading non-word chars so the transform applies to the actual word,
+    // matching readline.
+    var s = pos;
+    while (s < target && !/\w/.test(buf.charAt(s))) s++;
+    if (s >= target) { this._gitTermCursorPos = target; this.gitTerm.write('\x1b[' + (target - pos) + 'C'); return; }
+    var before = buf.substring(0, s);
+    var word = buf.substring(s, target);
+    var after = buf.substring(target);
+    var transformed;
+    if (mode === 'upper')      transformed = word.toUpperCase();
+    else if (mode === 'lower') transformed = word.toLowerCase();
+    else                       transformed = word.charAt(0).toUpperCase() + word.substring(1).toLowerCase();
+    this._gitTermLineBuf = before + transformed + after;
+    // Redraw from the original cursor position to end of word, then walk
+    // cursor to end of word (matches readline placement).
+    var redraw = buf.substring(pos, s) + transformed;
+    this.gitTerm.write(redraw);
+    this._gitTermCursorPos = target;
+  };
+
+  // Apply bash-style history expansion to a freshly-typed line: `!!` becomes
+  // the previous command, `!$` the last word of the previous command, `!^`
+  // the first argument. If anything was substituted, the expanded line is
+  // echoed before being dispatched (also matching bash).
+  TutorialCode.prototype._gitExpandHistory = function (line) {
+    if (line.indexOf('!') === -1) return { line: line, changed: false };
+    var hist = this._gitTermHistory;
+    var prev = hist.length ? hist[hist.length - 1] : '';
+    var prevArgs = prev ? this._gitTokenize(prev) : [];
+    var changed = false;
+    var out = line.replace(/!!|!\$|!\^|!\*/g, function (m) {
+      if (!prev) return m;
+      changed = true;
+      if (m === '!!') return prev;
+      if (m === '!$') return prevArgs.length ? prevArgs[prevArgs.length - 1] : '';
+      if (m === '!^') return prevArgs.length > 1 ? prevArgs[1] : '';
+      if (m === '!*') return prevArgs.length > 1 ? prevArgs.slice(1).join(' ') : '';
+      return m;
+    });
+    return { line: out, changed: changed };
   };
 
   // ---- Tab completion -------------------------------------------------------

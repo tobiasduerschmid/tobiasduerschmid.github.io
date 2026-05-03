@@ -32,19 +32,39 @@
   'use strict';
 
   function getBreakpointMouseHit(editor, e) {
-    if (!editor || !e || !e.target || !e.target.position) return null;
-    var line = e.target.position.lineNumber;
-    if (!line) return null;
+    if (!editor || !e) return null;
+    var line = e.target && e.target.position && e.target.position.lineNumber;
 
-    var mouseEvent = e.event || {};
+    var mouseEvent = e.event || e;
     var browserEvent = mouseEvent.browserEvent || mouseEvent;
     var clientX = typeof browserEvent.clientX === 'number'
       ? browserEvent.clientX
       : (typeof mouseEvent.posx === 'number' ? mouseEvent.posx : null);
+    var clientY = typeof browserEvent.clientY === 'number'
+      ? browserEvent.clientY
+      : (typeof mouseEvent.posy === 'number' ? mouseEvent.posy : null);
     if (clientX == null) return null;
 
     var dom = editor.getDomNode && editor.getDomNode();
     if (!dom) return null;
+    var rect = dom.getBoundingClientRect();
+    if (!line && clientY != null && editor.getModel && editor.getModel()) {
+      var lineHeight = 24;
+      try {
+        var monaco = window.monaco;
+        if (monaco && monaco.editor && monaco.editor.EditorOption) {
+          lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight) || lineHeight;
+        }
+      } catch (err) {}
+      var firstLineTop = editor.getTopForLineNumber ? editor.getTopForLineNumber(1) : 0;
+      var scrollTop = editor.getScrollTop ? editor.getScrollTop() : 0;
+      var yInDocument = clientY - rect.top + scrollTop;
+      line = Math.floor((yInDocument - firstLineTop) / lineHeight) + 1;
+      var lineCount = editor.getModel().getLineCount();
+      if (line < 1 || line > lineCount) return null;
+    }
+    if (!line) return null;
+
     var root = dom.closest?.('.tvm-container, .ttp-wrap, .tpp-wrap') || dom;
     var rootStyle = window.getComputedStyle(root);
     var offset = parseFloat(rootStyle.getPropertyValue('--tvm-debug-breakpoint-offset')) || 22;
@@ -57,7 +77,6 @@
       gutterLeft = marginEl.getBoundingClientRect().left;
     } else {
       var layout = editor.getLayoutInfo ? editor.getLayoutInfo() : {};
-      var rect = dom.getBoundingClientRect();
       gutterLeft = rect.left + (layout.glyphMarginLeft || 0);
     }
 
@@ -70,6 +89,17 @@
       line: line,
       rightButton: !!(mouseEvent.rightButton || browserEvent.button === 2),
     };
+  }
+
+  function stopBreakpointMouseEvent(e) {
+    var mouseEvent = e.event || e;
+    var browserEvent = mouseEvent.browserEvent || null;
+    if (mouseEvent.preventDefault) mouseEvent.preventDefault();
+    if (mouseEvent.stopPropagation) mouseEvent.stopPropagation();
+    if (browserEvent && browserEvent !== mouseEvent) {
+      if (browserEvent.preventDefault) browserEvent.preventDefault();
+      if (browserEvent.stopPropagation) browserEvent.stopPropagation();
+    }
   }
 
   function attachDebuggerToEditor(editor, sync, opts) {
@@ -127,20 +157,28 @@
     }
 
     // ── Gutter click → toggleBreakpoint / editBreakpointCondition ─────────
-    var clickD = editor.onMouseDown(function (e) {
+    function handleBreakpointMouseDown(e) {
       var hit = getBreakpointMouseHit(editor, e);
       if (!hit) return;
       var fname = getActiveFile();
       if (!fname) return;
       var path = normalizePath(fname);
       if (!path) return;
-      if (e.event && e.event.preventDefault) e.event.preventDefault();
+      stopBreakpointMouseEvent(e);
       if (hit.rightButton) {
         sync.dispatch({ type: 'editBreakpointCondition', path: path, line: hit.line });
       } else {
         sync.dispatch({ type: 'toggleBreakpoint', path: path, line: hit.line });
       }
-    });
+    }
+
+    var editorDom = editor.getDomNode && editor.getDomNode();
+    if (editorDom) {
+      editorDom.addEventListener('mousedown', handleBreakpointMouseDown, true);
+      disposers.push(function () { editorDom.removeEventListener('mousedown', handleBreakpointMouseDown, true); });
+    }
+
+    var clickD = editor.onMouseDown(handleBreakpointMouseDown);
     disposers.push(function () { try { clickD.dispose(); } catch (e) {} });
 
     // ── Breakpoint decorations (red dots in glyph margin) ──────────────────

@@ -121,6 +121,7 @@ info_nav_title: "Keyboard shortcuts"
       <li><a href="#tutorials">Tutorials &amp; SEBook</a></li>
       <li><a href="#debugger">Step-through debugger</a></li>
       <li><a href="#command-labs">Command labs (filesystem, git)</a></li>
+      <li><a href="#tutorial-terminal">Embedded tutorial terminal</a></li>
       <li><a href="#refactoring">Refactoring engine</a></li>
       <li><a href="#chat">Tutor chat</a></li>
       <li><a href="#diagrams">UML &amp; diagram viewers</a></li>
@@ -229,6 +230,113 @@ info_nav_title: "Keyboard shortcuts"
       <tr>
         <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
         <td>Close the lab modal and return to the tutorial.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="tutorial-terminal">Embedded tutorial terminal</h2>
+  <p class="shortcuts-note">The Python tutorials embed a small in-browser terminal under the editor for git, filesystem, and python commands. The terminal must be focused for these to take effect. macOS users can swap <kbd>Ctrl</kbd> for <kbd>Cmd</kbd> and <kbd>Alt</kbd> for <kbd>Option</kbd> in any of the chords below.</p>
+  <table class="shortcuts-table">
+    <caption>Line editing and history shortcuts in the embedded terminal.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&larr;</kbd><span class="key-sep">/</span><kbd>&rarr;</kbd></td>
+        <td>Move the cursor one character left or right.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>&uarr;</kbd><span class="key-sep">/</span><kbd>&darr;</kbd></td>
+        <td>Step backwards or forwards through the command history.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Home</kbd><span class="key-sep">/</span><kbd>End</kbd></td>
+        <td>Jump the cursor to the start or end of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Tab</kbd></td>
+        <td>Complete the current command, git subcommand, or path. Press twice to list every candidate.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Backspace</kbd><span class="key-sep">/</span><kbd>Delete</kbd></td>
+        <td>Delete one character before or after the cursor.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>&larr;</kbd><span class="key-sep">/</span><kbd>&rarr;</kbd></td>
+        <td>Jump the cursor one word left or right. <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>&larr;</kbd><span class="key-sep">/</span><kbd>&rarr;</kbd> behaves the same.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>Backspace</kbd></td>
+        <td>Delete the word before the cursor. <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>W</kbd> does the same.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>Delete</kbd></td>
+        <td>Delete the word after the cursor. <kbd>Alt</kbd><span class="key-sep">+</span><kbd>D</kbd> does the same.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd><span class="key-sep">+</span><kbd>&larr;</kbd><span class="key-sep">/</span><kbd>&rarr;</kbd></td>
+        <td>macOS only. Jump the cursor to the start or end of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd><span class="key-sep">+</span><kbd>Backspace</kbd></td>
+        <td>macOS only. Delete from the cursor back to the start of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd><span class="key-sep">+</span><kbd>Delete</kbd></td>
+        <td>macOS only. Delete from the cursor forward to the end of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>A</kbd><span class="key-sep">/</span><kbd>E</kbd></td>
+        <td>Jump the cursor to the start (<kbd>A</kbd>) or end (<kbd>E</kbd>) of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>B</kbd><span class="key-sep">/</span><kbd>F</kbd></td>
+        <td>Move the cursor one character backwards or forwards.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>P</kbd><span class="key-sep">/</span><kbd>N</kbd></td>
+        <td>Step backwards (<kbd>P</kbd>) or forwards (<kbd>N</kbd>) through the command history.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>U</kbd></td>
+        <td>Delete the entire line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>K</kbd></td>
+        <td>Delete from the cursor to the end of the line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Y</kbd></td>
+        <td>Paste back the most recently killed text (from <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>U</kbd>, <kbd>K</kbd>, <kbd>W</kbd>, <kbd>Alt</kbd><span class="key-sep">+</span><kbd>Backspace</kbd>, or <kbd>Alt</kbd><span class="key-sep">+</span><kbd>Delete</kbd>).</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>T</kbd></td>
+        <td>Swap the two characters around the cursor (transpose).</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>.</kbd></td>
+        <td>Insert the last argument of the previous command. Press repeatedly to cycle further back through history. <kbd>Alt</kbd><span class="key-sep">+</span><kbd>_</kbd> does the same.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>U</kbd><span class="key-sep">/</span><kbd>L</kbd><span class="key-sep">/</span><kbd>C</kbd></td>
+        <td>Convert the word at the cursor to UPPERCASE, lowercase, or Capitalised form.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><code>!!</code></td>
+        <td>Type at the prompt. Expands to the previous command before running. Use <code>sudo !!</code>-style retries.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><code>!$</code></td>
+        <td>Type at the prompt. Expands to the last argument of the previous command. <code>!^</code> uses the first argument; <code>!*</code> uses all arguments.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>L</kbd></td>
+        <td>Clear the screen and redraw the prompt with the current line.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>C</kbd></td>
+        <td>Discard the line being typed and start a fresh prompt.</td>
       </tr>
     </tbody>
   </table>
