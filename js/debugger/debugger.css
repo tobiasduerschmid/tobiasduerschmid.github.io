@@ -243,6 +243,11 @@
 .tvm-bp-error {
   background: #f1a325;
 }
+.tvm-bp-preview-glyph {
+  background: rgba(230, 57, 70, 0.50);
+  border-color: #3f3f46;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
+}
 
 .tvm-bp-dialog-backdrop {
   position: fixed;
@@ -1296,6 +1301,11 @@ html.dark-mode .tvm-bp-glyph {
 }
 html.dark-mode .tvm-bp-cond { background: #d62828; }
 html.dark-mode .tvm-bp-error { background: #f1a325; }
+html.dark-mode .tvm-bp-preview-glyph {
+  background: rgba(230, 57, 70, 0.50);
+  border-color: #3f3f46;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
+}
 html.dark-mode .tvm-bp-dialog-backdrop { background: rgba(2, 6, 23, 0.62); }
 html.dark-mode .tvm-bp-dialog {
   background: #1f2330;

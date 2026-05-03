@@ -524,27 +524,33 @@
       }
 
       function initToggles() {
-        const article = document.querySelector('article');
+        const contentRoot = document.getElementById('main-content') || document.querySelector('article') || document.body;
         const highlightToggle = document.getElementById('highlightToggle');
         const darkModeToggle = document.getElementById('darkModeToggle');
         const readAloudToggle = document.getElementById('readAloudToggle');
         const container = document.getElementById('togglesContainer');
 
-        if (!article || !highlightToggle || !darkModeToggle || !container) return;
+        if (!darkModeToggle || !container) return;
 
-        const marks = article.getElementsByTagName('mark');
-        const audioPlayers = document.getElementsByClassName('cap');
+        const marks = contentRoot.getElementsByTagName('mark');
+        const audioPlayers = contentRoot.getElementsByClassName('cap');
+        const hasHighlights = highlightToggle && marks.length > 0;
+        const hasAudioPlayers = readAloudToggle && audioPlayers.length > 0;
 
-        // Dark mode is always available, highlights only if marks exist
-        container.style.display = 'flex';
-        if (marks.length === 0) {
-          highlightToggle.parentElement.parentElement.style.display = 'none';
+        function setControlVisible(toggle, visible) {
+          const row = toggle && toggle.closest('div');
+          if (row) {
+            row.style.display = visible ? 'flex' : 'none';
+          }
         }
+
+        // Dark mode is always available; page-specific toggles appear only
+        // when their matching content exists.
+        container.style.display = 'flex';
+        setControlVisible(highlightToggle, hasHighlights);
 
         // Audio Clips toggle — only shown when .cap players exist on this page
-        if (readAloudToggle && audioPlayers.length === 0) {
-          readAloudToggle.parentElement.parentElement.style.display = 'none';
-        }
+        setControlVisible(readAloudToggle, hasAudioPlayers);
 
         // --- Dark Mode Logic ---
         const savedDarkMode = getCookie('dark-mode');
@@ -568,35 +574,37 @@
         });
 
         // --- Highlight Logic ---
-        const savedHighlights = getCookie('show-highlights');
-        if (savedHighlights !== null) {
-          const isChecked = savedHighlights === 'true';
-          highlightToggle.checked = isChecked;
-          if (isChecked) {
-            document.documentElement.classList.remove('highlights-disabled');
-          } else {
-            document.documentElement.classList.add('highlights-disabled');
+        if (hasHighlights) {
+          const savedHighlights = getCookie('show-highlights');
+          if (savedHighlights !== null) {
+            const isChecked = savedHighlights === 'true';
+            highlightToggle.checked = isChecked;
+            if (isChecked) {
+              document.documentElement.classList.remove('highlights-disabled');
+            } else {
+              document.documentElement.classList.add('highlights-disabled');
+            }
           }
-        }
 
-        highlightToggle.addEventListener('change', function () {
-          document.documentElement.classList.add('highlights-transition');
-          if (this.checked) {
-            document.documentElement.classList.remove('highlights-disabled');
-          } else {
-            document.documentElement.classList.add('highlights-disabled');
-          }
-          setCookie('show-highlights', this.checked, 300);
-          setTimeout(() => {
-            document.documentElement.classList.remove('highlights-transition');
-          }, 300);
-        });
+          highlightToggle.addEventListener('change', function () {
+            document.documentElement.classList.add('highlights-transition');
+            if (this.checked) {
+              document.documentElement.classList.remove('highlights-disabled');
+            } else {
+              document.documentElement.classList.add('highlights-disabled');
+            }
+            setCookie('show-highlights', this.checked, 300);
+            setTimeout(() => {
+              document.documentElement.classList.remove('highlights-transition');
+            }, 300);
+          });
+        }
 
         // --- Read Aloud Toggle Logic ---
         const savedReadAloud = getCookie('read-aloud');
         const isReadAloud = savedReadAloud !== 'false'; // Default is true (ON)
 
-        if (readAloudToggle) {
+        if (hasAudioPlayers) {
           readAloudToggle.checked = isReadAloud;
           if (isReadAloud) {
             document.documentElement.classList.add('read-aloud-enabled');

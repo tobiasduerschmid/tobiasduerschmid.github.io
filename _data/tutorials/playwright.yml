@@ -280,7 +280,7 @@ steps:
             border-color: #3a4351;
           }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/todo.spec.js"
         language: "javascript"
@@ -558,7 +558,7 @@ steps:
           [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/add-todo.spec.js"
         language: "javascript"
@@ -930,7 +930,7 @@ steps:
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
           [data-bs-theme="dark"] .add-todo-btn,
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/locator-ladder.spec.js"
         language: "javascript"
@@ -1312,7 +1312,7 @@ steps:
           [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/todo.spec.js"
         language: "javascript"
@@ -1669,7 +1669,7 @@ steps:
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
           [data-bs-theme="dark"] .add-todo-btn,
           [data-bs-theme="dark"] .primary-btn,
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/css-locator.spec.js"
         language: "javascript"
@@ -2056,7 +2056,7 @@ steps:
           [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] button { background: #3b82f6; }
+          [data-bs-theme="dark"] button { background: #2563eb; }
           [data-bs-theme="dark"] .status-line { color: #9ca3af; }
 
       - path: "tests/brittle.spec.js"
@@ -2495,7 +2495,7 @@ steps:
           [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] .todo-row > button { background: #3b82f6; }
+          [data-bs-theme="dark"] .todo-row > button { background: #2563eb; }
           [data-bs-theme="dark"] .status-line { color: #9ca3af; }
           [data-bs-theme="dark"] .todo-toggle { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] .todo-done .todo-toggle { color: #6b7280; }
@@ -2935,7 +2935,7 @@ steps:
           [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
           [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
-          [data-bs-theme="dark"] .todo-row > button { background: #3b82f6; }
+          [data-bs-theme="dark"] .todo-row > button { background: #2563eb; }
           [data-bs-theme="dark"] .todo-toggle { background: transparent; color: #e6edf3; border-color: #3a4351; }
           [data-bs-theme="dark"] .todo-toggle[aria-pressed="true"] { background: #064e3b; border-color: #10b981; }
 

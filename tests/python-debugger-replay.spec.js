@@ -151,6 +151,24 @@ async function codeBreakpointLines(page, filename) {
   }, filename);
 }
 
+async function breakpointPreviewState(page) {
+  return page.evaluate(() => {
+    const editor = window._tutorial.editor;
+    const decorations = editor.getModel().getAllDecorations()
+      .filter(d => String(d.options?.glyphMarginClassName || '').includes('tvm-bp-preview-glyph'));
+    const previewEl = editor.getDomNode().querySelector('.tvm-bp-preview-glyph');
+    const style = previewEl ? getComputedStyle(previewEl) : null;
+    return {
+      lines: decorations.map(d => d.range.startLineNumber).sort((a, b) => a - b),
+      background: style && style.backgroundColor,
+      borderColor: style && style.borderColor,
+      opacity: style && style.opacity,
+      width: style && style.width,
+      height: style && style.height,
+    };
+  });
+}
+
 async function prepareDebuggerAtBreakpoint(page, breakpointLine) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
@@ -383,6 +401,13 @@ async function breakpointVisualTokens(page, darkMode) {
     conditional.style.top = '-9999px';
     document.body.appendChild(conditional);
 
+    const preview = document.createElement('div');
+    preview.className = 'tvm-bp-glyph tvm-bp-preview-glyph';
+    preview.style.position = 'absolute';
+    preview.style.left = '-9999px';
+    preview.style.top = '-9999px';
+    document.body.appendChild(preview);
+
     const chevron = document.createElement('div');
     chevron.className = 'tvm-debug-current-glyph-on-bp';
     chevron.style.position = 'absolute';
@@ -393,6 +418,7 @@ async function breakpointVisualTokens(page, darkMode) {
     const standaloneStyle = getComputedStyle(standalone);
     const conditionalStyle = getComputedStyle(conditional);
     const conditionalQuestionStyle = getComputedStyle(conditional, '::after');
+    const previewStyle = getComputedStyle(preview);
     const chevronStyle = getComputedStyle(chevron);
     const result = {
       standaloneBackground: standaloneStyle.backgroundColor,
@@ -405,12 +431,17 @@ async function breakpointVisualTokens(page, darkMode) {
       conditionalQuestionDisplay: conditionalQuestionStyle.display,
       conditionalQuestionAlignItems: conditionalQuestionStyle.alignItems,
       conditionalQuestionJustifyContent: conditionalQuestionStyle.justifyContent,
+      previewBackground: previewStyle.backgroundColor,
+      previewBorderColor: previewStyle.borderColor,
+      previewShadow: previewStyle.boxShadow,
+      previewOpacity: previewStyle.opacity,
       chevronBreakpointImage: chevronStyle.backgroundImage,
       chevronFilter: chevronStyle.filter,
     };
 
     standalone.remove();
     conditional.remove();
+    preview.remove();
     chevron.remove();
     return result;
   }, darkMode);
@@ -497,6 +528,10 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(light.conditionalQuestionDisplay).toBe('flex');
       expect(light.conditionalQuestionAlignItems).toBe('center');
       expect(light.conditionalQuestionJustifyContent).toBe('center');
+      expect(light.previewBackground).toBe('rgba(230, 57, 70, 0.5)');
+      expect(light.previewBorderColor).toBe('rgb(63, 63, 70)');
+      expect(light.previewShadow).toContain('rgba(0, 0, 0, 0.42)');
+      expect(light.previewOpacity).toBe('1');
       expect(light.chevronFilter).toContain('drop-shadow');
       expect(light.chevronBreakpointImage).toContain('%233f3f46');
       expect(light.chevronBreakpointImage).not.toContain('%23000000');
@@ -523,6 +558,42 @@ test.describe.serial('Python debugger replay variable edits', () => {
       const leftEdge = await breakpointHitboxPoint(page, 3, -13);
       await page.mouse.click(leftEdge.x, leftEdge.y);
       expect(await codeBreakpointLines(page, 'hitbox.py')).toEqual([3]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('breakpoint hover preview advertises empty gutter hitbox', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await loadDebuggerFile(page, 'hover-preview.py', 'total = 0\nfor i in range(3):\n    total += i\nprint(total)\n');
+
+      const center = await breakpointHitboxPoint(page, 3);
+      await page.mouse.move(center.x, center.y);
+      await page.waitForFunction(() => {
+        const editor = window._tutorial.editor;
+        return editor.getModel().getAllDecorations()
+          .some(d => d.range.startLineNumber === 3 && String(d.options?.glyphMarginClassName || '').includes('tvm-bp-preview-glyph'));
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const preview = await breakpointPreviewState(page);
+      expect(preview.lines).toEqual([3]);
+      expect(preview.background).toBe('rgba(230, 57, 70, 0.5)');
+      expect(preview.borderColor).toBe('rgb(63, 63, 70)');
+      expect(preview.opacity).toBe('1');
+      expect(preview.width).toBe('16px');
+      expect(preview.height).toBe('16px');
+
+      await page.mouse.click(center.x, center.y);
+      expect(await codeBreakpointLines(page, 'hover-preview.py')).toEqual([3]);
+      await page.waitForFunction(() => {
+        const editor = window._tutorial.editor;
+        return !editor.getModel().getAllDecorations()
+          .some(d => String(d.options?.glyphMarginClassName || '').includes('tvm-bp-preview-glyph'));
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      await page.mouse.move(center.x + 40, center.y);
+      expect((await breakpointPreviewState(page)).lines).toEqual([]);
     } finally {
       await page.close();
     }

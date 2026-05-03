@@ -82,8 +82,8 @@ steps:
       | Lecture phase | This tutorial's stages |
       | --- | --- |
       | 1. Investigate symptoms / Reproduce | **Symptom** + **Predict** + **Evidence** |
-      | 2. Locate the faulty code | **Localize** |
-      | 3. Determine root cause | **Hypothesis** |
+      | 2. Determine root cause | **Hypothesis** |
+      | 3. Locate the faulty code | **Localize** |
       | 4. Implement & verify fix | **Fix** + **Verify** |
 
       ### 🐞 Lecture vocabulary you should keep straight
@@ -250,6 +250,15 @@ steps:
               "Don't change the test file — production code is what we change. Revert `test_greet.py`."
           assert '"Hello!"' in source, \
               "Don't change the test file — production code is what we change. Revert `test_greet.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you're tempted to edit the test, that's a *symptom* of the wrong stage. The test states the *spec*; the production code is what's broken. Revert `test_greet.py` and apply the fix in `greet.py` instead."
+          - title: "Layer 2 — recovery"
+            text: "Open `test_greet.py`. Restore both expected strings exactly: `\"Hello, Ada, Linus, Grace!\"` for the three-name case, `\"Hello!\"` for the empty-list case. Then move to `greet.py` and fix the off-by-one in the `range(...)` call."
+            condition: "code_missing: \"Hello, Ada, Linus, Grace!\""
+          - title: "Layer 3 — concept"
+            text: "This is the **Liar Test antipattern** in disguise — making the test agree with the bug. From the lecture: a fix should change the *fault* (the wrong line in production code), not the *test that detected the failure*. If you change the test, the bug ships with green CI."
+            condition: "code_missing: \"Hello!\""
 
     quiz:
       title: "The Debugging Process — Knowledge Check"
@@ -833,12 +842,27 @@ steps:
               "Don't change the test — fix `pathfinder.py` instead."
           assert 'max_steps=9' in source, \
               "Don't delete the under-budget rejection case — revert `test_pathfinder.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you weakened a `max_steps=...` value, you patched the symptom (the failing test) instead of the fault (the order of the two checks in `_dfs`). Restore the test."
+          - title: "Layer 2 — recovery"
+            text: "Open `test_pathfinder.py`. The exact-budget case must keep `max_steps=10`; the under-budget rejection case must keep `max_steps=9`. Both are part of the spec — they enforce the boundary the bug crosses."
+            condition: "code_missing: max_steps=10"
+          - title: "Layer 3 — concept"
+            text: "Two tests check opposite ends of the same boundary. Removing or weakening one means the boundary is no longer pinned — exactly the kind of change reviewers will catch in code review. Apply the fix in `pathfinder.py` (reorder the two `if` blocks) and both tests will pass without touching the test file."
+            condition: "code_missing: max_steps=9"
 
       - description: "Workaround guard — maze unchanged"
         command: |
           source = open('/tutorial/maze_data.py').read()
           assert '"#S..#..G#"' in source, \
               "Don't edit the maze — fix `_dfs` instead."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you reshaped the maze to make the existing pathfinder pass, you fixed the *test data* instead of the *fault*. Revert `maze_data.py`."
+          - title: "Layer 2 — recovery"
+            text: "Restore the row containing `\"#S..#..G#\"`. The maze is the *spec*: a 10-step path from S to G must be findable when `max_steps=10`. The bug is in the pathfinder's check ordering, not the maze geometry."
+            condition: "code_missing: \"#S..#..G#\""
 
       - description: "Workaround guard — both checks present"
         command: |
@@ -846,6 +870,15 @@ steps:
           assert 'current == goal' in source, "The goal check shouldn't be removed — without it, the function never returns a path."
           assert 'steps_used >= max_steps' in source or 'len(path) - 1 >= max_steps' in source, \
               "Don't remove the cutoff entirely — `test_path_rejected_when_battery_too_small` would fail."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Both checks are in the spec. The goal check is *how the function returns a valid path*; the cutoff is *how the function rejects over-budget paths*. Removing either breaks the spec. The fix is **reorder them**, not delete one."
+          - title: "Layer 2 — recovery"
+            text: "Re-add whichever check you removed. The two should be: `if current == goal: return path.copy()` (FIRST) and `if steps_used >= max_steps: return None` (SECOND). Both stay; only the order changes."
+            condition: "code_missing: current == goal"
+          - title: "Layer 3 — concept"
+            text: "This is the **Workaround antipattern**: deleting code to silence a test. From the lecture: the fix should *correct the fault*, not delete the constraint. Removing the cutoff makes one test pass and breaks the other — you traded one bug for a worse one."
+            condition: "code_missing: max_steps"
 
     quiz:
       title: "Case 1 — Knowledge Check"
@@ -1264,12 +1297,27 @@ steps:
           lt_block = source[source.find('def load_transactions'):source.find('def apply_transaction')]
           assert '.strip()' in lt_block, \
               "Put `.strip()` in `load_transactions`, not in `apply_transaction`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Fix the data at the **boundary** where it enters the program — that's `load_transactions`. Stripping whitespace inside `apply_transaction` would also work, but every future caller of `load_transactions` would have to remember to strip again. One fix at the seam beats N fixes everywhere."
+          - title: "Layer 2 — strategy"
+            text: "In `load_transactions`, the row's `type` field becomes `tx.kind`. Add `.strip()` before `.upper()` on that line so `\" REVERSAL\"` normalizes to `\"REVERSAL\"` *before* it ever reaches `apply_transaction`."
+            condition: "code_missing: .strip()"
+          - title: "Layer 3 — concept"
+            text: "From the lecture: *fix the fault, not its propagation*. Whitespace from a CSV is a data-representation problem; the fix belongs at the loading layer (which owns parsing). Putting it in `apply_transaction` would scatter the same fix across every consumer of the loader's output."
+            condition: "code_contains: apply_transaction"
 
       - description: "Workaround guard — CSV unchanged"
         command: |
           source = open('/tutorial/transactions.csv').read()
           assert 'T011,ACCT-202, REVERSAL,18.00' in source, \
               "Don't edit the CSV — fix the loader instead. Revert `transactions.csv`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you removed the leading space from row T011, you fixed the *symptom* (the test failing) instead of the *fault* (the loader's missing strip). Real CSVs from real banks/exchanges *will* have stray whitespace; your code must handle it."
+          - title: "Layer 2 — recovery"
+            text: "Restore row T011 exactly: `T011,ACCT-202, REVERSAL,18.00` (note the leading space before `REVERSAL`). Then fix `load_transactions` to strip whitespace from the type field."
+            condition: "code_missing: T011,ACCT-202, REVERSAL"
 
       - description: "Workaround guard — apply_transaction arithmetic intact"
         command: |
@@ -1278,12 +1326,24 @@ steps:
               "Don't remove or modify the REVERSAL branch in `apply_transaction`. The bug is in loading, not in the arithmetic."
           assert 'tx.kind == "WITHDRAWAL"' in source, \
               "Don't remove the WITHDRAWAL branch. The bug is in loading, not in the arithmetic."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you deleted or modified one of the kind-branches, you removed business logic — that path is needed for *other* transaction types. The bug is upstream (in loading); the arithmetic is correct."
+          - title: "Layer 2 — recovery"
+            text: "Restore both branches in `apply_transaction`: `if tx.kind == \"WITHDRAWAL\": ... elif tx.kind == \"REVERSAL\": ...`. The fix lives in `load_transactions`, not here."
+            condition: "code_missing: tx.kind == \"REVERSAL\""
 
       - description: "Workaround guard — test expectations unchanged"
         command: |
           source = open('/tutorial/test_ledger.py').read()
           assert '"ACCT-202": 7300' in source, \
               "Don't change the expected balance for ACCT-202 — the test correctly states what the balance *should* be. Revert `test_ledger.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The test states the *spec*: ACCT-202 should end at 7300. If you changed the expected number, you made the test agree with the bug. Revert."
+          - title: "Layer 2 — concept"
+            text: "From the lecture: a fix should change the *fault* in production code, not the *test that detected the failure*. The test isn't wrong — `7300` is what the bank's books actually show. The loader's whitespace bug is what makes the program disagree."
+            condition: "code_missing: \"ACCT-202\": 7300"
 
     quiz:
       title: "Case 2 — Knowledge Check"
@@ -1694,6 +1754,15 @@ steps:
           alloc_block = source[source.find('def allocate_next'):source.find('def run_events')]
           assert 'pop(0)' in alloc_block or 'popleft' in alloc_block, \
               "The fix should change `pop()` to `pop(0)` (or use `deque.popleft()`) inside `allocate_next`. That's the line where FIFO policy lives."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "FIFO removal happens at *one specific line* in `allocate_next` — the `pop()` call. That's the line that decides who gets enrolled next. The fix must touch *that* line."
+          - title: "Layer 2 — strategy"
+            text: "`pop()` (no arg) removes from the *end* — that's LIFO. `pop(0)` removes from the *front* — that's FIFO. Or use `collections.deque` with `popleft()` — same idea, more efficient for long waitlists."
+            condition: "code_missing: pop(0)"
+          - title: "Layer 3 — concept"
+            text: "FIFO/LIFO is a *protocol* invariant. The lecture's framing: the fault is the wrong protocol implementation in `allocate_next`. Patch it where it lives — not by re-sorting elsewhere or pre-massaging the data."
+            condition: "code_contains: waitlist.pop()"
 
       - description: "Workaround guard — events unchanged"
         command: |
@@ -1702,6 +1771,12 @@ steps:
               "Don't reorder `sample_events()` — the events represent real student actions. Revert the event list."
           assert 'Event(3, "join_waitlist", "CS201", "Jules Kim"),' in source, \
               "Don't change the event stream. The bug is in `allocate_next`, not the events."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If you reordered the events to make the test pass, you fixed the *input data* instead of the *fault*. In production, you wouldn't get to reorder reality — students sign up in whatever order they sign up."
+          - title: "Layer 2 — recovery"
+            text: "Restore `sample_events()` exactly. The events represent real user actions over time; reordering them is rewriting history. Then fix `allocate_next` so it processes that real history correctly."
+            condition: "code_missing: Event(1, \"join_waitlist\", \"CS201\", \"Mina Patel\")"
 
       - description: "Workaround guard — test expectations unchanged"
         command: |
@@ -1710,6 +1785,12 @@ steps:
               "Don't change the expected enrolled list — FIFO is the spec. Revert `test_waitlist.py`."
           assert '["Jules Kim", "Kai Morgan", "Sam Lee"]' in source, \
               "Don't change the expected waitlist — FIFO is the spec. Revert `test_waitlist.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "FIFO is the *spec* — first to join the waitlist is first to be admitted. If you flipped the expected list to LIFO order, you made the test agree with the bug."
+          - title: "Layer 2 — recovery"
+            text: "Restore the test's expected lists exactly: enrolled `[\"Mina Patel\", \"Theo Rios\"]`, waitlisted `[\"Jules Kim\", \"Kai Morgan\", \"Sam Lee\"]`. Then fix `allocate_next` to actually implement FIFO."
+            condition: "code_missing: [\"Mina Patel\", \"Theo Rios\"]"
 
       - description: "Workaround guard — no alphabetical sort hack"
         command: |
@@ -1717,6 +1798,12 @@ steps:
           alloc_block = source[source.find('def allocate_next'):source.find('def run_events')]
           assert 'sort' not in alloc_block.lower(), \
               "Don't sort the waitlist alphabetically — the test happens to be alphabetical by coincidence, but the spec is FIFO (insertion order), not alphabetical."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Sorting the waitlist alphabetically *happens to* match the test data because the names were chosen in alphabetical-ish order — but that's a coincidence in the test, not the spec. The real spec is FIFO (insertion order)."
+          - title: "Layer 2 — concept"
+            text: "This is the **'pass for the wrong reason' trap**: the test goes green, but the fix relies on a property of the test data, not the actual spec. Rename the students to start with non-alphabetical letters and your sort would silently break the spec — and CI would still be green."
+            condition: "code_contains: sort"
 
       - description: "Workaround guard — _handle_join still appends"
         command: |
@@ -1724,6 +1811,12 @@ steps:
           join_block = source[source.find('def _handle_join'):source.find('def _handle_drop')]
           assert 'course.waitlist.append(student)' in join_block, \
               "`_handle_join` should still APPEND new waitlisted students to the end. The bug was on the *removal* side (allocate_next), not the *insertion* side."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Insertion (`append`) and removal (`pop`) are *two different sides* of FIFO. The bug is on the *removal* side. Don't change the insertion side."
+          - title: "Layer 2 — recovery"
+            text: "Restore `course.waitlist.append(student)` in `_handle_join`. Append-on-join + pop-from-front-on-allocate is the canonical FIFO pattern. Touching the join side instead would force you to maintain reverse order everywhere — fighting the data structure rather than using it."
+            condition: "code_missing: course.waitlist.append(student)"
 
     quiz:
       title: "Case 3 — Knowledge Check"
@@ -2556,6 +2649,15 @@ steps:
           # The wrong wiring must be gone.
           assert 'PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket' not in source.replace(' ', '').replace('EventKind.', ''), \
               "Remove the `EventKind.PAYMENT_AUTHORIZED` subscription for `fulfillment.prepare_pick_ticket` — that's the buggy wiring."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Two changes both have to land in `workflow_config.py`: (1) ADD a subscription of `fulfillment.prepare_pick_ticket` to `EventKind.INVENTORY_RESERVED`, and (2) REMOVE the existing subscription to `EventKind.PAYMENT_AUTHORIZED` for the same handler. Replacing the wrong topic with the right one in the existing line accomplishes both."
+          - title: "Layer 2 — strategy"
+            text: "Open `checkout_app/workflow_config.py` and find the last `HandlerRegistration` line. Change `EventKind.PAYMENT_AUTHORIZED` → `EventKind.INVENTORY_RESERVED`. One identifier, one line."
+            condition: "code_contains: PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket"
+          - title: "Layer 3 — verify"
+            text: "After the change, the file should contain `EventKind.INVENTORY_RESERVED, fulfillment.prepare_pick_ticket` and should *not* contain `EventKind.PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket`. If both are present, you added the right line but didn't replace the wrong one."
+            condition: "code_missing: INVENTORY_RESERVED, fulfillment.prepare_pick_ticket"
 
       - description: "Workaround guard — handler body unchanged (no defensive `if event.kind …` check inside the handler)"
         command: |
@@ -2602,6 +2704,12 @@ steps:
               "Don't change the test's expected empty-shipping-queue assertion. The test correctly states the spec."
           assert 'app.shipping_queue.pending_order_ids() == [\"order-1001\"]' in source, \
               "Don't weaken the in-stock test. Revert `test_checkout.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The two assertions in the test pin both halves of the spec: out-of-stock orders MUST NOT enqueue a pick ticket; in-stock orders MUST. Weakening either makes the test agree with whichever bug exists today, instead of catching it."
+          - title: "Layer 2 — recovery"
+            text: "Restore both assertions exactly: `app.shipping_queue.pending_order_ids() == []` for the out-of-stock case, `app.shipping_queue.pending_order_ids() == [\"order-1001\"]` for the in-stock case. Then fix the wiring in `workflow_config.py`."
+            condition: "code_missing: pending_order_ids() == []"
 
     quiz:
       title: "Case 4 — Knowledge Check"
@@ -3105,18 +3213,39 @@ steps:
           # Specifically reject `most_common(1)[0][0].strip()` style post-processing
           assert '][0].strip()' not in stripped and '][0].rstrip(' not in stripped, \
               "Post-processing the return value masks the bug. Strip the *input* in the loop, not the output."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Same family as Case 2. The bug is in the *loader* (the loop reading `articles.txt`), not the return value. Strip the trailing newline from `tag` *before* it goes into the counter — not after-the-fact on `most_common(...)`."
+          - title: "Layer 2 — strategy"
+            text: "Inside the `for line in f:` loop, after `line.split(\"|\", 1)`, the `tag` ends with `\\n`. Strip it: `counts[tag.strip().upper()] += 1`. That fixes every count, not just whichever happens to be top."
+            condition: "code_missing: .strip()"
+          - title: "Layer 3 — concept"
+            text: "From the lecture (and Case 2): *fix the fault, not its propagation*. Stripping `most_common(1)[0][0]` only sanitizes the answer you return — but every internal count is still keyed by the wrong (newline-suffixed) string. Two articles tagged `python\\n` and one tagged `python` would count as separate tags. Fix the boundary, fix all of it."
+            condition: "code_contains: ][0].strip"
 
       - description: "Workaround guard — articles.txt unchanged"
         command: |
           source = open('/tutorial/articles.txt').read()
           assert 'Why Python rocks|python' in source and 'Async Python explained|python' in source, \
               "Don't edit `articles.txt` — real article exports often have stray whitespace; your code should handle it. Revert the data file."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Real article exports — RSS dumps, CMS exports, scraped feeds — *always* arrive with stray whitespace. Your code has to handle it. If you cleaned the file to make tests pass, you fixed the data instead of the loader."
+          - title: "Layer 2 — recovery"
+            text: "Restore `articles.txt` to its original form (lines like `Why Python rocks|python` and `Async Python explained|python`). Then strip whitespace inside `top_tag` — that's the load-boundary fix."
+            condition: "code_missing: Why Python rocks|python"
 
       - description: "Workaround guard — test expectations unchanged"
         command: |
           source = open('/tutorial/test_tagger.py').read()
           assert '== "PYTHON"' in source, \
               "Don't change the test's expected value to match the bug. Revert `test_tagger.py`."
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The spec says the top tag is `\"PYTHON\"` — clean, no trailing newline. If you changed the test to expect `\"PYTHON\\n\"` (or anything else), you made the test agree with the bug. Revert."
+          - title: "Layer 2 — concept"
+            text: "Same lesson as every other Workaround guard in this tutorial: the test states the spec; the production code is what's broken. Make the production code meet the spec, not the other way around."
+            condition: "code_missing: == \"PYTHON\""
 
     quiz:
       title: "Transfer & Reflection"

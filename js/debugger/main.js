@@ -2260,7 +2260,10 @@
   // ===========================================================================
   DebuggerController.prototype.installGutterClickHandler = function () {
     var self = this;
-    var breakpointMouseHit = window.SEBookDebuggerEditor && window.SEBookDebuggerEditor.breakpointMouseHit;
+    var debuggerEditor = window.SEBookDebuggerEditor || {};
+    var breakpointMouseHit = debuggerEditor.breakpointMouseHit;
+    var clearBreakpointPreview = debuggerEditor.clearBreakpointPreview;
+    var installBreakpointHoverPreview = debuggerEditor.installBreakpointHoverPreview;
     var stopBreakpointMouseEvent = function (e) {
       var mouseEvent = (e && e.event) || e || {};
       var browserEvent = mouseEvent.browserEvent || null;
@@ -2286,6 +2289,7 @@
         var filename = self.activeFileForEditor(editor);
         if (!filename) return;
         stopBreakpointMouseEvent(e);
+        if (clearBreakpointPreview) clearBreakpointPreview(editor);
         if (hit.rightButton) {
           self.editBreakpointCondition(filename, hit.line);
         } else {
@@ -2295,6 +2299,27 @@
       var dom = editor.getDomNode && editor.getDomNode();
       if (dom) dom.addEventListener('mousedown', handleBreakpointMouseDown, true);
       editor.onMouseDown(handleBreakpointMouseDown);
+      if (installBreakpointHoverPreview) {
+        installBreakpointHoverPreview(editor, {
+          monaco: monaco,
+          shouldShow: function (line) {
+            var model = editor.getModel(); if (!model) return false;
+            line = self.normalizeBreakpointLine(line);
+            if (!line || line > model.getLineCount()) return false;
+            var filename = self.activeFileForEditor(editor);
+            var path = self.normalizeBreakpointPath(filename);
+            if (!path) return false;
+            var bps = self.breakpoints.get(path);
+            if (bps && bps.has(line)) return false;
+            var curSnap = (self.historyIdx >= 0 && self.history[self.historyIdx]) || null;
+            var curFrameIdx = curSnap && curSnap.stack && curSnap.stack.length
+              ? (self.selectedFrameIdx >= 0 ? self.selectedFrameIdx : curSnap.stack.length - 1)
+              : -1;
+            var curFrame = curFrameIdx >= 0 ? self.displayFrameForSnapshot(curSnap, curFrameIdx) : null;
+            return !(curFrame && curFrame.file === path && curFrame.line === line);
+          },
+        });
+      }
     };
     hookEditor(this.t.editor);
     if (this.t.editor2) hookEditor(this.t.editor2);
@@ -2678,6 +2703,7 @@
       var key = '_dbgBpIds';
       var prev = editor[key] || [];
       editor[key] = editor.deltaDecorations(prev, decos);
+      if (editor._dbgBpPreviewRefresh) editor._dbgBpPreviewRefresh();
     }
     paint(this.t.editor);
     paint(this.t.editor2);

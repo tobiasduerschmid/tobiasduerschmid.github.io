@@ -338,11 +338,25 @@ steps:
   - description: Currently on main branch (not detached)
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
     hints:
-    - text: 'Still detached after the rescue? `git switch main` re-attaches. The rescued-work branch you anchored stays put.'
+    - title: 'Layer 1 — orientation'
+      text: 'Still detached after the rescue? `git switch main` re-attaches. The rescued-work branch you anchored stays put.'
+    - title: 'Layer 2 — verify'
+      text: '`git status` should now say "On branch main". `cat .git/HEAD` should print `ref: refs/heads/main` (not a raw SHA).'
+      condition: 'output_contains: detached'
+    - title: 'Layer 3 — recovery'
+      text: 'If you committed work *while* detached and `git switch main` would lose it, anchor it FIRST with `git switch -c rescue-name` — then come back to main. The reflog rescue you just learned is the safety net for cases where you forgot.'
+      condition: 'code_contains: detached'
   - description: rescued-work branch exists and points to an experimental commit (proves reflog rescue)
     command: cd /tutorial/myproject && git log rescued-work --oneline 2>/dev/null | grep -qi 'experimental'
     hints:
-    - text: 'The recipe: (1) make an orphan commit in detached HEAD and switch away, (2) `git reflog` to find its SHA, (3) `git branch rescued-work <sha>` to anchor it. `HEAD@{1}` works as a shortcut for the SHA.'
+    - title: 'Layer 1 — orientation'
+      text: 'You need a branch named `rescued-work` whose tip commit message contains "Experimental". The reflog has the SHA of that orphan commit; `git branch rescued-work <sha>` anchors it.'
+    - title: 'Layer 2 — strategy'
+      text: 'The recipe: (1) make an orphan commit in detached HEAD and switch away, (2) `git reflog` to find its SHA (look for "Experimental: add note"), (3) `git branch rescued-work <sha>` to anchor it. `HEAD@{1}` works as a shortcut for the SHA if you haven''t moved since.'
+      condition: 'output_missing: rescued-work'
+    - title: 'Layer 3 — verify'
+      text: 'After anchoring, `git log rescued-work --oneline` should show the experimental commit. If the branch exists but doesn''t contain that commit, you anchored the wrong SHA — re-check `git reflog` and use the SHA whose message mentions "Experimental".'
+      condition: 'output_contains: rescued-work'
   quiz:
     title: git reflog — Knowledge Check
     min_score: 0.8
@@ -550,11 +564,25 @@ steps:
   - description: On main branch with calculator.py
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main' && [ -f calculator.py ]
     hints:
-    - text: 'Not on main, or `calculator.py` went missing. `git switch main`; if the file is gone, restore it from the last commit: `git restore calculator.py`.'
+    - title: 'Layer 1 — orientation'
+      text: 'Not on main, or `calculator.py` went missing. `git switch main`; if the file is gone, restore it from the last commit: `git restore calculator.py`.'
+    - title: 'Layer 2 — strategy'
+      text: '`git status` and `ls` answer both questions in one shot. If you see "On branch main" and `calculator.py` listed, you''re fine.'
+      condition: 'output_contains: not on main'
+    - title: 'Layer 3 — verify'
+      text: '`git log --oneline` should print at least two commits — the seeded `Initial commit` and `Add add function`. If it prints fewer, the setup didn''t finish; reload the step.'
+      condition: 'output_missing: calculator.py'
   - description: You can resolve HEAD~1 (at least 2 commits on main)
     command: cd /tutorial/myproject && git rev-parse --quiet --verify HEAD~1 >/dev/null
     hints:
-    - text: 'Only one commit on main, so `HEAD~1` resolves to nothing. Make a small second commit (touch any file, `git add && git commit`) and retry.'
+    - title: 'Layer 1 — orientation'
+      text: '`HEAD~1` means "one commit before HEAD." For it to resolve, main needs at least 2 commits.'
+    - title: 'Layer 2 — strategy'
+      text: 'Only one commit on main, so `HEAD~1` resolves to nothing. Make a small second commit (touch any file, `git add && git commit`) and retry.'
+      condition: 'output_missing: HEAD~1'
+    - title: 'Layer 3 — verify'
+      text: '`git rev-parse HEAD~1` (no `--verify`) prints the SHA on success. If it errors with "unknown revision", main has fewer than 2 commits — add one and retry.'
+      condition: 'output_contains: unknown revision'
   quiz:
     title: Relative Addresses & Object Database — Knowledge Check
     min_score: 0.8
@@ -1697,7 +1725,14 @@ steps:
   - description: Bisect has been cleaned up (no active bisect)
     command: cd /tutorial/myproject && [ ! -f .git/BISECT_LOG ]
     hints:
-    - text: '`git bisect reset` ends the bisect session and returns HEAD to where you started.'
+    - title: 'Layer 1 — orientation'
+      text: '`git bisect reset` ends the bisect session and returns HEAD to where you started.'
+    - title: 'Layer 2 — diagnose'
+      text: '`git status` will tell you if a bisect is still active ("You are currently bisecting…"). If so, `git bisect reset` is the universal "I''m done" command — it works whether bisect succeeded, failed, or got stuck.'
+      condition: 'output_contains: bisecting'
+    - title: 'Layer 3 — verify'
+      text: 'After `git bisect reset`, `.git/BISECT_LOG` should be gone and HEAD should point back to your original branch tip. If `.git/BISECT_LOG` is still there, the reset didn''t complete — try again from the project root.'
+      condition: 'code_contains: BISECT_LOG'
   # Removed the "Test file was committed" gate — setup_commands already committed
   # test_calculator.py before the student touched anything, so the gate passed
   # without verifying any student work. The post-bisect repair-and-commit gates
@@ -1705,13 +1740,21 @@ steps:
   - description: At least 5 new commits exist on main
     command: cd /tutorial/myproject && [ $(git log --oneline main | wc -l) -ge 7 ]
     hints:
-    - text: 'Setup issue — normally the step seeds 5+ commits automatically. Re-run the step if history is sparse.'
+    - title: 'Layer 1 — orientation'
+      text: 'Setup issue — normally the step seeds 5+ commits automatically. `git log --oneline` should show at least 7 entries.'
+    - title: 'Layer 2 — recovery'
+      text: 'Reload the step — setup_commands re-seed the history. If they ran but you don''t see them, you may have done a `git reset --hard` that wiped them; reload again.'
+      condition: 'output_contains: 1'
   - description: The absolute function has been repaired (handles negatives, zero, and positives correctly)
     command: cd /tutorial/myproject && grep -q 'return x if x >= 0 else -x' calculator.py
     hints:
-    - text: 'Fix `absolute(x)` to return `x` when `x >= 0`, else `-x`. After bisect pointed at the culprit, commit the repair on top of main.'
+    - title: 'Layer 1 — orientation'
+      text: 'Bisect points you at the *culprit commit* but doesn''t fix it. After identifying the bad commit, fix `absolute(x)` on top of main and commit the repair.'
+    - title: 'Layer 2 — strategy'
+      text: 'Fix `absolute(x)` to return `x` when `x >= 0`, else `-x`. After bisect pointed at the culprit, commit the repair on top of main with a clear message like "Fix: restore negation in absolute".'
       condition: 'code_contains: def absolute'
-    - text: '`def absolute` is gone entirely. Add it back with a one-line body using the sign of `x`, then commit.'
+    - title: 'Layer 3 — recovery'
+      text: '`def absolute` is gone entirely. Add it back with a one-line body using the sign of `x`, then commit. The canonical form: `return x if x >= 0 else -x`.'
       condition: 'code_missing: def absolute'
   quiz:
     title: git bisect — Knowledge Check
@@ -2824,15 +2867,33 @@ steps:
   - description: On main branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
     hints:
-    - text: 'Run revert from `main`. `git switch main` if drifted.'
+    - title: 'Layer 1 — orientation'
+      text: 'Run revert from `main`. `git switch main` if drifted.'
+    - title: 'Layer 2 — strategy'
+      text: '`git status` shows your current branch. If you see "HEAD detached" or another branch name, switch back to main before reverting.'
+      condition: 'output_contains: detached'
   - description: A revert commit was added on top (history grew, not shrank)
     command: cd /tutorial/myproject && git log --oneline -3 | grep -qiE 'Revert|revert'
     hints:
-    - text: '`git revert HEAD --no-edit` creates the anti-matter commit. If you used `git reset --hard`, you rewrote history — not the point of this step. Redo from main and use revert.'
+    - title: 'Layer 1 — orientation'
+      text: '`git revert HEAD --no-edit` creates the anti-matter commit on top of main. The bad commit stays in history; a *new* commit reversing its diff is appended.'
+    - title: 'Layer 2 — strategy'
+      text: 'Two commits to your name when this is done: the bad rename (still there) AND the revert (added by you). `git log --oneline -3` should show the revert as the most recent.'
+      condition: 'output_missing: revert'
+    - title: 'Layer 3 — recovery'
+      text: 'If you used `git reset --hard`, you rewrote history — not the point of this step. The bad commit is gone instead of being reverted. Redo from main: `git pull` (or restore the bad commit from reflog), then `git revert HEAD --no-edit`.'
+      condition: 'output_contains: nothing to revert'
   - description: Both the bad commit and its revert are reachable (revert is additive)
     command: cd /tutorial/myproject && git log --oneline | grep -qi 'rename divide' && git log --oneline | grep -qiE 'Revert.*rename'
     hints:
-    - text: 'The original bad commit should still be visible in `git log` alongside the revert. Revert does not delete history — that is the whole point vs. reset.'
+    - title: 'Layer 1 — orientation'
+      text: 'The original bad commit should still be visible in `git log` alongside the revert. Revert does not delete history — that is the whole point vs. reset.'
+    - title: 'Layer 2 — diagnose'
+      text: 'Run `git log --oneline | head -5`. You want to see BOTH the original "rename divide → div" commit AND a "Revert ..." commit. If only one shows, you used `reset --hard` instead of `revert`.'
+      condition: 'output_missing: rename divide'
+    - title: 'Layer 3 — verify'
+      text: 'After revert: `git log --oneline | grep -i "rename divide"` should return at least one match (the original bad commit). `git log --oneline | grep -i "revert"` should also match (the new anti-matter commit).'
+      condition: 'output_contains: revert'
   quiz:
     title: git revert — Knowledge Check
     min_score: 0.8

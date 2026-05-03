@@ -102,6 +102,77 @@
     }
   }
 
+  function clearBreakpointPreview(editor) {
+    if (!editor) return;
+    editor._dbgBpPreviewLine = 0;
+    editor._dbgBpPreviewIds = editor.deltaDecorations(editor._dbgBpPreviewIds || [], []);
+  }
+
+  function installBreakpointHoverPreview(editor, opts) {
+    opts = opts || {};
+    var monaco = opts.monaco || window.monaco;
+    var dom = editor && editor.getDomNode && editor.getDomNode();
+    if (!editor || !monaco || !dom) return { clear: function () {}, refresh: function () {}, dispose: function () {} };
+
+    var lastMouseEvent = null;
+    function shouldShow(line) {
+      return !opts.shouldShow || opts.shouldShow(line);
+    }
+    function paint(line) {
+      if (editor._dbgBpPreviewLine === line && editor._dbgBpPreviewIds && editor._dbgBpPreviewIds.length) return;
+      editor._dbgBpPreviewLine = line;
+      editor._dbgBpPreviewIds = editor.deltaDecorations(editor._dbgBpPreviewIds || [], [{
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          glyphMarginClassName: 'tvm-bp-glyph tvm-bp-preview-glyph',
+        },
+      }]);
+    }
+    function update(e) {
+      lastMouseEvent = e || lastMouseEvent;
+      var hit = lastMouseEvent && getBreakpointMouseHit(editor, lastMouseEvent);
+      if (!hit || !hit.line || !shouldShow(hit.line)) {
+        clearBreakpointPreview(editor);
+        return;
+      }
+      paint(hit.line);
+    }
+    function clear() {
+      lastMouseEvent = null;
+      clearBreakpointPreview(editor);
+    }
+    function refresh() {
+      if (lastMouseEvent) update(lastMouseEvent);
+      else clearBreakpointPreview(editor);
+    }
+
+    dom.addEventListener('mousemove', update, true);
+    dom.addEventListener('mouseleave', clear, true);
+    var moveD = editor.onMouseMove ? editor.onMouseMove(update) : null;
+    var leaveD = editor.onMouseLeave ? editor.onMouseLeave(clear) : null;
+    var scrollD = editor.onDidScrollChange ? editor.onDidScrollChange(refresh) : null;
+    var modelD = editor.onDidChangeModel ? editor.onDidChangeModel(clear) : null;
+
+    editor._dbgBpPreviewRefresh = refresh;
+    editor._dbgBpPreviewClear = clear;
+
+    return {
+      clear: clear,
+      refresh: refresh,
+      dispose: function () {
+        dom.removeEventListener('mousemove', update, true);
+        dom.removeEventListener('mouseleave', clear, true);
+        if (moveD) { try { moveD.dispose(); } catch (e) {} }
+        if (leaveD) { try { leaveD.dispose(); } catch (e) {} }
+        if (scrollD) { try { scrollD.dispose(); } catch (e) {} }
+        if (modelD) { try { modelD.dispose(); } catch (e) {} }
+        if (editor._dbgBpPreviewRefresh === refresh) editor._dbgBpPreviewRefresh = null;
+        if (editor._dbgBpPreviewClear === clear) editor._dbgBpPreviewClear = null;
+        clearBreakpointPreview(editor);
+      },
+    };
+  }
+
   function attachDebuggerToEditor(editor, sync, opts) {
     if (!editor || !sync) return { dispose: function () {} };
     opts = opts || {};
@@ -181,6 +252,21 @@
     var clickD = editor.onMouseDown(handleBreakpointMouseDown);
     disposers.push(function () { try { clickD.dispose(); } catch (e) {} });
 
+    var breakpointPreview = installBreakpointHoverPreview(editor, {
+      monaco: monaco,
+      shouldShow: function (line) {
+        var model = editor.getModel(); if (!model) return false;
+        if (line < 1 || line > model.getLineCount()) return false;
+        var fname = getActiveFile(); if (!fname) return false;
+        var path = normalizePath(fname); if (!path) return false;
+        var bps = (sync.state.breakpoints || {})[path] || {};
+        if (bps[line]) return false;
+        var cur = currentLineState();
+        return !(cur && cur.path === path && cur.line === line);
+      },
+    });
+    disposers.push(function () { breakpointPreview.dispose(); });
+
     // ── Breakpoint decorations (red dots in glyph margin) ──────────────────
     function paintBreakpoints() {
       var model = editor.getModel(); if (!model) return;
@@ -217,6 +303,7 @@
       }
       var prev = editor._dbgBpIds || [];
       editor._dbgBpIds = editor.deltaDecorations(prev, decos);
+      if (editor._dbgBpPreviewRefresh) editor._dbgBpPreviewRefresh();
     }
 
     // ── Current-line decoration (yellow line where execution is) ───────────
@@ -430,6 +517,8 @@
   window.SEBookDebuggerEditor = {
     attach: attachDebuggerToEditor,
     breakpointMouseHit: getBreakpointMouseHit,
+    clearBreakpointPreview: clearBreakpointPreview,
+    installBreakpointHoverPreview: installBreakpointHoverPreview,
     registerHoverProvider: registerHoverProvider,
     resolveVar: resolveVar,
   };

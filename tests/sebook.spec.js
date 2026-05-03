@@ -16,6 +16,19 @@ async function expectNavLinkActive(page, targetId) {
     .toBe(true);
 }
 
+async function expectToggleRowVisible(page, toggleId, visible) {
+  await expect
+    .poll(async () => page.evaluate(({ id }) => {
+      const input = document.getElementById(id);
+      const row = input && input.closest('div');
+      return row ? getComputedStyle(row).display : null;
+    }, { id: toggleId }), {
+      timeout: 5000,
+      message: `Expected ${toggleId} row visibility to be ${visible}`
+    })
+    .toBe(visible ? 'flex' : 'none');
+}
+
 /**
  * Tests: SEBook Navigation Highlighting
  * 
@@ -67,5 +80,66 @@ test.describe('SEBook Navigation Highlighting', () => {
     }, targetId);
 
     await expectNavLinkActive(page, targetId);
+  });
+});
+
+test.describe('SEBook page toggles', () => {
+  test('dark mode toggle updates the document theme state', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns.html');
+
+    await expectToggleRowVisible(page, 'darkModeToggle', true);
+    await page.locator('#darkModeToggle').setChecked(true, { force: true });
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark-mode')))
+      .toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.cookie.includes('dark-mode=true')))
+      .toBe(true);
+
+    await page.locator('#darkModeToggle').setChecked(false, { force: true });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark-mode')))
+      .toBe(false);
+  });
+
+  test('highlights toggle is shown only when marks exist and controls mark styling', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns.html');
+
+    await expect(page.locator('#main-content mark').first()).toBeVisible();
+    await expectToggleRowVisible(page, 'highlightToggle', true);
+
+    await page.locator('#highlightToggle').setChecked(false, { force: true });
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('highlights-disabled')))
+      .toBe(true);
+    await expect
+      .poll(() => page.locator('#main-content mark').first().evaluate((mark) => getComputedStyle(mark).backgroundColor))
+      .toBe('rgba(0, 0, 0, 0)');
+
+    await page.goto('/SEBook/uml.html');
+    await expect(page.locator('#main-content mark')).toHaveCount(0);
+    await expectToggleRowVisible(page, 'highlightToggle', false);
+  });
+
+  test('read-aloud toggle is shown only when audio players exist and controls player visibility', async ({ page }) => {
+    await page.goto('/SEBook/process/scrum.html');
+
+    await expect(page.locator('#main-content .cap').first()).toBeVisible();
+    await expectToggleRowVisible(page, 'readAloudToggle', true);
+
+    await page.locator('#readAloudToggle').setChecked(false, { force: true });
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('read-aloud-enabled')))
+      .toBe(false);
+    await expect
+      .poll(() => page.locator('#main-content .cap').first().evaluate((player) => getComputedStyle(player).display))
+      .toBe('none');
+
+    await page.goto('/SEBook/uml.html');
+    await expect(page.locator('#main-content .cap')).toHaveCount(0);
+    await expectToggleRowVisible(page, 'readAloudToggle', false);
   });
 });

@@ -4677,6 +4677,7 @@
       '<style id="__user-styles__">\n* { box-sizing: border-box; }\n' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
       '       padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
+      '[data-bs-theme="dark"] .text-secondary { color: #9ca3af !important; }\n' +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
       scripts + '\n</body>\n</html>';
   };
