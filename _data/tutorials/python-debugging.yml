@@ -239,8 +239,8 @@ steps:
           - title: "Strategic hint"
             text: "Trace `greet([\"Ada\", \"Linus\", \"Grace\"])` by hand. What value of `i` does the first iteration use? What index *should* it use to include `\"Ada\"`?"
             condition: "code_contains: range(1, len"
-          - title: "Spoiler — full fix"
-            text: "Change `range(1, len(names))` to `range(0, len(names))` (or `range(len(names))`). The original skipped index 0."
+          - title: "Skeleton — fill the blank"
+            text: "The `range(...)` call has a wrong start. Fix the shape: `range(___, len(names))` so the very first iteration sees index 0. Pick the integer that makes that true."
             condition: "code_contains: range(1, len"
 
       - description: "Workaround guard — test file unchanged"
@@ -819,8 +819,8 @@ steps:
             text: "Look at the order of the two checks at the top of `_dfs`. Which one runs first when `steps_used == max_steps` AND `current == goal`?"
           - title: "Strategic hint"
             text: "Trace by hand: when the recursion calls `_dfs(current=goal, ...)` after using all 10 steps, what is `steps_used`? Which check fires? Should reaching the goal be allowed even at the budget limit?"
-          - title: "Spoiler — full fix"
-            text: "Move the `if current == goal:` block ABOVE the `if steps_used >= max_steps:` block. Reaching the goal is a terminal valid state — accept it before the cutoff has a chance to reject it."
+          - title: "Skeleton — name the order"
+            text: "There are two early-exit checks at the top of `_dfs`: a *success* check (`current == goal`) and a *failure* check (`steps_used >= max_steps`). When both could fire on the same call, which one should win? Reorder so the winner runs first."
 
       - description: "Workaround guard — test file unchanged"
         command: |
@@ -1289,18 +1289,32 @@ steps:
           - title: "Strategic hint"
             text: "Set a conditional breakpoint at the start of `apply_transaction` with `tx.account == \"ACCT-202\"`. When paused on T011, watch `repr(tx.kind)`. The `repr()` reveals what `print()` hides."
             condition: "code_missing: .strip()"
-          - title: "Spoiler — full fix"
-            text: "Change `kind=row[\"type\"].upper()` to `kind=row[\"type\"].strip().upper()` in `load_transactions`. The leading space on T011 was bypassing all explicit branches in `apply_transaction`."
+          - title: "Skeleton — fill the boundary fix"
+            text: "In `load_transactions`, the line that builds `kind` is `kind=row[\"type\"].upper()`. Insert one method call between `row[\"type\"]` and `.upper()` that removes leading/trailing whitespace before normalization. Pick the method whose Python name means \"trim\"."
             condition: "code_missing: .strip()"
 
       - description: "Workaround guard — fix is in load_transactions"
+        # Accept any plausible whitespace-normalization technique on the
+        # type field — .strip(), .lstrip(), .rstrip(), or a re.sub pattern.
+        # The pytest test above already verifies the fix is *behaviorally*
+        # correct; this test only enforces *where* the fix lives.
         command: |
+          import re, ast
           source = open('/tutorial/ledger.py').read()
-          assert '.strip()' in source, \
-              "The fix should call `.strip()` on the `type` field in `load_transactions`."
-          lt_block = source[source.find('def load_transactions'):source.find('def apply_transaction')]
-          assert '.strip()' in lt_block, \
-              "Put `.strip()` in `load_transactions`, not in `apply_transaction`."
+          norm_pattern = r'\.l?strip\(|\.rstrip\(|\bre\.(?:sub|search)\('
+          assert re.search(norm_pattern, source), \
+              "The fix should normalize whitespace on the `type` field in `load_transactions`. Try `.strip()`, `.lstrip()`, or a `re.sub` pattern."
+          # Ensure the normalization sits in load_transactions, not downstream.
+          tree = ast.parse(source)
+          load_src = next(
+              (ast.get_source_segment(source, node)
+               for node in ast.walk(tree)
+               if isinstance(node, ast.FunctionDef) and node.name == 'load_transactions'),
+              None,
+          )
+          assert load_src is not None, "load_transactions function not found in ledger.py"
+          assert re.search(norm_pattern, load_src), \
+              "Put the whitespace normalization in `load_transactions`, not in `apply_transaction`. Fix at the boundary where data enters."
         hints:
           - title: "Layer 1 — orientation"
             text: "Fix the data at the **boundary** where it enters the program — that's `load_transactions`. Stripping whitespace inside `apply_transaction` would also work, but every future caller of `load_transactions` would have to remember to strip again. One fix at the seam beats N fixes everywhere."
@@ -1930,8 +1944,8 @@ steps:
           - title: "Strategic hint"
             text: "Set a breakpoint on the `next_student = course.waitlist.pop()` line. When paused, watch `course.waitlist[0]` and `course.waitlist[-1]`. Step over. Which one became `next_student`? Which one *should* have, given FIFO policy?"
             condition: "code_contains: waitlist.pop()"
-          - title: "Spoiler — full fix"
-            text: "Change `course.waitlist.pop()` to `course.waitlist.pop(0)` in `allocate_next`. (Or better: use `collections.deque` and `popleft()` — but `pop(0)` is enough to make tests pass.)"
+          - title: "Skeleton — pick the index"
+            text: "`list.pop()` with no argument removes from the *end* (LIFO). FIFO needs an explicit positional argument that picks the *front* of the list. Add that argument to the `course.waitlist.pop()` call. (Or, idiomatically: `collections.deque` with `popleft()`.)"
             condition: "code_contains: waitlist.pop()"
 
       - description: "Workaround guard — fix is FIFO removal in allocate_next"
@@ -2558,7 +2572,6 @@ steps:
                       HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, notifier.send_payment_hold_email, "payment hold email"),
                       HandlerRegistration(EventKind.ORDER_CONFIRMED, notifier.send_confirmation_email, "customer confirmation"),
                       HandlerRegistration(EventKind.ORDER_REJECTED, notifier.send_rejection_email, "customer rejection"),
-                      # BUG: a pick ticket must be prepared only after inventory is reserved.
                       HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket, "warehouse pick ticket"),
                   ]
 
@@ -2762,7 +2775,7 @@ steps:
               assert app.shipping_queue.pending_order_ids() == ["order-1001"]
               assert app.inventory.snapshot() == {"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 1}
 
-    open_file: "checkout_app/workflow_config.py"
+    open_file: "checkout_app/checkout_service.py"
     run_file: "test_checkout.py"
 
     solution:
@@ -2822,8 +2835,8 @@ steps:
           - title: "Strategic hint"
             text: "The bug is in event-bus wiring, not in any method body. Open `checkout_app/workflow_config.py` and look at the last `HandlerRegistration`. What event topic is `fulfillment.prepare_pick_ticket` subscribed to? What event topic *should* it be subscribed to?"
             condition: "code_contains: PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket"
-          - title: "Spoiler — full fix"
-            text: "In `checkout_app/workflow_config.py`, change the last registration's first argument from `EventKind.PAYMENT_AUTHORIZED` to `EventKind.INVENTORY_RESERVED`. One identifier, one line."
+          - title: "Skeleton — pick the right topic"
+            text: "In `checkout_app/workflow_config.py`, the last `HandlerRegistration` for `fulfillment.prepare_pick_ticket` has the wrong topic. The protocol is *reserve first, then ship* — which `EventKind` value names the moment when reservation has succeeded? Replace the topic identifier on that one line."
             condition: "code_contains: PAYMENT_AUTHORIZED, fulfillment.prepare_pick_ticket"
 
       - description: "Workaround guard — fix is at the wiring layer"
@@ -2882,6 +2895,15 @@ steps:
                           "(`workflow_config.py`). Subscribing to the correct event topic makes the "
                           "filter unnecessary; defensive filters in every handler is the antipattern this case is teaching against."
                       )
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The handler `prepare_pick_ticket` is correct as written — the bug is in the *wiring* (which event topic it's subscribed to), not in the handler body. Don't add an `if event.kind ...` guard inside the handler."
+          - title: "Layer 2 — strategy"
+            text: "The right place for the fix is `workflow_config.py`, where the `HandlerRegistration(...)` for `prepare_pick_ticket` lives. Change the *topic* there. The handler body should be untouched."
+            condition: "code_contains: event.kind"
+          - title: "Layer 3 — concept"
+            text: "Defensive filters in every handler is the **swiss-cheese antipattern**: each handler adds its own `if topic_matches: ...` guard, the wiring still misroutes events, and now you have to remember the guard everywhere. The single-responsibility fix is at the wiring layer — once subscriptions are correct, no handler needs to re-check the topic."
+            condition: "code_contains: event.kind"
 
       - description: "Workaround guard — test expectations unchanged"
         command: |
@@ -3383,20 +3405,26 @@ steps:
           - title: "Strategic hint"
             text: "When you iterate `for line in f`, each `line` includes its trailing newline. After `line.split('|', 1)`, the trailing `\\n` ends up on `tag`. The fix belongs in the loader, *before* `tag.upper()`."
             condition: "code_missing: .strip()"
-          - title: "Spoiler — full fix"
-            text: "Change `counts[tag.upper()] += 1` to `counts[tag.strip().upper()] += 1`. Same pattern as Case 2's fix to `load_transactions`."
+          - title: "Skeleton — same pattern as Case 2"
+            text: "The line `counts[tag.upper()] += 1` builds the dict key. `tag` ends with `\\n` here. Insert a method call between `tag` and `.upper()` that removes that newline (and any surrounding whitespace), like Case 2 did with the CSV row's `type` field."
             condition: "code_missing: .strip()"
 
       - description: "Workaround guard — fix is at the load boundary"
+        # Accept any plausible whitespace-normalization technique on the tag —
+        # .strip(), .rstrip() (since the bug is trailing \n), .rstrip('\n'),
+        # or a re.sub pattern. The pytest test above already verifies the fix
+        # is *behaviorally* correct; this test only enforces *where* it lives.
         command: |
+          import re
           source = open('/tutorial/tagger.py').read()
           stripped = source.replace(' ', '')
-          # Must call strip on `tag` somewhere, AND the fix must be inside the loader,
-          # not on the return value (which would be a post-process workaround).
           loader_block = source[source.find('def top_tag'):]
-          assert ('.strip()' in loader_block) or ('.rstrip(' in loader_block), \
-              "Strip on the input field, not the return value — fix at the load boundary, like Case 2."
-          # Specifically reject `most_common(1)[0][0].strip()` style post-processing
+          norm_pattern = r'\.l?strip\(|\.rstrip\(|\bre\.(?:sub|search)\('
+          assert re.search(norm_pattern, loader_block), \
+              "Normalize whitespace on the tag inside the loop, not on the return value. Try `.strip()`, `.rstrip()`, or `re.sub(r'\\s+', '', tag)`."
+          # Reject `most_common(1)[0][0].strip()` style post-processing — that
+          # only sanitizes the answer, leaving every internal count keyed by
+          # the un-stripped string.
           assert '][0].strip()' not in stripped and '][0].rstrip(' not in stripped, \
               "Post-processing the return value masks the bug. Strip the *input* in the loop, not the output."
         hints:

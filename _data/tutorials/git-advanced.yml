@@ -251,6 +251,21 @@ steps:
       - 'git checkout <old-sha> .       # DANGER: overwrites working dir'
       - 'git branch -f main <old-sha>   # DANGER: moves branch pointer'
       explanation: Detached HEAD is the safe inspection mode — HEAD anchored to the commit, no branch pointer moved. The distractors all *modify* state (main's pointer, working directory), which is the opposite of inspection.
+    # Apply-level: students must reason from the "branches are 41-byte pointers"
+    # concept to a quantitative scenario. Every wrong answer maps to a specific
+    # broken mental model (file copy, merge-time penalty, pre-commit cost).
+    - question: '**[Apply]** Your project is 500 MB on disk (working tree + history). You create 50 new branches, all pointing at the same commit, without making any commits. Roughly how much *additional* disk space does Git use?'
+      options:
+      - About 50 × 500 MB = 25 GB — each branch is a full snapshot
+      - About 50 × 500 MB = 25 GB at merge time, copy-on-write until then
+      - About 50 × 41 bytes ≈ 2 KB — each branch is one pointer file in `.git/refs/heads/`
+      - About 50 × the average commit size — Git makes a fresh commit per branch
+      correct_index: 2
+      option_feedback:
+        0: This answer treats a branch like a folder copy — the very mental model this step exists to retire. `git branch` writes one line; nothing is duplicated.
+        1: This answer invents a copy-on-write scheme; Git never copies files for branches, with or without merging.
+        3: This answer assumes `git branch` creates a commit — it doesn't. Branch creation only writes one tiny ref file; the commit object is shared across all branches that point at it.
+      explanation: 'Each branch is a single text file in `.git/refs/heads/` containing one 40-character SHA + newline = 41 bytes. 50 branches × 41 bytes ≈ 2 KB. Same commit object, same trees, same blobs — only the *pointers* multiply. This is why teams can keep hundreds of feature branches without storage concerns, and why `git switch -c` is instantaneous on a multi-GB repo.'
 - title: "Rescuing Lost Work with git reflog"
   view: git_graph
   instructions: |
@@ -404,7 +419,7 @@ steps:
       - 3
       option_feedback:
         2: This answer confuses remote history with local reflog; force-pushing rewrites the *remote* branch but leaves your local `.git/logs/` (and its rescue path) untouched.
-      explanation: Reflog lives in `.git/logs/`. Destroying `.git/` (option 1) takes the reflog with it. A fresh clone (option 2) starts with an empty reflog of *that* clone. Expiry (option 4) is configurable via `gc.reflogExpire`. A force-push (option 3) rewrites the remote's *branch* but doesn't touch your local reflog — your local rescue path is still intact.
+      explanation: Reflog lives in `.git/logs/`. Destroying `.git/` takes the reflog with it. A fresh `git clone` starts with an empty reflog of *that* clone. Default expiry is configurable via `gc.reflogExpire`. A `git push --force` rewrites the remote's *branch* but doesn't touch your local reflog — your local rescue path is still intact.
     - question: Put these steps in the correct order to rescue an orphaned commit you just made in detached HEAD.
       type: parsons
       display: block
@@ -730,14 +745,15 @@ steps:
     git switch -c hotfix-divide-zero
     ```
 
-    In the editor, append to `calculator.py`:
+    In the editor, append a `safe_divide` function to `calculator.py`. Its
+    goal: same behavior as `divide`, but raise a clear `ValueError` instead
+    of letting a zero denominator crash with `ZeroDivisionError`. Skeleton:
 
     ```python
     def safe_divide(a, b):
         """Divide a by b, raising ValueError on zero denominator."""
-        if b == 0:
-            raise ValueError("Cannot divide by zero")
-        return a / b
+        # TODO: guard the zero case, then return a / b
+        ...
     ```
 
     ```bash
@@ -776,15 +792,15 @@ steps:
 
     ### Task 5: Finish the feature
 
-    Edit `calculator.py` so `power` has real validation, then commit
-    (message must include "power"):
+    Replace the seeded `power` body with real input validation, then commit
+    (message must include "power"). Goal: reject non-numeric arguments
+    early with a clear `TypeError`; otherwise return `a ** b`. Skeleton:
 
     ```python
     def power(a, b):
         """Return a raised to the power of b."""
-        if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-            raise TypeError("Arguments must be numbers")
-        return a ** b
+        # TODO: validate that a and b are numbers; raise TypeError if not
+        ...
     ```
   watch_files:
   - myproject/calculator.py
@@ -869,6 +885,25 @@ steps:
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
     hints:
     - text: 'Uncommitted changes remain. `git status` tells you what; commit or discard to finish the step.'
+  - description: Stash was actually used (proves the workflow, not just the end state)
+    # `.git/logs/refs/stash` is created the first time `git stash` runs and
+    # persists after pop/drop. A student who skipped stash entirely and
+    # committed safe_divide → power linearly on main will fail this gate
+    # even though the file content matches.
+    command: |
+      cd /tutorial/myproject
+      if [ ! -f .git/logs/refs/stash ]; then
+        echo "No record of any git stash operation in this session."
+        echo "This step's pedagogy is the stash → hotfix-branch → merge → pop workflow,"
+        echo "not just the final file contents. Redo with stash: it's the whole point."
+        exit 1
+      fi
+    hints:
+    - title: 'Layer 1 — orientation'
+      text: 'This step teaches a *workflow*, not just an end state. `git stash` is the tool that lets you context-switch cleanly mid-feature without committing half-baked code.'
+    - title: 'Layer 2 — strategy'
+      text: 'Re-read Tasks 2–4: stash your WIP power, do the hotfix on its own branch, merge to main, then `git stash pop` to restore your WIP and finish.'
+      condition: 'output_contains: workflow'
   quiz:
     title: git stash — Knowledge Check
     min_score: 0.8
@@ -989,9 +1024,22 @@ steps:
 
     ### 🤔 Predict first
 
-    Cherry-pick produces a new commit with a new SHA. What happens to the
-    **original** commit on `experimental` — does it move, get rewritten,
-    vanish, or stay put unchanged?
+    You're about to cherry-pick the `Add absolute value function` commit
+    `A` from `experimental` onto `main`. Apply the Step 3 object model:
+
+    1. **Parents.** What is the parent of the original commit `A` on
+       `experimental`? What is the parent of the *new* commit `A'` that
+       lands on `main`?
+    2. **Refs.** Which branch ref points at `A` after the cherry-pick?
+       Which points at `A'`? Where is `HEAD`?
+    3. **SHA.** Why must `A'` have a different SHA than `A`, even though
+       the patch is byte-identical?
+
+    Commit to all three answers — *then* run cherry-pick and verify with
+    `git log --oneline --all --graph`. The trap most students fall into:
+    "the original moves to main." Step 3's object model says it can't —
+    each commit hashes its parent + tree + metadata, so a same-patch
+    commit with a different parent is a *different* commit object.
 
     `cherry-pick <sha>` replays one commit's patch on top of HEAD as a
     **new commit** (new parent → new SHA, same message + diff).
@@ -1402,22 +1450,44 @@ steps:
       - **`-C -M`:** Follow moves and copies across the file; essential when a line was refactored into a new location.
       - **Workflow:** use blame to find the SHA, then `git show <sha>` to read the full commit message and diff. That is where the *why* lives.
   tests:
+  # Setup sanity: file exists with enough history to make blame meaningful.
   - description: calculator.py exists and has at least 2 commits in its history
     command: cd /tutorial/myproject && [ -f calculator.py ] && [ $(git log --oneline -- calculator.py | wc -l) -ge 2 ]
     hints:
     - text: '`calculator.py` needs at least two commits in its history for blame to show interesting output. Make a small edit and commit it if the file has only one.'
-  - description: Blame runs without error on calculator.py
-    command: cd /tutorial/myproject && git blame calculator.py >/dev/null
+  # The substantive gate: did the student actually complete Task 2 — the
+  # reformatter-masked-authorship case? `.git-blame-ignore-revs` is what the
+  # step really teaches; anyone who skipped Task 2 fails this gate.
+  - description: '.git-blame-ignore-revs lists the CI-Bot reformat commit (Task 2)'
+    command: |
+      cd /tutorial/myproject
+      if [ ! -f .git-blame-ignore-revs ]; then
+        echo "Task 2 — '.git-blame-ignore-revs' doesn't exist yet."
+        echo "After blaming the 'clip' lines, append the CI-Bot SHA to that file so"
+        echo "future blames ignore the masking reformatter commit."
+        exit 1
+      fi
+      cibot_sha=$(git log --all --pretty='%H %an' | awk '$2=="CI-Bot"{print $1; exit}')
+      if [ -z "$cibot_sha" ]; then
+        echo "Couldn't find the CI-Bot reformat commit in history. Did setup_commands run?"
+        exit 1
+      fi
+      cibot_short=$(printf '%s' "$cibot_sha" | cut -c1-7)
+      if ! grep -q "$cibot_short" .git-blame-ignore-revs && ! grep -q "$cibot_sha" .git-blame-ignore-revs; then
+        echo ".git-blame-ignore-revs exists but doesn't contain the CI-Bot SHA ($cibot_short...)."
+        echo "Run blame on the 'clip' function to find the CI-Bot SHA, then append it"
+        echo "to .git-blame-ignore-revs (one SHA per line)."
+        exit 1
+      fi
     hints:
-    - text: 'Run `git blame calculator.py` in the terminal. If it errors, check the working directory — you must be inside `/tutorial/myproject`.'
-  - description: Blame reports per-line SHA + author + timestamp (format check)
-    command: cd /tutorial/myproject && git blame calculator.py | head -1 | grep -qE '^[\^a-f0-9]+ +\([^)]+[0-9]+\)'
-    hints:
-    - text: 'Each blame line should look like `<sha> (<author> <date> <lineno>) <code>`. If yours does not, your Git version may need an upgrade — but normally this just means blame was never run.'
-  - description: -L line-range flag works (returns output for specified range)
-    command: cd /tutorial/myproject && [ -n "$(git blame -L 1,3 calculator.py 2>/dev/null)" ]
-    hints:
-    - text: 'Try `git blame -L 1,3 calculator.py` — restricts blame to lines 1–3. Syntax is `-L <start>,<end>`.'
+    - title: 'Layer 1 — orientation'
+      text: 'Task 2 ends with adding the CI-Bot reformat SHA to `.git-blame-ignore-revs`. That file is how a project teaches `git blame` to permanently skip pure-formatter commits — for everyone, not just you.'
+    - title: 'Layer 2 — strategy'
+      text: 'Find the CI-Bot SHA. `git log --all --author=CI-Bot --oneline` lists it. Then from `/tutorial/myproject`: `echo <full-or-short-sha> >> .git-blame-ignore-revs`.'
+      condition: "output_contains: doesn't exist"
+    - title: 'Layer 3 — verify'
+      text: '`git config blame.ignoreRevsFile .git-blame-ignore-revs` makes Git honor the file on every blame. Re-run blame on the `clip` function — Bob should reappear as the real author.'
+      condition: "output_contains: doesn't contain"
   quiz:
     title: git blame — Knowledge Check
     min_score: 0.8
@@ -1655,19 +1725,28 @@ steps:
 
     ### Task 4: Fix the bug
 
-    Bisect points at `Simplify absolute (BUG: removes negation!)`.
-    In the editor, restore the body of `absolute`:
+    Bisect points at exactly one commit — let's call its SHA `<sha>`. Look at
+    what that commit changed:
 
-    ```python
-    def absolute(x):
-        """Return |x| — handles negatives, zero, and positives."""
-        return x if x >= 0 else -x
+    ```bash
+    git show <sha>                          # what got introduced
+    git show <sha>~1:calculator.py          # how absolute looked just BEFORE
     ```
+
+    The diff names the regression directly. Bisect's promise: the *commit*
+    is the suspect; the *diff* is the fingerprint.
+
+    Now repair `absolute(x)` in the editor so it returns the magnitude of
+    `x` (non-negative for any input). One line is enough — pick whichever
+    Python style reads cleanest to you. Then commit on top of `main`:
 
     ```bash
     git commit -am "Fix: restore negation in absolute"
     python3 test_calculator.py      # all tests pass
     ```
+
+    > 💡 Bisect points; it doesn't repair. Reading the culprit's diff
+    > (Step 6's habit) is what tells you *what* to put back.
 
     <details markdown="1"><summary>⚠️ Test-portability caveat (real-world bisects)</summary>
 
@@ -1701,7 +1780,10 @@ steps:
   - myproject/test_calculator.py
   open_file: myproject/calculator.py
   setup_commands:
-  - "cd /tutorial/myproject\n[ -e .git/BISECT_START ] && git bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log main --oneline 2>/dev/null | grep -q 'Simplify absolute (BUG'; then\n  exit 0\nfi\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: add absolute function' 2>/dev/null\nfi\nprintf 'from calculator import add, divide, absolute\\nassert add(2, 3) == 5\\nassert divide(10, 2) == 5\\nassert absolute(-4) == 4\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Add regression tests'\necho '# commit A: refactor docstring' >> calculator.py\ngit commit -qam 'Refactor: tidy docstring'\necho '# commit B: new helper' >> calculator.py\ngit commit -qam 'Add unused helper comment'\nsed -i 's/return x if x >= 0 else -x/return x/' calculator.py\nif git diff --quiet calculator.py; then\n  sed -i 's/def absolute(x):/def absolute(x):\\n    return x  # BUG\\n    pass  # unreachable/' calculator.py\nfi\ngit commit -qam 'Simplify absolute (BUG: removes negation!)'\necho '# commit D: later tweak' >> calculator.py\ngit commit -qam 'Later tweak'\necho '# commit E: even later' >> calculator.py\ngit commit -qam 'Even later tweak'\n"
+  # NOTE: the planted bug commit's message must NOT reveal the bug — bisect's
+  # job is to find it, not the student's eyes. Match the capstone's tell-free
+  # naming ("Simplify absolute return path"). Same for any in-file comment.
+  - "cd /tutorial/myproject\n[ -e .git/BISECT_START ] && git bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log main --oneline 2>/dev/null | grep -q 'Simplify absolute return path'; then\n  exit 0\nfi\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: add absolute function' 2>/dev/null\nfi\nprintf 'from calculator import add, divide, absolute\\nassert add(2, 3) == 5\\nassert divide(10, 2) == 5\\nassert absolute(-4) == 4\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Add regression tests'\necho '# commit A: refactor docstring' >> calculator.py\ngit commit -qam 'Refactor: tidy docstring'\necho '# commit B: new helper' >> calculator.py\ngit commit -qam 'Add unused helper comment'\nsed -i 's/return x if x >= 0 else -x/return x/' calculator.py\nif git diff --quiet calculator.py; then\n  sed -i 's/def absolute(x):/def absolute(x):\\n    return x\\n    pass  # unreachable/' calculator.py\nfi\ngit commit -qam 'Simplify absolute return path'\necho '# commit D: later tweak' >> calculator.py\ngit commit -qam 'Later tweak'\necho '# commit E: even later' >> calculator.py\ngit commit -qam 'Even later tweak'\n"
   solution:
     # Interactive instructions teach bisect + sed-fix. Automated solution
     # reverses the setup's planted bug via sed (the inverse substitution).
@@ -1739,15 +1821,24 @@ steps:
       text: 'Reload the step — setup_commands re-seed the history. If they ran but you don''t see them, you may have done a `git reset --hard` that wiped them; reload again.'
       condition: 'output_contains: 1'
   - description: The absolute function has been repaired (handles negatives, zero, and positives correctly)
-    command: cd /tutorial/myproject && grep -q 'return x if x >= 0 else -x' calculator.py
+    # Behavioral test — accepts any correct fix (`abs(x)`, ternary in either
+    # order, multi-line if/else, etc.) and rejects the planted `return x` bug.
+    command: |
+      cd /tutorial/myproject && python3 -c "
+      from calculator import absolute
+      assert absolute(-4) == 4, f'absolute(-4) returned {absolute(-4)} (expected 4)'
+      assert absolute(0)  == 0, f'absolute(0) returned {absolute(0)} (expected 0)'
+      assert absolute(3)  == 3, f'absolute(3) returned {absolute(3)} (expected 3)'
+      assert absolute(-1) == 1, f'absolute(-1) returned {absolute(-1)} (expected 1)'
+      "
     hints:
     - title: 'Layer 1 — orientation'
-      text: 'Bisect points you at the *culprit commit* but doesn''t fix it. After identifying the bad commit, fix `absolute(x)` on top of main and commit the repair.'
+      text: 'Bisect points you at the *culprit commit* but doesn''t fix it. After identifying the bad commit, repair `absolute(x)` on top of `main` and commit the fix.'
     - title: 'Layer 2 — strategy'
-      text: 'Fix `absolute(x)` to return `x` when `x >= 0`, else `-x`. After bisect pointed at the culprit, commit the repair on top of main with a clear message like "Fix: restore negation in absolute".'
+      text: 'Read the bad commit''s diff with `git show <sha>` — what was removed? Restore it. The previous commit''s version is one option (`git show <sha>~1:calculator.py`); a clean rewrite using `abs()` or a sign check is another. Then commit on top of main with a clear message like "Fix: restore negation in absolute".'
       condition: 'code_contains: def absolute'
     - title: 'Layer 3 — recovery'
-      text: '`def absolute` is gone entirely. Add it back with a one-line body using the sign of `x`, then commit. The canonical form: `return x if x >= 0 else -x`.'
+      text: '`def absolute` is gone entirely. Re-add it: it takes one number and returns its magnitude (non-negative for any input). The body is a one-liner — pick whichever Python style you find clearest.'
       condition: 'code_missing: def absolute'
   quiz:
     title: git bisect — Knowledge Check
@@ -1984,11 +2075,24 @@ steps:
   - description: square_root function is on main
     command: cd /tutorial/myproject && grep -q 'def square_root' calculator.py && git log --oneline main | grep -qi 'square_root'
     hints:
-    - text: 'Rebase `feature-sqrt` onto `main`, then fast-forward merge. Check `git log --oneline main` — the `square_root` commit should appear on top.'
+    - title: 'Layer 1 — orientation'
+      text: 'After rebase, the feature branch tip should sit directly on top of main. Then a fast-forward merge moves `main` to that tip. The result: `square_root` lives on main.'
+    - title: 'Layer 2 — strategy'
+      text: 'Sequence: `git switch feature-sqrt` → `git rebase main` (replays your commits on main''s tip) → `git switch main` → `git merge feature-sqrt` (fast-forwards). Check `git log --oneline main` — your commit should appear on top.'
+      condition: 'code_missing: def square_root'
+    - title: 'Layer 3 — recovery'
+      text: '`square_root` is in the file but not yet on `main` — likely you''re still on the feature branch or the merge didn''t happen. From main: `git merge feature-sqrt`. If it complains about non-fast-forward, you skipped the rebase step.'
+      condition: 'code_contains: def square_root'
   - description: History is linear (no merge commit for feature-sqrt)
     command: cd /tutorial/myproject && [ $(git log --merges --oneline main | grep -ci 'Merge branch.*feature-sqrt') -eq 0 ]
     hints:
-    - text: 'A merge commit snuck in — you ran `git merge` without rebasing first, or with `--no-ff`. The point of rebase is linear history; redo with `git rebase main` on the feature branch, then `git merge` (fast-forwards).'
+    - title: 'Layer 1 — orientation'
+      text: 'Rebase''s whole point is *linear* history — no merge commit. If `git log --merges` shows one for `feature-sqrt`, the merge wasn''t a fast-forward.'
+    - title: 'Layer 2 — diagnose'
+      text: 'A merge commit appears when (a) you used `git merge --no-ff`, or (b) main moved while you were on the branch and you skipped the rebase step. Run `git log --oneline --graph main` to see the shape.'
+      condition: 'output_contains: Merge'
+    - title: 'Layer 3 — recovery'
+      text: 'To redo: `git reset --hard <pre-merge-sha>` on main (find the SHA in `git reflog`), then `git switch feature-sqrt`, `git rebase main`, `git switch main`, `git merge feature-sqrt`. The second merge will fast-forward because feature-sqrt is now a strict descendant.'
   - description: No rebase is in progress and no conflict markers remain (Task 5 resolved)
     command: cd /tutorial/myproject && [ ! -d .git/rebase-merge ] && [ ! -d .git/rebase-apply ] && ! grep -E '^(<{7}|={7}|>{7})' calculator.py
     hints:
@@ -2262,13 +2366,32 @@ steps:
 
     ### Task 2: Squash four commits into one
 
-    Predict: which lines get `squash`, and why must line 1 stay `pick`?
+    The current branch has one substantive commit at the bottom of `HEAD~4`
+    and three increasingly trivial typo-fixes on top. Goal: collapse the
+    typo-fixes into the substantive commit so `git log` shows one clean entry.
+
+    **Predict before you peek:**
+    - Which line of the rebase todo (1 = oldest, 4 = newest) must stay `pick`?
+    - Which verb from the table melds a commit into the *previous* one and
+      keeps both messages for the editor?
+    - What's the line *range* the verb applies to?
+
+    Commit to your three answers, *then* run the corresponding scripted rebase.
+
+    <details markdown="1"><summary>Reveal the matching sed and verify</summary>
 
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '2,4s/^pick/squash/'" git rebase -i HEAD~4
     git commit --amend -m "Refactor: cleanup notes in calculator.py"
     git log --oneline -3
     ```
+
+    Lines 2–4 get `squash` (they meld up into line 1). Line 1 must stay
+    `pick` — it's the anchor each later commit melds into. If you predicted
+    `fixup`, you'd lose the typo-fix commit messages silently; `squash`
+    keeps them so `commit --amend` can rewrite a clean unified message.
+
+    </details>
 
     ### Task 3: Drop a secret-leaking commit
 
@@ -2278,12 +2401,22 @@ steps:
     Then append `def placeholder(): pass` and commit:
     `git commit -am "Add placeholder function"`.
 
-    Drop the secret:
+    **Predict:** of the two commits in `HEAD~2..HEAD`, which line of the
+    rebase todo (1 = older, 2 = newer) is the secret? Which verb removes a
+    commit entirely while leaving the rest?
+
+    <details markdown="1"><summary>Reveal the matching sed and verify</summary>
 
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '1s/^pick/drop/'" git rebase -i HEAD~2
     grep SECRET_API_KEY calculator.py || echo "secret is gone from branch"
     ```
+
+    The secret is the older of the two — line 1. `drop` removes it; the
+    placeholder commit on line 2 stays as `pick` and is replayed on top
+    of the unchanged base.
+
+    </details>
 
     ### Task 3b: Prove reflog rescues the "dropped" commit
 
@@ -2311,6 +2444,13 @@ steps:
 
     ### Task 4: Reword a message
 
+    **Predict:** when you `reword` a commit, Git opens *two* editors in
+    sequence — first to let you change the verb in the rebase todo, then
+    to let you rewrite the actual commit message. In v86 we replace each
+    with a scripted `sed`. Which env var drives which editor?
+
+    <details markdown="1"><summary>Reveal the matching sed and verify</summary>
+
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '1s/^pick/reword/'" \
       GIT_EDITOR="sed -i '1s/.*/Refactor: cleanup notes and placeholder/'" \
@@ -2318,8 +2458,12 @@ steps:
     git log --oneline -3
     ```
 
-    Two env vars = two editors (todo list + message editor). In real life
-    you'd hand-edit both.
+    `GIT_SEQUENCE_EDITOR` controls the *todo list* (rewrites `pick` →
+    `reword`). `GIT_EDITOR` controls the *message editor* (rewrites the
+    first line of the commit message). In real life you'd hand-edit both;
+    here we script them with one-line `sed` substitutions.
+
+    </details>
 
     ### Wrap-up: rule of thumb
 
@@ -3353,10 +3497,9 @@ steps:
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
     hints:
     - text: 'Usually `modified: vendor/math-utils (new commits)` — inner commit landed but outer bump is missing. Finish the outer commit.'
-  - description: Remote (math-utils.git) has the new upstream commit
-    command: git --git-dir=/tutorial/math-utils.git log --oneline --all | grep -qi 'quadruple'
-    hints:
-    - text: 'Inner commit never pushed. From inside the submodule: `git switch -c main` (if detached), then `git push origin main`.'
+  # Note: removed a "remote has quadruple" gate that the publish-math-utils-v0.2.sh
+  # helper passed before the student touched anything. The next step (Submodule
+  # Internals) verifies the *student's* inner commit was actually pushed.
   quiz:
     title: Updating Submodules — Knowledge Check
     min_score: 0.8
@@ -3595,7 +3738,9 @@ steps:
   solution:
     commands:
     # Single batched command to fit the v86 _runVisible 30s prompt timeout.
-    - "cd /tutorial/myproject && git switch -q main 2>/dev/null; cd /tutorial/myproject/vendor/math-utils && (grep -q 'def halve' utils.py || (printf '\\ndef halve(x):\\n    return x / 2\\n' >> utils.py && git add utils.py && git commit -m 'Add halve helper')); cd /tutorial/myproject && git add vendor/math-utils && (git diff --cached --quiet || git commit -m 'Bump math-utils: add halve helper')"
+    # The push step is required so the inner halve commit reaches math-utils.git
+    # — without it, teammates can't fetch what the outer repo now pins.
+    - "cd /tutorial/myproject && git switch -q main 2>/dev/null; cd /tutorial/myproject/vendor/math-utils && (grep -q 'def halve' utils.py || (printf '\\ndef halve(x):\\n    return x / 2\\n' >> utils.py && git add utils.py && git commit -m 'Add halve helper')); (git symbolic-ref -q HEAD >/dev/null || git switch -c update-halve); git push -u origin HEAD 2>/dev/null; cd /tutorial/myproject && git add vendor/math-utils && (git diff --cached --quiet || git commit -m 'Bump math-utils: add halve helper')"
     explanation: |
       - **`modified: <path> (modified content)`:** the submodule's working directory is dirty — untracked or unstaged changes inside the submodule. The outer repo cannot show the diff; you must `cd` into the submodule to see it with plain `git diff`.
       - **`modified: <path> (new commits)`:** the submodule's HEAD has moved to a new commit, but the outer repo still points at the old pinned SHA. Resolve by either `git add <path>` + commit (to bump) or `git submodule update` (to reset the submodule back to the pinned SHA).
@@ -3616,6 +3761,40 @@ steps:
     hints:
     - text: 'You edited the file but never committed *inside* the submodule. `cd vendor/math-utils && git add utils.py && git commit -m "Add halve helper"`.'
       condition: 'code_contains: def halve'
+  # The student's inner commit must reach the math-utils.git remote — that's
+  # the whole point of Task 3's "switch -c → push -u" recovery from detached HEAD.
+  # We require the pushed commit's author to match the local user.email so a
+  # student who skipped the push (or accidentally pushed a stale commit from
+  # the seeding helper) doesn't pass.
+  - description: Inner halve commit was pushed to math-utils.git as the student (Task 3)
+    command: |
+      cd /tutorial/myproject/vendor/math-utils
+      student_email=$(git config user.email 2>/dev/null)
+      if [ -z "$student_email" ]; then
+        student_email=$(git -C /tutorial/myproject config user.email 2>/dev/null)
+      fi
+      if [ -z "$student_email" ]; then
+        echo "Couldn't read your git user.email. Set one with 'git config --global user.email \"you@example.com\"' and retry."
+        exit 1
+      fi
+      # Find a commit on math-utils.git whose subject mentions halve AND was authored by this user.
+      hit=$(git --git-dir=/tutorial/math-utils.git log --all --pretty='%ae|%s' \
+              | awk -F'|' -v e="$student_email" 'tolower($2) ~ /halve/ && $1==e {print; exit}')
+      if [ -z "$hit" ]; then
+        echo "math-utils.git has no halve commit authored by $student_email."
+        echo "After committing inside the submodule, push it: 'git switch -c update-halve' (if detached)"
+        echo "then 'git push -u origin update-halve' from inside vendor/math-utils."
+        exit 1
+      fi
+    hints:
+    - title: 'Layer 1 — orientation'
+      text: 'Task 3 ends with `git push -u origin update-halve` *inside* the submodule. Without that push, the new SHA only exists on your laptop — the bumped pin in the outer repo points to a commit teammates can''t fetch.'
+    - title: 'Layer 2 — strategy'
+      text: 'Inside `vendor/math-utils`: are you on a branch (`git status` shows `On branch ...`)? If detached, `git switch -c update-halve` first. Then `git push -u origin update-halve` publishes the new SHA to the math-utils.git remote.'
+      condition: 'output_contains: no halve commit'
+    - title: 'Layer 3 — concept'
+      text: 'The submodule''s remote (`/tutorial/math-utils.git`) is a real bare repo — push works exactly like any network remote. Step 1''s detached-HEAD lesson resurfaces here: a push from detached HEAD has no branch to update.'
+      condition: 'output_contains: detached'
   - description: Outer repo has a commit that bumps the submodule SHA
     command: cd /tutorial/myproject && git log --oneline | grep -qiE 'bump|halve'
     hints:
@@ -3933,9 +4112,17 @@ steps:
     hints:
     - text: '`git status` names the paused operation. `git bisect reset`, `git rebase --abort`, or `git merge --abort` as appropriate.'
   - description: 'absolute() body has the correct return (handles negatives, zero, positives)'
-    command: cd /tutorial/myproject && grep -q 'return x if x >= 0 else -x' calculator.py
+    # Behavioral test — accepts any correct fix and rejects the planted bug.
+    command: |
+      cd /tutorial/myproject && python3 -c "
+      from calculator import absolute
+      assert absolute(-4) == 4, f'absolute(-4) returned {absolute(-4)} (expected 4)'
+      assert absolute(0)  == 0, f'absolute(0) returned {absolute(0)} (expected 0)'
+      assert absolute(3)  == 3, f'absolute(3) returned {absolute(3)} (expected 3)'
+      assert absolute(-1) == 1, f'absolute(-1) returned {absolute(-1)} (expected 1)'
+      "
     hints:
-    - text: 'Bisect should have pointed at `Capstone: simplify absolute return path`. `git show <sha>` to see the damage, then fix `absolute` to return `x` when `x >= 0`, else `-x`.'
+    - text: 'Bisect should have pointed at the capstone''s simplify-absolute commit. `git show <sha>` to see what was removed, then restore the magnitude logic in `absolute(x)`.'
   - description: 'A fix commit landed on main with the absolute repair'
     command: cd /tutorial/myproject && git log main --oneline | grep -qiE 'fix|capstone|absolute|negation'
     hints:
