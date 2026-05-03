@@ -262,6 +262,7 @@ layout: sebook
       removeBtn.setAttribute('aria-label', 'Remove bookmark for ' + escapeHtml(b.title));
       removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
       removeBtn.addEventListener('click', function () {
+        if (!window.confirm('Remove bookmark for ' + b.title + '?')) return;
         window.SEBookmarks.removeBookmark(b.url);
         renderBookmarks(listContainer, noMsg);
       });

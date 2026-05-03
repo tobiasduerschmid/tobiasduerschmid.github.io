@@ -20,7 +20,7 @@
         <p>{% for author in p.authors %}{% if author == p.authors.last and p.authors.count > 1 %}and {% endif %}{{ author }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}<br><span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span></p>
         <p>{{ p.caption }}</p>
         <p>
-          {% if p.bibtex %}<a data-toggle="collapse" href="#bibtex-{{ p.key }}">BibTeX</a>{% if p.downloads %}, {% endif %}{% endif %}
+          {% if p.bibtex %}<a data-toggle="collapse" href="#bibtex-{{ p.key }}" aria-expanded="false" aria-controls="bibtex-{{ p.key }}">BibTeX</a>{% if p.downloads %}, {% endif %}{% endif %}
           {% if p.downloads %}{% for download in p.downloads %}<a {% if download.video %}class="video-{{ download.video }}" {% endif %}href="{{ download.href }}" target="_blank">{{ download.desc }}</a>{% if download != p.downloads.last %}, {% endif %}{% endfor %}{% endif %}
         </p>
       {% if p.bibtex %}

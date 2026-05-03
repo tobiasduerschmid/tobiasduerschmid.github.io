@@ -665,6 +665,15 @@ info_nav_title: "Browser storage"
     }, 2200);
   }
 
+  function isDestructiveStorageKey(key) {
+    return key === 'se-gym'
+      || key === 'se-gym-stats'
+      || key === 'se-bookmarks'
+      || key === 'regex-tutorial-progress'
+      || key === 'regex-tutorial-advanced-progress'
+      || key.indexOf('tutorial-progress-') === 0;
+  }
+
   // -------- Render a single row --------
   function renderRow(row) {
     var storage = row.getAttribute('data-storage');
@@ -692,6 +701,7 @@ info_nav_title: "Browser storage"
     btn.title = isSet ? ('Delete ' + key) : (key + ' is not set');
     btn.disabled = !isSet;
     btn.addEventListener('click', function () {
+      if (isDestructiveStorageKey(key) && !confirm('Delete ' + key + '? This may remove saved tutorial work, bookmarks, or SE Gym data and cannot be undone.')) return;
       if (storage === 'cookie') deleteCookie(key);
       else deleteLS(key);
       renderRow(row);

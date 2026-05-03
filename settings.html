@@ -14,18 +14,13 @@ info_nav_title: "My Settings"
   }
   .settings-page h1 { margin-top: 0.6em; }
   /* Section headings match the h2 pattern used on the sibling
-     /cookies/ and /glossary/ pages (framework layout, same info-nav).
-     The legend acts as the section heading semantically (we keep the
-     fieldset for proper form grouping), so it gets the same border-
-     accented look. */
-  .settings-page h2,
-  .settings-section legend {
+     /cookies/ and /glossary/ pages (framework layout, same info-nav). */
+  .settings-section-title {
     margin-top: 1.8em;
     padding-bottom: 6px;
     border-bottom: 2px solid #2774AE;
   }
-  html.dark-mode .settings-page h2,
-  html.dark-mode .settings-section legend { border-bottom-color: #4da3ff; }
+  html.dark-mode .settings-section-title { border-bottom-color: #4da3ff; }
 
   .settings-intro {
     background: #f8f9fa;
@@ -52,15 +47,10 @@ info_nav_title: "My Settings"
     margin: 0 0 24px;
     padding: 0;
   }
-  /* Box-model overrides on legend (display, width, padding-side,
-     font-weight) so the fieldset legend behaves like a normal block
-     heading. Font-size and border come from the shared rule above so
-     it stays in sync with .settings-page h2. */
-  .settings-section legend {
+  .settings-section-title {
     display: block;
     width: 100%;
-    padding-left: 0;
-    padding-right: 0;
+    margin-bottom: 0;
     font-weight: 700;
     color: inherit;
   }
@@ -82,7 +72,9 @@ info_nav_title: "My Settings"
   .setting-name {
     font-weight: 700;
     margin: 0 0 6px;
-    font-size: 1.05rem;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: inherit;
   }
   .setting-description {
     margin: 0;
@@ -96,7 +88,9 @@ info_nav_title: "My Settings"
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: flex-start;
+    align-items: stretch;
+    justify-self: stretch;
+    padding-top: 2px;
   }
   /* Toggle row uses the site-wide .switch component (see css/portfolio.css)
      so it matches the SE Gym and SEBook navbar toggles. The visible
@@ -242,7 +236,8 @@ info_nav_title: "My Settings"
 
   <form class="settings-form" id="settings-form">
     <fieldset class="settings-section">
-      <legend>How the site looks and moves</legend>
+      <legend class="sr-only">How the site looks and moves</legend>
+      <h2 class="settings-section-title">How the site looks and moves</h2>
       <div class="settings-list">
         <div class="setting-row">
           <div>
@@ -333,7 +328,8 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Reading aloud and audio</legend>
+      <legend class="sr-only">Reading aloud and audio</legend>
+      <h2 class="settings-section-title">Reading aloud and audio</h2>
       <div class="settings-list">
         <div class="setting-row">
           <div>
@@ -418,7 +414,8 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Tutorials and diagrams</legend>
+      <legend class="sr-only">Tutorials and diagrams</legend>
+      <h2 class="settings-section-title">Tutorials and diagrams</h2>
       <div class="settings-list">
         <div class="setting-row">
           <div>
@@ -466,7 +463,8 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>Bookmarks, gym, and progress</legend>
+      <legend class="sr-only">Bookmarks, gym, and progress</legend>
+      <h2 class="settings-section-title">Bookmarks, gym, and progress</h2>
       <div class="settings-list">
         <div class="setting-row">
           <div>
@@ -537,7 +535,8 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
-      <legend>What each tutorial remembers</legend>
+      <legend class="sr-only">What each tutorial remembers</legend>
+      <h2 class="settings-section-title">What each tutorial remembers</h2>
       <div class="settings-list">
         <div class="setting-row setting-row-full">
           <div>

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const playBtn     = player.querySelector('.cap__play-btn');
         const progress    = player.querySelector('.cap__progress');
         const volumeSlider = player.querySelector('.cap__volume-slider');
+        const volBtn      = player.querySelector('.cap__vol-btn');
         const volIcon     = player.querySelector('.cap__vol-icon');
         const timeCur     = player.querySelector('.cap__time--cur');
         const timeDur     = player.querySelector('.cap__time--dur');
@@ -49,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         function setVolIcon(v) {
             volIcon.className = 'fa-solid cap__vol-icon ' +
                 (v === 0 ? 'fa-volume-xmark' : v < 0.4 ? 'fa-volume-low' : 'fa-volume-high');
+            if (volBtn) {
+                const muted = v === 0;
+                volBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+                volBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+                volBtn.setAttribute('title', muted ? 'Unmute' : 'Mute');
+            }
         }
 
         setVolIcon(audio.volume);
@@ -144,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let prevVol = 1;
-        volIcon.addEventListener('click', () => {
+        if (volBtn) volBtn.addEventListener('click', () => {
             if (audio.volume > 0) {
                 prevVol = audio.volume;
                 audio.volume = 0;

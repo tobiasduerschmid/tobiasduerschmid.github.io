@@ -274,7 +274,7 @@
       rootEl.dataset.toolbarBuilt = '1';
       rootEl.classList.add('tvm-debug-toolbar');
       rootEl.innerHTML =
-        '<span class="tvm-debug-status"></span>' +
+        '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
         '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + debugToolbarIcon('play') + '</button>' +
         '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + debugToolbarIcon('over') + '</button>' +
         '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + debugToolbarIcon('into') + '</button>' +

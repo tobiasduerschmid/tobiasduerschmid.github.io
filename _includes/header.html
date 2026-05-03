@@ -61,7 +61,7 @@
       <br>
       <h1>{{ site.authortitle }} {{ site.author }}</h1>
       {% if site.authorexplain and site.authorexplainname %}
-      <a data-toggle="collapse" href="#authorexplain">{{ site.authorexplainname }}</a>
+      <a data-toggle="collapse" href="#authorexplain" aria-expanded="false" aria-controls="authorexplain">{{ site.authorexplainname }}</a>
       <div class="collapse bibtex" id="authorexplain">
         <p>{{ site.authorexplain }}</p>
       </div>

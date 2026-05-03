@@ -3387,6 +3387,20 @@
   /* Preview and input UI                                                     */
   /* ------------------------------------------------------------------------ */
 
+  var sbrErrorCounter = 0;
+
+  function configureFormError(error, controls) {
+    if (!error) return;
+    error.id = error.id || ('sbr-error-' + (++sbrErrorCounter));
+    error.setAttribute('role', 'alert');
+    error.setAttribute('aria-live', 'polite');
+    (controls || []).forEach(function (control) {
+      if (!control) return;
+      control.setAttribute('aria-describedby', error.id);
+      control.setAttribute('aria-invalid', 'false');
+    });
+  }
+
   function askText(opts) {
     return showForm(opts, function (body, done, modal) {
       var label = document.createElement('label');
@@ -3399,13 +3413,14 @@
       label.appendChild(input);
       var error = document.createElement('div');
       error.className = 'sbr-error';
+      configureFormError(error, [input]);
       body.appendChild(label);
       body.appendChild(error);
 
       function validateCurrent() {
         var value = input.value.trim();
         var msg = opts.validate ? opts.validate(value) : '';
-        setFormValidation(modal, error, msg);
+        setFormValidation(modal, error, msg, [input]);
         return { value: value, error: msg };
       }
 
@@ -3438,12 +3453,13 @@
 
       var error = document.createElement('div');
       error.className = 'sbr-error';
+      configureFormError(error, [select]);
       body.appendChild(error);
 
       function validateCurrent() {
         var value = select.value;
         var msg = opts.validateChoice ? opts.validateChoice(value) : '';
-        setFormValidation(modal, error, msg);
+        setFormValidation(modal, error, msg, [select]);
         return { value: value, error: msg };
       }
 
@@ -3496,6 +3512,7 @@
 
       var error = document.createElement('div');
       error.className = 'sbr-error';
+      configureFormError(error, [nameInput].concat(Array.prototype.slice.call(checks.querySelectorAll('input'))));
       body.appendChild(error);
 
       function readState() {
@@ -3509,7 +3526,7 @@
       function validateCurrent() {
         var state = readState();
         var msg = validateParameterObjectDialogState(state, opts.validateState);
-        setFormValidation(modal, error, msg);
+        setFormValidation(modal, error, msg, [nameInput].concat(Array.prototype.slice.call(checks.querySelectorAll('input'))));
         return { state: state, error: msg };
       }
 
@@ -3597,6 +3614,7 @@
 
       var error = document.createElement('div');
       error.className = 'sbr-error';
+      configureFormError(error, [classInput, delegateInput].concat(Array.prototype.slice.call(checks.querySelectorAll('input'))));
       body.appendChild(error);
 
       var umlPreview = document.createElement('div');
@@ -3625,7 +3643,7 @@
         var state = readState();
         renderExtractClassUmlPreview(umlPreview, opts, state);
         var msg = validateExtractClassDialogState(state, opts.validateState);
-        setFormValidation(modal, error, msg);
+        setFormValidation(modal, error, msg, [classInput, delegateInput].concat(Array.prototype.slice.call(checks.querySelectorAll('input'))));
         return { state: state, error: msg };
       }
 
@@ -3675,9 +3693,12 @@
     return msg;
   }
 
-  function setFormValidation(modal, errorNode, message) {
+  function setFormValidation(modal, errorNode, message, controls) {
     message = message || '';
     if (errorNode) errorNode.textContent = message;
+    (controls || []).forEach(function (control) {
+      if (control) control.setAttribute('aria-invalid', message ? 'true' : 'false');
+    });
     if (modal && modal.primary) {
       modal.primary.disabled = !!message;
       modal.primary.setAttribute('aria-disabled', message ? 'true' : 'false');
@@ -4452,6 +4473,8 @@
   function defaultNotify(message, cls) {
     var toast = document.createElement('div');
     toast.className = 'sbr-toast ' + (cls || '');
+    toast.setAttribute('role', cls === 'bad' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', cls === 'bad' ? 'assertive' : 'polite');
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(function () {

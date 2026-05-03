@@ -22,6 +22,7 @@
         <label id="autoSaveLabel" style="display:none; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
                title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Auto-save
+          <span id="tutorialAutosaveStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
           <span class="tvm-dark-toggle-wrap">
             <input type="checkbox" id="autoSaveToggle" checked style="display:none;">
             <span class="tvm-dark-toggle-track">
@@ -43,6 +44,12 @@
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
           <i class="fa fa-print" aria-hidden="true"></i> Print
         </a>
+        <div class="tutorial-help-links" aria-label="Help links" style="display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600;">
+          <a href="{{ '/glossary/' | relative_url }}" style="color:#fff; text-decoration:none;">Glossary</a>
+          <a href="{{ '/shortcuts/' | relative_url }}" style="color:#fff; text-decoration:none;">Shortcuts</a>
+          <a href="{{ '/settings/' | relative_url }}" style="color:#fff; text-decoration:none;">Settings</a>
+          <a href="{{ '/cookies/' | relative_url }}" style="color:#fff; text-decoration:none;">Storage</a>
+        </div>
         <button id="tts-read-btn" title="Read current step aloud" aria-label="Read Aloud: read current step aloud"
           style="background:none; border:none; color:#fff;
                  padding:3px 11px; cursor:pointer;
@@ -52,7 +59,7 @@
         <label id="darkModeLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">
           Dark mode
           <span class="tvm-dark-toggle-wrap">
-            <input type="checkbox" id="darkModeToggle" style="display:none;">
+            <input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode" style="display:none;">
             <span class="tvm-dark-toggle-track">
               <span class="tvm-dark-toggle-thumb"></span>
             </span>
@@ -389,7 +396,9 @@
         resetBtn.style.display = 'flex';
         resetBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          tutorial.resetStep();
+          if (window.confirm('Reset the current step? This will discard your edits in this step and restore the starter files.')) {
+            tutorial.resetStep();
+          }
         });
       }
       if (tutorial.allowAutosave) {
@@ -401,13 +410,54 @@
           var autoSaveOn = savedPref !== 'false';
           autoSaveToggle.checked = autoSaveOn;
           tutorial.autoSaveEnabled = autoSaveOn;
+          var autosaveConfirmPreviousFocus = null;
+          function closeAutosaveConfirmModal() {
+            var modal = document.getElementById('autosaveConfirmModal');
+            if (modal) {
+              modal.style.display = 'none';
+              modal.removeEventListener('keydown', trapAutosaveConfirmFocus);
+            }
+            if (autosaveConfirmPreviousFocus && typeof autosaveConfirmPreviousFocus.focus === 'function') {
+              autosaveConfirmPreviousFocus.focus();
+            }
+            autosaveConfirmPreviousFocus = null;
+          }
+          function trapAutosaveConfirmFocus(e) {
+            var modal = document.getElementById('autosaveConfirmModal');
+            if (!modal || modal.style.display === 'none') return;
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              closeAutosaveConfirmModal();
+              return;
+            }
+            if (e.key !== 'Tab') return;
+            var focusable = Array.prototype.slice.call(modal.querySelectorAll('button')).filter(function (el) {
+              return !el.disabled && el.offsetParent !== null;
+            });
+            if (!focusable.length) return;
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
           autoSaveToggle.addEventListener('change', function () {
             var toggle = this;
             if (!toggle.checked) {
               tutorial.autoSaveEnabled = false;
               localStorage.setItem('tutorial-autosave', 'false');
               var modal = document.getElementById('autosaveConfirmModal');
-              if (modal) modal.style.display = 'flex';
+              var modalNo = document.getElementById('autosaveConfirmNo');
+              if (modal) {
+                autosaveConfirmPreviousFocus = document.activeElement;
+                modal.style.display = 'flex';
+                modal.addEventListener('keydown', trapAutosaveConfirmFocus);
+                if (modalNo) modalNo.focus();
+              }
             } else {
               tutorial.autoSaveEnabled = true;
               localStorage.setItem('tutorial-autosave', 'true');
@@ -420,14 +470,14 @@
           var modal    = document.getElementById('autosaveConfirmModal');
           if (modalYes) {
             modalYes.addEventListener('click', function () {
-              modal.style.display = 'none';
+              closeAutosaveConfirmModal();
               localStorage.removeItem(tutorial._storageKey());
               tutorial.resetStep();
             });
           }
           if (modalNo) {
             modalNo.addEventListener('click', function () {
-              modal.style.display = 'none';
+              closeAutosaveConfirmModal();
             });
           }
         }
@@ -473,7 +523,7 @@
     <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
       <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
-    <button id="tts-playpause" title="Pause / Resume" aria-label="Pause or resume reading aloud"
+    <button id="tts-playpause" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true"
       style="background:transparent; border:2px solid #2774AE; color:#fff;
              border-radius:50%; width:34px; height:34px; cursor:pointer;
              display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
@@ -596,6 +646,8 @@
               ? '<i class="fa fa-play" aria-hidden="true"></i>'
               : '<i class="fa fa-pause" aria-hidden="true"></i>';
             playPauseBtn.title = paused ? 'Resume' : 'Pause';
+            playPauseBtn.setAttribute('aria-label', paused ? 'Resume reading' : 'Pause reading');
+            playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           if (!speaking && !paused) {
@@ -669,7 +721,12 @@
         jQuery('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip({
           trigger: 'hover focus',
           delay: { show: 100, hide: 250 },
-          container: 'body'
+          container: 'body',
+          viewport: { selector: 'body', padding: 8 },
+          placement: function (_tip, element) {
+            var rect = element.getBoundingClientRect();
+            return rect.top < 80 ? 'bottom' : 'auto top';
+          }
         });
         jQuery(document).on('keydown.a11yTooltip', function (event) {
           if (event.key === 'Escape' || event.keyCode === 27) {

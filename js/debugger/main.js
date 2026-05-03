@@ -1226,7 +1226,7 @@
       "<polygon points='7,7 12,3.5 12,10.5' fill='currentColor'/></svg>";
 
     this.stepToolbar.innerHTML =
-      '<span class="tvm-debug-status"></span>' +
+      '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
       '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + svgPlay + '</button>' +
       '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + svgOver + '</button>' +
       '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + svgInto + '</button>' +
@@ -2402,11 +2402,18 @@
       input.setAttribute('spellcheck', 'false');
       input.setAttribute('autocomplete', 'off');
       input.setAttribute('autocapitalize', 'off');
+      if (condError) {
+        input.setAttribute('aria-describedby', 'tvm-bp-condition-error');
+        input.setAttribute('aria-invalid', 'true');
+      }
       body.appendChild(label);
       body.appendChild(input);
       if (condError) {
         var error = document.createElement('div');
+        error.id = 'tvm-bp-condition-error';
         error.className = 'tvm-bp-dialog-error';
+        error.setAttribute('role', 'alert');
+        error.setAttribute('aria-live', 'assertive');
         error.textContent = condError;
         body.appendChild(error);
       }
@@ -2839,18 +2846,18 @@
     // we need the WebContainer to be booted; for browser we just need the
     // BrowserChannel module loaded (no async runtime to wait on).
     var backend = this.t.config && this.t.config.backend;
-    if (!this.channel && !this.t._worker) { alert('Pyodide not ready yet'); return; }
+    if (!this.channel && !this.t._worker) { this.setStatus('Pyodide not ready yet. Wait a moment, then try again.'); return; }
     var usingNodeChannel = this.channel && window.SEBookNodeChannel && this.channel instanceof window.SEBookNodeChannel;
     if (usingNodeChannel && backend === 'webcontainer' && !this.t._webcontainer) {
-      alert('WebContainer is not ready yet'); return;
+      this.setStatus('WebContainer is not ready yet. Wait a moment, then try again.'); return;
     }
 
     var step = this.t.steps && this.t.steps[this.t.currentStep >= 0 ? this.t.currentStep : 0];
     var filename = (step && step.run_file) ? step.run_file : this.t.activeFileName;
-    if (!filename) { alert('No active file to debug'); return; }
+    if (!filename) { this.setStatus('Open a file in the editor before debugging.'); return; }
     filename = String(filename).replace(/^\/tutorial\//, '').replace(/^\/+/, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
-    if (!model) { alert('Cannot locate code for ' + filename); return; }
+    if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Switch to a Python file and try again.'); return; }
     var code = model.getValue();
     var path = this.normalizeBreakpointPath(filename);
     var files = this.collectDebugFiles();

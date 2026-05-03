@@ -144,9 +144,9 @@
           + '</code></span></div>';
       } else {
         var optionFeedback = q.option_feedback || {};
-        html += '<div class="quiz-options">';
+        html += '<div class="quiz-options" role="' + (q.type === 'multiple' ? 'group' : 'radiogroup') + '" aria-label="Answer options">';
         q.options.forEach(function (opt, oi) {
-          html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"'
+          html += '<button class="quiz-option" role="' + (q.type === 'multiple' ? 'checkbox' : 'radio') + '" aria-checked="false" data-index="' + String(opt.originalIndex) + '"'
             + ' data-correct="' + q.correctOriginals[0] + '"'
             + ' data-correct-indices="' + q.correctOriginals.join(',') + '"'
             + ' data-optional-indices="' + q.optionalOriginals.join(',') + '">'
@@ -258,9 +258,12 @@
       if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
       if (card.dataset.type === 'multiple') {
         opt.classList.toggle('selected');
+        opt.setAttribute('aria-checked', opt.classList.contains('selected') ? 'true' : 'false');
         var sub = card.querySelector('.submit-answer-btn');
         if (sub) sub.disabled = (card.querySelectorAll('.quiz-option.selected').length === 0);
       } else {
+        card.querySelectorAll('.quiz-option').forEach(function (o) { o.setAttribute('aria-checked', 'false'); });
+        opt.setAttribute('aria-checked', 'true');
         validateSingle(opt, card);
       }
     }
@@ -339,6 +342,7 @@
         var ca = card.querySelector('.quiz-correct-answers');
         optionsEls.forEach(function (o) {
           o.classList.remove('correct', 'incorrect', 'selected');
+          if (o.hasAttribute('aria-checked')) o.setAttribute('aria-checked', 'false');
           o.removeAttribute('disabled');
         });
         card.querySelectorAll('.option-feedback').forEach(function (el) {

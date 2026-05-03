@@ -1,19 +1,19 @@
 <div id="carousel-example-generic" class="carousel slide" data-ride="carousel"
   aria-roledescription="carousel" aria-label="Photography gallery">
   <ol class="carousel-indicators">
-    <li data-target="#carousel-example-generic" data-slide-to="0" class="active" aria-label="Go to slide 1"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="1" aria-label="Go to slide 2"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="2" aria-label="Go to slide 3"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="3" aria-label="Go to slide 4"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="4" aria-label="Go to slide 5"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="5" aria-label="Go to slide 6"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="6" aria-label="Go to slide 7"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="7" aria-label="Go to slide 8"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="8" aria-label="Go to slide 9"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="9" aria-label="Go to slide 10"></li>
-    <li data-target="#carousel-example-generic" data-slide-to="10" aria-label="Go to slide 11"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="0" class="active" role="button" tabindex="0" aria-current="true" aria-label="Go to slide 1"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="1" role="button" tabindex="0" aria-label="Go to slide 2"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="2" role="button" tabindex="0" aria-label="Go to slide 3"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="3" role="button" tabindex="0" aria-label="Go to slide 4"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="4" role="button" tabindex="0" aria-label="Go to slide 5"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="5" role="button" tabindex="0" aria-label="Go to slide 6"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="6" role="button" tabindex="0" aria-label="Go to slide 7"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="7" role="button" tabindex="0" aria-label="Go to slide 8"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="8" role="button" tabindex="0" aria-label="Go to slide 9"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="9" role="button" tabindex="0" aria-label="Go to slide 10"></li>
+    <li data-target="#carousel-example-generic" data-slide-to="10" role="button" tabindex="0" aria-label="Go to slide 11"></li>
   </ol>
-  <div class="carousel-inner">
+  <div class="carousel-inner" aria-live="polite" aria-atomic="false">
     <div class="item active">
       <img alt="Close-up of a dog's eyes seen through a white fence." src="img/photography/img_1.jpg">
     </div>
@@ -50,11 +50,33 @@
   </div>
   <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev" aria-label="Previous slide">
     <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-    <span class="sr-only">Previous (Zurück)</span>
+    <span class="sr-only">Previous slide</span>
   </a>
   <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next" aria-label="Next slide">
     <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-    <span class="sr-only">Next (Weiter)</span>
+    <span class="sr-only">Next slide</span>
   </a>
   {% include carousel_pause.html target="#carousel-example-generic" %}
+  <script>
+    (function () {
+      document.querySelectorAll('#carousel-example-generic .carousel-indicators [data-slide-to]').forEach(function (dot) {
+        dot.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            if (window.jQuery) window.jQuery('#carousel-example-generic').carousel(parseInt(dot.getAttribute('data-slide-to'), 10));
+            else dot.click();
+          }
+        });
+      });
+      if (window.jQuery) {
+        window.jQuery('#carousel-example-generic').on('slid.bs.carousel', function () {
+          document.querySelectorAll('#carousel-example-generic .carousel-indicators [data-slide-to]').forEach(function (dot) {
+            var active = dot.classList.contains('active');
+            if (active) dot.setAttribute('aria-current', 'true');
+            else dot.removeAttribute('aria-current');
+          });
+        });
+      }
+    })();
+  </script>
 </div>

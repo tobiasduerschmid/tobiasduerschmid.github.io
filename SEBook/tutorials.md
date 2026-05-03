@@ -10,7 +10,7 @@ Hands-on, in-browser tutorials covering languages, tools, design patterns,
 testing, and other software-engineering topics. Each tutorial runs in your
 browser — no install required — and saves your progress locally.
 
-<div class="tutorials-index" role="list">
+<div class="tutorials-index">
   {% comment %}
     Build a sorted list of (title, description, url) triples by joining each
     `_data/tutorials/<key>.yml` entry to the `.md` page that references it
@@ -36,7 +36,7 @@ browser — no install required — and saves your progress locally.
   <ul class="tutorials-index-list">
     {% for row in rows %}
       {% assign parts = row | split: "|||" %}
-      <li class="tutorial-card" role="listitem">
+      <li class="tutorial-card">
         <h2 class="tutorial-card-title">
           <a href="{{ parts[2] | relative_url }}">{{ parts[0] }}</a>
         </h2>
@@ -88,7 +88,7 @@ browser — no install required — and saves your progress locally.
      of ~5:1 passes SC 1.4.3 Contrast (Minimum) for AA. */
   .tutorial-card-title {
     margin: 0 0 10px;
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     line-height: 1.3;
     color: #2774AE;
     -webkit-text-stroke: 0;
@@ -114,12 +114,11 @@ browser — no install required — and saves your progress locally.
     text-decoration: underline;
   }
 
-  /* Body text at 1rem (16px, browser default) — comfortable read size,
-     matches the rest of the SE Book. #24292f on white = ~15:1 contrast. */
+  /* Body text inherits the SEBook paragraph size. #24292f on white =
+     ~15:1 contrast. */
   .tutorial-card-desc {
     margin: 0;
     color: #24292f;
-    font-size: 1rem;
     line-height: 1.5;
   }
 

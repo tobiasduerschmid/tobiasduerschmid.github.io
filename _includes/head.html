@@ -113,7 +113,7 @@
   {% if project %}
     {% assign page_title_text = page.title | default: project.title %}
     {% assign canonical_url = page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url %}
-    <title>{{ page_title_text }} | {{ project.title }}</title>
+    <title>{{ page_title_text }}{% unless page_title_text == project.title %} | {{ project.title }}{% endunless %}</title>
     <meta property="og:title" content="{{ page_title_text }}" />
     <meta property="og:site_name" content="{{ project.title }}" />
     <meta name="description" content="{{ project.subtitle }}" />

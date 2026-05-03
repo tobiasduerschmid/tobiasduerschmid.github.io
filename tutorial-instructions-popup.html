@@ -46,7 +46,7 @@
   <main aria-label="Tutorial instructions popout">
   <div class="tip-bar">
     <span>Instructions</span>
-    <span class="tip-status" id="statusEl">Connecting&hellip;</span>
+    <span class="tip-status" id="statusEl" role="status" aria-live="polite">Connecting&hellip;</span>
   </div>
   <div class="tip-wrap">
     <div class="tvm-instructions-panel" id="panelRoot">
@@ -154,6 +154,9 @@
       if (!panel) {
         panel = document.createElement('div');
         panel.className = 'tvm-test-panel';
+        panel.setAttribute('role', 'status');
+        panel.setAttribute('aria-live', 'polite');
+        panel.setAttribute('aria-atomic', 'true');
         els.stepContent.appendChild(panel);
       }
       panel.innerHTML = innerHtml;
@@ -232,7 +235,7 @@
       // identical to main during the quiz.
       els.stepControls.innerHTML =
         '<button class="tvm-btn tvm-btn-prev tvm-quiz-back">← Back to Step</button>'
-        + '<span class="tvm-quiz-status">Loading…</span>'
+        + '<span class="tvm-quiz-status" role="status" aria-live="polite" aria-atomic="true">Loading…</span>'
         + '<span></span>';
       var back = els.stepControls.querySelector('.tvm-quiz-back');
       if (back) back.addEventListener('click', hideQuiz);

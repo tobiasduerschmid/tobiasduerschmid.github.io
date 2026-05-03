@@ -424,7 +424,7 @@
       h += renderFreeInput(ex);
     }
 
-    h += '<div class="rt-error" data-exid="' + ex.id + '"></div>';
+    h += '<div class="rt-error" id="rt-error-' + ex.id + '" data-exid="' + ex.id + '" role="alert" aria-live="assertive"></div>';
 
     // Tests
     h += '<div class="rt-tests" data-exid="' + ex.id + '"><div class="rt-tests-label">Test Cases</div>';
@@ -446,7 +446,7 @@
     h += '<button class="rt-btn rt-btn-check" data-exid="' + ex.id + '">Check Answer</button>';
     h += '<button class="rt-btn rt-btn-skip" data-exid="' + ex.id + '">Skip &rarr;</button>';
     h += '</div>';
-    h += '<div class="rt-result" data-exid="' + ex.id + '"></div>';
+    h += '<div class="rt-result" id="rt-result-' + ex.id + '" data-exid="' + ex.id + '" role="status" aria-live="polite" aria-atomic="true"></div>';
 
     // Print-only answer
     if (ex.solution) {
@@ -459,14 +459,14 @@
 
   function renderFreeInput(ex) {
     return '<div class="rt-input-wrap"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Regular expression for ' + esc(ex.title || ex.id) + '" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" placeholder="type your regex here" spellcheck="false" autocomplete="off">' +
       '<span class="rt-delim">/g</span></div>';
   }
 
   function renderFixerInput(ex) {
     return '<div class="rt-fixer-label">Broken regex (edit to fix):</div>' +
       '<div class="rt-input-wrap rt-input-fixer"><span class="rt-delim">/</span>' +
-      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken regular expression for ' + esc(ex.title || ex.id) + '" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
+      '<input type="text" class="rt-input" data-exid="' + ex.id + '" aria-label="Broken regular expression for ' + esc(ex.title || ex.id) + '" aria-describedby="rt-error-' + ex.id + ' rt-result-' + ex.id + '" aria-invalid="false" value="' + esc(ex.brokenRegex) + '" spellcheck="false" autocomplete="off">' +
       '<span class="rt-delim">/g</span></div>' +
       (ex.hint ? '<details class="rt-hint"><summary>Why is it broken?</summary><p>' + ex.hint + '</p></details>' : '');
   }
@@ -601,6 +601,11 @@
     return el ? el.value : '';
   }
 
+  function setInputInvalid(exId, invalid) {
+    var input = document.querySelector('.rt-input[data-exid="' + exId + '"]');
+    if (input) input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+  }
+
   function onInput(exId) {
     var pattern = getPattern(exId);
     var ex = EXERCISES.filter(function (e) { return e.id === exId; })[0];
@@ -611,10 +616,12 @@
 
     if (compiled && compiled.error) {
       if (errEl) { errEl.textContent = compiled.error; errEl.style.display = 'block'; }
+      setInputInvalid(exId, true);
       clearSample(exId); clearTests(exId);
       return;
     }
     if (errEl) errEl.style.display = 'none';
+    setInputInvalid(exId, false);
 
     // Highlight sample text
     if (ex.sampleText !== null) {
@@ -720,6 +727,7 @@
 
     if (!pattern) {
       if (rEl) { rEl.textContent = 'Please enter a regex pattern.'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      setInputInvalid(exId, true);
       return;
     }
 
@@ -737,6 +745,7 @@
       var stEl = exEl ? exEl.querySelector('.rt-ex-status') : null;
       if (stEl) stEl.innerHTML = '&#10003;';
       if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; rEl.style.display = 'block'; }
+      setInputInvalid(exId, false);
       updateProgress();
       var totalEx = EXERCISES.length, doneEx = 0;
       for (var k = 0; k < totalEx; k++) if (completedExercises[EXERCISES[k].id]) doneEx++;
@@ -748,6 +757,7 @@
     } else {
       var hint = getFailureHint(ex, pattern);
       if (rEl) { rEl.innerHTML = '&#10007; Not quite — ' + fails + ' test case' + (fails > 1 ? 's' : '') + ' failed (including hidden tests). ' + hint; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      setInputInvalid(exId, true);
     }
   }
 

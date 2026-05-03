@@ -562,6 +562,8 @@
             pShow.classList.add('unix-lab__prediction-show--match');
             var match = document.createElement('div');
             match.className = 'unix-lab__prediction-match';
+            match.setAttribute('role', 'status');
+            match.setAttribute('aria-live', 'polite');
             match.innerHTML = '<span class="unix-lab__thumb" aria-hidden="true">\uD83D\uDC4D</span>' +
               '<span class="unix-lab__match-label">Nailed it — your prediction matches ' +
               escapeHtml(matchTarget) + '</span>';

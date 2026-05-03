@@ -378,6 +378,9 @@
     if (ENABLE_AI_CHAT) {
       statusEl = document.createElement('div');
       statusEl.className = 'tvm-tutor-status';
+      statusEl.setAttribute('role', 'status');
+      statusEl.setAttribute('aria-live', 'polite');
+      statusEl.setAttribute('aria-atomic', 'true');
       statusEl.style.display = 'none';
       body.appendChild(statusEl);
 

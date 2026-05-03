@@ -40,6 +40,7 @@ function flickr_photosets(photoset_id)
 
   var spinner = $('#' + photoset_id + ' .tag');
   var spinner_text = spinner.text();
+  var load_failed = false;
   spinner.text("fetching");
   spinner.addClass("animate");
 
@@ -67,12 +68,15 @@ function flickr_photosets(photoset_id)
   })
   .fail( function(data, textStatus, error) 
   {
-    alert("flickr.photosets.getPhotos as json failed, status: " + textStatus + ", error: " + error);
+    load_failed = true;
+    spinner.attr({ role: "alert", "aria-live": "assertive" });
+    spinner.text("Photos could not load right now. Check your connection and try again later.");
+    if (window.console && console.warn) console.warn("Flickr photoset load failed:", textStatus, error);
   })
   .always( function() 
   { 
     spinner.removeClass("animate");
-    spinner.text(spinner_text);
+    if (!load_failed) spinner.text(spinner_text);
   });
 }
 

@@ -211,16 +211,29 @@
         }
     }
 
-    &__vol-icon {
+    &__vol-btn {
+        background: transparent;
+        border: none;
         color: rgba(255, 255, 255, 0.72);
-        font-size: 14px;
         cursor: pointer;
         min-width: 24px;
         min-height: 24px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        padding: 0;
+        border-radius: 4px;
         &:hover { color: #fff; }
+        &:focus-visible {
+            outline: 3px solid #FFD100;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 2px #111827;
+        }
+    }
+
+    &__vol-icon {
+        font-size: 14px;
+        pointer-events: none;
     }
 
     &__volume-slider {
@@ -271,7 +284,7 @@
             &.is-active { color: #005587; border-color: #005587; }
         }
 
-        .cap__skip-btn, .cap__ctrl-btn, .cap__vol-icon, .cap__play-btn {
+        .cap__skip-btn, .cap__ctrl-btn, .cap__vol-btn, .cap__play-btn {
             color: rgba(0, 0, 0, 0.65);
             &:hover { color: #000; }
         }
@@ -289,6 +302,7 @@
         }
 
         .cap__progress:focus-visible,
+        .cap__vol-btn:focus-visible,
         .cap__volume-slider:focus-visible {
             outline-color: #005587;
             box-shadow: 0 0 0 2px #fff;

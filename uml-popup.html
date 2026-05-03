@@ -4,7 +4,7 @@
 <html class="dark-mode" lang="en">
 <head>
   <meta charset="utf-8">
-  <title>UML Diagram</title>
+  <title>UML Diagram | Tobias Dürschmid</title>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <style>
@@ -18,6 +18,10 @@
     html.dark-mode .popup-status { color: #b0b0b0; }
     html:not(.dark-mode) body { background: #fff; }
     #diagramContent { cursor: grab; }
+    #diagramContent:focus-visible {
+      outline: 3px solid #FFD100;
+      outline-offset: -3px;
+    }
     #diagramContent.panning { cursor: grabbing; }
   </style>
 </head>
@@ -25,8 +29,8 @@
   <h1 class="sr-only">UML Diagram popout</h1>
   <main class="tvm-uml-left-view" aria-label="UML diagram popout" style="height:100%">
     <div class="tvm-diagram-toolbar">
-      <button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>
-      <button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>
+      <button class="tvm-diagram-type-btn active" data-type="class" aria-pressed="true">Class Diagram</button>
+      <button class="tvm-diagram-type-btn" data-type="sequence" aria-pressed="false">Sequence Diagram</button>
       <div class="tvm-diagram-zoom-controls">
         <button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">&#8722;</button>
         <span class="tvm-diagram-zoom-label">100%</span>
@@ -40,8 +44,10 @@
       <button class="tvm-diagram-color-reset-btn" title="Reset to default color">&#x21bb;</button>
     </div>
     <div class="popup-wrap">
-      <div class="tvm-diagram-content" id="diagramContent" style="display:none"></div>
-      <div class="popup-status" id="popupStatus">Waiting for diagram from tutorial&hellip;</div>
+      <div class="tvm-diagram-content" id="diagramContent" style="display:none" tabindex="0"
+        aria-label="UML diagram canvas. Use arrow keys to pan, Shift plus arrow keys to pan faster, plus or minus to zoom, and Home to reset pan."
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Shift+ArrowUp Shift+ArrowDown Shift+ArrowLeft Shift+ArrowRight + - Home"></div>
+      <div class="popup-status" id="popupStatus" role="status" aria-live="polite">Waiting for diagram from tutorial&hellip;</div>
     </div>
   </main>
 
@@ -153,6 +159,7 @@
         activeType = btn.dataset.type;
         document.querySelectorAll('.tvm-diagram-type-btn').forEach(function(b) {
           b.classList.toggle('active', b.dataset.type === activeType);
+          b.setAttribute('aria-pressed', b.dataset.type === activeType ? 'true' : 'false');
         });
         render();
       });
@@ -173,6 +180,22 @@
       e.preventDefault();
       applyZoom(e.deltaY < 0 ? zoom + 0.05 : zoom - 0.05);
     }, { passive: false });
+    contentEl.addEventListener('keydown', function(e) {
+      var step = e.shiftKey ? 128 : 32;
+      var handled = true;
+      if (e.key === 'ArrowLeft') panX += step;
+      else if (e.key === 'ArrowRight') panX -= step;
+      else if (e.key === 'ArrowUp') panY += step;
+      else if (e.key === 'ArrowDown') panY -= step;
+      else if (e.key === '+' || e.key === '=') applyZoom(zoom + 0.15);
+      else if (e.key === '-' || e.key === '_') applyZoom(zoom - 0.15);
+      else if (e.key === 'Home') { panX = 0; panY = 0; }
+      else handled = false;
+      if (handled) {
+        e.preventDefault();
+        applyTransform();
+      }
+    });
 
     // ── Color picker ──────────────────────────────────────────────────────
     document.querySelector('.tvm-diagram-color-input').addEventListener('input', function(e) {
@@ -192,6 +215,7 @@
         activeType = e.data.activeType;
         document.querySelectorAll('.tvm-diagram-type-btn').forEach(function(b) {
           b.classList.toggle('active', b.dataset.type === activeType);
+          b.setAttribute('aria-pressed', b.dataset.type === activeType ? 'true' : 'false');
         });
       }
       if (e.data.color !== undefined) applyColor(e.data.color);

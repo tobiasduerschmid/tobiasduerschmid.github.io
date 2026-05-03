@@ -802,7 +802,7 @@
         '<div class="tvm-preview-actions">' +
         (this._playwrightMode ? '<button class="tvm-preview-test-btn" title="Run Playwright tests from the test files">✓ Test</button>' : '') +
         '<button class="tvm-refresh-btn" title="Rebuild preview">\u21bb Refresh</button>' +
-        '<button class="tvm-output-popout-btn" title="Open preview in separate window" aria-label="Open preview in separate window">\u29c9</button>' +
+        '<button class="tvm-output-popout-btn" title="Open preview in separate window">\u29c9<span class="sr-only">Open preview in separate window</span></button>' +
         '</div></div>' +
         '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
@@ -816,8 +816,8 @@
       // the workspace bottom-pane block further down.)
       var umlRightToolbar =
         '<div class="tvm-diagram-toolbar">' +
-        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
         '<div class="tvm-diagram-zoom-controls">' +
         '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
         '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -850,7 +850,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window" aria-label="Open output in separate window">⧉</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
         '</div>' +
@@ -876,7 +876,7 @@
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window" aria-label="Open output in separate window">⧉</button>' +
+        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>';
 
@@ -911,7 +911,7 @@
     // editors top-right, UML bottom-right (no tabs), Output bottom-left.
     var useBottomLeftOutput = this._outputPositionBottomLeft;
     this.root.innerHTML =
-      '<div class="tvm-loading">' +
+      '<div class="tvm-loading" role="status" aria-live="polite" aria-atomic="true">' +
       '<div class="tvm-loading-spinner"></div>' +
       '<div class="tvm-loading-text">Loading\u2026</div>' +
       '</div>' +
@@ -926,14 +926,14 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
-      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window" aria-label="Open instructions in separate window">⧉</button>' +
+      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
       '</div>' +
       '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
       (useBelowUml
         ? '<div class="tvm-uml-below-view">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -971,8 +971,8 @@
       (useLeftUml
         ? '<div class="tvm-uml-left-view" style="display:none">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -992,8 +992,8 @@
         ? '<div class="tvm-uml-bottom-left-splitter" title="Drag to resize"></div>' +
           '<div class="tvm-uml-bottom-left-view">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -1047,7 +1047,7 @@
         ? '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="left">' +
             '<span class="tvm-editor-pane-label-text">Code</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window" aria-label="Open code pane in separate window">⧉</button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window">⧉<span class="sr-only">Open code pane in separate window</span></button>' +
           '</div>' +
           '<div class="tvm-editor-tabs"></div>' +
           '</div>'
@@ -1060,7 +1060,7 @@
           '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="right">' +
             '<span class="tvm-editor-pane-label-text">Tests</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window" aria-label="Open tests pane in separate window">⧉</button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window">⧉<span class="sr-only">Open tests pane in separate window</span></button>' +
           '</div>' +
           '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
           '</div>' +
@@ -1071,18 +1071,18 @@
       (this.editorSplitSupported
         ? '<div class="tvm-editor-mode-toggle" role="group" aria-label="Editor layout">' +
           '<button class="tvm-editor-mode-btn' + (!this._splitActive ? ' active' : '') +
-            '" data-mode="tabs" title="Tab view — single editor, tabs for every file">' +
+            '" data-mode="tabs" aria-pressed="' + (!this._splitActive ? 'true' : 'false') + '" title="Tab view — single editor, tabs for every file">' +
             '<i class="fa fa-window-maximize"></i> Tabs</button>' +
           '<button class="tvm-editor-mode-btn' + (this._splitActive ? ' active' : '') +
-            '" data-mode="split" title="Split view — code on the left, tests on the right">' +
+            '" data-mode="split" aria-pressed="' + (this._splitActive ? 'true' : 'false') + '" title="Split view — code on the left, tests on the right">' +
             '<i class="fa fa-columns"></i> Split</button>' +
           '</div>'
         : '') +
       '</div>' +
       '<div class="tvm-diagram-fullscreen-overlay" style="display:none">' +
       '<div class="tvm-diagram-fs-toolbar">' +
-      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
       '<div class="tvm-diagram-zoom-controls">' +
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
       '<span class="tvm-diagram-fs-zoom-label">100%</span>' +
@@ -1126,8 +1126,8 @@
       ((useBottomLeftOutput && this._umlPositionRight && this._umlDiagramEnabled)
         ? '<div class="tvm-uml-bottom-left-view">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out" aria-label="Zoom out">−</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -1237,6 +1237,7 @@
             self._umlActiveType = btn.getAttribute('data-type');
             for (var j = 0; j < typeBtns.length; j++) {
               typeBtns[j].classList.toggle('active', typeBtns[j] === btn);
+              typeBtns[j].setAttribute('aria-pressed', typeBtns[j] === btn ? 'true' : 'false');
             }
             self._renderCurrentUMLDiagram();
           });
@@ -1294,11 +1295,13 @@
             self._umlActiveType = btn.getAttribute('data-type');
             for (var j = 0; j < fsTypeBtns.length; j++) {
               fsTypeBtns[j].classList.toggle('active', fsTypeBtns[j] === btn);
+              fsTypeBtns[j].setAttribute('aria-pressed', fsTypeBtns[j] === btn ? 'true' : 'false');
             }
             // Sync inline type buttons too
             var inlineBtns = self._umlContainer ? self._umlContainer.querySelectorAll('.tvm-diagram-type-btn') : [];
             for (var k = 0; k < inlineBtns.length; k++) {
               inlineBtns[k].classList.toggle('active', inlineBtns[k].getAttribute('data-type') === self._umlActiveType);
+              inlineBtns[k].setAttribute('aria-pressed', inlineBtns[k].getAttribute('data-type') === self._umlActiveType ? 'true' : 'false');
             }
             // Re-render in fullscreen view
             self._renderUMLInFullscreen();
@@ -1571,6 +1574,9 @@
       overlay.innerHTML =
         '<div class="tvm-loading-spinner"></div>' +
         '<div class="tvm-loading-text"></div>';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.setAttribute('aria-atomic', 'true');
       panel.appendChild(overlay);
     }
     overlay.querySelector('.tvm-loading-text').textContent = msg || 'Loading\u2026';
@@ -1742,6 +1748,44 @@
   TutorialCode.prototype._makeDraggable = function (splitter, direction, beforeEl, afterEl) {
     var self = this;
     var startPos, startSizeBefore;
+    splitter.setAttribute('role', 'separator');
+    splitter.setAttribute('tabindex', '0');
+    splitter.setAttribute('aria-orientation', direction === 'vertical' ? 'vertical' : 'horizontal');
+    splitter.setAttribute('aria-valuemin', '0');
+    splitter.setAttribute('aria-valuemax', '100');
+    splitter.setAttribute('aria-label', direction === 'vertical'
+      ? 'Resize editor panes'
+      : 'Resize tutorial panels');
+    function updateSeparatorValue() {
+      var parentRect = beforeEl.parentElement.getBoundingClientRect();
+      var beforeRect = beforeEl.getBoundingClientRect();
+      var total = direction === 'vertical' ? parentRect.width : parentRect.height;
+      var current = direction === 'vertical' ? beforeRect.width : beforeRect.height;
+      if (total > 0) splitter.setAttribute('aria-valuenow', String(Math.round((current / total) * 100)));
+    }
+    function applySize(sz) {
+      var parent = beforeEl.parentElement;
+      var parentRect = parent.getBoundingClientRect();
+      var otherSpace = 0;
+      Array.prototype.forEach.call(parent.children, function(child) {
+        if (child !== beforeEl && child !== afterEl &&
+            window.getComputedStyle(child).display !== 'none' &&
+            window.getComputedStyle(child).position !== 'absolute') {
+          otherSpace += (direction === 'vertical' ? child.offsetWidth : child.offsetHeight);
+        }
+      });
+      var totalAvailable = (direction === 'vertical' ? parentRect.width : parentRect.height) - otherSpace;
+      var minSZ = 80;
+      var maxSZ = totalAvailable - 100;
+      var clamped = Math.min(maxSZ, Math.max(minSZ, sz));
+      beforeEl.style.flex = '0 0 ' + clamped + 'px';
+      afterEl.style.flex = '1 1 0';
+      updateSeparatorValue();
+      if (self.fitAddon) self.fitAddon.fit();
+      if (self.editor) self.editor.layout();
+      if (self.editor2) self.editor2.layout();
+    }
+    updateSeparatorValue();
     function onMouseDown(e) {
       e.preventDefault();
       startPos = direction === 'vertical' ? e.clientX : e.clientY;
@@ -1756,30 +1800,7 @@
     }
     function onMouseMove(e) {
       var cur = direction === 'vertical' ? e.clientX : e.clientY;
-      var parent = beforeEl.parentElement;
-      var parentRect = parent.getBoundingClientRect();
-      
-      // Calculate total occupied space by other elements in the flex container
-      var otherSpace = 0;
-      Array.prototype.forEach.call(parent.children, function(child) {
-        if (child !== beforeEl && child !== afterEl && 
-            window.getComputedStyle(child).display !== 'none' &&
-            window.getComputedStyle(child).position !== 'absolute') {
-          otherSpace += (direction === 'vertical' ? child.offsetWidth : child.offsetHeight);
-        }
-      });
-
-      var totalAvailable = (direction === 'vertical' ? parentRect.width : parentRect.height) - otherSpace;
-      var minSZ = 80;
-      var maxSZ = totalAvailable - 100; // Guarantee at least 100px for the afterEl
-      
-      var sz = Math.min(maxSZ, Math.max(minSZ, startSizeBefore + (cur - startPos)));
-      beforeEl.style.flex = '0 0 ' + sz + 'px';
-      afterEl.style.flex = '1 1 0';
-      
-      if (self.fitAddon) self.fitAddon.fit();
-      if (self.editor) self.editor.layout();
-      if (self.editor2) self.editor2.layout();
+      applySize(startSizeBefore + (cur - startPos));
     }
     function onMouseUp() {
       document.removeEventListener('mousemove', onMouseMove);
@@ -1789,6 +1810,20 @@
       document.body.style.userSelect = '';
     }
     splitter.addEventListener('mousedown', onMouseDown);
+    splitter.addEventListener('keydown', function (e) {
+      var beforeRect = beforeEl.getBoundingClientRect();
+      var current = direction === 'vertical' ? beforeRect.width : beforeRect.height;
+      var step = e.shiftKey ? 50 : 20;
+      var handled = true;
+      if (direction === 'vertical' && e.key === 'ArrowLeft') applySize(current - step);
+      else if (direction === 'vertical' && e.key === 'ArrowRight') applySize(current + step);
+      else if (direction !== 'vertical' && e.key === 'ArrowUp') applySize(current - step);
+      else if (direction !== 'vertical' && e.key === 'ArrowDown') applySize(current + step);
+      else if (e.key === 'Home') applySize(80);
+      else if (e.key === 'End') applySize(100000);
+      else handled = false;
+      if (handled) e.preventDefault();
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -4914,6 +4949,8 @@
     var self = this;
     this.editorTabsEl.innerHTML = '';
     if (this.editorTabsElRight) this.editorTabsElRight.innerHTML = '';
+    if (this.editorTabsElRight) {
+    }
 
     var splitMode = !!(this._splitActive && this.editor2);
 
@@ -4923,13 +4960,17 @@
       tab.className = 'tvm-tab'
         + (isActive && !detached ? ' active' : '')
         + (detached ? ' detached' : '');
+      tab.setAttribute('role', 'presentation');
       tab.title = detached ? filename + ' (open in popup window \u2014 click to focus)' : filename;
-      var label = document.createElement('span');
+      var label = document.createElement('button');
+      label.type = 'button';
       label.className = 'tvm-tab-label';
       label.textContent = detached ? (filename + ' \u2937') : filename;
+      label.setAttribute('tabindex', isActive && !detached ? '0' : '-1');
+      label.setAttribute('aria-current', isActive && !detached ? 'true' : 'false');
       tab.appendChild(label);
 
-      tab.addEventListener('click', function () {
+      function activateTab() {
         if (detached) {
           // Focus the popup window
           var entry = self._popoutManager._popups['tab:' + filename];
@@ -4940,6 +4981,32 @@
         }
         self._setActiveFile(filename);
         self._renderTabs();
+      }
+
+      tab.addEventListener('click', activateTab);
+      label.addEventListener('click', function (e) {
+        e.stopPropagation();
+        activateTab();
+      });
+      label.addEventListener('keydown', function (e) {
+        var tabs = Array.prototype.slice.call(tab.parentElement.querySelectorAll('.tvm-tab-label'));
+        var idx = tabs.indexOf(label);
+        var nextIdx = idx;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          activateTab();
+          return;
+        }
+        if (e.key === 'ArrowRight') nextIdx = Math.min(tabs.length - 1, idx + 1);
+        else if (e.key === 'ArrowLeft') nextIdx = Math.max(0, idx - 1);
+        else if (e.key === 'Home') nextIdx = 0;
+        else if (e.key === 'End') nextIdx = tabs.length - 1;
+        else return;
+        e.preventDefault();
+        if (tabs[nextIdx]) {
+          tabs[nextIdx].tabIndex = 0;
+          tabs[nextIdx].focus();
+        }
       });
 
       // In split mode, the pane-level \u29c9 button replaces per-tab popout \u2014 the
@@ -4952,10 +5019,12 @@
         badgeOnly.className = 'tvm-tab-detached-badge';
         badgeOnly.textContent = '(detached)';
         tab.appendChild(badgeOnly);
-        var reattachOnly = document.createElement('span');
+        var reattachOnly = document.createElement('button');
+        reattachOnly.type = 'button';
         reattachOnly.className = 'tvm-tab-reattach';
         reattachOnly.textContent = '\u21a9';
         reattachOnly.title = 'Bring file back to this window';
+        reattachOnly.setAttribute('aria-label', 'Bring ' + filename + ' back to this window');
         reattachOnly.addEventListener('click', function (e) {
           e.stopPropagation();
           self._popoutManager.requestPopupClose('tab:' + filename);
@@ -4963,10 +5032,12 @@
         tab.appendChild(reattachOnly);
       } else if (!splitMode) {
         // Pop-out button (mirrors UML's \u29c9 control)
-        var pop = document.createElement('span');
+        var pop = document.createElement('button');
+        pop.type = 'button';
         pop.className = 'tvm-tab-popout';
         pop.textContent = '\u29c9';
         pop.title = 'Open file in separate window';
+        pop.setAttribute('aria-label', 'Open ' + filename + ' in a separate window');
         pop.addEventListener('click', function (e) {
           e.stopPropagation();
           self._popoutFile(filename);
@@ -5142,6 +5213,7 @@
     var btns = this.root.querySelectorAll('.tvm-editor-mode-btn');
     for (var i = 0; i < btns.length; i++) {
       btns[i].classList.toggle('active', btns[i].getAttribute('data-mode') === (this._splitActive ? 'split' : 'tabs'));
+      btns[i].setAttribute('aria-pressed', btns[i].classList.contains('active') ? 'true' : 'false');
     }
 
     try {
@@ -6796,8 +6868,12 @@
       // Pre-measure the possible bumped sizes too so worker layout still uses
       // the same rendered SVG metrics as the main thread.
       if (diagramType === 'class' && fontSize != null) {
-        measureOne(text, bold, fontSize + 1);
-        measureOne(text, bold, fontSize + 2);
+        // withAdaptiveClassTypography can bump compact diagrams by up to 4px.
+        // Cache every possible bumped size so worker layout never falls back
+        // to OffscreenCanvas metrics for the final rendered typography.
+        for (var bump = 1; bump <= 4; bump++) {
+          measureOne(text, bold, fontSize + bump);
+        }
       }
     }
 
@@ -7081,11 +7157,13 @@
   /** Open the fullscreen overlay and render the current diagram inside it */
   TutorialCode.prototype._openUMLFullscreen = function () {
     if (!this._umlFullscreenEl || !this._umlFsContentEl) return;
+    this._umlFullscreenPrevFocus = document.activeElement;
 
     // Sync type buttons
     var fsTypeBtns = this._umlFullscreenEl.querySelectorAll('.tvm-diagram-fs-type-btn');
     for (var i = 0; i < fsTypeBtns.length; i++) {
       fsTypeBtns[i].classList.toggle('active', fsTypeBtns[i].getAttribute('data-type') === this._umlActiveType);
+      fsTypeBtns[i].setAttribute('aria-pressed', fsTypeBtns[i].getAttribute('data-type') === this._umlActiveType ? 'true' : 'false');
     }
 
     // Reset zoom for new fullscreen session
@@ -7102,6 +7180,8 @@
     this._renderUMLInFullscreen();
     this._umlFullscreenEl.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    var closeBtn = this._umlFullscreenEl.querySelector('.tvm-diagram-fs-close');
+    if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
   };
 
   /** Close the fullscreen overlay */
@@ -7110,6 +7190,10 @@
     this._umlFullscreenEl.style.display = 'none';
     document.body.style.overflow = '';
     if (this._umlFsContentEl) this._umlFsContentEl.innerHTML = '';
+    if (this._umlFullscreenPrevFocus && typeof this._umlFullscreenPrevFocus.focus === 'function') {
+      try { this._umlFullscreenPrevFocus.focus(); } catch (e) { /* ignore */ }
+    }
+    this._umlFullscreenPrevFocus = null;
   };
 
   /**
@@ -8203,6 +8287,16 @@
     if (this.currentStep < 0) return;
     if (this._suppressAutoSave) return;   // never clobber during file-load sequences
     this.saveProgress();
+    var status = document.getElementById('tutorialAutosaveStatus');
+    if (!status) return;
+    var now = Date.now();
+    if (this._lastAutoSaveStatusAt && now - this._lastAutoSaveStatusAt < 5000) return;
+    this._lastAutoSaveStatusAt = now;
+    status.textContent = 'Saved';
+    clearTimeout(this._autoSaveStatusTimer);
+    this._autoSaveStatusTimer = setTimeout(function () {
+      status.textContent = '';
+    }, 1500);
   };
 
   /**
@@ -8579,9 +8673,9 @@
       if (step.uml_files && step.uml_files.length > 0) {
         this._umlWatchedFiles = step.uml_files.slice();
       } else if (step.files) {
-        // Fallback: derive from step's source files (.py, .js, .ts, .jsx, .tsx)
+        // Fallback: derive from step's source files that UML inference supports.
         this._umlWatchedFiles = step.files
-          .filter(function (f) { return f.path && /\.(py|js|jsx|ts|tsx)$/.test(f.path); })
+          .filter(function (f) { return f.path && /\.(py|js|jsx|ts|tsx|java)$/.test(f.path); })
           .map(function (f) { return f.path; });
       } else {
         this._umlWatchedFiles = [];
@@ -8687,24 +8781,18 @@
     var nextLocked = !nextStepUnlocked;
 
     var html = '';
-    // Add aria-labels alongside the visible text so screen-reader and
-    // voice-control users get a clearer name (and so accessibility scanners
-    // like WAVE annotate these step-control buttons rather than treating
-    // them as unlabelled). The aria-label intentionally CONTAINS the
-    // visible text (WCAG 2.5.3 Label in Name) \u2014 "Previous step" includes
-    // "Previous", etc.
     html += index > 0
-      ? '<button class="tvm-btn tvm-btn-prev" aria-label="Previous step">\u2190 Previous</button>'
+      ? '<button class="tvm-btn tvm-btn-prev" title="Previous step">\u2190 Previous</button>'
       : '<span></span>';
     html += this._stepHasTests(step)
-      ? '<button class="tvm-btn tvm-btn-test" aria-label="\u2713 Test My Work \u2014 run the tests for this step">\u2713 Test My Work</button>'
+      ? '<button class="tvm-btn tvm-btn-test" title="Run the tests for this step">\u2713 Test My Work</button>'
       : '<span></span>';
     var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
       && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next" aria-label="Next \u2192 step"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next \u2192</button>'
+      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : ' title="Next step"') + '>Next \u2192</button>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;
@@ -8765,8 +8853,8 @@
       this._initTooltips(this.quizPanelEl);
     }
     this.stepControlsEl.innerHTML =
-      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" aria-label="Back to step (leave quiz)">\u2190 Back to Step</button>' +
-      '<span class="tvm-quiz-status">Question 1\u2009/\u2009' + quiz.questions.length + '</span>' +
+      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" title="Back to step">\u2190 Back to Step</button>' +
+      '<span class="tvm-quiz-status" role="status" aria-live="polite" aria-atomic="true">Question 1\u2009/\u2009' + quiz.questions.length + '</span>' +
       '<span></span>';
     var back = this.stepControlsEl.querySelector('.tvm-quiz-back');
     if (back) back.addEventListener('click', function () { self._hideStepQuiz(); });
@@ -8945,6 +9033,11 @@
         trigger: 'hover focus',
         delay: { show: 100, hide: 250 },
         container: 'body',
+        viewport: { selector: 'body', padding: 8 },
+        placement: function (_tip, element) {
+          var rect = element.getBoundingClientRect();
+          return rect.top < 80 ? 'bottom' : 'auto top';
+        },
       });
   };
 
@@ -9573,6 +9666,9 @@
     if (!panel) {
       panel = document.createElement('div');
       panel.className = 'tvm-test-panel';
+      panel.setAttribute('role', 'status');
+      panel.setAttribute('aria-live', 'polite');
+      panel.setAttribute('aria-atomic', 'true');
       this.stepContentEl.appendChild(panel);
     }
     panel.innerHTML = innerHtml;

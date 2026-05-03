@@ -149,7 +149,7 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   gap: 6px;
   padding: 5px 9px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: lowercase;
@@ -161,9 +161,9 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
 .unix-lab__panel-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unix-lab__panel-tag {
   flex: 0 0 auto;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -202,7 +202,7 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
 }
 .unix-lab__panel-hint {
   padding: 4px 10px 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: #5a6573;
   font-style: italic;
   background-color: #ffffff;
@@ -275,7 +275,7 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   padding: 4px 10px;
   border-radius: 999px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   margin-top: 2px;
 }
@@ -327,7 +327,7 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
 }
 .unix-lab__prediction-label {
   display: block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -587,9 +587,9 @@ html.dark-mode .unix-lab__notice {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
-  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
   line-height: 1;
   flex: 0 0 auto;
 }

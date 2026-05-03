@@ -79,3 +79,46 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    document.querySelectorAll('#Presets img[onmousedown]').forEach(function (img) {
+      var rendered = img.getAttribute('src');
+      var renderedAlt = img.getAttribute('alt') || 'Pencil hatching preset.';
+      var down = img.getAttribute('onmousedown') || '';
+      var original = (down.match(/this\.src='([^']+)'/) || [])[1];
+      var originalAlt = (down.match(/this\.alt='([^']+)'/) || [])[1] || 'Original photo before pencil hatching.';
+      if (!original || !rendered) return;
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-pressed', 'false');
+      img.setAttribute('tabindex', '0');
+      img.setAttribute('data-ph-original', original);
+      img.setAttribute('data-ph-rendered', rendered);
+      img.setAttribute('title', 'Press and hold, or focus and press Enter, for before / after comparison.');
+      img.setAttribute('alt', renderedAlt + ' Press and hold, or focus and press Enter, to view the original photo.');
+
+      function showOriginal() {
+        img.src = original;
+        img.alt = originalAlt;
+        img.setAttribute('aria-pressed', 'true');
+      }
+      function showRendered() {
+        img.src = rendered;
+        img.alt = renderedAlt + ' Press and hold, or focus and press Enter, to view the original photo.';
+        img.setAttribute('aria-pressed', 'false');
+      }
+      img.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          showOriginal();
+        } else if (e.key === 'Escape') {
+          showRendered();
+        }
+      });
+      img.addEventListener('keyup', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') showRendered();
+      });
+      img.addEventListener('blur', showRendered);
+    });
+  })();
+</script>

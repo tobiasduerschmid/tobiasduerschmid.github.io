@@ -66,6 +66,10 @@
     var tutorialTitle = params.get('title') || 'Tutorial';
     var channel = new BroadcastChannel(chName);
     var statusEl = opts.statusEl || null;
+    if (statusEl && !statusEl.hasAttribute('role')) {
+      statusEl.setAttribute('role', 'status');
+      statusEl.setAttribute('aria-live', 'polite');
+    }
     var statusBaseClass = opts.statusClass || 'status';
     var lastHeartbeat = 0;
     var connected = false;

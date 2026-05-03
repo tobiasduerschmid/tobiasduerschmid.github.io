@@ -27,9 +27,28 @@
 .tvm-tutor-icon { font-size: 1.1em; }
 .tvm-tutor-toggle {
   margin-left: auto;
-  background: none; border: none; color: #9090b0;
-  font-size: 0.85em; cursor: pointer; padding: 0;
+  background: none;
+  border: none;
+  color: #9090b0;
+  font-size: 0.85em;
+  cursor: pointer;
+  padding: 0;
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
   transition: transform 0.2s;
+}
+.tvm-tutor-toggle:hover,
+.tvm-tutor-toggle:focus-visible {
+  background: rgba(255,255,255,0.08);
+  color: #c4c4dc;
+}
+.tvm-tutor-toggle:focus-visible {
+  outline: 2px solid #8bb8e8;
+  outline-offset: 2px;
 }
 .tvm-tutor-chat.collapsed .tvm-tutor-toggle { transform: rotate(-90deg); }
 .tvm-tutor-chat.collapsed .tvm-tutor-body { display: none; }
@@ -83,6 +102,15 @@ html:not(.dark-mode) .tvm-tutor-hint { background: #eef4fa; border-color: #c8d8e
 html:not(.dark-mode) .tvm-tutor-hint-title { color: #2774AE; }
 html:not(.dark-mode) .tvm-tutor-hint-body { color: #444; }
 html:not(.dark-mode) .tvm-tutor-hint-body code { background: rgba(0,0,0,0.06); }
+html:not(.dark-mode) .tvm-tutor-toggle { color: #5a5a78; }
+html:not(.dark-mode) .tvm-tutor-toggle:hover,
+html:not(.dark-mode) .tvm-tutor-toggle:focus-visible {
+  background: #e0e3ea;
+  color: #34344a;
+}
+html:not(.dark-mode) .tvm-tutor-toggle:focus-visible {
+  outline-color: #005587;
+}
 
 /* Message area */
 .tvm-tutor-messages {

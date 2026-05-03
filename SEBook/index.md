@@ -1,5 +1,5 @@
 ---
-title: SE Book
+title: SE Book — Table of Contents
 layout: sebook
 ---
 

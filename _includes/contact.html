@@ -18,7 +18,8 @@
             <div class="form-group">
               <div class="col-sm-2 control-label">Email</div>
               <div class="col-sm-10">
-                <p class="form-control-static"><span class="text-danger">{{ contact.email }}</span> (<a href="mailto:{{ contact.email }}">mailto</a>)</p>
+                {% assign contact_email_href = contact.email | replace: ' at ', '@' | replace: ' dot ', '.' %}
+                <p class="form-control-static"><a class="text-danger" href="mailto:{{ contact_email_href }}">Email {{ contact.email }}</a></p>
               </div>
             </div>
 

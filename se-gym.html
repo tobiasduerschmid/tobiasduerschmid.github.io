@@ -32,8 +32,9 @@ layout: sebook
         <div class="controls-row toggle-row" style="justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="toggle-label">Activate Personal Gym</span>
-            <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym">?<span class="info-tooltip">Allows
-                you to add flash cards and quizzes to your personal gym stored in a local cookie.</span></button>
+            <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym" aria-describedby="personal-gym-tooltip">?</button>
+            <span id="personal-gym-tooltip" role="tooltip" class="info-tooltip">Allows
+                you to add flash cards and quizzes to your personal gym stored in a local cookie.</span>
           </span>
           <label class="switch">
             <span class="sr-only">Toggle personal gym activation</span>
@@ -45,12 +46,13 @@ layout: sebook
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
-              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking">?<span
-                  class="info-tooltip">Allows SE Gym to track your performance on each question to be stored locally in
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking" aria-describedby="performance-tracking-tooltip">?</button>
+              <span
+                  id="performance-tracking-tooltip" role="tooltip" class="info-tooltip">Allows SE Gym to track your performance on each question to be stored locally in
                   your browser's localStorage to enable you to easily revisit the questions you often get wrong. This
                   will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
-                  data remains on your local device and is not shared with the provider of the site.</span></button>
+                  data remains on your local device and is not shared with the provider of the site.</span>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle performance analysis</span>
@@ -61,10 +63,11 @@ layout: sebook
           <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
             <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
             <div style="display: inline-flex; align-items: center; gap: 12px;">
-              <input type="number" id="max-cards" value="50" min="0" max="9999">
+              <input type="number" id="max-cards" value="50" min="0" max="9999" aria-describedby="max-cards-note">
               <button id="start-workout-btn" class="gym-btn primary" disabled>Start Workout</button>
             </div>
           </div>
+          <p id="max-cards-note" class="gym-summary-text" role="status" aria-live="polite"></p>
           <p id="gym-summary" class="gym-summary-text"></p>
         </div>
       </div>
@@ -88,8 +91,8 @@ layout: sebook
                   weak areas.</p>
               </div>
               <button class="gym-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
-                title="Add to workout">
-                <i class="fa-solid fa-plus"></i>
+                title="Add to workout" aria-label="Add Difficult Questions to workout">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
               </button>
             </div>
           </div>
@@ -117,8 +120,8 @@ layout: sebook
               <span class="gym-item-count">({{ qdata.questions | size }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym">
-              <i class="fa-solid fa-plus"></i>
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
           {% elsif qdata.decks and qdata.active != false %}
@@ -136,8 +139,8 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym">
-              <i class="fa-solid fa-plus"></i>
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
           {% endif %}
@@ -157,8 +160,8 @@ layout: sebook
               <span class="gym-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym">
-              <i class="fa-solid fa-plus"></i>
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
           {% elsif fcdata.decks and fcdata.active != false %}
@@ -176,8 +179,8 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym">
-              <i class="fa-solid fa-plus"></i>
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
           {% endif %}
@@ -203,6 +206,7 @@ layout: sebook
             title="Upload tutorial progress JSON" aria-label="Upload tutorial progress JSON"
             style="display:none;" />
         </div>
+        <p id="tutorial-progress-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
 
     </div>
@@ -495,10 +499,9 @@ layout: sebook
       border-bottom-color: #333;
     }
 
-    .info-btn:hover .info-tooltip,
-    .info-btn:focus .info-tooltip,
-    .info-btn:focus-within .info-tooltip,
-    .info-btn.active .info-tooltip {
+    .info-btn:hover + .info-tooltip,
+    .info-btn:focus + .info-tooltip,
+    .info-btn.active + .info-tooltip {
       display: block;
     }
 
@@ -665,6 +668,11 @@ layout: sebook
       margin: 8px 0 0 0;
       font-size: 0.9em;
       color: #666;
+    }
+
+    .gym-summary-text.gym-status-error {
+      color: #8a1f11;
+      font-weight: 600;
     }
 
     /* Buttons */
@@ -1325,6 +1333,14 @@ layout: sebook
       color: #aaa;
     }
 
+    html.dark-mode .gym-summary-text {
+      color: #c8c8d8;
+    }
+
+    html.dark-mode .gym-summary-text.gym-status-error {
+      color: #ffb4a8;
+    }
+
     html.dark-mode .milestone-banner.milestone-bronze {
       background: linear-gradient(135deg, #3a2a10, #4a3520);
       color: #d4a76a;
@@ -1685,6 +1701,7 @@ layout: sebook
       var workoutView = document.getElementById('gym-workout');
       var startBtn = document.getElementById('start-workout-btn');
       var maxCardsInput = document.getElementById('max-cards');
+      var maxCardsNote = document.getElementById('max-cards-note');
       var gymSummary = document.getElementById('gym-summary');
       var gymSelectedDiv = document.getElementById('gym-selected');
       var backBtn = document.getElementById('back-to-library-btn');
@@ -1723,6 +1740,30 @@ layout: sebook
           var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
         return arr;
+      }
+
+      function getMaxCardsValue() {
+        var raw = maxCardsInput.value;
+        var parsed = parseInt(raw, 10);
+        var note = '';
+        var invalid = false;
+        if (raw === '' || isNaN(parsed)) {
+          parsed = 20;
+          invalid = true;
+          note = 'Using 20 cards because the max cards field is empty.';
+        } else if (parsed < 0) {
+          parsed = 0;
+          invalid = true;
+          note = 'Using 0 cards because the max cards value cannot be negative.';
+        } else if (parsed > 9999) {
+          parsed = 9999;
+          invalid = true;
+          note = 'Using 9999 cards because that is the maximum allowed.';
+        }
+        maxCardsInput.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+        maxCardsInput.setCustomValidity(invalid ? note : '');
+        if (maxCardsNote) maxCardsNote.textContent = note;
+        return parsed;
       }
 
       // ==================== LIBRARY VIEW ====================
@@ -1777,7 +1818,11 @@ layout: sebook
           btn.classList.toggle('in-gym', inGym);
           var icon = btn.querySelector('i');
           icon.className = inGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          icon.setAttribute('aria-hidden', 'true');
           btn.title = inGym ? 'Remove from gym' : 'Add to gym';
+          var title = item.querySelector('.gym-item-title');
+          var name = title ? title.textContent.trim() : 'item';
+          btn.setAttribute('aria-label', (inGym ? 'Remove ' : 'Add ') + name + (inGym ? ' from gym' : ' to gym'));
         });
 
         // ---- Difficult Questions Gym ----
@@ -1830,8 +1875,8 @@ layout: sebook
             '<strong class="gym-item-title">' + data.title + '</strong>' +
             '<span class="gym-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym">' +
-            '<i class="fa-solid fa-check"></i>' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
+            '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
         });
@@ -1844,8 +1889,8 @@ layout: sebook
             '<strong class="gym-item-title">Difficult Questions</strong>' +
             '<span class="gym-item-count">(' + difficultCards.length + ' cards)</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from workout">' +
-            '<i class="fa-solid fa-check"></i>' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from workout" aria-label="Remove Difficult Questions from workout">' +
+            '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
         }
@@ -1858,6 +1903,7 @@ layout: sebook
           // Bind remove buttons in selected section
           gymSelectedDiv.querySelectorAll('.gym-remove-selected').forEach(function (btn) {
             btn.addEventListener('click', function () {
+              if (!window.confirm('Remove this item from your gym?')) return;
               PersonalGym.removeFromGym(btn.dataset.type, btn.dataset.id);
               refreshLibrary();
             });
@@ -1865,7 +1911,7 @@ layout: sebook
         }
 
         // Update summary and start button
-        var maxCards = Math.max(0, isNaN(parseInt(maxCardsInput.value)) ? 20 : parseInt(maxCardsInput.value));
+        var maxCards = getMaxCardsValue();
         var drawCount = Math.min(maxCards, totalCards);
         if (gym.length > 0 || (difficultInGym && hasDifficult)) {
           gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
@@ -2011,8 +2057,14 @@ layout: sebook
 
       // ---- Empty Gym Button ----
       document.getElementById('empty-gym-btn').addEventListener('click', function () {
-        PersonalGym.clearGym();
-        refreshLibrary();
+        confirmGymAction(
+          'Empty your gym? This removes all saved quizzes and flashcard sets and cannot be undone.',
+          function () {
+            PersonalGym.clearGym();
+            refreshLibrary();
+          },
+          null
+        );
       });
 
       // ---- Activate Personal Gym Toggle ----
@@ -2046,38 +2098,112 @@ layout: sebook
           applyActiveState(true);
           refreshLibrary();
         } else {
-          PersonalGym.setPersonalGymActive(false);
-          PersonalGym.clearGym();
-          applyActiveState(false);
-          refreshLibrary();
+          confirmGymAction(
+            'Disabling Personal Gym will delete your saved quizzes and flashcard sets. Continue?',
+            function () {
+              PersonalGym.setPersonalGymActive(false);
+              PersonalGym.clearGym();
+              applyActiveState(false);
+              refreshLibrary();
+            },
+            function () {
+              activateToggle.checked = true;
+            }
+          );
         }
       });
 
       // ---- Analyze Performance Toggle ----
       analyzeToggle.checked = PersonalGym.isAnalyzePerformance();
 
+      var activeGymModal = null;
+      var activeGymModalPreviousFocus = null;
+      function getModalFocusables(modal) {
+        return Array.prototype.slice.call(modal.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])'))
+          .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+      }
+      function closeManagedGymModal(modal) {
+        if (!modal) return;
+        modal.style.display = 'none';
+        if (activeGymModal === modal) {
+          document.removeEventListener('keydown', handleManagedGymModalKeydown);
+          activeGymModal = null;
+        }
+        if (activeGymModalPreviousFocus && typeof activeGymModalPreviousFocus.focus === 'function') {
+          activeGymModalPreviousFocus.focus();
+        }
+        activeGymModalPreviousFocus = null;
+      }
+      function handleManagedGymModalKeydown(e) {
+        if (!activeGymModal) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          var cancel = activeGymModal.querySelector('[data-modal-cancel], .gym-btn.secondary, button[id$="-cancel"]');
+          if (cancel) cancel.click();
+          else closeManagedGymModal(activeGymModal);
+          return;
+        }
+        if (e.key !== 'Tab') return;
+        var focusables = getModalFocusables(activeGymModal);
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+      function openManagedGymModal(modal, defaultFocus) {
+        activeGymModalPreviousFocus = document.activeElement;
+        activeGymModal = modal;
+        modal.style.display = 'block';
+        document.addEventListener('keydown', handleManagedGymModalKeydown);
+        var target = defaultFocus || getModalFocusables(modal)[0];
+        if (target && typeof target.focus === 'function') target.focus();
+      }
+
+      function confirmGymAction(message, onConfirm, onCancel) {
+        var modal = document.getElementById('confirm-modal');
+        var msg = document.getElementById('confirm-modal-msg');
+        var yesBtn = document.getElementById('confirm-modal-yes');
+        var noBtn = document.getElementById('confirm-modal-no');
+        var backdrop = modal.querySelector('.confirm-modal-backdrop');
+        msg.textContent = message;
+        openManagedGymModal(modal, noBtn);
+        yesBtn.onclick = function () {
+          closeManagedGymModal(modal);
+          if (typeof onConfirm === 'function') onConfirm();
+        };
+        noBtn.onclick = function () {
+          closeManagedGymModal(modal);
+          if (typeof onCancel === 'function') onCancel();
+        };
+        backdrop.onclick = function () {
+          closeManagedGymModal(modal);
+          if (typeof onCancel === 'function') onCancel();
+        };
+      }
+
       analyzeToggle.addEventListener('change', function () {
         if (this.checked) {
           PersonalGym.setAnalyzePerformance(true);
           refreshLibrary();
         } else {
-          var modal = document.getElementById('confirm-modal');
-          modal.style.display = 'block';
-          document.getElementById('confirm-modal-yes').onclick = function () {
-            modal.style.display = 'none';
-            PersonalGym.clearStats();
-            PersonalGym.setAnalyzePerformance(false);
-            PersonalGym.removeFromGym('difficult', 'difficult');
-            refreshLibrary();
-          };
-          document.getElementById('confirm-modal-no').onclick = function () {
-            modal.style.display = 'none';
-            analyzeToggle.checked = true;
-          };
-          document.querySelector('.confirm-modal-backdrop').onclick = function () {
-            modal.style.display = 'none';
-            analyzeToggle.checked = true;
-          };
+          confirmGymAction(
+            'Do you want to delete your current performance statistics?',
+            function () {
+              PersonalGym.clearStats();
+              PersonalGym.setAnalyzePerformance(false);
+              PersonalGym.removeFromGym('difficult', 'difficult');
+              refreshLibrary();
+            },
+            function () {
+              analyzeToggle.checked = true;
+            }
+          );
         }
       });
 
@@ -2136,7 +2262,7 @@ layout: sebook
 
         shuffleArray(cards);
 
-        var maxCards = Math.max(0, isNaN(parseInt(maxCardsInput.value)) ? 20 : parseInt(maxCardsInput.value));
+        var maxCards = getMaxCardsValue();
         if (cards.length > maxCards) {
           cards = cards.slice(0, maxCards);
         }
@@ -2229,7 +2355,7 @@ layout: sebook
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var optionFeedback = q.option_feedback || {};
-        var optionsHtml = '<div class="quiz-options">';
+        var optionsHtml = '<div class="quiz-options" role="' + (type === 'multiple' ? 'group' : 'radiogroup') + '" aria-label="Answer options">';
         optionObjs.forEach(function (opt, idx) {
           var label = alphabet[idx];
           if (correctOriginals.indexOf(opt.originalIndex) !== -1) {
@@ -2239,7 +2365,7 @@ layout: sebook
             optionalLabels.push(label);
           }
           var checkboxHtml = '<span class="option-checkbox"></span>';
-          optionsHtml += '<button class="quiz-option" data-index="' + opt.originalIndex + '" data-label="' + label + '"' +
+          optionsHtml += '<button class="quiz-option" role="' + (type === 'multiple' ? 'checkbox' : 'radio') + '" aria-checked="false" data-index="' + opt.originalIndex + '" data-label="' + label + '"' +
             ' data-correct-indices="' + correctOriginals.join(',') + '"' +
             ' data-optional-indices="' + optionalOriginals.join(',') + '">' +
             checkboxHtml +
@@ -2291,7 +2417,8 @@ layout: sebook
             opt.addEventListener('click', function () {
               if (explanationEl && !explanationEl.classList.contains('hidden')) return;
               // Validate
-              options.forEach(function (o) { o.setAttribute('disabled', 'true'); });
+              options.forEach(function (o) { o.setAttribute('disabled', 'true'); o.setAttribute('aria-checked', 'false'); });
+              opt.setAttribute('aria-checked', 'true');
               var isCorrect = correctOriginals.indexOf(parseInt(opt.dataset.index)) !== -1;
               if (isCorrect) {
                 opt.classList.add('correct');
@@ -2317,6 +2444,7 @@ layout: sebook
             opt.addEventListener('click', function () {
               if (explanationEl && !explanationEl.classList.contains('hidden')) return;
               opt.classList.toggle('selected');
+              opt.setAttribute('aria-checked', opt.classList.contains('selected') ? 'true' : 'false');
               var anySelected = div.querySelectorAll('.quiz-option.selected').length > 0;
               submitBtn.disabled = !anySelected;
             });
@@ -2825,11 +2953,11 @@ layout: sebook
             } catch (e) { return ''; }
           });
         }
-        exportModal.style.display = 'block';
+        openManagedGymModal(exportModal, exportCancelBtn);
       }
 
       function closeExportModal() {
-        exportModal.style.display = 'none';
+        closeManagedGymModal(exportModal);
       }
 
       function exportSelected() {
@@ -2885,8 +3013,15 @@ layout: sebook
       var importCancelBtn = document.getElementById('tutorial-import-cancel');
       var importSelectAllBtn = document.getElementById('tutorial-import-select-all');
       var importSelectNoneBtn = document.getElementById('tutorial-import-select-none');
+      var tutorialProgressStatus = document.getElementById('tutorial-progress-status');
 
       var pendingImportEntries = null;
+
+      function setTutorialProgressStatus(message, isError) {
+        if (!tutorialProgressStatus) return;
+        tutorialProgressStatus.textContent = message || '';
+        tutorialProgressStatus.classList.toggle('gym-status-error', !!isError);
+      }
 
       function openImportModal(entries) {
         pendingImportEntries = entries;
@@ -2897,11 +3032,11 @@ layout: sebook
           var existing = localStorage.getItem(key);
           return existing !== null ? '(overwrites existing)' : '(new)';
         });
-        importModal.style.display = 'block';
+        openManagedGymModal(importModal, importCancelBtn);
       }
 
       function closeImportModal() {
-        importModal.style.display = 'none';
+        closeManagedGymModal(importModal);
         pendingImportEntries = null;
       }
 
@@ -2923,7 +3058,7 @@ layout: sebook
         });
         closeImportModal();
         if (imported > 0) {
-          alert('Imported progress for ' + imported + ' tutorial' + (imported === 1 ? '' : 's') + '.');
+          setTutorialProgressStatus('Imported progress for ' + imported + ' tutorial' + (imported === 1 ? '' : 's') + '.', false);
         }
       }
 
@@ -2934,21 +3069,22 @@ layout: sebook
           var parsed;
           try { parsed = JSON.parse(text); }
           catch (e) {
-            alert('Could not read file: invalid JSON.');
+            setTutorialProgressStatus('Could not read file: ' + (e && e.message ? e.message : 'invalid JSON.') + ' Try re-exporting with the Download Tutorial Progress button.', true);
             return;
           }
           if (!parsed || typeof parsed !== 'object' || !parsed.entries || typeof parsed.entries !== 'object') {
-            alert('File does not look like a tutorial progress export.');
+            setTutorialProgressStatus('That file does not look like a tutorial-progress export. Use a JSON file produced by Download Tutorial Progress.', true);
             return;
           }
           var keys = Object.keys(parsed.entries);
           if (keys.length === 0) {
-            alert('The uploaded file has no tutorial entries.');
+            setTutorialProgressStatus('That file has no tutorial entries. There is nothing to import.', true);
             return;
           }
+          setTutorialProgressStatus('', false);
           openImportModal(parsed.entries);
         };
-        reader.onerror = function () { alert('Failed to read file.'); };
+        reader.onerror = function () { setTutorialProgressStatus('Failed to read file. Try a smaller JSON file, or refresh the page and retry.', true); };
         reader.readAsText(file);
       }
 

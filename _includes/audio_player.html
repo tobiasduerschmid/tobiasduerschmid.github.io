@@ -72,7 +72,9 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
         </div>
 
         <div class="cap__volume">
-            <i class="fa-solid fa-volume-low cap__vol-icon" title="Mute" aria-hidden="true"></i>
+            <button type="button" class="cap__vol-btn" title="Mute" aria-label="Mute" aria-pressed="false">
+                <i class="fa-solid fa-volume-low cap__vol-icon" aria-hidden="true"></i>
+            </button>
             <input class="cap__volume-slider" type="range" min="0" max="1" step="0.05" value="1"
                 aria-label="Volume">
         </div>

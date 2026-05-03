@@ -58,6 +58,9 @@
         }
       });
     });
+    $(document).on('show.bs.collapse hidden.bs.collapse', '.collapse', function (e) {
+      $('[data-toggle="collapse"][aria-controls="' + this.id + '"]').attr('aria-expanded', e.type === 'show' ? 'true' : 'false');
+    });
   });
 </script>
 
@@ -247,7 +250,10 @@
         blueimp_gallery(photoset_id);
       })
       .fail(function (data, textStatus, error) {
-        alert("flickr.photosets.getPhotos as json failed, status: " + textStatus + ", error: " + error);
+        var $target = $('#' + photoset_id);
+        $target.attr({ role: 'alert', 'aria-live': 'assertive' });
+        $target.text('Photos could not load right now. Check your connection and try again later.');
+        if (window.console && console.warn) console.warn('Flickr photoset load failed:', textStatus, error);
       })
       .always(function () {
         var spinner = $('#' + photoset_id).data().spinner;

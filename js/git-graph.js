@@ -7,6 +7,7 @@
  *
  * Usage:
  *   var graph = new GitGraph(containerElement);
+ *   var liveGraph = new GitGraph(containerElement, { live: true });
  *   graph.render(parsedData);
  *
  * parsedData format (from GitGraph.parseGitState):
@@ -179,6 +180,248 @@
       (examples.length ? 'Files and entries: ' + examples.join('; ') + '.' : '');
   }
 
+  function _workingTreeStatusSummary(workingTree) {
+    if (!workingTree) return '';
+    var zones = [
+      { key: 'staged', label: 'staged file' },
+      { key: 'unstaged', label: 'unstaged file' },
+      { key: 'untracked', label: 'untracked file' },
+      { key: 'stashed', label: 'stashed entry' }
+    ];
+    var counts = [];
+    for (var i = 0; i < zones.length; i++) {
+      var zone = zones[i];
+      var rows = workingTree[zone.key] || [];
+      if (rows.length) counts.push(_plural(rows.length, zone.label));
+    }
+    return counts.length ? 'working tree has ' + counts.join(', ') : 'working tree clean';
+  }
+
+  function _commitReference(data, hash) {
+    var commit = _commitByHash(data, hash);
+    return commit ? _commitSummary(commit) : _plainText(hash);
+  }
+
+  function _commitLabels(cm) {
+    var decorations = _plainText(cm && cm.decorations);
+    if (!decorations) return '';
+    return decorations.split(',')
+      .map(function (part) { return _plainText(part); })
+      .filter(Boolean)
+      .join('; ');
+  }
+
+  function _commitDetail(data, cm) {
+    var parts = ['Commit ' + _commitSummary(cm)];
+    var labels = _commitLabels(cm);
+    if (labels) parts.push('Labels: ' + labels);
+    if (cm.parents && cm.parents.length) {
+      parts.push('Parents: ' + cm.parents.map(function (hash) {
+        return _commitReference(data, hash);
+      }).join('; '));
+    } else {
+      parts.push('Parents: none');
+    }
+    if (cm.children && cm.children.length) {
+      parts.push('Children: ' + cm.children.map(function (hash) {
+        return _commitReference(data, hash);
+      }).join('; '));
+    } else {
+      parts.push('Children: none');
+    }
+    return _plainText(parts.join('. ') + '.');
+  }
+
+  function _workingTreeDetailLines(workingTree) {
+    if (!workingTree) return [];
+    var zones = [
+      { key: 'staged', label: 'Staged files' },
+      { key: 'unstaged', label: 'Changes not staged for commit' },
+      { key: 'untracked', label: 'Untracked files' },
+      { key: 'stashed', label: 'Stash entries' }
+    ];
+    var lines = [];
+    for (var i = 0; i < zones.length; i++) {
+      var zone = zones[i];
+      var rows = workingTree[zone.key] || [];
+      if (!rows.length) continue;
+      lines.push(zone.label + ': ' + rows.map(function (row) {
+        if (zone.key === 'stashed') {
+          return _plainText((row.ref || 'stash entry') + (row.branch ? ' on ' + row.branch : '') +
+            (row.message ? ': ' + row.message : ''));
+        }
+        return _plainText((row.status ? row.status + ' ' : '') + (row.path || 'unnamed file'));
+      }).join('; ') + '.');
+    }
+    return lines.length ? lines : ['Working tree: clean.'];
+  }
+
+  function _buildGraphDetails(data) {
+    data = data || {};
+    var commits = data.commits || [];
+    var branches = data.branches || [];
+    var head = data.head || {};
+    var headCommit = _commitByHash(data, head.hash);
+    var lines = ['Detailed Git graph text alternative.'];
+
+    if (head.ref && headCommit) {
+      lines.push('HEAD is on branch ' + head.ref + ' at commit ' + _commitSummary(headCommit) + '.');
+    } else if (head.detached && headCommit) {
+      lines.push('HEAD is detached at commit ' + _commitSummary(headCommit) + '.');
+    } else {
+      lines.push('HEAD position is not available.');
+    }
+
+    if (branches.length) {
+      lines.push('Branch tips: ' + branches.map(function (br) {
+        return _branchSummary(data, br);
+      }).join('; ') + '.');
+    } else {
+      lines.push('No branches are shown.');
+    }
+
+    if (commits.length) {
+      lines.push('Commits in newest-first order:');
+      for (var i = 0; i < commits.length; i++) {
+        lines.push((i + 1) + '. ' + _commitDetail(data, commits[i]));
+      }
+    } else {
+      lines.push('No commits are shown.');
+    }
+
+    return lines.concat(_workingTreeDetailLines(data.workingTree)).join('\n');
+  }
+
+  function _commitAnnouncement(data, hash) {
+    var commit = _commitByHash(data, hash);
+    if (!commit) return 'commit ' + _plainText(hash);
+    var label = commit.shortHash || (commit.hash ? commit.hash.substring(0, 7) : 'unknown');
+    return 'commit ' + label + (commit.message ? ' with message "' + _plainText(commit.message) + '"' : '');
+  }
+
+  function _commitAnnouncementFromSnapshot(snapshot, hash) {
+    if (!snapshot || !snapshot.commits || !snapshot.commits[hash]) return 'commit ' + _plainText(hash);
+    var commit = snapshot.commits[hash];
+    return 'commit ' + commit.shortHash + (commit.message ? ' with message "' + _plainText(commit.message) + '"' : '');
+  }
+
+  function _branchMap(data) {
+    var out = {};
+    var branches = (data && data.branches) || [];
+    for (var i = 0; i < branches.length; i++) {
+      if (branches[i] && branches[i].name) out[branches[i].name] = branches[i].hash || '';
+    }
+    return out;
+  }
+
+  function _snapshotGraphState(data) {
+    data = data || {};
+    var commits = data.commits || [];
+    var commitMap = {};
+    for (var i = 0; i < commits.length; i++) {
+      var cm = commits[i];
+      commitMap[cm.hash] = {
+        shortHash: cm.shortHash || (cm.hash ? cm.hash.substring(0, 7) : 'unknown'),
+        message: cm.message || ''
+      };
+    }
+    var head = data.head || {};
+    return {
+      headHash: head.hash || '',
+      headRef: head.ref || '',
+      detached: !!head.detached,
+      branches: _branchMap(data),
+      commits: commitMap,
+      commitOrder: commits.map(function (cm) { return cm.hash; }),
+      workingTreeStatus: _workingTreeStatusSummary(data.workingTree)
+    };
+  }
+
+  function _describeGitGraphDelta(previous, currentData, current) {
+    if (!previous || !current) return '';
+    var changes = [];
+    var handledBranch = {};
+    var headChanged = previous.headHash !== current.headHash ||
+      previous.headRef !== current.headRef ||
+      previous.detached !== current.detached;
+
+    if (headChanged) {
+      if (current.headHash) {
+        if (current.headRef &&
+            previous.headRef === current.headRef &&
+            previous.branches[current.headRef] !== current.branches[current.headRef] &&
+            current.branches[current.headRef] === current.headHash) {
+          changes.push('HEAD and branch ' + current.headRef + ' moved to ' +
+            _commitAnnouncement(currentData, current.headHash) + '.');
+          handledBranch[current.headRef] = true;
+        } else if (current.headRef) {
+          changes.push('HEAD moved to ' + _commitAnnouncement(currentData, current.headHash) +
+            ' on branch ' + current.headRef + '.');
+        } else if (current.detached) {
+          changes.push('HEAD detached at ' + _commitAnnouncement(currentData, current.headHash) + '.');
+        } else {
+          changes.push('HEAD moved to ' + _commitAnnouncement(currentData, current.headHash) + '.');
+        }
+      } else {
+        changes.push('HEAD position changed.');
+      }
+    }
+
+    var newCommits = [];
+    for (var ci = 0; ci < current.commitOrder.length; ci++) {
+      var hash = current.commitOrder[ci];
+      if (!previous.commits[hash]) newCommits.push(hash);
+    }
+    if (newCommits.length) {
+      var newCommitTexts = newCommits.map(function (hash) {
+        return _commitAnnouncement(currentData, hash);
+      });
+      changes.push((newCommits.length === 1 ? 'New commit added: ' : 'New commits added: ') +
+        _list(newCommitTexts, 3) + '.');
+    }
+
+    var removedCommits = [];
+    for (var oldHash in previous.commits) {
+      if (previous.commits.hasOwnProperty(oldHash) && !current.commits[oldHash]) removedCommits.push(oldHash);
+    }
+    if (removedCommits.length) {
+      var removedTexts = removedCommits.map(function (hash) {
+        return _commitAnnouncementFromSnapshot(previous, hash);
+      });
+      changes.push((removedCommits.length === 1 ? 'Commit no longer shown: ' : 'Commits no longer shown: ') +
+        _list(removedTexts, 3) + '.');
+    }
+
+    for (var name in current.branches) {
+      if (!current.branches.hasOwnProperty(name) || handledBranch[name]) continue;
+      var curHash = current.branches[name];
+      var prevHash = previous.branches[name];
+      if (!prevHash && curHash) {
+        changes.push('Branch ' + name + ' appeared at ' + _commitAnnouncement(currentData, curHash) + '.');
+      } else if (prevHash !== curHash && curHash) {
+        changes.push('Branch ' + name + ' moved to ' + _commitAnnouncement(currentData, curHash) + '.');
+      }
+    }
+    for (var oldName in previous.branches) {
+      if (previous.branches.hasOwnProperty(oldName) && !current.branches[oldName]) {
+        changes.push('Branch ' + oldName + ' is no longer shown.');
+      }
+    }
+
+    if (previous.workingTreeStatus !== current.workingTreeStatus && current.workingTreeStatus) {
+      changes.push('Working tree now ' + current.workingTreeStatus + '.');
+    }
+
+    return changes.length ? 'Git graph changed: ' + _list(changes, 4) : '';
+  }
+
+  function _addIdRef(el, attr, id) {
+    if (!el || !attr || !id) return;
+    var ids = (el.getAttribute(attr) || '').split(/\s+/).filter(Boolean);
+    if (ids.indexOf(id) === -1) ids.push(id);
+    el.setAttribute(attr, ids.join(' '));
+  }
+
   // Colour helpers used to keep SVG text legible against the branch palette.
   // The graph paints text on top of branch-coloured circles and tinted chips,
   // and several palette entries (gold, green) have light luminance — so a
@@ -312,7 +555,8 @@
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
-  function GitGraph(container) {
+  function GitGraph(container, options) {
+    options = options || {};
     this.container = container;
     this.svg = null;
     this._data = null;
@@ -334,6 +578,17 @@
     this._reservedMaxW        = 0;
     this._reservedWorkbenchH  = 0;
     this._perfLite = shouldUsePerfLite();
+    this._liveA11y = !!(options.live ||
+      (container && container.getAttribute && container.getAttribute('data-git-graph-live') === 'true') ||
+      (container && container.classList && container.classList.contains('tvm-git-graph-container')));
+    this._liveLabel = _plainText(options.liveLabel ||
+      (container && container.getAttribute && container.getAttribute('data-git-graph-label')) ||
+      'Live Git graph');
+    this._a11ySummaryEl = null;
+    this._a11yDetailsEl = null;
+    this._a11yStatusEl = null;
+    this._lastLiveStatus = '';
+    this._lastA11ySnapshot = null;
   }
 
   GitGraph.describeData = function (data) {
@@ -348,13 +603,19 @@
     else if (head.detached && headCommit) label += ' with detached HEAD at ' + (headCommit.shortHash || headCommit.hash);
     if (commits.length) label += ' showing ' + _plural(commits.length, 'commit');
 
-    var parts = ['Git graph specification.'];
+    var parts = ['Current Git graph state.'];
+    var statusParts = [];
     if (head.ref && headCommit) {
-      parts.push('HEAD is on branch ' + head.ref + ' at commit ' + _commitSummary(headCommit) + '.');
+      var headRefText = 'HEAD is on branch ' + head.ref + ' at commit ' + _commitSummary(headCommit);
+      parts.push(headRefText + '.');
+      statusParts.push(headRefText);
     } else if (head.detached && headCommit) {
-      parts.push('HEAD is detached at commit ' + _commitSummary(headCommit) + '.');
+      var detachedText = 'HEAD is detached at commit ' + _commitSummary(headCommit);
+      parts.push(detachedText + '.');
+      statusParts.push(detachedText);
     } else {
       parts.push('HEAD position is not available.');
+      statusParts.push('HEAD position is not available');
     }
     if (branches.length) {
       parts.push('Branches: ' + _list(branches.map(function (br) { return _branchSummary(data, br); }), 10) + '.');
@@ -370,10 +631,19 @@
     }
     var wt = _workingTreeSummary(data.workingTree);
     if (wt) parts.push(wt);
+    statusParts.push(_plural(commits.length, 'commit'));
+    statusParts.push(_plural(branches.length, 'branch'));
+    var wtStatus = _workingTreeStatusSummary(data.workingTree);
+    if (wtStatus) statusParts.push(wtStatus);
+
+    var overview = _plainText(statusParts.join('. ') + '.');
 
     return {
       label: _plainText(label),
-      description: _plainText(parts.join(' '))
+      overview: overview,
+      description: _plainText(parts.join(' ')),
+      details: _buildGraphDetails(data),
+      status: _plainText('Git graph updated: ' + statusParts.join('. ') + '.')
     };
   };
 
@@ -1185,7 +1455,7 @@
         // placeholder. Workbench is preserved by identity.
         var children = Array.prototype.slice.call(this.container.children);
         for (var ci = 0; ci < children.length; ci++) {
-          if (children[ci] !== this._workbenchEl) {
+          if (children[ci] !== this._workbenchEl && !this._isA11yNode(children[ci])) {
             this.container.removeChild(children[ci]);
           }
         }
@@ -1199,6 +1469,7 @@
         this.container.appendChild(empty);
       }
       if (data && data.workingTree) this._diffWorkbench(data);
+      this._applyAccessibility(data);
       return;
     }
     // Commits exist now — drop a previous empty-state placeholder if any.
@@ -1354,7 +1625,7 @@
     // are cleared.
     var children = Array.prototype.slice.call(this.container.children);
     for (var ci = 0; ci < children.length; ci++) {
-      if (children[ci] !== this._workbenchEl) {
+      if (children[ci] !== this._workbenchEl && !this._isA11yNode(children[ci])) {
         this.container.removeChild(children[ci]);
       }
     }
@@ -1388,9 +1659,99 @@
     this._labelEls = {};
   };
 
+  GitGraph.prototype._isA11yNode = function (el) {
+    return !!(el && (
+      el === this._a11ySummaryEl ||
+      el === this._a11yDetailsEl ||
+      el === this._a11yStatusEl ||
+      (el.classList && (
+        el.classList.contains('git-graph-accessible-summary') ||
+        el.classList.contains('git-graph-accessible-details') ||
+        el.classList.contains('git-graph-live-status')
+      ))
+    ));
+  };
+
+  GitGraph.prototype._ensureLiveAccessibility = function () {
+    if (!this._liveA11y || !this.container || typeof document === 'undefined') return null;
+
+    if (!this.container.hasAttribute('role')) this.container.setAttribute('role', 'region');
+    if (!this.container.hasAttribute('aria-label') && !this.container.hasAttribute('aria-labelledby')) {
+      this.container.setAttribute('aria-label', this._liveLabel || 'Live Git graph');
+    }
+
+    var summaryId = this._arrowId + '-summary';
+    var detailsId = this._arrowId + '-details';
+    var statusId = this._arrowId + '-status';
+
+    if (!this._a11ySummaryEl || this._a11ySummaryEl.parentNode !== this.container) {
+      this._a11ySummaryEl = this.container.querySelector('#' + summaryId);
+      if (!this._a11ySummaryEl) {
+        this._a11ySummaryEl = document.createElement('div');
+        this._a11ySummaryEl.id = summaryId;
+        this._a11ySummaryEl.className = 'sr-only git-graph-accessible-summary';
+        this.container.appendChild(this._a11ySummaryEl);
+      }
+    }
+
+    if (!this._a11yDetailsEl || this._a11yDetailsEl.parentNode !== this.container) {
+      this._a11yDetailsEl = this.container.querySelector('#' + detailsId);
+      if (!this._a11yDetailsEl) {
+        this._a11yDetailsEl = document.createElement('div');
+        this._a11yDetailsEl.id = detailsId;
+        this._a11yDetailsEl.className = 'sr-only git-graph-accessible-details';
+        this.container.appendChild(this._a11yDetailsEl);
+      }
+    }
+
+    if (!this._a11yStatusEl || this._a11yStatusEl.parentNode !== this.container) {
+      this._a11yStatusEl = this.container.querySelector('#' + statusId);
+      if (!this._a11yStatusEl) {
+        this._a11yStatusEl = document.createElement('div');
+        this._a11yStatusEl.id = statusId;
+        this._a11yStatusEl.className = 'sr-only git-graph-live-status';
+        this._a11yStatusEl.setAttribute('role', 'status');
+        this._a11yStatusEl.setAttribute('aria-live', 'polite');
+        this._a11yStatusEl.setAttribute('aria-atomic', 'true');
+        this.container.appendChild(this._a11yStatusEl);
+      }
+    }
+
+    _addIdRef(this.container, 'aria-describedby', summaryId);
+    return { summary: this._a11ySummaryEl, status: this._a11yStatusEl };
+  };
+
+  GitGraph.prototype._applyLiveAccessibility = function (a11y, data) {
+    var live = this._ensureLiveAccessibility();
+    if (!live) return;
+    live.summary.textContent = a11y.overview +
+      ' A generated detailed text alternative follows in the reading order.';
+    if (this._a11yDetailsEl) this._a11yDetailsEl.textContent = a11y.details;
+    var snapshot = _snapshotGraphState(data);
+    var deltaStatus = _describeGitGraphDelta(this._lastA11ySnapshot, data, snapshot);
+    var statusText = deltaStatus || a11y.status;
+    this._lastA11ySnapshot = snapshot;
+    if (statusText && statusText !== this._lastLiveStatus) {
+      live.status.textContent = statusText;
+      this._lastLiveStatus = statusText;
+    }
+  };
+
   GitGraph.prototype._applyAccessibility = function (data) {
-    if (!this._svgRoot) return;
     var a11y = GitGraph.describeData(data);
+    if (this._liveA11y) {
+      if (this._svgRoot) {
+        this._svgRoot.removeAttribute('role');
+        this._svgRoot.removeAttribute('aria-label');
+        this._svgRoot.removeAttribute('aria-describedby');
+        this._svgRoot.setAttribute('aria-hidden', 'true');
+        this._svgRoot.setAttribute('focusable', 'false');
+      }
+      this._applyLiveAccessibility(a11y, data);
+      return;
+    }
+
+    if (!this._svgRoot) return;
     var descId = this._arrowId + '-desc';
     this._svgRoot.setAttribute('role', 'img');
     this._svgRoot.setAttribute('aria-label', a11y.label);

@@ -26,6 +26,7 @@
     blocks.forEach((pre) => {
       if (pre.hasAttribute('tabindex')) return;
       if (pre.closest('[aria-hidden="true"]')) return;
+      if (pre.closest('.inline-language-panel')) return;
       pre.setAttribute('tabindex', '0');
     });
 

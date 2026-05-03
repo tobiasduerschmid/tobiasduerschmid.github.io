@@ -655,6 +655,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
             toggleBtn.classList.toggle('in-gym', inGym);
             toggleBtn.innerHTML = inGym ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
             toggleBtn.title = inGym ? "Remove from Personal Gym" : "Add to Personal Gym";
+            toggleBtn.setAttribute('aria-pressed', inGym ? 'true' : 'false');
+            toggleBtn.setAttribute('aria-label', inGym ? 'Remove from Personal Gym' : 'Add to Personal Gym');
           }
         }
 
