@@ -32,6 +32,14 @@
   var _voicesReadyCbs = [];
   var _voicesReady = false;
 
+  // Chrome's TTS engine silently fails when an utterance is too long
+  // (~32K chars) or runs longer than ~15s. Splitting the input into short
+  // pieces and chaining them via onend keeps each utterance under both limits.
+  var MAX_CHUNK_LENGTH = 200;
+  var _chunks = [];
+  var _chunkIdx = 0;
+  var _chunkBase = 0;        // global offset within _text where _chunks[0] begins
+
   /* ── Voice quality scoring ────────────────────────────────── */
 
   function _scoreVoice(v) {
@@ -107,17 +115,83 @@
 
   /* ── Playback ─────────────────────────────────────────────── */
 
+  // Split text on sentence boundaries (then word boundaries as a fallback) so
+  // each utterance stays short enough for Chrome's TTS engine. The chunks
+  // concatenate back to the input, so chunkStart math below is exact.
+  function _splitIntoChunks(text) {
+    var chunks = [];
+    var remaining = text;
+    while (remaining.length > MAX_CHUNK_LENGTH) {
+      var win = remaining.slice(0, MAX_CHUNK_LENGTH);
+      var lastSentence = Math.max(
+        win.lastIndexOf('. '),
+        win.lastIndexOf('! '),
+        win.lastIndexOf('? '),
+        win.lastIndexOf('; '),
+        win.lastIndexOf(': ')
+      );
+      var splitAt;
+      if (lastSentence > MAX_CHUNK_LENGTH / 2) {
+        splitAt = lastSentence + 2;
+      } else {
+        var lastSpace = win.lastIndexOf(' ');
+        splitAt = lastSpace > 0 ? lastSpace + 1 : MAX_CHUNK_LENGTH;
+      }
+      chunks.push(remaining.slice(0, splitAt));
+      remaining = remaining.slice(splitAt);
+    }
+    if (remaining.length > 0) chunks.push(remaining);
+    return chunks;
+  }
+
   function _startFrom(offset) {
     if (!synth) return;
 
-    var text = _text.slice(offset).trim();
-    if (!text) {
+    var remaining = _text.slice(offset);
+    if (!remaining.trim()) {
       _speaking = false;
       _paused = false;
       if (_onUpdate) _onUpdate();
       if (_onEnd) _onEnd();
       return;
     }
+
+    _chunks = _splitIntoChunks(remaining);
+    _chunkBase = offset;
+    _chunkIdx = 0;
+
+    // The cancel+setTimeout dance works around a Chrome race where speak()
+    // called immediately after cancel() drops the new utterance. We only need
+    // it when something is actually playing — for a fresh start, going through
+    // setTimeout instead loses Chrome's transient user activation and the
+    // first speak() silently aborts.
+    if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
+    if (synth.speaking || synth.pending) {
+      _restarting = true;
+      synth.cancel();
+      _startTimer = setTimeout(function () {
+        _startTimer = null;
+        _speakChunk();
+      }, 50);
+    } else {
+      _restarting = false;
+      _speakChunk();
+    }
+  }
+
+  function _speakChunk() {
+    if (!synth || _chunkIdx >= _chunks.length) {
+      _speaking = false;
+      _paused = false;
+      _offset = 0;
+      if (_onUpdate) _onUpdate();
+      if (_onEnd) _onEnd();
+      return;
+    }
+
+    var chunkText = _chunks[_chunkIdx];
+    var chunkStart = _chunkBase;
+    for (var k = 0; k < _chunkIdx; k++) chunkStart += _chunks[k].length;
 
     // Re-resolve voice by name at speak-time so the reference is never stale
     // (Chrome rebuilds its voice list internally; stored object refs can go dead)
@@ -127,7 +201,7 @@
       activeVoice = fresh[0] || null;
     }
 
-    var utt = new SpeechSynthesisUtterance(text);
+    var utt = new SpeechSynthesisUtterance(chunkText);
     utt.rate = _rate;
     if (activeVoice) {
       utt.voice = activeVoice;
@@ -137,7 +211,7 @@
     }
 
     utt.onboundary = function (e) {
-      if (e.name === 'word') _offset = offset + e.charIndex;
+      if (e.name === 'word') _offset = chunkStart + e.charIndex;
     };
     utt.onstart = function () {
       _restarting = false;
@@ -149,11 +223,16 @@
       // Ignore onend that fires because we called cancel() for a restart —
       // Chrome fires onend (not onerror) when cancel() stops an utterance.
       if (_restarting) return;
-      _speaking = false;
-      _paused = false;
-      _offset = 0;
-      if (_onUpdate) _onUpdate();
-      if (_onEnd) _onEnd();
+      _chunkIdx++;
+      if (_chunkIdx < _chunks.length) {
+        _speakChunk();
+      } else {
+        _speaking = false;
+        _paused = false;
+        _offset = 0;
+        if (_onUpdate) _onUpdate();
+        if (_onEnd) _onEnd();
+      }
     };
     utt.onerror = function (e) {
       if (_restarting) return;
@@ -163,15 +242,7 @@
       if (_onUpdate) _onUpdate();
     };
 
-    // Chrome bug: cancel() followed immediately by speak() can silently fail.
-    // Use a flag + clearTimeout so rapid calls collapse into one speak().
-    _restarting = true;
-    if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
-    synth.cancel();
-    _startTimer = setTimeout(function () {
-      _startTimer = null;
-      synth.speak(utt);
-    }, 50);
+    synth.speak(utt);
   }
 
   /* ── Text extraction ──────────────────────────────────────── */
@@ -241,6 +312,8 @@
     stop: function () {
       if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
       _restarting = false;
+      _chunks = [];
+      _chunkIdx = 0;
       if (synth) synth.cancel();
       _speaking = false;
       _paused   = false;
