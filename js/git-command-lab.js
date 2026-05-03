@@ -161,6 +161,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'git-command-lab__btn';
+    btn.setAttribute('aria-pressed', 'false');
     var icon = document.createElement('span');
     icon.className = 'git-command-lab__icon';
     icon.setAttribute('aria-hidden', 'true');
@@ -220,11 +221,13 @@
           cmdEl.textContent = 'Undo ' + spec.command;
         }
         btn.classList.add('git-command-lab__btn--undo');
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         graph.render(buildState(spec.before));
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('git-command-lab__btn--undo');
+        btn.setAttribute('aria-pressed', 'false');
       }
     }
 
@@ -363,6 +366,9 @@
 
     var progressEl = document.createElement('div');
     progressEl.className = 'git-command-lab__step-progress';
+    progressEl.setAttribute('role', 'status');
+    progressEl.setAttribute('aria-live', 'polite');
+    progressEl.setAttribute('aria-atomic', 'true');
     caption.appendChild(progressEl);
 
     var action = document.createElement('div');

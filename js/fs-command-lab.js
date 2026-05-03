@@ -535,6 +535,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'fs-command-lab__btn';
+    btn.setAttribute('aria-pressed', 'false');
     var icon = document.createElement('span');
     icon.className = 'fs-command-lab__icon';
     icon.setAttribute('aria-hidden', 'true');
@@ -602,10 +603,12 @@
         icon.textContent = '\u21BA';
         cmdEl.textContent = 'Undo ' + spec.command;
         btn.classList.add('fs-command-lab__btn--undo');
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('fs-command-lab__btn--undo');
+        btn.setAttribute('aria-pressed', 'false');
       }
     }
 
@@ -719,6 +722,9 @@
 
     var progressEl = document.createElement('div');
     progressEl.className = 'fs-command-lab__step-progress';
+    progressEl.setAttribute('role', 'status');
+    progressEl.setAttribute('aria-live', 'polite');
+    progressEl.setAttribute('aria-atomic', 'true');
     caption.appendChild(progressEl);
 
     var action = document.createElement('div');

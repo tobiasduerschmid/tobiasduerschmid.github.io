@@ -120,7 +120,7 @@
   padding: 7px 16px 7px 12px;
   cursor: pointer;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
@@ -139,11 +139,11 @@
 @media (max-width: 520px) {
   .git-command-lab { padding: 12px 12px 10px; }
   .git-command-lab__btn {
-    font-size: 12.5px;
+    font-size: 13.5px;
     padding: 6px 12px 6px 10px;
     border-radius: 14px;
   }
-  .git-command-lab__rebase-file { font-size: 12px; }
+  .git-command-lab__rebase-file { font-size: 13px; }
   .git-command-lab__rebase-file code { padding: 8px 10px; }
 }
 .git-command-lab__btn:hover {
@@ -163,7 +163,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -217,7 +217,7 @@
   border-radius: 6px;
   overflow: hidden;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.45;
 }
 .git-command-lab__rebase-file code {
@@ -227,7 +227,7 @@
   padding: 6px 10px;
   background-color: #e6eaee;
   color: #5a6573;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
   border-bottom: 1px solid #d8dde2;
@@ -306,7 +306,7 @@ html.dark-mode .git-command-lab__rebase-file code {
   padding: 6px 14px 6px 11px;
   cursor: pointer;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   line-height: 1.2;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
@@ -324,7 +324,7 @@ html.dark-mode .git-command-lab__rebase-file code {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.git-command-lab__btn-back .git-command-lab__icon { font-size: 12px; }
+.git-command-lab__btn-back .git-command-lab__icon { font-size: 13px; }
 .git-command-lab__btn-back-label { font: inherit; }
 
 html.dark-mode .git-command-lab__btn-back {
@@ -365,7 +365,7 @@ html.dark-mode .git-command-lab__btn--restart:hover {
 .git-command-lab__step-progress {
   margin-top: 10px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
   font-variant-numeric: tabular-nums;
 }
@@ -519,7 +519,7 @@ html.dark-mode .git-command-lab-modal__close:hover { background-color: #2a323e; 
   background: #0d1117;
   color: #e6edf3;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.6;
   border-radius: 6px;
   border: 1px solid #30363d;

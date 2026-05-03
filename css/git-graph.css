@@ -355,7 +355,7 @@ html.dark-mode .post-content svg.git-graph-svg {
   gap: 8px;
   margin: 0 0 8px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.35;
   color: #1f2d3d;
   /* `min-height` is managed by js/git-graph.js (`_lockWorkbenchHeight`),
@@ -389,7 +389,7 @@ html.dark-mode .post-content svg.git-graph-svg {
 }
 .git-workbench-zone:last-child { border-right: none; }
 .git-workbench-zone-header {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -489,7 +489,7 @@ html.dark-mode .post-content svg.git-graph-svg {
   align-self: stretch;
 }
 .git-workbench-shelf-header {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;

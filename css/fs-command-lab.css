@@ -108,7 +108,7 @@ html.dark-mode .fs-command-lab text[font-style="italic"] {
   margin: 0;
   padding: 0 12px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.5;
   background-color: #f8f9fa;
   color: #1f2d3d;
@@ -143,7 +143,7 @@ html.dark-mode .fs-command-lab__output {
   border-radius: 999px;
   border: 1px solid;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   vertical-align: middle;
   white-space: nowrap;
@@ -169,7 +169,7 @@ html.dark-mode .fs-command-lab__exit--err {
   border-color: rgba(241, 148, 138, 0.3);
 }
 .fs-command-lab__exit-label { opacity: 0.75; font-weight: 500; }
-.fs-command-lab__exit-icon { font-size: 12px; line-height: 1; }
+.fs-command-lab__exit-icon { font-size: 13px; line-height: 1; }
 
 /* ----- Print layout: show Before | After side by side ----- */
 .fs-command-lab__print-pair { display: none; }
@@ -241,7 +241,7 @@ html.dark-mode .fs-command-lab__exit--err {
   padding: 7px 16px 7px 12px;
   cursor: pointer;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
@@ -260,7 +260,7 @@ html.dark-mode .fs-command-lab__exit--err {
 @media (max-width: 520px) {
   .fs-command-lab { padding: 12px 12px 10px; }
   .fs-command-lab__btn {
-    font-size: 12.5px;
+    font-size: 13.5px;
     padding: 6px 12px 6px 10px;
     border-radius: 14px;
   }
@@ -282,7 +282,7 @@ html.dark-mode .fs-command-lab__exit--err {
   justify-content: center;
   width: 16px;
   height: 16px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -351,7 +351,7 @@ html.dark-mode .fs-command-lab__exit--err {
   padding: 6px 14px 6px 11px;
   cursor: pointer;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   line-height: 1.2;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
@@ -369,7 +369,7 @@ html.dark-mode .fs-command-lab__exit--err {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.fs-command-lab__btn-back .fs-command-lab__icon { font-size: 12px; }
+.fs-command-lab__btn-back .fs-command-lab__icon { font-size: 13px; }
 .fs-command-lab__btn-back-label { font: inherit; }
 
 html.dark-mode .fs-command-lab__btn-back {
@@ -410,7 +410,7 @@ html.dark-mode .fs-command-lab__btn--restart:hover {
 .fs-command-lab__step-progress {
   margin-top: 10px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
   font-variant-numeric: tabular-nums;
 }

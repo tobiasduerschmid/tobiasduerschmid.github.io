@@ -447,13 +447,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
     padding: 2px 8px;
     border-radius: 4px;
     font-weight: 800;
-    font-size: 0.85em;
+    font-size: 0.95em;
     display: inline-block;
   }
 
   .optional-answer-note {
     margin-left: 8px;
-    font-size: 0.9em;
+    font-size: 0.95em;
     font-weight: 700;
     color: #555;
   }
@@ -515,27 +515,27 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
   /* ── Parsons Problem Styles ─────────────────────────────────────────── */
   .parsons-container { margin-top: 12px; }
-  .parsons-label { font-size: 0.85em; color: #555; margin-bottom: 8px; }
+  .parsons-label { font-size: 0.95em; color: #555; margin-bottom: 8px; }
   .parsons-bank, .parsons-target {
     min-height: 48px; padding: 8px; border-radius: 6px;
     display: flex; flex-direction: column; gap: 4px;
   }
   .parsons-bank { background: #f5f5f8; border: 1.5px dashed #6b7078; }
   .parsons-target { background: #f0f8f0; border: 2px dashed #2f7a2f; }
-  .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.8em; }
+  .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.95em; }
   .parsons-line {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 10px; background: #fff; border: 1px solid #767676; border-radius: 4px;
-    cursor: grab; font-size: 0.9em; transition: border-color 0.2s, background 0.2s;
+    cursor: grab; font-size: 0.95em; transition: border-color 0.2s, background 0.2s;
     user-select: none;
   }
   .parsons-line:hover { border-color: #2774AE; background: #e8f0ff; }
   .parsons-line.dragging { opacity: 0.4; }
   .parsons-line code {
-    font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.92em;
+    font-family: 'Fira Code', 'Consolas', monospace; font-size: 1em;
     white-space: pre; color: #333; background: transparent; padding: 0;
   }
-  .parsons-grip { color: #555; font-size: 12px; line-height: 1; flex-shrink: 0; }
+  .parsons-grip { color: #555; font-size: 14px; line-height: 1; flex-shrink: 0; }
   .parsons-line.parsons-correct { border-color: #1f7a35; background: #e6ffed; }
   .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
   .parsons-line.parsons-correct::before,
@@ -549,7 +549,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
   .parsons-check-btn, .parsons-reset-btn {
     padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;
-    font-size: 0.85em; font-weight: 600;
+    font-size: 0.95em; font-weight: 600;
   }
   .parsons-check-btn { background: #2774AE; color: white; }
   .parsons-check-btn:hover:not(:disabled) { background: #1d5d8a; }
@@ -579,7 +579,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   html.dark-mode .parsons-reset-btn:hover:not(:disabled) { background: #444; }
   /* Correct-answer display for parsons */
   .quiz-correct-answers code {
-    font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
+    font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.95em;
     background: #f0f0f5; padding: 1px 4px; border-radius: 2px;
   }
 

@@ -310,6 +310,7 @@ html, body {
 .tvm-uml-bottom-left-splitter:focus-visible {
   background: transparent;
   outline: none;
+  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 .tvm-uml-bottom-left-splitter::before {
   content: "";
@@ -589,6 +590,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-hsplitter:focus-visible {
   background: transparent;
   outline: none;
+  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 .tvm-hsplitter::before {
   content: "";
@@ -1305,6 +1307,7 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 .tvm-editor-pane-divider:focus-visible {
   background: transparent;
   outline: none;
+  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 .tvm-editor-pane-divider::before {
   content: "";
@@ -2129,6 +2132,7 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 .tvm-vsplitter:focus-visible {
   background: transparent;
   outline: none;
+  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 .tvm-vsplitter::before {
   content: "";
@@ -2709,6 +2713,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
 .tvm-http-splitter:focus-visible {
   background: transparent;
   outline: none;
+  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 .tvm-http-splitter::before {
   content: "";

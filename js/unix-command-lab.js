@@ -467,6 +467,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'unix-lab__btn';
+    btn.setAttribute('aria-pressed', 'false');
     var btnIcon = document.createElement('span');
     btnIcon.className = 'unix-lab__btn-icon';
     btnIcon.setAttribute('aria-hidden', 'true');
@@ -486,6 +487,9 @@
     // Outputs column. Before run: placeholder. After run: populated panels.
     var outCol = document.createElement('div');
     outCol.className = 'unix-lab__col unix-lab__col--out';
+    outCol.setAttribute('role', 'status');
+    outCol.setAttribute('aria-live', 'polite');
+    outCol.setAttribute('aria-atomic', 'false');
     pipeline.appendChild(outCol);
 
     var placeholder = document.createElement('div');
@@ -635,12 +639,14 @@
         btnIcon.textContent = '\u21BA';
         btnCmd.textContent = 'Reset';
         btn.classList.add('unix-lab__btn--reset');
+        btn.setAttribute('aria-pressed', 'true');
         if (predictInput) predictInput.readOnly = true;
       } else {
         clearOutputs();
         btnIcon.textContent = '\u25B6';
         btnCmd.textContent = spec.command;
         btn.classList.remove('unix-lab__btn--reset');
+        btn.setAttribute('aria-pressed', 'false');
         if (predictInput) predictInput.readOnly = false;
       }
     }
