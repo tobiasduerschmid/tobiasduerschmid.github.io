@@ -60,6 +60,30 @@ steps:
 
       The discipline is the same. The mechanics differ.
 
+      ### 🌳 Primer: what `getByRole` actually queries
+
+      Before you read the test, lock in this concept — every locator in the test below depends on it.
+
+      Every HTML element has an **implicit role** that the browser exposes to assistive technology (screen readers, voice control, etc.). The browser maintains a parallel tree — the **accessibility tree** — that mirrors the DOM but only contains semantically meaningful elements with their roles, names, and states.
+
+      | HTML | Implicit role | Accessible name source |
+      | --- | --- | --- |
+      | `<button>Save</button>` | `button` | the visible text "Save" |
+      | `<input type="text">` | `textbox` | a `<label for=...>` or `aria-label` |
+      | `<a href="...">Home</a>` | `link` | the visible link text |
+      | `<ul><li>X</li></ul>` | `list` containing `listitem` | (none — structural) |
+      | `<h2>Settings</h2>` | `heading` | the visible heading text |
+      | `<div onclick=...>Click me</div>` | (no role) | (no name) — invisible to screen readers |
+
+      **`page.getByRole('button', { name: /add todo/i })` queries this tree, not the DOM.** It says: "find the element with accessible role *button* whose accessible name matches the regex `/add todo/i`." The query doesn't care whether the button is `<button class="primary">`, `<button id="add">`, or wrapped in five `<div>`s — only the role and name.
+
+      Why this matters:
+      - **Locators stay stable across CSS refactors** — change the class, change the layout, the locator still works.
+      - **Locators break when accessibility breaks** — if a teammate replaces `<button>` with `<div onclick="...">`, the locator stops finding it. That's a *feature*, not a bug: the change made the page worse for screen-reader users, and the test failure surfaces that regression.
+      - **You're testing the same thing the user (and their assistive tech) sees** — not the same thing the React renderer happens to emit on a given day.
+
+      With that primer in mind, every `getByRole(...)` call below is a query against the accessibility tree.
+
       ### Read this test (don't run yet)
 
       ```javascript
@@ -77,8 +101,29 @@ steps:
 
       - `async ({ page }) => { … }` — every Playwright test is async. `page` is your handle to the browser tab.
       - `await` on every line — the browser is asynchronous. Without `await`, JavaScript races past the click before React's state has updated.
-      - `getByRole('button', { name: /add todo/i })` — finds the button **the way assistive tech finds it**: by its accessible name, not by its CSS class or DOM position.
+      - `getByRole('button', { name: /add todo/i })` — queries the accessibility tree (per the primer above) for a *button* with the accessible name "Add todo".
       - `await expect(...).toBeVisible()` — Playwright's web-first assertions **auto-wait and retry** until the condition holds (or the timeout expires). They're the right tool for asynchronous UI.
+
+      <details markdown="1"><summary>⚠️ Negative-transfer trap: this is *not* React Testing Library or Jest</summary>
+
+      If you've used **React Testing Library (RTL)** with Jest, the API looks deceptively similar — `getByRole`, `getByText`, `expect(...).toBeVisible()`. The methods have *the same names* but different machinery underneath:
+
+      | Comparison point | React Testing Library + Jest | Playwright |
+      | --- | --- | --- |
+      | What runs the test | jsdom (a fake DOM in Node) | a *real* Chromium browser |
+      | Render | React's renderer alone | the full app + bundler + browser |
+      | `getByRole(...)` | synchronous, returns immediately | returns a *locator* — async, retries |
+      | `expect(x).toBeVisible()` | synchronous Jest matcher | `await expect(locator).toBeVisible()` — async, auto-retries |
+      | A failing assertion | shows the rendered DOM | shows the failing accessibility tree + screenshot |
+      | Snapshot tests | common (`toMatchSnapshot`) | strongly discouraged for e2e — they brittle on every render |
+      | Deep render assertions | "the component received prop X" | not even possible — Playwright sees only what the user sees |
+
+      Three habits to retire before continuing:
+
+      1. **Never write `expect(await locator.isVisible()).toBe(true)`.** That looks like Jest, but it runs once and races. Always `await expect(locator).toBeVisible()` — Playwright's web-first form retries.
+      2. **Don't reach for snapshot matchers.** `toMatchSnapshot` works in Playwright but is the wrong tool for e2e — every refactor breaks the snapshot, even when the user-visible behavior is unchanged. Use `toHaveText`, `toHaveCount`, `toHaveURL` — assertions that mirror what the *user* would notice.
+      3. **Don't probe component internals.** "Was prop X passed?" "Is `useState` set to Y?" — those are unit-test concerns. Playwright sees what the browser renders. If a behavior isn't observable through the UI, it's not Playwright's job to verify.
+      </details>
 
       ### 🎬 Predict (in your head, before running)
 
@@ -1510,7 +1555,9 @@ steps:
 
       ### ▶ Run
 
-      Click **Test**.
+      Click **Test**. **You will see one ❌ red and one ✓ green** — that's the design of this step. Do **not** "fix" the red one by reverting the rename; the red is the *lesson*. If you see two greens, the rename didn't take effect (recheck `App.jsx`); if you see two reds, you broke something else (revert other changes and try again).
+
+      The gate below specifically asserts that `tests/css-locator.spec.js` is failing — passing the gate requires the css-locator test to be in its broken state.
 
       ### 🔍 Investigate
 
@@ -1660,6 +1707,15 @@ steps:
             'The Add todo button still has className=\"add-todo-btn\". Rename it to \"primary-btn\" as instructed.');
           assert(/className=['"]primary-btn['"]/.test(app),
             'Rename the button\'s className to \"primary-btn\".');
+
+      # Precondition: confirm the css-locator spec is unmodified (otherwise the
+      # `should_fail: true` below could pass for the wrong reason — student
+      # editing the test rather than experiencing the locator break).
+      - description: "The css-locator spec is unchanged (the test must still try to use .add-todo-btn, so the rename can break it)"
+        command: |
+          const spec = files['tests/css-locator.spec.js'] || '';
+          assert(/\.add-todo-btn/.test(spec),
+            'tests/css-locator.spec.js no longer references .add-todo-btn — did you change the test? The lesson is what happens when the **test** is brittle and the **app** changes; reverting the test cancels the lesson. Restore the original spec.');
 
       - description: "After the rename: the CSS-locator test fails (brittle — false alarm)"
         playwright:
@@ -2718,3 +2774,350 @@ steps:
             3: "Working backward from the assertion is good practice for AAA structure, but only after you know *what* to assert. The Spec Card answers that — its Oracle field is what you'll assert."
           explanation: |
             The Spec Card is the central artifact this tutorial built up to. Every test should start with one — even a small one written in 30 seconds. The cost of writing it is small; the cost of not writing it is the brittle/loose tests you've been learning to avoid.
+
+
+  # ==========================================================================
+  # STEP 8 — From-Scratch Capstone (Tutorial Hell escape hatch)
+  # Pedagogy:
+  #   PRIMM Make rung — student writes a complete Playwright test from
+  #     a Spec Card and an empty file (only the `import` line).
+  #   No stubs, no TODO comments, no per-line scaffold. Just behavior +
+  #     intent + an empty buffer.
+  #   This is the moment the training wheels come off. Every prior step
+  #     was Read / Predict / Modify; this is Make-from-scratch.
+  # ==========================================================================
+  - title: "From-Scratch Capstone: Write a Test From a Spec Card Alone"
+    instructions: |
+      > **Learning objective.** After this step you can write a complete Playwright test — `import` to closing `});` — given only a behavior spec and an empty file. This is the skill that distinguishes "I can fill in TODOs in a tutorial" from "I can write tests at work."
+
+      ### 🪜 The training wheels come off
+
+      Every previous step gave you something to start with: a stub, a TODO, a worked example sitting just above the box where you typed. **This step gives you nothing.** An empty file. A spec. Your judgment.
+
+      That's how it works at work — and that's the gap most Playwright tutorials never close. We're closing it here.
+
+      ### 📋 The spec — read carefully, don't skim
+
+      The Todo app from Step 7 supports marking items as **done**. The team has just added a small new spec promise:
+
+      > **Promise.** When *every* todo in the list is marked done, the remaining-count display reads `"0 items remaining"`, and **all the original todos remain visible** (done items are not deleted from the list).
+
+      Two specific user paths the team wants covered:
+
+      1. *Mark-all-then-check.* Add three todos. Mark all three as done. The count should read 0; all three items should still be in the list.
+      2. *Toggle-back-restores.* Add two todos. Mark both done. Then unmark one. The count should be 1; both items still in the list.
+
+      ### 🃏 Your Spec Card (write this BEFORE you write code — on paper or as a comment)
+
+      Fill in the five fields:
+
+      | Field | Example shape |
+      |---|---|
+      | **Behavior** | One sentence: what user-visible behavior are you proving? |
+      | **Should pass when** | List the implementation changes the test must *survive* (CSS class renames, button text tweaks, etc.) |
+      | **Required failures** | List the regressions the test must *catch* (count not decrementing, items deleted on done, etc.) |
+      | **Locator contract** | Which semantic queries (`getByRole`, `getByLabel`, etc.) — and *why* each one |
+      | **Oracle** | Per-promise: what assertion shape pins each promise at the right specificity? |
+
+      Once your Spec Card has all five fields, then open `tests/all-done.spec.js` and start typing. You will see only the `import` line; everything else is yours.
+
+      ### ✏️ Write the test
+
+      Open `tests/all-done.spec.js` (currently has only the import line). Write **two** tests covering the two user paths above. Both must:
+
+      - Use `getByRole` / `getByLabel` for every locator (no CSS classes, no XPath).
+      - Use `await expect(...)` for every assertion (no synchronous `expect(await locator.isVisible()).toBe(true)`).
+      - Match assertion specificity to spec specificity: the count number IS the contract, but the wording around it ("0 items remaining" vs "Nothing left to do") is not.
+
+      ### 📋 What the gates check
+
+      The gates below verify you wrote the test from scratch — the file will have:
+
+      - An `import` line for `test, expect`.
+      - Two `test('...', async ({ page }) => { … });` blocks.
+      - At least one `await page.goto(...)` per test.
+      - At least one `await expect(...)` per test.
+      - At least one `getByRole(...)` locator (proving you used the accessibility tree).
+      - And of course: both tests must actually pass against the running app.
+
+      Don't peek at Step 7's solution mid-task. The point of this step is not the answer; it's the *typing-from-blank* habit.
+
+    files:
+      - path: "src/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [items, setItems] = React.useState([]);
+            const [text, setText] = React.useState('');
+
+            function addTodo() {
+              const trimmed = text.trim();
+              if (!trimmed) return;
+              setItems([...items, { text: trimmed, done: false }]);
+              setText('');
+            }
+
+            function toggleDone(idx) {
+              setItems(items.map((item, i) =>
+                i === idx ? { ...item, done: !item.done } : item
+              ));
+            }
+
+            const remainingCount = items.filter((item) => !item.done).length;
+
+            return (
+              <main className="todo-shell">
+                <section className="todo-panel">
+                  <p className="eyebrow">Todo Lab — From-Scratch Capstone</p>
+                  <h1>Todo Lab</h1>
+
+                  <div className="todo-form">
+                    <label htmlFor="todo-input">Todo item</label>
+                    <div className="todo-row">
+                      <input
+                        id="todo-input"
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        placeholder="Buy milk"
+                      />
+                      <button onClick={addTodo}>Add todo</button>
+                    </div>
+                  </div>
+
+                  <p role="status" className="status-line">
+                    {remainingCount} items remaining
+                  </p>
+
+                  <ul aria-label="Todo list" className="todo-list">
+                    {items.map((item, idx) => (
+                      <li key={idx} className={item.done ? 'todo-done' : ''}>
+                        <button
+                          className="todo-toggle"
+                          onClick={() => toggleDone(idx)}
+                          aria-pressed={item.done}
+                        >
+                          {item.text}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </main>
+            );
+          }
+
+      - path: "src/main.jsx"
+        language: "javascript"
+        content: |
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+
+      - path: "src/styles.css"
+        language: "css"
+        content: |
+          body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
+          .todo-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px; }
+          .todo-panel { width: min(100%, 560px); background: white; border: 1px solid #d9dee8; border-radius: 8px; padding: 28px; box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08); }
+          .eyebrow { margin: 0 0 8px; color: #4b5563; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+          h1 { margin: 0 0 24px; font-size: 2rem; }
+          label { display: block; margin-bottom: 8px; font-weight: 700; }
+          .todo-row { display: flex; gap: 10px; }
+          input { flex: 1; min-width: 0; background: white; color: #1f2937; border: 1px solid #b8c0cc; border-radius: 6px; padding: 10px 12px; font: inherit; }
+          .todo-row > button { border: 0; border-radius: 6px; padding: 10px 14px; background: #2563eb; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+          .status-line { margin: 18px 0 0; color: #4b5563; font-weight: 600; }
+          .todo-list { margin: 12px 0 0; padding-left: 0; list-style: none; }
+          .todo-list li { margin: 8px 0; }
+          .todo-toggle { width: 100%; text-align: left; background: transparent; border: 1px solid #d9dee8; border-radius: 6px; padding: 10px 12px; font: inherit; cursor: pointer; }
+          .todo-toggle[aria-pressed="true"] { background: #ecfdf5; border-color: #10b981; }
+          .todo-done .todo-toggle { text-decoration: line-through; color: #6b7280; }
+          [data-bs-theme="dark"] body { background: #1c2533; color: #e6edf3; }
+          [data-bs-theme="dark"] .todo-panel { background: #232a36; border-color: #2a323e; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); }
+          [data-bs-theme="dark"] .eyebrow { color: #9ca3af; }
+          [data-bs-theme="dark"] input { background: #2a323e; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] input::placeholder { color: #6b7280; }
+          [data-bs-theme="dark"] .todo-row > button { background: #3b82f6; }
+          [data-bs-theme="dark"] .todo-toggle { background: transparent; color: #e6edf3; border-color: #3a4351; }
+          [data-bs-theme="dark"] .todo-toggle[aria-pressed="true"] { background: #064e3b; border-color: #10b981; }
+
+      - path: "tests/all-done.spec.js"
+        language: "javascript"
+        content: |
+          import { test, expect } from '@playwright/test';
+
+          // ─────────────────────────────────────────────────────────────
+          // From-scratch capstone. Two tests, both written by you, both
+          // following the spec at the top of the step. No TODOs, no stubs.
+          //
+          // Spec recap (write this as a comment block before each test):
+          //   Promise: marking all todos done makes the count read 0,
+          //            and all items remain visible.
+          //   Path 1:  add 3 todos, mark all 3 done, expect count = 0
+          //            and 3 listitems still visible.
+          //   Path 2:  add 2 todos, mark both done, unmark one,
+          //            expect count = 1, both listitems visible.
+          // ─────────────────────────────────────────────────────────────
+
+    open_file: "tests/all-done.spec.js"
+
+    solution:
+      files:
+        - path: "tests/all-done.spec.js"
+          language: "javascript"
+          content: |
+            import { test, expect } from '@playwright/test';
+
+            test('marking every todo done shows count 0 and keeps all items visible', async ({ page }) => {
+              await page.goto('/');
+
+              for (const t of ['Milk', 'Bread', 'Eggs']) {
+                await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+                await page.getByRole('button', { name: /add todo/i }).click();
+              }
+
+              for (const t of ['Milk', 'Bread', 'Eggs']) {
+                await page.getByRole('button', { name: t }).click();
+              }
+
+              await expect(page.getByRole('status')).toContainText('0');
+              await expect(page.getByRole('listitem')).toHaveCount(3);
+            });
+
+            test('unmarking one todo restores the count to 1, both items still visible', async ({ page }) => {
+              await page.goto('/');
+
+              for (const t of ['Milk', 'Bread']) {
+                await page.getByRole('textbox', { name: /todo item/i }).fill(t);
+                await page.getByRole('button', { name: /add todo/i }).click();
+              }
+
+              const milkToggle = page.getByRole('button', { name: 'Milk' });
+              const breadToggle = page.getByRole('button', { name: 'Bread' });
+
+              await milkToggle.click();
+              await breadToggle.click();
+              await milkToggle.click();   // un-mark Milk
+
+              await expect(page.getByRole('status')).toContainText('1');
+              await expect(page.getByRole('listitem')).toHaveCount(2);
+              await expect(milkToggle).toHaveAttribute('aria-pressed', 'false');
+              await expect(breadToggle).toHaveAttribute('aria-pressed', 'true');
+            });
+      explanation: |
+        Two tests, two promises, no scaffolding. Notice every choice the Spec Card forced you to commit to: semantic locators (`getByRole` everywhere), per-promise specificity (`toContainText('0')` for the count — the *number* is the contract, the wording around it isn't; `toHaveCount` for "items still in the list" — exact count IS the contract), and the use of `aria-pressed` to verify the toggle state semantically rather than via `.todo-done` class.
+
+        If you wrote a test that pins the count to the literal string `"0 items remaining"`, your test passes today but breaks when product changes the wording to "Nothing left to do" — over-specified. If you wrote `toBeVisible()` on the listitems instead of `toHaveCount(3)`, your test passes when 3 items become 1 — under-specified. The Spec Card was the tool that made each of those choices visible *before* you typed.
+
+    tests:
+      - description: "tests/all-done.spec.js exists and has the import line"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          assert(/import\s*\{\s*test\s*,\s*expect\s*\}\s+from\s+['"]@playwright\/test['"]/.test(spec),
+            'tests/all-done.spec.js needs the import line: `import { test, expect } from \'@playwright/test\';`. Don\\'t delete the existing one.');
+
+      - description: "You wrote two tests from scratch — neither name overlaps with the Step 7 fixtures"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          // Count test('...') invocations
+          const matches = spec.match(/^\s*test\s*\(\s*['"]/gm) || [];
+          assert(matches.length >= 2,
+            'Write at least two tests in tests/all-done.spec.js (one per user path in the spec). Got ' + matches.length + '.');
+
+      - description: "Every test in your file uses semantic locators (`getByRole`, `getByLabel`, or `getByText`) — no CSS-class locators"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          assert(/getByRole|getByLabel|getByText/.test(spec),
+            'Use semantic locators (getByRole / getByLabel / getByText). The whole tutorial built toward this — falling back to CSS-class locators here defeats the purpose.');
+          // Reject CSS-class locators in the from-scratch tests.
+          if (/\.locator\s*\(\s*['"]\./.test(spec) && !/\.locator\s*\(\s*['"]:/.test(spec)) {
+            throw new Error('Found a CSS-class locator (`.locator(\".something\")`) in tests/all-done.spec.js. Step 5 covered why those are brittle. Use getByRole instead.');
+          }
+
+      - description: "Every assertion uses the web-first `await expect(...)` form (no synchronous expect-await-isVisible)"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          assert(/await\s+expect\s*\(/.test(spec),
+            'Every assertion should be `await expect(locator).toX(...)`. The web-first form auto-waits and retries.');
+          // Reject the canonical anti-pattern.
+          if (/expect\s*\(\s*await\s+[^)]*\.isVisible\s*\(\s*\)\s*\)\s*\.toBe\s*\(/.test(spec)) {
+            throw new Error('Anti-pattern: `expect(await x.isVisible()).toBe(true)`. That looks like Jest but runs once and races. Use `await expect(x).toBeVisible()`.');
+          }
+
+      - description: "Each test navigates the page (await page.goto) before interacting"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          // Find each test block and assert it contains a goto.
+          const tests = spec.split(/\btest\s*\(/).slice(1);
+          tests.forEach((body, i) => {
+            // Extract just this test's body (until the next 'test(' or end-of-file)
+            assert(/await\s+page\.goto\s*\(/.test(body),
+              `Test #${i + 1} doesn't call \`await page.goto(...)\`. Every Playwright test needs to navigate before interacting.`);
+          });
+
+      - description: "Each test contains at least one `await expect(...)` assertion"
+        command: |
+          const spec = files['tests/all-done.spec.js'] || '';
+          const tests = spec.split(/\btest\s*\(/).slice(1);
+          tests.forEach((body, i) => {
+            assert(/await\s+expect\s*\(/.test(body),
+              `Test #${i + 1} has no await-expect assertion. A test that asserts nothing proves nothing.`);
+          });
+
+      - description: "Both tests pass against the live app"
+        playwright:
+          enabled: true
+          test_files:
+            - "tests/all-done.spec.js"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "If your tests fail, run them and read the actual failure. Don't guess. Compare the failure to your prediction (you wrote one in the Spec Card, right?). The gap is the lesson."
+          - title: "Layer 2 — strategy"
+            text: "Most likely failure: assertion specificity wrong. If `toHaveText('0 items remaining')` failed because the count is `0` and the actual rendered text is `0 items remaining` (with leading zero, etc.) — switch to `toContainText('0')`. The number is the contract; the surrounding wording isn't."
+            condition: "output_contains: AssertionError"
+          - title: "Layer 3 — locator skeleton"
+            text: |
+              Each toggle is a button whose accessible name is the todo's text:
+              ```js
+              const milkToggle = page.getByRole('button', { name: 'Milk' });
+              await milkToggle.click();
+              await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
+              ```
+              The status (`role="status"` in the JSX) gives you the count — query it with `page.getByRole('status')` and `toContainText`.
+            condition: "code_missing: getByRole"
+
+    quiz:
+      title: "From-Scratch Capstone — Reflection"
+      min_score: 0.5
+      shuffle: false
+      questions:
+
+        - question: |
+            You finished writing the tests from scratch. Looking back at the *full sequence* of this tutorial — Steps 1–7 building scaffolding, Step 8 removing it — which is the most accurate description of why the from-scratch step was necessary?
+          type: single
+          options:
+            - "The from-scratch step is just for assessment — to grade whether you mastered the prior steps"
+            - "Without writing a complete test from a blank file at least once, you never confront the *blank-file problem* — choosing where to start, what to assert, what locators to use — which is exactly the moment most engineers freeze in real work"
+            - "It's a tradition in tutorials; not all of them include it"
+            - "It's there to make the tutorial feel more like a real exam"
+          correct_index: 1
+          option_feedback:
+            0: "Assessment is a side effect, not the main goal. The main goal is to *fill the gap between guided exercises and real-work performance* — which only the empty-file experience does."
+            2: "It's not a tradition — it's a structural fix for the canonical \"Tutorial Hell\" problem (CS-tutorial-design literature). Many tutorials skip it; this one didn't, deliberately."
+            3: "Exam vibes aren't the goal. The from-scratch step exists because the literature on programming pedagogy is unambiguous: students who only ever fill in TODOs in tutorials freeze when given a blank file at work."
+          explanation: |
+            The blank-file moment is the one most tutorials miss. By writing a complete test from a Spec Card alone — `import` to closing `});` — you've crossed the gap that scaffolded exercises can't cross for you. Everything you wrote is the same shape as the tests you'd write at work; the difference is, you wrote them yourself.
+
+        - question: |
+            What's the single most useful artifact you produced in this step?
+          type: single
+          options:
+            - "The two passing tests"
+            - "The Spec Card you filled in *before* writing the tests — that's the artifact you'll reuse on every test you write at work"
+            - "The locator queries"
+            - "The assertion patterns"
+          correct_index: 1
+          option_feedback:
+            0: "The tests are the *output*. The Spec Card is the *method* that produced them. The output is one feature; the method scales to every feature you'll ever test."
+            2: "Locator queries are tactics, not strategy. Without the Spec Card to drive *which* locator to use, you're guessing each time."
+            3: "Assertion patterns are tactics. The Spec Card decides which assertion pattern fits which promise — that's the higher-order skill."
+          explanation: |
+            Tests are downstream of decisions. The Spec Card is the upstream artifact that made every decision visible *before* you typed. Carry the habit. On your first job's first PR, the difference between writing a brittle test and a robust one is whether you wrote the Spec Card before opening the test file.

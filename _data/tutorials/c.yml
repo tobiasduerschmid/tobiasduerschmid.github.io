@@ -64,13 +64,24 @@ steps:
 
       ### ✏️ Predict before you compile
 
-      Before running `gcc`, write down (in a comment in `hello.c`, or on paper):
+      Look at the four `printf` calls in `hello.c`. Each ends with `\n`. **Mentally delete the `\n` from the third line's printf** — so it reads `printf("Just you, raw memory, and a compiler.");` (no `\n`).
 
-      1. *How many lines* of output will you see?
-      2. *What's the first character* of the first line? (Don't peek at the program output — read the format strings.)
-      3. *Why does each `printf` end with `\n`?* What would happen without it?
+      Now predict: when you compile and run that modified version, **what would the output look like?** Pick one:
 
-      Commit to your three answers, *then* compile and run. The point isn't to be right; it's to lock in expectations so you can compare prediction vs. reality. Good engineers do this every time.
+      - (a) Identical to the original — `printf` always adds an implicit newline.
+      - (b) Lines 3 and 4 collapse onto a single line — output ends with `Just you, raw memory, and a compiler.Let's go.`
+      - (c) Line 3 disappears entirely — without `\n`, `printf` doesn't flush.
+      - (d) Compile error — `printf` requires every string to end with `\n`.
+
+      Commit to a letter on paper. *Then* compile the original and read the actual output. (The next exercise won't ask you to actually delete the `\n` — this is a thought experiment.)
+
+      <details markdown="1"><summary>⚠️ Open after you've committed to an answer</summary>
+
+      The answer is **(b)**. C's `printf` writes exactly the bytes you give it — no implicit newline, no implicit flush rule based on string content. Lines 3 and 4 would collapse: `Just you, raw memory, and a compiler.Let's go.` This is the C++→C trap to lock in early: in C, **every `\n` is something *you* explicitly wrote**. Coming from `cout << x << endl;` it's easy to forget that `endl` was doing two things — newline *and* flush — and that `printf` does neither for you automatically.
+
+      Why does this matter? Forgetting `\n` is the #1 reason "my program ran but I didn't see any output" — output sits in stdout's line-buffer, never flushed before the program exits, vanished. We'll meet `fflush(stdout)` properly in Step 3 when we mix `printf` with `scanf`.
+
+      </details>
 
     files:
       - path: "c_project/hello.c"
@@ -524,18 +535,19 @@ steps:
           explanation: "fgets reads at most `size - 1` characters, reserving the last byte for `\\0`. So `fgets(buf, 20, stdin)` reads at most 19 characters. This is what makes it safe — unlike scanf, it respects the buffer boundary."
 
         - question: |
-            **Arrange** the lines to safely read a username (max 50 chars) and print a greeting.
+            **Arrange** the lines to safely read a *city name* (max 30 chars), strip its trailing newline, and print it back as `City: <name>`. The pattern is the same as `input_lab.c` — but you must transfer it to a new buffer name, a new size, and a different output format.
           type: parsons
           lines:
-            - "char username[50];"
-            - "printf(\"Enter name: \");"
-            - "fgets(username, sizeof(username), stdin);"
-            - "strip_newline(username);"
-            - "printf(\"Hello, %s!\\n\", username);"
+            - "char city[30];"
+            - "printf(\"Enter city: \");"
+            - "fgets(city, sizeof(city), stdin);"
+            - "strip_newline(city);"
+            - "printf(\"City: %s\\n\", city);"
           distractors:
-            - "scanf(\"%s\", username);"
-            - "gets(username);"
-          explanation: "Declare the buffer first, prompt the user, read safely with `fgets` (which limits input to `sizeof(username) - 1` chars), strip the trailing newline that `fgets` includes, then print. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely."
+            - "scanf(\"%s\", city);"
+            - "gets(city);"
+            - "char city[1000];"
+          explanation: "Declare a buffer with a sensible bound (30 chars covers most real city names — bigger isn't always better; oversized buffers waste stack and don't fix the safety issue), prompt, read safely with `fgets` (which limits input to `sizeof(city) - 1` chars), strip the trailing newline that `fgets` includes, then print with the format the question asked for. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely. `char city[1000]` would also work but it's not a *fix* — even a 1000-char buffer can be overflowed; the right defense is fgets-with-sizeof, not just larger buffers."
 
         - question: "**[Interleaved: Revisit Step 2]** What does `printf(\"%05d\", 42)` print?"
           options:
@@ -1085,7 +1097,7 @@ steps:
 
       If your C++ habit is "`struct` and `class` are basically the same", *unlearn it for C*:
 
-      | | C++ `struct` | C++ `class` | C `struct` |
+      | Comparison point | C++ `struct` | C++ `class` | C `struct` |
       |---|---|---|---|
       | Default access | `public` | `private` | (no concept of access at all) |
       | Methods | yes | yes | **no** |
@@ -2306,6 +2318,10 @@ steps:
 
       **This is supposed to be hard.** If you get stuck, that doesn't mean you're not cut out for C — it means you're fighting the boss, not the tutorial. Go back and re-read the specific step that covers the concept you're struggling with. Every power you need is already in your toolkit. The challenge is wielding them all at once.
 
+      ### ⚠️ Negative-transfer trap: in C++ you'd just `#include <list>`
+
+      In C++ you'd reach for `std::list<int>` (doubly-linked) or `std::forward_list<int>` (singly-linked) and the standard library would handle every memory bug for you — `push_back`, `pop_front`, the destructor, the works. The C standard library has *none of that.* No `list.h`, no built-in container. **Every linked-list operation in C is hand-rolled** — you write the struct, the malloc, the traversal, the free, and the bug fixes when one of those goes sideways. That's why this is the capstone: it's the moment the C++ training wheels come off.
+
       **Why linked lists are the ultimate pointer test:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
 
       | Error Category | % of Students Who Make It |
@@ -2335,6 +2351,25 @@ steps:
       ```
 
       Note: For recursive (self-referencing) structs, you **must** name the struct (`struct Node`) and use `struct Node *next` inside — because `Node` (the typedef) isn't defined yet at that point.
+
+      ### ✏️ Predict warm-up — trace 3 nodes by hand before you compile
+
+      Before you write a single line of `node_create`, work through this on paper. The point is to load the data structure into your head so you're *coding from a model*, not flailing.
+
+      Imagine the user enters `Enter count: 3`, then values `10, 20, 30`. After all three insertions, draw:
+
+      1. **Three boxes**, one per node, each labeled with `value` and `next`.
+      2. **Arrows** for every `next` pointer (where does node 1's `next` point? Node 3's?).
+      3. **Two outside arrows**: one labeled `head`, one labeled `tail`. Where do they point?
+
+      Now answer (commit to a number):
+
+      - How many `malloc(sizeof(Node))` calls happen total?
+      - How many `free(...)` calls must happen during cleanup?
+      - In `list_free`, the `curr` pointer takes how many distinct values during the walk? (Hint: it visits every node exactly once, plus one terminal value.)
+      - When `list_print` prints node 3, what does `curr->next` equal? What stops the loop?
+
+      Once you have these numbers, *then* start coding `node_create` / `list_print` / `list_free`. The implementation almost writes itself once the picture is clear. Without the picture, every implementation move is guesswork — and guesswork is why 70% of students hit use-after-free.
 
       ### Example Run
 

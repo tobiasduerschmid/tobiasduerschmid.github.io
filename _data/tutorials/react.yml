@@ -83,7 +83,7 @@ steps:
       **CSS** (Cascading Style Sheets) controls how elements look — colors, spacing, fonts, borders, and layout. A CSS **class** is a reusable set of styles that you apply to elements by name:
 
       ```css
-      .greeting { color: tomato; font-size: 24px; }
+      .greeting { color: #e45b45; font-size: 24px; }
       ```
 
       In React, you attach a CSS class with the `className` prop (not `class` — that is a reserved JavaScript keyword):
@@ -107,7 +107,7 @@ steps:
       The preview shows a greeting component. Make two changes:
 
       1. In `App.jsx`: Change `"World"` to another name in the `name` variable
-      2. In `styles.css`: Change the color from `tomato` to `#2774AE` (or any other color)
+      2. In `styles.css`: Change the color from `#e45b45` to `#2774AE` (or any other color)
 
       The preview rebuilds automatically when you save (Ctrl+S). Use **↻ Refresh** if needed.
 
@@ -115,7 +115,7 @@ steps:
       - path: "step1/styles.css"
         content: |
           .greeting {
-            color: tomato;        /* Task 2: Change this color */
+            color: #e45b45;       /* Task 2: Change this color */
           }
         language: "css"
 
@@ -150,7 +150,7 @@ steps:
         - path: "step1/styles.css"
           content: |
             .greeting {
-              color: #2774AE; /* Changed from tomato */
+                  color: #2774AE; /* Changed from the starter color */
             }
           language: "css"
         - path: "step1/App.jsx"
@@ -174,7 +174,7 @@ steps:
           language: "jsx"
       explanation: |
         - **Test 1 — heading no longer says "World":** The test reads the `<h1>` from the live DOM and checks `h1.textContent.trim() !== 'Hello, World!'`. Any name other than `"World"` passes.
-        - **Test 2 — color changed in CSS:** The test uses `getComputedStyle(h1).color` and checks it is not `rgb(255, 99, 71)` (tomato). Changing the color in `styles.css` to `#2774AE`, `blue`, or any other valid CSS color passes.
+        - **Test 2 — color changed in CSS:** The test uses `getComputedStyle(h1).color` and checks it is not `rgb(228, 91, 69)` (`#e45b45`). Changing the color in `styles.css` to `#2774AE`, `blue`, or any other valid CSS color passes.
         - **Declarative model:** You changed the `name` variable and the CSS color — not DOM nodes. React re-renders the component, builds a new Virtual DOM tree, diffs it against the old one, and patches only what changed in the real DOM.
 
     tests:
@@ -187,16 +187,16 @@ steps:
         hints:
           - text: "Look for the line that says `const name = \"World\"`. What would happen if you changed the string on the right side of the `=`?"
             condition: "code_contains: World"
-      - description: "The heading color is not 'tomato'"
+      - description: "The heading color is not the starter color"
         command: |
           var h1 = frame.contentDocument.querySelector('h1');
           assert(h1, 'No <h1> found');
           var color = getComputedStyle(h1).color;
-          assert(color !== 'rgb(255, 99, 71)' && color !== 'tomato',
-            'Change the color in styles.css to something other than "tomato"');
+          assert(color !== 'rgb(228, 91, 69)' && color.toLowerCase() !== '#e45b45',
+            'Change the color in styles.css to something other than "#e45b45"');
         hints:
           - text: "Switch to the **styles.css** file tab. Find the `.greeting` rule — what CSS property controls text color?"
-            condition: "code_contains: tomato"
+            condition: "code_contains: #e45b45"
 
     quiz:
       title: "Hello, React! — Knowledge Check"

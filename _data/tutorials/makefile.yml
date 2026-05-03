@@ -43,9 +43,15 @@ steps:
       1. Open `math.c` in the editor.
       2. Fix the missing semicolon at the end of the `return` statement.
       3. Save the file.
-      4. Go back to the terminal and **re-type** (or press Up arrow) that entire `gcc` command to try compiling again.
+      4. Go back to the terminal and **re-type the entire `gcc` command from scratch** (don't shortcut with Up arrow on this attempt — feel the friction of typing all three filenames again).
 
       Notice what just happened: to fix **one file**, you had to recompile **all three**. `gcc` has no memory — it blindly reprocesses everything you hand it. In a 500-file project, fixing a single typo means a minutes-long recompile of every untouched file. We need a smarter tool.
+
+      <details markdown="1"><summary>📖 Yes, you can press Up arrow next time</summary>
+
+      Real shells let you scroll through history with the Up arrow. We made you re-type the command on purpose — the typing time *is* the lesson. In real projects, the typing time per command is small but the *recompile* time per command is huge, and the recompile time is what makes manual builds untenable. Once you've felt that, use Up arrow / `Ctrl-R` / shell aliases as much as you like.
+
+      </details>
 
     files:
       - path: "make_project/main.c"
@@ -306,18 +312,26 @@ steps:
             3: "Prerequisites can appear in any order — Make builds a dependency graph from them, not a sorted list. Ordering matters only when *you* care about it (e.g., to control link order)."
           explanation: "A rule is `target: prerequisites` followed by a recipe on the next line. The recipe must use a literal Tab. Prerequisites can be in any order — Make builds a dependency graph from them."
 
-        - question: "The command `sed -i 's/^    /\\t/' Makefile` is used to fix the Tab Trap. What does the `s/^    /\\t/` part mean?"
+        - question: |
+            A teammate's editor uses **2-space** indentation, so their Makefile recipes start with 2 spaces instead of 4. They run the `sed` command from this step verbatim:
+
+            ```bash
+            sed -i 's/^    /\t/' Makefile
+            ```
+
+            What happens, and why?
+          type: single
           options:
-            - "Search for four spaces anywhere in the line and replace all occurrences with a tab"
-            - "Replace the four leading spaces at the start of a line (`^`) with a real tab character"
-            - "Delete four-space-indented lines from the file"
-            - "Append a tab character after every line that starts with four spaces"
+            - "It silently inserts a Tab and the build now works"
+            - "It does nothing — the regex matches 4 leading spaces, but the file has 2 — and Make still complains about `missing separator`"
+            - "Sed errors out because the file doesn't match the pattern"
+            - "It doubles each leading space, producing 4 spaces, then a Tab"
           correct_index: 1
           option_feedback:
-            0: "Without the `^` anchor, that's what would happen — but `^` restricts the match to the *start* of the line. So only leading spaces match, not embedded ones."
-            2: "`s/.../.../` is *substitute*, not delete. The line itself stays; only the matched pattern is replaced. The `d` command would delete lines."
-            3: "`s/x/y/` *replaces* `x` with `y`. To append, you'd write `s/x/x y/`. Substitute is in-place replacement, not insertion."
-          explanation: "`sed`'s `s/pattern/replacement/` syntax substitutes the pattern with the replacement. `^` anchors the match to the **start of the line**, so only leading spaces are replaced — not spaces that appear elsewhere on the line. `\\t` is the escape sequence for a real Tab character. The `-i` flag makes the edit in-place."
+            0: "The substitution only fires on lines that *match the pattern*. 2 leading spaces ≠ 4 leading spaces — sed leaves those lines alone, and Make still rejects the indentation."
+            2: "Sed doesn't error when the pattern doesn't match — it just doesn't substitute. No-match-means-no-change is sed's default mode (use the `q` flag to make it complain)."
+            3: "Sed's substitute does *replacement*, not multiplication. Without a match, no change."
+          explanation: "The pattern `^    ` (four leading spaces) is *literally* four spaces. If the editor used a different indentation width, the pattern doesn't match. Two fixes: (1) widen the regex to `^ +` (one or more leading spaces), or (2) use a more robust tool like `expand --tabs=4 -i Makefile | sed 's/^    /\\t/'`. The general lesson: a fix tied to a specific indentation width is brittle — better to detect the actual leading whitespace and replace it with a Tab regardless of count."
 
   # --------------------------------------------------------------------------
   # STEP 3: The "DRY" Refactor — Variables
@@ -730,18 +744,25 @@ steps:
             3: "Missing source files are reported as 'No rule to make target' at execution time. 'missing separator' is a parser-level error, not an I/O one."
           explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
 
-        - question: "**[Interleaved: Revisit Step 2]** What invisible character is **required** at the start of every recipe line in a Makefile?"
+        - question: |
+            **[Interleaved: Revisit Step 2]** Pattern rules use the same `target: prerequisites` structure you learned in Step 2. In the rule below, identify the **target**, the **prerequisites**, and the **recipe**:
+
+            ```make
+            %.o: %.c %.h
+            	$(CC) $(CFLAGS) -c $< -o $@
+            ```
+          type: single
           options:
-            - "4 spaces"
-            - "8 spaces"
-            - "A Tab character"
-            - "A semicolon"
-          correct_index: 2
+            - "Target: `%.c %.h` · Prerequisites: `%.o` · Recipe: the line below"
+            - "Target: `%.o` · Prerequisites: `%.c %.h` · Recipe: the line below"
+            - "Target: `$@` · Prerequisites: `$<` · Recipe: `$(CC) $(CFLAGS) -c`"
+            - "Target: the whole rule · Prerequisites: the colon · Recipe: the variables"
+          correct_index: 1
           option_feedback:
-            0: "Spaces (any count — 4, 8, 1) all fail. Make's parser specifically wants a Tab character."
-            1: "Same as above — Make doesn't accept spaces of any width. It checks for the Tab byte (`\\t`) explicitly."
-            3: "Semicolons separate commands *within* a recipe line, but the recipe line itself is identified by its leading Tab."
-          explanation: "As you discovered in Step 2, the 'Tab Trap' is real! Make strictly requires a literal Tab character to identify recipe lines. Spaces will cause a 'missing separator' error."
+            0: "Reversed. The **target** sits to the *left* of the colon — that's `%.o`. Prerequisites sit to the *right*."
+            2: "`$@` and `$<` are *automatic variables* that *expand to* the target and first prerequisite at recipe-execution time — but the target *itself* (in the rule header) is `%.o`, not `$@`."
+            3: "The colon doesn't change roles between simple rules and pattern rules — it's still the divider. Target on the left, prerequisites on the right, recipe indented below."
+          explanation: "Step 2's rule structure (`target: prerequisites` / Tab + recipe) is unchanged in pattern rules — only the name on either side becomes a wildcard (`%`). `%.o: %.c %.h` says 'to build any `.o`, the matching `.c` AND the matching `.h` must both exist.' Adding `%.h` is also how you'd tell Make about the header dependency we covered in the footgun callout in Step 5."
 
   # --------------------------------------------------------------------------
   # STEP 5: Proving the Magic of the DAG
@@ -1071,7 +1092,7 @@ steps:
         - "make clean"
         - "make"
       explanation: |
-        No file edits are required for this step — it is a review and summary.
+        This step is a review — the canonical solution shows the complete Makefile from Steps 1–6 in its final form. The tests below verify your work from previous steps is still intact.
 
         - This Makefile demonstrates every concept from the tutorial in 10 lines:
           - **Variables (`CC`, `CFLAGS`, `OBJS`):** DRY principle — change the compiler or flags in one place.
@@ -1091,3 +1112,19 @@ steps:
         | Automatic variables `$@`, `$<`, `$^` | No filename repetition in recipes |
         | Timestamp-based DAG | Incremental builds — only recompiles what changed |
         | `.PHONY` | Non-file targets always run, even if a same-named file exists |
+
+    tests:
+      - description: "Your Makefile contains every concept from the tutorial: variables, $(OBJS), pattern rule, automatic variable, .PHONY"
+        command: |
+          cd /tutorial/make_project
+          # Variables (CC, CFLAGS) from Step 3
+          grep -q 'CC *=' Makefile || { echo "Missing CC variable (Step 3 work seems lost)."; exit 1; }
+          grep -q 'CFLAGS *=' Makefile || { echo "Missing CFLAGS variable (Step 3)."; exit 1; }
+          # OBJS + pattern rule + automatic variables from Step 4
+          grep -q 'OBJS *=' Makefile || { echo "Missing OBJS variable (Step 4)."; exit 1; }
+          grep -qP '%\.o.*:.*%\.c' Makefile || { echo "Missing pattern rule %.o: %.c (Step 4)."; exit 1; }
+          grep -qP '\$[<^@]' Makefile || { echo "No automatic variable found (Step 4)."; exit 1; }
+          # .PHONY clean from Step 6
+          grep -q '\.PHONY:.*clean' Makefile || { echo "Missing .PHONY: clean (Step 6)."; exit 1; }
+      - description: "The full build still works (`make clean && make` produces an `app` binary)"
+        command: "cd /tutorial/make_project && make clean >/dev/null 2>&1 && make >/dev/null 2>&1 && [ -f app ]"

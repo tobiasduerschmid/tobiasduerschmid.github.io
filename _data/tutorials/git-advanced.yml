@@ -2298,6 +2298,17 @@ steps:
     # Add the reworded final commit
     - "echo '# done iterating' >> calculator.py && git add calculator.py && git commit -m 'Refactor: cleanup notes and placeholder'"
     explanation: |
+      > ⚠️ **Note on this automated solution.** The `commands` above *rebuild the
+      > same end state* the interactive rebase produces — they do NOT replay
+      > the `rebase -i` motion the step is teaching. If you click "Show
+      > solution" and run these commands, you'll pass the gates without ever
+      > experiencing the interactive todo-list editor. **For the lesson to
+      > stick, redo the step by hand** with `GIT_SEQUENCE_EDITOR="sed -i …"
+      > git rebase -i HEAD~N` (or open the todo list in your real editor).
+      > The Tutorial-runtime can't replicate mid-flow editor edits inside an
+      > automated solution, so we rebuild the end state — but that shortcut
+      > skips the verb you came here to learn.
+
       - **`git rebase -i HEAD~N`:** opens the todo list for the last N commits. You mark each with one of six core verbs (`pick`, `reword`, `squash`, `fixup`, `edit`, `drop`); two more (`break`, `exec`) exist for advanced workflows — see `git help rebase`.
       - **`squash` vs `fixup`:** both meld with the previous commit. `squash` combines messages (editor opens); `fixup` silently drops the squashed commit's message. Use `fixup` for tiny typos, `squash` when the message has information worth keeping.
       - **`drop`:** deletes the commit from history. Useful for removing accidentally-committed secrets, debug prints, or experiments that did not pan out. The dropped commit remains in reflog for recovery.
@@ -2971,6 +2982,35 @@ steps:
 
     </details>
 
+    <details markdown="1"><summary>⚠️ Submodule URL drift — the year-three nightmare</summary>
+
+    The `url = …` line in `.gitmodules` is *plain text*, committed once,
+    forgotten forever. Then someone in the wider community moves the
+    submodule:
+
+    - the upstream repo migrates from GitHub to GitLab,
+    - the org renames itself,
+    - the maintainer transfers ownership,
+    - the SaaS shuts down (RIP `gitorious`),
+    - or the corporate VPN restricts access to a different mirror URL.
+
+    Three years later, *your* `.gitmodules` still points at the old URL.
+    A new teammate runs `git clone --recursive` and gets a
+    `repository not found` error. Some teammates patched their `.gitmodules`
+    locally (now their local file disagrees with `origin`); others used
+    `git config --global url.<new>.insteadOf <old>` to silently rewrite
+    the URL in their checkout. Result: a single repo with three different
+    submodule URLs in the wild, and no one quite remembers which one is
+    canonical.
+
+    **This is "submodule URL drift."** Fix early: when a submodule moves,
+    open a PR that updates `.gitmodules`, run `git submodule sync` (which
+    propagates the new URL into each clone's `.git/config`), and tell
+    everyone to `git submodule sync && git submodule update`. Skipping
+    this is how submodule setups become unmaintainable.
+
+    </details>
+
     Inspect the gitlink:
 
     ```bash
@@ -3415,8 +3455,15 @@ steps:
     ```bash
     git switch -c update-halve 2>/dev/null || git switch update-halve
     git log --oneline -2
-    # git push -u origin update-halve   # real push would succeed now
+    git push -u origin update-halve              # ← uncommented: this *actually* runs
+    git log --oneline origin/update-halve -2     # confirm the remote saw it
     ```
+
+    The submodule's `origin` is a real local bare clone in this VM
+    (`/tutorial/math-utils.git`), so `git push` to it works just like a real
+    network remote — same protocol, same arguments, same surprise on detached
+    HEAD if you forget to `switch -c` first. Try it: the push only succeeds
+    after you've moved off detached HEAD.
 
     Back in outer:
 
@@ -3818,10 +3865,40 @@ steps:
     command: cd /tutorial/myproject && git log main --oneline | grep -qiE 'fix|capstone|absolute|negation'
     hints:
     - text: 'After fixing `absolute`, commit on a branch, then merge or squash-merge to main with a message that mentions the fix.'
-  - description: 'Exactly one fix commit landed on main (not 2+ WIP commits visible on main)'
-    command: cd /tutorial/myproject && [ $(git log main --oneline | grep -ciE '^[a-f0-9]+ (WIP|wip)') -eq 0 ]
+  - description: 'Exactly one fix commit landed on main since the bisect baseline (no WIP/iteration commits leaked)'
+    command: |
+      cd /tutorial/myproject
+      # Find the bisect baseline: the BUG commit ('Capstone: simplify absolute…').
+      bug_sha=$(git log main --oneline | grep -i 'simplify absolute' | head -1 | awk '{print $1}')
+      if [ -z "$bug_sha" ]; then
+        echo "Couldn't locate the bisect baseline commit ('Capstone: simplify absolute...'). Did setup_commands run?"
+        exit 1
+      fi
+      # Count commits on main strictly newer than the bug commit.
+      new_count=$(git log "${bug_sha}..main" --oneline | wc -l | tr -d ' ')
+      if [ "$new_count" -eq 0 ]; then
+        echo "No new commits on main after the bug. You haven't landed the fix yet."
+        exit 1
+      fi
+      if [ "$new_count" -gt 1 ]; then
+        echo "Found $new_count new commits on main after the bug commit. The capstone wants exactly ONE clean fix commit landed on main — not the iteration history."
+        echo "Collapse into one: 'git rebase -i' + 'squash', or 'git merge --squash' + commit, or land via squash-merge."
+        echo
+        echo "What landed:"
+        git log "${bug_sha}..main" --oneline
+        exit 1
+      fi
+      # Negative: also reject 'WIP'/'wip'/'oops'/'tweak'/'try'/'temp' as the message of that single commit.
+      msg=$(git log -1 main --pretty=%s)
+      if echo "$msg" | grep -qiE '^\s*(wip|oops|tweak|try|temp|update|junk|iter)\b'; then
+        echo "The single commit on main has a vague message: '$msg'. The capstone wants a *meaningful* fix commit (e.g., 'Fix: restore negation in absolute'). Reword it: 'git commit --amend' if it's the tip, or 'git rebase -i' to reword."
+        exit 1
+      fi
     hints:
-    - text: 'WIP commits landed on `main`. Collapse into one: `rebase -i` + `squash`, or `git merge --squash` + commit. Either way, one clean fix commit.'
+    - text: 'Multiple commits or a vague-message commit landed on `main`. Collapse into one with `rebase -i` + `squash` (or `git merge --squash` + commit). The single commit must mention the fix (e.g., contains "fix", "absolute", or "negation"), not just "WIP" or "tweak".'
+      condition: 'output_contains: Found'
+    - text: 'No new commit on main yet — fix `absolute`, commit, and either merge or squash-merge it onto `main`.'
+      condition: 'output_contains: No new commits'
   - description: 'The in-progress clamp note survived the session (still in working tree, uncommitted)'
     command: "cd /tutorial/myproject && grep -q 'TODO: add clamp helper' calculator.py && ! git log main --oneline | grep -qi 'clamp'"
     hints:

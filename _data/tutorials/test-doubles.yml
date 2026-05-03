@@ -635,13 +635,32 @@ steps:
           source = open('/tutorial/test_quest_service.py').read()
           assert 'FILL_IN_HERE' not in source, \
               "Replace `\"FILL_IN_HERE\"` in test_thursday_picks_thursday_quest with the exact title the SUT should return. Read the spec and the canned API data — what's the Thursday quest?"
-      - description: "The Thursday assertion pins exactly the right title"
+      - description: "The Thursday assertion pins exactly the right title — using `==`, not a weak substring oracle"
         command: |
+          import re
           source = open('/tutorial/test_quest_service.py').read()
-          # The Thursday quest in the canned data is "Battle the Lich King".
+          if 'def test_thursday_picks_thursday_quest' not in source:
+              raise AssertionError("Couldn't find test_thursday_picks_thursday_quest. Did you rename it?")
           body = source.split('def test_thursday_picks_thursday_quest')[1].split('def ')[0]
-          assert '"Battle the Lich King"' in body or "'Battle the Lich King'" in body, \
-              "The assertion should pin the exact Thursday title from the canned API data: \"Battle the Lich King\". The clock is frozen to a Thursday and that's the only Thursday entry in the canned quest list."
+
+          # Catch the "Liar test" trap — `assert "Battle the Lich King" in str(...)`
+          # passes for many wrong return values. Step 2's whole point is that the
+          # assertion *shape* matters, not just the string.
+          if re.search(r'in\s+str\s*\(', body) or re.search(r'"Battle the Lich King"\s+in\s+', body):
+              raise AssertionError(
+                  "Your assertion uses a substring check (`in str(...)` or `\"...\" in ...`). "
+                  "That's a *weak oracle* — it would pass if the SUT returned 'Battle the Lich King 2' "
+                  "or '... has been Battle the Lich King-d ...'. Use `==` for an exact match: "
+                  "`assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`."
+              )
+
+          # Strong oracle: the assertion uses == and pins the exact title.
+          if not re.search(r"daily_quest_title\([^)]*\)\s*==\s*['\"]Battle the Lich King['\"]", body):
+              raise AssertionError(
+                  "The assertion should pin the exact Thursday title using `==`: "
+                  "`assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`. "
+                  "(The clock is frozen to a Thursday and that's the only Thursday entry in the canned quest list.)"
+              )
       - description: "Both tests pass"
         command: |
           import pytest, io, sys
@@ -749,6 +768,33 @@ steps:
             consistent stateful behavior across multiple calls (add → fetch →
             update → fetch again, etc.). Step 6's decision guide covers when
             each fits.
+
+        - question: |
+            **Pick the right tool for the test.**
+
+            Your `notify_user(user_id)` function calls `email_gateway.send(user_id, "Welcome")` and returns nothing. The test must verify that **the email was sent to user `"u1"` exactly once with the welcome subject**. The real `email_gateway.send` actually delivers an email — you cannot run it in tests.
+
+            Which test double is the right tool? (One choice from Step 1's vocabulary table.)
+          type: single
+          options:
+            - "Stub — return a canned value to drive the SUT down a partition"
+            - "Spy — replace `email_gateway.send` and assert on the recorded calls afterward"
+            - "Fake — write a working in-memory email gateway"
+            - "No double — just call the real `email_gateway.send` and check the inbox"
+          correct_index: 1
+          option_feedback:
+            0: "A stub returns canned *inputs* to drive the SUT. But here `email_gateway.send` doesn't return anything that the SUT branches on — the SUT calls it for *side effect*, not for a return value. The test cares whether the call *happened*, which is a spy's job."
+            2: "A Fake is overkill — there's no stateful behavior to simulate, just a single fire-and-forget call. Fakes are for SUTs that interact with the collaborator multiple times and expect consistent state (Step 2's discussion of stubs vs. fakes)."
+            3: "Hitting the real gateway breaks the test's determinism (a real email is sent on every run) and slows the suite to a crawl. Tests must not have observable side effects on production systems."
+          explanation: |
+            **Spy.** When the SUT calls a collaborator for *side effect* (no meaningful return value the SUT acts on), the test needs to *record the call* and assert on it afterward — that's the spy role. Skeleton:
+            ```python
+            def test_welcomes_new_user():
+                spy = SpyEmailGateway()
+                notify_user("u1", gateway=spy)
+                assert spy.calls == [("u1", "Welcome")]
+            ```
+            Compare the wrong choices: a stub answers a question the SUT asked; a fake provides a working alternate; the real one sends a real email. Step 3 will show you how to hand-roll spies of this exact shape.
 
 
   # --------------------------------------------------------------------------
@@ -1094,8 +1140,19 @@ steps:
           - title: "Small nudge — streak bonus"
             text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
             condition: "code_missing: 50"
-          - title: "Almost-spoiler — both fills"
-            text: "Liar comment: `# Liar test / weak oracle — len(...) >= 0 is always true, so this passes regardless of behavior.`\n\nStreak assertion: `assert spy.calls == [(\"u2\", 50)]` (5 days * 10 gold = 50, below the 100 cap)."
+          - title: "Almost-spoiler — skeleton (you fill in the numbers)"
+            text: |
+              Liar comment template:
+              ```python
+              # Liar test / weak oracle — len(...) >= ___ is always true,
+              # so this passes regardless of behavior.
+              ```
+
+              Streak assertion skeleton:
+              ```python
+              assert spy.calls == [("___", ___)]
+              ```
+              Compute the second value from the spec: *N days × M gold per day*, but never above the cap.
             condition: "code_missing: spy.calls == ["
 
     quiz:
@@ -1460,6 +1517,35 @@ steps:
               "test_d still has `ValueError` — replace it with the exception class the SUT actually catches. Read `daily_quest_title` in quest_service.py: which exception does its `except` clause name?"
           assert re.search(r'side_effect\s*=\s*ConnectionError', body), \
               "Set `api.fetch_quests.side_effect = ConnectionError`. The SUT's daily_quest_title catches ConnectionError specifically — using any other exception class will cause the SUT to re-raise rather than returning 'No quests today'."
+
+      - description: "test_c plays the spy role correctly — it asserts the SUT *called* the collaborator (not just that pytest is happy)"
+        command: |
+          import re
+          source = open('/tutorial/test_quest_service.py').read()
+          if 'def test_c_mock_as_spy' not in source:
+              raise AssertionError("Couldn't find test_c_mock_as_spy. Did you rename it?")
+          body = source.split('def test_c_mock_as_spy')[1].split('def ')[0]
+
+          # The spy role REQUIRES verifying a call happened. Without an assert_called_*
+          # assertion, the test is a fake-spy — it would pass even if the SUT never
+          # touched the collaborator.
+          if not re.search(r'assert_called_once_with|assert_called_with|assert_called\(\)|call_count\s*==', body):
+              raise AssertionError(
+                  "test_c is supposed to verify the SUT *called* api.fetch_quests with the right args — "
+                  "that's the spy role. Add an assertion like `api.fetch_quests.assert_called_once_with(\"u1\")`. "
+                  "Without a call-verification assertion, the test passes whether or not the SUT actually used the collaborator — "
+                  "and that defeats the entire point of using a Mock here."
+              )
+
+          # Defensive guard against `assert True` / `pass` shortcut: every spy test
+          # must contain at least one assertion (the call-verification covers this,
+          # but flagged explicitly so the error message is clear).
+          if not re.search(r'\bassert(_|\s)', body):
+              raise AssertionError(
+                  "test_c has no assertion at all. The spy role still needs a verification — "
+                  "use one of `assert_called_once_with`, `assert_called_with`, or `call_count == N`."
+              )
+
       - description: "All four tests pass"
         command: |
           import pytest, io, sys
@@ -2408,8 +2494,18 @@ steps:
           - title: "Small nudge — scenarios"
             text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter."
             condition: "code_missing: adapter"
-          - title: "Almost-spoiler — scenarios"
-            text: "1: `\"no_double\"`, 2: `\"stub\"`, 3: `\"mock\"`, 4: `\"fake\"`, 5: `\"adapter\"`."
+          - title: "Almost-spoiler — skeleton (the categories, in order)"
+            text: |
+              You'll classify five scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
+
+              - `"no_double"` — the collaborator is a pure function (no I/O, no state). Use the real one.
+              - `"stub"` — the test only needs the collaborator to *return* a canned value (or raise).
+              - `"spy"` — the test needs to verify the collaborator *was called* (with what args).
+              - `"mock"` — same as spy but with up-front behavior expectations (Meszaros-strict sense).
+              - `"fake"` — the test needs the collaborator to behave like a real one but cheaper (e.g., in-memory DB).
+              - `"adapter"` — the collaborator is a third-party library you don't own; wrap it, then mock the wrapper.
+
+              Now read each scenario and pick the smallest tool that does the job. Don't reach for the answer key — work through the rubric.
             condition: "code_missing: adapter"
 
     quiz:

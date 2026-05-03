@@ -296,6 +296,34 @@ steps:
           explanation: |
             SQL tables are **multisets** (bags), not sets. `SELECT major FROM students` returns one row per source row, including all duplicates. To collapse duplicates, write `SELECT DISTINCT major FROM students`. To count distinct majors, write `SELECT COUNT(DISTINCT major) FROM students` — `COUNT(*)` would return 9 (the row count), not 4.
 
+        - question: |
+            Two teammates need every column from `students` for a debugging session. **Alice** writes:
+
+            ```sql
+            SELECT * FROM students;
+            ```
+
+            **Bob** writes:
+
+            ```sql
+            SELECT id, name, year, major, gpa FROM students;
+            ```
+
+            Both queries return identical results today. **Six months later**, the team adds a new column `phone_number` to `students` and a new column `ssn` later still. Whose code ages better — and why?
+          type: single
+          options:
+            - "Alice's — `SELECT *` automatically adapts to schema changes"
+            - "Bob's — explicit columns isolate his code from accidental data leaks (PII like `ssn`) and from breaking when downstream code expects exactly 5 columns"
+            - "Tie — both forms are equivalent; SQL's optimizer flattens any difference"
+            - "Alice's — fewer characters means smaller network payloads and faster execution"
+          correct_index: 1
+          option_feedback:
+            0: "*That's the bug, not the feature.* Alice's code starts returning `phone_number` and later `ssn` to every caller. If any caller wasn't expecting them — log files, JSON exports, downstream services — Alice has just created a privacy incident."
+            2: "Optimizers can't read your *intent*. Both queries have identical execution plans *today*, but they have very different consequences when the schema evolves. Choose explicit columns at write time."
+            3: "Network payload differences are negligible compared to the maintenance and security cost. Production codebases ban `SELECT *` from non-exploratory code precisely because of the schema-evolution risk."
+          explanation: |
+            **`SELECT *` is fine for *exploration* and dangerous in *production*.** When the schema changes, Alice's downstream code starts receiving columns it never asked for — most commonly leaking PII (`ssn`, `phone_number`) into logs/exports, but also breaking code that expects a specific column count. Bob's explicit list is **self-documenting** (it says exactly what the caller depends on) and **change-isolating** (a new column doesn't silently propagate). The trade-off — three extra seconds of typing — is what makes seasoned engineers refuse `SELECT *` in code review every time.
+
   # --------------------------------------------------------------------------
   # STEP 2: JOIN — combining rows from two tables
   # Pedagogy: Threshold concept (set-based combination). PRIMM. Lean syntax:
@@ -1565,8 +1593,8 @@ steps:
           -- For each statement: predict, preview with a commented SELECT, then fix.
 
           -- 1. Intended: raise Kiwi's GPA to 3.6.
-          --    Targets the wrong student. A second trap hides here too:
-          --    drop the WHERE clause and every student ends up at 3.6.
+          --    Read this UPDATE carefully. Does it actually do what the comment promises?
+          --    Preview by running a SELECT with the same WHERE clause first.
           UPDATE students SET gpa = 3.6 WHERE name = 'Mango';
 
           -- 2. Intended: delete all year-4 students.
@@ -1846,9 +1874,24 @@ steps:
 
       ### Predict before you run
 
-      Before you submit your query: **how many rows do you expect back?** Write the answer down (commit to a number) — then run. The dean's filter is "year ≥ 2 with at least 2 such students per major." Look at the data: 9 students, 4 majors, year column populated for every row. Which majors meet *both* conditions?
+      Before you submit your query, work this out by hand:
 
-      A correct query returns exactly **2 rows**. If your query returns 0, your filters are too aggressive (over-restricted). If it returns 3+, you're missing one of the filters. Predicting *before* running converts a vague "did it work?" into a sharp "does my number match?"
+      1. **Open the data.** The students table has 9 rows. Walk through every student's `year` and `major`. Tally per major: how many year-2-or-above students does each major have?
+      2. **Apply the dean's filter** ("year ≥ 2 *and* COUNT(*) ≥ 2 per major"). Cross out any major that doesn't meet both conditions.
+      3. **Now commit (on paper) to all three:**
+         - The exact **number of rows** your query will return.
+         - The **major** that appears in row 1 (highest avg GPA).
+         - The **major** that appears in row 2.
+
+      Then run. The fastest way to know whether your query is correct isn't "does it run?" — it's "does it return *exactly the row count, ordering, and majors I predicted?*" If your number matches but the majors are wrong, your `ORDER BY` direction is reversed. If the count is off by one, your `HAVING` threshold is wrong. Predicting *before* running converts a vague "looks fine" into a sharp diagnostic.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed to all three answers</summary>
+
+      Two majors qualify: **CS** (Mango 3.9, Bananito 3.7, Coconick 3.4 → year≥2 count is 3, avg ≈ 3.67) and **Math** (Watermelina 3.6, Grapenzo 3.5 → year≥2 count is 2, avg = 3.55). Engineering and the NULL-major student fail one filter each. Sorted highest-first: CS, then Math.
+
+      If your prediction matched, great — your mental model of the data + the filters + the ordering is solid. If it didn't, *that's the lesson*: pin down which step (counting / filtering / sorting / averaging) was wrong before you debug the SQL. The query is downstream of the model.
+
+      </details>
 
     files:
       - path: "final.sql"
