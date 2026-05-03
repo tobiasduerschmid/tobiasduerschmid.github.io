@@ -389,7 +389,7 @@ html.dark-mode .post-content svg.git-graph-svg {
 }
 .git-workbench-zone:last-child { border-right: none; }
 .git-workbench-zone-header {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -489,7 +489,7 @@ html.dark-mode .post-content svg.git-graph-svg {
   align-self: stretch;
 }
 .git-workbench-shelf-header {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;

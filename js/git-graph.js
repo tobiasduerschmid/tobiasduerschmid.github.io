@@ -770,7 +770,7 @@
   // the raw 40-char hash (which was always length 40 and never matched before).
   function _hashDisplay(shortHash) {
     var big = shortHash.length <= 2;
-    return { text: shortHash, fontSize: big ? 18 : 11, dy: big ? 7 : 5 };
+    return { text: shortHash, fontSize: big ? 18 : 12, dy: big ? 7 : 5 };
   }
 
   function _normalizeFileEntry(entry) {
