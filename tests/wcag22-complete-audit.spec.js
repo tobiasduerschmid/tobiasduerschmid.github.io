@@ -172,10 +172,10 @@ for (const [id] of WCAG_22_AA) {
 test.describe.configure({ mode: 'serial' });
 // Each page now does six passes (custom DOM light + dark, axe light + dark,
 // keyboard-driven focus walk, mobile reload at 320px), so a ~150-page sweep
-// runs roughly 30–60 min. Default 75 min for FULL_SWEEP; allow override for
+// runs roughly 30–90 min. Default 120 min for FULL_SWEEP; allow override for
 // slower runners via WCAG_AUDIT_TIMEOUT_MS.
 const AUDIT_TIMEOUT_MS = Number(process.env.WCAG_AUDIT_TIMEOUT_MS)
-  || (FULL_SWEEP ? 75 * 60 * 1000 : 5 * 60 * 1000);
+  || (FULL_SWEEP ? 120 * 60 * 1000 : 5 * 60 * 1000);
 test.setTimeout(AUDIT_TIMEOUT_MS);
 
 test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
