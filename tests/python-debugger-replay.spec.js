@@ -105,6 +105,52 @@ async function waitForTutorialReady(page) {
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
+async function loadDebuggerFile(page, filename, code) {
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  await page.evaluate(async ({ filename, code }) => {
+    const tutorial = window._tutorial;
+    tutorial.loadStep(5);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    tutorial.openFile(filename, code, 'python');
+    tutorial._setActiveFile(filename);
+
+    const ctl = tutorial._debuggerCtl;
+    ctl.breakpoints = new Map();
+    ctl.persistBreakpoints();
+    ctl.refreshBpDecorations();
+  }, { filename, code });
+}
+
+async function breakpointHitboxPoint(page, line, xOffset = 0) {
+  return page.evaluate(({ line, xOffset }) => {
+    const editor = window._tutorial.editor;
+    const dom = editor.getDomNode();
+    const root = dom.closest('.tvm-container, .ttp-wrap, .tpp-wrap') || dom;
+    const rootStyle = getComputedStyle(root);
+    const offset = parseFloat(rootStyle.getPropertyValue('--tvm-debug-breakpoint-offset')) || 22;
+    const dotSize = 16;
+    const marginEl = dom.querySelector('.glyph-margin') || dom.querySelector('.margin-view-overlays .cgmr');
+    const gutterLeft = marginEl
+      ? marginEl.getBoundingClientRect().left
+      : dom.getBoundingClientRect().left + (editor.getLayoutInfo().glyphMarginLeft || 0);
+    const pos = editor.getScrolledVisiblePosition({ lineNumber: line, column: 1 });
+    const editorRect = dom.getBoundingClientRect();
+    return {
+      x: gutterLeft + offset + (dotSize / 2) + xOffset,
+      y: editorRect.top + pos.top + Math.max(12, pos.height / 2),
+    };
+  }, { line, xOffset });
+}
+
+async function codeBreakpointLines(page, filename) {
+  return page.evaluate((filename) => {
+    const ctl = window._tutorial._debuggerCtl;
+    const path = ctl.normalizeBreakpointPath(filename);
+    return Array.from(ctl.breakpoints.get(path)?.keys() || []).sort((a, b) => a - b);
+  }, filename);
+}
+
 async function prepareDebuggerAtBreakpoint(page, breakpointLine) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
@@ -456,6 +502,27 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(light.chevronBreakpointImage).not.toContain('%23000000');
       expect(light.chevronBreakpointImage).not.toContain('stroke=\"%23000');
       expect(dark).toEqual(light);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('breakpoint hitbox is centered on the visible gutter dot', async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      await loadDebuggerFile(page, 'hitbox.py', 'total = 0\nfor i in range(3):\n    total += i\nprint(total)\n');
+
+      const center = await breakpointHitboxPoint(page, 3);
+      await page.mouse.click(center.x, center.y);
+      expect(await codeBreakpointLines(page, 'hitbox.py')).toEqual([3]);
+
+      const rightEdge = await breakpointHitboxPoint(page, 3, 13);
+      await page.mouse.click(rightEdge.x, rightEdge.y);
+      expect(await codeBreakpointLines(page, 'hitbox.py')).toEqual([]);
+
+      const leftEdge = await breakpointHitboxPoint(page, 3, -13);
+      await page.mouse.click(leftEdge.x, leftEdge.y);
+      expect(await codeBreakpointLines(page, 'hitbox.py')).toEqual([3]);
     } finally {
       await page.close();
     }

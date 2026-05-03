@@ -2260,18 +2260,26 @@
   // ===========================================================================
   DebuggerController.prototype.installGutterClickHandler = function () {
     var self = this;
+    var breakpointMouseHit = window.SEBookDebuggerEditor && window.SEBookDebuggerEditor.breakpointMouseHit;
     var hookEditor = function (editor) {
       if (!editor) return;
       editor.onMouseDown(function (e) {
-        if (!e.target || e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
-        var line = e.target.position && e.target.position.lineNumber;
-        if (!line) return;
+        var hit = breakpointMouseHit ? breakpointMouseHit(editor, e) : null;
+        if (!hit && !breakpointMouseHit &&
+            e.target && e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+          var fallbackLine = e.target.position && e.target.position.lineNumber;
+          if (fallbackLine) {
+            hit = { line: fallbackLine, rightButton: !!(e.event && e.event.rightButton) };
+          }
+        }
+        if (!hit) return;
         var filename = self.activeFileForEditor(editor);
         if (!filename) return;
-        if (e.event && e.event.rightButton) {
-          self.editBreakpointCondition(filename, line);
+        if (e.event && e.event.preventDefault) e.event.preventDefault();
+        if (hit.rightButton) {
+          self.editBreakpointCondition(filename, hit.line);
         } else {
-          self.toggleBreakpoint(filename, line);
+          self.toggleBreakpoint(filename, hit.line);
         }
       });
     };

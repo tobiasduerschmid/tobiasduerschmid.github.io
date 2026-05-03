@@ -694,6 +694,10 @@ messages on the BroadcastChannel and re-renders accordingly.
   (rename, extract, inline) used by the refactoring tutorials.
 - **`js/debugger/*.js`** — time-travel debugger: `sync.js`,
   `ui-render.js`, `editor-attach.js`, `main.js`, `worker-extension.js`.
+  Breakpoint gutter clicks use `editor-attach.js`'s shared hitbox helper,
+  which centers the pointer target on the visible Monaco breakpoint dot and
+  is reused by the main editor and popout editors; keep that math aligned
+  with the glyph-offset CSS variables in `js/debugger/debugger.css`.
 - **Backend workers** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `js/playwright-compat/runner.js` (in-browser Playwright for React),

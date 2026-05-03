@@ -31,6 +31,47 @@
 (function () {
   'use strict';
 
+  function getBreakpointMouseHit(editor, e) {
+    if (!editor || !e || !e.target || !e.target.position) return null;
+    var line = e.target.position.lineNumber;
+    if (!line) return null;
+
+    var mouseEvent = e.event || {};
+    var browserEvent = mouseEvent.browserEvent || mouseEvent;
+    var clientX = typeof browserEvent.clientX === 'number'
+      ? browserEvent.clientX
+      : (typeof mouseEvent.posx === 'number' ? mouseEvent.posx : null);
+    if (clientX == null) return null;
+
+    var dom = editor.getDomNode && editor.getDomNode();
+    if (!dom) return null;
+    var root = dom.closest?.('.tvm-container, .ttp-wrap, .tpp-wrap') || dom;
+    var rootStyle = window.getComputedStyle(root);
+    var offset = parseFloat(rootStyle.getPropertyValue('--tvm-debug-breakpoint-offset')) || 22;
+    var dotSize = 16;
+    var minHit = 30;
+    var marginEl = dom.querySelector('.glyph-margin') || dom.querySelector('.margin-view-overlays .cgmr');
+    var gutterLeft;
+
+    if (marginEl) {
+      gutterLeft = marginEl.getBoundingClientRect().left;
+    } else {
+      var layout = editor.getLayoutInfo ? editor.getLayoutInfo() : {};
+      var rect = dom.getBoundingClientRect();
+      gutterLeft = rect.left + (layout.glyphMarginLeft || 0);
+    }
+
+    var centerX = gutterLeft + offset + (dotSize / 2);
+    if (clientX < centerX - (minHit / 2) || clientX > centerX + (minHit / 2)) {
+      return null;
+    }
+
+    return {
+      line: line,
+      rightButton: !!(mouseEvent.rightButton || browserEvent.button === 2),
+    };
+  }
+
   function attachDebuggerToEditor(editor, sync, opts) {
     if (!editor || !sync) return { dispose: function () {} };
     opts = opts || {};
@@ -87,17 +128,17 @@
 
     // ── Gutter click → toggleBreakpoint / editBreakpointCondition ─────────
     var clickD = editor.onMouseDown(function (e) {
-      if (!e.target || e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
-      var line = e.target.position && e.target.position.lineNumber;
-      if (!line) return;
+      var hit = getBreakpointMouseHit(editor, e);
+      if (!hit) return;
       var fname = getActiveFile();
       if (!fname) return;
       var path = normalizePath(fname);
       if (!path) return;
-      if (e.event && e.event.rightButton) {
-        sync.dispatch({ type: 'editBreakpointCondition', path: path, line: line });
+      if (e.event && e.event.preventDefault) e.event.preventDefault();
+      if (hit.rightButton) {
+        sync.dispatch({ type: 'editBreakpointCondition', path: path, line: hit.line });
       } else {
-        sync.dispatch({ type: 'toggleBreakpoint', path: path, line: line });
+        sync.dispatch({ type: 'toggleBreakpoint', path: path, line: hit.line });
       }
     });
     disposers.push(function () { try { clickD.dispose(); } catch (e) {} });
@@ -350,6 +391,7 @@
 
   window.SEBookDebuggerEditor = {
     attach: attachDebuggerToEditor,
+    breakpointMouseHit: getBreakpointMouseHit,
     registerHoverProvider: registerHoverProvider,
     resolveVar: resolveVar,
   };
