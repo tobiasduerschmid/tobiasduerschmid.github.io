@@ -1,6 +1,14 @@
 title: "Code Smells & Refactoring — A Music Streaming App"
 description: "Identify smells in real Python code and apply named refactorings safely. The first refactoring you do by hand to anchor the safety dance; the rest you drive with Monaco's tool support so you can spend your time thinking instead of typing. Tests stay green throughout. Live UML class diagrams make the structural change visible. Built around a music streaming codebase you incrementally clean up over ten steps."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Identify common code smells (duplicated code, long methods, long parameter lists, feature envy, god classes, boolean traps, deep conditional nesting)."
+  - "Apply named refactorings (Extract Function, Move Method, Extract Class, Replace Conditional with Polymorphism, Introduce Parameter Object) safely while keeping tests green."
+  - "Use Monaco's refactoring tool support (extract / rename / inline) instead of error-prone hand edits."
+  - "Read live UML class diagrams to verify a refactoring preserved behavior while changing structure."
+  - "Evaluate where to invest refactoring effort using hotspot analysis and the Boy Scout Rule."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true

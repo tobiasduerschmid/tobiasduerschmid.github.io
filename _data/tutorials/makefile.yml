@@ -1,6 +1,14 @@
 title: "Makefiles: From Pain to Power (C Edition)"
 description: "Learn how to write Makefiles, understand dependency graphs, and automate your C builds through hands-on practice in an interactive terminal."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Explain why running `gcc` by hand on every change is wasteful, and what dependency tracking gives you."
+  - "Apply Makefile rule syntax (target / prerequisites / recipe) and recognize the Tab Trap."
+  - "Refactor a verbose Makefile to use variables, automatic variables (`$@`, `$<`, `$^`), pattern rules, and `OBJS`."
+  - "Predict whether `make` will rebuild a given target based on timestamps."
+  - "Use `.PHONY` to mark non-file targets like `clean`."
+
 require_tests: true
 autosave_type: none
 
@@ -105,6 +113,10 @@ steps:
             - "The output binary must always be named `a.out`"
             - "gcc requires files to be listed in alphabetical order"
           correct_index: 1
+          option_feedback:
+            0: "gcc compiles however many files you list — there's no built-in limit. The pain isn't capacity; it's that gcc has no memory of what changed since last time."
+            2: "`-o app` overrides the default. `a.out` is what you'd get *without* `-o`, but you can name the binary anything. The pain isn't naming."
+            3: "There's no alphabetical rule. gcc compiles in the order you list. The pain is rebuilding *all* of them every time."
           explanation: "gcc has no memory — it blindly reprocesses every file you hand it. Fix one file? It still recompiles all three. In large projects, this means minutes-long rebuilds for single-line changes."
 
         - question: "In a 500-file C project, you fix a typo in one file and rerun the same gcc command. How many files does gcc recompile?"
@@ -114,6 +126,10 @@ steps:
             - "All 500 files"
             - "None — gcc auto-detects unchanged files"
           correct_index: 2
+          option_feedback:
+            0: "That's what a smart build tool would do. gcc itself has no idea which files changed — it compiles every file you list, every run."
+            1: "That's what `make` (or another dependency tracker) does. gcc has no view of `#include` graphs across the build; it just compiles what's on the command line."
+            3: "gcc has no auto-detection. That's the whole reason `make` exists — to add the change-detection layer gcc lacks."
           explanation: "gcc has no dependency tracking. It processes every file you list, every time. This is the core pain point that build tools like Make solve."
 
         - question: "What key capability does Make have that raw gcc does NOT?"
@@ -123,6 +139,10 @@ steps:
             - "Tracking which files changed since the last build"
             - "Compiling faster using parallel threads"
           correct_index: 2
+          option_feedback:
+            0: "Both gcc and Make catch syntax errors at compile time — Make just orchestrates calls to gcc. Syntax checking belongs to the compiler."
+            1: "Library downloading is a package manager's job (apt, brew, vcpkg, conan). Make runs commands you've written; it doesn't fetch dependencies."
+            3: "Make can run jobs in parallel (`make -j`), but that's a bonus. Even with `-j 1`, Make's superpower — timestamp-based skipping — still applies."
           explanation: "Make tracks file modification timestamps (and a dependency graph) to determine which targets are out of date. It only rebuilds what's actually needed."
 
   # --------------------------------------------------------------------------
@@ -225,6 +245,10 @@ steps:
             - "The shell command(s) that create the target"
             - "A comment block describing what the rule does"
           correct_index: 2
+          option_feedback:
+            0: "That's the *target* — what's to the left of the colon. The recipe is the shell command beneath."
+            1: "Those are the *prerequisites* — what's to the right of the colon. The recipe is the indented shell line beneath."
+            3: "Comments in Makefiles start with `#` and aren't part of the rule structure. The recipe is executable shell, not documentation."
           explanation: "A Makefile rule has three parts: `target: prerequisites` on the first line, then the **recipe** (the shell command) indented on the next line. The recipe is what actually runs to produce the target."
 
         - question: "What error does Make print when recipe lines use spaces instead of a real Tab character?"
@@ -234,6 +258,10 @@ steps:
             - "command not found"
             - "permission denied"
           correct_index: 1
+          option_feedback:
+            0: "Segfaults come from runtime memory bugs, not a parser disagreeing with you about indentation. Make never gets to running anything; the file rejects parsing first."
+            2: "That's a shell error you'd get if you tried to run a non-existent program. Make's parser fails before any shell command runs."
+            3: "Permission errors come from the OS refusing to execute. The file is readable; Make's parser just rejects spaces where it expected a Tab."
           explanation: "Make's parser uses a leading Tab character to identify recipe lines. Spaces look identical on screen but cause the cryptic `missing separator` error — one of Make's most famous gotchas."
 
         - question: "Which of the following correctly describes the three parts of a Makefile rule?"
@@ -247,6 +275,8 @@ steps:
             - 0
             - 1
             - 2
+          option_feedback:
+            3: "Prerequisites can appear in any order — Make builds a dependency graph from them, not a sorted list. Ordering matters only when *you* care about it (e.g., to control link order)."
           explanation: "A rule is `target: prerequisites` followed by a recipe on the next line. The recipe must use a literal Tab. Prerequisites can be in any order — Make builds a dependency graph from them."
 
         - question: "The command `sed -i 's/^    /\\t/' Makefile` is used to fix the Tab Trap. What does the `s/^    /\\t/` part mean?"
@@ -256,6 +286,10 @@ steps:
             - "Delete four-space-indented lines from the file"
             - "Append a tab character after every line that starts with four spaces"
           correct_index: 1
+          option_feedback:
+            0: "Without the `^` anchor, that's what would happen — but `^` restricts the match to the *start* of the line. So only leading spaces match, not embedded ones."
+            2: "`s/.../.../` is *substitute*, not delete. The line itself stays; only the matched pattern is replaced. The `d` command would delete lines."
+            3: "`s/x/y/` *replaces* `x` with `y`. To append, you'd write `s/x/x y/`. Substitute is in-place replacement, not insertion."
           explanation: "`sed`'s `s/pattern/replacement/` syntax substitutes the pattern with the replacement. `^` anchors the match to the **start of the line**, so only leading spaces are replaced — not spaces that appear elsewhere on the line. `\\t` is the escape sequence for a real Tab character. The `-i` flag makes the edit in-place."
 
   # --------------------------------------------------------------------------
@@ -327,8 +361,33 @@ steps:
         command: "cd /tutorial/make_project && grep -q 'CC *=' Makefile"
       - description: "Defined CFLAGS variable"
         command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
-      - description: "Used $(CC) in recipes instead of hardcoded gcc"
-        command: "cd /tutorial/make_project && grep -q '\\$(CC)' Makefile"
+      - description: "Used $(CC) in every recipe and removed every hardcoded `gcc` from recipes"
+        command: |
+          cd /tutorial/make_project
+          # Positive: $(CC) appears at least 4 times (link + 3 .o rules)
+          cc_count=$(grep -c '\$(CC)' Makefile)
+          if [ "$cc_count" -lt 4 ]; then
+            echo "Found only $cc_count uses of \$(CC). Replace 'gcc' with \$(CC) in all 4 recipes."
+            exit 1
+          fi
+          # Negative: no recipe still has a literal `gcc` call (recipes start with a Tab)
+          if grep -qE '^\t.*\bgcc\b' Makefile; then
+            echo "A recipe still calls 'gcc' directly. Replace every 'gcc' in a recipe with \$(CC)."
+            exit 1
+          fi
+      - description: "Used $(CFLAGS) in every recipe and removed every hardcoded `-Wall -std=c11` from recipes"
+        command: |
+          cd /tutorial/make_project
+          cflags_count=$(grep -c '\$(CFLAGS)' Makefile)
+          if [ "$cflags_count" -lt 4 ]; then
+            echo "Found only $cflags_count uses of \$(CFLAGS). Replace '-Wall -std=c11' with \$(CFLAGS) in all 4 recipes."
+            exit 1
+          fi
+          # Negative: no recipe still has a literal `-Wall -std=c11`
+          if grep -qE '^\t.*-Wall.*-std=c11' Makefile; then
+            echo "A recipe still has '-Wall -std=c11' hardcoded. Replace it with \$(CFLAGS)."
+            exit 1
+          fi
       - description: "Code still builds successfully"
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
@@ -344,6 +403,10 @@ steps:
             - "[CFLAGS]"
             - "#CFLAGS"
           correct_index: 1
+          option_feedback:
+            0: "`%VAR%` is Windows CMD/batch syntax. Make doesn't recognize it; the % character has a different meaning (pattern wildcard)."
+            2: "Square brackets aren't a Make syntax for anything. They're sometimes used in shell case-statement patterns but never for variable expansion."
+            3: "`#` starts a comment in Make. Anything after `#` is ignored."
           explanation: "Make uses `$(VAR)` or `${VAR}` to expand variables. `$(CFLAGS)` is the standard convention. Note that `%CFLAGS%` is Windows CMD syntax and has no meaning in Make."
 
         - question: "You define `CC = gcc` at the top of your Makefile and use `$(CC)` in all four recipes. You want to switch to `clang`. How many lines must you edit?"
@@ -353,6 +416,10 @@ steps:
             - "None — Make auto-detects installed compilers"
             - "Two — the definition and the first recipe"
           correct_index: 1
+          option_feedback:
+            0: "That'd be the case *without* the variable — exactly the problem the DRY refactor solves. With `$(CC)` everywhere, only the definition needs changing."
+            2: "Make has no compiler-detection logic. You decide which compiler is `CC`."
+            3: "Recipes don't need separate edits — they reference `$(CC)`, so they pick up the new value automatically."
           explanation: "This is the DRY (Don't Repeat Yourself) principle in action. All four recipes reference `$(CC)`, so changing `CC = gcc` to `CC = clang` updates every recipe at once."
 
         - question: "Which of the following are benefits of using `CC` and `CFLAGS` variables in a Makefile? (Select all that apply)"
@@ -365,6 +432,9 @@ steps:
           correct_indices:
             - 0
             - 1
+          option_feedback:
+            2: "Variables don't change build speed — that's a Step-5 (incremental builds) concern. They organize the Makefile, not the executions."
+            3: "Variables and the Tab Trap are independent concerns. Recipe lines still need a literal Tab regardless of how many variables you use."
           explanation: "Variables provide a single point of change for repeated values. They do NOT affect build speed or the Tab requirement — those are separate concerns entirely."
 
         - question: "In the rule `app: $(OBJS)`, which part is the **target**?"
@@ -374,6 +444,10 @@ steps:
             - "gcc"
             - "The entire line"
           correct_index: 0
+          option_feedback:
+            1: "`OBJS` (after the colon) is part of the *prerequisites*, not the target. Targets sit on the left of the colon."
+            2: "`gcc` doesn't appear in the rule line at all (the recipe goes on the next line). Even when it does, it's a *command*, not a target."
+            3: "Within a rule, target and prerequisites have distinct roles separated by the colon. Calling 'the whole line' the target loses that structure."
           explanation: "Even when using variables like `$(OBJS)`, the basic Rule structure remains `target: prerequisites`. Everything to the left of the colon is the target (what you want to build)."
 
         - question: "**[Interleaved: Revisit Step 1]** What is the core problem that Make solves compared to running a manual `gcc` command on all files?"
@@ -383,6 +457,10 @@ steps:
             - "Make only rebuilds the files that actually changed (incremental builds)"
             - "Make compresses the binary to save disk space"
           correct_index: 2
+          option_feedback:
+            0: "Make doesn't fix code — only the compiler can do that. Make orchestrates *which* files the compiler sees."
+            1: "Parallelism requires `-j` and isn't on by default (single-threaded `make` is the default). The core win is *skipping* work, not parallelizing it."
+            3: "Binary size is the linker's domain (with strip/optimizer flags). Make doesn't post-process binaries."
           explanation: "As we felt in Step 1, manual compilation is slow because it rebuilds everything. Make's superpower is its ability to track changes and only run necessary commands."
 
   # --------------------------------------------------------------------------
@@ -501,6 +579,13 @@ steps:
         command: "cd /tutorial/make_project && grep -qP '%\\.o.*:.*%\\.c' Makefile"
       - description: "Used an automatic variable ($<, $^, or $@) in a recipe"
         command: "cd /tutorial/make_project && grep -qP '\\$[<^@]' Makefile"
+      - description: "Removed the explicit per-file .o rules (replaced by the pattern rule)"
+        command: |
+          cd /tutorial/make_project
+          if grep -qE '^(main|math|io)\.o[[:space:]]*:' Makefile; then
+            echo "An explicit '.o' rule (main.o:, math.o:, or io.o:) is still in the Makefile. Delete the three explicit rules — the pattern rule '%.o: %.c' replaces them."
+            exit 1
+          fi
       - description: "Project still builds correctly"
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
@@ -516,6 +601,10 @@ steps:
             - "The target name (the file to the left of the colon)"
             - "The shell's exit code from the last command"
           correct_index: 2
+          option_feedback:
+            0: "That's `$^` — all prerequisites. The `^` mnemonic is 'caret = up = the top half (target side)? — no, opposite — `^` is *all* prereqs.'"
+            1: "That's `$<` — the first prerequisite. The `<` looks like an arrow pointing into the rule from the left."
+            3: "Make doesn't expose shell exit codes in its variable namespace. `$?` in shell is the exit code; `$?` in Make is 'all newer-than-target prereqs'. Different namespaces."
           explanation: "`$@` always expands to the **target** name. In `app: $(OBJS)`, using `$@` in the recipe gives you `app`. Think: `@` looks like a target symbol."
 
         - question: "The pattern rule `%.o: %.c` with recipe `$(CC) $(CFLAGS) -c $< -o $@` compiles `math.c`. What do `$<` and `$@` expand to?"
@@ -525,6 +614,10 @@ steps:
             - "$< = all .c files, $@ = math.o"
             - "$< = math.c, $@ = $(CC)"
           correct_index: 0
+          option_feedback:
+            1: "Reversed. `$<` is the *first prerequisite* — the right-hand side input. `$@` is the *target* — the left-hand side output."
+            2: "`$<` is *first* prerequisite (singular), not all. For all prereqs you'd use `$^`."
+            3: "Variables expand to file names from the rule, not to other variables. `$@` is the rule's target — `math.o` here."
           explanation: "`$<` is the **first prerequisite** (here, `math.c`) and `$@` is the **target** (here, `math.o`). The `%` wildcard matches the common stem `math`, so `%.o` becomes `math.o` and `%.c` becomes `math.c`."
 
         - question: "After replacing explicit `.o` rules with one pattern rule, which of the following are true? (Select all that apply)"
@@ -538,6 +631,8 @@ steps:
             - 0
             - 2
             - 3
+          option_feedback:
+            1: "That's the *whole point* of pattern rules — adding a new `.c` file means *just* dropping it into `OBJS`. The pattern rule auto-handles compilation."
           explanation: "The pattern rule `%.o: %.c` handles **any** `.c`→`.o` compilation automatically. Adding `newfile.c` to `OBJS` is all you need — no new rule required. `$^` gives all prerequisites (all `.o` files for the app rule), and `$<` gives the first prerequisite (the `.c` file for each pattern match)."
 
         - question: "You use `%.o: %.c` and `$(CC) $(CFLAGS) -c $< -o $@`. You get `makefile:10: *** missing separator. Stop.` What is the most likely cause?"
@@ -547,6 +642,10 @@ steps:
             - "The compiler 'gcc' is not installed"
             - "The file 'math.c' is missing"
           correct_index: 0
+          option_feedback:
+            1: "If automatic-variable syntax were wrong, Make would report it more specifically (e.g., 'invalid variable name'). 'missing separator' is Make's signature for the Tab problem."
+            2: "Missing gcc would surface as 'gcc: command not found' from the *shell*, after Make tries to run the recipe. The 'missing separator' error happens at parse time, before any commands run."
+            3: "Missing source files are reported as 'No rule to make target' at execution time. 'missing separator' is a parser-level error, not an I/O one."
           explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
 
         - question: "**[Interleaved: Revisit Step 2]** What invisible character is **required** at the start of every recipe line in a Makefile?"
@@ -556,6 +655,10 @@ steps:
             - "A Tab character"
             - "A semicolon"
           correct_index: 2
+          option_feedback:
+            0: "Spaces (any count — 4, 8, 1) all fail. Make's parser specifically wants a Tab character."
+            1: "Same as above — Make doesn't accept spaces of any width. It checks for the Tab byte (`\\t`) explicitly."
+            3: "Semicolons separate commands *within* a recipe line, but the recipe line itself is identified by its leading Tab."
           explanation: "As you discovered in Step 2, the 'Tab Trap' is real! Make strictly requires a literal Tab character to identify recipe lines. Spaces will cause a 'missing separator' error."
 
   # --------------------------------------------------------------------------
@@ -597,6 +700,11 @@ steps:
 
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
+      # Record main.o's baseline mtime so we can later assert it didn't change.
+      # This catches "make clean && make" (full rebuild) where math.o is still
+      # newer than main.o by gcc compile order — the existing -nt test alone
+      # accepts that wrong solution.
+      - "stat -c %Y /tutorial/make_project/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo 0 > /tmp/.makefile_step5_main_o_baseline"
 
     solution:
       commands:
@@ -604,7 +712,8 @@ steps:
         - "touch math.c"
         - "make"
       explanation: |
-        - **Test:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp than `main.o` (which was not recompiled).
+        - **Test 1:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp.
+        - **Test 2:** `main.o`'s mtime must equal the baseline recorded in `setup_commands`. This catches the wrong solution `make clean && make` — that produces a *full* rebuild where math.o is still newer than main.o (by gcc compile order), but main.o's mtime has changed from the baseline.
         - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
         - **`touch math.c`:** Updates `math.c`'s modification timestamp without changing its content. Make sees `math.c` is now newer than `math.o` and recompiles just that one file, then re-links `app`. `main.c` and `io.c` are untouched.
         - **Why this matters:** In a large project, this turns a potential hours-long full rebuild into a seconds-long incremental one.
@@ -612,6 +721,20 @@ steps:
     tests:
       - description: "math.c was touched and recompiled (math.o is newer than main.o)"
         command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
+      - description: "Make did NOT do a full rebuild — main.o is unchanged from the original build"
+        command: |
+          cd /tutorial/make_project
+          if [ ! -f /tmp/.makefile_step5_main_o_baseline ]; then
+            echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
+            exit 1
+          fi
+          current=$(stat -c %Y main.o)
+          baseline=$(cat /tmp/.makefile_step5_main_o_baseline)
+          if [ "$current" != "$baseline" ]; then
+            echo "main.o's mtime changed from $baseline to $current — that means main.o was recompiled."
+            echo "If you ran 'make clean && make' (full rebuild), undo that. The lesson is incremental: just touch math.c and run make, so ONLY math.o gets rebuilt."
+            exit 1
+          fi
 
     quiz:
       title: "The Magic of Incremental Builds — Knowledge Check"
@@ -625,6 +748,10 @@ steps:
             - "It checksums file contents to detect actual changes"
             - "It asks the user which files changed since last time"
           correct_index: 1
+          option_feedback:
+            0: "Always-rebuild defeats the entire purpose of Make. The whole performance argument from Step 1 is that Make *skips* unnecessary work."
+            2: "Newer build tools (like Bazel, Buck) checksum files. Classic Make uses timestamps — fast to check, but false-positives if you `touch` a file."
+            3: "Make never asks. It deduces from timestamps alone — that's why it's a sealed automation tool, not a chatbot."
           explanation: "Make compares modification timestamps. If a prerequisite (e.g. `math.c`) is newer than the target (e.g. `math.o`), the target is considered out of date and its recipe runs. This simple heuristic enables powerful incremental builds."
 
         - question: "You run `touch math.c` (without changing its content) then immediately run `make`. What does Make do?"
@@ -634,6 +761,10 @@ steps:
             - "Recompiles only math.c → math.o, then re-links the final binary"
             - "Deletes math.o because it considers math.c corrupted"
           correct_index: 2
+          option_feedback:
+            0: "Make doesn't look at content; it looks at timestamps. `touch` updates the timestamp, so Make treats the file as 'changed' from its perspective."
+            1: "Full rebuild only happens after `make clean`. Make is conservative: only files newer than their target trigger work."
+            3: "`touch` doesn't trigger any deletion. There's no integrity-check in Make."
           explanation: "`touch` updates a file's timestamp, making it look newer than its dependent targets. Make sees `math.c` is newer than `math.o`, recompiles just that one file, then re-links `app` since `math.o` changed. `main.o` and `io.o` are untouched."
 
         - question: "After a successful build with no changes, you run `make` again. What message appears and why?"
@@ -643,6 +774,10 @@ steps:
             - "`No targets specified` — Make requires a target argument"
             - "`make: Nothing to do for 'all'` — the default target is missing"
           correct_index: 1
+          option_feedback:
+            0: "Make is terse — it doesn't print success banners. If it has nothing to do, it says so explicitly with the 'up to date' message."
+            2: "If no target argument is given, Make uses the *first* target in the Makefile. There's an explicit error for true 'no target available' situations, but that's not this scenario."
+            3: "That message appears for `make all` if a default `all:` target is *missing*. With a defined target like `app:`, Make's no-op message is 'is up to date'."
           explanation: "When all targets are newer than their prerequisites, Make prints `make: 'app' is up to date` and does nothing. This is the incremental build in action — skipping all work when nothing needs rebuilding."
 
         - question: "**[Interleaved: Revisit Step 3]** What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
@@ -652,6 +787,10 @@ steps:
             - "`$CC`"
             - "Both `$(CC)` and `${CC}` are valid"
           correct_index: 3
+          option_feedback:
+            0: "`${CC}` works fine, but it's not the *only* answer — both forms are valid in Make."
+            1: "`$(CC)` works fine, but again — both forms are valid. The question asks for what's correct."
+            2: "`$CC` is *not* valid for multi-character names — Make would parse it as `$C` followed by literal `C`. Single-character variable names (`$X`) work without parens; multi-character names must be parenthesized."
           explanation: "As we practiced in Step 3, Make uses either parentheses `( )` or curly braces `{ }` to expand variables. Both are technically correct, though `$(CC)` is the more common convention."
 
   # --------------------------------------------------------------------------
@@ -732,6 +871,10 @@ steps:
             - "To encrypt the Makefile for security"
             - "To allow spaces instead of Tabs in recipes"
           correct_index: 1
+          option_feedback:
+            0: "`.PHONY` doesn't change build speed — it changes *whether* a target is considered up-to-date. Performance comes from incremental rebuilding (Step 5)."
+            2: "Make has no encryption features. The file is plain text and parsed by Make's grammar, no obfuscation."
+            3: "Sadly no — there's no Make directive that fixes the Tab Trap. `.PHONY` is about target names, not indentation."
           explanation: "`.PHONY` tells Make to ignore any files on disk with the same name as the target. This ensures that commands like `make clean` always run, even if a file named `clean` happens to exist."
 
         - question: "What happens if a target name (like `test`) matches a directory name in your project, but is NOT declared `.PHONY`?"
@@ -741,6 +884,10 @@ steps:
             - "Make will assume the target is up-to-date (since the directory exists) and will NOT run the recipe"
             - "Make will always execute the recipe because directories are always considered 'new'"
           correct_index: 2
+          option_feedback:
+            0: "Make never auto-deletes anything. It just refuses to run the recipe."
+            1: "No fatal error — Make's behavior is silent and easy to miss. That's exactly why this trap is dangerous."
+            3: "Reverse — directories with no prerequisites are considered up-to-date, *not* always-new. The whole problem is Make thinks the work is done."
           explanation: "By default, Make looks for a file OR directory matching the target name. If a directory named `test` exists and has no dependencies, Make thinks its job is done. `.PHONY: test` forces it to run the recipe regardless."
 
         - question: "How can you use Phony targets to bundle multiple independent builds together?"
@@ -750,6 +897,10 @@ steps:
             - "By using the `bundle:` keyword instead of `.PHONY:`"
             - "Make cannot group multiple targets into one command"
           correct_index: 0
+          option_feedback:
+            1: "Phony targets aren't 'inserted' into recipes — they're targets in their own right. The trick is making them *depend on* other targets so Make builds those as prerequisites."
+            2: "There's no `bundle:` keyword in Make. The bundling pattern uses `.PHONY: all` + `all: target1 target2`."
+            3: "Make absolutely supports grouping. The phony-target-with-prerequisites pattern is canonical."
           explanation: "The conventional `all` target is usually a phony target that depends on every program you want to build. Running `make all` triggers all those prerequisites in sequence (or parallel)."
 
         - question: "Why is it generally a bad idea to make a real file target (like `app`) depend on a `.PHONY` target?"
@@ -759,6 +910,10 @@ steps:
             - "Make will refuse to run if real and phony targets are mixed"
             - "It makes the resulting executable much slower"
           correct_index: 1
+          option_feedback:
+            0: "Make is non-destructive in that sense — it never deletes Makefiles or anything else. The danger is performance, not data loss."
+            2: "Make happily mixes real and phony targets. The grand `all` target is itself phony, depending on real ones. Mixing is the *point*."
+            3: "Phony deps don't slow the produced binary — they slow the *build* (constant unnecessary rebuilding)."
           explanation: "Because a Phony target is NEVER up-to-date, any real file that depends on it will also be considered out-of-date every time. This forces constant, unnecessary recompilation."
 
         - question: "**[Interleaved: Revisit Step 4]** In the pattern rule `%.o: %.c`, which automatic variable expands to the **target** (the `.o` file)?"
@@ -768,6 +923,10 @@ steps:
             - "`$@`"
             - "`$*`"
           correct_index: 2
+          option_feedback:
+            0: "`$<` is the *first prerequisite* — for `%.o: %.c`, that's the `.c` file (the input)."
+            1: "`$^` is *all prerequisites* — for `%.o: %.c`, just the one `.c` file. Same as `$<` here, but you'd use `$@` for the *output*."
+            3: "`$*` is the matched stem — for building `math.o`, `$*` is `math` (no extension). Useful but not what 'target' means."
           explanation: "As we used in Step 4, `$@` is the target (think '@' = 'at the target'). `$<` is the first prerequisite (the `.c` file)."
 
   # --------------------------------------------------------------------------

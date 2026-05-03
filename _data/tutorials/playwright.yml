@@ -1,6 +1,14 @@
 title: "Playwright Tutorial: End-to-End Testing for React Apps"
 description: "Translate the testing concepts from Testing Foundations into the browser. Write end-to-end tests in Playwright that test behavior, not implementation — tests that survive harmless refactors and fail for real bugs."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply semantic locators (`getByRole`, `getByLabel`, `getByText`) to write Playwright tests that remain stable across CSS refactors."
+  - "Distinguish web-first assertions (`await expect(locator).toBeVisible()`) from the antipattern that calls `.isVisible()` synchronously and pretends to assert."
+  - "Analyze a failing test to determine whether the fault is in the test, the locator, or the application code."
+  - "Evaluate trade-offs between brittle, goldilocks, and loose locator specificity."
+  - "Write a complete Playwright test from a behavior spec, using arrange / act / assert structure."
+
 backend: react
 require_tests: true
 autosave_type: files

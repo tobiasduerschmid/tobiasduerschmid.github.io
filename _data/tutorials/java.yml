@@ -1,6 +1,15 @@
 title: "Java for C++ and Python Developers"
 description: "A fast-paced, hands-on Java tutorial for senior CS students who already know C++ and Python. Master Java's type system, OOP model, and design idioms — with UML diagrams to guide your thinking."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply Java's reference semantics correctly: distinguish `==` (identity) from `.equals()` (value equality)."
+  - "Use Java's dual type system (primitives + their wrapper classes) without boxing/unboxing surprises."
+  - "Design with interfaces (Java contracts) before reaching for inheritance."
+  - "Apply generics for type-safe collections without C++-template assumptions (no specialization, type erasure at runtime)."
+  - "Distinguish checked vs. unchecked exceptions and choose appropriately for each error condition."
+  - "Evaluate inheritance vs. composition trade-offs in Java's OO model."
+
 backend: java
 
 require_tests: true

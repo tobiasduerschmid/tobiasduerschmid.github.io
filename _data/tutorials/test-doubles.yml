@@ -1,6 +1,14 @@
 title: "Test Doubles — Stubs, Spies, and Mocks"
 description: "Learn to test code that depends on a clock, an HTTP service, a database, or a notification system — without actually hitting them. Concepts first; the Python+pytest syntax is provided so you can focus on the test-design decisions."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Distinguish Dummy / Stub / Spy / Mock / Fake (Meszaros' taxonomy) by *role*, given a concrete scenario."
+  - "Apply dependency injection to introduce a *seam* in code that hard-codes a collaborator (clock, HTTP, DB)."
+  - "Recognize the `unittest.mock` colloquial-vs-Meszaros mismatch — `Mock()` the class can play any role; the role is determined by *how* the test uses it."
+  - "Evaluate whether a passing test actually verifies anything (vs. tautologically agreeing with itself because both sides ask the same uncontrolled source)."
+  - "Decide when *not* to use a test double — fakes for stateful collaborators, real objects for pure logic."
+
 backend: pyodide
 linter: true
 debugger: true
@@ -56,7 +64,7 @@ steps:
       > 🎯 **Goal:** See a test that *passes* today but is fundamentally broken — then carve out a *seam* where you can later substitute a controlled clock.
       > 🧠 **Skills you'll gain:** Recognize when a real collaborator (clock, HTTP, database) makes a test non-deterministic, and introduce a *seam* — a parameter the test can swap out — so future tests can stay deterministic.
 
-      > 📣 **The kind of test that ships green and rots overnight.** Imagine you're on the QuestForge team. A daily-quest event is scheduled for *April 28, 2026*. A teammate writes a test on April 28 that asserts `is_today_event_day("2026-04-28")` returns `True`. Test passes. PR merges. Next day — without a single code change — the same test fails on CI. Why? Because the *test depends on the wall clock*, not on what the function should do. That hidden dependency is what test doubles exist to control.
+      > 📣 **The kind of test that ships green and rots on a schedule.** Imagine you're on the QuestForge team. A daily-quest event was scheduled for *April 28, 2026*. A teammate wrote a test on April 28 that asserted `is_today_event_day("2026-04-28")` returns `True`. Test passed. PR merged. Next day — without a single code change — the same test failed on CI. Why? Because the *test depended on the wall clock*, not on what the function should do. That hidden dependency is what test doubles exist to control. The test in this step is the same one that teammate wrote — and unless today's date happens to be 2026-04-28, you'll see it **fail right now**. That failure is the lesson.
 
       ### 🧭 What you already know — and what's about to shift
 
@@ -81,9 +89,9 @@ steps:
 
       ⚙️ **Task** — three small moves:
 
-      1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28")` returns `True`. **Predict**: will it pass today? Will it pass tomorrow? Why?
-      2. **Run** the test. It passes today (April 28, 2026) — and that **PASS** result is *misleading*. Tomorrow the same code with no changes will fail.
-      3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Step 2 will show how a stub fills it.
+      1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28")` returns `True`. **Predict**: did this test pass on the day it was written (April 28, 2026)? Does it pass today? Why or why not?
+      2. **Run** the test. Unless today happens to be April 28, 2026, the test **FAILS** — `is_today_event_day("2026-04-28")` returns `False` because the wall clock disagrees with the hardcoded date. That **FAIL** is the lesson. The test was correct on the day it was written; the *world* changed beneath it. Tests that depend on the wall clock matching a specific date rot on a schedule.
+      3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Adding the seam alone won't fix the test (it still calls `is_today_event_day("2026-04-28")` without injecting a clock). Step 2 will use the seam to *control* the clock so the test is deterministic.
 
       ```mermaid
       flowchart LR
@@ -140,14 +148,20 @@ steps:
         content: |
           """Test for is_today_event_day.
 
-          ⚠️ This test was written on 2026-04-28. It passes today.
-          Read it carefully — would it pass *tomorrow*? Why or why not?
+          ⚠️ This test was written on 2026-04-28 and passed that day.
+          Today, unless the calendar still reads 2026-04-28, it FAILS —
+          `is_today_event_day("2026-04-28")` returns False because the wall
+          clock no longer matches the hardcoded date. That failure is the
+          lesson: a test that depends on `datetime.now()` matching a specific
+          string rots the moment the date passes. Step 2 will fix it by
+          *controlling* the clock instead of asking the OS.
           """
           from quest_service import is_today_event_day
 
 
           def test_april_28_is_event_day():
-              # Today (2026-04-28) IS the event day, so this should return True.
+              # Test author assumed today would always be 2026-04-28 when this ran.
+              # Reality: this test passes on exactly one calendar day.
               assert is_today_event_day("2026-04-28") is True
         language: "python"
 
@@ -205,18 +219,28 @@ steps:
           source = open('/tutorial/quest_service.py').read()
           assert 'clock.now()' in source, \
               "The function body should call `clock.now()` (using the parameter) — not `datetime.now()` directly. The whole point of the seam is to USE the parameter."
-      - description: "The original test still passes (default clock preserves behavior)"
+      - description: "Default clock preserves the function's contract (calling without `clock` works and stays date-aware)"
         command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_quest_service.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"The original test should still pass — the default `clock=datetime.datetime` makes the new signature behave like the old one. If the test fails, check that the default is correct.\n\n{output}"
+          import sys
+          for _m in ('quest_service',):
+              sys.modules.pop(_m, None)
+          from quest_service import is_today_event_day
+          # Calling without a `clock` argument should use the default datetime.datetime.
+          # Today is unlikely to be 2099-12-31, so the result is False — but the call
+          # must NOT raise. That confirms the default value is correct.
+          result = is_today_event_day("2099-12-31")
+          assert isinstance(result, bool), \
+              "is_today_event_day should return a boolean. Did the default clock break the comparison?"
+          assert result is False, \
+              "is_today_event_day('2099-12-31') should return False today (today isn't 2099-12-31). If it raised, your default value for `clock` is wrong — use `clock=datetime.datetime` so calling with no arg uses the real datetime class."
+          # Note: the existing test in test_quest_service.py is *expected* to fail today —
+          # that failure is the pedagogical point. Step 2 will fix it by injecting a
+          # controlled clock through the seam you just created.
         hints:
           - title: "Small nudge"
             text: "The signature is `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:`. Then inside the function, replace `datetime.now()` with `clock.now()`."
           - title: "Strategic hint"
-            text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
+            text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter with the default value; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
           - title: "Almost-spoiler — the full signature"
             text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:\n    today = clock.now().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nNotice: top-level `import datetime` (not `from datetime import datetime`) — we want the *module* so we can reference `datetime.datetime` as the default."
 
@@ -615,8 +639,10 @@ steps:
             text: "Walk through the SUT's logic with `clock=FrozenClock(datetime(2026, 4, 30, ...))`. The clock's weekday is Thursday (use a calendar to verify). The SUT iterates the canned list looking for the matching weekday entry."
           - title: "Strategic hint"
             text: "April 30, 2026 is a Thursday. The canned API list has exactly one Thursday entry. The SUT returns that entry's `title` field."
+            condition: "code_missing: Battle the Lich King"
           - title: "Almost-spoiler"
             text: "The Thursday entry in the canned list is `{\"weekday\": \"Thursday\", \"title\": \"Battle the Lich King\"}`. Pin the title with `assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`."
+            condition: "code_missing: Battle the Lich King"
 
     quiz:
       title: "Test Stubs — Knowledge Check"
@@ -1052,8 +1078,10 @@ steps:
             text: "Above the `assert len(spy.calls) >= 0` line, add something like `# Liar test — len() is always >= 0, so this passes regardless of whether the SUT called the spy at all.`"
           - title: "Small nudge — streak bonus"
             text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
+            condition: "code_missing: 50"
           - title: "Almost-spoiler — both fills"
             text: "Liar comment: `# Liar test / weak oracle — len(...) >= 0 is always true, so this passes regardless of behavior.`\n\nStreak assertion: `assert spy.calls == [(\"u2\", 50)]` (5 days * 10 gold = 50, below the 100 cap)."
+            condition: "code_missing: spy.calls == ["
 
     quiz:
       title: "Test Spies — Knowledge Check"
@@ -1418,8 +1446,10 @@ steps:
             text: "Look at `quest_service.py`'s `daily_quest_title` method. The `try`/`except` block names a specific exception class — that's the one to use as `side_effect`."
           - title: "Strategic hint"
             text: "The SUT does `try: quests = self._api.fetch_quests(user_id) except ConnectionError: return 'No quests today'`. So `side_effect = ConnectionError` will trigger the catch branch."
+            condition: "code_contains: side_effect = ValueError"
           - title: "Almost-spoiler"
             text: "Replace `api.fetch_quests.side_effect = ValueError` with `api.fetch_quests.side_effect = ConnectionError`. That's it — one identifier change."
+            condition: "code_contains: side_effect = ValueError"
 
     quiz:
       title: "unittest.mock — Knowledge Check"
@@ -1858,8 +1888,10 @@ steps:
             text: "Look at quest_service.py's top: `from push_notifier import send_push`. That import gives `quest_service` its OWN reference to the function. The SUT's `send_push(...)` call uses that local reference."
           - title: "Strategic hint"
             text: "Patch the namespace where the SUT will *resolve* the name at runtime. The SUT is `quest_service.celebrate_milestone`; the name `send_push` was imported INTO `quest_service`'s namespace. So the target string is `\"quest_service.send_push\"`."
+            condition: "code_contains: patch(\"push_notifier.send_push\")"
           - title: "Almost-spoiler"
             text: "Replace `with patch(\"push_notifier.send_push\") as mock_send:` with `with patch(\"quest_service.send_push\") as mock_send:`. One string change."
+            condition: "code_contains: patch(\"push_notifier.send_push\")"
 
     quiz:
       title: "Where to Patch + autospec — Knowledge Check"
@@ -2349,8 +2381,10 @@ steps:
             text: "The over-mocked test patches `_filter_completed`, `_apply_multipliers`, and `_sum_xp`. With those mocked, the test verifies nothing about the SUT's actual behavior — only that the SUT calls some helpers. Any rename of an internal would break the test for no good reason."
           - title: "Small nudge — scenarios"
             text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter."
+            condition: "code_missing: adapter"
           - title: "Almost-spoiler — scenarios"
             text: "1: `\"no_double\"`, 2: `\"stub\"`, 3: `\"mock\"`, 4: `\"fake\"`, 5: `\"adapter\"`."
+            condition: "code_missing: adapter"
 
     quiz:
       title: "Decision Guide — Synthesis Quiz"

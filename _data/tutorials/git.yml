@@ -1,6 +1,15 @@
 title: "Version Control with Git"
 description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply the edit-stage-commit cycle to track changes in a Git repository."
+  - "Distinguish working tree, staging area (index), and HEAD; predict what `git add`, `git commit`, and `git restore` move between them."
+  - "Use branches to isolate independent lines of work and merge them back."
+  - "Resolve a merge conflict end-to-end without losing work."
+  - "Use `git revert` to undo a published commit safely (no history rewriting)."
+  - "Push to and pull from a remote, and explain the difference between local and remote branches."
+
 require_tests: true
 autosave_type: commands-and-files
 reset_type: commands

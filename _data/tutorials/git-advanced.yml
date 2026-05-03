@@ -1,5 +1,14 @@
 title: 'Advanced Git: Debugging, History Rewriting, and Submodules'
 description: Go beyond the basics — master detached HEAD, git's object model, stash, cherry-pick, blame, bisect, rebase (including interactive), squash merge, and submodules. Every step is grounded in a real scenario you will meet on the job.
+
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Predict what a given Git command does to the commit DAG before running it."
+  - "Apply `git stash`, `cherry-pick`, `bisect`, `rebase`, `revert`, and `submodule` commands to debug and rewrite history safely."
+  - "Recover 'lost' work using `git reflog` — and explain why no commit is truly lost without a force-push."
+  - "Evaluate when to use `revert` (safe, additive) vs. history-rewriting commands (rebase, reset, amend) on shared branches."
+  - "Use submodules to compose repos and update submodule references without losing the parent's pin."
+
 backend: v86
 require_tests: true
 autosave_type: commands-and-files
@@ -765,13 +774,40 @@ steps:
       condition: 'code_missing: def safe_divide'
     - text: '`safe_divide` is in the file but the test still reports it missing. Did you save and switch back to `main`?'
       condition: 'code_contains: def safe_divide'
-  - description: power function has been committed
-    command: cd /tutorial/myproject && git log --oneline | grep -qi 'power'
+  - description: power function was committed AFTER the hotfix (verifies the stash → hotfix → pop → commit flow really happened)
+    command: |
+      cd /tutorial/myproject
+      if ! git log --oneline | grep -qi 'power'; then
+        echo "The 'power' commit is missing from main's history. After popping your stash, did you commit?"
+        exit 1
+      fi
+      # Pickaxe each function to find the commit that introduced it.
+      hotfix_sha=$(git log --oneline -S 'def safe_divide' 2>/dev/null | head -1 | awk '{print $1}')
+      power_sha=$(git log --oneline -S 'def power' 2>/dev/null | head -1 | awk '{print $1}')
+      if [ -z "$hotfix_sha" ]; then
+        echo "Couldn't find a commit that introduced 'def safe_divide'. The hotfix should be a separate commit."
+        exit 1
+      fi
+      if [ -z "$power_sha" ]; then
+        echo "Couldn't find a commit that introduced 'def power'."
+        exit 1
+      fi
+      if [ "$hotfix_sha" = "$power_sha" ]; then
+        echo "safe_divide and power are in the SAME commit. The stash workflow requires the hotfix to be its own commit, then power separately."
+        echo "Redo: stash your power work first, do the hotfix as its own commit, merge to main, pop the stash, then commit power on top."
+        exit 1
+      fi
+      if ! git merge-base --is-ancestor "$hotfix_sha" "$power_sha"; then
+        echo "The hotfix commit ($hotfix_sha) isn't an ancestor of the power commit ($power_sha). Expected order: hotfix (safe_divide) → power (HEAD)."
+        exit 1
+      fi
     hints:
     - text: 'No `power` in the file — pop your stash first: `git stash pop` brings it back.'
       condition: 'code_missing: def power'
     - text: '`power` is in the file but not committed. `git add calculator.py && git commit -m "Add power function"`.'
       condition: 'code_contains: def power'
+    - text: 'safe_divide and power are in the SAME commit — that means you skipped the hotfix flow. Redo with the correct sequence: stash power, do the hotfix on its own branch, merge to main, pop the stash, then commit power.'
+      condition: 'output_contains: SAME commit'
   - description: Working tree is clean
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
     hints:
@@ -1626,10 +1662,10 @@ steps:
     command: cd /tutorial/myproject && [ ! -f .git/BISECT_LOG ]
     hints:
     - text: '`git bisect reset` ends the bisect session and returns HEAD to where you started.'
-  - description: Test file was committed
-    command: cd /tutorial/myproject && git log --oneline -- test_calculator.py | grep -q '.'
-    hints:
-    - text: '`test_calculator.py` exists but was never committed. `git add test_calculator.py && git commit -m "Add regression test"` — bisect needs the test to be in history so it survives the checkouts.'
+  # Removed the "Test file was committed" gate — setup_commands already committed
+  # test_calculator.py before the student touched anything, so the gate passed
+  # without verifying any student work. The post-bisect repair-and-commit gates
+  # below cover what we actually want to check.
   - description: At least 5 new commits exist on main
     command: cd /tutorial/myproject && [ $(git log --oneline main | wc -l) -ge 7 ]
     hints:

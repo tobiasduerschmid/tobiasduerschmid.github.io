@@ -1,6 +1,14 @@
 title: "SQL Essentials"
 description: "A hands-on introduction to SQL using SQLite, running entirely in your browser. Start by querying an existing database, then learn to filter, aggregate, create your own tables, and modify data — no installation required."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply `SELECT`, `JOIN`, `WHERE`, `GROUP BY`, `HAVING`, and `ORDER BY` to write queries that answer real questions."
+  - "Explain three-valued logic (NULL semantics) and use `IS NULL` correctly — comparing NULL with `=` always yields UNKNOWN."
+  - "Distinguish row-filtering (`WHERE`) from group-filtering (`HAVING`)."
+  - "Evaluate two queries against each other for correctness and efficiency."
+  - "Compose a multi-table aggregation query from a natural-language ask."
+
 backend: sql
 
 require_tests: true
@@ -202,6 +210,10 @@ steps:
             - "Rows are accessed by 1-based index instead of 0-based"
             - "Python lists can hold more data than SQL tables"
           correct_index: 1
+          option_feedback:
+            0: "Disk vs. memory is incidental — modern Python streams from disk and SQL can run in-memory. The deeper gap is that SQL rows have no positional access at all."
+            2: "There's no `students[0]` in SQL. Rows aren't indexed by position — you identify them by content (`WHERE`). 1-based vs 0-based isn't the issue; *no* positional access is."
+            3: "Capacity isn't the difference. Both can hold large data. The conceptual gap is that a SQL table is a *set* (no order, schema-enforced), not a list."
           explanation: |
             SQL tables have a **rigid schema** (fixed columns and types) and **no guaranteed row order** — there is no `students[0]`. Storage location is incidental; the indexing distractor is the misconception this step is built to dismantle.
 
@@ -214,6 +226,10 @@ steps:
             - "Alphabetically by the first column"
             - "In no guaranteed order — depends on storage and query plan"
           correct_index: 3
+          option_feedback:
+            0: "Insertion order isn't guaranteed. Small tables may happen to come back that way, but the engine is free to return rows in any order it likes."
+            1: "The primary key *uniquely identifies* rows; it doesn't dictate result-set order. SQLite, Postgres, MySQL — none guarantee PK order without `ORDER BY`."
+            2: "There's no default-alphabetical rule. Result order depends on storage layout, indexes, and the query planner — not on column types or names."
           explanation: |
             A SQL table is a **set**, not a list. Without `ORDER BY`, order depends on storage and query plan — never rely on it.
 
@@ -226,6 +242,10 @@ steps:
             - "There is no equivalent — SQL rows have no position"
             - "`SELECT FIRST FROM students`"
           correct_index: 2
+          option_feedback:
+            0: "`id = 0` references a *value*, not a position. Even if a row had id 0, that's content-based lookup — not the same as Python's `students[0]`, which asks for position 0."
+            1: "Not valid SQL — tables aren't subscriptable. SQL doesn't expose row position."
+            3: "No `FIRST` keyword in standard SQL. Some dialects have `LIMIT 1` paired with `ORDER BY`, but that's still content-based — picking 'first' requires defining an ordering."
           explanation: |
             SQL rows have no position — you identify them by their **content** (`WHERE` clause), not by an index.
 
@@ -456,6 +476,10 @@ steps:
             - "They improve query performance"
             - "They prevent NULL values in the result"
           correct_index: 1
+          option_feedback:
+            0: "Aliases are optional in SQL — the query runs fine without them when no column names collide. They become *required* when you self-join a table to itself."
+            2: "Aliases are pure syntax; the query planner ignores them. Performance comes from indexes, joins, and predicates."
+            3: "NULLs come from the *data* (or from outer joins), not from how you name tables. Aliases don't filter."
           explanation: |
             Aliases disambiguate same-named columns (both `students` and `majors` could have `name`) and keep queries readable. They are also required for self-joins. They do not affect performance or NULL handling.
 
@@ -600,15 +624,21 @@ steps:
         hints:
           - text: "SELECT chooses *columns*. To choose *rows* that match a condition, you need a different clause. Which one?"
             condition: "code_missing: where"
-      - description: "filter.sql uses ORDER BY"
+      - description: "filter.sql uses ORDER BY ... DESC for the GPA query (highest-first)"
         command: |
           var src = __read_file('filter.sql').toLowerCase().split('\n').filter(function(l){ return l.trim().indexOf('--') !== 0; }).join('\n');
           assert(/\border\s+by\b/.test(src), "Query 1 should use ORDER BY to sort results");
+          // Without DESC, the ASC default is wrong — the dean wants highest GPA first.
+          // The audit caught: a student who omits ORDER BY entirely was passing because the
+          // result-check below ran a hardcoded canonical query, not the student's file.
+          assert(/\bdesc\b/.test(src), "Query 1 must order by GPA *descending* (`ORDER BY gpa DESC`) — the task asks for *highest GPA first*.");
         hints:
           - text: "Query 1 asks for results sorted by GPA. Without an explicit ordering clause, SQL returns rows in *no guaranteed sequence*."
             condition: "code_missing: order by"
           - text: "You have ORDER BY — but the task asks for *highest first*. Check whether you used ASC (the default) or the keyword that means descending."
             condition: "code_contains: order by"
+          - text: "ASC is the default. To present highest-first, append `DESC` after the column name: `ORDER BY gpa DESC`."
+            condition: "code_missing: desc"
       - description: "CS + GPA > 3.5 returns exactly Mango (3.9) then Bananito (3.7)"
         command: |
           var rows = __run_query("SELECT name, gpa FROM students WHERE major = 'CS' AND gpa > 3.5 ORDER BY gpa DESC");
@@ -665,6 +695,10 @@ steps:
             - "They cause a runtime error"
             - "They are included only if NULL is listed as a valid status"
           correct_index: 1
+          option_feedback:
+            0: "Intuitively *true*, but SQL doesn't agree. NULL means 'unknown' — comparing it to anything (even with `!=`) yields UNKNOWN, and `WHERE` keeps only TRUE rows."
+            2: "No error. `WHERE` silently drops UNKNOWN-evaluating rows; that silent drop is exactly the bug to watch for."
+            3: "There's no 'list of valid statuses' anywhere. NULL handling is governed by 3VL, not by a list."
           explanation: |
             In SQL's Three-Valued Logic, `NULL != 'Active'` evaluates to **UNKNOWN** — not TRUE. `WHERE` only keeps rows where the predicate is TRUE. UNKNOWN rows are silently discarded. To include NULL rows, write: `WHERE status != 'Active' OR status IS NULL`.
 
@@ -677,6 +711,10 @@ steps:
             - "`WHERE credits IS NULL`"
             - "`WHERE ISNULL(credits) = 1`"
           correct_index: 2
+          option_feedback:
+            0: "`= NULL` evaluates to UNKNOWN — never TRUE. SQL has a special operator for this case precisely because `=` doesn't work on NULL."
+            1: "`==` is not valid SQL — it borrows from C-family languages. SQL uses single `=` for equality, and even then `IS NULL` for NULL tests."
+            3: "Some dialects offer `ISNULL()` (and Oracle has `NVL()`), but they're non-standard extensions. `IS NULL` is the portable answer."
           explanation: |
             `NULL = NULL` evaluates to UNKNOWN, not TRUE — so `WHERE credits = NULL` never matches any row. The only portable, standard-SQL way to test for NULL is `IS NULL`. `== NULL` is not valid SQL syntax (SQL uses `=`, not `==`). `ISNULL()` is a non-standard extension.
 
@@ -689,6 +727,10 @@ steps:
             - "Fifth — after FROM, WHERE, GROUP BY, and HAVING"
             - "Last — after ORDER BY and LIMIT"
           correct_index: 2
+          option_feedback:
+            0: "Reading order is misleading. SELECT is *written* first but logically runs after the row-filtering and grouping clauses."
+            1: "FROM identifies the source, but WHERE filters before SELECT projects. Otherwise, an alias used in SELECT couldn't reference filtered-out rows."
+            3: "ORDER BY runs *after* SELECT (so it can refer to SELECT's aliases). LIMIT is the absolute last step."
           explanation: |
             `SELECT` is evaluated **fifth**: FROM -> WHERE -> GROUP BY -> HAVING -> **SELECT** -> ORDER BY -> LIMIT. This is why an alias defined in `SELECT` cannot be used in `WHERE` — the alias doesn't exist until after `WHERE` has already filtered the rows.
 
@@ -701,6 +743,10 @@ steps:
             - "It creates new columns called name and gpa"
             - "It sorts the table by name and then by gpa"
           correct_index: 1
+          option_feedback:
+            0: "That's *row* filtering — the job of `WHERE`. SELECT picks columns, not rows."
+            2: "Those columns must already exist on the table. SELECT doesn't create columns; it projects existing ones (or computes expressions over them)."
+            3: "Sorting is `ORDER BY name, gpa`. SELECT alone has no implicit ordering — that's why you saw the first quiz warn about row order."
           explanation: |
             `SELECT` projects (selects) **columns**, not rows. `SELECT name, gpa FROM students` returns all rows but shows only the `name` and `gpa` columns. To filter *rows*, you need a `WHERE` clause. This is a common point of confusion — `SELECT` chooses columns, `WHERE` chooses rows.
 
@@ -730,6 +776,10 @@ steps:
             - "Both are equally safe in production"
             - "Query A — `SELECT *` causes a syntax error"
           correct_index: 0
+          option_feedback:
+            1: "The extra OR is constant cost — and on indexed columns, both queries optimize similarly. Correctness beats microseconds anyway."
+            2: "They differ on both projection (`*` vs explicit columns) and on how NULL roles are treated. They are not equally safe."
+            3: "`SELECT *` is valid SQL — that's part of the trap. It compiles fine; it's just brittle as columns get added/dropped."
           explanation: |
             Query A has two production risks: (1) `SELECT *` breaks if columns are added or removed, and (2) `!= 'admin'` silently drops rows where role is NULL. Query B is safer: it names specific columns and explicitly handles NULL. This combines two lessons — explicit projection and NULL-safe predicates.
 
@@ -962,6 +1012,10 @@ steps:
             - "`FILTER`"
             - "`SELECT ... WHERE`"
           correct_index: 1
+          option_feedback:
+            0: "WHERE filters *rows* before grouping — at WHERE-time, the aggregates don't exist yet. `WHERE COUNT(*) > 5` is always an error."
+            2: "FILTER exists in some dialects (SQL:2003 introduced `FILTER (WHERE ...)` for inline aggregate filtering), but it's per-aggregate. Group-level filtering is HAVING's job."
+            3: "There's no `SELECT ... WHERE` clause structure for groups — SELECT projects, WHERE filters rows, HAVING filters groups. Three different jobs, three different keywords."
           explanation: |
             `WHERE` filters individual rows *before* grouping. `HAVING` filters groups *after* aggregation. `WHERE COUNT(*) > 5` is always an error because the count doesn't exist yet when `WHERE` runs. Use `HAVING COUNT(*) > 5`.
 
@@ -1041,6 +1095,10 @@ steps:
             - "`WHERE status IN ('inactive', NULL)`"
             - "`WHERE status != 'active'`"
           correct_index: 1
+          option_feedback:
+            0: "The first half is fine, but `status = NULL` always evaluates to UNKNOWN — it never matches. SQL has `IS NULL` precisely because `=` doesn't work on NULL."
+            2: "`IN (a, b)` desugars to `status = a OR status = b`. The NULL inside expands to `status = NULL`, which is UNKNOWN, so it silently misses NULL rows."
+            3: "`!= 'active'` drops NULL rows the same way `= 'inactive'` does — three-valued logic strikes again. You'd need `OR status IS NULL` regardless."
           explanation: |
             `= NULL` and `IN (..., NULL)` both silently miss NULL rows (internally they use `=`). `!= 'active'` drops NULL rows too. Only `IS NULL` works.
 
@@ -1268,6 +1326,10 @@ steps:
             - "Each value is unique and non-null across all rows"
             - "The column is indexed for faster lookups only"
           correct_index: 2
+          option_feedback:
+            0: "Storage may *happen* to keep PK rows ordered (B-tree indexes do this), but logically there's no sort guarantee. Result-set order still requires `ORDER BY`."
+            1: "PRIMARY KEY can be on any type — INTEGER, TEXT, BLOB. The constraint is uniqueness, not the column type."
+            3: "An implicit index *is* created, but that's a side effect. The defining contract is uniqueness + non-null, which is what 'identifying every row' requires."
           explanation: |
             `PRIMARY KEY` enforces two things: uniqueness (no two rows share the same value) and non-nullability. It also creates an implicit index, but its core purpose is to uniquely identify every row.
 
@@ -1280,6 +1342,10 @@ steps:
             - "The database raises an error and the row is not inserted"
             - "The row is inserted but flagged as incomplete"
           correct_index: 2
+          option_feedback:
+            0: "There's no implicit default of 0 or `''` unless you declared one. Without `DEFAULT`, the column has no fallback."
+            1: "That'd defeat the purpose of `NOT NULL`. The constraint says the column may *never* be NULL — including at insert time."
+            3: "There's no 'incomplete' state. A row either satisfies all constraints or the insert is rejected outright."
           explanation: |
             A `NOT NULL` column with no default value **requires** an explicit value. Omitting it in the `INSERT` causes an error — the database enforces the constraint and refuses the row.
 
@@ -1296,6 +1362,10 @@ steps:
             - "Syntax error — the SQL grammar rules are violated"
             - "Constraint violation — a NOT NULL or PRIMARY KEY rule was broken"
           correct_index: 1
+          option_feedback:
+            0: "A logical error runs *successfully* but produces the wrong result. Here the query never runs — the column lookup fails before execution."
+            2: "Syntax errors are about grammar (missing parentheses, misplaced clauses). The grammar is fine here; the *meaning* is broken."
+            3: "Constraints are about row-level data validity (NOT NULL, PRIMARY KEY, FOREIGN KEY). This is a *naming* problem at parse time."
           explanation: |
             A **semantic error** is a query that is grammatically correct SQL but references something that doesn't exist (wrong column name, wrong table). A syntax error violates grammar (wrong clause order, missing parentheses). A logical error is when the query runs but returns the wrong answer.
 
@@ -1499,8 +1569,10 @@ steps:
             }
           });
         hints:
-          - text: "Run a SELECT with the same WHERE clause first as a sanity check. Every UPDATE and DELETE in this file should have a WHERE."
-            condition: "code_contains: update"
+          - text: "Stuck? Every UPDATE and DELETE should specify *which* rows it affects — that's what WHERE is for."
+            condition: "code_missing: where"
+          - text: "Sanity check: before running an UPDATE, write the equivalent SELECT first (`SELECT * FROM students WHERE …`) to see exactly which rows you'll change. If you see more rows than you meant, your WHERE is too loose."
+            condition: "output_contains: without WHERE"
       - description: "DROP TABLE uses IF EXISTS (safe to re-run)"
         command: |
           var src = __read_file('cleanup.sql').toLowerCase().split('\n').filter(function(l){ return l.trim().indexOf('--') !== 0; }).join('\n');
@@ -1557,6 +1629,10 @@ steps:
             - "An error — DELETE requires a WHERE clause"
             - "Only rows matching the implicit WHERE TRUE condition are deleted"
           correct_index: 1
+          option_feedback:
+            0: "DELETE removes *rows*, not the table itself. To remove the schema too, use DROP TABLE."
+            2: "SQL doesn't require WHERE on DELETE — that's *exactly* what makes this footgun dangerous. The query runs cleanly and empties the table."
+            3: "There's no implicit WHERE TRUE concept — DELETE without WHERE just deletes everything by design. The framing in this option implies a safety net that doesn't exist."
           explanation: |
             `DELETE FROM orders` without a `WHERE` deletes every row but leaves the table schema intact. The table still exists — it is just empty. To remove the schema too, use `DROP TABLE orders`. SQL does not require a `WHERE` clause on `DELETE`, which makes this mistake easy to make in production.
 
@@ -1569,6 +1645,10 @@ steps:
             - "`DROP TABLE IF EXISTS courses;`"
             - "`TRUNCATE TABLE IF EXISTS courses;`"
           correct_index: 2
+          option_feedback:
+            0: "There's no `REMOVE TABLE` keyword in SQL. The keyword is `DROP`."
+            1: "`DELETE TABLE` is invalid syntax. `DELETE FROM` removes rows; `DROP TABLE` removes the table itself."
+            3: "`TRUNCATE` removes rows (like DELETE without WHERE) but keeps the schema. Also, SQLite doesn't support TRUNCATE at all — and `TRUNCATE TABLE IF EXISTS` isn't standard."
           explanation: |
             `DROP TABLE IF EXISTS tablename` is the idiomatic safe form. Plain `DROP TABLE tablename` raises an error if the table doesn't exist. `DELETE TABLE` is not valid SQL. `TRUNCATE` removes all rows (like `DELETE`) but keeps the schema, and is not supported by all databases (including SQLite).
 
@@ -1581,6 +1661,10 @@ steps:
             - "Add `ORDER BY` to the UPDATE so the order is deterministic"
             - "Change WHERE to WHERE TRUE so every row is visible"
           correct_index: 1
+          option_feedback:
+            0: "By the time you check the UI, the change is committed. The whole point is to preview *before* the destructive action."
+            2: "ORDER BY on UPDATE doesn't preview anything — and it's not even standard. The point is to verify *which rows* are affected, not what order they're processed in."
+            3: "WHERE TRUE matches *every* row — the opposite of safe. You want to verify the *specific* rows the UPDATE will hit."
           explanation: |
             Running `SELECT ... WHERE ...` with the same predicate lets you *see* exactly which rows the UPDATE will touch — before the change is permanent. This is the claim/preview/confirm trail the task demonstrated.
 
@@ -1593,6 +1677,10 @@ steps:
             - "It returns NULL for every column"
             - "It returns the data that was in the table before the DROP"
           correct_index: 1
+          option_feedback:
+            0: "Empty result requires the schema to still exist (so columns are known). DROP removes the schema too — there's nothing to project."
+            2: "NULL implies columns existing but values being unknown. After DROP, the columns themselves don't exist."
+            3: "DROP doesn't soft-delete or version data. The table is gone; old data isn't recoverable from SQL alone."
           explanation: |
             `DROP TABLE` removes both the data **and the schema**. The table no longer exists in the database at all, so any query referencing it fails with an error. Compare this with `DELETE FROM courses` (no WHERE), which removes all rows but keeps the table structure intact — `SELECT * FROM courses` would return an empty result set, not an error.
 
@@ -1619,6 +1707,10 @@ steps:
             - "They are equivalent — both count all rows"
             - "`COUNT(*)` counts columns; `COUNT(email)` counts rows"
           correct_index: 0
+          option_feedback:
+            1: "Performance is roughly identical for both — engines optimize them similarly. The semantic difference (NULL handling) is what matters."
+            2: "They differ on rows where the named column is NULL. If `email` is nullable and some rows are NULL, the two return different counts."
+            3: "Both count *rows*. `*` is a special form meaning 'count any row'; `COUNT(column)` filters rows where the column is non-NULL."
           explanation: |
             `COUNT(*)` counts every row regardless of NULL. `COUNT(column)` counts only rows where that column is not NULL.
 
@@ -1631,6 +1723,10 @@ steps:
             - "`DELETE FROM students WHERE major != 'CS'`"
             - "`DELETE FROM students WHERE major`"
           correct_index: 1
+          option_feedback:
+            0: "`= NULL` evaluates to UNKNOWN, never TRUE. The DELETE would run but match no rows — silently doing nothing, exactly the trap that motivates `IS NULL`."
+            2: "`!= 'CS'` would *also* drop NULL rows by 3VL — but it would *also* delete every non-CS student with a known major. Way too broad."
+            3: "Bare `WHERE major` (without an operator) treats `major` as a boolean — implicit conversion that's not portable. It's not what you want for NULL semantics."
           explanation: |
             `= NULL` always evaluates to UNKNOWN and matches no rows — the delete would silently do nothing. Only `IS NULL` tests for unknown values.
 
@@ -1800,20 +1896,46 @@ steps:
           - text: "Drop the `*` and list the 5 columns the dean asked for."
             condition: "code_contains: *"
 
-      - description: "Result places CS first (highest avg GPA among year-2+ majors with ≥ 2 students)"
+      - description: "Result places CS first then Math (only those two majors qualify), with correct avg_gpa and n"
         command: |
           var rows = __run_query(__read_file('final.sql'));
-          assert(rows.length >= 1, "Query returned no rows — re-check your WHERE and HAVING");
-          var firstRowVals = Object.values(rows[0]).map(function(v){ return String(v); });
-          var hasCS = firstRowVals.indexOf('CS') !== -1;
-          var hasEng = firstRowVals.indexOf('Engineering') !== -1;
-          var hasHopper = firstRowVals.indexOf('Dr. Hopper') !== -1;
-          assert(hasCS, "First row should contain the CS major (highest avg GPA among qualifying majors). Got: " + firstRowVals.join(', '));
-          assert(hasEng, "First row should also include 'Engineering' (CS's department from the JOIN)");
-          assert(hasHopper, "First row should also include 'Dr. Hopper' (CS's advisor from the JOIN)");
+          assert(rows.length === 2, "Expected exactly 2 rows (only CS and Math have year-2+ students with COUNT(*) ≥ 2). Got " + rows.length + ". Re-check your WHERE (year ≥ 2) and HAVING (COUNT(*) ≥ 2).");
+
+          // Row 1 — CS first (higher avg GPA)
+          var r0 = Object.values(rows[0]).map(function(v){ return String(v); });
+          assert(r0.indexOf('CS') !== -1, "Row 1 should contain 'CS' (highest avg GPA among qualifying majors). Got: " + r0.join(', '));
+          assert(r0.indexOf('Engineering') !== -1, "Row 1 should also include 'Engineering' (CS's department from the JOIN)");
+          assert(r0.indexOf('Dr. Hopper') !== -1, "Row 1 should also include 'Dr. Hopper' (CS's advisor from the JOIN)");
+
+          // Row 2 — Math second
+          var r1 = Object.values(rows[1]).map(function(v){ return String(v); });
+          assert(r1.indexOf('Math') !== -1, "Row 2 should contain 'Math' (the other qualifying major). Got: " + r1.join(', '));
+
+          // Numeric checks: avg_gpa and n. The test queries the canonical answer once, then asserts the student's row matches.
+          var ref = __run_query(
+            "SELECT s.major, d.department, d.advisor, ROUND(AVG(s.gpa), 4) AS avg_gpa, COUNT(*) AS n " +
+            "FROM students s JOIN majors d ON s.major = d.code " +
+            "WHERE s.year >= 2 GROUP BY s.major, d.department, d.advisor " +
+            "HAVING COUNT(*) >= 2 ORDER BY avg_gpa DESC"
+          );
+          // The student's avg_gpa rounding may differ — accept anything within 0.05.
+          function findNum(r) { return Object.values(r).map(Number).filter(function(v){ return !isNaN(v) && v > 0 && v < 5; }); }
+          var studentNums0 = findNum(rows[0]);
+          var refNums0 = findNum(ref[0]);
+          var avgMatch0 = studentNums0.some(function(s){ return refNums0.some(function(r){ return Math.abs(s - r) < 0.05; }); });
+          assert(avgMatch0, "Row 1's avg_gpa doesn't match the canonical CS average. Expected ≈ " + refNums0[0] + ". Check your AVG().");
+          // Sanity: row counts must match canonical (exact equality)
+          var studentCounts0 = Object.values(rows[0]).map(Number).filter(function(v){ return Number.isInteger(v) && v >= 1 && v <= 100; });
+          var refCounts0 = Object.values(ref[0]).map(Number).filter(function(v){ return Number.isInteger(v) && v >= 1 && v <= 100; });
+          var nMatch0 = studentCounts0.some(function(s){ return refCounts0.indexOf(s) !== -1; });
+          assert(nMatch0, "Row 1's COUNT (n) doesn't match. Expected " + refCounts0.join(' or ') + ". Got numbers: " + studentCounts0.join(', '));
         hints:
           - text: "If your first row isn't CS, check your ORDER BY direction — should be DESC, not ASC."
             condition: "code_contains: order by"
+          - text: "Got more than 2 rows? Your HAVING filter isn't catching every major with fewer than 2 qualifying students. Use `HAVING COUNT(*) >= 2`."
+            condition: "code_missing: having"
+          - text: "Got fewer than 2 rows? Your WHERE may be over-restrictive. Year filter should be `WHERE s.year >= 2` (year-2+, not exactly year 2)."
+            condition: "code_missing: >= 2"
 
     quiz:
       title: "Capstone — Cumulative Check"
@@ -1838,6 +1960,10 @@ steps:
             - "Both run; SQLite is permissive about this"
             - "Neither — both need a JOIN"
           correct_index: 0
+          option_feedback:
+            1: "WHERE *does* run before grouping — and that's exactly why it can't reference COUNT(*). The count doesn't exist yet at WHERE time."
+            2: "SQLite is more permissive than other engines on some things (e.g., the GROUP BY rule), but it still rejects aggregates in WHERE. Both rejections are universal."
+            3: "Neither query needs a JOIN — students alone holds enough data. The bug is the placement of `COUNT(*)`, not the absence of a JOIN."
           explanation: |
             Engineer A is right. `WHERE COUNT(*) >= 2` always errors because aggregates don't exist when `WHERE` runs (the logical execution order from Step 4). Filtering on aggregates is `HAVING`'s job.
 
@@ -1850,6 +1976,10 @@ steps:
             - "Yes — WHERE includes NULL by default"
             - "It depends on the database engine"
           correct_index: 1
+          option_feedback:
+            0: "SQL treats NULL as *unknown*, not zero. Spreadsheet intuition (blank → 0) doesn't carry over."
+            2: "There's no NULL-pass-through default. WHERE applies its predicate to every row, and NULL operands always produce UNKNOWN."
+            3: "3VL is in the ANSI SQL standard. Every major engine treats NULL comparisons identically — it's one of the most consistent parts of SQL."
           explanation: |
             Three-Valued Logic (Step 3): comparing `NULL` to anything yields UNKNOWN, and `WHERE` keeps only TRUE rows. The principle matters whenever a filtered column is nullable.
 
@@ -1862,6 +1992,10 @@ steps:
             - "GROUP BY only supports indexed columns"
             - "The SQL standard prohibits mixing aggregates and non-aggregates in the same SELECT"
           correct_index: 1
+          option_feedback:
+            0: "It's a *semantic* requirement, not stylistic. Standard-compliant engines reject violations; SQLite silently picks an arbitrary value, which is worse."
+            2: "GROUP BY works on any column type. Indexes affect performance, not whether grouping is allowed."
+            3: "The standard *does* allow mixing — that's the entire point of GROUP BY. The constraint is that non-aggregate columns must be in GROUP BY too."
           explanation: |
             If a column is neither grouped nor aggregated, multiple row values collapse into one group with no rule for which to return. Standard SQL rejects this; SQLite picks arbitrarily — silent corruption, not a feature.
 

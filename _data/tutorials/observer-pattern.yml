@@ -1,6 +1,14 @@
 title: "The Observer Pattern: Stop Hard-Coding Your Dependencies"
 description: "Learn the most widely used behavioral design pattern by experiencing the pain of tightly coupled code first, then discovering how the Observer pattern makes your systems flexible and extensible. You will refactor a broken weather station into clean, decoupled architecture — guided by UML diagrams that update live as you code."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply the Observer pattern (Subject + Observer interfaces) to decouple a system that has tight one-way coupling."
+  - "Predict what breaks (and why) when a tightly-coupled implementation gains a new requirement."
+  - "Read UML class diagrams to confirm a refactoring preserved Subject/Observer roles."
+  - "Distinguish push vs. pull update styles and choose the appropriate trade-off."
+  - "Evaluate when Observer is the right pattern vs. when a simpler callback or plain function call would do."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true

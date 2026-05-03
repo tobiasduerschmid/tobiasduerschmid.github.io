@@ -1,6 +1,15 @@
 title: "Node.js Essentials: JavaScript for the Backend"
 description: "A hands-on introduction to Node.js for students who already know Python and C++. Learn to run JavaScript, understand the event loop, and write modern async code — all in the browser."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply Node.js's CLI and module system (`require` / `import`, `npm`) to run JavaScript outside the browser."
+  - "Distinguish `==` from `===` and avoid JavaScript's coercion traps."
+  - "Use arrow functions, destructuring, and array transformation idioms (`.map`, `.filter`, `.reduce`) instead of imperative for-loops."
+  - "Build a small Express HTTP API with route parameters, query strings, and POST handlers."
+  - "Explain the single-threaded event loop and predict how a long synchronous task affects every other request."
+  - "Refactor callback-style code to async/await and handle errors with try/catch."
+
 backend: webcontainer
 debugger: true
 
