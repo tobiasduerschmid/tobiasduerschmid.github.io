@@ -2,6 +2,36 @@
 const { test, expect } = require('@playwright/test');
 
 test.describe('GitGraph accessibility', () => {
+  test('scrollable live tutorial graph container is keyboard focusable', async ({ page }) => {
+    await page.goto('/');
+    await page.setContent(`
+      <!doctype html>
+      <html lang="en">
+      <head>
+        <style>
+          #host {
+            width: 140px;
+            height: 90px;
+            overflow: auto;
+          }
+          #wide-content {
+            width: 900px;
+            height: 180px;
+          }
+        </style>
+        <script src="/js/accessibility-fixes.js"></script>
+      </head>
+      <body>
+        <div id="host" class="tvm-git-graph-container" role="region" aria-label="Live Git graph">
+          <div id="wide-content"></div>
+        </div>
+      </body>
+      </html>
+    `);
+
+    await expect(page.locator('#host')).toHaveAttribute('tabindex', '0');
+  });
+
   test('live tutorial graph uses a live summary instead of exposing the SVG as an image', async ({ page }) => {
     await page.goto('/');
     await page.setContent(`

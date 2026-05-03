@@ -172,7 +172,9 @@
     </nav>
 
 
-    {% include header_project.html title=page.title %}
+    <div role="region" aria-label="{{ page.title | default: 'SEBook' }} introduction">
+      {% include header_project.html title=page.title %}
+    </div>
 
     <main id="main-content" tabindex="-1" class="container">
       <div class="row">
@@ -187,7 +189,9 @@
         <section id="{{topic_id}}">
 
           {% assign current_topic = site.pages | where: "url", topic.url | first %}
-          {% include header_project.html title=topic.name %}
+          <div role="region" aria-label="{{ topic.name }} introduction">
+            {% include header_project.html title=topic.name %}
+          </div>
           {% if current_topic.path contains '.html' %}
           {{ current_topic.content | liquid }}
           {% else %}
@@ -196,7 +200,9 @@
 
           {% if topic.subtopics %}
           {% for subtopic in topic.subtopics %}
-          {% include header_project.html title=subtopic.name %}
+          <div role="region" aria-label="{{ subtopic.name }} introduction">
+            {% include header_project.html title=subtopic.name %}
+          </div>
           {% assign current_subtopic = site.pages | where: "url", subtopic.url | first %}
           {% if current_subtopic.path contains '.html' %}
           {{ current_subtopic.content | liquid }}
@@ -206,7 +212,9 @@
           {% if subtopic.items %}
           {% for item in subtopic.items %}
 
-          {% include header_project.html title=item.name %}
+          <div role="region" aria-label="{{ item.name }} introduction">
+            {% include header_project.html title=item.name %}
+          </div>
           {% assign current_item = site.pages | where: "url", item.url | first %}
           {% if current_item.path contains '.html' %}
           {{ current_item.content | liquid }}

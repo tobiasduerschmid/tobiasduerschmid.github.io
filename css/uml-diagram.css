@@ -77,6 +77,29 @@ html.dark-mode {
   --git-graph-bg: #121212;
 }
 
+/* WCAG 1.4.3: empty/error placeholder text inside diagram containers.
+   The container's `--uml-bg` is transparent and `filter: invert(...)` only
+   applies to <svg> children, so HTML <div> placeholders inherit the page
+   background. Light = #fdfdfd, dark = #121212.
+   #5a5a5a on #fdfdfd = 6.89:1; #b0b0b0 on #121212 = 9.50:1.
+   #a00000 on #fdfdfd = 7.75:1; #ff8a8a on #121212 = 7.96:1. */
+.uml-empty-msg {
+  padding: 20px;
+  text-align: center;
+  color: #5a5a5a;
+}
+html.dark-mode .uml-empty-msg {
+  color: #b0b0b0;
+}
+.uml-error-msg {
+  padding: 20px;
+  text-align: center;
+  color: #a00000;
+}
+html.dark-mode .uml-error-msg {
+  color: #ff8a8a;
+}
+
 .uml-class-diagram-container svg,
 .uml-sequence-diagram-container svg,
 .uml-state-diagram-container svg,

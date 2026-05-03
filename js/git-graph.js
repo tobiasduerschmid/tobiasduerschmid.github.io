@@ -1679,6 +1679,17 @@
     if (!this.container.hasAttribute('aria-label') && !this.container.hasAttribute('aria-labelledby')) {
       this.container.setAttribute('aria-label', this._liveLabel || 'Live Git graph');
     }
+    // axe `scrollable-region-focusable` (WCAG 2.1.1): the live graph container
+    // wraps an SVG that frequently overflows in horizontal/vertical scroll on
+    // narrow viewports, but the SVG itself is not keyboard-focusable. Mark
+    // the region as a tab stop so keyboard users can scroll it with arrow
+    // keys. The shared `.scrollable-region-focus-target` class suppresses the
+    // full-height focus ring that would otherwise span the whole pane (see
+    // css/portfolio.css :20-27).
+    if (!this.container.hasAttribute('tabindex')) {
+      this.container.setAttribute('tabindex', '0');
+    }
+    this.container.classList.add('scrollable-region-focus-target');
 
     var summaryId = this._arrowId + '-summary';
     var detailsId = this._arrowId + '-details';

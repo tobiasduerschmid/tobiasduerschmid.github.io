@@ -14,6 +14,12 @@ const REPORT_PATH = path.join(ROOT, 'tmp', process.env.WCAG_AUDIT_REPORT_NAME ||
 // support for color-contrast, dark-mode-aware contrast, link-in-text-block
 // matching the project's underline conventions).
 const AXE_RULES_HANDLED_LOCALLY = ['target-size', 'color-contrast', 'link-in-text-block'];
+const AXE_RULE_CRITERION_OVERRIDES = {
+  region: '1.3.1',
+  'scrollable-region-focusable': '2.1.1',
+  'color-contrast': '1.4.3',
+};
+const AXE_EXPLICIT_RULES = Object.keys(AXE_RULE_CRITERION_OVERRIDES);
 
 // axe-core tags every WCAG-mapped rule with `wcagXYZ` (e.g. `wcag111`,
 // `wcag1410`, `wcag2411`). Build a reverse lookup so we can attach each axe
@@ -212,6 +218,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       // language validity, meta-refresh, etc. — areas the custom checker
       // doesn't address.
       const axeLight = await runAxeAudit(page);
+      const explicitAxeLight = await runExplicitAxeRules(page);
 
       // Dark-mode pass — flip the theme and re-run the DOM audit, but keep
       // only theme-sensitive findings (color contrast, use-of-color, non-text
@@ -227,6 +234,13 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       await page.waitForTimeout(800);
       const darkRaw = await page.evaluate(runDomAudit);
       const axeDark = await runAxeAudit(page);
+      // Run the explicit-rules pass in dark mode too: `runAxeAudit` disables
+      // `color-contrast` (handled locally), so without this dark-mode contrast
+      // failures from `axe-core` would never surface — see e.g. footer/
+      // post-meta in dark mode flagged by the deep audit. `region` and
+      // `scrollable-region-focusable` are theme-independent in principle but
+      // some popout/modal scroll containers only appear in one theme.
+      const explicitAxeDark = await runExplicitAxeRules(page);
       await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
       await settleLoadedPage(page);
       await page.waitForTimeout(400);
@@ -239,6 +253,11 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       const axeDarkContrast = {
         findings: axeDark.findings
           .filter((f) => f.criterion === '1.4.3' || f.criterion === '1.4.11' || f.criterion === '1.4.1')
+          .map((finding) => ({ ...finding, message: `Dark mode: ${finding.message}` })),
+      };
+      const explicitAxeDarkContrast = {
+        findings: explicitAxeDark.findings
+          .filter((f) => f.criterion === '1.4.3')
           .map((finding) => ({ ...finding, message: `Dark mode: ${finding.message}` })),
       };
 
@@ -271,8 +290,10 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       const findings = [
         ...desktop.findings,
         ...axeLight.findings,
+        ...explicitAxeLight.findings,
         ...darkMode.findings,
         ...axeDarkContrast.findings,
+        ...explicitAxeDarkContrast.findings,
         ...focus.findings,
         ...mobile.findings,
       ];
@@ -297,6 +318,10 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
           darkModeChecked: true,
           axeRulesEvaluated: axeLight.evidence?.rulesEvaluated ?? null,
           axeDarkRulesEvaluated: axeDark.evidence?.rulesEvaluated ?? null,
+          explicitAxeRulesEvaluated: explicitAxeLight.evidence?.rulesEvaluated ?? null,
+          explicitAxeDarkRulesEvaluated: explicitAxeDark.evidence?.rulesEvaluated ?? null,
+          explicitAxeRules: AXE_EXPLICIT_RULES,
+          explicitAxeRulesRunInBothModes: true,
           ...focus.evidence,
           ...mobile.evidence,
         },
@@ -615,6 +640,47 @@ async function runAxeAudit(page) {
     }
   }
   return { findings, evidence: { rulesEvaluated: (result.passes?.length || 0) + (result.violations?.length || 0) } };
+}
+
+async function runExplicitAxeRules(page) {
+  // Run the high-signal axe rules the project specifically wants surfaced,
+  // even when they are not WCAG-tagged (`region`) or when the broader
+  // calibrated audit handles the same SC locally (`color-contrast`). Keeping
+  // this as a small named pass makes the report prove these scanner checks
+  // are part of the audit without broadening axe to noisy best-practice rules.
+  let result;
+  try {
+    result = await new AxeBuilder({ page })
+      .withRules(AXE_EXPLICIT_RULES)
+      .analyze();
+  } catch (error) {
+    return {
+      findings: [{
+        criterion: '4.1.2',
+        severity: 'review',
+        message: `explicit axe rule run failed: ${error && error.message ? error.message : error}`,
+      }],
+      evidence: { rulesEvaluated: 0, axeError: true },
+    };
+  }
+
+  const findings = [];
+  for (const violation of result.violations) {
+    const criterion = AXE_RULE_CRITERION_OVERRIDES[violation.id];
+    if (!criterion) continue;
+    const severity = (violation.impact === 'critical' || violation.impact === 'serious')
+      ? 'fail' : 'review';
+    for (const node of violation.nodes) {
+      const target = Array.isArray(node.target) ? node.target.join(' ') : String(node.target || '');
+      const summary = (node.failureSummary || violation.help || '').replace(/\s+/g, ' ').trim();
+      findings.push({
+        criterion,
+        severity,
+        message: `[axe ${violation.id}] ${summary} — ${target}`.slice(0, 600),
+      });
+    }
+  }
+  return { findings, evidence: { rulesEvaluated: AXE_EXPLICIT_RULES } };
 }
 
 function runMobileAudit() {
@@ -997,6 +1063,7 @@ function runDomAudit() {
   findings.push(...targetFindings);
   findings.push(...contrastFindings());
   findings.push(...linkUseOfColorFindings());
+  findings.push(...scrollableRegionFindings());
 
   if (!document.querySelector('audio, video')) {
     notApplicableCriteria.push('1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2');
@@ -1457,6 +1524,53 @@ function runDomAudit() {
       });
     });
     return result.slice(0, 200);
+  }
+
+  // WCAG 2.1.1 — `scrollable-region-focusable` (axe-core rule). Mirrors
+  // axe's logic locally so the project's own audit catches it deterministically
+  // even when axe misses the case (page state not yet rendered, alternate URL
+  // states like ?instructor-mode=true, etc.). For every element whose
+  // overflow style produces a scrollable region, the rule passes if EITHER
+  // the element itself is keyboard-focusable (has a non-negative tabindex)
+  // OR it has at least one focusable descendant. This matches what axe's
+  // `scrollable-region-focusable-evaluate` checks today (see
+  // https://dequeuniversity.com/rules/axe/4.10/scrollable-region-focusable).
+  function scrollableRegionFindings() {
+    const out = [];
+    const focusableSelector = [
+      'a[href]', 'button:not([disabled])',
+      'input:not([type="hidden"]):not([disabled])',
+      'select:not([disabled])', 'textarea:not([disabled])',
+      'iframe', 'audio[controls]', 'video[controls]',
+      'summary', '[contenteditable=""]', '[contenteditable="true"]',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(',');
+    const all = document.querySelectorAll('*');
+    for (const el of all) {
+      // Cheap reject before getComputedStyle.
+      if (!(el.scrollWidth > el.clientWidth + 1) && !(el.scrollHeight > el.clientHeight + 1)) continue;
+      // Hidden subtrees are out of scope (axe doesn't flag them either).
+      if (el.closest('[aria-hidden="true"]')) continue;
+      if (!isVisible(el)) continue;
+      const cs = getComputedStyle(el);
+      const overflowX = cs.overflowX;
+      const overflowY = cs.overflowY;
+      const scrollable = (overflowX === 'auto' || overflowX === 'scroll' ||
+                          overflowY === 'auto' || overflowY === 'scroll');
+      if (!scrollable) continue;
+      // Element itself is a tab stop?
+      const ti = el.getAttribute('tabindex');
+      if (ti != null && Number(ti) > -1) continue;
+      // Any focusable descendant satisfies the rule (axe accepts this).
+      if (el.querySelector(focusableSelector)) continue;
+      out.push({
+        criterion: '2.1.1',
+        severity: 'fail',
+        message: `Scrollable region is not keyboard accessible (no tabindex, no focusable descendants): ${shortNode(el)}`,
+      });
+      if (out.length >= 50) break;
+    }
+    return out;
   }
 
   function effectiveBackground(el) {

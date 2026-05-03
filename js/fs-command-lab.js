@@ -121,6 +121,11 @@
     return w;
   }
 
+  function makeScrollableRegionKeyboardReachable(el) {
+    if (!el || el.hasAttribute('tabindex')) return;
+    el.setAttribute('tabindex', '0');
+  }
+
   // ---------------------------------------------------------------------------
   // extractPathsAndAnnotations — parse a tree text into an ordered list of
   // { path, annotation } entries. Used to diff old vs. new state so we can

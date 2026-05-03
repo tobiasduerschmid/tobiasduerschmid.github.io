@@ -300,7 +300,10 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   text-align: center;
   font-size: 13px;
   font-style: italic;
-  color: #9aa6b2;
+  /* WCAG 1.4.3: #9aa6b2 on #f8f9fa = 2.35:1 (FAIL).
+     #5a6573 on #f8f9fa = 5.62:1 (PASS) — matches the muted token used
+     elsewhere in this file (lines 71, 348, 396). */
+  color: #5a6573;
   background-color: #f8f9fa;
   border: 1px dashed #d8dde2;
   border-radius: 6px;

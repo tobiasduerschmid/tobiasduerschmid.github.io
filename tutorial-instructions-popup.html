@@ -23,10 +23,14 @@
       flex-shrink: 0; font-size: 12.5px; color: #aaa;
     }
     html:not(.dark-mode) .tip-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; color: #555; }
+    /* WCAG 1.4.3: light-mode variants must clear 4.5:1 on #f3f3f3. */
     .tip-status { margin-left: auto; }
     .tip-status.ok { color: #4caf50; }
     .tip-status.warn { color: #d4a017; }
-    .tip-status.bad { color: #c0392b; }
+    .tip-status.bad { color: #ff8a8a; }
+    html:not(.dark-mode) .tip-status.ok { color: #1f7a35; }
+    html:not(.dark-mode) .tip-status.warn { color: #75591a; }
+    html:not(.dark-mode) .tip-status.bad { color: #c0392b; }
     .tvm-instructions-panel {
       flex: 1; min-height: 0; display: flex; flex-direction: column;
       background: var(--instr-bg, #14141c); width: 100%; max-width: 100%; min-width: 0;
@@ -42,8 +46,8 @@
   </style>
 </head>
 <body>
-  <h1 class="sr-only">Instructions popout</h1>
   <main aria-label="Tutorial instructions popout">
+  <h1 class="sr-only">Instructions popout</h1>
   <div class="tip-bar">
     <span>Instructions</span>
     <span class="tip-status" id="statusEl" role="status" aria-live="polite">Connecting&hellip;</span>

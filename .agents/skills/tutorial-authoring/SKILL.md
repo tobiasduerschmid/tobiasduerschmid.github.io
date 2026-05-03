@@ -70,6 +70,68 @@ effective parts. Conversely, a tutorial that is *only* "Read and Run" skips
 the active-learning parts. Aim for each PRIMM phase to appear at least once
 across any 3–4 step run.
 
+#### What makes a *good* Predict prompt (vs. box-checking)
+
+The Predict phase is the easiest to author badly. Tutorials are full of
+"Predict before you run" headings that ask trivial counting questions
+("how many printf calls are there?") or impossible questions ("predict
+the runtime in microseconds"). Both fail. A Predict prompt earns its place
+only when **all** of these are true:
+
+1. **The student can actually predict it from prior knowledge or careful
+   reading.** No magic, no needing to run the code first. If they have to
+   guess, the prompt is broken.
+2. **It surfaces a misconception or a non-obvious detail.** The reward for
+   predicting correctly is the satisfaction of "I called it"; the reward
+   for predicting incorrectly is *the gap itself becomes the lesson*. If
+   the answer is too obvious, neither reward exists.
+3. **The answer is sharp, not vague.** "Predict what happens" is too
+   loose; "predict whether output line 3 and line 4 collapse onto the
+   same line, and why" is sharp. A sharp answer is something the student
+   can commit to in one sentence — and either match or mismatch on running.
+4. **It would be plausible to predict wrong.** If 95% of students predict
+   the same thing without thinking, the prompt is just retrieval cosplay.
+   Good predict prompts have a *trap* — a tempting wrong answer that maps
+   to a known misconception.
+5. **It's engaging.** The student should actually want to know whether
+   they were right. "How many lines are in this output?" — nobody cares.
+   "Will pressing Run on this code segfault, succeed silently, or produce
+   wrong output?" — students lean in.
+
+A useful template: present **2–4 plausible alternatives** as multiple
+choice (or "(a)/(b)/(c)") rather than an open-ended question. The
+alternatives let you encode the misconceptions explicitly, and the
+"commit to one letter" step forces a decision. Pair the prompt with a
+gated `<details>` block that opens *after* the student has committed —
+not before — and that uses the prediction-vs-reality gap to teach the
+underlying rule.
+
+Bad ("box-checking"):
+
+> ✏️ Predict before you compile: how many lines of output will you see?
+> What's the first character?
+
+(Both trivially answered by glancing at the source. No gap, no insight.)
+
+Good (sharp, traps a misconception, gated reveal):
+
+> ✏️ Predict before you compile: mentally delete the `\n` from line 3's
+> printf. What does the output look like?
+>
+> - (a) Identical — printf adds an implicit newline.
+> - (b) Lines 3 and 4 collapse onto a single line.
+> - (c) Line 3 disappears entirely.
+> - (d) Compile error.
+>
+> Commit to a letter, *then* read the gated reveal.
+
+(Forces the student to confront whether `printf` adds a newline — the
+canonical C++→C trap. Three of the four wrong answers map to specific
+misconceptions you can address in the reveal.)
+
+If you can't write a Predict prompt that meets all five tests, **don't
+add one** — a missing Predict is better than a box-checking one.
+
 Other named pedagogies that are common in this repo and are encouraged when
 they fit:
 

@@ -508,7 +508,10 @@ a.thumbnail:visited {
 .tpl6 .bg {
 	height: 100%;
 	width: 100%;
-	background-color: rgba(0, 179, 254, 0.9);
+	/* WCAG 1.4.3: white text on rgba(0,179,254,0.9) cyan ranges 2.21–2.91:1
+	   depending on the underlying image. UCLA navy (#003B5C) at near-full
+	   opacity gives white text 11.80:1 PASS. */
+	background-color: rgba(0, 59, 92, 0.92);
 	text-align: center;
 	display: table;
 }
@@ -724,6 +727,16 @@ html.dark-mode #main-content {
 
 html.dark-mode .container {
 	background-color: transparent;
+}
+
+/* WCAG 1.4.3: footer + post-meta in dark mode.
+   Light-mode `_sass/_layout.scss:117,189` uses #595959 which clears 6.89:1 on
+   #fdfdfd, but dropped to 2.48:1 on #1a1a1a / 2.67:1 on #121212 in dark mode.
+   #b0b0b0 gives 9.50:1 on #121212 and 9.04:1 on #1a1a1a — comfortably above
+   the 4.5:1 minimum-contrast threshold for normal text. */
+html.dark-mode .footer-col-wrapper,
+html.dark-mode .post-meta {
+	color: #b0b0b0;
 }
 
 h1,

@@ -815,7 +815,9 @@
   flex: 1;
   word-break: break-all;
 }
-.tvm-debug-watch-na { color: #999; font-style: italic; }
+/* WCAG 1.4.3: light bg is .tvm-debug-view #fafafa.
+   #999 → 2.73:1 (FAIL). #5e5e5e → 6.94:1 (PASS). */
+.tvm-debug-watch-na { color: #5e5e5e; font-style: italic; }
 .tvm-debug-watch-error { color: #c0392b; font-style: italic; font-size: 11px; }
 .tvm-debug-watch-action {
   background: transparent;
@@ -1450,7 +1452,10 @@ html.dark-mode .tvm-debug-watch-row { border-bottom-color: #2d3346; }
 html.dark-mode .tvm-debug-watch-expr { color: #f1f5f9; }
 html.dark-mode .tvm-debug-watch-arrow { color: #94a3b8; }
 html.dark-mode .tvm-debug-watch-val { color: #fbbf24; }
-html.dark-mode .tvm-debug-watch-na { color: #64748b; }
+/* WCAG 1.4.3: dark workspace #1e1e1e.
+   #64748b → 3.50:1 (FAIL). #94a3b8 → 6.50:1 (PASS) — matches
+   the .tvm-debug-var-type token already used elsewhere. */
+html.dark-mode .tvm-debug-watch-na { color: #94a3b8; }
 html.dark-mode .tvm-debug-watch-error { color: #fca5a5; }
 html.dark-mode .tvm-debug-watch-promote { color: #FFE066; }
 html.dark-mode .tvm-debug-watch-promote:hover {

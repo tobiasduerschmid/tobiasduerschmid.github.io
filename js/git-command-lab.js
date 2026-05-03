@@ -113,6 +113,11 @@
     return out;
   }
 
+  function makeScrollableRegionKeyboardReachable(el) {
+    if (!el || el.hasAttribute('tabindex')) return;
+    el.setAttribute('tabindex', '0');
+  }
+
   function makeCard(container, spec) {
     container.innerHTML = '';
     container.classList.add('git-command-lab');

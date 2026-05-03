@@ -310,7 +310,7 @@ html, body {
 .tvm-uml-bottom-left-splitter:focus-visible {
   background: transparent;
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
+  box-shadow: none;
 }
 .tvm-uml-bottom-left-splitter::before {
   content: "";
@@ -343,6 +343,29 @@ html, body {
 }
 .tvm-uml-bottom-left-splitter:focus-visible::before {
   box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+.tvm-uml-bottom-left-splitter::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tvm-splitter-focus-ring);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvm-uml-bottom-left-splitter:focus-visible {
+  box-shadow: none;
+}
+.tvm-uml-bottom-left-splitter:focus-visible::before {
+  box-shadow: none;
+}
+.tvm-uml-bottom-left-splitter:focus-visible::after {
+  opacity: 1;
 }
 
 .tvm-uml-bottom-left-view {
@@ -590,7 +613,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-hsplitter:focus-visible {
   background: transparent;
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
+  box-shadow: none;
 }
 .tvm-hsplitter::before {
   content: "";
@@ -622,6 +645,29 @@ html:not(.dark-mode) .tvm-left-tab.active {
 }
 .tvm-hsplitter:focus-visible::before {
   box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+.tvm-hsplitter::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 10px;
+  height: 42px;
+  transform: translateY(-50%);
+  border: 2px solid var(--tvm-splitter-focus-ring);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvm-hsplitter:focus-visible {
+  box-shadow: none;
+}
+.tvm-hsplitter:focus-visible::before {
+  box-shadow: none;
+}
+.tvm-hsplitter:focus-visible::after {
+  opacity: 1;
 }
 
 /* ───────────────────────────────────────────
@@ -1307,7 +1353,7 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 .tvm-editor-pane-divider:focus-visible {
   background: transparent;
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
+  box-shadow: none;
 }
 .tvm-editor-pane-divider::before {
   content: "";
@@ -1339,6 +1385,29 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 }
 .tvm-editor-pane-divider:focus-visible::before {
   box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+.tvm-editor-pane-divider::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 42px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tvm-splitter-focus-ring);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvm-editor-pane-divider:focus-visible {
+  box-shadow: none;
+}
+.tvm-editor-pane-divider:focus-visible::before {
+  box-shadow: none;
+}
+.tvm-editor-pane-divider:focus-visible::after {
+  opacity: 1;
 }
 
 .tvm-editor-pane .monaco-editor .scrollbar,
@@ -2132,7 +2201,7 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 .tvm-vsplitter:focus-visible {
   background: transparent;
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
+  box-shadow: none;
 }
 .tvm-vsplitter::before {
   content: "";
@@ -2165,6 +2234,29 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 }
 .tvm-vsplitter:focus-visible::before {
   box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+.tvm-vsplitter::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tvm-splitter-focus-ring);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvm-vsplitter:focus-visible {
+  box-shadow: none;
+}
+.tvm-vsplitter:focus-visible::before {
+  box-shadow: none;
+}
+.tvm-vsplitter:focus-visible::after {
+  opacity: 1;
 }
 
 /* Terminal Panel */
@@ -2713,7 +2805,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
 .tvm-http-splitter:focus-visible {
   background: transparent;
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--tvm-splitter-focus-ring);
+  box-shadow: none;
 }
 .tvm-http-splitter::before {
   content: "";
@@ -2746,6 +2838,29 @@ html:not(.dark-mode) .tvm-right-tab.active {
 }
 .tvm-http-splitter:focus-visible::before {
   box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+.tvm-http-splitter::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tvm-splitter-focus-ring);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvm-http-splitter:focus-visible {
+  box-shadow: none;
+}
+.tvm-http-splitter:focus-visible::before {
+  box-shadow: none;
+}
+.tvm-http-splitter:focus-visible::after {
+  opacity: 1;
 }
 
 .tvm-http-toolbar {
@@ -4021,7 +4136,10 @@ html:not(.dark-mode) .parsons-reset-btn { background: #eee; color: #333; }
 .tvm-quiz-panel .score-summary { color: #8888a8; font-size: 0.92em; margin: 0 0 6px; }
 .tvm-quiz-panel .tvm-quiz-threshold {
   font-size: 0.82em;
-  color: #555570;
+  /* WCAG 1.4.3: workspace bg is always-dark #1c1c1e.
+     #555570 → 2.37:1 (FAIL). #9090b0 → 5.61:1 (PASS) — matches the muted
+     token used in css/tutor-chat.css. */
+  color: #9090b0;
   margin-bottom: 14px;
 }
 .tvm-quiz-panel .hidden { display: none !important; }

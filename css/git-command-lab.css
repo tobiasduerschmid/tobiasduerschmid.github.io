@@ -252,7 +252,6 @@ html.dark-mode .git-command-lab__rebase-file-header {
 html.dark-mode .git-command-lab__rebase-file code {
   color: #e6edf3;
 }
-
 /* Block layout with inline-block centering for the SVG. We deliberately
    avoid `display: flex; justify-content: center` here because the SVG's
    width/height are tweened per frame by js/git-graph.js (_animateDimensions).

@@ -390,7 +390,7 @@
           {% endif %}
         </div>
 
-        <div class="container">
+        <div class="container" role="region" aria-label="{{ page.title | default: 'Chapter' }} introduction">
           <div class="row">
             {% assign section_heading_count = 0 %}
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
@@ -698,7 +698,7 @@
   {% include footer.html %}
 
   <!-- Privacy / Cookie Notice -->
-  <div style="max-width: 860px; margin: 20px auto 0; padding: 0 20px; clear: both;">
+  <div role="region" aria-label="Privacy notice" style="max-width: 860px; margin: 20px auto 0; padding: 0 20px; clear: both;">
     {% include cookie-notice.html %}
   </div>
 
