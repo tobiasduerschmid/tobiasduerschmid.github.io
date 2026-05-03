@@ -281,9 +281,261 @@ test.describe('SEBook read-aloud button (TTS)', () => {
       window.__ttsLog.filter((l) => l.type === 'speak')
     );
     for (const call of speakCalls) {
-      // A small slack over MAX_CHUNK_LENGTH (200) covers the trailing
+      // A small slack over MAX_CHUNK_LENGTH (240) covers the trailing
       // sentence-boundary string that the chunker keeps with its piece.
-      expect(call.text.length).toBeLessThanOrEqual(300);
+      expect(call.text.length).toBeLessThanOrEqual(320);
     }
+  });
+});
+
+/**
+ * Tests: TTS pacing improvements
+ *
+ * Plain textContent extraction concatenates blocks with no boundaries, so
+ * "Software TestingIn our quest..." reads as one phrase and the chunker's
+ * word-boundary fallback creates audible pauses mid-sentence. The DOM-aware
+ * extractor injects ". " at block exits and ", " at list / cell exits,
+ * giving the chunker plenty of natural breakpoints and giving the speech
+ * engine room to insert real intonation.
+ */
+test.describe('SEBook read-aloud pacing', () => {
+  test('extract() inserts a strong pause after headings', async ({ page }) => {
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer);
+
+    const result = await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.innerHTML = '<h1>Title</h1><p>Body sentence</p><h2>Section</h2><p>More body</p>';
+      return window.TTSPlayer.extract(div);
+    });
+
+    expect(result.text).toMatch(/Title\.\s+Body sentence\./);
+    expect(result.text).toMatch(/Section\.\s+More body/);
+  });
+
+  test('extract() inserts pauses at code-line and blockquote boundaries', async ({ page }) => {
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer);
+
+    const result = await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.innerHTML =
+        '<pre>line one\nline two\nline three</pre>' +
+        '<blockquote>A quoted aside</blockquote>' +
+        '<p>Final paragraph</p>';
+      return window.TTSPlayer.extract(div).text;
+    });
+
+    // Each code line stands alone as a sentence so the engine pauses at line breaks.
+    expect(result).toMatch(/line one\.\s+line two\.\s+line three\./);
+    // Leaving the blockquote marks a strong pause before the next paragraph.
+    expect(result).toMatch(/A quoted aside\.\s+Final paragraph/);
+  });
+
+  test('extract() collapses double punctuation injected by adjacent blocks', async ({ page }) => {
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer);
+
+    const text = await page.evaluate(() => {
+      const div = document.createElement('div');
+      // Each <p> already ends with a period — the extractor must not produce ".."
+      div.innerHTML = '<p>First.</p><p>Second.</p><p>Third.</p>';
+      return window.TTSPlayer.extract(div).text;
+    });
+
+    expect(text).not.toMatch(/\.\./);
+    expect(text).toMatch(/First\.\s+Second\.\s+Third\./);
+  });
+
+  test('regression: chunker prefers sentence boundaries over word boundaries', async ({ page }) => {
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    // Build text where the same window contains both a sentence boundary
+    // and several word boundaries. The chunker must end every chunk at a
+    // sentence/clause boundary, not in the middle of a word.
+    const speakCalls = await page.evaluate(() => {
+      window.__ttsLog.length = 0;
+      let text = '';
+      const filler = 'Word ';
+      // Build long stretches of words punctuated by full stops.
+      for (let i = 0; i < 30; i++) {
+        for (let j = 0; j < 15; j++) text += filler;
+        text += 'End. ';
+      }
+      window.TTSPlayer.speak(text);
+      return null;
+    });
+
+    await expect
+      .poll(() => page.evaluate(() => window.__ttsLog.filter((l) => l.type === 'speak').length))
+      .toBeGreaterThan(1);
+
+    const calls = await page.evaluate(() =>
+      window.__ttsLog.filter((l) => l.type === 'speak').map((l) => l.text)
+    );
+    // Every chunk except possibly the last (the tail) must terminate on a
+    // sentence-ending pause. A chunk ending with "Word " is a Tier-3 split
+    // and produces an audible mid-sentence pause.
+    for (let i = 0; i < calls.length - 1; i++) {
+      expect(calls[i]).toMatch(/[.!?]\s*$/);
+    }
+  });
+});
+
+/**
+ * Tests: TTS navigation controls
+ *
+ * Co-designed with the structured extractor: heading positions recorded
+ * during extraction power both the extra strong pause (pacing) and the
+ * prev/next-heading buttons (navigation). 10-second skips use a
+ * rate-aware chars-per-second estimate so the perceived skip feels the
+ * same regardless of playback speed.
+ */
+test.describe('SEBook read-aloud navigation', () => {
+  test('extract() records a marker for every heading', async ({ page }) => {
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer);
+
+    const markers = await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.innerHTML =
+        '<h1>Alpha</h1><p>body alpha</p>' +
+        '<h2>Bravo</h2><p>body bravo</p>' +
+        '<h3>Charlie</h3><p>body charlie</p>';
+      return window.TTSPlayer.extract(div).markers;
+    });
+
+    expect(markers).toHaveLength(3);
+    expect(markers.map((m) => m.label)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    expect(markers.map((m) => m.level)).toEqual([1, 2, 3]);
+    // Markers are ordered by document position.
+    expect(markers[0].offset).toBeLessThan(markers[1].offset);
+    expect(markers[1].offset).toBeLessThan(markers[2].offset);
+  });
+
+  test('seekToHeading("next") jumps offset to the next heading marker', async ({ page }) => {
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    const result = await page.evaluate(async () => {
+      const div = document.createElement('div');
+      div.innerHTML =
+        '<h1>Alpha</h1><p>body alpha sentence here</p>' +
+        '<h2>Bravo</h2><p>body bravo sentence here</p>';
+      const extracted = window.TTSPlayer.extract(div);
+      window.__ttsLog.length = 0;
+      window.TTSPlayer.speak(extracted);
+      // Allow the first chunk to be queued.
+      await new Promise((r) => setTimeout(r, 5));
+      window.TTSPlayer.seekToHeading('next');
+      await new Promise((r) => setTimeout(r, 100));
+      const lastSpeak = window.__ttsLog.filter((l) => l.type === 'speak').slice(-1)[0];
+      return { lastChunk: lastSpeak ? lastSpeak.text : null, bravoOffset: extracted.markers.find((m) => m.label === 'Bravo').offset };
+    });
+
+    // After seeking to "Bravo", the chunk being spoken must start at or
+    // after the Bravo heading position — i.e., contain "Bravo" near its head.
+    expect(result.lastChunk).toBeTruthy();
+    expect(result.lastChunk).toContain('Bravo');
+  });
+
+  test('seekToHeading("prev") rewinds to the start when before the first heading', async ({ page }) => {
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    // After speaking is in flight, asking "prev" from a position before all
+    // headings rewinds to offset 0 rather than no-oping.
+    const result = await page.evaluate(async () => {
+      const div = document.createElement('div');
+      // First heading is at offset > 0 because some prefix prose precedes it.
+      div.innerHTML = '<p>Intro before any heading.</p><h1>FirstHeading</h1><p>body</p>';
+      const extracted = window.TTSPlayer.extract(div);
+      window.__ttsLog.length = 0;
+      window.TTSPlayer.speak(extracted);
+      await new Promise((r) => setTimeout(r, 5));
+      // Force offset past the first heading by advancing it.
+      window.TTSPlayer.seekToHeading('next');
+      await new Promise((r) => setTimeout(r, 30));
+      window.TTSPlayer.seekToHeading('prev');
+      await new Promise((r) => setTimeout(r, 100));
+      const firstSpeak = window.__ttsLog.filter((l) => l.type === 'speak').slice(-1)[0];
+      return firstSpeak ? firstSpeak.text : null;
+    });
+
+    expect(result).toBeTruthy();
+    // After prev with no preceding heading, playback resumes at the start.
+    expect(result).toMatch(/^Intro/);
+  });
+
+  test('seekRelative jumps offset proportional to the rate', async ({ page }) => {
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    const probe = await page.evaluate(() => {
+      // 10K chars of neutral text so progress is measurable in fractions.
+      const text = 'word '.repeat(2000);
+      const T = window.TTSPlayer;
+
+      T.speak(text, { rate: 1.0 });
+      const startProgress = T.getProgress();
+      T.seekRelative(10);
+      const after1xForward = T.getProgress();
+
+      T.stop();
+      T.speak(text, { rate: 2.0 });
+      T.seekRelative(10);
+      const after2xForward = T.getProgress();
+
+      T.stop();
+      T.speak(text, { rate: 1.0 });
+      T.seekRelative(10);
+      T.seekRelative(-10);
+      const afterRoundTrip = T.getProgress();
+
+      return { startProgress, after1xForward, after2xForward, afterRoundTrip };
+    });
+
+    // Forward seek moves progress strictly forward.
+    expect(probe.startProgress).toBe(0);
+    expect(probe.after1xForward).toBeGreaterThan(0);
+    // 2x rate covers about twice as much text per "10s" — at minimum strictly
+    // more than the 1x case (we don't pin an exact ratio because the formula
+    // is heuristic).
+    expect(probe.after2xForward).toBeGreaterThan(probe.after1xForward);
+    // Forward then back lands back at the start (clamped at 0).
+    expect(probe.afterRoundTrip).toBe(0);
+  });
+
+  test('TTS bar exposes navigation buttons; heading buttons appear when the page has headings', async ({ page }) => {
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    // Always-visible nav buttons exist in the markup.
+    await expect(page.locator('#tts-back-10s')).toHaveCount(1);
+    await expect(page.locator('#tts-fwd-10s')).toHaveCount(1);
+    await expect(page.locator('#tts-prev-heading')).toHaveCount(1);
+    await expect(page.locator('#tts-next-heading')).toHaveCount(1);
+
+    // Trigger reading; testing.html has multiple headings so the heading
+    // buttons should reveal themselves.
+    await page.click('#tts-read-btn');
+    await expect
+      .poll(() => page.evaluate(() => {
+        const el = document.getElementById('tts-prev-heading');
+        return el ? getComputedStyle(el).display : 'missing';
+      }))
+      .not.toBe('none');
+    await expect
+      .poll(() => page.evaluate(() => {
+        const el = document.getElementById('tts-next-heading');
+        return el ? getComputedStyle(el).display : 'missing';
+      }))
+      .not.toBe('none');
   });
 });

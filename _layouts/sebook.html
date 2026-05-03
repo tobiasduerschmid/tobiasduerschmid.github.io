@@ -714,16 +714,40 @@
   <div id="tts-bar" role="region" aria-label="Text-to-speech controls"
     style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:1050;
            background:#1c1c2e; color:#fff; padding:8px 20px;
-           align-items:center; gap:12px; flex-wrap:wrap;
+           align-items:center; gap:8px; flex-wrap:wrap;
            box-shadow:0 -2px 10px rgba(0,0,0,0.45);">
     <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
       <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
+    <button id="tts-prev-heading" title="Previous heading" aria-label="Jump to previous heading"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#fff; border-radius:6px; width:34px; height:34px; cursor:pointer;
+             display:none; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+      <i class="fa fa-step-backward" aria-hidden="true"></i>
+    </button>
+    <button id="tts-back-10s" title="Back 10 seconds" aria-label="Back 10 seconds"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#fff; border-radius:6px; padding:4px 9px; cursor:pointer;
+             font-size:12px; font-weight:700; flex-shrink:0;">
+      <i class="fa fa-undo" aria-hidden="true"></i> 10s
+    </button>
     <button id="tts-playpause" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true"
       style="background:transparent; border:2px solid #2774AE; color:#fff;
              border-radius:50%; width:34px; height:34px; cursor:pointer;
              display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
       <i class="fa fa-pause" aria-hidden="true"></i>
+    </button>
+    <button id="tts-fwd-10s" title="Forward 10 seconds" aria-label="Forward 10 seconds"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#fff; border-radius:6px; padding:4px 9px; cursor:pointer;
+             font-size:12px; font-weight:700; flex-shrink:0;">
+      10s <i class="fa fa-redo" aria-hidden="true"></i>
+    </button>
+    <button id="tts-next-heading" title="Next heading" aria-label="Jump to next heading"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#fff; border-radius:6px; width:34px; height:34px; cursor:pointer;
+             display:none; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+      <i class="fa fa-step-forward" aria-hidden="true"></i>
     </button>
     <button id="tts-slower" title="Slower"
       style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
@@ -766,14 +790,18 @@
           return;
         }
 
-        var readBtn      = document.getElementById('tts-read-btn');
-        var bar          = document.getElementById('tts-bar');
-        var playPauseBtn = document.getElementById('tts-playpause');
-        var slowerBtn    = document.getElementById('tts-slower');
-        var fasterBtn    = document.getElementById('tts-faster');
-        var stopBtn      = document.getElementById('tts-stop');
-        var rateDisplay  = document.getElementById('tts-rate');
-        var voiceSel     = document.getElementById('tts-voice-select');
+        var readBtn       = document.getElementById('tts-read-btn');
+        var bar           = document.getElementById('tts-bar');
+        var playPauseBtn  = document.getElementById('tts-playpause');
+        var slowerBtn     = document.getElementById('tts-slower');
+        var fasterBtn     = document.getElementById('tts-faster');
+        var stopBtn       = document.getElementById('tts-stop');
+        var rateDisplay   = document.getElementById('tts-rate');
+        var voiceSel      = document.getElementById('tts-voice-select');
+        var prevHeadingBtn = document.getElementById('tts-prev-heading');
+        var nextHeadingBtn = document.getElementById('tts-next-heading');
+        var back10Btn      = document.getElementById('tts-back-10s');
+        var fwd10Btn       = document.getElementById('tts-fwd-10s');
 
         if (!readBtn || !bar) return;
 
@@ -859,13 +887,18 @@
             return;
           }
           var content = document.getElementById('main-content');
-          var text = TTSPlayer.extractText(content);
-          if (!text) return;
+          var extracted = TTSPlayer.extract(content);
+          if (!extracted.text) return;
 
           readBtn.innerHTML = '<i class="fa fa-stop" style="margin-right:5px;" aria-hidden="true"></i>Stop Reading';
           readBtn.style.color = '#c0392b';
           readBtn.style.borderColor = '#c0392b';
-          TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });
+          // Show heading-skip buttons only when the page actually has
+          // multiple headings to skip between.
+          var hasHeadings = extracted.markers && extracted.markers.length > 1;
+          if (prevHeadingBtn) prevHeadingBtn.style.display = hasHeadings ? 'flex' : 'none';
+          if (nextHeadingBtn) nextHeadingBtn.style.display = hasHeadings ? 'flex' : 'none';
+          TTSPlayer.speak(extracted, { onUpdate: updateBar, onEnd: updateBar });
           updateBar();
         });
 
@@ -885,6 +918,18 @@
             TTSPlayer.setRate(TTSPlayer.getRate() + 0.1);
             if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           });
+        }
+        if (back10Btn) {
+          back10Btn.addEventListener('click', function () { TTSPlayer.seekRelative(-10); });
+        }
+        if (fwd10Btn) {
+          fwd10Btn.addEventListener('click', function () { TTSPlayer.seekRelative(10); });
+        }
+        if (prevHeadingBtn) {
+          prevHeadingBtn.addEventListener('click', function () { TTSPlayer.seekToHeading('prev'); });
+        }
+        if (nextHeadingBtn) {
+          nextHeadingBtn.addEventListener('click', function () { TTSPlayer.seekToHeading('next'); });
         }
         if (stopBtn) {
           stopBtn.addEventListener('click', function () { TTSPlayer.stop(); });

@@ -6,13 +6,20 @@
  * and surfaces quality labels so users can pick wisely.
  *
  * Public API:
- *   TTSPlayer.speak(text, { rate, onUpdate, onEnd });
+ *   TTSPlayer.speak(input, { rate, onUpdate, onEnd })
+ *     input may be a plain string OR { text, markers } as produced by
+ *     TTSPlayer.extract(el). Markers (heading positions) enable heading
+ *     navigation; without them seekToHeading is a no-op.
  *   TTSPlayer.pause() / resume() / stop()
- *   TTSPlayer.setRate(n)          — restarts from last word boundary
- *   TTSPlayer.setVoice(voice)     — SpeechSynthesisVoice object
- *   TTSPlayer.getVoices()         — sorted list: { voice, label, lang, score }
- *   TTSPlayer.onVoicesReady(fn)   — call fn once voice list is populated
- *   TTSPlayer.extractText(el)
+ *   TTSPlayer.setRate(n)            — restarts from last word boundary
+ *   TTSPlayer.setVoice(voice)       — SpeechSynthesisVoice object
+ *   TTSPlayer.seekRelative(seconds) — back/forward by ~seconds (rate-aware)
+ *   TTSPlayer.seekToHeading(dir)    — 'next' | 'prev', uses extracted markers
+ *   TTSPlayer.getMarkers()          — current extraction's markers (copy)
+ *   TTSPlayer.getVoices()           — sorted list: { voice, label, lang, score }
+ *   TTSPlayer.onVoicesReady(fn)     — call fn once voice list is populated
+ *   TTSPlayer.extract(el)           — { text, markers }, DOM-aware
+ *   TTSPlayer.extractText(el)       — plain text (alias for extract(el).text)
  *   TTSPlayer.rateLabel()
  */
 (function (window) {
@@ -35,10 +42,14 @@
   // Chrome's TTS engine silently fails when an utterance is too long
   // (~32K chars) or runs longer than ~15s. Splitting the input into short
   // pieces and chaining them via onend keeps each utterance under both limits.
-  var MAX_CHUNK_LENGTH = 200;
+  var MAX_CHUNK_LENGTH = 240;
   var _chunks = [];
   var _chunkIdx = 0;
   var _chunkBase = 0;        // global offset within _text where _chunks[0] begins
+  var _markers = [];         // [{ offset, type, level, label }]
+  // Estimated chars-per-second at rate=1.0 (English ~150 wpm × 5 chars/word ÷ 60s).
+  // Scales with _rate for seekRelative.
+  var BASE_CHARS_PER_SEC = 12.5;
 
   /* ── Voice quality scoring ────────────────────────────────── */
 
@@ -115,28 +126,45 @@
 
   /* ── Playback ─────────────────────────────────────────────── */
 
-  // Split text on sentence boundaries (then word boundaries as a fallback) so
-  // each utterance stays short enough for Chrome's TTS engine. The chunks
-  // concatenate back to the input, so chunkStart math below is exact.
+  // Split text into TTS-engine-sized pieces, preferring boundaries that
+  // already sound like natural pauses. Order of preference per chunk:
+  //   1. Sentence end (. ! ?)            — already a strong pause
+  //   2. Clause end   (; : ,)            — already a light pause
+  //   3. Word boundary (space)           — last resort, sounds clipped
+  // Falling back to a word boundary is what produces the awkward
+  // mid-sentence pauses; structural punctuation injected by _extract keeps
+  // most chunks splitting at tier 1 even on long pages.
+  // Chunks concatenate back to the input, so chunkStart math is exact.
   function _splitIntoChunks(text) {
     var chunks = [];
     var remaining = text;
+    var minSplit = Math.floor(MAX_CHUNK_LENGTH / 3);
     while (remaining.length > MAX_CHUNK_LENGTH) {
       var win = remaining.slice(0, MAX_CHUNK_LENGTH);
+      var splitAt;
+
       var lastSentence = Math.max(
         win.lastIndexOf('. '),
         win.lastIndexOf('! '),
-        win.lastIndexOf('? '),
-        win.lastIndexOf('; '),
-        win.lastIndexOf(': ')
+        win.lastIndexOf('? ')
       );
-      var splitAt;
-      if (lastSentence > MAX_CHUNK_LENGTH / 2) {
+
+      if (lastSentence >= minSplit) {
         splitAt = lastSentence + 2;
       } else {
-        var lastSpace = win.lastIndexOf(' ');
-        splitAt = lastSpace > 0 ? lastSpace + 1 : MAX_CHUNK_LENGTH;
+        var lastClause = Math.max(
+          win.lastIndexOf('; '),
+          win.lastIndexOf(': '),
+          win.lastIndexOf(', ')
+        );
+        if (lastClause >= minSplit) {
+          splitAt = lastClause + 2;
+        } else {
+          var lastSpace = win.lastIndexOf(' ');
+          splitAt = lastSpace > 0 ? lastSpace + 1 : MAX_CHUNK_LENGTH;
+        }
       }
+
       chunks.push(remaining.slice(0, splitAt));
       remaining = remaining.slice(splitAt);
     }
@@ -247,29 +275,123 @@
 
   /* ── Text extraction ──────────────────────────────────────── */
 
-  function _extractText(el, skipSel) {
-    if (!el) return '';
+  // Tags that imply a strong pause (≈ sentence end) when leaving the element.
+  var STRONG_PAUSE_TAGS = {
+    H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1,
+    P: 1, BLOCKQUOTE: 1, PRE: 1, HR: 1,
+    SECTION: 1, ARTICLE: 1, HEADER: 1, FOOTER: 1, MAIN: 1, ASIDE: 1,
+    TABLE: 1, FIGURE: 1, FIGCAPTION: 1,
+    UL: 1, OL: 1, DL: 1
+  };
+  // Tags that imply a light pause (≈ comma) when leaving the element.
+  var LIGHT_PAUSE_TAGS = {
+    LI: 1, TR: 1, TD: 1, TH: 1, DT: 1, DD: 1
+  };
+
+  var DEFAULT_SKIP_SELECTORS = [
+    'script', 'noscript', 'style', 'nav', 'button', 'input', 'select', 'textarea',
+    '.cap', '.highlight-toggle-container', '.navbar', '#sidebar',
+    '#tts-bar', '.tts-bar', '.se-gym-container', '.alert'
+  ];
+
+  // Walk a (cleaned) DOM subtree and produce both the spoken text and a list
+  // of markers (currently just headings). Block-level elements get a strong
+  // ". " on exit; list items / table cells get a light ", "; <pre> blocks
+  // turn each non-empty code line into its own short sentence so each line
+  // gets an audible pause. Punctuation is normalized at the end so we never
+  // emit things like "Title.. ," or "Word, .".
+  function _extract(el, skipSel) {
+    if (!el) return { text: '', markers: [] };
+
     var clone = el.cloneNode(true);
-    var selectors = skipSel || [
-      'script', 'noscript', 'style', 'nav', 'button', 'input', 'select', 'textarea',
-      '.cap', '.highlight-toggle-container', '.navbar', '#sidebar',
-      '#tts-bar', '.tts-bar', '.se-gym-container', '.alert'
-    ];
-    selectors.forEach(function (sel) {
-      var nodes = clone.querySelectorAll(sel);
-      for (var i = nodes.length - 1; i >= 0; i--) {
-        var n = nodes[i];
+    var selectors = skipSel || DEFAULT_SKIP_SELECTORS;
+    for (var s = 0; s < selectors.length; s++) {
+      var matches;
+      try { matches = clone.querySelectorAll(selectors[s]); } catch (e) { continue; }
+      for (var i = matches.length - 1; i >= 0; i--) {
+        var n = matches[i];
         if (n.parentNode) n.parentNode.removeChild(n);
       }
-    });
-    // Use textContent (not innerText) — cloned nodes are detached from the
-    // document so innerText returns "" in Chrome (it requires layout).
-    // Replace < and > with spaces so Chrome's TTS engine doesn't interpret
-    // code like <iostream> or <T> as SSML tags and halt mid-sentence.
-    return (clone.textContent || '')
-      .replace(/[<>]/g, ' ')
+    }
+
+    var parts = [];
+    var rawMarkers = [];
+
+    function walk(node) {
+      if (node.nodeType === 3) {  // TEXT_NODE
+        if (node.nodeValue) parts.push(node.nodeValue);
+        return;
+      }
+      if (node.nodeType !== 1) return;  // not ELEMENT_NODE
+      var tag = node.tagName;
+
+      if (tag === 'BR') { parts.push(', '); return; }
+
+      if (tag === 'PRE') {
+        // Each non-blank code line becomes its own short sentence so the
+        // engine pauses at line breaks instead of running lines together.
+        var raw = (node.textContent || '');
+        var lines = raw.split(/\r?\n/);
+        var pieces = [];
+        for (var l = 0; l < lines.length; l++) {
+          var line = lines[l].replace(/\s+/g, ' ').trim();
+          if (line) pieces.push(line);
+        }
+        if (pieces.length) parts.push(pieces.join('. ') + '. ');
+        return;
+      }
+
+      var isHeading = /^H[1-6]$/.test(tag);
+      var headingLabel = isHeading ? (node.textContent || '').replace(/\s+/g, ' ').trim() : null;
+
+      for (var c = 0; c < node.childNodes.length; c++) walk(node.childNodes[c]);
+
+      if (headingLabel) {
+        rawMarkers.push({ type: 'heading', level: parseInt(tag.charAt(1), 10), label: headingLabel });
+      }
+
+      if (STRONG_PAUSE_TAGS[tag]) parts.push('. ');
+      else if (LIGHT_PAUSE_TAGS[tag]) parts.push(', ');
+    }
+
+    walk(clone);
+
+    // Strip < > so Chrome's TTS doesn't interpret code like <iostream> or <T>
+    // as SSML tags and halt mid-sentence. Then collapse whitespace.
+    var text = parts.join('').replace(/[<>]/g, ' ').replace(/\s+/g, ' ');
+
+    // Punctuation cleanup. Repeated injections plus original punctuation can
+    // produce strings like ". , ", " : .", or ".. " — normalize them.
+    text = text
+      .replace(/\s+([.,!?;:])/g, '$1')                 // no space before punct
+      .replace(/([.!?])(?:\s*[,;:])+/g, '$1')          // strong absorbs following light
+      .replace(/(?:[,;:]\s*)+([.!?])/g, '$1')          // strong absorbs preceding light
+      .replace(/([.!?])(?:\s*\1)+/g, '$1')             // collapse ".." or "?? " etc.
+      .replace(/([,;:])(?:\s*\1)+/g, '$1')             // collapse ",,"
+      .replace(/([.,!?;:])(?=\S)/g, '$1 ')             // ensure space after punct
       .replace(/\s+/g, ' ')
       .trim();
+
+    // Locate each heading marker in the normalized text. Search forward from
+    // the previous marker so duplicate heading text in body prose doesn't
+    // pull a marker backward in document order.
+    var markers = [];
+    var searchFrom = 0;
+    for (var k = 0; k < rawMarkers.length; k++) {
+      var raw = rawMarkers[k];
+      if (!raw.label) continue;
+      var idx = text.indexOf(raw.label, searchFrom);
+      if (idx >= 0) {
+        markers.push({ offset: idx, type: raw.type, level: raw.level, label: raw.label });
+        searchFrom = idx + raw.label.length;
+      }
+    }
+
+    return { text: text, markers: markers };
+  }
+
+  function _extractText(el, skipSel) {
+    return _extract(el, skipSel).text;
   }
 
   /* ── Public API ───────────────────────────────────────────── */
@@ -283,9 +405,21 @@
     getRate:    function () { return _rate;     },
     getVoice:   function () { return _voice;    },
 
-    speak: function (text, opts) {
+    speak: function (input, opts) {
       opts = opts || {};
+      var text;
+      var markers;
+      if (typeof input === 'string') {
+        text = input;
+        markers = [];
+      } else if (input && typeof input.text === 'string') {
+        text = input.text;
+        markers = Array.isArray(input.markers) ? input.markers.slice() : [];
+      } else {
+        return;
+      }
       _text = text;
+      _markers = markers;
       _offset = 0;
       _onEnd    = opts.onEnd    || null;
       _onUpdate = opts.onUpdate || null;
@@ -312,8 +446,10 @@
     stop: function () {
       if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
       _restarting = false;
-      _chunks = [];
+      _text     = '';
+      _chunks   = [];
       _chunkIdx = 0;
+      _markers  = [];
       if (synth) synth.cancel();
       _speaking = false;
       _paused   = false;
@@ -334,6 +470,61 @@
       if (_speaking || _paused) _startFrom(_offset);
     },
 
+    /**
+     * Skip back/forward by approximately deltaSeconds. Conversion uses an
+     * empirical chars-per-second baseline scaled by the current rate, so a
+     * 10s skip at 2x covers roughly twice the text of a 10s skip at 1x.
+     * Always restarts playback at the new position (matching audio-player
+     * UX where skip controls work whether currently playing or paused);
+     * no-op when stop() has cleared the text.
+     */
+    seekRelative: function (deltaSeconds) {
+      if (!_text) return;
+      var charsPerSec = BASE_CHARS_PER_SEC * _rate;
+      var deltaChars = Math.round(charsPerSec * deltaSeconds);
+      var newOffset = Math.max(0, Math.min(_text.length, _offset + deltaChars));
+      _offset = newOffset;
+      _startFrom(newOffset);
+    },
+
+    /**
+     * Jump to the nearest heading marker. direction is 'next' or 'prev'.
+     * 'next' past the last heading is a no-op so the user doesn't get
+     * silently teleported to the end. 'prev' before the first heading
+     * rewinds to the start of the document.
+     */
+    seekToHeading: function (direction) {
+      if (!_text || !_markers.length) return;
+      // Tolerance avoids re-selecting the heading we're currently inside
+      // when the user mashes the button.
+      var FUZZ = 5;
+      var newOffset = null;
+      if (direction === 'next') {
+        for (var i = 0; i < _markers.length; i++) {
+          if (_markers[i].type !== 'heading') continue;
+          if (_markers[i].offset > _offset + FUZZ) { newOffset = _markers[i].offset; break; }
+        }
+        if (newOffset === null) return;
+      } else {
+        for (var j = _markers.length - 1; j >= 0; j--) {
+          if (_markers[j].type !== 'heading') continue;
+          if (_markers[j].offset < _offset - FUZZ) { newOffset = _markers[j].offset; break; }
+        }
+        if (newOffset === null) newOffset = 0;
+      }
+      _offset = newOffset;
+      _startFrom(newOffset);
+    },
+
+    /** Returns a copy of the markers (heading positions) for the active text. */
+    getMarkers: function () { return _markers.slice(); },
+
+    /** Current playback offset as a fraction in [0, 1]. 0 if no text. */
+    getProgress: function () {
+      if (!_text || !_text.length) return 0;
+      return Math.max(0, Math.min(1, _offset / _text.length));
+    },
+
     /** Returns English voices sorted best-first, with quality scores and labels. */
     getVoices: function () {
       return _getEnglishVoices().map(function (v) {
@@ -352,6 +543,7 @@
       if (_voicesReady) { fn(); } else { _voicesReadyCbs.push(fn); }
     },
 
+    extract:     _extract,
     extractText: _extractText,
     rateLabel:   function () { return _rate.toFixed(1) + 'x'; }
   };
