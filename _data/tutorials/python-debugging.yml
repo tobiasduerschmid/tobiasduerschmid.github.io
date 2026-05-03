@@ -68,6 +68,40 @@ steps:
     instructions: |
       > 🎯 **Goal:** Apply the 7-stage debugging cycle to a tiny off-by-one bug.
 
+      ### 📖 Recap from lecture: the four phases of debugging
+
+      Lecture 10 framed debugging as a **systematic process** with four phases:
+
+      1. **Investigating symptoms** to *reproduce the bug*
+      2. **Locating** the faulty code
+      3. **Determining the root cause** of the bug
+      4. **Implementing and verifying** a fix
+
+      Inside that frame, each phase has its own moves. The 7-stage cycle below is the *zoomed-in* version of those four phases — same process, more resolution. The four phases tell you *what* to do; the seven stages tell you *how*.
+
+      | Lecture phase | This tutorial's stages |
+      | --- | --- |
+      | 1. Investigate symptoms / Reproduce | **Symptom** + **Predict** + **Evidence** |
+      | 2. Locate the faulty code | **Localize** |
+      | 3. Determine root cause | **Hypothesis** |
+      | 4. Implement & verify fix | **Fix** + **Verify** |
+
+      ### 🐞 Lecture vocabulary you should keep straight
+
+      The lecture distinguished three terms that get sloppily blurred in everyday speech:
+
+      | Term | Definition | Where it lives |
+      | --- | --- | --- |
+      | **Fault** | The erroneous *location in the code* (e.g., `range(1, ...)` skipping index 0). | In source code. |
+      | **Error** | An *incorrect program state* during execution (e.g., the loop variable `i` starts at the wrong value). | In memory at runtime. |
+      | **Failure** | The observed *outside behavior* (e.g., `greet([\"Ada\", \"Linus\", \"Grace\"])` returns `\"Hello, Linus, Grace!\"` instead of including Ada). | What the user / test sees. |
+
+      Flow: **Fault** → (program execution) → **Error** → (error reaches the system boundary) → **Failure**.
+
+      A useful question the lecture leaves you with: *"How can we prevent this error from becoming a failure?"* — assertions and defensive checks are exactly that prevention. The bug you're about to fix demonstrates this chain end-to-end.
+
+      ### 🔄 The hypothesis-driven cycle (refines the lecture's 4 phases)
+
       The process below is what the research calls a **hypothesis-driven debugging cycle**. It applies to every bug you'll ever fix.
 
       If you currently *tinker* (edit, run, hope, repeat), that's the default everyone starts with — including most professional engineers under pressure. The cycle below is what replaces it. You aren't expected to internalize it *yet*; you'll practice it across the next seven steps.
@@ -83,6 +117,21 @@ steps:
       ```
 
       No edit happens until stage 6. That's the central discipline.
+
+      <details markdown="1"><summary>📋 Reproducing the bug — what the lecture said about Step 1</summary>
+
+      The lecture spent extra time on the *first* phase ("Reproduce the bug") because everything downstream depends on it. Two pieces to reproduce:
+
+      - **Problem environment** — the *setting* in which the bug occurs: hardware, OS, settings, runtime dependencies, software versions. Try to re-create it on a different machine.
+      - **Problem history** — the *steps* needed to recreate the failure: the sequence of data inputs, user interactions, communications with other components. Plus timing, randomness, physical influences.
+
+      And whenever possible, **write an automated bug reproduction test** — a test that fails on the bug and passes after the fix. Run it repeatedly during debugging so "did I fix it yet?" is one click, not five minutes of manual reproduction. After the fix, *keep* the test in the suite for **regression testing** — re-running existing tests after later code changes to make sure the bug doesn't sneak back in.
+
+      In this tutorial the bug reproduction is already automated for you (the failing pytest test *is* the reproduction). Notice that we never click "I think I fixed it" without re-running the test — that's the lecture's discipline in action.
+
+      Reference: Andreas Zeller, *Why Programs Fail – A Guide to Systematic Debugging* (2009).
+
+      </details>
 
       ### 📂 What you have
 
@@ -2648,6 +2697,42 @@ steps:
       > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families.
 
       Try the drill from memory. Pass threshold: **0.85**. After the quiz, you'll see a recap of the cue→technique mapping for spaced retrieval next time.
+
+      ### 🦆 Two debugging moves the lecture covered that you haven't drilled yet
+
+      Before the quiz, lock these in. They're cheap, ubiquitous in real practice, and the triage drill will mention them.
+
+      <details markdown="1"><summary>🦆 Rubber Duck Debugging — your most valuable root-cause tool</summary>
+
+      The lecture called this the "most valuable root-cause analysis tool" — and the call-out wasn't ironic.
+
+      **The Curse of Knowledge.** When you've held a mental model of your code in your head for the past hour, you read what you *intended* to write, not what you *actually* wrote. Your eyes skip the bug because your model says it's not there. This is why staring at the same five lines for 20 minutes rarely uncovers anything new.
+
+      **The technique.**
+
+      1. Place a rubber duck (or any silent object — a coffee mug, a textbook, a sympathetic stuffed animal) on your desk.
+      2. Explain to the duck **what your code is supposed to do, line by line**. Out loud. Slowly.
+      3. At some point — typically a third of the way through — you'll tell the duck what your code *should* be doing next, and realize that's not what it's *actually* doing.
+
+      That's the moment your mental model and the actual code diverge. The bug lives in that gap.
+
+      **Why it works.** Verbalization forces you to *retrieve* and *articulate* each intermediate step instead of skimming over it. The duck doesn't help you; *explaining* helps you. The duck just keeps you from looking like you're talking to yourself.
+
+      Practice tip: when you don't have a duck, write the explanation as a comment in the code (you can delete it after). Same effect.
+
+      </details>
+
+      <details markdown="1"><summary>📝 After the fix — document and regression-test (don't skip this)</summary>
+
+      The lecture closed phase 4 (Implement & verify a fix) with three moves you should plan to do *every* time:
+
+      - **Add nearby assertions.** When you find a bug, related bugs are often hiding in the same neighborhood. `assert x is not None`, `assert len(items) > 0`, `assert response.status_code == 200` — assertions catch errors before they become failures.
+      - **Document why the fix was necessary** in a code comment, in the git commit message, and in the bug report. Future-you (and future-teammate) will need to understand *why* this line exists; "fix bug" is not enough.
+      - **Keep the bug-reproduction test in the suite for regression testing.** Re-running existing tests after later code changes is how you make sure today's fix doesn't get silently undone next month. Every bug fix should leave behind a test.
+
+      The triage quiz below assumes you'll do all three after picking the right *first* move.
+
+      </details>
 
     files:
       - path: "notes.txt"

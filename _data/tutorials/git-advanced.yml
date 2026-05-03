@@ -160,15 +160,36 @@ steps:
   - description: myproject is a Git repository
     command: '[ -d /tutorial/myproject/.git ]'
     hints:
-    - text: '`/tutorial/myproject/.git` is missing — something went wrong with setup. Re-run the step to rebuild the starter repo.'
+    - title: 'Layer 1 — orientation'
+      text: '`/tutorial/myproject/.git` is missing — something went wrong with setup. Re-run the step to rebuild the starter repo.'
+    - title: 'Layer 2 — strategy'
+      text: 'Make sure you''re inside `/tutorial/myproject` when you run Git commands. `pwd` confirms; `cd /tutorial/myproject` if not.'
+      condition: 'output_contains: not a git repository'
+    - title: 'Layer 3 — recovery'
+      text: 'If the directory exists but `.git/` is gone, you may have run `rm -rf .git`. The setup_commands rebuild the repo on step reload — refresh the tutorial page.'
+      condition: 'output_contains: No such file'
   - description: feature-divide branch exists
     command: cd /tutorial/myproject && git branch | grep -q 'feature-divide'
     hints:
-    - text: 'No `feature-divide` branch. From main, run `git switch -c feature-divide` (or branch + switch separately). `git branch` lists what you have.'
+    - title: 'Layer 1 — orientation'
+      text: '`git branch` lists every local branch with a `*` next to the current one. If `feature-divide` is missing entirely, you need to create it.'
+    - title: 'Layer 2 — strategy'
+      text: 'From main, `git switch -c feature-divide` does both moves at once: creates the branch *and* switches to it. The setup pre-creates this branch — if it''s gone, you may have deleted it; recreate it from main.'
+      condition: 'code_missing: feature-divide'
+    - title: 'Layer 3 — verify'
+      text: 'After creation: `git branch` should show three lines — `* feature-divide` (or whichever you''re on), `main`, plus any others. If you see `* main` and no `feature-divide`, the create step didn''t run.'
+      condition: 'output_missing: feature-divide'
   - description: Currently on main branch (not detached)
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
     hints:
-    - text: 'HEAD is detached or on another branch. `git switch main` re-attaches.'
+    - title: 'Layer 1 — orientation'
+      text: '`git status` shows the current branch (or "HEAD detached at <sha>"). `git symbolic-ref HEAD` asks the same question via plumbing — it errors when HEAD is detached.'
+    - title: 'Layer 2 — strategy'
+      text: '`git switch main` re-attaches HEAD to the main branch ref. After it runs, `cat .git/HEAD` should print `ref: refs/heads/main`, not a raw SHA.'
+      condition: 'output_contains: detached'
+    - title: 'Layer 3 — verify'
+      text: 'If you committed work while detached and `git switch main` would lose it, the next step (reflog) is your recovery path. For now, anchor those commits to a branch first: `git switch -c rescue` saves them to a new branch named `rescue`.'
+      condition: 'code_contains: detached'
   quiz:
     title: Branch Internals & Detached HEAD — Knowledge Check
     min_score: 0.8
