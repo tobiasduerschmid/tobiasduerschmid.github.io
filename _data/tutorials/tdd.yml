@@ -1,6 +1,15 @@
 title: "TDD with pytest — Dragon Dice Battle"
 description: "Live the Red-Green-Refactor rhythm by growing a fantasy dice-scoring engine from scratch — seven tiny tests, one design pressure at a time, plus a final transfer cycle (FizzBuzz) that proves the rhythm carries to a brand-new problem. Tests drive design, refactors stay safe, and the rules of the game emerge as code."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply the Red-Green-Refactor rhythm to grow a small system one test at a time."
+  - "Write a failing test FIRST (Red) and explain what each failing test is asking the design to clarify."
+  - "Make the failing test pass with the minimum code (Green) without overshooting."
+  - "Refactor while tests stay green — distinguishing safe refactors from risky ones."
+  - "Recognize when a sequence of similar tests demands a structural refactor (rule object, polymorphism)."
+  - "Apply the same rhythm to a new domain (FizzBuzz) and confirm the technique transfers."
+
 backend: pyodide
 debugger: true
 pytest: true

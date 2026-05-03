@@ -1,6 +1,14 @@
 title: "Testing Foundations with pytest"
 description: "Build the core testing skills you need BEFORE learning TDD: write meaningful assertions, choose test cases using partitions and boundaries, and test behavior instead of implementation."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply pytest's assert-style assertions to verify single, observable behaviors."
+  - "Choose test cases using equivalence partitioning and boundary analysis."
+  - "Distinguish strong oracles (catch real bugs) from weak oracles (pass on wrong solutions)."
+  - "Recognize and avoid the Liar Test antipattern — a test that always passes regardless of implementation."
+  - "Test behavior (the contract) rather than implementation (internal structure) so refactors don't break tests."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true

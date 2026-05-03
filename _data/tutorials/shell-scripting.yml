@@ -1,6 +1,15 @@
 title: "Shell Scripting"
 description: "Master shell scripting through hands-on exercises in an interactive Linux environment — from your first script to building real automation tools"
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply shell scripting basics (variables, conditionals, loops, functions) to automate command-line tasks."
+  - "Use pipes to compose small commands into bigger pipelines that solve a real problem."
+  - "Quote variables correctly so values containing spaces or globs don't break the script."
+  - "Read positional arguments (`$1`, `$2`, `$@`) and use them in conditional logic."
+  - "Write a `case` statement and exit with appropriate codes that downstream callers can check."
+  - "Compose a complete log-monitor script using everything above."
+
 autosave_type: commands-and-files
 
 steps:

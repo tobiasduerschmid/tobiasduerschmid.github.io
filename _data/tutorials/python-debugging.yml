@@ -445,6 +445,22 @@ steps:
           explanation: |
             **Object identity ≠ equality.** The `↔` alias badge and matching `oid` mean two names point at the *same* object — modifying one will appear to modify the other.
 
+        - question: |
+            The tour file's line-14 `def enroll(student, students=[])` lights up the `↔` aliasing badge across calls. Why?
+          type: single
+          options:
+            - "Each call gets its own fresh empty list — the `↔` badge is reporting incorrect state"
+            - "Default argument values are evaluated **once at function-definition time**, so every call that uses the default shares one list"
+            - "The interpreter caches all empty lists as the same object for memory efficiency"
+            - "Python's parameter passing is by-reference, so mutations leak across calls"
+          correct_index: 1
+          option_feedback:
+            0: "The `↔` badge is correct — the bug is real. Try it: run `enroll(\"Ada\")` twice and the second call's `students` already contains \"Ada\" from the first."
+            2: "Python doesn't intern lists. `[] is []` returns False — every literal `[]` makes a new object. The trap is *only* with default arguments, because the default expression runs once at `def` time."
+            3: "Python is pass-by-reference for objects, but a fresh local variable inside each function call wouldn't share state across calls. The aliasing here is specifically because the *default value object* is reused."
+          explanation: |
+            **Default argument values are evaluated exactly once, at function-definition time.** The `students=[]` creates one list, bound to the function as its default. Every subsequent call that doesn't override the parameter reuses *that same list*. Standard fix: `def enroll(student, students=None): students = students if students is not None else []`. The `↔` badge is the time-travel debugger's way of pointing at exactly this aliasing — saving you 30 minutes of head-scratching.
+
 
   # ===========================================================================
   # STEP 3 — Case 1: Maze Pathfinder (Boundary Bug)
@@ -505,7 +521,7 @@ steps:
       - What does the debugger show?
       - If they differ, complete this sentence before continuing: *"My model assumed ___, but the code computes `steps_used` as `len(path) - 1`, which means ___."*
 
-      <details><summary>What the comparison typically reveals</summary>
+      <details><summary>⚠️ Click only AFTER you've written your prediction — what the comparison typically reveals</summary>
 
       Most students predict `steps_used = 9` (the nine moves *leading to* the goal). The actual value is `10` — because the goal cell has already been appended to `path` before this recursive call starts, so `len(path) - 1` counts the goal cell itself as a step. If your prediction was wrong, that gap is the heart of the bug.
       </details>
@@ -518,7 +534,7 @@ steps:
 
       Write your one-sentence hypothesis. Format: *"<which check> <does what> <when>."* No fix yet — just the cause. (If you can't write a clean sentence yet, that's fine — the act of trying surfaces what's still fuzzy.)
 
-      <details><summary>Compare with a sample sentence</summary>
+      <details><summary>⚠️ Click only AFTER you've written your hypothesis — compare with a sample sentence</summary>
 
       *"The cutoff check rejects exact-budget arrivals before the goal check can accept them."*
 
@@ -2658,7 +2674,10 @@ steps:
 
     quiz:
       title: "Debugging Triage Drill"
-      min_score: 0.85
+      # Lowered from 0.85 → 0.78 (audit fix): with 9 questions, 0.85 means at most
+      # 1 wrong (8/9 = 0.89 passes; 7/9 = 0.78 passes). Borderline-discrimination
+      # items shouldn't fail an otherwise-competent student.
+      min_score: 0.78
       shuffle: true
       questions:
 
@@ -3012,7 +3031,11 @@ steps:
 
     quiz:
       title: "Transfer & Reflection"
-      min_score: 0.5
+      # Audit fix: bumped from 0.5 → 0.75. The 7-stage retrieval question (Q2) is
+      # the *only* recall test for the cycle in the entire tutorial, and at 0.5
+      # a student could pass with that exact item wrong. Expanded from 2 to 5
+      # questions to make 0.75 forgiving of one borderline answer (4/5 = 0.80 passes).
+      min_score: 0.75
       shuffle: false
       questions:
 
@@ -3057,3 +3080,60 @@ steps:
             **Symptom → Predict → Evidence → Hypothesis → Localize → Fix → Verify.** The order matters: each stage produces what the next stage needs. Skipping or reordering creates known anti-patterns: tinkering (Fix-first), local verification (skipping Verify of the full suite), or pattern-matching wrong fixes (Localize without Hypothesis).
 
             🪞 **Final reflection (no graded answer):** *Which stage is hardest for you to slow down on?* If your honest answer is "Fix" — i.e., you skip ahead to editing — you're in good company. That's the most common failure mode. The remedy is not willpower; it's the explicit form of the cycle plus practice. You just did three rounds of practice.
+
+        - question: |
+            *(Spaced retrieval — Step 1's "no edit until stage 6" rule.)* You're 30 seconds into investigating a bug. You think you see the problem. What does the discipline say to do *right now*?
+          type: single
+          options:
+            - "Make the edit immediately while the insight is fresh"
+            - "Form an explicit hypothesis (in words) before touching the code"
+            - "Run the failing test 3 more times to make sure it's reproducible"
+            - "Consult the time-travel debugger first; insight without evidence is a hallucination"
+          correct_index: 1
+          option_feedback:
+            0: "Edit-first is the *anti-pattern* this tutorial is built to dismantle. Bugs that 'felt obvious' are exactly where confirmation bias lives — the discipline is to verbalize the hypothesis first."
+            2: "You should already have a reproducible failure (Step 1's discipline) before you ever entered the investigation. Running the test more times is not the next move; *committing* to a hypothesis is."
+            3: "TT-debugger is a *tool for evidence-gathering*, not a substitute for the hypothesis stage. Form the hypothesis first, then use the debugger to test it."
+          explanation: |
+            "No edit until stage 6" is the central rule. Even a 5-second hypothesis ("I think it's the off-by-one in the range call") forces you to articulate what you believe before you commit to a fix. Without articulation, you fix-and-hope, which can take 10× longer than verbalize-then-fix.
+
+        - question: |
+            *(Transfer — apply the cycle to a new case.)* A teammate reports: *"My function `expand_aliases` is supposed to look up names in `aliases.json`, but every key returns `None`."* Which stage of the debugging cycle did your teammate just do, and what's the *next* stage?
+          type: single
+          options:
+            - "They gave a Symptom; the next stage is Predict"
+            - "They gave a Hypothesis; the next stage is Localize"
+            - "They gave Evidence; the next stage is Verify"
+            - "They gave a Fix; the next stage is to confirm it works"
+          correct_index: 0
+          option_feedback:
+            1: "A hypothesis names a *cause* — e.g., 'I think the JSON is failing to parse.' Your teammate described what they observe (a symptom), not why it's happening."
+            2: "Evidence is *concrete observation* (e.g., 'I added `print(repr(key))` and saw `\"name\\n\"`'). 'Every key returns None' is a symptom — the externally visible fault — not the underlying evidence."
+            3: "No fix has been proposed. They reported a problem; the cycle starts at Symptom and works forward."
+          explanation: |
+            **Symptom** = the externally visible fault ("returns None"). The next stage is **Predict** — *what should happen* per the spec? Then **Evidence** — what *is* happening (use the debugger or `print(repr(...))`). Then **Hypothesis**. Skipping Predict is the most common shortcut and the most expensive one — without a written prediction, you can't tell whether observation matches expectation.
+
+        - question: |
+            *(Spaced — Step 2's aliasing badge.)* Your code does:
+            ```python
+            def add_to(items=[]):
+                items.append("x")
+                return items
+
+            print(add_to())   # ['x']
+            print(add_to())   # ['x', 'x']  ←  surprise
+            ```
+            Which Python rule is biting you?
+          type: single
+          options:
+            - "Lists are immutable — calling `.append` actually creates a new list each time"
+            - "Default arguments are evaluated **once** at function-definition time, so the *same* list is reused across calls"
+            - "Function calls inside a script always share their parameter memory unless `copy.deepcopy` is used"
+            - "Python caches small lists; `[]` always points to the same canonical empty list"
+          correct_index: 1
+          option_feedback:
+            0: "Lists are *mutable* (`.append` mutates in place). The bug here is real and the second call sees the first call's mutation."
+            2: "Function parameter scoping is normal — local in scope, separate per call. The trap is *only* with mutable default values, because the default object is created once."
+            3: "Python doesn't intern empty lists. `[] is []` returns False (try it). Default mutable args is a separate, well-documented Python footgun."
+          explanation: |
+            **Default argument values are evaluated once, at function-definition time.** The `items=[]` creates one list, bound to the function as its default. Every call that uses the default reuses *that same list*. The fix is `def add_to(items=None): items = items or []` (or `if items is None: items = []`). This is one of Python's top-5 gotchas — the time-travel debugger's *aliasing badge* (Step 2) lights up on this exact pattern.

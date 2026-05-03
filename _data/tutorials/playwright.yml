@@ -428,11 +428,7 @@ steps:
 
       In `tests/add-todo.spec.js`, find the `whitespace-only input is rejected` test. The Arrange / Act / Assert comments are placeholders — fill them in, following the pattern of the three tests above.
 
-      Hints (use them in order if you get stuck):
-
-      1. Look at the `empty input is rejected` test. The whitespace test is the same shape — only the input value changes.
-      2. The assertion should prove that *no* list item was added.
-      3. Use `toHaveCount(0)` on the listitems.
+      Hints will appear on test failure — work through them in layers if you get stuck.
 
       ### 🔍 Investigate
 
@@ -576,6 +572,22 @@ steps:
         playwright:
           title: "whitespace-only input is rejected"
           should_fail: false
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Look at the `empty input is rejected` test above. Your whitespace test is the same shape — only the input value changes (whitespace instead of empty)."
+          - title: "Layer 2 — strategy"
+            text: "Three moves: navigate (`page.goto('/')`), fill the textbox with whitespace (`.fill('   ')`), click the Add button. Then assert *no* listitem was added — `toHaveCount(0)` is the natural matcher."
+            condition: "code_missing: toHaveCount"
+          - title: "Layer 3 — skeleton"
+            text: |
+              ```js
+              await page.goto('/');
+              await page.getByRole('textbox', { name: /todo item/i }).fill('   ');
+              await page.getByRole('button', { name: /add todo/i }).click();
+              await expect(page.getByRole('listitem')).toHaveCount(0);
+              ```
+              Same shape as the empty-input test; the only change is what `.fill()` receives.
+            condition: "output_contains: AssertionError"
 
       - description: "The whitespace test actually exercises the input"
         command: |
@@ -585,6 +597,15 @@ steps:
             'The whitespace test should fill the input — otherwise it isn\'t exercising the partition.');
           assert(whitespaceTest.includes('toHaveCount') || whitespaceTest.includes('toBeHidden'),
             'Assert that no listitem was added (e.g., toHaveCount(0)).');
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "A test that doesn't `.fill()` doesn't exercise the partition you claimed to test. The point of partition tests is to *drive the SUT* with one input from each partition — not to leave the input empty."
+          - title: "Layer 2 — strategy"
+            text: "Two assertions both have to pass: (1) your test contains a `.fill(...)` call, (2) your test asserts on the listitem count or visibility. If the source-grep can't find both, this test fails."
+            condition: "code_missing: .fill"
+          - title: "Layer 3 — skeleton"
+            text: "The whitespace test body should look like: `.goto`, `.fill('   ')`, `.click()`, `expect(...).toHaveCount(0)`. Make sure each line is inside the `test('whitespace-only ...', async ({ page }) => { ... })` block — not commented out, not in a separate test."
+            condition: "code_contains: TODO"
 
     solution:
       files:
@@ -1163,10 +1184,7 @@ steps:
 
       In `tests/todo.spec.js`, strengthen the assertion to **verify the item's text**, not just the count. Predict the new failure message before re-running.
 
-      Hints:
-      1. The locator `page.getByRole('listitem')` finds the list item; chain a content-checking matcher.
-      2. `toHaveText('Milk')` pins exact text; `toContainText('Milk')` pins substring.
-      3. The spec promises that the user's input appears in the list, so exact match is fine here.
+      Hints will appear on test failure — work through them in layers if you get stuck.
 
       ### 📝 House rule
 
@@ -1285,12 +1303,31 @@ steps:
             'Use toHaveText or toContainText so your assertion verifies the rendered text — not just the count.');
           assert(spec.includes("'Milk'") || spec.includes('"Milk"') || spec.includes('Milk'),
             'Pin the actual user input (\"Milk\") in the assertion.');
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The current assertion only counts list items — it would pass for an empty `<li></li>`. Strengthen it so the test verifies the *user-visible content*, not just structure."
+          - title: "Layer 2 — strategy"
+            text: "Chain a content-checking matcher onto the listitem locator. Two options: `toHaveText('Milk')` pins exact text; `toContainText('Milk')` pins a substring. Since the spec promises the user's input appears verbatim, exact match is fine."
+            condition: "code_missing: toHaveText"
+          - title: "Layer 3 — skeleton"
+            text: |
+              ```js
+              await expect(page.getByRole('listitem')).toHaveText('Milk');
+              ```
+              Same locator as before, stronger matcher.
+            condition: "code_missing: 'Milk'"
 
       - description: "The test still uses web-first assertion form (await expect)"
         command: |
           const spec = files['tests/todo.spec.js'] || '';
           assert(/await\s+expect\(/.test(spec),
             'Use `await expect(...)` — web-first assertions retry, manual `expect(await locator.isVisible()).toBe(true)` does not.');
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Playwright's web-first assertions (`await expect(locator).toX(...)`) auto-retry until the condition holds — no hand-coded waits needed."
+          - title: "Layer 2 — strategy"
+            text: "Anti-pattern: `expect(await locator.isVisible()).toBe(true)` looks similar but runs *once*. If the page hasn't finished rendering, your test flakes. Always start with `await expect(locator)...`."
+            condition: "code_contains: .isVisible()"
 
     solution:
       files:

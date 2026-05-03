@@ -1,6 +1,15 @@
 title: "React Essentials: From Imperative to Declarative UI"
 description: "A hands-on introduction to React for students who already know C++ and Python and have completed the Node.js tutorial. Assumes basic familiarity with HTML tags and CSS classes (a refresher is provided in Step 1). Learn to think declaratively, build components, manage state, and compose real UIs — all live in your browser."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply React's component model to build composable UI in JSX."
+  - "Distinguish props (read-only inputs from a parent) from state (component-owned, mutable via setState)."
+  - "Use the `useState` hook to make components remember values across renders."
+  - "Render lists of items with stable keys; explain why missing keys cause subtle bugs."
+  - "Compose smaller components into larger ones (top-down data flow) and lift state up when siblings need to share it."
+  - "Evaluate when a piece of state belongs in a parent vs. a child."
+
 backend: react
 
 require_tests: true

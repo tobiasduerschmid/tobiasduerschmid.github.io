@@ -183,15 +183,17 @@
 /* ---- Breakpoint glyphs in Monaco gutter --------------------------------- */
 /* Force Monaco's glyph margin column wider on debugger-enabled tutorials so
    the larger chevron + breakpoint dot have room. The left edge of each
-   visible glyph starts past the splitter's transparent 10px hit overhang.
+   visible glyph starts past the left/right splitter's workspace-side grab
+   lane, which keeps the instruction scrollbar and breakpoint gutter from
+   fighting for the same pixels.
    Scoped to TutorialCode's tvm-container and tutorial popout wrappers so
    other Monaco usage on the site is unaffected.
    Also allow gutter glyphs to overflow vertically so the chevron can render
    slightly taller than the line (per design preference). */
 :root {
-  --tvm-debug-glyph-margin-width: 40px;
-  --tvm-debug-glyph-safe-offset: 12px;
-  --tvm-debug-breakpoint-offset: 14px;
+  --tvm-debug-glyph-margin-width: 54px;
+  --tvm-debug-glyph-safe-offset: 22px;
+  --tvm-debug-breakpoint-offset: 22px;
 }
 .tvm-container .monaco-editor .margin-view-overlays .cgmr,
 .ttp-wrap .monaco-editor .margin-view-overlays .cgmr,

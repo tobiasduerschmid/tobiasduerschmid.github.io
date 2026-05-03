@@ -98,8 +98,20 @@ steps:
     tests:
       - description: "The syntax error in math.c is fixed"
         command: "cd /tutorial/make_project && grep -q 'a + b;' math.c"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Look at the gcc error message — it points at the line and column. C's `return` statement (like every other statement) needs a terminator. Which character?"
+          - title: "Layer 2 — strategy"
+            text: "Open `math.c` in the editor. The `return a + b` line is missing a semicolon at the end. Add it, save, and re-run the gcc command."
+            condition: "code_missing: a + b;"
       - description: "The project compiled successfully into an executable named 'app'"
         command: "cd /tutorial/make_project && [ -f app ]"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "After fixing the syntax error, recompile by re-typing (or pressing Up arrow) the same gcc command. Notice that gcc happily reprocesses *every* file — even the two you didn't touch."
+          - title: "Layer 2 — strategy"
+            text: "The exact command is: `cd make_project && gcc main.c math.c io.c -o app`. The `-o app` flag names the output binary."
+            condition: "output_missing: app"
 
     quiz:
       title: "The Pain of Manual Compilation — Knowledge Check"
@@ -230,8 +242,23 @@ steps:
     tests:
       - description: "The recipe uses a Tab character, not spaces"
         command: "cd /tutorial/make_project && grep -qP '^\\tgcc' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Make's parser looks for a literal Tab byte at the start of recipe lines. Spaces look identical on screen but trigger the cryptic `*** missing separator. Stop.` error. The fix has to put a real Tab there."
+          - title: "Layer 2 — strategy"
+            text: "Most editors auto-convert Tab keypresses to spaces. The simplest fix is `sed -i 's/^    /\\t/' Makefile` — replace four leading spaces with a Tab on every line of the file."
+            condition: "output_contains: missing separator"
+          - title: "Layer 3 — verify"
+            text: "Run `cat -A Makefile` after the sed. Recipe lines should start with `^I` (that's how `cat -A` displays a Tab). If you see `        ` instead, the spaces weren't replaced."
+            condition: "code_missing: \\tgcc"
       - description: "Make ran successfully and built 'app'"
         command: "cd /tutorial/make_project && [ -f app ]"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Run `make` from inside `make_project/`. With a working Makefile, it should print one line per command and produce an `app` binary."
+          - title: "Layer 2 — strategy"
+            text: "If Make prints `*** missing separator`, the Tab isn't fixed yet. If it runs gcc but gcc errors, the previous step's syntax bug may have come back — re-check `math.c`."
+            condition: "output_contains: separator"
 
     quiz:
       title: "Your First Makefile & The Tab Trap — Knowledge Check"
@@ -317,6 +344,33 @@ steps:
       4. Replace all 4 instances of `-Wall -std=c11` with `$(CFLAGS)`.
       5. Save the file and run `make` to confirm it still compiles successfully.
 
+      <details markdown="1"><summary>📖 `=` vs `:=` — recursive vs simple expansion</summary>
+
+      Make has *two* assignment operators. They look almost identical and behave very differently:
+
+      ```make
+      CC  = gcc                  # Recursive — re-evaluated every time CC is used
+      CC := gcc                  # Simple — evaluated once, at the moment of the assignment
+      ```
+
+      The difference bites when one variable references another:
+
+      ```make
+      VERSION = 1.0
+      ARCHIVE = app-$(VERSION).tar.gz
+      VERSION = 2.0              # ARCHIVE expands to "app-2.0.tar.gz" because = is lazy
+
+      VERSION := 1.0
+      ARCHIVE := app-$(VERSION).tar.gz
+      VERSION := 2.0             # ARCHIVE is still "app-1.0.tar.gz" — captured at assignment time
+      ```
+
+      Recursive (`=`) evaluates the right-hand side every time the variable is *used*; simple (`:=`) evaluates it once, at the *assignment*. Use `:=` when you want a snapshot — especially for shell commands like `$(shell date +%s)` (you don't want a different timestamp every time the variable is read).
+
+      For this tutorial we use `=` everywhere — the simpler one to learn first. In real-world Makefiles, `:=` is often the safer default for anything that involves shell calls or builds incrementally on prior values.
+
+      </details>
+
       Now a compiler change is a one-line edit at the top of the file.
 
     setup_commands:
@@ -359,8 +413,18 @@ steps:
     tests:
       - description: "Defined CC variable"
         command: "cd /tutorial/make_project && grep -q 'CC *=' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Add a line at the top of the Makefile that names the compiler. The convention is `CC = gcc` (this is Make's standard variable name for the C compiler)."
+          - title: "Layer 2 — strategy"
+            text: "Variables are written *before* any rules. The first three lines of the Makefile should be:\n```make\nCC = gcc\nCFLAGS = -Wall -std=c11\n\n```\nThen the rules follow."
+            condition: "code_missing: CC ="
       - description: "Defined CFLAGS variable"
         command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "After `CC = gcc`, add `CFLAGS = -Wall -std=c11` on the next line. CFLAGS is Make's standard name for compiler flags."
+            condition: "code_missing: CFLAGS"
       - description: "Used $(CC) in every recipe and removed every hardcoded `gcc` from recipes"
         command: |
           cd /tutorial/make_project
@@ -573,12 +637,30 @@ steps:
     tests:
       - description: "Defined OBJS variable"
         command: "cd /tutorial/make_project && grep -q 'OBJS *=' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Add an `OBJS = main.o math.o io.o` line near the top, after `CFLAGS`. This is the standard Make idiom: a variable holding the list of object files the executable depends on."
+            condition: "code_missing: OBJS"
       - description: "Used $(OBJS) in the app rule"
         command: "cd /tutorial/make_project && grep -q '\\$(OBJS)' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Replace the explicit `main.o math.o io.o` in the `app:` rule with `$(OBJS)` so the rule reads from the variable."
+            condition: "code_missing: $(OBJS)"
       - description: "Added a pattern rule (%.o: %.c)"
         command: "cd /tutorial/make_project && grep -qP '%\\.o.*:.*%\\.c' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "A pattern rule uses `%` as a wildcard. The line `%.o: %.c` tells Make: 'to build any `.o` file, use the matching `.c` file as input'. One rule replaces the three explicit ones."
+          - title: "Layer 2 — strategy"
+            text: "Skeleton:\n```make\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n```\n`$<` is the first prerequisite (the `.c` file), `$@` is the target (the `.o` file). Don't forget the literal Tab before `$(CC)`."
+            condition: "code_missing: %.o"
       - description: "Used an automatic variable ($<, $^, or $@) in a recipe"
         command: "cd /tutorial/make_project && grep -qP '\\$[<^@]' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Automatic variables let Make plug in the right filename without you naming it. `$@` = target name. `$<` = first prerequisite. `$^` = all prerequisites. Use them in the recipe, not in the rule header."
+            condition: "code_missing: $@"
       - description: "Removed the explicit per-file .o rules (replaced by the pattern rule)"
         command: |
           cd /tutorial/make_project
@@ -697,6 +779,26 @@ steps:
       ```
 
       Look closely at the output! Make compiled `math.c` → `math.o` and then re-linked `app`. **It completely skipped `main.c` and `io.c`.** They were still up to date — so Make left them alone. In a massive codebase this is the difference between waiting seconds and waiting hours.
+
+      <details markdown="1"><summary>⚠️ The classic dependency-tracking footgun: header-file changes</summary>
+
+      Make's incremental rebuild only tracks the dependencies *you tell it about*. The Makefile says `main.o: main.c` — so editing `main.c` rebuilds `main.o`. But what if `main.c` does `#include "math.h"` and you edit `math.h`?
+
+      **`main.o` will *not* rebuild.** Your Makefile never told Make that `main.o` depends on `math.h`. The compiled object is now out of sync with the header it was built against — sometimes catastrophically (struct layout mismatches → silent memory corruption), sometimes obviously (compile errors at link time).
+
+      In real C/C++ projects, this is solved with auto-generated dependency files:
+
+      ```make
+      # gcc's -MMD flag emits .d files that list every header each .c includes
+      %.o: %.c
+      	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+      -include $(OBJS:.o=.d)   # pull in the generated .d files
+      ```
+
+      We don't do that here — it's beyond essentials. But know: **plain Makefiles silently miss header dependencies.** If you ever wonder "why does my code segfault even though everything compiled?", a stale `.o` against a changed `.h` is the #1 suspect. Always run `make clean && make` after pulling header changes from a teammate.
+
+      </details>
 
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
@@ -856,8 +958,21 @@ steps:
     tests:
       - description: "Added .PHONY: clean to Makefile"
         command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "Add a `.PHONY: clean` line just above the `clean:` rule. This declaration tells Make: 'don't look for a file named clean — run the recipe regardless.'"
+            condition: "code_missing: .PHONY"
+          - title: "Layer 2 — strategy"
+            text: "Convention is one `.PHONY:` line listing every phony target. For now you only have one (clean), but as you add `all`, `test`, `install`, the line becomes: `.PHONY: clean all test install`."
+            condition: "code_contains: .PHONY"
       - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
         command: "cd /tutorial/make_project && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The `clean:` rule needs no prerequisites and one recipe line. The recipe should remove all `.o` files and the `app` binary."
+          - title: "Layer 2 — strategy"
+            text: "Skeleton:\n```make\n.PHONY: clean\nclean:\n\trm -f *.o app\n```\nThe `-f` flag suppresses errors when files don't exist (so `make clean` succeeds even on a fresh checkout)."
+            condition: "code_missing: clean:"
 
     quiz:
       title: ".PHONY — Knowledge Check"

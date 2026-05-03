@@ -87,6 +87,21 @@ steps:
       These terms come from `xUnit Test Patterns` (Meszaros, 2007). They're language-agnostic. JavaScript+Jest, Java+Mockito, C#+Moq, Ruby+RSpec — all use *the same words for the same roles*. What changes between languages is the **syntax** of how you express a stub or a mock. The **role** doesn't change.
       </details>
 
+      <details markdown="1"><summary>📋 The full Meszaros taxonomy (preview)</summary>
+
+      You'll meet four named test doubles in this tutorial — Stub, Spy, Mock, and Fake — plus one you'll see in passing:
+
+      | Role | What it does | First encountered in |
+      |---|---|---|
+      | **Dummy** | A placeholder object that's *never actually used*. Passed only to satisfy a constructor or method signature when the test doesn't care about that collaborator. | Step 5's `_service(Mock(), Mock())` helper — those args are dummies. |
+      | **Stub** | Returns canned indirect *inputs* to the SUT. The SUT reads from it; the test doesn't verify how. | Step 2 — a `FrozenClock` that always returns the same datetime. |
+      | **Spy** | Records the SUT's outgoing *calls* so the test can assert on them later. | Step 3 — a ledger spy that captures `(user_id, gold)` tuples. |
+      | **Mock** *(Meszaros sense — the "noun")* | A spy + behavior verification: the test sets *expectations* up-front, and the mock fails if they aren't met. | Step 4 — `unittest.mock` + `assert_called_once_with`. |
+      | **Fake** | A working alternate implementation, simpler than production (e.g., an in-memory database for a test). | Step 6 — when stubs/spies become unwieldy. |
+
+      Five roles, *one* taxonomy. The role is determined by *how the test uses* the object, not by what class instantiated it.
+      </details>
+
       ⚙️ **Task** — three small moves:
 
       1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28")` returns `True`. **Predict**: did this test pass on the day it was written (April 28, 2026)? Does it pass today? Why or why not?
@@ -1213,6 +1228,17 @@ steps:
       ### ⚠️ Why this matters for your career
 
       Reading other people's tests, you'll see `Mock` everywhere. Most uses are *stubs in disguise* (`Mock(return_value=...)`). When someone says "I added a mock for the database," nine times out of ten they actually added a stub. Recognizing the role behind the class name is the difference between *parroting Mock syntax* and *understanding what the test verifies*.
+
+      ### 🔤 "Mock" as a verb vs. "a Mock" as a noun
+
+      English makes this trap worse. Two senses you'll hear in the wild:
+
+      | Form | What it means | Example |
+      |---|---|---|
+      | **"to mock"** *(verb)* | Replace any collaborator with any test double — colloquial, role-agnostic. | "*Let's mock the database*" — could mean stub, spy, fake, or `unittest.mock.Mock`. |
+      | **"a Mock"** *(noun, Meszaros)* | Specifically a *behavior-verifying* double with up-front expectations. | "*Use a Mock when you need to assert the email service was called exactly once*." |
+
+      When a teammate says "we mocked the API," you don't know which role they used until you read the test. The verb is loose; the noun is specific. **In this tutorial, we use the noun (Meszaros) form.** When you talk about your own tests, naming the *role* — "I stubbed the clock," "I spied on the ledger," "I added a mock for the gateway" — communicates more than "I mocked it."
 
       ⚙️ **Task** — read four tests, fill in one slot:
 

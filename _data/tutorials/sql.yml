@@ -91,6 +91,22 @@ steps:
 
       `SELECT` names the columns, `FROM` names the table, `*` means "all columns". Use `SELECT *` while exploring; in production code, **always list the columns you need** so schema changes do not silently break callers.
 
+      <details markdown="1"><summary>SQL is a *multiset*, not a set — DISTINCT removes duplicates</summary>
+
+      Set theory says `{CS, CS, Math}` is the same as `{CS, Math}` — duplicates collapse. SQL is *not* a set. It's a **multiset** (sometimes called a "bag"): duplicates stick around unless you ask for them to be removed.
+
+      ```sql
+      -- 9 rows: every student's major, including duplicates
+      SELECT major FROM students;
+
+      -- 4 rows: each distinct major listed once
+      SELECT DISTINCT major FROM students;
+      ```
+
+      Why does this matter? If you want to count *distinct* majors, the obvious-looking `SELECT COUNT(*) FROM students` gives 9 (all rows). The intended query is `SELECT COUNT(DISTINCT major) FROM students`, which gives 4. Forgetting `DISTINCT` is one of the top-5 SQL gotchas.
+
+      </details>
+
       ### Task
 
       Open `query.sql`. Two queries; neither errors, but each is the wrong tool for its stated job.
@@ -263,6 +279,22 @@ steps:
             - "* "
           explanation: |
             `SELECT` names the columns, `FROM` names the table. `*` is wrong (not just those two); `WHERE` filters rows, not columns.
+
+        - question: |
+            The `students` table has 9 rows but only 4 distinct majors. What does `SELECT major FROM students` return?
+          type: single
+          options:
+            - "4 rows — duplicates are removed by default"
+            - "9 rows — one for each student, with duplicate majors included"
+            - "9 rows, but pre-deduplicated by the query optimizer when storage allows"
+            - "An error — projecting only `major` is ambiguous when multiple students share one"
+          correct_index: 1
+          option_feedback:
+            0: "Set theory wants `{CS, CS, Math}` to collapse to `{CS, Math}`. SQL is a *multiset* — duplicates stick around unless you ask for them to be removed with `DISTINCT`."
+            2: "Optimizers don't silently change the row count. `SELECT major` always returns one row per source row; deduplication requires explicit `DISTINCT`."
+            3: "No ambiguity — every row contributes its own `major` value to the projection. The grouping rule (Step 4) only applies once `GROUP BY` enters the picture."
+          explanation: |
+            SQL tables are **multisets** (bags), not sets. `SELECT major FROM students` returns one row per source row, including all duplicates. To collapse duplicates, write `SELECT DISTINCT major FROM students`. To count distinct majors, write `SELECT COUNT(DISTINCT major) FROM students` — `COUNT(*)` would return 9 (the row count), not 4.
 
   # --------------------------------------------------------------------------
   # STEP 2: JOIN — combining rows from two tables
@@ -482,6 +514,25 @@ steps:
             3: "NULLs come from the *data* (or from outer joins), not from how you name tables. Aliases don't filter."
           explanation: |
             Aliases disambiguate same-named columns (both `students` and `majors` could have `name`) and keep queries readable. They are also required for self-joins. They do not affect performance or NULL handling.
+
+        - question: |
+            For an **INNER** JOIN, do these two queries return the same rows?
+
+            **Query A:** `SELECT * FROM students s JOIN majors m ON s.major = m.code AND s.year > 1;`
+            **Query B:** `SELECT * FROM students s JOIN majors m ON s.major = m.code WHERE s.year > 1;`
+          type: single
+          options:
+            - "Yes — the result is identical for an INNER JOIN"
+            - "No — predicate placement always changes the result"
+            - "Yes, but only if `year` has no NULLs"
+            - "No — Query A pre-filters and is therefore always faster"
+          correct_index: 0
+          option_feedback:
+            1: "For an *outer* join, placement absolutely matters. For *inner* joins specifically, both forms produce the same row set — the join keeps a row only when both predicates are TRUE."
+            2: "NULL handling is identical here — `NULL > 1` is UNKNOWN, and both queries drop the row. The 3VL behavior doesn't differ between ON-clause filters and WHERE filters."
+            3: "Modern optimizers reorder predicates regardless of where you wrote them. A query planner sees both forms and produces the same plan."
+          explanation: |
+            **For INNER JOINs**, `ON ... AND ...` and `WHERE ...` are equivalent — both predicates must be TRUE for a row to survive. **For LEFT/RIGHT OUTER JOINs**, placement matters: an `ON` filter applies during matching (unmatched left rows still appear with NULLs), while a `WHERE` filter applies after the join (an unmatched left row that fails the WHERE is dropped). This subtlety is the #1 cause of "missing rows" in outer-join queries.
 
   # --------------------------------------------------------------------------
   # STEP 3: WHERE + ORDER BY — declarative filtering and sorting
@@ -1154,6 +1205,15 @@ steps:
       3. **Logical** — runs and returns a result, but the *wrong* result (e.g., the NULL trap from Step 3). No error message — the hardest to catch.
       4. **Constraint violation** — grammatically and semantically valid, but violates `PRIMARY KEY` / `NOT NULL` / `UNIQUE` / `FOREIGN KEY` at execution time.
 
+      ### Predict before you run
+
+      Read the two files (`schema.sql` and `populate.sql`) before touching either. Then write down (in a comment in the file or on paper):
+
+      1. *Which* of the three INSERT statements will succeed against the **strengthened** schema (the one with the constraints from the table below)?
+      2. For each insert that fails, *which constraint* will it violate — and which of the four error categories does that map to?
+
+      Once you have written your prediction, then strengthen the schema and run the inserts. Compare the actual failures to your prediction. The point isn't to be right; it's to *commit* to a hypothesis before the database tells you the answer.
+
       ### Task
 
       A teammate handed you two unreviewed files. Bring them up to production quality.
@@ -1784,6 +1844,12 @@ steps:
 
       One query. No `SELECT *`. Run before you celebrate.
 
+      ### Predict before you run
+
+      Before you submit your query: **how many rows do you expect back?** Write the answer down (commit to a number) — then run. The dean's filter is "year ≥ 2 with at least 2 such students per major." Look at the data: 9 students, 4 majors, year column populated for every row. Which majors meet *both* conditions?
+
+      A correct query returns exactly **2 rows**. If your query returns 0, your filters are too aggressive (over-restricted). If it returns 3+, you're missing one of the filters. Predicting *before* running converts a vague "did it work?" into a sharp "does my number match?"
+
     files:
       - path: "final.sql"
         content: |
@@ -1791,6 +1857,7 @@ steps:
           -- Plan first as a comment in execution order:
           --   FROM ... → JOIN ... → WHERE ... → GROUP BY ... → HAVING ...
           --   → SELECT ... → ORDER BY ...
+          -- Expected output: 2 rows, columns major | department | advisor | avg_gpa | n
           -- Then write the query below.
 
         language: "sql"

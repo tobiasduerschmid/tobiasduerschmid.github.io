@@ -1,6 +1,15 @@
 title: "UML Sequence Diagrams in Python"
 description: "Learn to read and create UML sequence diagrams by writing Python code that matches target diagrams. Starting from a few objects exchanging messages and building up to branches and loops, you will see how sequence diagrams turn invisible runtime behavior into a picture."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Read a UML sequence diagram and write Python code that produces the same call ordering."
+  - "Distinguish synchronous calls from return arrows; match each return value to its originating call."
+  - "Use sequence-diagram `opt` and `alt` fragments to express conditional execution."
+  - "Use `loop` fragments to express iteration."
+  - "Trace a runtime call sequence by hand and produce the corresponding sequence diagram."
+  - "Evaluate when a sequence diagram earns its place vs. when prose or a class diagram would communicate better."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true

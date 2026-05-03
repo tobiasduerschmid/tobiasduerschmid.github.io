@@ -55,6 +55,21 @@ steps:
 
     Both come from an inaccurate mental model. Each step fixes one piece.
 
+    ### Habits from prior tools that mislead in Git
+
+    If you came to Git from SVN, Perforce, or a "save = commit" mental model in
+    a CS1 IDE, retire these instincts before they bite:
+
+    | Bad instinct | Why Git breaks it | Right reflex |
+    |---|---|---|
+    | "`git pull` is always safe" | `git pull` is `git fetch` + `git merge`. If you have local commits and the remote moved, it silently creates a merge commit (or fails on conflicts). | `git pull --rebase` (or `git fetch` + inspect with `git log` before merging) |
+    | "Force-push is fine on my own branch" | Other people may have based work on yours, or CI may have tagged commits. Force-push rewrites history, breaking everyone downstream. | `git push --force-with-lease` *and* coordinate before doing it on a shared branch — never on `main`. |
+    | "Save = commit" (from auto-saving IDEs) | A commit is a *snapshot* with author + message; it lives forever. Filling history with `update`, `wip`, `oops` pollutes blame and bisect for the rest of the repo's life. | Commit *meaningful* units with descriptive messages. Use `git stash` for in-progress work. |
+    | "`push.default = matching`" (older Git) | The legacy default pushed every local branch that matched a remote name — easy to surprise teammates with half-finished branches. | Modern Git defaults to `simple` (only the current branch). Verify with `git config push.default`. |
+    | "If something goes wrong, just delete the folder and re-clone" | Git is *designed* to recover from anything short of `rm -rf .git`. Deleting and re-cloning teaches you nothing — you'll hit the same bug next time. | `git reflog` is your safety net. Step 2 will show you. |
+
+    The rest of this tutorial assumes you've internalized these. If any feel like brand-new ideas, slow down here before continuing.
+
     ### Prerequisite self-check
 
     Answer from memory. Any shaky? Revisit the basic tutorial.

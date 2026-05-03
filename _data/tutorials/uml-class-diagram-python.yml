@@ -1,6 +1,14 @@
 title: "UML Class Diagrams in Python"
 description: "Learn to read and create UML class diagrams by writing Python code that matches target diagrams. Starting from single classes and building to full system architectures, you will discover how UML makes invisible design decisions visible."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Read a UML class diagram and write Python code that matches it (visibility, types, multiplicity, inheritance)."
+  - "Distinguish association, aggregation, and composition by their UML notation and life-cycle implications."
+  - "Apply UML's visibility modifiers (`+`, `-`, `#`, `~`) and explain how they map to Python's leading-underscore conventions."
+  - "Read multiplicity annotations (`1`, `*`, `0..1`, `1..*`) and translate them into the correct Python data structures."
+  - "Evaluate a UML class diagram critically and identify design flaws (cyclic dependencies, missing abstractions, over-coupling)."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 uml_diagram: true

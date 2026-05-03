@@ -573,7 +573,10 @@ html:not(.dark-mode) .tvm-left-tab.active {
 .tvm-hsplitter {
   flex: 0 0 var(--tvm-splitter-hit-size);
   flex-shrink: 0;
-  margin-inline: var(--tvm-splitter-overhang);
+  /* Keep the 24px grab target on the workspace side so the instructions
+     panel's native scrollbar remains the top hit target at the rail. */
+  margin-inline-start: 0;
+  margin-inline-end: var(--tvm-splitter-row-before-overhang);
   --tvm-splitter-rail-direction: to right;
   background: transparent;
   cursor: col-resize;
@@ -592,9 +595,9 @@ html:not(.dark-mode) .tvm-left-tab.active {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
+  left: 0;
   width: var(--tvm-splitter-line-size);
-  transform: translateX(-50%);
+  transform: none;
   border-radius: 1px;
   background: linear-gradient(
     var(--tvm-splitter-rail-direction),
@@ -658,7 +661,7 @@ html:not(.dark-mode) .tvm-left-tab.active {
 
 .tvm-tab {
   padding: 7px 16px;
-  color: #888;
+  color: #a8b0bd;
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 500;
@@ -3402,7 +3405,7 @@ html:not(.dark-mode) .tvm-editor-tabs {
 }
 
 html:not(.dark-mode) .tvm-tab {
-  color: #6e6e6e;
+  color: #5a5f66;
   border-right-color: #d4d4d4;
 }
 

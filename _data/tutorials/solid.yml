@@ -1,6 +1,14 @@
 title: "SOLID Design Principles: Stop Writing Code That Falls Apart"
 description: "Learn the SOLID principles by suffering through rigid code first, then leveling up with refactoring. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply each SOLID principle (SRP, OCP, LSP, ISP, DIP) to refactor brittle code into a resilient design."
+  - "Diagnose which SOLID principle a given code smell violates."
+  - "Predict what minor change request will break a tightly-coupled system *before* the change request actually arrives."
+  - "Refactor a violating design without breaking existing tests."
+  - "Evaluate the trade-offs of applying SOLID strictly vs. pragmatically — overuse leads to its own problems."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 debugger: true
