@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { loadTutorialConfig } = require('./tutorial-helpers');
 
 /**
  * Tests: Navigation
@@ -29,6 +30,42 @@ test('navbar links return HTTP 200', async ({ page, request }) => {
     const response = await request.get(`http://127.0.0.1:4000${href}`);
     expect(response.status(), `Nav link ${href} returned ${response.status()}`).toBeLessThan(400);
   }
+});
+
+test('tutorial navbar shows YAML title without expanding the nav', async ({ page }) => {
+  const tutorial = loadTutorialConfig('git');
+  await page.goto('/SEBook/tools/git-tutorial');
+
+  const nav = page.locator('#navnav');
+  const title = page.locator('#tutorialNavbarTitle');
+
+  await expect(nav).toBeVisible();
+  await expect(nav).not.toHaveClass(/tutorial-nav-compact/);
+  await expect(title).toHaveText(tutorial.title);
+  await expect(title).toBeVisible();
+  await expect(page.locator('#tutorialHelpMenuToggle .tutorial-help-menu-icon')).toBeVisible();
+
+  await page.locator('#tutorialHelpMenuToggle').click();
+  await expect(page.locator('#tutorial-help-menu-links')).toBeVisible();
+  await expect(page.locator('#tutorialHelpMenuToggle')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#tutorial-help-menu-links a')).toHaveText([
+    'Glossary',
+    'Shortcuts',
+    'Settings',
+    'Storage',
+  ]);
+
+  const readAloud = page.locator('#tts-read-btn');
+  await readAloud.click();
+  if ((await readAloud.textContent())?.includes('Stop')) {
+    await readAloud.click();
+    await expect(readAloud).toContainText('Read Aloud');
+  }
+  await page.mouse.move(20, 100);
+  await expect(readAloud).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  const navHeight = await nav.evaluate((element) => element.offsetHeight);
+  expect(navHeight).toBeLessThanOrEqual(45);
 });
 
 test('blog index lists at least one post', async ({ page }) => {

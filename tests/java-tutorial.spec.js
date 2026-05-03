@@ -32,10 +32,27 @@ async function waitForTutorialReady(page) {
 }
 
 async function clickRun(page) {
+  await showOutputPane(page);
   const runBtn = page.locator('.tvm-run-btn');
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
   await runBtn.click();
   await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+}
+
+async function showOutputPane(page) {
+  const outputTab = page.locator('.tvm-right-tab[data-panel="output"]');
+  if (await outputTab.count()) {
+    await outputTab.click();
+    await expect(page.locator('.tvm-output-view')).toBeVisible({ timeout: 5_000 });
+  }
+}
+
+async function showUmlPane(page) {
+  const umlTab = page.locator('.tvm-right-tab[data-panel="uml"]');
+  if (await umlTab.count()) {
+    await umlTab.click();
+    await expect(page.locator('.tvm-uml-right-view')).toBeVisible({ timeout: 5_000 });
+  }
 }
 
 // =============================================================================
@@ -69,6 +86,7 @@ test.describe.serial('Java Tutorial — structure', () => {
   });
 
   test('run and clear buttons are present', async () => {
+    await showOutputPane(page);
     await expect(page.locator('.tvm-run-btn')).toBeVisible();
     await expect(page.locator('.tvm-clear-btn')).toBeVisible();
   });
@@ -85,6 +103,7 @@ test.describe.serial('Java Tutorial — structure', () => {
       () => window._tutorial?._umlWatchedFiles?.includes('Welcome.java'),
       { timeout: 15_000 },
     );
+    await showUmlPane(page);
 
     await expect(page.locator('.tvm-right-tab[data-panel="uml"]')).toBeVisible();
     await expect(page.locator('.tvm-right-tab[data-panel="uml"]')).toHaveClass(/active/);
@@ -115,6 +134,7 @@ test.describe.serial('Java Tutorial — structure', () => {
   });
 
   test('clicking run executes Java code and shows output', async () => {
+    await showOutputPane(page);
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
     await setEditorContent(page, `public class Welcome {

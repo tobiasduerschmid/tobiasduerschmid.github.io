@@ -16,23 +16,29 @@ html:not(.dark-mode) #autoSaveLabel:hover, html:not(.dark-mode) #autoSaveLabel:f
 html:not(.dark-mode) #resetStepBtn:hover,    html:not(.dark-mode) #resetStepBtn:focus,
 html:not(.dark-mode) #solutionBtn:hover,     html:not(.dark-mode) #solutionBtn:focus,
 html:not(.dark-mode) #printBtn:hover,        html:not(.dark-mode) #printBtn:focus,
-html:not(.dark-mode) #tts-read-btn:hover,   html:not(.dark-mode) #tts-read-btn:focus {
+html:not(.dark-mode) #tts-read-btn:hover,   html:not(.dark-mode) #tts-read-btn:focus-visible,
+html:not(.dark-mode) .tutorial-help-menu-toggle:hover,
+html:not(.dark-mode) .tutorial-help-menu-toggle:focus {
   color: #000 !important;
 }
 
 /* <button> and <label> don't inherit the global a:hover styles — match them explicitly */
 html:not(.dark-mode) #tts-read-btn:hover,
-html:not(.dark-mode) #tts-read-btn:focus,
+html:not(.dark-mode) #tts-read-btn:focus-visible,
 html:not(.dark-mode) #autoSaveLabel:hover,
-html:not(.dark-mode) #autoSaveLabel:focus {
+html:not(.dark-mode) #autoSaveLabel:focus,
+html:not(.dark-mode) .tutorial-help-menu-toggle:hover,
+html:not(.dark-mode) .tutorial-help-menu-toggle:focus {
   background-color: #FFD100 !important;
   border-radius: 4px !important;
 }
 
 html.dark-mode #tts-read-btn:hover,
-html.dark-mode #tts-read-btn:focus,
+html.dark-mode #tts-read-btn:focus-visible,
 html.dark-mode #autoSaveLabel:hover,
-html.dark-mode #autoSaveLabel:focus {
+html.dark-mode #autoSaveLabel:focus,
+html.dark-mode .tutorial-help-menu-toggle:hover,
+html.dark-mode .tutorial-help-menu-toggle:focus {
   background-color: #005587 !important;
   color: #fff !important;
   border-radius: 4px !important;
@@ -89,6 +95,95 @@ html.dark-mode #tts-read-btn {
 /* Auto-save toggle: UCLA gold when on */
 #autoSaveLabel .tvm-dark-toggle-wrap input:checked + .tvm-dark-toggle-track {
   background: #FFD100;
+}
+
+/* Tutorial help menu */
+.tutorial-help-menu {
+  position: relative;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.tutorial-help-menu-toggle {
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tutorial-help-menu-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tutorial-help-menu-toggle:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: 2px;
+}
+
+.tutorial-help-menu-panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 1100;
+  min-width: 168px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #5f6b7a;
+  border-radius: 4px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
+.tutorial-help-menu-panel a {
+  display: block;
+  min-height: 32px;
+  padding: 8px 14px;
+  color: #003B5C;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.tutorial-help-menu-panel a:hover,
+.tutorial-help-menu-panel a:focus {
+  background: #e8f2fb;
+  color: #003B5C;
+  text-decoration: underline;
+}
+
+.tutorial-help-menu-panel a:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: -3px;
+}
+
+html.dark-mode .tutorial-help-menu-panel {
+  background: #111827;
+  border-color: #5fa8d3;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.58);
+}
+
+html.dark-mode .tutorial-help-menu-panel a {
+  color: #e8f1f8;
+}
+
+html.dark-mode .tutorial-help-menu-panel a:hover,
+html.dark-mode .tutorial-help-menu-panel a:focus {
+  background: #005587;
+  color: #fff;
 }
 
 /* ─────────────────────────────────────────── */
@@ -3862,8 +3957,17 @@ body.lecture-mode #navnav .navbar-right {
 }
 body.lecture-mode #navnav .navbar-right a,
 body.lecture-mode #navnav .navbar-right button,
-body.lecture-mode #navnav .navbar-right label {
+body.lecture-mode #navnav .navbar-right label,
+body.lecture-mode #navnav .tutorial-help-menu-toggle {
   font-size: 11px !important;
+}
+body.lecture-mode #navnav .tutorial-help-menu-toggle {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+}
+body.lecture-mode #navnav .tutorial-help-menu-panel a {
+  font-size: 13px !important;
 }
 body.lecture-mode .tutorial-page {
   top: var(--tutorial-navbar-height, 23px) !important;

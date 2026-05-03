@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 
+{% assign tutorial_data = site.data.tutorials[page.tutorial] %}
+{% assign tutorial_title = tutorial_data.title | default: page.title %}
 {% include head.html %}
 <meta name="pdf-url" content="{{ page.url | replace: '.html', '' }}/print">
 
@@ -14,8 +16,8 @@
         <a id="seBookBtn" class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
           <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;" aria-hidden="true"></i> SE Book
         </a>
-        <span class="navbar-brand" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; color: #fff; font-size: 20px; font-weight: 600; margin-left: 5px;">
-          {{ page.title }}
+        <span id="tutorialNavbarTitle" class="navbar-brand tutorial-navbar-title" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; color: #fff; font-size: 20px; font-weight: 600; margin-left: 5px;">
+          {{ tutorial_title }}
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; min-height:45px; padding-right:16px; gap:14px;">
@@ -44,12 +46,6 @@
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
           <i class="fa fa-print" aria-hidden="true"></i> Print
         </a>
-        <div class="tutorial-help-links" aria-label="Help links" style="display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600;">
-          <a href="{{ '/glossary/' | relative_url }}" style="color:#fff; text-decoration:none;">Glossary</a>
-          <a href="{{ '/shortcuts/' | relative_url }}" style="color:#fff; text-decoration:none;">Shortcuts</a>
-          <a href="{{ '/settings/' | relative_url }}" style="color:#fff; text-decoration:none;">Settings</a>
-          <a href="{{ '/cookies/' | relative_url }}" style="color:#fff; text-decoration:none;">Storage</a>
-        </div>
         <button id="tts-read-btn" title="Read current step aloud" aria-label="Read Aloud: read current step aloud"
           style="background:none; border:none; color:#fff;
                  padding:3px 11px; cursor:pointer;
@@ -65,6 +61,18 @@
             </span>
           </span>
         </label>
+        <div id="tutorialHelpMenu" class="tutorial-help-menu">
+          <button id="tutorialHelpMenuToggle" class="tutorial-help-menu-toggle" type="button"
+                  aria-label="Help links" aria-controls="tutorial-help-menu-links" aria-expanded="false">
+            <i class="fa fa-bars tutorial-help-menu-icon" aria-hidden="true"></i>
+          </button>
+          <ul id="tutorial-help-menu-links" class="tutorial-help-menu-panel" aria-label="Help links" hidden>
+            <li><a href="{{ '/glossary/' | relative_url }}">Glossary</a></li>
+            <li><a href="{{ '/shortcuts/' | relative_url }}">Shortcuts</a></li>
+            <li><a href="{{ '/settings/' | relative_url }}">Settings</a></li>
+            <li><a href="{{ '/cookies/' | relative_url }}">Storage</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </nav>
@@ -88,6 +96,44 @@
         window.addEventListener('resize', check);
       }
       check();
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var menu = document.getElementById('tutorialHelpMenu');
+      if (!menu) return;
+      var toggle = document.getElementById('tutorialHelpMenuToggle');
+      var panel = document.getElementById('tutorial-help-menu-links');
+      if (!toggle || !panel) return;
+
+      function setOpen(open) {
+        panel.hidden = !open;
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      toggle.addEventListener('click', function () {
+        setOpen(panel.hidden);
+      });
+      menu.addEventListener('keydown', function (event) {
+        if ((event.key === 'Escape' || event.keyCode === 27) && !panel.hidden) {
+          event.preventDefault();
+          setOpen(false);
+          toggle.focus();
+        }
+      });
+      menu.addEventListener('focusout', function (event) {
+        if (!panel.hidden && event.relatedTarget && !menu.contains(event.relatedTarget)) {
+          setOpen(false);
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!panel.hidden && !menu.contains(event.target)) {
+          setOpen(false);
+        }
+      });
+      setOpen(false);
     })();
   </script>
 
@@ -148,7 +194,7 @@
 
   <!-- Tutorial container — full viewport below navbar -->
   <main id="main-content" class="tutorial-page" tabindex="-1" aria-labelledby="tutorial-page-heading">
-    <h1 id="tutorial-page-heading" class="sr-only">{{ page.title }}</h1>
+    <h1 id="tutorial-page-heading" class="sr-only">{{ tutorial_title }}</h1>
     <div id="tutorial-container"></div>
   </main>
 
@@ -208,7 +254,6 @@
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
   <script src="{{ '/js/tutor-chat.js' | relative_url }}"></script>
 
-  {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
   {% if site.tutorial_autosave and tutorial_data.autosave_type != false %}
     {% if tutorial_data.autosave_type %}

@@ -1,6 +1,10 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+async function clickSwitch(page, selector) {
+  await page.locator('label.switch', { has: page.locator(selector) }).click();
+}
+
 /**
  * Phase 1 WCAG-readiness checks. Verifies the new infrastructure added in
  * the WCAG 3 Phase 1 work renders correctly: glossary, abbr include,
@@ -65,9 +69,9 @@ test.describe('Settings page', () => {
     await expect(page.getByLabel('Reduced motion')).toBeVisible();
     await expect(page.getByLabel('Underline glossary abbreviations')).toBeVisible();
     await expect(page.getByLabel('Autosave tutorial work')).toBeVisible();
-    await expect(page.locator('text=Per-page tutorial state')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What each tutorial remembers' })).toBeVisible();
 
-    await page.getByLabel('Dark mode').check();
+    await clickSwitch(page, '#setting-dark-mode');
     await expect(page.locator('html')).toHaveClass(/dark-mode/);
     expect(await page.evaluate(() => document.cookie)).toContain('dark-mode=true');
 
@@ -75,11 +79,11 @@ test.describe('Settings page', () => {
     expect(await page.evaluate(() => localStorage.getItem('prefersReducedMotion'))).toBe('1');
     await expect(page.locator('html')).toHaveClass(/prm-reduce/);
 
-    await page.getByLabel('Underline glossary abbreviations').uncheck();
+    await clickSwitch(page, '#setting-abbr-underlines');
     expect(await page.evaluate(() => localStorage.getItem('abbr-underlines'))).toBe('false');
     await expect(page.locator('html')).toHaveClass(/abbr-underlines-disabled/);
 
-    await page.getByLabel('Autosave tutorial work').uncheck();
+    await clickSwitch(page, '#setting-tutorial-autosave');
     expect(await page.evaluate(() => localStorage.getItem('tutorial-autosave'))).toBe('false');
   });
 });
@@ -162,24 +166,17 @@ test.describe('Diagram <figure> wrapping', () => {
   });
 });
 
-test.describe('Tutorial progress indicator', () => {
-  test('python tutorial nav exposes a progressbar + status announcement', async ({ page }) => {
+test.describe('Tutorial step status', () => {
+  test('python tutorial nav exposes a status announcement for the current step', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('/SEBook/tools/python-tutorial');
     await page.waitForSelector('.tvm-step-btn', { timeout: 60_000 });
     await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: 60_000 });
 
-    const progress = page.locator('.tvm-step-progress');
-    await expect(progress).toBeVisible();
-    await expect(progress).toHaveAttribute('role', 'progressbar');
-    await expect(progress).toHaveAttribute('aria-valuemin', '0');
-    const valuemax = await progress.getAttribute('aria-valuemax');
-    expect(Number(valuemax)).toBeGreaterThan(0);
-    const valuetext = await progress.getAttribute('aria-valuetext');
-    expect(valuetext).toMatch(/Step \d+ of \d+/);
-
     const status = page.locator('.tvm-step-status');
     await expect(status).toBeVisible();
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
     const statusText = await status.textContent();
     expect(statusText).toMatch(/Step \d+ of \d+/);
 
