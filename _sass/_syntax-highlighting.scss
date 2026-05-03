@@ -66,3 +66,29 @@
     .vi    { color: #001080 } // Name.Variable.Instance
     .il    { color: #006b35 } // Literal.Number.Integer.Long
 }
+
+// Keep syntax colors stable if late-loaded accessibility or component CSS
+// applies broad code/pre color rules.
+.highlight {
+    .c, .cm, .c1, .cs { color: #006400 !important; font-style: italic } // Comment
+    .err   { color: #a61717 !important; background-color: #e3d2d2 } // Error
+    .k, .kc, .kd, .kp, .kr, .ow { color: #0000ff !important } // Keyword
+    .o, .si { color: #000000 !important } // Operator / interpolation
+    .cp    { color: #006400 !important } // Comment.Preproc
+    .kt, .nc, .nn { color: #005f73 !important } // Types/classes/namespaces
+    .m, .mf, .mh, .mi, .mo, .il { color: #006b35 !important } // Numbers
+    .s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .sx, .ss, .dl { color: #a31515 !important } // Strings
+    .sr    { color: #811f3f !important } // Regex
+    .na, .no, .nv, .vc, .vg, .vi { color: #001080 !important } // Attributes/variables
+    .nb, .bp, .nf { color: #5c3d00 !important } // Builtins/functions
+    .ni    { color: #800080 !important } // Entity
+    .ne    { color: #a31515 !important } // Exception
+    .nt    { color: #800000 !important } // Tag
+    .w     { color: inherit !important } // Whitespace
+    .gd    { color: #000 !important; background-color: #fdd !important }
+    .gd .x { color: #000 !important; background-color: #faa !important; text-decoration: line-through }
+    .gi    { color: #000 !important; background-color: #dfd !important }
+    .gi .x { color: #000 !important; background-color: #afa !important; text-decoration: underline; text-underline-offset: 2px }
+    .gr, .gt { color: #a00 !important }
+    .gh, .go, .gp, .gu { color: #555 !important }
+}

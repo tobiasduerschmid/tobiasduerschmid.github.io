@@ -226,6 +226,8 @@
     // xterm state
     this.term = null;
     this.fitAddon = null;
+    this._terminalReadyForInput = false; // true once the prompt is visible to the student
+    this._legacySerialBackgroundSkipLogged = false;
 
     // Monaco state
     this.editor = null;
@@ -928,7 +930,7 @@
       '<div class="tvm-step-nav"></div>' +
       '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
       '</div>' +
-      '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
+      '<div class="tvm-step-content-wrap scrollable-region-focus-target" tabindex="0"><div class="tvm-step-content"></div></div>' +
       (useBelowUml
         ? '<div class="tvm-uml-below-view">' +
           '<div class="tvm-diagram-toolbar">' +
@@ -2794,8 +2796,9 @@
 
   TutorialCode.prototype._refreshPrompt = function () {
     if (this.config.backend === 'v86') {
+      var self = this;
+      this._terminalReadyForInput = false;
       if (this._silentRunning || (this._silentQueue && this._silentQueue.length > 0)) {
-        var self = this;
         return this._waitForSilentIdle(2500).then(function (idle) {
           return idle ? self._refreshPrompt() : false;
         });
@@ -2807,11 +2810,29 @@
         this.emulator.serial0_send('\n');
         this._schedulePromptRedrawFallback();
       }
-      return this._waitForTerminalText(2500);
+      return this._waitForTerminalText(2500).then(function (visible) {
+        self._terminalReadyForInput = true;
+        return visible;
+      });
     } else if (this.config.backend === 'webcontainer') {
       if (this._shellWriter) this._shellWriter.write('\n');
     }
     return Promise.resolve();
+  };
+
+  TutorialCode.prototype._canRunLegacyBackgroundSerial = function () {
+    return this.config.backend === 'v86' &&
+      (!this._terminalReadyForInput || this._isBackgroundSyncPaused());
+  };
+
+  TutorialCode.prototype._logLegacyBackgroundSerialSkip = function (feature) {
+    if (this._legacySerialBackgroundSkipLogged) return;
+    this._legacySerialBackgroundSkipLogged = true;
+    console.info(
+      '[TutorialCode] Skipping legacy serial fallback for ' + feature +
+      ' because the interactive terminal is ready. Background git features ' +
+      'will retry through the daemon or use cached state instead.'
+    );
   };
 
   TutorialCode.prototype._terminalHasVisibleText = function () {
@@ -2901,9 +2922,10 @@
   //
   // No serial traffic. No muting. Zero interference with user typing.
   //
-  // Old snapshots (without the daemon or virtio console) still work: probe
-  // failures fall back to _runSilent. Negative results are only throttled
-  // briefly so an early race cannot permanently disable the daemon path.
+  // Old snapshots (without the daemon or virtio console) still work during
+  // boot/setup: probe failures can fall back to _runSilent while the terminal
+  // is hidden. Once the interactive prompt is visible, background git features
+  // must not use serial fallback; they retry the daemon or use cached state.
   // ---------------------------------------------------------------------------
 
   TutorialCode.prototype._initRPCChannel = function () {
@@ -7384,17 +7406,17 @@
     });
   };
 
-  // v86 backend: read <filename> at HEAD by shelling `git show` into a
-  // temp file on the 9p mount, then reading that file from JS.
+  // v86 backend: read <filename> at HEAD through the RPC daemon. During
+  // boot/setup only, old snapshots without RPC may fall back to shelling
+  // `git show` into a temp file on the 9p mount.
   //
   // Returns a Promise of {content, notReady}:
   //   content === <string>   — exact bytes of the blob at HEAD
   //   content === null       — file not at HEAD (untracked / never committed)
   //   notReady === true      — VM not booted / read failed; gutter left alone
   //
-  // Uses a unique-per-call temp filename so concurrent refreshes for
-  // different files don't race on a shared buffer. _runSilent serialises
-  // the writes through _silentQueue, so each .then(read) sees its own file.
+  // The legacy temp-file path uses a unique-per-call filename so concurrent
+  // refreshes for different files don't race on a shared buffer.
   TutorialCode.prototype._v86GitFileAtHead = function (filename) {
     var self = this;
     if (!this.emulator || !this.emulator.read_file) {
@@ -7461,6 +7483,10 @@
 
       // Legacy fallback (no daemon): write to a temp file in .git/, read via
       // 9p, parse for the marker. Same behavior as before the RPC migration.
+      if (!self._canRunLegacyBackgroundSerial()) {
+        self._logLegacyBackgroundSerialSkip('git gutter refresh');
+        return { content: null, notReady: true };
+      }
       var cmd = '( cd ' + shellQuote(repoRoot) + ' && ( git show HEAD:\'' + safeRel + '\' 2>/dev/null && echo ' + marker + ' ) > ' + shellQuote(tmpVMPath) + ' )';
       return self._runSilent(cmd)
         .then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
@@ -9862,6 +9888,10 @@
       if (self._gitGraphHookInstalled && self._gitGraphHookMode === mode) {
         return Promise.resolve();
       }
+      if (!rpcAvail && !self._canRunLegacyBackgroundSerial()) {
+        self._logLegacyBackgroundSerialSkip('git graph prompt hook');
+        return Promise.resolve();
+      }
       var hookCmd;
       if (rpcAvail) {
         hookCmd =
@@ -10060,10 +10090,10 @@
   };
 
   /**
-   * Run git state commands silently, writing output to a known file
-   * on the 9p-mounted filesystem so we can read it via read_file().
-   * Used only for the initial dump (before PROMPT_COMMAND kicks in)
-   * and explicit Refresh button clicks.
+   * Run git state commands out-of-band, writing output to a known file on the
+   * 9p-mounted filesystem so we can read it via read_file(). If RPC is not
+   * available after the terminal is interactive, skip the serial fallback so
+   * background graph refreshes never steal or mute the student's shell input.
    */
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
@@ -10074,7 +10104,12 @@
     // redirected to gitgraph_state), so we don't use the resp content —
     // we only need the "done" signal that the daemon finished.
     return self._probeRPCDaemon().then(function (avail) {
-      return avail ? self._runRPC(cmd) : self._runSilent(cmd);
+      if (avail) return self._runRPC(cmd);
+      if (!self._canRunLegacyBackgroundSerial()) {
+        self._logLegacyBackgroundSerialSkip('git graph refresh');
+        return Promise.resolve();
+      }
+      return self._runSilent(cmd);
     });
   };
 
@@ -10183,7 +10218,7 @@
   /**
    * FULL refresh: producer-driven dump. Used for: Refresh button clicks,
    * initial _setView, step loads. Backend dispatch:
-   *   v86       → _dumpGitState() (serial) + _renderGitGraphFromText
+   *   v86       → _dumpGitState() (RPC or pre-reveal serial) + render cached state
    *   pyodide   → worker.gitGetState → GitGraph.fromStructured
    * Other backends with gitGraphPath unset are no-ops.
    */

@@ -759,10 +759,12 @@ html.dark-mode .blog-post-content h3 {
 	color: #FFD100 !important;
 }
 
-/* Maintain stroke for H1/H2 */
+/* Dark headings already have strong contrast; a black stroke fails against
+   dark page backgrounds and can leak into heading-contained code blocks. */
 html.dark-mode h1,
 html.dark-mode h2 {
-	-webkit-text-stroke: 1px #000;
+	-webkit-text-stroke: 0 !important;
+	text-shadow: none;
 }
 
 /* Inline code inside headings inherits the heading color in all modes */
@@ -1017,6 +1019,52 @@ html.dark-mode .highlight .nb,
 html.dark-mode .highlight .bp { color: #569cd6; } /* Blue for builtins (set, echo) to match Monaco Shell */
 html.dark-mode .highlight .nt { color: #ff6363; } /* Red for options (-e, +x) to match Monaco Shell — bumped from #f44747 to clear 4.5:1 against #1e1e1e */
 html.dark-mode .highlight .o { color: #d4d4d4; }
+
+/* Keep Rouge syntax colors stable against late broad code/pre accessibility rules. */
+html.dark-mode .highlight .c,
+html.dark-mode .highlight .cm,
+html.dark-mode .highlight .c1,
+html.dark-mode .highlight .cs { color: #6a9955 !important; font-style: italic; }
+html.dark-mode .highlight .cp { color: #c586c0 !important; }
+html.dark-mode .highlight .k,
+html.dark-mode .highlight .kd,
+html.dark-mode .highlight .kp,
+html.dark-mode .highlight .kr,
+html.dark-mode .highlight .kc,
+html.dark-mode .highlight .ow { color: #569cd6 !important; }
+html.dark-mode .highlight .kt,
+html.dark-mode .highlight .nc,
+html.dark-mode .highlight .nn { color: #4ec9b0 !important; }
+html.dark-mode .highlight .m,
+html.dark-mode .highlight .mf,
+html.dark-mode .highlight .mh,
+html.dark-mode .highlight .mi,
+html.dark-mode .highlight .mo,
+html.dark-mode .highlight .il { color: #b5cea8 !important; }
+html.dark-mode .highlight .s,
+html.dark-mode .highlight .s1,
+html.dark-mode .highlight .s2,
+html.dark-mode .highlight .sb,
+html.dark-mode .highlight .sc,
+html.dark-mode .highlight .sd,
+html.dark-mode .highlight .se,
+html.dark-mode .highlight .sh,
+html.dark-mode .highlight .sx,
+html.dark-mode .highlight .sr,
+html.dark-mode .highlight .ss,
+html.dark-mode .highlight .dl { color: #ce9178 !important; }
+html.dark-mode .highlight .si,
+html.dark-mode .highlight .o { color: #d4d4d4 !important; }
+html.dark-mode .highlight .nf { color: #dcdcaa !important; }
+html.dark-mode .highlight .na,
+html.dark-mode .highlight .no,
+html.dark-mode .highlight .nv,
+html.dark-mode .highlight .vc,
+html.dark-mode .highlight .vg,
+html.dark-mode .highlight .vi { color: #9cdcfe !important; }
+html.dark-mode .highlight .nb,
+html.dark-mode .highlight .bp { color: #569cd6 !important; }
+html.dark-mode .highlight .nt { color: #ff6363 !important; }
 
 
 

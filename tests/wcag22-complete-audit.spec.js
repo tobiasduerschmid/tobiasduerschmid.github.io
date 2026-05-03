@@ -210,6 +210,15 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
 
+      // Mount deterministic copies of "post-runtime" UI states (e.g.
+      // tutorial test-result chips that only appear after a learner runs
+      // tests, autosave toasts) so axe + the custom contrast helper can
+      // sweep them. Without this the audit can ship green while the live
+      // post-event state has a 2.17:1 contrast failure (.tvm-test-summary
+      // light-mode case). Idempotent + scoped to pages that already host a
+      // .tvm-instructions-panel, so it doesn't pollute non-tutorial pages.
+      await mountRuntimeStateFixtures(page);
+
       // Light-mode DOM audit (custom checks).
       const desktop = await page.evaluate(runDomAudit);
 
@@ -270,6 +279,9 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       await page.setViewportSize({ width: 320, height: 900 });
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
+      // Re-mount runtime-state fixtures so the 320px reflow + target-size
+      // pass covers them too (page.goto cleared the previous mount).
+      await mountRuntimeStateFixtures(page);
       const mobileLight = await page.evaluate(runMobileAudit);
       // Run again under dark mode at 320px — page.goto resets the class so we
       // re-apply it, then audit reflow + target-size against the dark theme too.
@@ -365,6 +377,57 @@ async function settleLoadedPage(page) {
   await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.waitForTimeout(750);
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
+/** Inject deterministic representatives of "post-runtime" UI states into
+ *  the live page, so axe + the custom contrast helper can sweep them.
+ *
+ *  Some elements on this site only appear after a user action — e.g. the
+ *  tutorial test-result chips (`.tvm-test-summary.all-pass / .partial`) are
+ *  only inserted after the learner runs tests; the autosave toast appears
+ *  after a save event; the popout disconnect overlay appears when the
+ *  parent window is closed. Static-build sweeps don't trigger those
+ *  events, so axe ships PASS even when the live post-event state has a
+ *  contrast or focus-visibility failure.
+ *
+ *  This injector mounts those elements into a hidden-but-visible-to-axe
+ *  fixture container at the bottom of the page (on tutorial pages only).
+ *  The container is removed after each page's audit by `unmountRuntimeStateFixtures`.
+ *  Anchored inside .tvm-instructions-panel so each chip composes against
+ *  the same parent background it has in the live tutorial — light/dark
+ *  mode then follow the page's own theming.
+ */
+async function mountRuntimeStateFixtures(page) {
+  await page.evaluate(() => {
+    if (document.getElementById('audit-runtime-fixtures')) return;
+    const panel = document.querySelector('.tvm-instructions-panel');
+    if (!panel) return;
+    // Sentinel comment helps when reading the rendered DOM in the report.
+    const fixture = document.createElement('div');
+    fixture.id = 'audit-runtime-fixtures';
+    fixture.setAttribute('data-audit-fixture', 'runtime-state');
+    // Don't display:none — axe ignores hidden elements, defeating the
+    // point. Place it below the workspace, off-screen-but-rendered, so
+    // computed styles + composited backgrounds match the live state.
+    fixture.style.cssText = 'position:absolute;left:0;top:100%;width:100%;pointer-events:none;';
+    fixture.innerHTML = [
+      // Test-result chips (run after `Test My Work`).
+      '<div class="tvm-test-summary all-pass">All 1 tests passed!</div>',
+      '<div class="tvm-test-summary partial">0 / 4 tests passed</div>',
+      '<ul class="tvm-test-list">',
+      '<li class="tvm-test-item pass"><span class="tvm-test-icon">PASS</span><span>Sample passing test</span></li>',
+      '<li class="tvm-test-item fail"><span class="tvm-test-icon">FAIL</span><span>Sample failing test</span></li>',
+      '</ul>',
+    ].join('');
+    panel.appendChild(fixture);
+  });
+}
+
+async function unmountRuntimeStateFixtures(page) {
+  await page.evaluate(() => {
+    const f = document.getElementById('audit-runtime-fixtures');
+    if (f && f.parentNode) f.parentNode.removeChild(f);
+  });
 }
 
 function buildCriteriaMatrix(findings, evidence) {

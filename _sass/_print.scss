@@ -151,72 +151,154 @@
     padding: 0 !important;
   }
 
-  // Syntax Highlighting - Identical to _syntax-highlighting.scss
+  // Syntax Highlighting - mirror the screen theme so print/PDF keeps color cues.
   .highlight {
     background: #fff !important;
-    -webkit-text-stroke: 0 !important; // Reset stroke for syntax tokens
+    -webkit-text-stroke: 0 !important;
 
     * {
-      -webkit-text-stroke: 0 !important; // Deep reset for all tokens
+      -webkit-text-stroke: 0 !important;
     }
 
-    .c {
-      color: #998 !important;
+    .c,
+    .cm,
+    .c1,
+    .cs {
+      color: #006400 !important;
       font-style: italic !important;
     }
 
+    .err {
+      color: #a61717 !important;
+      background-color: #e3d2d2 !important;
+    }
+
     .k {
+      color: #0000ff !important;
+    }
+
+    .o,
+    .si {
+      color: #000000 !important;
+    }
+
+    .cp {
+      color: #006400 !important;
+    }
+
+    .gd {
+      color: #000 !important;
+      background-color: #fdd !important;
+    }
+
+    .gd .x {
+      color: #000 !important;
+      background-color: #faa !important;
+      text-decoration: line-through !important;
+    }
+
+    .ge {
+      font-style: italic !important;
+    }
+
+    .gr,
+    .gt {
+      color: #a00 !important;
+    }
+
+    .gh,
+    .go,
+    .gp,
+    .gu {
+      color: #555 !important;
+    }
+
+    .gi {
+      color: #000 !important;
+      background-color: #dfd !important;
+    }
+
+    .gi .x {
+      color: #000 !important;
+      background-color: #afa !important;
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+    }
+
+    .gs {
       font-weight: bold !important;
-      color: #111 !important;
     }
 
-    .o {
-      font-weight: bold !important;
-      color: #111 !important;
+    .kc,
+    .kd,
+    .kp,
+    .kr,
+    .ow {
+      color: #0000ff !important;
     }
 
-    .s {
-      color: #d14 !important;
+    .kt,
+    .nc,
+    .nn {
+      color: #005f73 !important;
     }
 
-    .na {
-      color: #008080 !important;
-    }
-
-    .nc {
-      color: #458 !important;
-      font-weight: bold !important;
-    }
-
-    .nf {
-      color: #900 !important;
-      font-weight: bold !important;
-    }
-
-    .nt {
-      color: #000080 !important;
-    }
-
-    .nv {
-      color: #008080 !important;
-    }
-
-    .m {
-      color: #099 !important;
-    }
-
+    .m,
     .mi,
     .mf,
     .mh,
-    .mo {
-      color: #099 !important;
+    .mo,
+    .il {
+      color: #006b35 !important;
     }
 
+    .s,
     .s2,
     .s1,
     .sb,
-    .sc {
-      color: #d14 !important;
+    .sc,
+    .sd,
+    .se,
+    .sh,
+    .sx,
+    .dl,
+    .ss {
+      color: #a31515 !important;
+    }
+
+    .sr {
+      color: #811f3f !important;
+    }
+
+    .na,
+    .no,
+    .nv,
+    .vc,
+    .vg,
+    .vi {
+      color: #001080 !important;
+    }
+
+    .nb,
+    .bp,
+    .nf {
+      color: #5c3d00 !important;
+    }
+
+    .ni {
+      color: #800080 !important;
+    }
+
+    .ne {
+      color: #a31515 !important;
+    }
+
+    .nt {
+      color: #800000 !important;
+    }
+
+    .w {
+      color: inherit !important;
     }
   }
 
