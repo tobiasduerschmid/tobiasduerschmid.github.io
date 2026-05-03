@@ -32,8 +32,8 @@
   var _voice = null;
   var _speaking = false;
   var _paused = false;
-  var _restarting = false;   // true while cancel+setTimeout is in flight
   var _startTimer = null;    // pending setTimeout handle
+  var _epoch = 0;            // bumped on every _startFrom; stale handlers compare against this
   var _onUpdate = null;
   var _onEnd = null;
   var _voicesReadyCbs = [];
@@ -41,8 +41,9 @@
 
   // Chrome's TTS engine silently fails when an utterance is too long
   // (~32K chars) or runs longer than ~15s. Splitting the input into short
-  // pieces and chaining them via onend keeps each utterance under both limits.
-  var MAX_CHUNK_LENGTH = 240;
+  // pieces keeps each utterance under both limits. 180 chars stays under
+  // ~15s of audio at rate 1.0 (≈12.5 chars/sec) with safety margin.
+  var MAX_CHUNK_LENGTH = 180;
   var _chunks = [];
   var _chunkIdx = 0;
   var _chunkBase = 0;        // global offset within _text where _chunks[0] begins
@@ -187,6 +188,9 @@
     _chunks = _splitIntoChunks(remaining);
     _chunkBase = offset;
     _chunkIdx = 0;
+    // Bump the generation counter so any in-flight utterance handlers
+    // from the previous run treat themselves as stale and exit early.
+    _epoch++;
 
     // The cancel+setTimeout dance works around a Chrome race where speak()
     // called immediately after cancel() drops the new utterance. We only need
@@ -194,32 +198,36 @@
     // setTimeout instead loses Chrome's transient user activation and the
     // first speak() silently aborts.
     if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
+    var queueEpoch = _epoch;
     if (synth.speaking || synth.pending) {
-      _restarting = true;
       synth.cancel();
       _startTimer = setTimeout(function () {
         _startTimer = null;
-        _speakChunk();
+        _queueAllChunks(queueEpoch);
       }, 50);
     } else {
-      _restarting = false;
-      _speakChunk();
+      _queueAllChunks(queueEpoch);
     }
   }
 
-  function _speakChunk() {
-    if (!synth || _chunkIdx >= _chunks.length) {
-      _speaking = false;
-      _paused = false;
-      _offset = 0;
-      if (_onUpdate) _onUpdate();
-      if (_onEnd) _onEnd();
-      return;
-    }
-
-    var chunkText = _chunks[_chunkIdx];
+  // Queue every chunk on the SpeechSynthesis engine in one pass. Chrome
+  // hands utterances off to its TTS engine sequentially with very small
+  // gaps between them — far smaller than the latency of round-tripping
+  // through JS via onend → speak(), which is what made sentence-end
+  // chunk boundaries sound like long mid-sentence pauses.
+  function _queueAllChunks(epoch) {
+    if (!synth || epoch !== _epoch) return;
     var chunkStart = _chunkBase;
-    for (var k = 0; k < _chunkIdx; k++) chunkStart += _chunks[k].length;
+    for (var i = 0; i < _chunks.length; i++) {
+      _queueChunk(i, chunkStart, epoch);
+      chunkStart += _chunks[i].length;
+    }
+  }
+
+  function _queueChunk(idx, chunkStart, epoch) {
+    if (!synth || epoch !== _epoch) return;
+
+    var chunkText = _chunks[idx];
 
     // Re-resolve voice by name at speak-time so the reference is never stale
     // (Chrome rebuilds its voice list internally; stored object refs can go dead)
@@ -237,33 +245,41 @@
     } else {
       utt.lang = 'en-US';
     }
+    var isLast = (idx === _chunks.length - 1);
 
     utt.onboundary = function (e) {
+      if (epoch !== _epoch) return;
       if (e.name === 'word') _offset = chunkStart + e.charIndex;
     };
     utt.onstart = function () {
-      _restarting = false;
+      if (epoch !== _epoch) return;
+      _chunkIdx = idx;
+      _offset = chunkStart;
       _speaking = true;
       _paused = false;
       if (_onUpdate) _onUpdate();
     };
     utt.onend = function () {
-      // Ignore onend that fires because we called cancel() for a restart —
-      // Chrome fires onend (not onerror) when cancel() stops an utterance.
-      if (_restarting) return;
-      _chunkIdx++;
-      if (_chunkIdx < _chunks.length) {
-        _speakChunk();
-      } else {
-        _speaking = false;
-        _paused = false;
-        _offset = 0;
-        if (_onUpdate) _onUpdate();
-        if (_onEnd) _onEnd();
+      // Stale onend (e.g. cancel during seek/setRate) — ignore so we don't
+      // fire the user's _onEnd callback for a session that's been replaced.
+      if (epoch !== _epoch) return;
+      if (!isLast) {
+        // Advance the recorded offset to the end of this chunk so a seek
+        // operation called in the gap before the next chunk's onstart
+        // fires (or in the absence of reliable onboundary events) reflects
+        // actual playback progress. Without this, "next heading" always
+        // jumps from offset 0.
+        _offset = chunkStart + chunkText.length;
+        return;
       }
+      _speaking = false;
+      _paused = false;
+      _offset = 0;
+      if (_onUpdate) _onUpdate();
+      if (_onEnd) _onEnd();
     };
     utt.onerror = function (e) {
-      if (_restarting) return;
+      if (epoch !== _epoch) return;
       if (e.error === 'interrupted' || e.error === 'canceled') return;
       _speaking = false;
       _paused = false;
@@ -445,7 +461,9 @@
 
     stop: function () {
       if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
-      _restarting = false;
+      // Bump the epoch so all currently queued utterances treat their
+      // event handlers as stale and exit early.
+      _epoch++;
       _text     = '';
       _chunks   = [];
       _chunkIdx = 0;

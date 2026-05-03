@@ -257,7 +257,7 @@ test.describe('SEBook read-aloud button (TTS)', () => {
     // Chrome's speech engine drops utterances over ~32K chars and stops
     // speaking after ~15s. Long pages like /SEBook/tools/shell trigger this:
     // a single speak() call produces no audio. The fix splits the text into
-    // short chunks and chains them via onend.
+    // short chunks and queues them up front.
     await mockSpeechSynthesis(page);
     await page.goto('/SEBook/testing.html');
     await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
@@ -281,10 +281,39 @@ test.describe('SEBook read-aloud button (TTS)', () => {
       window.__ttsLog.filter((l) => l.type === 'speak')
     );
     for (const call of speakCalls) {
-      // A small slack over MAX_CHUNK_LENGTH (240) covers the trailing
+      // A small slack over MAX_CHUNK_LENGTH (180) covers the trailing
       // sentence-boundary string that the chunker keeps with its piece.
-      expect(call.text.length).toBeLessThanOrEqual(320);
+      expect(call.text.length).toBeLessThanOrEqual(260);
     }
+  });
+
+  test('regression: all chunks are queued up front (no chain-via-onend gap)', async ({ page }) => {
+    // Chrome's TTS engine inserts a perceptible (~200-400ms) gap between
+    // utterances when each one is enqueued from the previous one's onend
+    // handler. Queueing every chunk before the first one starts shrinks
+    // the gap to the engine's internal queue-processing latency. This test
+    // verifies that all speak() calls happen synchronously inside the
+    // initial speak() invocation — i.e. before any onend callback fires.
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    const counts = await page.evaluate(() => {
+      window.__ttsLog.length = 0;
+      // Build text long enough to need many chunks (≥5).
+      let text = '';
+      const filler = 'Sentence ending in a period. ';
+      while (text.length < 2000) text += filler;
+      // Synchronously call speak() and immediately read the log.
+      window.TTSPlayer.speak(text);
+      const synchronous = window.__ttsLog.filter((l) => l.type === 'speak').length;
+      return { synchronous, totalLen: text.length };
+    });
+
+    // All chunks must have been queued before the inner evaluate function
+    // returns. With the old chain-via-onend pattern only the first chunk
+    // would be present synchronously.
+    expect(counts.synchronous).toBeGreaterThan(4);
   });
 });
 
@@ -440,6 +469,55 @@ test.describe('SEBook read-aloud navigation', () => {
     // after the Bravo heading position — i.e., contain "Bravo" near its head.
     expect(result.lastChunk).toBeTruthy();
     expect(result.lastChunk).toContain('Bravo');
+  });
+
+  test('regression: seekToHeading("next") advances from the current playback position, not from 0', async ({ page }) => {
+    // Bug: in the chained-via-onend implementation, chunk onstart only set
+    // _speaking=true; it did not update _offset. _offset only progressed
+    // via onboundary events, which Chrome fires unreliably for some voices,
+    // so _offset stayed near 0 throughout playback. Every "next heading"
+    // click then jumped to whichever heading sat just past offset 0 —
+    // i.e. the same heading every time. The fix updates _offset on each
+    // chunk's onstart (and again on its onend so the inter-chunk gap is
+    // also covered).
+    await mockSpeechSynthesis(page);
+    await page.goto('/SEBook/testing.html');
+    await page.waitForFunction(() => window.TTSPlayer && window.TTSPlayer.isSupported());
+
+    const result = await page.evaluate(() => {
+      // Three headings spaced apart by long word-only paragraphs so the
+      // chunker produces several chunks between consecutive headings.
+      const div = document.createElement('div');
+      div.innerHTML =
+        '<h1>One</h1><p>' + 'word '.repeat(120) + '</p>' +
+        '<h2>Two</h2><p>' + 'word '.repeat(120) + '</p>' +
+        '<h3>Three</h3><p>' + 'word '.repeat(120) + '</p>';
+      const extracted = window.TTSPlayer.extract(div);
+      const T = window.TTSPlayer;
+
+      T.speak(extracted);
+      // Move offset forward enough to land between headings One and Two.
+      // This deterministically simulates "playback progressed past the first
+      // heading" without depending on async onstart timing.
+      T.seekRelative(45);
+      const offsetBeforeNext = T.getProgress() * extracted.text.length;
+
+      // From a position past One, "next heading" must jump to Two — not One.
+      window.__ttsLog.length = 0;
+      T.seekToHeading('next');
+      const calls = window.__ttsLog.filter((l) => l.type === 'speak');
+      const firstChunk = calls[0] ? calls[0].text : null;
+
+      return { firstChunk, offsetBeforeNext, headingOffsets: extracted.markers.map((m) => ({ label: m.label, offset: m.offset })) };
+    });
+
+    // Sanity: seekRelative actually advanced past the first heading.
+    expect(result.headingOffsets[0].offset).toBeLessThan(result.offsetBeforeNext);
+    // The post-seek chunk should start with content from heading "Two" or
+    // later, never with "One" (the previous heading we already passed).
+    expect(result.firstChunk).toBeTruthy();
+    expect(result.firstChunk).not.toMatch(/^One/);
+    expect(result.firstChunk).toMatch(/^Two|^Three/);
   });
 
   test('seekToHeading("prev") rewinds to the start when before the first heading', async ({ page }) => {
