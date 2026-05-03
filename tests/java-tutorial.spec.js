@@ -80,6 +80,40 @@ test.describe.serial('Java Tutorial — structure', () => {
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
   });
 
+  test('first Java step shows UML by default without widening the page', async () => {
+    await page.waitForFunction(
+      () => window._tutorial?._umlWatchedFiles?.includes('Welcome.java'),
+      { timeout: 15_000 },
+    );
+
+    await expect(page.locator('.tvm-right-tab[data-panel="uml"]')).toBeVisible();
+    await expect(page.locator('.tvm-right-tab[data-panel="uml"]')).toHaveClass(/active/);
+    await expect(page.locator('.tvm-uml-right-view')).toBeVisible();
+    await expect(page.locator('.tvm-output-view')).toBeHidden();
+    await expect(page.locator('.tvm-uml-right-view svg')).toBeVisible({ timeout: 15_000 });
+
+    const layout = await page.evaluate(() => {
+      const container = document.querySelector('.tvm-container');
+      const instructions = document.querySelector('.tvm-instructions-panel');
+      return {
+        watchedFiles: window._tutorial?._umlWatchedFiles || [],
+        umlLanguage: window._tutorial?._umlLanguage,
+        instructionsRatio:
+          instructions && container
+            ? instructions.getBoundingClientRect().width / container.getBoundingClientRect().width
+            : 0,
+        documentOverflow:
+          document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+
+    expect(layout.watchedFiles).toContain('Welcome.java');
+    expect(layout.umlLanguage).toBe('java');
+    expect(layout.instructionsRatio).toBeGreaterThan(0.45);
+    expect(layout.instructionsRatio).toBeLessThan(0.55);
+    expect(layout.documentOverflow).toBe(0);
+  });
+
   test('clicking run executes Java code and shows output', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });

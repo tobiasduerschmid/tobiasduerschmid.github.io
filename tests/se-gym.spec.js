@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 
 const GYM_URL = '/se-gym/';
 // A page with both a quiz and flashcard include
-const GIT_PAGE_URL = '/SEBook/tools/git/';
+const GIT_PAGE_URL = '/SEBook/tools/git.html';
 
 // The toggle inputs are visually hidden inside custom .switch labels.
 // We need to click the visible slider span, not the hidden input.
@@ -104,6 +104,8 @@ test.describe('SE Gym - Library View', () => {
 
     // Deactivate
     await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
+    await expect(page.locator('.confirm-modal-box')).toBeVisible();
+    await page.locator('#confirm-modal-yes').click();
 
     // Re-activate and check gym is empty
     await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
@@ -165,6 +167,7 @@ test.describe('SE Gym - Library View', () => {
     await page.goto(GYM_URL);
 
     // Click the remove button in the "Your Gym" section
+    page.once('dialog', dialog => dialog.accept());
     await page.locator('#gym-selected .gym-remove-selected[data-id="git"]').click();
 
     // Gym should be empty
@@ -184,6 +187,8 @@ test.describe('SE Gym - Library View', () => {
 
     await expect(page.locator('#gym-selected .gym-item')).toHaveCount(2);
     await page.locator('#empty-gym-btn').click();
+    await expect(page.locator('.confirm-modal-box')).toBeVisible();
+    await page.locator('#confirm-modal-yes').click();
     await expect(page.locator('#gym-selected .empty-gym-msg')).toBeVisible();
   });
 
