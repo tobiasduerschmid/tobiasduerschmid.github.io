@@ -27,6 +27,7 @@
       if (pre.hasAttribute('tabindex')) return;
       if (pre.closest('[aria-hidden="true"]')) return;
       if (pre.closest('.inline-language-panel')) return;
+      if (pre.scrollWidth <= pre.clientWidth && pre.scrollHeight <= pre.clientHeight) return;
       pre.setAttribute('tabindex', '0');
     });
 

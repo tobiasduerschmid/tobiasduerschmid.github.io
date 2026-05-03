@@ -182,16 +182,27 @@
 
 /* ---- Breakpoint glyphs in Monaco gutter --------------------------------- */
 /* Force Monaco's glyph margin column wider on debugger-enabled tutorials so
-   the larger chevron + breakpoint dot have room. Scoped to TutorialCode's
-   tvm-container so other Monaco usage on the site is unaffected.
+   the larger chevron + breakpoint dot have room. The left edge of each
+   visible glyph starts past the splitter's transparent 10px hit overhang.
+   Scoped to TutorialCode's tvm-container and tutorial popout wrappers so
+   other Monaco usage on the site is unaffected.
    Also allow gutter glyphs to overflow vertically so the chevron can render
    slightly taller than the line (per design preference). */
-.tvm-container .monaco-editor .margin-view-overlays .cgmr {
-  width: 28px !important;
+:root {
+  --tvm-debug-glyph-margin-width: 40px;
+  --tvm-debug-glyph-safe-offset: 12px;
+  --tvm-debug-breakpoint-offset: 14px;
+}
+.tvm-container .monaco-editor .margin-view-overlays .cgmr,
+.ttp-wrap .monaco-editor .margin-view-overlays .cgmr,
+.tpp-wrap .monaco-editor .margin-view-overlays .cgmr {
+  width: var(--tvm-debug-glyph-margin-width) !important;
   overflow: visible !important;
 }
-.tvm-container .monaco-editor .glyph-margin {
-  width: 28px !important;
+.tvm-container .monaco-editor .glyph-margin,
+.ttp-wrap .monaco-editor .glyph-margin,
+.tpp-wrap .monaco-editor .glyph-margin {
+  width: var(--tvm-debug-glyph-margin-width) !important;
   overflow: visible !important;
 }
 
@@ -205,8 +216,8 @@
   box-sizing: border-box;
   width: 16px !important;
   height: 16px !important;
-  margin-left: 4px;
-  margin-top: 3px;
+  margin-left: var(--tvm-debug-breakpoint-offset);
+  margin-top: 4px;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
 }
@@ -439,7 +450,7 @@
   background-size: 26px 26px !important;
   width: 28px !important;
   height: 26px !important;
-  margin-left: 0 !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
   margin-top: -3px !important;   /* center against the line; lets it overflow up */
   overflow: visible !important;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
@@ -461,7 +472,7 @@
   background-size: 26px 26px !important;
   width: 28px !important;
   height: 26px !important;
-  margin-left: 0 !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
   margin-top: -3px !important;
   overflow: visible !important;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
@@ -481,7 +492,7 @@
   background-size: 26px 26px !important;
   width: 28px !important;
   height: 26px !important;
-  margin-left: 0 !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
   margin-top: -3px !important;
   overflow: visible !important;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
@@ -493,7 +504,7 @@
   background-size: 26px 26px !important;
   width: 28px !important;
   height: 26px !important;
-  margin-left: 0 !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
   margin-top: -3px !important;
   overflow: visible !important;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
@@ -505,7 +516,7 @@
   background-size: 26px 26px !important;
   width: 28px !important;
   height: 26px !important;
-  margin-left: 0 !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
   margin-top: -3px !important;
   overflow: visible !important;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
@@ -585,6 +596,8 @@
   align-items: center;
   gap: 5px;
   padding: 2px 10px;
+  min-height: 24px;
+  box-sizing: border-box;
   background: #ececec;
   cursor: pointer;
   user-select: none;
@@ -665,15 +678,19 @@
 .tvm-debug-vars { line-height: 1.4; }
 .tvm-debug-var-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   padding: 0;
   cursor: default;
 }
 .tvm-debug-var-row:hover { background: rgba(255, 209, 0, 0.12); }
 .tvm-debug-expander {
-  display: inline-block;
-  width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   font-size: 9px;
   color: #7a5800;
   cursor: pointer;
@@ -681,7 +698,8 @@
 }
 .tvm-debug-expander-spacer {
   display: inline-block;
-  width: 14px;
+  width: 24px;
+  flex: 0 0 24px;
 }
 .tvm-debug-var-name {
   color: #2c3e50;
@@ -753,7 +771,10 @@
 .tvm-debug-stack { padding: 0; }
 .tvm-debug-frame {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  min-height: 24px;
+  box-sizing: border-box;
   padding: 2px 6px;
   border-radius: 2px;
   cursor: pointer;
@@ -924,6 +945,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  min-height: 24px;
+  box-sizing: border-box;
   border: none;
   background: transparent;
   margin-top: 4px;
@@ -1014,9 +1037,12 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 24px;
   cursor: pointer;
 }
 .tvm-debug-manager-exc-modes input[type="radio"] {
+  width: 24px;
+  height: 24px;
   margin: 0;
 }
 .tvm-debug-manager-error {
@@ -1039,6 +1065,9 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
 }
 .tvm-debug-manager-toggle input {
@@ -1104,6 +1133,7 @@
 }
 .tvm-debug-history-slider {
   flex: 1;
+  min-height: 24px;
   cursor: pointer;
   accent-color: #FFD100;            /* native control tint */
 }
@@ -1132,7 +1162,10 @@
 }
 .tvm-debug-history-item {
   display: flex;
+  align-items: center;
   gap: 6px;
+  min-height: 24px;
+  box-sizing: border-box;
   padding: 1px 4px;
   border-radius: 2px;
   cursor: pointer;

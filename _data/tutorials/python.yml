@@ -1,6 +1,15 @@
 title: "Python Essentials: Scripting & Automation"
 description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Build a solid Python mental model by mapping every concept to what you already know — and spotting where the analogies break."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply Python's variable, function, and class syntax to write small scripts."
+  - "Distinguish Python's significant-whitespace rules from C++'s brace-based blocks."
+  - "Use Python idioms (f-strings, list comprehensions, `with`-statements, type hints) for readable code."
+  - "Read user input via `sys.argv` and write to `stderr` correctly."
+  - "Use the `re` module to extract structured information from text."
+  - "Compose a complete log-analysis script using files, regex, and dataclasses."
+
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
 

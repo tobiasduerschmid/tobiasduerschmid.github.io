@@ -4663,7 +4663,7 @@
   // Monaco Editor
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._monacoEditorOptions = function () {
-    return {
+    var opts = {
       language: this.config.backend === 'pyodide' ? 'python' :
         this.config.backend === 'react' ? 'jsx' :
           (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'javascript' :
@@ -4687,6 +4687,10 @@
       // is on so our 4px-wide bar with 4px margin always fits.
       lineDecorationsWidth: this.config.enableGitGutter ? 14 : 10,
     };
+    if (this.debuggerEnabled) {
+      opts.lineHeight = Math.max(24, Math.ceil(this.config.fontSize * 1.5));
+    }
+    return opts;
   };
 
   // Lazy-load the time-travel debugger module. Inserts <script> + <link> for

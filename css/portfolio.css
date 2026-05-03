@@ -48,6 +48,64 @@ html.dark-mode .carousel-control:focus-visible {
 	text-shadow: none;
 }
 
+.carousel-indicators {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+	width: auto;
+	left: 50%;
+	margin-left: 0;
+	transform: translateX(-50%);
+}
+
+.carousel-indicators button {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	position: relative;
+	cursor: pointer;
+}
+
+.carousel-indicators button.active {
+	width: 24px;
+	height: 24px;
+	margin: 0;
+}
+
+.carousel-indicators button::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 12px;
+	height: 12px;
+	border: 1px solid #fff;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.45);
+	transform: translate(-50%, -50%);
+}
+
+.carousel-indicators button.active::after,
+.carousel-indicators button[aria-current="true"]::after {
+	background: #fff;
+	border-color: #003B5C;
+}
+
+html.dark-mode .carousel-indicators button::after {
+	border-color: #FFD100;
+	background: rgba(0, 0, 0, 0.7);
+}
+
+html.dark-mode .carousel-indicators button.active::after,
+html.dark-mode .carousel-indicators button[aria-current="true"]::after {
+	background: #FFD100;
+	border-color: #000;
+}
+
 header {
 	padding: 4em 0 0;
 }

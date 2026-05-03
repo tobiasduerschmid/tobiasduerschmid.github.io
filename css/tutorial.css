@@ -53,6 +53,10 @@ html.dark-mode #tts-read-btn {
   border-color: #5fa8d3 !important;
 }
 
+#tts-read-btn {
+  color: #fff;
+}
+
 /* ───────────────────────────────────────────
    Dark mode toggle pill (in tutorial navbar)
 ─────────────────────────────────────────── */
@@ -203,6 +207,18 @@ html, body {
   position: relative;
   overflow: hidden;
   background: #141414;
+  --tvm-splitter-hit-size: 24px;
+  --tvm-splitter-line-size: 4px;
+  --tvm-splitter-overhang: -10px;
+  --tvm-splitter-row-before-overhang: calc(var(--tvm-splitter-line-size) - var(--tvm-splitter-hit-size));
+  --tvm-splitter-scrollbar-priority-size: 18px;
+  --tvm-splitter-rail-highlight: #9aa1ac;
+  --tvm-splitter-rail-core: #737b88;
+  --tvm-splitter-rail-shadow: #6e7682;
+  --tvm-splitter-rail-hover-highlight: #a8afb9;
+  --tvm-splitter-rail-hover-core: #7b838f;
+  --tvm-splitter-rail-hover-shadow: #737b88;
+  --tvm-splitter-focus-ring: #FFB81C;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -278,19 +294,54 @@ html, body {
 }
 
 .tvm-uml-bottom-left-splitter {
-  flex: 0 0 24px;
+  flex: 0 0 var(--tvm-splitter-hit-size);
   flex-shrink: 0;
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #5a5a5e 10px, #5a5a5e 14px, transparent 14px);
+  margin-block-start: var(--tvm-splitter-row-before-overhang);
+  margin-block-end: 0;
+  --tvm-splitter-rail-direction: to bottom;
+  background: transparent;
   cursor: row-resize;
-  transition: background 0.15s;
+  transition: outline-color 0.15s;
+  position: relative;
   z-index: 10;
 }
 .tvm-uml-bottom-left-splitter:hover,
 .tvm-uml-bottom-left-splitter.active,
 .tvm-uml-bottom-left-splitter:focus-visible {
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #1a8be8 10px, #1a8be8 14px, transparent 14px);
-  outline: 3px solid #FFD100;
-  outline-offset: 2px;
+  background: transparent;
+  outline: none;
+}
+.tvm-uml-bottom-left-splitter::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  height: var(--tvm-splitter-line-size);
+  transform: none;
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-highlight) 0 25%,
+    var(--tvm-splitter-rail-core) 25% 75%,
+    var(--tvm-splitter-rail-shadow) 75% 100%
+  );
+  pointer-events: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tvm-uml-bottom-left-splitter:hover::before,
+.tvm-uml-bottom-left-splitter.active::before,
+.tvm-uml-bottom-left-splitter:focus-visible::before {
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-hover-highlight) 0 25%,
+    var(--tvm-splitter-rail-hover-core) 25% 75%,
+    var(--tvm-splitter-rail-hover-shadow) 75% 100%
+  );
+}
+.tvm-uml-bottom-left-splitter:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 
 .tvm-uml-bottom-left-view {
@@ -520,20 +571,52 @@ html:not(.dark-mode) .tvm-left-tab.active {
    Horizontal splitter (between left & right)
 ─────────────────────────────────────────── */
 .tvm-hsplitter {
-  flex: 0 0 24px;
+  flex: 0 0 var(--tvm-splitter-hit-size);
   flex-shrink: 0;
-  background: linear-gradient(to right, transparent 0, transparent 10px, #2a2a2e 10px, #2a2a2e 14px, transparent 14px);
+  margin-inline: var(--tvm-splitter-overhang);
+  --tvm-splitter-rail-direction: to right;
+  background: transparent;
   cursor: col-resize;
-  transition: background 0.15s;
+  transition: outline-color 0.15s;
   position: relative;
   z-index: 10;
 }
 .tvm-hsplitter:hover,
 .tvm-hsplitter.active,
 .tvm-hsplitter:focus-visible {
-  background: linear-gradient(to right, transparent 0, transparent 10px, #0078d4 10px, #0078d4 14px, transparent 14px);
-  outline: 3px solid #FFD100;
-  outline-offset: 2px;
+  background: transparent;
+  outline: none;
+}
+.tvm-hsplitter::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tvm-splitter-line-size);
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-highlight) 0 25%,
+    var(--tvm-splitter-rail-core) 25% 75%,
+    var(--tvm-splitter-rail-shadow) 75% 100%
+  );
+  pointer-events: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tvm-hsplitter:hover::before,
+.tvm-hsplitter.active::before,
+.tvm-hsplitter:focus-visible::before {
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-hover-highlight) 0 25%,
+    var(--tvm-splitter-rail-hover-core) 25% 75%,
+    var(--tvm-splitter-rail-hover-shadow) 75% 100%
+  );
+}
+.tvm-hsplitter:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 
 /* ───────────────────────────────────────────
@@ -913,7 +996,21 @@ html:not(.dark-mode) .tvm-left-tab.active {
 /* Divider becomes a horizontal line in column mode */
 .tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-divider,
 .tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-divider {
+  margin-inline: 0;
+  margin-block-start: var(--tvm-splitter-row-before-overhang);
+  margin-block-end: 0;
+  --tvm-splitter-rail-direction: to bottom;
   cursor: row-resize;
+}
+.tvm-editor-panel.tvm-editor-pane-detached-left  .tvm-editor-pane-divider::before,
+.tvm-editor-panel.tvm-editor-pane-detached-right .tvm-editor-pane-divider::before {
+  top: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: var(--tvm-splitter-line-size);
+  transform: none;
 }
 
 /* Both panes detached → editor-panel collapses to label-strip height so
@@ -1189,18 +1286,58 @@ html:not(.dark-mode) .tvm-pane-detached-indicator .tvm-tab-reattach:hover {
 }
 
 .tvm-editor-pane-divider {
-  flex: 0 0 24px;
-  background: linear-gradient(to right, transparent 0, transparent 10px, #2a2a2e 10px, #2a2a2e 14px, transparent 14px);
+  flex: 0 0 var(--tvm-splitter-hit-size);
+  flex-shrink: 0;
+  margin-inline: var(--tvm-splitter-overhang);
+  --tvm-splitter-rail-direction: to right;
+  background: transparent;
   cursor: col-resize;
-  transition: background 0.15s;
+  transition: outline-color 0.15s;
+  position: relative;
+  z-index: 10;
 }
 
 .tvm-editor-pane-divider:hover,
 .tvm-editor-pane-divider.active,
 .tvm-editor-pane-divider:focus-visible {
-  background: linear-gradient(to right, transparent 0, transparent 10px, #0078d4 10px, #0078d4 14px, transparent 14px);
-  outline: 3px solid #FFD100;
-  outline-offset: 2px;
+  background: transparent;
+  outline: none;
+}
+.tvm-editor-pane-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tvm-splitter-line-size);
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-highlight) 0 25%,
+    var(--tvm-splitter-rail-core) 25% 75%,
+    var(--tvm-splitter-rail-shadow) 75% 100%
+  );
+  pointer-events: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tvm-editor-pane-divider:hover::before,
+.tvm-editor-pane-divider.active::before,
+.tvm-editor-pane-divider:focus-visible::before {
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-hover-highlight) 0 25%,
+    var(--tvm-splitter-rail-hover-core) 25% 75%,
+    var(--tvm-splitter-rail-hover-shadow) 75% 100%
+  );
+}
+.tvm-editor-pane-divider:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
+}
+
+.tvm-editor-pane .monaco-editor .scrollbar,
+.tvm-editor-pane .monaco-editor .scrollbar .slider {
+  pointer-events: auto !important;
 }
 
 /* Three-column layout: instructions | code | tests (each ~1/3 of viewport).
@@ -1256,23 +1393,36 @@ html:not(.dark-mode) .tvm-editor-mode-btn.active {
 }
 
 html:not(.dark-mode) .tvm-editor-pane-divider {
-  background: linear-gradient(to right, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
+  background: transparent;
 }
 
 html:not(.dark-mode) .tvm-editor-pane-divider:hover,
 html:not(.dark-mode) .tvm-editor-pane-divider.active,
 html:not(.dark-mode) .tvm-editor-pane-divider:focus-visible {
-  background: linear-gradient(to right, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
-  outline-color: #005587;
+  background: transparent;
+  outline: none;
 }
 
 /* Stack vertically on narrow viewports so both editors stay usable */
 @media (max-width: 900px) {
   .tvm-editor-split-active .tvm-editor-body { flex-direction: column; }
   .tvm-editor-split-active .tvm-editor-pane-divider {
-    flex: 0 0 24px;
+    flex: 0 0 var(--tvm-splitter-hit-size);
+    margin-inline: 0;
+    margin-block-start: var(--tvm-splitter-row-before-overhang);
+    margin-block-end: 0;
+    --tvm-splitter-rail-direction: to bottom;
     width: 100%;
     cursor: row-resize;
+  }
+  .tvm-editor-split-active .tvm-editor-pane-divider::before {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: var(--tvm-splitter-line-size);
+    transform: none;
   }
   /* On narrow screens, drop the three-col split and let instructions take their default width */
   .tvm-split-layout-three-col .tvm-instructions-panel { flex: 0 0 45%; }
@@ -1960,19 +2110,54 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 
 /* Vertical splitter (between editor and terminal) */
 .tvm-vsplitter {
-  flex: 0 0 24px;
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #2a2a2e 10px, #2a2a2e 14px, transparent 14px);
+  flex: 0 0 var(--tvm-splitter-hit-size);
+  margin-block-start: calc(var(--tvm-splitter-row-before-overhang) - var(--tvm-splitter-scrollbar-priority-size));
+  margin-block-end: var(--tvm-splitter-scrollbar-priority-size);
+  --tvm-splitter-rail-direction: to bottom;
+  background: transparent;
   cursor: row-resize;
-  transition: background 0.15s;
+  transition: outline-color 0.15s;
   z-index: 10;
   flex-shrink: 0;
+  position: relative;
 }
 .tvm-vsplitter:hover,
 .tvm-vsplitter.active,
 .tvm-vsplitter:focus-visible {
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #0078d4 10px, #0078d4 14px, transparent 14px);
-  outline: 3px solid #FFD100;
-  outline-offset: 2px;
+  background: transparent;
+  outline: none;
+}
+.tvm-vsplitter::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: calc(var(--tvm-splitter-scrollbar-priority-size) * -1);
+  height: var(--tvm-splitter-line-size);
+  transform: none;
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-highlight) 0 25%,
+    var(--tvm-splitter-rail-core) 25% 75%,
+    var(--tvm-splitter-rail-shadow) 75% 100%
+  );
+  pointer-events: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tvm-vsplitter:hover::before,
+.tvm-vsplitter.active::before,
+.tvm-vsplitter:focus-visible::before {
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-hover-highlight) 0 25%,
+    var(--tvm-splitter-rail-hover-core) 25% 75%,
+    var(--tvm-splitter-rail-hover-shadow) 75% 100%
+  );
+}
+.tvm-vsplitter:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 
 /* Terminal Panel */
@@ -2505,19 +2690,54 @@ html:not(.dark-mode) .tvm-right-tab.active {
 }
 
 .tvm-http-splitter {
-  height: 24px;
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #2a2a2e 10px, #2a2a2e 14px, transparent 14px);
+  height: var(--tvm-splitter-hit-size);
+  margin-block-start: var(--tvm-splitter-row-before-overhang);
+  margin-block-end: 0;
+  --tvm-splitter-rail-direction: to bottom;
+  background: transparent;
   cursor: row-resize;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: outline-color 0.15s;
+  position: relative;
   z-index: 11;
 }
 .tvm-http-splitter:hover,
 .tvm-http-splitter.active,
 .tvm-http-splitter:focus-visible {
-  background: linear-gradient(to bottom, transparent 0, transparent 10px, #2774AE 10px, #2774AE 14px, transparent 14px);
-  outline: 3px solid #FFD100;
-  outline-offset: 2px;
+  background: transparent;
+  outline: none;
+}
+.tvm-http-splitter::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  height: var(--tvm-splitter-line-size);
+  transform: none;
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-highlight) 0 25%,
+    var(--tvm-splitter-rail-core) 25% 75%,
+    var(--tvm-splitter-rail-shadow) 75% 100%
+  );
+  pointer-events: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tvm-http-splitter:hover::before,
+.tvm-http-splitter.active::before,
+.tvm-http-splitter:focus-visible::before {
+  background: linear-gradient(
+    var(--tvm-splitter-rail-direction),
+    var(--tvm-splitter-rail-hover-highlight) 0 25%,
+    var(--tvm-splitter-rail-hover-core) 25% 75%,
+    var(--tvm-splitter-rail-hover-shadow) 75% 100%
+  );
+}
+.tvm-http-splitter:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--tvm-splitter-focus-ring);
 }
 
 .tvm-http-toolbar {
@@ -2971,7 +3191,22 @@ html:not(.dark-mode) .tvm-step-status {
 @media (max-width: 900px) {
   .tvm-container { flex-direction: column; }
   .tvm-instructions-panel { flex: 0 0 45%; border-right: none; border-bottom: 1px solid #2a2a2e; }
-  .tvm-hsplitter { cursor: row-resize; }
+  .tvm-hsplitter {
+    margin-inline: 0;
+    margin-block-start: var(--tvm-splitter-row-before-overhang);
+    margin-block-end: 0;
+    --tvm-splitter-rail-direction: to bottom;
+    cursor: row-resize;
+  }
+  .tvm-hsplitter::before {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: var(--tvm-splitter-line-size);
+    transform: none;
+  }
   .tvm-workspace { flex-direction: column; }
   .tvm-vsplitter { cursor: row-resize; }
 }
@@ -3012,6 +3247,13 @@ html:not(.dark-mode) .tvm-step-status {
 
 html:not(.dark-mode) .tvm-root {
   background: #f0f0f4;
+  --tvm-splitter-rail-highlight: #f7f8fa;
+  --tvm-splitter-rail-core: #d8dce2;
+  --tvm-splitter-rail-shadow: #707884;
+  --tvm-splitter-rail-hover-highlight: #ffffff;
+  --tvm-splitter-rail-hover-core: #ccd1d8;
+  --tvm-splitter-rail-hover-shadow: #626b77;
+  --tvm-splitter-focus-ring: #005587;
 }
 
 /* Instructions panel */
@@ -3249,7 +3491,7 @@ html:not(.dark-mode) .tvm-terminal-container {
 html:not(.dark-mode) .tvm-uml-bottom-left-splitter,
 html:not(.dark-mode) .tvm-vsplitter,
 html:not(.dark-mode) .tvm-http-splitter {
-  background: linear-gradient(to bottom, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
+  background: transparent;
 }
 
 html:not(.dark-mode) .tvm-uml-bottom-left-splitter:hover,
@@ -3261,19 +3503,19 @@ html:not(.dark-mode) .tvm-vsplitter:focus-visible,
 html:not(.dark-mode) .tvm-http-splitter:hover,
 html:not(.dark-mode) .tvm-http-splitter.active,
 html:not(.dark-mode) .tvm-http-splitter:focus-visible {
-  background: linear-gradient(to bottom, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
-  outline-color: #005587;
+  background: transparent;
+  outline: none;
 }
 
 html:not(.dark-mode) .tvm-hsplitter {
-  background: linear-gradient(to right, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
+  background: transparent;
 }
 
 html:not(.dark-mode) .tvm-hsplitter:hover,
 html:not(.dark-mode) .tvm-hsplitter.active,
 html:not(.dark-mode) .tvm-hsplitter:focus-visible {
-  background: linear-gradient(to right, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
-  outline-color: #005587;
+  background: transparent;
+  outline: none;
 }
 
 @media (max-width: 900px) {
@@ -3285,7 +3527,7 @@ html:not(.dark-mode) .tvm-hsplitter:focus-visible {
   html:not(.dark-mode) .tvm-editor-split-active .tvm-editor-pane-divider:hover,
   html:not(.dark-mode) .tvm-editor-split-active .tvm-editor-pane-divider.active,
   html:not(.dark-mode) .tvm-editor-split-active .tvm-editor-pane-divider:focus-visible {
-    background: linear-gradient(to bottom, #ffffff 0, #ffffff 10px, #000000 10px, #000000 14px, #ffffff 14px);
+    background: transparent;
   }
 }
 

@@ -1,6 +1,14 @@
 title: "Prolog Essentials"
 description: "A hands-on introduction to logic programming with Prolog, running entirely in your browser. Learn to think declaratively — define facts, write rules, and let Prolog find the answers."
 
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Apply Prolog's facts/rules/queries to express logical relationships."
+  - "Distinguish unification (`=`) from arithmetic evaluation (`is`) — Prolog's #1 misconception for newcomers."
+  - "Trace Prolog's depth-first backtracking by hand to predict which solutions are returned and in what order."
+  - "Use list patterns (`[Head | Tail]`) and recursion to write list-processing predicates."
+  - "Evaluate when a problem is well-suited to declarative logic programming vs. imperative or functional style."
+
 backend: prolog
 
 require_tests: true

@@ -405,6 +405,15 @@ title: string                          # Required. Shown in navbar + index
 description: string                    # Required. Shown on /SEBook/tutorials
                                        # and as <meta description>
 
+# === Authoring metadata ===
+learning_objectives: [string]          # Optional. Bloom-verb statements (Apply,
+                                       # Analyze, Evaluate, Create — not "understand"
+                                       # or "know about"). Currently authoring-time
+                                       # metadata for self-audit; not yet rendered
+                                       # to students. The runtime ignores this field.
+                                       # Add at the top of each tutorial so authors
+                                       # and reviewers can verify Bloom coverage.
+
 # === Index / surface visibility ===
 exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # this entry. Set on demos, lectures,
