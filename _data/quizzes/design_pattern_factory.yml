@@ -43,7 +43,7 @@ questions:
   - id: 3
     type: single
     question: |
-      "Factory Method uses classes to create; Abstract Factory uses objects." What does this distinction mean structurally?
+      A common shorthand contrasts Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
     options:
       - "Factory Method creates classes at runtime; Abstract Factory creates objects at runtime"
       - "Factory Method relies on inheritance (subclass overrides a method); Abstract Factory relies on composition (client receives a factory object)"

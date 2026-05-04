@@ -38,7 +38,7 @@ Do not apply it automatically. If a method contains two stable branches and no n
 
 The Gang of Four version supplies the core role model: a `Command` object encapsulates a request, an `Invoker` stores and triggers commands, and a `Receiver` does the real work. The important consequence is decoupling: the object that asks for work no longer needs to know which receiver method performs it {% cite Gamma1995 %}.
 
-Head First Design Patterns makes the pattern concrete with a home-automation remote control. The remote knows only "press slot 0"; command objects know whether that means `light.on()`, `light.off()`, a ceiling fan speed change, a no-op placeholder, an undo operation, or a "party mode" macro {% cite FreemanRobson2020 %}.
+Head First Design Patterns makes the pattern concrete with a home-automation remote control. The remote knows only "press slot 0"; command objects know whether that means `light.on()`, `light.off()`, a ceiling fan speed change, a `NoCommand` Null Object placeholder, an undo operation, or a "party mode" macro {% cite FreemanRobson2020 %}.
 
 Refactoring to Patterns gives the best adoption rule: refactor toward Command when conditional dispatch has either outgrown its class or needs runtime flexibility. The practical path is to extract each branch into an execution method, extract those methods into command classes, give them a common signature, then replace the dispatcher with a command map {% cite Kerievsky2004 %}.
 
@@ -646,7 +646,7 @@ The pattern earns its complexity when requests need a lifecycle: configure, exec
 | [Observer](/SEBook/designpatterns/observer.html) | Both decouple senders from receivers. | Observer broadcasts a change to many listeners; Command packages one request for one invoker to execute. |
 | [Mediator](/SEBook/designpatterns/mediator.html) | Both can reduce direct coupling between objects. | Mediator centralizes coordination rules; Command decentralizes actions into request objects. |
 | [Composite](/SEBook/designpatterns/composite.html) | Macro commands compose commands into a tree or list. | Composite is the structural mechanism; Command is the behavioral intent. |
-| Memento | Both can support undo. | Command often stores the operation; Memento stores a snapshot of state. They are commonly combined. |
+| Memento | Both can support undo. | Command represents the *operation* to perform (and may need to know how to reverse it); Memento captures and externalizes a *snapshot of state* without violating encapsulation. Memento is commonly combined with Command to implement undo when re-executing the inverse operation is impractical. |
 
 # Check Yourself
 

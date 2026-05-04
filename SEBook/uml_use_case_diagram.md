@@ -30,12 +30,12 @@ A *use case* refers to a particular piece of functionality that the system must 
 
 ### 2.1 Actors
 
-An **actor** represents a role that a user takes when interacting with the system. Actors are drawn as stick figures with their role name below.
+An **actor** represents a role played by a user, or any other system, that interacts with the *subject* of a use case (UML 2.5.1 §18.2.1). The most common notation is a stick figure with the role name below, but the spec defines **three** equivalent notations: a stick figure (Figure 18.6), a class rectangle with the keyword `«actor»` (Figure 18.7), or a custom icon that conveys the kind of actor — for example a screen-and-keyboard icon for a non-human external system (Figure 18.8). Any of the three may be used for any actor; the choice is stylistic, not semantic.
 
 Key points about actors:
 - An actor is a **role**, not a specific person. One person can play multiple roles (e.g., a university professor might be both an "Instructor" and a "Student" in a course system).
 - A single user may be represented by **multiple actors** if they interact with different parts of the system in different capacities.
-- Actors are always **external** to the system — they interact with it but are not part of it.
+- Actors are always **external** to the subject — they interact with it but are not part of it.
 
 > **⚠ Roles, not job titles (Ambler G65).** Name actors for the *role* they play in this system, not for their position in a company. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system."**
 
@@ -48,9 +48,9 @@ A **use case** represents a specific goal or piece of functionality the system p
 - Use case names should describe a goal using a **verb phrase** (e.g., "Place Order", not "Order" or "OrderSystem").
 - There will be one or more use cases per kind of actor. It is common for any reasonable system to have many use cases.
 
-### 2.3 System Boundary
+### 2.3 Subject (System Boundary)
 
-The **system boundary** is a rectangle drawn around the use cases, representing the scope of the system. The system name appears at the top of the rectangle. Actors are placed **outside** the boundary, and use cases are placed **inside**.
+The rectangle drawn around the use cases is called the **subject** in the UML 2.5.1 specification — though "system boundary" is the term most textbooks and tools use, and the spec acknowledges it (§18.1.4: "A subject (sometimes called a *system boundary*)..."). The subject represents the system (or component, or class) that *realizes* the contained use cases. The subject's name appears at the top of the rectangle. Actors are placed **outside** the subject, and use cases are placed **inside**.
 
 ### 2.4 Associations
 
@@ -114,7 +114,7 @@ A use case diagram shows *what* functionality exists, but not *how* it works. To
 
 Use cases rarely exist in isolation. UML defines three types of relationships between use cases: **inclusion**, **extension**, and **generalization**. Each is drawn as a dashed or solid arrow between use cases.
 
-**Notation Rule:** For include and extend arrows, the arrows are **dashed** and point in the **reading direction** of the verb. The relationship label is written in **double angle brackets** (guillemets) and uses the **base form** of the verb (e.g., `<<include>>`, not `<<includes>>`).
+**Notation Rule:** For include and extend arrows, the arrows are **dashed with an open arrowhead** (UML 2.5.1 §18.1.4) and point in the **reading direction** of the verb. The relationship label is written in **guillemets** — the spec uses `«include»` and `«extend»`; the ASCII shorthand `<<include>>` / `<<extend>>` used throughout this chapter is universally accepted by tools and equivalent. Use the **base form** of the verb (e.g., `«include»`, not `«includes»`).
 
 ### 4.1 Inclusion (`<<include>>`)
 
@@ -197,7 +197,7 @@ Students often confuse `<<include>>` and `<<extend>>`. Here is a direct comparis
 | Feature | `<<include>>` | `<<extend>>` |
 |---------|--------------|-------------|
 | **When it happens** | **Always** --- the included behavior is mandatory | **Sometimes** --- the extending behavior is optional/conditional |
-| **Arrow direction** | From including use case **to** included use case | From extending use case **to** base use case |
+| **Arrow direction** | From base (including) use case **to** included use case | From extending use case **to** base (extended) use case |
 | **Analogy** | Like a function call that always executes | Like an optional plugin or hook |
 | **Example** | "Purchase Item" always includes "Login" | "Purchase Item" may be extended by "Apply Coupon" |
 
@@ -274,6 +274,7 @@ UC3 ..> UC4 : <<include>>
 2. **`<<include>>` (Create PR → Authenticate):** You cannot create a PR without being logged in. This is mandatory, unconditional behavior — `<<include>>` is correct. The arrow points *from the base* toward the included behavior.
 3. **`<<include>>` (Merge PR → Run CI Checks):** A maintainer cannot merge without CI passing. The checks run automatically as part of every merge — they are not optional. This is another `<<include>>`.
 4. **What is NOT shown:** There is no `<<extend>>` here, because there is no optional behavior in this workflow. Not every use case diagram needs `<<extend>>` — use it only when behavior genuinely *sometimes* happens.
+5. **Modeling simplification:** In reality every GitHub action requires authentication, so `Review Code` and `Merge Pull Request` would each `<<include>>` `Authenticate` too. We show authentication only on `Create Pull Request` to keep the diagram readable — don't read this as "review and merge are unauthenticated." Real diagrams often face the same trade-off between completeness and clarity.
 
 ---
 
@@ -358,7 +359,7 @@ UC6 ..> UC4 : <<extend>>
 
 | # | Mistake | Fix |
 |---|---|---|
-| 1 | **`<<include>>` and `<<extend>>` arrows pointing the wrong way** | Remember: `<<include>>` points *from base → included*; `<<extend>>` points *from extension → base*. They are opposite directions. |
+| 1 | **`<<include>>` and `<<extend>>` arrows pointing the wrong way** | Remember (UML 2.5.1 §18.1.4): `<<include>>` points *from base (including) → included*; `<<extend>>` points *from extension → base (extended)*. They are opposite directions. |
 | 2 | **Actors named with job titles instead of roles** (*"VP of Sales"*) | Name the *role* (*"Sales Rep"*). Roles describe what the system cares about; titles change with HR. |
 | 3 | **Missing actor on use cases** — a use case with no initiator | Every top-level use case must be triggered *by someone* (actor, external system, or `Time`). If nobody triggers it, why is it in the diagram? |
 | 4 | **Functional decomposition via `<<include>>`** — breaking every internal step into its own use case | Use cases are *user-visible goals*, not functions. If your diagram contains "validate input" or "query database" as use cases, you have slipped into design. |

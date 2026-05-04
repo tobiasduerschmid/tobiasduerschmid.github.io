@@ -7,11 +7,17 @@ layout: sebook
 
 # Problem 
 
-In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly.
+In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly. As the GoF describe it, this is a common side-effect of partitioning a system into a collection of cooperating classes: you need to maintain consistency between related objects, but you don't want to achieve that consistency by making the classes tightly coupled, because that reduces their reusability.
+
+The classic motivating example (GoF Observer chapter) is a graphical user interface toolkit that separates presentation from the underlying application data: a spreadsheet view and a bar chart can both depict the same numerical data using different presentations. The two views don't know about each other, yet they must *behave* as though they do — when the user edits a value in the spreadsheet, the bar chart must reflect the change immediately, and vice versa. There is no reason to limit the number of dependents to two; any number of different views may want to display the same data.
 
 If the dependent objects constantly check the core object for changes (polling), it wastes valuable CPU cycles and resources. Conversely, if the core object is hard-coded to directly update all its dependent objects, the classes become tightly coupled. Every time you need to add or remove a dependent object, you have to modify the core object's code, violating the [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp).
 
 The core problem is: **How can a one-to-many dependency between objects be maintained efficiently without making the objects tightly coupled?**
+
+> **Intent (GoF):** *"Define a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically."*
+>
+> **Also Known As:** *Dependents, Publish-Subscribe* (the GoF Observer chapter explicitly lists both as alternative names; POSA1 documents the related pattern under the name *Publisher-Subscriber*, with *Observer* and *Dependents* as aliases).
 
 # Context
 
@@ -113,8 +119,7 @@ note right of NewsChannel._notify_subscribers
 end note
 note bottom of MobileApp.update
 	```python
-	post = self._channel.get_latest_post()
-	print(f"[MobileApp] Push notification: {post}")
+	print(f"[MobileApp] {self._channel.get_latest_post()}")
 	```
 end note
 @enduml'></div>
@@ -229,12 +234,28 @@ final class MobileApp implements Subscriber {
     }
 }
 
+final class EmailDigest implements Subscriber {
+    private final NewsChannel channel;
+
+    EmailDigest(NewsChannel channel) {
+        this.channel = channel;
+    }
+
+    public void update() {
+        System.out.println("[EmailDigest] " + channel.getLatestPost());
+    }
+}
+
 public class Demo {
     public static void main(String[] args) {
         NewsChannel channel = new NewsChannel();
         Subscriber app = new MobileApp(channel);
+        Subscriber email = new EmailDigest(channel);
         channel.follow(app);
+        channel.follow(email);
         channel.publishPost("New video uploaded!");
+        channel.unfollow(email);
+        channel.publishPost("Live stream starting!");
     }
 }
 ```
@@ -293,11 +314,27 @@ private:
     const NewsChannel& channel_;
 };
 
+class EmailDigest : public Subscriber {
+public:
+    explicit EmailDigest(const NewsChannel& channel) : channel_(channel) {}
+
+    void update() override {
+        std::cout << "[EmailDigest] " << channel_.latestPost() << "\n";
+    }
+
+private:
+    const NewsChannel& channel_;
+};
+
 int main() {
     NewsChannel channel;
     MobileApp app(channel);
+    EmailDigest email(channel);
     channel.follow(app);
+    channel.follow(email);
     channel.publishPost("New video uploaded!");
+    channel.unfollow(email);
+    channel.publishPost("Live stream starting!");
 }
 ```
   </div>
@@ -341,10 +378,22 @@ class MobileApp(Subscriber):
         print(f"[MobileApp] {self._channel.get_latest_post()}")
 
 
+class EmailDigest(Subscriber):
+    def __init__(self, channel: NewsChannel) -> None:
+        self._channel = channel
+
+    def update(self) -> None:
+        print(f"[EmailDigest] {self._channel.get_latest_post()}")
+
+
 channel = NewsChannel()
 app = MobileApp(channel)
+email = EmailDigest(channel)
 channel.follow(app)
+channel.follow(email)
 channel.publish_post("New video uploaded!")
+channel.unfollow(email)
+channel.publish_post("Live stream starting!")
 ```
   </div>
 
@@ -384,10 +433,22 @@ class MobileApp implements Subscriber {
   }
 }
 
+class EmailDigest implements Subscriber {
+  constructor(private readonly channel: NewsChannel) {}
+
+  update(): void {
+    console.log(`[EmailDigest] ${this.channel.getLatestPost()}`);
+  }
+}
+
 const channel = new NewsChannel();
 const app = new MobileApp(channel);
+const email = new EmailDigest(channel);
 channel.follow(app);
+channel.follow(email);
 channel.publishPost("New video uploaded!");
+channel.unfollow(email);
+channel.publishPost("Live stream starting!");
 ```
   </div>
 </div>
@@ -399,10 +460,10 @@ This is the most important design decision when tailoring the Observer pattern.
 
 **Push Model:** 
 The *Subject* sends the **detailed state information** to the *Observer* as arguments in the `update()` method, even if the *Observer* doesn't need all data. 
-This keeps the Observer completely decoupled from the Subject but can be inefficient if large data is passed unnecessarily. Use this when all observers need the same data, or when the Subject's interface should remain hidden from observers.
+The *Observer* doesn't need a reference back to the *Subject*, but it does become coupled to the *Subject*'s data format — which can compromise *Observer* reusability across different *Subjects*. It can also be inefficient if large data is passed unnecessarily. Use this when all observers need the same data, or when the Subject's interface should remain hidden from observers.
 
 **Pull Model:** 
-The *Subject* sends a **minimal notification**, and the *Observer* is responsible for querying the *Subject* for the specific data it needs. This requires the *Observer* to have a reference back to the *Subject*, slightly increasing coupling, but it is often more efficient. Use this when different observers need different subsets of data.
+The *Subject* sends a **minimal notification**, and the *Observer* is responsible for querying the *Subject* for the specific data it needs. This requires the *Observer* to have a reference back to the *Subject*, slightly increasing coupling. It can be more efficient than push when different observers need different subsets of data (each pulls only what it uses), but less efficient when every observer would consume the same payload that push could deliver in one call. Use this when different observers need different subsets of data, or when the data is expensive to compute and not all observers will use it.
 
 **Hybrid Model:** The *Subject* pushes the *type* of change (e.g., an event enum or change descriptor), and observers decide whether to pull additional data based on the event type. This balances decoupling with efficiency and is the most common approach in modern frameworks.
 
@@ -413,16 +474,47 @@ A critical but often overlooked decision is how observer registrations are manag
 * **Scoped subscriptions:** Tie the observer's registration to a lifecycle scope that automatically unsubscribes on cleanup (common in modern UI frameworks).
 
 ## Notification Trigger
-Who triggers the notification? Three options exist:
-* **Automatic:** The Subject's setter methods call `notifyObservers()` after every state change. Simple but can cause notification storms if multiple properties are updated in sequence.
-* **Client-triggered:** The client explicitly calls `notifyObservers()` after making all desired changes. More efficient but places the burden on the client.
+Who triggers the notification? GoF (Implementation issue #3, "Who triggers the update?") frames the same trade-off, listing two options; modern practice adds a third:
+* **Automatic:** The Subject's setter methods call `notifyObservers()` after every state change. Simple — clients don't have to remember to call notify — but consecutive state changes cause consecutive notifications, which may be inefficient.
+* **Client-triggered:** The client explicitly calls `notifyObservers()` after making all desired changes. The client can wait until a series of state changes is complete, avoiding needless intermediate updates, but clients carry the responsibility and may forget.
 * **Batched/deferred:** Notifications are collected and dispatched after a delay or at a synchronization point, reducing redundant updates.
+
+## Self-Consistency Before Notification
+GoF (Implementation issue #5) warns that a *Subject* must be in a self-consistent state before calling notify, because observers will query the subject for its current state during their update. This is easy to violate when a subclass operation calls an inherited operation that triggers the notification *before* the subclass has finished its own state update. A standard fix is to send notifications from a Template Method in the abstract Subject — define a primitive operation for subclasses to override, and make `Notify()` the last step of the template method, so the object is guaranteed to be self-consistent when subclasses override Subject operations.
+
+## Observing Multiple Subjects
+GoF (Implementation issue #2) notes that an observer may depend on more than one subject (e.g., a spreadsheet cell that draws from several data sources). In that case, the `update()` operation needs to tell the observer *which* subject changed — typically by passing the subject as a parameter (`update(Subject* changedSubject)`). The pull style naturally supports this; a pure push style with no subject identity makes it harder.
+
+## Dangling References to Deleted Subjects
+GoF (Implementation issue #4) flags a subtle ownership bug: if a subject is deleted while observers still hold references to it, those references dangle. One remedy is to have the subject notify its observers as it is destroyed, so they can null out their references. This is the dual of the lapsed-listener problem above and matters most in languages without garbage collection.
+
+## Specifying Modifications of Interest (Aspects)
+GoF (Implementation issue #7) discusses extending the registration interface so observers can subscribe only to *specific* events of interest (e.g., `Subject::Attach(Observer*, Aspect& interest)`). This avoids waking up every observer on every change and is the conceptual ancestor of typed event handlers in modern frameworks (e.g., separate listener interfaces per event type, or topic-based publish-subscribe).
+
+## Encapsulating Complex Update Semantics (ChangeManager)
+When the dependency graph between subjects and observers is intricate — e.g., observers depend on multiple subjects and you must avoid duplicate updates when several change at once — GoF (Implementation issue #9) recommends introducing a separate **ChangeManager** object that maps subjects to observers, defines an update strategy, and dispatches updates on the subject's behalf. GoF cite two specializations: a `SimpleChangeManager` that always updates every observer, and a `DAGChangeManager` that handles directed acyclic graphs of dependencies and ensures each observer is updated only once per change event. The ChangeManager is itself an instance of the [Mediator](/SEBook/designpatterns/mediator.html) pattern and is typically a [Singleton](/SEBook/designpatterns/singleton.html).
 
 # Consequences
 
-Applying the Observer pattern yields several important consequences:
-* **Loose Coupling:** The subject and observers can vary independently. The subject knows only that its observers implement a given interface—not their concrete types, not how many there are, not what they do with the data.
+Applying the Observer pattern yields several important consequences. The first three are the canonical GoF benefits (Consequences §1–§3); the remaining items capture liabilities GoF flag and one widely observed comprehension issue.
+* **Abstract coupling between Subject and Observer (loose coupling):** The subject knows only that its observers conform to a simple interface — not their concrete classes. Because Subject and Observer aren't tightly coupled, they can also belong to different layers of abstraction in the system: a lower-level subject can notify a higher-level observer without violating the layering.
+* **Support for broadcast communication:** Unlike an ordinary request, the notification a subject sends needn't specify its receiver — it is broadcast automatically to every observer that subscribed. The subject doesn't care how many interested objects exist; it is up to each observer to handle or ignore a notification.
 * **Dynamic Relationships:** Observers can be added and removed at any time during execution, enabling highly flexible architectures.
-* **Broadcast Communication:** When the subject changes, all registered observers are notified—the subject does not need to know who they are.
-* **Unexpected Updates:** Because observers have no knowledge of each other, a change triggered by one observer can cascade through the system in unexpected ways. A notification chain where observer A's update triggers subject B's notification, which updates observer C, can be very difficult to debug.
-* **Inverted Dependency Flow:** An empirical study on reactive programming found that the Observer pattern *inverts the natural dependency flow* in code. Conceptually, data flows from subject to observer, but in the code, observers call the subject to register themselves. This means that when a reader encounters an observer for the first time, there is no sign in the code near the observer of *what* it depends on. This inversion makes program comprehension harder—a critical insight for anyone debugging Observer-based systems.
+* **Unexpected updates:** Because observers have no knowledge of each other's presence, a seemingly innocuous operation on the subject can cause a cascade of updates to observers and their dependent objects. The simple `update()` protocol carries no information about *what* changed, so observers may have to work hard to deduce the changes — a frequent source of subtle bugs that are hard to track down.
+* **Inverted dependency flow makes comprehension harder:** Conceptually, data flows from subject to observer, but in the *code* the observer calls the subject to register itself. When a reader encounters an observer for the first time, there is no sign near the observer of *what* it depends on — the wiring lives elsewhere. This inversion is widely cited as a comprehension hazard for Observer-based systems and is one reason modern reactive frameworks try to make the dependency graph explicit at the call site.
+
+# Known Uses
+
+GoF cite the following examples; the pattern is far more pervasive today, but these are the historical anchors:
+
+* **Smalltalk Model/View/Controller (MVC):** the first and best-known use. Smalltalk's `Model` plays the role of Subject and `View` is the base class for observers. Smalltalk, ET++, and the THINK class library put Subject and Observer interfaces in the root class `Object`, making the dependency mechanism available to every object in the system.
+* **InterViews, the Andrew Toolkit, and Unidraw** all employ the pattern in their UI frameworks. InterViews defines `Observer` and `Observable` classes explicitly; Andrew calls them "view" and "data object"; Unidraw splits graphical editor objects into View (observers) and Subject parts.
+* **Java's standard library:** `java.util.Observer` / `java.util.Observable` provided a built-in implementation. *Caveat for modern code:* both have since been deprecated in modern JDKs because `Observable` is a class (forcing single inheritance) with `protected` methods that require subclassing rather than composition — Head First Design Patterns' "dark side of `java.util.Observable`" section in Chapter 2 lays out exactly these criticisms. Modern Java code typically uses `java.beans.PropertyChangeListener`, the Flow API publishers, or a third-party reactive library instead.
+* **Swing and JavaBeans:** the listener model in `JButton`/`AbstractButton` (`addActionListener`, etc.) is a typed-event variant of Observer; `PropertyChangeListener` plays a similar role at the bean level.
+
+# Related Patterns
+
+* **[Mediator](/SEBook/designpatterns/mediator.html):** GoF note that the *ChangeManager* described under Implementation is itself a Mediator — it sits between subjects and observers and encapsulates complex update semantics so neither side has to know about the other directly.
+* **[Singleton](/SEBook/designpatterns/singleton.html):** A *ChangeManager* is typically unique and globally accessible, making Singleton a natural choice for its lifecycle.
+* **Template Method:** A common technique for keeping subjects self-consistent before notifying (Implementation issue #5) is to put `Notify()` as the final step of a template method in the abstract Subject, with the state-changing primitive operation overridden in subclasses.
+* **POSA1's Publisher-Subscriber:** documents the same pattern at a coarser, architectural granularity — for example as a *Gatekeeper* or as an *Event Channel* between processes — and is the conceptual root of message-broker and pub/sub middleware.

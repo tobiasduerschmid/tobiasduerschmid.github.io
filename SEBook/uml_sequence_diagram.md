@@ -34,7 +34,7 @@ A lifeline represents an individual participant in the interaction. It is drawn 
 Messages are the communications between lifelines. They are drawn as horizontal arrows. UML 2 distinguishes three main arrow styles (sources: Fowler, *UML Distilled*, ch. 4; Rumbaugh, Jacobson & Booch, *The Unified Modeling Language Reference Manual*):
 
   * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> — solid line with **filled (triangular) arrowhead**. The sender blocks until the receiver responds, like calling a method and waiting for it to return.
-  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> — solid line with **open (stick) arrowhead**. The sender fires the message and continues immediately, like putting an event on a queue or sending an HTTP POST without awaiting the response.
+  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> — solid line with **open (stick) arrowhead**. The sender fires the message and continues immediately, like posting an event to a queue or invoking a callback you don't wait for.
   * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> — **dashed** line with open arrowhead. Represents control (and often a value) returning to the original caller. Return arrows are optional in UML 2: include them when the returned value is important, omit them when a synchronous call obviously returns.
 
 > **⚠ Common mistake:** Students often confuse the filled vs. open arrowhead, treating both as synchronous. The rule: **filled = blocks, open = fires-and-forgets**. Remember it as "filled is full commitment; open lets go."
@@ -47,13 +47,13 @@ Let's look at the sequence of a user inserting a card into an ATM.
 actor customer: Customer
 participant atm: ATM
 participant bank: Bank Server
-customer -> atm: (1) insertCard()
+customer -> atm: insertCard()
 activate atm
-atm -> bank: (2) verifyCard()
+atm -> bank: verifyCard()
 activate bank
-bank --> atm: (3) cardValid()
+bank --> atm: cardValid()
 deactivate bank
-atm --> customer: (4) promptPIN()
+atm -> customer: promptPIN()
 deactivate atm
 @enduml'></div>
 
@@ -256,7 +256,7 @@ The three fragments above (opt, alt, loop) are the most common, but UML defines 
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span> **LOOP** | Repeat while guard is true | `while` / `for` loop |
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-par"></span> **PAR** | Parallel execution of fragments | Concurrent threads |
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-critical"></span> **CRITICAL** | Critical region (only one thread at a time) | `synchronized` block |
-| <span class="uml-sym" data-diagram="sequence" data-sym="frag-break"></span> **BREAK** | Early exit from the enclosing interaction | `break` / early return |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-break"></span> **BREAK** | Early exit from the rest of the enclosing fragment (its operand is performed instead of the remaining messages) | `break` / early return |
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-ref"></span> **REF** | Reference to another sequence diagram by name | Function / subroutine call |
 
 > **When to use `ref`:** When a shared interaction (e.g., login, authentication, checkout) appears in many sequence diagrams, draw it *once* as its own diagram and reference it from others with a `ref` frame. This is the sequence-diagram equivalent of factoring out a function.
@@ -862,32 +862,29 @@ participant pg: PaymentGateway
 participant rest: Restaurant
 app -> os: submitOrder(items, paymentInfo)
 activate os
-alt [payment approved]
-  os -> pg: charge(amount, card)
-  activate pg
-  pg --> os: transactionId
-  deactivate pg
+os -> pg: charge(amount, card)
+activate pg
+pg --> os: chargeResult
+deactivate pg
+alt [chargeResult.approved]
   os -> rest: notifyNewOrder(items)
   activate rest
   rest --> os: estimatedTime
   deactivate rest
   os --> app: confirmed(orderId, eta)
-else [payment declined]
-  os -> pg: charge(amount, card)
-  activate pg
-  pg --> os: declineReason
-  deactivate pg
-  os --> app: error(declineReason)
+else [chargeResult.declined]
+  os --> app: error(chargeResult.reason)
 end
 deactivate os
 @enduml'></div>
 
 **What the UML notation captures:**
 
-1. **`alt` fragment (if/else):** The dashed horizontal line inside the box divides the two branches. Only one branch executes at runtime. When you see `alt`, think `if/else`.
-2. **Guard conditions in `[ ]`:** `[payment approved]` and `[payment declined]` are boolean guards — they must be mutually exclusive so exactly one branch fires.
-3. **Different paths, different participants:** In the success branch, the flow continues to `Restaurant`. In the failure branch, it returns immediately to the app. The diagram makes both paths equally visible — no "happy path bias."
-4. **Why `alt` and not `opt`?** An `opt` fragment has only one branch (if, no else). Because we have two explicit outcomes — success and failure — `alt` is the correct choice.
+1. **Charge once, then branch on the response:** The `charge()` call is issued *before* the `alt` fragment, and `chargeResult` is returned to `OrderService`. The `alt` then branches on the *content* of that response — never call payment twice. Putting the `charge()` inside both branches would imply a double charge attempt, which would be an architectural bug.
+2. **`alt` fragment (if/else):** The dashed horizontal line inside the box divides the two branches. Only one branch executes at runtime. When you see `alt`, think `if/else`.
+3. **Guard conditions in `[ ]`:** `[chargeResult.approved]` and `[chargeResult.declined]` are boolean guards — they must be mutually exclusive so exactly one branch fires.
+4. **Different paths, different participants:** In the success branch, the flow continues to `Restaurant`. In the failure branch, it returns immediately to the app. The diagram makes both paths equally visible — no "happy path bias."
+5. **Why `alt` and not `opt`?** An `opt` fragment has only one branch (if, no else). Because we have two explicit outcomes — success and failure — `alt` is the correct choice.
 
 ---
 
@@ -939,18 +936,11 @@ participant driver: DriverApp
 participant notif: NotificationService
 rider -> match: requestRide(location, rideType)
 activate match
-loop [no driver accepted]
-  alt [driver accepts]
-    match -> driver: offerRide(request)
-    activate driver
-    driver --> match: accepted
-    deactivate driver
-  else [driver declines or timeout]
-    match -> driver: offerRide(request)
-    activate driver
-    driver --> match: declined
-    deactivate driver
-  end
+loop [no driver has accepted]
+  match -> driver: offerRide(request)
+  activate driver
+  driver --> match: response
+  deactivate driver
 end
 match -> notif: notifyRider(driverId, eta)
 activate notif
@@ -961,9 +951,9 @@ deactivate match
 
 **What the UML notation captures:**
 
-1. **`loop` fragment:** The matching service repeats the offer-cycle until a driver accepts. `loop` models iteration — equivalent to a `while` loop. In practice this loop has a timeout (e.g., 3 attempts before cancellation), which would be the loop guard condition.
-2. **Nested `alt` inside `loop`:** Each iteration of the loop has its own if/else: did the driver accept or decline? Nesting fragments is valid and common — it directly mirrors nested control flow in code.
-3. **Flow continues after the loop:** Once a driver accepts, execution exits the `loop` and the notification is sent. Messages *outside* a fragment are unconditional.
+1. **`loop` fragment:** The matching service repeats the offer-cycle until a driver accepts (the loop guard `[no driver has accepted]` checks the response). `loop` models iteration — equivalent to a `while` loop. In practice this loop also has a timeout (e.g., a maximum number of attempts before cancellation), which would tighten the guard condition.
+2. **Offer once per iteration, branch on the response:** The diagram shows a single `offerRide(request)` per loop iteration — the driver's `response` is either `accepted` or `declined`/`timeout`. The loop guard then decides whether to continue. Sending the same offer twice inside an `alt` would mistakenly model two separate offers for what is really one driver interaction.
+3. **Flow continues after the loop:** Once a driver accepts, the loop guard becomes false and execution exits, then the notification is sent. Messages *outside* a fragment are unconditional.
 4. **`DriverApp` as a participant:** The driver's mobile app is a first-class lifeline. This shows that sequence diagrams can include mobile clients, web clients, and backend services on equal footing.
 
 ---
@@ -973,11 +963,12 @@ deactivate match
 **Scenario:** When you send a Slack message, it is persisted, then broadcast to all subscribers of that channel. This diagram shows the fan-out delivery pattern using a `loop` fragment.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant client: SlackClient
+participant sender: SlackClient
 participant ws: WebSocketGateway
 participant msg: MessageService
 participant notif: NotificationService
-client -> ws: sendMessage(channelId, text)
+participant subscriber: SlackClient[*]
+sender -> ws: sendMessage(channelId, text)
 activate ws
 ws -> msg: persist(channelId, text, userId)
 activate msg
@@ -988,19 +979,19 @@ activate notif
 loop [for each online subscriber]
   notif -> ws: deliver(userId, message)
   activate ws
-  ws --> client: messageReceived
+  ws ->> subscriber: messageReceived
   deactivate ws
 end
 deactivate notif
-ws --> client: ack(messageId)
+ws --> sender: ack(messageId)
 deactivate ws
 @enduml'></div>
 
 **What the UML notation captures:**
 
 1. **Sequence before the loop:** `persist` and get `messageId` happen exactly once — before the broadcast. The diagram makes this ordering explicit: a message is saved before it is delivered to anyone.
-2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery call. In a channel with 200 members, the loop body executes 200 times. The diagram abstracts this into a single readable fragment.
-3. **`ack` after the loop:** The sender receives their acknowledgment (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once.
+2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery. The lifeline `subscriber : SlackClient[*]` represents the *set* of recipient clients (distinct from the original `sender`); the asynchronous arrow `->>` shows the gateway *pushes* the message — this is server-pushed, not a return value. In a channel with 200 members, the loop body executes 200 times.
+3. **`ack` after the loop:** The original sender receives their acknowledgment (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once. Note that `ack` returns to `sender`, while delivery flows to `subscriber` — distinguishing these two lifelines is essential to model fan-out correctly.
 4. **`WebSocketGateway` as the central hub:** All messages flow in and out through the gateway. The diagram shows this hub topology clearly — every arrow touches `ws`, revealing it as the architectural bottleneck. This is a useful architectural insight visible only in the sequence diagram.
 
 ---

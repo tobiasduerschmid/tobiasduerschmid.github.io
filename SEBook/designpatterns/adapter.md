@@ -19,13 +19,13 @@ Without an adapter, we would be forced to rewrite our existing system code to ac
 # Solution
 The **Adapter Pattern** solves this by creating a class that converts the interface of an "Adaptee" class into the "Target" interface that the "Client" expects. 
 
-According to the **course material**, there are four key roles in this structure:
-1.  **Target:** The interface the Client wants to use (e.g., a `Duck` interface with `quack()` and `fly()`).
-2.  **Adaptee:** The existing class with the incompatible interface that needs adapting (e.g., a `WildTurkey` class that `gobble()`s instead of `quack()`s).
-3.  **Adapter:** The class that realizes the Target interface while holding a reference to an instance of the Adaptee. 
-4.  **Client:** The class that interacts only with the Target interface, remaining completely oblivious to the fact that it is actually communicating with an Adaptee through the Adapter.
+According to the GoF catalog, there are four key roles in this structure:
+1.  **Target:** The domain-specific interface the Client wants to use (e.g., a `Duck` interface with `quack()` and `fly()`). In GoF's motivating example, this is `Shape`.
+2.  **Adaptee:** The existing class with an incompatible interface that needs adapting (e.g., a `WildTurkey` class that `gobble()`s instead of `quack()`s). In GoF, this is `TextView`.
+3.  **Adapter:** The class that adapts the interface of Adaptee to the Target interface (e.g., `TurkeyAdapter`). In GoF, this is `TextShape`.
+4.  **Client:** The class that collaborates with objects conforming to the Target interface, remaining oblivious to the fact that it is communicating with an Adaptee through the Adapter.
 
-In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` that implements the `Duck` interface. When the client calls `quack()` on the adapter, the adapter internally calls `gobble()` on the wrapped turkey object. This syntactic translation effectively hides the underlying implementation from the client.
+In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` that implements the `Duck` interface. When the client calls `quack()` on the adapter, the adapter internally calls `gobble()` on the wrapped turkey object. Because turkeys can only fly short distances, the adapter calls the turkey's `fly()` method five times to compensate when a duck-style `fly()` is requested. This syntactic translation effectively hides the underlying implementation from the client.
 
 ## UML Role Diagram
 
@@ -58,7 +58,7 @@ interface Duck {
 }
 interface Turkey {
 	+ gobble(): void
-	+ flyShort(): void
+	+ fly(): void
 }
 class TurkeyAdapter {
 	- turkey: Turkey
@@ -67,7 +67,7 @@ class TurkeyAdapter {
 }
 class WildTurkey {
 	+ gobble(): void
-	+ flyShort(): void
+	+ fly(): void
 }
 DuckSimulator --> Duck : expects >
 TurkeyAdapter ..|> Duck
@@ -90,7 +90,7 @@ deactivate adapter
 simulator -> adapter: fly()
 activate adapter
 loop 5 short bursts
-adapter -> turkey: flyShort()
+adapter -> turkey: fly()
 activate turkey
 deactivate turkey
 end
@@ -120,7 +120,7 @@ interface Duck {
 
 interface Turkey {
     void gobble();
-    void flyShort();
+    void fly();
 }
 
 final class WildTurkey implements Turkey {
@@ -128,8 +128,8 @@ final class WildTurkey implements Turkey {
         System.out.println("Gobble gobble");
     }
 
-    public void flyShort() {
-        System.out.println("Flying a short distance");
+    public void fly() {
+        System.out.println("I'm flying a short distance");
     }
 }
 
@@ -146,7 +146,7 @@ final class TurkeyAdapter implements Duck {
 
     public void fly() {
         for (int i = 0; i < 5; i++) {
-            turkey.flyShort();
+            turkey.fly();
         }
     }
 }
@@ -177,7 +177,7 @@ struct Duck {
 struct Turkey {
     virtual ~Turkey() = default;
     virtual void gobble() = 0;
-    virtual void flyShort() = 0;
+    virtual void fly() = 0;
 };
 
 class WildTurkey : public Turkey {
@@ -186,8 +186,8 @@ public:
         std::cout << "Gobble gobble\n";
     }
 
-    void flyShort() override {
-        std::cout << "Flying a short distance\n";
+    void fly() override {
+        std::cout << "I'm flying a short distance\n";
     }
 };
 
@@ -201,7 +201,7 @@ public:
 
     void fly() override {
         for (int i = 0; i < 5; ++i) {
-            turkey_.flyShort();
+            turkey_.fly();
         }
     }
 
@@ -243,7 +243,7 @@ class Turkey(ABC):
         pass
 
     @abstractmethod
-    def fly_short(self) -> None:
+    def fly(self) -> None:
         pass
 
 
@@ -251,8 +251,8 @@ class WildTurkey(Turkey):
     def gobble(self) -> None:
         print("Gobble gobble")
 
-    def fly_short(self) -> None:
-        print("Flying a short distance")
+    def fly(self) -> None:
+        print("I'm flying a short distance")
 
 
 class TurkeyAdapter(Duck):
@@ -264,7 +264,7 @@ class TurkeyAdapter(Duck):
 
     def fly(self) -> None:
         for _ in range(5):
-            self._turkey.fly_short()
+            self._turkey.fly()
 
 
 def test_duck(duck: Duck) -> None:
@@ -285,7 +285,7 @@ interface Duck {
 
 interface Turkey {
   gobble(): void;
-  flyShort(): void;
+  fly(): void;
 }
 
 class WildTurkey implements Turkey {
@@ -293,8 +293,8 @@ class WildTurkey implements Turkey {
     console.log("Gobble gobble");
   }
 
-  flyShort(): void {
-    console.log("Flying a short distance");
+  fly(): void {
+    console.log("I'm flying a short distance");
   }
 }
 
@@ -307,7 +307,7 @@ class TurkeyAdapter implements Duck {
 
   fly(): void {
     for (let i = 0; i < 5; i += 1) {
-      this.turkey.flyShort();
+      this.turkey.fly();
     }
   }
 }
@@ -326,15 +326,15 @@ testDuck(new TurkeyAdapter(new WildTurkey()));
 Applying the Adapter pattern results in several significant architectural trade-offs:
 *   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing the Adaptee to evolve independently without breaking the client code.
 *   **Information Hiding:** It follows the [Information Hiding](/SEBook/designprinciples/informationhiding.html) principle by concealing the "secret" that the system is using a legacy component.
-*   **Flexibility vs. Complexity:** While adapters make a system more flexible, they add a layer of indirection that can make it harder to trace the execution flow of the program since the client doesn't know which object is actually receiving the signal.
+*   **Flexibility vs. Complexity:** While adapters make a system more flexible, they add a layer of indirection that can make it harder to trace the execution flow of the program since the client doesn't know which object is actually receiving the call.
 
 # Design Decisions
 
 ## Object Adapter vs. Class Adapter
 * **Object Adapter** (via composition): The adapter wraps an instance of the Adaptee. This is the standard approach in Java and most modern languages. It can adapt an entire class hierarchy (any subclass of the Adaptee works), and the adaptation can be configured at runtime.
-* **Class Adapter** (via multiple inheritance): The adapter inherits from *both* the Target and the Adaptee simultaneously. This is only possible in languages that support multiple inheritance (e.g., C++). It avoids the indirection overhead of delegation but ties the adapter to a single concrete Adaptee class.
+* **Class Adapter** (via inheritance): The adapter inherits from *both* the Target and the Adaptee simultaneously. This requires either multiple class inheritance (e.g., C++) or — in single-inheritance languages — the Target to be an interface, so the adapter can `extend Adaptee` and `implements Target`. It avoids the indirection overhead of delegation but ties the adapter to a single concrete Adaptee class.
 
-Modern consensus strongly favors **Object Adapters** for their flexibility and compatibility with single-inheritance languages.
+Modern practice favors **Object Adapters** because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance (see also Effective Java Item 18: *Favor composition over inheritance*).
 
 ## Adaptation Scope
 Not all adapters are created equal. The complexity of adaptation ranges widely:
@@ -346,13 +346,13 @@ If an adapter becomes "too thick" (containing significant business logic), it is
 
 # Adapter is a Family, Not a Single Pattern
 
-Buschmann et al. (POSA5) argue that "the notion that there is a single pattern called ADAPTER is in practice present nowhere except in the table of contents of the Gang-of-Four book." In practice, there are at least four distinct adaptation patterns:
-1. **Object Adapter:** Wraps an adaptee via composition (the standard form).
-2. **Class Adapter:** Inherits from both target and adaptee (multiple inheritance).
-3. **Two-Way Adapter:** Implements both the target and adaptee interfaces, allowing communication in both directions.
-4. **Pluggable Adapter:** Uses interfaces or abstract classes to make the adapter configurable, so it can adapt different adaptees without creating new adapter classes.
+Buschmann, Henney, and Schmidt observe in *Pattern-Oriented Software Architecture, Volume 5: On Patterns and Pattern Languages* (2007, p. 234) that "the notion that there is a single pattern called Adapter is in practice present nowhere except in the table of contents of the Gang-of-Four book." A deconstruction of GoF's pattern description reveals at least four quite distinct patterns:
+1. **Object Adapter:** Wraps an adaptee via composition; adaptation is encapsulated through forwarding via an additional level of indirection (the standard form, favored from a layered/encapsulated perspective).
+2. **Class Adapter:** Realized by subclassing both the adapter interface (Target) and the adaptee implementation to yield a single object — avoiding an additional level of indirection. Requires multiple inheritance, or — in single-inheritance languages — the Target being an interface.
+3. **Two-Way Adapter:** Conforms to both the target and adaptee interfaces (typically via multiple inheritance), so the adapter is usable wherever either interface is expected. GoF's example is `ConstraintStateVariable`, a subclass of both Unidraw's `StateVariable` and QOCA's `ConstraintVariable`, that adapts each interface to the other so the same object works in either system.
+4. **Pluggable Adapter:** A class with built-in interface adaptation. GoF describes three implementations: using abstract operations, using delegate objects, or using parameterized adapters (e.g., Smalltalk's `PluggableAdaptor`, which is parameterized with blocks).
 
-This insight is educationally important: when a reference says "use the Adapter pattern," you must clarify *which* form of adaptation is needed.
+The first two forms (Object Adapter, Class Adapter) are described together inside GoF's Adapter entry, while Two-Way and Pluggable Adapter are surfaced in GoF's Implementation discussion. This insight is educationally important: when a reference says "use the Adapter pattern," you must clarify *which* form of adaptation is needed.
 
 # Adapter vs. Facade vs. Decorator
 

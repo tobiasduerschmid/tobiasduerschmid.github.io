@@ -57,7 +57,7 @@ questions:
         Handling user input alone does not require full MVC. MVC is more justified when domain logic, presentation, and interaction are likely to evolve independently.
       3: |
         State is useful when behavior changes with an object's internal state. A simple CRUD form may need neither full MVC nor State; the issue is proportional design.
-    explanation: "**This criticism is valid — MVC's three-way division adds complexity that is not justified for a simple CRUD form with a single view.** As Bass, Clements, and Kazman note: *'The complexity may not be worth it for simple user interfaces.'* MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
+    explanation: "**This criticism is valid — MVC's three-way division adds complexity that is not justified for a simple CRUD form with a single view.** As Gamma argued in his 1991 ET++ thesis (cited by POSA1, p. 142), separating model, view, and controller for menus and other simple UI elements increases complexity without much flexibility gain. MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
 
   - id: 4
     type: single

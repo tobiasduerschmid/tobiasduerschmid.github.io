@@ -4,6 +4,12 @@ layout: sebook
 ---
 
 
+# Intent
+
+The State pattern allows an object to change its behavior when its internal state changes — making the object appear, from the outside, to have changed its class. (See *Design Patterns* by Gamma, Helm, Johnson & Vlissides, 1994, p. 283, for the original GoF formulation.)
+
+The pattern is also known as **Objects for States**. The original motivating example in GoF is a `TCPConnection` that switches behavior between `TCPEstablished`, `TCPListen`, and `TCPClosed` states — the same `Open()` request behaves entirely differently depending on which state the connection is currently in.
+
 # Problem 
 
 The core problem the State pattern addresses is when an object's behavior **needs to change dramatically based on its internal state**, and this leads to code that is complex, difficult to maintain, and hard to extend.
@@ -16,9 +22,9 @@ An object's behavior depends on its state, and it must change that behavior at r
 
 # Solution
 
-Create an **Abstract State class** that defines the interface that all states have. The Context class should not know any state methods besides the methods in the Abstract State so that it is not tempted to implement any state-dependent behavior itself. For each state-dependent method (i.e., for each method that should be implemented differently depending on which state the Context is in) we should define one abstract method in the Abstract State class. 
+Create an **abstract State type** — either an interface or an abstract class — that defines the operations that all states have. The Context class should not know any state methods besides the methods in the abstract State so that it is not tempted to implement any state-dependent behavior itself. For each state-dependent method (i.e., for each method that should be implemented differently depending on which state the Context is in) we should define one abstract method in the State type. 
 
-Create **Concrete State classes** that inherit from the Abstract State and implement the remaining methods. 
+Create **Concrete State classes** that implement (or inherit from) the State type and provide the state-specific behavior. 
 
 The primary interactions should be between the Context and its current State object. Whether Concrete State objects interact with each other depends on the transition design decision discussed below.
 
@@ -64,14 +70,11 @@ interface State {
 }
 class NoQuarterState
 class HasQuarterState
-class SoldState
 GumballMachine --> State : delegates
 NoQuarterState ..|> State
 HasQuarterState ..|> State
-SoldState ..|> State
 NoQuarterState --> GumballMachine : setState(...)
 HasQuarterState --> GumballMachine : releaseBall(), setState(...)
-SoldState --> GumballMachine : setState(...)
 @enduml'></div>
 
 ## Sequence Diagram
@@ -109,6 +112,8 @@ deactivate machine
 This example removes the conditional state checks from `GumballMachine`. The context delegates each action to the current state object, and the state object performs the transition.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
+>
+> The full Gumball Machine example from *Head First Design Patterns* (Ch. 10) actually has **four** states — `NoQuarterState`, `HasQuarterState`, `SoldState`, and `SoldOutState` — plus an inventory counter. We've collapsed it to two states here so the pattern's mechanics are visible without the bookkeeping. In a realistic implementation, `turnCrank()` would transition to a separate `SoldState` whose `dispense()` then transitions to either `NoQuarterState` (more gumballs left) or `SoldOutState` (count hits zero) — making the value of one-class-per-state immediate the moment you add the `WinnerState` change request that closes the chapter.
 
 <div class="inline-language-switcher" data-language-switcher data-default-language="java">
   <div class="inline-language-tabs" role="tablist" aria-label="State code language">
@@ -384,7 +389,18 @@ This is a critical design decision with significant consequences:
 In practice, **state-driven transitions** are preferred when states are well-defined and transitions are local. **Context-driven transitions** work better when transitions depend on complex external conditions.
 
 ## State object creation: on demand vs. shared
-If state objects are **stateless** (they carry behavior but no instance data), they can be shared as flyweight objects or even Singletons, saving memory. If state objects carry **per-context data**, they must be created on demand.
+If state objects are **stateless** (they carry behavior but no instance data), they can be shared as flyweights or even [Singletons](/SEBook/designpatterns/singleton.html), saving memory. GoF (p. 285) lists this as one of the State pattern's three core consequences: when the state is encoded entirely in the object's type, contexts can share a single instance per state. If state objects carry **per-context data**, they must be created on demand instead.
+
+A related trade-off — also from GoF — is **when** to create state objects: create them only on demand (and destroy them when no longer current) versus create them all up front and keep references forever. On-demand creation is preferable when not all states will be entered and contexts change state infrequently. Up-front creation is better when state changes occur rapidly, so that instantiation costs are paid once and there are no destruction costs.
+
+## State pattern vs. table-based state machines
+The State pattern is not the only way to structure a state machine in OO code. A long-standing alternative — discussed in GoF (p. 286, citing Cargill's *C++ Programming Style*) — is a **table-driven** machine: a 2D table maps `(currentState, input) → nextState`, and a single dispatch loop reads from the table.
+
+The trade-off:
+* **State pattern** models *state-specific behavior*. Each state is a class; transitions are easy to augment with arbitrary code (logging, side effects, validation).
+* **Table-driven** models *transitions* uniformly. The state machine is data, so changing the topology means editing a table, not code — but attaching custom behavior to each transition is awkward, and table look-ups are typically slower than virtual calls.
+
+Use the table-driven approach when the state graph is large, regular, and behavior-poor (e.g., a parser's lexer states). Use the State pattern when each state needs distinct, non-trivial behavior.
 
 ## How to represent a state in which the object is never doing anything (either at initialization time or as a "final" state)
 
@@ -396,7 +412,7 @@ The State pattern embodies the fundamental principle of **polymorphism over cond
 ```java
 if (state == "noQuarter") { /* behavior A */ }
 else if (state == "hasQuarter") { /* behavior B */ }
-else if (state == "sold") { /* behavior C */ }
+// ...one branch per state, repeated in every state-dependent method
 ```
 ...the pattern replaces each branch with a polymorphic object. This is powerful because:
 * Adding a new state requires adding a new class, not modifying existing conditional logic (Open/Closed Principle).
@@ -408,8 +424,8 @@ A pedagogically effective way to internalize this insight is the "Before and Aft
 # State vs. Strategy: Same Structure, Different Intent
 
 The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nearly identical UML class diagrams—a context delegating to an abstract interface with multiple concrete implementations. The difference is entirely in **intent**:
-* **State:** The context object's behavior changes *implicitly* as its internal state transitions. The client typically does not choose which state object is active.
-* **Strategy:** The client *explicitly* selects which algorithm to use. There are no automatic transitions between strategies.
+* **State:** The context object's behavior changes *implicitly* as its internal state transitions. The client typically does not choose which state object is active. Concrete States often need to know about one another so they can install the next state on the Context.
+* **Strategy:** The client *explicitly* selects which algorithm to use. There are no automatic transitions between strategies, and Concrete Strategies are independent of one another.
 
 A useful heuristic: if the concrete implementations *transition between each other* based on internal logic, it is State. If the client *selects* the concrete implementation at configuration time, it is Strategy.
 

@@ -16,8 +16,8 @@ cards:
     explanation: "Factory Method uses inheritance (subclass overrides). Abstract Factory uses composition (client receives a factory object). Factory methods lurk inside Abstract Factories."
   - id: 4
     question: "What is a parameterized factory method?"
-    answer: "A single factory method that takes a parameter (string/enum) to decide which product to create. Simpler but violates Open/Closed Principle."
-    explanation: "Adding a new product type requires modifying the conditional logic inside the factory method, rather than adding a new subclass."
+    answer: "A single factory method that takes a parameter (string/enum) to decide which product to create. Convenient when the product set is stable, but the conditional must be modified to add a new product type unless a subclass overrides the method."
+    explanation: "GoF presents parameterized factory methods as a polymorphic-extension variation: subclasses can override the method, add new IDs, and fall through to `super` for known types. Naive non-overriding implementations that just keep growing the conditional do violate the Open/Closed Principle."
   - id: 5
     question: "How does Factory Method relate to Abstract Factory?"
     answer: "Each creation method inside an Abstract Factory (e.g., `createDough()`, `createSauce()`) is itself a Factory Method."

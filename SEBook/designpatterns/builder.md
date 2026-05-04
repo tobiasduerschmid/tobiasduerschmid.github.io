@@ -8,9 +8,9 @@ In software engineering, we often need to construct complex objects step-by-step
 
 # Problem
 When an object requires multi-step construction or has many optional parameters, putting all the initialization logic into a single constructor or factory method becomes unwieldy. 
-*   **Telescoping Constructors:** You might end up with a massive constructor with dozens of parameters, most of which are null or default values for any given instance.
 *   **Coupled Construction:** The algorithm for creating the complex object becomes tightly coupled to the parts that make up the object and how they are assembled.
 *   **Incomplete Objects:** If construction steps are exposed directly to the client, there's a risk of the client using a partially constructed, invalid object.
+*   **Telescoping Constructors:** You might end up with a massive constructor with dozens of parameters, most of which are null or default values for any given instance. (Note: this problem is the primary motivation for the closely related *fluent builder* variant popularized by Joshua Bloch in *Effective Java* — see the variant note below.)
 
 # Solution
 The **Builder Pattern** separates the construction of a complex object from its representation so that the same construction process can create different representations. It encapsulates the way a complex object is built and allows it to be constructed incrementally.
@@ -77,7 +77,7 @@ PatternslandBuilder --> VacationPlanner : creates
 
 ## Code Example
 
-This example builds a vacation plan through a fixed construction sequence. The director controls the steps; the concrete builder controls the representation of the finished plan.
+This example builds a vacation plan through one specific construction sequence. The director controls the steps; the concrete builder controls the internal representation of the finished plan. (Different `Director` implementations could encode different sequences over the same `VacationBuilder` interface.)
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -360,6 +360,21 @@ builder.getVacationPlanner().showPlan();
 </div>
 
 # Consequences
-*   **Finer Control Over Construction:** Unlike other creational patterns that build products in one shot, Builder lets you construct products step-by-step.
-*   **Varying Internal Representation:** You can change the internal representation of the product simply by providing a different `ConcreteBuilder`.
-*   **Immutability:** It is easier to enforce immutability post-construction because the object is only returned to the client once it is fully built.
+
+**Benefits:** (GoF lists three.)
+*   **Lets you vary a product's internal representation.** Because the product is constructed through an abstract `Builder` interface, changing its internal representation only requires defining a new `ConcreteBuilder`. The `Director`'s construction algorithm stays the same.
+*   **Isolates code for construction and representation.** Each `ConcreteBuilder` encapsulates all the code to assemble one kind of product. Clients don't need to know about the classes that make up the product's internal structure — those classes don't appear in `Builder`'s interface. Once written, the same `ConcreteBuilder` can be reused by different `Director`s.
+*   **Gives you finer control over the construction process.** Unlike creational patterns that build products in one shot, Builder constructs the product step by step under the director's control. The director retrieves the product only when it is finished.
+
+**Liabilities:**
+*   **More Classes:** A separate `Builder` interface and one `ConcreteBuilder` per representation increase the type count.
+*   **Director–Builder Coupling:** A `Director` that calls a specific sequence of builder methods is implicitly coupled to that interface.
+
+# Variant: Joshua Bloch's Fluent Builder
+
+The classical GoF Builder shown above uses a separate `Director` to drive a fixed construction algorithm. A widely-used variant — popularized by Joshua Bloch in *Effective Java* (Item 2) — has no Director: the client itself chains setter-style methods on the builder (`new Pizza.Builder().size(12).cheese().build()`) and finally calls `build()` to obtain the product. This *fluent builder* is the standard solution to the **telescoping constructor** anti-pattern in Java and is what most modern Java/Kotlin/C# code means by "the Builder pattern" (e.g., `StringBuilder`, Lombok's `@Builder`, AWS SDK builders, Protocol Buffers builders). It is more about taming long parameter lists for immutable value objects than about separating construction from representation.
+
+# Related Patterns
+
+*   **Abstract Factory** is similar to Builder in that both construct complex objects, but the emphasis differs: Abstract Factory builds *families* of related products and returns each product immediately, while Builder constructs a single complex product step-by-step and returns it only as a final step.
+*   **Composite** is what the builder often builds — the Patternsland vacation planner above is a composite tree of days, hotels, tickets, and special events.

@@ -8,8 +8,8 @@ cards:
     explanation: "Like a power outlet adapter for international travel — translates between two incompatible standards without modifying either one."
   - id: 2
     question: "Object Adapter vs. Class Adapter?"
-    answer: "Object Adapter uses **composition** (wraps the adaptee), works in any language. Class Adapter uses **multiple inheritance**, only in C++."
-    explanation: "Modern consensus strongly favors Object Adapters for flexibility and compatibility with single-inheritance languages like Java."
+    answer: "Object Adapter uses **composition** (wraps the adaptee), works in any language. Class Adapter uses **inheritance** — multiple class inheritance in C++, or (in Java/C#) extending the Adaptee class while implementing the Target interface."
+    explanation: "Modern practice favors Object Adapters because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance (Effective Java Item 18: favor composition over inheritance)."
   - id: 3
     question: "Adapter vs. Facade vs. Decorator?"
     answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* through the same interface."

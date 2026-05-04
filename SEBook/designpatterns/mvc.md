@@ -6,6 +6,8 @@ layout: sebook
 
 The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates.
 
+MVC was first formulated by Trygve Reenskaug in 1978–79 while he was visiting the Learning Research Group at Xerox PARC, and it took its enduring shape in the Smalltalk-80 class library. His initial sketch was actually called *Thing-Model-View-Editor*; the name *Model-View-Controller* appeared in his note of December 10, 1979. POSA Vol. 1 (Buschmann et al., 1996) later codified MVC as one of the canonical architectural patterns.
+
 # Problem 
 
 User interface software is typically the most frequently modified portion of an interactive application. As systems evolve, menus are reorganized, graphical presentations change, and customers often demand to look at the same underlying data from multiple perspectives—such as simultaneously viewing a spreadsheet, a bar graph, and a pie chart. All of these representations must immediately and consistently reflect the current state of the data.
@@ -94,8 +96,6 @@ activate model
 model --> view: tasks
 deactivate model
 view -> view: showTasks(tasks)
-activate view
-deactivate view
 deactivate view
 deactivate model
 deactivate controller
@@ -108,16 +108,21 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 
 ## Benefits
 
-* **Multiple Synchronized Views**: Because of the Observer-based change propagation, you can attach multiple varying views to the same model. When the model changes, all views remain perfectly synchronized and updated.
-* **Pluggable User Interfaces**: The conceptual separation allows developers to easily exchange view and controller objects, even at runtime.
-* **Reusability and Portability**: Because the model knows nothing about the views or controllers, the core domain logic can be reused across entirely different systems. Furthermore, porting the system to a new platform only requires rewriting the platform-dependent view and controller code, leaving the model untouched.
+* **Multiple Views of the Same Model**: MVC strictly separates the model from the user-interface components. Multiple views can therefore be implemented and used with a single model, and at run-time multiple views can be open simultaneously and opened or closed dynamically.
+* **Synchronized Views**: Because of the Observer-based change-propagation mechanism, all attached observers are notified of changes to the application's data at the correct time, keeping all dependent views and controllers synchronized.
+* **Pluggable Views and Controllers**: The conceptual separation allows developers to easily exchange view and controller objects, even at runtime.
+* **Exchangeability of "Look and Feel"**: Because the model is independent of all user-interface code, a port of an MVC application to a new platform does not affect the functional core of the application; you only need suitable implementations of view and controller components for each platform.
+* **Framework Potential**: It is possible to base an application framework on this pattern, as the various Smalltalk development environments have proven.
 
 ## Liabilities
 
-* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered. As Bass, Clements, and Kazman note: *"The complexity may not be worth it for simple user interfaces."*
-* **Potential for Excessive Updates**: Because changes to the model are blindly published to all subscribing views, minor data manipulations can trigger an excessive cascade of notifications, potentially causing severe performance bottlenecks. This is the same "notification storm" problem that plagues the Observer pattern—MVC inherits it directly.
-* **Inefficiency of Data Access**: To preserve loose coupling, views must frequently query the model through its public interface to retrieve display data. If not carefully designed with data caching, this frequent polling can be highly inefficient.
-* **Tight Coupling Between View and Controller**: While the model is isolated, the view and its corresponding controller are often intimately connected. A view rarely exists without its specific controller, which hinders their individual reuse.
+* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered. Gamma argues that using separate model, view, and controller components for menus and simple text elements increases complexity without gaining much flexibility.
+* **Potential for Excessive Updates**: Because changes to the model are blindly published to all subscribing views, minor data manipulations can trigger an excessive cascade of notifications, potentially causing severe performance bottlenecks. For example, a view with an iconized window may not need an update until the window is restored. This is the same "notification storm" problem that plagues the Observer pattern—MVC inherits it directly.
+* **Inefficiency of Data Access in View**: To preserve loose coupling, views must frequently query the model through its public interface to retrieve display data. Depending on the model's interface, a view may need to make multiple calls to obtain all its display data. If not carefully designed with data caching, this frequent polling can be highly inefficient.
+* **Intimate Connection Between View and Controller**: While the model is isolated, the view and its corresponding controller are often closely-related but separate components. A view rarely exists without its specific controller, which hinders their individual reuse—the exception being read-only views that share a controller that ignores all input.
+* **Close Coupling of Views and Controllers to the Model**: Both view and controller components make direct calls to the model. This implies that changes to the model's interface are likely to break the code of both view and controller. This problem is magnified if the system uses a multitude of views and controllers. Applying the [Command Processor](/SEBook/designpatterns/command.html) pattern (or another means of indirection) can address this.
+* **Inevitability of Change to View and Controller When Porting**: All dependencies on the user-interface platform are encapsulated within view and controller. However, both components also contain code that is independent of a specific platform. A port of an MVC system thus requires the separation of platform-dependent code before rewriting.
+* **Difficulty of Using MVC with Modern UI Tools**: If portability is not an issue, using high-level toolkits or user interface builders can rule out the use of MVC. Many high-level tools or toolkits define their own flow of control and handle some events internally (such as displaying a pop-up menu or scrolling a window), and a high-level platform may already interpret events and offer callbacks for each kind of user activity—so most controller functionality is therefore already provided by the toolkit, and a separate component is not needed.
 
 # MVC as a Pattern Compound
 
@@ -129,14 +134,20 @@ MVC is one of the most important examples of a **pattern compound**—a combinat
 
 The **emergent property** of this compound is a clean three-way separation where each component can be developed, tested, and replaced independently. No individual pattern achieves this alone—it is the *combination* of Observer (data synchronization), Strategy (input flexibility), and Composite (UI structure) that makes MVC powerful.
 
+# Variants and Known Uses
+
+POSA1 documents one classical variant, **Document-View**, which relaxes the separation of view and controller. In several GUI platforms (notably the X Window System) window display and event handling are closely interwoven, so the responsibilities of view and controller are combined into a single component while the document corresponds to the model. This sacrifices exchangeability of controllers but matches the underlying platform more naturally. The Document-View variant is the architecture used by Microsoft Foundation Class Library (MFC) and the ET++ application framework. The original known use, of course, is the Smalltalk-80 user-interface framework where MVC was first formulated.
+
 # MVC in Modern Frameworks
 
-While the original MVC concept remains foundational, modern frameworks have evolved several variants:
-* **MVVM (Model-View-ViewModel)**: Used in WPF, SwiftUI, and Vue.js. The ViewModel acts as an adapter between Model and View, exposing data through bindings rather than explicit Observer subscriptions.
-* **MVP (Model-View-Presenter)**: Used in Android (traditional). The Presenter replaces the Controller and takes on more responsibility for updating the View directly.
-* **Reactive/Component-Based**: Modern frameworks replace the explicit Observer mechanism with framework-managed reactivity. React uses hooks and virtual DOM diffing; Angular 16+ and SolidJS use Signals; Vue.js uses reactive proxies. In all cases, the framework handles notification propagation internally, so developers rarely implement Observer explicitly.
+It is important to distinguish Reenskaug's **classic Smalltalk MVC** — in which the View *observes* the Model directly via the Observer pattern — from the **server-side "web MVC"** popularised by Ruby on Rails, Spring MVC, and ASP.NET MVC. In the request-response cycle of a web framework, the View does not subscribe to model change events; instead the Controller receives an HTTP request, updates the Model, selects a View, and hands it the data to render. This server-side adaptation was originally called **"Model 2"** in the Java Servlet/JSP world. Some authors (notably Martin Fowler) argue this arrangement is closer to **Model-View-Adapter** than to classic MVC. Django takes the same idea further and renames the components **MVT (Model-View-Template)** — what Django calls a *View* plays the controller role, and the *Template* plays the view role.
 
-Despite these variations, the core principle remains: **separate what the system knows (Model) from how it looks (View) from how the user interacts with it (Controller/ViewModel/Presenter)**.
+Modern client-side frameworks have evolved further variants:
+* **MVP (Model-View-Presenter)**: Popularised in late-1990s/2000s GUI toolkits and the early Android UI stack. The Presenter mediates between Model and View; in Fowler's *Passive View* variant the View is a dumb shell exposing setters and forwarding events, and the Presenter contains all UI logic, which makes the Presenter highly testable.
+* **MVVM (Model-View-ViewModel)**: Devised by Microsoft architects Ken Cooper and Ted Peters and announced publicly by John Gossman in a 2005 blog post about WPF; now used in SwiftUI, Android Jetpack, Knockout.js, and Vue.js. The ViewModel exposes view-shaped data and commands through *data binding*, so the View updates automatically without an explicit Observer subscription written by the developer. Microsoft describes MVVM as a specialisation of Martin Fowler's earlier *Presentation Model*.
+* **Reactive/Component-Based**: Modern frameworks replace the explicit Observer mechanism with framework-managed reactivity. React reconciles a virtual DOM whenever component state (e.g. `useState`) changes; Angular (Signals stable from v17) and SolidJS use signals for fine-grained reactivity; Vue 3 uses reactive proxies. In all cases, the framework handles change propagation internally, so developers rarely implement Observer explicitly.
+
+Despite these variations, the core principle remains: **separate what the system knows (Model) from how it looks (View) from how the user interacts with it (Controller/Presenter/ViewModel)**.
 
 # Code Example
 

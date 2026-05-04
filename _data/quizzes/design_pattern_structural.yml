@@ -5,7 +5,7 @@ questions:
   - id: 1
     type: single
     question: |
-      A `TurkeyAdapter` implements the `Duck` interface. The `fly()` method calls `turkey.flyShort()` five times in a loop to simulate a longer flight. What design concern does this raise?
+      A `TurkeyAdapter` implements the `Duck` interface. The `fly()` method calls `turkey.fly()` five times in a loop because a duck's flight is much longer than a turkey's short hop. What design concern does this raise?
     options:
       - "The adapter should use multiple inheritance instead of composition"
       - "The adapter contains behavioral adaptation (logic beyond simple interface translation), which may grow into a separate service"

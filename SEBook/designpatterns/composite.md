@@ -7,13 +7,26 @@ layout: sebook
 
 Software often needs to treat individual objects and nested groups of objects uniformly. File systems contain files and directories, drawing tools contain primitive shapes and grouped drawings, and menu systems contain both single menu items and complete submenus. If a client has to distinguish between every leaf and every container, the code quickly fills with special cases and repeated tree traversal logic.
 
+A classic motivating example is a graphics editor: it works with primitives like `Line`, `Rectangle`, and `Text`, but it also supports `Picture` objects that group these primitives (and other pictures) into composite drawings. Clients want to call `draw()` on either a primitive or a picture without checking which kind of object they are holding.
+
 # Context
 
 The Composite pattern applies when the domain is naturally recursive: a whole is built from parts, and some parts can themselves contain further parts. In such systems, clients want one common abstraction for both single objects and containers so they can issue operations like `print()`, `render()`, or `totalPrice()` without checking whether the receiver is a leaf or a branch.
 
+# Intent
+
+Compose objects into tree structures to represent part-whole hierarchies. Composite lets clients treat individual objects and compositions of objects uniformly.
+
 # Solution
 
 The **Composite Pattern** introduces a common `Component` abstraction shared by both atomic elements (`Leaf`) and containers (`Composite`). The composite stores child components and forwards operations recursively to them. Clients program only against the `Component` interface, which keeps the traversal logic inside the structure rather than scattering it across the application.
+
+## Participants
+
+* **Component** (e.g., `Graphic`, `MenuComponent`): declares the interface for objects in the composition; implements default behavior for the interface common to all classes; declares an interface for accessing and managing its child components; optionally defines an interface for accessing a component's parent.
+* **Leaf** (e.g., `Rectangle`, `Line`, `Text`, `MenuItem`): represents leaf objects in the composition. A leaf has no children and defines behavior for primitive objects.
+* **Composite** (e.g., `Picture`, `Menu`): defines behavior for components having children; stores child components; implements child-related operations in the `Component` interface.
+* **Client**: manipulates objects in the composition through the `Component` interface.
 
 ## UML Role Diagram
 
@@ -23,6 +36,7 @@ abstract class Component {
 	+ operation(): void
 	+ add(child: Component): void
 	+ remove(child: Component): void
+	+ getChild(i: int): Component
 }
 class Leaf {
 	+ operation(): void
@@ -32,6 +46,7 @@ class Composite {
 	+ operation(): void
 	+ add(child: Component): void
 	+ remove(child: Component): void
+	+ getChild(i: int): Component
 }
 class Client
 Leaf --|> Component
@@ -101,7 +116,27 @@ If child objects cannot exist independently of their parent, use composition sem
 
 ## Parent References
 
-Adding a parent reference to `Component` enables upward traversal (e.g., "which menu does this item belong to?") but complicates `add()` and `remove()` operations, which must now maintain bidirectional consistency.
+Adding a parent reference to `Component` enables upward traversal (e.g., "which menu does this item belong to?") but complicates `add()` and `remove()` operations, which must now maintain bidirectional consistency. The usual place to define the parent reference is in the `Component` class so leaves and composites can inherit it. The invariant to maintain is that all children of a composite have that composite as their parent — the simplest way to enforce this is to set the parent only inside the composite's `add()` and `remove()`.
+
+## Sharing Components
+
+Sharing components is useful for reducing storage requirements, but a component with a single parent reference cannot be shared across multiple composites. One option is to let children store multiple parents; another is to drop parent references altogether and externalize the relevant state, which is the approach taken by the [Flyweight](/SEBook/designpatterns/flyweight.html) pattern.
+
+## Child Storage and Ordering
+
+Several smaller decisions arise once you commit to a Composite design:
+
+* **Where to store the children:** Putting the child collection in the `Component` base class is convenient but pays a per-leaf storage cost for a list that leaves never use. It is only worthwhile when there are relatively few leaves in the structure.
+* **Child ordering:** Many domains require an ordering on children (front-to-back rendering, the order of statements in a parse tree, the order of items on a menu). Design `add()`, `remove()`, and traversal carefully when order matters; an explicit [Iterator](/SEBook/designpatterns/iterator.html) often pays for itself here.
+* **Caching:** A composite that is traversed or searched frequently can cache aggregated information about its children (e.g., a bounding box of all child shapes). Any change to a child must invalidate the caches of its ancestors, which is easiest to coordinate when components hold parent references.
+* **Choice of data structure:** There is no single right collection — linked lists, arrays, hash tables, even per-child fields are all reasonable depending on access patterns and child count.
+
+# Consequences
+
+* **Defines class hierarchies of primitive and composite objects.** Primitive objects can be composed into more complex objects, which in turn can be composed recursively. Wherever client code expects a primitive object, it can also accept a composite.
+* **Makes the client simple.** Clients can treat composite structures and individual objects uniformly and need not write tag-and-case-statement-style logic over the classes that define the composition.
+* **Makes it easier to add new kinds of components.** New `Composite` or `Leaf` subclasses work automatically with existing structures and existing client code.
+* **Can make your design overly general.** It becomes harder to restrict which components a composite may contain. The type system cannot enforce "only these kinds of children are allowed"; you must fall back on run-time checks.
 
 # Composite in Pattern Compounds
 
@@ -135,7 +170,7 @@ import java.util.List;
 
 abstract class MenuComponent {
     void add(MenuComponent component) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("leaf cannot contain children");
     }
 
     abstract void print();

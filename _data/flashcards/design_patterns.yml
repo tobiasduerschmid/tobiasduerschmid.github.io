@@ -29,19 +29,19 @@ cards:
   - id: 7
     question: "What is the difference between architectural patterns and design patterns?"
     answer: "Architectural patterns are *strategic* (constrain the overall system structure); design patterns are *tactical* (solve class/object-level problems)."
-    explanation: "As Taylor and Medvidovic put it: architectural styles constrain the overall architectural decisions, while design patterns provide concrete, parameterized solution fragments."
+    explanation: "As Taylor, Medvidović, and Dashofy frame it (*Software Architecture: Foundations, Theory, and Practice*, 2009): architectural styles constrain the overall architectural decisions, while design patterns provide concrete, parameterized solution fragments."
   - id: 8
     question: "What does the 'Before and After' teaching technique involve?"
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
     explanation: "This technique from Astrachan et al. makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
   - id: 9
     question: "What does the '74% of student submissions' finding refer to?"
-    answer: "Cai et al. found that 74% of students introduced modularity-violating dependencies even though their software functioned correctly."
+    answer: "A design-structure-matrix study by Cai and Wong (CSEE&T 2011) of 85 student submissions found that 74% introduced modularity-violating dependencies even though their software functioned correctly."
     explanation: "This shows that correct behavior does not mean correct design. Students learned the gross structure of patterns but made lower-level mistakes that defeated the modularity the patterns were meant to achieve."
   - id: 10
-    question: "Why do experts say 'start stupid and evolve'?"
-    answer: "Complex systems that work evolved from simple systems that worked. Start simple, then refactor toward patterns as concrete needs emerge."
-    explanation: "Rather than speculating upfront about which patterns might be needed, use the simplest working solution and refactor when code smells indicate the need. This prevents over-engineering."
+    question: "Why do experienced engineers prefer 'do the simplest thing that could possibly work'?"
+    answer: "Per **Gall's Law** (John Gall, *Systemantics*, 1975): a complex system that works is invariably found to have evolved from a simple system that worked. Start simple, then refactor toward patterns as concrete needs emerge."
+    explanation: "Rather than speculating upfront about which patterns might be needed, use the simplest working solution and refactor when code smells indicate the need. The phrase \"do the simplest thing that could possibly work\" is associated with Kent Beck and the XP / TDD tradition. This prevents over-engineering."
   - id: 11
     question: "What is the relationship between code smells and design patterns?"
     answer: "Code smells indicate *when* a pattern might be needed; patterns provide *how* to fix the smell."

@@ -43,7 +43,7 @@ questions:
   - id: 3
     type: single
     question: |
-      An empirical study on reactive programming found that the Observer pattern creates an "inverted dependency flow." What does this mean in practice?
+      The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
     options:
       - "Observers depend on the subject, but the subject also depends on observers — creating a circular dependency"
       - "In code, observers call the subject to register (observer→subject), but data flows from subject to observer — making it hard to trace dependencies by reading the code"

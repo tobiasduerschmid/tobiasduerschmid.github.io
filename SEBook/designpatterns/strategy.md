@@ -89,7 +89,7 @@ end note
 
 ## UML Example Diagram
 
-The classic SimUDuck example {% cite FreemanRobson2020 %} extracts the *fly* and *quack* behaviors out of the `Duck` hierarchy. Each duck *has-a* `FlyBehavior` and a `QuackBehavior`; the concrete strategy classes implement each variation. A `MallardDuck` flies with wings and quacks normally; a `RubberDuck` cannot fly (uses a null-object fly behavior) and squeaks instead.
+The classic SimUDuck example {% cite FreemanRobson2020 %} extracts the *fly* and *quack* behaviors out of the `Duck` hierarchy. Each duck *has-a* `FlyBehavior` and a `QuackBehavior`; the concrete strategy classes implement each variation. A `MallardDuck` flies with wings and quacks normally; a `RubberDuck` cannot fly (uses a null-object fly behavior) and squeaks instead. (The book itself names the no-op fly strategy `FlyNoWay`; we use `FlyNullObject` here to make its design role as a [Null Object](/SEBook/designpatterns/state.html#how-to-represent-a-state-in-which-the-object-is-never-doing-anything-either-at-initialization-time-or-as-a-final-state) explicit.)
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
@@ -458,7 +458,7 @@ model.performFly();                          // "Flying with a rocket"
   </div>
 </div>
 
-In languages with first-class functions, a strategy is often *just a function* — `Comparator<T>` in Java, `Comparable` in Python's `sorted(key=...)`, a lambda passed to `Array.prototype.sort`. Use an explicit Strategy class when the algorithm needs identity, configuration data, multiple operations, polymorphic dispatch beyond a single call, or test seams.
+In languages with first-class functions, a strategy is often *just a function* — `Comparator<T>` in Java (often written as a lambda like `(a, b) -> a.getName().compareTo(b.getName())`), a key function passed to Python's `sorted(key=...)`, a lambda passed to `Array.prototype.sort`. Use an explicit Strategy class when the algorithm needs identity, configuration data, multiple operations, polymorphic dispatch beyond a single call, or test seams.
 
 # Design Decisions
 
@@ -474,7 +474,7 @@ The right choice depends on the algorithm's data needs and how stable the Contex
 ## Compile-time vs. runtime strategy selection
 
 * **Runtime selection** (the standard form): the Strategy is held as a field and can be swapped via a setter. This enables dynamic reconfiguration — exactly what `setFlyBehavior()` enables in the duck example.
-* **Compile-time selection** (C++ template parameter, generics): the Strategy is bound when the type is instantiated. This is more efficient (no virtual dispatch, possibly inlinable) but cannot change at runtime. Useful when the choice is fixed at configuration time and performance matters {% cite Gamma1995 %}.
+* **Compile-time selection** (C++ template parameter, generics): the Strategy is bound when the type is instantiated — known as *policy-based design* in C++. This is more efficient (no virtual dispatch, possibly inlinable) but cannot change at runtime. Useful when the choice is fixed at configuration time and performance matters {% cite Gamma1995 %}.
 
 ## Optional Strategy with default behavior
 
@@ -500,7 +500,7 @@ Applying the Strategy pattern yields several important consequences {% cite Gamm
 
 | Pattern | Similarity | Difference |
 |---|---|---|
-| [**State**](/SEBook/designpatterns/state.html) | Identical UML structure: a Context delegates to an interface with multiple implementations. | **State**: behavior changes *implicitly* via internal transitions (the state objects switch each other). **Strategy**: behavior is *explicitly* selected by the client; strategies don't transition between each other {% cite FreemanRobson2020 %}. |
+| [**State**](/SEBook/designpatterns/state.html) | Identical UML structure: a Context delegates to an interface with multiple implementations. | **State**: behavior changes *implicitly* via internal transitions (the Context — or the State objects themselves — switch states in response to operations). **Strategy**: behavior is *explicitly* selected by the client; strategies don't know about each other {% cite FreemanRobson2020 %}. |
 | **Template Method** | Both let you vary parts of an algorithm. | **Template Method** uses inheritance — the base class fixes the skeleton and subclasses override individual steps. **Strategy** uses composition — the entire algorithm is swapped via an external object {% cite Gamma1995 %}. |
 | [**Command**](/SEBook/designpatterns/command.html) | Both wrap behavior in an object behind a common interface. | **Command** represents a *request* with a lifecycle (queue, log, undo). **Strategy** represents an *algorithm choice* — there is no request identity, no undo, no queuing. |
 | [**Observer**](/SEBook/designpatterns/observer.html) | Both replace static coupling with dynamic delegation. | **Observer** broadcasts state changes to many listeners. **Strategy** routes one operation to one chosen algorithm. |

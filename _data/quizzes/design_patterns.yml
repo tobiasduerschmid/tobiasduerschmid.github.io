@@ -216,10 +216,10 @@ questions:
   - id: 12
     type: single
     question: |
-      A developer writes a `TurkeyAdapter` that implements the `Duck` interface. The `quack()` method calls `turkey.gobble()`, and the `fly()` method calls `turkey.flyShort()` five times in a loop. Which aspect of this adapter introduces the most design risk?
+      A developer writes a `TurkeyAdapter` that implements the `Duck` interface. The `quack()` method calls `turkey.gobble()`, and the `fly()` method calls `turkey.fly()` in a loop five times (a `Duck.fly()` flies a long distance, but a `Turkey.fly()` only goes a short burst). Which aspect of this adapter introduces the most design risk?
     options:
       - "The quack()-to-gobble() mapping, because it changes the method name"
-      - "The fly()-to-flyShort() mapping, because it involves behavioral adaptation beyond simple interface translation"
+      - "The looped fly() simulation, because it involves behavioral adaptation beyond simple interface translation"
       - "The fact that the adapter wraps the turkey via composition"
       - "The adapter should use multiple inheritance instead"
     correct_index: 1
@@ -230,4 +230,4 @@ questions:
         Wrapping an adaptee via composition is a standard object-adapter implementation. The concern is the logic inside the wrapper, not the fact that it wraps.
       3: |
         Multiple inheritance is not required for Adapter and is unavailable or discouraged in many languages. Composition is a normal implementation route.
-    explanation: "**The loop in `fly()` is behavioral adaptation — not a simple rename — and is a warning sign that the adapter is evolving into a separate service component.** The `fly()` mapping is not a simple rename — it contains **behavioral adaptation** (calling a method five times in a loop). This is a warning sign: as adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. Simple renaming (quack→gobble) is low-risk; behavioral logic in an adapter should be scrutinized carefully."
+    explanation: "**Looping five short turkey flights to simulate one long duck flight is behavioral adaptation — not a simple rename — and is a warning sign that the adapter is evolving into a separate service component.** The `fly()` mapping is not a simple rename — it contains **behavioral adaptation** (calling a method five times in a loop). This is a warning sign: as adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. Simple renaming (quack→gobble) is low-risk; behavioral logic in an adapter should be scrutinized carefully."

@@ -13,7 +13,7 @@ Modeling serves two critical purposes in software engineering:
 
 **1. Communication.** Models provide a common, simple, graphical representation that allows developers, architects, and stakeholders to discuss the workings of the software. When everyone reads the same diagram, the team converges on the same understanding.
 
-**2. Early Problem Detection.** Bugs found during design cost a fraction of bugs found during testing or maintenance. Studies have shown that the cost to fix a defect grows substantially from the requirements phase to the maintenance phase — estimates range from 10× to 100× depending on the project and phase (Boehm, *Software Engineering Economics*, 1981; McConnell, *Code Complete*, 2004). Modeling and analysis shifts the discovery of problems earlier in the lifecycle, where they are cheaper to fix.
+**2. Early Problem Detection.** Fixing bugs found during design costs a fraction of fixing bugs found during testing or maintenance. Studies have suggested that the cost to fix a defect grows substantially from the requirements phase to the maintenance phase — common estimates range from 10× to 100× depending on the project and phase (Boehm, *Software Engineering Economics*, 1981; McConnell, *Code Complete*, 2nd ed., 2004). The empirical strength of the 100× claim is debated (see Bossavit, *The Leprechauns of Software Engineering*, 2015), but the qualitative principle — earlier defects are cheaper to fix — is widely accepted. Modeling and analysis shifts the discovery of problems earlier in the lifecycle, where they are cheaper to fix.
 
 ## What Is a Model?
 
@@ -24,9 +24,9 @@ A model describes a system at a **high level of abstraction**. Models are abstra
 
 ## A Brief History of UML
 
-In the 1980s, the rise of Object-Oriented Programming spawned dozens of competing modeling notations. By the early 1990s, there were over 50 OO modeling languages. In the mid-1990s, the three leading notation designers —- Grady Booch (*Booch method*), Jim Rumbaugh (*OMT — Object Modeling Technique*), and Ivar Jacobson (*OOSE — Object-Oriented Software Engineering*) —- converged at Rational Software and combined their approaches. This convergence, standardized by the Object Management Group (OMG) in 1997, produced **UML 1.0**. UML 2.0 followed in 2005 with significant revisions (see Rumbaugh, Jacobson & Booch, *The UML Reference Manual*). The current version (UML 2.5.1, 2017) is maintained by the OMG.
+In the 1980s, the rise of Object-Oriented Programming spawned dozens of competing modeling notations. By the mid-1990s, more than 50 OO modeling methods had been proposed. The three leading notation designers — Grady Booch (*Booch method*), Jim Rumbaugh (*OMT — Object Modeling Technique*), and Ivar Jacobson (*OOSE — Object-Oriented Software Engineering*) — converged at Rational Software and combined their approaches. This convergence, standardized by the Object Management Group (OMG) in 1997, produced **UML 1.x** (UML 1.1 was the first OMG-adopted version). UML 2.0 was adopted by the OMG in 2003 and finalized in 2005 (see Rumbaugh, Jacobson & Booch, *The Unified Modeling Language Reference Manual*, 2nd ed., 2004). The current version, **UML 2.5.1** (2017), is maintained by the OMG.
 
-UML is a large language — the UML 2 specification spans nearly 800 pages — but in practice only a small fraction of its notation is widely used. Martin Fowler (*UML Distilled*) argues that "20% of UML does 80% of the work" — and recommends learning *sketching-level* UML over exhaustive coverage of every symbol. This textbook follows that philosophy.
+UML is a large language — the current UML 2.5.1 specification spans nearly 800 pages — but in practice only a small fraction of its notation is widely used. Martin Fowler (*UML Distilled*) advocates learning the "mythical 20 percent of UML that helps you do 80 percent of your work," and recommends *sketching-level* UML over exhaustive coverage of every symbol. This textbook follows that philosophy.
 
 ### Modeling Guidelines
 

@@ -17,7 +17,7 @@ cards:
   - id: 4
     question: "What does 'inverted dependency flow' mean for Observer?"
     answer: "In code, observers call the subject to register (dependency points observer→subject), but data conceptually flows subject→observer—making it hard to trace what depends on what."
-    explanation: "An empirical study on reactive programming found this inversion hurts comprehension: when encountering an observer, there is no nearby sign of what it depends on."
+    explanation: "This inversion is widely cited as a comprehension hazard for the Observer pattern: when encountering an observer, there is no nearby sign of what it depends on; the reader must trace back to the registration call."
   - id: 5
     question: "Name three contexts where Observer is highly applicable."
     answer: "GUI/MVC architectures (model notifies views), event management systems (listeners for events), and social media feeds (followers notified of new posts)."

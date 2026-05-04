@@ -190,7 +190,7 @@ Author "1" -- "1..*" Book : writes
 
 #### Navigability
 
-By default, an association is **bidirectional**---both classes know about each other. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
+When neither end of an association is annotated with an arrowhead or X mark, navigability is formally **undefined** in UML 2.5. By convention, many authors and tools render this case as **bidirectional** (both classes know about each other), but you should not rely on the default — make navigability explicit when it matters. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
 
 * **Navigable end** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> An **open arrowhead** pointing to the class that can be "reached." The left object has a reference to the right object.
 * **Non-Navigable end** <span class="uml-sym" data-diagram="class" data-sym="--x"></span> An **X** on the end that cannot be navigated. This explicitly states that the class at the X end does *not* hold a reference to the other.
@@ -276,7 +276,7 @@ House "1" *-- "1..*" Room
 
 **A helpful way to think about the difference:** In C++, aggregation is usually expressed through pointers/references (the part can exist separately), while composition is expressed by containing instances by value (the part's lifetime is tied to the whole). In Java and Python, every object reference is effectively a pointer — the distinction between aggregation and composition is communicated through *design intent* (who created the part? who destroys it?) rather than through language syntax. Inner classes in Java are *one* indicator of composition but are not required.
 
-> **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification. Martin Fowler (*UML Distilled*) observes: *"Aggregation is strictly meaningless; I recommend that you ignore it in your own diagrams."* When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
+> **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification. Martin Fowler (*UML Distilled*) observes: *"Aggregation is strictly meaningless; as a result, I recommend that you ignore it in your own diagrams."* When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
 
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
@@ -893,9 +893,7 @@ class Movie {
   - duration: int
   + play(): void
 }
-class TVShow {
-  + play(): void
-}
+abstract class TVShow
 class Season {
   - seasonNumber: int
 }
@@ -916,7 +914,7 @@ Content "*" -- "1..*" Genre : classifiedBy
 
 **What the UML notation captures:**
 
-1. **Abstract class (`abstract class Content`):** The italicised class name and `{abstract}` on `play()` signal that `Content` is never instantiated directly — you never watch a "content", only a `Movie` or `TVShow`. Both subclasses override `play()` with their own implementation.
+1. **Abstract class (`abstract class Content`):** The italicised class name and `{abstract}` on `play()` signal that `Content` is never instantiated directly — you never watch a "content", only a `Movie` or an `Episode`. `Movie` overrides `play()` with its own implementation. `TVShow` is also abstract (it inherits `play()` without overriding it) — you don't play a show as a whole, you play one of its `Episode`s, which provides its own concrete `play()`.
 2. **Generalization hierarchy:** Both `Movie` and `TVShow` extend `Content`, inheriting `title` and `rating`. A `Movie` adds `duration` directly; a `TVShow` delegates duration implicitly through its episodes.
 3. **Nested composition (`TVShow → Season → Episode`):** A `TVShow` is composed of seasons; each season is composed of episodes. Delete a show and the seasons disappear; delete a season and the episodes disappear. The chain of filled diamonds models this cascade.
 4. **Association with multiplicity (`Content → Genre`):** A movie or show belongs to `1..*` genres (at least one — e.g., Action). A genre classifies `*` content items. This is a plain association — deleting a genre does not delete the content.

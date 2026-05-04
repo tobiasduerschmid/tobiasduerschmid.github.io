@@ -77,6 +77,16 @@ States can have **internal activities** that execute at specific points during t
 Idle --> Processing : requestReceived / logRequest()
 Processing --> Idle : complete
 Processing --> [*] : fatalError / shutDown()
+state Idle {
+  entry / clearBuffers()
+  do / waitForRequest()
+  exit / logTransition()
+}
+state Processing {
+  entry / startTimer()
+  do / processData()
+  exit / stopTimer()
+}
 @enduml'></div>
 
 Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
@@ -109,7 +119,7 @@ When the suit is powered on, it enters an *Idle* state. If its sensors detect a 
 [*] --> Idle : powerOn()
 Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
-CombatMode --> EmergencyPower : powerLevel &lt; 5% / rerouteToLifeSupport()
+CombatMode --> EmergencyPower : [powerLevel &lt; 5%] / rerouteToLifeSupport()
 EmergencyPower --> [*] : manualOverride()
 @enduml'></div>
 
@@ -118,7 +128,7 @@ EmergencyPower --> [*] : manualOverride()
 1. **The Initial Transition:** The system begins at the solid circle and transitions to `Idle` via the `powerOn()` event.
 2. **Moving to Combat:** To move from `Idle` to `Combat Mode`, the `threatDetected` event must occur. Notice the guard `[sysCheckOK]`; the suit will only enter combat if internal systems pass their checks. As the transition happens, the effect `/ deployUI()` occurs.
 3. **Cyclic Behavior:** The system can transition back to `Idle` when the `threatNeutralized` event occurs, triggering the `/ retractWeapons()` effect.
-4. **Critical Transitions:** The transition to `Emergency Power` is triggered by a condition: `powerLevel < 5%`. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
+4. **Critical Transitions:** The transition to `Emergency Power` is a *completion* transition guarded by `[powerLevel < 5%]` — it has no explicit event trigger and fires as soon as the guard becomes true while the source state is settled. Notice the brackets: per the UML 2.5.1 transition-label syntax `Event [Guard] / Effect`, the guard must always appear in square brackets so it is not misread as an event name. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
 
 ---
 
@@ -179,7 +189,7 @@ Closed --> [*]
 
 ### Example 3: Food Delivery — Order Lifecycle
 
-**Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — but it can be canceled at any point before pickup.
+**Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — the diagram below shows the simplest case where the only cancellation path fires when the restaurant declines a freshly placed order. (A production system would also model customer-initiated cancellation from `Confirmed` and `Preparing`; we omit those arrows here to keep the happy path readable, but see the *Self-Correction* exercise below.)
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Placed : submitOrder()

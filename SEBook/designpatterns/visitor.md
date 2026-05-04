@@ -21,7 +21,7 @@ The key participants are:
 2.  **ConcreteVisitor:** Implements the operations declared by the `Visitor`, providing the algorithm and accumulating state as it traverses the structure.
 3.  **Element:** Defines an `accept` operation that takes a visitor as an argument.
 4.  **ConcreteElement:** Implements the `accept` operation by calling back to the specific `visit` method on the visitor that corresponds to its own class.
-5.  **ObjectStructure:** A [composite](/SEBook/designpatterns/composite.html) or collection that can enumerate its elements.
+5.  **ObjectStructure:** Can enumerate its elements; it may be a [composite](/SEBook/designpatterns/composite.html) or a collection such as a list or a set.
 
 > [!WARNING]
 > If the element classes (the object structure) change frequently, this pattern is a poor choice. Adding a new `ConcreteElement` requires adding a corresponding operation to the `Visitor` interface and updating every single `ConcreteVisitor`.
@@ -30,50 +30,52 @@ The key participants are:
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Visitor {
-    + VisitElementA(ElementA)
-    + VisitElementB(ElementB)
+    + visitConcreteElementA(ConcreteElementA)
+    + visitConcreteElementB(ConcreteElementB)
 }
 class ConcreteVisitor1 {
-    + VisitElementA(ElementA)
-    + VisitElementB(ElementB)
+    + visitConcreteElementA(ConcreteElementA)
+    + visitConcreteElementB(ConcreteElementB)
 }
 class ConcreteVisitor2 {
-    + VisitElementA(ElementA)
-    + VisitElementB(ElementB)
+    + visitConcreteElementA(ConcreteElementA)
+    + visitConcreteElementB(ConcreteElementB)
 }
 interface Element {
-    + Accept(Visitor)
+    + accept(Visitor)
 }
-class ElementA {
-    + Accept(Visitor)
+class ConcreteElementA {
+    + accept(Visitor)
 }
-class ElementB {
-    + Accept(Visitor)
+class ConcreteElementB {
+    + accept(Visitor)
 }
+class ObjectStructure
 
 ConcreteVisitor1 ..|> Visitor
 ConcreteVisitor2 ..|> Visitor
-ElementA ..|> Element
-ElementB ..|> Element
+ConcreteElementA ..|> Element
+ConcreteElementB ..|> Element
 
+ObjectStructure o--> Element
 Client --> Visitor
-Client --> Element
+Client --> ObjectStructure
 @enduml'></div>
 
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface NodeVisitor {
-    + visit_assignment_node(AssignmentNode)
-    + visit_variable_ref_node(VariableRefNode)
+    + visitAssignment(AssignmentNode)
+    + visitVariableRef(VariableRefNode)
 }
 class TypeCheckingVisitor {
-    + visit_assignment_node(AssignmentNode)
-    + visit_variable_ref_node(VariableRefNode)
+    + visitAssignment(AssignmentNode)
+    + visitVariableRef(VariableRefNode)
 }
 class CodeGeneratingVisitor {
-    + visit_assignment_node(AssignmentNode)
-    + visit_variable_ref_node(VariableRefNode)
+    + visitAssignment(AssignmentNode)
+    + visitVariableRef(VariableRefNode)
 }
 
 interface Node {
@@ -299,6 +301,15 @@ ast.forEach((node) => node.accept(typeChecker));
 
 # Consequences
 *   **Adding Operations is Easy:** You can add a new operation over an object structure simply by adding a new visitor class.
-*   **Gathers Related Operations:** Related behavior is localized in a single visitor class rather than spread across multiple node classes.
-*   **Adding New Elements is Hard:** The element class hierarchy must be stable. Adding a new element type requires modifying the visitor interface and all concrete visitors.
-*   **Modern Alternatives:** In modern languages with advanced pattern matching (like Rust, Kotlin, or Java 21+), the visitor pattern is often replaced by sealed classes and exhaustive switch expressions.
+*   **Gathers Related Operations:** Related behavior is localized in a single visitor class rather than spread across multiple node classes; behavior unrelated to a given operation is not entangled with it.
+*   **Adding New Elements is Hard:** The element class hierarchy must be stable. Adding a new element type requires modifying the visitor interface and all concrete visitors. This trade-off — easy to add operations, hard to add types — is the dual of the trade-off in plain object-oriented inheritance, and is known as the **Expression Problem** (Wadler, 1998).
+*   **Visiting Across Class Hierarchies:** Unlike a virtual method on `Element`, a visitor can be applied to objects whose classes do not share a common base, as long as they all implement `accept`.
+*   **Accumulating State:** Visitors can accumulate state as they traverse the structure (e.g., a symbol table during type checking), avoiding both global variables and extra parameters threaded through every operation.
+*   **Breaks Encapsulation:** To do their work, visitors typically need access to the internal state of the elements they visit. This often forces `ConcreteElement` classes to expose state through public accessors that would otherwise be private.
+*   **Cyclic Dependency:** The `Visitor` interface depends on every `ConcreteElement` (via the `visit*` overloads), and every `Element` depends on `Visitor` (via `accept`). The **Acyclic Visitor** variant (Martin, 1998) breaks this cycle by giving each element its own narrow visitor interface and using a runtime cast inside `accept`.
+*   **Modern Alternatives:** In languages with sealed types and exhaustive pattern matching — such as Scala (`sealed trait` + `match`), Rust (`enum` + `match`), or Java 21+ (sealed interfaces + `switch` pattern matching) — much of the Visitor pattern's machinery is unnecessary. A `switch` over a sealed type achieves the same separation of operations from data and is checked for exhaustiveness by the compiler. (GoF themselves note that languages supporting double or multiple dispatch, such as CLOS, lessen the need for the Visitor pattern.)
+
+# Related Patterns
+*   **[Composite](/SEBook/designpatterns/composite.html):** Visitors can be used to apply an operation over an object structure defined by the Composite pattern.
+*   **Interpreter:** Visitor may be applied to do the interpretation. Each grammar rule is a `ConcreteElement`, and an interpretation pass is a `ConcreteVisitor`.
+*   **Iterator:** Iterators can also walk an object structure and call operations on each element, but they require all elements to share a common parent class. Visitor lifts this restriction and lets the operation differ by element type. The two patterns are often combined: an iterator drives the traversal and calls `accept` on each element.

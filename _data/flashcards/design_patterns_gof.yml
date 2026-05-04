@@ -17,7 +17,7 @@ cards:
   - id: 4
     question: "What does 'inverted dependency flow' mean in Observer?"
     answer: "In the code, observers call the subject to register (dependency points observer→subject), but data conceptually flows from subject to observer—making it hard to trace by reading code."
-    explanation: "An empirical study found this inversion hurts program comprehension: when encountering an observer in code, there is no sign of what it depends on."
+    explanation: "This inversion is widely cited as a program-comprehension hazard for Observer-based designs: when encountering an observer in code, there is no nearby sign of what it depends on; the reader must trace back to the registration call."
   - id: 5
     question: "What problem does the **State** pattern solve?"
     answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."

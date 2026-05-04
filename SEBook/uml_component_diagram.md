@@ -115,10 +115,11 @@ Reading this diagram: `PaymentService` has an incoming port `processPayment` (wh
 
 ### 2.4 Connectors
 
-**Connectors** are the lines between components (or between ports) that show communication pathways:
+**Connectors** are the lines between components (or between ports) that show communication pathways. The UML specification defines two kinds of connectors (*ConnectorKind* — `assembly` or `delegation`):
 
-- **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> A solid arrow linking one component to another (or a required interface to a provided interface). This is the most common connector.
-- **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a weaker "uses" or "depends on" relationship.
+- **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> Joins a **required** interface (socket, §2.2) on one component to a matching **provided** interface (ball) on another — see §4 for the ball-and-socket "snap." This is the canonical way to wire two components together in UML. In a simplified diagram (no ball-and-socket drawn), authors often use a plain solid arrow between components or ports as shorthand for the same idea.
+- **Delegation Connector** A connector inside a *composite* component that forwards an external port to a port on an internal sub-component (used in white-box views, not shown in this chapter).
+- **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a weaker "uses" or "depends on" relationship — *not* a connector in the strict UML sense, but commonly drawn on component diagrams for cross-cutting uses.
 - **Plain Link** <span class="uml-sym" data-diagram="component" data-sym="--"></span> An undirected association between components.
 
 > **Concept Check (Retrieval Practice):** Without looking back, name the two types of interfaces in component diagrams and their visual symbols. What is the difference between a provided and required interface?
@@ -223,7 +224,7 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 
 **Rule of thumb:** If you can deploy it, containerize it, or replace it independently, it belongs in a component diagram. If it is an internal implementation detail (a class, a method), it belongs in a class diagram.
 
-> **Note on UML 2 changes:** Before UML 2, components were distinct from classes and often modeled physical artifacts (DLLs, JARs). UML 2 redefined components as **modular units with contractually specified interfaces** — essentially abstract units of the design, not physical files. Physical files became *artifacts*, shown on deployment diagrams. Older textbooks and diagrams you encounter in the wild may still mix the two — be aware of the distinction when reading legacy UML.
+> **Note on UML 2 changes:** In UML 1.x, a *component* was defined narrowly as a physical, replaceable part of a system — often modeled as a deployed file (DLL, JAR, EXE). UML 2 generalized the concept: a component is now a **modular unit with contractually specified provided and required interfaces**, and the spec covers both *logical* components (business or process components) and *physical* components (EJB, CORBA, COM+, .NET, WSDL components). The physical *files* that implement a component are now modeled separately as **artifacts** and shown on deployment diagrams. Older textbooks and diagrams you encounter in the wild may still mix component and artifact — be aware of the distinction when reading legacy UML.
 
 ## ⚠ Common Component Diagram Mistakes
 
@@ -233,7 +234,7 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 | 2 | **Confusing lollipop and socket** — putting the ball on the consumer and the socket on the provider | Ball (lollipop) = **provided** ("I offer this"). Socket (half-circle) = **required** ("I need this"). The ball fits *into* the socket. |
 | 3 | **Omitting protocol labels** on connectors | Labels like `HTTPS`, `gRPC`, `SQL` turn a generic "arrow" into a concrete architectural statement — a reviewer can spot sync-vs-async and firewall concerns at a glance. |
 | 4 | **Mixing deployment nodes with components** | Components live on nodes; they are not the same thing. Use a deployment diagram when you want to show *where* things run. |
-| 5 | **Too many components on one diagram** | Apply the 7±2 rule (Fowler, *UML Distilled*). If you need more than ~9 components, split into multiple diagrams by subsystem. Architecture diagrams are for overview — not exhaustive cataloguing. |
+| 5 | **Too many components on one diagram** | Apply the 7±2 rule of working memory (Miller, 1956 — discussed in Fowler's *UML Distilled* as a diagram-readability heuristic). If you need more than ~9 components, split into multiple diagrams by subsystem. Architecture diagrams are for overview — not exhaustive cataloguing. |
 
 ---
 
@@ -299,7 +300,7 @@ gw_rec --> re_in : gRPC
 
 ### Example 2: E-Commerce — Microservices Backend
 
-**Scenario:** A mobile app communicates through an API gateway to two microservices. The `OrderService` depends on `PaymentService` through a formal interface — enabling the payment provider to be swapped without touching `OrderService`.
+**Scenario:** A mobile app communicates through an API gateway to the `OrderService`. The `OrderService` depends on an internal `PaymentService` through a formal `IPayment` interface — enabling the payment provider to be swapped without touching `OrderService`.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component "MobileApp" {
@@ -308,7 +309,6 @@ component "MobileApp" {
 component "APIGateway" {
   portin "http" as gw_in
   portout "orders" as gw_orders
-  portout "pay" as gw_pay
 }
 component "OrderService" {
   portin "api" as os_in
@@ -316,7 +316,6 @@ component "OrderService" {
   require "IPayment" as os_req
 }
 component "PaymentService" {
-  portin "charge" as ps_in
   provide "IPayment" as ps_prov
 }
 component "OrderDB" {
@@ -324,7 +323,6 @@ component "OrderDB" {
 }
 app_out --> gw_in : HTTPS
 gw_orders --> os_in : REST
-gw_pay --> ps_in : REST
 os_db --> db_in : SQL
 os_req --> ps_prov
 @enduml'></div>

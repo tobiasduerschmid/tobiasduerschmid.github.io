@@ -54,4 +54,4 @@ cards:
     question: "What is the `par` combined fragment used for?"
     answer: "To model messages that execute **in parallel** (concurrently)."
     explanation: >
-      The `par` fragment divides the interaction into regions that execute simultaneously. This is useful for modeling multi-threaded behavior or concurrent operations. The `region` fragment is related: it defines a critical section where only one thread can run at a time.
+      The `par` fragment divides the interaction into regions that execute simultaneously. This is useful for modeling multi-threaded behavior or concurrent operations. The `critical` fragment is related: it marks a region that cannot be interleaved by other event occurrences — the equivalent of a synchronized block.
