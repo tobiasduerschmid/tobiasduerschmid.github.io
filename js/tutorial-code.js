@@ -5929,8 +5929,11 @@
     };
   };
 
-  TutorialCode.prototype._isNextStepLocked = function () {
-    var idx = this.currentStep;
+  TutorialCode.prototype._isNextStepLocked = function (idx) {
+    if (idx == null) idx = this.currentStep;
+    // Steps with no tests can't be gated by tests — there's nothing to pass.
+    // (A quiz, if present, opens via clicking Next, not by gating it.)
+    if (!this._stepHasTests(this.steps[idx])) return false;
     var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(idx + 1);
     return !nextStepUnlocked;
   };
@@ -8808,8 +8811,7 @@
   TutorialCode.prototype._renderStepControls = function (index) {
     var self = this;
     var step = this.steps[index];
-    var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(index + 1);
-    var nextLocked = !nextStepUnlocked;
+    var nextLocked = this._isNextStepLocked(index);
 
     var html = '';
     html += index > 0
