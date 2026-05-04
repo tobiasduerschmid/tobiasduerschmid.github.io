@@ -1691,11 +1691,14 @@ html.dark-mode .tvm-git-graph-container {
 }
 
 /* Branch label border is thin at 22% fill — hard to see on pure black.
-   Keep the fill as-is (text color matches fill, higher opacity kills contrast),
-   but make the stroke thicker and fully opaque so the shape reads clearly. */
+   Keep the chip fill low-opacity, strengthen the outline, and force light
+   label text so branch names remain readable in dark mode. */
 html.dark-mode .tvm-git-graph-container .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-label-bg + path {
   stroke-width: 2.5;
   stroke-opacity: 1;
+}
+html.dark-mode .tvm-git-graph-container .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label {
+  fill: #eef7ff;
 }
 
 /* ── Light mode overrides for git graph ── */

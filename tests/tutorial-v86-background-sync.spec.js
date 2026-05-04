@@ -75,4 +75,49 @@ test.describe('v86 terminal background sync', () => {
     expect(result.calls[1]).toContain('gitgraph_state');
     expect(result.hookInstalled).toBe(true);
   });
+
+  test('does not use serial fallback after prompt reveal has started', async ({ page }) => {
+    await newHarness(page, false);
+
+    const result = await page.evaluate(async () => {
+      const { tutorial, calls } = window.__tutorialHarness;
+      tutorial._terminalPromptRevealAttempted = true;
+      await tutorial._installGitGraphPromptHook();
+      await tutorial._dumpGitState();
+      return {
+        calls,
+        hookInstalled: tutorial._gitGraphHookInstalled,
+      };
+    });
+
+    expect(result.calls).toEqual([]);
+    expect(result.hookInstalled).toBe(false);
+  });
+
+  test('accepts user terminal input only after the prompt is visible and serial is idle', async ({ page }) => {
+    await newHarness(page, true);
+
+    const result = await page.evaluate(() => {
+      const { tutorial } = window.__tutorialHarness;
+      tutorial.emulator = { serial0_send() {} };
+      const states = [
+        { ready: false, mute: 0, running: false, queued: 0, listeners: 0 },
+        { ready: true, mute: 1, running: false, queued: 0, listeners: 0 },
+        { ready: true, mute: 0, running: true, queued: 0, listeners: 0 },
+        { ready: true, mute: 0, running: false, queued: 1, listeners: 0 },
+        { ready: true, mute: 0, running: false, queued: 0, listeners: 1 },
+        { ready: true, mute: 0, running: false, queued: 0, listeners: 0 },
+      ];
+      return states.map((state) => {
+        tutorial._terminalReadyForInput = state.ready;
+        tutorial._muteCount = state.mute;
+        tutorial._silentRunning = state.running;
+        tutorial._silentQueue = new Array(state.queued).fill({});
+        tutorial._silentListeners = new Array(state.listeners).fill({});
+        return tutorial._canAcceptTerminalInput();
+      });
+    });
+
+    expect(result).toEqual([false, false, false, false, false, true]);
+  });
 });

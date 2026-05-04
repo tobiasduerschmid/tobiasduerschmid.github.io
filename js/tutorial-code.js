@@ -232,6 +232,8 @@
     this.term = null;
     this.fitAddon = null;
     this._terminalReadyForInput = false; // true once the prompt is visible to the student
+    this._terminalPromptRevealAttempted = false;
+    this._terminalReadinessTimer = null;
     this._legacySerialBackgroundSkipLogged = false;
 
     // Monaco state
@@ -705,6 +707,7 @@
 
   TutorialCode.prototype.destroy = function () {
     this._stopFileWatch();
+    clearTimeout(this._terminalReadinessTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
     if (this._worker) { this._worker.terminate(); this._worker = null; }
     if (this._shellProcess) { this._shellProcess = null; }
@@ -2426,6 +2429,25 @@
     this.term.loadAddon(this.fitAddon);
     this.term.open(this.terminalContainerEl);
     this.term.focus();
+    var focusTerminal = function () {
+      requestAnimationFrame(function () {
+        if (self.term && typeof self.term.focus === 'function') {
+          try { self.term.focus(); } catch (e) { }
+        }
+      });
+    };
+    if (this.terminalContainerEl) {
+      this.terminalContainerEl.addEventListener('pointerdown', focusTerminal);
+      this.terminalContainerEl.addEventListener('click', focusTerminal);
+    }
+    var terminalPanel = this.root && this.root.querySelector('.tvm-terminal-panel');
+    if (terminalPanel) {
+      terminalPanel.addEventListener('pointerdown', function (event) {
+        if (event.target && event.target.closest &&
+            event.target.closest('button, a, input, select, textarea')) return;
+        focusTerminal();
+      });
+    }
     // Sync terminal size to the backend whenever xterm reports a resize
     this.term.onResize(function (size) {
       self._syncTerminalSize(size.cols, size.rows);
@@ -2541,6 +2563,10 @@
 
         // xterm ↔ serial
         self.term.onData(function (data) {
+          if (!self._canAcceptTerminalInput()) {
+            self._handleTerminalInputBeforeReady();
+            return;
+          }
           self.emulator.serial0_send(data);
           if (data === '\r' || data === '\n') {
             var m = self._inputLine.match(/chmod\s+\+x\s+(\S+)/);
@@ -2799,24 +2825,86 @@
     this._lastStty = null;
   };
 
+  TutorialCode.prototype._hasPendingSilentSerialWork = function () {
+    return !!(this._silentRunning ||
+      (this._silentQueue && this._silentQueue.length > 0) ||
+      (this._silentListeners && this._silentListeners.length > 0));
+  };
+
+  TutorialCode.prototype._focusTerminalSoon = function () {
+    var self = this;
+    requestAnimationFrame(function () {
+      if (self.term && typeof self.term.focus === 'function') {
+        try { self.term.focus(); } catch (e) { }
+      }
+    });
+  };
+
+  TutorialCode.prototype._canAcceptTerminalInput = function () {
+    if (this.config.backend !== 'v86') return true;
+    return !!(this.emulator &&
+      this._terminalReadyForInput &&
+      this._muteCount === 0 &&
+      !this._hasPendingSilentSerialWork());
+  };
+
+  TutorialCode.prototype._handleTerminalInputBeforeReady = function () {
+    if (this.config.backend !== 'v86') return;
+    this._showTerminalLoading('Preparing terminal\u2026');
+    this._scheduleTerminalReadinessRecovery(500);
+  };
+
+  TutorialCode.prototype._scheduleTerminalReadinessRecovery = function (delayMs) {
+    if (this.config.backend !== 'v86') return;
+    if (this._terminalReadinessTimer) return;
+    var self = this;
+    this._terminalReadinessTimer = setTimeout(function () {
+      self._terminalReadinessTimer = null;
+      Promise.resolve(self._refreshPrompt()).then(function (visible) {
+        if (!visible && self.config.backend === 'v86') {
+          self._scheduleTerminalReadinessRecovery(1000);
+        }
+      });
+    }, delayMs || 1000);
+  };
+
   TutorialCode.prototype._refreshPrompt = function () {
     if (this.config.backend === 'v86') {
       var self = this;
+      this._terminalPromptRevealAttempted = true;
       this._terminalReadyForInput = false;
-      if (this._silentRunning || (this._silentQueue && this._silentQueue.length > 0)) {
+      if (this._hasPendingSilentSerialWork()) {
         return this._waitForSilentIdle(2500).then(function (idle) {
-          return idle ? self._refreshPrompt() : false;
+          if (idle) return self._refreshPrompt();
+          self._showTerminalLoading('Preparing terminal\u2026');
+          self._scheduleTerminalReadinessRecovery(1000);
+          return false;
         });
       }
       if (this.term) this.term.clear();
       this._muteCount = 0;
       this._promptDetectBuf = '';
+      clearTimeout(this._promptRedrawTimer);
       if (this.emulator) {
         this.emulator.serial0_send('\n');
         this._schedulePromptRedrawFallback();
       }
       return this._waitForTerminalText(2500).then(function (visible) {
-        self._terminalReadyForInput = true;
+        if (visible) return true;
+        if (self.emulator) {
+          self.emulator.serial0_send('\n');
+          self._schedulePromptRedrawFallback();
+        }
+        return self._waitForTerminalText(1500);
+      }).then(function (visible) {
+        self._terminalReadyForInput = !!visible;
+        if (visible) {
+          self._hideTerminalLoading();
+          self._focusTerminalSoon();
+        } else {
+          self._showTerminalLoading('Preparing terminal\u2026');
+          self._scheduleTerminalReadinessRecovery(1000);
+        }
         return visible;
       });
     } else if (this.config.backend === 'webcontainer') {
@@ -2827,7 +2915,8 @@
 
   TutorialCode.prototype._canRunLegacyBackgroundSerial = function () {
     return this.config.backend === 'v86' &&
-      (!this._terminalReadyForInput || this._isBackgroundSyncPaused());
+      ((!this._terminalPromptRevealAttempted && !this._terminalReadyForInput) ||
+        this._isBackgroundSyncPaused());
   };
 
   TutorialCode.prototype._logLegacyBackgroundSerialSkip = function (feature) {
