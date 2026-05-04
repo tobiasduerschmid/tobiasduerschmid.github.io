@@ -164,16 +164,19 @@ test.describe.serial('Python Tutorial', () => {
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
 
     const firstCard = page.locator('.tvm-quiz-panel .quiz-question-card.active');
-    const firstCardCorrectIdx = await firstCard.locator('.quiz-option').first().getAttribute('data-correct');
-    const firstCardOptions = firstCard.locator('.quiz-option');
-    const firstCardOptionCount = await firstCardOptions.count();
-    for (let i = 0; i < firstCardOptionCount; i++) {
-      const option = firstCardOptions.nth(i);
-      if (await option.getAttribute('data-index') === firstCardCorrectIdx) {
-        await option.click();
-        break;
-      }
-    }
+    await expect(firstCard.locator('.quiz-shortcuts-hint')).toContainText('B/2');
+    await expect(firstCard.locator('.quiz-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+    await expect(firstCard.locator('.quiz-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(37, 37, 56)');
+    await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+    await expect(firstCard.locator('.quiz-option').first()).toBeFocused();
+    await page.keyboard.press('B');
+    await expect(firstCard.locator('.quiz-option').nth(1)).toHaveClass(/correct/);
+    await expect(firstCard.locator('.quiz-next-shortcut-hint kbd')).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+    await expect(firstCard.locator('.quiz-next-shortcut-hint kbd')).toHaveCSS('background-color', 'rgb(37, 37, 56)');
+    await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+    await expect(firstCard.locator('.quiz-shortcuts-hint')).toBeHidden();
     await firstCard.locator('.next-btn').click();
 
     const multipleCard = page.locator('.tvm-quiz-panel .quiz-question-card.active');
@@ -182,15 +185,14 @@ test.describe.serial('Python Tutorial', () => {
     const required = (await firstMultipleOption.getAttribute('data-correct-indices')).split(',').filter(Boolean);
     const optional = (await firstMultipleOption.getAttribute('data-optional-indices')).split(',').filter(Boolean);
     const accepted = new Set(required.concat(optional));
-    const multipleOptions = multipleCard.locator('.quiz-option');
-    const multipleOptionCount = await multipleOptions.count();
-    for (let i = 0; i < multipleOptionCount; i++) {
-      const option = multipleOptions.nth(i);
-      if (accepted.has(await option.getAttribute('data-index'))) {
-        await option.click();
-      }
+    expect(accepted.size).toBe(4);
+    await expect(multipleCard.locator('.quiz-shortcuts-hint')).toBeVisible();
+    await expect(multipleCard.locator('.quiz-shortcuts-hint')).toContainText(/Enter|Return/);
+    await expect(multipleCard.locator('.quiz-option').first()).toBeFocused();
+    for (const key of ['1', '2', '3', '4']) {
+      await page.keyboard.press(key);
     }
-    await multipleCard.locator('.submit-answer-btn').click();
+    await page.keyboard.press('Enter');
     await expect(multipleCard.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
     await expect(multipleCard.locator('.optional-answer-note')).toHaveText('Optional:');
     await multipleCard.locator('.next-btn').click();

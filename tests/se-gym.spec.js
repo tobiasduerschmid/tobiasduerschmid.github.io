@@ -320,6 +320,86 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard.locator('.next-btn')).toBeVisible();
   });
 
+  test('quiz card answer shortcuts select visible options', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('2');
+    await page.locator('#start-workout-btn').click();
+
+    let quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeVisible();
+    await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
+
+    await page.keyboard.press('A');
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+    await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeHidden();
+
+    await quizCard.locator('.next-btn').click();
+    quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
+
+    await page.keyboard.press('1');
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+  });
+
+  test('multiple-answer quiz shortcut uses Enter to submit', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+
+    const quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    await expect(quizCard).toHaveAttribute('data-type', 'multiple');
+    await expect(quizCard.locator('.quiz-shortcuts-hint')).toContainText(/Enter|Return/);
+    await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
+
+    await page.keyboard.press('1');
+    await expect(quizCard.locator('.submit-answer-btn')).toBeEnabled();
+    await page.keyboard.press('Enter');
+
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+    await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeHidden();
+  });
+
+  test('Parsons shortcuts move numbered lines and Enter checks order', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'shell_parson' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+
+    const quizCard = page.locator('.workout-quiz-card[data-type="parsons"]');
+    await expect(quizCard).toBeVisible();
+    await expect(quizCard.locator('.parsons-shortcuts-hint')).toContainText(/Enter|Return/);
+    await expect(quizCard.locator('.parsons-line').first()).toBeFocused();
+    await expect(quizCard.locator('.parsons-shortcut-label').first()).toHaveText('1');
+    await expect(quizCard.locator('.parsons-shortcut-label').first()).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    await expect(quizCard.locator('.parsons-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+    await expect(quizCard.locator('.parsons-shortcut-label').first()).toHaveCSS('background-color', 'rgb(37, 37, 37)');
+    await expect(quizCard.locator('.parsons-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(37, 37, 37)');
+    await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+
+    await page.keyboard.press('1');
+    await expect(quizCard.locator('.parsons-target .parsons-line[data-shortcut-index="1"]')).toHaveCount(1);
+
+    await page.keyboard.press('Enter');
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+    await expect(quizCard.locator('.next-btn')).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.locator('#workout-restart-btn')).toBeFocused();
+  });
+
   test('flashcard interaction: show answer then assess', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
@@ -343,6 +423,36 @@ test.describe('Personal Gym - Workout', () => {
     await expect(flashcard.locator('.assessment-buttons')).not.toHaveClass(/hidden/);
     await expect(flashcard.locator('.correct-btn')).toBeVisible();
     await expect(flashcard.locator('.incorrect-btn')).toBeVisible();
+  });
+
+  test('flashcard shortcuts assess revealed cards', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('2');
+    await page.locator('#start-workout-btn').click();
+
+    let flashcard = page.locator('.workout-flashcard');
+    await expect(flashcard).toBeVisible();
+    await expect(flashcard.locator('.flashcard-shortcuts-hint')).toBeHidden();
+    await expect(flashcard.locator('.show-answer-btn')).toBeFocused();
+
+    await flashcard.locator('.show-answer-btn').click();
+    await expect(flashcard.locator('.flashcard-shortcuts-hint')).toBeVisible();
+    await expect(flashcard.locator('.correct-btn')).toBeFocused();
+    await page.keyboard.press('z');
+
+    flashcard = page.locator('.workout-flashcard');
+    await expect(flashcard).toBeVisible();
+    await expect(flashcard.locator('.show-answer-btn')).toBeFocused();
+    await flashcard.locator('.show-answer-btn').click();
+    await page.keyboard.press('ArrowRight');
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.locator('#workout-score')).toHaveText('1');
+    await expect(page.locator('#workout-total')).toHaveText('2');
+    await expect(page.locator('#workout-review-btn')).toBeVisible();
   });
 
   test('workout completes and shows results', async ({ page, context }) => {

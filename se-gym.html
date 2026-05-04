@@ -276,6 +276,7 @@ layout: sebook
             <button id="workout-review-btn" class="gym-btn secondary" style="display: none;">Review Incorrect</button>
             <button id="workout-back-btn" class="gym-btn secondary">Back to Gym Entrance</button>
           </div>
+          <p id="workout-result-shortcut-hint" class="workout-result-shortcut-hint hidden"></p>
         </div>
       </div>
     </div>
@@ -1258,6 +1259,65 @@ layout: sebook
       margin-top: 20px;
     }
 
+    #se-gym-app .quiz-shortcuts-hint,
+    #se-gym-app .quiz-next-shortcut-hint,
+    #se-gym-app .parsons-shortcuts-hint,
+    #se-gym-app .flashcard-shortcuts-hint,
+    #se-gym-app .workout-result-shortcut-hint {
+      margin: 12px 0 0;
+      color: #555;
+      font-size: 0.86em;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    #se-gym-app .quiz-shortcuts-hint kbd,
+    #se-gym-app .quiz-next-shortcut-hint kbd,
+    #se-gym-app .parsons-shortcuts-hint kbd,
+    #se-gym-app .flashcard-shortcuts-hint kbd,
+    #se-gym-app .workout-result-shortcut-hint kbd {
+      display: inline-block;
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border: 1px solid #767676;
+      border-radius: 4px;
+      background: #f6f8fa;
+      color: #24292e;
+      font-size: 0.92em;
+      font-family: inherit;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    #se-gym-app .quiz-shortcut-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      margin: 0 2px;
+    }
+
+    #se-gym-app .key-sep {
+      color: #666;
+    }
+
+    #se-gym-app .parsons-shortcut-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      min-width: 1.6em;
+      min-height: 1.6em;
+      margin-right: 8px;
+      padding: 1px 6px;
+      border: 1px solid #767676;
+      border-radius: 4px;
+      background: #f6f8fa;
+      color: #24292e;
+      font-size: 0.86em;
+      font-weight: 700;
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -1499,6 +1559,35 @@ layout: sebook
       color: #4da3ff;
     }
 
+    html.dark-mode #se-gym-app .quiz-shortcuts-hint,
+    html.dark-mode #se-gym-app .quiz-next-shortcut-hint,
+    html.dark-mode #se-gym-app .parsons-shortcuts-hint,
+    html.dark-mode #se-gym-app .flashcard-shortcuts-hint,
+    html.dark-mode #se-gym-app .workout-result-shortcut-hint {
+      color: #c8c8d8;
+    }
+
+    html.dark-mode #se-gym-app .quiz-shortcuts-hint kbd,
+    html.dark-mode #se-gym-app .quiz-next-shortcut-hint kbd,
+    html.dark-mode #se-gym-app .parsons-shortcuts-hint kbd,
+    html.dark-mode #se-gym-app .flashcard-shortcuts-hint kbd,
+    html.dark-mode #se-gym-app .workout-result-shortcut-hint kbd {
+      background: #252525;
+      border-color: #737373;
+      color: #e0e0e0;
+      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    html.dark-mode #se-gym-app .key-sep {
+      color: #b0b0b0;
+    }
+
+    html.dark-mode #se-gym-app .parsons-shortcut-label {
+      background: #252525;
+      border-color: #737373;
+      color: #e0e0e0;
+    }
+
     html.dark-mode .gym-btn.secondary {
       background: #333;
       color: #e0e0e0;
@@ -1718,6 +1807,7 @@ layout: sebook
       var workoutRestartBtn = document.getElementById('workout-restart-btn');
       var workoutReviewBtn = document.getElementById('workout-review-btn');
       var workoutBackBtn = document.getElementById('workout-back-btn');
+      var workoutResultShortcutHint = document.getElementById('workout-result-shortcut-hint');
 
       var allItems = document.querySelectorAll('.gym-item:not(.difficult-gym-item)');
       var allAddBtns = document.querySelectorAll('.gym-add-btn:not(#difficult-add-btn)');
@@ -2321,6 +2411,108 @@ layout: sebook
         workoutProgress.style.width = current + '%';
       }
 
+      function shouldIgnoreCardShortcut(e) {
+        if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return true;
+        var target = e.target;
+        var tag = target && target.tagName ? target.tagName.toLowerCase() : '';
+        return tag === 'input' || tag === 'textarea' || tag === 'select' || !!(target && target.isContentEditable);
+      }
+
+      function answerShortcutIndex(e) {
+        if (shouldIgnoreCardShortcut(e)) return -1;
+        var key = e.key || '';
+        if (/^[1-9]$/.test(key)) return parseInt(key, 10) - 1;
+        if (key.length === 1) {
+          var upper = key.toUpperCase();
+          if (/^[A-Z]$/.test(upper)) return upper.charCodeAt(0) - 65;
+        }
+        return -1;
+      }
+
+      function enterKeyLabel() {
+        var platform = '';
+        if (navigator.userAgentData && navigator.userAgentData.platform) platform = navigator.userAgentData.platform;
+        else platform = navigator.platform || '';
+        return /Mac|iPhone|iPad|iPod/i.test(platform) ? 'Return' : 'Enter';
+      }
+
+      function buildAnswerShortcutHint(count, isMultiple) {
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var pairs = [];
+        for (var i = 0; i < count && i < alphabet.length; i++) {
+          var label = alphabet[i];
+          var number = i < 9 ? '<span class="key-sep">/</span><kbd>' + (i + 1) + '</kbd>' : '';
+          pairs.push('<span class="quiz-shortcut-pair"><kbd>' + label + '</kbd>' + number + '</span>');
+        }
+        if (!pairs.length) return '';
+        return '<p class="quiz-shortcuts-hint">Shortcuts: ' + pairs.join(' ')
+          + ' select answers' + (isMultiple ? '; <kbd>' + enterKeyLabel() + '</kbd> submits.' : '.') + '</p>';
+      }
+
+      function buildNextShortcutHint() {
+        return '<p class="quiz-next-shortcut-hint">Shortcut: <kbd>' + enterKeyLabel()
+          + '</kbd> moves to the next question.</p>';
+      }
+
+      function buildParsonsShortcutHint(count) {
+        var keys = [];
+        for (var i = 0; i < count && i < 9; i++) {
+          keys.push('<kbd>' + (i + 1) + '</kbd>');
+        }
+        if (!keys.length) return '';
+        return '<p class="parsons-shortcuts-hint">Shortcuts: ' + keys.join(' ')
+          + ' move numbered lines; <kbd>' + enterKeyLabel() + '</kbd> checks the order.</p>';
+      }
+
+      function focusFirstAnswerOption(cardEl) {
+        if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
+        var firstOption = cardEl && (cardEl.querySelector('.quiz-option:not([disabled])') || cardEl.querySelector('.parsons-line'));
+        if (!firstOption || typeof firstOption.focus !== 'function') return;
+        setTimeout(function () {
+          try { firstOption.focus({ preventScroll: true }); }
+          catch (err) { firstOption.focus(); }
+        }, 0);
+      }
+
+      function focusNextButton(cardEl) {
+        var next = cardEl && cardEl.querySelector('.next-btn');
+        if (!next || typeof next.focus !== 'function') return;
+        setTimeout(function () {
+          try { next.focus({ preventScroll: true }); }
+          catch (err) { next.focus(); }
+        }, 0);
+      }
+
+      function focusWorkoutAction(button) {
+        if (!button || typeof button.focus !== 'function') return;
+        setTimeout(function () {
+          try { button.focus({ preventScroll: true }); }
+          catch (err) { button.focus(); }
+        }, 0);
+      }
+
+      function moveParsonsLine(line, cardEl) {
+        if (!line || !cardEl) return false;
+        var expEl = cardEl.querySelector('.quiz-explanation');
+        if (expEl && !expEl.classList.contains('hidden')) return false;
+        var parent = line.parentElement;
+        if (!parent) return false;
+        if (parent.classList.contains('parsons-bank')) {
+          var target = cardEl.querySelector('.parsons-target');
+          if (target) target.appendChild(line);
+        } else if (parent.classList.contains('parsons-target')) {
+          var bank = cardEl.querySelector('.parsons-bank');
+          if (bank) bank.appendChild(line);
+        } else {
+          return false;
+        }
+        if (typeof line.focus === 'function') {
+          try { line.focus({ preventScroll: true }); }
+          catch (err) { line.focus(); }
+        }
+        return true;
+      }
+
       function scrollToTop() {
         var navbar = document.getElementById('navnav');
         var navHeight = navbar ? navbar.offsetHeight : 50;
@@ -2371,7 +2563,8 @@ layout: sebook
           var checkboxHtml = '<span class="option-checkbox"></span>';
           optionsHtml += '<button class="quiz-option" role="' + (type === 'multiple' ? 'checkbox' : 'radio') + '" aria-checked="false" data-index="' + opt.originalIndex + '" data-label="' + label + '"' +
             ' data-correct-indices="' + correctOriginals.join(',') + '"' +
-            ' data-optional-indices="' + optionalOriginals.join(',') + '">' +
+            ' data-optional-indices="' + optionalOriginals.join(',') + '"' +
+            ' aria-keyshortcuts="' + label + (idx < 9 ? ' ' + (idx + 1) : '') + '">' +
             checkboxHtml +
             '<span class="option-label">' + label + '</span>' +
             '<span class="option-content">' + opt.html + '</span>' +
@@ -2385,8 +2578,9 @@ layout: sebook
         optionsHtml += '</div>';
 
         var submitHtml = type === 'multiple'
-          ? '<button class="submit-answer-btn" disabled>Submit Answer</button>'
+          ? '<button class="submit-answer-btn" disabled aria-keyshortcuts="Enter">Submit Answer</button>'
           : '';
+        var shortcutsHtml = buildAnswerShortcutHint(optionObjs.length, type === 'multiple');
 
         var correctAnswerHtml = '<div class="quiz-correct-answers">Correct Answer' +
           (type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
@@ -2401,9 +2595,10 @@ layout: sebook
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
           '<button class="next-btn">Next</button>' +
+          buildNextShortcutHint() +
           '</div>';
 
-        div.innerHTML = sourceHtml + questionHtml + optionsHtml + submitHtml + correctAnswerHtml + explanationHtml;
+        div.innerHTML = sourceHtml + questionHtml + optionsHtml + submitHtml + shortcutsHtml + correctAnswerHtml + explanationHtml;
         workoutCardArea.appendChild(div);
 
         // Bind quiz interactions
@@ -2436,8 +2631,11 @@ layout: sebook
                 workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
               }
               PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
+              var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
+              if (shortcutHint) shortcutHint.classList.add('hidden');
               correctAnswersEl.style.display = 'flex';
               explanationEl.classList.remove('hidden');
+              focusNextButton(div);
               if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
               explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             });
@@ -2485,14 +2683,45 @@ layout: sebook
               workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
             }
             PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isMultiCorrect);
+            var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
+            if (shortcutHint) shortcutHint.classList.add('hidden');
             correctAnswersEl.style.display = 'flex';
             explanationEl.classList.remove('hidden');
+            focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
             explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           });
         }
 
         div.querySelector('.next-btn').addEventListener('click', nextWorkoutCard);
+        div.addEventListener('keydown', function (e) {
+          if (!shouldIgnoreCardShortcut(e) && (e.key || '') === 'Enter'
+              && explanationEl && !explanationEl.classList.contains('hidden')) {
+            e.preventDefault();
+            div.querySelector('.next-btn').click();
+            return;
+          }
+          if (!shouldIgnoreCardShortcut(e) && (e.key || '') === 'Enter' && type === 'multiple') {
+            var submitButton = div.querySelector('.submit-answer-btn');
+            if (submitButton && !submitButton.disabled && !submitButton.classList.contains('hidden')
+                && explanationEl && explanationEl.classList.contains('hidden')) {
+              e.preventDefault();
+              submitButton.click();
+              return;
+            }
+          }
+          var idx = answerShortcutIndex(e);
+          if (idx < 0) return;
+          if (explanationEl && !explanationEl.classList.contains('hidden')) return;
+          if (idx >= options.length) return;
+          e.preventDefault();
+          if (typeof options[idx].focus === 'function') {
+            try { options[idx].focus({ preventScroll: true }); }
+            catch (err) { options[idx].focus(); }
+          }
+          options[idx].click();
+        });
+        focusFirstAnswerOption(div);
       }
 
       // ---- PARSONS CARD RENDERING ----
@@ -2520,9 +2749,13 @@ layout: sebook
         var containerClass = 'parsons-container' + (isInline ? ' parsons-inline' : '');
 
         var bankHtml = '<div class="parsons-bank">';
-        items.forEach(function (item) {
+        items.forEach(function (item, itemIndex) {
+          var shortcut = itemIndex < 9 ? String(itemIndex + 1) : '';
           bankHtml += '<div class="parsons-line" draggable="true" data-line="' + escapeHtml(item.line) +
-            '" data-distractor="' + item.isDistractor + '" data-correct-pos="' + item.correctPos + '">' +
+            '" data-distractor="' + item.isDistractor + '" data-correct-pos="' + item.correctPos + '"' +
+            (shortcut ? ' data-shortcut-index="' + shortcut + '" aria-keyshortcuts="' + shortcut + ' Space"' : ' aria-keyshortcuts="Space"') +
+            ' tabindex="0" role="button" aria-label="' + escapeHtml('Line ' + (itemIndex + 1) + ': ' + item.line) + '">' +
+            '<span class="parsons-shortcut-label" aria-hidden="true">' + (itemIndex + 1) + '</span>' +
             '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(item.line) + '</code></div>';
         });
         bankHtml += '</div>';
@@ -2547,12 +2780,14 @@ layout: sebook
           '<button class="parsons-check-btn">Check Order</button>' +
           '<button class="parsons-reset-btn">Reset</button></div>' +
           '</div>' +
+          buildParsonsShortcutHint(items.length) +
           '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels">' +
           correctDisplay + '</span></div>' +
           '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
-          '<button class="next-btn">Next</button></div>';
+          '<button class="next-btn">Next</button>' +
+          buildNextShortcutHint() + '</div>';
 
         div.innerHTML = html;
         workoutCardArea.appendChild(div);
@@ -2596,11 +2831,9 @@ layout: sebook
           var expEl = div.querySelector('.quiz-explanation');
           if (expEl && !expEl.classList.contains('hidden')) return;
           if (parent.classList.contains('parsons-bank')) {
-            var tgt = div.querySelector('.parsons-target');
-            if (tgt) tgt.appendChild(line);
+            moveParsonsLine(line, div);
           } else if (parent.classList.contains('parsons-target')) {
-            var bnk = div.querySelector('.parsons-bank');
-            if (bnk) bnk.appendChild(line);
+            moveParsonsLine(line, div);
           }
         });
 
@@ -2636,6 +2869,7 @@ layout: sebook
           if (ca) ca.style.display = 'flex';
           if (exp) {
             exp.classList.remove('hidden');
+            focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
             exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
@@ -2651,6 +2885,40 @@ layout: sebook
         });
 
         div.querySelector('.next-btn').addEventListener('click', nextWorkoutCard);
+        div.addEventListener('keydown', function (e) {
+          if (shouldIgnoreCardShortcut(e)) return;
+          var exp = div.querySelector('.quiz-explanation');
+          if ((e.key || '') === 'Enter' && exp && !exp.classList.contains('hidden')) {
+            e.preventDefault();
+            div.querySelector('.next-btn').click();
+            return;
+          }
+          if (exp && !exp.classList.contains('hidden')) return;
+          if ((e.key || '') === 'Enter') {
+            var checkBtn = div.querySelector('.parsons-check-btn');
+            if (checkBtn && !checkBtn.disabled) {
+              e.preventDefault();
+              checkBtn.click();
+            }
+            return;
+          }
+          if (e.key === ' ' || e.key === 'Spacebar') {
+            var focusedLine = e.target && e.target.closest ? e.target.closest('.parsons-line') : null;
+            if (focusedLine) {
+              e.preventDefault();
+              moveParsonsLine(focusedLine, div);
+            }
+            return;
+          }
+          if (/^[1-9]$/.test(e.key || '')) {
+            var shortcutLine = div.querySelector('.parsons-line[data-shortcut-index="' + e.key + '"]');
+            if (shortcutLine) {
+              e.preventDefault();
+              moveParsonsLine(shortcutLine, div);
+            }
+          }
+        });
+        focusFirstAnswerOption(div);
       }
 
       function getParsonsInsertAfter(zone, y, x, isInline) {
@@ -2680,11 +2948,12 @@ layout: sebook
           '<div class="flashcard-explanation">' + c.explanation + '</div>' +
           '</div>' +
           '<div class="flashcard-actions">' +
-          '<button class="show-answer-btn">Show Answer</button>' +
+          '<button class="show-answer-btn" type="button">Show Answer</button>' +
           '<div class="assessment-buttons hidden">' +
-          '<button class="assess-btn correct-btn" title="I got it right!">&#x2714;</button>' +
-          '<button class="assess-btn incorrect-btn" title="I missed it">&#x2716;</button>' +
+          '<button class="assess-btn correct-btn" type="button" aria-label="I got it right" title="I got it right" aria-keyshortcuts="ArrowLeft Z">&#x2714;</button>' +
+          '<button class="assess-btn incorrect-btn" type="button" aria-label="I got it wrong" title="I got it wrong" aria-keyshortcuts="ArrowRight X">&#x2716;</button>' +
           '</div>' +
+          '<p class="flashcard-shortcuts-hint hidden">Shortcuts: <kbd>&larr;</kbd> or <kbd>Z</kbd> I got it right; <kbd>&rarr;</kbd> or <kbd>X</kbd> I got it wrong.</p>' +
           '</div>';
 
         workoutCardArea.appendChild(div);
@@ -2692,25 +2961,52 @@ layout: sebook
         var showBtn = div.querySelector('.show-answer-btn');
         var answerContainer = div.querySelector('.flashcard-answer-container');
         var assessBtns = div.querySelector('.assessment-buttons');
+        var shortcutHint = div.querySelector('.flashcard-shortcuts-hint');
+        var correctBtn = div.querySelector('.correct-btn');
+        var incorrectBtn = div.querySelector('.incorrect-btn');
 
         showBtn.addEventListener('click', function () {
           answerContainer.classList.remove('hidden');
           if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
           showBtn.classList.add('hidden');
           assessBtns.classList.remove('hidden');
+          if (shortcutHint) shortcutHint.classList.remove('hidden');
+          if (correctBtn && typeof correctBtn.focus === 'function') {
+            try { correctBtn.focus({ preventScroll: true }); }
+            catch (err) { correctBtn.focus(); }
+          }
         });
 
-        div.querySelector('.correct-btn').addEventListener('click', function () {
+        correctBtn.addEventListener('click', function () {
           workoutScore++;
           PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), true);
           nextWorkoutCard();
         });
 
-        div.querySelector('.incorrect-btn').addEventListener('click', function () {
+        incorrectBtn.addEventListener('click', function () {
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
           PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), false);
           nextWorkoutCard();
         });
+        div.addEventListener('keydown', function (e) {
+          if (shouldIgnoreCardShortcut(e)) return;
+          if (answerContainer.classList.contains('hidden')) return;
+          var key = e.key || '';
+          var lower = key.toLowerCase();
+          if (key === 'ArrowLeft' || lower === 'z') {
+            e.preventDefault();
+            correctBtn.click();
+          } else if (key === 'ArrowRight' || lower === 'x') {
+            e.preventDefault();
+            incorrectBtn.click();
+          }
+        });
+        if (typeof document.hasFocus !== 'function' || document.hasFocus()) {
+          setTimeout(function () {
+            try { showBtn.focus({ preventScroll: true }); }
+            catch (err) { showBtn.focus(); }
+          }, 0);
+        }
       }
 
       // ---- SESSION NAVIGATION ----
@@ -2800,6 +3096,11 @@ layout: sebook
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
           workoutReviewBtn.style.display = 'inline-block';
         }
+        if (workoutResultShortcutHint) {
+          workoutResultShortcutHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> restarts the workout.';
+          workoutResultShortcutHint.classList.remove('hidden');
+        }
+        focusWorkoutAction(workoutRestartBtn);
         spawnGymEmojis(workoutResults);
       }
 
@@ -2822,6 +3123,7 @@ layout: sebook
         workoutReviewQueue = [];
         workoutReviewStep = 0;
         workoutResults.style.display = 'none';
+        if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
         showWorkoutCard(0);
         scrollToTop();
       }

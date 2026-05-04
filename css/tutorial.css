@@ -4038,6 +4038,90 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 }
 .tvm-quiz-panel .explanation-text { color: #a8a8c0; }
 
+.tvm-quiz-panel .quiz-shortcuts-hint,
+.tvm-quiz-panel .quiz-next-shortcut-hint,
+.tvm-quiz-panel .quiz-result-shortcut-hint,
+.tvm-quiz-panel .parsons-shortcuts-hint {
+  margin: 12px 0 0;
+  color: #555;
+  font-size: 0.86em;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.tvm-quiz-panel .quiz-shortcuts-hint kbd,
+.tvm-quiz-panel .quiz-next-shortcut-hint kbd,
+.tvm-quiz-panel .quiz-result-shortcut-hint kbd,
+.tvm-quiz-panel .parsons-shortcuts-hint kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  background: #f6f8fa;
+  color: #24292e;
+  font-family: inherit;
+  font-size: 0.92em;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.tvm-quiz-panel .quiz-shortcut-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 2px;
+}
+
+.tvm-quiz-panel .key-sep {
+  color: #666;
+}
+
+.tvm-quiz-panel .parsons-shortcut-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 1.6em;
+  min-height: 1.6em;
+  margin-right: 8px;
+  padding: 1px 6px;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  background: #f6f8fa;
+  color: #24292e;
+  font-size: 0.86em;
+  font-weight: 700;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-shortcuts-hint,
+html.dark-mode .tvm-quiz-panel .quiz-next-shortcut-hint,
+html.dark-mode .tvm-quiz-panel .quiz-result-shortcut-hint,
+html.dark-mode .tvm-quiz-panel .parsons-shortcuts-hint {
+  color: #9aa6b5;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-shortcuts-hint kbd,
+html.dark-mode .tvm-quiz-panel .quiz-next-shortcut-hint kbd,
+html.dark-mode .tvm-quiz-panel .quiz-result-shortcut-hint kbd,
+html.dark-mode .tvm-quiz-panel .parsons-shortcuts-hint kbd {
+  background: #252538;
+  border-color: #555566;
+  color: #f0f0ff;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html.dark-mode .tvm-quiz-panel .key-sep {
+  color: #b8b8c8;
+}
+
+html.dark-mode .tvm-quiz-panel .parsons-shortcut-label {
+  background: #252538;
+  border-color: #555566;
+  color: #f0f0ff;
+}
+
 /* Buttons */
 .tvm-quiz-panel .submit-answer-btn,
 .tvm-quiz-panel .next-btn,
@@ -4301,6 +4385,25 @@ html:not(.dark-mode) .tvm-quiz-panel .quiz-explanation {
 }
 html:not(.dark-mode) .tvm-quiz-panel .explanation-title { color: #2774AE; }
 html:not(.dark-mode) .tvm-quiz-panel .explanation-text { color: #444; }
+html:not(.dark-mode) .tvm-quiz-panel .quiz-shortcuts-hint,
+html:not(.dark-mode) .tvm-quiz-panel .quiz-next-shortcut-hint,
+html:not(.dark-mode) .tvm-quiz-panel .quiz-result-shortcut-hint,
+html:not(.dark-mode) .tvm-quiz-panel .parsons-shortcuts-hint { color: #555; }
+html:not(.dark-mode) .tvm-quiz-panel .quiz-shortcuts-hint kbd,
+html:not(.dark-mode) .tvm-quiz-panel .quiz-next-shortcut-hint kbd,
+html:not(.dark-mode) .tvm-quiz-panel .quiz-result-shortcut-hint kbd,
+html:not(.dark-mode) .tvm-quiz-panel .parsons-shortcuts-hint kbd {
+  background: #f6f8fa;
+  border-color: #767676;
+  color: #24292e;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+html:not(.dark-mode) .tvm-quiz-panel .key-sep { color: #666; }
+html:not(.dark-mode) .tvm-quiz-panel .parsons-shortcut-label {
+  background: #f6f8fa;
+  border-color: #767676;
+  color: #24292e;
+}
 html:not(.dark-mode) .tvm-quiz-panel .submit-answer-btn,
 html:not(.dark-mode) .tvm-quiz-panel .next-btn,
 html:not(.dark-mode) .tvm-quiz-panel .restart-btn { background: #2774AE; }
@@ -4465,6 +4568,11 @@ body.lecture-mode .tutorial-page {
   /* Hide explanations and correct-answer reveals — save space */
   .quiz-explanation { display: none !important; }
   .quiz-correct-answers { display: none !important; }
+  .quiz-shortcuts-hint,
+  .quiz-next-shortcut-hint,
+  .quiz-result-shortcut-hint,
+  .parsons-shortcuts-hint,
+  .parsons-shortcut-label { display: none !important; }
 
   /* Always show every option's feedback in print, regardless of student state */
   .option-feedback,

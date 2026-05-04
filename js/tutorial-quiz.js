@@ -40,6 +40,38 @@
     if (window.marked && window.marked.parse) return window.marked.parse(s || '');
     return (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '<br><br>');
   }
+  function enterKeyLabel() {
+    var platform = '';
+    if (navigator.userAgentData && navigator.userAgentData.platform) platform = navigator.userAgentData.platform;
+    else platform = navigator.platform || '';
+    return /Mac|iPhone|iPad|iPod/i.test(platform) ? 'Return' : 'Enter';
+  }
+  function buildAnswerShortcutHint(count, isMultiple) {
+    var pairs = [];
+    for (var i = 0; i < count && i < ALPHABET.length; i++) {
+      var label = ALPHABET[i];
+      var number = i < 9 ? '<span class="key-sep">/</span><kbd>' + (i + 1) + '</kbd>' : '';
+      pairs.push('<span class="quiz-shortcut-pair"><kbd>' + label + '</kbd>' + number + '</span>');
+    }
+    if (!pairs.length) return '';
+    return '<p class="quiz-shortcuts-hint">Shortcuts: '
+      + pairs.join('<span class="shortcut-list-sep"> </span>')
+      + ' select answers' + (isMultiple ? '; <kbd>' + enterKeyLabel() + '</kbd> submits.' : '.') + '</p>';
+  }
+  function buildNextShortcutHint() {
+    return '<p class="quiz-next-shortcut-hint">Shortcut: <kbd>' + enterKeyLabel()
+      + '</kbd> moves to the next question.</p>';
+  }
+  function buildParsonsShortcutHint(count) {
+    var keys = [];
+    for (var i = 0; i < count && i < 9; i++) {
+      keys.push('<kbd>' + (i + 1) + '</kbd>');
+    }
+    if (!keys.length) return '';
+    return '<p class="parsons-shortcuts-hint">Shortcuts: '
+      + keys.join('<span class="shortcut-list-sep"> </span>')
+      + ' move numbered lines; <kbd>' + enterKeyLabel() + '</kbd> checks the order.</p>';
+  }
 
   // ---------------------------------------------------------------------------
   // HTML builder
@@ -123,10 +155,14 @@
         html += '<div class="parsons-label">Drag lines into the solution area in the correct order'
           + (q.distractors.length ? ' (some lines are distractors that should not be used)' : '') + ':</div>';
         html += '<div class="parsons-bank" data-qi="' + qi + '">';
-        q.shuffledItems.forEach(function (item) {
+        q.shuffledItems.forEach(function (item, itemIndex) {
+          var shortcut = itemIndex < 9 ? String(itemIndex + 1) : '';
           html += '<div class="parsons-line" draggable="true" data-line="'
             + escapeHtml(item.line) + '" data-distractor="' + item.isDistractor
-            + '" data-correct-pos="' + item.correctPos + '">'
+            + '" data-correct-pos="' + item.correctPos + '"'
+            + (shortcut ? ' data-shortcut-index="' + shortcut + '" aria-keyshortcuts="' + shortcut + ' Space"' : ' aria-keyshortcuts="Space"')
+            + ' tabindex="0" role="button" aria-label="' + escapeHtml('Line ' + (itemIndex + 1) + ': ' + item.line) + '">'
+            + '<span class="parsons-shortcut-label" aria-hidden="true">' + (itemIndex + 1) + '</span>'
             + '<span class="parsons-grip">&#8942;&#8942;</span>'
             + '<code>' + escapeHtml(item.line) + '</code></div>';
         });
@@ -137,6 +173,7 @@
           + '<button class="parsons-check-btn" data-qi="' + qi + '">Check Order</button>'
           + '<button class="parsons-reset-btn" data-qi="' + qi + '">Reset</button></div>';
         html += '</div>';
+        html += buildParsonsShortcutHint(q.shuffledItems.length);
         html += '<div class="parsons-correct-data hidden" data-correct="'
           + escapeHtml(JSON.stringify(q.correctOrder)) + '"></div>';
         html += '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels"><code>'
@@ -149,7 +186,8 @@
           html += '<button class="quiz-option" role="' + (q.type === 'multiple' ? 'checkbox' : 'radio') + '" aria-checked="false" data-index="' + String(opt.originalIndex) + '"'
             + ' data-correct="' + q.correctOriginals[0] + '"'
             + ' data-correct-indices="' + q.correctOriginals.join(',') + '"'
-            + ' data-optional-indices="' + q.optionalOriginals.join(',') + '">'
+            + ' data-optional-indices="' + q.optionalOriginals.join(',') + '"'
+            + ' aria-keyshortcuts="' + ALPHABET[oi] + (oi < 9 ? ' ' + (oi + 1) : '') + '">'
             + '<span class="option-checkbox"></span><span class="option-label">' + ALPHABET[oi] + '</span>'
             + '<span class="option-content">' + renderMarkdown(opt.text) + '</span></button>';
           var fb = optionFeedback[opt.originalIndex];
@@ -160,7 +198,8 @@
           }
         });
         html += '</div>';
-        if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
+        if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled aria-keyshortcuts="Enter">Submit Answer</button>';
+        html += buildAnswerShortcutHint(q.options.length, q.type === 'multiple');
         html += '<div class="quiz-correct-answers">Correct Answer'
           + (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">'
           + appendAnswerBadges(q.correctLabels)
@@ -169,7 +208,8 @@
       }
       html += '<div class="quiz-explanation hidden"><div class="explanation-title">Explanation</div>'
         + '<div class="explanation-text">' + renderMarkdown(q.explanation) + '</div>'
-        + '<button class="next-btn">' + (qi < questions.length - 1 ? 'Next Question' : 'See Results') + '</button></div>';
+        + '<button class="next-btn">' + (qi < questions.length - 1 ? 'Next Question' : 'See Results') + '</button>'
+        + buildNextShortcutHint() + '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -180,7 +220,8 @@
       + '<p class="score-summary"></p><div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>'
       + '<div class="results-actions">'
       + (isFinalQuiz ? '' : '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>')
-      + '<button class="restart-btn">Try Again</button></div></div></div></div>';
+      + '<button class="restart-btn">Try Again</button></div>'
+      + '<p class="quiz-result-shortcut-hint hidden"></p></div></div></div>';
     return html;
   }
 
@@ -209,6 +250,121 @@
           && selectedIndices.every(function (i) { return allowed.has(i); });
     }
     function statusEl() { return controlsEl && controlsEl.querySelector('.tvm-quiz-status'); }
+    function isEditableShortcutTarget(target) {
+      if (!target) return false;
+      var tag = (target.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+    }
+    function answerShortcutIndex(e) {
+      if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return -1;
+      if (isEditableShortcutTarget(e.target)) return -1;
+      var key = e.key || '';
+      if (/^[1-9]$/.test(key)) return parseInt(key, 10) - 1;
+      if (key.length === 1) {
+        var upper = key.toUpperCase();
+        if (/^[A-Z]$/.test(upper)) return upper.charCodeAt(0) - 65;
+      }
+      return -1;
+    }
+    function setShortcutHintVisible(card, visible) {
+      var hint = card && card.querySelector('.quiz-shortcuts-hint');
+      if (hint) hint.classList.toggle('hidden', !visible);
+    }
+    function submitMultipleShortcut(e, card) {
+      if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return false;
+      if (isEditableShortcutTarget(e.target)) return false;
+      if ((e.key || '') !== 'Enter') return false;
+      if (!card || card.dataset.type !== 'multiple') return false;
+      if (card.querySelector('.quiz-explanation:not(.hidden)')) return false;
+      var sub = card.querySelector('.submit-answer-btn');
+      if (!sub || sub.disabled || sub.classList.contains('hidden')) return false;
+      e.preventDefault();
+      sub.click();
+      return true;
+    }
+    function nextQuestionShortcut(e, card) {
+      if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return false;
+      if (isEditableShortcutTarget(e.target)) return false;
+      if ((e.key || '') !== 'Enter') return false;
+      if (!card || !card.querySelector('.quiz-explanation:not(.hidden)')) return false;
+      var next = card.querySelector('.next-btn');
+      if (!next) return false;
+      e.preventDefault();
+      next.click();
+      return true;
+    }
+    function focusNextQuestionButton(card) {
+      var next = card && card.querySelector('.next-btn');
+      if (!next || typeof next.focus !== 'function') return;
+      setTimeout(function () {
+        try { next.focus({ preventScroll: true }); }
+        catch (err) { next.focus(); }
+      }, 0);
+    }
+    function focusQuizAction(button) {
+      if (!button || typeof button.focus !== 'function') return;
+      setTimeout(function () {
+        try { button.focus({ preventScroll: true }); }
+        catch (err) { button.focus(); }
+      }, 0);
+    }
+    function moveParsonsLine(line, card) {
+      if (!line || !card || card.querySelector('.quiz-explanation:not(.hidden)')) return false;
+      var parent = line.parentElement;
+      if (!parent) return false;
+      if (parent.classList.contains('parsons-bank')) {
+        var target = card.querySelector('.parsons-target');
+        if (target) target.appendChild(line);
+      } else if (parent.classList.contains('parsons-target')) {
+        var bank = card.querySelector('.parsons-bank');
+        if (bank) bank.appendChild(line);
+      } else {
+        return false;
+      }
+      if (typeof line.focus === 'function') {
+        try { line.focus({ preventScroll: true }); }
+        catch (err) { line.focus(); }
+      }
+      return true;
+    }
+    function parsonsShortcut(e, card) {
+      if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return false;
+      if (isEditableShortcutTarget(e.target)) return false;
+      if (!card || card.dataset.type !== 'parsons') return false;
+      if (card.querySelector('.quiz-explanation:not(.hidden)')) return false;
+      var key = e.key || '';
+      if (key === 'Enter') {
+        var check = card.querySelector('.parsons-check-btn');
+        if (!check || check.disabled) return false;
+        e.preventDefault();
+        check.click();
+        return true;
+      }
+      if (key === ' ' || key === 'Spacebar') {
+        var focusedLine = e.target && e.target.closest ? e.target.closest('.parsons-line') : null;
+        if (!focusedLine) return false;
+        e.preventDefault();
+        return moveParsonsLine(focusedLine, card);
+      }
+      if (/^[1-9]$/.test(key)) {
+        var line = card.querySelector('.parsons-line[data-shortcut-index="' + key + '"]');
+        if (!line) return false;
+        e.preventDefault();
+        return moveParsonsLine(line, card);
+      }
+      return false;
+    }
+    function focusActiveAnswer() {
+      if (typeof document.hasFocus === 'function' && !document.hasFocus()) return;
+      var card = cards[currentQ];
+      if (!card || !card.classList.contains('active')) return;
+      var target = card.querySelector('.quiz-option:not([disabled])') || card.querySelector('.parsons-line');
+      if (!target || typeof target.focus !== 'function') return;
+      setTimeout(function () {
+        try { target.focus({ preventScroll: true }); }
+        catch (err) { target.focus(); }
+      }, 0);
+    }
 
     var progressBar = container.querySelector('.progress-fill');
     var resultsArea = container.querySelector('.quiz-results');
@@ -228,6 +384,7 @@
       if (sub) sub.disabled = true;
       updateProgress();
       if (hostEl) hostEl.scrollTop = 0;
+      focusActiveAnswer();
     }
     function revealOptionFeedback(card, idx) {
       var fb = card.querySelector('.option-feedback[data-for-index="' + idx + '"]');
@@ -249,8 +406,10 @@
         if (correct) correct.classList.add('correct');
         revealOptionFeedback(card, opt.dataset.index);
       }
+      setShortcutHintVisible(card, false);
       if (ca) ca.style.display = 'flex';
       if (exp) exp.classList.remove('hidden');
+      focusNextQuestionButton(card);
     }
     function handleOption(e) {
       var opt = e.currentTarget;
@@ -300,8 +459,10 @@
           }
         });
       }
+      setShortcutHintVisible(card, false);
       if (ca) ca.style.display = 'flex';
       if (exp) exp.classList.remove('hidden');
+      focusNextQuestionButton(card);
     }
     function nextQ() { currentQ++; if (currentQ < total) showQ(currentQ); else finishQuiz(); }
     function finishQuiz() {
@@ -314,6 +475,8 @@
       var summary = container.querySelector('.score-summary');
       var contBtn = container.querySelector('.tvm-quiz-continue-btn');
       var restBtn = container.querySelector('.restart-btn');
+      var resultHint = container.querySelector('.quiz-result-shortcut-hint');
+      var focusBtn = null;
       if (passed) {
         if (summary) summary.textContent = isFinalQuiz
           ? 'Tutorial complete — great job!'
@@ -321,6 +484,16 @@
         if (contBtn) contBtn.classList.remove('hidden');
         if (restBtn) restBtn.classList.add('hidden');
         if (st) st.textContent = isFinalQuiz ? '✓ Tutorial Complete' : '✓ Passed';
+        if (resultHint) {
+          if (contBtn) {
+            resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> continues.';
+            resultHint.classList.remove('hidden');
+          } else {
+            resultHint.textContent = '';
+            resultHint.classList.add('hidden');
+          }
+        }
+        if (contBtn) focusBtn = contBtn;
         if (isFinalQuiz) onPass(stepIndex);
       } else {
         var needed = Math.round(minScore * total);
@@ -329,8 +502,14 @@
         if (contBtn) contBtn.classList.add('hidden');
         if (restBtn) restBtn.classList.remove('hidden');
         if (st) st.textContent = '✗ ' + score + '/' + total;
+        if (resultHint) {
+          resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> tries again.';
+          resultHint.classList.remove('hidden');
+        }
+        focusBtn = restBtn;
       }
       if (hostEl) hostEl.scrollTop = 0;
+      focusQuizAction(focusBtn);
     }
     function restartQuiz() {
       currentQ = 0; score = 0;
@@ -351,6 +530,7 @@
         if (exp) exp.classList.add('hidden');
         if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }
         if (ca) ca.style.display = '';
+        setShortcutHintVisible(card, true);
         // Reset Parsons
         var bank = card.querySelector('.parsons-bank');
         var target = card.querySelector('.parsons-target');
@@ -376,6 +556,25 @@
     container.querySelectorAll('.quiz-option').forEach(function (b) { b.addEventListener('click', handleOption); });
     container.querySelectorAll('.submit-answer-btn').forEach(function (b) { b.addEventListener('click', handleSubmit); });
     container.querySelectorAll('.next-btn').forEach(function (b) { b.addEventListener('click', nextQ); });
+    container.addEventListener('keydown', function (e) {
+      var card = cards[currentQ];
+      if (!card || !card.classList.contains('active')) return;
+      if (nextQuestionShortcut(e, card)) return;
+      if (parsonsShortcut(e, card)) return;
+      if (submitMultipleShortcut(e, card)) return;
+      var idx = answerShortcutIndex(e);
+      if (idx < 0) return;
+      if (card.dataset.type !== 'single' && card.dataset.type !== 'multiple') return;
+      if (card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      var options = card.querySelectorAll('.quiz-option');
+      if (idx >= options.length) return;
+      e.preventDefault();
+      if (typeof options[idx].focus === 'function') {
+        try { options[idx].focus({ preventScroll: true }); }
+        catch (err) { options[idx].focus(); }
+      }
+      options[idx].click();
+    });
     var rBtn = container.querySelector('.restart-btn');
     if (rBtn) rBtn.addEventListener('click', restartQuiz);
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
@@ -474,6 +673,7 @@
         var exp = card.querySelector('.quiz-explanation');
         if (ca) ca.style.display = 'flex';
         if (exp) exp.classList.remove('hidden');
+        focusNextQuestionButton(card);
       });
     });
     container.querySelectorAll('.parsons-reset-btn').forEach(function (btn) {
@@ -489,6 +689,7 @@
         });
       });
     });
+    showQ(0);
   }
 
   // ---------------------------------------------------------------------------

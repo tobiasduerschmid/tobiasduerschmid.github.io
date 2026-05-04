@@ -695,7 +695,21 @@ messages on the BroadcastChannel and re-renders accordingly.
   progression, quiz gating, debugger sync. Where most behavioral changes go.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
-  `min_score` gating, `option_feedback` rendering.
+  `min_score` gating, `option_feedback` rendering. Tutorial quiz answer
+  options expose scoped shortcuts: visible option labels (`A`, `B`, `C`, …)
+  and number keys (`1`, `2`, `3`, … through `9`) select/toggle the matching
+  currently visible answer while the quiz has focus. For multiple-answer
+  questions, `Enter` submits once at least one answer is selected and the
+  Submit Answer button is enabled. Visible hints label that key as `Return`
+  on Apple platforms. After question feedback appears, focus moves to the
+  next-question button so `Enter` / `Return` activates the native button. On
+  quiz results, focus moves to the active result action (`Continue` or
+  `Try Again`) so the same native key activation works there. The shortcut
+  hint appears at the bottom of active non-Parsons quiz questions and hides
+  after the question is answered. Parsons questions number their shuffled
+  lines; number keys move matching lines, `Space` moves the focused line, and
+  `Enter` / `Return` checks the order before focus moves to the next-question
+  button.
 - **`js/tutorial-popout-manager.js`** / **`js/tutorial-popout-client.js`** —
   popout lifecycle and IPC.
 - **`js/tutorial-refactorings.js`** — Monaco refactoring helpers
