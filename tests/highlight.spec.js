@@ -96,6 +96,17 @@ test.describe('Highlight Syntax on Blog Content with Inline HTML', () => {
     await expect(page.locator('.blog-post-content')).not.toContainText('==');
   });
 
+  test('generated metadata descriptions do not expose raw highlight delimiters', async ({ page }) => {
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /How can I leverage AI/);
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute('content', /==/);
+    await expect(page.locator('meta[property="og:description"]')).not.toHaveAttribute('content', /==/);
+
+    const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
+    const structuredData = JSON.parse(jsonLd || '{}');
+    expect(structuredData.description).toContain('How can I leverage AI');
+    expect(structuredData.description).not.toContain('==');
+  });
+
   test('highlight wraps an emphasized question that contains generated abbreviation markup', async ({ page }) => {
     const paragraph = page.locator('.blog-post-content p').filter({
       hasText: 'Many of my students come to me with this wonderful question'
