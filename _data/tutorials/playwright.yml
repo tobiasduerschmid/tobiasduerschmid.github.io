@@ -3082,7 +3082,7 @@ steps:
         command: |
           const spec = files['tests/all-done.spec.js'] || '';
           assert(/import\s*\{\s*test\s*,\s*expect\s*\}\s+from\s+['"]@playwright\/test['"]/.test(spec),
-            'tests/all-done.spec.js needs the import line: `import { test, expect } from \'@playwright/test\';`. Don\\'t delete the existing one.');
+            'tests/all-done.spec.js needs the import line: `import { test, expect } from \'@playwright/test\';`. Do not delete the existing one.');
 
       - description: "You wrote two tests from scratch — neither name overlaps with the Step 7 fixtures"
         command: |

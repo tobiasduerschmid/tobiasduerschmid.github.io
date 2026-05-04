@@ -9577,11 +9577,22 @@
     var tests = (run && run.tests) || [];
     var results = (run && run.results) || [];
     var targetIndex = -1;
+    var hasTitle = cfg.title || cfg.test_title || cfg.name || cfg.description;
     if (cfg.index !== undefined && cfg.index !== null) {
       targetIndex = Number(cfg.index);
+    } else if (!hasTitle) {
+      // No title/index — check that *all* discovered tests match the expectation.
+      // Useful for from-scratch steps where the student names their own tests.
+      if (!tests.length) throw new Error('Playwright expectation found no tests in test_files');
+      for (var k = 0; k < tests.length; k++) {
+        var pass = results[k] === true;
+        var lbl = tests[k] && tests[k].description || ('test #' + k);
+        if (expected === 'fail' && pass) throw new Error('Expected Playwright test "' + lbl + '" to fail, but it passed');
+        if (expected === 'pass' && !pass) throw new Error('Expected Playwright test "' + lbl + '" to pass, but it failed');
+      }
+      return true;
     } else {
-      var title = cfg.title || cfg.test_title || cfg.name || cfg.description;
-      if (!title) throw new Error('Playwright expectation needs `title` or `index`');
+      var title = hasTitle;
       var exact = String(title);
       for (var i = 0; i < tests.length; i++) {
         if (tests[i] && tests[i].description === exact) { targetIndex = i; break; }
