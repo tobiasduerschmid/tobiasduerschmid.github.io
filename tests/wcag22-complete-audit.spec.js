@@ -30,9 +30,14 @@ const AXE_TAG_TO_CRITERION = (() => {
   return map;
 })();
 
-const MAX_PAGES_PER_FEATURE = Number(process.env.WCAG_AUDIT_PAGE_LIMIT || 0);
 const FULL_SWEEP = process.env.WCAG_AUDIT_FULL_SWEEP === '1';
 const URL_FILTER = process.env.WCAG_AUDIT_URL_FILTER ? new RegExp(process.env.WCAG_AUDIT_URL_FILTER) : null;
+const EXPLICIT_PAGE_LIMIT = process.env.WCAG_AUDIT_PAGE_LIMIT ? Number(process.env.WCAG_AUDIT_PAGE_LIMIT) : null;
+// Local `npx playwright test` runs need a representative smoke sweep; the
+// full site pass is opt-in because each page now runs multiple expensive
+// light/dark, axe, focus, and mobile checks. CI enables the full sweep with
+// WCAG_AUDIT_FULL_SWEEP=1.
+const MAX_PAGES_PER_FEATURE = EXPLICIT_PAGE_LIMIT ?? (FULL_SWEEP || URL_FILTER ? 0 : 1);
 const CONFORMANCE_TARGET = {
   standard: 'WCAG',
   version: '2.2',

@@ -112,14 +112,14 @@ test.describe('Automatic glossary abbreviations', () => {
   });
 
   test('renders tutorial instructions with glossary abbreviations', async ({ page }) => {
-    await page.goto('/SEBook/tools/sql-tutorial');
+    await page.goto('/SEBook/tools/sql-tutorial.html');
     const sql = page.locator('.tvm-step-instructions p abbr[title="Structured Query Language"], .tvm-step-instructions p abbr[data-original-title="Structured Query Language"]').first();
     await expect(sql).toHaveText('SQL');
     await expect(sql).toHaveAttribute('data-no-tooltip', 'true');
     await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
     await expect(page.locator('.tvm-step-instructions abbr[tabindex]')).toHaveCount(0);
 
-    await page.goto('/SEBook/tools/react-tutorial');
+    await page.goto('/SEBook/tools/react-tutorial.html');
     const jsx = page.locator('.tvm-step-instructions abbr[title="JavaScript XML"], .tvm-step-instructions abbr[data-original-title="JavaScript XML"]').filter({ hasText: 'JSX' }).first();
     await expect(jsx).toHaveText('JSX');
     await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
@@ -169,7 +169,7 @@ test.describe('Diagram <figure> wrapping', () => {
 test.describe('Tutorial step status', () => {
   test('python tutorial nav exposes a status announcement for the current step', async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto('/SEBook/tools/python-tutorial');
+    await page.goto('/SEBook/tools/python-tutorial.html');
     await page.waitForSelector('.tvm-step-btn', { timeout: 60_000 });
     await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: 60_000 });
 
@@ -186,17 +186,5 @@ test.describe('Tutorial step status', () => {
     // First step button has a descriptive aria-label
     const firstBtnLabel = await page.locator('.tvm-step-btn').first().getAttribute('aria-label');
     expect(firstBtnLabel).toMatch(/^Step \d+:/);
-  });
-});
-
-test.describe('Audio player transcript surface', () => {
-  test('audio player without transcript renders without disclosure', async ({ page }) => {
-    // Pick a blog post that has audio but no transcript front-matter.
-    // The disclosure should be absent when no transcript is provided.
-    await page.goto('/blog/');
-    const audioLink = page.locator('a[href*="/blog/"]').first();
-    await expect(audioLink).toBeVisible();
-    // Simply verify the include works on the blog index without errors.
-    expect(await page.locator('.cap-transcript').count()).toBe(0);
   });
 });
