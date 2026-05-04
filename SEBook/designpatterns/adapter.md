@@ -352,7 +352,7 @@ Buschmann, Henney, and Schmidt observe in *Pattern-Oriented Software Architectur
 3. **Two-Way Adapter:** Conforms to both the target and adaptee interfaces (typically via multiple inheritance), so the adapter is usable wherever either interface is expected. GoF's example is `ConstraintStateVariable`, a subclass of both Unidraw's `StateVariable` and QOCA's `ConstraintVariable`, that adapts each interface to the other so the same object works in either system.
 4. **Pluggable Adapter:** A class with built-in interface adaptation. GoF describes three implementations: using abstract operations, using delegate objects, or using parameterized adapters (e.g., Smalltalk's `PluggableAdaptor`, which is parameterized with blocks).
 
-The first two forms (Object Adapter, Class Adapter) are described together inside GoF's Adapter entry, while Two-Way and Pluggable Adapter are surfaced in GoF's Implementation discussion. This insight is educationally important: when a reference says "use the Adapter pattern," you must clarify *which* form of adaptation is needed.
+The first two forms (Object Adapter, Class Adapter) are described together inside GoF's Adapter entry, while Two-Way and Pluggable Adapter are surfaced in GoF's Implementation discussion. This insight is educationally important: when a reference says "use the Adapter pattern", you must clarify *which* form of adaptation is needed.
 
 # Adapter vs. Facade vs. Decorator
 

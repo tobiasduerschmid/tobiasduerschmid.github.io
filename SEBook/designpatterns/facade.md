@@ -8,7 +8,7 @@ In modern software construction, we often build systems composed of multiple com
 
 # Problem
 When a client needs to interact with a set of complex subsystems, several issues arise:
-1.  **High Complexity:** To perform a single logical action like "Watch a Movie," the client must execute a long sequence of manual steps. In the Head First example, watching a movie requires 13 separate calls across six classes: turn on the popcorn popper, start it popping, dim the lights, put the screen down, turn on the projector, set its input, put it in widescreen mode, turn on the amplifier, set it to DVD input, set surround sound, set the volume, turn on the DVD player, and finally play the movie.
+1.  **High Complexity:** To perform a single logical action like "Watch a Movie", the client must execute a long sequence of manual steps. In the Head First example, watching a movie requires 13 separate calls across six classes: turn on the popcorn popper, start it popping, dim the lights, put the screen down, turn on the projector, set its input, put it in widescreen mode, turn on the amplifier, set it to DVD input, set surround sound, set the volume, turn on the DVD player, and finally play the movie.
 2.  **Maintenance Nightmares:** If the movie finishes, the user has to perform all those steps again in reverse order to shut everything down. If a component is upgraded (e.g., replacing the DVD player with a Blu-ray device), every client that uses the system must learn a new, slightly different procedure.
 3.  **Tight Coupling:** The client code becomes "intimate" with every single class in the subsystem. This violates the principle of [**Information Hiding**](/SEBook/designprinciples/informationhiding.html), as the client must understand the internal low-level details of how each device operates just to use the system.
 
@@ -591,7 +591,7 @@ A subsystem is analogous to a class: both have public and private interfaces. Th
 
 > **Principle of Least Knowledge** — talk only to your immediate friends.
 
-This principle (also known as the **Law of Demeter**) guides us to reduce the interactions between objects to just a few close "friends." When designing a system, for any object, be careful of the number of classes it interacts with and how it comes to interact with those classes. Following this principle prevents designs where a large number of classes are coupled together so that changes in one part cascade to other parts.
+This principle (also known as the **Law of Demeter**) guides us to reduce the interactions between objects to just a few close "friends". When designing a system, for any object, be careful of the number of classes it interacts with and how it comes to interact with those classes. Following this principle prevents designs where a large number of classes are coupled together so that changes in one part cascade to other parts.
 
 The principle states that, from any method in an object, you should only invoke methods that belong to:
 

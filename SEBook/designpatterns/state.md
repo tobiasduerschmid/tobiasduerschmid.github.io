@@ -6,7 +6,7 @@ layout: sebook
 
 # Intent
 
-The State pattern allows an object to change its behavior when its internal state changes — making the object appear, from the outside, to have changed its class. (See *Design Patterns* by Gamma, Helm, Johnson & Vlissides, 1994, p. 283, for the original GoF formulation.)
+The State pattern allows an object to change its behavior when its internal state changes — making the object appear, from the outside, to have changed its class. (See p. 283 of the GoF book {% cite Gamma1995 %} for the original formulation.)
 
 The pattern is also known as **Objects for States**. The original motivating example in GoF is a `TCPConnection` that switches behavior between `TCPEstablished`, `TCPListen`, and `TCPClosed` states — the same `Open()` request behaves entirely differently depending on which state the connection is currently in.
 
@@ -404,7 +404,7 @@ Use the table-driven approach when the state graph is large, regular, and behavi
 
 ## How to represent a state in which the object is never doing anything (either at initialization time or as a "final" state)
 
-Use the Null Object pattern to create a ["null state"](https://en.wikipedia.org/wiki/Null_object_pattern). This communicates the design intent of "empty behavior" explicitly rather than scattering `null` checks throughout the code.
+Use the [Null Object pattern](/SEBook/designpatterns/null_object.html) to create a "null state". This communicates the design intent of "empty behavior" explicitly rather than scattering `null` checks throughout the code.
 
 # The Core Insight: Polymorphism over Conditions
 
@@ -429,10 +429,8 @@ The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nea
 
 A useful heuristic: if the concrete implementations *transition between each other* based on internal logic, it is State. If the client *selects* the concrete implementation at configuration time, it is Strategy.
 
-## Flashcards
+## Practice
 
 {% include flashcards.html id="design_pattern_state" %}
-
-## Quiz
 
 {% include quiz.html id="design_pattern_state" %}

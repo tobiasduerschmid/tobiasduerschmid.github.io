@@ -6,7 +6,7 @@ layout: sebook
 
 The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates.
 
-MVC was first formulated by Trygve Reenskaug in 1978–79 while he was visiting the Learning Research Group at Xerox PARC, and it took its enduring shape in the Smalltalk-80 class library. His initial sketch was actually called *Thing-Model-View-Editor*; the name *Model-View-Controller* appeared in his note of December 10, 1979. POSA Vol. 1 (Buschmann et al., 1996) later codified MVC as one of the canonical architectural patterns.
+MVC was first formulated by Trygve Reenskaug in 1978–79 while he was visiting the Learning Research Group at Xerox PARC, and it took its enduring shape in the Smalltalk-80 class library. His initial sketch was actually called *Thing-Model-View-Editor*; the name *Model-View-Controller* appeared in his note of December 10, 1979. POSA Vol. 1 {% cite Buschmann1996 %} later codified MVC as one of the canonical architectural patterns.
 
 # Problem 
 
@@ -116,7 +116,7 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 
 ## Liabilities
 
-* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered. Gamma argues that using separate model, view, and controller components for menus and simple text elements increases complexity without gaining much flexibility.
+* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered. The GoF {% cite Gamma1995 %} argue that using separate model, view, and controller components for menus and simple text elements increases complexity without gaining much flexibility.
 * **Potential for Excessive Updates**: Because changes to the model are blindly published to all subscribing views, minor data manipulations can trigger an excessive cascade of notifications, potentially causing severe performance bottlenecks. For example, a view with an iconized window may not need an update until the window is restored. This is the same "notification storm" problem that plagues the Observer pattern—MVC inherits it directly.
 * **Inefficiency of Data Access in View**: To preserve loose coupling, views must frequently query the model through its public interface to retrieve display data. Depending on the model's interface, a view may need to make multiple calls to obtain all its display data. If not carefully designed with data caching, this frequent polling can be highly inefficient.
 * **Intimate Connection Between View and Controller**: While the model is isolated, the view and its corresponding controller are often closely-related but separate components. A view rarely exists without its specific controller, which hinders their individual reuse—the exception being read-only views that share a controller that ignores all input.
@@ -136,7 +136,7 @@ The **emergent property** of this compound is a clean three-way separation where
 
 # Variants and Known Uses
 
-POSA1 documents one classical variant, **Document-View**, which relaxes the separation of view and controller. In several GUI platforms (notably the X Window System) window display and event handling are closely interwoven, so the responsibilities of view and controller are combined into a single component while the document corresponds to the model. This sacrifices exchangeability of controllers but matches the underlying platform more naturally. The Document-View variant is the architecture used by Microsoft Foundation Class Library (MFC) and the ET++ application framework. The original known use, of course, is the Smalltalk-80 user-interface framework where MVC was first formulated.
+POSA1 {% cite Buschmann1996 %} documents one classical variant, **Document-View**, which relaxes the separation of view and controller. In several GUI platforms (notably the X Window System) window display and event handling are closely interwoven, so the responsibilities of view and controller are combined into a single component while the document corresponds to the model. This sacrifices exchangeability of controllers but matches the underlying platform more naturally. The Document-View variant is the architecture used by Microsoft Foundation Class Library (MFC) and the ET++ application framework. The original known use, of course, is the Smalltalk-80 user-interface framework where MVC was first formulated.
 
 # MVC in Modern Frameworks
 
@@ -391,10 +391,8 @@ new TaskController(model).addNewTask("Combine Observer with MVC");
   </div>
 </div>
 
-## Flashcards
+## Practice
 
 {% include flashcards.html id="design_pattern_mvc" %}
-
-## Quiz
 
 {% include quiz.html id="design_pattern_mvc" %}

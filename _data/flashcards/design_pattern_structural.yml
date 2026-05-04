@@ -17,7 +17,7 @@ cards:
   - id: 4
     question: "What does POSA5 say about 'the Adapter pattern'?"
     answer: "It is actually a family of at least four patterns: Object Adapter, Class Adapter, Two-Way Adapter, and Pluggable Adapter."
-    explanation: "When someone says 'use the Adapter pattern,' you must clarify which form of adaptation is needed."
+    explanation: "When someone says 'use the Adapter pattern', you must clarify which form of adaptation is needed."
   - id: 5
     question: "What problem does Composite solve?"
     answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."

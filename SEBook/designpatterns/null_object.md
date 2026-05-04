@@ -483,7 +483,7 @@ If some clients want the Null Object to return `0` and others want it to throw, 
 
 ## Null Object is not a Proxy, and does not transform into a Real Object
 
-It is tempting to think of a Null Object as a placeholder that "will become real later." It does not {% cite Woolf1998 %}. A Null Object always does nothing; that is its single job. If your stand-in needs to transform into a real collaborator on first use, you are reaching for the [Proxy pattern](https://en.wikipedia.org/wiki/Proxy_pattern), not Null Object — Proxy controls access to a real subject and may instantiate it lazily. Null Object replaces the real subject permanently.
+It is tempting to think of a Null Object as a placeholder that "will become real later". It does not {% cite Woolf1998 %}. A Null Object always does nothing; that is its single job. If your stand-in needs to transform into a real collaborator on first use, you are reaching for the [Proxy pattern](https://en.wikipedia.org/wiki/Proxy_pattern), not Null Object — Proxy controls access to a real subject and may instantiate it lazily. Null Object replaces the real subject permanently.
 
 ## Does this collaborator need a Null Object at all? (Watch for masked bugs)
 
@@ -491,7 +491,7 @@ The Null Object pattern silently swallows every operation it receives. That is e
 
 * Logging at startup which collaborator was wired in (`"Audit logger: SilentLogger"` is conspicuous in a production log).
 * Making the Null Object's name say what it does — `SilentLogger`, `NoopValidator`, `EmptyPermissions` — never `DefaultLogger`.
-* Reserving Null Object for cases where do-nothing is a legitimate domain decision, not a fallback for "we couldn't construct the real one."
+* Reserving Null Object for cases where do-nothing is a legitimate domain decision, not a fallback for "we couldn't construct the real one".
 
 # Variants
 
@@ -505,7 +505,7 @@ When several Null Objects of the same type need slightly different "null results
 
 ## Null Iterator
 
-A frequently used special case: a leaf node in a tree is asked for an iterator over its (non-existent) children, and returns a `NullIterator` whose `hasNext()` always returns `false` {% cite Gamma1995 %}. Clients iterate uniformly over leaves and composites, with no special case for "this node has no children." `Collections.emptyIterator()` in Java and `iter([])` in Python encode the same idea in standard libraries.
+A frequently used special case: a leaf node in a tree is asked for an iterator over its (non-existent) children, and returns a `NullIterator` whose `hasNext()` always returns `false` {% cite Gamma1995 %}. Clients iterate uniformly over leaves and composites, with no special case for "this node has no children". `Collections.emptyIterator()` in Java and `iter([])` in Python encode the same idea in standard libraries.
 
 ## Null State and Null Strategy (pattern compounds)
 
@@ -528,7 +528,7 @@ Applying the Null Object pattern yields the following consequences {% cite Woolf
 * **Class proliferation.** Every `AbstractObject` family that needs a Null Object adds at least one more class (the Null Object itself, plus possibly the `AbstractObject` extracted just to host it) {% cite Woolf1998 %}.
 * **Hard to mix do-nothing into several collaborators.** The Null Object only helps when all the do-nothing behavior lives behind one collaborator interface. If "do nothing" should sometimes mean "skip step A on Collaborator-1 and step B on Collaborator-2," you cannot drop one Null Object in.
 * **Clients cannot agree on do-nothing semantics.** If different clients want the Null Object to behave differently, you end up with multiple Null Object subclasses or a parameterized one — losing some of the simplicity the pattern was meant to offer {% cite Woolf1998 %}.
-* **Inappropriate when the absence must be observable.** Monitoring, metrics, or auditing systems may *need* to distinguish "the operation was skipped" from "the operation succeeded with no effect." A Null Object hides the distinction by definition. In that case, leave the `null`/`Optional` and check it explicitly.
+* **Inappropriate when the absence must be observable.** Monitoring, metrics, or auditing systems may *need* to distinguish "the operation was skipped" from "the operation succeeded with no effect". A Null Object hides the distinction by definition. In that case, leave the `null`/`Optional` and check it explicitly.
 
 # When to use, and when not to
 
@@ -543,7 +543,7 @@ Per Woolf's Applicability {% cite Woolf1998 %}, use Null Object when **all** of 
 Skip the Null Object when:
 
 * **You only have one client and one call site.** A single null-check is simpler than a new class hierarchy.
-* **The absence carries information that the client must act on.** If "no logger" means "skip metrics emission too," the absence is data; do not hide it.
+* **The absence carries information that the client must act on.** If "no logger" means "skip metrics emission too", the absence is data; do not hide it.
 * **`null` and "do nothing" are different things.** A search returning "no result found" is not the same as a search returning the empty list of results that happen to match nothing. Match the type to the meaning.
 * **The collaborator must transform into a real one later.** That's a [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern), not a Null Object.
 * **Modern language facilities already cover the case.** Languages with `Optional<T>` / `Maybe T` types, exhaustive pattern matching, or non-nullable types make the conditional shorter and the type-checker enforce it. The benefit of Null Object shrinks accordingly. (See *Related Patterns* below.)
@@ -576,11 +576,11 @@ The Null Object frequently combines with — or competes with — other patterns
 
 # Practical Guidance
 
-* **Name the class for what it does, not what it is.** `SilentLogger` and `EmptyPermissions` are more honest than `NullLogger` and `DefaultPermissions`. The reader needs to understand the *behavior* at a glance — "default" implies "what you usually want," which is precisely what a Null Object usually is *not*.
+* **Name the class for what it does, not what it is.** `SilentLogger` and `EmptyPermissions` are more honest than `NullLogger` and `DefaultPermissions`. The reader needs to understand the *behavior* at a glance — "default" implies "what you usually want", which is precisely what a Null Object usually is *not*.
 * **Log which collaborator was wired in.** A one-line startup log (`"Audit logger: SilentLogger (no audit trail will be written)"`) catches misconfigurations before they cause months of silent damage.
 * **Don't reach for it when you have only one client.** A lone `if (x != null)` is not a smell worth fixing with a class hierarchy. Wait until two or three call sites repeat the same guard.
 * **Pair with `Optional`/`Maybe` rather than replacing them.** In typed languages, returning `Optional<AuditLogger>` from your factory and then resolving the empty case to a `SilentLogger` at the wiring boundary keeps the type honest *and* keeps the call site clean.
-* **Don't use Null Object to silence a real exception.** If a missing file *is* an error, throw. Null Object replaces "absence is the design"; it does not paper over "absence means we screwed up."
+* **Don't use Null Object to silence a real exception.** If a missing file *is* an error, throw. Null Object replaces "absence is the design"; it does not paper over "absence means we screwed up".
 
 ## Flashcards
 

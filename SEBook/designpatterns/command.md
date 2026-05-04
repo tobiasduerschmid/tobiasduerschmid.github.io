@@ -186,7 +186,7 @@ Kerievsky's refactoring is especially useful because it prevents pattern-first d
 5. Put concrete commands in a map keyed by command name, button slot, route name, or message type.
 6. Replace the conditional dispatcher with lookup plus `execute()`.
 
-This is not just "remove a switch statement." It changes the design from "the dispatcher knows every action" to "the dispatcher hosts independently configurable actions."
+This is not just "remove a switch statement". It changes the design from "the dispatcher knows every action" to "the dispatcher hosts independently configurable actions".
 
 # Code Example
 
@@ -622,7 +622,7 @@ The costs are real:
 
 * More classes or functions exist in the design.
 * The actual receiver method is one indirection away, so tracing execution takes more navigation.
-* Undo requires careful state management; a command that only knows "do" does not magically know "undo."
+* Undo requires careful state management; a command that only knows "do" does not magically know "undo".
 * Overuse turns straightforward method calls into an abstraction maze.
 
 The pattern earns its complexity when requests need a lifecycle: configure, execute, remember, undo, replay, queue, log, retry, compose, or inspect.

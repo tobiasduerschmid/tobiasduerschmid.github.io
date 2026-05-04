@@ -7,7 +7,7 @@ layout: sebook
 
 # Problem 
 
-In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly. As the GoF describe it, this is a common side-effect of partitioning a system into a collection of cooperating classes: you need to maintain consistency between related objects, but you don't want to achieve that consistency by making the classes tightly coupled, because that reduces their reusability.
+In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly. As the *Gang of Four* (GoF — the four authors of *Design Patterns* {% cite Gamma1995 %}) describe it, this is a common side-effect of partitioning a system into a collection of cooperating classes: you need to maintain consistency between related objects, but you don't want to achieve that consistency by making the classes tightly coupled, because that reduces their reusability.
 
 The classic motivating example (GoF Observer chapter) is a graphical user interface toolkit that separates presentation from the underlying application data: a spreadsheet view and a bar chart can both depict the same numerical data using different presentations. The two views don't know about each other, yet they must *behave* as though they do — when the user edits a value in the spreadsheet, the bar chart must reflect the change immediately, and vice versa. There is no reason to limit the number of dependents to two; any number of different views may want to display the same data.
 
@@ -17,7 +17,7 @@ The core problem is: **How can a one-to-many dependency between objects be maint
 
 > **Intent (GoF):** *"Define a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically."*
 >
-> **Also Known As:** *Dependents, Publish-Subscribe* (the GoF Observer chapter explicitly lists both as alternative names; POSA1 documents the related pattern under the name *Publisher-Subscriber*, with *Observer* and *Dependents* as aliases).
+> **Also Known As:** *Dependents, Publish-Subscribe* (the GoF Observer chapter explicitly lists both as alternative names; POSA1 {% cite Buschmann1996 %} documents the related pattern under the name *Publisher-Subscriber*, with *Observer* and *Dependents* as aliases).
 
 # Context
 

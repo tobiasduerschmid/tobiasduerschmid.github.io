@@ -18,7 +18,7 @@ When these objects communicate directly, several architectural challenges arise:
 # Solution
 The **Mediator Pattern** solves this by encapsulating many-to-many communication dependencies within a single "Mediator" object. Instead of objects talking to each other directly, they only communicate with the Mediator.
 
-The objects (often called "colleagues") tell the Mediator when their state changes. The Mediator then contains all the complex control logic and coordination rules to tell the other objects how to respond. For example, the alarm clock simply tells the Mediator "I've been snoozed," and the Mediator checks the calendar and decides whether to trigger the coffee maker. This reduces the number of inter-object connections from O(N²) to O(N), since each colleague only needs to know about the Mediator.
+The objects (often called "colleagues") tell the Mediator when their state changes. The Mediator then contains all the complex control logic and coordination rules to tell the other objects how to respond. For example, the alarm clock simply tells the Mediator "I've been snoozed", and the Mediator checks the calendar and decides whether to trigger the coffee maker. This reduces the number of inter-object connections from O(N²) to O(N), since each colleague only needs to know about the Mediator.
 
 ## UML Role Diagram
 

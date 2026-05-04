@@ -317,7 +317,7 @@ When analyzing various design patterns, you will begin to notice recurring micro
 
 *   **Delegation over Inheritance:** Subclassing can lead to rigid designs and code duplication (e.g., trying to create an inheritance tree for cars that can be electric, gas, hybrid, and also either drive or fly). Patterns like [Strategy](/SEBook/designpatterns/strategy.html), [State](/SEBook/designpatterns/state.html), and Bridge solve this by extracting varying behaviors into separate classes and delegating responsibilities to them.
 *   **Polymorphism over Conditions:** Patterns frequently replace complex `if/else` or `switch` statements with polymorphic objects. For instance, instead of conditional logic checking the state of an algorithm, the [Strategy pattern](/SEBook/designpatterns/strategy.html) uses interchangeable objects to represent different execution paths.
-*   **Additional Layers of Indirection:** To reduce strong coupling between interacting components, patterns like the Mediator or Facade introduce an intermediate object to handle communication. While this centralizes logic and improves changeability, it can create long traces of method calls that are harder to debug.
+*   **Additional Layers of Indirection:** To reduce strong coupling between interacting components, patterns like the Mediator or Façade introduce an intermediate object to handle communication. While this centralizes logic and improves changeability, it can create long traces of method calls that are harder to debug.
 
 
 ## Domain-Specific and Application-Specific Patterns
@@ -330,7 +330,7 @@ The Gang of Four patterns are generic to object-oriented programming, but patter
 # Conclusion
 Design patterns are the foundational building blocks of robust software architecture. However, they are not a substitute for domain expertise or critical thought. The mark of an expert engineer is not knowing how to implement every pattern, but possessing the wisdom to evaluate trade-offs, carefully observe the context, and know exactly when the simplest code is actually the smartest design.
 
-# Quiz & Flashcards 
+## Practice
 
 {% include flashcards.html id="design_patterns" %}
 
