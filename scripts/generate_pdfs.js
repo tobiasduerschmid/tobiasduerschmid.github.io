@@ -66,9 +66,9 @@ async function generatePDFs() {
       if (pdfUrlMeta) {
         const pdfPath = await pdfUrlMeta.getAttribute('content');
         const separator = pdfPath.includes('?') ? '&' : '?';
-        const alternatUrl = `http://localhost:4000${pdfPath}${separator}instructor-mode=true`;
-        console.log(`  Using print URL: ${alternatUrl}`);
-        response = await page.goto(alternatUrl, { waitUntil: 'networkidle', timeout: 60000 });
+        const alternateUrl = `http://localhost:4000${pdfPath}${separator}instructor-mode=true`;
+        console.log(`  Using print URL: ${alternateUrl}`);
+        response = await page.goto(alternateUrl, { waitUntil: 'networkidle', timeout: 60000 });
         status = response.status();
       }
       const pageTitle = await page.title();

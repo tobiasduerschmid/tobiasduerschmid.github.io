@@ -242,7 +242,7 @@ questions:
       Which SOLID principle is most directly violated, and what is the correct fix?
     options:
       - "LSP — because the home printer returns early; fix by caching the result"
-      - "ISP — clients and implementers are forced to depend on methods they don't use; fix by segregating into role-specific interfaces like `Printable`, `Scannable`, `Faxable`, `Staplable`"
+      - "ISP — clients and implementers are forced to depend on methods they don't use; fix by segregating into role-specific interfaces like `Printable`, `Scannable`, `Faxable`, `Stapleable`"
       - "DIP — because `Printer` is concrete; fix by making it abstract"
       - "SRP — because the interface has four methods; fix by giving it only one"
     correct_index: 1
