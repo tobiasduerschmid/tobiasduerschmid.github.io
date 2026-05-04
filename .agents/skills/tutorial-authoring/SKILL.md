@@ -491,8 +491,16 @@ backend: v86 | pyodide | webcontainer | react   # default: v86
 # react         — React + Vite + live preview iframe + Playwright-compat.
 
 # === Common feature flags ===
-require_tests: boolean                 # If true, student must pass step's
+require_tests: boolean                 # If true, student must pass each step's
                                        # tests to advance. Default false.
+                                       # NOTE: only steps that actually declare
+                                       # `tests:` are gated. A step with no
+                                       # `tests:` block is treated as ungated
+                                       # — Next is enabled immediately (a quiz,
+                                       # if present, opens via clicking Next).
+                                       # This makes purely-quiz / summary /
+                                       # reflection steps work inside an
+                                       # otherwise test-gated tutorial.
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
 debugger: boolean                      # Time-travel debugger (pyodide only).
 debugger_options: { ... }              # Per-tutorial debugger config
