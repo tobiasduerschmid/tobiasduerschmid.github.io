@@ -167,12 +167,41 @@ async function unlockNextStep(page, testTimeout = 30_000) {
  * Set the Monaco editor content for the active file.
  */
 async function setEditorContent(page, content) {
-  return page.evaluate((text) => {
-    const editors = window.monaco?.editor?.getEditors?.();
-    if (!editors || editors.length === 0) return false;
-    editors[0].getModel().setValue(text);
+  return page.evaluate(async (text) => {
+    const tutorial = window._tutorial;
+    const activeFile = tutorial?.activeFileName || tutorial?._rightActiveFile || tutorial?._leftActiveFile;
+    const activeModel = activeFile && tutorial?.editorModels?.[activeFile]?.model;
+    const fallbackModel = tutorial?.editor?.getModel?.()
+      || window.monaco?.editor?.getEditors?.()?.[0]?.getModel?.();
+    const model = activeModel || fallbackModel;
+    if (!model) return false;
+    model.setValue(text);
+    if (tutorial && activeFile && typeof tutorial._syncFileToBackend === 'function') {
+      await tutorial._syncFileToBackend(activeFile);
+    }
     return true;
   }, content);
+}
+
+/**
+ * Set a named tutorial file and sync it to the backing runtime.
+ * Useful for split-editor tutorials where the run file is not always the
+ * currently focused Monaco model.
+ */
+async function setTutorialFileContent(page, filename, content) {
+  return page.evaluate(async ({ filename: target, content: text }) => {
+    const tutorial = window._tutorial;
+    const entry = tutorial?.editorModels?.[target];
+    if (!tutorial || !entry?.model) return false;
+    entry.model.setValue(text);
+    if (typeof tutorial._setActiveFile === 'function') {
+      tutorial._setActiveFile(target);
+    }
+    if (typeof tutorial._syncFileToBackend === 'function') {
+      await tutorial._syncFileToBackend(target);
+    }
+    return true;
+  }, { filename, content });
 }
 
 module.exports = {
@@ -191,4 +220,5 @@ module.exports = {
   answerQuizCorrectly,
   unlockNextStep,
   setEditorContent,
+  setTutorialFileContent,
 };

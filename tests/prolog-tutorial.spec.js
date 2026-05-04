@@ -90,15 +90,15 @@ test.describe.serial('Prolog Tutorial', () => {
 
   // --- Run / clear ---
 
-  test('running a Prolog file produces output', async () => {
+  test('running a Prolog file answers the current query from edited facts', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, ":- write('Hello Prolog!'), nl.");
+    await setEditorContent(page, 'parent(tom, bob).');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello Prolog!', { timeout: TEST_RUN_TIMEOUT });
+      .toContainText(/X\s*=\s*bob|bob/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   test('clear button empties the output panel', async () => {

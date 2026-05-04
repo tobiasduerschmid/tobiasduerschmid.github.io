@@ -8,6 +8,7 @@ const {
   expectActiveStep,
   expectStepCount,
   expectRenderedStepTests,
+  setTutorialFileContent,
 } = require('./tutorial-helpers');
 
 /**
@@ -52,18 +53,19 @@ async function clickRun(page) {
 }
 
 /**
- * Pyodide: running the active file before clicking Test triggers
- * loadPackagesFromImports() on the file content, which loads pytest (and any
- * other needed packages) into the Pyodide runtime.  Without this, test commands
- * that use __run_capture() → exec() → import pytest fail with ModuleNotFoundError
- * because exec() bypasses Pyodide's package-loading mechanism.
+ * Pyodide: make the solution's editor models durable in the worker before
+ * clicking Test. The tutorial validates files from /tutorial, so the harness
+ * must not race Monaco's autosave debounce.
  */
 async function passCurrentStepTestsTDD(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
-  // Run the active file to trigger loadPackagesFromImports (loads pytest etc.)
-  await clickRun(page);
+  await page.evaluate(async () => {
+    const tutorial = window._tutorial;
+    const files = Object.keys(tutorial?.editorModels || {});
+    await Promise.all(files.map((filename) => tutorial._syncFileToBackend(filename)));
+  });
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
@@ -114,15 +116,18 @@ test.describe.serial('TDD Tutorial', () => {
 
   // --- Run / clear ---
 
-  test('clicking run executes Python and shows output', async () => {
+  test('clicking run executes pytest for the tutorial run file', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, 'print("Hello TDD!")');
+    await setTutorialFileContent(page, 'test_scorer.py', [
+      'def test_smoke_run_file_executes_under_pytest():',
+      '    assert True',
+    ].join('\n'));
     await page.locator('.tvm-editor-container').first().click();
     await page.keyboard.press('Control+s');
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello TDD!', { timeout: TEST_RUN_TIMEOUT });
+      .toContainText(/1 passed|All tests passed/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   test('clear button empties the output panel', async () => {
@@ -134,7 +139,7 @@ test.describe.serial('TDD Tutorial', () => {
   test('syntax errors appear in output', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, 'def broken(:');
+    await setTutorialFileContent(page, 'test_scorer.py', 'def broken(:');
     await page.locator('.tvm-editor-container').first().click();
     await page.keyboard.press('Control+s');
     await clickRun(page);

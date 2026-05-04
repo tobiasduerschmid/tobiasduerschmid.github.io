@@ -56,8 +56,8 @@ async function selectEditMode(page, mode) {
 }
 
 async function dragLocatorCenter(page, locator, dx, dy) {
-  await expect(locator).toBeVisible({ timeout: 2_000 });
-  await locator.scrollIntoViewIfNeeded({ timeout: 2_000 });
+  await expect(locator).toHaveCount(1, { timeout: 2_000 });
+  await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
   await expect
     .poll(() => locator.boundingBox(), {
       timeout: 2_000,

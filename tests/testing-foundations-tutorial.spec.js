@@ -47,16 +47,19 @@ async function clickRun(page) {
 }
 
 /**
- * Pyodide: running the active file before clicking Test triggers
- * loadPackagesFromImports() on the file content, which loads pytest into the
- * Pyodide runtime. Without this, test commands that import pytest through
- * exec() fail with ModuleNotFoundError.
+ * Pyodide: make the solution's editor models durable in the worker before
+ * clicking Test. The tutorial validates files from /tutorial, so the harness
+ * must not race Monaco's autosave debounce.
  */
 async function passCurrentStepTestsFoundations(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
-  await clickRun(page);
+  await page.evaluate(async () => {
+    const tutorial = window._tutorial;
+    const files = Object.keys(tutorial?.editorModels || {});
+    await Promise.all(files.map((filename) => tutorial._syncFileToBackend(filename)));
+  });
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }

@@ -143,16 +143,18 @@ test.describe.serial('Node.js Tutorial', () => {
   });
 
   test('syntax errors appear in output', async () => {
+    await page.goto(`${TUTORIAL_URL}?autosave=false`);
+    await waitForTutorialReady(page);
+    await page.locator('.tvm-step-btn').first().click();
+    await expectActiveStep(page, 0);
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
     await setEditorContent(page, 'const x = {');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
     await clickRun(page);
-    const output = page.locator('.tvm-output-pre');
-    await expect(output).not.toBeEmpty({ timeout: TEST_RUN_TIMEOUT });
-    const text = await output.textContent();
-    expect(text).toMatch(/Error|error|SyntaxError|Unexpected/i);
+    await expect(page.locator('.tvm-output-pre'))
+      .toContainText(/Error|error|SyntaxError|Unexpected/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   // --- Editor ---
