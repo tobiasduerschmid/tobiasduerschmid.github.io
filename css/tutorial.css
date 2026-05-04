@@ -210,7 +210,7 @@ html, body {
   overflow: hidden;
   background: #141414;
   --tvm-splitter-hit-size: 24px;
-  --tvm-splitter-line-size: 4px;
+  --tvm-splitter-line-size: 2px;
   --tvm-splitter-overhang: -10px;
   --tvm-splitter-hit-overhang: calc((var(--tvm-splitter-line-size) - var(--tvm-splitter-hit-size)) / 2);
   --tvm-splitter-row-before-overhang: calc(var(--tvm-splitter-line-size) - var(--tvm-splitter-hit-size));
@@ -219,12 +219,12 @@ html, body {
   --tvm-splitter-handle-thickness: 10px;
   --tvm-splitter-control-z: 12;
   --tvm-splitter-floating-control-z: 13;
-  --tvm-splitter-rail-highlight: #9aa1ac;
-  --tvm-splitter-rail-core: #737b88;
-  --tvm-splitter-rail-shadow: #6e7682;
-  --tvm-splitter-rail-hover-highlight: #a8afb9;
-  --tvm-splitter-rail-hover-core: #7b838f;
-  --tvm-splitter-rail-hover-shadow: #737b88;
+  --tvm-splitter-rail-highlight: #aeb6c2;
+  --tvm-splitter-rail-core: #aeb6c2;
+  --tvm-splitter-rail-shadow: #aeb6c2;
+  --tvm-splitter-rail-hover-highlight: #c7ced8;
+  --tvm-splitter-rail-hover-core: #c7ced8;
+  --tvm-splitter-rail-hover-shadow: #c7ced8;
   --tvm-splitter-focus-ring: #FFB81C;
   --tvm-splitter-focus-handle: #FFB81C;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -2888,29 +2888,32 @@ html:not(.dark-mode) .tvm-right-tab.active {
   opacity: 1;
 }
 
-/* The splitters keep a 24px pointer target, but the target rail itself should
-   stay invisible; otherwise its full-height/full-width edge reads as a UI line. */
+/* Splitters keep a 24px pointer target while painting only a thin rail. */
 .tvm-uml-bottom-left-splitter::before,
+.tvm-hsplitter::before,
+.tvm-editor-pane-divider::before,
+.tvm-vsplitter::before,
+.tvm-http-splitter::before {
+  background: var(--tvm-splitter-rail-core);
+  box-shadow: none;
+}
+
 .tvm-uml-bottom-left-splitter:hover::before,
 .tvm-uml-bottom-left-splitter.active::before,
 .tvm-uml-bottom-left-splitter:focus-visible::before,
-.tvm-hsplitter::before,
 .tvm-hsplitter:hover::before,
 .tvm-hsplitter.active::before,
 .tvm-hsplitter:focus-visible::before,
-.tvm-editor-pane-divider::before,
 .tvm-editor-pane-divider:hover::before,
 .tvm-editor-pane-divider.active::before,
 .tvm-editor-pane-divider:focus-visible::before,
-.tvm-vsplitter::before,
 .tvm-vsplitter:hover::before,
 .tvm-vsplitter.active::before,
 .tvm-vsplitter:focus-visible::before,
-.tvm-http-splitter::before,
 .tvm-http-splitter:hover::before,
 .tvm-http-splitter.active::before,
 .tvm-http-splitter:focus-visible::before {
-  background: transparent;
+  background: var(--tvm-splitter-rail-hover-core);
   box-shadow: none;
 }
 
@@ -3446,12 +3449,12 @@ html:not(.dark-mode) .tvm-test-summary.partial {
 
 html:not(.dark-mode) .tvm-root {
   background: #f0f0f4;
-  --tvm-splitter-rail-highlight: #f7f8fa;
-  --tvm-splitter-rail-core: #d8dce2;
-  --tvm-splitter-rail-shadow: #707884;
-  --tvm-splitter-rail-hover-highlight: #ffffff;
-  --tvm-splitter-rail-hover-core: #ccd1d8;
-  --tvm-splitter-rail-hover-shadow: #626b77;
+  --tvm-splitter-rail-highlight: #5f6670;
+  --tvm-splitter-rail-core: #5f6670;
+  --tvm-splitter-rail-shadow: #5f6670;
+  --tvm-splitter-rail-hover-highlight: #4f5660;
+  --tvm-splitter-rail-hover-core: #4f5660;
+  --tvm-splitter-rail-hover-shadow: #4f5660;
   --tvm-splitter-focus-ring: #005587;
   --tvm-splitter-focus-handle: #5f6670;
 }
