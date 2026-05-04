@@ -372,7 +372,8 @@ html.dark-mode #uml-pg-error {
   min-width: 200px;
 }
 
-.uml-pg-syntax-help-link {
+a.uml-pg-syntax-help-link,
+a.uml-pg-syntax-help-link:visited {
   white-space: nowrap;
   padding: 7px 16px;
   background: #2774AE;
@@ -383,11 +384,16 @@ html.dark-mode #uml-pg-error {
   font-size: 0.9em;
 }
 
-.uml-pg-syntax-help-link:hover,
-.uml-pg-syntax-help-link:focus {
+a.uml-pg-syntax-help-link:hover,
+a.uml-pg-syntax-help-link:focus {
   background: #1f5d8a;
   color: #fff;
   text-decoration: none;
+}
+
+a.uml-pg-syntax-help-link:focus-visible {
+  outline: 3px solid #111;
+  outline-offset: 3px;
 }
 
 html.dark-mode .uml-pg-syntax-help {
@@ -396,7 +402,7 @@ html.dark-mode .uml-pg-syntax-help {
   color: #d0e0f0;
 }
 
-html.dark-mode .uml-pg-syntax-help-link,
+html.dark-mode a.uml-pg-syntax-help-link,
 html.dark-mode a.uml-pg-syntax-help-link:visited {
   /* The global `html.dark-mode a` rule paints links UCLA gold (#FFD100),
      which on a UCLA-blue background only hits ~3.5:1 — below 4.5:1.
@@ -407,12 +413,16 @@ html.dark-mode a.uml-pg-syntax-help-link:visited {
   color: #fff;
 }
 
-html.dark-mode .uml-pg-syntax-help-link:hover,
-html.dark-mode .uml-pg-syntax-help-link:focus {
+html.dark-mode a.uml-pg-syntax-help-link:hover,
+html.dark-mode a.uml-pg-syntax-help-link:focus {
   /* Slightly darker than the default UCLA blue so the hover affordance
      reads in dark mode while keeping ≥4.5:1 against white text. */
   background: #1f5d8a;
   color: #fff;
+}
+
+html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
+  outline-color: #FFD100;
 }
 
 @media (max-width: 700px) {
@@ -1999,5 +2009,5 @@ html.dark-mode .uml-pg-syntax-help-link:focus {
   <div class="uml-pg-syntax-help-text">
     <strong>Need syntax help?</strong> The full ArchUML syntax reference with live rendered examples is available on a dedicated page.
   </div>
-  <a class="uml-pg-syntax-help-link" href="/SEBook/tools/uml-reference" target="_blank">Open Syntax Reference ↗</a>
+  <a class="uml-pg-syntax-help-link" href="/SEBook/tools/uml-reference" target="_blank" rel="noopener">Open Syntax Reference ↗</a>
 </div>

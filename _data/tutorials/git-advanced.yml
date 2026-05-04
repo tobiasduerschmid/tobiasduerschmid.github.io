@@ -829,23 +829,50 @@ steps:
       content: "\"\"\"A simple calculator module.\"\"\"\ndef add(a, b): return a + b\n\ndef divide(a, b): return a / b\n\ndef safe_divide(a, b):\n    \"\"\"Divide a by b, raising ValueError on zero denominator.\"\"\"\n    if b == 0:\n        raise ValueError(\"Cannot divide by zero\")\n    return a / b\n\ndef power(a, b):\n    \"\"\"Return a raised to the power of b.\"\"\"\n    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):\n        raise TypeError(\"Arguments must be numbers\")\n    return a ** b\n"
       language: python
     commands:
-    # The interactive instructions above teach the stash → hotfix → pop dance.
-    # The automated solution below rebuilds the same end state deterministically:
-    # the harness applies solution.files BEFORE these commands, so a literal
-    # stash/pop sequence collides on conflicting end-of-file diffs (the manual
-    # student flow doesn't see this because the student edits the file inline
-    # instead of having it pre-set to final state).
+    # The harness applies solution.files BEFORE these commands. Start from a
+    # clean HEAD, then replay the real stash → hotfix → pop workflow. The final
+    # rewrite after `stash pop` keeps the automated path deterministic even if
+    # Git reports an end-of-file conflict while replaying the stashed WIP.
     - cd /tutorial/myproject && git switch main
     - git reset --hard HEAD
     - git clean -fdq
     - while git stash list 2>/dev/null | grep -q .; do git stash drop -q 2>/dev/null || break; done
-    - (git branch -D hotfix-divide-zero 2>/dev/null; true) && git switch -c hotfix-divide-zero
+    - git branch -D hotfix-divide-zero 2>/dev/null; true
+    - |
+      cat >> calculator.py <<'PY'
+
+      def power(a, b):
+          # TODO: add input validation
+          return a ** b
+      PY
+    - git stash
+    - git switch -c hotfix-divide-zero
     - printf '\ndef safe_divide(a, b):\n    """Divide a by b, raising ValueError on zero denominator."""\n    if b == 0:\n        raise ValueError("Cannot divide by zero")\n    return a / b\n' >> calculator.py
     - "git add calculator.py && git commit -m 'Hotfix: add safe_divide to prevent zero-division errors'"
     - git switch main && git merge hotfix-divide-zero --no-edit
     - git branch -D hotfix-divide-zero 2>/dev/null; true
-    - printf '\ndef power(a, b):\n    """Return a raised to the power of b."""\n    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):\n        raise TypeError("Arguments must be numbers")\n    return a ** b\n' >> calculator.py
+    - git stash pop || true
+    - |
+      cat > calculator.py <<'PY'
+      """A simple calculator module."""
+      def add(a, b): return a + b
+
+      def divide(a, b): return a / b
+
+      def safe_divide(a, b):
+          """Divide a by b, raising ValueError on zero denominator."""
+          if b == 0:
+              raise ValueError("Cannot divide by zero")
+          return a / b
+
+      def power(a, b):
+          """Return a raised to the power of b."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          return a ** b
+      PY
     - git add calculator.py && git commit -m 'Add power function with input validation'
+    - git stash list 2>/dev/null | grep -q . && git stash drop -q 2>/dev/null || true
     explanation: |
       - **`git stash`:** snapshots tracked modifications and staged changes into a stash commit in `.git/refs/stash`, then resets the working tree to match HEAD. Untracked files are **not** included unless you use `git stash -u`.
       - **`git stash pop`:** applies the top stash and removes it. Conflicts surface exactly like merge conflicts — resolve them, then `git add` and commit (or drop the stash manually).
@@ -901,25 +928,24 @@ steps:
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
     hints:
     - text: 'Uncommitted changes remain. `git status` tells you what; commit or discard to finish the step.'
-  - description: Stash was actually used (proves the workflow, not just the end state)
-    # `.git/logs/refs/stash` is created the first time `git stash` runs and
-    # persists after pop/drop. A student who skipped stash entirely and
-    # committed safe_divide → power linearly on main will fail this gate
-    # even though the file content matches.
+  - description: safe_divide and power contain the required validation logic
+    # Direct post-pop forensic proof of `git stash` is not durable: Git removes
+    # refs/stash and its reflog when the final entry is popped/dropped. Object
+    # scans can find the dropped stash commit, but they exceed the browser VM's
+    # 15s test-runner safety timer. The preceding history-order gate verifies
+    # the workflow shape; this gate verifies the two resulting functions.
     command: |
-      cd /tutorial/myproject
-      if [ ! -f .git/logs/refs/stash ]; then
-        echo "No record of any git stash operation in this session."
-        echo "This step's pedagogy is the stash → hotfix-branch → merge → pop workflow,"
-        echo "not just the final file contents. Redo with stash: it's the whole point."
-        exit 1
-      fi
+      cd /tutorial/myproject &&
+      grep -q 'raise ValueError("Cannot divide by zero")' calculator.py &&
+      grep -q 'raise TypeError("Arguments must be numbers")' calculator.py &&
+      grep -q 'return a \*\* b' calculator.py &&
+      grep -q 'return a / b' calculator.py
     hints:
     - title: 'Layer 1 — orientation'
-      text: 'This step teaches a *workflow*, not just an end state. `git stash` is the tool that lets you context-switch cleanly mid-feature without committing half-baked code.'
+      text: 'This step ends with two working pieces: the hotfix `safe_divide` and the resumed feature `power`.'
     - title: 'Layer 2 — strategy'
-      text: 'Re-read Tasks 2–4: stash your WIP power, do the hotfix on its own branch, merge to main, then `git stash pop` to restore your WIP and finish.'
-      condition: 'output_contains: workflow'
+      text: '`safe_divide` should raise `ValueError` on zero denominators. `power` should reject non-numeric inputs with `TypeError` and otherwise return `a ** b`.'
+      condition: 'code_contains: def power'
   quiz:
     title: "Step 4 — Knowledge Check"
     min_score: 0.8
@@ -1465,10 +1491,15 @@ steps:
   solution:
     commands:
     - cd /tutorial/myproject
-    # The interactive instructions teach `git blame -L` + `git show`. The
-    # solution intentionally doesn't run `git show` (it would page in v86);
-    # the tests only verify blame works on the file setup leaves behind.
     - git --no-pager blame -L 1,3 calculator.py >/dev/null 2>&1; true
+    - |
+      cibot_sha=$(git log --all --author=CI-Bot --format=%H -n 1)
+      if [ -n "$cibot_sha" ]; then
+        printf '%s\n' "$cibot_sha" > .git-blame-ignore-revs
+        git config blame.ignoreRevsFile .git-blame-ignore-revs
+      else
+        echo "CI-Bot formatter commit not found"
+      fi
     explanation: |
       - **`git blame <file>`:** Shows, for every line, the SHA / author / timestamp of the commit that last modified it.
       - **`-L start,end`:** Restrict to a line range — avoids hundreds of irrelevant lines on large files.
@@ -1816,11 +1847,46 @@ steps:
   # naming ("Simplify absolute return path"). Same for any in-file comment.
   - "cd /tutorial/myproject\n[ -e .git/BISECT_START ] && git bisect reset 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log main --oneline 2>/dev/null | grep -q 'Simplify absolute return path'; then\n  exit 0\nfi\nif ! grep -q 'def absolute' calculator.py; then\n  printf '\\ndef absolute(x):\\n    \"\"\"Return |x|.\"\"\"\\n    return x if x >= 0 else -x\\n' >> calculator.py\n  git add calculator.py\n  git commit -qm 'Seed: add absolute function' 2>/dev/null\nfi\nprintf 'from calculator import add, divide, absolute\\nassert add(2, 3) == 5\\nassert divide(10, 2) == 5\\nassert absolute(-4) == 4\\nprint(\"all tests pass\")\\n' > test_calculator.py\ngit add test_calculator.py\ngit diff --cached --quiet || git commit -qm 'Add regression tests'\necho '# commit A: refactor docstring' >> calculator.py\ngit commit -qam 'Refactor: tidy docstring'\necho '# commit B: new helper' >> calculator.py\ngit commit -qam 'Add unused helper comment'\nsed -i 's/return x if x >= 0 else -x/return x/' calculator.py\nif git diff --quiet calculator.py; then\n  sed -i 's/def absolute(x):/def absolute(x):\\n    return x\\n    pass  # unreachable/' calculator.py\nfi\ngit commit -qam 'Simplify absolute return path'\necho '# commit D: later tweak' >> calculator.py\ngit commit -qam 'Later tweak'\necho '# commit E: even later' >> calculator.py\ngit commit -qam 'Even later tweak'\n"
   solution:
-    # Interactive instructions teach bisect + sed-fix. Automated solution
-    # reverses the setup's planted bug via sed (the inverse substitution).
-    # No python in v86 — tests verify the fix string via grep.
+    # Interactive instructions teach bisect + repair. Automated solution
+    # normalizes the module to a known-good state, then commits the repair.
     commands:
-    - "cd /tutorial/myproject && git bisect reset 2>/dev/null; git switch -q main 2>/dev/null; git reset --hard HEAD; sed -i 's|^    return x$|    return x if x >= 0 else -x|' calculator.py; git add calculator.py && (git diff --cached --quiet || git commit -m 'Fix: restore negation in absolute')"
+    - cd /tutorial/myproject
+    - git bisect reset 2>/dev/null; true
+    - git switch -q main 2>/dev/null
+    - git reset --hard HEAD
+    - |
+      cat > calculator.py <<'PY'
+      """A simple calculator module."""
+      def add(a, b): return a + b
+
+      def divide(a, b): return a / b
+
+      def safe_divide(a, b):
+          """Divide a by b, raising ValueError on zero denominator."""
+          if b == 0:
+              raise ValueError("Cannot divide by zero")
+          return a / b
+
+      def power(a, b):
+          """Return a raised to the power of b."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          return a ** b
+
+      def clip(x, lo, hi):
+          """Clip x to [lo, hi]."""
+          if x < lo:
+              return lo
+          if x > hi:
+              return hi
+          return x
+
+      def absolute(x):
+          """Return |x|."""
+          return x if x >= 0 else -x
+      PY
+    - rm -rf __pycache__
+    - "git add calculator.py && (git diff --cached --quiet || git commit -m 'Fix: restore negation in absolute')"
     explanation: |
       - **Binary search:** bisect halves the candidate range each step. `log₂(n)` tests find the exact breaking commit — 5 tests for 30 commits, 10 tests for 1000.
       - **`git bisect start` / `bad` / `good`:** establishes the range. Git checks out the midpoint and waits for your verdict.
@@ -1854,14 +1920,7 @@ steps:
   - description: The absolute function has been repaired (handles negatives, zero, and positives correctly)
     # Behavioral test — accepts any correct fix (`abs(x)`, ternary in either
     # order, multi-line if/else, etc.) and rejects the planted `return x` bug.
-    command: |
-      cd /tutorial/myproject && python3 -c "
-      from calculator import absolute
-      assert absolute(-4) == 4, f'absolute(-4) returned {absolute(-4)} (expected 4)'
-      assert absolute(0)  == 0, f'absolute(0) returned {absolute(0)} (expected 0)'
-      assert absolute(3)  == 3, f'absolute(3) returned {absolute(3)} (expected 3)'
-      assert absolute(-1) == 1, f'absolute(-1) returned {absolute(-1)} (expected 1)'
-      "
+    command: cd /tutorial/myproject && rm -rf __pycache__ && python3 -c "from calculator import absolute; assert absolute(-4) == 4; assert absolute(0) == 0; assert absolute(3) == 3; assert absolute(-1) == 1"
     hints:
     - title: 'Layer 1 — orientation'
       text: 'Bisect points you at the *culprit commit* but doesn''t fix it. After identifying the bad commit, repair `absolute(x)` on top of `main` and commit the fix.'

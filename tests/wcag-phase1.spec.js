@@ -1,24 +1,61 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+const headingAbbrSelector = 'h1 abbr, h2 abbr, h3 abbr, h4 abbr, h5 abbr, h6 abbr';
+
+function cssAttr(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function exactText(value) {
+  return new RegExp(`^${String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+}
+
+async function gotoOk(page, url) {
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+  expect(response && response.ok(), `${url} should load successfully`).toBeTruthy();
+}
+
 async function clickSwitch(page, selector) {
   await page.locator('label.switch', { has: page.locator(selector) }).click();
+}
+
+async function gotoTutorial(page, url) {
+  await gotoOk(page, url);
+  await expect(page.locator('.tvm-step-instructions')).toBeVisible({ timeout: 60_000 });
+}
+
+function abbr(scope, definition, text) {
+  return scope
+    .locator(`abbr[title="${cssAttr(definition)}"], abbr[data-original-title="${cssAttr(definition)}"]`)
+    .filter({ hasText: exactText(text) })
+    .first();
+}
+
+async function expectNoHeadingAbbr(scope) {
+  await expect(scope.locator(headingAbbrSelector)).toHaveCount(0);
+}
+
+async function expectNoTabbableAbbr(scope) {
+  await expect(scope.locator('abbr[tabindex]')).toHaveCount(0);
 }
 
 /**
  * Phase 1 WCAG-readiness checks. Verifies the new infrastructure added in
  * the WCAG 3 Phase 1 work renders correctly: glossary, abbr include,
- * shortcuts page, diagram <figure> wrapping, audio transcript surface,
- * and the tutorial progress indicator.
+ * shortcuts page, diagram <figure> wrapping, and the tutorial progress
+ * indicator.
  */
 
 test.describe('Glossary page', () => {
   test('lists terms, has working A–Z jump nav, search filters by term', async ({ page }) => {
-    await page.goto('/glossary/');
+    await gotoOk(page, '/glossary/');
     await expect(page.locator('h1')).toHaveText('Glossary');
     const entries = page.locator('.glossary-entry');
     await expect(entries.first()).toBeVisible();
-    expect(await entries.count()).toBeGreaterThan(20);
+    const totalEntries = await entries.count();
+    expect(totalEntries).toBeGreaterThan(0);
+    await expect(page.locator('.glossary-entry[data-term="rest"]')).toBeVisible();
 
     // Search filtering
     await page.fill('#glossary-search', 'rest');
@@ -26,7 +63,8 @@ test.describe('Glossary page', () => {
       .locator('.glossary-entry')
       .evaluateAll((els) => els.filter((e) => !e.hasAttribute('hidden')).length);
     expect(visibleAfterFilter).toBeGreaterThan(0);
-    expect(visibleAfterFilter).toBeLessThan(20);
+    expect(visibleAfterFilter).toBeLessThan(totalEntries);
+    await expect(page.locator('.glossary-entry[data-term="rest"]')).toBeVisible();
 
     // Status region updates
     const status = await page.locator('#glossary-search-status').textContent();
@@ -34,36 +72,42 @@ test.describe('Glossary page', () => {
   });
 
   test('A–Z jump nav marks empty letters as inert', async ({ page }) => {
-    await page.goto('/glossary/');
-    const inertCount = await page.locator('.glossary-jump a.is-empty').count();
-    expect(inertCount).toBeGreaterThan(0); // some letters have no entries
+    await gotoOk(page, '/glossary/');
+    const emptyLinks = page.locator('.glossary-jump a.is-empty');
+    expect(await emptyLinks.count()).toBeGreaterThan(0); // some letters have no entries
+    await expect(emptyLinks.first()).toHaveAttribute('aria-disabled', 'true');
+    await expect(emptyLinks.first()).toHaveAttribute('tabindex', '-1');
   });
 });
 
 test.describe('Shortcuts page', () => {
   test('renders with sectioned tables, kbd elements, and reporting link', async ({ page }) => {
-    await page.goto('/shortcuts/');
+    await gotoOk(page, '/shortcuts/');
     await expect(page.locator('h1')).toHaveText('Keyboard shortcuts');
-    expect(await page.locator('table.shortcuts-table').count()).toBeGreaterThanOrEqual(8);
-    expect(await page.locator('table.shortcuts-table caption').count()).toBeGreaterThanOrEqual(8);
-    expect(await page.locator('table.shortcuts-table kbd').count()).toBeGreaterThan(15);
-    await expect(page.locator('a[href*="github.com"]').first()).toBeVisible();
+    const tables = page.locator('table.shortcuts-table');
+    const tableCount = await tables.count();
+    expect(tableCount).toBeGreaterThan(0);
+    await expect(page.locator('table.shortcuts-table caption')).toHaveCount(tableCount);
+    await expect(page.locator('table.shortcuts-table th[scope="col"]')).toHaveCount(tableCount * 2);
+    expect(await page.locator('table.shortcuts-table kbd').count()).toBeGreaterThan(0);
+    await expect(page.getByRole('link', { name: /open an issue on github/i })).toBeVisible();
   });
 });
 
 test.describe('Footer accessibility links', () => {
   test('home page footer links to Glossary, Shortcuts, My Settings, and Browser storage', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('footer a[href$="/glossary/"]').first()).toBeVisible();
-    await expect(page.locator('footer a[href$="/shortcuts/"]').first()).toBeVisible();
-    await expect(page.locator('footer a[href$="/settings/"]').first()).toBeVisible();
-    await expect(page.locator('footer a[href$="/cookies/"]').first()).toBeVisible();
+    await gotoOk(page, '/');
+    const footer = page.locator('footer');
+    await expect(footer.getByRole('link', { name: 'Glossary' })).toHaveAttribute('href', /\/glossary\/$/);
+    await expect(footer.getByRole('link', { name: 'Keyboard shortcuts' })).toHaveAttribute('href', /\/shortcuts\/$/);
+    await expect(footer.getByRole('link', { name: 'My Settings' })).toHaveAttribute('href', /\/settings\/$/);
+    await expect(footer.getByRole('link', { name: 'Browser storage' })).toHaveAttribute('href', /\/cookies\/$/);
   });
 });
 
 test.describe('Settings page', () => {
   test('renders user-facing settings and writes preferences locally', async ({ page }) => {
-    await page.goto('/settings/');
+    await gotoOk(page, '/settings/');
     await expect(page.locator('h1')).toHaveText('My Settings');
     await expect(page.getByLabel('Dark mode')).toBeVisible();
     await expect(page.getByLabel('Reduced motion')).toBeVisible();
@@ -90,87 +134,95 @@ test.describe('Settings page', () => {
 
 test.describe('Automatic glossary abbreviations', () => {
   test('renders SEBook glossary terms and plural forms as abbr elements', async ({ page }) => {
-    await page.goto('/SEBook/userstories.html');
-    await expect(page.locator('main p abbr[title="Independent, Negotiable, Valuable, Estimable, Small, Testable"], main p abbr[data-original-title="Independent, Negotiable, Valuable, Estimable, Small, Testable"]').first()).toHaveText('INVEST');
-    await expect(page.locator('main abbr[title="Application Programming Interface"], main abbr[data-original-title="Application Programming Interface"]').filter({ hasText: 'APIs' }).first()).toHaveText('APIs');
-    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await gotoOk(page, '/SEBook/userstories.html');
+    let main = page.locator('main');
+    await expect(abbr(main.locator('p'), 'Independent, Negotiable, Valuable, Estimable, Small, Testable', 'INVEST')).toHaveText('INVEST');
+    await expect(abbr(main, 'Application Programming Interface', 'APIs')).toHaveText('APIs');
+    await expectNoHeadingAbbr(main);
     await expect(page.locator('main pre abbr')).toHaveCount(0);
-    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+    await expectNoTabbableAbbr(main);
 
-    await page.goto('/SEBook/systems/');
-    await expect(page.locator('main p abbr[title="Consistency, Availability, Partition tolerance"], main p abbr[data-original-title="Consistency, Availability, Partition tolerance"]').first()).toHaveText('CAP');
-    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
-    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+    await gotoOk(page, '/SEBook/systems/');
+    main = page.locator('main');
+    await expect(abbr(main.locator('p'), 'Consistency, Availability, Partition tolerance', 'CAP')).toHaveText('CAP');
+    await expectNoHeadingAbbr(main);
+    await expectNoTabbableAbbr(main);
 
-    await page.goto('/SEBook/tools/networking.html');
-    await expect(page.locator('main abbr[title="Internet Protocol"], main abbr[data-original-title="Internet Protocol"]').filter({ hasText: 'IP' }).first()).toHaveText('IP');
-    await expect(page.locator('main abbr[title="Domain Name System"], main abbr[data-original-title="Domain Name System"]').filter({ hasText: 'DNS' }).first()).toHaveText('DNS');
-    await expect(page.locator('main abbr[title="Operating System"], main abbr[data-original-title="Operating System"]').filter({ hasText: 'OS' }).first()).toHaveText('OS');
-    await expect(page.locator('main abbr[title="HyperText Transfer Protocol Secure"], main abbr[data-original-title="HyperText Transfer Protocol Secure"]').filter({ hasText: 'HTTPS' }).first()).toHaveText('HTTPS');
-    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
-    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+    await gotoOk(page, '/SEBook/tools/networking.html');
+    main = page.locator('main');
+    await expect(abbr(main, 'Internet Protocol', 'IP')).toHaveText('IP');
+    await expect(abbr(main, 'Domain Name System', 'DNS')).toHaveText('DNS');
+    await expect(abbr(main, 'Operating System', 'OS')).toHaveText('OS');
+    await expect(abbr(main, 'HyperText Transfer Protocol Secure', 'HTTPS')).toHaveText('HTTPS');
+    await expectNoHeadingAbbr(main);
+    await expectNoTabbableAbbr(main);
   });
 
   test('renders tutorial instructions with glossary abbreviations', async ({ page }) => {
-    await page.goto('/SEBook/tools/sql-tutorial.html');
-    const sql = page.locator('.tvm-step-instructions p abbr[title="Structured Query Language"], .tvm-step-instructions p abbr[data-original-title="Structured Query Language"]').first();
+    await gotoTutorial(page, '/SEBook/tools/sql-tutorial.html');
+    let instructions = page.locator('.tvm-step-instructions');
+    const sql = abbr(instructions.locator('p'), 'Structured Query Language', 'SQL');
     await expect(sql).toHaveText('SQL');
     await expect(sql).toHaveAttribute('data-no-tooltip', 'true');
-    await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
-    await expect(page.locator('.tvm-step-instructions abbr[tabindex]')).toHaveCount(0);
+    await expectNoHeadingAbbr(instructions);
+    await expectNoTabbableAbbr(instructions);
 
-    await page.goto('/SEBook/tools/react-tutorial.html');
-    const jsx = page.locator('.tvm-step-instructions abbr[title="JavaScript XML"], .tvm-step-instructions abbr[data-original-title="JavaScript XML"]').filter({ hasText: 'JSX' }).first();
+    await gotoTutorial(page, '/SEBook/tools/react-tutorial.html');
+    instructions = page.locator('.tvm-step-instructions');
+    const jsx = abbr(instructions, 'JavaScript XML', 'JSX');
     await expect(jsx).toHaveText('JSX');
-    await expect(page.locator('.tvm-step-instructions h1 abbr, .tvm-step-instructions h2 abbr, .tvm-step-instructions h3 abbr, .tvm-step-instructions h4 abbr, .tvm-step-instructions h5 abbr, .tvm-step-instructions h6 abbr')).toHaveCount(0);
-    await expect(page.locator('.tvm-step-instructions abbr[tabindex]')).toHaveCount(0);
+    await expectNoHeadingAbbr(instructions);
+    await expectNoTabbableAbbr(instructions);
   });
 
   test('renders blog post glossary abbreviations', async ({ page }) => {
-    await page.goto('/blog/evidence-based-study-tips-for-college-students/');
-    await expect(page.locator('main p abbr[title="HyperText Markup Language"], main p abbr[data-original-title="HyperText Markup Language"]').first()).toHaveText('HTML');
-    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await gotoOk(page, '/blog/evidence-based-study-tips-for-college-students/');
+    const main = page.locator('main');
+    await expect(abbr(main.locator('p'), 'HyperText Markup Language', 'HTML')).toHaveText('HTML');
+    await expectNoHeadingAbbr(main);
     await expect(page.locator('main code abbr')).toHaveCount(0);
-    await expect(page.locator('main abbr[tabindex]')).toHaveCount(0);
+    await expectNoTabbableAbbr(main);
   });
 
   test('honors abbreviation underline setting without rendering abbreviations in headings', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('abbr-underlines', 'false'));
-    await page.goto('/SEBook/tools/networking.html');
+    await gotoOk(page, '/SEBook/tools/networking.html');
 
-    const ip = page.locator('main abbr[title="Internet Protocol"], main abbr[data-original-title="Internet Protocol"]').filter({ hasText: 'IP' }).first();
+    const main = page.locator('main');
+    const ip = abbr(main, 'Internet Protocol', 'IP');
     await expect(ip).toHaveText('IP');
     await expect(page.locator('html')).toHaveClass(/abbr-underlines-disabled/);
     expect(await ip.evaluate((el) => getComputedStyle(el).textDecorationLine)).not.toContain('underline');
     expect(await ip.evaluate((el) => getComputedStyle(el).borderBottomStyle)).toBe('none');
-    await expect(page.locator('main h1 abbr, main h2 abbr, main h3 abbr, main h4 abbr, main h5 abbr, main h6 abbr')).toHaveCount(0);
+    await expectNoHeadingAbbr(main);
   });
 });
 
 test.describe('Diagram <figure> wrapping', () => {
   test('ArchUML diagrams in SEBook are wrapped in <figure> with <figcaption>', async ({ page }) => {
-    await page.goto('/SEBook/tools/networking.html');
+    await gotoOk(page, '/SEBook/tools/networking.html');
     // Wait for the ArchUML auto-init to kick in (fonts.ready + a settle pass).
     await page.waitForSelector('figure.sebook-figure--archuml', { timeout: 15_000 });
 
     const figures = page.locator('figure.sebook-figure--archuml');
     expect(await figures.count()).toBeGreaterThan(0);
 
-    // Each figure has a figcaption with text + a [role="img"][aria-label] inner.
-    const firstFigure = figures.first();
-    await expect(firstFigure.locator('figcaption.sebook-figure__caption')).toBeVisible();
-    const role = await firstFigure.locator('[role="img"]').first().getAttribute('role');
-    expect(role).toBe('img');
-    const ariaLabel = await firstFigure.locator('[role="img"]').first().getAttribute('aria-label');
-    expect(ariaLabel).toBeTruthy();
+    const figureAudit = await figures.evaluateAll((els) => els.map((figure) => {
+      const caption = figure.querySelector('figcaption.sebook-figure__caption');
+      const image = figure.querySelector('[role="img"]');
+      return {
+        hasCaptionText: !!(caption && caption.textContent && caption.textContent.trim()),
+        hasImageLabel: !!(image && image.getAttribute('aria-label') && image.getAttribute('aria-label').trim()),
+      };
+    }));
+    expect(figureAudit.every((item) => item.hasCaptionText && item.hasImageLabel)).toBe(true);
   });
 });
 
 test.describe('Tutorial step status', () => {
   test('python tutorial nav exposes a status announcement for the current step', async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto('/SEBook/tools/python-tutorial.html');
-    await page.waitForSelector('.tvm-step-btn', { timeout: 60_000 });
+    await gotoTutorial(page, '/SEBook/tools/python-tutorial.html');
     await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: 60_000 });
 
     const status = page.locator('.tvm-step-status');

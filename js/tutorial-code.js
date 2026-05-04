@@ -96,6 +96,10 @@
   }
 
   var V86_SNAPSHOT_CACHE_VERSION = 4;
+  var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
+  // Instructor solution batches can contain multi-command Git workflows; keep
+  // applySolution() pending until those scripts have a real chance to finish.
+  var V86_VISIBLE_COMMAND_TIMEOUT_MS = 240000;
 
   function hashString(s) {
     var h = 2166136261;
@@ -209,6 +213,7 @@
     this._silentRunning = false;      // true while a silent cmd is in-flight
     this._silentListeners = [];       // in-flight _runSilent listener registrations
     this._resetInProgress = false;    // guard against concurrent resetStep() calls
+    this._stepSetupPromise = null;    // active first-visit setup_commands chain
     this._visFilterMarker = null;     // string to suppress from xterm output
     this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
     this._rpcPending = {};            // virtio-console RPC id -> callbacks
@@ -3172,7 +3177,7 @@
     var buf = '';
     // Tracked registration so _resetSerialState can clean up in-flight
     // listeners after a VM restore_state(). Without this, orphaned listeners
-    // would time out 30s later and decrement muteCount below zero,
+    // would time out later and decrement muteCount below zero,
     // permanently muting the terminal (and making stty echoes visible).
     var reg = { onByte: null, timer: null, cleaned: false };
 
@@ -3205,7 +3210,7 @@
       self._muteCount = Math.max(0, self._muteCount - 1);
       entry.resolve();
       self._drainSilentQueue();
-    }, 30000);
+    }, V86_SILENT_COMMAND_TIMEOUT_MS);
     reg.onByte = onByte;
     reg.timer = timer;
     self._silentListeners.push(reg);
@@ -3277,7 +3282,7 @@
           self._visFilterMarker = null;
           self._visFilterBuf = '';
           resolve();
-        }, 30000);
+        }, V86_VISIBLE_COMMAND_TIMEOUT_MS);
         // Arm the filter before sending so the echo is suppressed immediately
         var multiline = /<<|\n/.test(cmd);
         self._visFilterMarker = (multiline ? ': #' : ' #') + marker;
@@ -7819,7 +7824,10 @@
       });
     }
 
-    var p = Promise.resolve();
+    var p = this._stepSetupPromise ? this._stepSetupPromise.catch(function () {}) : Promise.resolve();
+    if (this.config.backend === 'v86') {
+      p = p.then(function () { return self._runSilent(':'); });
+    }
     // 2. Apply file overrides — reuse existing openFile + _syncFileToBackend
     if (solution.files) {
       self._suppressAutoSave = true;
@@ -7845,6 +7853,9 @@
         // injected per-command so interactive pagers don't stall the chain.
         var batch = tutorialShellBatch(solution.commands);
         p = p.then(function () { return self._runVisible(batch); });
+        if (this.config.backend === 'v86') {
+          p = p.then(function () { return self._runSilent(':'); });
+        }
       } else if (this.config.backend === 'pyodide') {
         p = p.then(function () {
           return new Promise(function (resolve) {
@@ -7942,6 +7953,7 @@
       }
     } catch (e) { /* ignore */ }
     var self = this;
+    this._stepSetupPromise = null;
     for (var name in this.editorModels) {
       if (this.editorModels.hasOwnProperty(name)) {
         var current = this.editorModels[name].model.getValue();
@@ -8583,7 +8595,7 @@
       if (hasPostFileload) {
         p = p.then(function () { return self._runPostFileloadSetup(step); });
       }
-      p.then(function () {
+      var setupPromise = p.then(function () {
         return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
       }).then(function () {
         return self._runStepDir(step);
@@ -8599,6 +8611,11 @@
       }).then(function () {
         self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
+      });
+      var setupWait = setupPromise.catch(function () {});
+      self._stepSetupPromise = setupWait;
+      setupWait.then(function () {
+        if (self._stepSetupPromise === setupWait) self._stepSetupPromise = null;
       });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
       visibleFilesRefreshScheduled = true;

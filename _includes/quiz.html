@@ -72,9 +72,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
         Correct order:<br>
         <span class="correct-labels">
           {% if q.display == 'inline' %}
-          <code>{{ q.lines | join: '' }}</code>
+          <code>{{ q.lines | join: '' | escape }}</code>
           {% else %}
-          {% for line in q.lines %}<code>{{ line }}</code>{% unless forloop.last %}<br>{% endunless %}{% endfor %}
+          {% for line in q.lines %}<code>{{ line | escape }}</code>{% unless forloop.last %}<br>{% endunless %}{% endfor %}
           {% endif %}
         </span>
       </div>

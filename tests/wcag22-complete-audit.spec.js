@@ -30,9 +30,19 @@ const AXE_TAG_TO_CRITERION = (() => {
   return map;
 })();
 
+function parseNonNegativeIntegerEnv(name) {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return null;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative integer, got ${JSON.stringify(raw)}`);
+  }
+  return value;
+}
+
 const FULL_SWEEP = process.env.WCAG_AUDIT_FULL_SWEEP === '1';
 const URL_FILTER = process.env.WCAG_AUDIT_URL_FILTER ? new RegExp(process.env.WCAG_AUDIT_URL_FILTER) : null;
-const EXPLICIT_PAGE_LIMIT = process.env.WCAG_AUDIT_PAGE_LIMIT ? Number(process.env.WCAG_AUDIT_PAGE_LIMIT) : null;
+const EXPLICIT_PAGE_LIMIT = parseNonNegativeIntegerEnv('WCAG_AUDIT_PAGE_LIMIT');
 // Local `npx playwright test` runs need a representative smoke sweep; the
 // full site pass is opt-in because each page now runs multiple expensive
 // light/dark, axe, focus, and mobile checks. CI enables the full sweep with
@@ -179,8 +189,8 @@ test.describe.configure({ mode: 'serial' });
 // keyboard-driven focus walk, mobile reload at 320px), so a ~150-page sweep
 // runs roughly 30–90 min. Default 120 min for FULL_SWEEP; allow override for
 // slower runners via WCAG_AUDIT_TIMEOUT_MS.
-const AUDIT_TIMEOUT_MS = Number(process.env.WCAG_AUDIT_TIMEOUT_MS)
-  || (FULL_SWEEP ? 120 * 60 * 1000 : 5 * 60 * 1000);
+const AUDIT_TIMEOUT_MS = parseNonNegativeIntegerEnv('WCAG_AUDIT_TIMEOUT_MS')
+  ?? (FULL_SWEEP ? 120 * 60 * 1000 : 5 * 60 * 1000);
 test.setTimeout(AUDIT_TIMEOUT_MS);
 
 test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
