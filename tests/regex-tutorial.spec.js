@@ -440,8 +440,8 @@ test.describe('RegEx Tutorial: Basics', () => {
   const basicsFreeAndFixerSolutions = [
     ['literal-2', 'error'],
     ['charclass-2', '[^a-zA-Z]'],
-    ['meta character-1', '\\d'],
-    ['meta character-2', '\\.[a-z]+'],
+    ['meta-character-1', '\\d'],
+    ['meta-character-2', '\\.[a-z]+'],
     ['anchor-0', '^\\d+$'],
     ['anchor-2', '\\bgo\\b'],
     ['anchor-3', '^[a-zA-Z0-9]+$'],
