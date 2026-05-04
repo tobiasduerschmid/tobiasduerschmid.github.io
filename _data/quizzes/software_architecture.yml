@@ -3,7 +3,7 @@ description: "Recalling what you just learned is the best way to form lasting me
 active: true
 questions:
   - id: 1
-    question: "Which paradigm views software architecture primarily as 'The set of principal design decisions governing a system'?"
+    question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal choices governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
     options:
       - "The Structural Paradigm"
       - "The Decision-Based Paradigm"
