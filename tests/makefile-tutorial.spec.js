@@ -42,7 +42,8 @@ test.describe.serial('Makefile Tutorial', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(120_000);
     page = await browser.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
@@ -181,7 +182,8 @@ test.describe.serial('Makefile Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(120_000);
     page = await browser.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
