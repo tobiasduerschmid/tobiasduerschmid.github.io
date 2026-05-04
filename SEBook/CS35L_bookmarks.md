@@ -57,7 +57,8 @@ layout: sebook
     border-bottom: none;
   }
 
-  .cs35l-subtopic-list a {
+  .cs35l-subtopic-list a,
+  .cs35l-subtopic-list a:visited {
     display: block;
     padding: 9px 16px 9px 40px;
     color: #2774AE;
@@ -97,7 +98,8 @@ layout: sebook
     border-bottom-color: #2a3a4a;
   }
 
-  html.dark-mode .cs35l-subtopic-list a {
+  html.dark-mode .cs35l-subtopic-list a,
+  html.dark-mode .cs35l-subtopic-list a:visited {
     color: #FFD100;
   }
 

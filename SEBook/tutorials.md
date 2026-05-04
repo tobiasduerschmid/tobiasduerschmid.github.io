@@ -94,7 +94,8 @@ browser — no install required — and saves your progress locally.
     -webkit-text-stroke: 0;
   }
 
-  .tutorial-card-title a {
+  .tutorial-card-title a,
+  .tutorial-card-title a:visited {
     color: inherit;
     text-decoration: none;
   }

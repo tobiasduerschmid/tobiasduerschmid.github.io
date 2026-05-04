@@ -151,7 +151,8 @@ html.dark-mode #tts-read-btn {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
 }
 
-.tutorial-help-menu-panel a {
+.tutorial-help-menu-panel a,
+.tutorial-help-menu-panel a:visited {
   display: block;
   min-height: 32px;
   padding: 8px 14px;
@@ -180,7 +181,8 @@ html.dark-mode .tutorial-help-menu-panel {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.58);
 }
 
-html.dark-mode .tutorial-help-menu-panel a {
+html.dark-mode .tutorial-help-menu-panel a,
+html.dark-mode .tutorial-help-menu-panel a:visited {
   color: #e8f1f8;
 }
 
@@ -546,7 +548,8 @@ html:not(.dark-mode) .tvm-left-tab.active {
   font-size: 0.95em;
 }
 
-.tvm-step-instructions a { color: #7ec8e3; }
+.tvm-step-instructions a,
+.tvm-step-instructions a:visited { color: #7ec8e3; }
 .tvm-step-instructions strong { color: #f0f0ff; font-weight: 600; }
 
 /* Tables */
@@ -3553,7 +3556,8 @@ html:not(.dark-mode) .tvm-step-instructions li {
   color: #383848;
 }
 
-html:not(.dark-mode) .tvm-step-instructions a { color: #0060a8; }
+html:not(.dark-mode) .tvm-step-instructions a,
+html:not(.dark-mode) .tvm-step-instructions a:visited { color: #0060a8; }
 html:not(.dark-mode) .tvm-step-instructions strong { color: #0a0a20; }
 
 /* Tables */

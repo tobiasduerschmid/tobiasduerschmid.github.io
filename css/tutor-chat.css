@@ -60,7 +60,8 @@
   color: #9090b0;
   text-align: center;
 }
-.tvm-tutor-status a {
+.tvm-tutor-status a,
+.tvm-tutor-status a:visited {
   color: #5b9bd5;
   text-decoration: underline;
 }

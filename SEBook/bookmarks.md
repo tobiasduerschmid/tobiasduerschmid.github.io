@@ -129,7 +129,8 @@ layout: sebook
     background: #f6f8fa;
   }
 
-  .bookmark-item a {
+  .bookmark-item a,
+  .bookmark-item a:visited {
     color: #2774AE;
     text-decoration: none;
     font-weight: 500;
