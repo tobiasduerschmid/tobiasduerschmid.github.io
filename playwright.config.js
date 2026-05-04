@@ -3,6 +3,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 const requestedJekyllPort = process.env.JEKYLL_PORT || '4000';
 const jekyllPort = /^\d+$/.test(requestedJekyllPort) ? requestedJekyllPort : '4000';
+const jekyllHost = '127.0.0.1';
 
 module.exports = defineConfig({
 
@@ -12,7 +13,7 @@ module.exports = defineConfig({
 
     // The URL Playwright will ping to check if the server is ready.
     // It waits for a 200 OK response before starting tests.
-    url: `http://localhost:${jekyllPort}`,
+    url: `http://${jekyllHost}:${jekyllPort}`,
 
     // If true, it won't try to start a new server if one is already running on that port.
     // Highly recommended for local development to save time.
@@ -29,7 +30,7 @@ module.exports = defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: `http://127.0.0.1:${jekyllPort}`,
+    baseURL: `http://${jekyllHost}:${jekyllPort}`,
     // Fail fast on page errors
     actionTimeout: 10000,
   },
