@@ -20,7 +20,7 @@ questions:
       3: |
         Custom sequence numbers are possible, but then the application must reimplement ordering,
         retransmission, duplicate handling, and edge cases that TCP already solves.
-    explanation: "**TCP is required because out-of-order or missing messages cause real misunderstandings.** While you *could* bolt reliability onto UDP yourself (option D), that means re-implementing TCP, which is error-prone and wasteful. TCP's overhead is negligible for the small payloads of a text message, making it the right tool here."
+    explanation: "**TCP is required because out-of-order or missing messages cause real misunderstandings.** While you *could* bolt reliability onto UDP yourself with custom sequence numbers, that means re-implementing TCP, which is error-prone and wasteful. TCP's overhead is negligible for the small payloads of a text message, making it the right tool here."
 
   - id: 2
     question: "You are building a **live video conferencing platform** similar to Zoom or Discord, where participants send real-time video to each other. Which transport protocol is most appropriate for the video data?"
@@ -120,7 +120,7 @@ questions:
       3: |
         A single central chunk index still violates the no-central-owner requirement. Hybrid designs can
         be useful, but not when the central piece becomes the control point.
-    explanation: "**P2P is correct because decentralization is an explicit design requirement, not just a preference.** Any central server (options A and D) creates a single point of control or failure, violating the requirements. True P2P systems like IPFS use a Distributed Hash Table (DHT) so peers discover each other without any central coordinator — the same principle behind BitTorrent's trackerless mode."
+    explanation: "**P2P is correct because decentralization is an explicit design requirement, not just a preference.** Any central server — including the central-index variant in the hybrid option — creates a single point of control or failure, violating the requirements. True P2P systems like IPFS use a Distributed Hash Table (DHT) so peers discover each other without any central coordinator — the same principle behind BitTorrent's trackerless mode."
 
   - id: 7
     question: "You are adding a **voice call feature** to a mobile messaging app, similar to WhatsApp Calls or FaceTime audio. Which transport protocol should handle the audio stream?"
