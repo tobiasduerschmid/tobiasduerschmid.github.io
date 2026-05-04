@@ -933,13 +933,29 @@ steps:
     # refs/stash and its reflog when the final entry is popped/dropped. Object
     # scans can find the dropped stash commit, but they exceed the browser VM's
     # 15s test-runner safety timer. The preceding history-order gate verifies
-    # the workflow shape; this gate verifies the two resulting functions.
+    # the workflow shape; this shell-only gate verifies the resulting function
+    # bodies without pinning exact exception messages or whitespace.
     command: |
-      cd /tutorial/myproject &&
-      grep -q 'raise ValueError("Cannot divide by zero")' calculator.py &&
-      grep -q 'raise TypeError("Arguments must be numbers")' calculator.py &&
-      grep -q 'return a \*\* b' calculator.py &&
-      grep -q 'return a / b' calculator.py
+      cd /tutorial/myproject
+      safe_body=$(awk '
+        /^def[ \t]+safe_divide[ \t]*\(/ { body=""; capture=1; next }
+        capture && /^def[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*\(/ { capture=0 }
+        capture { line=$0; sub(/#.*/, "", line); body=body line "\n" }
+        END { print body }
+      ' calculator.py | tr -d '[:space:]')
+      power_body=$(awk '
+        /^def[ \t]+power[ \t]*\(/ { body=""; capture=1; next }
+        capture && /^def[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*\(/ { capture=0 }
+        capture { line=$0; sub(/#.*/, "", line); body=body line "\n" }
+        END { print body }
+      ' calculator.py | tr -d '[:space:]')
+      case "$safe_body" in
+        *'ifb==0:'*'raiseValueError'*'returna/b'*|*'ifb!=0:'*'returna/b'*'raiseValueError'*) safe_ok=1 ;;
+      esac
+      case "$power_body" in
+        *'raiseTypeError'*'returna**b'*) power_ok=1 ;;
+      esac
+      [ "${safe_ok:-0}" = 1 ] && [ "${power_ok:-0}" = 1 ]
     hints:
     - title: 'Layer 1 — orientation'
       text: 'This step ends with two working pieces: the hotfix `safe_divide` and the resumed feature `power`.'
@@ -1804,7 +1820,8 @@ steps:
 
     ```bash
     git commit -am "Fix: restore negation in absolute"
-    grep -q 'return x if x >= 0 else -x' calculator.py && echo "all tests pass"
+    # Then click Run Tests. The gate accepts abs(x), a sign-check ternary,
+    # or an if/else branch, as long as negatives become positive.
     ```
 
     > 💡 Bisect points; it doesn't repair. Reading the culprit's diff
@@ -1887,9 +1904,24 @@ steps:
       text: 'Reload the step — setup_commands re-seed the history. If they ran but you don''t see them, you may have done a `git reset --hard` that wiped them; reload again.'
       condition: 'output_contains: 1'
   - description: The absolute function has been repaired (handles negatives, zero, and positives correctly)
-    # v86's test execution path does not reliably expose python3, so this gate
-    # checks the exact regression signal planted by setup_commands.
-    command: cd /tutorial/myproject && grep -q 'return x if x >= 0 else -x' calculator.py
+    # v86's test execution path cannot rely on Python being installed in the
+    # VM image. Extract the effective (last) absolute() body and accept common
+    # correct repairs instead of pinning one exact source string.
+    command: |
+      cd /tutorial/myproject
+      body=$(awk '
+        /^def[ \t]+absolute[ \t]*\(/ { body=""; capture=1; next }
+        capture && /^def[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*\(/ { capture=0 }
+        capture { line=$0; sub(/#.*/, "", line); body=body line "\n" }
+        END { print body }
+      ' calculator.py | tr -d '[:space:]')
+      case "$body" in
+        *'returnabs(x)'*|*'returnmax(x,-x)'*|*'returnmax(-x,x)'*|*'returnxifx>=0else-x'*|*'returnxifx>0else-x'*|*'return-xifx<0elsex'*|*'return-xifx<=0elsex'*) abs_ok=1 ;;
+      esac
+      case "$body" in
+        *'ifx<0:'*'return-x'*'returnx'*|*'ifx<=0:'*'return-x'*'returnx'*|*'ifx>0:'*'returnx'*'return-x'*|*'ifx>=0:'*'returnx'*'return-x'*) abs_ok=1 ;;
+      esac
+      [ "${abs_ok:-0}" = 1 ]
     hints:
     - title: 'Layer 1 — orientation'
       text: 'Bisect points you at the *culprit commit* but doesn''t fix it. After identifying the bad commit, repair `absolute(x)` on top of `main` and commit the fix.'
@@ -4121,7 +4153,7 @@ steps:
 
     ### Success criteria
 
-    - `grep -q 'return x if x >= 0 else -x' calculator.py && echo "all tests pass"` prints `all tests pass`.
+    - Run Tests reports that `absolute()` handles negatives, zero, and positives.
     - `main` ends with exactly **one** new fix commit.
     - `calculator.py` still has your uncommitted `# TODO: add clamp helper` note.
     - `git reflog` retains your intermediate messy commits.
@@ -4211,9 +4243,24 @@ steps:
     hints:
     - text: '`git status` names the paused operation. `git bisect reset`, `git rebase --abort`, or `git merge --abort` as appropriate.'
   - description: 'absolute() body has the correct return (handles negatives, zero, positives)'
-    # v86's test execution path does not reliably expose python3, so this gate
-    # checks the exact capstone regression signal planted by setup_commands.
-    command: cd /tutorial/myproject && grep -q 'return x if x >= 0 else -x' calculator.py
+    # Shell-only equivalent of the behavioral check. It extracts the effective
+    # (last) absolute() body and accepts common correct repairs such as abs(x),
+    # sign-check ternaries, and if/else branches.
+    command: |
+      cd /tutorial/myproject
+      body=$(awk '
+        /^def[ \t]+absolute[ \t]*\(/ { body=""; capture=1; next }
+        capture && /^def[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*\(/ { capture=0 }
+        capture { line=$0; sub(/#.*/, "", line); body=body line "\n" }
+        END { print body }
+      ' calculator.py | tr -d '[:space:]')
+      case "$body" in
+        *'returnabs(x)'*|*'returnmax(x,-x)'*|*'returnmax(-x,x)'*|*'returnxifx>=0else-x'*|*'returnxifx>0else-x'*|*'return-xifx<0elsex'*|*'return-xifx<=0elsex'*) abs_ok=1 ;;
+      esac
+      case "$body" in
+        *'ifx<0:'*'return-x'*'returnx'*|*'ifx<=0:'*'return-x'*'returnx'*|*'ifx>0:'*'returnx'*'return-x'*|*'ifx>=0:'*'returnx'*'return-x'*) abs_ok=1 ;;
+      esac
+      [ "${abs_ok:-0}" = 1 ]
     hints:
     - text: 'Bisect should have pointed at the capstone''s simplify-absolute commit. `git show <sha>` to see what was removed, then restore the magnitude logic in `absolute(x)`.'
   - description: 'A fix commit landed on main with the absolute repair'
