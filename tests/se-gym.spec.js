@@ -9,6 +9,7 @@ const GIT_PAGE_URL = '/SEBook/tools/git.html';
 // We need to click the visible slider span, not the hidden input.
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 const ANALYZE_TOGGLE_SLIDER = '#analyzePerformanceToggle + .slider';
+const TIMED_TOGGLE_SLIDER = '#timedPracticeToggle + .slider';
 
 function parseIndices(value) {
   if (!value) return [];
@@ -227,6 +228,71 @@ test.describe('SE Gym - Library View', () => {
     await expect(page.locator('#gym-selected .gym-item')).toHaveCount(1);
     await expect(page.locator('#available-quizzes .gym-add-btn[data-id="git"]')).toHaveClass(/in-gym/);
   });
+
+  test('timed practice toggle reveals timer settings and persists', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+
+    await expect(page.locator('#timed-practice-panel')).toBeHidden();
+    await page.locator(TIMED_TOGGLE_SLIDER).click();
+    await expect(page.locator('#timedPracticeToggle')).toBeChecked();
+    await expect(page.locator('#timed-practice-panel')).toBeVisible();
+    await expect(page.locator('input[name="timedPracticeMode"][value="total"]')).toBeChecked();
+    const radioBox = await page.locator('input[name="timedPracticeMode"][value="total"]').boundingBox();
+    expect(radioBox.width).toBeGreaterThanOrEqual(24);
+    expect(radioBox.height).toBeGreaterThanOrEqual(24);
+
+    await page.reload();
+    await expect(page.locator('#timedPracticeToggle')).toBeChecked();
+    await expect(page.locator('#timed-practice-panel')).toBeVisible();
+  });
+
+  test('timed practice info tooltip stays anchored to the question button', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+
+    const infoButton = page.locator('button[aria-describedby="timed-practice-tooltip"]');
+    const tooltip = page.locator('#timed-practice-tooltip');
+    await infoButton.click();
+    await expect(tooltip).toBeVisible();
+
+    const buttonBox = await infoButton.boundingBox();
+    const tooltipBox = await tooltip.boundingBox();
+    expect(buttonBox).not.toBeNull();
+    expect(tooltipBox).not.toBeNull();
+    expect(tooltipBox.y).toBeGreaterThan(buttonBox.y);
+    expect(tooltipBox.y - buttonBox.y).toBeLessThan(80);
+    expect(Math.abs(tooltipBox.x - buttonBox.x)).toBeLessThan(260);
+  });
+
+  test('timed practice per-card mode updates the workout countdown estimate', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator(TIMED_TOGGLE_SLIDER).click();
+    await page.locator('input[name="timedPracticeMode"][value="per-question"]').check();
+    await page.locator('#timed-practice-seconds-per-question').fill('30');
+    await page.locator('#timed-practice-seconds-per-question').dispatchEvent('change');
+    await page.locator('#max-cards').fill('2');
+
+    await expect(page.locator('#timed-practice-note')).toContainText('1:00');
+    await expect(page.locator('#timed-practice-note')).toContainText('2 cards');
+  });
+
+  test('timed practice accepts one second per card', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator(TIMED_TOGGLE_SLIDER).click();
+    await page.locator('input[name="timedPracticeMode"][value="per-question"]').check();
+    await page.locator('#timed-practice-seconds-per-question').fill('1');
+    await page.locator('#max-cards').fill('2');
+
+    await expect(page.locator('#timed-practice-seconds-per-question')).toHaveAttribute('aria-invalid', 'false');
+    await expect(page.locator('#timed-practice-note')).toContainText('0:02');
+  });
 });
 
 // ==================== SESSION TESTS ====================
@@ -254,6 +320,71 @@ test.describe('Personal Gym - Workout', () => {
 
     await page.locator('#start-workout-btn').click();
     await expect(page.locator('.workout-progress-bar')).toBeVisible();
+  });
+
+  test('timed practice shows a countdown clock during workout', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-timed-practice', 'true');
+    await setCookie(context, 'se-gym-timer-mode', 'total');
+    await setCookie(context, 'se-gym-timer-total-minutes', '1');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+
+    await expect(page.locator('#timed-practice-clock')).toBeVisible();
+    await expect(page.locator('#timed-practice-clock-value')).toHaveText(/^(1:00|0:5[0-9])$/);
+    await expect(page.locator('#timed-practice-extend-btn')).toBeVisible();
+  });
+
+  test('timed practice add-minute status accumulates repeated extensions', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-timed-practice', 'true');
+    await setCookie(context, 'se-gym-timer-mode', 'total');
+    await setCookie(context, 'se-gym-timer-total-minutes', '1');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+    await page.locator('#timed-practice-extend-btn').click();
+    await expect(page.locator('#timed-practice-status')).toContainText('Added 1 minute total');
+    await page.locator('#timed-practice-extend-btn').click();
+    await expect(page.locator('#timed-practice-status')).toContainText('Added 2 minutes total');
+  });
+
+  test('timed practice timeout stops the workout and shows results', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-timed-practice', 'true');
+    await setCookie(context, 'se-gym-timer-mode', 'per-question');
+    await setCookie(context, 'se-gym-timer-seconds-per-question', '1');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+
+    await expect(page.locator('#workout-results')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('#workout-summary')).toContainText('Time is up');
+    await expect(page.locator('#workout-score')).toHaveText('0');
+    await expect(page.locator('#workout-total')).toHaveText('1');
+    await expect(page.locator('#timed-practice-clock')).toBeHidden();
+  });
+
+  test('timed practice per-card countdown uses selected workout size', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-timed-practice', 'true');
+    await setCookie(context, 'se-gym-timer-mode', 'per-question');
+    await setCookie(context, 'se-gym-timer-seconds-per-question', '30');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('2');
+    await page.locator('#start-workout-btn').click();
+
+    await expect(page.locator('#timed-practice-clock')).toBeVisible();
+    await expect(page.locator('#timed-practice-clock-value')).toHaveText(/^(1:00|0:5[0-9])$/);
   });
 
   test('workout renders quiz card with quiz UI', async ({ page, context }) => {

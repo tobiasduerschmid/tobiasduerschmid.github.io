@@ -2,6 +2,12 @@
   var COOKIE_NAME = 'se-gym';
   var COOKIE_DAYS = 365;
   var ACTIVE_COOKIE = 'se-gym-active';
+  var TIMED_PRACTICE_COOKIE = 'se-gym-timed-practice';
+  var TIMED_MODE_COOKIE = 'se-gym-timer-mode';
+  var TIMED_TOTAL_MINUTES_COOKIE = 'se-gym-timer-total-minutes';
+  var TIMED_SECONDS_PER_QUESTION_COOKIE = 'se-gym-timer-seconds-per-question';
+  var DEFAULT_TIMED_TOTAL_MINUTES = 20;
+  var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
 
   function setCookie(name, value, days) {
     var d = new Date();
@@ -73,6 +79,50 @@
     setCookie(COOKIE_NAME, '[]', COOKIE_DAYS);
   }
 
+  function boundedNumber(value, fallback, min, max) {
+    var parsed = parseInt(value, 10);
+    if (!isFinite(parsed)) parsed = fallback;
+    if (parsed < min) return min;
+    if (parsed > max) return max;
+    return parsed;
+  }
+
+  function normalizeTimedMode(value) {
+    return value === 'per-question' ? 'per-question' : 'total';
+  }
+
+  function isTimedPractice() {
+    return getCookie(TIMED_PRACTICE_COOKIE) === 'true';
+  }
+
+  function setTimedPractice(value) {
+    setCookie(TIMED_PRACTICE_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
+  function getTimedPracticeMode() {
+    return normalizeTimedMode(getCookie(TIMED_MODE_COOKIE));
+  }
+
+  function setTimedPracticeMode(value) {
+    setCookie(TIMED_MODE_COOKIE, normalizeTimedMode(value), COOKIE_DAYS);
+  }
+
+  function getTimedPracticeTotalMinutes() {
+    return boundedNumber(getCookie(TIMED_TOTAL_MINUTES_COOKIE), DEFAULT_TIMED_TOTAL_MINUTES, 1, 600);
+  }
+
+  function setTimedPracticeTotalMinutes(value) {
+    setCookie(TIMED_TOTAL_MINUTES_COOKIE, String(boundedNumber(value, DEFAULT_TIMED_TOTAL_MINUTES, 1, 600)), COOKIE_DAYS);
+  }
+
+  function getTimedPracticeSecondsPerQuestion() {
+    return boundedNumber(getCookie(TIMED_SECONDS_PER_QUESTION_COOKIE), DEFAULT_TIMED_SECONDS_PER_QUESTION, 1, 3600);
+  }
+
+  function setTimedPracticeSecondsPerQuestion(value) {
+    setCookie(TIMED_SECONDS_PER_QUESTION_COOKIE, String(boundedNumber(value, DEFAULT_TIMED_SECONDS_PER_QUESTION, 1, 3600)), COOKIE_DAYS);
+  }
+
   function isAnalyzePerformance() {
     return getCookie(PERF_COOKIE) === 'true';
   }
@@ -133,6 +183,14 @@
     isPersonalGymActive: isPersonalGymActive,
     setPersonalGymActive: setPersonalGymActive,
     clearGym: clearGym,
+    isTimedPractice: isTimedPractice,
+    setTimedPractice: setTimedPractice,
+    getTimedPracticeMode: getTimedPracticeMode,
+    setTimedPracticeMode: setTimedPracticeMode,
+    getTimedPracticeTotalMinutes: getTimedPracticeTotalMinutes,
+    setTimedPracticeTotalMinutes: setTimedPracticeTotalMinutes,
+    getTimedPracticeSecondsPerQuestion: getTimedPracticeSecondsPerQuestion,
+    setTimedPracticeSecondsPerQuestion: setTimedPracticeSecondsPerQuestion,
     isAnalyzePerformance: isAnalyzePerformance,
     setAnalyzePerformance: setAnalyzePerformance,
     hashQuestion: hashQuestion,

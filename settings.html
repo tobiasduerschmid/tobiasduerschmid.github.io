@@ -109,15 +109,19 @@ info_nav_title: "My Settings"
   html.dark-mode .setting-toggle-status { color: #e8edf2; }
   .setting-control select,
   .setting-control input[type="text"],
+  .setting-control input[type="number"],
   .setting-control input[type="color"] {
     min-height: 38px;
     border: 1px solid var(--color-border, #c0c4ca);
     border-radius: var(--radius-md, 8px);
     background: var(--color-surface, #fff);
     color: var(--color-text, #1f2328);
+    box-sizing: border-box;
+    font: inherit;
   }
   .setting-control select,
-  .setting-control input[type="text"] {
+  .setting-control input[type="text"],
+  .setting-control input[type="number"] {
     width: 100%;
     padding: 8px 10px;
   }
@@ -127,6 +131,7 @@ info_nav_title: "My Settings"
   }
   html.dark-mode .setting-control select,
   html.dark-mode .setting-control input[type="text"],
+  html.dark-mode .setting-control input[type="number"],
   html.dark-mode .setting-control input[type="color"] {
     background: #1f1f1f;
     border-color: #555;
@@ -190,6 +195,20 @@ info_nav_title: "My Settings"
     font-size: 0.92em;
   }
   html.dark-mode .settings-note { color: #b0b0b0; }
+  .settings-timed-fields {
+    display: grid;
+    gap: 10px;
+  }
+  .settings-timed-field[hidden] {
+    display: none !important;
+  }
+  .settings-inline-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #393f47;
+    font-weight: 600;
+  }
+  html.dark-mode .settings-inline-label { color: #e8edf2; }
   .settings-status {
     min-height: 1.4em;
     margin: 18px 0 0;
@@ -505,6 +524,58 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <p class="setting-name">Timed practice</p>
+            <p class="setting-description">
+              Add a countdown clock to SE Gym workouts when you want a
+              time-boxed practice session. The countdown is private to this
+              browser and uses the <code>se-gym-timed-practice</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Timed practice</span>
+                <input type="checkbox" id="setting-timed-practice" data-setting="timedPractice" data-status-target="setting-timed-practice-status" aria-label="Timed practice">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-timed-practice-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Timed practice length</p>
+            <p class="setting-description">
+              Choose a single total time limit, or let SE Gym multiply a
+              per-card time by the workout size. These settings use
+              <code>se-gym-timer-mode</code>,
+              <code>se-gym-timer-total-minutes</code>, and
+              <code>se-gym-timer-seconds-per-question</code>.
+            </p>
+          </div>
+          <div class="setting-control">
+            <label for="setting-timed-mode" class="settings-inline-label">How to set the timer</label>
+            <select id="setting-timed-mode" data-setting="timedPracticeMode">
+              <option value="total">Set total time</option>
+              <option value="per-question">Compute from time per card</option>
+            </select>
+            <div class="settings-timed-fields">
+              <div class="settings-timed-field" id="setting-timed-total-field">
+                <label for="setting-timed-total-minutes" class="settings-inline-label">Total time in minutes</label>
+                <input type="number" id="setting-timed-total-minutes" min="1" max="600" step="1" inputmode="numeric" data-setting="timedPracticeTotalMinutes">
+              </div>
+              <div class="settings-timed-field" id="setting-timed-per-question-field">
+                <label for="setting-timed-seconds-per-question" class="settings-inline-label">Seconds per card</label>
+                <input type="number" id="setting-timed-seconds-per-question" min="1" max="3600" step="1" inputmode="numeric" data-setting="timedPracticeSecondsPerQuestion">
+              </div>
+            </div>
+            <p class="settings-note" id="setting-timed-practice-note"></p>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Track which questions trip me up</p>
             <p class="setting-description">
               Lets the SE Gym keep a private tally of how often you see each
@@ -600,6 +671,8 @@ info_nav_title: "My Settings"
 
   var COOKIE_DAYS = 365;
   var DEFAULT_UML_COLOR = '#2774AE';
+  var DEFAULT_TIMED_TOTAL_MINUTES = 20;
+  var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
   var statusEl = document.getElementById('settings-status');
 
   function readCookie(name) {
@@ -687,6 +760,33 @@ info_nav_title: "My Settings"
     return DEFAULT_UML_COLOR;
   }
 
+  function normalizeTimedMode(value) {
+    return value === 'per-question' ? 'per-question' : 'total';
+  }
+
+  function boundedNumber(value, fallback, min, max) {
+    var parsed = parseInt(value, 10);
+    if (!isFinite(parsed)) parsed = fallback;
+    if (parsed < min) return min;
+    if (parsed > max) return max;
+    return parsed;
+  }
+
+  function syncTimedPracticeFields() {
+    var modeSelect = document.getElementById('setting-timed-mode');
+    var totalField = document.getElementById('setting-timed-total-field');
+    var perQuestionField = document.getElementById('setting-timed-per-question-field');
+    var note = document.getElementById('setting-timed-practice-note');
+    var mode = normalizeTimedMode(modeSelect ? modeSelect.value : 'total');
+    if (totalField) totalField.hidden = mode !== 'total';
+    if (perQuestionField) perQuestionField.hidden = mode !== 'per-question';
+    if (note) {
+      note.textContent = mode === 'per-question'
+        ? 'SE Gym will multiply this by the number of cards drawn for the workout.'
+        : 'SE Gym will use this same total countdown for each workout.';
+    }
+  }
+
   function populateVoices() {
     var select = document.getElementById('setting-tts-voice');
     var note = document.getElementById('tts-voice-note');
@@ -734,7 +834,16 @@ info_nav_title: "My Settings"
     setCheckbox('setting-read-aloud', readCookie('read-aloud') === 'true');
     setCheckbox('setting-bookmarks', readCookie('se-bookmarks-active') === 'true');
     setCheckbox('setting-se-gym', readCookie('se-gym-active') === 'true');
+    setCheckbox('setting-timed-practice', readCookie('se-gym-timed-practice') === 'true');
     setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
+
+    var timedMode = document.getElementById('setting-timed-mode');
+    if (timedMode) timedMode.value = normalizeTimedMode(readCookie('se-gym-timer-mode'));
+    var timedTotal = document.getElementById('setting-timed-total-minutes');
+    if (timedTotal) timedTotal.value = String(boundedNumber(readCookie('se-gym-timer-total-minutes'), DEFAULT_TIMED_TOTAL_MINUTES, 1, 600));
+    var timedPerQuestion = document.getElementById('setting-timed-seconds-per-question');
+    if (timedPerQuestion) timedPerQuestion.value = String(boundedNumber(readCookie('se-gym-timer-seconds-per-question'), DEFAULT_TIMED_SECONDS_PER_QUESTION, 1, 3600));
+    syncTimedPracticeFields();
 
     var reducedSelect = document.getElementById('setting-reduced-motion');
     if (reducedSelect) {
@@ -792,6 +901,24 @@ info_nav_title: "My Settings"
     } else if (setting === 'seGym') {
       writeCookie('se-gym-active', target.checked ? 'true' : 'false');
       announce('SE Gym setting saved.');
+    } else if (setting === 'timedPractice') {
+      writeCookie('se-gym-timed-practice', target.checked ? 'true' : 'false');
+      announce('Timed practice setting saved.');
+    } else if (setting === 'timedPracticeMode') {
+      target.value = normalizeTimedMode(target.value);
+      writeCookie('se-gym-timer-mode', target.value);
+      syncTimedPracticeFields();
+      announce('Timed practice mode saved.');
+    } else if (setting === 'timedPracticeTotalMinutes') {
+      var totalMinutes = boundedNumber(target.value, DEFAULT_TIMED_TOTAL_MINUTES, 1, 600);
+      target.value = String(totalMinutes);
+      writeCookie('se-gym-timer-total-minutes', String(totalMinutes));
+      announce('Timed practice total time saved.');
+    } else if (setting === 'timedPracticeSecondsPerQuestion') {
+      var secondsPerQuestion = boundedNumber(target.value, DEFAULT_TIMED_SECONDS_PER_QUESTION, 1, 3600);
+      target.value = String(secondsPerQuestion);
+      writeCookie('se-gym-timer-seconds-per-question', String(secondsPerQuestion));
+      announce('Timed practice per-card time saved.');
     } else if (setting === 'performance') {
       writeCookie('analyze-performance', target.checked ? 'true' : 'false');
       announce('Performance tracking setting saved.');

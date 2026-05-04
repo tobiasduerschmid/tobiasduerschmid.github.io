@@ -30,7 +30,7 @@ layout: sebook
       <!-- Workout Controls -->
       <div id="gym-controls">
         <div class="controls-row toggle-row" style="justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 6px;">
+          <span class="toggle-copy">
             <span class="toggle-label">Activate Personal Gym</span>
             <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym" aria-describedby="personal-gym-tooltip">?</button>
             <span id="personal-gym-tooltip" role="tooltip" class="info-tooltip">Allows
@@ -44,7 +44,7 @@ layout: sebook
         </div>
         <div id="gym-controls-body">
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
-            <span style="display: inline-flex; align-items: center; gap: 6px;">
+            <span class="toggle-copy">
               <span class="toggle-label">Track Performance</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking" aria-describedby="performance-tracking-tooltip">?</button>
               <span
@@ -59,6 +59,43 @@ layout: sebook
               <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
               <span class="slider round"></span>
             </label>
+          </div>
+          <div class="controls-row toggle-row timed-practice-toggle-row">
+            <span class="toggle-copy">
+              <span class="toggle-label">Timed Practice</span>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about timed practice" aria-describedby="timed-practice-tooltip">?</button>
+              <span
+                  id="timed-practice-tooltip" role="tooltip" class="info-tooltip">Adds an optional countdown clock to SE Gym workouts. You choose either one total time limit or a per-card time that SE Gym multiplies by the workout size.</span>
+            </span>
+            <label class="switch">
+              <span class="sr-only">Toggle timed practice</span>
+              <input type="checkbox" id="timedPracticeToggle" aria-label="Timed Practice">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div id="timed-practice-panel" class="timed-practice-panel" hidden>
+            <fieldset class="timed-practice-mode-group">
+              <legend class="sr-only">Timed practice time calculation</legend>
+              <label class="timed-practice-mode-option">
+                <input type="radio" name="timedPracticeMode" value="total">
+                <span>Set total time</span>
+              </label>
+              <label class="timed-practice-mode-option">
+                <input type="radio" name="timedPracticeMode" value="per-question">
+                <span>Compute from time per card</span>
+              </label>
+            </fieldset>
+            <div class="timed-practice-fields">
+              <div class="timed-practice-field" id="timed-practice-total-field">
+                <label for="timed-practice-total-minutes">Total time in minutes</label>
+                <input type="number" id="timed-practice-total-minutes" min="1" max="600" step="1" inputmode="numeric" aria-describedby="timed-practice-note">
+              </div>
+              <div class="timed-practice-field" id="timed-practice-per-question-field">
+                <label for="timed-practice-seconds-per-question">Seconds per card</label>
+                <input type="number" id="timed-practice-seconds-per-question" min="1" max="3600" step="1" inputmode="numeric" aria-describedby="timed-practice-note">
+              </div>
+            </div>
+            <p id="timed-practice-note" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
           <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
             <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
@@ -255,8 +292,16 @@ layout: sebook
 
     <!-- ==================== WORKOUT VIEW ==================== -->
     <div id="gym-workout" style="display: none;">
-      <button id="back-to-library-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left"></i> Back to
-        Gym Entrance</button>
+      <div class="workout-header-row">
+        <div id="timed-practice-clock" class="timed-practice-clock" role="timer" aria-live="off" aria-label="Timed practice remaining time" hidden>
+          <span class="timed-practice-clock-label">Time left</span>
+          <span id="timed-practice-clock-value" class="timed-practice-clock-value">00:00</span>
+          <button type="button" id="timed-practice-extend-btn" class="timed-practice-extend-btn">Add 1 minute</button>
+        </div>
+        <button id="back-to-library-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left"></i> Back to
+          Gym Entrance</button>
+      </div>
+      <p id="timed-practice-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
 
       <div class="workout-progress-bar">
         <div class="workout-progress-fill" id="workout-progress" style="width: 0%"></div>
@@ -643,6 +688,13 @@ layout: sebook
       flex-wrap: wrap;
     }
 
+    .toggle-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
     .controls-row label {
       font-weight: 600;
       font-size: 1.1em;
@@ -665,6 +717,90 @@ layout: sebook
     .controls-row input[type="number"]:focus {
       border-color: #2774AE;
       box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15);
+    }
+
+    .timed-practice-toggle-row {
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .timed-practice-panel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #9aa4b2;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .timed-practice-panel[hidden],
+    .timed-practice-field[hidden],
+    .timed-practice-clock[hidden] {
+      display: none !important;
+    }
+
+    .timed-practice-mode-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .timed-practice-mode-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      margin: 0;
+      color: #333;
+      font-size: 1.1em;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .timed-practice-mode-option input {
+      width: 1.35em;
+      height: 1.35em;
+      min-width: 24px;
+      min-height: 24px;
+      margin: 0;
+      accent-color: var(--color-primary, #2774AE);
+      flex-shrink: 0;
+    }
+
+    .timed-practice-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .timed-practice-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+
+    .timed-practice-field input[type="number"] {
+      width: 100%;
+      min-height: 38px;
+      padding: 6px 10px;
+      border: 1.5px solid #767676;
+      border-radius: 6px;
+      box-sizing: border-box;
+      background: #fff;
+      color: #333;
+      font: inherit;
+      font-weight: 600;
+    }
+
+    .timed-practice-field input[type="number"]:focus {
+      border-color: #2774AE;
+      box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15);
+      outline: none;
     }
 
     .gym-summary-text {
@@ -820,6 +956,80 @@ layout: sebook
     /* Workout */
     #gym-workout {
       padding-top: 10px;
+    }
+
+    .workout-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .timed-practice-clock {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 8px 10px;
+      border: 1px solid #2774AE;
+      border-radius: 8px;
+      background: #eaf4fb;
+      color: #17324d;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timed-practice-clock-label {
+      font-weight: 700;
+    }
+
+    .timed-practice-clock-value {
+      font-size: 1.2em;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .timed-practice-extend-btn {
+      min-height: 32px;
+      border: 1px solid #2774AE;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #17324d;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+      padding: 4px 8px;
+    }
+
+    .timed-practice-extend-btn:hover {
+      background: #d8ebf7;
+    }
+
+    .timed-practice-extend-btn:focus-visible {
+      outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+      outline-offset: var(--focus-offset, 2px);
+    }
+
+    .timed-practice-clock.is-warning {
+      background: #fff4d6;
+      border-color: #8a5a00;
+      color: #4b3500;
+    }
+
+    .timed-practice-clock.is-warning .timed-practice-extend-btn {
+      border-color: #8a5a00;
+      color: #4b3500;
+    }
+
+    .timed-practice-clock.is-expired {
+      background: #fdecea;
+      border-color: #b1281e;
+      color: #69140f;
+    }
+
+    .timed-practice-clock.is-expired .timed-practice-extend-btn {
+      border-color: #b1281e;
+      color: #69140f;
     }
 
     .workout-progress-bar {
@@ -1444,6 +1654,66 @@ layout: sebook
       color: #e0e0e0;
     }
 
+    html.dark-mode .timed-practice-panel {
+      background: #1f1f1f;
+      border-color: #555;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .timed-practice-mode-option,
+    html.dark-mode .timed-practice-field label {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .timed-practice-field input[type="number"] {
+      background: #1a1a1a;
+      border-color: #737373;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .timed-practice-field input[type="number"]:focus {
+      border-color: #4da3ff;
+      box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.25);
+    }
+
+    html.dark-mode .timed-practice-clock {
+      background: #102333;
+      border-color: #4da3ff;
+      color: #e6f4ff;
+    }
+
+    html.dark-mode .timed-practice-extend-btn {
+      background: #1f1f1f;
+      border-color: #4da3ff;
+      color: #e6f4ff;
+    }
+
+    html.dark-mode .timed-practice-extend-btn:hover {
+      background: #29384a;
+    }
+
+    html.dark-mode .timed-practice-clock.is-warning {
+      background: #332500;
+      border-color: #d19a00;
+      color: #ffe4a3;
+    }
+
+    html.dark-mode .timed-practice-clock.is-warning .timed-practice-extend-btn {
+      border-color: #d19a00;
+      color: #ffe4a3;
+    }
+
+    html.dark-mode .timed-practice-clock.is-expired {
+      background: #341a18;
+      border-color: #f5a8a3;
+      color: #ffd3d0;
+    }
+
+    html.dark-mode .timed-practice-clock.is-expired .timed-practice-extend-btn {
+      border-color: #f5a8a3;
+      color: #ffd3d0;
+    }
+
     html.dark-mode .gym-item {
       background: #1a1a1a;
       border-color: #333;
@@ -1817,6 +2087,18 @@ layout: sebook
       var difficultSection = document.getElementById('difficult-gym-section');
       var difficultCountEl = document.getElementById('difficult-count');
       var difficultAddBtn = document.getElementById('difficult-add-btn');
+      var timedPracticeToggle = document.getElementById('timedPracticeToggle');
+      var timedPracticePanel = document.getElementById('timed-practice-panel');
+      var timedPracticeModeInputs = document.querySelectorAll('input[name="timedPracticeMode"]');
+      var timedPracticeTotalField = document.getElementById('timed-practice-total-field');
+      var timedPracticePerQuestionField = document.getElementById('timed-practice-per-question-field');
+      var timedPracticeTotalInput = document.getElementById('timed-practice-total-minutes');
+      var timedPracticePerQuestionInput = document.getElementById('timed-practice-seconds-per-question');
+      var timedPracticeNote = document.getElementById('timed-practice-note');
+      var timedPracticeClock = document.getElementById('timed-practice-clock');
+      var timedPracticeClockValue = document.getElementById('timed-practice-clock-value');
+      var timedPracticeExtendBtn = document.getElementById('timed-practice-extend-btn');
+      var timedPracticeStatus = document.getElementById('timed-practice-status');
 
       // Workout state
       var workoutCards = [];
@@ -1826,6 +2108,12 @@ layout: sebook
       var workoutIsReview = false;
       var workoutReviewQueue = [];
       var workoutReviewStep = 0;
+      var workoutTimerInterval = null;
+      var workoutTimerEndAt = 0;
+      var workoutTimerExpired = false;
+      var workoutTimerExtensionSeconds = 0;
+      var workoutEndedByTimer = false;
+      var lastTimedPracticeDrawCount = 0;
 
       function shuffleArray(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
@@ -1857,6 +2145,190 @@ layout: sebook
         maxCardsInput.setCustomValidity(invalid ? note : '');
         if (maxCardsNote) maxCardsNote.textContent = note;
         return parsed;
+      }
+
+      function formatTimerSeconds(totalSeconds) {
+        var seconds = Math.max(0, Math.round(totalSeconds || 0));
+        var hours = Math.floor(seconds / 3600);
+        var minutes = Math.floor((seconds % 3600) / 60);
+        var remainingSeconds = seconds % 60;
+        var paddedSeconds = remainingSeconds < 10 ? '0' + remainingSeconds : String(remainingSeconds);
+        if (hours > 0) {
+          var paddedMinutes = minutes < 10 ? '0' + minutes : String(minutes);
+          return hours + ':' + paddedMinutes + ':' + paddedSeconds;
+        }
+        return minutes + ':' + paddedSeconds;
+      }
+
+      function selectedTimedPracticeMode() {
+        for (var i = 0; i < timedPracticeModeInputs.length; i++) {
+          if (timedPracticeModeInputs[i].checked) return timedPracticeModeInputs[i].value;
+        }
+        return PersonalGym.getTimedPracticeMode();
+      }
+
+      function setTimedPracticeModeChecked(mode) {
+        var normalized = mode === 'per-question' ? 'per-question' : 'total';
+        for (var i = 0; i < timedPracticeModeInputs.length; i++) {
+          timedPracticeModeInputs[i].checked = timedPracticeModeInputs[i].value === normalized;
+        }
+      }
+
+      function validateTimedNumberInput(input, fallback, min, max, label) {
+        var raw = input ? input.value : '';
+        var parsed = parseInt(raw, 10);
+        var invalid = false;
+        var note = '';
+        if (raw === '' || !isFinite(parsed)) {
+          parsed = fallback;
+          invalid = true;
+          note = 'Enter a ' + label + ' value between ' + min + ' and ' + max + '.';
+        } else if (parsed < min) {
+          parsed = min;
+          invalid = true;
+          note = 'Using ' + min + ' because that is the minimum ' + label + ' value.';
+        } else if (parsed > max) {
+          parsed = max;
+          invalid = true;
+          note = 'Using ' + max + ' because that is the maximum ' + label + ' value.';
+        }
+        if (input) {
+          input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+          input.setCustomValidity(invalid ? note : '');
+        }
+        return { value: parsed, note: note };
+      }
+
+      function currentTimedPracticeTotalMinutes() {
+        return validateTimedNumberInput(timedPracticeTotalInput, PersonalGym.getTimedPracticeTotalMinutes(), 1, 600, 'total-minute').value;
+      }
+
+      function currentTimedPracticeSecondsPerQuestion() {
+        return validateTimedNumberInput(timedPracticePerQuestionInput, PersonalGym.getTimedPracticeSecondsPerQuestion(), 1, 3600, 'seconds-per-card').value;
+      }
+
+      function getTimedPracticeDurationSeconds(cardCount) {
+        if (!PersonalGym.isTimedPractice()) return 0;
+        var mode = selectedTimedPracticeMode();
+        if (mode === 'per-question') {
+          return currentTimedPracticeSecondsPerQuestion() * Math.max(0, cardCount || 0);
+        }
+        return currentTimedPracticeTotalMinutes() * 60;
+      }
+
+      function updateTimedPracticeEstimate(cardCount) {
+        if (!timedPracticeToggle || !timedPracticePanel) return;
+        var enabled = timedPracticeToggle.checked;
+        var mode = selectedTimedPracticeMode();
+        timedPracticePanel.hidden = !enabled;
+        if (timedPracticeTotalField) timedPracticeTotalField.hidden = !enabled || mode !== 'total';
+        if (timedPracticePerQuestionField) timedPracticePerQuestionField.hidden = !enabled || mode !== 'per-question';
+        if (!timedPracticeNote) return;
+        if (!enabled) {
+          timedPracticeNote.textContent = '';
+          return;
+        }
+        var validation = mode === 'per-question'
+          ? validateTimedNumberInput(timedPracticePerQuestionInput, PersonalGym.getTimedPracticeSecondsPerQuestion(), 1, 3600, 'seconds-per-card')
+          : validateTimedNumberInput(timedPracticeTotalInput, PersonalGym.getTimedPracticeTotalMinutes(), 1, 600, 'total-minute');
+        if (validation.note) {
+          timedPracticeNote.textContent = validation.note;
+          return;
+        }
+        var duration = getTimedPracticeDurationSeconds(cardCount);
+        if (mode === 'per-question') {
+          timedPracticeNote.textContent = cardCount > 0
+            ? 'This workout will start with ' + formatTimerSeconds(duration) + ' for ' + cardCount + ' card' + (cardCount === 1 ? '' : 's') + '.'
+            : 'Add at least one item to estimate the timed-practice countdown.';
+        } else {
+          timedPracticeNote.textContent = 'This workout will start with ' + formatTimerSeconds(duration) + ' total.';
+        }
+      }
+
+      function saveTimedPracticeSettingsFromInputs() {
+        if (!timedPracticeToggle) return;
+        PersonalGym.setTimedPractice(timedPracticeToggle.checked);
+        PersonalGym.setTimedPracticeMode(selectedTimedPracticeMode());
+        var total = currentTimedPracticeTotalMinutes();
+        var secondsPerQuestion = currentTimedPracticeSecondsPerQuestion();
+        PersonalGym.setTimedPracticeTotalMinutes(total);
+        PersonalGym.setTimedPracticeSecondsPerQuestion(secondsPerQuestion);
+        if (timedPracticeTotalInput) timedPracticeTotalInput.value = String(PersonalGym.getTimedPracticeTotalMinutes());
+        if (timedPracticePerQuestionInput) timedPracticePerQuestionInput.value = String(PersonalGym.getTimedPracticeSecondsPerQuestion());
+      }
+
+      function syncTimedPracticeControls(cardCount) {
+        if (!timedPracticeToggle) return;
+        timedPracticeToggle.checked = PersonalGym.isTimedPractice();
+        setTimedPracticeModeChecked(PersonalGym.getTimedPracticeMode());
+        if (timedPracticeTotalInput) timedPracticeTotalInput.value = String(PersonalGym.getTimedPracticeTotalMinutes());
+        if (timedPracticePerQuestionInput) timedPracticePerQuestionInput.value = String(PersonalGym.getTimedPracticeSecondsPerQuestion());
+        updateTimedPracticeEstimate(cardCount || 0);
+      }
+
+      function renderWorkoutTimer(remainingSeconds) {
+        if (!timedPracticeClock || !timedPracticeClockValue) return;
+        timedPracticeClock.hidden = false;
+        timedPracticeClockValue.textContent = formatTimerSeconds(remainingSeconds);
+        timedPracticeClock.classList.toggle('is-warning', remainingSeconds > 0 && remainingSeconds <= 60);
+        timedPracticeClock.classList.toggle('is-expired', remainingSeconds <= 0);
+        timedPracticeClock.setAttribute('aria-label', remainingSeconds <= 0
+          ? 'Timed practice countdown ended'
+          : 'Timed practice remaining time ' + formatTimerSeconds(remainingSeconds));
+      }
+
+      function stopWorkoutTimer(hideClock) {
+        if (workoutTimerInterval) {
+          clearInterval(workoutTimerInterval);
+          workoutTimerInterval = null;
+        }
+        workoutTimerEndAt = 0;
+        workoutTimerExpired = false;
+        workoutTimerExtensionSeconds = 0;
+        if (hideClock && timedPracticeClock) {
+          timedPracticeClock.hidden = true;
+          timedPracticeClock.classList.remove('is-warning', 'is-expired');
+        }
+        if (timedPracticeStatus) timedPracticeStatus.textContent = '';
+      }
+
+      function tickWorkoutTimer() {
+        if (!workoutTimerEndAt) return;
+        var remainingSeconds = Math.max(0, Math.ceil((workoutTimerEndAt - Date.now()) / 1000));
+        renderWorkoutTimer(remainingSeconds);
+        if (remainingSeconds <= 0 && !workoutTimerExpired) {
+          workoutTimerExpired = true;
+          if (workoutTimerInterval) {
+            clearInterval(workoutTimerInterval);
+            workoutTimerInterval = null;
+          }
+          workoutEndedByTimer = true;
+          finishWorkout();
+        }
+      }
+
+      function startWorkoutTimer(cardCount) {
+        stopWorkoutTimer(true);
+        var durationSeconds = getTimedPracticeDurationSeconds(cardCount);
+        if (!PersonalGym.isTimedPractice() || durationSeconds <= 0) return;
+        workoutTimerExpired = false;
+        workoutTimerEndAt = Date.now() + durationSeconds * 1000;
+        renderWorkoutTimer(durationSeconds);
+        workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
+      }
+
+      function extendWorkoutTimer(secondsToAdd) {
+        if (!timedPracticeClock || timedPracticeClock.hidden) return;
+        var base = Math.max(Date.now(), workoutTimerEndAt || Date.now());
+        workoutTimerEndAt = base + secondsToAdd * 1000;
+        workoutTimerExpired = false;
+        workoutTimerExtensionSeconds += secondsToAdd;
+        if (timedPracticeStatus) {
+          var addedMinutes = Math.round(workoutTimerExtensionSeconds / 60);
+          timedPracticeStatus.textContent = 'Added ' + addedMinutes + ' minute' + (addedMinutes === 1 ? '' : 's') + ' total to timed practice.';
+        }
+        if (!workoutTimerInterval) workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
+        tickWorkoutTimer();
       }
 
       // ==================== LIBRARY VIEW ====================
@@ -2006,6 +2478,8 @@ layout: sebook
         // Update summary and start button
         var maxCards = getMaxCardsValue();
         var drawCount = Math.min(maxCards, totalCards);
+        lastTimedPracticeDrawCount = drawCount;
+        updateTimedPracticeEstimate(drawCount);
         if (gym.length > 0 || (difficultInGym && hasDifficult)) {
           gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
           startBtn.disabled = false;
@@ -2094,6 +2568,38 @@ layout: sebook
 
       maxCardsInput.addEventListener('input', refreshLibrary);
 
+      if (timedPracticeToggle) {
+        syncTimedPracticeControls(0);
+        timedPracticeToggle.addEventListener('change', function () {
+          saveTimedPracticeSettingsFromInputs();
+          refreshLibrary();
+        });
+      }
+
+      timedPracticeModeInputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+          saveTimedPracticeSettingsFromInputs();
+          refreshLibrary();
+        });
+      });
+
+      [timedPracticeTotalInput, timedPracticePerQuestionInput].forEach(function (input) {
+        if (!input) return;
+        input.addEventListener('input', function () {
+          updateTimedPracticeEstimate(lastTimedPracticeDrawCount);
+        });
+        input.addEventListener('change', function () {
+          saveTimedPracticeSettingsFromInputs();
+          refreshLibrary();
+        });
+      });
+
+      if (timedPracticeExtendBtn) {
+        timedPracticeExtendBtn.addEventListener('click', function () {
+          extendWorkoutTimer(60);
+        });
+      }
+
       // ---- Info button click toggle (for touch devices) ----
       document.querySelectorAll('.info-btn').forEach(function (infoBtn) {
         infoBtn.addEventListener('click', function (e) {
@@ -2123,6 +2629,7 @@ layout: sebook
 
       // ---- Start Hard Workout Button ----
       document.getElementById('start-hard-workout-btn').addEventListener('click', function () {
+        saveTimedPracticeSettingsFromInputs();
         var difficultCards = getDifficultCards();
         if (difficultCards.length === 0) return;
 
@@ -2137,6 +2644,7 @@ layout: sebook
         workoutIsReview = false;
         workoutReviewQueue = [];
         workoutReviewStep = 0;
+        workoutEndedByTimer = false;
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
@@ -2144,6 +2652,7 @@ layout: sebook
         workoutCardArea.innerHTML = '';
 
         workoutTotalEl.textContent = workoutCards.length;
+        startWorkoutTimer(workoutCards.length);
         showWorkoutCard(0);
         scrollToTop();
       });
@@ -2364,6 +2873,7 @@ layout: sebook
       }
 
       function startWorkout() {
+        saveTimedPracticeSettingsFromInputs();
         workoutCards = buildWorkoutCards();
         if (workoutCards.length === 0) return;
 
@@ -2373,6 +2883,7 @@ layout: sebook
         workoutIsReview = false;
         workoutReviewQueue = [];
         workoutReviewStep = 0;
+        workoutEndedByTimer = false;
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
@@ -2380,6 +2891,7 @@ layout: sebook
         workoutCardArea.innerHTML = '';
 
         workoutTotalEl.textContent = workoutCards.length;
+        startWorkoutTimer(workoutCards.length);
         showWorkoutCard(0);
         scrollToTop();
       }
@@ -3045,7 +3557,7 @@ layout: sebook
         host.style.width  = rect.width  + 'px';
         host.style.height = rect.height + 'px';
 
-        var emojis = ['💪', '🏋️'];
+        var emojis = ['💪', '🏋️', '🧠'];
         var count = 18;
 
         for (var i = 0; i < count; i++) {
@@ -3081,13 +3593,17 @@ layout: sebook
       }
 
       function finishWorkout() {
+        stopWorkoutTimer(true);
         workoutCardArea.innerHTML = '';
         workoutResults.style.display = 'block';
         workoutProgress.style.width = '100%';
         workoutScoreEl.textContent = workoutScore;
         scrollToTop();
 
-        if (workoutIncorrectIndices.length === 0) {
+        if (workoutEndedByTimer) {
+          workoutSummaryEl.textContent = 'Time is up. Review your score below, then restart or return to the gym entrance.';
+          workoutReviewBtn.style.display = workoutIncorrectIndices.length > 0 ? 'inline-block' : 'none';
+        } else if (workoutIncorrectIndices.length === 0 && workoutScore === workoutCards.length) {
           workoutSummaryEl.textContent = 'Perfect score! Come back later to improve your recall!';
           workoutReviewBtn.style.display = 'none';
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
@@ -3108,7 +3624,9 @@ layout: sebook
         workoutReviewQueue = workoutIncorrectIndices.filter(function (v, i, a) { return a.indexOf(v) === i; });
         workoutIncorrectIndices = [];
         workoutReviewStep = 0;
+        workoutEndedByTimer = false;
         workoutResults.style.display = 'none';
+        startWorkoutTimer(workoutReviewQueue.length);
         showWorkoutCard(workoutReviewQueue[0]);
         scrollToTop();
       }
@@ -3121,13 +3639,16 @@ layout: sebook
         workoutIsReview = false;
         workoutReviewQueue = [];
         workoutReviewStep = 0;
+        workoutEndedByTimer = false;
         workoutResults.style.display = 'none';
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
+        startWorkoutTimer(workoutCards.length);
         showWorkoutCard(0);
         scrollToTop();
       }
 
       function goBackToLibrary() {
+        stopWorkoutTimer(true);
         workoutView.style.display = 'none';
         libraryView.style.display = 'block';
         refreshLibrary();

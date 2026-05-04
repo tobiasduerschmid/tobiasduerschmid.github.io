@@ -115,6 +115,7 @@ test.describe('Settings page', () => {
     await expect(page.getByLabel('Reduced motion')).toBeVisible();
     await expect(page.getByLabel('Underline glossary abbreviations')).toBeVisible();
     await expect(page.getByLabel('Autosave tutorial work')).toBeVisible();
+    await expect(page.getByLabel('Timed practice')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What each tutorial remembers' })).toBeVisible();
 
     await clickSwitch(page, '#setting-dark-mode');
@@ -131,6 +132,16 @@ test.describe('Settings page', () => {
 
     await clickSwitch(page, '#setting-tutorial-autosave');
     expect(await page.evaluate(() => localStorage.getItem('tutorial-autosave'))).toBe('false');
+
+    await clickSwitch(page, '#setting-timed-practice');
+    expect(await page.evaluate(() => document.cookie)).toContain('se-gym-timed-practice=true');
+    await page.getByLabel('How to set the timer').selectOption('per-question');
+    await expect(page.getByLabel('Seconds per card')).toHaveAttribute('min', '1');
+    await page.getByLabel('Seconds per card').fill('1');
+    await page.getByLabel('Seconds per card').dispatchEvent('change');
+    const settingsCookies = await page.evaluate(() => document.cookie);
+    expect(settingsCookies).toContain('se-gym-timer-mode=per-question');
+    expect(settingsCookies).toContain('se-gym-timer-seconds-per-question=1');
   });
 });
 
