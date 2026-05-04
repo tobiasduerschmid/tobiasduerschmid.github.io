@@ -793,6 +793,15 @@ messages on the BroadcastChannel and re-renders accordingly.
 - **`js/tutorial-code.js`** — the unified tutorial runtime. Editor
   management, file I/O, test execution, autosave / restore, step
   progression, quiz gating, debugger sync. Where most behavioral changes go.
+  `applySolution()` returns a Promise; tests and runtime code that reveal
+  solutions must await it before running step tests or advancing state, and it
+  must wait for any active first-visit `setup_commands` chain before it mutates
+  files or runs solution commands. In v86, it also uses a no-op shell prompt
+  barrier before applying the solution; keep that barrier when editing this
+  path so setup input cannot race with solution input. Setup and visible
+  solution batches may contain multi-command Git workflows, so keep their
+  timeouts long enough for the shell prompt to return instead of resolving
+  against a partially applied repository state.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
   `min_score` gating, `option_feedback` rendering. Tutorial quiz answer
