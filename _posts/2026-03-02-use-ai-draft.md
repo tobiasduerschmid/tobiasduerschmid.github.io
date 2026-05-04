@@ -53,7 +53,7 @@ Excessive reliance on AI for academic and recreational communication can reduce 
 ### Divergent Perspectives in the Literature
 A fascinating contradiction exists within the literature regarding AI's impact on **cognitive load**. 
 *   *Perspective A (The Efficiency Advocate):* Some researchers argue that by taking over lower-level tasks (like syntax correction or searching for baseline facts), AI reduces extraneous cognitive load, freeing up mental resources for higher-order, germane problem-solving and creativity {% cite Gerlich2025 AlanaziEtAl2025 %}. 
-*   *Perspective B (The Cognitive Atrophy Warning):* Conversely, other scholars argue that this exact reduction in cognitive friction is detrimental. Because the AI makes learning feel "effortless," it bypasses the productive struggle necessary for schema formation in the brain, leading to lower-quality reasoning, superficial fluency, and the erosion of independent problem-solving skills {% cite Kosmyna2025 MacnamaraEtAl2024 %}. 
+*   *Perspective B (The Cognitive Atrophy Warning):* Conversely, other scholars argue that this exact reduction in cognitive friction is detrimental. Because the AI makes learning feel "effortless", it bypasses the productive struggle necessary for schema formation in the brain, leading to lower-quality reasoning, superficial fluency, and the erosion of independent problem-solving skills {% cite Kosmyna2025 MacnamaraEtAl2024 %}. 
 
 **Synthesis for the Student:** To reconcile these views, students must deliberately inject "[desirable difficulties](https://www.youtube.com/watch?v=gtmMMR7SJKw)" back into their learning process. If AI makes gathering information frictionless, the student must manually apply the friction during the synthesis and application phases to ensure true learning takes place.
 
@@ -87,7 +87,7 @@ However, studies across high school and university programming courses consisten
 **Actionable Tips:**
 
 *   **Demand Socratic Scaffolding, Not Solutions:** 
-    Do not ask AI to "solve this problem" or "write this function." This robs you of the *generation effect* needed for deep learning {% cite Duplice2025 %}. Instead, force the AI to act as your *Socratic Tutor* {% cite SunilThakkar2024 %}. 
+    Do not ask AI to "solve this problem" or "write this function". This robs you of the *generation effect* needed for deep learning {% cite Duplice2025 %}. Instead, force the AI to act as your *Socratic Tutor* {% cite SunilThakkar2024 %}. 
     *   *How to do it:* Engineer your prompt to establish boundaries. Say, *"Act as my senior computer science tutor. I am trying to implement a recursive merge sort in Java, but I am getting a StackOverflowError. Do NOT write the corrected code for me. Instead, ask me a guiding question about my base case to help me figure out the flaw myself."* This keeps you in the driver's seat and preserves the productive struggle required for skill acquisition.
 *   **The "Generation-Then-Comprehension" Protocol:** 
     If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. Research shows that students who simply delegate code generation to AI suffer severe skill decay {% cite ShenTamkin2026 %}.
@@ -118,7 +118,7 @@ Because AI provides instant answers, it frequently triggers *metacognitive lazin
     Stop treating the AI as an oracle that fixes your mess. You must form your own hypothesis *before* engaging the AI {% cite Ma2026 %}.
     *   *How to do it:* When your code breaks, take a breath. Look at the traceback. Formulate a guess as to why it broke. Then, write a prompt that tests your hypothesis: *"I am getting a KeyError in Pandas. I hypothesize it is because the dataframe drops the 'price' column during my inner merge step. Can you confirm if my hypothesis is correct, and explain why the merge is dropping it?"* This forces you to remain cognitively engaged.
 *   **Avoid the "You Tell Me" Habit:** 
-    Never just paste a block of broken code and type "fix it." This trains your brain to give up at the first sign of friction. 
+    Never just paste a block of broken code and type "fix it". This trains your brain to give up at the first sign of friction. 
     *   *How to do it:* Treat the AI like a rubber duck that talks back. Use it to help you isolate the problem space, not to solve it. Prompt: *"My React component is re-rendering infinitely. I know it has to do with the useEffect dependency array. Can you explain the rules of dependency arrays so I can find my mistake?"*
 
 
@@ -140,7 +140,7 @@ Furthermore, while AI agents can achieve high functional correctness, a signific
     *   **L - Language:** Is the syntax actually correct for the specific version of the framework you are using? 
     *   **U - Usability:** Did the AI hallucinate libraries, APIs, or methods that do not exist? (This is incredibly common).
     *   **F - Fanfare (Audience/Constraints):** Does the code meet the specific constraints of your assignment, or did it generate a bloated, over-engineered enterprise solution for a simple script?
-    *   **F - Function (Expertise):** Put on your "expert lens." Does the underlying algorithmic logic actually solve the problem securely and efficiently?
+    *   **F - Function (Expertise):** Put on your "expert lens". Does the underlying algorithmic logic actually solve the problem securely and efficiently?
 
 ### 5. The "Vibe Coding" Debate vs. The Foundational Grind
 

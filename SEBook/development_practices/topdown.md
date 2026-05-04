@@ -17,7 +17,7 @@ To provide a comprehensive analysis of top-down code comprehension, we must firs
 | Concept Category | Semantic Terms & Equivalents |
 | --- | --- |
 | **Direct Synonyms** | Top-down approach, concept-driven model, inside-out model, whole-to-part processing, stepwise refinement in reading, structural exploration, abstraction descent, expectation-based/inference-based comprehension. |
-| **Metaphorical Equivalents** | Psycholinguistic guessing game, predictive coding, "the big picture," the "Newspaper Article" metaphor, seeing the forest for the trees, wiping the dirt off a window, mental mapping, zooming out. |
+| **Metaphorical Equivalents** | Psycholinguistic guessing game, predictive coding, "the big picture", the "Newspaper Article" metaphor, seeing the forest for the trees, wiping the dirt off a window, mental mapping, zooming out. |
 | **Paradigm Shifts** | Schema theory vs. bottom-up chunking, functional decomposition vs. cognitive abstraction, linear/line-by-line reading $\rightarrow$ hypothesis verification $\rightarrow$ opportunistic strategies. |
 | **Symptomatic Behaviors** | Hypothesis formulation, searching for beacons, skimming, activating background knowledge, relying on context cues, recognizing programming plans, asking "How" questions. |
 
@@ -25,7 +25,7 @@ To provide a comprehensive analysis of top-down code comprehension, we must firs
 
 #  The Cognitive Mechanics
 
-To understand how developers read code, we must examine how the brain processes information. Historically rooted in constructivist learning theories and the psycholinguistic research of Kenneth Goodman and Frank Smith, top-down processing fundamentally views reading as a "psycholinguistic guessing game." Comprehension begins in the mind of the reader rather than on the screen.
+To understand how developers read code, we must examine how the brain processes information. Historically rooted in constructivist learning theories and the psycholinguistic research of Kenneth Goodman and Frank Smith, top-down processing fundamentally views reading as a "psycholinguistic guessing game". Comprehension begins in the mind of the reader rather than on the screen.
 
 When a programmer utilizes a top-down approach, the process unfolds through distinct cognitive mechanics:
 
@@ -35,7 +35,7 @@ When a programmer utilizes a top-down approach, the process unfolds through dist
 * **Chunking via Programming Plans:** Expert programmers possess a mental library of "programming plans" (stereotypical implementations like a sorting algorithm). When a beacon is spotted, the developer performs *chunking*—abstracting away the low-level details and substituting them with the high-level plan.
 
 **Letovsky’s Model and the "Specification Layer"**
-Stanley Letovsky posits that an understander builds a Mental Model consisting of three layers: the specification, the annotation, and the implementation. In a top-down approach, the developer constructs the Specification Layer first—often by reading pull request descriptions, issue trackers, or architectural documentation. When a developer understands the high-level goal but hasn't read the code yet, it creates a "dangling purpose link." This cognitive gap generates "How" questions (e.g., "How does it search the database?"), prompting a targeted dive into the implementation layer.
+Stanley Letovsky posits that an understander builds a Mental Model consisting of three layers: the specification, the annotation, and the implementation. In a top-down approach, the developer constructs the Specification Layer first—often by reading pull request descriptions, issue trackers, or architectural documentation. When a developer understands the high-level goal but hasn't read the code yet, it creates a "dangling purpose link". This cognitive gap generates "How" questions (e.g., "How does it search the database?"), prompting a targeted dive into the implementation layer.
 
 
 # Structural Heuristics: Coding for the Top-Down Reader

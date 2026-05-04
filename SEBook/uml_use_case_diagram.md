@@ -37,7 +37,7 @@ Key points about actors:
 - A single user may be represented by **multiple actors** if they interact with different parts of the system in different capacities.
 - Actors are always **external** to the subject — they interact with it but are not part of it.
 
-> **⚠ Roles, not job titles (Ambler G65).** Name actors for the *role* they play in this system, not for their position in a company. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system."**
+> **⚠ Roles, not job titles (Ambler G65).** Name actors for the *role* they play in this system, not for their position in a company. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system".**
 
 > **Non-human actors exist.** An actor can be an *external system* (a payment gateway, an email provider) or even *Time itself* — Ambler and Seidl et al. both recommend introducing a *Time* actor for use cases triggered on a schedule (payroll, monthly statements, nightly batch jobs). The actor convention keeps the diagram honest: *something* initiates every use case.
 
@@ -179,7 +179,7 @@ UC2 --|> UC1
 UC3 --|> UC1
 @enduml'></div>
 
-Reading this diagram: "Synchronize Wirelessly" and "Synchronize Serially" are both specialized versions of "Synchronize Data." Either can be used wherever the general "Synchronize Data" use case is expected.
+Reading this diagram: "Synchronize Wirelessly" and "Synchronize Serially" are both specialized versions of "Synchronize Data". Either can be used wherever the general "Synchronize Data" use case is expected.
 
 > **Concept Check (Retrieval Practice):** Without looking at the diagrams above, answer: Which direction does the `<<include>>` arrow point? Which direction does the `<<extend>>` arrow point? What arrowhead style does generalization use?
 >
@@ -274,7 +274,7 @@ UC3 ..> UC4 : <<include>>
 2. **`<<include>>` (Create PR → Authenticate):** You cannot create a PR without being logged in. This is mandatory, unconditional behavior — `<<include>>` is correct. The arrow points *from the base* toward the included behavior.
 3. **`<<include>>` (Merge PR → Run CI Checks):** A maintainer cannot merge without CI passing. The checks run automatically as part of every merge — they are not optional. This is another `<<include>>`.
 4. **What is NOT shown:** There is no `<<extend>>` here, because there is no optional behavior in this workflow. Not every use case diagram needs `<<extend>>` — use it only when behavior genuinely *sometimes* happens.
-5. **Modeling simplification:** In reality every GitHub action requires authentication, so `Review Code` and `Merge Pull Request` would each `<<include>>` `Authenticate` too. We show authentication only on `Create Pull Request` to keep the diagram readable — don't read this as "review and merge are unauthenticated." Real diagrams often face the same trade-off between completeness and clarity.
+5. **Modeling simplification:** In reality every GitHub action requires authentication, so `Review Code` and `Merge Pull Request` would each `<<include>>` `Authenticate` too. We show authentication only on `Create Pull Request` to keep the diagram readable — don't read this as "review and merge are unauthenticated". Real diagrams often face the same trade-off between completeness and clarity.
 
 ---
 

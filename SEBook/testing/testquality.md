@@ -3,7 +3,7 @@ title: Test Quality
 layout: sebook
 ---
 
-A test suite is good when it gives trustworthy evidence about the behaviors and risks that matter. That is a stronger standard than "the tests pass" or "coverage is high." A passing suite can still miss the behavior users rely on, assert the wrong thing, fail randomly, or be so hard to maintain that developers stop trusting it.
+A test suite is good when it gives trustworthy evidence about the behaviors and risks that matter. That is a stronger standard than "the tests pass" or "coverage is high". A passing suite can still miss the behavior users rely on, assert the wrong thing, fail randomly, or be so hard to maintain that developers stop trusting it.
 
 Good test quality has two sides:
 
@@ -54,7 +54,7 @@ Property-based testing is especially useful when one exact expected value is les
 
 A test suite must be repeatable. If the same code sometimes passes and sometimes fails, developers learn to ignore the suite. Luo et al.'s empirical analysis of flaky tests found recurring causes such as asynchronous waiting, concurrency, test-order dependencies, time assumptions, randomness, and external resources {% cite Luo2014Flaky %}.
 
-Flakiness is not just annoying. It damages the social contract of testing: a red test should mean "investigate this behavior," not "rerun the job and hope." Good suites therefore isolate state, control clocks and randomness, avoid real networks in fast tests, and make asynchronous waits depend on observable conditions rather than fixed sleeps.
+Flakiness is not just annoying. It damages the social contract of testing: a red test should mean "investigate this behavior", not "rerun the job and hope". Good suites therefore isolate state, control clocks and randomness, avoid real networks in fast tests, and make asynchronous waits depend on observable conditions rather than fixed sleeps.
 
 # Maintainability
 

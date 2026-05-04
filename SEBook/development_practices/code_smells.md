@@ -7,7 +7,7 @@ layout: sebook
 
 When building and maintaining software, developers often rely on their intuition to tell when a piece of code just doesn't feel right. This intuition is formally recognized in software engineering as a **"code smell"**. First coined by Kent Beck and popularized by Martin Fowler, a code smell is a surface-level indication that usually corresponds to a deeper problem in the system. 
 
-Code smells are not bugs—they don't necessarily prevent the program from functioning correctly. Instead, they indicate the symptoms of poor software design. Over time, these structural weaknesses accumulate as "technical debt," making the codebase harder to maintain, more difficult to understand, and increasingly prone to future bugs.
+Code smells are not bugs—they don't necessarily prevent the program from functioning correctly. Instead, they indicate the symptoms of poor software design. Over time, these structural weaknesses accumulate as "technical debt", making the codebase harder to maintain, more difficult to understand, and increasingly prone to future bugs.
 
 Understanding and identifying code smells is a crucial skill for any software engineer. Below is a breakdown of some of the most common code smells and what they mean for your code.
 
@@ -40,7 +40,7 @@ Divergent change occurs when a single class is frequently changed for completely
 
 ### 6. Shotgun Surgery
 Shotgun surgery is the exact opposite of divergent change. It happens when a single, simple feature request forces you to make tiny edits across many different classes in the codebase.
-* **The Problem:** Making changes becomes a game of "whack-a-mole." It is incredibly easy to forget to update one of the many scattered files, leading to inconsistent behavior.
+* **The Problem:** Making changes becomes a game of "whack-a-mole". It is incredibly easy to forget to update one of the many scattered files, leading to inconsistent behavior.
 * **The Solution:** Consolidate the scattered logic into a single class or module.
 
 ### 7. Feature Envy

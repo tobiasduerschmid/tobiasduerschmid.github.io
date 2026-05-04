@@ -134,7 +134,7 @@ To assist newly connected subscribers, systems utilize state-retention mechanism
 ## 5. Prominent Publish/Subscribe Technologies
 The software industry has produced a wide variety of pub/sub frameworks tailored for different architectural needs:
 
-*   **Apache Kafka:** Operating as a "distributed commit log," Kafka provides massive throughput and fault tolerance. It partitions topics across brokers to enable horizontal scaling and durably stores events on disk, making it ideal for heavy event streaming, log aggregation, and offline analytics.
+*   **Apache Kafka:** Operating as a "distributed commit log", Kafka provides massive throughput and fault tolerance. It partitions topics across brokers to enable horizontal scaling and durably stores events on disk, making it ideal for heavy event streaming, log aggregation, and offline analytics.
 *   **RabbitMQ:** A traditional message-oriented middleware utilizing the AMQP standard. RabbitMQ excels in complex routing scenarios and point-to-point queuing. Unlike Kafka, RabbitMQ is generally designed to delete messages once they are consumed.
 *   **Apache Pulsar:** A cloud-native messaging system that separates compute (brokers) from persistent storage (Apache BookKeeper). This allows for independent scaling and provides strong multi-tenancy, namespace isolation, and native geo-replication.
 *   **MQTT:** An extremely lightweight, OASIS-standardized protocol designed for constrained environments and Internet of Things (IoT) devices where bandwidth is at a premium.

@@ -100,7 +100,7 @@ By forcing yourself into a "struggle protocol" for at least 15–20 minutes, you
 Assigning the LLM the role of an "intelligent tutor" produces significantly larger gains in academic achievement and critical thinking than using it as a passive "learning tool" {% cite Huang2025 Kazemitabaar2025 %}. This strategy relies on the **Testing Effect (Retrieval Practice)**: the act of retrieving information from memory strengthens learning more than re-reading or seeing an answer {% cite bjork2020desirable %}.
 
 **How and Why it Works:**
-Instead of dispensing answers, a Socratic tutor enforces **"beneficial friction."** It forces you into a "think–articulate–reflect" loop, requiring you to explain your reasoning before receiving feedback {% cite kazemitabaar2025%}. This transforms a transactional exchange into a cognitively demanding learning process.
+Instead of dispensing answers, a Socratic tutor enforces **"beneficial friction"**. It forces you into a "think–articulate–reflect" loop, requiring you to explain your reasoning before receiving feedback {% cite kazemitabaar2025%}. This transforms a transactional exchange into a cognitively demanding learning process.
 
 **Example Prompt (Python):**
 > "You are a Socratic Python tutor. I am having trouble understanding how list comprehensions work when using multiple 'if' conditions. Do not give me the syntax or a solved example for now. Instead, ask me 2–3 probing questions to help me break down the logic of how filters are applied in sequence, and wait for my response to each."
@@ -114,7 +114,7 @@ This strategy is rooted in the **Protégé Effect**—the phenomenon where stude
 Explaining a concept to a "confused" AI forces you to fill gaps in your own understanding, define jargon precisely, and monitor your comprehension {% cite tomisu2025 %}. Generating these explanations is a "Constructive" activity in the ICAP framework, leading to superior learning outcomes {% cite ChiWylie2014ICAP %}.
 
 **Example Prompt (Python):**
-> "Pretend you are a first-year CS student who doesn't understand how object-oriented inheritance works in Python. I am going to explain it to you. Ask me 'why' and 'how' questions whenever my explanation is unclear, uses jargon without defining it, or skips a step. Point out any logical gaps and don't accept hand-waving—if I say 'it inherits methods,' ask me to explain what that means precisely."
+> "Pretend you are a first-year CS student who doesn't understand how object-oriented inheritance works in Python. I am going to explain it to you. Ask me 'why' and 'how' questions whenever my explanation is unclear, uses jargon without defining it, or skips a step. Point out any logical gaps and don't accept hand-waving—if I say 'it inherits methods', ask me to explain what that means precisely."
 
 
 ## Strategic Prompting Frameworks
@@ -138,7 +138,7 @@ A well-specified pedagogical prompt includes five key components: the **AI's Rol
 ROPE shifts your effort away from low-level syntax recall and toward **Computational Thinking** and **Requirement Specification** {% cite denny2024prompt %}. This is akin to the core "requirement elicitation" step in professional software engineering.
 
 **How and Why it Works:**
-In "Prompt Problems," your task is to analyze a complex problem and formulate a precise natural language prompt that guides the AI to generate the correct code {% cite denny2024prompt%}. This forces you to engage in high-level abstraction and logical decomposition—the hardest and most valuable parts of programming—while the AI handles the syntax.
+In "Prompt Problems", your task is to analyze a complex problem and formulate a precise natural language prompt that guides the AI to generate the correct code {% cite denny2024prompt%}. This forces you to engage in high-level abstraction and logical decomposition—the hardest and most valuable parts of programming—while the AI handles the syntax.
 
 **Example Prompt (Python):**
 > (Student task) "Write a Python function `process_data` that takes a pandas DataFrame. Requirement 1: Drop all rows where the 'Status' column is NaN. Requirement 2: Group the data by 'Department' and calculate the mean of the 'Salary' column. Requirement 3: Return the resulting Series sorted in descending order. Requirement 4: Do not use any loop structures."
@@ -159,7 +159,7 @@ In "Prompt Problems," your task is to analyze a complex problem and formulate a 
 
 ### High-Friction Study Patterns
 
-To move from "passive consumer" to "active builder," you need study patterns that introduce **desirable difficulties**—friction that feels hard in the moment but results in better long-term retention.
+To move from "passive consumer" to "active builder", you need study patterns that introduce **desirable difficulties**—friction that feels hard in the moment but results in better long-term retention.
 
 ### 1. The Alternative Approaches Pattern
 

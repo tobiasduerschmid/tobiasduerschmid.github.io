@@ -241,7 +241,7 @@ Lookbehinds are useful for extracting values after a known prefix — like captu
 
 You've learned every major regex feature. The real skill is knowing **which tools to combine** for a given problem. These exercises don't tell you which section to draw from — you'll need to decide which combination of character classes, anchors, quantifiers, groups, and lookarounds to use.
 
-This is where regex goes from "I can follow along" to "I can solve problems on my own."
+This is where regex goes from "I can follow along" to "I can solve problems on my own".
 
 <div class="rt-section" data-section="Putting It All Together"></div>
 

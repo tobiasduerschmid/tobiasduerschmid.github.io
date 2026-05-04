@@ -8,7 +8,7 @@ The goal of `option_feedback` is **to land surgical correction at the moment the
 
 ## Before authoring: is a quiz the right tool?
 
-MCQ is great at testing *discrimination* between near-neighbour concepts (recursion step vs base case, `WHERE` vs `HAVING`, unit vs integration test). It is a poor proxy for *production* skills — writing code, designing a class, choosing an architecture. If the construct you want to assess is "the student can write a working factorial," replacing it with "the student can recognise a working factorial from four candidates" demotes Bloom Apply/Create to Bloom Remember and trains pattern-matching, not synthesis.
+MCQ is great at testing *discrimination* between near-neighbour concepts (recursion step vs base case, `WHERE` vs `HAVING`, unit vs integration test). It is a poor proxy for *production* skills — writing code, designing a class, choosing an architecture. If the construct you want to assess is "the student can write a working factorial", replacing it with "the student can recognise a working factorial from four candidates" demotes Bloom Apply/Create to Bloom Remember and trains pattern-matching, not synthesis.
 
 Two diagnostic questions:
 

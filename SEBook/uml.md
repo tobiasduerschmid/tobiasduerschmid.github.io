@@ -7,7 +7,7 @@ layout: sebook
 
 ## Why Model?
 
-Before writing a single line of code, software engineers need to communicate their ideas clearly. Consider a team of four developers asked to build "a building management system." Without a shared model, each person imagines something different---one pictures a skyscraper, another a shopping mall, a third a house. A **model** gives the team a shared blueprint to align on, just like an architectural drawing does for a construction crew.
+Before writing a single line of code, software engineers need to communicate their ideas clearly. Consider a team of four developers asked to build "a building management system". Without a shared model, each person imagines something different---one pictures a skyscraper, another a shopping mall, a third a house. A **model** gives the team a shared blueprint to align on, just like an architectural drawing does for a construction crew.
 
 Modeling serves two critical purposes in software engineering:
 
@@ -26,7 +26,7 @@ A model describes a system at a **high level of abstraction**. Models are abstra
 
 In the 1980s, the rise of Object-Oriented Programming spawned dozens of competing modeling notations. By the mid-1990s, more than 50 OO modeling methods had been proposed. The three leading notation designers — Grady Booch (*Booch method*), Jim Rumbaugh (*OMT — Object Modeling Technique*), and Ivar Jacobson (*OOSE — Object-Oriented Software Engineering*) — converged at Rational Software and combined their approaches. This convergence, standardized by the Object Management Group (OMG) in 1997, produced **UML 1.x** (UML 1.1 was the first OMG-adopted version). UML 2.0 was adopted by the OMG in 2003 and finalized in 2005 (see Rumbaugh, Jacobson & Booch, *The Unified Modeling Language Reference Manual*, 2nd ed., 2004). The current version, **UML 2.5.1** (2017), is maintained by the OMG.
 
-UML is a large language — the current UML 2.5.1 specification spans nearly 800 pages — but in practice only a small fraction of its notation is widely used. Martin Fowler (*UML Distilled*) advocates learning the "mythical 20 percent of UML that helps you do 80 percent of your work," and recommends *sketching-level* UML over exhaustive coverage of every symbol. This textbook follows that philosophy.
+UML is a large language — the current UML 2.5.1 specification spans nearly 800 pages — but in practice only a small fraction of its notation is widely used. Martin Fowler (*UML Distilled*) advocates learning the "mythical 20 percent of UML that helps you do 80 percent of your work", and recommends *sketching-level* UML over exhaustive coverage of every symbol. This textbook follows that philosophy.
 
 ### Modeling Guidelines
 

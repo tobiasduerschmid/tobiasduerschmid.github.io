@@ -84,12 +84,12 @@ Despite the availability of advanced frameworks, empirical data from enterprise 
 ### 4.1 The Economics of Prompting and Re-Prompting Loops
 Observational telemetry from enterprise IDE integrations, such as Google’s internal *Transform Code* feature, demonstrates that professional developers typically default to extremely short, ambiguous prompts—averaging around just 15 words {% cite Nam2025 %}. 
 
-This behavior is driven by the *economics of prompting*: developers constantly weigh the high cognitive effort required to write a detailed, exhaustive specification against the expected benefit of the generated code. When the AI fails to guess the missing context, developers fall into frustrated *re-prompting loops*. Telemetry shows that 11.9% of the time, developers simply repeat a request to the AI on the exact same code region. Even when a suggestion is "accepted," the most common subsequent actions are manual *Delete* (32.9%) and *Type* (28.7%), indicating that the AI's output is rarely perfect and heavily relied upon merely as a rough draft requiring immediate manual refinement {% cite Nam2025 %}.
+This behavior is driven by the *economics of prompting*: developers constantly weigh the high cognitive effort required to write a detailed, exhaustive specification against the expected benefit of the generated code. When the AI fails to guess the missing context, developers fall into frustrated *re-prompting loops*. Telemetry shows that 11.9% of the time, developers simply repeat a request to the AI on the exact same code region. Even when a suggestion is "accepted", the most common subsequent actions are manual *Delete* (32.9%) and *Type* (28.7%), indicating that the AI's output is rarely perfect and heavily relied upon merely as a rough draft requiring immediate manual refinement {% cite Nam2025 %}.
 
 ### 4.2 Bimodal Interaction: Acceleration vs. Exploration
 How a developer prompts and evaluates an AI depends entirely on their current cognitive state. Qualitative research identifies two distinct interaction modes when programmers use code-generating models {% cite Barke2023 %}:
 
-*   **Acceleration Mode:** The developer already knows exactly what they want to do and uses the AI as an "intelligent autocomplete." 
+*   **Acceleration Mode:** The developer already knows exactly what they want to do and uses the AI as an "intelligent autocomplete". 
     *   *Prompting Strategy:* Short, implicit prompts (like a brief comment or simply typing a function name).
     *   *The Friction:* In this flow state, the developer already has the full line of code in their mind. If the AI generates a massive, multi-line suggestion, it severely *breaks flow*. The developer must abruptly stop typing, read a large block of code, and verify it against their mental model. In acceleration, "less is more"—developers frequently reject long suggestions outright to avoid the cognitive cost of reading them {% cite Barke2023 %}.
 *   **Exploration Mode:** The developer is unsure of how to proceed, lacking the specific API knowledge or algorithm required. 
@@ -109,7 +109,7 @@ Analysis of developer timelines using the CUPS model reveals that the dominant p
 
 ## 5. Divergent Perspectives: Vibe vs. Control
 
-As prompt engineering evolves into a standard practice, the empirical literature reveals a striking cultural schism in how the software engineering community conceptualizes human-AI interaction. This divide frames a sharp contrast between the experimental fluidity of "vibe coding" and the rigid requirements of professional "control."
+As prompt engineering evolves into a standard practice, the empirical literature reveals a striking cultural schism in how the software engineering community conceptualizes human-AI interaction. This divide frames a sharp contrast between the experimental fluidity of "vibe coding" and the rigid requirements of professional "control".
 
 ### 5.1 The Gestalt of Vibe Coding and Material Disengagement
 On one end of the spectrum is *vibe coding*, an emergent paradigm popularized by AI researchers (often referred to as the "Karpathy canon"). Vibe coding is characterized by a conversational, highly iterative interaction where developers purposefully engage in *material disengagement*—deliberately stepping back from manually manipulating the physical substrate of code {% cite Sarkar2025 %}. 

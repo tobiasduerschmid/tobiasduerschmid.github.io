@@ -432,7 +432,7 @@ Prefer assertions at stable boundaries:
 * Messages sent to real collaborators at architectural boundaries.
 * Domain events or logs when those are part of the contract.
 
-Interaction checks are useful when the interaction itself is the behavior, such as "send exactly one receipt email after payment succeeds." They are harmful when they merely freeze how the current implementation happens to collaborate internally. Use the [Test Doubles](/SEBook/testing/testdoubles.html) vocabulary to distinguish stubs, spies, and mocks before reaching for a mock by habit.
+Interaction checks are useful when the interaction itself is the behavior, such as "send exactly one receipt email after payment succeeds". They are harmful when they merely freeze how the current implementation happens to collaborate internally. Use the [Test Doubles](/SEBook/testing/testdoubles.html) vocabulary to distinguish stubs, spies, and mocks before reaching for a mock by habit.
 
 # Refactor Tests Too
 
@@ -509,7 +509,7 @@ Test-driven development is most helpful when it keeps feedback small:
 
 Beck's original TDD text emphasizes tiny steps and refactoring after green {% cite Beck2002TDD %}. Industrial case studies found large reductions in pre-release defect density in teams using TDD, with an initial development-time increase {% cite Nagappan2008TDD %}. Later process research complicates the slogan: Fucci et al. found quality and productivity were primarily associated with fine granularity and uniform rhythm, not simply with test-first ordering {% cite Fucci2017TDD %}. Qualitative work also shows that developers often skip refactoring, even though refactoring is where much of TDD's design value lives {% cite Romano2017TDD %}.
 
-So the teaching point is not "chant red-green-refactor." The point is: make one behavioral claim, get fast feedback, improve the design, and keep the suite trustworthy.
+So the teaching point is not "chant red-green-refactor". The point is: make one behavioral claim, get fast feedback, improve the design, and keep the suite trustworthy.
 
 # A Short Checklist
 
@@ -524,4 +524,4 @@ Before you commit a test, ask:
 * Would a reasonable refactoring leave the test intact?
 * If this test failed next month, would the failure message help?
 
-If the answer is "no," improve the test before trusting the green bar.
+If the answer is "no", improve the test before trusting the green bar.

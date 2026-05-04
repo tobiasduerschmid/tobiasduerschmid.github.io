@@ -27,7 +27,7 @@ To design a system effectively, quality requirements must be **measurable and pr
 *   **The Scenario:** This describes the specific conditions or environment to which the system must respond, such as the arrival of a certain type of request or a specific environmental deviation.
 *   **The Metric:** This provides a concrete measure of "goodness". These can be **hard thresholds** (e.g., "response time < 1s") or **soft goals** (e.g., "minimize effort as much as possible").
 
-For example, a robust specification for a Mars rover would not just say it should be "robust," but that it must "function normally and send back all information under extreme weather conditions".
+For example, a robust specification for a Mars rover would not just say it should be "robust", but that it must "function normally and send back all information under extreme weather conditions".
 
 # Trade-offs and Synergies
 A fundamental reality of software design is that **you cannot always maximize all quality attributes simultaneously**; they frequently conflict with one another.

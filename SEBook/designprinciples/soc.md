@@ -394,10 +394,10 @@ When you look at code you need to structure (or restructure), this is the workin
 
 * Edsger W. Dijkstra. *["On the Role of Scientific Thought" (EWD 447)](https://www.cs.utexas.edu/~EWD/transcriptions/EWD04xx/EWD447.html)*. 1974.
 * GeeksforGeeks. *[Separation of Concerns (SoC)](https://www.geeksforgeeks.org/software-engineering/separation-of-concerns-soc/)*.
-* Yuanfang Cai, Rick Kazman, Ciera Jaspan, Jonathan Aldrich. "Introducing Tool-Supported Architecture Review into Software Design Education." *CSEE&T 2013*.
-* Marius Marin, Arie van Deursen, Leon Moonen, Robin van der Rijst. "An Integrated Crosscutting Concern Migration Strategy and its Semi-Automated Application to JHotDraw." *Automated Software Engineering, 2009*.
-* Dragoş Dobrean, Laura Dioşan. "Model View Controller in iOS Mobile Applications Development." *SEKE 2019*.
-* Chenxing Zhong et al. "Refactoring Microservices to Microservices in Support of Evolutionary Design." *IEEE TSE 2024*.
+* Yuanfang Cai, Rick Kazman, Ciera Jaspan, Jonathan Aldrich. "Introducing Tool-Supported Architecture Review into Software Design Education". *CSEE&T 2013*.
+* Marius Marin, Arie van Deursen, Leon Moonen, Robin van der Rijst. "An Integrated Crosscutting Concern Migration Strategy and its Semi-Automated Application to JHotDraw". *Automated Software Engineering, 2009*.
+* Dragoş Dobrean, Laura Dioşan. "Model View Controller in iOS Mobile Applications Development". *SEKE 2019*.
+* Chenxing Zhong et al. "Refactoring Microservices to Microservices in Support of Evolutionary Design". *IEEE TSE 2024*.
 
 # Practice
 

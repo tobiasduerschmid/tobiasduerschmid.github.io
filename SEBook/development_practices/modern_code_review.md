@@ -56,13 +56,13 @@ Achieving any of the goals of MCR requires a reviewer to accomplish one monument
 
 ## The Brain on Code: Letovsky and the CRCM
 
-In 1987, Stanley Letovsky proposed a foundational model suggesting that programmers act as "knowledge-based understanders," using an *assimilation process* to combine raw code with their existing knowledge base to construct a mental model {% cite Letovsky1987 %}.
+In 1987, Stanley Letovsky proposed a foundational model suggesting that programmers act as "knowledge-based understanders", using an *assimilation process* to combine raw code with their existing knowledge base to construct a mental model {% cite Letovsky1987 %}.
 
 Recent studies extended this specifically for MCR, creating the *Code Review Comprehension Model (CRCM)* {% cite Goncalves2025 %}. A reviewer must simultaneously hold a mental model of the *existing* software system, the *proposed* changes, and the *ideal* solution. Because this comparative comprehension is incredibly taxing, reviewers use **opportunistic strategies** instead of reading top-to-bottom {% cite Goncalves2025 %}:
 
 1. **Linear Reading:** Used mostly for very small changes (under 175 lines). The reviewer reads from the first changed file to the last.
 2. **Difficulty-Based Reading:** Reviewers prioritize. Some use an *easy-first* approach (skimming and approving documentation/renames to reduce cognitive load), while others use a *core-based* approach (searching for the core change and tracing data flow outward).
-3. **Chunking:** For massive PRs, reviewers break the code down into logical "chunks," reviewing commit-by-commit or looking exclusively at automated tests first to understand intent.
+3. **Chunking:** For massive PRs, reviewers break the code down into logical "chunks", reviewing commit-by-commit or looking exclusively at automated tests first to understand intent.
 
 ## The Quantitative Limits of Human Attention
 
@@ -110,7 +110,7 @@ Receiving critical feedback triggers strong emotional responses. Developers must
 
 ## Conflict and the "Bikeshedding" Anti-Pattern
 
-**Bikeshedding** (nitpicking) occurs when reviewers obsess over trivial, subjective details like formatting while overlooking serious flaws. High-performing teams actively suppress this by implementing automated *linters* and static analysis tools to enforce style guidelines automatically, preferring to be "reprimanded by a robot."
+**Bikeshedding** (nitpicking) occurs when reviewers obsess over trivial, subjective details like formatting while overlooking serious flaws. High-performing teams actively suppress this by implementing automated *linters* and static analysis tools to enforce style guidelines automatically, preferring to be "reprimanded by a robot".
 
 Tone is frequently lost in text-based communication; over 66% of non-technical emails in certain open-source projects contained uncivil features. To counteract this, modern teams explicitly train for communication, using questioning over dictating, and occasionally adopting an "Emoji Code" to convey friendly intent.
 
@@ -131,7 +131,7 @@ Imagine a software company where more than 25,000 developers submit over 20,000 
 Google enforces two highly unique concepts dictating *who* is allowed to approve code:
 
 **1. Ownership (Gatekeeping)**
-Every directory in Google's codebase has explicit "owners." While anyone can propose a change, it cannot be merged unless an official owner of that specific directory reviews and approves it.
+Every directory in Google's codebase has explicit "owners". While anyone can propose a change, it cannot be merged unless an official owner of that specific directory reviews and approves it.
 
 **2. Readability (Maintaining Norms)**
 Google has strict, mandatory coding styles for every language. "Readability" is an internal certification developers earn by consistently submitting high-quality code. If an author lacks Readability certification for a specific language, their code *must* be approved by a reviewer who has it {% cite Sadowski2018 %}.
@@ -199,7 +199,7 @@ The integration of AI disrupts the *socio-technical fabric* of code review. Code
 
 **The Loss of Reciprocity:** Accountability is a social contract. One cannot hold an LLM socially or morally accountable. When an LLM reviews code, the shared team accountability transitions strictly back to the individual developer {% cite Alami2025 %}. As one developer noted, *"You cannot blame or hold the LLM accountable"*. 
 
-**Emotional Neutrality vs. Meaningfulness:** AI drastically reduces the emotional taxation of code reviews. LLM feedback is consistently polite, objective, and neutral, which eliminates the defensive responses or "bikeshedding" conflict that occurs between humans. However, this emotional sterilization comes at a cost. Developers derive psychological meaningfulness, "joy," and professional validation from having respected peers validate their code {% cite Alami2025 %}. Replacing peers with a "faceless chat box" strips the software engineering role of its relational warmth and identity-affirming properties. 
+**Emotional Neutrality vs. Meaningfulness:** AI drastically reduces the emotional taxation of code reviews. LLM feedback is consistently polite, objective, and neutral, which eliminates the defensive responses or "bikeshedding" conflict that occurs between humans. However, this emotional sterilization comes at a cost. Developers derive psychological meaningfulness, "joy", and professional validation from having respected peers validate their code {% cite Alami2025 %}. Replacing peers with a "faceless chat box" strips the software engineering role of its relational warmth and identity-affirming properties. 
 
 ## The Future: From Syntax-Checking to Outcome-Verification
 
