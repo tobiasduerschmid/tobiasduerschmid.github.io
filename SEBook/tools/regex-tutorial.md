@@ -69,8 +69,9 @@ layout: sebook
 .rt-parsons-bank { display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; padding: 0.5em; background: #f8f9fa; border: 1px dashed #adb5bd; border-radius: 4px; margin-bottom: 0.5em; }
 .rt-parsons-target { display: flex; align-items: center; gap: 4px; margin-bottom: 0.4em; }
 .rt-parsons-drop { display: flex; flex-wrap: wrap; gap: 4px; min-height: 36px; min-width: 120px; flex: 1; padding: 0.3em 0.5em; background: #fff; border: 2px dashed #2774AE; border-radius: 4px; }
-.rt-frag { display: inline-block; padding: 0.3em 0.7em; background: #e7f1fa; border: 1px solid #2774AE; border-radius: 4px; cursor: grab; font-family: 'Courier New', Courier, monospace; font-size: 1em; font-weight: 600; user-select: none; transition: background 0.15s, transform 0.15s; }
+.rt-frag { display: inline-block; padding: 0.3em 0.7em; background: #e7f1fa; border: 1px solid #2774AE; border-radius: 4px; cursor: grab; font-family: 'Courier New', Courier, monospace; font-size: 1em; font-weight: 600; line-height: 1.4; color: #111; user-select: none; transition: background 0.15s, transform 0.15s; }
 .rt-frag:hover { background: #d0e4f5; transform: translateY(-1px); }
+.rt-frag:focus-visible { outline: 3px solid #005587; outline-offset: 2px; }
 .rt-frag.rt-dragging { opacity: 0.4; }
 
 /* ── Fixer Hint ────────────────────────────────────────────────── */
@@ -127,6 +128,7 @@ layout: sebook
 :root.dark-mode .rt-parsons-drop { background: #1e1e1e; border-color: #7ec8e3; }
 :root.dark-mode .rt-frag { background: #1a3a5c; border-color: #7ec8e3; color: #ddd; }
 :root.dark-mode .rt-frag:hover { background: #254a6e; }
+:root.dark-mode .rt-frag:focus-visible { outline-color: #FFD100; }
 :root.dark-mode .rt-viz { background: #1a2a3a; border-color: #3a5a7a; }
 :root.dark-mode .rt-viz-title { color: #7ec8e3; }
 :root.dark-mode .rt-viz-re, :root.dark-mode .rt-viz-str { background: #2a2a2a; border-color: #555; color: #ddd; }
@@ -284,7 +286,7 @@ The **pipe** `|` works like a logical OR: `cat|dog` matches either "cat" or "dog
 When you combine multiple regex features, patterns become expressive:
 - `gr[ae]y` — character class for the spelling variant.
 - `\d{2}:\d{2}` — two digits, a colon, two digits (time format).
-- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a full date validator.
+- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a month/day format validator. (It accepts impossible combinations like `02/30` and `04/31`; properly validating month-specific day limits — let alone leap years — is beyond what regex alone can express, and is one of the classic limits of regex pattern matching.)
 
 Start simple and add complexity only when tests demand it.
 

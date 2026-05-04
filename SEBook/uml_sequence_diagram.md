@@ -764,7 +764,7 @@ class A {
   </div>
 </div>
 
-> **Concept Check (Generation):** Try translating this code into a sequence diagram before checking the answer:
+> **Quick Check (Generation):** Try translating this code into a sequence diagram before checking the answer:
 > ```java
 > public class OrderProcessor {
 >     public void process(Order order, Inventory inv) {
@@ -814,7 +814,7 @@ These examples show sequence diagrams for real systems. For each diagram, trace 
 
 ### Example 1: Google Sign-In — OAuth2 Login Flow
 
-**Scenario:** When you click "Sign in with Google," three systems exchange a precise sequence of messages. This diagram shows that flow — it illustrates how return messages carry data back and why the *ordering* of messages matters.
+**Scenario:** When you click "Sign in with Google", three systems exchange a precise sequence of messages. This diagram shows that flow — it illustrates how return messages carry data back and why the *ordering* of messages matters.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant B: Browser
@@ -883,7 +883,7 @@ deactivate os
 1. **Charge once, then branch on the response:** The `charge()` call is issued *before* the `alt` fragment, and `chargeResult` is returned to `OrderService`. The `alt` then branches on the *content* of that response — never call payment twice. Putting the `charge()` inside both branches would imply a double charge attempt, which would be an architectural bug.
 2. **`alt` fragment (if/else):** The dashed horizontal line inside the box divides the two branches. Only one branch executes at runtime. When you see `alt`, think `if/else`.
 3. **Guard conditions in `[ ]`:** `[chargeResult.approved]` and `[chargeResult.declined]` are boolean guards — they must be mutually exclusive so exactly one branch fires.
-4. **Different paths, different participants:** In the success branch, the flow continues to `Restaurant`. In the failure branch, it returns immediately to the app. The diagram makes both paths equally visible — no "happy path bias."
+4. **Different paths, different participants:** In the success branch, the flow continues to `Restaurant`. In the failure branch, it returns immediately to the app. The diagram makes both paths equally visible — no "happy path bias".
 5. **Why `alt` and not `opt`?** An `opt` fragment has only one branch (if, no else). Because we have two explicit outcomes — success and failure — `alt` is the correct choice.
 
 ---
@@ -1015,15 +1015,13 @@ To solidify your learning, attempt these questions without looking back at the t
 2.  If you needed to model a user trying to enter a password 3 times before being locked out, which fragment would you use as the outer box, and which fragment would you use inside it?
 3.  Draw a simple sequence diagram (using pen and paper) of yourself ordering a book online. Include one `OPT` fragment representing applying a promo code.
 
-## Interactive Practice
+## Practice
 
 Test your knowledge with these retrieval practice exercises. These diagrams are rendered dynamically to ensure you can recognize UML notation in any context.
 
-### Knowledge Quiz
-{% include quiz.html id="uml_sequence_diagram_examples" %}
-
-### Retrieval Flashcards
 {% include flashcards.html id="uml_sequence_diagram_examples" %}
+
+{% include quiz.html id="uml_sequence_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
 

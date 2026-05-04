@@ -58,17 +58,21 @@ function UserProfile() {
 ```
 
 ### What is that HTML doing inside JavaScript?!
-You are looking at **JSX** (JavaScript XML). It is a special syntax extension for React. Under the hood, a compiler (like Babel) transforms those HTML-like tags into plain JavaScript function calls:
+You are looking at **JSX** (JavaScript XML). It is a special syntax extension for React. Under the hood, a compiler (Babel, SWC, or esbuild) transforms those HTML-like tags into plain JavaScript function calls:
 
 ```jsx
 // JSX (what you write):
 <button className="btn-primary" disabled={false}>Save</button>
 
-// What Babel compiles it to:
-React.createElement('button', { className: 'btn-primary', disabled: false }, 'Save')
+// Modern (React 17+) "automatic" JSX transform output:
+import { jsx as _jsx } from 'react/jsx-runtime';
+_jsx('button', { className: 'btn-primary', disabled: false, children: 'Save' });
+
+// Older "classic" transform output (still produced by some toolchains):
+React.createElement('button', { className: 'btn-primary', disabled: false }, 'Save');
 ```
 
-`React.createElement` returns a lightweight JavaScript object — the **Virtual DOM** node. React then compares these object trees to determine the minimal set of real DOM changes needed.
+Either form returns a lightweight JavaScript object — the **Virtual DOM** node. React then compares these object trees to determine the minimal set of real DOM changes needed.
 
 Notice the `{username}` syntax? Just like f-strings in Python (`f"Hello {username}"`), JSX allows you to seamlessly inject JavaScript variables directly into your UI using curly braces `{}`.
 
@@ -125,7 +129,7 @@ A **stale closure** occurs when an event handler closes over a value that was cu
 
 ### State batching
 
-React batches multiple `setState` calls that happen in the same event handler into a single re-render. This is an optimisation — you will not see intermediate states. If you call `setA(1); setB(2);` in one click handler, the component re-renders once with both changes applied.
+React 18 and later use **automatic batching**: multiple `setState` calls that happen in the same synchronous tick — whether inside event handlers, promises, `setTimeout` callbacks, or `async` functions — are merged into a single re-render. This is an optimisation; you will not see intermediate states. If you call `setA(1); setB(2);` in one click handler, the component re-renders once with both changes applied.
 
 
 
@@ -149,7 +153,10 @@ import { useState, useEffect } from 'react';
 function Dashboard() {
   const [userData, setUserData] = useState(null);
 
-  // This runs once when the component is first displayed
+  // This runs after the component mounts. (In development with React's
+  // StrictMode, you'll see it run twice — that's intentional and goes away
+  // in production. Real fetch effects should also return a cleanup function
+  // — e.g., aborting via AbortController — but it's omitted here for brevity.)
   useEffect(() => {
     // Fetch data from your Express server!
     fetch('http://localhost:3000/api/users/1')
@@ -383,7 +390,7 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 | Term | Definition |
 |------|-----------|
 | **Component** | A JavaScript function that returns JSX. The building block of React UIs. |
-| **JSX** | A syntax extension that lets you write HTML-like markup inside JavaScript. Babel compiles it to `React.createElement()` calls. |
+| **JSX** | A syntax extension that lets you write HTML-like markup inside JavaScript. A compiler (Babel, SWC, or esbuild) transforms it into JavaScript function calls — historically `React.createElement()`, and since React 17 the automatic transform calls `jsx()` from `react/jsx-runtime`. |
 | **Props** | Read-only data passed from a parent component to a child, like function arguments. |
 | **State** | Data managed inside a component via `useState`. Changing state triggers a re-render. |
 | **Hook** | A special function (prefixed with `use`) that lets components use React features. Must be called at the top level. |
@@ -396,13 +403,13 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 | **Lifting state up** | Moving state to the lowest common ancestor of the components that need it, then passing it down as props. |
 | **Stale closure** | A bug where an event handler or callback captures an outdated state value from a previous render. Fixed by using the functional `setState(prev => ...)` pattern. |
 | **Functional update** | Passing a function to a state setter (`setState(prev => prev + 1)`) so React provides the latest state value at update time, avoiding stale closure bugs. |
-| **State batching** | React's optimisation of merging multiple `setState` calls in the same event handler into a single re-render. |
+| **State batching** | React 18's optimisation of merging multiple `setState` calls that happen in the same synchronous tick (event handlers, promises, timeouts, async callbacks) into a single re-render. |
 | **Prop drilling** | Passing a prop through several intermediate components that don't use it, just to reach a deeply nested child that does. |
 
 
 ## Summary
 1. **Components:** UI is broken down into reusable JavaScript functions.
-2. **JSX:** We write HTML-like syntax inside JS to describe UI, compiled to `React.createElement` calls.
+2. **JSX:** We write HTML-like syntax inside JS to describe UI; a compiler turns it into `jsx()` (modern) or `React.createElement` (classic) calls.
 3. **Props:** Data flows one-way from parent to child. Props are read-only.
 4. **State:** We use `useState` to give components memory. Updating state triggers re-renders.
 5. **Lists & Keys:** Use `.map()` with stable `key` props for dynamic lists.
@@ -413,7 +420,7 @@ React tracks hooks by their *call order*. Two rules are non-negotiable:
 ## Ready to Practice?
 Head to the [React Tutorial](/SEBook/tools/react-tutorial) for hands-on exercises with immediate feedback — no setup required.
 
-## Test Your Knowledge
+## Practice
 
 {% include flashcards.html id="react_syntax_explain" %}
 

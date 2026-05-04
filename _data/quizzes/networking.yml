@@ -184,10 +184,10 @@ questions:
       **Arrange** the TCP/IP layers in order from bottom (closest to hardware) to top (closest to the application).
     type: parsons
     lines:
-      - "Application Layer"
-      - "Transport Layer"
-      - "Internet Layer"
       - "Link Layer"
+      - "Internet Layer"
+      - "Transport Layer"
+      - "Application Layer"
     distractors:
       - "Security Layer"
       - "Performance Layer"

@@ -17,13 +17,13 @@ In C++, your workflow is **Write $\rightarrow$ Compile $\rightarrow$ Link $\righ
 
 Python is a **scripting language**. You do not explicitly compile and link a binary. Instead, your workflow is simply **Write $\rightarrow$ Execute**. 
 
-Under the hood, when you run `python script.py`, the Python interpreter reads your code, translates it into an intermediate "bytecode," and immediately runs that bytecode on the Python Virtual Machine (PVM). 
+Under the hood, when you run `python script.py`, the Python interpreter reads your code, translates it into an intermediate "bytecode", and immediately runs that bytecode on the Python Virtual Machine (PVM). 
 
 
 **What this means for you:**
 * **No `main()` boilerplate:** Python executes from top to bottom. You don't *need* a `main()` function to make a script run, though it is often used for organization.
 * **Rapid Prototyping:** Because there is no compilation step, you can write and test code iteratively and quickly.
-* **Runtime Errors:** In C++, the compiler catches syntax and type errors before the program ever runs. In Python, errors are caught *at runtime* when the interpreter actually reaches the problematic line.
+* **Runtime Errors:** In C++, the compiler catches syntax and type errors before the program ever runs. In Python, syntax and indentation errors are caught at parse time before any code executes, but most other errors (e.g., `TypeError`, `NameError`, `AttributeError`) are caught *at runtime* only when the interpreter actually reaches the problematic line.
 
 **C++:**
 ```cpp
@@ -67,12 +67,14 @@ This is useful for debugging, but note that checking types explicitly is often u
 **Let's look at an example:**
 
 ```python
-x = 5         # Python creates an integer object '5'. It attaches the name tag 'x' to it.
+x = 1_000_000  # Python creates an integer object '1000000'. It attaches the name tag 'x' to it.
 print(x)      
 
 x = "Hello"   # Python creates a string object '"Hello"'. It moves the 'x' tag to the string.
-print(x)      # The integer '5' is now nameless and will be garbage collected.
+print(x)      # The integer '1000000' is now nameless and will be garbage collected.
 ```
+
+> **Note:** CPython caches small integers (roughly -5 through 256) in a permanent pool, so they are *not* eligible for garbage collection even when no user variable references them. We deliberately use `1_000_000` above to illustrate the general principle.
 
 Because variables are just name tags (references) pointing to objects, you don't declare types. The Python interpreter figures out the type of the object at runtime. 
 
@@ -80,7 +82,7 @@ Because variables are just name tags (references) pointing to objects, you don't
 
 In C++, scope is defined by curly braces `{}` and statements are terminated by semicolons `;`. 
 
-Python uses **indentation** to define scope, and **newlines** to terminate statements. This enforces highly readable code by design. The PEP 8 standard mandates **4 spaces** per level — never mix tabs and spaces, as this causes an `IndentationError` at runtime that can be hard to diagnose (tabs and spaces look identical in many editors).
+Python uses **indentation** to define scope, and **newlines** to terminate statements. This enforces highly readable code by design. PEP 8 recommends **4 spaces** per level — never mix tabs and spaces, as this raises a `TabError` (a kind of `IndentationError`) when Python parses the file (before any code runs) that can be hard to diagnose (tabs and spaces look identical in many editors).
 
 **C++:**
 ```cpp
@@ -239,7 +241,7 @@ age = 30
 # The f-string automatically converts variables to strings and evaluates the math
 print(f"{name} is {age} years old and will be {age + 1} next year.")
 ```
-*Pedagogical Note:* Under the hood, Python calls the `__str__()` method of the objects placed inside the curly braces to get their string representation.
+*Pedagogical Note:* Under the hood, Python calls the object's `__format__()` method (passing the format spec, if any). For most built-in types `__format__()` delegates to `__str__()`, so the two appear interchangeable — but a custom class can override `__format__()` to support format specifiers like `f"{value:>10}"`.
 
 
 ## String Quotes: `"..."` and `'...'` Are Interchangeable
@@ -421,7 +423,7 @@ If you are used to C++ classes, Python's approach to OOP will feel radically ope
 
 1. **No Header Files:** Everything is declared and defined in one place.
 2. **Explicit `self`:** In C++, instance methods have an implicit `this` pointer. In Python, the instance reference is passed *explicitly* as the first parameter to every instance method. By convention, it is always named `self`.
-3. **No True Privacy:** C++ enforces `public`, `private`, and `protected` access specifiers at compile time. Python operates on the philosophy of "we are all consenting adults here." There are no true private variables. Instead, developers use a *convention*: prefixing a variable with a single underscore (e.g., `_internal_state`) signals to other developers, "This is meant for internal use, please don't touch it," but the language will not stop them from accessing it.
+3. **No True Privacy:** C++ enforces `public`, `private`, and `protected` access specifiers at compile time. Python operates on the philosophy of "we are all consenting adults here". There are no true private variables. Instead, developers use a *convention*: prefixing a variable with a single underscore (e.g., `_internal_state`) signals to other developers, "This is meant for internal use, please don't touch it", but the language will not stop them from accessing it.
 4. **Duck Typing:** In C++, if a function expects a `Bird` object, you must pass an object that inherits from `Bird`. Python relies on "Duck Typing"—*If it walks like a duck and quacks like a duck, it must be a duck.* Python doesn't care about the object's actual class hierarchy; it only cares if the object implements the methods being called on it.
 
 
@@ -515,7 +517,7 @@ print(text[0:8:2])  # Output: 'Sfwr' (Every 2nd character of 'Software')
 print(text[::-1])   # Output: 'gnireenignE erawtfoS' (Steps backwards by 1)
 ```
 
-Because variables in Python are references to objects, it is important to note that slicing a list or a string creates a **shallow copy**—a brand new object in memory containing the sliced elements.
+Because variables in Python are references to objects, it is important to note that slicing a *list* always creates a **shallow copy**—a brand new list object containing references to the sliced elements. Slicing a *string* normally also returns a new string, but because strings are immutable, CPython is allowed to optimize the whole-string slice `s[:]` to return the same object — that's a harmless implementation detail, not something to rely on.
 
 
 
@@ -569,7 +571,7 @@ except KeyError:
 value = my_dict.get("key", "default")
 ```
 
-EAFP is idiomatic Python because exceptions are cheap in Python (unlike C++, where they are expensive). Using `try/except` for expected cases like missing dictionary keys or file-not-found is standard practice, not an anti-pattern.
+EAFP is idiomatic Python by convention. Setting up a `try/except` block in CPython 3.11+ has essentially zero cost on the no-exception path, so using `try/except` for expected cases like missing dictionary keys or file-not-found is standard practice, not an anti-pattern. (Modern C++ also uses zero-cost exception handling, so the contrast you may have heard between "cheap Python exceptions" and "expensive C++ exceptions" is mostly a cultural difference, not a performance one.)
 
 ### Common Built-in Exception Types
 
@@ -745,7 +747,7 @@ Always use raw strings (`r'...'`) for regex patterns — they prevent Python fro
 
 ## Top 10 Python Best Practices
 
-These are the most important conventions and idioms that experienced Python programmers follow. Internalizing them will make your code more readable, less error-prone, and immediately recognizable as "Pythonic."
+These are the most important conventions and idioms that experienced Python programmers follow. Internalizing them will make your code more readable, less error-prone, and immediately recognizable as "Pythonic".
 
 ### 1. Use f-Strings for String Formatting
 
@@ -895,7 +897,7 @@ if len(my_list) == 0:
     print("list is empty")
 ```
 
-**Exception:** Use explicit `is not None` checks when `0`, `""`, or `False` are valid values that should not be treated as "empty."
+**Exception:** Use explicit `is not None` checks when `0`, `""`, or `False` are valid values that should not be treated as "empty".
 
 ### 10. Use `is` for `None` Comparisons
 
@@ -919,7 +921,7 @@ if result == None:
 This matters because a class can override `__eq__` to return `True` when compared with `None`, which would break the equality check. The `is` operator checks *identity* (same object in memory), which cannot be overridden.
 
 
-## Test Your Knowledge
+## Practice
 
 {% include flashcards.html id="python_syntax_explain" %}
 

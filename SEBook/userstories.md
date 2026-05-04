@@ -32,7 +32,7 @@ This structure helps the team identify not just the "what", but also the "who" a
 The main requirement of the user story is captured in the *I want* part.
 The *so that* part primarily clarifies the goal the user wants to achieve. While it should not prescribe implementation details, it may implicitly introduce quality constraints or dependencies that shape the acceptance criteria.
 
-**Be specific about the actor.** Avoid generic labels like "user" in the *As a* clause. Instead, name the specific role that benefits from the feature (e.g., "job seeker", "hiring manager", "store owner"). A precise actor clarifies *who* needs the feature and *why*, helps the team understand the context, and prevents stories from becoming vague catch-alls. If you find yourself writing "**As a** user," ask: *which* user?
+**Be specific about the actor.** Avoid generic labels like "user" in the *As a* clause. Instead, name the specific role that benefits from the feature (e.g., "job seeker", "hiring manager", "store owner"). A precise actor clarifies *who* needs the feature and *why*, helps the team understand the context, and prevents stories from becoming vague catch-alls. If you find yourself writing "**As a** user", ask: *which* user?
 
 # Acceptance Criteria
 
@@ -174,7 +174,7 @@ To determine if a user story is negotiable, ask:
 **How to Improve It**
 If a story violates the Negotiable criterion, you can improve it using these techniques:
 * **Focus on the "Why":** Use "So that" clauses to clarify the underlying goal, which allows the team to negotiate the "How".
-* **Specify What, Not How:** Replace technology-specific language with the user need it serves. Instead of "use HTTPS", write "keep data I send and receive confidential."
+* **Specify What, Not How:** Replace technology-specific language with the user need it serves. Instead of "use HTTPS", write "keep data I send and receive confidential".
 * **Define Acceptance Criteria, Not Steps:** Define the outcomes that must be true, rather than the specific UI clicks or database queries required.
 * **Keep the UI Out as Long as Possible:** Avoid embedding interface details into stories early in the project {% cite cohn2004user %}. Focus on what the user needs to accomplish, not the specific controls they will use.
 
@@ -359,7 +359,7 @@ To determine if a user story is appropriately sized, ask:
 The approach to fixing a story that violates the Small criterion depends on whether it is too big or too small:
 
 *Stories that are too big:*
-* **Split by Workflow Steps (CRUD):** Instead of "**As a** job seeker, **I want to** manage my resume," split along operations: create, edit, delete, and manage multiple resumes {% cite cohn2004user %}.
+* **Split by Workflow Steps (CRUD):** Instead of "**As a** job seeker, **I want to** manage my resume", split along operations: create, edit, delete, and manage multiple resumes {% cite cohn2004user %}.
 * **Split by Data Boundaries:** Instead of splitting by operation, split by the data involved: "add/edit education", "add/edit job history", "add/edit salary" {% cite cohn2004user %}.
 * **Slice the Cake (Vertical Slicing):** Never split along technical boundaries (one story for UI, one for database). Instead, split into thin end-to-end "vertical slices" where each story touches every architectural layer and delivers complete, albeit narrow, functionality {% cite cohn2004user %}.
 * **Split by Happy/Sad Paths:** Build the "happy path" (successful transaction) as one story, and handle the error states (declined cards, expired sessions) in subsequent stories.
@@ -397,14 +397,14 @@ The approach to fixing a story that violates the Small criterion depends on whet
 > Is this story appropriately sized?
 >
 > <details> <summary><i>Reveal Answer</i></summary>
-No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills." </details>
+No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills". </details>
 
 ## Testable
 
 *A **testable** story has clear, objective, and measurable acceptance criteria that allow the team to verify definitively when the work is done.*
 
 **What it is and Why it Matters**
-The "Testable" criterion dictates that a user story must have clear, objective, and measurable conditions that allow the team to verify when the work is officially complete. If a story is not testable, it can never truly be considered "Done." 
+The "Testable" criterion dictates that a user story must have clear, objective, and measurable conditions that allow the team to verify when the work is officially complete. If a story is not testable, it can never truly be considered "Done". 
 
 This criterion matters for several crucial reasons:
 * **Shared Understanding:** It forces the product owner and the development team to align on the exact expectations. It removes ambiguity and prevents the dreaded "that's not what I meant" conversation at the end of a sprint.
@@ -419,7 +419,7 @@ To determine if a user story is testable, ask yourself the following questions:
 
 **How to Improve It**
 If you find a story that violates the Testable criterion, you can improve it by replacing subjective language with quantifiable metrics and concrete scenarios:
-* **Quantify Adjectives:** Replace subjective terms with hard numbers. Change "loads fast" to "loads in under 2 seconds." Change "supports a lot of users" to "supports 10,000 concurrent users."
+* **Quantify Adjectives:** Replace subjective terms with hard numbers. Change "loads fast" to "loads in under 2 seconds". Change "supports a lot of users" to "supports 10,000 concurrent users".
 * **Use the Given/When/Then Format:** Borrow from Behavior-Driven Development (BDD) to write clear acceptance criteria. Establish the starting state (*Given*), the action taken (*When*), and the expected, observable outcome (*Then*).
 * **Define "Intuitive" or "Easy":** If the goal is a "user-friendly" interface, make it testable by tying it to a metric, such as: "A new user can complete the checkout process in fewer than 3 clicks without relying on a help menu."
 
@@ -436,7 +436,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Valuable:** Yes. A landing page to attract a younger demographic provides clear business value.
 * **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page independent of what specific definition of "gorgeous and modern" is used. 
 * **Small:** Yes. Building a single landing page easily fits within a single sprint.
-* **Why it violates Testable:** "Gorgeous," "modern," and "appeals to" are completely subjective. What one developer thinks is modern, the marketing manager might think is ugly. 
+* **Why it violates Testable:** "Gorgeous", "modern", and "appeals to" are completely subjective. What one developer thinks is modern, the marketing manager might think is ugly. 
 * **How to fix it:** Tie it to a specific, measurable design system or user-testing metric. *(e.g., "Acceptance Criteria: The design strictly adheres to the new V2 Brand Guidelines and passes a 5-second usability test with a 4/5 rating from a focus group of 18-24 year olds.")*
 
 **Example 2: The Vague Performance Requirement**
@@ -446,7 +446,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Independent:** Yes. Optimizing or building this report can be done independently.
 * **Negotiable:** Yes. The team can negotiate *how* to achieve the speed (e.g., caching, database indexing, background processing).
 * **Valuable:** Yes. Saving the analyst's time is a clear operational benefit.
-* **Estimable:** Yes. A developer can estimate the effort for standard report optimizations (query tuning, caching, indexing, pagination) regardless of the specific latency threshold that will ultimately be defined. The implementation work is predictable even though the acceptance threshold is not—just as in Example 1 above, where the effort to build a landing page does not depend on the specific definition of "modern."
+* **Estimable:** Yes. A developer can estimate the effort for standard report optimizations (query tuning, caching, indexing, pagination) regardless of the specific latency threshold that will ultimately be defined. The implementation work is predictable even though the acceptance threshold is not—just as in Example 1 above, where the effort to build a landing page does not depend on the specific definition of "modern".
 * **Small:** Yes. It is a focused optimization on a single report.
 * **Why it violates Testable:** "Instantly" is subjective. Does it mean 100 milliseconds? Two seconds? Zero perceived delay? Without a quantifiable threshold, QA cannot write a definitive pass/fail test—and the developer cannot know when to stop optimizing.
 * **How to fix it:** Replace the subjective word with a quantifiable service level indicator. *(e.g., "Acceptance Criteria: Given the database contains 5 years of sales data, when the analyst requests the monthly sales report, then the data renders on screen in under 2.5 seconds at the 95th percentile.")*
@@ -481,7 +481,7 @@ If they are not small, it becomes hard to select a Sprint Backlog that fits the 
 
 **Testable** means that a story can be verified through objective acceptance criteria. A story is considered testable if there is a definitive "Yes" or "No" answer to whether its objectives have been achieved.
 
-In practice, these two are closely linked: if a story is not testable because it uses vague terms like "fast" or "high accuracy," it becomes nearly impossible to estimate the actual effort needed to satisfy it.
+In practice, these two are closely linked: if a story is not testable because it uses vague terms like "fast" or "high accuracy", it becomes nearly impossible to estimate the actual effort needed to satisfy it.
 But that is not always the case.
 
 Here are examples of user stories that isolate those specific violations of the INVEST criteria:
@@ -653,8 +653,7 @@ Recent advancements in Large Language Models (LLMs) have introduced new capabili
 - **The Power of Prompting**: The quality of automated generation is highly sensitive to prompt design. Using a "Meta-Few-Shot" approach—combining structural rules with explicit positive and negative examples—can push LLM success rates significantly higher, even surpassing manual human generation in semantic accuracy {% cite santos2025chatgpt %}.
 --> 
 
-## Quiz
-
+## Practice
 
 {% include flashcards.html id="user_stories" %}
 

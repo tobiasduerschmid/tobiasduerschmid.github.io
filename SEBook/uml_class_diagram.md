@@ -36,7 +36,7 @@ LineItem "*" -- "1" Product
 
 # Introduction
 
-*Pedagogical Note: This chapter is designed using principles of **Active Engagement** (frequent retrieval practice). We will build concepts incrementally. Please complete the "Concept Checks" without looking back at the text—this introduces a "[desirable difficulty](/blog/evidence-based-study-tips-for-college-students/)" that strengthens long-term memory.*
+*Pedagogical Note: This chapter is designed using principles of **Active Engagement** (frequent retrieval practice). We will build concepts incrementally. Please complete the "Quick Checks" without looking back at the text—this introduces a "[desirable difficulty](/blog/evidence-based-study-tips-for-college-students/)" that strengthens long-term memory.*
 
 ## 🎯 Learning Objectives
 By the end of this chapter, you will be able to:
@@ -89,7 +89,7 @@ interface Payable {
 }
 @enduml'></div>
 
-> 🧠 **Concept Check 1 (Retrieval Practice)**
+> **Quick Check 1 (Retrieval Practice)**
 > *Cover the screen above. What do the symbols `+`, `-`, and `#` stand for? Why does an interface lack an attributes compartment?*
 
 
@@ -192,7 +192,7 @@ Author "1" -- "1..*" Book : writes
 
 When neither end of an association is annotated with an arrowhead or X mark, navigability is formally **undefined** in UML 2.5. By convention, many authors and tools render this case as **bidirectional** (both classes know about each other), but you should not rely on the default — make navigability explicit when it matters. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
 
-* **Navigable end** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> An **open arrowhead** pointing to the class that can be "reached." The left object has a reference to the right object.
+* **Navigable end** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> An **open arrowhead** pointing to the class that can be "reached". The left object has a reference to the right object.
 * **Non-Navigable end** <span class="uml-sym" data-diagram="class" data-sym="--x"></span> An **X** on the end that cannot be navigated. This explicitly states that the class at the X end does *not* hold a reference to the other.
 
 Here are the four navigability combinations, each with an example:
@@ -231,7 +231,7 @@ class Vote
 Voter x-- Vote
 @enduml'></div>
 
-In the full UML notation, an X on the `Voter` end would mean: `Vote` knows about `Voter`, but `Voter` does *not* hold a reference to `Vote`. (Note: the X mark is a formal UML notation not commonly rendered in simplified tools---when you see a unidirectional arrow, the absence of an arrowhead on the other end implies non-navigability.)
+In the full UML notation, an X on the `Voter` end means that the *opposite* lifeline cannot navigate to it — i.e., `Vote` does *not* hold a reference back to `Voter`. (`Voter`'s navigability toward `Vote` is then determined by whatever is marked on the `Vote` end.) Note: the X mark is a formal UML 2 notation that many simplified tools do not render, and per UML 2.5, when one end carries a navigability arrow but the other end is unmarked, the unmarked end's navigability is formally **undefined**, not "non-navigable" by default.
 
 **Non-navigable on both ends (X on both sides):** Neither class holds a reference---the association is recorded only in the model, not in code.
 
@@ -278,7 +278,7 @@ House "1" *-- "1..*" Room
 
 > **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification. Martin Fowler (*UML Distilled*) observes: *"Aggregation is strictly meaningless; as a result, I recommend that you ignore it in your own diagrams."* When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
 
-> 🧠 **Concept Check 2 (Self-Explanation)**
+> **Quick Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
 
 ### Relationship Strength Summary
@@ -302,7 +302,7 @@ From weakest to strongest, the class relationships are:
 
 ## ⚠ The Five Most Common UML Class Diagram Mistakes
 
-Empirical studies of student diagrams (Chren et al., "Mistakes in UML Diagrams: Analysis of Student Projects in a Software Engineering Course," ICSE SEET 2019) identify these recurring errors. Watch for them in your own work:
+Empirical studies of student diagrams (Chren et al., "Mistakes in UML Diagrams: Analysis of Student Projects in a Software Engineering Course", ICSE SEET 2019) identify these recurring errors. Watch for them in your own work:
 
 | # | Mistake | Fix |
 |---|---|---|
@@ -671,7 +671,7 @@ MotherBoard *-- "2" IDEBus
 
 The private part type plus owned fields indicate composition: the `IDEBus` instances are created and controlled by the `MotherBoard`.
 
-> **Concept Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
+> **Quick Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
 > ```java
 > import java.util.ArrayList;
 > import java.util.List;
@@ -981,15 +981,13 @@ Grab a blank piece of paper. Without looking at this chapter, try to draw the UM
 *Review your drawing against the rules in sections 2 and 3. How did you do? Identifying your own gaps in knowledge is the most powerful step in the learning process!*
 
 
-## 6. Interactive Practice
+## 6. Practice
 
 Test your knowledge with these retrieval practice exercises. These diagrams are rendered dynamically to ensure you can recognize UML notation in any context.
 
-### Knowledge Quiz
-{% include quiz.html id="uml_class_diagram_examples" %}
-
-### Retrieval Flashcards
 {% include flashcards.html id="uml_class_diagram_examples" %}
+
+{% include quiz.html id="uml_class_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
 

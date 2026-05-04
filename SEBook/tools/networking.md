@@ -77,10 +77,12 @@ The internet uses a **layered architecture** called the TCP/IP stack. Each layer
 
 | Layer | Responsibility | Example Protocols |
 |-------|---------------|-------------------|
-| **Application Layer** | Provides an interface for applications to access network services | HTTP, HTTPS, SSH, DNS, FTP, POP/SMTP, TLS/SSL |
+| **Application Layer** | Provides an interface for applications to access network services | HTTP, HTTPS, SSH, DNS, FTP, SMTP, POP, IMAP |
 | **Transport Layer** | Provides end-to-end communication between applications on different hosts | TCP, UDP |
-| **Internet Layer** | Enables communication between networks through addressing and routing | IPv4, IPv6 |
-| **Link Layer** | Handles the physical transmission of data over local network hardware | Ethernet, Wi-Fi, MAC |
+| **Internet Layer** | Enables communication between networks through addressing and routing | IPv4, IPv6, ICMP |
+| **Link Layer** | Handles the physical transmission of data over local network hardware | Ethernet, Wi-Fi, ARP |
+
+> **Where does TLS fit?** TLS (and its predecessor SSL, now deprecated) sits *between* the transport and application layers — it wraps a TCP connection and exposes an encrypted channel that an application protocol like HTTP runs on top of. HTTPS is "HTTP over TLS over TCP."
 
 ## Encapsulation (Package Wrapping)
 
@@ -278,17 +280,22 @@ note over client, server: Connection closed
 
 ## Key Property: Stateless
 
-HTTP is a **stateless** protocol — each request is independent, and the server does not remember anything about previous requests from the same client. Every request must contain all the information the server needs to respond.
+HTTP is a **stateless** protocol — each request is independent, and the server does not remember anything about previous requests from the same client. Every request must contain all the information the server needs to respond. (Real applications layer state on top of HTTP using mechanisms like cookies, sessions, or bearer tokens such as JWTs.)
+
+> **HTTP versions.** HTTP/1.1 (1997) introduced persistent connections and pipelining. HTTP/2 (2015) added binary framing and multiplexing over a single TCP connection. HTTP/3 (standardized 2022) replaces TCP with **QUIC**, which runs over UDP and integrates TLS — so an HTTP/3 connection avoids head-of-line blocking and can establish in fewer round trips.
+>
+> **HTTPS** is HTTP wrapped in **TLS** (the successor to the now-deprecated SSL). It provides confidentiality (no eavesdropping), integrity (no tampering), and server authentication (you really are talking to `ucla.edu`).
 
 ## HTTP Verbs (Methods)
 
 | Verb | Purpose | Response Contains |
 |------|---------|-------------------|
-| **GET** | Retrieve a resource (web page, data, image, file) | The resource content + status code |
-| **POST** | Send data to create or update a resource (form submission, file upload) | Status code |
-| **PUT** | Update an existing resource on the server | Status code |
-| **DELETE** | Delete a resource on the server | Status code |
-| **HEAD** | Retrieve only headers of a resource, not the body | Headers + status code |
+| **GET** | Retrieve a resource (web page, data, image, file). Safe and idempotent. | The resource content + status code |
+| **POST** | Send data for processing — typically to create a new resource (form submission, file upload). Not idempotent. | Status code (and often the new resource or its location) |
+| **PUT** | Create or replace the resource at a specific URI. Idempotent. | Status code |
+| **PATCH** | Apply a partial update to an existing resource. | Status code |
+| **DELETE** | Delete a resource on the server. Idempotent. | Status code |
+| **HEAD** | Retrieve only headers of a resource, not the body. | Headers + status code |
 
 ## URLs (Uniform Resource Locators)
 
@@ -383,7 +390,7 @@ app.listen(port, () => {
 
 For a hands-on walkthrough, work through the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial).
 
-# Test Your Knowledge
+## Practice
 
 {% include flashcards.html id="networking_concepts" %}
 

@@ -51,13 +51,13 @@ Once you have a DBMS, the application code stops worrying about *how* the data i
 
 **SQL (Structured Query Language)** is the query language that most DBMSs understand. SQL is **declarative**: you describe *what* data you want — "give me the names of all students enrolled in 35L" — and the DBMS decides *how* to find it (which indexes to use, which order to join tables in, how to parallelize). This separation is one of the most consequential ideas in data management: it lets the DBMS optimize your query without you rewriting it.
 
-SQL is an **industry standard** (ISO/IEC 9075), and most relational systems support the core of it. In practice, however, **SQL dialects differ** — PostgreSQL, MySQL, SQL Server, and Oracle each add their own extensions (stored-procedure languages, window-function syntax, JSON operators) that are not portable. "SQL-compatible" is closer to "mostly compatible for the standard subset" than to "drop-in replaceable." Knowing the core of the language lets you read and write queries against almost any relational DBMS; rewriting a large application to switch DBMSs still usually takes real effort.
+SQL is an **industry standard** (ISO/IEC 9075), and most relational systems support the core of it. In practice, however, **SQL dialects differ** — PostgreSQL, MySQL, SQL Server, and Oracle each add their own extensions (stored-procedure languages, window-function syntax, JSON operators) that are not portable. "SQL-compatible" is closer to "mostly compatible for the standard subset" than to "drop-in replaceable". Knowing the core of the language lets you read and write queries against almost any relational DBMS; rewriting a large application to switch DBMSs still usually takes real effort.
 
 > **Note on scope.** The rest of this chapter uses small SQL snippets to make operations concrete. You do **not** need to memorize SQL syntax for this course — what matters is the *thinking* behind each query (which operations, in which order). An optional, deeper SQL walkthrough is available in [Remy Wang's CS 143 SQL notes](https://remy.wang/cs143/notes/sql/sql.html).
 
 ---
 
-**Check yourself (retrieval practice).** Before reading on, close your eyes for thirty seconds and name the four problems a DBMS solves that a naïve application does not. Then name one thing SQL's *declarativeness* buys you. Spaced retrieval — trying to remember without looking — is what builds durable memory; re-reading is what feels like it does.
+**Quick Check.** Before reading on, close your eyes for thirty seconds and name the four problems a DBMS solves that a naïve application does not. Then name one thing SQL's *declarativeness* buys you. Spaced retrieval — trying to remember without looking — is what builds durable memory; re-reading is what feels like it does.
 
 ---
 
@@ -123,6 +123,7 @@ Translating the ER diagram above into tables yields three of them: one for each 
 |---|---|---|
 | 12345 | Fall 2025 | 35L |
 | 12345 | Fall 2025 | 143 |
+| 23456 | Fall 2025 | 143 |
 
 Underlined columns indicate the **primary key** of each table, discussed next. Note that `IsEnrolled` has no data of its own beyond references — it exists purely to represent the many-to-many `is enrolled` relationship. This pattern (one table per entity + one join table per many-to-many relationship) is how every many-to-many relationship is represented in a relational database.
 
@@ -134,7 +135,7 @@ A **primary key** is the column (or combination of columns) whose value uniquely
 * In `Course`, the primary key is *not* just `id` — a course with the same `id` can run in different quarters. The primary key is the **composite** `(id, quarter)` — only the *pair* is unique.
 * In `IsEnrolled`, the primary key is the composite `(uid, quarter, course_id)` — a student can enroll in different courses and can even re-take a course in a different quarter, but cannot be enrolled twice in the exact same (course, quarter).
 
-The primary key is what the rest of the database uses to **refer to** a row — the row's "name" inside the database. When we say "foreign key", we will mean "a column that stores some other table's primary-key value."
+The primary key is what the rest of the database uses to **refer to** a row — the row's "name" inside the database. When we say "foreign key", we will mean "a column that stores some other table's primary-key value".
 
 ```sql
 CREATE TABLE Student (
@@ -154,7 +155,7 @@ CREATE TABLE Course (
 
 ## Foreign Keys: Keeping References Consistent
 
-A **foreign key** is a column (or set of columns) in one table whose values are required to match a primary key in another table. Foreign keys are how tables are *linked*: they express "this row refers to *that* row over there."
+A **foreign key** is a column (or set of columns) in one table whose values are required to match a primary key in another table. Foreign keys are how tables are *linked*: they express "this row refers to *that* row over there".
 
 In `IsEnrolled`, `uid` is a foreign key into `Student(uid)` — every row in `IsEnrolled` must refer to an existing student. Likewise, `(course_id, quarter)` is a foreign key into `Course(id, quarter)`.
 
@@ -169,7 +170,7 @@ CREATE TABLE IsEnrolled (
 );
 ```
 
-The DBMS enforces the foreign-key constraint: you cannot insert an `IsEnrolled` row whose `uid` does not already exist in `Student`, and you cannot delete a `Student` row while any `IsEnrolled` row still references it (without an explicit cascade rule). This is the mechanism that prevents **dangling references** — the database version of "pointer to nowhere."
+The DBMS enforces the foreign-key constraint: you cannot insert an `IsEnrolled` row whose `uid` does not already exist in `Student`, and you cannot delete a `Student` row while any `IsEnrolled` row still references it (without an explicit cascade rule). This is the mechanism that prevents **dangling references** — the database version of "pointer to nowhere".
 
 ### Primary key vs. foreign key — a near-identical pair
 
@@ -184,7 +185,7 @@ The *same column* (`uid`) plays *both* roles in `IsEnrolled`: it is part of the 
 
 ---
 
-**Check yourself.** Without scrolling up, draw the three tables and mark which columns form the primary key and which are foreign keys. Explain in one sentence *why* `Course`'s primary key has to be composite.
+**Quick Check.** Without scrolling up, draw the three tables and mark which columns form the primary key and which are foreign keys. Explain in one sentence *why* `Course`'s primary key has to be composite.
 
 ---
 
@@ -210,8 +211,9 @@ $$\text{Student} \bowtie \text{IsEnrolled} \bowtie \text{Course}$$
 |---|---|---|---|---|
 | Jon Doe | 12345 | Fall 2025 | 35L | Tobias Dürschmid |
 | Jon Doe | 12345 | Fall 2025 | 143 | Remy Wang |
+| Jane Doe | 23456 | Fall 2025 | 143 | Remy Wang |
 
-> **Join flavors.** `INNER JOIN` (the default) drops rows with no match; `LEFT OUTER JOIN` keeps every row from the left table, filling in `NULL` where there is no match; `RIGHT OUTER JOIN` does the same for the right; `FULL OUTER JOIN` keeps unmatched rows from both sides. Which flavor to pick depends on whether "no match" means "exclude" (inner) or "include with missing fields" (outer).
+> **Join flavors.** `INNER JOIN` (the default) drops rows with no match; `LEFT OUTER JOIN` keeps every row from the left table, filling in `NULL` where there is no match; `RIGHT OUTER JOIN` does the same for the right; `FULL OUTER JOIN` keeps unmatched rows from both sides. Which flavor to pick depends on whether "no match" means "exclude" (inner) or "include with missing fields" (outer). Note that David Smallberg's course (32) does not appear in this inner-join result because nobody enrolled in it; only a `LEFT OUTER JOIN` from `Course` would surface him with a `NULL` enrollment.
 
 ## Selection ($\sigma$) — filtering rows
 
@@ -249,7 +251,8 @@ $$\gamma_{\text{instructor},\ \text{COUNT}(\text{DISTINCT uid})}(\text{IsEnrolle
 |---|---|
 | Tobias Dürschmid | 1 |
 | Remy Wang | 2 |
-| David Smallberg | 0 |
+
+> Notice David Smallberg is **absent** from the result. Because the inner join drops courses with no enrollments, he produces no rows to be grouped over. To list every instructor — even those with zero students — you would start from `Course` and use a `LEFT OUTER JOIN` into `IsEnrolled` instead.
 
 ---
 
@@ -338,7 +341,7 @@ The `GROUP BY` clause is doing the heavy lifting: it partitions the joined rows 
 
 ---
 
-**Check yourself.** For each of these three queries, re-derive the relational-algebra expression from scratch without peeking. Then: *which* of the four operations would you remove from the language if you had to pick one, and what queries would no longer be expressible?
+**Quick Check.** For each of these three queries, re-derive the relational-algebra expression from scratch without peeking. Then: *which* of the four operations would you remove from the language if you had to pick one, and what queries would no longer be expressible?
 
 ---
 
@@ -423,7 +426,7 @@ A DBMS transaction is expected to provide four properties.
 
 ---
 
-**Check yourself.** For each of these failures, name the ACID letter whose *violation* would produce it:
+**Quick Check.** For each of these failures, name the ACID letter whose *violation* would produce it:
 
 1. You transfer \\$100; the server crashes mid-transfer; on restart, A has been debited but B has not been credited.
 2. The DBMS lets a transfer commit that drives A's balance to \\$-500, even though `CHECK (balance >= 0)` is declared.
@@ -553,12 +556,10 @@ The right question is almost never "RDBMS or NoSQL?" in the abstract; it is *"gi
 4. Write an ER diagram for a small system you know well (a library, a social network, a music player). Translate it to tables. Identify the primary key of each table and at least one foreign key. Where did a many-to-many relationship force a join table?
 5. Given the query *"For each quarter, list how many distinct instructors taught at least one course that at least 5 students were enrolled in"*, sketch the sequence of relational operations you would compose. Do not write SQL — just the algebra, in order.
 
-## Knowledge Quiz
-
-{% include quiz.html id="data_management" %}
-
-## Retrieval Flashcards
+## Practice
 
 {% include flashcards.html id="data_management" %}
+
+{% include quiz.html id="data_management" %}
 
 *Pedagogical tip: Try to **explain** each concept aloud — to a teammate, a rubber duck, or your imaginary future self — before peeking at the answer. Effortful retrieval builds durable mental models; re-reading merely feels productive.*

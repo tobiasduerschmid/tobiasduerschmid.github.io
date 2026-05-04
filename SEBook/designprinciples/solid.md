@@ -11,7 +11,7 @@ Software is never finished. Requirements shift. Teams grow. What was "one small 
 
 The core problem is: **How do we structure object-oriented code so that change is localized, safe, and cheap — instead of tangling every new feature into every old one?**
 
-SOLID is a set of five design principles that answer this question. Each principle targets a different kind of tangle. Together, they define what Robert C. Martin calls a *well-designed* object-oriented system: one where behavior can be extended without rewriting, dependencies point from detail to policy, and subtypes can be trusted to honor their contracts.
+SOLID is a set of five design principles that answer this question. Each principle targets a different kind of tangle. Together, they define what Robert C. Martin {% cite Martin2017CleanArchitecture %} calls a *well-designed* object-oriented system: one where behavior can be extended without rewriting, dependencies point from detail to policy, and subtypes can be trusted to honor their contracts.
 
 # Context
 
@@ -98,7 +98,7 @@ Applying SRP strategically (only when actual axes of change emerge) maximizes **
 
 ## Open/Closed Principle (OCP)
 
-> *Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.* — Bertrand Meyer, 1988
+> *Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.* — Bertrand Meyer {% cite Meyer1988OOSC %}
 
 The Open/Closed Principle dictates that as an application's requirements change, you should be able to extend the behavior of a module with new functionalities **by adding new code**, rather than altering existing, tested code.
 
@@ -107,7 +107,7 @@ Every time you modify existing, working code, you risk introducing regressions. 
 
 **Common Misconceptions:**
 * **"Closed for modification means code can never be changed":** This restriction only applies to adding new features. If there is a bug, you must absolutely modify the code to fix it.
-* **"OCP should be applied everywhere":** Anticipating every conceivable future change leads to "Abstraction Hell." Conforming to OCP is expensive. It should be applied strategically where change is actually anticipated.
+* **"OCP should be applied everywhere":** Anticipating every conceivable future change leads to "Abstraction Hell". Conforming to OCP is expensive. It should be applied strategically where change is actually anticipated.
 
 **Examples of Violations & Fixes:**
 
@@ -136,7 +136,9 @@ Abstraction is the key to OCP. By relying on interfaces, higher-level architectu
 
 ## Liskov Substitution Principle (LSP)
 
-> *Let $\Phi(x)$ be a property provable about objects $x$ of type $T$. Then $\Phi(y)$ should be true for objects $y$ of type $S$ where $S$ is a subtype of $T$.* — Barbara Liskov, 1987
+> *Let $\Phi(x)$ be a property provable about objects $x$ of type $T$. Then $\Phi(y)$ should be true for objects $y$ of type $S$ where $S$ is a subtype of $T$.* — Barbara Liskov & Jeannette Wing, 1994 {% cite LiskovWing1994subtyping %}
+
+> The principle is named after Barbara Liskov, who introduced an informal version in her 1987 OOPSLA keynote *"Data Abstraction and Hierarchy"*. The formal property-based statement above was published seven years later by Liskov and Wing in *A Behavioral Notion of Subtyping*.
 
 LSP goes beyond standard object-oriented structural subtyping (matching method signatures) to demand **behavioral substitutability**. An object of a superclass should be completely replaceable by an object of its subclass without causing unexpected behaviors or breaking the program. A subclass must honor the contract established by its parent.
 
@@ -346,19 +348,15 @@ The judgment of *when to apply* SOLID — and when to stop — is itself the mar
 
 * Robert C. Martin. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 * Robert C. Martin. *Agile Software Development, Principles, Patterns, and Practices*. Prentice Hall, 2002.
-* Barbara Liskov. "Data Abstraction and Hierarchy." *OOPSLA '87 Addendum to the Proceedings*. 1987.
-* Raimund Krämer. "SOLID Principles: Common Misconceptions." 2024. [raimund-kraemer.dev](https://raimund-kraemer.dev/solid-principles-common-misconceptions/)
+* Barbara Liskov. "Data Abstraction and Hierarchy". *OOPSLA '87 Addendum to the Proceedings*. 1987.
+* Raimund Krämer. "SOLID Principles: Common Misconceptions". 2024. [raimund-kraemer.dev](https://raimund-kraemer.dev/solid-principles-common-misconceptions/)
 
-# Practice
+## Practice
 
 Test your understanding below. The quiz emphasizes *applying* and *evaluating* SOLID in realistic scenarios — most questions will feel harder than pure recall, and that effortful retrieval is exactly what builds durable judgment.
 
-## Knowledge Quiz
+{% include flashcards.html id="design_principle_solid" %}
 
 {% include quiz.html id="design_principle_solid" %}
-
-## Retrieval Flashcards
-
-{% include flashcards.html id="design_principle_solid" %}
 
 *Pedagogical tip: Before flipping a card, try to name the principle's core idea, its most common misconception, and one concrete example from memory. That generation effect outperforms passive rereading every time.*

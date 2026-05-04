@@ -680,7 +680,7 @@ A central question came out of that conference: *how do you decompose a large pr
 
 ### David Parnas, 1972, and the KWIC Example
 
-Four years after the NATO conference, **David L. Parnas** published a short, sharp paper titled *On the Criteria To Be Used in Decomposing Systems into Modules*. He took a tiny example program — the **KWIC (Key Word In Context) index** — and decomposed it two ways.
+Four years after the NATO conference, **David L. Parnas** published a short, sharp paper titled *On the Criteria To Be Used in Decomposing Systems into Modules* {% cite Parnas1972 %}. He took a tiny example program — the **KWIC (Key Word In Context) index** — and decomposed it two ways.
 
 The KWIC system itself is small: it accepts an ordered set of lines, where each line is a sequence of words. Any line can be *circularly shifted* by repeatedly removing the first word and appending it to the end. The system outputs all circular shifts of all lines, sorted alphabetically. This is not just a toy — Unix's "permuted" index for the `man` pages is essentially a real-world KWIC.
 
@@ -762,11 +762,11 @@ Information Hiding is not an aesthetic. It produces measurable outcomes that tea
 4. **Independent testability.** A module whose dependencies are abstracted behind interfaces can be tested with stubs and fakes. You do not need a real PayPal account to test `OrderService` — you supply a `FakePaymentGateway` that records what it was asked to do.
 5. **Replaceability.** When a vendor raises prices, a library is deprecated, or a database hits a scaling wall, the swap is bounded. The blast radius of "we're changing payment providers" is one module instead of one codebase.
 
-The mirror-image of these benefits is the cost of *failing* to hide information: the **Big Ball of Mud** *(Foote & Yoder, 1997)*, where unmanaged complexity leaves every module knowing every other module's secrets, and a one-line business change requires touching dozens of files. This is the modern face of the 1968 software crisis.
+The mirror-image of these benefits is the cost of *failing* to hide information: the **Big Ball of Mud** {% cite Foote1997BigBallOfMud %}, where unmanaged complexity leaves every module knowing every other module's secrets, and a one-line business change requires touching dozens of files. This is the modern face of the 1968 software crisis.
 
 ## Deep Modules vs. Shallow Modules
 
-A modern extension of Parnas's idea, due to **John Ousterhout** in *A Philosophy of Software Design* (2018), is the distinction between **deep** and **shallow** modules.
+A modern extension of Parnas's idea, due to **John Ousterhout** in *A Philosophy of Software Design* {% cite Ousterhout2021PSD %}, is the distinction between **deep** and **shallow** modules.
 
 <div style="display:flex;justify-content:center;margin:18px 0;">
 <svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Side-by-side comparison: a deep module has a small interface above a large hidden implementation, while a shallow module has a wide interface above a tiny implementation and hides little." viewBox="0 0 820 360" width="100%" style="max-width:820px;height:auto;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
@@ -1100,7 +1100,7 @@ class OrderService:
 ## Summary
 
 * **Information Hiding** decomposes a system by *design decisions*, not by processing steps. Each module owns one likely-to-change decision and hides it from the rest of the system.
-* Coined by **Parnas (1972)** in response to the **Software Crisis**, it is the foundational principle behind modern modularity, encapsulation, abstract data types, and most of OOP.
+* Coined by **Parnas** {% cite Parnas1972 %} in response to the **Software Crisis**, it is the foundational principle behind modern modularity, encapsulation, abstract data types, and most of OOP.
 * Every module has a stable **interface** (the public contract) and a hidden **implementation** (the secret). Clients depend on the interface; the implementation is free to change.
 * Common secrets include data structures, storage, algorithms, libraries, hardware, and processing sequence. Some things — statefulness, rate limits, exception behavior — belong in the interface.
 * **Deep modules** hide a lot of complexity behind a small interface. **Shallow modules** add overhead without value.
@@ -1133,12 +1133,8 @@ Test your understanding below. Effortful retrieval is exactly what builds durabl
 4. Some properties of a module belong in its **interface**, not in its hidden implementation — for example, whether a network protocol is stateful or stateless. Why? What makes a property "interface material" rather than "secret material"?
 5. The lecture mentions that "program comprehension takes up 58% of professional developers' time". Connect this statistic to the design decisions you make as a programmer: what kinds of information hiding most directly reduce cognitive load on future readers?
 
-### Knowledge Quiz
+{% include flashcards.html id="design_principle_information_hiding" %}
 
 {% include quiz.html id="design_principle_information_hiding" %}
-
-### Retrieval Flashcards
-
-{% include flashcards.html id="design_principle_information_hiding" %}
 
 *Pedagogical tip: Try to **explain** each concept out loud — to a teammate, a rubber duck, or your imaginary future self — before peeking at the answer. The "generation effect" strengthens memory more than re-reading ever will.*

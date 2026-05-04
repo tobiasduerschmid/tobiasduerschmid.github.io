@@ -841,7 +841,7 @@ These tools manage how your shell operates and how you access information:
 <script type="application/json">
 {
   "command": "chmod +x deploy.sh",
-  "description": "`chmod +x` grants execute permission so the shell will actually *run* the file when you type `./deploy.sh`. `+x` sets the bit for **everyone** (owner, group, others); `u+x` sets it only for the owner. Without an execute bit, the shell rejects the file with `Permission denied`.",
+  "description": "`chmod +x` grants execute permission so the shell will actually *run* the file when you type `./deploy.sh`. With a default `umask 0022` (typical on most Linux systems), `+x` adds the bit for owner, group, and others; on a stricter umask such as `0077`, only the categories the umask permits get the bit. Use `chmod a+x` to explicitly target everyone, or `chmod u+x` to target only the owner. Without an execute bit, the shell rejects the file with `Permission denied`.",
   "input": {
     "files": [
       { "name": "deploy.sh", "content": "#!/bin/bash\necho \"deploying…\"", "hint": "mode before: -rw-r--r--  (644)" }
@@ -1482,7 +1482,7 @@ Scripts receive command-line arguments via **positional parameters**. If you run
 | `$1` | `/src` | First argument |
 | `$2` | `/dest` | Second argument |
 | `$#` | `2` | Total number of arguments passed |
-| `$@` | `/src /dest` | All arguments as separate, properly-quoted words |
+| `$@` | `/src /dest` | All arguments — when written as `"$@"`, expands to one separately-quoted word per argument (preserving spaces inside arguments) |
 | `$?` | (exit code) | Exit status of the most recent command |
 
 When iterating over all arguments, always use `"$@"` (quoted). Without quotes, `$@` is subject to word splitting and arguments containing spaces are silently broken into multiple words:
@@ -1510,7 +1510,7 @@ echo "Build started, continuing with other work..."
 ```
 
 Two special variables are useful when managing background processes:
-* **`$$`**: The process ID (PID) of the current shell itself. Often used to create unique temporary file names: `tmp_file="/tmp/myscript.$$"`.
+* **`$$`**: The process ID (PID) of the current shell process. Bash deliberately does not update `$$` inside subshells (`( … )`, `$(…)`, pipelines), so it remains a stable identifier — useful for unique temporary file names: `tmp_file="/tmp/myscript.$$"`. The actual PID of a subshell is exposed in `$BASHPID`.
 * **`$!`**: The PID of the most recently backgrounded job. Use it to wait for or kill a specific background process.
 
 The `jobs` command lists all active background jobs; `fg` brings the most recent one back to the foreground, and `bg` resumes a stopped job in the background.
@@ -1590,7 +1590,7 @@ cp config.yml config.yml.{bak,old}  # copies to two names simultaneously
 echo {1..5}                          # → 1 2 3 4 5  (sequence expression)
 ```
 
-Brace expansion happens before all other expansions, so you can combine it freely with variables and globbing.
+Brace expansion happens before all other expansions. Because of this, you cannot use a variable to drive the *range* (`{$a..$b}` does **not** work), but you can freely combine the result of brace expansion with variables and globbing in the surrounding text (e.g., `cp $f.{bak,old}`).
 
 ## Supercharging Scripts with Regular Expressions
 
@@ -1608,7 +1608,7 @@ RegEx allows you to match sub-strings in a longer sequence. Critical to this are
 
 Shell scripting is an indispensable skill for anyone working in tech. By viewing the shell as a set of modular tools (the "Infinity Stones" of your development environment), you can combine simple operations to perform massive, complex tasks with minimal effort. Start small by automating a daily chore on your machine, and before you know it, you will be weaving complex UNIX tools together with ease!
 
-## Quiz
+## Practice
 
 {% include flashcards.html id="shell_commands_reference" %}
 

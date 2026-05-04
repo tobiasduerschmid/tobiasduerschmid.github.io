@@ -8,10 +8,10 @@ This is a **reference page** for JavaScript and Node.js, designed to be kept ope
 > **New to Node.js?** Start with the [interactive tutorial](/SEBook/tools/nodejs-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 
 ## The Syntax and Semantics: A Familiar Hybrid
-If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers Discord, Spotify's web player, Netflix's backend, and most of the interactive web you use daily.
+If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers most of the interactive web you use daily, runs on servers via Node.js (used at companies such as LinkedIn, PayPal, Uber, and NASA), and ships in cross-platform desktop apps like VS Code and Discord (via the Electron framework, which embeds Node.js).
 
 * **From C++, JS inherits its syntax:** You will feel right at home with curly braces `{}`, semicolons `;`, `if/else` statements, `for` and `while` loops, and `switch` statements. 
-* **From Python, JS inherits its dynamic nature:** Like Python, JS is dynamically typed and interpreted (specifically, Just-In-Time compiled). You don't need to declare whether a variable is an `int` or a `string`. You don't have to manage memory explicitly with `malloc` or `new/delete`; there are no pointers, and a garbage collector handles memory for you.
+* **From Python, JS inherits its dynamic nature:** Like Python, JS is dynamically typed. You don't need to declare whether a variable is an `int` or a `string`. You don't have to manage memory explicitly with `malloc` or `new/delete`; there are no explicit pointers, and a garbage collector handles memory for you. Modern engines like V8 don't simply interpret JavaScript — they execute bytecode through a fast interpreter (Ignition) and Just-In-Time-compile hot code paths to native machine code via TurboFan/Maglev.
 
 **Variable Declaration:**
 Instead of C++'s `int x = 5;` or Python's `x = 5`, modern JavaScript uses `let` and `const`:
@@ -32,7 +32,7 @@ Here is how JavaScript (via Node.js) fits into your mental model from C++ and Py
 | Aspect | C++ | Python | JavaScript (Node.js) |
 |---|---|---|---|
 | Typing | Static | Dynamic | Dynamic |
-| Memory | Manual (`new`/`delete`) | GC (reference counting) | GC (V8 engine) |
+| Memory | Manual (`new`/`delete`) | GC (reference counting + cycle collector) | GC (V8: generational, tracing) |
 | Run with | Compile → `./app` | `python script.py` | `node script.js` |
 | I/O model | Synchronous (blocks) | Synchronous (blocks) | **Asynchronous** (non-blocking) |
 
@@ -250,7 +250,7 @@ The Event Loop is best understood with the **Restaurant Metaphor**:
 | **The Waiter** | Task Queue | When an appliance finishes, the callback is queued. |
 | **The Kitchen Manager** | Event Loop | Only when the Chef's hands are **completely empty** does the Manager hand over the next callback. |
 
-The critical insight: `setTimeout(fn, 0)` does NOT mean "run immediately." It means "run when the call stack is empty." Synchronous code always runs to completion before any callback fires:
+The critical insight: `setTimeout(fn, 0)` does NOT mean "run immediately". It means "run when the call stack is empty". Synchronous code always runs to completion before any callback fires:
 
 ```javascript
 setTimeout(() => console.log("B"), 0);   // queued in Task Queue
@@ -262,13 +262,13 @@ console.log("C");                        // runs immediately
 This is why blocking the main thread with a long synchronous operation is catastrophic in Node.js — it prevents ALL other requests, timers, and I/O callbacks from being processed.
 
 ## Modern Asynchrony: Promises and Async/Await
-In the earlier example, we mentioned that Node.js uses "callbacks" to handle events. However, nesting multiple callbacks inside one another leads to a notoriously difficult-to-read structure known as "Callback Hell." 
+In the earlier example, we mentioned that Node.js uses "callbacks" to handle events. However, nesting multiple callbacks inside one another leads to a notoriously difficult-to-read structure known as "Callback Hell". 
 
 To manage cognitive load and make asynchronous code easier to reason about, modern JavaScript introduced **Promises** (conceptually similar to `std::future` in C++) and the `async/await` syntax.
 
 A Promise is exactly what it sounds like: an object representing the eventual completion (or failure) of an asynchronous operation. Using `async/await` allows you to write asynchronous code that *looks* and *reads* like traditional, synchronous C++ or Python code.
 
-**Creating a Promise:** The `new Promise(...)` constructor takes a function with two callback arguments — `resolve` (call when the work succeeds) and `reject` (call when it fails):
+**Creating a Promise:** The `new Promise(...)` constructor takes a single function (called the *executor*) that receives two arguments — `resolve` (call when the work succeeds) and `reject` (call when it fails):
 ```javascript
 // Under the hood, this is how async operations are built:
 const promise = new Promise((resolve, reject) => {
@@ -355,7 +355,7 @@ If you understand Python dictionaries, you already understand the *general struc
 While they look similar, JSON (JavaScript Object Notation) is a **strict** data-interchange format. Unlike JS objects, JSON *requires* double quotes for all keys and string values, and it cannot store functions or special values like `undefined`. JSON is simply this structure serialized into a string format so it can be sent over a network.
 
 ```javascript
-// This is a JavaScript Object (Identical to a Python Dictionary)
+// This is a JavaScript Object (similar to a Python dictionary, but keys are coerced to strings/Symbols and objects also have a prototype chain)
 const student = {
     name: "Joe Bruin",
     uid: 123456789,
@@ -373,7 +373,7 @@ Here is how you should approach mastering this new ecosystem:
 
 * **Utilize Pair Programming:** Don't learn Node.js in isolation. Sit at a single screen with a peer (one "Driver" typing, one "Navigator" reviewing and strategizing). Research shows pair programming significantly increases confidence and code quality while reducing frustration for novices transitioning to a new language paradigm {% cite mcdowell2006pair cockburn2000costs williams2000all %}.
 * **Embrace [Test-Driven Development (TDD)](/SEBook/testing/tdd.html):** In Python, you might have used `pytest`; in C++, `gtest`. In JavaScript, frameworks like **Jest** are the standard. Before you write a complex API endpoint in Express, write a test for what it *should* do. This acts as a formative assessment, giving you immediate, automated feedback on whether your mental model of the code aligns with reality.
-* **Avoid "Vibe Coding" with AI:** While Large Language Models (LLMs) can generate Node.js boilerplate instantly, relying on them before you understand the asynchronous Event Loop will lead to "unsound abstractions." Use AI to *explain* confusing syntax or error messages, but do not let it rob you of the cognitive struggle required to build your own notional machine of how JavaScript executes.
+* **Avoid "Vibe Coding" with AI:** While Large Language Models (LLMs) can generate Node.js boilerplate instantly, relying on them before you understand the asynchronous Event Loop will lead to "unsound abstractions". Use AI to *explain* confusing syntax or error messages, but do not let it rob you of the cognitive struggle required to build your own notional machine of how JavaScript executes.
 
 ## Top 10 JavaScript & Node.js Best Practices
 
@@ -578,7 +578,7 @@ for (let i = 0; i < students.length; i++) {
 Use regular `for` loops when you need early termination (`break`), when performance on very large arrays matters, or when the logic is too complex for a single chain.
 
 
-## Test Your Knowledge
+## Practice
 
 {% include flashcards.html id="nodejs_syntax_explain" %}
 

@@ -182,7 +182,7 @@ Conceptually: a branch is a pointer to a commit, plus the chain of parent commit
 
 A branch is **literally** a 41-byte text file. Inside `.git/refs/heads/` there is one file per branch, each containing one 40-character SHA plus a newline. Creating a branch is one `fwrite()`; deleting one is one `unlink()`. That's why branch operations are instant even on a 10 GB repo — nothing is copied.
 
-`HEAD` is another text file at `.git/HEAD`. Normally it contains a *symbolic reference* like `ref: refs/heads/main`, which is Git's way of saying "follow whatever commit `main` points at." When you're in [detached HEAD](#detached-head) state, this file instead contains a raw SHA directly.
+`HEAD` is another text file at `.git/HEAD`. Normally it contains a *symbolic reference* like `ref: refs/heads/main`, which is Git's way of saying "follow whatever commit `main` points at". When you're in [detached HEAD](#detached-head) state, this file instead contains a raw SHA directly.
 
 Both facts — branch-as-pointer-file and HEAD-as-indirection — are the reason `git commit` only has to rewrite a few bytes to advance history: update the branch file, and every reader sees the new tip.
 
@@ -203,7 +203,7 @@ Both facts — branch-as-pointer-file and HEAD-as-indirection — are the reason
 @enduml
 </code></pre>
 
-The commits "on" a branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch." Walk the parent chain from a branch's SHA, and every commit you visit is part of that branch's history.
+The commits "on" a branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch". Walk the parent chain from a branch's SHA, and every commit you visit is part of that branch's history.
 
 </details>
 
@@ -219,7 +219,7 @@ The (a) bucket is **additive** — safe on shared branches, because nothing anyo
 
 *Why* Git can work this way — the content-addressed hash machinery that makes snapshots cheap and tamper-evident — is covered in the optional **🔧 Under the Hood** callouts scattered throughout this page. For now, the pointer-and-snapshot picture is enough.
 
-**🧠 Check yourself — Core Concepts.** Before moving on, try these without looking back:
+**Quick Check — Core Concepts.** Before moving on, try these without looking back:
 
 1. **In your own words:** what's the difference between a *branch* and `HEAD`? Where does each point?
 2. You run `git branch feature` and then make a commit. On which branch does the new commit land, and why?
@@ -367,7 +367,7 @@ Rules combine: a file is ignored if any of the three sources matches it, unless 
 
 </details>
 
-**🧠 Check yourself — Setting Up.** Try these before peeking:
+**Quick Check — Setting Up.** Try these before peeking:
 
 1. When would you reach for `git init` versus `git clone`?
 2. Your first commit on a new project has `node_modules/` in it. You add `node_modules/` to `.gitignore` and commit. Is it still tracked? Why?
@@ -612,7 +612,7 @@ Typical uses:
 
 Amend is the simplest of Git's rewrite operations — and therefore the gateway drug to the rest of [Reshaping History](#rewriting-history).
 
-**🧠 Check yourself — Making Commits.** Try these before peeking:
+**Quick Check — Making Commits.** Try these before peeking:
 
 1. Name the three areas a file passes through on its way into history. Which Git command moves it between each?
 2. You have `src/utils.js` (modified) and `notes.txt` (untracked). You run `git commit -am "Update utils"`. What ends up in the new commit, and why?
@@ -743,7 +743,7 @@ git clean -fdx        # also remove ignored files (!!!)
 
 Like `git restore` without `--staged`, this is **permanent** — `git clean -fd` cannot be undone by Git. Always dry-run first. `-fdx` removes files that `.gitignore` excludes (build artefacts, `node_modules/`, caches) — useful for a full reset before diagnosing a build issue, but dangerous if `.gitignore` covers anything you don't want to lose.
 
-**🧠 Check yourself — Managing Uncommitted Changes.** Try these before peeking:
+**Quick Check — Managing Uncommitted Changes.** Try these before peeking:
 
 1. Three files are all *uncommitted* but in different states: `a.js` is staged, `b.js` is modified-but-unstaged, `c.js` is brand-new-and-untracked. You run `git stash`. What happens to each?
 2. What's the functional difference between `git restore file.js` and `git restore --staged file.js`?
@@ -889,7 +889,7 @@ Where a commit lands depends entirely on where `HEAD` is pointing when you run `
 
 > **Detached HEAD**, the third common HEAD state, is covered under [Undoing Committed Work](#detached-head) — it's most useful when investigating and recovering, not during normal branching.
 
-**🧠 Check yourself — Branching.** Try these before peeking:
+**Quick Check — Branching.** Try these before peeking:
 
 1. Your repo has 10 GB of code. How long does `git branch feature` take, and why?
 2. You run `git branch feature`. Without moving from `main`, you stage and commit a new file. Sketch the graph (or describe it in one sentence). Where did the commit actually land?
@@ -1022,7 +1022,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
-**Trade-off.** Squash merge makes `main`'s log read as one commit per feature (clean), but you lose the intermediate commits — which hurts `git bisect` precision if a regression later narrows to "the whole squashed feature." The internal commits still exist on the feature branch (if you don't delete it) and in reflog.
+**Trade-off.** Squash merge makes `main`'s log read as one commit per feature (clean), but you lose the intermediate commits — which hurts `git bisect` precision if a regression later narrows to "the whole squashed feature". The internal commits still exist on the feature branch (if you don't delete it) and in reflog.
 
 ## Handling Merge Conflicts
 
@@ -1160,7 +1160,7 @@ git merge feature -X ignore-all-space  # ignore whitespace differences
 
 Use `-X theirs` when integrating generated or vendored files where the incoming version is authoritative. Use `-X ours` sparingly — it's easy to silently lose incoming fixes.
 
-**🧠 Check yourself — Merging.** Try these before peeking:
+**Quick Check — Merging.** Try these before peeking:
 
 1. `main` is at commit B. `feature` branched from B and added commits C and D. `main` has not moved. You run `git merge feature` from `main`. What shape does history take — fast-forward or merge commit? Why?
 2. Same setup, but now `main` has also added a commit E since `feature` branched. You run `git merge feature`. What's the shape now? How many parents does the new commit have?
@@ -1206,7 +1206,7 @@ Remote servers typically host **bare repositories** (created with `git init --ba
 
 ### What's the difference between `git clone` and `git pull`?
 
-They sound similar and both "get code from a remote," which causes endless confusion. They do fundamentally different jobs:
+They sound similar and both "get code from a remote", which causes endless confusion. They do fundamentally different jobs:
 
 | Question | `git clone <url>` | `git pull` |
 |---|---|---|
@@ -1444,7 +1444,7 @@ The daily loop:
 
 **Forks vs. direct branches.** In internal team repositories, everyone pushes branches directly to the same `origin` and opens PRs there. In open-source projects (and some strict security contexts), you don't have push access to the main repo — you **fork** it into your own account, push branches to your fork, and open a PR from `yourfork:branch` → `upstream:main`. The mechanics are the same; only the *where you pushed the branch* differs.
 
-**🧠 Check yourself — Remotes.** Try these before peeking:
+**Quick Check — Remotes.** Try these before peeking:
 
 1. There are three pointers that *all* sit on what feels like "the main branch": `main`, `origin/main`, and the actual branch on the remote server. Which one moves when you run each of these? `git commit`, `git fetch`, `git push`.
 2. What's the practical difference between `git fetch` and `git pull` — and why have two commands?
@@ -1524,7 +1524,7 @@ v1.2.0-15-ga3f2d9c
 
 Read this as *"15 commits past the v1.2.0 tag, at commit `a3f2d9c`"*. Build systems use this to stamp binaries with their exact source version.
 
-**🧠 Check yourself — Tagging Releases.** Try these before peeking:
+**Quick Check — Tagging Releases.** Try these before peeking:
 
 1. What's the practical difference between `git tag v1.0.0` (lightweight) and `git tag -a v1.0.0 -m "…"` (annotated)? Which one should you use for a public release?
 2. You've tagged `v1.0.0` locally and pushed your branch. Your teammate pulls — can they see `v1.0.0`? What do you need to do?
@@ -1773,7 +1773,7 @@ All three create new commits with new hashes. Their difference is **scope and in
 
 All three obey the [Golden Rule](#the-golden-rule-never-rewrite-pushed-commits) — never rewrite pushed history.
 
-**🧠 Check yourself — Rewriting History.** Try these before peeking:
+**Quick Check — Rewriting History.** Try these before peeking:
 
 1. State the Golden Rule in your own words and explain *why* it exists (what actually breaks if you ignore it?).
 2. Your branch has three commits on top of `main`: `Add login`, `Oops debug print`, `Add tests`. You want to land this as clean work on `main`. Which rewrite tool removes the middle commit without touching the other two, and what happens to the hashes?
@@ -1836,7 +1836,7 @@ A rough decision tree:
 
 The single most important choice is *keeping feature branches short*. Regardless of strategy, branches that live for weeks accumulate merge conflicts and hide unfinished work from CI. Aim for *days*, not *weeks*.
 
-**🧠 Check yourself — Branching Strategies.** Try these before peeking:
+**Quick Check — Branching Strategies.** Try these before peeking:
 
 1. A startup ships a SaaS product to production several times a day from a single live version. Which strategy fits best, and what mechanism lets unfinished features live in `main` without shipping?
 2. An enterprise product ships quarterly releases and simultaneously maintains v1.x, v2.x, and v3.x lines for different customers. Which strategy fits best, and why?
@@ -1937,7 +1937,7 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
 </script>
 </div>
 
-**🧠 Check yourself — Submodules.** Try these before peeking:
+**Quick Check — Submodules.** Try these before peeking:
 
 1. A submodule pins one specific thing about the external repo. What is it, and what does that mean for teammates who pull?
 2. You clone a repo that uses submodules with plain `git clone`. The submodule directories exist but are empty. What one-command alternative would have populated them, and which two commands would you run after a plain clone to fix it?
@@ -2101,7 +2101,7 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 
 **Automating bisect.** If your test script exits `0` on success and non-zero on failure, `git bisect run <script>` automates the whole search — Git runs the script at each candidate and uses the exit code to decide. Always end with `git bisect reset` — without it, HEAD stays on the last-checked historical commit, which is a confusing state to leave behind.
 
-**🧠 Check yourself — Investigating History.** Try these before peeking:
+**Quick Check — Investigating History.** Try these before peeking:
 
 1. You want to find every commit that mentions "rate limit" in its message, and — separately — every commit whose diff added or removed the string `RateLimiter`. Which `git log` flags?
 2. A line in `src/auth.py` looks wrong. Which command tells you who last touched it, and which command do you then run to see the full context of that change?
@@ -2280,7 +2280,7 @@ c9a2f3e HEAD@{2}: checkout: moving from main to feat-login
 ...
 ```
 
-Each entry is `<sha> HEAD@{n}: <operation>: <description>`. The `@{n}` syntax is **reflog-relative** — `HEAD@{1}` means "where HEAD was one move ago," `HEAD@{2}` two moves ago, and so on.
+Each entry is `<sha> HEAD@{n}: <operation>: <description>`. The `@{n}` syntax is **reflog-relative** — `HEAD@{1}` means "where HEAD was one move ago", `HEAD@{2}` two moves ago, and so on.
 
 **The universal recovery recipe** — for *any* destructive operation (rebase drop, hard reset, detached-HEAD orphan, merge gone wrong):
 
@@ -2299,11 +2299,11 @@ That's the whole pattern. Every "oh no, I lost my commits" question on Stack Ove
 
 The reflog is one of the deepest reasons Git is forgiving: destructive commands look scary, but they are almost always recoverable for weeks after the fact.
 
-**🧠 Check yourself — Undoing Committed Work.** Try these before peeking:
+**Quick Check — Undoing Committed Work.** Try these before peeking:
 
 1. A buggy commit has been *pushed* to `main` and several teammates have already pulled it. Should you `git reset --hard` or `git revert`? Why?
 2. For `git reset`, rank the three modes by how much state they destroy (least to most): `--soft`, `--mixed`, `--hard`.
-3. You do `git switch --detach <sha>`, make two commits, then `git switch main` without creating a branch. Your new commits appear to be "gone." Are they really deleted? What's the recovery recipe?
+3. You do `git switch --detach <sha>`, make two commits, then `git switch main` without creating a branch. Your new commits appear to be "gone". Are they really deleted? What's the recovery recipe?
 4. State the universal recovery recipe for "I lost my commit" in two steps.
 
 <details markdown="1">
@@ -2364,14 +2364,16 @@ A condensed checklist. Each item links back to its full section.
 * **Review [branching strategy](#branching-strategies) with your team.** Short-lived branches beat long-lived ones every time, regardless of which strategy you pick.
 * **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within Git's retention window (configured via `gc.reflogExpire` / `gc.reflogExpireUnreachable`). Don't panic, reflog first.
 
-## Quiz
+## Practice
 
-## Basic Git
+### Basic Git
+
 {% include flashcards.html id="git_basic" %}
 
 {% include quiz.html id="git_basic" %}
 
-## Advanced Git
+### Advanced Git
+
 {% include flashcards.html id="git_advanced" %}
 
 {% include quiz.html id="git_advanced" %}

@@ -53,7 +53,7 @@ This is the role of **UML Component Diagrams**. They operate at a **higher level
 | **Component Diagram** | High (architecture-level) | Deployable modules, provided/required interfaces, assembly |
 | **Deployment Diagram** | Physical (infrastructure) | Hardware nodes, artifacts, network topology |
 
-> **Concept Check (Prior Knowledge Activation):** Think about a web application you have used or built. What are the major "pieces" of the system? (e.g., frontend, backend, database, authentication service). These pieces are what component diagrams model.
+> **Quick Check (Prior Knowledge Activation):** Think about a web application you have used or built. What are the major "pieces" of the system? (e.g., frontend, backend, database, authentication service). These pieces are what component diagrams model.
 
 ---
 
@@ -117,12 +117,12 @@ Reading this diagram: `PaymentService` has an incoming port `processPayment` (wh
 
 **Connectors** are the lines between components (or between ports) that show communication pathways. The UML specification defines two kinds of connectors (*ConnectorKind* — `assembly` or `delegation`):
 
-- **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> Joins a **required** interface (socket, §2.2) on one component to a matching **provided** interface (ball) on another — see §4 for the ball-and-socket "snap." This is the canonical way to wire two components together in UML. In a simplified diagram (no ball-and-socket drawn), authors often use a plain solid arrow between components or ports as shorthand for the same idea.
+- **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> Joins a **required** interface (socket, §2.2) on one component to a matching **provided** interface (ball) on another — see §4 for the ball-and-socket "snap". This is the canonical way to wire two components together in UML. In a simplified diagram (no ball-and-socket drawn), authors often use a plain solid arrow between components or ports as shorthand for the same idea.
 - **Delegation Connector** A connector inside a *composite* component that forwards an external port to a port on an internal sub-component (used in white-box views, not shown in this chapter).
 - **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a weaker "uses" or "depends on" relationship — *not* a connector in the strict UML sense, but commonly drawn on component diagrams for cross-cutting uses.
 - **Plain Link** <span class="uml-sym" data-diagram="component" data-sym="--"></span> An undirected association between components.
 
-> **Concept Check (Retrieval Practice):** Without looking back, name the two types of interfaces in component diagrams and their visual symbols. What is the difference between a provided and required interface?
+> **Quick Check (Retrieval Practice):** Without looking back, name the two types of interfaces in component diagrams and their visual symbols. What is the difference between a provided and required interface?
 >
 > <details>
 > <summary><i>Reveal Answer</i></summary>
@@ -390,14 +390,12 @@ After drawing, review your diagram:
 
 ---
 
-## 8. Interactive Practice
+## 8. Practice
 
 Test your knowledge with these retrieval practice exercises.
 
-### Knowledge Quiz
-{% include quiz.html id="uml_component_diagram_examples" %}
-
-### Retrieval Flashcards
 {% include flashcards.html id="uml_component_diagram_examples" %}
+
+{% include quiz.html id="uml_component_diagram_examples" %}
 
 *Pedagogical Tip: Try to answer each question from memory before revealing the answer. Effortful retrieval is exactly what builds durable mental models. Come back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*

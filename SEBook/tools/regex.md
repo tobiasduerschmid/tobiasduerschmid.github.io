@@ -188,9 +188,9 @@ However, real-world data is rarely that predictable. Regular Expressions allow y
 Let's look at one simple and two complex examples to illustrate this conceptual leap.
 
 ### The Simple Example: The "Cat" Problem
-Imagine you are proofreading a document and want to find every instance of the animal "cat." 
+Imagine you are proofreading a document and want to find every instance of the animal "cat". 
 
-If you do a literal search for `cat`, your text editor will highlight the "cat" in "The **cat** is sleeping," but it will also highlight the "cat" in "**cat**alog", "edu**cat**ion", and "s**cat**ter". Furthermore, a literal search for `cat` will completely miss the plural "cats" or the capitalized "Cat".
+If you do a literal search for `cat`, your text editor will highlight the "cat" in "The **cat** is sleeping", but it will also highlight the "cat" in "**cat**alog", "edu**cat**ion", and "s**cat**ter". Furthermore, a literal search for `cat` will completely miss the plural "cats" or the capitalized "Cat".
 
 Conceptually, a Regular Expression allows you to tell the computer: 
 > *"Find the letters C-A-T (ignoring uppercase or lowercase), but only if they form their own distinct word, and optionally allow an 's' at the very end."* By defining the *rules* of the word rather than just the literal letters, RegEx eliminates the false positives ("catalog") and captures the edge cases ("Cats").
@@ -237,6 +237,8 @@ Anchors do not match any actual characters; instead, they constrain a match base
 * `^` (Caret): Asserts the **start** of a string. `^Hello` matches "Hello world" but not "Say Hello".
 * `$` (Dollar Sign): Asserts the **end** of a string. `end$` matches "The end" but not "endless".
 
+> By default `^` and `$` match the start and end of the entire string. With the **multiline flag** (`m` in JavaScript / `re.M` in Python), they additionally match the start and end of each *line* within the string.
+
 > **Practice this:** [Anchors exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#anchors)
 
 ### Character Classes: Matching Sets of Characters
@@ -251,10 +253,10 @@ Character classes (or sets) allow you to match any single character from a speci
 
 ### Metacharacters
 Because certain character sets are used so frequently, RegEx provides handy meta characters:
-* `\d`: Matches any digit (equivalent to `[0-9]`).
-* `\w`: Matches any "word" character (alphanumeric plus underscore: `[a-zA-Z0-9_]`).
+* `\d`: Matches any digit. In ASCII-only engines (POSIX, JavaScript without the `u` flag), this is equivalent to `[0-9]`. In Python 3 (and other Unicode-aware engines), `\d` by default matches any Unicode digit (e.g., Devanagari `९`); pass `re.ASCII` to restrict it to `[0-9]`.
+* `\w`: Matches any "word" character. In ASCII-only engines this is `[a-zA-Z0-9_]`; in Unicode-aware engines (Python 3 by default) it also matches accented letters and characters from non-Latin scripts.
 * `\s`: Matches any whitespace character (spaces, tabs, line breaks).
-* `.` (Dot): The wildcard. Matches *any* single character except a newline. (To match a literal dot, you must escape it with a backslash: `\.`).
+* `.` (Dot): The wildcard. Matches *any* single character except a newline (turn on the `s`/DOTALL flag to also match newlines). To match a literal dot, you must escape it with a backslash: `\.`.
 
 > **Practice this:** [Meta Characters exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#meta-characters)
 
@@ -345,7 +347,7 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
 3. **Index 5 (`c` in "catalog"):**
    * `\b` matches. `[Cc]` matches `c`. `[Aa]` matches `a`. `[Tt]` matches `t`.
    * The string pointer is now positioned between the `t` and the `a` in "catalog".
-   * The pattern asks for `[Ss]?`. Is 'a' an 's'? No. Since the 's' is optional (`?`), the engine says "That's fine, I matched it 0 times," and moves to the next pattern token.
+   * The pattern asks for `[Ss]?`. Is 'a' an 's'? No. Since the 's' is optional (`?`), the engine says "That's fine, I matched it 0 times", and moves to the next pattern token.
    * The pattern asks for `\b` (a word boundary). The string pointer is currently between `t` (a word character) and `a` (another word character). Because there is no transition to a non-word character, the boundary assertion fails.
    * **Match Fails!** The engine drops everything, resets the pattern, and bumps along to the next letter.
 4. **Index 13 (`c` in "cat"):**
@@ -431,7 +433,7 @@ Running this against `<div>Hello World</div>` will successfully yield a match wh
 
 Sometimes you need to assert that a specific pattern exists (or doesn't exist) immediately before or after your current position, but you don't want to include those characters in your final match result. To solve this problem, we use Lookarounds.
 
-Lookarounds are "zero-width assertions." Like anchors (`^` and `$`), they check a condition at a specific position, but they do not "consume" any characters. The engine's pointer stays exactly where it is.
+Lookarounds are "zero-width assertions". Like anchors (`^` and `$`), they check a condition at a specific position, but they do not "consume" any characters. The engine's pointer stays exactly where it is.
 
 ### Positive and Negative Lookaheads
 Lookaheads look forward in the string from the current position.
@@ -491,7 +493,7 @@ Instead, the engine performs **Backtracking**. It remembers previous decision po
 
 
 ### The "Bump-Along" (Failing and Retrying)
-If the engine exhausts all possibilities at the current starting position and completely fails to find a match, it performs a "bump-along." 
+If the engine exhausts all possibilities at the current starting position and completely fails to find a match, it performs a "bump-along". 
 
 It resets the pattern pointer to the beginning of your RegEx, advances the string pointer *one character forward* from where the last attempt began, and starts the entire process over again. It will continue this process, checking every single starting index of the string, until it finds a match or reaches the end of the text.
 
@@ -516,7 +518,7 @@ By mechanically stepping forward, backtracking when stuck, and resuming immediat
 
 ## Limitations of RegEx: The HTML Problem
 
-As powerful as RegEx is, it has mathematical limitations. Under the hood, standard regular expressions are powered by **Finite Automata** (state machines). 
+As powerful as RegEx is, it has mathematical limitations. The "regular expressions" of formal language theory map cleanly to **Finite Automata** (state machines), which match exactly the *regular languages*. Most modern engines (PCRE, Python's `re`, Java, JavaScript, Ruby, .NET) actually use **backtracking NFA implementations** that add features like backreferences and lookarounds — these go *beyond* pure finite automata, but at the cost of worst-case exponential matching time. DFA-based engines like RE2 and `grep` (without `-P`) stay closer to the theoretical foundation and guarantee linear-time matching.
 
 
 
@@ -528,7 +530,7 @@ HTML allows for infinitely nested tags (e.g., `<div><div><span></span></div></di
 
 Regular Expressions might look intimidating, but they are incredibly logical once you break them down into their component parts. By mastering anchors, character classes, quantifiers, and groups, you can drastically reduce the amount of code you write for data validation and text manipulation. Start small, practice in online tools like Regex101, and slowly incorporate them into your daily software development workflow!
 
-## Quiz
+## Practice
 
 {% include flashcards.html id="regex_basics" %}
 

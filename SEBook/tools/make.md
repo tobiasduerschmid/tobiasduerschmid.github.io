@@ -36,7 +36,7 @@ What you actually need is a smart tool that asks two questions before doing any 
 If `math.c` was saved at 10:05 AM, but `math.o` (its compiled object file) was created at 9:00 AM, the tool knows `math.c` has changed and *must* be recompiled. If `utils.c` hasn't been touched since yesterday, the tool completely skips recompiling it and just reuses the existing `utils.o`. 
 
 
-This is exactly why **`make`** was created in 1976, and why it remains a staple of software engineering today. While the original utility was created at Bell Labs, modern development primarily relies on **GNU Make**, a powerful and widely-extended implementation that reads a configuration file called a **Makefile**. 
+This is exactly why **`make`** was created by Stuart Feldman at Bell Labs in 1976 {% cite Feldman1979Make %}, and why it remains a staple of software engineering today. Modern development primarily relies on **GNU Make**, a powerful and widely-extended implementation that reads a configuration file called a **Makefile**. 
 
 So GNU **`make`** is the project's *engine* that reads recipes from **Makefiles** to build complex products.
 
@@ -107,7 +107,7 @@ Note: *If you run this now (i.e., ask the kitchen manager to bake the cake), `ma
 
 **The Need:** We need to teach `make` how to create the missing intermediate ingredients so it can satisfy the requirements of the final `cake`.
 
-**The Syntax:** We simply add more rules. `make` reads top-to-bottom, but executes bottom-to-top based on what the top target needs.
+**The Syntax:** We simply add more rules. The order of rules in the Makefile does not matter for execution — `make` reads all the rules, builds a dependency graph from them, and then traverses that graph from the goal target down to the leaves, building each prerequisite before the target that needs it. The first non-special rule in the file is used as the *default goal* if no target is given on the command line.
 
 ```makefile
 # Step 2: Adding the Chain
@@ -162,8 +162,8 @@ buttercream: butter.txt powdered_sugar.txt
 **The Need:** Look at the `chocolate_layers` rule. We list all the ingredients in the dependencies, but in a real C++ program, you also have to list all those exact same files again in the compiler command. Typing things twice causes typos.
 
 **The Syntax:** Makefiles have built-in "Automatic Variables" that act as shortcuts:
-* `$@` automatically means **"The name of the current target."**
-* `$^` automatically means **"The names of ALL the dependencies."**
+* `$@` automatically means **"The name of the current target"**.
+* `$^` automatically means **"The names of ALL the dependencies"**.
 
 ```makefile
 # Step 4: Automatic Variables
@@ -219,7 +219,7 @@ Now we get this complete Makefile:
 # ---------------------------------------------------------
 
 # Variables (Kitchen settings)
-OVEN_TEMP = 350F
+OVEN_TEMP = 350
 MIXER_SPEED = medium-high
 
 # 1. The Final Target: The Cake
@@ -268,7 +268,7 @@ clean:
 ```
 
 ### 3. The Rules (The Recipe/Commands)
-In a Makefile, the **rule** or **command** is the specific action the compiler must take to turn the dependencies into the target.
+A *rule* in a Makefile pairs a target with its prerequisites and a *recipe*: the sequence of shell commands `make` runs to turn those prerequisites into the target. The recipe doesn't have to call a compiler — it's just shell commands, so `make` can drive any tool (linter, packager, doc generator, deployer).
 * **Compiling:** The rule to turn flour, sugar, and eggs into a chocolate layer is: *"Mix ingredients in bowl A, pour into a 9-inch pan, and bake at 350°F for 30 minutes."*
 * **Linking:** The rule to turn the individual layers, filling, and frosting into the Final Cake is: *"Stack layer, spread filling, stack layer, cover entirely with frosting."*
 
@@ -312,7 +312,7 @@ If your cake recipe were written as a Makefile, it would look exactly like this:
 > **Buttercream:** Butter Powdered_Sugar Vanilla
 > *Whip in a stand mixer until fluffy.*
 
-Whenever you type `make` in your terminal, the system reads this recipe from the top down, checks what is already sitting in your "kitchen," and only does the work absolutely necessary to give you a fresh cake.
+Whenever you type `make` in your terminal, the system reads this recipe from the top down, checks what is already sitting in your "kitchen", and only does the work absolutely necessary to give you a fresh cake.
 
 
 ## Makefile Syntax
@@ -329,7 +329,7 @@ target: prerequisites
 * **Prerequisites (Dependencies)**: The files that are required to build the target. 
 * **Commands (Recipe)**: The shell commands that `make` executes to build the target. *(Note: Commands MUST be indented with a Tab character, not spaces!)*
 
-When you run `make`, it looks at the target. If any of the prerequisites have a newer modification timestamp than the target, `make` executes the commands to update the target. The relationships you define matter immensely; for example, if you remove the object files (`$(OBJS)`) dependency from your main executable rule (e.g., `$(EXEC): $(OBJS)`), `make` will no longer know how to re-link the executable when its constituent object files change.
+When you run `make`, it looks at the target. If any of the prerequisites have a newer modification timestamp than the target, `make` executes the commands to update the target. The dependency relationships you declare matter immensely; for example, if you remove the object files (`$(OBJS)`) prerequisite from your main executable rule (e.g., `$(TARGET): $(OBJS)`), `make` will no longer trigger a re-link when the object files change, because the dependency relationship has been removed.
 
 ### Syntax Basics
 
@@ -373,7 +373,7 @@ clean:
 * **Line 13-14:** This pattern rule explains *how* to turn a `.c` file into a `.o` file. It tells Make: "To compile any object file, use the compiler to compile the first prerequisite (`$<`, which is the `.c` file) and output it to the target name (`$@`, which is the `.o` file)".
 * **Line 17-18:** The `clean` target is a convention used to remove all generated object files and the target executable, leaving only the original source files. You can execute it by running `make clean`.
 
-## Quiz
+## Practice
 
 {% include flashcards.html id="makefile_syntax" %}
 

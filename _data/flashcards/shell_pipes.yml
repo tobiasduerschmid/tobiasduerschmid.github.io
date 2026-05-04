@@ -69,5 +69,5 @@ cards:
 
   - id: 14
     question: "You have two files, `file1.txt` and `file2.txt`. Print all lines from both files that contain the word 'success', sorted alphabetically with duplicates removed."
-    answer: "`grep 'success' file1.txt file2.txt | sort | uniq`"
-    explanation: "`grep` can take multiple file arguments and searches all of them, prefixing each match with the filename; `sort` orders the results; `uniq` removes duplicate lines."
+    answer: "`grep -h 'success' file1.txt file2.txt | sort | uniq`"
+    explanation: "`grep` can take multiple file arguments and searches all of them. By default it prefixes each match with the filename (`file1.txt:success!`), which would defeat `uniq` — identical match lines from different files would compare as different strings. The `-h` flag suppresses the filename prefix so `sort | uniq` can dedupe by content."

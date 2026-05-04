@@ -26,7 +26,7 @@ Refunded --> [*]
 ---
 
 ## 🧠 Activating Prior Knowledge
-Before we dive into the formal UML syntax, let's connect this to something you already know. Think about a standard vending machine. You can't just press the "Dispense" button and expect a snack if you haven't inserted money first. The machine has different *conditions of being*—it is either "Waiting for Money," "Waiting for Selection," or "Dispensing." 
+Before we dive into the formal UML syntax, let's connect this to something you already know. Think about a standard vending machine. You can't just press the "Dispense" button and expect a snack if you haven't inserted money first. The machine has different *conditions of being*—it is either "Waiting for Money", "Waiting for Selection", or "Dispensing". 
 
 In software engineering, we call these conditions **States**. The rules that dictate how the machine moves from one condition to another are called **Transitions**. If you have ever written a `switch` statement or a complex `if-else` block to manage what an application should do based on its current status, you have informally programmed a state machine.
 
@@ -91,7 +91,7 @@ state Processing {
 
 Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
 
-> **Concept Check (Retrieval Practice):** What is the difference between an `entry/` action and an effect on a transition (the `/ action` part of `Event [Guard] / Effect`)? Think about *when* each executes. The entry action runs every time the state is entered regardless of which transition was taken, while the transition effect runs only during that specific transition.
+> **Quick Check (Retrieval Practice):** What is the difference between an `entry/` action and an effect on a transition (the `/ action` part of `Event [Guard] / Effect`)? Think about *when* each executes. The entry action runs every time the state is entered regardless of which transition was taken, while the transition effect runs only during that specific transition.
 
 ### 2.4 Composite States (Advanced)
 
@@ -232,14 +232,12 @@ To ensure these concepts are transferring from working memory to long-term reten
 
 *Self-Correction Check:* If you struggled with question 2, revisit Section 2.2 to review how Guards act as gatekeepers for transitions.
 
-## Interactive Practice
+## Practice
 
 Test your knowledge with these retrieval practice exercises.
 
-### Knowledge Quiz
-{% include quiz.html id="uml_state_diagram_examples" %}
-
-### Retrieval Flashcards
 {% include flashcards.html id="uml_state_diagram_examples" %}
+
+{% include quiz.html id="uml_state_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
