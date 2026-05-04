@@ -3,18 +3,17 @@ title: SE Book — Table of Contents
 layout: sebook
 ---
 
-# Welcome 
-This is a collection of topics for students in software engineering courses ([CS 35L](/SEBook/CS35L_bookmarks.html) and [CS 130](/SEBook/CS130_bookmarks.html)).
+# Welcome to the SE Book
+The SE Book brings together material for students in software engineering courses, including [CS 35L](/SEBook/CS35L_bookmarks.html) and [CS 130](/SEBook/CS130_bookmarks.html).
 
-# Tutorials
-The SE Book comes with a large range of interactive tutorials that you can run right in the browser without installing anything.
-They cover Linux shell scripting in a real Linux VM, live UML visualizations of your code, interactive debugging with a time-traveling debugger, a live git graph visualization, and advanced testing concepts.
-Each tutorial is designed to help you build strong skills in a fun and pedagogically sound way.
-Browse the [full list of available tutorials](/SEBook/tutorials).
+## Interactive Tutorials
+The SE Book includes a broad set of interactive tutorials that run directly in your browser, with no installation required.
+Depending on the topic, you can practice Linux shell scripting in a real Linux VM, explore live UML visualizations of your code, step through programs with a time-travel debugger, inspect Git history through an interactive graph, and work through advanced testing concepts.
+Browse the [full list of tutorials](/SEBook/tutorials).
 
-# Work-in-Progress Note 
+## Work in Progress
 Many topics are still a work in progress. 
 Please consider only the pages linked in your specific course page and already covered in the lecture as "canon". 
 
-# Practice Practice Practice
-To practice concepts from this book, regularly go to the [SE Gym](/se-gym)
+## Practice
+To reinforce the concepts from this book, practice regularly in the [SE Gym](/se-gym).
