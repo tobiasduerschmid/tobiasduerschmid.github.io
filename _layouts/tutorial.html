@@ -763,9 +763,12 @@
     (function () {
       function initTooltips() {
         if (!window.jQuery || !jQuery.fn.tooltip) return;
-        jQuery('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip({
-          trigger: 'hover focus',
-          delay: { show: 100, hide: 250 },
+        var selector = '[data-toggle="tooltip"], [title]:not([data-no-tooltip])';
+        var $triggers = jQuery(selector);
+        if (!$triggers.length) return;
+        $triggers.tooltip({
+          trigger: 'manual',
+          delay: 0,
           container: 'body',
           viewport: { selector: 'body', padding: 8 },
           placement: function (_tip, element) {
@@ -773,9 +776,63 @@
             return rect.top < 80 ? 'bottom' : 'auto top';
           }
         });
+
+        function getTip($trigger) {
+          var data = $trigger.data('bs.tooltip');
+          if (data && data.$tip) return data.$tip;
+          var id = $trigger.attr('aria-describedby');
+          return id ? jQuery('#' + id) : jQuery();
+        }
+
+        function clearHideTimer($trigger) {
+          var timer = $trigger.data('a11yTooltipHideTimer');
+          if (timer) {
+            window.clearTimeout(timer);
+            $trigger.removeData('a11yTooltipHideTimer');
+          }
+        }
+
+        function scheduleHide($trigger) {
+          clearHideTimer($trigger);
+          var timer = window.setTimeout(function () {
+            var $tip = getTip($trigger);
+            if ($trigger.is(':hover') || $trigger.is(':focus') || ($tip.length && $tip.is(':hover'))) {
+              scheduleHide($trigger);
+              return;
+            }
+            $trigger.tooltip('hide');
+          }, 150);
+          $trigger.data('a11yTooltipHideTimer', timer);
+        }
+
+        function showTooltip(trigger) {
+          var $trigger = jQuery(trigger);
+          clearHideTimer($trigger);
+          $trigger.tooltip('show');
+          window.setTimeout(function () {
+            getTip($trigger)
+              .off('.a11yTooltipHover')
+              .on('mouseenter.a11yTooltipHover', function () {
+                clearHideTimer($trigger);
+              })
+              .on('mouseleave.a11yTooltipHover', function () {
+                scheduleHide($trigger);
+              });
+          }, 0);
+        }
+
+        $triggers
+          .off('.a11yTooltip')
+          .on('mouseenter.a11yTooltip focusin.a11yTooltip', function () {
+            showTooltip(this);
+          })
+          .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
+            scheduleHide(jQuery(this));
+          });
+
         jQuery(document).on('keydown.a11yTooltip', function (event) {
           if (event.key === 'Escape' || event.keyCode === 27) {
-            jQuery('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip('hide');
+            $triggers.tooltip('hide');
           }
         });
       }

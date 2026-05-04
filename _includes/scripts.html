@@ -33,18 +33,78 @@
 <script src="{{ " /js/unslider-min.js" | prepend: site.baseurl }}"></script>
 <script>
   $(document).ready(function () {
-    // Tooltips: trigger on hover AND keyboard focus so keyboard users can
-    // reach them (SC 2.1.1). Esc dismisses without losing focus (SC 1.4.13).
-    $('[data-toggle="tooltip"], [title]:not([data-no-tooltip])').tooltip({
-      trigger: 'hover focus',
-      delay: { show: 100, hide: 250 },
-      container: 'body'
-    });
-    $(document).on('keydown.a11yTooltip', function (e) {
-      if (e.key === 'Escape' || e.keyCode === 27) {
-        $('[data-toggle="tooltip"]').tooltip('hide');
+    // Tooltips: manual triggers keep the tooltip hoverable and persistent
+    // while focus/hover remains, and Esc dismisses without moving focus.
+    function initAccessibleTooltips(selector, options) {
+      var $triggers = $(selector);
+      if (!$triggers.length) return;
+      $triggers.tooltip($.extend({
+        trigger: 'manual',
+        delay: 0,
+        container: 'body'
+      }, options || {}));
+
+      function getTip($trigger) {
+        var data = $trigger.data('bs.tooltip');
+        if (data && data.$tip) return data.$tip;
+        var id = $trigger.attr('aria-describedby');
+        return id ? $('#' + id) : $();
       }
-    });
+
+      function clearHideTimer($trigger) {
+        var timer = $trigger.data('a11yTooltipHideTimer');
+        if (timer) {
+          window.clearTimeout(timer);
+          $trigger.removeData('a11yTooltipHideTimer');
+        }
+      }
+
+      function scheduleHide($trigger) {
+        clearHideTimer($trigger);
+        var timer = window.setTimeout(function () {
+          var $tip = getTip($trigger);
+          if ($trigger.is(':hover') || $trigger.is(':focus') || ($tip.length && $tip.is(':hover'))) {
+            scheduleHide($trigger);
+            return;
+          }
+          $trigger.tooltip('hide');
+        }, 150);
+        $trigger.data('a11yTooltipHideTimer', timer);
+      }
+
+      function showTooltip(trigger) {
+        var $trigger = $(trigger);
+        clearHideTimer($trigger);
+        $trigger.tooltip('show');
+        window.setTimeout(function () {
+          getTip($trigger)
+            .off('.a11yTooltipHover')
+            .on('mouseenter.a11yTooltipHover', function () {
+              clearHideTimer($trigger);
+            })
+            .on('mouseleave.a11yTooltipHover', function () {
+              scheduleHide($trigger);
+            });
+        }, 0);
+      }
+
+      $triggers
+        .off('.a11yTooltip')
+        .on('mouseenter.a11yTooltip focusin.a11yTooltip', function () {
+          showTooltip(this);
+        })
+        .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
+          scheduleHide($(this));
+        });
+
+      $(document).on('keydown.a11yTooltip', function (e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+          $triggers.tooltip('hide');
+        }
+      });
+    }
+
+    initAccessibleTooltips('[data-toggle="tooltip"], [title]:not([data-no-tooltip])');
 
     // Keep the navbar hamburger's aria-expanded in sync with the Bootstrap 3
     // collapse state (SC 4.1.2). The toggle button points at the collapse

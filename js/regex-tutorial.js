@@ -473,8 +473,8 @@
 
   function renderParsonsInput(ex) {
     var h = '<div class="rt-parsons" data-exid="' + ex.id + '">';
-    h += '<div class="rt-parsons-label">Drag fragments into the answer box:</div>';
-    h += '<div class="rt-parsons-bank" data-exid="' + ex.id + '">';
+    h += '<div class="rt-parsons-label" id="rt-parsons-label-' + ex.id + '">Choose fragments for the answer box. Press, tap, or drag a fragment to move it between the bank and the answer.</div>';
+    h += '<div class="rt-parsons-bank" data-exid="' + ex.id + '" aria-labelledby="rt-parsons-label-' + ex.id + '">';
     // Shuffle fragments
     var frags = ex.fragments.slice();
     for (var i = frags.length - 1; i > 0; i--) {
@@ -482,15 +482,15 @@
       var tmp = frags[i]; frags[i] = frags[j]; frags[j] = tmp;
     }
     for (var i = 0; i < frags.length; i++) {
-      h += '<span class="rt-frag" draggable="true" data-frag="' + esc(frags[i]) + '">' + esc(frags[i]) + '</span>';
+      h += '<button type="button" class="rt-frag" draggable="true" data-frag="' + esc(frags[i]) + '" aria-describedby="rt-parsons-label-' + ex.id + '">' + esc(frags[i]) + '</button>';
     }
     h += '</div>';
     h += '<div class="rt-parsons-target" data-exid="' + ex.id + '">';
     h += '<span class="rt-delim">/</span>';
-    h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '"></span>';
+    h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '" aria-label="Answer fragments"></span>';
     h += '<span class="rt-delim">/g</span>';
     h += '</div>';
-    h += '<button class="rt-btn rt-btn-clear" data-exid="' + ex.id + '">Clear</button>';
+    h += '<button type="button" class="rt-btn rt-btn-clear" data-exid="' + ex.id + '">Clear</button>';
     // Hidden input for the assembled regex
     h += '<input type="hidden" class="rt-input" data-exid="' + ex.id + '">';
     h += '</div>';

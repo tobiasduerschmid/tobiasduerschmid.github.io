@@ -837,19 +837,22 @@ html.dark-mode .sebook-nav-link:visited,
 html.dark-mode .sebook-nav-sublink,
 html.dark-mode .sebook-nav-sublink:visited,
 html.dark-mode .sebook-nav-itemlink,
-html.dark-mode .sebook-nav-itemlink:visited {
+html.dark-mode .sebook-nav-itemlink:visited,
+html.dark-mode .sebook-nav-toggle {
 	color: #e0e0e0 !important;
 }
 
 html.dark-mode .sebook-nav-link:hover,
 html.dark-mode .sebook-nav-sublink:hover,
-html.dark-mode .sebook-nav-itemlink:hover {
+html.dark-mode .sebook-nav-itemlink:hover,
+html.dark-mode .sebook-nav-toggle:hover {
 	background-color: #333 !important;
 }
 
 .sebook-nav-link:focus-visible,
 .sebook-nav-sublink:focus-visible,
-.sebook-nav-itemlink:focus-visible {
+.sebook-nav-itemlink:focus-visible,
+.sebook-nav-toggle:focus-visible {
 	outline: 3px solid #2774AE !important;
 	outline-offset: -3px;
 	box-shadow: inset 0 0 0 2px #fff;
@@ -857,7 +860,8 @@ html.dark-mode .sebook-nav-itemlink:hover {
 
 html.dark-mode .sebook-nav-link:focus-visible,
 html.dark-mode .sebook-nav-sublink:focus-visible,
-html.dark-mode .sebook-nav-itemlink:focus-visible {
+html.dark-mode .sebook-nav-itemlink:focus-visible,
+html.dark-mode .sebook-nav-toggle:focus-visible {
 	outline-color: #FFD100 !important;
 	box-shadow: inset 0 0 0 2px #000;
 }

@@ -1,38 +1,46 @@
 <nav class="sebook-sidebar-nav" aria-label="SE Book table of contents">
   <ul class="sebook-nav-list">
     {% for topic in site.data.sebook_nav.topics %}
+    {% assign topic_panel_id = 'sebook-nav-topic-' | append: forloop.index %}
     <li class="sebook-nav-item {% if topic.subtopics %}has-subtopics{% endif %}">
-      <a href="{{ topic.url }}" class="sebook-nav-link">
-        {% if topic.icon %}
-        <span class="sebook-nav-icon" aria-hidden="true">{{ topic.icon }}</span>
-        {% endif %}
-        <span class="sebook-nav-text">{{ topic.name }}</span>
+      <div class="sebook-nav-row">
+        <a href="{{ topic.url }}" class="sebook-nav-link">
+          {% if topic.icon %}
+          <span class="sebook-nav-icon" aria-hidden="true">{{ topic.icon }}</span>
+          {% endif %}
+          <span class="sebook-nav-text">{{ topic.name }}</span>
+        </a>
         {% if topic.subtopics %}
-        <span role="button" tabindex="0" class="sebook-nav-toggle"
+        <button type="button" class="sebook-nav-toggle"
           aria-expanded="false"
+          aria-controls="{{ topic_panel_id }}"
           aria-label="Toggle {{ topic.name }} subtopics">
           <span aria-hidden="true">›</span>
-        </span>
+        </button>
         {% endif %}
-      </a>
+      </div>
 
       {% if topic.subtopics %}
-      <ul class="sebook-nav-sublist">
+      <ul class="sebook-nav-sublist" id="{{ topic_panel_id }}">
         {% for subtopic in topic.subtopics %}
+        {% assign subtopic_panel_id = topic_panel_id | append: '-subtopic-' | append: forloop.index %}
         <li class="sebook-nav-subitem {% if subtopic.items %}has-subitems{% endif %}">
-          <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
-            <span class="sebook-nav-text">{{ subtopic.name }}</span>
+          <div class="sebook-nav-subrow">
+            <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
+              <span class="sebook-nav-text">{{ subtopic.name }}</span>
+            </a>
             {% if subtopic.items %}
-            <span role="button" tabindex="0" class="sebook-nav-toggle"
+            <button type="button" class="sebook-nav-toggle"
               aria-expanded="false"
+              aria-controls="{{ subtopic_panel_id }}"
               aria-label="Toggle {{ subtopic.name }} subtopics">
               <span aria-hidden="true">›</span>
-            </span>
+            </button>
             {% endif %}
-          </a>
+          </div>
 
           {% if subtopic.items %}
-          <ul class="sebook-nav-itemlist">
+          <ul class="sebook-nav-itemlist" id="{{ subtopic_panel_id }}">
             {% for item in subtopic.items %}
             <li class="sebook-nav-item-leaf">
               <a href="{{ item.url }}" class="sebook-nav-itemlink">
@@ -71,6 +79,13 @@
     border-bottom: 1px solid #ddd;
   }
 
+  .sebook-nav-row,
+  .sebook-nav-subrow {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+  }
+
   .sebook-nav-link,
   .sebook-nav-link:visited {
     display: flex;
@@ -82,7 +97,8 @@
     transition: background-color 0.2s;
     font-size: 15px;
     font-weight: 500;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     box-sizing: border-box;
   }
 
@@ -100,10 +116,12 @@
   }
 
   .sebook-nav-toggle {
-    margin-left: 10px;
+    flex: 0 0 auto;
+    margin: 0;
     transition: transform 0.2s;
     background: transparent;
     border: 0;
+    border-left: 1px solid transparent;
     padding: 6px 8px;
     cursor: pointer;
     color: inherit;
@@ -114,6 +132,10 @@
     justify-content: center;
     min-width: 28px;
     min-height: 28px;
+  }
+
+  .sebook-nav-toggle:hover {
+    background-color: #e8e8e8;
   }
 
   .sebook-nav-toggle:focus-visible {
@@ -159,11 +181,16 @@
     transition: background-color 0.2s;
     font-size: 14px;
     font-weight: normal;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     box-sizing: border-box;
   }
 
   .sebook-nav-sublink:hover {
+    background-color: #d8d8d8;
+  }
+
+  .sebook-nav-subrow .sebook-nav-toggle:hover {
     background-color: #d8d8d8;
   }
 
@@ -234,7 +261,7 @@
     // First, close all sections
     document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(function (item) {
       item.classList.remove('open');
-      const toggle = item.querySelector('.sebook-nav-toggle');
+      const toggle = item.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle');
       if (toggle) {
         toggle.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
@@ -243,7 +270,7 @@
 
     document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(function (item) {
       item.classList.remove('open');
-      const toggle = item.querySelector('.sebook-nav-toggle');
+      const toggle = item.querySelector(':scope > .sebook-nav-subrow > .sebook-nav-toggle');
       if (toggle) {
         toggle.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
@@ -291,7 +318,7 @@
     if (currentTopicItem) {
       if (currentTopicItem.classList.contains('has-subtopics')) {
         currentTopicItem.classList.add('open');
-        const toggle = currentTopicItem.querySelector('.sebook-nav-toggle');
+        const toggle = currentTopicItem.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle');
         if (toggle) {
           toggle.classList.add('open');
           toggle.setAttribute('aria-expanded', 'true');
@@ -303,7 +330,7 @@
     if (currentSubtopicItem) {
       if (currentSubtopicItem.classList.contains('has-subitems')) {
         currentSubtopicItem.classList.add('open');
-        const toggle = currentSubtopicItem.querySelector('.sebook-nav-toggle');
+        const toggle = currentSubtopicItem.querySelector(':scope > .sebook-nav-subrow > .sebook-nav-toggle');
         if (toggle) {
           toggle.classList.add('open');
           toggle.setAttribute('aria-expanded', 'true');
@@ -317,25 +344,18 @@
       toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
-    function wireToggle(link) {
-      const toggle = link.querySelector('.sebook-nav-toggle');
+    function wireToggle(parent) {
+      const toggle = parent.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle, :scope > .sebook-nav-subrow > .sebook-nav-toggle');
       if (!toggle) return;
       const fire = function (e) {
         e.stopPropagation();
-        e.preventDefault();
-        toggleSection(toggle, link.parentElement);
+        toggleSection(toggle, parent);
       };
       toggle.addEventListener('click', fire);
-      // role="button" span doesn't get native Enter/Space — wire it up.
-      toggle.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-          fire(e);
-        }
-      });
     }
 
-    document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(wireToggle);
-    document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(wireToggle);
+    document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(wireToggle);
+    document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(wireToggle);
 
     // Esc closes the nearest open expanded section (SC 1.4.13 dismissible).
     document.querySelector('.sebook-sidebar-nav').addEventListener('keydown', function (e) {
@@ -344,7 +364,7 @@
       if (!focused) return;
       const openAncestor = focused.closest('.sebook-nav-item.open, .sebook-nav-subitem.open');
       if (!openAncestor) return;
-      const toggle = openAncestor.querySelector(':scope > .sebook-nav-link > .sebook-nav-toggle, :scope > .sebook-nav-sublink > .sebook-nav-toggle');
+      const toggle = openAncestor.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle, :scope > .sebook-nav-subrow > .sebook-nav-toggle');
       if (toggle) {
         toggleSection(toggle, openAncestor);
         toggle.focus();
