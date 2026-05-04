@@ -35,9 +35,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Your First Sequence Diagram"
     instructions: |
-      ## From Structure to Behavior
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **identify** a participant (lifeline) in a sequence diagram and **write** Python calls that produce synchronous messages between two objects.
+      Class diagrams show what *exists* in a system; sequence diagrams show what *happens at runtime* — which object calls which method, in what order. As soon as you start designing or debugging real interactions (logins, API handshakes, message flows), you need a way to describe behavior over time, not just structure. This first step gives you the smallest complete sequence diagram and shows you how Python code on the page becomes a picture you can read.
+
+      ### 🎯 You will learn to
+
+      - Apply the lifeline notation by identifying participants in a sequence diagram
+      - Create Python code that produces synchronous messages between two object instances
 
       ### Where Class Diagrams End, Sequence Diagrams Begin
 
@@ -247,8 +252,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Lifelines and Messages"
-      min_score: 0.6
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -322,9 +327,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Return Values: The Dashed Arrow"
     instructions: |
-      ## When Methods Talk Back
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** when a return message appears on a sequence diagram and **write** Python code that produces one.
+      Most useful methods *give something back* — a count, a status, a result — and the diagram has to show those returns without burying the reader in noise. UML draws a dashed return arrow only when the returned value carries information the reader cares about, so you need to recognise the two precise conditions that trigger one. Get this right and your diagrams stay readable; miss it and either important data disappears or trivial returns clutter the picture.
+
+      ### 🎯 You will learn to
+
+      - Analyze when a return message appears on a sequence diagram (and when it does not)
+      - Apply Python type annotations and assignments to produce a dashed return arrow
 
       ### The Two Rules for Return Arrows
 
@@ -561,8 +571,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Return Messages"
-      min_score: 0.6
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -642,9 +652,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Self-Calls and Nested Activation"
     instructions: |
-      ## When an Object Talks to Itself
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** why an activation box represents a call stack frame and **produce** a nested self-call diagram from Python code.
+      Real classes rarely expose every detail; they delegate to private helper methods on the same object. When the diagram captures that delegation, you can see at a glance which public method is the orchestrator and which are its internal pieces. Activation boxes are not decoration — they are the *literal* call stack you already debug every day, drawn vertically. Connecting that mental model to the diagram is the threshold concept of this step.
+
+      ### 🎯 You will learn to
+
+      - Analyze why an activation box represents a call stack frame
+      - Apply self-message notation to produce nested activation from Python code
 
       ### The Call Stack, Drawn
 
@@ -843,8 +858,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Self-Calls and the Call Stack"
-      min_score: 0.6
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -919,9 +934,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Conditional Fragments: opt and alt"
     instructions: |
-      ## When Behavior Is Not Always the Same
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **recognize** the `opt` and `alt` interaction fragments on a diagram and **write** Python conditionals that produce each one.
+      Real behavior almost always branches — spam vs. legitimate traffic, cache hit vs. miss, authorised vs. denied. A sequence diagram that only shows a single straight-line trace cannot communicate any of that. The `opt` and `alt` interaction fragments are how UML draws conditional execution, and the *only* difference between them is whether there is an `else`. Mastering this small contrast lets you turn any Python `if` statement into the right diagram on the first try.
+
+      ### 🎯 You will learn to
+
+      - Analyze when to choose `opt` vs. `alt` based on the Python control flow
+      - Apply `if` and `if/else` to produce each fragment in a sequence diagram
 
       ### Combined Fragments Are Boxes Around Messages
 
@@ -1164,8 +1184,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Conditional Fragments"
-      min_score: 0.6
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1217,9 +1237,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Loops: Doing the Same Thing Many Times"
     instructions: |
-      ## When a Message Runs Many Times
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **recognize** a `loop` interaction fragment and **write** Python iteration that produces one.
+      Iteration is in nearly every real interaction — broadcasting to every subscriber, processing each item in a queue, retrying until success. A sequence diagram cannot duplicate the same arrow ten times to mean "this happens for every item"; it uses the `loop` fragment instead. The visual grammar is identical to `opt` and `alt` from Step 4 — a thin rectangle, a keyword, a guard in square brackets — only the meaning changes from *pick* to *repeat*. Once you see that pattern, you will recognise every fragment on sight.
+
+      ### 🎯 You will learn to
+
+      - Apply `for` and `while` loops in Python to produce a `loop` fragment in the diagram
+      - Analyze when the right answer is one fragment vs. multiple smaller diagrams
 
       ### The `loop` Fragment
 
@@ -1389,8 +1414,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Loops"
-      min_score: 0.6
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1469,11 +1494,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Putting It All Together: A Moderated Broadcast"
     instructions: |
-      ## Putting It All Together
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **design** and **implement** a Python method whose sequence diagram combines lifelines, a captured return value, self-calls, and both `alt` and `loop` fragments.
+      A real sequence diagram is never one notation in isolation — it weaves lifelines, returns, self-calls, and control-flow fragments into a single scenario that tells a story. You have learned every piece already; the difficulty here is *integrating* them. If you stare at the target diagram for a minute before seeing how it maps to code, that is the point — working developers have the same experience when they first design a real diagram, and the only way to build that fluency is to do it.
 
-      > **Heads up — this one is harder on purpose.** You have learned every piece already; the difficulty here is *integrating* them. If you stare at the target diagram for a minute before seeing how it maps to code, that is the point. Working developers have the same experience when they first design a real diagram.
+      ### 🎯 You will learn to
+
+      - Create a Python method whose sequence diagram combines lifelines, a captured return, self-calls, and both `alt` and `loop` fragments
+      - Analyze a target diagram and predict its code shape before writing a line
 
       ### The Scenario
 
@@ -1822,8 +1850,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Synthesis: Reading a Full Diagram"
-      min_score: 0.6
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1896,9 +1924,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Sequence Diagram Reference"
     instructions: |
-      ## Congratulations!
+      ### Why this matters
 
-      You can now read and write basic UML sequence diagrams — lifelines, synchronous calls, return messages, self-calls with nested activation, and the `opt` / `alt` / `loop` fragments. Step 6 proved you can weave them together in one scenario. This page is your cheat sheet.
+      Congratulations — you can now read and write basic UML sequence diagrams: lifelines, synchronous calls, return messages, self-calls with nested activation, and the `opt` / `alt` / `loop` fragments. Step 6 proved you can weave them together in one scenario. The notation only sticks if you can pull it back out of memory later, so this page is structured as a self-test first and a cheat sheet second — retrieval before review is what makes the learning durable.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your own recall of every notation element introduced in Steps 1–6
+      - Apply this reference card as a quick lookup when designing future diagrams
 
       ### Self-check (close this page first)
 

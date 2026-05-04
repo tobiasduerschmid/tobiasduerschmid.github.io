@@ -113,9 +113,15 @@ steps:
 
       > **Prerequisite:** [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) — pytest discovery, `assert`, and `@pytest.mark.parametrize`. If those feel new, do that one first.
 
-      ## Step 1 — A Bug, in Triplicate
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) define refactoring as **behavior-preserving structural change**, and (b) explain *operationally* why duplicated code multiplies the cost of every future bug.
+      Duplication isn't just a style problem — it multiplies the cost of every future bug. When the same logic lives in three places, one fix becomes three fixes, and missing one means the bug ships in production. Before you can *refactor* duplication away, you need to *feel* what it costs. This step plants that schema: a single bug, fixed in N places, where N is the number of duplicates.
+
+      ### 🎯 You will learn to
+
+      - Apply Fowler's definition of refactoring as **behavior-preserving structural change**.
+      - Analyze a duplicated method to see how a single bug propagates through every caller.
+      - Evaluate when visual similarity is real duplication vs. an accidental coincidence.
 
       Open `royalty.py`. The `RoyaltyCalculator` class has three methods that calculate the creator's share of streaming royalties for three different track types — songs, podcasts, audiobooks. They all use the same formula: **plays × rate × 0.7** (the platform takes 30%, creators get 70%).
 
@@ -437,8 +443,8 @@ steps:
           assert code == 0, f"pytest failed:\n{output}"
 
     quiz:
-      title: "Step 1 — The Cost of Duplication"
-      min_score: 0.7
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -512,9 +518,15 @@ steps:
   # ==========================================================================
   - title: "Long Method → Extract Function (by hand)"
     instructions: |
-      ## Long Method, the smell
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) recognize a Long Method by its sub-goal structure, (b) apply **Extract Function** while keeping tests green, and (c) explain the safety dance — the test discipline that makes refactoring safe.
+      A method that does five things needs five names — but it's been given one. Long Methods are the most common code smell in real Python, and the cure (Extract Function) is the most important refactoring you'll learn. You'll do this one *by hand*, slowly and deliberately, so when the tool drives later extractions you recognize what it's doing under the hood. The safety dance — green tests → change → green tests — is the discipline that turns refactoring from a coin flip into a reliable craft.
+
+      ### 🎯 You will learn to
+
+      - Analyze a Long Method by identifying its sub-goal structure.
+      - Apply **Extract Function** by hand while keeping tests green.
+      - Evaluate the safety dance — the test rhythm that makes structural change reliable.
 
       Open `player.py`. The original `Streaming.process_play_event(user, track)` was **about 35 lines** doing five different things. Sub-goal 1 (the subscription check) has already been extracted as a worked example — the file you opened starts from there. The method body still inlines four more sub-goals:
 
@@ -969,8 +981,8 @@ steps:
           assert code == 0, f"pytest failed:\n{output}"
 
     quiz:
-      title: "Step 2 — Long Method"
-      min_score: 0.7
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1046,9 +1058,15 @@ steps:
   # ==========================================================================
   - title: "Boolean Anti-Patterns — and the trap that costs you everything"
     instructions: |
-      ## Three boolean smells
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) simplify three common boolean anti-patterns, (b) recognize the **IfsMerged trap** — a dangerous "simplification" that silently drops a branch — and (c) use a **`@pytest.mark.parametrize` truth table** to detect behavior change in boolean code.
+      Boolean code looks innocent and breaks loudly. About 30% of conditional anti-patterns in one large empirical study come from a single shape — wrapping a boolean expression in `if/else: return True/False`. Worse, some "obvious" boolean simplifications silently drop a branch, and a happy-path test will let the bug ship. Truth tables are the safety net that catches what your eyes miss.
+
+      ### 🎯 You will learn to
+
+      - Apply three boolean simplifications to remove pointless conditional wrappers.
+      - Analyze a nested-`if` collapse to recognize the **IfsMerged trap**.
+      - Create a `@pytest.mark.parametrize` truth table that covers all input combinations.
 
       Open `gates.py`. The `PlaybackGates` class has three small methods that guard playback. All three have boolean smells. Two are safe to simplify; one looks safe but isn't.
 
@@ -1549,8 +1567,8 @@ steps:
           assert code == 0, f"pytest failed:\n{output}"
 
     quiz:
-      title: "Step 3 — Boolean Anti-Patterns"
-      min_score: 0.7
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1631,13 +1649,21 @@ steps:
   # First tool-supported step. Naming dialog is load-bearing; tool screenshots
   # used here. Memo template: 2 of 4 fields prefilled. Step-1 callback in quiz.
   # ==========================================================================
+  # Pedagogy: worked example with fading — first tool-supported extraction,
+  # heavy scaffolding on the naming dialog, then independent extraction at the end.
   - title: "Duplicated Code → Extract Function (with the tool)"
     instructions: |
-      ## The tool does the typing — you do the thinking
+      ### Why this matters
+
+      Step 1 made you *feel* duplication's cost. Now you remove it — and from this step forward, the tool does the typing. Your job is the three decisions a tool can't make: where the boundary is, what to name the result, and whether the post-state is better than the pre-state. Get those three right and parameterised Extract Function is the highest-leverage refactoring in the toolkit.
+
+      ### 🎯 You will learn to
+
+      - Analyze near-duplicate methods to identify the *one thing* that varies between them.
+      - Apply Monaco's **Refactor: Extract Function/Method** to consolidate duplicates with a callable parameter.
+      - Evaluate when to extract using the **Rule of Three**.
 
       > **The tool will do the typing. You are doing three things: choosing the boundary, choosing the name, and judging whether the result is better. Those decisions are yours.**
-
-      > **Learning objective.** After this step you will be able to (a) recognize duplicated code where the *variation* between copies is captured by a single parameter, (b) use Monaco's **Refactor: Extract Function/Method** action, and (c) decide when to extract using the **Rule of Three**.
 
       Open `filters.py`. The `MusicLibrary` class has two filter methods:
 
@@ -2036,8 +2062,8 @@ steps:
               "Fill in the Tests field — list the tests that confirm the invariant."
 
     quiz:
-      title: "Step 4 — Duplicated Code"
-      min_score: 0.7
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2111,11 +2137,19 @@ steps:
   # Inline before-UML in instructions; pre-show @dataclass syntax; productive
   # failure (missed call site in fixture); closing before/after call-out.
   # ==========================================================================
+  # Pedagogy: productive failure (Bjork) — the missed call site in the fixture
+  # forces students to feel why the tool's "find all references" is load-bearing.
   - title: "Long Parameter List → Introduce Parameter Object (with the tool)"
     instructions: |
-      ## Eight parameters and a clump
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) recognize a Long Parameter List and the **data clump** hiding inside it, (b) use Monaco's **Refactor: Introduce Parameter Object** to consolidate the clump into a `@dataclass`, and (c) explain why type-annotated parameter objects beat dicts for this purpose.
+      A method that takes eight parameters is not just *long* — it's hiding a relationship the code refuses to name. When four of the eight always travel together, that's a **data clump**, and every call site that touches one is forced to touch all four. Introduce Parameter Object names the clump as a real type, so the relationship becomes a compile-time fact rather than a convention every reader has to discover.
+
+      ### 🎯 You will learn to
+
+      - Analyze a long parameter list to spot the **data clump** hiding inside it.
+      - Apply Monaco's **Refactor: Introduce Parameter Object** to consolidate a clump into a `@dataclass`.
+      - Evaluate why type-annotated parameter objects beat anonymous `dict` payloads.
 
       Open `track.py`. The class `TrackCatalog` has an `add_track` method that takes **eight parameters**:
 
@@ -2570,8 +2604,8 @@ steps:
                   f"Fill in the {section} field in the memo. (Replace the TODO comment with prose.)"
 
     quiz:
-      title: "Step 5 — Long Parameter List"
-      min_score: 0.7
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2650,11 +2684,19 @@ steps:
   # Inline before-UML; up-front predict-which-class quiz; spacing callback to
   # Step 3 (Track.is_finished boolean simplification); 1-of-4 memo prefilled.
   # ==========================================================================
+  # Pedagogy: PRIMM — Predict before Run. Up-front predict-which-class quiz
+  # forces commitment before the diagnostic rule is named.
   - title: "Feature Envy → Move Method (with the tool)"
     instructions: |
-      ## Methods belong with the data they use
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) recognize **Feature Envy** by the rule "uses zero state of its host class," (b) use Monaco's **Refactor: Move Method** to relocate the method to the class whose data it actually uses, and (c) explain why type-annotated signatures make moves safer.
+      A method is a name plus a body, and a body that touches only *another* class's data is misnamed. Feature Envy is the diagnostic for this: a method that lives on one class but uses zero state of it. The cure is Move Method — relocate the code to the class whose data it actually uses. Get this right and the dependency arrows in your UML start pointing the way the code actually flows.
+
+      ### 🎯 You will learn to
+
+      - Analyze a method body to recognize **Feature Envy** by the "zero self-state" rule.
+      - Apply Monaco's **Refactor: Move Method** to relocate the method to its rightful host.
+      - Evaluate why type-annotated signatures make automated moves safer than dynamic ones.
 
       Open `media.py`. There are two classes, `Player` and `Track`, and one suspicious method:
 
@@ -3121,8 +3163,8 @@ steps:
                   f"Fill in the {section} field in the memo. (Replace the TODO comment with prose.)"
 
     quiz:
-      title: "Step 6 — Feature Envy"
-      min_score: 0.7
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -3260,11 +3302,19 @@ steps:
   # Inline before-UML; up-front responsibility-recognition quiz; prescribed
   # move order; comparison prompt on change-locality; spacing callback Step 4.
   # ==========================================================================
+  # Pedagogy: PRIMM — Predict before Run. Students predict change-locality
+  # numbers before and after, then verify the decomposition shrinks them.
   - title: "God Class → Extract Class (with the tool)"
     instructions: |
-      ## One class, two responsibilities
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) recognize a **God Class** by its multiple responsibility clusters, (b) use Monaco's **Refactor: Extract Class** to move a cohesive field/method cluster into a new class, and (c) explain why a clean extraction reduces *change locality* — fewer files change for any given feature.
+      A God Class is a class that grew responsibilities until none of them are clearly *its* responsibility. Renaming won't help — fields and methods are still coupled to the same `self`. Decomposition does help, because it shrinks **change locality**: the number of places that have to change when a feature lands. Extract Class is the named refactoring that turns "one class doing two jobs" into "two classes each doing one job," and the change-locality count is how you tell whether you actually decomposed or just renamed.
+
+      ### 🎯 You will learn to
+
+      - Analyze a class to identify multiple **responsibility clusters** by their field-set overlap.
+      - Apply Monaco's **Refactor: Extract Class** to migrate one cluster into a new class.
+      - Evaluate the refactor by comparing **change locality** before and after.
 
       Open `streaming_app.py`. The `StreamingApp` class has **two distinct responsibilities** mixed into one body:
 
@@ -3891,8 +3941,8 @@ steps:
                   f"Fill in the {section} field in the memo. (Replace the TODO comment with prose.)"
 
     quiz:
-      title: "Step 7 — God Class"
-      min_score: 0.7
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -3971,11 +4021,19 @@ steps:
   # (explicit callout); productive failure (one subclass incomplete);
   # micro-tests on empty skeletons; spacing callback to Step 6.
   # ==========================================================================
+  # Pedagogy: productive failure (Bjork) — interface-first refactoring runs
+  # through red. Tests fail loudly until each subclass body is filled in.
   - title: "Replace Conditional with Polymorphism (with the tool)"
     instructions: |
-      ## When `if track_kind ==` is the smell
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) recognize a type-conditional that begs for polymorphism, (b) use Monaco's **Refactor: Move Method** to migrate each branch into a subclass's overridden method, and (c) explain when *not* to use polymorphism (a small `match` statement is sometimes fine).
+      An `if track_kind == ...` chain is a class hierarchy in disguise: each branch corresponds to a type, and every new type adds an `elif`. Polymorphism inverts this — each subclass owns its own behavior, and the dispatch becomes the language's job, not yours. This step is also the first refactoring that runs through *red*: the safety dance changes shape when you're declaring an interface before its bodies exist. Knowing when polymorphism is the right hammer (and when a small `match` is fine) is the senior judgment we're after.
+
+      ### 🎯 You will learn to
+
+      - Analyze an `if/elif` chain over a type tag to recognize a polymorphism opportunity.
+      - Apply **Replace Conditional with Polymorphism** by migrating each branch to a subclass.
+      - Evaluate when *not* to use polymorphism (small, stable `match` statements).
 
       > 🟥 **Heads-up — the safety dance changes shape for this one step.** Steps 1–7 ran **green → change → green**: tests stayed passing throughout. Step 8 deliberately starts from **red**. The starter declares `Track` as `@abstractmethod` and three empty subclasses; every subclass-specific test fails *at construction* because none of the subclasses override `play` yet. You'll fill in each subclass's `play` body, watching the failures clear one at a time. This is **interface-first refactoring**: declare the target shape, let tests fail loudly until the shape is real, finish green. The *external* behavior of the procedural `play(track_kind, ...)` wrapper is identical at the start and at the end — that's the behavior-preserving promise — but the *internal* migration runs through red. The discipline is the same: tiny steps, tests as your map. The starting color is the only thing that's different.
 
@@ -4536,8 +4594,8 @@ steps:
                   f"Fill in the {section} field in the memo. (Replace the TODO comment with prose.)"
 
     quiz:
-      title: "Step 8 — Replace Conditional with Polymorphism"
-      min_score: 0.7
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -4612,11 +4670,19 @@ steps:
   # No code task. Names speculative generality, premature abstraction,
   # hotspot/churn focus. Pairs always-refactor vs never-refactor.
   # ==========================================================================
+  # Pedagogy: negative-transfer callout — counters the over-generalization
+  # that "every smell deserves a refactor" by naming where the rule breaks.
   - title: "Hotspots & The Boy Scout Rule"
     instructions: |
-      ## When refactoring earns its keep — and when it doesn't
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) explain why "always refactor" and "never refactor" are both wrong, (b) name two anti-rules — **speculative generality** and **premature abstraction** — that punish over-eager refactoring, and (c) apply the **hotspot rule**: refactor where the code is already changing.
+      With six refactorings under your belt, every line of code starts to look like a nail. It isn't. "Always refactor" produces speculative generality; "never refactor" lets hotspots compound debt until the code becomes write-only. This step is the calibration: where investment of refactoring effort earns its keep, and where it's a tax on every future reader. The empirical data make the trade-off concrete — smelly hotspots have **4–5× the change-proneness** of clean code, but a smelly cold file is just noise.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a piece of code to decide whether refactoring is worth the cost *now*.
+      - Analyze a candidate refactoring for **speculative generality** or **premature abstraction**.
+      - Apply the **hotspot rule** and the **Boy Scout Rule** as complementary heuristics.
 
       Eight steps in, you've learned six refactorings (Extract Function, Boolean simplification, parameterised Extract, Introduce Parameter Object, Move Method, Extract Class) and one big idea (Replace Conditional with Polymorphism). With this much hammering, every line of code starts to look like a nail.
 
@@ -4688,8 +4754,8 @@ steps:
     tests: []
 
     quiz:
-      title: "Step 9 — Hotspots & The Boy Scout Rule"
-      min_score: 0.7
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -4797,11 +4863,19 @@ steps:
   # full memo authoring before any code, cumulative quiz drawing from all
   # earlier steps. Includes interleaved diagnosis warmup.
   # ==========================================================================
+  # Pedagogy: PRIMM — Modify (synthesis). Multi-smell code where students
+  # diagnose, defend a choice in writing, and only then execute a refactoring.
   - title: "The Refactoring Memo (Synthesis)"
     instructions: |
-      ## Putting it all together
+      ### Why this matters
 
-      > **Learning objective.** After this step you will be able to (a) **diagnose** multiple smells coexisting in a piece of unfamiliar code, (b) **choose** which refactoring to apply first based on the dependencies between smells, and (c) **defend** the choice in a four-field refactoring memo before touching any code.
+      Real code never gives you one smell at a time. The synthesis test is whether you can spot multiple smells *coexisting*, choose which refactoring to apply *first* based on the dependencies between them, and *defend* the choice in writing before any code moves. That last part — defending the choice in a memo — is the discipline that separates a senior engineer from a tool-driven button-pusher. The tool will let you refactor anything; the memo is what makes you ask whether you should.
+
+      ### 🎯 You will learn to
+
+      - Analyze unfamiliar code to diagnose multiple coexisting smells.
+      - Evaluate which refactoring to apply first based on smell dependencies.
+      - Create a four-field refactoring memo (Issue, Cure, Risk, Confidence) before touching any code.
 
       Open `playlist.py`. The class `PlaylistManager` has multiple smells stacked together. Your job is to (a) diagnose them, (b) choose **one** refactoring to apply, (c) write the memo, and only then (d) execute the refactoring with the tool.
 
@@ -5408,8 +5482,8 @@ steps:
           assert code == 0, f"pytest failed:\n{output}"
 
     quiz:
-      title: "Step 10 — Synthesis (Cumulative)"
-      min_score: 0.7
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 

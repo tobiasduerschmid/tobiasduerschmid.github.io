@@ -61,10 +61,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Why Test? The Bug That Got Away"
     instructions: |
-      > 📣 **The kind of bug that ships.** Imagine you've kept your Duolingo streak alive for **100 days straight**. You open the app expecting the 💯 badge — and it shows you 🔥 instead. One missing `=` sign in the badge logic, and the milestone you actually earned silently disappeared. The code runs cleanly, prints no error, and a million 100-day-streakers feel slightly betrayed. *That* is what tests prevent.
+      ### Why this matters
 
-      > 🎯 **Goal:** Find the bug in `streak_badge`, watch a real test catch it, then fix the code so the test passes.
-      > 🧠 **Skills you'll gain:** Read a failing test, understand what it expects, and fix production code to make it pass.
+      Imagine you've kept your Duolingo streak alive for **100 days straight**. You open the app expecting the 💯 badge — and it shows you 🔥 instead. One missing `=` sign in the badge logic, and the milestone you actually earned silently disappeared. The code runs cleanly, prints no error, and a million 100-day-streakers feel slightly betrayed. *That* is what tests prevent.
+
+      ### 🎯 You will learn to
+
+      - Apply pytest's pass/fail loop: read a failing test, understand what it expects, and fix production code until it passes.
+      - Analyze what a test specifies about a function's behavior versus what it merely happens to observe.
 
       > 🧭 **Heads-up — a shift coming.** By the end of this tutorial you'll think about tests differently than most beginners do: not as *"checking your homework"* but as *executable specifications of behavior*. Notice the shift as it happens.
 
@@ -235,7 +239,7 @@ steps:
           assert code == 0, f"Some tests still fail. Read the assertion error in the output: which value did the function return, and which did the test expect? That mismatch is your symptom — trace the code to find where it diverges.\n\n{output}"
 
     quiz:
-      title: "Why Test? — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -343,10 +347,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Choosing What to Test: Partitions & Boundaries"
     instructions: |
-      > 🎯 **Goal:** Stop guessing inputs. Choose a small set that systematically catches off-by-one bugs.
-      > 🧠 **Skills you'll gain:** Write your own pytest tests from scratch, divide a function's input space into meaningful groups, and pinpoint the exact boundary values where off-by-one bugs hide.
+      ### Why this matters
 
-      🧭 **Bridge from Step 1.** That `streak_badge` bug at *exactly* day 100 wasn't random — it lived at a **boundary**, the value where one behavior turns into another. This step teaches you to find those boundary values systematically, before they ship.
+      That `streak_badge` bug at *exactly* day 100 from Step 1 wasn't random — it lived at a **boundary**, the value where one behavior turns into another. Bugs cluster at boundaries, so guessing inputs misses them. This step teaches you to find those boundary values systematically, before they ship.
+
+      ### 🎯 You will learn to
+
+      - Apply equivalence partitioning to divide a function's input space into meaningful groups.
+      - Analyze numeric specs to pinpoint the boundary values where off-by-one bugs hide.
+      - Create your own pytest tests from scratch — `test_` prefix, AAA shape, single assertion.
 
       🔍 **Retrieve first.** Scan the three tests you inherited in Step 1 (`test_streaks.py`). Each test calls `streak_badge` and asserts something with `==`. Notice the *shape* of each — same structure, different inputs. You're about to write tests just like these.
 
@@ -627,7 +636,7 @@ steps:
             text: "Read the spec (3 ≤ len ≤ 12). For each test, decide the length you need, pick any squad name with that length, and decide `is True` vs `is False` from the spec. Don't transcribe a fixed string — derive it."
 
     quiz:
-      title: "Partitions & Boundaries — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -744,10 +753,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Oracle Strength: Strong, Weak, and the Liar Test"
     instructions: |
-      > 🎯 **Goal:** Spot a *weak oracle* — an assertion that looks productive but lets wrong answers slip through — and rewrite it as a strong oracle that pins exactly what the spec says.
-      > 🧠 **Skills you'll gain:** Recognize the three most common weak-oracle anti-patterns (presence, type, single-field) and replace each with a strong oracle that catches *any* wrong return value.
+      ### Why this matters
 
-      🧭 **Bridge from Step 2.** In Step 2 you wrote `assert squad_name_valid("epic") is True`. That's a *strong* oracle on a Boolean: only the `True` singleton satisfies it, so any wrong return — `False`, `1`, `"yes"` — fails the test. Now we generalize: for any return type (numbers, strings, lists, dicts), what makes one assertion strong and another *deceptively* weak?
+      In Step 2 you wrote `assert squad_name_valid("epic") is True`. That's a *strong* oracle on a Boolean: only the `True` singleton satisfies it, so any wrong return — `False`, `1`, `"yes"` — fails the test. For richer return types (numbers, strings, lists, dicts), it's much easier to write an assertion that *looks* productive but lets wrong answers slip through. This step makes the difference between strong and *deceptively* weak oracles concrete.
+
+      ### 🎯 You will learn to
+
+      - Analyze an assertion to spot the three weak-oracle anti-patterns: presence, type, and single-field.
+      - Apply the strong-oracle form (`assert result == <exact expected value>`) to any return type so wrong values fail loudly.
+      - Evaluate whether a passing test actually verifies the spec or merely looks like it does.
 
       Today's function returns something richer than a Boolean — a **dict**. Open `loot.py` and read the spec. `build_loot_card(name, qty, rarity)` returns a five-field dict: `name`, `qty`, `rarity`, `label`, `is_rare`. The test surface is bigger now — and that's exactly where weak oracles get tempting.
 
@@ -980,7 +994,7 @@ steps:
             text: "Above each strong assert, add the comment in this exact form:\n```python\n# Weak version (presence) would also pass for: {\"name\": \"Wrong Name\", \"qty\": 0, ...}\n```\nNaming a specific wrong dict each weak oracle would still accept is what locks in the Liar-test pattern."
 
     quiz:
-      title: "Oracle Strength — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1092,10 +1106,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Test Behavior, Not Implementation"
     instructions: |
-      > 🎯 **Goal:** Test **WHAT** the spec says — no less (weak oracle), no more (over-specification or peeking at internals).
-      > 🧠 **Skills you'll gain:** Spot tests that break for the *wrong* reason — internal renames or unrelated output additions — and rewrite them to verify only the spec.
+      ### Why this matters
 
-      🧭 **The bridge from Step 3.** Step 3 said: *strong oracles beat weak ones — pin the exact value*. That's true, but only up to a ceiling: **the spec**. Going *below* the spec is a weak oracle (Step 3's lesson). Going *above* it — asserting on things the spec doesn't mandate — is the **over-specification trap**, and it produces tests that break during clean refactors. This step covers both halves of "above the spec":
+      Step 3 said: *strong oracles beat weak ones — pin the exact value*. That's true, but only up to a ceiling: **the spec**. Going *below* the spec is a weak oracle (Step 3's lesson). Going *above* it — asserting on things the spec doesn't mandate — is the **over-specification trap**, and it produces tests that break during clean refactors. The cure is to assert on exactly what the spec says, no more, no less.
+
+      ### 🎯 You will learn to
+
+      - Analyze a test for two species of "above the spec" — internal coupling (peeking at private state) and over-specification (pinning unmandated output fields).
+      - Apply the Refactoring Litmus Test: a pure refactor with unchanged behavior should never break a well-written test.
+      - Evaluate test smells like Excessive Setup as feedback on the *production* design, not as a problem to hide in a helper.
+
+      This step covers both halves of "above the spec":
 
       - **(a) Internal coupling** — the test peeks at private state (`obj._tracks`). A pure rename of the internal attribute breaks the test even though no observable behavior changed.
       - **(b) Over-specification** — the test pins output fields the spec doesn't mandate (e.g., a full-dict equality that includes a `created_at` timestamp the spec never promised). Adding a new internal-but-public field breaks the test even though every spec-mandated field is still correct.
@@ -1639,7 +1660,7 @@ steps:
           assert code == 0, f"Some over-spec tests still fail:\n{output}"
 
     quiz:
-      title: "Behavior vs Implementation — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1838,8 +1859,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Putting It All Together"
     instructions: |
-      > 🎯 **Goal:** Design a complete test suite **from scratch** — combining everything from Steps 1–4.
-      > 🧠 **Skills you'll gain:** Design a complete test suite for a new function from scratch — choosing partitions, writing strong assertions, and keeping tests decoupled from implementation details.
+      ### Why this matters
+
+      Steps 1–4 each isolated one dimension of test design: behavior specification, partition choice, oracle strength, and testing the spec no-more-no-less. Real test design weaves all four together on every new function you encounter. This step lets you fuse them on a brand-new spec — designing a complete suite from scratch and feeling the four skills compose.
+
+      ### 🎯 You will learn to
+
+      - Create a complete test suite for an unfamiliar function from scratch — partitions, representative inputs, and strong oracles.
+      - Evaluate your own suite against deliberately broken implementations to confirm each partition is actually probed.
 
       ✍️ **Before reading on, write your own recap.** In one or two sentences each, answer from memory (no scrolling back):
 
@@ -2248,8 +2275,8 @@ steps:
           )
 
     quiz:
-      title: "Wrap-up — Knowledge Check"
-      min_score: 0.75
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 

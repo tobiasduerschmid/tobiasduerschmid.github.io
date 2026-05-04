@@ -21,6 +21,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 1: Hello C — What's Missing from C++
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict before Run (the `\n` thought experiment + first compile)
   - title: "Origin Story — Shedding the C++ Armor"
     instructions: |
       ### Chapter 1: Every hero starts by losing something.
@@ -28,6 +29,12 @@ steps:
       Welcome to the **C Tutorial**! You already know C++ — so instead of starting from zero, we'll focus on what's **different** and what's **missing**.
 
       Think of C++ as a suit of high-tech armor: classes, `std::string`, templates — layers of protection built over decades. C is what's underneath: raw, exposed, powerful. Learning C means *voluntarily removing the armor* to understand what it was protecting you from. That's not a downgrade — it's an origin story. Every systems programming superhero (Linux kernel devs, embedded engineers, OS hackers) started right here.
+
+      ### 🎯 You will learn to
+
+      - Identify the C++ features that simply don't exist in C (references, namespaces, overloading, templates).
+      - Apply `gcc -Wall -std=c11` to compile a C source file — and explain why `g++` would mask the differences.
+      - Predict whether `printf` adds an implicit newline before you run the program.
 
       C is not a "simpler C++." It's an *older, smaller* language that C++ grew out of. Many features you rely on in C++ simply don't exist:
 
@@ -115,7 +122,7 @@ steps:
         command: "cd /tutorial/c_project && ./hello | grep -q 'Danger Zone'"
 
     quiz:
-      title: "Hello C — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -188,11 +195,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 2: printf — Formatted Output
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — full cycle (Predict, Run, Investigate, Modify)
   - title: "Power #1 — printf: Speak to the Machine"
     instructions: |
       ### Power Unlocked: Formatted Output
 
       Your first superpower: talking directly to the terminal. `printf` is C's Swiss Army knife for output. It takes a **format string** containing ordinary text and **conversion specifiers** that start with `%`:
+
+      ### 🎯 You will learn to
+
+      - Apply `printf` conversion specifiers (`%d`, `%f`, `%s`, `%c`, `%x`, `%%`) to format mixed values.
+      - Analyze width / precision / padding modifiers (`%.2f`, `%-20s`, `%05d`) and predict their output.
+      - Modify a working program — adding a new conversion — to lock in the syntax.
 
       | Specifier | Type | Example |
       |-----------|------|---------|
@@ -284,7 +298,7 @@ steps:
         command: "cd /tutorial/c_project && ./format_lab | grep -q '42.0%'"
 
     quiz:
-      title: "printf — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -361,6 +375,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 3: scanf — Reading Input (and Its Dangers)
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization (bug-hunt the unsafe scanf)
   - title: "Power #2 — scanf: Listen (But Watch Your Back)"
     instructions: |
       ### Power Unlocked: Reading Input (with great danger)
@@ -368,6 +383,12 @@ steps:
       Every superpower has a dark side. `scanf` lets you hear the user — but it's also how most C programs get hacked.
 
       `scanf` reads formatted input from the user. It uses the same `%` specifiers as `printf`, but with a critical difference: **scanf needs pointers** because it must *store* the input somewhere.
+
+      ### 🎯 You will learn to
+
+      - Identify the buffer-overflow risk in unbounded `scanf("%s", ...)` and `gets()` style input.
+      - Apply `fgets(buf, sizeof(buf), stdin)` as the safe alternative for reading lines.
+      - Explain why `fflush(stdout)` is required after a prompt that lacks a trailing `\n`.
 
       ```c
       int age;
@@ -491,7 +512,7 @@ steps:
         command: "cd /tutorial/c_project && echo -e 'Azeroth\n5000' | ./input_lab | grep -q 'Azeroth'"
 
     quiz:
-      title: "scanf — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -560,11 +581,12 @@ steps:
             0: "Space-padding is the *default* — `%5d` would give `   42`. The leading `0` flag flips to zero-padding."
             2: "The padding is on the *left* (to reach the field width). To pad on the right, use the `-` flag (`%-5d`) — but that pads with spaces, not trailing zeros."
             3: "That would require a float specifier (`%.2f`). `%d` is integer; there's no decimal at all."
-          explanation: "The `0` flag means 'pad with zeros instead of spaces,' and `5` is the field width. So 42 gets zero-padded to 5 digits: `00042`. Without the `0` flag, `%5d` would give `   42` (space-padded)."
+          explanation: "The `0` flag means 'pad with zeros instead of spaces', and `5` is the field width. So 42 gets zero-padded to 5 digits: `00042`. Without the `0` flag, `%5d` would give `   42` (space-padded)."
 
   # --------------------------------------------------------------------------
   # STEP 4: Pointers and malloc — Manual Memory Management
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading (sub-goals scaffolded inside the lab file)
   - title: "Power #3 — malloc/free: Control Over Memory Itself"
     instructions: |
       ### Power Unlocked: Manual Memory Management
@@ -572,6 +594,12 @@ steps:
       This is the big one. The power that separates C programmers from everyone else: **you control memory directly**. No garbage collector. No smart pointers. Just you and the heap. With great power comes great responsibility — and great bugs. When researchers tracked real CS2 students, they found that **74% created memory leaks**, **70% dereferenced dead pointers**, and **57% dereferenced null pointers** — and most of these errors were completely silent. No crash, no warning, just corrupted memory that manifests as mysterious bugs way later. Spooky.
 
       This step teaches you the discipline that prevents these errors.
+
+      ### 🎯 You will learn to
+
+      - Apply `malloc` / `free` correctly — request bytes with `sizeof`, validate the `NULL` return, and pair every allocation with a release.
+      - Analyze the four-state pointer lifecycle (Uninitialized → Alive → Null → Dead) and explain which transitions cause use-after-free.
+      - Distinguish stack-allocated locals from heap allocations and predict when each becomes invalid.
 
       In C++, you allocate heap memory with `new` and release it with `delete`. C uses lower-level functions from `<stdlib.h>`:
 
@@ -782,7 +810,7 @@ steps:
             condition: "output_missing: 0 1 4 9 16"
 
     quiz:
-      title: "malloc/free — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -855,11 +883,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 5: C Strings — char Arrays, Not Objects
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization (bug-hunt three string traps)
   - title: "Power #4 — Strings: Bare-Knuckle Text Wrangling"
     instructions: |
       ### Power Unlocked: Raw String Manipulation
 
       In C++, `std::string` does the heavy lifting — memory, length tracking, concatenation, all automatic. In C, *you* are the string class. Every byte, every null terminator, every bounds check — that's on you. A "string" is just an array of `char` terminated by a null byte `'\0'`:
+
+      ### 🎯 You will learn to
+
+      - Apply `strcmp` for string equality and explain why `==` silently compares pointer addresses instead.
+      - Apply `strncpy` with manual `'\0'` termination to copy strings safely without buffer overflow.
+      - Identify the C++ "false friends" (`+`, `=`, `.length()`) that compile but do the wrong thing on `char*`.
 
       ```
       char name[] = "Alice";
@@ -1020,7 +1055,7 @@ steps:
             condition: "output_contains: Segmentation"
 
     quiz:
-      title: "C Strings — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1080,11 +1115,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 6: Structs — C's Classes (Without Methods)
   # --------------------------------------------------------------------------
+  # Pedagogy: negative-transfer callout (C++ → C: `struct` defaults differ)
   - title: "Power #5 — Structs: Build Your Own Data Types"
     instructions: |
       ### Power Unlocked: Custom Data Structures
 
       Time to level up from primitive types. With structs, you can bundle related data together and build the foundations of any system — game engines, operating systems, databases. C has no classes, but structs + functions give you everything you need.
+
+      ### 🎯 You will learn to
+
+      - Define a `typedef`'d struct and access its fields through a pointer with `->`.
+      - Apply the C "no-methods" idiom — pass `Struct *` (or `const Struct *`) to standalone functions instead of writing member functions.
+      - Distinguish C `struct` semantics from C++ `struct` / `class` (no access control, no constructors, no inheritance).
 
       In C++, `class` and `struct` are nearly identical (differing only in default access). In C, `struct` is all you have, and it's much more limited:
 
@@ -1251,7 +1293,7 @@ steps:
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 structs_lab.c -o structs_lab && ./structs_lab | grep -q 'LinkSlayer99'"
 
     quiz:
-      title: "Structs — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1313,11 +1355,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7: Unions — One Memory, Multiple Interpretations
   # --------------------------------------------------------------------------
+  # Pedagogy: negative-transfer callout (C++ → C: this is *not* `std::variant`)
   - title: "Power #6 — Unions: Shape-Shifting Memory"
     instructions: |
       ### Power Unlocked: One Memory Location, Many Forms
 
       This power is subtle but deadly useful. A union lets a single block of memory *shape-shift* between different types — like a Pokemon swapping between Fire, Water, and Electric attack types using the same move slot. It's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, every Pokemon-style "this thing can be one of N variants" system, and any code that handles multiple data shapes through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
+
+      ### 🎯 You will learn to
+
+      - Apply the tagged-union pattern (enum tag + anonymous union) to represent a value that can hold one of N variants.
+      - Analyze why `sizeof(union)` equals the size of its largest member, and predict which member is valid at any moment.
+      - Distinguish C tagged unions from C++ `std::variant` — and explain which guarantees the compiler does *not* give you in C.
 
       ### Motivating example: a single attack slot, three element types
 
@@ -1487,7 +1536,7 @@ steps:
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 unions_lab.c -o unions_lab && ./unions_lab | grep -q 'int: 42' && ./unions_lab | grep -q 'double: 3.14' && ./unions_lab | grep -q 'string: hello'"
 
     quiz:
-      title: "Unions — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1548,11 +1597,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 8: Function Pointers — Callbacks in C
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading (study `compare_doubles`, then implement int variants)
   - title: "Power #7 — Function Pointers: Code That Rewires Itself"
     instructions: |
       ### Power Unlocked: Functions as Values
 
       This is arguably C's most mind-bending power: **functions are just addresses in memory**, and you can store, pass, and swap them at runtime. This is how C programs achieve polymorphism without classes — and it's the secret behind `qsort`, callback systems, and plugin architectures.
+
+      ### 🎯 You will learn to
+
+      - Read the function-pointer declaration syntax (`int (*fp)(int, int)`) and explain why the inner parentheses matter.
+      - Apply `qsort` with a custom comparator — casting `const void*` parameters back to the real type before comparing.
+      - Create ascending and descending comparators and predict their effect on the same input array.
 
       In C, a function name (without parentheses) evaluates to the function's **memory address**. You can store this address in a **function pointer** and call the function through it.
 
@@ -1736,7 +1792,7 @@ steps:
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab && ./funcptr_lab | grep -q 'Ascending: 8 17 31 42 56 74 93' && ./funcptr_lab | grep -q 'Descending: 93 74 56 42 31 17 8'"
 
     quiz:
-      title: "Function Pointers — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1796,6 +1852,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 9: Arrays, Pointers, and the "Decay" Trap
   # --------------------------------------------------------------------------
+  # Pedagogy: productive failure (Bjork) — surface the decay/pass-by-value trap by debugging it
   - title: "Trial by Fire — Arrays, Pointers, and the Decay Trap"
     instructions: |
       ### Every Hero Has a Weakness. This Is Yours.
@@ -1803,6 +1860,12 @@ steps:
       Array decay and pass-by-value are the kryptonite of C programmers. More bugs come from misunderstanding these two concepts than from almost anything else in the language. This step is a trial — survive it, and you'll have the mental model that separates beginners from real systems programmers.
 
       **Scaffolding pause:** You've been writing code from scratch in the last few steps. Now we're deliberately giving you back some scaffolding — pre-written buggy code to debug — because this concept is a notorious trap even for experienced programmers. Finding bugs is the right exercise type here: it forces you to reason about *why* code breaks, which is exactly the skill you need for array/pointer issues.
+
+      ### 🎯 You will learn to
+
+      - Explain array-to-pointer decay and predict what `sizeof(arr)` returns inside a function vs. at the call site.
+      - Apply the C convention of passing an array's length as a separate parameter.
+      - Apply pointer-to-pointer (`int **`) parameters to let a function modify the caller's pointer (output parameter).
 
       In C++, arrays and pointers are related but distinct. In C, they are so intertwined that students routinely confuse them — this is the most treacherous "false friend" between C and C++.
 
@@ -1986,7 +2049,7 @@ steps:
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 arrays_lab.c -o arrays_lab && ./arrays_lab | grep -q 'expected 5' && ./arrays_lab | grep -q 'expected all 0s'"
 
     quiz:
-      title: "Arrays, Pointers, and Pass-by-Value — Knowledge Check"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2046,11 +2109,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 10: File I/O — Reading and Writing Files
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict (the silent `"w"`-mode truncation footgun)
   - title: "Power #8 — File I/O: Read and Write the World"
     instructions: |
       ### Power Unlocked: Persistent Storage
 
       Up until now, everything you've built vanishes when the program exits. This power changes that — you can read from and write to files on disk, making your programs interact with the real world. Config files, save games, log files, databases — it all starts here.
+
+      ### 🎯 You will learn to
+
+      - Apply the open-use-close pattern (`fopen` → read/write → `fclose`) and check the `NULL` return on every `fopen`.
+      - Distinguish file modes (`"r"`, `"w"`, `"a"`, `"r+"`) and predict whether existing contents survive each one.
+      - Apply `fprintf` / `fgets` to write and read a file line-by-line, and explain why missing `fclose` causes silent data loss.
 
       ### Files in C: Open, Use, Close
 
@@ -2232,7 +2302,7 @@ steps:
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 fileio_lab.c -o fileio_lab && ./fileio_lab | grep -q 'Saved 6 tracks' && ./fileio_lab | grep -q 'Loaded 6 tracks'"
 
     quiz:
-      title: "File I/O — Knowledge Check"
+      title: "Step 10 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2308,6 +2378,7 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 11: Putting It All Together — A Linked List in C (Capstone)
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict + Make (capstone: trace 3 nodes by hand, then build from a blank slate)
   - title: "Final Boss — A Linked List in C"
     instructions: |
       ### The Final Boss Fight
@@ -2317,6 +2388,12 @@ steps:
       You'll combine **every power you've unlocked** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. No scaffolding. No hints. No TODO comments telling you what to write. Just you and the compiler.
 
       **This is supposed to be hard.** If you get stuck, that doesn't mean you're not cut out for C — it means you're fighting the boss, not the tutorial. Go back and re-read the specific step that covers the concept you're struggling with. Every power you need is already in your toolkit. The challenge is wielding them all at once.
+
+      ### 🎯 You will learn to
+
+      - Create a singly-linked list end-to-end — define the recursive `Node` struct, allocate nodes with `malloc`, traverse, and free every node without leaks.
+      - Apply `head` and `tail` pointers to insert at the tail in O(1).
+      - Analyze a 3-node trace by hand before writing code, predicting `malloc` / `free` counts and the loop-termination condition.
 
       ### ⚠️ Negative-transfer trap: in C++ you'd just `#include <list>`
 
@@ -2578,7 +2655,7 @@ steps:
             condition: "output_contains: Segmentation"
 
     quiz:
-      title: "Linked List & Integration — Knowledge Check"
+      title: "Step 11 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:

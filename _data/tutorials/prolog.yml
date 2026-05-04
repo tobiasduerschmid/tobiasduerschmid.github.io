@@ -22,15 +22,17 @@ steps:
   # Research: Fleck 2007 (start with logic), Kumar 2002 (family domain)
   # Bloom's: Remember / Understand / Apply
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict before Run (multi-directional queries)
   - title: "Facts and Queries"
     instructions: |
-      ## A Different Kind of Programming
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **define** Prolog facts and **query** a knowledge base in multiple directions.
+      You already know Python, JavaScript, and C++. In all three, you tell the computer **how** to solve a problem — step by step, with loops, variables, and function calls. Prolog is fundamentally different: you describe **what is true**, and Prolog figures out the answers. This shift from imperative recipes to declarative descriptions is the single most important idea in this tutorial — and the foundation for everything that follows.
 
-      You already know Python, JavaScript, and C++. In all three, you tell the computer **how** to solve a problem — step by step, with loops, variables, and function calls.
+      ### 🎯 You will learn to
 
-      Prolog is fundamentally different. You describe **what is true**, and Prolog figures out the answers. This is called **declarative programming** — the single most important idea in this tutorial.
+      - Apply Prolog facts to record relationships in a knowledge base
+      - Analyze query results to see how the same predicate works in multiple directions
 
       ### Facts: Declaring what is true
 
@@ -87,8 +89,8 @@ steps:
     open_file: "family.pl"
 
     quiz:
-      title: "Facts & Queries — Predict Before You Run"
-      min_score: 1.0
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             Given these facts:
@@ -158,13 +160,17 @@ steps:
   # Research: Kumar 2002 (unification misconceptions), PRIMM (predict first)
   # Bloom's: Understand / Analyze
   # --------------------------------------------------------------------------
+  # Pedagogy: negative-transfer callout (Python → Prolog: = is not assignment)
   - title: "Unification: = Is Not Assignment"
     instructions: |
-      ## The Most Important Concept in Prolog
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** how unification differs from assignment and **predict** whether two terms unify.
+      In Python, `X = 5` stores the value 5 in a variable named X. In Prolog, `X = 5` means something completely different — it's bidirectional pattern matching, not assignment. Mis-reading `=` as assignment is the single most common source of confusion when programmers transfer in from imperative languages, and it will silently break any code that uses arithmetic, structures, or recursion. Get this concept right and the rest of Prolog falls into place.
 
-      In Python, `X = 5` stores the value 5 in a variable named X. In Prolog, `X = 5` means something completely different.
+      ### 🎯 You will learn to
+
+      - Analyze whether two Prolog terms unify and what bindings result
+      - Evaluate why `X = 3, X = 4` fails (single-assignment) where Python would simply reassign
 
       ### Unification: bidirectional pattern matching
 
@@ -241,8 +247,8 @@ steps:
     open_file: "unify.pl"
 
     quiz:
-      title: "Unification — Predict the Outcome"
-      min_score: 0.75
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             What happens when Prolog processes `X = 3, X = 4`?
@@ -339,13 +345,17 @@ steps:
   # Research: Fleck 2007 (goal-directed), Wick & Stevenson 2006 (exercise design)
   # Bloom's: Understand / Apply
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading (rule definition + apply)
   - title: "Rules: Deriving New Knowledge"
     instructions: |
-      ## From Facts to Logic
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **write** rules that derive new relationships from existing facts.
+      Facts let you record what you *already* know. Rules let Prolog *derive* new knowledge you never wrote down — relationships like `grandparent`, `ancestor`, or `sibling` follow logically from the facts you have. This is where Prolog earns its keep over a database: you write the *logic*, and Prolog handles the *search* for matching values. No `if/else`, no loops — just declarative implications.
 
-      Facts are things you state directly. **Rules** let Prolog *derive* new knowledge from existing facts.
+      ### 🎯 You will learn to
+
+      - Apply the `:-` operator to define rules that compose existing predicates
+      - Analyze how Prolog searches for variable bindings that satisfy a rule's body
 
       ### Rule syntax
 
@@ -402,8 +412,8 @@ steps:
     open_file: "family.pl"
 
     quiz:
-      title: "Rules — Predict the Derivation"
-      min_score: 0.75
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             Given `parent(tom, bob)` and `parent(bob, ann)`, what does `grandparent(tom, ann)` do?
@@ -475,13 +485,17 @@ steps:
   # Research: Fleck 2007 (trace facility essential), Fogel 2010 (graphical trace)
   # Bloom's: Understand / Analyze
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Investigate (trace the search to see all solutions)
   - title: "Backtracking: The Search for Solutions"
     instructions: |
-      ## How Prolog Finds Answers
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **trace** how Prolog searches through facts and rules using backtracking.
+      When Prolog encounters a query, it doesn't just find *one* answer — it systematically searches for *all* answers, exploring every combination of variable bindings. This mechanism, called **backtracking**, is what replaces nested `for` loops, list comprehensions, and explicit search code in imperative languages. Once you can trace backtracking by hand, you can predict exactly which solutions Prolog returns and in what order — a prerequisite for writing correct recursive predicates later.
 
-      When Prolog encounters a query, it doesn't just find *one* answer — it systematically searches for *all* answers. This is called **backtracking**.
+      ### 🎯 You will learn to
+
+      - Analyze a query trace step by step to predict which solutions Prolog returns and in what order
+      - Apply backtracking to enumerate all combinations of values across multiple predicates
 
       ### The search process
 
@@ -547,8 +561,8 @@ steps:
     open_file: "meals.pl"
 
     quiz:
-      title: "Backtracking — Trace the Search"
-      min_score: 0.75
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             How many answers does `meal(X, Y)` produce, given 3 foods and 2 drinks?
@@ -625,13 +639,17 @@ steps:
   # Research: Kumar 2002 (arithmetic misconceptions are common)
   # Bloom's: Understand / Apply
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization (= vs is, the arithmetic trap)
   - title: "Arithmetic: is vs ="
     instructions: |
-      ## Numbers in a Logic Language
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **use** Prolog arithmetic correctly and **explain** why `X = 2 + 3` does not compute 5.
+      Arithmetic in Prolog has a critical gotcha that trips up every imperative programmer: `X = 2 + 3` does not compute 5 — it binds X to the *unevaluated structure* `+(2, 3)`. To actually compute, you need the `is/2` operator. Mixing these up produces predicates that silently bind variables to terms instead of numbers, leading to confusing failures further down the chain. Knowing exactly when to use `=` vs `is` is the gate to writing any Prolog program that touches numbers.
 
-      Arithmetic in Prolog has a critical gotcha that trips up every imperative programmer.
+      ### 🎯 You will learn to
+
+      - Apply `is/2` to evaluate arithmetic expressions and bind the result to a variable
+      - Evaluate when to use `=`, `is`, and `=:=` for the right kind of comparison or assignment
 
       ### The trap: `=` does NOT evaluate
 
@@ -693,8 +711,8 @@ steps:
     open_file: "arithmetic.pl"
 
     quiz:
-      title: "Arithmetic — Predict the Output"
-      min_score: 0.75
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             What does `X = 2 + 3` bind X to?
@@ -771,13 +789,17 @@ steps:
   # Research: Wick & Stevenson 2006 (list exercises), worked examples with fading
   # Bloom's: Understand / Apply
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading (pattern matching before recursion)
   - title: "Lists and Pattern Matching"
     instructions: |
-      ## Prolog's Fundamental Data Structure
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **decompose** lists using head|tail pattern matching and **write** simple list predicates.
+      Lists are Prolog's fundamental container — almost every nontrivial Prolog program processes them. The `[H|T]` destructuring pattern is your primary tool for working with lists, and unlike Python's slicing or JS array methods, it works *bidirectionally*: the same pattern that decomposes a list can also build one. Mastering head/tail patterns now (without recursion yet) makes the recursive predicates in the next step feel natural instead of magical.
 
-      Lists in Prolog look familiar:
+      ### 🎯 You will learn to
+
+      - Apply `[H|T]` patterns to destructure a list into head and tail
+      - Analyze nested patterns like `[X, Y | Rest]` to grab specific positions without writing code
       ```prolog
       [a, b, c]        % a list of three atoms
       [1, 2, 3]        % a list of three numbers
@@ -849,8 +871,8 @@ steps:
     open_file: "lists.pl"
 
     quiz:
-      title: "Lists — Predict the Unification"
-      min_score: 0.75
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             What does `[H|T] = [42]` bind H and T to?
@@ -931,13 +953,17 @@ steps:
   # Research: Rinderknecht 2014 (recursion pedagogy), sub-goal labeling
   # Bloom's: Apply / Analyze
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading (full → partial → blank for recursion)
   - title: "Recursive List Processing"
     instructions: |
-      ## Recursion: Prolog's Loops
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **write** recursive predicates over lists using the base-case/recursive-case pattern.
+      Prolog has no `for` or `while` loops — recursion is the only way to process lists of arbitrary length. Every recursive predicate follows the same skeleton: a *base case* for the empty list and a *recursive case* that strips the head and recurses on the tail. Once you internalize this base-case/recursive-case pattern, you can write `member`, `length`, `append`, `reverse`, `map`, `filter`, and most other list operations almost mechanically.
 
-      Prolog has no `for` or `while` loops. Instead, you use **recursion** — a predicate that calls itself with a smaller input.
+      ### 🎯 You will learn to
+
+      - Apply the base-case/recursive-case pattern to write recursive list predicates
+      - Create new predicates (`my_last`, `my_append`, `my_reverse`) by following a worked example
 
       ### The pattern: Base case + Recursive case
 
@@ -1028,8 +1054,8 @@ steps:
     open_file: "recursion.pl"
 
     quiz:
-      title: "Recursion — Trace the Execution"
-      min_score: 0.75
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             How does `my_member(b, [a, b, c])` succeed?
@@ -1118,13 +1144,17 @@ steps:
   # Research: Ambrose et al. 2010 (component -> integration)
   # Bloom's: Apply / Create
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Make (synthesis with faded scaffolding)
   - title: "Putting It All Together"
     instructions: |
-      ## Synthesis: A Mini Knowledge Base
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **design** a small Prolog program that combines facts, rules, arithmetic, and list processing.
+      Individual pieces — facts, rules, arithmetic, lists, recursion — are useful, but real Prolog programs *combine* them. This synthesis step has you compose every concept from the tutorial into a small grade analyzer that looks up data, computes statistics, and answers multi-directional queries. Building one program end-to-end is what consolidates the pieces into a working mental model you can transfer to your own problems.
 
-      You've learned all the building blocks. Now combine them.
+      ### 🎯 You will learn to
+
+      - Create a multi-predicate Prolog program that composes facts, rules, arithmetic, and recursion
+      - Evaluate when a problem is well-suited to declarative logic programming
 
       ### Challenge: Student Grade Analyzer
 
@@ -1191,8 +1221,8 @@ steps:
     open_file: "grades.pl"
 
     quiz:
-      title: "Synthesis — Think Declaratively"
-      min_score: 0.75
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       questions:
         - question: |
             To find all students with average above 80, an imperative programmer would write a loop. In Prolog, you:

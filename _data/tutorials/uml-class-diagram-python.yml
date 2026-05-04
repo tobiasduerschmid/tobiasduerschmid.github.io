@@ -36,7 +36,14 @@ steps:
     instructions: |
       ## Welcome to UML Class Diagrams
 
-      > **Learning objective:** After this step you will be able to **identify** the three compartments of a UML class box and **write** a Python class that matches a given diagram.
+      ### Why this matters
+
+      Before you can read a UML class diagram, you have to know how to look at one. The class box is the atom of the entire notation — every other concept (visibility, types, inheritance, multiplicity) is just decoration on this three-compartment shape. Get this single building block solid and the rest of the tutorial clicks into place.
+
+      ### 🎯 You will learn to
+
+      - Identify the three compartments of a UML class box (name, attributes, methods)
+      - Apply that mapping to write a Python class that matches a target diagram
 
       > **💡 Light mode recommended.** The UML diagrams in this tutorial are easier to read on a light background. If you are in dark mode, consider switching with the **Dark mode** toggle in the tutorial navbar.
 
@@ -202,8 +209,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "The Class Box"
-      min_score: 0.6
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -269,7 +276,14 @@ steps:
     instructions: |
       ## Visibility Markers
 
-      > **Learning objective:** After this step you will be able to **map** UML visibility symbols to Python naming conventions and **explain** why encapsulation is a design decision.
+      ### Why this matters
+
+      Python lets any caller reach in and grab any attribute, so visibility feels optional — until your codebase grows and you discover three modules monkey-patching the same "internal" field. UML forces you to make the call: which parts are the public contract, and which are implementation details that may change without warning? Naming conventions are how Python communicates that decision.
+
+      ### 🎯 You will learn to
+
+      - Apply Python's `_`/`__` naming conventions to express the four UML visibility levels
+      - Analyze why encapsulation is a deliberate design decision rather than a language feature
 
       ### The Four UML Visibility Levels
 
@@ -318,7 +332,7 @@ steps:
 
       > **Key takeaway:** UML visibility expresses **design intent**; Python conventions express that intent through naming, not enforcement. In this tutorial we use `__` for private so the UML renderer displays `-`, but in real Python code many teams standardise on `_` for anything non-public.
 
-      ### Why This Matters
+      ### Visibility as a Design Decision
 
       Python does not *enforce* visibility — but UML forces you to **decide** what *should* be accessible. When you model a class in UML, you make a deliberate architectural choice about which parts are the public interface and which are internal implementation details that could change without warning.
 
@@ -480,8 +494,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Visibility Notation"
-      min_score: 0.6
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -521,7 +535,14 @@ steps:
     instructions: |
       ## Explicit Types in UML
 
-      > **Learning objective:** After this step you will be able to **add** Python type hints that make UML diagrams show complete type information and **explain** why explicit types improve software design.
+      ### Why this matters
+
+      Python's duck typing is convenient when you write the code and a nightmare when someone else has to read it six months later. UML refuses to let you hide the contracts: every attribute and parameter must declare its type. Adding Python type hints serves the same purpose — and as a bonus, the live UML renderer reads them, so the diagram fills in only when your code is honest about its data flow.
+
+      ### 🎯 You will learn to
+
+      - Apply Python type hints to attributes, parameters, and return values
+      - Analyze how explicit types act as contracts between components
 
       ### What Are Type Hints?
 
@@ -748,8 +769,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Types in UML"
-      min_score: 0.6
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -789,7 +810,14 @@ steps:
     instructions: |
       ## The Generalization Arrow
 
-      > **Learning objective:** After this step you will be able to **refactor** duplicated classes into an inheritance hierarchy and **draw** the correct generalization arrow direction.
+      ### Why this matters
+
+      Whenever you find yourself copy-pasting the same attributes and methods across two classes, you are leaving an inheritance hierarchy unbuilt. UML draws this hidden parent-child relationship with a single hollow-triangle arrow — but the *direction* of that arrow is the most-reversed notation in introductory UML, and getting it right requires a mental shift from "general → specific" to "specific → general."
+
+      ### 🎯 You will learn to
+
+      - Apply Python inheritance to eliminate duplicated attributes and methods
+      - Evaluate generalization arrows for correct direction using the "Is-a" test
 
       > **Heads up — the arrow direction trips up almost everyone the first time.** Even developers who use inheritance every day sometimes have to pause and think. Expect to re-read the "Is-a test" below once or twice. That is the skill forming, not a sign you're confused.
 
@@ -1050,8 +1078,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Inheritance Arrows"
-      min_score: 0.6
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1105,7 +1133,14 @@ steps:
     instructions: |
       ## Association Arrows
 
-      > **Learning objective:** After this step you will be able to **identify** when a UML association exists between two classes and **refactor** string-based references into proper object associations.
+      ### Why this matters
+
+      In real codebases, the most damaging form of design rot is hiding object relationships behind strings or IDs. A `Course` that stores `instructor_name: str` looks innocent in isolation, but the structural link to `Instructor` is invisible — invisible to UML, invisible to type checkers, invisible to the developer who has to refactor the system three years from now. Association arrows make those links explicit.
+
+      ### 🎯 You will learn to
+
+      - Analyze when a UML association exists between two classes
+      - Apply object-typed attributes to surface hidden relationships in code
 
       ### What Is an Association?
 
@@ -1266,8 +1301,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Associations"
-      min_score: 0.6
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1322,7 +1357,14 @@ steps:
     instructions: |
       ## Ownership and Lifecycle
 
-      > **Learning objective:** After this step you will be able to **distinguish** composition from aggregation and **implement** both patterns correctly in Python.
+      ### Why this matters
+
+      "Has-a" is not a single relationship — it is a family. A `Car` *has* an `Engine` (built into it; scrapped with it). A `Team` *has* `Player`s (traded between teams; outlive the team). Both are has-a, but the lifecycle implications are radically different, and good designers make that distinction explicit. UML gives you two diamonds (filled vs. hollow) to encode the difference, and Python encodes it through *where the part is created*.
+
+      ### 🎯 You will learn to
+
+      - Analyze a "has-a" relationship to decide between composition and aggregation
+      - Apply the right Python pattern (create-inside vs. pass-in) for each case
 
       > **Heads up — this is the distinction working developers most often get wrong.**  If the rule feels fuzzy after this step, that is *honest* confusion, not a learning failure — the UML spec itself calls aggregation's semantics "intentionally informal."
 
@@ -1568,8 +1610,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Composition vs Aggregation"
-      min_score: 0.6
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1621,7 +1663,14 @@ steps:
     instructions: |
       ## Multiplicity Notation
 
-      > **Learning objective:** After this step you will be able to **read** multiplicity notation on UML associations and **implement** one-to-many relationships using Python lists.
+      ### Why this matters
+
+      "A `Playlist` has `Song`s" is not enough information to write the code. Can a playlist be empty? Must a song belong to exactly one playlist? Can the same song appear on many? These cardinality questions are exactly what multiplicity annotations answer — and they are also where students most often flip the numbers, because the placement rule ("next to the class it quantifies") is counter-intuitive at first.
+
+      ### 🎯 You will learn to
+
+      - Apply multiplicity notation (`1`, `0..1`, `*`, `1..*`) to UML associations
+      - Analyze whether a Python attribute should be a single object or a list
 
       ### What Is Multiplicity?
 
@@ -1807,8 +1856,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Multiplicity"
-      min_score: 0.6
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1859,7 +1908,14 @@ steps:
     instructions: |
       ## Abstract Classes in UML
 
-      > **Learning objective:** After this step you will be able to **implement** abstract classes using Python's `abc` module and **recognize** italic notation in UML diagrams.
+      ### Why this matters
+
+      Step 4's `Shape.area()` returned `0.0` — a polite lie that hid a real design flaw: a generic `Shape` should not be instantiable in the first place, because "the area of a shape" is meaningless without knowing which shape. Abstract classes turn that lie into a contract. They let you say "this class is a blueprint; you cannot create one directly, and every subclass *must* fill in these specific methods" — and they let UML show that intent visually with italic class names.
+
+      ### 🎯 You will learn to
+
+      - Apply Python's `abc` module to declare abstract classes and methods
+      - Analyze when italic UML notation signals an unimplementable contract
 
       ### Flashback to Step 4
 
@@ -2084,8 +2140,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Abstract Classes"
-      min_score: 0.6
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2137,7 +2193,14 @@ steps:
     instructions: |
       ## The God Class Anti-Pattern
 
-      > **Learning objective:** After this step you will be able to **identify** the God Class anti-pattern in a UML diagram and **refactor** a monolithic class into cohesive, collaborating classes.
+      ### Why this matters
+
+      A 500-line class can hide bad architecture for years. Open it in your editor and you see methods scrolling past — but you have no easy way to *see* that one class is doing the work of four. UML changes that: a God Class shows up as an enormous box surrounded by emptiness, and the missing arrows are louder than any code review. This step is where UML earns its keep — not as documentation, but as a thinking tool that surfaces design problems before they become maintenance disasters.
+
+      ### 🎯 You will learn to
+
+      - Analyze a UML diagram to identify the God Class anti-pattern
+      - Create a refactored class hierarchy with cohesive responsibilities
 
       ### Spotting the Problem
 
@@ -2447,8 +2510,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "God Class & Comprehensive Review"
-      min_score: 0.6
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2547,7 +2610,16 @@ steps:
     instructions: |
       ## Congratulations!
 
-      You have learned to read and create UML class diagrams. This final page summarizes every notation element covered in this tutorial — use it as a quick reference.
+      ### Why this matters
+
+      You have learned every notation element this tutorial covers — but UML is a *vocabulary*, and vocabulary fades unless you can revisit it on demand. This final page is your reference card: a single place to look up any symbol, any relationship, any multiplicity rule when you encounter one in the wild. The decision flowchart at the end is the cheat sheet most working developers wish they had bookmarked.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a design situation and pick the right UML relationship using the decision flowchart
+      - Apply the consolidated notation reference when reading or drawing class diagrams in the future
+
+      You have learned to read and create UML class diagrams. The page below summarizes every notation element covered in this tutorial — use it as a quick reference.
 
       ---
 

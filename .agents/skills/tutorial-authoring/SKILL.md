@@ -197,6 +197,81 @@ their background. It is **not** to hand them a solution to paste. Concretely:
 - Prefer prompts like "before you continue, predict ..." / "stop and ask
   yourself ..." over "now type the following:".
 
+### Step structure: required conventions
+
+Every step's YAML and `instructions:` block follow a fixed structural
+template so students get the same shape on every step, the print view
+renders cleanly, and reviewers can scan a tutorial without re-learning
+its layout. Deviating from these is **not** a stylistic choice — match
+the template, then put your authorial energy into the *content*.
+
+**1. Step title — Title-Cased noun phrase.** Names the concept the step
+teaches, not the action the student performs. Reads like a textbook
+chapter.
+
+- ✔ "Your First Repository", "The Indentation Trap", "Reference Semantics"
+- ✘ "Add a remote" (imperative), "Adding a Remote" (gerund), "Step 1: …"
+
+**Documented exceptions** (do not normalize away):
+
+- `c.yml` uses a `### Chapter N: <hook>` narrative arc with thematic
+  step-titles like "Power Unlocked: …", "Every Hero Has a Weakness".
+  The arc is load-bearing for that tutorial — keep as-is.
+- `tdd.yml` uses themed step-title prefixes
+  `Cycle N — RED: <…>` / `Cycle N — GREEN: <…>` / `Cycle N — REFACTOR: <…>`.
+  The RED/GREEN/REFACTOR rhythm is the pedagogy — keep as-is.
+
+**2. Pedagogy comment above the step.** Every step gets a
+`# Pedagogy:` YAML comment immediately above the `- title:` line naming
+the PRIMM phase or the named technique driving that step. Pick one:
+
+```yaml
+  # Pedagogy: PRIMM — Predict before Run, then Modify
+  # Pedagogy: mistake-based familiarization
+  # Pedagogy: productive failure (Bjork)
+  # Pedagogy: worked example with fading
+  # Pedagogy: negative-transfer callout (Python → C)
+  - title: "..."
+```
+
+A richer multi-line `# Pedagogy:` block (citations, multiple techniques,
+phase notes) is fine and even encouraged on steps where the pedagogy is
+load-bearing. `# Bloom: <verbs>` comments are *optional* — add them when
+they help future editors, but they're not required.
+
+**3. `instructions:` opens with `### Why this matters` + 🎯 list.** The
+first ~10 lines of every step's `instructions:` follow this exact shape:
+
+```markdown
+### Why this matters
+
+<one short paragraph — 2–4 sentences that earn the student's attention.
+Cut filler. Lead with the durable reason this step exists in the
+curriculum, not a goal-restatement>
+
+### 🎯 You will learn to
+
+- <Bloom verb (Apply / Analyze / Evaluate / Create) + concrete behavior>
+- <…1–3 items total…>
+
+<rest of the step content — tables, examples, predict prompts, tasks, …>
+```
+
+The 🎯 emoji is part of the heading. Don't drop it; don't substitute
+("You will demonstrate you can", "Goals", "Skills you'll gain"). Don't
+duplicate — if the step already had a `> **Learning objective:**`
+blockquote or similar, **restructure it into the 🎯 list**, don't keep
+both.
+
+**Documented exception:** `c.yml` keeps the `### Chapter N: <hook>`
+narrative opener instead of `### Why this matters`. The 🎯 list still
+appears, immediately after the chapter intro.
+
+**4. Top-level `learning_objectives:` declared.** Every non-excluded
+tutorial (i.e. `exclude_from_index: true` is not set) has a top-level
+`learning_objectives:` list of 4–8 Bloom-verb statements. See §3.1 for
+schema. Currently authoring-only metadata; runtime ignores it.
+
 ### In-tutorial quizzes are *recall and transfer*, not new content
 
 Quizzes that appear between steps (the `quiz:` block on a step) should be
@@ -228,6 +303,17 @@ consult). The two non-obvious traps that bite every author:
 
 Read `.agents/skills/quiz-format/SKILL.md` before writing or editing any
 `quiz:` block.
+
+**Two formatting conventions that apply to every quiz block:**
+
+- **`title: "Step N — Knowledge Check"`** where `N` is the 1-indexed step
+  number. Don't use `"Step N quiz"`, `"Step N recall"`, or topic-named
+  variants — the canonical form names the cognitive purpose (a knowledge
+  check, not a graded assessment) and is what students see in the print
+  view's table of contents.
+- **`min_score: 0.8`** on every quiz, no exceptions. Bumping a quiz to
+  `0.6` or `0.7` because it's "harder" is a content problem dressed up as
+  a threshold one — fix the questions, not the gate.
 
 ### Tests should be precise — low false-positive *and* low false-negative
 
@@ -352,12 +438,26 @@ students are confused" reports.
 
 ### YAML & content
 
-- [ ] `_data/tutorials/<slug>.yml` created with `title`, `description`,
-      and an explicit `backend:`. (See §3.1 for the schema cheat sheet.)
-- [ ] First step opens with **why this matters** before how. One short
-      paragraph max — earn the student's attention.
+- [ ] `_data/tutorials/<slug>.yml` created with Title-Cased `title`,
+      `description`, top-level `learning_objectives:` (4–8 Bloom-verb
+      items), and an explicit `backend:`. (See §3.1 for the schema cheat
+      sheet.)
+- [ ] **Step titles are Title-Cased noun phrases / concept names** — not
+      imperatives ("Add a remote"), gerunds ("Adding a remote"), or
+      questions. Documented exceptions: `c.yml` (Chapter framing),
+      `tdd.yml` (`Cycle N — RED/GREEN/REFACTOR:` prefix).
+- [ ] **Every step has a `# Pedagogy:` YAML comment** immediately above
+      its `- title:` line, naming the PRIMM phase or the named technique.
+- [ ] **Every step's `instructions:` opens with the canonical block:**
+      `### Why this matters` + 2–4 sentence motivating paragraph,
+      followed by `### 🎯 You will learn to` + 1–3 Bloom-verb bullets,
+      *then* the rest of the step content. Documented exception: `c.yml`
+      keeps `### Chapter N: <hook>` instead of `### Why this matters`,
+      but still gets the 🎯 list.
 - [ ] Each step has `instructions:` (Markdown), zero or one `quiz:`
       block, and either `tests:` *or* a clear "exploratory step" callout.
+- [ ] **Quiz `title:` is `"Step N — Knowledge Check"`** (1-indexed); quiz
+      `min_score: 0.8`. No exceptions.
 - [ ] **Solutions live in `solution:`, not in `instructions:`.**
 - [ ] **Hints are multi-layered** (≥3 layers for non-trivial tests),
       with `condition:` where useful, and **never reveal the literal
@@ -839,16 +939,37 @@ setup_commands:
 steps:
   # =========================================================================
   # STEP 1: <Concept>
-  # Pedagogy: PRIMM — Predict before Run. Mistake-based familiarization.
-  # Bloom: Understand → Apply.
   # =========================================================================
-  - title: "<Step title>"
+  # Pedagogy: PRIMM — Predict before Run, then Modify
+  - title: "<Title-Cased Noun Phrase>"
     instructions: |
       ### Why this matters
-      One short paragraph. Then a worked example or buggy code to fix.
 
-      ### Predict before you run
-      What will the snippet below print? Write down your guess, then run.
+      One short paragraph (2–4 sentences) — earn the student's attention.
+      Lead with the durable reason this step exists in the curriculum.
+
+      ### 🎯 You will learn to
+
+      - <Bloom verb (Apply / Analyze / Evaluate / Create) + concrete behavior>
+      - <…1–3 items total…>
+
+      ### ✏️ Predict before you run
+
+      What will the snippet below print?
+
+      - (a) <plausible alternative — maps to a misconception>
+      - (b) <plausible alternative — maps to a misconception>
+      - (c) <correct answer, hidden among the rest>
+      - (d) <plausible alternative — maps to a misconception>
+
+      Commit to a letter, *then* read the gated reveal below.
+
+      <details>
+      <summary>Reveal</summary>
+
+      <answer + explanation tied to each misconception>
+
+      </details>
 
     files:
       - path: /tutorial/main.py
@@ -874,7 +995,7 @@ steps:
             condition: "output_missing: Tobi"
 
     quiz:
-      title: "Step 1 recall"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single

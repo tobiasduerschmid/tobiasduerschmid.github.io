@@ -28,8 +28,23 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 1: Why Version Control? + git init + git config
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict (motivation), then Run `git init` and Investigate
   - title: "Your First Repository"
     instructions: |
+      ### Why this matters
+
+      Without version control, you end up with files like
+      `report_final_v2_REALLY_final.txt` and overwritten teammate edits.
+      Git ends that chaos: every change is tracked, every mistake is
+      reversible, and parallel work merges instead of clobbering. Mastering
+      `git init` is the gateway — without it, none of the rest of Git works.
+
+      ### 🎯 You will learn to
+
+      - Apply `git init` to turn an ordinary folder into a Git repository
+      - Analyze the role of the hidden `.git/` directory in storing history
+      - Evaluate when version control beats ad-hoc file copies
+
       Welcome to the **Git Tutorial**! You've got a code editor
       (top) and a real Linux terminal in the workspace. Files you
       edit are automatically synced to the VM. Let's get into it.
@@ -133,7 +148,7 @@ steps:
           - text: "After running `git init myproject`, navigate into the new folder with `cd myproject`. Your terminal prompt should show you're inside the project directory."
 
     quiz:
-      title: "Your First Repository — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -171,9 +186,24 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 2: First commit — git add, git commit
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict file status, then Run `git add`/`commit` and Investigate
   - title: "Your First Commit"
     step_dir: /tutorial/myproject
     instructions: |
+      ### Why this matters
+
+      A repository without commits is just an empty container. The two-step
+      `add` → `commit` workflow is the heartbeat of Git — every snapshot you
+      will ever save passes through it. Getting this rhythm into your fingers
+      now pays off in every later step, because the same flow shows up in
+      branching, merging, conflict resolution, and pushing to a remote.
+
+      ### 🎯 You will learn to
+
+      - Apply `git add` and `git commit` to record a snapshot of your work
+      - Analyze `git status` output to tell tracked, modified, and untracked apart
+      - Evaluate what makes a commit message useful versus useless
+
       ### Creating and tracking files
 
       Unlike other version control systems that track "Deltas" (changes
@@ -303,7 +333,7 @@ steps:
           - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'hero' or 'registry'."
 
     quiz:
-      title: "Your First Commit — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -350,10 +380,25 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict what `git diff` compares, then Run and Investigate
   - title: "The Edit-Stage-Commit Cycle"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Real coding rarely means committing brand-new files — it means evolving
+      tracked ones. The edit → diff → stage → commit loop is how you save
+      every meaningful change for the rest of your career. Mastering `git
+      diff` here also gives you the power to review your own work before
+      committing, catching mistakes before they enter history.
+
+      ### 🎯 You will learn to
+
+      - Apply the edit-stage-commit cycle to evolve a tracked file
+      - Analyze `git diff` output to see exactly what changed and where
+      - Evaluate when to inspect a diff versus trust your memory before committing
+
       ### Modifying tracked files
 
       Git now tracks `hero_registry.py`. When you edit a tracked file, Git
@@ -476,7 +521,7 @@ steps:
           - text: "You need at least 2 commits total — one from Step 2 and one from this step. Run `git log --oneline` to see how many you have."
 
     quiz:
-      title: "Edit-Stage-Commit Cycle — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -528,10 +573,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 4: Staging strategies — individual, wildcard, directory, all
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization — discover the `-am` shortcut's hidden trap
   - title: "Staging Strategies"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      Real projects rarely have just one modified file at a time. Knowing how
+      to stage selectively — by name, by glob, by directory, or by "all
+      tracked" — is what lets you turn a messy working directory into clean,
+      focused commits. Equally important: the `git commit -am` shortcut has a
+      silent gotcha that has bitten countless developers, and you need to see
+      it once now so you never get caught.
+
+      ### 🎯 You will learn to
+
+      - Apply four staging strategies (single file, glob, directory, `--all`)
+      - Analyze the difference between `-am` and the explicit two-step flow
+      - Evaluate which staging approach fits each real-world commit
+
       ### Controlling what goes into a commit
 
       The staging area lets you carefully choose *exactly* which changes
@@ -686,7 +747,7 @@ steps:
           - text: "The instructions show terminal commands to create this file. Look at the section demonstrating the `-am` shortcut's limitation — that's where you'll find the commands to run."
 
     quiz:
-      title: "Staging Strategies — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -742,10 +803,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
+  # Pedagogy: productive failure (Bjork) — guess the undo command before reading
   - title: "Unstaging and Undoing Changes"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Every developer fat-fingers a `git add` or pastes "BROKEN CODE" into a
+      file at some point. The difference between panic and confidence is
+      knowing the difference between *unstaging* (reversible) and *discarding*
+      (irreversible) — they share the same command name but have very
+      different blast radii. Confusing them is one of the top sources of lost
+      work in Git.
+
+      ### 🎯 You will learn to
+
+      - Apply `git restore --staged` to unstage a file without losing edits
+      - Apply `git restore` to discard working-directory changes
+      - Evaluate when `git reset --hard` is appropriate versus dangerous
+
       ### Ctrl+Z for Git (kind of)
 
       Accidentally staged the wrong file? Made changes you want to yeet
@@ -846,7 +923,7 @@ steps:
           - text: "Run `git status` to see what's still pending. Are the remaining changes staged (green) or unstaged (red)? The summary table in the instructions maps each state to the right undo command."
 
     quiz:
-      title: "Unstaging and Undoing — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -899,10 +976,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 6: .gitignore
   # --------------------------------------------------------------------------
+  # Pedagogy: negative-transfer callout — `.gitignore` does NOT retroactively untrack files
   - title: "Ignoring Files with .gitignore"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Some files (`.env`, `*.pyc`, `node_modules/`) belong nowhere near
+      version history — committing secrets is a career-defining mistake that
+      lives in history forever. `.gitignore` is your filter, but it has one
+      counter-intuitive gotcha: it cannot retroactively untrack files Git is
+      already following. Learning that rule now prevents painful incident
+      response later.
+
+      ### 🎯 You will learn to
+
+      - Apply `.gitignore` patterns to exclude generated files and secrets
+      - Analyze why `.gitignore` has no retroactive effect on tracked files
+      - Evaluate when `git rm --cached` is the right escape hatch
+
       ### Not everything belongs in version control
 
       > **Real-world note:** In professional projects, you'd create
@@ -1070,7 +1163,7 @@ steps:
           - text: "The `.env` file must **not** be tracked by Git. If you accidentally staged it before creating `.gitignore`, the file is now tracked — and `.gitignore` cannot retroactively fix that. Re-read the 'Important' section above about retroactive effects for the fix."
 
     quiz:
-      title: "Ignoring Files — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1135,10 +1228,25 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading — guided diff variants then independent practice
   - title: "Inspecting History"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      A repository without inspection tools is a black box. Reading history
+      effectively is what lets you debug a regression ("when did this break?"),
+      audit a code review ("what exactly did this commit change?"), and make
+      sense of a complex merge. The `git diff` family has four meaningfully
+      different forms; confusing them sends you chasing ghost changes.
+
+      ### 🎯 You will learn to
+
+      - Apply `git log`, `git show`, and `git diff` variants to inspect history
+      - Analyze the four `git diff` comparison modes and pick the right one
+      - Evaluate `HEAD~N` syntax to reference any commit relative to the current one
+
       ### Reading the story of your project
 
       Git's log is a detailed journal of every snapshot you've saved. Let's
@@ -1237,7 +1345,7 @@ steps:
           - text: "Run `git log --oneline` to count your commits. You should have at least 3 by now from previous steps. If not, you may have skipped a commit earlier — go back and check."
 
     quiz:
-      title: "Inspecting History — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1306,10 +1414,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7.5: Mid-tutorial mini-capstone — unguided consolidation
   # --------------------------------------------------------------------------
+  # Pedagogy: productive failure (Bjork) — unguided consolidation forces retrieval
   - title: "Mini-Capstone: Clean Up a Messy Repository"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Reading instructions and following them is not the same as *knowing*
+      Git. Real engineering work hands you a broken repository and says "fix
+      it" — no command list provided. This unguided checkpoint forces you to
+      retrieve, sequence, and apply everything from Steps 1–7 from memory.
+      Struggling here is the point: it's where transfer to the real world
+      actually happens.
+
+      ### 🎯 You will learn to
+
+      - Apply unstaging, restoring, and `.gitignore` skills without scaffolding
+      - Analyze a broken repository and choose the right tool for each problem
+      - Evaluate your own readiness before moving on to branching
+
       ### Boss level: no hand-holding
 
       You've learned the core Git workflow: init, stage, commit, undo,
@@ -1435,7 +1559,7 @@ steps:
           - text: "Something is still pending. Run `git status` to see what needs attention, then revisit the relevant earlier step."
 
     quiz:
-      title: "Mini-Capstone — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1469,10 +1593,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict Git Graph behaviour, then Run and Investigate the diverging timelines
   - title: "Branching"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Branching is what makes Git different from "save with a new filename".
+      A branch is a tiny pointer (~41 bytes), not a copy — that's why every
+      professional team creates branches generously, one per feature. If you
+      believe branches are expensive copies, you'll branch too rarely and miss
+      the isolation benefit. If you grasp "branch = pointer", parallel
+      development becomes effortless.
+
+      ### 🎯 You will learn to
+
+      - Apply `git switch -c` to create and switch to a feature branch
+      - Analyze why a branch is a lightweight pointer rather than a project copy
+      - Evaluate the consequences of switching branches with uncommitted work
+
       ### Parallel universes for your code
 
       Branches let you work on new features without touching the main
@@ -1695,7 +1835,7 @@ steps:
           - text: "The final task asks you to be back on the feature branch. How do you switch between branches?"
 
     quiz:
-      title: "Branching — Knowledge Check"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1738,10 +1878,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
+  # Pedagogy: worked example with fading — guided fast-forward, primed for diverging merges next
   - title: "Merging Branches"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      Branches are only useful if you can integrate the work back. Git picks
+      between *fast-forward* and *three-way* merges based on whether history
+      has diverged — and the difference shows up directly in your log graph.
+      Knowing which one will happen before you run `git merge` (and how to
+      override the default with `--no-ff`) is the line between "this just
+      worked" and "what is this commit graph trying to tell me?"
+
+      ### 🎯 You will learn to
+
+      - Apply `git merge` to integrate a feature branch back into `main`
+      - Analyze when Git fast-forwards versus creates a three-way merge commit
+      - Evaluate the trade-off between linear history and `--no-ff` branch preservation
+
       ### Integrating your work
 
       When a feature is complete, you merge it back into the main branch.
@@ -1966,7 +2122,7 @@ steps:
           - text: "Run `git log --oneline` on main to verify the merge. You should see the team_up commit in main's history after merging."
 
     quiz:
-      title: "Merging Branches — Knowledge Check"
+      title: "Step 10 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2031,10 +2187,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization — engineer a conflict on purpose so the real one isn't scary
   - title: "Preparing for a Merge Conflict"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Most learners encounter their first merge conflict in the middle of a
+      stressful real-world deadline. By engineering one on purpose now — in a
+      controlled sandbox — you remove the surprise factor. The trick is
+      understanding *why* the conflict will happen: same lines, two different
+      branches, no automatic reconciliation possible. Set the stage here;
+      resolve it next step.
+
+      ### 🎯 You will learn to
+
+      - Apply branching and committing to deliberately diverge two branches
+      - Analyze which line-level changes will trigger a conflict
+      - Evaluate why Git refuses to silently pick a winner
+
       ### Merge conflicts: scary name, totally normal
 
       A **merge conflict** happens when two branches modify the **same
@@ -2153,7 +2325,7 @@ steps:
 
 
     quiz:
-      title: "Preparing for a Merge Conflict — Knowledge Check"
+      title: "Step 11 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2199,10 +2371,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 11: Resolving a merge conflict
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict the conflict outcome, then Run, Investigate, and Modify the resolved file
   - title: "Resolving a Merge Conflict"
     step_dir: /tutorial/myproject
     view: editor
     instructions: |
+      ### Why this matters
+
+      Resolving merge conflicts is a skill that separates Git users who panic
+      from Git users who ship. Conflict markers (`<<<<<<<`, `=======`,
+      `>>>>>>>`) look intimidating, but they are just markup — once you can
+      read them, you can resolve any conflict. The dual role of `git add`
+      during a merge (stage AND clear the unresolved flag) is the one piece
+      most tutorials gloss over.
+
+      ### 🎯 You will learn to
+
+      - Apply manual conflict resolution to combine changes from two branches
+      - Analyze conflict markers to see which version came from which branch
+      - Evaluate when to use `--abort`, `-X ours`, or `-X theirs` shortcuts
+
       ### The conflict
 
       In the previous step, you added safety protocols to the `recruit` function on the
@@ -2455,7 +2643,7 @@ steps:
             condition: "code_missing: print"
 
     quiz:
-      title: "Resolving a Merge Conflict — Knowledge Check"
+      title: "Step 12 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2520,10 +2708,27 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
+  # Pedagogy: negative-transfer callout — `git revert` versus `git reset --hard` (scalpel vs. sledgehammer)
   - title: "Safe Undo with git revert"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      `git restore` only undoes uncommitted work; once a mistake is committed
+      (especially on a shared branch), you need a different tool. `git
+      revert` adds an anti-commit that preserves history — safe for
+      collaboration. `git reset --hard` rewrites history — dangerous on
+      shared branches. Picking the wrong tool here can wipe out a teammate's
+      work, which is why this distinction is the most career-critical lesson
+      in the whole tutorial.
+
+      ### 🎯 You will learn to
+
+      - Apply `git revert` to safely undo a committed mistake
+      - Analyze why `git reset --hard` is dangerous on shared branches
+      - Evaluate `git reflog` as the safety net when something *does* go wrong
+
       ### Undoing committed mistakes safely
 
       `git restore` only works on uncommitted changes. What if you've already
@@ -2758,7 +2963,7 @@ steps:
           - text: "Follow Task 4 step by step. The final command synchronizes your working directory to match the latest commit — what command does that? The file should reappear because Git committed the staged snapshot."
 
     quiz:
-      title: "Safe Undo with git revert — Knowledge Check"
+      title: "Step 13 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2900,10 +3105,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 13: Working with Remotes
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict what `git push` sends, then Run and Investigate the bare-repo simulation
   - title: "Working with Remotes"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      Local Git is useful; collaborative Git is transformative. Until you
+      push to a remote, your work lives on exactly one machine — one disk
+      failure away from oblivion. `clone`, `push`, and `pull` are the verbs
+      that turn a solo project into team work, and `git pull` itself is
+      shorthand for `fetch` + `merge`, which matters the moment a pull
+      surprises you with a conflict.
+
+      ### 🎯 You will learn to
+
+      - Apply `git remote add`, `push`, `clone`, and `pull` to collaborate via a shared remote
+      - Analyze `git pull` as `git fetch` + `git merge` under the hood
+      - Evaluate why `-u` upstream tracking simplifies future pushes and pulls
+
       ### Time to go online
 
       Everything so far has been local — just you and your machine.
@@ -3048,7 +3269,7 @@ steps:
           - text: "This task involves three directories. Follow the instructions carefully, paying close attention to each `cd` command — being in the wrong directory is the most common source of errors in this step."
 
     quiz:
-      title: "Working with Remotes — Knowledge Check"
+      title: "Step 14 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3100,12 +3321,28 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
+  # Pedagogy: productive failure (Bjork) — full unguided capstone with a rejected push surprise
   - title: "Capstone Git Project and Review & Best Practices"
     step_dir: /tutorial/myproject
     view: git_graph
     setup_commands:
       - "cd /tutorial/colleague-copy && git pull && grep -q 'def status_report' hero_registry.py || (echo '' >> hero_registry.py && echo 'def status_report(hero):' >> hero_registry.py && echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py && echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py && git add hero_registry.py && git commit -m 'Add status report function' && git push); true && cd /tutorial/myproject/ && git config pull.rebase false"
     instructions: |
+      ### Why this matters
+
+      Knowing each Git command in isolation is not the same as orchestrating
+      them under pressure. This capstone hands you a realistic scenario —
+      branch, feature, merge, push, *rejection*, pull, conflict, resolve,
+      push — without scaffolding. If you can drive that loop end-to-end on
+      your own, you have the workflow that every professional team uses
+      every day.
+
+      ### 🎯 You will learn to
+
+      - Apply the full branch → commit → merge → push → pull cycle without scaffolding
+      - Analyze a rejected push and recover by pulling and resolving conflicts
+      - Evaluate professional best practices against your own emerging habits
+
       ### You made it to the Final Boss!
 
       Seriously, nice work. You've gone from zero to a solid Git workflow.
@@ -3329,7 +3566,7 @@ steps:
           - text: "After resolving the conflict and committing the merge, push your result to the remote with `git push`."
 
     quiz:
-      title: "Git Mastery — Final Comprehensive Review"
+      title: "Step 15 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3555,10 +3792,26 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 15: Celebration — final quiz
   # --------------------------------------------------------------------------
+  # Pedagogy: spaced retrieval — final consolidation pass and real-machine setup pointer
   - title: "Git Mastery — Final Review"
     step_dir: /tutorial/myproject
     view: git_graph
     instructions: |
+      ### Why this matters
+
+      Closing out the tutorial with deliberate reflection is what cements
+      the habits. You've built a real workflow — initialize, stage, commit,
+      branch, merge, resolve, undo, push, pull. The one piece left is making
+      sure you can take it off the training-wheels VM and onto your own
+      machine, where Git refuses to commit until it knows your name and
+      email.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your overall confidence with the full Git workflow
+      - Apply `git config --global user.name` and `user.email` on a fresh machine
+      - Analyze which best practices you'll carry into your next project
+
       ### Congratulations — you've completed the Git tutorial!
 
       From an empty folder to a version-controlled Python project with

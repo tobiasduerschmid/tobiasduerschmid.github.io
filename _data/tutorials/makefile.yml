@@ -21,11 +21,17 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 1: The "Pain Point" Sandbox
   # --------------------------------------------------------------------------
+  # Pedagogy: productive failure (Bjork) — feel the pain before learning the tool
   - title: "The Pain of Manual Compilation"
     instructions: |
-      Welcome to the **Makefiles Tutorial**!
+      ### Why this matters
 
-      Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain. Let's feel that pain first.
+      Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain — and you'll appreciate Make's design only after you've suffered through manual compilation. Let's feel that pain first.
+
+      ### 🎯 You will learn to
+
+      - Apply `gcc` to compile a multi-file C project by hand
+      - Analyze why manual recompilation does not scale beyond a handful of files
 
       ### Task 1: Compile the project manually
 
@@ -120,7 +126,7 @@ steps:
             condition: "output_missing: app"
 
     quiz:
-      title: "The Pain of Manual Compilation — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -166,8 +172,19 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 2: The Core Anatomy & The "Tab" Trap
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Run, then Investigate the cryptic Tab Trap error
   - title: "Your First Makefile & The Tab Trap"
     instructions: |
+      ### Why this matters
+
+      A Makefile is just a list of **rules** describing a dependency graph — and learning the rule anatomy is the gateway to every other Make feature. But Make hides one infamous trap right at the start: recipe lines must be indented with a real Tab, not spaces. Stumbling into that trap once will save you hours of confusion later.
+
+      ### 🎯 You will learn to
+
+      - Apply Makefile rule syntax (`target: prerequisites` followed by an indented recipe)
+      - Analyze the cryptic `missing separator. Stop.` error and recognize the Tab Trap
+      - Apply `sed -i` to substitute leading spaces with a Tab character
+
       ### The Anatomy of a Rule
 
       Makefiles are made of **rules** that describe a dependency graph. A rule looks like this:
@@ -267,7 +284,7 @@ steps:
             condition: "output_contains: separator"
 
     quiz:
-      title: "Your First Makefile & The Tab Trap — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -336,8 +353,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 3: The "DRY" Refactor — Variables
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Modify a working Makefile to remove duplication
   - title: "Don't Repeat Yourself (DRY) with Variables"
     instructions: |
+      ### Why this matters
+
+      A single-rule Makefile recompiles everything any time anything changes. To unlock incremental builds in later steps, you first need to split compilation into per-file rules — and the moment you do, duplication explodes. Variables are how Make lets you express the build configuration in one place and reuse it everywhere, so a compiler swap is one edit instead of four.
+
+      ### 🎯 You will learn to
+
+      - Apply Make variables (`CC`, `CFLAGS`) to eliminate repeated literals
+      - Evaluate the trade-off between recursive (`=`) and simple (`:=`) variable assignment
+
       ### Enabling Incremental Builds
 
       Our single-rule Makefile still recompiles everything together. To let Make skip unchanged files, we must compile each `.c` file into an **object file** (`.o`) separately, then **link** the `.o` files into the final executable.
@@ -470,7 +497,7 @@ steps:
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
     quiz:
-      title: "DRY Variables — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -544,8 +571,19 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 4: Automatic Variables & Pattern Rules
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Modify three near-identical rules into one pattern rule
   - title: "Smarter Rules: Automatic Variables & Patterns"
     instructions: |
+      ### Why this matters
+
+      Three near-identical rules for `main.o`, `math.o`, and `io.o` is annoying at three files and unbearable at fifty. Pattern rules and automatic variables (`$@`, `$<`, `$^`) are Make's mechanism for expressing "do the same thing for any matching pair" — they shrink your Makefile while letting it scale to arbitrary numbers of source files with no edits.
+
+      ### 🎯 You will learn to
+
+      - Apply automatic variables (`$@`, `$<`, `$^`) to eliminate filename repetition
+      - Create a pattern rule (`%.o: %.c`) that compiles any source file
+      - Analyze how an `OBJS` list combines with pattern rules to scale to N files
+
       ### The Repetition Problem
 
       Look at your current Makefile. The three `.o` rules are almost identical:
@@ -686,7 +724,7 @@ steps:
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
     quiz:
-      title: "Automatic Variables & Pattern Rules — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -767,8 +805,19 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 5: Proving the Magic of the DAG
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Predict, Run, Investigate Make's timestamp heuristic
   - title: "The Magic of Incremental Builds"
     instructions: |
+      ### Why this matters
+
+      This is the payoff for everything you've built so far. Make's timestamp-based dependency graph is what turns a multi-hour full rebuild into a few seconds of incremental work — and it's the single feature that makes Make worth its quirks. You'll watch Make skip work it doesn't need to do, and learn the one footgun (header dependencies) that catches even seasoned C developers.
+
+      ### 🎯 You will learn to
+
+      - Analyze Make's timestamp heuristic to predict which targets will rebuild
+      - Apply `touch` to simulate a file edit and observe selective recompilation
+      - Evaluate when implicit header dependencies will silently sabotage a build
+
       ### The Core Idea: Timestamp Comparison
 
       Make's central trick is brutally simple: it compares the **last-modified timestamp** of each target against its prerequisites. If a prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips it.
@@ -860,7 +909,7 @@ steps:
           fi
 
     quiz:
-      title: "The Magic of Incremental Builds — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -919,8 +968,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 6: The .PHONY Sabotage
   # --------------------------------------------------------------------------
+  # Pedagogy: mistake-based familiarization — sabotage `clean` to surface the .PHONY rationale
   - title: "The .PHONY Sabotage"
     instructions: |
+      ### Why this matters
+
+      Every real-world Makefile has command-style targets like `clean`, `test`, or `install` — and every one of them can silently break the day someone creates a file or directory with the same name. `.PHONY` is the one-line declaration that immunizes those targets, and seeing the sabotage in action is the only way to remember to use it.
+
+      ### 🎯 You will learn to
+
+      - Analyze why a same-named file on disk causes Make to skip a command target
+      - Apply `.PHONY` to declare command targets that always run
+
       ### Non-File Targets
 
       Make is fundamentally about building files. But sometimes we want a target that just runs a command — like cleaning up build artifacts. There's no output file; you just want the action.
@@ -996,7 +1055,7 @@ steps:
             condition: "code_missing: clean:"
 
     quiz:
-      title: ".PHONY — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1068,8 +1127,18 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7: Summary & Best Practices
   # --------------------------------------------------------------------------
+  # Pedagogy: PRIMM — Make: synthesize the pieces and look at real-world Makefiles
   - title: "Mastering Make"
     instructions: |
+      ### Why this matters
+
+      Knowing each Make feature in isolation is not the same as knowing how they fit together. This synthesis step shows the entire Makefile in its final form — every concept from Steps 1–6 in ten lines — and points to the next gotcha you'll meet when you scale beyond a single directory.
+
+      ### 🎯 You will learn to
+
+      - Evaluate a complete Makefile and explain how each feature contributes
+      - Analyze when Recursive Make is appropriate versus harmful
+
       You've mastered the essentials of Make! You can now:
       - Navigate the **Tab Trap** with confidence.
       - Use **Variables** for DRY (Don't Repeat Yourself) builds.

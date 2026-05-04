@@ -59,11 +59,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Exploring Data"
     instructions: |
-      ## Describe What You Want, Not How
+      ### Why this matters
 
-      > **Learning objective:** Retrieve the slice of a dataset a caller needs, and explain why *describing what you want* (declarative) scales better than *describing how to compute it* (imperative).
+      In Python or JavaScript, you tell the machine *how* to solve a problem step by step. In SQL, you describe *what* you want and the engine figures out the rest. If this **imperative → declarative** shift feels strange, that is normal — it is the foundational mental shift this entire tutorial is built around.
 
-      In Python or JavaScript, you tell the machine *how* to solve a problem step by step. In SQL, you describe *what* you want and the engine figures out the rest. If this **imperative → declarative** shift feels strange, that is normal.
+      ### 🎯 You will learn to
+
+      - Apply `SELECT` to project a chosen subset of columns from a table
+      - Analyze why an explicit column list is safer than `SELECT *` in production code
 
       ### The students table
 
@@ -211,7 +214,7 @@ steps:
           assert(names === 'gpa,id,major,name,year', "students columns should be id, name, year, major, gpa — got: " + names);
 
     quiz:
-      title: "Exploring Data — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -333,11 +336,18 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Joining Tables"
     instructions: |
-      ## JOIN — Combining Tables by a Shared Key
+      ### Why this matters
 
-      > **Learning objective:** Answer questions that span two tables (e.g. *"who is Mango's advisor?"*) by combining rows on a shared key, and recognize when a query has accidentally paired every row with every row.
+      Real data is rarely in one table — every production query you write will stitch information together across two or more. `JOIN` is the workhorse, but it has a famous trap: forget the `ON` predicate and you silently return every row paired with every row.
 
-      Real data is rarely in one table. The `students` table has a `major` column, but each major's *department* and *advisor* live in a separate `majors` table:
+      ### 🎯 You will learn to
+
+      - Apply `JOIN ... ON` to combine rows from two tables on a shared key
+      - Analyze a multi-table query for the Cartesian-product trap (missing `ON`)
+
+      ### Two tables, one question
+
+      The `students` table has a `major` column, but each major's *department* and *advisor* live in a separate `majors` table:
 
       | `majors.code` | `majors.department` | `majors.advisor` |
       |---------------|---------------------|------------------|
@@ -476,7 +486,7 @@ steps:
           assert(rows.length === 1 && rows[0].advisor === 'Dr. Hopper', "Mango's advisor should be Dr. Hopper (CS → Dr. Hopper)");
 
     quiz:
-      title: "Joining Tables — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -564,6 +574,7 @@ steps:
 
   # --------------------------------------------------------------------------
   # STEP 3: WHERE + ORDER BY — declarative filtering and sorting
+  # Pedagogy: PRIMM — Predict, Run, Investigate the NULL/3VL trap, then Modify
   # Audit fix: Moved error taxonomy out (was overloading this step).
   #   Now focuses on WHERE, ORDER BY, NULL/3VL only (~4 interacting elements).
   # Added: = vs == negative transfer, single-quote convention,
@@ -572,11 +583,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Filtering & Sorting"
     instructions: |
-      ## WHERE and ORDER BY — The filter() and sort() of SQL
+      ### Why this matters
 
-      > **Learning objective:** Narrow a result set to exactly the rows that answer a question, order the output, and avoid the silent bugs that unknown values (NULL) introduce into filters.
+      Almost every real query needs to *narrow down* — give me only the rows that match these conditions, sorted this way. `WHERE` is your filter and `ORDER BY` is your sort, but both interact with `NULL` in ways that quietly drop rows you expected to see. NULL is genuinely difficult — experienced developers still get tripped up by it, so plan to spend a little extra time here.
 
-      NULL is genuinely difficult — experienced developers still get tripped up by it. Plan to spend a little extra time on this step.
+      ### 🎯 You will learn to
+
+      - Apply `WHERE` predicates and `ORDER BY` to return exactly the rows you want, in the order you want
+      - Analyze how three-valued logic (NULL = UNKNOWN) silently drops rows from `!=` and `=` filters
+      - Evaluate a failing filter by classifying the bug as syntax, semantic, or logical
 
       ### WHERE predicates
 
@@ -756,7 +771,7 @@ steps:
             condition: "code_contains: = null"
 
     quiz:
-      title: "Filtering & Sorting — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -864,6 +879,7 @@ steps:
 
   # --------------------------------------------------------------------------
   # STEP 4: GROUP BY + HAVING — the reduce() of SQL
+  # Pedagogy: PRIMM — Plan execution order, Predict, then Modify the wrong-clause bug
   # Added: generation challenge, Investigate prompt, metacognitive prompt,
   #   logical execution order (moved from old Step 2), a priori planning prompt,
   #   execution-plan Parsons (confirms declarative threshold crossing).
@@ -871,11 +887,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Aggregating Data"
     instructions: |
-      ## GROUP BY — The reduce() of SQL
+      ### Why this matters
 
-      > **Learning objective:** Turn row-level data into per-category summaries (counts, averages, totals), and distinguish filtering individual rows from filtering whole groups.
+      Every time Spotify shows "Your top artists this month" or Instagram shows "4 people liked this" — that is a `GROUP BY` + `COUNT` running against millions of rows in milliseconds. Aggregation is how data becomes insight; the trick is keeping straight what gets filtered *before* grouping (rows) versus *after* (groups).
 
-      Every time Spotify shows "Your top artists this month" or Instagram shows "4 people liked this" — that is a `GROUP BY` + `COUNT` running against millions of rows in milliseconds.
+      ### 🎯 You will learn to
+
+      - Apply `GROUP BY` with aggregate functions (`COUNT`, `AVG`, `SUM`, `MIN`, `MAX`) to summarize rows per category
+      - Analyze SQL's logical execution order to predict why aggregates belong in `HAVING`, not `WHERE`
+      - Evaluate a `GROUP BY` query for the grouping rule (every selected column is grouped or aggregated)
 
       ### Logical execution order
 
@@ -1055,7 +1075,7 @@ steps:
             condition: "code_missing: avg"
 
     quiz:
-      title: "Aggregation — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1183,6 +1203,7 @@ steps:
 
   # --------------------------------------------------------------------------
   # STEP 5: CREATE TABLE + INSERT INTO — designing and populating a table
+  # Pedagogy: PRIMM — Predict which inserts violate the strengthened schema, then Modify
   # Audit fix: Error taxonomy moved here from former Step 2 (WHERE, now Step 3),
   #   plus the 4th "constraint violation" category called out for Insert C.
   # Added: Bloom's Create-level quiz question, scaffold fading (lighter hints)
@@ -1190,11 +1211,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Designing Your Own Table"
     instructions: |
-      ## CREATE TABLE and INSERT INTO
+      ### Why this matters
 
-      > **Learning objective:** Design a table that protects its own integrity — so bad data cannot enter in the first place — and classify query errors so you can debug them efficiently.
+      You have been querying an existing table for four steps; now it is time to build your own. A well-designed schema makes invalid data *impossible to insert in the first place* — your `NOT NULL`, `PRIMARY KEY`, and type declarations are the database's safety net. If constraint syntax feels fiddly at first, that is normal — the payoff is that bugs surface at insert time, not three weeks later in a production report.
 
-      You have been querying an existing table for four steps. Now it is time to build your own. If constraint syntax feels fiddly at first, that is normal — the payoff is that the database catches bad data before it becomes a bug.
+      ### 🎯 You will learn to
+
+      - Apply `CREATE TABLE` with appropriate types and constraints (`PRIMARY KEY`, `NOT NULL`) to a real schema
+      - Create rows with `INSERT INTO` that satisfy every declared constraint
+      - Evaluate a failing query by classifying the error as syntax, semantic, logical, or constraint violation
 
       ### CREATE TABLE
 
@@ -1400,7 +1425,7 @@ steps:
           assert(rows[0].n === 9, "The students table should have 9 rows — do not modify it");
 
     quiz:
-      title: "Creating Tables — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1507,6 +1532,7 @@ steps:
 
   # --------------------------------------------------------------------------
   # STEP 6: UPDATE + DELETE + DROP TABLE — modifying and removing data
+  # Pedagogy: productive failure (Bjork) — feel a destructive bug in safety, then preview-then-commit
   # Added: Safe failure simulation (DELETE without WHERE), faded scaffolding
   #   (less hand-holding in TODO comments), metacognitive reflection,
   #   "Where to go next" epilogue (LEFT JOIN, CTEs, N+1).
@@ -1514,11 +1540,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Modifying & Cleaning Up"
     instructions: |
-      ## UPDATE, DELETE, and DROP TABLE
+      ### Why this matters
 
-      > **Learning objective:** Change or remove data without damaging the rest of the database, recognize destructive statements before they run, and apply the professional habit of previewing impact before committing.
+      Destructive SQL is where careful habits pay off. If you have ever run a shell command and watched the wrong files disappear, you already know the feeling — these patterns exist so you do not have it in production. A missing `WHERE` on `UPDATE` or `DELETE` is one of the most common ways to corrupt a real database, and the only defense is a workflow that previews changes before committing them.
 
-      Destructive SQL is where careful habits pay off. If you have ever run a shell command and watched the wrong files disappear, you already know the feeling — these patterns exist so you do not have it in production.
+      ### 🎯 You will learn to
+
+      - Apply `UPDATE`, `DELETE`, and `DROP TABLE` with the right scoping (`WHERE`, `IF EXISTS`)
+      - Evaluate a destructive statement by previewing its impact with a `SELECT` first
+      - Analyze the differences between row-level deletion (`DELETE`), table removal (`DROP`), and modification (`UPDATE`)
 
       ### Safe failure experiment
 
@@ -1699,7 +1729,7 @@ steps:
           assert(rows.length === 0, "Expected courses table to be gone — use `DROP TABLE IF EXISTS courses;`");
 
     quiz:
-      title: "Modifying & Cleaning Up — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1834,11 +1864,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Putting It Together"
     instructions: |
-      ## Capstone — One Query, Six Steps' Worth of Tools
+      ### Why this matters
 
-      > **Learning objective:** Compose a single query that combines `JOIN`, `WHERE`, `GROUP BY`/`HAVING`, aggregates, and `ORDER BY` to answer a real-world question — and recognize which construct each part of the question maps to.
+      You've spent six steps learning the building blocks separately. **This step is *composition*** — chaining `JOIN`, `WHERE`, `GROUP BY`/`HAVING`, aggregates, and `ORDER BY` into one query that answers a real-world question. The skill the capstone builds isn't typing more SQL — it's *decomposing a natural-language ask* into the constructs you already know.
 
-      You've spent six steps learning the building blocks separately. **This step is *composition*** — chaining those blocks into one query that answers a real-world question.
+      ### 🎯 You will learn to
+
+      - Create a single query that combines `JOIN`, `WHERE`, `GROUP BY`/`HAVING`, aggregates, and `ORDER BY`
+      - Analyze a natural-language request to map each phrase to the SQL construct it requires
+      - Evaluate your own query against a hand-computed prediction (rows, ordering, totals)
 
       ### The dean's request
 
@@ -2048,8 +2082,8 @@ steps:
             condition: "code_missing: >= 2"
 
     quiz:
-      title: "Capstone — Cumulative Check"
-      min_score: 0.7
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 

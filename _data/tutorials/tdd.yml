@@ -84,6 +84,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 1 — RED: Write the Failing Test"
     instructions: |
+      ### Why this matters
+
+      RED is the moment TDD looks weirdest: you deliberately write a test that *cannot* pass yet, and you make the failure happen on purpose. That inversion is the threshold concept — a *failing* test is the goal, not the accident, because it's the first place where the spec gets pinned down before any implementation exists. Learning to read a failure for the *right reason* is the foundation everything else in this tutorial sits on.
+
+      ### 🎯 You will learn to
+
+      - Apply the four-part pytest test shape (import, define, arrange-act, assert) to translate a one-sentence spec into a runnable failing test
+      - Analyze a pytest failure and distinguish a *right-reason* RED (`ImportError` / `AssertionError` on the assertion you wrote) from a *wrong-reason* RED (typo / missing colon)
+      - Evaluate why a surprise *green* on a brand-new test should be treated as a Liar test until proven otherwise
+
       > **Prerequisite:** [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) — pytest discovery, `assert`, partitions, behavior-not-implementation. If those feel new, do that one first.
 
       ## What you're building — *Dragon Dice*
@@ -352,6 +362,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 1 — GREEN: Make It Pass"
     instructions: |
+      ### Why this matters
+
+      The instinct on GREEN is to "build it right" — anticipate the next cycle, generalize early, reach for the elegant abstraction. That instinct is the single most common way TDD degrades into test-after. The GREEN rule asks for the *smallest* code that satisfies *this one test*, even if it looks embarrassingly trivial — because every line you write without a test demanding it is a guess, not a discovery.
+
+      ### 🎯 You will learn to
+
+      - Apply the GREEN rule by writing the smallest code that satisfies the current failing test (no speculative branches, no premature abstraction)
+      - Analyze a pytest test as a contract that prescribes the unit's interface (`@dataclass(frozen=True)`, `@property`, default tuple) line-by-line
+      - Evaluate a candidate GREEN against the Transformation Priority Premise — preferring lower-cost transformations (constant → variable) over higher-cost ones (loop / class)
+
       > **The GREEN rule:** write the **smallest** code that makes the failing test pass. Anything more is *speculative design* — code with no test demanding it.
 
       ## The test is your contract
@@ -551,6 +571,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 1 — REFACTOR: The Pause That Counts"
     instructions: |
+      ### Why this matters
+
+      Beginners skip REFACTOR when they "don't see anything to clean up" — and that habit is exactly how TDD silently decays into write-test-then-write-code. REFACTOR is a *phase you enter every cycle*, with a deliberate look-around through a checklist; the answer "nothing this time" is a fine outcome, but skipping the look is not. Today's cycle 1 has almost nothing to clean — that's why it's the right moment to install the discipline of *looking anyway*.
+
+      ### 🎯 You will learn to
+
+      - Apply the five-line REFACTOR checklist (duplication, names, test names, magic constants, imports) as a deliberate pause at the end of every cycle
+      - Evaluate when "nothing to clean this time" is the correct outcome — and notice that *entering and looking* is the discipline, not finding something
+      - Analyze a quiz question on the rhythm to confirm RED-GREEN-REFACTOR is now reasoned about, not just slogan-recited
+
       > **The discipline:** REFACTOR is a phase you **enter every cycle** — even when the answer is *"nothing to clean this time."* Entering and looking is the discipline. Skipping the look is the failure mode that quietly degrades TDD into test-after.
 
       ## The REFACTOR checklist (you'll re-use this every cycle)
@@ -698,7 +728,7 @@ steps:
               "Cycle 1's test still exists but its assertions were removed. The test body must keep at least one `assert` so behavior is still pinned down."
 
     quiz:
-      title: "First Quiz — The Red-Green-Refactor Rhythm"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -817,6 +847,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 2 — Single 1 → Dragon Flame"
     instructions: |
+      ### Why this matters
+
+      Cycle 1 walked the rhythm one phase at a time. Cycle 2 packs all three phases into one step — and immediately tests the hardest TDD discipline of all: *allow the hard-code*. The first GREEN for "a 1 is a Dragon Flame" should look ugly (`if dice == [1]:`) because *one example* is not enough information to choose the right shape. Refactor toward duplication, not before it.
+
+      ### 🎯 You will learn to
+
+      - Apply the full RED-GREEN-REFACTOR rhythm as a single packaged cycle, translating a one-sentence spec into a test, the smallest passing code, and a deliberate REFACTOR pause
+      - Analyze why the first GREEN is allowed (and expected) to look ugly — one example is not enough information to choose the right shape
+      - Evaluate the "refactor toward duplication, not before it" rule against the temptation to generalize early
+
       > **Spec:** a single die showing **1** creates a *Dragon Flame* event worth 100 damage.
 
       From now on, each cycle is **one step with three tasks** (RED → GREEN → REFACTOR). Same discipline as cycle 1 — tighter packaging.
@@ -1007,6 +1047,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 3 — Single 5 → Lightning Spark"
     instructions: |
+      ### Why this matters
+
+      Cycle 3 is *the same shape* as cycle 2 with different values — and that's exactly why it matters. Two near-identical hardcoded branches make the duplication impossible to miss; the trap is that your hands will itch to extract a loop *right now*. Don't. Refactoring with only two data points is still guessing. Cycle 4's test will provide the third point — and the loop refactor it earns will be a discovery, not a guess.
+
+      ### 🎯 You will learn to
+
+      - Apply Variation Theory by writing a second test with the *same shape* as cycle 2 (only the values change) and observing what the contrast makes visible
+      - Evaluate when *deliberately keeping ugly code* is the disciplined move — refactoring under-informed is worse than not refactoring
+      - Analyze how the visible duplication will be the design pressure that earns the cycle 4 refactor
+
       > **Spec:** a single die showing **5** creates a *Lightning Spark* event worth 50 damage.
 
       Same shape as cycle 2, different values. The duplication this creates is *intentional* — cycle 4's test will earn the right to fix it.
@@ -1229,6 +1279,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 4 — Repeated Singles → First Real Refactor"
     instructions: |
+      ### Why this matters
+
+      Cycle 4 is the first **design-breaking** test of the tutorial — neither `dice == [1]` nor `dice == [5]` matches `[1, 1]`, so the cheapest patch (a third hardcoded branch) is *globally* expensive even when it's *locally* small. This is also where the safety-net argument becomes load-bearing: the *previous three green tests* are what allow you to replace the hardcoded branches with a loop without fear. The mutation move at the end of the cycle proves those tests actually catch the regressions you think they do.
+
+      ### 🎯 You will learn to
+
+      - Apply the first real refactor under safety — replacing hardcoded branches with a loop while three green tests guard the change
+      - Evaluate competing GREEN options (third hardcoded branch vs. loop) by predicting which is cheaper across the next two cycles
+      - Apply the *mutation move* (mutate a line, watch a test fail, revert) to verify the safety net actually catches regressions
+
       > **Spec:** `score([1, 1])` returns total damage 200 with **two** Dragon Flame events.
 
       The first **design-breaking** test. Neither `dice == [1]` nor `dice == [5]` matches `[1, 1]` — the duplication you noted in cycle 3 just demanded payment.
@@ -1509,7 +1569,7 @@ steps:
               f"The whole point of cycle 4 was to retire the `if {param} == [...]:` branches in favor of a generic per-die loop. Remove them."
 
     quiz:
-      title: "Cycle 4 Quiz"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1597,6 +1657,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 5 — Triple 1s → Dragon Blast (Design Moment)"
     instructions: |
+      ### Why this matters
+
+      The cycle-4 per-die loop walks each die in isolation — it has no way to know that *the other two 1s exist* when it processes the first. The triple-1 test cannot be satisfied by editing a branch or tweaking the loop body; the *structure* has to change from "iterate dice in order" to "count faces, then decide what to emit." This is the threshold concept: tests force *structural* change, not just lines of code. And the previous five tests survive a full body rewrite of `score` — *because* they assert on observable behavior, not on internals.
+
+      ### 🎯 You will learn to
+
+      - Analyze why a per-die loop is structurally incapable of satisfying a triple-combo test — and why this earns a `Counter`-based count-then-emit shape
+      - Evaluate the *Refactoring Litmus Test*: which property of the previous tests allowed them to survive a full rewrite of `score`?
+      - Apply the same mutation move from cycle 4 to a leftover-bookkeeping line, confirming the new structure's invariants are pinned down by tests
+
       > **Spec:** three 1s in a roll combine into one *Dragon Blast* (1000 damage) instead of three Dragon Flames.
 
       The pivot moment. Cycle 4's per-die loop walks each die independently — it has no way to know that *the other two 1s exist* when it processes the first. This test cannot be satisfied by tweaking a branch; the structure has to change. **A design-breaking test.**
@@ -1901,7 +1971,7 @@ steps:
             text: "```python\ncounts = Counter(dice)\nevents = []\nif counts[1] >= 3:\n    events.append(ScoringEvent('Dragon Blast', (1, 1, 1), 1000))\n    counts[1] -= 3\nfor _ in range(counts[1]):\n    events.append(ScoringEvent('Dragon Flame', (1,), 100))\nfor _ in range(counts[5]):\n    events.append(ScoringEvent('Lightning Spark', (5,), 50))\nreturn BattleReport(tuple(events))\n```"
 
     quiz:
-      title: "Cycle 5 Quiz"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1993,6 +2063,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 6 — Goblin Swarm → Discover Rule Objects (Big Refactor)"
     instructions: |
+      ### Why this matters
+
+      One combo branch in `score` is fine. Adding a second one — *next to* the first — makes the duplication ugly enough that "add another `if`" feels obviously wrong. That ugliness is the design pressure; what it earns is the **rule object** abstraction (`ComboRule` + `SingleRule` with `apply()`). The Open-Closed Principle stops being a slogan: new behavior is now new *data*, not new branches. This is the cycle where students stop pattern-matching TDD and start *listening to the test*.
+
+      ### 🎯 You will learn to
+
+      - Apply *listening to the test* — recognize that a duplicate combo branch is the test telling you the structure is wrong
+      - Create a rule-object abstraction (`ComboRule` + `SingleRule` with a uniform `apply()` interface) under the safety net of seven green tests
+      - Evaluate the resulting design against the Open-Closed Principle — new behavior added as data, not as branches
+
       > **Spec:** three 2s combine into a *Goblin Swarm* (200 damage).
 
       Cycle 6 is structurally the most important cycle in this tutorial. The current code handles **one** combo (Dragon Blast). Cycle 6 will give you a **second** — and the design pressure of having two will teach you the right abstraction.
@@ -2573,7 +2653,7 @@ steps:
             text: "```python\nCOMBO_RULES = (\n    ComboRule(1, 3, 'Dragon Blast', 1000),\n    ComboRule(2, 3, 'Goblin Swarm', 200),\n)\n\ndef score(dice: list[int]) -> BattleReport:\n    counts = Counter(dice)\n    events = []\n    for rule in COMBO_RULES:\n        events.extend(rule.apply(counts))\n    # ... singles loops still here for now ...\n    return BattleReport(tuple(events))\n```\nPhase F just appends to `COMBO_RULES`; this body never changes."
 
     quiz:
-      title: "Cycle 6 Quiz"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2667,6 +2747,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Cycle 7 — Six 1s → Two Dragon Blasts (Hidden Bug)"
     instructions: |
+      ### Why this matters
+
+      Every previous combo test used *exactly* three of a face — so every previous combo test passed *and* hid a bug. Six 1s should be two Blasts (2000 damage); your current `ComboRule.apply` emits one Blast plus three Flames (1300). Line coverage said the `if` ran, but a line being executed is not the same as a line being right *for all relevant inputs*. This is the gap between coverage and **boundary-value analysis** — and it's the cycle where you experience first-hand the kind of bug TDD literature reports: a defect the developer doesn't know exists in code they wrote themselves.
+
+      ### 🎯 You will learn to
+
+      - Apply boundary-value analysis to predict where existing tests under-pin a behavior (`exactly N` covered; `2N` and beyond not)
+      - Analyze the gap between line coverage and behavioral correctness — coverage locates under-tested code; it does not measure correctness
+      - Create a fix to `ComboRule.apply` using `//` and `%=` so it emits zero-or-more combos per call with correct leftover bookkeeping
+
       > **Spec:** `score([1, 1, 1, 1, 1, 1])` produces **two** Dragon Blasts (2000 damage).
 
       🪞 **Predict first (don't open the reveal yet).** Look at your `ComboRule.apply` and trace through six 1s by hand. *Write down the damage your current code produces.* The whole pedagogical value of this step depends on the order: predict before peeking.
@@ -3171,7 +3261,7 @@ steps:
             text: "```python\ndef apply(self, counts: Counter) -> list[ScoringEvent]:\n    events = []\n    number_of_combos = counts[self.die] // self.count\n    for _ in range(number_of_combos):\n        dice_used = tuple([self.die] * self.count)\n        events.append(ScoringEvent(self.name, dice_used, self.damage))\n    counts[self.die] %= self.count\n    return events\n```"
 
     quiz:
-      title: "Cycle 7 Quiz"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3283,6 +3373,16 @@ steps:
   # ==========================================================================
   - title: "Transfer Cycle — TDD on FizzBuzz (Different Domain, Same Rhythm)"
     instructions: |
+      ### Why this matters
+
+      Seven Dragon-Dice cycles risk teaching you "TDD works *because* dice are compositional." The transfer cycle disproves that — same rhythm, totally different domain (FizzBuzz), and *no scaffolding from us*: you write your own test list (Canon TDD step 1), you order the items, you drive the cycles. Janzen & Saiedian's "residual effect" predicts that this is where the rhythm finally feels *natural* — earned, not preached. The compression of seven Dragon-Dice cycles into ~four FizzBuzz mini-cycles is itself the test of mastery.
+
+      ### 🎯 You will learn to
+
+      - Create your own Canon TDD test list for an unfamiliar problem, ordered from simplest to most design-breaking
+      - Apply RED-GREEN-REFACTOR to FizzBuzz with no instructor scaffolding — driving the cycles yourself in compressed form
+      - Evaluate the structural parallels between each FizzBuzz move and the Dragon-Dice cycle it mirrors (Variation Theory generalization)
+
       You've completed seven cycles of TDD on dice scoring. The risk: *"TDD only works because Dragon Dice is a naturally compositional domain."* The way to disprove that risk is to apply the same rhythm to a completely unrelated problem — right now, in compressed form.
 
       ## The classic spec — FizzBuzz
@@ -3520,7 +3620,7 @@ steps:
               f"all pass:\n\n{output}"
 
     quiz:
-      title: "Transfer Cycle — Did the Rhythm Carry?"
+      title: "Step 10 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3581,9 +3681,24 @@ steps:
   # transfer. When TDD shines vs. when it doesn't, the anti-pattern taxonomy,
   # the empirical case, and a final quiz that mixes spaced retrieval across
   # earlier cycles with new application questions requiring analysis and evaluation.
+  # Pedagogy:
+  #   Synthesis              — "synthesise yourself" prompt before any reveals.
+  #   Spaced retrieval       — final quiz mixes recall across earlier cycles.
+  #   Bjork's desirable difficulty — confidence recalibration before answers.
+  #   Transfer probe         — name a real piece of student code where TDD helps.
   # ==========================================================================
   - title: "The Big Picture — Seven Cycles and a Transfer"
     instructions: |
+      ### Why this matters
+
+      The cycles taught the rhythm one beat at a time; this step asks whether you can hear the *whole song*. You'll synthesize the journey from memory before any reveals, recalibrate your own confidence in writing, and probe whether the discipline transfers to a real piece of code from your own work — not "I'd write more tests" but a specific bug it would have caught. The final quiz is mixed retrieval across all seven cycles, the way Bjork's spacing principle predicts will make the rhythm last.
+
+      ### 🎯 You will learn to
+
+      - Analyze the seven-cycle journey by recalling, from memory, three design moves and the test that forced each one
+      - Evaluate your own confidence to apply Red-Green-Refactor *unaided* on a problem you haven't seen before
+      - Apply the rhythm to one specific piece of your own code — naming what TDD would have prevented in concrete terms
+
       Seven Dragon-Dice cycles. Then an eighth on a totally different problem — FizzBuzz — driven by you with no scaffolding. Every line in your final `scorer.py` is justified by a test; every line in your `fizzbuzz.py` is too; and the rhythm that produced both is the *same rhythm*.
 
       ---
@@ -4011,7 +4126,7 @@ steps:
               f"All tests should still pass — this is a reflection step:\n{output}"
 
     quiz:
-      title: "Final Quiz"
+      title: "Step 11 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:

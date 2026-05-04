@@ -25,11 +25,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Hello, Node.js!"
     instructions: |
-      ## The Lay of the Land
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser, **write** `console.log()` statements, and **use** `if`/`else if`/`else` and `for...of` control flow.
+      You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, Twitch, and even parts of VS Code. Node.js lets you wield JavaScript outside the browser, on the same backend servers powering those apps, so the work you do here translates directly to what professional developers ship.
 
-      You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, Twitch, and even parts of VS Code. Here is how it fits into your mental model:
+      ### 🎯 You will learn to
+
+      - Explain how Node.js uses V8 and libuv to run JavaScript outside the browser
+      - Apply `console.log()` and `if`/`else if`/`else` to inspect runtime values
+      - Apply `for...of` to iterate over array values
+
+      Here is how JavaScript fits into your mental model:
 
       | Aspect | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
@@ -180,7 +186,7 @@ steps:
             condition: "code_missing: for"
 
     quiz:
-      title: "Hello, Node.js! — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -237,11 +243,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Variables, Types & The === Trap"
     instructions: |
-      ## Bridging Your Mental Models
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **declare** variables with `let`/`const`, **use** template literals, and **explain** why `===` should be preferred over `==`.
+      JavaScript's type system *looks* like Python but hides a critical landmine: the `==` operator silently coerces types, producing surprises that have leaked into countless production bugs. Mastering `let`/`const`, template literals, and strict equality now protects every line of JavaScript you write afterward — and makes you fluent in the idioms professional Node.js code uses everywhere.
 
-      JavaScript's type system *looks* like Python but hides a critical landmine.
+      ### 🎯 You will learn to
+
+      - Apply `let` and `const` to declare variables with the correct mutability
+      - Apply template literals to interpolate values into strings
+      - Evaluate when to use `===` over `==` to avoid coercion bugs
 
       ### `let` and `const`
 
@@ -442,7 +452,7 @@ steps:
           - text: "Syntax error. The output usually points at the line."
 
     quiz:
-      title: "Variables, Types & The === Trap — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -501,13 +511,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Arrow Functions & Callbacks"
     instructions: |
-      ## The Foundation of Everything That Follows
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **write** arrow functions, **pass** functions as callbacks, and **use** `.filter()` to select array elements.
+      In C++, you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)` or `map()`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings. This is not merely a stylistic feature — it is the entire foundation of Node.js's asynchronous model and the Express web framework you will use starting in Step 5. Understanding it now makes everything later obvious.
 
-      In C++, you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)` or `map()`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings.
+      ### 🎯 You will learn to
 
-      This is not merely a stylistic feature — it is the entire foundation of Node.js's asynchronous model and the Express web framework you will use starting in Step 5. Understanding it now makes everything later obvious.
+      - Create arrow functions to express short callable values
+      - Apply callbacks by passing functions as arguments to higher-order functions
+      - Apply `.filter()` to select array elements that match a predicate
 
       ### Arrow Functions
 
@@ -702,7 +714,7 @@ steps:
             condition: "code_matches: \\.filter\\s*\\(\\s*\\w+\\s*=>\\s*\\w+\\.grade\\s*>\\s*88"
 
     quiz:
-      title: "Arrow Functions & Callbacks — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -760,11 +772,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Array Transformation & Destructuring"
     instructions: |
-      ## Transforming Data with Array Methods
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **use** `.map()` to transform arrays, `.reduce()` to accumulate values, and **destructure** objects and arrays.
+      In Step 3 you learned `.filter()` — selecting elements. Now you will learn to **transform** them with `.map()` and **combine** them with `.reduce()`. These three methods — `.filter()`, `.map()`, `.reduce()` — are the workhorses of data processing in JavaScript, and you will use all three inside Express route handlers starting in Step 5. Destructuring rounds out the set so you can unpack request bodies and JSON responses with one tidy line.
 
-      In Step 3 you learned `.filter()` — selecting elements. Now you will learn to **transform** them with `.map()` and **combine** them with `.reduce()`. These three methods — `.filter()`, `.map()`, `.reduce()` — are the workhorses of data processing in JavaScript, and you will use all three inside Express route handlers starting in Step 5.
+      ### 🎯 You will learn to
+
+      - Apply `.map()` to transform every element of an array
+      - Apply `.reduce()` to accumulate an array into a single value
+      - Apply object and array destructuring to unpack values concisely
 
       ### Objects and JSON — What You Have Been Using All Along
 
@@ -1063,7 +1079,7 @@ steps:
             condition: "code_matches: \\.filter\\s*\\([^)]*\\.grade\\s*>=?\\s*60"
 
     quiz:
-      title: "Array Transformation & Destructuring — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1137,11 +1153,14 @@ steps:
     http_client: true
     http_url: "http://localhost:3000/"
     instructions: |
-      ## From Callbacks to Web Servers
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** how Express uses callbacks to handle HTTP requests and **create** a basic Express GET route.
+      You have been building callback skills for two steps. Now you will see why: **an Express route handler is a callback**. The entire Express framework is built on the pattern you already know — meaning every route you ever write in Node.js leans on the muscle you have already trained.
 
-      You have been building callback skills for two steps. Now you will see why: **an Express route handler is a callback**. The entire Express framework is built on the pattern you already know.
+      ### 🎯 You will learn to
+
+      - Explain how Express uses callbacks to handle HTTP requests
+      - Create a basic Express GET route that responds with text
 
       ### What is Express?
 
@@ -1280,7 +1299,7 @@ steps:
             condition: "code_missing: .listen(3000"
 
     quiz:
-      title: "Your First Express Route — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1340,11 +1359,17 @@ steps:
     http_client: true
     http_url: "http://localhost:3000/students?passing=true"
     instructions: |
-      ## Making Routes Dynamic
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **read** query parameters with `req.query`, **extract** URL parameters with `req.params`, and **handle** POST requests with `req.body`.
+      In Step 5, your route always returned the same response. Real APIs need to respond differently based on what the user asks for — search filters, resource IDs, JSON payloads to create new records. Without these three input channels, an Express server is just a glorified static page.
 
-      In Step 5, your route always returned the same response. Real APIs need to respond differently based on what the user asks for. Express provides three ways to receive data from users:
+      ### 🎯 You will learn to
+
+      - Apply `req.query` to read URL query parameters
+      - Apply `req.params` to extract URL path parameters
+      - Create POST handlers that read JSON from `req.body`
+
+      Express provides three ways to receive data from users:
 
       ### 1. Query Parameters (`req.query`)
 
@@ -1599,7 +1624,7 @@ steps:
             condition: "source_contains: Implement me"
 
     quiz:
-      title: "Dynamic Routes — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1669,9 +1694,15 @@ steps:
     http_client: true
     http_url: "http://localhost:3000/api/students"
     instructions: |
-      ## Organizing Routes Like a Professional
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **create** an Express Router, **define** routes on it, and **mount** it on a prefix path using `app.use()`.
+      Real Express apps quickly grow past a single file. Without a way to split routes into modules, your `app.js` balloons to hundreds of lines mixing students, courses, professors, and authentication. The Router pattern is how every production Express codebase organizes routes into modular, testable units.
+
+      ### 🎯 You will learn to
+
+      - Create an Express Router and define routes on it
+      - Apply `module.exports` and `require` to share a router across files
+      - Apply `app.use()` to mount a router on a URL prefix
 
       ### The Problem: One File Gets Messy
 
@@ -1901,7 +1932,7 @@ steps:
             condition: "code_missing: studentRoutes"
 
     quiz:
-      title: "The Express Router — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1978,11 +2009,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "The Blocked Chef — The Event Loop"
     instructions: |
-      ## The Most Important Concept in Node.js
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **predict** the execution order of synchronous and asynchronous code and **explain** how the Event Loop, Call Stack, and Task Queue interact.
+      This is the paradigm shift that trips up every C++ and Python developer. The Event Loop is the single most important concept in Node.js: it is what lets a single JavaScript thread serve thousands of HTTP requests, and it is also what causes a careless `readFileSync` to freeze your entire server. Read carefully — and expect to be surprised.
 
-      This is the paradigm shift that trips up every C++ and Python developer. Read carefully — and expect to be surprised.
+      ### 🎯 You will learn to
+
+      - Analyze the execution order of synchronous and asynchronous code
+      - Explain how the Event Loop, Call Stack, and Task Queue interact
+      - Evaluate when blocking I/O will harm a single-threaded server
 
       > **Before you begin:** Rate your confidence: *"I understand how code execution order works"* — 1 (not sure) to 5 (very confident). Revisit this rating after completing the step.
 
@@ -2200,7 +2235,7 @@ steps:
             condition: "code_contains: readFile"
 
     quiz:
-      title: "The Event Loop — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2270,11 +2305,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "From Callbacks to async/await"
     instructions: |
-      ## From Callbacks to Clean Code
+      ### Why this matters
 
-      > You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners. If it is still fuzzy, revisit the Restaurant Metaphor whenever async code surprises you — that is completely normal and the metaphor becomes clearer with practice.
+      You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners; if it is still fuzzy, revisit the Restaurant Metaphor whenever async code surprises you. Now you will trade callback nesting for `async`/`await` — the syntax that lets you write non-blocking code that *reads* like ordinary Python or C++. Almost every modern Node.js codebase is built on this idiom.
 
-      > **Learning objective:** After this step you will be able to **refactor** `fs.readFile` callback-style code to use `async`/`await` with `fs.promises.readFile`, **explain** what a Promise represents, and **use** `try`/`catch` for async error handling.
+      ### 🎯 You will learn to
+
+      - Apply `async`/`await` with `fs.promises.readFile` to refactor callback code
+      - Explain what a Promise represents and its three states
+      - Apply `try`/`catch` to handle errors in async code
 
       ### Quick Retrieval: Event Loop Check
 
@@ -2517,7 +2556,7 @@ steps:
             condition: "code_matches: const\\s+data\\s*=\\s*fs\\.promises\\.readFile"
 
     quiz:
-      title: "async/await — Knowledge Check"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2594,11 +2633,19 @@ steps:
     http_client: true
     http_url: "http://CS35L-nodejs.edu/api/dashboard"
     instructions: |
-      > **Learning objective:** After this step you will be able to **design and implement** a complete Express API using the Router pattern, async data fetching, and all JavaScript skills from this tutorial.
+      ### Why this matters
+
+      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. Now you are building a real API and deploying it to `CS35L-nodejs.edu` — with **no scaffolding**. The integration *is* the learning: pulling component skills into one cohesive system is what working developers do every day.
+
+      ### 🎯 You will learn to
+
+      - Create a complete Express API using the Router pattern
+      - Apply `async`/`await` with `Promise.all` for concurrent data fetching
+      - Evaluate trade-offs in code structure across multiple route handlers
 
       ## Ship It — Your API Goes Live
 
-      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. Now you are building a real API and deploying it to `CS35L-nodejs.edu` — with **no scaffolding**. You decide how to structure the code.
+      You decide how to structure the code.
 
       > **Growth mindset moment:** This capstone has no scaffolding — and that is intentional. If you feel stuck, it does not mean you are missing something fundamental. It means you are doing the hard work of *integrating* skills that you practiced in isolation. Go back to the specific step that covers the concept you are stuck on. Every professional developer references prior work when building something new.
 
@@ -2895,8 +2942,8 @@ steps:
             condition: "code_missing: ==="
 
     quiz:
-      title: "Capstone — Comprehensive Knowledge Check"
-      min_score: 0.7
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         # --- Capstone-specific questions ---
@@ -3021,12 +3068,22 @@ steps:
 
   # --------------------------------------------------------------------------
   # STEP 11: You Made It! — Summary & Celebration (no tasks, no tests)
+  # Pedagogy: consolidation & spaced-practice prompt — recap component
+  #           skills, link to capstone integration, and seed retrieval
+  #           practice for the next day.
   # --------------------------------------------------------------------------
   - title: "You Made It!"
     instructions: |
-      ## You Built a Backend From Scratch
+      ### Why this matters
 
-      Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of JavaScript and Node.js backend development.
+      Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of JavaScript and Node.js backend development. Pausing here to consolidate — naming each skill you unlocked and how it slotted together in the capstone — is what turns a finished tutorial into durable, transferable knowledge.
+
+      ### 🎯 You will learn to
+
+      - Evaluate which Node.js concepts you have mastered and which need review
+      - Apply spaced retrieval practice to consolidate the tutorial's concepts
+
+      ## You Built a Backend From Scratch
 
       ### Here is everything you learned:
 

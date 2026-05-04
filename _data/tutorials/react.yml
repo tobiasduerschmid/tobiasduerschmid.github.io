@@ -29,7 +29,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Hello, React! — Declarative vs. Imperative"
     instructions: |
-      > **Learning objective:** After this step you will be able to **explain** the difference between imperative and declarative UI programming, and **modify** a simple React component.
+      ### Why this matters
+
+      Modern web UIs change constantly, and manually keeping the DOM in sync with your data is the #1 source of UI bugs. React eliminates that synchronization problem with a **declarative** model — but only if you make the mental shift from "tell the browser how to update" to "describe what the UI should look like." This shift is the single biggest hurdle for developers coming from imperative languages like C++ and Python.
+
+      ### 🎯 You will learn to
+
+      - Explain the difference between imperative and declarative UI programming
+      - Modify a simple React component to change its rendered output
+      - Evaluate when React's declarative model pays off vs. when vanilla JS is simpler
 
       ## The Paradigm Shift
 
@@ -199,7 +207,7 @@ steps:
             condition: "code_contains: #e45b45"
 
     quiz:
-      title: "Hello, React! — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -253,7 +261,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Components & JSX — Fixer-Upper"
     instructions: |
-      > **Learning objective:** After this step you will be able to **identify** and **fix** common JSX syntax errors, and **explain** why JSX differs from HTML.
+      ### Why this matters
+
+      JSX looks like HTML, and that resemblance is a trap: it tricks your HTML instincts into writing code that compiles to subtly wrong JavaScript. Most beginner React bugs are JSX syntax mistakes — `class` instead of `className`, `onclick` instead of `onClick`, missing self-closing slashes. Spot these now and you save yourself hours of confused debugging later.
+
+      ### 🎯 You will learn to
+
+      - Identify common JSX syntax errors that trip up HTML-trained developers
+      - Apply JSX rules (`className`, self-closing tags, camelCase events) to fix broken components
+      - Explain why JSX differs from HTML and how Babel compiles it to `React.createElement` calls
 
       ## Components Are Just Functions
 
@@ -422,7 +438,7 @@ steps:
             condition: "code_missing: style=\""
 
     quiz:
-      title: "Components & JSX — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -495,7 +511,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Props — Parameterizing Components"
     instructions: |
-      > **Learning objective:** After this step you will be able to **implement** components that accept props, and **explain** why props are read-only.
+      ### Why this matters
+
+      A component with no props is a one-trick pony — it can only ever render the exact UI you hard-coded into it. Props turn components into reusable building blocks that adapt to their context, exactly like function arguments turn a function into something you can call from many places. Without props, every product card in your store would have to be a separate component.
+
+      ### 🎯 You will learn to
+
+      - Apply props to parameterize a component's rendered output
+      - Implement destructuring (`{ name, price }`) to unpack props cleanly
+      - Explain why props are read-only and what breaks if you mutate them
 
       ## Props Are Function Arguments
 
@@ -734,7 +758,7 @@ steps:
             condition: "code_contains: &&"
 
     quiz:
-      title: "Props — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -817,13 +841,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "useState — Making Components Remember"
     instructions: |
-      > **Learning objective:** After this step you will be able to **implement** interactive components using `useState` and **explain** why regular variables don't trigger re-renders.
-
-      ## Try It First (Productive Failure)
-
-      ### The Hardest Paradigm Shift
+      ### Why this matters
 
       This step is where most students get stuck. The idea that changing a variable doesn't update the UI — and that you need a special React function to do it — feels deeply wrong after years of imperative programming. That confusion is normal and expected. Every React developer had the same "but why doesn't this just work?" moment.
+
+      ### 🎯 You will learn to
+
+      - Apply `useState` to give components persistent memory across re-renders
+      - Analyze why regular variables don't trigger re-renders (and why mutating arrays in place doesn't either)
+      - Evaluate when to use the functional update form `setCount(prev => prev + 1)` to avoid stale closures
+
+      ## Try It First (Productive Failure)
 
       **Before reading further**, look at the counter code below. It doesn't work — clicking +1 does nothing. Spend 2 minutes trying to fix it using what you know from C++ and Python. What approaches did you try? Why didn't they work?
 
@@ -1099,7 +1127,7 @@ steps:
             condition: "code_matches: setCount\\s*\\(\\s*count\\s*-\\s*1\\s*\\)"
 
     quiz:
-      title: "useState — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1199,11 +1227,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Lists & Keys — Rendering Collections"
     instructions: |
-      > **Learning objective:** After this step you will be able to **render** arrays as lists using `.map()` and **explain** why stable `key` props are essential for React's reconciliation.
+      ### Why this matters
 
-      ### A Note on `.map()` — A New Way to Loop
+      Real apps render collections — task lists, product grids, search results — and React needs you to think about lists differently than C++ and Python do. If you have always used `for` loops to iterate over arrays, the `.map()` pattern will feel unfamiliar at first. You might think: "Why can't I just use a `for` loop?" You can — but `.map()` produces a new array without mutating the original, which is exactly what React needs. Get this right and you unlock 80% of real-world UI work.
 
-      If you have always used `for` loops to iterate over arrays (as in C++ and Python), the `.map()` pattern will feel unfamiliar at first. You might think: "Why can't I just use a `for` loop?" You can — but `.map()` produces a new array without mutating the original, which is exactly what React needs. Give it a few tries and it will click.
+      ### 🎯 You will learn to
+
+      - Apply `.map()` to transform a data array into an array of JSX elements
+      - Analyze why stable `key` props are essential for React's reconciliation
+      - Evaluate when array indices are unsafe to use as keys
 
       ### JavaScript Array Methods — Quick Reference
 
@@ -1392,7 +1424,7 @@ steps:
             condition: "code_missing: ?"
 
     quiz:
-      title: "Lists & Keys — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1466,11 +1498,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Conditional Rendering & Filtering"
     instructions: |
-      > **Learning objective:** After this step you will be able to **use** conditional rendering patterns (`&&`, ternary) in JSX and **implement** interactive list filtering with `useState`.
-
-      ### Combining Skills — This Is the Hard Part
+      ### Why this matters
 
       This step is a turning point: you are combining `useState` (Step 4) with `.map()` and `.filter()` (Step 5) into a single interactive component. If it feels harder than previous steps, that is because it IS harder — you are integrating multiple skills simultaneously for the first time. Take it one piece at a time: get the buttons rendering first, then wire up the filter logic.
+
+      ### 🎯 You will learn to
+
+      - Apply conditional rendering patterns (`&&`, ternary) to show or hide JSX
+      - Implement interactive list filtering by combining `useState` with `.filter()`
+      - Analyze the derived-state principle — store the minimum, compute the rest
 
       ## Conditional Rendering
 
@@ -1761,7 +1797,7 @@ steps:
             condition: "code_missing: ? 'primary'"
 
     quiz:
-      title: "Conditional Rendering & Filtering — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1901,13 +1937,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Composition — Thinking in React"
     instructions: |
-      > **Learning objective:** After this step you will be able to **use** the `children` prop for composition, and **apply** the "Thinking in React" methodology to decompose a UI.
-
-      ## Thinking in React
-
-      ### Putting the Pieces Together
+      ### Why this matters
 
       This step asks you to combine everything you have learned into a structured design process. It is normal to feel overwhelmed by the number of moving parts — components, props, state, lists, conditionals. Take it one step at a time: start with a static version (no state), then add interactivity piece by piece.
+
+      ### 🎯 You will learn to
+
+      - Apply the `children` prop to build flexible, composable container components
+      - Apply the "Thinking in React" methodology to decompose a UI into a component hierarchy
+      - Evaluate when to lift state up vs. pass it down via props
+
+      ## Thinking in React
 
       React's official methodology for approaching a new UI:
 
@@ -2253,7 +2293,7 @@ steps:
             condition: "code_missing: Avatar"
 
     quiz:
-      title: "Composition — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2332,13 +2372,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Integration Project: Build a Mini Store"
     instructions: |
-      > **Learning objective:** After this step you will be able to **design and implement** a complete React application that integrates components, props, state, lists, conditional rendering, and composition.
+      ### Why this matters
 
-      ## The Training Wheels Are Off
+      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. If you feel uncertain, that's actually a good sign — every professional React developer went through this exact transition from "I can follow tutorials" to "I can build from scratch." It is supposed to feel like a stretch.
 
-      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. No hints, no scaffolding — just you and everything you've learned.
+      ### 🎯 You will learn to
 
-      If you feel uncertain, that's actually a good sign: you know enough to see the design space, but haven't yet internalized the patterns through unguided practice. That's exactly what this step is for. Every professional React developer went through this exact transition — from "I can follow tutorials" to "I can build from scratch." It is supposed to feel like a stretch. Work through "Thinking in React" below — it'll guide your decisions.
+      - Create a complete React application from scratch with no scaffolding
+      - Apply every prior skill (components, props, state, lists, filtering, composition) in an integrated design
+      - Evaluate which component owns each piece of state using the lowest-common-ancestor rule
 
       ### Requirements
 
@@ -2603,7 +2645,7 @@ steps:
             condition: "code_contains: useState"
 
     quiz:
-      title: "Final Assessment — Everything You've Learned"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2827,6 +2869,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "You Made It!"
     instructions: |
+      ### Why this matters
+
+      You walked into this tutorial knowing C++ and Python; you are walking out with a working knowledge of React and modern declarative UI development. Taking a moment to consolidate what you learned — and to recognize the arc from your first JSX bug to a fully-featured app — turns a sequence of exercises into durable knowledge you can transfer to the next framework you encounter.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your own growth across the eight prior steps and name the concepts you now own
+      - Identify natural next topics (`useEffect`, React Router, Context, custom hooks) to deepen your React skills
+
       ## You Built a React App From Scratch
 
       Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of React and modern declarative UI development.

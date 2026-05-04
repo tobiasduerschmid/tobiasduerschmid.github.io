@@ -35,9 +35,17 @@ steps:
   # AAA → navigate-interact-assert mapping).
   # Faded scaffolding: fully worked annotated test. Predict + modify in PRIMM.
   # ==========================================================================
+  # Pedagogy: PRIMM — worked example with Predict + Modify
   - title: "Anatomy of a Playwright Test: Navigate, Interact, Assert"
     instructions: |
-      > **Learning objective.** After this step you can read a basic Playwright test for a React app and identify how each line maps onto the **Arrange / Act / Assert** pattern from Testing Foundations.
+      ### Why this matters
+
+      Every Playwright test you ever write — at work, on capstones, debugging at 11pm — is a variation on three lines: navigate to the page, interact with the UI, assert what the user sees. Lock that rhythm in now and the rest of the tutorial becomes pattern-matching against it. Skip it, and every later step feels like memorization.
+
+      ### 🎯 You will learn to
+
+      - Analyze a basic Playwright test and identify how each line maps onto the **Arrange / Act / Assert** pattern from Testing Foundations
+      - Apply the navigate-interact-assert rhythm to read unfamiliar Playwright tests at a glance
 
       In Testing Foundations you wrote tests like this:
 
@@ -333,7 +341,7 @@ steps:
         The test reads as **navigate → interact → assert** — the browser version of Arrange / Act / Assert. The title (`'user can add a todo'`) describes a user-visible promise, not a click sequence. Locators use accessible roles (`getByRole`) so the test isn't tied to CSS class names. The assertion uses `await expect(...).toBeVisible()` — a web-first matcher that auto-waits.
 
     quiz:
-      title: "Anatomy of a Playwright Test — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -410,9 +418,18 @@ steps:
   # partition-as-user-path mapping). Builds on Step 1 syntax.
   # Faded scaffolding: 3-of-4 tests provided; student writes the 4th.
   # ==========================================================================
+  # Pedagogy: worked example with fading — 3 of 4 tests provided, student writes the 4th
   - title: "The Spec Card: Choosing What User Paths Deserve a Test"
     instructions: |
-      > **Learning objective.** After this step you can write a **Spec Card** for a feature and use it to choose which user-path partitions deserve an end-to-end test (and which belong in lower test layers).
+      ### Why this matters
+
+      The hardest part of e2e testing isn't writing the test — it's deciding *which* tests to write. Without a deliberate selection method, you end up testing whatever came to mind first, missing the partitions that actually catch bugs. The Spec Card is the artifact that forces the question *what about this feature is the stable contract?* before you commit code that pins the wrong thing.
+
+      ### 🎯 You will learn to
+
+      - Apply input-space partitioning from Testing Foundations to user-path partitioning in e2e
+      - Create a Spec Card that names a feature's stable contract before writing the test
+      - Evaluate which user paths deserve an e2e test versus a lower test layer
 
       ### 🧠 Quick recall (don't scroll back)
 
@@ -690,7 +707,7 @@ steps:
         The whitespace-only test follows the same shape as the other partition tests — only the input value changes. The assertion uses `toHaveCount(0)` to prove no list item was added. Because the spec trims input before validating, whitespace-only and empty input are in the same behavioral partition; we test one representative of each.
 
     quiz:
-      title: "Spec Card & Partitions — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -760,9 +777,18 @@ steps:
   # durability dimension).
   # Variation Theory: contrast — same scenario, 5 different locator strategies.
   # ==========================================================================
+  # Pedagogy: Variation Theory contrast — same scenario, 5 locator strategies
   - title: "The Locator Ladder: Stable Contracts vs Incidental UI"
     instructions: |
-      > **Learning objective.** After this step you can choose a locator that matches what's *stable* about a UI element — and explain when each rung of the locator ladder is the right choice.
+      ### Why this matters
+
+      The locator you choose is the *contract* between your test and the UI — it decides which UI changes will (correctly) break the test and which will (incorrectly) break it. Pick the wrong rung of the ladder and your test either fails on every CSS rename (false alarms that erode trust) or stays green when accessibility regresses (silent failures). The locator ladder is how you make that choice deliberately, not by accident.
+
+      ### 🎯 You will learn to
+
+      - Analyze five locator strategies and identify what each one depends on (semantics vs implementation)
+      - Apply the locator ladder to choose the highest rung the UI actually supports
+      - Evaluate locator durability against three classes of refactor (CSS rename, text change, DOM restructure)
 
       ### 🧠 Quick recall
 
@@ -1099,7 +1125,7 @@ steps:
         Rung 5 was rewritten to use the role + accessible-name locator (Rung 1). Same behavior verified, but the test no longer depends on the CSS class `.add-todo-btn`. Step 5 will demonstrate why this matters when the team renames CSS classes.
 
     quiz:
-      title: "The Locator Ladder — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1166,9 +1192,18 @@ steps:
   # weak vs strong web-first assertions).
   # Productive failure: weak test passes against silently buggy app.
   # ==========================================================================
+  # Pedagogy: productive failure (Bjork) — weak test passes against silently buggy app
   - title: "Strong Assertions: The Liar Test in the Browser"
     instructions: |
-      > **Learning objective.** After this step you can recognize *weak* assertions in Playwright tests, predict when they'll lie about a buggy app, and strengthen them to catch real regressions.
+      ### Why this matters
+
+      A green test you can't trust is worse than no test at all — it gives false confidence while the bug ships. *Liar tests* are the most dangerous failure mode in an e2e suite because the test visibly clicks buttons, which makes it *feel* like real verification. This step makes that lie tactile: you'll watch a buggy app pass a weak assertion, then strengthen it until it tells the truth.
+
+      ### 🎯 You will learn to
+
+      - Analyze a passing Playwright test and recognize when its oracle is too weak to catch the spec violation
+      - Apply web-first assertions (`await expect(...)`) instead of the synchronous `expect(await locator.isVisible()).toBe(true)` antipattern
+      - Evaluate three weak assertion patterns and rewrite them to verify the user-visible promise
 
       ### 🧠 Quick recall
 
@@ -1440,7 +1475,7 @@ steps:
         The strengthened assertion uses `toHaveText('Milk')` — it now pins the *content* of the list item, not just its existence. Against the buggy app (which renders an empty `<li>`), this assertion fails as it should: the user's promise ("the item shows up in the list") was broken, and the test now reflects that.
 
     quiz:
-      title: "Strong Assertions — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1505,9 +1540,18 @@ steps:
   # Variation Theory: contrast — same behavior, two locator strategies; refactor
   # varies; behavior held constant.
   # ==========================================================================
+  # Pedagogy: Variation Theory contrast — refactor varies, behavior held constant
   - title: "Behavior, Not Implementation: The Brittleness Gauntlet"
     instructions: |
-      > **Learning objective.** After this step you can predict which tests will survive a UI refactor and which will break, classify a break as a real regression vs a false alarm, and rewrite brittle locators into durable ones.
+      ### Why this matters
+
+      Every brittle test on a real codebase trains the team to ignore the suite — and once trust is gone, the suite's value collapses. The fix is not to write *more* tests; it's to make sure each test breaks for the *right* reason. This step makes that distinction tactile by having you edit the app yourself and watch one locator survive a refactor while another shatters.
+
+      ### 🎯 You will learn to
+
+      - Analyze a failing test and classify the break as a **real regression** or a **false alarm**
+      - Apply the locator ladder under pressure: predict which tests survive each refactor before running them
+      - Evaluate a brittle locator and rewrite it into one coupled to behavior, not styling
 
       ### 🧠 Quick recall
 
@@ -1778,7 +1822,7 @@ steps:
         After renaming the CSS class to `primary-btn`, only the role-based test still passes. The CSS-based test was coupled to the *implementation detail* (the class name); the role-based test was coupled to the *user-visible behavior* (a button with the accessible name "Add todo"). The user-facing experience didn't change, so a healthy test suite doesn't notice the rename.
 
     quiz:
-      title: "The Brittleness Gauntlet — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1847,9 +1891,18 @@ steps:
   # Variation Theory: separation — assertion strength varies (3 levels) ×
   # scenario varies (refactor vs bug).
   # ==========================================================================
+  # Pedagogy: Variation Theory separation — 3 assertion strengths × 2 scenarios
   - title: "The Maintenance Trade-off: Pin the Spec, No More, No Less"
     instructions: |
-      > **Learning objective.** After this step you can match an assertion's *strictness* to what the spec actually promises — neither over-specifying (which causes false alarms) nor under-specifying (which misses real bugs).
+      ### Why this matters
+
+      Step 4 said *stronger assertions catch more bugs*. Step 5 said *brittle locators waste team time*. Both are true — and they pull in opposite directions. The skill that separates a maintainable suite from a brittle one is knowing how to reconcile them: pin exactly what the spec promises, no more, no less. Get this calibration wrong and you either over-specify (false alarms on every refactor) or under-specify (the count is broken and the test is green).
+
+      ### 🎯 You will learn to
+
+      - Apply the principle *match assertion specificity to spec specificity* to a single-promise feature
+      - Analyze a 3 × 2 grid of assertion strength × scenario and predict which results are correct vs misleading
+      - Evaluate a goldilocks assertion against brittle and loose alternatives
 
       ### 🧠 Quick recall
 
@@ -2187,7 +2240,7 @@ steps:
         With the off-by-one bug, the brittle and Goldilocks tests both fail — both pinned the count, and the count is now wrong. The loose test still passes — it only verified the status region exists, never the count. That's the lesson: a stronger assertion isn't always better, but an assertion that doesn't pin the spec at all is *worse* than no test. The Goldilocks assertion is on the diagonal: loose enough to survive a wording change, tight enough to catch a real regression.
 
     quiz:
-      title: "The Maintenance Trade-off — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2264,9 +2317,18 @@ steps:
   # Scaffolded per user feedback: Spec Card given, test stubs given, student
   # fills in Act + Assert.
   # ==========================================================================
+  # Pedagogy: Variation Theory fusion — multiple promises varying together
   - title: "Multi-Promise Features and the Capstone"
     instructions: |
-      > **Learning objective.** After this step you can apply the *match assertion specificity to spec specificity* principle to a feature with **multiple** promises, choosing per-promise specificity independently. This is the real-world skill — most features have more than one thing to verify.
+      ### Why this matters
+
+      Real features rarely have a single promise. The "Mark as done" toggle has *three*: state changes, count decrements, item stays visible. Each promise has its own specificity sweet spot — and treating them as one big assertion either over-pins (brittle on harmless changes) or under-pins (misses bugs in two-thirds of the contract). This step is the real-world skill: per-promise specificity decisions, made independently.
+
+      ### 🎯 You will learn to
+
+      - Apply the specificity-matching principle to features with multiple independent promises
+      - Analyze each promise separately and choose its locator + assertion shape
+      - Create a complete multi-promise Playwright test from a Spec Card and a partial test stub
 
       ### 🧠 Quick recall
 
@@ -2705,7 +2767,7 @@ steps:
         Each test on the diagonal: semantic locators (`getByRole` with the item's text as the accessible name), per-promise specificity (toggle state via `aria-pressed`, count via `toContainText` of the number, item visibility via `getByRole('listitem').filter()`). None of the tests would break if the strikethrough color changes, the toggle becomes a checkbox icon, or the wording around the count changes. All three would fail if marking didn't persist or the count didn't decrement.
 
     quiz:
-      title: "Multi-Promise Features — Capstone Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2788,7 +2850,15 @@ steps:
   # ==========================================================================
   - title: "From-Scratch Capstone: Write a Test From a Spec Card Alone"
     instructions: |
-      > **Learning objective.** After this step you can write a complete Playwright test — `import` to closing `});` — given only a behavior spec and an empty file. This is the skill that distinguishes "I can fill in TODOs in a tutorial" from "I can write tests at work."
+      ### Why this matters
+
+      Filling in a TODO inside a tutorial scaffold is *not* the skill you'll need at work. At work you get a behavior, an empty file, and a deadline. The gap between "I can finish the test someone started" and "I can write the test from a blank buffer" is enormous — and most Playwright tutorials never close it. This step does. It's the moment the training wheels come off.
+
+      ### 🎯 You will learn to
+
+      - Create a complete Playwright test — from `import` to closing `});` — given only a behavior spec
+      - Apply every prior step's discipline (Spec Card, locator ladder, web-first assertions, per-promise specificity) without a stub to lean on
+      - Evaluate your own test against the gates: does it survive harmless refactors *and* catch real regressions?
 
       ### 🪜 The training wheels come off
 
@@ -3085,8 +3155,8 @@ steps:
             condition: "code_missing: getByRole"
 
     quiz:
-      title: "From-Scratch Capstone — Reflection"
-      min_score: 0.5
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       shuffle: false
       questions:
 

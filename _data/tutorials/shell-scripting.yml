@@ -13,6 +13,7 @@ learning_objectives:
 autosave_type: commands-and-files
 
 steps:
+  # Pedagogy: PRIMM — Run + Investigate (first contact: shebang, set -e, command substitution)
   - title: "Hello, Shell!"
     instructions: |
       Welcome to the **Shell Scripting Tutorial**! On the top is a code
@@ -24,17 +25,23 @@ steps:
       > with genuinely hard material, not a sign you're doing it wrong.
       > Every error message is a clue; every mistake is a step forward.
 
-      ### Why learn shell scripting?
+      ### Why this matters
 
       Every time you repeat a task in the terminal — processing files, checking
       log files, running complex builds — you are a candidate for automation. A
       shell script captures those commands in a file so you can re-run,
-      share, and schedule them without retyping anything.  So learning shell scripting can supercharge your productivity as a developer.
+      share, and schedule them without retyping anything. So learning shell scripting can supercharge your productivity as a developer.
 
       Shell scripts are the foundation of Continuous Integration / Continuous
       Delivery (CI/CD) pipelines, Docker entrypoints, deployment scripts,
       and system administration. The skills you learn here transfer directly
       to real production workflows.
+
+      ### 🎯 You will learn to
+
+      - Apply the shebang (`#!/bin/bash`) and `set -e` to make a script safe and self-contained.
+      - Apply command substitution `$(...)` to embed dynamic values inside strings.
+      - Create and execute your first shell script end-to-end.
 
       ### Two lines every script needs
 
@@ -163,7 +170,7 @@ steps:
         command: "[ -x morning.sh ]"
 
     quiz:
-      title: "Hello, Shell! — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -198,11 +205,22 @@ steps:
             - 3
           explanation: "Command substitution `$(cmd)` runs `cmd` and injects its stdout into the surrounding expression. It can be nested arbitrarily and does NOT require `eval`. It is one of Bash's most powerful and widely-used features."
 
+  # Pedagogy: PRIMM — Predict + Run (predict-before-run on cd, mkdir -p, cp -r)
   - title: "Navigating the Filesystem"
     instructions: |
+      ### Why this matters
+
       Before you can automate tasks with scripts, you need to move around
       the filesystem confidently. In a GUI you click folders; in the shell
-      you type commands. Let's build muscle memory for the essential ones.
+      you type commands. Every later step assumes you can navigate, create,
+      copy, move, and remove files without thinking — let's build that muscle
+      memory now.
+
+      ### 🎯 You will learn to
+
+      - Apply `pwd`, `ls`, and `cd` to navigate any directory tree.
+      - Apply `mkdir -p`, `cp -r`, `mv`, and `rm` to manipulate files and directories.
+      - Analyze when each flag is required (`-p` for parents, `-r` for recursion).
 
       ### Where am I? What's here?
 
@@ -387,7 +405,7 @@ steps:
         command: "! [ -f /tutorial/myproject/tests/test_placeholder.txt ]"
 
     quiz:
-      title: "Navigating the Filesystem — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -427,13 +445,24 @@ steps:
           correct_index: 1
           explanation: "`./morning.sh` means 'run the file named morning.sh in the current directory.' After `mv` moves it to `scripts/`, the file no longer exists at `./morning.sh`. The execute permission *does* travel with the file (it's a file attribute, not a path attribute), so `./scripts/morning.sh` would work. This reinforces what `./` means from Hello, Shell!."
 
+  # Pedagogy: worked example with fading (isolate each tool, then compose into pipelines)
   - title: "Pipes — Connecting Commands"
     instructions: |
+      ### Why this matters
+
       The **pipe** operator `|` is one of the most powerful ideas in Unix.
       It connects programs so that the output of one becomes the input of
       the next, letting you build data-processing pipelines from small,
       single-purpose tools. Data flows through memory from one process to
-      the next — no intermediate files needed.
+      the next — no intermediate files needed. Mastering pipes turns the
+      shell from a place where you type commands into a place where you
+      compose tools.
+
+      ### 🎯 You will learn to
+
+      - Apply `grep`, `wc`, `sort`, `uniq`, `cut`, and `head` individually on real text data.
+      - Create multi-stage pipelines that compose these tools to answer real questions.
+      - Analyze the difference between `stdout`, `stderr`, and the redirection operators (`>`, `>>`, `<`, `2>`).
 
       But before you connect tools, you need to know what each one does
       on its own. First, explore each tool individually — then we'll
@@ -686,7 +715,7 @@ steps:
         command: "[ -f top_message_types.txt ] && grep -q '8 *INFO' top_message_types.txt && grep -q '4 *ERROR' top_message_types.txt && ! grep -q 'WARN' top_message_types.txt"
 
     quiz:
-      title: "Pipes — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -744,10 +773,22 @@ steps:
           correct_index: 1
           explanation: "Each tool in the pipeline does **one thing well**: `cut` extracts fields, `sort` orders lines, `uniq` collapses duplicates, `sort -rn` ranks by count. They **work together** by passing text through pipes. Text is the **universal interface** that lets these tools compose freely — this is the Unix Philosophy in action."
 
+  # Pedagogy: productive failure (Bjork) — confront the quoting bug deliberately, then fix it
   - title: "Variables & The Quoting Trap"
     instructions: |
-      Variables store values for reuse. In Bash, you assign with `=` and
-      read with `$`.
+      ### Why this matters
+
+      Variables store values for reuse — but Bash's word-splitting rules
+      turn unquoted variables into one of the most common (and confusing)
+      bugs in production scripts. A filename like `my report.txt` will
+      silently break your script unless you quote correctly. Learning the
+      quoting rule once will save you hours of debugging later.
+
+      ### 🎯 You will learn to
+
+      - Apply Bash variable assignment syntax (`name="value"`, no spaces).
+      - Apply double-quoting consistently to prevent word-splitting bugs.
+      - Analyze a failing script and identify the missing quotes from the error message.
 
       ### The spaces rule — easy to break, hard to debug
 
@@ -885,7 +926,7 @@ steps:
         command: "bash inventory.sh | grep -qE '[0-9]+ script'"
 
     quiz:
-      title: "Variables & Quoting — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -925,10 +966,24 @@ steps:
           correct_index: 1
           explanation: "As we saw in Hello, Shell!, the shebang (`#!`) followed by a path tells the OS which program to use to run the script. Without it, the OS might guess the wrong interpreter."
 
+  # Pedagogy: PRIMM — Predict + Investigate (set -e + grep -c trap, then fill-in-the-blank)
   - title: "Conditionals — Making Decisions"
     instructions: |
-      Scripts need to react to different situations. Bash's `if` statement
-      runs commands conditionally based on whether a *test* succeeds.
+      ### Why this matters
+
+      Scripts need to react to different situations: a file might exist or
+      not, a count might be high or low, an argument might be valid or
+      garbage. Bash's `if` statement is the primary tool for branching, but
+      it has unique syntactic traps — `[` is actually a command, spaces
+      inside `[ ]` are mandatory, and string vs. integer comparison use
+      different operators. Get these right and your scripts behave; get
+      them wrong and Bash will silently lie to you.
+
+      ### 🎯 You will learn to
+
+      - Apply `if`/`elif`/`else` with `[ ]` tests for files, strings, and integers.
+      - Analyze the difference between `=`/`!=` (string) and `-eq`/`-gt`/`-lt` (integer) operators.
+      - Apply the `|| true` idiom to keep `set -e` from killing scripts on benign non-zero exits.
 
       ### Syntax
 
@@ -1098,7 +1153,7 @@ steps:
         command: "grep -qE '\\-gt|\\-ge' health_check.sh"
 
     quiz:
-      title: "Conditionals — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1138,9 +1193,22 @@ steps:
           correct_index: 1
           explanation: "As we learned in the Pipes step, `>` overwrites a file, while `>>` appends to it. Both are forms of output redirection."
 
+  # Pedagogy: worked example with fading (skeleton with three blanks: capture, compare, mirror)
   - title: "Loops — Repeating Work"
     instructions: |
-      Loops eliminate repetition. Let's look at iterating over globs (file expansions).
+      ### Why this matters
+
+      Loops eliminate repetition. Whenever you find yourself running the
+      same command on file after file, a `for` loop turns ten lines of
+      typing into three. Combined with globs (`*.sh`), arithmetic
+      expansion (`$(( ... ))`), and the conditionals you just learned,
+      a single loop becomes a tiny batch processor.
+
+      ### 🎯 You will learn to
+
+      - Apply `for` loops to iterate over files matched by a glob.
+      - Apply `$((... ))` arithmetic expansion to maintain running counters across iterations.
+      - Create a batch validator that classifies each file as pass or fail and reports a summary.
 
       ```bash
       for f in *.sh; do # expands to all matching filenames
@@ -1281,7 +1349,7 @@ steps:
         command: "grep -qE 'head' batch_check.sh"
 
     quiz:
-      title: "Loops — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1330,8 +1398,23 @@ steps:
           correct_index: 1
           explanation: "As we learned in the Filesystem step, `mkdir` requires all parent directories to already exist. Without `-p`, it fails. The fix is either `mkdir -p results/\"$f\"` or creating `results/` before the loop."
 
+  # Pedagogy: worked example with fading (training wheels removed — write file_info.sh from scratch)
   - title: "Arguments & Special Variables"
     instructions: |
+      ### Why this matters
+
+      Real scripts are reusable: they take input from the command line
+      instead of hard-coding filenames. Bash gives you `$1`, `$2`, `$#`,
+      and `"$@"` for free — these are the bridge between your script and
+      whoever (a user, another script, a CI/CD pipeline) is calling it.
+      Validating arguments is the first thing every robust script does.
+
+      ### 🎯 You will learn to
+
+      - Apply `$0`, `$1`…`$N`, `$#`, and `"$@"` to read command-line arguments.
+      - Apply `for f in "$@"; do` to loop over arguments safely.
+      - Create a script that validates input, branches on file type, and reports per-argument results.
+
       When you run `./script.sh one two three`, the shell sets special
       variables automatically:
 
@@ -1431,7 +1514,7 @@ steps:
         command: "bash file_info.sh server_log.txt | grep -qE '15 lines|server_log.*lines'"
       
     quiz:
-      title: "Arguments & Special Variables — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1461,9 +1544,24 @@ steps:
           correct_index: 1
           explanation: "Without quotes, `$@` is subject to word splitting. `\"$@\"` preserves each argument as a single unit, regardless of spaces."
 
+  # Pedagogy: negative-transfer callout (Bash return ≠ Python/C return — return is exit code only)
   - title: "Functions — Reusable Building Blocks"
     instructions: |
-      Functions let you name a block of code and call it anywhere, just like external commands.
+      ### Why this matters
+
+      Functions let you name a block of code and call it anywhere, just
+      like external commands. They keep scripts DRY, make them testable,
+      and give you a place to hang the `local` keyword (without which
+      every "local" variable secretly modifies a global). Bash's
+      function semantics differ subtly from other languages — `return`
+      is an exit code, not a value — so getting the mental model right
+      now prevents real production bugs later.
+
+      ### 🎯 You will learn to
+
+      - Create Bash functions with `name() { ... }` syntax and call them like commands.
+      - Apply `local` to scope variables and `echo`+`$(...)` to return data from functions.
+      - Analyze the difference between Bash's `return` (exit code 0–255) and other languages' return values.
 
       ```bash
       greet() {
@@ -1576,7 +1674,7 @@ steps:
         command: "grep -q 'local ' toolkit.sh"
 
     quiz:
-      title: "Functions — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1607,8 +1705,25 @@ steps:
           correct_index: 1
           explanation: "In Bash, `return` only carries exit codes (0–255). To pass **data** back, the function should `echo` the value and the caller captures it with `$(...)`."
 
+  # Pedagogy: worked example with fading (write a service controller using everything so far)
   - title: "Case Statements & Exit Codes"
     instructions: |
+      ### Why this matters
+
+      Once a script has more than two or three branches, an `if`/`elif`
+      chain becomes a wall of text. `case` keeps multi-way dispatch
+      readable and idiomatic — the standard pattern for service-style
+      scripts that take a subcommand (`start`/`stop`/`status`). Pair it
+      with meaningful **exit codes** and your script becomes a
+      well-behaved Unix citizen, ready to plug into pipelines, Make
+      targets, and CI/CD orchestration.
+
+      ### 🎯 You will learn to
+
+      - Apply `case "$var" in pattern) ... ;; esac` for clean multi-way branching.
+      - Apply `&&` and `||` for concise conditional chaining without full `if` blocks.
+      - Create scripts that exit with meaningful codes (0 = success, 1 = error, 2 = misuse) for downstream callers.
+
       ### case — readable multi-way branching
 
       When you need to check one variable against many possible values,
@@ -1739,7 +1854,7 @@ steps:
         command: "grep -q 'case' service.sh && grep -q 'esac' service.sh"
 
     quiz:
-      title: "Case Statements & Exit Codes — Knowledge Check"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1779,11 +1894,23 @@ steps:
           correct_index: 1
           explanation: "As we practiced in the Arguments step, `$#` gives you the count of arguments, which is essential for input validation before your script starts its work."
 
+  # Pedagogy: retrieval practice (capstone — synthesize all 9 prior steps without scaffolding)
   - title: "Build a Log Monitor"
     instructions: |
+      ### Why this matters
+
       Time to combine everything into a real tool. This is a **retrieval
-      practice** exercise: you have all the knowledge, now you must retrieve
-      it from memory and synthesize it.
+      practice** exercise: you have all the knowledge, now you must
+      retrieve it from memory and synthesize it. Capstone projects like
+      this one are where shell scripting concepts move from "I read about
+      that" to "I can build that on demand" — the only kind of knowledge
+      that survives long enough to use at work.
+
+      ### 🎯 You will learn to
+
+      - Create a complete shell script integrating arguments, validation, functions, pipes, conditionals, and case statements.
+      - Apply meaningful exit codes so the script can plug into CI/CD pipelines and other orchestrators.
+      - Evaluate when shell scripting is the right tool — and when to switch to a general-purpose language.
 
       **Before you write any code**, look at `server_log.txt` one more time
       and predict: How many ERROR, WARN, and INFO lines are there? What
@@ -1970,7 +2097,7 @@ steps:
         command: "bash monitor.sh 2>&1 | grep -qiE 'healthy|warning|critical'"
 
     quiz:
-      title: "Shell Scripting Mastery — Final Comprehensive Review"
+      title: "Step 10 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:

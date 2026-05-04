@@ -32,9 +32,14 @@ steps:
   - title: "From C++/Python to Java: Your First Class"
     instructions: |
 
-      > **Learning objective:** Map your existing C++ and Python knowledge to Java syntax and understand the "everything is a class" rule.
+      ### Why this matters
 
-      You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices.
+      You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices. Starting with a clear map between languages keeps your prior knowledge useful and prevents silent transfer errors later.
+
+      ### 🎯 You will learn to
+
+      - Apply Java's "everything in a class" rule by writing static methods and a `main` entry point
+      - Analyze how Java's syntax maps to constructs you already know in C++ and Python
 
       ### The Big Picture
 
@@ -222,8 +227,8 @@ steps:
             condition: "code_missing: new int["
 
     quiz:
-      title: "Java Syntax Mapping"
-      min_score: 0.75
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Why does Java's `main` method signature include `static`?"
@@ -262,7 +267,14 @@ steps:
   - title: "The Identity Trap: == vs .equals()"
     instructions: |
 
-      > **Learning objective:** Understand why `==` behaves differently for objects in Java than in Python or C++, and use `.equals()` for value comparison.
+      ### Why this matters
+
+      Comparing objects with `==` is one of the most common Java bugs for newcomers from Python or C++. Two strings that look identical can be unequal — or sneakily equal because of caching. Mastering identity vs. value equality is non-negotiable for writing Java code that is correct *and* portable across JVMs.
+
+      ### 🎯 You will learn to
+
+      - Apply `.equals()` for value comparison and reserve `==` for primitives and identity checks
+      - Analyze why string interning and the Integer cache make `==` *sometimes* "work" by accident
 
       > **⚠ False Friend — Unlearn This:** In Python, `==` compares values. In C++, `operator==` can be overloaded for value equality. In Java, `==` on objects compares **identity** (are these the exact same object in memory?), NOT value equality.
 
@@ -432,8 +444,8 @@ steps:
             condition: "code_contains: a == b"
 
     quiz:
-      title: "Identity vs Equality"
-      min_score: 0.75
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "What does `==` do when applied to two `String` objects in Java?"
@@ -480,7 +492,14 @@ steps:
   - title: "Java's Dual Type System: Primitives & Wrappers"
     instructions: |
 
-      > **Learning objective:** Understand why Java has both primitives and wrapper objects, and recognize the traps of autoboxing.
+      ### Why this matters
+
+      Java pretends primitives and objects are interchangeable, but they are not. Autoboxing makes the boundary invisible until a `NullPointerException` blows up on what looked like an `int`. Knowing where the boundary is — and where the JVM silently crosses it — is the difference between code that runs and code that mysteriously crashes in production.
+
+      ### 🎯 You will learn to
+
+      - Apply the right type (primitive vs. wrapper) for each situation, especially with collections
+      - Analyze autoboxing pitfalls such as null unboxing and identity caching of small `Integer` values
 
       > **Partial Transfer:** C++ has primitives but no autoboxing. Python has only objects (everything is an object). Java has **both** — and automatically converts between them, sometimes dangerously.
 
@@ -701,8 +720,8 @@ steps:
             condition: "code_missing: sum +="
 
     quiz:
-      title: "Primitives & Wrappers"
-      min_score: 0.75
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "What happens when you run: `Integer x = null; int y = x;`?"
@@ -748,7 +767,14 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Implement a Java class from a UML class diagram, using proper encapsulation with access modifiers.
+      ### Why this matters
+
+      In professional Java, you almost never start from a blank file — you start from a design (often a UML class diagram) and translate it into idiomatic code. Getting access modifiers right is what makes a class safe to evolve: a leaked field becomes a contract you can never break without breaking callers.
+
+      ### 🎯 You will learn to
+
+      - Apply Java's four access levels (`private`, package-private, `protected`, `public`) when implementing a class from a UML diagram
+      - Create a fully encapsulated class whose fields can only be modified through validated methods
 
       > **Partial Transfer from C++:** Java classes look similar to C++ but differ in key ways: no header files, no destructors (GC handles memory), default access is **package-private** (not private like C++), and there are **four** access levels (not three).
 
@@ -956,8 +982,8 @@ steps:
             condition: "code_missing: private"
 
     quiz:
-      title: "Encapsulation"
-      min_score: 0.75
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "What is the main benefit of making fields `private` with getter/setter methods, compared to `public` fields?"
@@ -999,7 +1025,15 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Distinguish information hiding from encapsulation, identify "leaked secrets" in encapsulated code, and refactor a system so that a requirement change touches only one class instead of many.
+      ### Why this matters
+
+      Most Java courses stop at "make fields private and add getters/setters" — but that's encapsulation, not information hiding. The real win is *which decisions* a module hides: when those secrets leak through the API, every requirement change ripples through the codebase. Parnas's 1972 insight — hide the decisions most likely to change — is still the highest-leverage idea in software design.
+
+      ### 🎯 You will learn to
+
+      - Analyze encapsulated Java code and identify which design "secrets" are actually leaking through the API
+      - Apply information hiding by refactoring a class so a representation or policy change touches only one module
+      - Evaluate the trade-offs between exposing convenient getters and protecting the freedom to change implementation
 
       > **⚠ Common misconception:** "If my fields are `private` and I have getters/setters, I've achieved information hiding." **This is wrong.** Encapsulation and information hiding are orthogonal concepts ([Parnas 1972](https://dl.acm.org/doi/10.1145/361598.361623)).
 
@@ -1260,8 +1294,8 @@ steps:
             condition: "code_contains: getScores"
 
     quiz:
-      title: "Information Hiding"
-      min_score: 0.75
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "A GradeReport class has private fields and a `getScores()` method returning `ArrayList<Integer>`. The grading thresholds (A ≥ 90, B ≥ 80...) are in the calling code. How many design decisions are leaked?"
@@ -1305,7 +1339,14 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Define and implement Java interfaces, understanding them as contracts that separate *what* from *how*.
+      ### Why this matters
+
+      Idiomatic Java is interface-driven: `List`, `Map`, `Comparable`, `Runnable`, and most APIs you'll consume are *interfaces* whose concrete implementations you swap freely. Programming to interfaces decouples client code from implementation choices, making your code easier to test, extend, and refactor — and it's the prerequisite for nearly every design pattern.
+
+      ### 🎯 You will learn to
+
+      - Apply Java's `interface` and `implements` keywords to express a contract that separates *what* from *how*
+      - Create polymorphic code that operates on an interface type rather than a specific implementation
 
       > **Partial Transfer from C++:** Java interfaces are like C++ abstract classes with only pure virtual functions — but with key differences: a class can `implement` multiple interfaces, and Java 8+ interfaces can have `default` methods with implementations.
 
@@ -1572,8 +1613,8 @@ steps:
             condition: "code_missing: getPerimeter"
 
     quiz:
-      title: "Interfaces & Polymorphism"
-      min_score: 0.75
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "In `ShapeDemo`, the method `printShape(Shape s)` works with both Circle and Rectangle. What makes this possible?"
@@ -1603,7 +1644,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 6 — Inheritance & Polymorphism (with UML)
+  # STEP 7 — Inheritance & Polymorphism (with UML)
   # Pedagogy: Transfer Tutor — single inheritance vs C++ multiple inheritance
   #           UML inheritance diagram
   #           Bloom's: Analyze (static vs dynamic dispatch) + Apply
@@ -1614,7 +1655,14 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Use `extends`, `abstract` classes, and `@Override` to build class hierarchies with polymorphic behavior.
+      ### Why this matters
+
+      Inheritance in Java is more constrained than in C++ — single inheritance only, no diamond problem — but the rules around `abstract`, `@Override`, and dynamic dispatch are strict. Misusing them produces silent bugs (typo in an override name = method shadowing instead of overriding). Understanding what Java enforces, and what's left to you, is what separates working hierarchies from fragile ones.
+
+      ### 🎯 You will learn to
+
+      - Apply `extends`, `abstract`, and `@Override` to build a single-inheritance class hierarchy with polymorphic dispatch
+      - Evaluate when sharing implementation via an abstract class is preferable to sharing a contract via an interface
 
       > **⚠ Key difference from C++:** Java supports only **single class inheritance** — a class can `extends` exactly one parent. Java's answer to multiple inheritance is **interfaces** (from Step 5). There is no diamond problem.
 
@@ -1901,8 +1949,8 @@ steps:
           }
 
     quiz:
-      title: "OOP Concepts Review"
-      min_score: 0.75
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "**[Spaced Practice: Step 2]** What does `==` do when comparing two String objects in Java?"
@@ -1940,7 +1988,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 7 — Generics: Not C++ Templates
+  # STEP 8 — Generics: Not C++ Templates
   # Pedagogy: False Friend — C++ templates vs Java generics
   #           Mistake Pattern — show what DOESN'T work and why
   #           Bloom's: Understand + Apply
@@ -1951,7 +1999,14 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Write generic classes and methods in Java, understanding type erasure and its consequences.
+      ### Why this matters
+
+      Java generics look like C++ templates and behave nothing like them. Because Java erases generic types at compile time, you cannot do `new T()`, you cannot have a `List<int>`, and `instanceof List<String>` doesn't compile. Knowing where erasure bites stops you from writing code that the compiler will reject — or worse, code that compiles but fails at runtime.
+
+      ### 🎯 You will learn to
+
+      - Apply generic syntax to write type-safe classes and methods that work with any reference type
+      - Analyze how type erasure constrains generics (no `new T()`, no `T[]`, no primitive type parameters)
 
       > **⚠ False Friend from C++:** Java's `List<String>` looks exactly like C++'s `vector<string>`, but the underlying mechanism is completely different. C++ templates generate separate code for each type. Java generics are a **compile-time fiction** — erased at runtime.
 
@@ -2200,8 +2255,8 @@ steps:
             condition: "code_missing: toString"
 
     quiz:
-      title: "Generics & Type Erasure"
-      min_score: 0.75
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Why did Java's designers choose type erasure instead of reified generics (like C++ templates)?"
@@ -2235,7 +2290,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 8 — Collections Framework
+  # STEP 9 — Collections Framework
   # Pedagogy: UML interface hierarchy — visualize the framework
   #           Transfer Tutor — map to Python dicts/lists, C++ STL
   #           Bloom's: Apply + Evaluate (choose correct collection)
@@ -2245,7 +2300,14 @@ steps:
       - WordCounter.java
     instructions: |
 
-      > **Learning objective:** Choose and use the right Java collection (List, Set, Map) for each task, understanding the interface-implementation pattern.
+      ### Why this matters
+
+      Real Java code spends most of its time pushing data through `List`, `Set`, and `Map`. Picking the wrong implementation — `LinkedList` where you needed random access, `HashMap` where you needed sorted iteration — is the single most common cause of "code that works but is mysteriously slow." The Java Collections Framework rewards programmers who think in terms of interfaces first and implementations second.
+
+      ### 🎯 You will learn to
+
+      - Apply the interface-first idiom: declare variables as `List`, `Set`, or `Map`, then choose the right concrete implementation
+      - Evaluate trade-offs between `ArrayList`/`LinkedList`, `HashSet`/`TreeSet`, and `HashMap`/`TreeMap` for a given task
 
       > **Transfer from Python:** `list` → `ArrayList`, `dict` → `HashMap`, `set` → `HashSet`. Similar semantics, different API.
 
@@ -2543,8 +2605,8 @@ steps:
             condition: "code_missing: getCounts"
 
     quiz:
-      title: "Collections Choices"
-      min_score: 0.75
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "You need to store student IDs and quickly check if a given ID exists. Which collection is best?"
@@ -2574,7 +2636,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 9 — Exception Handling: The Bureaucratic Contract
+  # STEP 10 — Exception Handling: The Bureaucratic Contract
   # Pedagogy: Transfer Tutor — Python EAFP vs Java checked exceptions
   #           Mistake Pattern — show what happens without handling
   #           UML — exception hierarchy
@@ -2585,7 +2647,14 @@ steps:
       - SafeCalculator.java
     instructions: |
 
-      > **Learning objective:** Understand Java's checked/unchecked exception model and write proper try-catch-finally blocks.
+      ### Why this matters
+
+      Java's checked exception model is unique among mainstream languages: the compiler refuses to let you ignore certain failures. Used well, it makes failure paths impossible to forget; used badly, it produces the "catch-and-swallow" anti-pattern that hides bugs forever. To write Java that other engineers will trust, you need a deliberate strategy for *which* exceptions to throw, *which* to catch, and *which* to declare.
+
+      ### 🎯 You will learn to
+
+      - Apply `try`-`catch`-`finally` (and try-with-resources) to handle checked exceptions correctly
+      - Evaluate when to use a checked exception, an unchecked exception, or no exception at all
 
       > **⚠ New concept — no analog in Python or C++:** Java uniquely divides exceptions into **checked** (compiler-enforced handling) and **unchecked** (runtime errors). Neither Python nor C++ has this distinction.
 
@@ -2835,8 +2904,8 @@ steps:
             condition: "code_missing: x < 0"
 
     quiz:
-      title: "Comprehensive Review"
-      min_score: 0.75
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Which type of exception does the Java compiler force you to handle?"
@@ -2874,7 +2943,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 10 — Design Challenge: Course Enrollment System (Full UML)
+  # STEP 11 — Design Challenge: Course Enrollment System (Full UML)
   # Pedagogy: Integration — combine all prior concepts
   #           Design-First — UML before code
   #           Multi-file — realistic project structure
@@ -2890,9 +2959,15 @@ steps:
     view: uml_diagram
     instructions: |
 
-      > **Learning objective:** Integrate interfaces, inheritance, generics, collections, and exceptions to implement a system from a UML specification.
+      ### Why this matters
 
-      This is your integration challenge. You'll implement a small course enrollment system using everything you've learned. Read the UML diagram carefully before writing any code.
+      Real Java systems are never about a single feature in isolation — they require interfaces, inheritance, generics, collections, and exceptions all working together. This step is your integration challenge: you'll implement a small course enrollment system from a UML specification, exercising every concept from the prior steps. Read the UML diagram carefully before writing any code.
+
+      ### 🎯 You will learn to
+
+      - Apply interfaces, inheritance, generics, collections, and exceptions in a single coherent design
+      - Create a Java implementation that conforms exactly to a UML specification
+      - Evaluate which abstractions belong in which class as the system grows
 
       ### Full UML Class Diagram
 

@@ -61,10 +61,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "The Test That Lied: A Test That Passes Today and Fails Tomorrow"
     instructions: |
-      > 🎯 **Goal:** See a test that *passes* today but is fundamentally broken — then carve out a *seam* where you can later substitute a controlled clock.
-      > 🧠 **Skills you'll gain:** Recognize when a real collaborator (clock, HTTP, database) makes a test non-deterministic, and introduce a *seam* — a parameter the test can swap out — so future tests can stay deterministic.
+      ### Why this matters
 
-      > 📣 **The kind of test that ships green and rots on a schedule.** Imagine you're on the QuestForge team. A daily-quest event was scheduled for *April 28, 2026*. A teammate wrote a test on April 28 that asserted `is_today_event_day("2026-04-28")` returns `True`. Test passed. PR merged. Next day — without a single code change — the same test failed on CI. Why? Because the *test depended on the wall clock*, not on what the function should do. That hidden dependency is what test doubles exist to control. The test in this step is the same one that teammate wrote — and unless today's date happens to be 2026-04-28, you'll see it **fail right now**. That failure is the lesson.
+      Some tests ship green and rot on a schedule. A teammate writes a test on April 28 asserting `is_today_event_day("2026-04-28")` returns `True`, the PR merges, and the next day — without a single code change — CI turns red. The hidden dependency is the *wall clock*; the test never really verified the function's behavior. Recognizing those uncontrolled collaborators (clocks, HTTP, databases) and carving out a *seam* to substitute them is the foundation every other test-double technique builds on.
+
+      ### 🎯 You will learn to
+
+      - Recognize when a real collaborator makes a test non-deterministic
+      - Apply Dependency Injection to introduce a *seam* the test can swap out
+      - Analyze the difference between a test that passes and one that actually verifies behavior
 
       ### 🧭 What you already know — and what's about to shift
 
@@ -260,7 +265,7 @@ steps:
             text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:\n    today = clock.now().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nNotice: top-level `import datetime` (not `from datetime import datetime`) — we want the *module* so we can reference `datetime.datetime` as the default."
 
     quiz:
-      title: "Why Test Doubles? — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -362,8 +367,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Hand-Rolled Stub: A Clock That Always Says Tuesday"
     instructions: |
-      > 🎯 **Goal:** Replace a real collaborator (clock, HTTP API) with a hand-written **Test Stub** — a tiny class that returns canned values — and watch a flaky test become deterministic.
-      > 🧠 **Skills you'll gain:** Recognize a Test Stub as a *role* (Meszaros, p.529), implement one in plain Python without any library, and pick canned values that drive the SUT down a specific behavior partition.
+      ### Why this matters
+
+      A seam is only useful if you have something to plug into it. The simplest something is a **Test Stub** — a tiny hand-written class that always answers questions the same way. Hand-rolling one (in plain Python, no library) makes the *role* visible: a stub is just a controlled answer to a question. Once you've built one yourself, every framework-generated stub you meet later is just less typing for the same idea.
+
+      ### 🎯 You will learn to
+
+      - Apply the Test Stub role (Meszaros, p.529) by writing one in plain Python
+      - Analyze how canned values drive the SUT down a specific behavior partition
+      - Evaluate state verification — asserting on the SUT's return value, not on the stubs
 
       🧭 **Bridge from Step 1.** You created a seam: `DailyQuestService(clock, api)` accepts its collaborators as parameters. Now we'll *use* the seam — by passing in objects that **always answer the same way**. That's a stub.
 
@@ -679,7 +691,7 @@ steps:
             condition: "code_missing: Battle the Lich King"
 
     quiz:
-      title: "Test Stubs — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -810,8 +822,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Hand-Rolled Spy: Did the Ledger Actually Get the Gold?"
     instructions: |
-      > 🎯 **Goal:** Verify that the SUT *called* a collaborator with the right arguments — even when the SUT itself returns nothing observable. Implement a **Test Spy** in plain Python, and pin exactly the right amount of detail in the assertion.
-      > 🧠 **Skills you'll gain:** Recognize a Test Spy as a *role* (Meszaros, p.538) — a stub that *also records calls*. Write spy assertions that are strong enough to catch bugs but loose enough to survive harmless refactors.
+      ### Why this matters
+
+      Plenty of real methods return `None` and do their work as a side effect — `ledger.credit(user_id, gold)`, `notifier.send(...)`, `cache.invalidate(...)`. A stub can't help: there's no return value to assert on. You need a **Test Spy** that records calls so the test can ask, after the fact, *did the SUT actually credit the right user the right amount?* The hard part isn't writing the spy — it's pinning *exactly the right amount of detail* in the assertion: enough to catch real bugs, loose enough to survive harmless refactors.
+
+      ### 🎯 You will learn to
+
+      - Apply the Test Spy role (Meszaros, p.538) by writing one in plain Python
+      - Evaluate "Goldilocks" assertions that pin only what the spec demands
+      - Analyze why fire-and-forget methods are invisible without a spy
 
       🧭 **Bridge from Step 2.** A stub *answers* the SUT's questions. A spy *also records* what the SUT did. The new conceptual move:
 
@@ -1156,7 +1175,7 @@ steps:
             condition: "code_missing: spy.calls == ["
 
     quiz:
-      title: "Test Spies — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1265,8 +1284,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Meet `unittest.mock`: Same Roles, Less Typing"
     instructions: |
-      > 🎯 **Goal:** Re-recognize the stubs and spies you wrote by hand in Steps 2-3 — but now generated by `unittest.mock.Mock` in a single line. See three syntactic forms of the same conceptual stub side-by-side.
-      > 🧠 **Skills you'll gain:** Read `Mock(return_value=...)` and recognize it as a *stub*. Read a Mock with `assert_called_once_with(...)` and recognize it as a *spy*. Use `side_effect` to simulate collaborator failures.
+      ### Why this matters
+
+      Hand-rolling stubs and spies makes the *roles* visible, but it gets repetitive — every spy is the same `self.calls.append(...)` boilerplate. Python's `unittest.mock.Mock` collapses that into a single line. The catch: it's the same *class* whether the test uses it as a stub, spy, or mock — the role is determined entirely by what the test *does* with the object. Once you can read a Mock and name its role on sight, framework syntax stops being a vocabulary barrier between you and other people's tests.
+
+      ### 🎯 You will learn to
+
+      - Recognize a `Mock(return_value=...)` as a stub and a Mock with `assert_called_once_with(...)` as a spy
+      - Apply `side_effect` to simulate collaborator failures
+      - Analyze why "to mock" (verb) and "a Mock" (Meszaros noun) are different things
 
       🧭 **Bridge from Steps 2-3.** You wrote `StubQuestApiClient` and `SpyLedger` by hand. The recording boilerplate (`self.calls.append(...)`) gets repetitive. Python's `unittest.mock.Mock` is a class that **generates the same conceptual object on demand**:
 
@@ -1564,7 +1590,7 @@ steps:
             condition: "code_contains: side_effect = ValueError"
 
     quiz:
-      title: "unittest.mock — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1697,8 +1723,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Where to Patch — The #1 Python Pitfall, and Why autospec Defends You"
     instructions: |
-      > 🎯 **Goal:** Recognize and fix the **wrong-namespace patch** — the most common Python-mocking failure mode. See `autospec=True` defend you against the *typo trap* and *signature drift*.
-      > 🧠 **Skills you'll gain:** Pick the correct `patch()` target string by tracing the SUT's import. Recognize when a Mock has *no spec* and the risks that come with that.
+      ### Why this matters
+
+      The single most common Python-mocking bug is patching the *wrong namespace*. Your test runs, no error is raised, but `mock_send` was never called and the real `send_push` ran behind the scenes. The rule is one sentence — *patch where the SUT looks the name up, not where it was defined* — but the trap catches everyone at least once. Pair that with `autospec=True` (a guardrail that makes your Mock as strict as the real callable it's replacing) and you've defused two of the production-only failure modes of `unittest.mock`.
+
+      ### 🎯 You will learn to
+
+      - Apply the rule "patch where the SUT looks up the name" to pick the right `patch()` target
+      - Evaluate when `autospec=True` is needed to defend against signature drift
+      - Analyze behavior verification (Meszaros, p.468) versus the state verification of Steps 2-3
 
       🧭 **Bridge from Step 4.** Step 4 used Mocks at constructor parameters — `DailyQuestService(clock, api, ledger)` accepts the doubles directly. Sometimes that's not possible: the SUT might call a *module-level function* directly, with no constructor parameter to swap. Then we use `unittest.mock.patch()` — and confront the canonical Python pitfall: **where in the namespace does the patch belong?**
 
@@ -2006,7 +2039,7 @@ steps:
             condition: "code_contains: patch(\"push_notifier.send_push\")"
 
     quiz:
-      title: "Where to Patch + autospec — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2135,8 +2168,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "When NOT to Use a Double — The Decision Guide"
     instructions: |
-      > 🎯 **Goal:** Build the judgment to *not* reach for a double when a real collaborator would do. Recognize over-mocking as brittleness. Apply a decision guide to five real scenarios.
-      > 🧠 **Skills you'll gain:** Diagnose an over-mocked test by reading it. Classify scenarios by which double (or none) fits. Recognize the "mock what you own" heuristic and the Adapter wrap-and-mock pattern.
+      ### Why this matters
+
+      A test double is a *tool* — not a default, not a sign of professionalism, not a coverage strategy. The right number of doubles for many tests is zero. Reaching for `Mock` reflexively produces brittle tests that break under harmless refactors and assert on choreography instead of behavior. This step builds the judgment to *not* reach for a double when a real collaborator would do — the capstone skill that separates "mocks everything" from "mocks at the right boundary."
+
+      ### 🎯 You will learn to
+
+      - Evaluate an over-mocked test and diagnose where it broke from the spec
+      - Apply a decision guide to classify scenarios as no-double / stub / spy / mock / fake / adapter
+      - Analyze the "mock what you own" heuristic and the Adapter wrap-and-mock pattern
 
       🧭 **The whole arc, in one sentence.** A test double is a *tool you reach for when a real collaborator would make the test flaky, slow, or unable to verify the right thing*. It is not a default. It is not a sign of professionalism. It is not a coverage strategy. *The right number of doubles for many tests is zero.*
 
@@ -2509,7 +2549,7 @@ steps:
             condition: "code_missing: adapter"
 
     quiz:
-      title: "Decision Guide — Synthesis Quiz"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:

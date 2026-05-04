@@ -39,9 +39,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Hello, Python!"
     instructions: |
-      ## The Lay of the Land
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **explain** how Python's execution model differs from C++ and **write** a basic Python script.
+      You already write C++ and shell scripts, but Python is the language of choice when you need to get something done fast — process a CSV, call an API, prototype an algorithm. It now ranks among the world's top 5 most widely used languages, which makes learning it a great investment of your time. Before you can write Python idiomatically, you need a feel for how its execution model differs from what you already know.
+
+      ### 🎯 You will learn to
+
+      - Apply Python's interpreted execution model by running your first script
+      - Contrast Python's syntax (no semicolons, no `main()`, indentation-based) with C++ and Bash
 
       You already write C++ and shell scripts. Here is how Python fits into your toolkit:
 
@@ -127,7 +132,7 @@ steps:
             condition: "code_contains: print("
 
     quiz:
-      title: "Hello, Python! — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -213,7 +218,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Variables, Types & f-Strings"
     instructions: |
-      > **Learning objective:** After this step you will be able to **use** Python's dynamic typing and f-strings, and **explain** the difference between dynamic and weak typing.
+      ### Why this matters
+
+      Python's dynamic typing eliminates the declaration ceremony you write every day in C++, but it does not make Python "weakly typed" — a confusion that traps C++ programmers and produces hard-to-find bugs. f-strings are the modern, readable way to format output, and they are far more compact than `printf` or `cout <<` chains.
+
+      ### 🎯 You will learn to
+
+      - Apply Python's dynamic typing to assign and inspect variables without declarations
+      - Analyze the difference between dynamic typing and weak typing
+      - Create formatted output using f-strings
 
       ## Bridging Your C++ Mental Model
 
@@ -382,7 +395,7 @@ steps:
             condition: "code_contains: f\""
 
     quiz:
-      title: "Variables & Types — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -459,7 +472,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "The Indentation Trap"
     instructions: |
-      > **Learning objective:** After this step you will be able to **identify** and **fix** indentation errors caused by negative transfer from C++, and **explain** why Python uses indentation instead of braces.
+      ### Why this matters
+
+      Indentation is the single most common stumbling block when C++ programmers write Python. In C++ indentation is cosmetic; in Python, indentation *is* the syntax. Wrong indentation produces an `IndentationError` and confused students who do not know why their previously-fine code is now broken. Confronting this early prevents weeks of frustration.
+
+      ### 🎯 You will learn to
+
+      - Analyze Python code to identify indentation errors caused by negative transfer from C++
+      - Apply correct indentation rules (4 spaces, never mixed with tabs) to fix block structure
 
       ## ⚠️ The Indentation Trap (Negative Transfer from C++)
 
@@ -562,7 +582,7 @@ steps:
           - text: "Which range does 71 fall into? Count your `elif` branches — do you have enough to cover all the grade letters?"
 
     quiz:
-      title: "The Indentation Trap — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -649,7 +669,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Functions"
     instructions: |
-      > **Learning objective:** After this step you will be able to **implement** Python functions with default parameters and **contrast** Python's `def` syntax with C++ function signatures.
+      ### Why this matters
+
+      Functions are how you compose larger programs. Python's `def` syntax is briefer than C++'s — no return type, no parameter types required — but the trade-off is that mistakes surface at runtime instead of compile time. Default parameters let you write APIs that are short to call in the common case and explicit when callers need control.
+
+      ### 🎯 You will learn to
+
+      - Apply `def` syntax to implement Python functions with optional type hints
+      - Create functions with default parameter values and use them with positional or keyword arguments
+      - Contrast Python's `def` signature with C++ function signatures
 
       ## Functions: `def` vs C++ Signatures
 
@@ -813,7 +841,7 @@ steps:
             condition: "code_contains: threshold"
 
     quiz:
-      title: "Functions — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -922,7 +950,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Type Hints"
     instructions: |
-      > **Learning objective:** After this step you will be able to **annotate** Python functions with type hints, and **explain** why those hints are checked by tools (`mypy`, IDEs) rather than by the Python interpreter at runtime.
+      ### Why this matters
+
+      Dynamic typing is fast to write but easy to break. Type hints give you a middle ground: contracts that document your intent, that IDEs use for autocomplete, and that `mypy` enforces statically — without sacrificing Python's flexibility. They are how serious Python codebases stay maintainable as they grow.
+
+      ### 🎯 You will learn to
+
+      - Apply type hint syntax to annotate Python function parameters and return values
+      - Analyze why Python type hints are checked by external tools (`mypy`, IDEs) rather than by the interpreter at runtime
 
       ## A Bridge from C++ Types
 
@@ -1135,7 +1170,7 @@ steps:
               "first_failing should return None when no score is below threshold (matches Optional[int])"
 
     quiz:
-      title: "Type Hints — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1269,7 +1304,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Loops"
     instructions: |
-      > **Learning objective:** After this step you will be able to **use** Python's `for` loops, `enumerate()`, and `range()`, and **identify** the key operator differences between Python and C++ (`**` vs `^`, `/` vs `//`).
+      ### Why this matters
+
+      Iteration is the workhorse of any program. Python's `for` is item-based by default — you almost never write `for i in range(len(...))` like you would in C++. Mastering `enumerate()` and `range()` unlocks idiomatic Python, and avoiding the `**` vs `^` and `/` vs `//` operator traps will save you hours of confused debugging.
+
+      ### 🎯 You will learn to
+
+      - Apply Python `for` loops with `enumerate()` and `range()` to iterate over collections idiomatically
+      - Analyze the operator differences between Python and C++ (`**` vs `^`, `/` vs `//`)
 
       ### Transfer Note: C++ Range-Based Loops → Python `for`
 
@@ -1467,7 +1509,7 @@ steps:
           - text: "Does your function handle lists of any length? Trace through it with `[10, 20]` — what should each element of the output be?"
 
     quiz:
-      title: "Loops — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1565,7 +1607,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "List Comprehensions"
     instructions: |
-      > **Learning objective:** After this step you will be able to **write** list comprehensions with filters, and **compare** them with equivalent for-loop code.
+      ### Why this matters
+
+      List comprehensions are one of the features that makes Python *Python*. They turn five-line for-loops into a single readable expression — once you can read them. Recognizing the `[expr for x in iter if cond]` pattern is essential for reading any modern Python codebase, and writing them cleanly is what separates idiomatic Python from "Python written like C++".
+
+      ### 🎯 You will learn to
+
+      - Create list comprehensions with filters using the `[expr for x in iter if cond]` pattern
+      - Analyze when a comprehension is clearer than the equivalent for-loop and when it is not
 
       ### Comprehensions Look Strange at First
 
@@ -1784,7 +1833,7 @@ steps:
           - text: "This test checks which operator you used for squaring. In Python, the exponentiation operator is *not* the same as in C++ or math notation. What does `^` actually do in Python?"
 
     quiz:
-      title: "List Comprehensions — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1873,7 +1922,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Reading Files with open() and with"
     instructions: |
-      > **Learning objective:** After this step you will be able to **read** files using `with open()` and **explain** how Python's context manager pattern relates to C++'s RAII.
+      ### Why this matters
+
+      Reading files is something every program eventually has to do, and resource leaks (forgotten `fclose()`) are a classic C/C++ bug. Python's `with` statement is the language's elegant answer: a context manager that guarantees cleanup, even on exceptions. The same pattern (RAII in C++ terms) extends to network sockets, locks, and database connections — learning it here pays off everywhere.
+
+      ### 🎯 You will learn to
+
+      - Apply `with open()` to read files line-by-line in idiomatic Python
+      - Analyze how Python's context manager pattern relates to C++'s RAII
 
       ## Python's "Batteries Included" Philosophy
 
@@ -2006,7 +2062,7 @@ steps:
             condition: "code_contains: open("
 
     quiz:
-      title: "Reading Files — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2129,7 +2185,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Regular Expressions in Python: the re Module"
     instructions: |
-      > **Learning objective:** After this step you will be able to **apply** Python's `re.findall()`, `re.search()`, and `re.sub()` to extract, test, and transform text patterns.
+      ### Why this matters
+
+      You already know regex from `grep` and `sed`. Python's `re` module brings that same power inside a script — no subprocess, no fragile shell escaping. Whenever you need to extract structured data from text (log lines, HTML, CSV oddities, error messages), `re.findall()`, `re.search()`, and `re.sub()` are the three tools that solve the vast majority of cases.
+
+      ### 🎯 You will learn to
+
+      - Apply `re.findall()`, `re.search()`, and `re.sub()` to extract, test, and transform text patterns
+      - Apply raw strings (`r'...'`) to write regex patterns without backslash-escaping headaches
 
       ## From grep to Python
 
@@ -2296,7 +2359,7 @@ steps:
             condition: "code_contains: re.sub"
 
     quiz:
-      title: "Regular Expressions in Python — Knowledge Check"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2399,7 +2462,14 @@ steps:
     has_args: true
     has_stderr: true
     instructions: |
-      > **Learning objective:** After this step you will be able to **implement** command-line argument handling with `sys.argv` and **use** `sys.stderr` for error messages.
+      ### Why this matters
+
+      Real Python scripts do not run from a hard-coded `print` — they take input from the command line, just like every CLI tool you use daily. `sys.argv` is the equivalent of `argc/argv` in C++, and routing error output to `sys.stderr` lets your scripts compose cleanly with shell pipelines (so users can redirect logs separately from data). Get this right and your scripts behave like proper Unix citizens.
+
+      ### 🎯 You will learn to
+
+      - Apply `sys.argv` to read and validate command-line arguments in a Python script
+      - Apply `sys.stderr` (via `print(..., file=sys.stderr)`) to route error and diagnostic output away from stdout
 
       ## Command-Line Arguments with `sys.argv`
 
@@ -2570,7 +2640,7 @@ steps:
             condition: "code_contains: sys.exit"
 
     quiz:
-      title: "sys.argv & stderr — Knowledge Check"
+      title: "Step 10 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2705,7 +2775,14 @@ steps:
     has_args: true
     has_stderr: true
     instructions: |
-      > **Learning objective:** After this step you will be able to **design and implement** a complete Python script that integrates functions, file I/O, regex, list comprehensions, and command-line arguments.
+      ### Why this matters
+
+      You now have all the component skills — functions, file I/O, regex, list comprehensions, and command-line arguments. The hard part of programming is not learning each piece in isolation, but composing them into something that solves a real problem. This capstone is your chance to integrate everything you've learned with no scaffolding telling you what to type.
+
+      ### 🎯 You will learn to
+
+      - Create a complete Python script that integrates functions, file I/O, regex, list comprehensions, and command-line arguments
+      - Apply your judgment to structure code without step-by-step guidance
 
       ## Putting It All Together
 
@@ -2924,7 +3001,7 @@ steps:
               "Expected an error message to be printed to stderr"
 
     quiz:
-      title: "Capstone — Knowledge Check"
+      title: "Step 11 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3044,7 +3121,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Data Classes"
     instructions: |
-      > **Learning objective:** After this step you will be able to **define** value-object classes using `@dataclass`, **apply** `frozen=True` to make them immutable, **define** computed attributes with `@property`, and **explain** when each is appropriate.
+      ### Why this matters
+
+      Plain Python classes force you to write `__init__`, `__eq__`, and `__repr__` by hand — boilerplate you would never write in C++ for a simple `struct`. `@dataclass` generates that plumbing automatically, `frozen=True` gives you immutability for free, and `@property` lets you compute attributes on the fly. Together, these turn data modeling in Python from tedious to elegant.
+
+      ### 🎯 You will learn to
+
+      - Create value-object classes using `@dataclass` to eliminate `__init__` / `__eq__` / `__repr__` boilerplate
+      - Apply `frozen=True` to make dataclass instances immutable
+      - Create computed attributes with `@property`
+      - Evaluate when each tool is the right choice
 
       ## A Bridge from C++ Structs
 
@@ -3366,7 +3452,7 @@ steps:
             condition: "code_missing: 02x"
 
     quiz:
-      title: "Data Classes — Knowledge Check"
+      title: "Step 12 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:

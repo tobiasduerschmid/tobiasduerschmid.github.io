@@ -34,11 +34,18 @@ steps:
   # --------------------------------------------------------------------------
   - title: "When One Display Breaks the Whole System"
     instructions: |
+      ### Why this matters
+
+      Hard-coded dependencies *feel* fine when there are only three of them — until your manager asks for a fourth, and you realize every new display means editing the class that's supposed to just collect sensor data. You're about to live that pain on purpose, so the fix in later steps lands as relief rather than abstract theory.
+
+      ### 🎯 You will learn to
+
+      - Identify the symptoms of tightly coupled code in a real codebase
+      - Analyze why direct dependencies create maintenance headaches as systems grow
+
       ## The Scenario
 
       > **Prerequisites:** This tutorial assumes you are comfortable with Python **classes**, **inheritance**, **abstract base classes** (`ABC`, `@abstractmethod`), and **`@property` decorators**. If any of these are unfamiliar, review them first — you will need all four.
-
-      > **Learning objective:** After this step you will be able to **identify** the symptoms of tightly coupled code and **explain** why direct dependencies create maintenance headaches.
 
       You work at a weather company. Your `WeatherStation` collects temperature, humidity, and pressure data from sensors, and updates three displays:
 
@@ -315,8 +322,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Tight Coupling — What Went Wrong?"
-      min_score: 0.6
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -379,9 +386,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Design Patterns: A Shared Vocabulary"
     instructions: |
-      ## What Are Design Patterns?
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **define** what a design pattern is and **describe** the Observer pattern using a real-world analogy and its UML structure.
+      Step 1 hurt because of a structural problem — but "things felt coupled" isn't a useful diagnosis a senior engineer can act on. Design patterns give you precise vocabulary like *Subject*, *Observer*, *attach*, *notify* that lets two engineers describe the same architecture without drawing UML on a whiteboard. Naming the pattern is the first step to applying it.
+
+      ### 🎯 You will learn to
+
+      - Define what a design pattern is and where the Gang of Four catalog comes from
+      - Apply the YouTube subscription analogy to map Observer's roles onto a familiar mental model
+
+      ## What Are Design Patterns?
 
       ### The YouTube Analogy
 
@@ -542,8 +556,8 @@ steps:
           assert "Dashboard B sees: 40" in out, "DashboardB should double the value: 20 * 2 = 40"
 
     quiz:
-      title: "Observer Concepts — Knowledge Check"
-      min_score: 0.6
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -629,9 +643,16 @@ steps:
   - title: "Building Observer: Step by Step"
     view: uml_diagram
     instructions: |
-      ## Constructing the Observer Pattern
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **implement** the Observer pattern from scratch, identify each UML role in your code, and watch the class diagram update live.
+      Vocabulary alone won't get you a working system — you need to wire the pieces together correctly the first time. The Subject's role is subtle: it must hold a list of *abstract* observers, never naming the concrete classes that will plug in later. Building it from a faded worked example trains the muscle memory you'll rely on every time you reach for this pattern in production.
+
+      ### 🎯 You will learn to
+
+      - Apply the Observer pattern by implementing `Subject`, `Observer`, and a concrete pair from scratch
+      - Analyze each UML role in your own code and watch the class diagram build up live
+
+      ## Constructing the Observer Pattern
 
       ### Quick Recall
 
@@ -992,8 +1013,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Observer Mechanics — Knowledge Check"
-      min_score: 0.6
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1057,9 +1078,16 @@ steps:
   - title: "The Big Refactor: Observer-Powered Weather Station"
     view: uml_diagram
     instructions: |
-      ## Applying Observer to the Weather Station
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **refactor** tightly coupled code into the Observer pattern, **demonstrate** dynamic attach/detach, and **compare** the two architectures using UML diagrams.
+      Knowing the pattern in isolation (Step 3) is different from applying it to *messy existing code* — and existing code is what you'll usually inherit on the job. This is where the payoff for Step 1's pain shows up: adding the next display will require zero edits to `WeatherStation`, and you'll see the architectural improvement made visually obvious in the UML diagram.
+
+      ### 🎯 You will learn to
+
+      - Apply the Observer pattern to refactor the tightly coupled Step 1 code
+      - Evaluate before/after architectures by comparing both UML diagrams side-by-side
+
+      ## Applying Observer to the Weather Station
 
       ### Quick Recall
 
@@ -1658,8 +1686,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "The Refactoring — Knowledge Check"
-      min_score: 0.6
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1722,9 +1750,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Design Judgment: When and When Not"
     instructions: |
-      ## When Observer Is the Right Tool — and When It Is Not
+      ### Why this matters
 
-      > **Learning objective:** After this step you will be able to **evaluate** whether the Observer pattern is appropriate for a given scenario, **explain** the Push vs. Pull trade-off, and **recognize** the danger of over-engineering.
+      Junior engineers who just learned a pattern apply it everywhere; senior engineers know when *not* to. Observer adds classes, indirection, and debugging pain — costs that only pay off when the relationship is genuinely one-to-many *and* dynamic. Without this judgment step you'd leave the tutorial with a hammer that makes everything look like a nail.
+
+      ### 🎯 You will learn to
+
+      - Evaluate whether the Observer pattern is appropriate for a given scenario
+      - Analyze the Push vs. Pull trade-off and pick the model that fits the situation
+      - Recognize over-engineering as a real cost, not a stylistic preference
+
+      ## When Observer Is the Right Tool — and When It Is Not
 
       ### Quick Recall
 
@@ -1941,8 +1977,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Design Judgment — Final Knowledge Check"
-      min_score: 0.6
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2055,17 +2091,24 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Comprehensive Assessment"
     instructions: |
+      ### Why this matters
+
+      A cumulative, interleaved quiz is one of the highest-leverage learning interventions there is — it forces you to discriminate between concepts that felt distinct in isolation but blur together in practice. If you can answer questions that mix tight coupling, UML, implementation, refactoring, and trade-offs without warning, the pattern has actually transferred into long-term memory.
+
+      ### 🎯 You will learn to
+
+      - Apply Observer concepts across all earlier steps without scaffolding
+      - Analyze your own gaps and revisit specific steps where retrieval fails
+
       ## Test Your Understanding
 
-      > **Learning objective:** Demonstrate mastery of the Observer pattern by answering questions that span **all** concepts from this tutorial — from tight coupling to design judgment.
-
-      This is a cumulative quiz. The questions are drawn from every step and require you to synthesize what you have learned. You need at least 70% to pass.
+      This is a cumulative quiz. The questions are drawn from every step and require you to synthesize what you have learned. You need at least 80% to pass.
 
       Take your time. If a question stumps you, think about which step covered that concept and what you learned there.
 
     quiz:
-      title: "Observer Pattern — Comprehensive Assessment"
-      min_score: 0.7
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2231,6 +2274,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Summary and Key Takeaways"
     instructions: |
+      ### Why this matters
+
+      A tutorial without a closing summary leaves the schema half-built. This step exists so you can see your six-step journey laid out as one mental model — tight coupling, vocabulary, construction, refactor, judgment, assessment — and walk away with a single UML snapshot you can recall later when you encounter the next one-to-many problem in real code.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your own learning by mapping each step's takeaway onto a single coherent narrative
+      - Apply the Observer pattern with confidence the next time a one-to-many requirement appears
+
       ## What You Learned
 
       Congratulations — you have completed the Observer Design Pattern tutorial. Here is a summary of your journey:

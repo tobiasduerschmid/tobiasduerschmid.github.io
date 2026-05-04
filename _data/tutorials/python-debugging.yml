@@ -66,6 +66,16 @@ steps:
   # ===========================================================================
   - title: "The Debugging Process"
     instructions: |
+      ### Why this matters
+
+      Debugging is a systematic, learnable process — not a vibe. Most engineers default to *tinkering* (edit, run, hope, repeat) and the bug eventually goes away without them learning what was wrong. The 7-stage cycle below replaces tinkering with a discipline you can repeat on any bug. Walking through it once on a tiny off-by-one anchors the cycle before you face anything harder.
+
+      ### 🎯 You will learn to
+
+      - Apply the 7-stage hypothesis-driven cycle to a small failing test.
+      - Distinguish *fault*, *error*, and *failure* — and trace one to the next.
+      - Evaluate why the local-verification trap (only rerunning the failing test) hides regressions.
+
       > 🎯 **Goal:** Apply the 7-stage debugging cycle to a tiny off-by-one bug.
 
       ### 📖 Recap from lecture: the four phases of debugging
@@ -261,7 +271,7 @@ steps:
             condition: "code_missing: \"Hello!\""
 
     quiz:
-      title: "The Debugging Process — Knowledge Check"
+      title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -347,6 +357,15 @@ steps:
   # ===========================================================================
   - title: "Debugger Tour"
     instructions: |
+      ### Why this matters
+
+      Tools subordinate to questions, not the other way around. If you learn debugger features as a feature menu, you'll forget them; if you learn each one as the answer to a specific debugging question, they stick. This step pairs six common questions with the smallest tool move that answers each — on correct code — so when a real bug forces the question, the move is already in your fingers.
+
+      ### 🎯 You will learn to
+
+      - Apply six debugger moves (breakpoint, hover, watch, conditional breakpoint, call stack, history scrubber) to answer specific questions.
+      - Analyze which question each tool actually answers — and which it doesn't.
+
       > 🎯 **Goal:** Build minimum tool fluency. Each section below pairs a **debugging question** with the **smallest tool move** that answers it. There's no bug to fix — `tour.py` runs correctly.
 
       Click **Debug** (not Run) to start each section.
@@ -437,8 +456,8 @@ steps:
         There's no fix to apply — this step is procedural drill. The six moves above answer the most common forward-debugging questions. The history scrubber gets its own dedicated drill in the **Backward Tour** before Case 3, where backward localization actually pays off.
 
     quiz:
-      title: "Tour — Quick Retrieval"
-      min_score: 0.75
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -502,6 +521,16 @@ steps:
   # ===========================================================================
   - title: "Case 1 — Maze Pathfinder (Boundary Bug)"
     instructions: |
+      ### Why this matters
+
+      Boundary bugs — off-by-one in `range`, slice indices, comparison operators, loop sentinels — are the most common shape of algorithmic bug, and they hide in plain sight because nine of ten test cases pass. This case forces the discipline you just learned (the 7-stage cycle) onto a recursive boundary bug, so the cycle has to handle a real call stack before you internalize it.
+
+      ### 🎯 You will learn to
+
+      - Apply the full 7-stage cycle to a recursive boundary bug, writing each stage in the debugging log.
+      - Analyze recursive execution by walking the Call Stack tab to read frame-by-frame state.
+      - Evaluate which of two adjacent `if` checks is the *first divergence* between intended and actual behavior.
+
       > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
 
       > 📋 **Open `debugging_log.md` and fill each field as you work.** The first time, the log carries you stage by stage. Cases 2 and 3 fade this scaffolding — by Case 3 you'll name three of the stages yourself. Committing each stage to writing is the difference between *thinking* the cycle and *doing* the cycle.
@@ -868,7 +897,7 @@ steps:
             condition: "code_missing: max_steps"
 
     quiz:
-      title: "Case 1 — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -930,6 +959,16 @@ steps:
   # ===========================================================================
   - title: "Case 2 — Ledger Reconciliation (Data Representation Bug)"
     instructions: |
+      ### Why this matters
+
+      Data-representation bugs — hidden whitespace, mixed encodings, silent type coercions — are a different family from algorithmic bugs. The algorithm is correct; the data is carrying something invisible. The forward-stepping technique you used in Case 1 doesn't scale to 30 transactions, and your eyes won't catch a leading space. This case introduces two new moves (conditional breakpoints, `repr()`) that are nearly free once you know to reach for them.
+
+      ### 🎯 You will learn to
+
+      - Apply conditional breakpoints to filter a long input stream down to the suspicious case.
+      - Analyze a value with `repr()` to surface invisible characters that `print()` hides.
+      - Evaluate where a normalization fix belongs — at the load boundary, not at the consumer.
+
       > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
 
       > 📋 **Keep filling `debugging_log.md`.** Fields are now name-only — refer to Case 1's log if you need the per-stage prompts. Writing forces commitment; commitment is what makes the cycle yours.
@@ -1364,7 +1403,7 @@ steps:
             condition: "code_missing: \"ACCT-202\": 7300"
 
     quiz:
-      title: "Case 2 — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1429,6 +1468,16 @@ steps:
   # ===========================================================================
   - title: "Backward Tour — Time-Travel Drill"
     instructions: |
+      ### Why this matters
+
+      Stepping forward is the default; rewinding from a known-wrong final state to find when it *first* appeared is a separate motor pattern that takes deliberate practice. Case 3 will demand exactly this move on a real bug — but learning the move during the bug hunt mixes two hard things at once. Drilling the four scrubber moves on correct code now isolates the skill so Case 3 can focus on the bug, not the tool.
+
+      ### 🎯 You will learn to
+
+      - Apply the four scrubber moves: anchor, single-tick rewind, jump-to-tick, scrub-until-predicate.
+      - Analyze a recorded execution history by reading the Variables tab as you scrub.
+      - Evaluate when backward localization beats forward stepping (symptom-far-from-cause bugs).
+
       > 🎯 **Goal:** Drill the *backward* moves. Stepping forward through code is the default; rewinding from a final state to find when something *first* changed is a different motor pattern. There's no bug — `counter.py` runs correctly.
 
       Click **Debug** to start.
@@ -1522,8 +1571,8 @@ steps:
         **Why backward, not forward?** When the *symptom* is visible at the end of execution but the *cause* is somewhere in the middle of a long event stream, anchoring on the wrong final state and rewinding walks you directly to the divergence. Stepping forward forces you to inspect every event — including the early ones that produced no symptom — before reaching the bad one. That's wasted attention for a bug class the scrubber is designed for.
 
     quiz:
-      title: "Backward Tour — Quick Retrieval"
-      min_score: 0.75
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1589,6 +1638,16 @@ steps:
   # ===========================================================================
   - title: "Case 3 — Course Waitlist (Temporal Bug)"
     instructions: |
+      ### Why this matters
+
+      Some bugs separate cause from symptom in *time*: a wrong decision happens early, the visible failure appears events later, and stepping forward forces you to inspect correct state for ages before anything looks wrong. This is what the time-travel debugger is built for — anchor on the wrong final state and rewind to the first divergence. Case 3 demands the backward-localization move you drilled in Step 5, on a real bug where forward stepping would waste the most attention.
+
+      ### 🎯 You will learn to
+
+      - Apply the anchor-and-rewind technique to find the first wrong state transition in an event stream.
+      - Analyze a temporal bug whose symptom appears events after the cause.
+      - Evaluate two correct fixes (`pop(0)` vs `deque.popleft()`) on intent, cost, and disruption.
+
       > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
 
       > 📋 **`debugging_log.md` — three stages are now unlabeled.** Name them yourself before filling them in. Naming the stage you're in is the move that keeps the cycle from collapsing into tinkering.
@@ -2019,7 +2078,7 @@ steps:
             condition: "code_missing: course.waitlist.append(student)"
 
     quiz:
-      title: "Case 3 — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2104,6 +2163,16 @@ steps:
   # ===========================================================================
   - title: "Case 4 — Event-Driven Checkout (Sequence Diagram)"
     instructions: |
+      ### Why this matters
+
+      In event-driven and pub/sub systems, no single function body is wrong — the bug lives in *which handler subscribes to which topic*. Source-reading one file is genuinely insufficient because the code that produces the symptom is never directly called by the code that triggers it. The Sequence Diagram panel linearizes the runtime call order across files and makes wiring bugs visible at a glance, which is the only practical way to localize them.
+
+      ### 🎯 You will learn to
+
+      - Apply sequence-diagram reading to localize a wiring/protocol bug across an event bus.
+      - Analyze the runtime call order to find the first arrow that violates the intended protocol.
+      - Evaluate two candidate fixes by which one addresses the *cause* vs which only treats the symptom.
+
       > 🎯 **Goal:** A checkout service correctly raises `OutOfStockError` for an out-of-stock cart, but the warehouse still receives a pick ticket. The bug is in event-bus wiring, not in any one method body. Use the **Sequence Diagram** panel — it makes the runtime call order visible.
 
       > 🔀 **Before you start:** In Cases 1–3, you could trace the bug by reaching the right function with a breakpoint. Will that approach work here — where the symptom is a side effect that "shouldn't" exist? Predict: what new kind of tool might be needed?
@@ -2920,7 +2989,7 @@ steps:
             condition: "code_missing: pending_order_ids() == []"
 
     quiz:
-      title: "Case 4 — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3010,6 +3079,16 @@ steps:
   # ===========================================================================
   - title: "Triage Drill — Pick the Right Technique"
     instructions: |
+      ### Why this matters
+
+      Knowing six debugger moves doesn't help if you reach for the wrong one first. Real bugs arrive without labels; the skill that separates a competent debugger from a thrashing one is reading the cue in a bug description and *picking* the right first move. This step interleaves the four bug families you've practiced so the discrimination is forced — and adds two ubiquitous moves the lecture covered (rubber duck, post-fix documentation) so they're in the toolkit.
+
+      ### 🎯 You will learn to
+
+      - Analyze a bug description and discriminate which family (boundary, data, temporal, wiring) it belongs to.
+      - Evaluate which technique fits each cue — and articulate why neighboring techniques don't.
+      - Apply rubber-duck debugging and post-fix documentation as standard moves in your workflow.
+
       > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families.
 
       Try the drill from memory. Pass threshold: **0.85**. After the quiz, you'll see a recap of the cue→technique mapping for spaced retrieval next time.
@@ -3078,11 +3157,11 @@ steps:
         | Stuck >15 minutes | Stop. Externalize the failure description. |
 
     quiz:
-      title: "Debugging Triage Drill"
+      title: "Step 8 — Knowledge Check"
       # Lowered from 0.85 → 0.78 (audit fix): with 9 questions, 0.85 means at most
       # 1 wrong (8/9 = 0.89 passes; 7/9 = 0.78 passes). Borderline-discrimination
       # items shouldn't fail an otherwise-competent student.
-      min_score: 0.78
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -3241,6 +3320,16 @@ steps:
   # ===========================================================================
   - title: "Transfer Challenge — You're On Your Own"
     instructions: |
+      ### Why this matters
+
+      Knowing the cycle on scaffolded examples is one thing; running it without prompts on unfamiliar code is the actual job. Transfer is what tells you whether the cycle has become *yours* or whether it lived only in the labels we put around each stage. This step removes the per-stage scaffolds — you name the stages, pick the technique, and write the log — so you can see for yourself what you've internalized.
+
+      ### 🎯 You will learn to
+
+      - Apply the full cycle on unfamiliar code without step-by-step prompts.
+      - Evaluate which case from this tutorial the new bug most resembles structurally — and defend the match.
+      - Analyze your own default debugging mode (tinkering / print / hypothesis-driven) and name when to override it.
+
       > 🎯 **Goal:** Find and fix a bug in unfamiliar code without step-by-step prompts. You pick the technique. You type the debugging log.
 
       *Compare to Cases 1–3: there, we numbered each stage of the cycle. Here, you do.*
@@ -3462,7 +3551,7 @@ steps:
             condition: "code_missing: == \"PYTHON\""
 
     quiz:
-      title: "Transfer & Reflection"
+      title: "Step 9 — Knowledge Check"
       min_score: 0.8
       shuffle: false
       questions:

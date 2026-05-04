@@ -34,9 +34,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Why Design Principles?"
     instructions: |
-      ## When One Change Breaks Everything
+      ### Why this matters
 
-      > **Goal:** Feel how a single private helper, shared across teams, makes simple change requests collide. (~20 min. Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
+      Software you'll ship in your career will be edited by many teams over many years — and the moment two unrelated change requests touch the same private helper, "small fix" becomes "broken release." Feeling that friction first-hand is the only durable motivation for the five SOLID principles that follow. Everything in this tutorial flows from the pain you're about to feel in the next 20 minutes. (Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
+
+      ### 🎯 You will learn to
+
+      - Apply the four SOLID vocabulary words — *actor*, *reason to change*, *coupling*, *cohesion* — to a real class
+      - Analyze how a shared private helper makes unrelated change requests collide
+      - Evaluate why "the code works" is not the same as "the code is healthy"
 
       ### Four Key Words
 
@@ -379,8 +385,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Why Design Principles? — Knowledge Check"
-      min_score: 0.6
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -465,9 +471,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "SRP — Feel the Friction"
     instructions: |
-      ## The Single Responsibility Principle
+      ### Why this matters
 
-      > **Goal:** Define SRP in terms of *actors* and spot SRP violations in existing code.
+      The Single Responsibility Principle is the foundation SOLID is built on — but its standard one-line definition ("a class should have only one reason to change") is famously slippery until you've felt the bug it's trying to prevent. This step puts you in front of a class with three different teams pulling on it, so the abstract phrase "one reason to change" stops being abstract. The next step will fix it; this one is about feeling the cost.
+
+      ### 🎯 You will learn to
+
+      - Apply the *actor* lens to spot which team owns each method on a class
+      - Analyze how a shared formatting helper couples unrelated business logic
+      - Evaluate the *God Class* and *Shotgun Surgery* code smells in production code
 
       ### The Principle
 
@@ -826,8 +838,8 @@ steps:
               f"The 32% bracket should be unchanged. Expected 0.32 for $150k salary, got {payroll['tax_rate']}"
 
     quiz:
-      title: "SRP — Feel the Friction — Knowledge Check"
-      min_score: 0.6
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -878,9 +890,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "SRP — Refactor & Practice"
     instructions: |
-      ## Applying SRP: From One Class to Four
+      ### Why this matters
 
-      > **Goal:** Refactor a monolithic class into multiple classes, each serving one actor.
+      Diagnosing an SRP violation is half the skill — the other half is performing the structural surgery that eliminates it. This step shows the worked refactor for the `EmployeeManager` class you suffered through in Step 2, then asks you to apply the same move to a *different* domain (rideshare) so the pattern transfers rather than memorizes. Each class you produce will end up serving one actor, and one team will be able to change without breaking another.
+
+      ### 🎯 You will learn to
+
+      - Apply SRP by splitting a monolithic class into actor-aligned classes
+      - Analyze a class to identify which actor owns which method
+      - Create a refactored design where each class has exactly one reason to change
 
       <details markdown="1">
       <summary><strong>Worked example (expand): how we'd split <code>EmployeeManager</code> from Step 2 into four focused classes.</strong> Open this if you want a fully-worked reference before you tackle the task below; skip it if you're ready to apply SRP directly.</summary>
@@ -1495,8 +1513,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "SRP — Refactor & Practice — Knowledge Check"
-      min_score: 0.6
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1557,9 +1575,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "OCP — Feel the Friction"
     instructions: |
-      ## The Open/Closed Principle — Part 1: Feel the Pain
+      ### Why this matters
 
-      > **Goal:** Spot OCP violations and feel why if/elif chains turn every new feature into a regression risk.
+      The Open/Closed Principle is the most directly profitable of the SOLID five: every if/elif chain you eliminate today becomes a non-modification tomorrow when the product team asks for "just one more variant." This step deliberately makes you add that one more variant to a brittle design so you experience the regression risk first-hand — the polymorphic refactor in Step 5 will then arrive as relief, not as academic theory.
+
+      ### 🎯 You will learn to
+
+      - Apply the *Switch Statement Smell* lens to flag OCP violations in existing code
+      - Analyze how each new branch in a switch chain creates regression risk for working branches
+      - Evaluate why "just add another elif" feels right in the moment but compounds over time
 
       ### The Scenario
 
@@ -1915,8 +1939,8 @@ steps:
               f"Expected a success message containing 'sent'. Got: {repr(result)}"
 
     quiz:
-      title: "OCP — Feel the Friction"
-      min_score: 0.66
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1972,9 +1996,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "OCP — Refactor & Practice"
     instructions: |
-      ## The Open/Closed Principle — Part 2: The Fix
+      ### Why this matters
 
-      > **Goal:** Refactor an if/elif chain into a polymorphic ABC + concrete-class family — open for extension, closed for modification.
+      Polymorphism is the structural move that turns "every new variant requires modifying the dispatcher" into "every new variant is a self-contained class the dispatcher never has to know about." Once you've performed this refactor twice — once with a worked example, once on your own — you'll start seeing if/elif chains as design debt rather than as the natural way to write code. This is the principle that changes the most lines of code you'll write next year.
+
+      ### 🎯 You will learn to
+
+      - Apply polymorphism with an abstract base class to replace an if/elif chain
+      - Analyze a fat dispatcher to extract the contract every variant must honor
+      - Create a new variant by writing one new class with zero modifications to the dispatcher
 
       In Step 4 you felt the pain of that if/elif chain. Now let's fix it properly using **polymorphism** and **abstract base classes**.
 
@@ -2603,8 +2633,8 @@ steps:
               f"ReportExporter did not recognize the new format. Got: {repr(result)}"
 
     quiz:
-      title: "OCP — Refactor & Practice"
-      min_score: 0.66
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -2678,9 +2708,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "LSP — The Contract You Didn't Know You Signed"
     instructions: |
-      ## The Liskov Substitution Principle — Part 1: Feel the Broken Promise
+      ### Why this matters
 
-      > **Goal:** Spot LSP violations caused by strengthened preconditions or weakened postconditions — and write the contract as executable `assert`s.
+      LSP is the deepest of the five SOLID principles — every senior developer has been burned by a subclass that quietly broke a caller written against the parent's contract. This step puts you in front of a payment hierarchy that *looks* polymorphic and *runs* until production hits a `GiftCardProcessor`, where the strengthened precondition and weakened postcondition shred a working `checkout()` flow. Once you've watched that fail, "honor the contract" stops being abstract advice and becomes a concrete, mechanically-checkable rule.
+
+      ### 🎯 You will learn to
+
+      - Apply Liskov's *strengthen-precondition / weaken-postcondition* test to a candidate subclass
+      - Analyze a hierarchy by writing pre- and post-conditions as executable `assert` statements
+      - Evaluate the *Refused Bequest* code smell as a structural diagnostic
 
       ### The Principle
 
@@ -3342,8 +3378,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "LSP Part 1 — Knowledge Check"
-      min_score: 0.75
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -3432,9 +3468,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "LSP — Split the Hierarchy"
     instructions: |
-      ## The Liskov Substitution Principle — Part 2: The Structural Fix
+      ### Why this matters
 
-      > **Goal:** Split a broken hierarchy so no subclass inherits a method it can't honor.
+      Most LSP violations cannot be fixed by being more careful in a subclass — they're symptoms of a *hierarchy that asks for promises a subtype cannot keep*. This step shows you the structural surgery: split the hierarchy so each subclass only inherits methods it can honor, then push the requirement up to the function signature so misuse is caught at the boundary, not deep inside business logic. This is also the move that bridges directly into ISP in the next step.
+
+      ### 🎯 You will learn to
+
+      - Apply hierarchy splitting to remove methods a subclass cannot honestly implement
+      - Analyze a function signature to push contract requirements up to the type system
+      - Create a refactored design where misuse becomes statically detectable
 
       In the previous step you watched `GiftCardProcessor` shred the `refund()` contract. Now the fix. The *root* cause isn't that the gift card was coded poorly — it's that the **hierarchy is wrong**. `refund()` doesn't belong on every payment processor, only on those that can actually refund.
 
@@ -4113,8 +4155,8 @@ steps:
               "Live stream entry should have duration=None."
 
     quiz:
-      title: "LSP Part 2 — Knowledge Check"
-      min_score: 0.75
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -4197,9 +4239,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "ISP — Lean Interfaces"
     instructions: |
-      ## The Interface Segregation Principle
+      ### Why this matters
 
-      > **Goal:** Split a fat ABC into role-based ABCs so each client only depends on what it actually calls.
+      A fat interface is a slow-acting trap: the day you add a sixth method to it, every implementer that only needed two is forced to write an `NotImplementedError` stub or pretend to honor a contract it can't keep. ISP heads off whole categories of LSP violation *structurally* — if a class never inherits a method, it can never break the method's promise. This step gives you the diagnostic for fat interfaces and the muscle memory to split them along the lines real clients actually use.
+
+      ### 🎯 You will learn to
+
+      - Apply role-based interface design to eliminate `NotImplementedError` stubs
+      - Analyze a class to map which clients use which methods on its interface
+      - Evaluate when a *Fat Interface* code smell warrants a split versus a single coherent role
 
       ### The Principle
 
@@ -5196,8 +5244,8 @@ steps:
               "SmartLock should NOT implement TemperatureControllable"
 
     quiz:
-      title: "ISP — Lean Interfaces — Knowledge Check"
-      min_score: 0.6
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -5304,9 +5352,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "DIP — Own Your Abstractions"
     instructions: |
-      ## The Dependency Inversion Principle
+      ### Why this matters
 
-      > **Goal:** Tell DIP apart from Dependency Injection, design abstractions *owned by the caller* (not the library), and unit-test without hitting external services.
+      DIP is the principle that most directly unlocks unit testing — and the one most commonly confused with Dependency Injection. The day you can swap in a fake `EmailGateway` for a real one without changing the class under test is the day your test suite stops costing real money and stops being flaky. The deeper move is *who owns the abstraction*: the high-level module describes what it needs, and the low-level detail bends to fit — never the other way around.
+
+      ### 🎯 You will learn to
+
+      - Apply DIP by inverting a dependency so the high-level module owns its abstraction
+      - Analyze candidate interfaces to distinguish *true inversion* from *indirection without inversion*
+      - Evaluate which dependencies are volatile enough to warrant DIP and which are stable enough to depend on directly
 
       ### The Principle
 
@@ -6202,8 +6256,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "DIP — Knowledge Check"
-      min_score: 0.75
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -6279,13 +6333,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Integration — Which Principle?"
     instructions: |
-      ## Can You Spot the Violation?
+      ### Why this matters
 
-      > **Goal:** Diagnose which SOLID principle (if any) a code snippet violates — and justify it in one sentence.
+      In real code reviews, violations don't come with labels. You have to look at a class and *recognize the smell* from its structure alone. This exercise mixes all five principles so you practice **discrimination** — telling similar-looking problems apart — instead of recognition, which is what step-by-step practice has trained so far.
 
-      ### Why This Matters
+      ### 🎯 You will learn to
 
-      In real code reviews, violations don't come with labels. You have to look at a class and *recognize the smell* from its structure alone. This exercise mixes all five principles so you practice **discrimination** — telling similar-looking problems apart.
+      - Apply a five-question diagnostic rubric to classify a SOLID violation by principle
+      - Analyze unlabeled code snippets and justify each diagnosis in one sentence
+      - Evaluate when a class genuinely follows all five principles versus when it just looks fine
 
       ### Your Task
 
@@ -6782,8 +6838,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Integration — Which Principle? — Knowledge Check"
-      min_score: 0.6
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -6890,9 +6946,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Capstone — The Real World"
     instructions: |
-      ## Final Boss: Library Management System
+      ### Why this matters
 
-      > **Goal:** Refactor a system with simultaneous SOLID violations in **three disciplined phases** — and recognize when SOLID is being over-applied.
+      Every step so far isolated one principle in one file — but real refactors land on systems where multiple violations interact, and the order you fix them in determines whether your test suite stays green or goes red mid-refactor. This capstone forces you to see the cascade: DIP enables the tests that make the LSP+OCP refactor safe, which makes the LSP structural fix obvious. You'll also see where SOLID stops paying for itself — over-application is the second-most-common failure mode after under-application.
+
+      ### 🎯 You will learn to
+
+      - Apply SRP, OCP, LSP, and DIP simultaneously to a multi-violation legacy system
+      - Analyze a refactor as a *sequence* of phases where each enables the next
+      - Evaluate when one more SOLID move would help versus tip into over-engineering
 
       ### The Challenge
 
@@ -8006,8 +8068,8 @@ steps:
             condition: "default"
 
     quiz:
-      title: "Capstone — The Real World — Knowledge Check"
-      min_score: 0.6
+      title: "Step 11 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -8073,13 +8135,17 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Consolidation — What Survives"
     instructions: |
-      ## Consolidation: What Survives in a Year
+      ### Why this matters
 
-      > **Goal:** Re-derive the five principles from memory and name three signs of over-engineering. *Best done at least 24 hours after the capstone* — the spacing is the point.
+      Material you *read* decays within days, but material you **actively retrieved** from your own head survives for months. This step is the one that decides whether your SOLID knowledge is still alive in six months — re-derive the five principles from memory, then name three signs of over-engineering so the guardrails come along for the ride. *Best done at least 24 hours after the capstone* — the spacing is the point.
 
-      ### Why One More Step?
+      ### 🎯 You will learn to
 
-      Research on human memory is blunt about this: material you *read* decays within days, but material you **actively retrieved** from your own head survives for months. You just finished the hardest step of the tutorial. This one is short on purpose, and it is the step that will decide whether your SOLID knowledge is still alive in six months.
+      - Apply spaced retrieval to re-derive each SOLID principle without rereading earlier steps
+      - Analyze under interleaving by discriminating between principles in randomized order
+      - Evaluate a candidate situation to decide whether SOLID would help or over-engineer it
+
+      ### What You Will Do
 
       You will do three things:
 
@@ -8372,8 +8438,8 @@ steps:
           )
 
     quiz:
-      title: "Consolidation — Mixed Retrieval"
-      min_score: 0.75
+      title: "Step 12 — Knowledge Check"
+      min_score: 0.8
       shuffle: true
       questions:
 
