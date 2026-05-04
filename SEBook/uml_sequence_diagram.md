@@ -626,7 +626,7 @@ Given this sequence diagram:
 participant a: A
 participant b: B
 participant c: C
-a -> a: doX(x)
+o-> a: doX(x)
 activate a
 alt [x < 10]
   a -> b: calculate()
