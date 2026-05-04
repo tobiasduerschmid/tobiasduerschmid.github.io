@@ -3,14 +3,12 @@
 html { scroll-padding-top: 80px; }
 
 /* Global keyboard focus ring. `:focus-visible` only fires for keyboard/
-   assistive-tech focus, so mouse clicks stay visually unchanged. */
+   assistive-tech focus, so mouse clicks stay visually unchanged.
+   Tokens come from css/design-tokens.css; the literal hex below is a
+   fallback for environments that strip custom properties. */
 :focus-visible {
-	outline: 3px solid #2774AE;
-	outline-offset: 2px;
-}
-
-html.dark-mode :focus-visible {
-	outline-color: #FFD100;
+	outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+	outline-offset: var(--focus-offset, 2px);
 }
 
 /* Hidden labels are still inspected by automated contrast checks, so keep
@@ -312,21 +310,22 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 
 .filter-btn {
 	margin: 5px;
-	padding: 8px 16px;
+	padding: var(--sp-sm, 8px) var(--sp-lg, 16px);
 	font-size: 0.95em;
 	transition: all 0.3s ease;
-	border: 1px solid #767676;
-	background-color: #fff;
+	border: 1px solid var(--color-border-strong, #767676);
+	background-color: var(--color-surface, #fff);
 	color: #333;
+	border-radius: var(--radius-md, 8px);
 }
 
 .filter-btn:hover {
-	background-color: #f5f5f5;
+	background-color: var(--color-surface-3, #f5f5f5);
 }
 
 .filter-btn.active {
-	background-color: #FFD100;
-	color: black;
+	background-color: var(--color-accent, #FFD100);
+	color: var(--color-text-on-accent, black);
 	border: 2px solid #8a6d00;
 }
 
@@ -943,19 +942,19 @@ html.dark-mode #bookmarkPageBtn {
    fail 1.4.3). Style them as a real tablist. */
 .inline-language-tabs {
 	display: inline-flex;
-	gap: 4px;
-	padding: 4px;
-	margin: 8px 0 0;
-	border: 1px solid #d0d0d6;
-	border-radius: 6px;
-	background: #f6f7f9;
+	gap: var(--sp-xs, 4px);
+	padding: var(--sp-xs, 4px);
+	margin: var(--sp-sm, 8px) 0 0;
+	border: 1px solid var(--color-border, #d0d0d6);
+	border-radius: var(--radius-md, 8px);
+	background: var(--color-surface-2, #f6f7f9);
 }
 .inline-language-tabs button[role="tab"] {
 	border: 1px solid transparent;
 	background: transparent;
-	color: #1a1a1a;
-	padding: 4px 12px;
-	border-radius: 4px;
+	color: var(--color-text, #1a1a1a);
+	padding: var(--sp-xs, 4px) var(--sp-md, 12px);
+	border-radius: var(--radius-sm, 4px);
 	font-size: 0.92em;
 	font-weight: 500;
 	cursor: pointer;
@@ -966,9 +965,9 @@ html.dark-mode #bookmarkPageBtn {
 	background: #e6e8ec;
 }
 .inline-language-tabs button[role="tab"][aria-selected="true"] {
-	background: #2774AE;
-	color: #fff;
-	border-color: #2774AE;
+	background: var(--color-primary, #2774AE);
+	color: var(--color-text-on-primary, #fff);
+	border-color: var(--color-primary, #2774AE);
 }
 html.dark-mode .inline-language-tabs {
 	border-color: #3a3a4a;
@@ -982,9 +981,7 @@ html.dark-mode .inline-language-tabs button[role="tab"]:focus-visible {
 	background: #2a2a38;
 }
 html.dark-mode .inline-language-tabs button[role="tab"][aria-selected="true"] {
-	background: #4da3ff;
 	color: #0a0a14;
-	border-color: #4da3ff;
 }
 html.dark-mode .highlight .k,
 html.dark-mode .highlight .kd,
@@ -1390,12 +1387,12 @@ html.dark-mode-transition *:after {
 
 /* Flashcard Fragment Styles */
 .flashcards-container {
-	background: #ffffff;
-	border: 1px solid #e1e4e8;
-	border-radius: 12px;
-	padding: 16px;
-	margin: 20px 0;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	background: var(--color-surface, #ffffff);
+	border: 1px solid var(--color-divider, #e1e4e8);
+	border-radius: var(--radius-lg, 12px);
+	padding: var(--sp-lg, 16px);
+	margin: var(--sp-xl, 20px) 0;
+	box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
 	font-family: 'Inter', sans-serif;
 }
 
@@ -1413,8 +1410,8 @@ html.dark-mode-transition *:after {
 .flashcard-question {
 	font-size: 1.25em;
 	font-weight: 600;
-	margin-bottom: 20px;
-	color: #1a1a1a;
+	margin-bottom: var(--sp-xl, 20px);
+	color: var(--color-text, #1a1a1a);
 	min-height: 60px;
 	display: flex;
 	align-items: center;
@@ -1422,11 +1419,11 @@ html.dark-mode-transition *:after {
 }
 
 .flashcard-answer-container {
-	margin-top: 15px;
-	padding: 15px;
-	background: #f8f9fa;
-	border-radius: 8px;
-	border-top: 3px solid #FFD100;
+	margin-top: var(--sp-lg, 15px);
+	padding: var(--sp-lg, 15px);
+	background: var(--color-surface-2, #f8f9fa);
+	border-radius: var(--radius-md, 8px);
+	border-top: 3px solid var(--color-accent, #FFD100);
 	animation: slideDown 0.3s ease;
 }
 
@@ -1444,8 +1441,8 @@ html.dark-mode-transition *:after {
 
 .flashcard-answer {
 	font-size: 1.2em;
-	color: #2774AE;
-	margin-bottom: 12px;
+	color: var(--color-primary, #2774AE);
+	margin-bottom: var(--sp-md, 12px);
 }
 
 .flashcard-explanation {
@@ -1455,17 +1452,17 @@ html.dark-mode-transition *:after {
 }
 
 .flashcard-actions {
-	margin-top: 20px;
+	margin-top: var(--sp-xl, 20px);
 }
 
 .show-answer-btn,
 .flashcards-container .restart-btn,
 .flashcards-container .review-btn {
-	background: #2774AE;
-	color: white;
+	background: var(--color-primary, #2774AE);
+	color: var(--color-text-on-primary, white);
 	border: none;
-	padding: 12px 24px;
-	border-radius: 8px;
+	padding: var(--sp-md, 12px) var(--sp-xl, 24px);
+	border-radius: var(--radius-md, 8px);
 	font-weight: 600;
 	cursor: pointer;
 	transition: background 0.2s;
@@ -1474,7 +1471,7 @@ html.dark-mode-transition *:after {
 .show-answer-btn:hover,
 .flashcards-container .restart-btn:hover,
 .flashcards-container .review-btn:hover {
-	background: #1e5c8a;
+	background: var(--color-primary-hover, #1e5c8a);
 }
 
 .assessment-buttons {
@@ -1486,10 +1483,10 @@ html.dark-mode-transition *:after {
 .assess-btn {
 	width: 50px;
 	height: 50px;
-	border-radius: 50%;
+	border-radius: var(--radius-circle, 50%);
 	border: none;
 	font-size: 24px;
-	color: white;
+	color: var(--color-text-on-primary, white);
 	cursor: pointer;
 	transition: transform 0.2s, background 0.2s;
 	display: flex;
@@ -1502,19 +1499,19 @@ html.dark-mode-transition *:after {
 }
 
 .correct-btn {
-	background: #1f7a3d;
+	background: var(--color-success, #1f7a3d);
 }
 
 .correct-btn:hover {
-	background: #186430;
+	background: var(--color-success-hover, #186430);
 }
 
 .incorrect-btn {
-	background: #dc3545;
+	background: var(--color-error, #b81e2c);
 }
 
 .incorrect-btn:hover {
-	background: #c82333;
+	background: var(--color-error-hover, #94121e);
 }
 
 .flashcards-results {
@@ -1551,12 +1548,12 @@ html.dark-mode .flashcard-explanation {
 .cookie-notice {
 	font-size: 0.78em;
 	color: #666;
-	background: #f8f9fa;
-	border: 1px solid #e1e4e8;
-	border-left: 3px solid #2774AE;
-	border-radius: 6px;
+	background: var(--color-surface-2, #f8f9fa);
+	border: 1px solid var(--color-divider, #e1e4e8);
+	border-left: 3px solid var(--color-primary, #2774AE);
+	border-radius: var(--radius-md, 8px);
 	padding: 10px 14px;
-	margin: 20px 0 10px 0;
+	margin: var(--sp-xl, 20px) 0 var(--sp-md, 10px) 0;
 	line-height: 1.5;
 }
 

@@ -9,13 +9,13 @@
 <style>
   h1 {
     font-weight: bold;
-    color: #2774AE;
+    color: var(--color-primary, #2774AE);
     -webkit-text-stroke: 1px black;
   }
 
   h2 {
     font-weight: bold;
-    color: #2774AE;
+    color: var(--color-primary, #2774AE);
     -webkit-text-stroke: 1px black;
   }
 
@@ -95,27 +95,27 @@
           }
 
           .inline-language-switcher {
-            border: 1px solid #6a737d;
-            border-radius: 6px;
+            border: 1px solid var(--color-border-strong, #6a737d);
+            border-radius: var(--radius-md, 8px);
             margin: 18px 0 24px;
             overflow: hidden;
-            background: #fff;
+            background: var(--color-surface, #fff);
           }
 
           .inline-language-tabs {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            padding: 8px;
-            border-bottom: 1px solid #6a737d;
-            background: #f6f8fa;
+            gap: var(--sp-xs, 6px);
+            padding: var(--sp-sm, 8px);
+            border-bottom: 1px solid var(--color-border-strong, #6a737d);
+            background: var(--color-surface-2, #f6f8fa);
           }
 
           .inline-language-tabs button {
             border: 1px solid transparent;
-            border-radius: 4px;
+            border-radius: var(--radius-sm, 4px);
             background: transparent;
-            color: #24292f;
+            color: var(--color-text, #24292f);
             font-weight: 600;
             line-height: 1.2;
             padding: 7px 11px;
@@ -123,10 +123,10 @@
 
           .inline-language-tabs button:hover,
           .inline-language-tabs button:focus {
-            border-color: #2774AE;
-            outline: 3px solid #2774AE;
-            outline-offset: 2px;
-            box-shadow: 0 0 0 2px #fff;
+            border-color: var(--color-primary, #2774AE);
+            outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+            outline-offset: var(--focus-offset, 2px);
+            box-shadow: 0 0 0 2px var(--color-surface, #fff);
           }
 
           .inline-language-tabs button:focus:not(:focus-visible) {
@@ -135,8 +135,8 @@
           }
 
           .inline-language-tabs button[aria-selected="true"] {
-            background: #2774AE;
-            color: #fff;
+            background: var(--color-primary, #2774AE);
+            color: var(--color-text-on-primary, #fff);
           }
 
           .inline-language-panel {
@@ -155,18 +155,16 @@
 
           .inline-language-panel pre:focus,
           #main-content pre[tabindex]:focus {
-            outline: 3px solid #2774AE;
+            outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
             outline-offset: 3px;
-            box-shadow: 0 0 0 2px #fff;
+            box-shadow: 0 0 0 2px var(--color-surface, #fff);
           }
 
           html.dark-mode .inline-language-switcher {
-            border-color: #6a737d;
             background: #111827;
           }
 
           html.dark-mode .inline-language-tabs {
-            border-color: #6a737d;
             background: #1f2937;
           }
 
@@ -176,14 +174,12 @@
 
           html.dark-mode .inline-language-tabs button:hover,
           html.dark-mode .inline-language-tabs button:focus {
-            outline-color: #FFD100;
-            border-color: #FFD100;
+            border-color: var(--color-accent, #FFD100);
             box-shadow: 0 0 0 2px #111827;
           }
 
           html.dark-mode .inline-language-panel pre:focus,
           html.dark-mode #main-content pre[tabindex]:focus {
-            outline-color: #FFD100;
             box-shadow: 0 0 0 2px #111827;
           }
 

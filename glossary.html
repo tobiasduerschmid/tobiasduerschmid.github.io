@@ -15,21 +15,19 @@ info_nav: true
   .glossary-page h2 {
     margin-top: 1.6em;
     padding-bottom: 6px;
-    border-bottom: 2px solid #2774AE;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
   }
-  html.dark-mode .glossary-page h2 { border-bottom-color: #4da3ff; }
 
   .glossary-intro {
-    background: #f8f9fa;
-    border-left: 3px solid #2774AE;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
     padding: 14px 18px;
     line-height: 1.55;
     margin: 16px 0 24px;
   }
   html.dark-mode .glossary-intro {
-    background: #1e1e1e;
-    border-left-color: #4da3ff;
+    background: var(--color-surface, #1e1e1e);
     color: #ccc;
   }
 
@@ -45,22 +43,21 @@ info_nav: true
     width: 100%;
     max-width: 420px;
     padding: 9px 12px;
-    border: 1px solid #c0c4ca;
-    border-radius: 6px;
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
     font-size: 1em;
-    background: #ffffff;
-    color: #1f2328;
+    background: var(--color-surface, #ffffff);
+    color: var(--color-text, #1f2328);
   }
   html.dark-mode .glossary-search {
     background: #1f1f1f;
-    border-color: #555;
+    border-color: var(--color-border-strong, #555);
     color: #e8e8e8;
   }
   .glossary-search:focus {
-    outline: 2px solid #2774AE;
-    outline-offset: 2px;
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
   }
-  html.dark-mode .glossary-search:focus { outline-color: #4da3ff; }
 
   .glossary-status {
     margin: 8px 0 0;
@@ -73,11 +70,11 @@ info_nav: true
   .glossary-jump {
     margin: 8px 0 24px;
     padding: 10px 14px;
-    background: #f6f8fa;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
     line-height: 2;
   }
-  html.dark-mode .glossary-jump { background: #1e1e1e; }
+  html.dark-mode .glossary-jump { background: var(--color-surface, #1e1e1e); }
   .glossary-jump a {
     display: inline-block;
     min-width: 26px;
@@ -110,7 +107,7 @@ info_nav: true
   }
   .glossary-entry {
     padding: 14px 0;
-    border-bottom: 1px solid #e1e4e8;
+    border-bottom: 1px solid var(--color-divider, #e1e4e8);
   }
   html.dark-mode .glossary-entry { border-bottom-color: #2a2a2a; }
   .glossary-entry:last-child { border-bottom: none; }
@@ -152,13 +149,13 @@ info_nav: true
   .glossary-empty {
     margin: 24px 0;
     padding: 18px;
-    background: #f6f8fa;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
     color: #555;
     text-align: center;
   }
   html.dark-mode .glossary-empty {
-    background: #1e1e1e;
+    background: var(--color-surface, #1e1e1e);
     color: #b0b0b0;
   }
 </style>

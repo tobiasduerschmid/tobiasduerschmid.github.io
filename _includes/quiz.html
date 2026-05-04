@@ -142,33 +142,33 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
 <style>
   .quiz-container {
-    background: #ffffff;
-    border: 1px solid #e1e4e8;
-    border-radius: 12px;
-    padding: 12px;
-    margin: 12px 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-divider, #e1e4e8);
+    border-radius: var(--radius-lg, 12px);
+    padding: var(--sp-md, 12px);
+    margin: var(--sp-md, 12px) 0;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
     font-family: 'Inter', sans-serif;
     position: relative;
   }
 
   .quiz-header h3 {
     margin-top: 0;
-    color: #2774AE;
+    color: var(--color-primary, #2774AE);
     font-weight: 700;
   }
 
   .quiz-progress-bar {
     height: 4px;
     background: #f0f2f5;
-    border-radius: 2px;
-    margin: 8px 0;
+    border-radius: var(--radius-sm, 4px);
+    margin: var(--sp-sm, 8px) 0;
     overflow: hidden;
   }
 
   .progress-fill {
     height: 100%;
-    background: #2774AE;
+    background: var(--color-primary, #2774AE);
     transition: width 0.4s ease;
   }
 
@@ -216,11 +216,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .quiz-option {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--sp-sm, 8px) var(--sp-md, 12px);
     min-height: 32px;
-    border: 1.5px solid #767676;
-    border-radius: 6px;
-    background: white;
+    border: 1.5px solid var(--color-border-strong, #767676);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, white);
     text-align: left;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -237,20 +237,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .parsons-reset-btn:focus-visible,
   .parsons-line:focus-visible,
   .se-gym-toggle:focus-visible {
-    outline: 3px solid #2774AE;
-    outline-offset: 2px;
-  }
-
-  html.dark-mode .quiz-option:focus-visible,
-  html.dark-mode .submit-answer-btn:focus-visible,
-  html.dark-mode .next-btn:focus-visible,
-  html.dark-mode .restart-btn:focus-visible,
-  html.dark-mode .review-btn:focus-visible,
-  html.dark-mode .parsons-check-btn:focus-visible,
-  html.dark-mode .parsons-reset-btn:focus-visible,
-  html.dark-mode .parsons-line:focus-visible,
-  html.dark-mode .se-gym-toggle:focus-visible {
-    outline-color: #FFD100;
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
   }
 
   /* Screen-reader-only utility, scoped to quiz */
@@ -263,24 +251,24 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .quiz-option:hover:not([disabled]):not(.selected) {
-    border-color: #2774AE;
+    border-color: var(--color-primary, #2774AE);
     background: #f0f7ff;
   }
 
   .quiz-option.selected {
-    border-color: #2774AE;
+    border-color: var(--color-primary, #2774AE);
     background: #eef6fc;
-    box-shadow: 0 0 0 1px #2774AE;
+    box-shadow: 0 0 0 1px var(--color-primary, #2774AE);
   }
 
   .quiz-option.correct {
-    border-color: #1f7a35;
+    border-color: var(--color-success, #1f7a3d);
     background: #e6ffed;
     color: #155724;
   }
 
   .quiz-option.incorrect {
-    border-color: #dc3545;
+    border-color: var(--color-error, #b81e2c);
     background: #ffeef0;
     color: #721c24;
   }
@@ -338,13 +326,30 @@ Data source: _data/quizzes/{{ include.id }}.yml
     background: white;
   }
 
+  /* Dark-mode overrides for quiz-option states. The general
+     `html.dark-mode .quiz-option` rule in css/portfolio.css uses
+     `!important`, so these higher-specificity rules also need
+     `!important` to win. Without these, selecting a quiz option
+     in dark mode produces no visual feedback (everything keeps
+     the default dark-gray background). */
+  html.dark-mode .quiz-option.selected {
+    border-color: var(--color-primary, #5fa8d3) !important;
+    background-color: #1c2f4a !important;
+    box-shadow: 0 0 0 1px var(--color-primary, #5fa8d3);
+  }
+
+  html.dark-mode .option-checkbox {
+    background: transparent;
+    border-color: #b0b0b0;
+  }
+
   [data-type="multiple"] .option-checkbox {
     display: block;
   }
 
   .quiz-option.selected .option-checkbox {
-    background: #2774AE;
-    border-color: #2774AE;
+    background: var(--color-primary, #2774AE);
+    border-color: var(--color-primary, #2774AE);
   }
 
   .quiz-option.selected .option-checkbox::after {
@@ -373,19 +378,19 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .quiz-explanation {
-    margin-top: 10px;
-    padding: 10px 15px;
-    background: #f8f9fa;
-    border-left: 3px solid #2774AE;
-    border-radius: 4px;
+    margin-top: var(--sp-md, 10px);
+    padding: var(--sp-md, 10px) var(--sp-lg, 15px);
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-sm, 4px);
     font-size: 0.92em;
     line-height: 1.35;
   }
 
   .explanation-title {
     font-weight: 700;
-    color: #2774AE;
-    margin-bottom: 8px;
+    color: var(--color-primary, #2774AE);
+    margin-bottom: var(--sp-sm, 8px);
     font-size: 0.9em;
     text-transform: uppercase;
   }
@@ -394,13 +399,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .next-btn,
   .restart-btn,
   .review-btn {
-    background: #2774AE;
-    color: white;
+    background: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, white);
     border: none;
-    padding: 6px 14px;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: var(--radius-md, 8px);
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: var(--sp-md, 10px);
     cursor: pointer;
     transition: background 0.2s;
     width: 100%;
@@ -416,7 +421,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .next-btn:hover,
   .restart-btn:hover,
   .review-btn:hover {
-    background: #1e5c8a;
+    background: var(--color-primary-hover, #1e5c8a);
   }
 
   .quiz-results {
@@ -442,10 +447,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .correct-label-badge {
-    background: #2774AE;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
+    background: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, white);
+    padding: 2px var(--sp-sm, 8px);
+    border-radius: var(--radius-sm, 4px);
     font-weight: 800;
     font-size: 0.95em;
     display: inline-block;
@@ -461,8 +466,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .score-display {
     font-size: 2em;
     font-weight: 800;
-    margin: 20px 0;
-    color: #2774AE;
+    margin: var(--sp-xl, 20px) 0;
+    color: var(--color-primary, #2774AE);
   }
 
   .hidden {
@@ -498,46 +503,59 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .se-gym-toggle:hover {
-    border-color: #2774AE;
-    color: #2774AE;
+    border-color: var(--color-primary, #2774AE);
+    color: var(--color-primary, #2774AE);
   }
 
   .se-gym-toggle.in-gym {
-    background: #28a745;
-    border-color: #28a745;
-    color: white;
+    background: var(--color-success, #1f7a3d);
+    border-color: var(--color-success, #1f7a3d);
+    color: var(--color-text-on-primary, white);
   }
 
   .se-gym-toggle.in-gym:hover {
-    background: #dc3545;
-    border-color: #dc3545;
+    background: var(--color-error, #b81e2c);
+    border-color: var(--color-error, #b81e2c);
+  }
+
+  /* The neutral pill (border #ccc, color #999) reads fine on light surfaces
+     but turns into a harsh near-white ring on the dark quiz background.
+     Pair both. */
+  html.dark-mode .quiz-container .se-gym-toggle {
+    border-color: #555 !important;
+    color: #b0b0b0 !important;
+  }
+  html.dark-mode .quiz-container .se-gym-toggle:hover {
+    border-color: var(--color-primary, #5fa8d3) !important;
+    color: var(--color-primary, #5fa8d3) !important;
   }
 
   /* ── Parsons Problem Styles ─────────────────────────────────────────── */
-  .parsons-container { margin-top: 12px; }
-  .parsons-label { font-size: 0.95em; color: #555; margin-bottom: 8px; }
+  .parsons-container { margin-top: var(--sp-md, 12px); }
+  .parsons-label { font-size: 0.95em; color: #555; margin-bottom: var(--sp-sm, 8px); }
   .parsons-bank, .parsons-target {
-    min-height: 48px; padding: 8px; border-radius: 6px;
-    display: flex; flex-direction: column; gap: 4px;
+    min-height: 48px; padding: var(--sp-sm, 8px); border-radius: var(--radius-md, 8px);
+    display: flex; flex-direction: column; gap: var(--sp-xs, 4px);
   }
   .parsons-bank { background: #f5f5f8; border: 1.5px dashed #6b7078; }
   .parsons-target { background: #f0f8f0; border: 2px dashed #2f7a2f; }
   .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.95em; }
   .parsons-line {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 10px; background: #fff; border: 1px solid #767676; border-radius: 4px;
+    display: inline-flex; align-items: center; gap: var(--sp-sm, 8px);
+    padding: 6px 10px; background: var(--color-surface, #fff); border: 1px solid var(--color-border-strong, #767676);
+    border-radius: var(--radius-sm, 4px);
     cursor: grab; font-size: 0.95em; transition: border-color 0.2s, background 0.2s;
     user-select: none;
   }
-  .parsons-line:hover { border-color: #2774AE; background: #e8f0ff; }
+  .parsons-line:hover { border-color: var(--color-primary, #2774AE); background: #e8f0ff; }
   .parsons-line.dragging { opacity: 0.4; }
   .parsons-line code {
-    font-family: 'Fira Code', 'Consolas', monospace; font-size: 1em;
+    font-family: var(--font-mono, 'Fira Code', 'Consolas', monospace); font-size: 1em;
     white-space: pre; color: #333; background: transparent; padding: 0;
   }
   .parsons-grip { color: #555; font-size: 14px; line-height: 1; flex-shrink: 0; }
-  .parsons-line.parsons-correct { border-color: #1f7a35; background: #e6ffed; }
-  .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
+  .parsons-line.parsons-correct { border-color: var(--color-success, #1f7a3d); background: #e6ffed; }
+  .parsons-line.parsons-incorrect { border-color: var(--color-error, #b81e2c); background: #ffeef0; }
   .parsons-line.parsons-correct::before,
   .parsons-line.parsons-incorrect::before {
     font-weight: 800;
@@ -546,13 +564,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
   .parsons-line.parsons-correct::before { content: "✓"; }
   .parsons-line.parsons-incorrect::before { content: "✗"; }
-  .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .parsons-actions { display: flex; gap: var(--sp-sm, 8px); margin-top: var(--sp-md, 10px); }
   .parsons-check-btn, .parsons-reset-btn {
-    padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;
+    padding: var(--sp-sm, 6px) var(--sp-lg, 16px); border-radius: var(--radius-md, 8px); border: none; cursor: pointer;
     font-size: 0.95em; font-weight: 600;
   }
-  .parsons-check-btn { background: #2774AE; color: white; }
-  .parsons-check-btn:hover:not(:disabled) { background: #1d5d8a; }
+  .parsons-check-btn { background: var(--color-primary, #2774AE); color: var(--color-text-on-primary, white); }
+  .parsons-check-btn:hover:not(:disabled) { background: var(--color-primary-hover, #1e5c8a); }
   .parsons-reset-btn { background: #eee; color: #333; }
   .parsons-reset-btn:hover:not(:disabled) { background: #ddd; }
   .parsons-check-btn:disabled, .parsons-reset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -565,18 +583,18 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
   .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
   /* Dark mode overrides for Parsons */
-  html.dark-mode .parsons-label { color: #b8b8c8; }
-  html.dark-mode .parsons-bank { background: #1a1a28; border-color: #6a737d; }
-  html.dark-mode .parsons-target { background: #1c2a1c; border-color: #4fa34f; }
-  html.dark-mode .parsons-separator { color: #b8b8c8; }
-  html.dark-mode .parsons-line { background: #2a2a3e; border-color: #6a737d; }
-  html.dark-mode .parsons-line:hover { border-color: #0078d4; background: #2a2a50; }
+  html.dark-mode .parsons-label { color: var(--color-text-muted, #b8b8c8); }
+  html.dark-mode .parsons-bank { background: #1a1a28; border-color: var(--color-border-strong, #6a737d); }
+  html.dark-mode .parsons-target { background: #1c2a1c; border-color: var(--color-success, #4fa34f); }
+  html.dark-mode .parsons-separator { color: var(--color-text-muted, #b8b8c8); }
+  html.dark-mode .parsons-line { background: #2a2a3e; border-color: var(--color-border-strong, #6a737d); }
+  html.dark-mode .parsons-line:hover { border-color: var(--color-primary, #5fa8d3); background: #2a2a50; }
   html.dark-mode .parsons-line code { color: #e0e0f0; }
-  html.dark-mode .parsons-grip { color: #b8b8c8; }
-  html.dark-mode .parsons-line.parsons-correct { border-color: #3a8a3a; background: rgba(58,138,58,0.15); }
-  html.dark-mode .parsons-line.parsons-incorrect { border-color: #cc4444; background: rgba(204,68,68,0.12); }
-  html.dark-mode .parsons-reset-btn { background: #333; color: #ccc; }
-  html.dark-mode .parsons-reset-btn:hover:not(:disabled) { background: #444; }
+  html.dark-mode .parsons-grip { color: var(--color-text-muted, #b8b8c8); }
+  html.dark-mode .parsons-line.parsons-correct { border-color: var(--color-success, #4fa34f); background: rgba(79, 163, 79, 0.15); }
+  html.dark-mode .parsons-line.parsons-incorrect { border-color: var(--color-error, #ff8585); background: rgba(255, 133, 133, 0.12); }
+  html.dark-mode .parsons-reset-btn { background: var(--color-border, #333); color: #ccc; }
+  html.dark-mode .parsons-reset-btn:hover:not(:disabled) { background: var(--color-divider, #444); }
   /* Correct-answer display for parsons */
   .quiz-correct-answers code {
     font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.95em;

@@ -18,21 +18,19 @@ info_nav_title: "My Settings"
   .settings-section-title {
     margin-top: 1.8em;
     padding-bottom: 6px;
-    border-bottom: 2px solid #2774AE;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
   }
-  html.dark-mode .settings-section-title { border-bottom-color: #4da3ff; }
 
   .settings-intro {
-    background: #f8f9fa;
-    border-left: 3px solid #2774AE;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
     padding: 14px 18px;
     line-height: 1.55;
     margin: 16px 0 24px;
   }
   html.dark-mode .settings-intro {
-    background: #1e1e1e;
-    border-left-color: #4da3ff;
+    background: var(--color-surface, #1e1e1e);
     color: #ccc;
   }
   .settings-intro p:last-child {
@@ -113,10 +111,10 @@ info_nav_title: "My Settings"
   .setting-control input[type="text"],
   .setting-control input[type="color"] {
     min-height: 38px;
-    border: 1px solid #c0c4ca;
-    border-radius: 6px;
-    background: #fff;
-    color: #1f2328;
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #1f2328);
   }
   .setting-control select,
   .setting-control input[type="text"] {
@@ -137,13 +135,8 @@ info_nav_title: "My Settings"
   .setting-control select:focus,
   .setting-control input:focus,
   .settings-btn:focus {
-    outline: 2px solid #2774AE;
-    outline-offset: 2px;
-  }
-  html.dark-mode .setting-control select:focus,
-  html.dark-mode .setting-control input:focus,
-  html.dark-mode .settings-btn:focus {
-    outline-color: #4da3ff;
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
   }
 
   .settings-range-line {
@@ -170,10 +163,10 @@ info_nav_title: "My Settings"
   }
   .settings-btn {
     min-height: 34px;
-    border: 1px solid #d1d5da;
-    border-radius: 6px;
-    background: #fff;
-    color: #24292e;
+    border: 1px solid var(--color-border, #d1d5da);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #24292e);
     padding: 7px 12px;
     cursor: pointer;
   }

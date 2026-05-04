@@ -61,8 +61,8 @@
 
 <style>
   .sebook-sidebar-nav {
-    background-color: #f5f5f5;
-    color: #333333;
+    background-color: var(--color-surface-3, #f5f5f5);
+    color: var(--color-text, #333333);
     padding: 0;
     margin: 0;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -76,7 +76,7 @@
 
   .sebook-nav-item {
     margin: 0;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--color-border, #ddd);
   }
 
   .sebook-nav-row,
@@ -90,8 +90,8 @@
   .sebook-nav-link:visited {
     display: flex;
     align-items: center;
-    padding: 12px 15px;
-    color: #005587;
+    padding: var(--sp-md, 12px) 15px;
+    color: var(--color-primary-strong, #005587);
     text-decoration: none;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -139,9 +139,9 @@
   }
 
   .sebook-nav-toggle:focus-visible {
-    outline: 2px solid #005587;
-    outline-offset: 2px;
-    border-radius: 3px;
+    outline: var(--focus-width, 3px) solid var(--focus-color, #005587);
+    outline-offset: var(--focus-offset, 2px);
+    border-radius: var(--radius-sm, 4px);
   }
 
   .sebook-nav-item.has-subtopics .sebook-nav-toggle[aria-expanded="true"] {
@@ -175,7 +175,7 @@
     display: flex;
     align-items: center;
     padding: 10px 30px;
-    color: #005587;
+    color: var(--color-primary-strong, #005587);
     text-decoration: none;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -220,7 +220,7 @@
   .sebook-nav-itemlink:visited {
     display: block;
     padding: 8px 50px;
-    color: #005587;
+    color: var(--color-primary-strong, #005587);
     text-decoration: none;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -232,22 +232,22 @@
 
   .sebook-nav-itemlink:hover {
     background-color: #c8c8c8;
-    color: #005587;
+    color: var(--color-primary-strong, #005587);
   }
 
   /* Highlight current page */
   .sebook-nav-link.current,
   .sebook-nav-sublink.current,
   .sebook-nav-itemlink.current {
-    background-color: #2774AE;
-    color: white;
+    background-color: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, white);
     font-weight: 600;
   }
 
   .sebook-nav-link.current:hover,
   .sebook-nav-sublink.current:hover,
   .sebook-nav-itemlink.current:hover {
-    background-color: #1a5a9f;
+    background-color: var(--color-primary-hover, #1e5c8a);
   }
 </style>
 

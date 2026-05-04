@@ -233,15 +233,15 @@ html.dark-mode .fs-command-lab__exit--err {
 .fs-command-lab__btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-sm, 8px);
   max-width: 100%;
-  background-color: #2774AE;
-  color: #ffffff;
-  border: 1px solid #2774AE;
-  border-radius: 999px;
+  background-color: var(--color-primary, #2774AE);
+  color: var(--color-text-on-primary, #ffffff);
+  border: 1px solid var(--color-primary, #2774AE);
+  border-radius: var(--radius-pill, 999px);
   padding: 7px 16px 7px 12px;
   cursor: pointer;
-  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-family: var(--font-mono, 'Fira Code', 'Cascadia Code', Menlo, monospace);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
@@ -249,7 +249,7 @@ html.dark-mode .fs-command-lab__exit--err {
   overflow-wrap: anywhere;
   word-break: break-word;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.08));
 }
 .fs-command-lab__btn .fs-command-lab__cmd {
   min-width: 0;
@@ -267,14 +267,14 @@ html.dark-mode .fs-command-lab__exit--err {
   }
 }
 .fs-command-lab__btn:hover {
-  background-color: #1e5f8d;
-  border-color: #1e5f8d;
+  background-color: var(--color-primary-hover, #1e5c8a);
+  border-color: var(--color-primary-hover, #1e5c8a);
   box-shadow: 0 2px 6px rgba(39,116,174,0.25);
 }
-.fs-command-lab__btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.fs-command-lab__btn:active { transform: translateY(1px); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.08)); }
 .fs-command-lab__btn:focus-visible {
-  outline: 2px solid #1e5f8d;
-  outline-offset: 2px;
+  outline: var(--focus-width, 3px) solid var(--focus-color, #1e5c8a);
+  outline-offset: var(--focus-offset, 2px);
 }
 
 .fs-command-lab__icon {
@@ -363,8 +363,8 @@ html.dark-mode .fs-command-lab__exit--err {
   color: #1f2d3d;
 }
 .fs-command-lab__btn-back:focus-visible {
-  outline: 2px solid #9aa6b2;
-  outline-offset: 2px;
+  outline: var(--focus-width, 3px) solid var(--focus-color, #9aa6b2);
+  outline-offset: var(--focus-offset, 2px);
 }
 .fs-command-lab__btn-back:disabled {
   opacity: 0.4;

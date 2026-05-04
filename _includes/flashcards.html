@@ -87,12 +87,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
 <style>
   .flashcards-container {
-    background: #ffffff;
-    border: 1px solid #e1e4e8;
-    border-radius: 12px;
-    padding: 12px;
-    margin: 12px 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-divider, #e1e4e8);
+    border-radius: var(--radius-lg, 12px);
+    padding: var(--sp-md, 12px);
+    margin: var(--sp-md, 12px) 0;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
     font-family: 'Inter', sans-serif;
     position: relative;
   }
@@ -127,11 +127,11 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .flashcard-answer-container {
-    margin-top: 10px;
-    padding: 10px 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-top: 2px solid #FFD100;
+    margin-top: var(--sp-md, 10px);
+    padding: var(--sp-md, 10px) var(--sp-lg, 15px);
+    background: var(--color-surface-2, #f8f9fa);
+    border-radius: var(--radius-md, 8px);
+    border-top: 2px solid var(--color-accent, #FFD100);
     animation: slideDown 0.3s ease;
     font-size: 0.95em;
     line-height: 1.3;
@@ -151,8 +151,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   .flashcard-answer {
     font-size: 1.2em;
-    color: #2774AE;
-    margin-bottom: 12px;
+    color: var(--color-primary, #2774AE);
+    margin-bottom: var(--sp-md, 12px);
   }
 
   .flashcard-answer strong,
@@ -173,12 +173,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
   .show-answer-btn,
   .restart-btn,
   .review-btn {
-    background: #2774AE;
-    color: white;
+    background: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, white);
     border: none;
-    padding: 8px 16px;
+    padding: var(--sp-sm, 8px) var(--sp-lg, 16px);
     min-height: 36px;
-    border-radius: 6px;
+    border-radius: var(--radius-md, 8px);
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
@@ -190,16 +190,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
   .review-btn:focus-visible,
   .assess-btn:focus-visible,
   .se-gym-toggle:focus-visible {
-    outline: 3px solid #2774AE;
-    outline-offset: 2px;
-  }
-
-  html.dark-mode .show-answer-btn:focus-visible,
-  html.dark-mode .restart-btn:focus-visible,
-  html.dark-mode .review-btn:focus-visible,
-  html.dark-mode .assess-btn:focus-visible,
-  html.dark-mode .se-gym-toggle:focus-visible {
-    outline-color: #FFD100;
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
   }
 
   .flashcards-container .sr-only {
@@ -213,7 +205,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
   .show-answer-btn:hover,
   .restart-btn:hover,
   .review-btn:hover {
-    background: #1e5c8a;
+    background: var(--color-primary-hover, #1e5c8a);
   }
 
   .assessment-buttons {
@@ -241,19 +233,19 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .correct-btn {
-    background: #1f7a3d;
+    background: var(--color-success, #1f7a3d);
   }
 
   .correct-btn:hover {
-    background: #186430;
+    background: var(--color-success-hover, #186430);
   }
 
   .incorrect-btn {
-    background: #dc3545;
+    background: var(--color-error, #b81e2c);
   }
 
   .incorrect-btn:hover {
-    background: #c82333;
+    background: var(--color-error-hover, #94121e);
   }
 
   .flashcards-results {
@@ -290,19 +282,19 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .se-gym-toggle:hover {
-    border-color: #2774AE;
-    color: #2774AE;
+    border-color: var(--color-primary, #2774AE);
+    color: var(--color-primary, #2774AE);
   }
 
   .se-gym-toggle.in-gym {
-    background: #28a745;
-    border-color: #28a745;
-    color: white;
+    background: var(--color-success, #1f7a3d);
+    border-color: var(--color-success, #1f7a3d);
+    color: var(--color-text-on-primary, white);
   }
 
   .se-gym-toggle.in-gym:hover {
-    background: #dc3545;
-    border-color: #dc3545;
+    background: var(--color-error, #b81e2c);
+    border-color: var(--color-error, #b81e2c);
   }
 
   /* Dark Mode */
@@ -323,6 +315,26 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   html.dark-mode .flashcard-answer {
     color: #FFD100 !important;
+  }
+
+  /* WCAG 1.4.3: #666 on the dark flashcards-container surface (#1a1a1a)
+     measures ~3.17:1 — fails the 4.5:1 minimum for body text. Bump to a
+     muted but legible grey that clears 4.5:1 on #252525 and #1a1a1a. */
+  html.dark-mode .flashcard-explanation {
+    color: #b0b0b0 !important;
+  }
+
+  /* The se-gym-toggle pill keeps a subtle neutral border in light mode
+     (#ccc on white). On the dark surface, a #ccc border becomes a harsh
+     near-white ring and #999 text fails contrast — pair both with dark
+     equivalents. */
+  html.dark-mode .flashcards-container .se-gym-toggle {
+    border-color: #555 !important;
+    color: #b0b0b0 !important;
+  }
+  html.dark-mode .flashcards-container .se-gym-toggle:hover {
+    border-color: var(--color-primary, #5fa8d3) !important;
+    color: var(--color-primary, #5fa8d3) !important;
   }
 
   @media print {

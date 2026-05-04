@@ -85,26 +85,26 @@ layout: blog
     max-width: 100%;
     height: auto;
     /* This adds the rounded corners */
-    border-radius: 25px;
+    border-radius: var(--radius-xl, 20px);
     /* Optional: prevents image "bleed" if you add a border later */
     overflow: hidden;
   }
 
   .blog-post-header {
-    margin-bottom: 30px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 20px;
+    margin-bottom: var(--sp-2xl, 30px);
+    border-bottom: 1px solid var(--color-border, #ddd);
+    padding-bottom: var(--sp-xl, 20px);
   }
 
   .blog-post-header h1 {
     margin: 0 0 10px 0;
     font-size: 2.5em;
-    color: #2774AE;
+    color: var(--color-primary, #2774AE);
     -webkit-text-stroke: 0.5px black;
   }
 
   .blog-post-meta {
-    color: black;
+    color: var(--color-text, black);
     font-size: 0.95em;
   }
 
@@ -115,16 +115,16 @@ layout: blog
   .blog-post-content {
     font-size: 1.05em;
     line-height: 1.8;
-    color: black;
-    margin: 30px 0;
+    color: var(--color-text, black);
+    margin: var(--sp-2xl, 30px) 0;
   }
 
   .blog-post-content h2 {
 
-    color: #2774AE;
+    color: var(--color-primary, #2774AE);
     -webkit-text-stroke: 0.5 px black;
-    margin-top: 30px;
-    margin-bottom: 15px;
+    margin-top: var(--sp-2xl, 30px);
+    margin-bottom: var(--sp-lg, 15px);
     font-weight: bold;
   }
 
@@ -144,16 +144,16 @@ layout: blog
   }
 
   .blog-post-content code {
-    background-color: #f5f5f5;
+    background-color: var(--color-surface-3, #f5f5f5);
     padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
+    border-radius: var(--radius-sm, 4px);
+    font-family: var(--font-mono, monospace);
   }
 
   .blog-post-content pre {
-    background-color: #f5f5f5;
-    padding: 15px;
-    border-radius: 5px;
+    background-color: var(--color-surface-3, #f5f5f5);
+    padding: var(--sp-lg, 15px);
+    border-radius: var(--radius-md, 8px);
     overflow-x: auto;
     max-width: 100%;
   }
@@ -209,13 +209,13 @@ layout: blog
   }
 
   .blog-post-footer {
-    border-top: 1px solid #ddd;
-    padding-top: 20px;
-    margin-top: 40px;
+    border-top: 1px solid var(--color-border, #ddd);
+    padding-top: var(--sp-xl, 20px);
+    margin-top: var(--sp-3xl, 40px);
   }
 
   .blog-bibliography {
-    margin-top: 40px;
+    margin-top: var(--sp-3xl, 40px);
   }
 
   .blog-bibliography h3 {
@@ -234,21 +234,12 @@ layout: blog
   }
 
   .action-box {
-    background-color: #FFD100;
-    /* A very light gray/off-white */
-    border-left: 10px solid #2774AE;
-    /* A bold blue line on the left to draw the eye */
-    /*border-right: 1.5px solid #2774AE; /* A bold blue line on the right to draw the eye */
-    /*border-top: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
-    /*border-bottom: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
-    padding: 5px 20px 5px 20px;
-    /* Top, Right, Bottom, Left padding */
-    margin: 20px 0;
-    /* Spacing above and below the box */
-    border-radius: 20px;
-    /* Slightly rounded corners on the right */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    /* A very subtle shadow */
+    background-color: var(--color-accent, #FFD100);
+    border-left: 10px solid var(--color-primary, #2774AE);
+    padding: var(--sp-sm, 5px) var(--sp-xl, 20px);
+    margin: var(--sp-xl, 20px) 0;
+    border-radius: var(--radius-xl, 20px);
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
   }
 
   /* Optional: This ensures the last item in your box doesn't create extra dead space at the bottom */

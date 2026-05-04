@@ -138,6 +138,10 @@
   <!--<link rel="stylesheet" href="https://bootswatch.com/3/yeti/bootstrap.min.css">-->
   <link rel="stylesheet" href="{{ "/css/bootstrap.ucla.css" | prepend: site.baseurl }}">
 
+  <!-- Site-wide design tokens (CSS custom properties). Loads early so the
+       variables are available to every later stylesheet and inline style. -->
+  <link rel="stylesheet" href="{{ "/css/design-tokens.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+
   <!-- Custom CSS -->
   <link rel="stylesheet" href="https://blueimp.github.io/Gallery/css/blueimp-gallery.min.css">
   <link rel="stylesheet" href="{{ "/css/bootstrap-image-gallery.min.css" | prepend: site.baseurl }}">

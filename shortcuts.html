@@ -16,31 +16,29 @@ info_nav_title: "Keyboard shortcuts"
   .shortcuts-page h2 {
     margin-top: 1.8em;
     padding-bottom: 6px;
-    border-bottom: 2px solid #2774AE;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
   }
-  html.dark-mode .shortcuts-page h2 { border-bottom-color: #4da3ff; }
 
   .shortcuts-intro {
-    background: #f8f9fa;
-    border-left: 3px solid #2774AE;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
     padding: 14px 18px;
     line-height: 1.55;
     margin: 16px 0 24px;
   }
   html.dark-mode .shortcuts-intro {
-    background: #1e1e1e;
-    border-left-color: #4da3ff;
+    background: var(--color-surface, #1e1e1e);
     color: #ccc;
   }
 
   .shortcuts-toc {
     margin: 12px 0 28px;
     padding: 12px 18px;
-    background: #f6f8fa;
-    border-radius: 6px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
   }
-  html.dark-mode .shortcuts-toc { background: #1e1e1e; color: #ddd; }
+  html.dark-mode .shortcuts-toc { background: var(--color-surface, #1e1e1e); color: #ddd; }
   .shortcuts-toc ul { margin: 6px 0 0; padding-left: 20px; }
   .shortcuts-toc li { margin: 3px 0; }
 
@@ -58,13 +56,13 @@ info_nav_title: "Keyboard shortcuts"
   html.dark-mode .shortcuts-table caption { color: #e0e0e0; }
   .shortcuts-table th,
   .shortcuts-table td {
-    border: 1px solid #d0d7de;
+    border: 1px solid var(--color-border, #d0d7de);
     padding: 9px 11px;
     text-align: left;
     vertical-align: top;
   }
   .shortcuts-table th {
-    background: #f6f8fa;
+    background: var(--color-surface-2, #f6f8fa);
     font-weight: 600;
   }
   html.dark-mode .shortcuts-table th,
