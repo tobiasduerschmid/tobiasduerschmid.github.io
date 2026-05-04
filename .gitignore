@@ -19,3 +19,5 @@ js/__pycache__/
 # v86 post-boot snapshot — the raw .bin is local-only debugging output; the
 # .gz form is what the runtime fetches and ships with the site.
 vm/dist/state.bin
+__pycache__/
+scripts/__pycache__/
