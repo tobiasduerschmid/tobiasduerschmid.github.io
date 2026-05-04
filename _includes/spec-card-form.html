@@ -1,0 +1,570 @@
+{% comment %}
+Interactive Spec Card widget — fillable form for the testing-foundations
+"Spec Card" artifact (Behavior / Should pass when / Should fail when /
+Locator contract / Oracle).
+
+Usage:
+  {% include spec-card-form.html %}                       (default card slot)
+  {% include spec-card-form.html id="add-todo" %}         (named slot)
+  {% include spec-card-form.html id="login" title="Spec Card: Login flow" %}
+
+Persistence:
+  Key: spec-card-{id}
+  Value: JSON { behavior, should_pass_when, should_fail_when, locator_contract, oracle }
+  (See /cookies/ for the storage inventory entry.)
+{% endcomment %}
+
+{% assign sc_id = include.id | default: "default" %}
+{% assign sc_title = include.title | default: "Spec Card" %}
+{% assign sc_dom_id = "spec-card-" | append: sc_id %}
+
+<div class="spec-card-widget" data-card-id="{{ sc_id }}" id="{{ sc_dom_id }}"
+     role="region" aria-label="{{ sc_title | escape }}">
+  <header class="spec-card-header">
+    <h3 class="spec-card-title">{{ sc_title }}</h3>
+    <span class="spec-card-status" data-spec-card-status aria-live="polite" aria-atomic="true">Empty</span>
+  </header>
+
+  <form class="spec-card-form" novalidate
+        aria-describedby="{{ sc_dom_id }}-desc">
+    <p id="{{ sc_dom_id }}-desc" class="spec-card-desc">
+      Five fields, fits on screen. Fill in <em>before</em> writing the test —
+      the card forces the question <strong>"what about this UI is the stable contract?"</strong> before
+      you commit to code that pins the wrong thing. Auto-saves to your browser; nothing is sent to a server.
+    </p>
+
+    <div class="spec-card-field">
+      <label for="{{ sc_dom_id }}-behavior">
+        <span class="spec-card-field-name">✓ Behavior</span>
+        <span class="spec-card-field-hint">One sentence — the user-visible promise this test will prove.</span>
+      </label>
+      <input type="text"
+             id="{{ sc_dom_id }}-behavior"
+             data-spec-card-field="behavior"
+             autocomplete="off"
+             placeholder="User can …">
+    </div>
+
+    <div class="spec-card-field">
+      <label for="{{ sc_dom_id }}-should-pass-when">
+        <span class="spec-card-field-name">✓ Should pass when</span>
+        <span class="spec-card-field-hint">Implementation changes the test must <em>survive</em> (CSS rename, restyle, layout shift).</span>
+      </label>
+      <textarea id="{{ sc_dom_id }}-should-pass-when"
+                data-spec-card-field="should_pass_when"
+                rows="3"
+                placeholder="CSS classes change. The Add button is restyled. The list becomes a table."></textarea>
+    </div>
+
+    <div class="spec-card-field">
+      <label for="{{ sc_dom_id }}-should-fail-when">
+        <span class="spec-card-field-name">✗ Should fail when</span>
+        <span class="spec-card-field-hint">Regressions the test must <em>catch</em> (silent data loss, wrong count, missing element).</span>
+      </label>
+      <textarea id="{{ sc_dom_id }}-should-fail-when"
+                data-spec-card-field="should_fail_when"
+                rows="3"
+                placeholder="Adding silently drops items. Empty inputs are accepted. The input doesn't clear after add."></textarea>
+    </div>
+
+    <div class="spec-card-field">
+      <label for="{{ sc_dom_id }}-locator-contract">
+        <span class="spec-card-field-name">🎯 Locator contract</span>
+        <span class="spec-card-field-hint">Stable queries — role + accessible name, label, semantic test ID.</span>
+      </label>
+      <textarea id="{{ sc_dom_id }}-locator-contract"
+                data-spec-card-field="locator_contract"
+                rows="3"
+                placeholder="A textbox labeled 'Todo item'; a button named 'Add todo'; a list of items."></textarea>
+    </div>
+
+    <div class="spec-card-field">
+      <label for="{{ sc_dom_id }}-oracle">
+        <span class="spec-card-field-name">✅ Oracle</span>
+        <span class="spec-card-field-hint">Observable outcome that confirms success — what would the user see?</span>
+      </label>
+      <textarea id="{{ sc_dom_id }}-oracle"
+                data-spec-card-field="oracle"
+                rows="3"
+                placeholder="The new item is visible in the list."></textarea>
+    </div>
+  </form>
+
+  <footer class="spec-card-actions">
+    <button type="button"
+            class="spec-card-btn spec-card-btn-primary"
+            data-spec-card-action="export">
+      <i class="fa fa-download" aria-hidden="true"></i>
+      Export as Markdown
+    </button>
+    <button type="button"
+            class="spec-card-btn spec-card-btn-secondary"
+            data-spec-card-action="copy">
+      <i class="fa fa-copy" aria-hidden="true"></i>
+      Copy to clipboard
+    </button>
+    <button type="button"
+            class="spec-card-btn spec-card-btn-danger"
+            data-spec-card-action="reset">
+      <i class="fa fa-trash" aria-hidden="true"></i>
+      Reset
+    </button>
+  </footer>
+</div>
+
+<style>
+  /* Spec Card widget — light mode (default).
+     Note on units: this site sets `html { font-size: 62.5% }` so 1rem = 10px,
+     while body/paragraph text actually renders at ~22.5px (set further down).
+     Using `rem` shrinks the widget to ~10px text. Widgets that sit inside
+     <article>/<main> inherit body's 16px, NOT the paragraph 22.5px (since the
+     widget isn't a <p>). So we explicitly set the widget's base to 1.4em
+     (≈22.4px from body's 16px) to match paragraph size, then size everything
+     else inside with `em` (relative to the widget). See AGENTS.md "Minimum
+     font sizes" section. */
+  .spec-card-widget {
+    background: #ffffff;
+    color: #1f2937;
+    border: 1px solid #d9dee8;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 24px 0;
+    box-shadow: 0 2px 8px rgba(31, 41, 55, 0.06);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Match surrounding paragraph size (~22.4px). */
+    font-size: 1.4em;
+    line-height: 1.5;
+    max-width: 720px;
+  }
+
+  .spec-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Title is an <h3>; scope to .spec-card-widget to override the layout's
+     own h3 rule. */
+  .spec-card-widget .spec-card-title {
+    margin: 0;
+    font-size: 1.2em;
+    line-height: 1.3;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .spec-card-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width: 80px;
+    text-align: center;
+  }
+  .spec-card-status[data-state="saved"] {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .spec-card-status[data-state="saving"] {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .spec-card-desc {
+    margin: 0 0 16px;
+    color: #4b5563;
+    /* font-size inherits — matches surrounding paragraph */
+    line-height: 1.55;
+  }
+
+  .spec-card-form {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+  }
+
+  .spec-card-field { display: grid; gap: 6px; }
+
+  /* Browsers (and some site stylesheets) shrink <label> font-size by
+     default. Force it back to the widget's paragraph size. */
+  .spec-card-widget .spec-card-field label {
+    display: grid;
+    gap: 4px;
+    font-size: 1em;
+  }
+
+  .spec-card-widget .spec-card-field-name {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1em;
+  }
+
+  .spec-card-widget .spec-card-field-hint {
+    font-size: 0.9em;        /* secondary text — slightly smaller than paragraph */
+    font-weight: 400;
+    color: #6b7280;
+    line-height: 1.45;
+  }
+
+  .spec-card-widget input[type="text"],
+  .spec-card-widget textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1f2937;
+    /* `font: inherit` makes the input adopt the widget's family + size,
+       so typed content is the same size as the surrounding paragraph. */
+    font: inherit;
+    line-height: 1.5;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
+  .spec-card-widget textarea {
+    min-height: 72px;
+    /* Override family back to monospace, but keep inherited font-size. */
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+
+  .spec-card-widget input[type="text"]:focus-visible,
+  .spec-card-widget textarea:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+    border-color: #2563eb;
+  }
+
+  .spec-card-widget input[type="text"]::placeholder,
+  .spec-card-widget textarea::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .spec-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .spec-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #1f2937;
+    /* Inherit family + size from widget so labels match surrounding text. */
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .spec-card-btn:hover { background: #e5e7eb; }
+  .spec-card-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+  .spec-card-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .spec-card-btn-primary {
+    background: #2563eb;
+    color: #ffffff;
+  }
+  .spec-card-btn-primary:hover { background: #1d4ed8; }
+
+  .spec-card-btn-danger {
+    background: #ffffff;
+    color: #b91c1c;
+    border-color: #fecaca;
+    margin-left: auto;
+  }
+  .spec-card-btn-danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+  }
+
+  /* Dark-mode overrides — applies whenever <html> has .dark-mode */
+  html.dark-mode .spec-card-widget {
+    background: #232a36;
+    color: #e6edf3;
+    border-color: #2a323e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  html.dark-mode .spec-card-header { border-bottom-color: #2a323e; }
+  html.dark-mode .spec-card-title { color: #f3f4f6; }
+
+  html.dark-mode .spec-card-status {
+    background: #2a323e;
+    color: #cbd5e1;
+  }
+  html.dark-mode .spec-card-status[data-state="saved"] {
+    background: #064e3b;
+    color: #a7f3d0;
+  }
+  html.dark-mode .spec-card-status[data-state="saving"] {
+    background: #78350f;
+    color: #fde68a;
+  }
+
+  html.dark-mode .spec-card-desc { color: #9ca3af; }
+  html.dark-mode .spec-card-field-name { color: #e6edf3; }
+  html.dark-mode .spec-card-field-hint { color: #9ca3af; }
+
+  html.dark-mode .spec-card-widget input[type="text"],
+  html.dark-mode .spec-card-widget textarea {
+    background: #1c2533;
+    color: #e6edf3;
+    border-color: #3a4351;
+  }
+  html.dark-mode .spec-card-widget input[type="text"]::placeholder,
+  html.dark-mode .spec-card-widget textarea::placeholder {
+    color: #6b7280;
+  }
+  html.dark-mode .spec-card-widget input[type="text"]:focus-visible,
+  html.dark-mode .spec-card-widget textarea:focus-visible {
+    outline-color: #60a5fa;
+    border-color: #60a5fa;
+  }
+
+  html.dark-mode .spec-card-actions { border-top-color: #2a323e; }
+
+  html.dark-mode .spec-card-btn {
+    background: #2a323e;
+    color: #e6edf3;
+  }
+  html.dark-mode .spec-card-btn:hover { background: #374151; }
+  html.dark-mode .spec-card-btn:focus-visible { outline-color: #60a5fa; }
+
+  html.dark-mode .spec-card-btn-primary {
+    background: #2563eb;
+    color: #ffffff;
+  }
+  html.dark-mode .spec-card-btn-primary:hover { background: #1d4ed8; }
+
+  html.dark-mode .spec-card-btn-danger {
+    background: #1c2533;
+    color: #fca5a5;
+    border-color: #7f1d1d;
+  }
+  html.dark-mode .spec-card-btn-danger:hover {
+    background: #2a1414;
+    border-color: #b91c1c;
+  }
+
+  /* High-contrast and reduced-motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .spec-card-btn { transition: none; }
+  }
+</style>
+
+<script>
+  (function () {
+    'use strict';
+
+    // ---------- Storage helpers ----------
+    var FIELDS = ['behavior', 'should_pass_when', 'should_fail_when', 'locator_contract', 'oracle'];
+
+    function storageKey(cardId) {
+      return 'spec-card-' + cardId;
+    }
+
+    function readCard(cardId) {
+      try {
+        var raw = window.localStorage.getItem(storageKey(cardId));
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        return parsed;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeCard(cardId, data) {
+      try {
+        var clean = {};
+        var hasContent = false;
+        FIELDS.forEach(function (f) {
+          var v = (data[f] || '').toString();
+          clean[f] = v;
+          if (v.trim()) hasContent = true;
+        });
+        if (hasContent) {
+          window.localStorage.setItem(storageKey(cardId), JSON.stringify(clean));
+        } else {
+          window.localStorage.removeItem(storageKey(cardId));
+        }
+        return hasContent;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function clearCard(cardId) {
+      try { window.localStorage.removeItem(storageKey(cardId)); }
+      catch (_) {}
+    }
+
+    // ---------- Markdown serialization ----------
+    var FIELD_LABELS = {
+      behavior:          '✓ Behavior',
+      should_pass_when:  '✓ Should pass when',
+      should_fail_when:  '✗ Should fail when',
+      locator_contract:  '🎯 Locator contract',
+      oracle:            '✅ Oracle'
+    };
+
+    function toMarkdown(cardId, data) {
+      var lines = ['# Spec Card: ' + (data.behavior || '(untitled)'), ''];
+      FIELDS.forEach(function (f) {
+        lines.push('## ' + FIELD_LABELS[f]);
+        lines.push('');
+        var v = (data[f] || '').trim();
+        lines.push(v || '_(not yet filled in)_');
+        lines.push('');
+      });
+      lines.push('---');
+      lines.push('');
+      lines.push('_Card id: `' + cardId + '` — exported from /SEBook/tools/spec-card_');
+      return lines.join('\n');
+    }
+
+    // ---------- Per-widget controller ----------
+    function initSpecCard(root) {
+      var cardId = root.getAttribute('data-card-id') || 'default';
+      var status = root.querySelector('[data-spec-card-status]');
+      var inputs = {};
+      FIELDS.forEach(function (f) {
+        var el = root.querySelector('[data-spec-card-field="' + f + '"]');
+        if (el) inputs[f] = el;
+      });
+
+      function snapshot() {
+        var data = {};
+        FIELDS.forEach(function (f) {
+          data[f] = inputs[f] ? inputs[f].value : '';
+        });
+        return data;
+      }
+
+      function setStatus(state, label) {
+        if (!status) return;
+        status.setAttribute('data-state', state);
+        status.textContent = label;
+      }
+
+      function refreshStatus() {
+        var data = snapshot();
+        var any = FIELDS.some(function (f) { return (data[f] || '').trim(); });
+        if (any) {
+          setStatus('saved', 'Saved');
+        } else {
+          setStatus('empty', 'Empty');
+        }
+      }
+
+      // Restore from storage
+      var existing = readCard(cardId);
+      if (existing) {
+        FIELDS.forEach(function (f) {
+          if (inputs[f] && typeof existing[f] === 'string') {
+            inputs[f].value = existing[f];
+          }
+        });
+      }
+      refreshStatus();
+
+      // Auto-save on input (debounced)
+      var saveTimer = null;
+      function scheduleSave() {
+        setStatus('saving', 'Saving…');
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(function () {
+          writeCard(cardId, snapshot());
+          refreshStatus();
+        }, 250);
+      }
+      FIELDS.forEach(function (f) {
+        if (!inputs[f]) return;
+        inputs[f].addEventListener('input', scheduleSave);
+      });
+
+      // Action buttons
+      var exportBtn = root.querySelector('[data-spec-card-action="export"]');
+      var copyBtn   = root.querySelector('[data-spec-card-action="copy"]');
+      var resetBtn  = root.querySelector('[data-spec-card-action="reset"]');
+
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+          var md = toMarkdown(cardId, snapshot());
+          var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'spec-card-' + cardId + '.md';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        });
+      }
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var md = toMarkdown(cardId, snapshot());
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(md).then(function () {
+              var prev = copyBtn.textContent;
+              copyBtn.textContent = 'Copied!';
+              setTimeout(function () { copyBtn.innerHTML = '<i class="fa fa-copy" aria-hidden="true"></i> Copy to clipboard'; }, 1200);
+            }, function () {
+              window.alert('Could not copy. Use Export to download instead.');
+            });
+          } else {
+            window.alert('Clipboard API not available. Use Export to download instead.');
+          }
+        });
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          var data = snapshot();
+          var any = FIELDS.some(function (f) { return (data[f] || '').trim(); });
+          if (any && !window.confirm('Reset all fields and clear this Spec Card from your browser?')) {
+            return;
+          }
+          FIELDS.forEach(function (f) { if (inputs[f]) inputs[f].value = ''; });
+          clearCard(cardId);
+          refreshStatus();
+          if (inputs.behavior) inputs.behavior.focus();
+        });
+      }
+    }
+
+    function initAll() {
+      var widgets = document.querySelectorAll('.spec-card-widget');
+      Array.prototype.forEach.call(widgets, initSpecCard);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+      initAll();
+    }
+  })();
+</script>

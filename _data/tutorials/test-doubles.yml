@@ -5,9 +5,10 @@ description: "Learn to test code that depends on a clock, an HTTP service, a dat
 learning_objectives:
   - "Distinguish Dummy / Stub / Spy / Mock / Fake (Meszaros' taxonomy) by *role*, given a concrete scenario."
   - "Apply dependency injection to introduce a *seam* in code that hard-codes a collaborator (clock, HTTP, DB)."
-  - "Recognize the `unittest.mock` colloquial-vs-Meszaros mismatch — `Mock()` the class can play any role; the role is determined by *how* the test uses it."
+  - "Differentiate the conceptual role of a `unittest.mock.Mock` object from its tool-class identity, given a code sample — `Mock()` the class can play any role; the role is determined by *how* the test uses it."
   - "Evaluate whether a passing test actually verifies anything (vs. tautologically agreeing with itself because both sides ask the same uncontrolled source)."
-  - "Decide when *not* to use a test double — fakes for stateful collaborators, real objects for pure logic."
+  - "Justify the choice to *not* use a test double — fakes for stateful collaborators, real objects for pure logic."
+  - "Create a test from scratch that uses an appropriate double (stub, spy, or mock) for a previously-unseen SUT, with a strong oracle."
 
 backend: pyodide
 linter: true
@@ -28,19 +29,26 @@ autosave_type: files
 
 # Global setup: install pytest, expose /tutorial on sys.path, patch the
 # pytest module cache so each pytest.main(...) call sees fresh source.
-# The module list MUST cover every student-editable module; missing one
-# causes stale-import bugs that look like flaky tests.
+# The eviction list is computed by globbing /tutorial/*.py at run-time so
+# adding a new student-editable module never requires editing this YAML
+# (a hard-coded list previously caused stale-import bugs that looked like
+# flaky tests whenever an author forgot to update it).
 setup_commands:
   - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
   - "import sys; sys.path.insert(0, '/tutorial')"
   - |
-    import pytest as _pytest, sys as _sys
+    import os as _os, pytest as _pytest, sys as _sys
+    _TUTORIAL_DIR = '/tutorial'
     def _make_pytest_patch():
         _orig = _pytest.main
         _sysmod = _sys
         def _patched(*a, **kw):
+            try:
+                tutorial_modules = {f[:-3] for f in _os.listdir(_TUTORIAL_DIR) if f.endswith('.py')}
+            except FileNotFoundError:
+                tutorial_modules = set()
             for m in list(_sysmod.modules):
-                if m.startswith('test_') or m in ('quest_service','quest_api','reward_ledger','push_notifier','xp_calculator','clock','scenarios'):
+                if m.startswith('test_') or m in tutorial_modules:
                     del _sysmod.modules[m]
             return _orig(*a, **kw)
         return _patched
@@ -67,9 +75,11 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Recognize when a real collaborator makes a test non-deterministic
+      - Diagnose when a real collaborator makes a test non-deterministic
       - Apply Dependency Injection to introduce a *seam* the test can swap out
       - Analyze the difference between a test that passes and one that actually verifies behavior
+
+      📐 *Two panes:* production code is on the **left**; tests are on the **right**. Files prefixed `test_` route to the right pane automatically; everything else lands on the left.
 
       ### 🧭 What you already know — and what's about to shift
 
@@ -85,7 +95,7 @@ steps:
       | **Collaborator** | Anything the SUT calls into. Here: `datetime.now()`. |
       | **Indirect input** | A value the SUT *receives* from a collaborator (rather than from its caller). Here: today's date from the clock. |
       | **Seam** | A point where you can substitute a collaborator at test time without changing production behavior. We're about to introduce one. |
-      | **Dependency Injection** | The technique: pass the collaborator in as a parameter instead of hard-coding it. *Meszaros, Dependency Injection, p.678.* |
+      | **Dependency Injection** | The technique: pass the collaborator in as a parameter instead of hard-coding it. *(Meszaros, [Dependency Injection](http://xunitpatterns.com/Dependency%20Injection.html).)* |
 
       <details markdown="1"><summary>🌍 The same vocabulary in another language</summary>
 
@@ -98,20 +108,36 @@ steps:
 
       | Role | What it does | First encountered in |
       |---|---|---|
-      | **Dummy** | A placeholder object that's *never actually used*. Passed only to satisfy a constructor or method signature when the test doesn't care about that collaborator. | Step 5's `_service(Mock(), Mock())` helper — those args are dummies. |
-      | **Stub** | Returns canned indirect *inputs* to the SUT. The SUT reads from it; the test doesn't verify how. | Step 2 — a `FrozenClock` that always returns the same datetime. |
-      | **Spy** | Records the SUT's outgoing *calls* so the test can assert on them later. | Step 3 — a ledger spy that captures `(user_id, gold)` tuples. |
-      | **Mock** *(Meszaros sense — the "noun")* | A spy + behavior verification: the test sets *expectations* up-front, and the mock fails if they aren't met. | Step 4 — `unittest.mock` + `assert_called_once_with`. |
-      | **Fake** | A working alternate implementation, simpler than production (e.g., an in-memory database for a test). | Step 6 — when stubs/spies become unwieldy. |
+      | **[Dummy](http://xunitpatterns.com/Dummy%20Object.html)** | A placeholder object that's *never actually used*. Passed only to satisfy a constructor or method signature when the test doesn't care about that collaborator. | Step 5's `_service(Mock(), Mock())` helper — those args are dummies. |
+      | **[Stub](http://xunitpatterns.com/Test%20Stub.html)** | Returns canned indirect *inputs* to the SUT. The SUT reads from it; the test doesn't verify how. | Step 2 — a `FrozenClock` that always returns the same datetime. |
+      | **[Spy](http://xunitpatterns.com/Test%20Spy.html)** | Records the SUT's outgoing *calls* so the test can assert on them later. | Step 3 — a ledger spy that captures `(user_id, gold)` tuples. |
+      | **[Mock](http://xunitpatterns.com/Mock%20Object.html)** *(Meszaros sense — the "noun")* | A spy + behavior verification: the test sets *expectations* up-front, and the mock fails if they aren't met. | Step 4 — `unittest.mock` + `assert_called_once_with`. |
+      | **[Fake](http://xunitpatterns.com/Fake%20Object.html)** | A working alternate implementation, simpler than production (e.g., an in-memory database for a test). | Step 6 — when stubs/spies become unwieldy. |
 
       Five roles, *one* taxonomy. The role is determined by *how the test uses* the object, not by what class instantiated it.
       </details>
 
       ⚙️ **Task** — three small moves:
 
-      1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28")` returns `True`. **Predict**: did this test pass on the day it was written (April 28, 2026)? Does it pass today? Why or why not?
-      2. **Run** the test. Unless today happens to be April 28, 2026, the test **FAILS** — `is_today_event_day("2026-04-28")` returns `False` because the wall clock disagrees with the hardcoded date. That **FAIL** is the lesson. The test was correct on the day it was written; the *world* changed beneath it. Tests that depend on the wall clock matching a specific date rot on a schedule.
-      3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Adding the seam alone won't fix the test (it still calls `is_today_event_day("2026-04-28")` without injecting a clock). Step 2 will use the seam to *control* the clock so the test is deterministic.
+      1. **Read** `quest_service.py` and `test_quest_service.py`. The test asserts that `is_today_event_day("2026-04-28") is True`. The test was written on 2026-04-28 and merged green that day.
+
+         ✏️ **Predict before you run.** What happens when you run `test_april_28_is_event_day` *today*?
+
+         - **(a)** Pass — the function returns `True` whenever its argument is a valid date string.
+         - **(b)** Pass — the date string in the assertion (`"2026-04-28"`) matches the value stored in the test, so equality holds.
+         - **(c)** Fail — `is_today_event_day("2026-04-28")` returns `False` because the function compares against today's wall clock, which is no longer 2026-04-28.
+         - **(d)** Error — the function raises an exception because `2026-04-28` is in the past.
+
+         Commit to a letter. *Then* run the test.
+
+         <details markdown="1"><summary>Reveal (after committing)</summary>
+
+         **(c)** is the answer. The trap is **(b)** — students who haven't yet thought about *where the function gets "today" from* assume both sides of the `==` come from the same source. They don't. The left side comes from `datetime.now()` (the wall clock); the right side is a hardcoded string. Two different sources, two different rates of change. The test rotted overnight.
+
+         </details>
+
+      2. **Run** the test. The **FAIL** is the lesson — the test was correct on the day it was written; the *world* changed beneath it. Tests that depend on the wall clock matching a specific date rot on a schedule.
+      3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Adding the seam alone won't fix `test_april_28_is_event_day` (it still calls `is_today_event_day("2026-04-28")` without injecting a clock). **Don't be alarmed when that one test stays red after the refactor** — the gate tests below check the seam itself, not the original test. Step 2 will use the seam to *control* the clock so the test is deterministic.
 
       ```mermaid
       flowchart LR
@@ -131,16 +157,7 @@ steps:
           classDef bad fill:#ffebee,stroke:#c62828,color:#b71c1c
       ```
 
-      💡 **Pedagogical move — concept over syntax.** Your code change is a single keyword (`clock`) and one default. The point isn't the syntax; the point is the *idea* — "this function used to depend on the wall clock; now its caller decides what 'now' means." That idea is *the* foundation of every test double in this tutorial.
-
-      <details markdown="1"><summary>🧠 Why a default value? Why not just require the parameter?</summary>
-
-      Two reasons:
-      1. **Backwards compatibility.** Other code that calls `is_today_event_day(date_str)` keeps working — the default `clock=datetime.datetime` reproduces the old behavior exactly.
-      2. **Pedagogy.** The original test (`assert is_today_event_day("2026-04-28") is True`) keeps passing without modification. The seam is *available* to any test that needs it; tests that don't need it ignore it. That's what *non-intrusive seam* means.
-
-      In Java, the equivalent would be a constructor parameter with a default factory. In JavaScript, an options object with a default. The *concept* — "let the caller swap this dependency" — is what carries.
-      </details>
+      💡 **Concept over syntax.** Your code change is a single keyword (`clock`) and one default. The point is the *idea* — "this function used to depend on the wall clock; now its caller decides what 'now' means." That's the foundation of every test double in this tutorial. (The default value `clock=datetime.datetime` keeps existing call sites working — the seam is *non-intrusive*.)
 
       🔭 **Coming in Step 2:** You created a seam. Now we'll actually use it — by passing in a `FrozenClock` object that always says it's Tuesday. Same SUT, same test shape, but now *fully deterministic*.
 
@@ -256,13 +273,30 @@ steps:
           # Note: the existing test in test_quest_service.py is *expected* to fail today —
           # that failure is the pedagogical point. Step 2 will fix it by injecting a
           # controlled clock through the seam you just created.
+      - description: "(Info) test_april_28_is_event_day SHOULD still be red — that's the lesson, not a problem"
+        command: |
+          import sys
+          for _m in ('quest_service', 'test_quest_service'):
+              sys.modules.pop(_m, None)
+          from quest_service import is_today_event_day
+          # Confirm the original test is still failing as expected.
+          original_result = is_today_event_day("2026-04-28")
+          if original_result is True:
+              # The wall clock happens to be 2026-04-28 — the lesson is harder to
+              # see today, but the principle stands.
+              print("ℹ️ Today happens to be 2026-04-28 — `test_april_28_is_event_day` passes by coincidence.")
+              print("   The seam you created lets future tests stay deterministic regardless of the date.")
+          else:
+              print("✓ Confirmed: `test_april_28_is_event_day` is failing because the wall clock no longer reads 2026-04-28.")
+              print("  This failure is the lesson — a test that depends on the wall clock rots on a schedule.")
+              print("  In Step 2, we'll use the seam you just created to inject a `FrozenClock` and make the test deterministic.")
         hints:
           - title: "Small nudge"
             text: "The signature is `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:`. Then inside the function, replace `datetime.now()` with `clock.now()`."
           - title: "Strategic hint"
             text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter with the default value; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
-          - title: "Almost-spoiler — the full signature"
-            text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:\n    today = clock.now().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nNotice: top-level `import datetime` (not `from datetime import datetime`) — we want the *module* so we can reference `datetime.datetime` as the default."
+          - title: "Skeleton (you fill in the blanks)"
+            text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=___) -> bool:\n    today = clock.___().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nFill the two blanks. Hints: (1) the default for `clock` is the datetime *class* (it has a `.now()` classmethod) — *not* the module and not a function. (2) The body should use the parameter `clock`, not the imported module directly. Note the top-level `import datetime` (the module), so you can reference `datetime.datetime` as the default."
 
     quiz:
       title: "Step 1 — Knowledge Check"
@@ -340,7 +374,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Pytest doesn't require dependency injection. The technique pre-dates pytest by decades. The reason to do it is *design*, not framework compliance."
-            1: "Right. Dependency Injection (Meszaros p.678) is the pattern that makes substitution possible. Once a collaborator is a parameter, any test can pass in a stub, spy, or mock. Without that seam, your only option is module-level patching — heavier and easier to get wrong."
+            1: "Right. [Dependency Injection](http://xunitpatterns.com/Dependency%20Injection.html) (Meszaros) is the pattern that makes substitution possible. Once a collaborator is a parameter, any test can pass in a stub, spy, or mock. Without that seam, your only option is module-level patching — heavier and easier to get wrong."
             2: "Performance is a non-issue at this scale. The benefit of DI is *testability*: the SUT becomes a unit you can isolate from its collaborators."
             3: "Hand-rolled stubs use the same seam as `unittest.mock` doubles — both pass an object in at the parameter level (or replace it via patching). DI is universally useful regardless of which double-style you reach for."
           explanation: |
@@ -373,7 +407,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply the Test Stub role (Meszaros, p.529) by writing one in plain Python
+      - Apply the [Test Stub](http://xunitpatterns.com/Test%20Stub.html) role (Meszaros) by writing one in plain Python
       - Analyze how canned values drive the SUT down a specific behavior partition
       - Evaluate state verification — asserting on the SUT's return value, not on the stubs
 
@@ -385,7 +419,7 @@ steps:
 
       Read that twice. Most confusion about test doubles in Python comes from conflating Python's `unittest.mock.Mock` *class* with the conceptual *Mock role*. They're not the same thing. We'll dismantle that confusion in Step 4. For now, lock in this: **the role is the question; the syntax is the answer**.
 
-      ### 📖 What is a Test Stub? (Meszaros, *xUnit Test Patterns*, p.529)
+      ### 📖 What is a [Test Stub](http://xunitpatterns.com/Test%20Stub.html)? (Meszaros, *xUnit Test Patterns*)
 
       A **Test Stub** replaces a collaborator with a hand-controlled object that **answers questions with canned values**. It does *not* record what was asked of it; it does *not* enforce a contract. It just answers.
 
@@ -402,10 +436,11 @@ steps:
 
       Notice what the test asserts on: the **SUT's return value**, not the stubs. That's **state verification** — we observe the *result* of calling the SUT, not whether it *talked* to anyone. Stubs make state verification possible by removing the variability the real collaborators would have introduced.
 
-      ⚙️ **Task** — two small moves:
+      ⚙️ **Task** — three moves, getting progressively harder:
 
       1. **Read** the worked example `test_tuesday_picks_tuesday_quest`. The `FrozenClock`, the `StubQuestApiClient`, and the assertion are all written for you. **Predict** the test's outcome before running. Then run it — green.
       2. **Fill in the assertion** in `test_thursday_picks_thursday_quest`. The clock is frozen to a Thursday; the canned API quests include a Thursday entry. **Compute** the expected value from the spec — don't run-and-paste. Replace `"FILL_IN_HERE"` with the exact title the SUT should return.
+      3. ✍️ **Write your own test — `test_friday_with_no_friday_quest_returns_no_quests_today`.** Friday clock (`datetime(2026, 5, 1, 12, 0)`), canned list with **no** Friday entry, assert `== "No quests today"`. No scaffold — wire up the stubs yourself.
 
       💡 **The conceptual move.** A stub *answers questions* — it doesn't decide what those answers should be. *You* decide. Your decision drives the SUT down whichever behavior branch the test is meant to exercise. The canned quest list and the frozen weekday together form a precise input partition; the assertion locks in what the SUT does for *that* partition.
 
@@ -420,7 +455,7 @@ steps:
 
       <details markdown="1"><summary>🧠 Stub vs Fake — the cousin you'll meet briefly</summary>
 
-      A **Fake Object** (Meszaros p.551) is the next-of-kin to a stub: a working but lightweight implementation. Where `StubQuestApiClient` returns the *same* canned list no matter what `user_id` is passed, a `FakeQuestApiClient` could keep an in-memory dict of `{user_id: [quests]}` and return different lists for different users.
+      A **[Fake Object](http://xunitpatterns.com/Fake%20Object.html)** (Meszaros) is the next-of-kin to a stub: a working but lightweight implementation. Where `StubQuestApiClient` returns the *same* canned list no matter what `user_id` is passed, a `FakeQuestApiClient` could keep an in-memory dict of `{user_id: [quests]}` and return different lists for different users.
 
       ```python
       class FakeQuestApiClient:
@@ -551,7 +586,7 @@ steps:
 
 
           class StubQuestApiClient:
-              """A Test Stub (Meszaros, p.529) — returns canned quests regardless of user_id."""
+              """A Test Stub (Meszaros, http://xunitpatterns.com/Test%20Stub.html) — returns canned quests regardless of user_id."""
 
               def __init__(self, canned_quests: list[dict]):
                   self._canned = canned_quests
@@ -630,16 +665,25 @@ steps:
                 ])
                 service = DailyQuestService(clock, api)
                 assert service.daily_quest_title("u456") == "Battle the Lich King"
+
+
+            # Generation task — fully written test for the no-Friday-quest partition.
+            def test_friday_with_no_friday_quest_returns_no_quests_today():
+                clock = FrozenClock(datetime(2026, 5, 1, 12, 0))   # 2026-05-01 is a Friday
+                api = StubQuestApiClient([
+                    {"weekday": "Monday",  "title": "Slay the Slime Lord"},
+                    {"weekday": "Tuesday", "title": "Find the Lost Amulet"},
+                    {"weekday": "Sunday",  "title": "Save the Princess"},
+                ])
+                service = DailyQuestService(clock, api)
+                assert service.daily_quest_title("u789") == "No quests today"
           language: "python"
       explanation: |
-        The SUT iterates the canned quest list looking for an entry whose
-        `weekday` matches the clock's current weekday. April 30, 2026 is a
-        Thursday; the canned list has a Thursday entry titled "Battle the
-        Lich King"; that's what the SUT returns.
-
-        Notice you didn't have to write any "stub" code — the stub class was
-        already written. The conceptual decision was *what value should the
-        assertion pin*. That's the test-design move; the syntax is the vehicle.
+        Faded test — 2026-04-30 is a Thursday → "Battle the Lich King".
+        Generation test — 2026-05-01 is a Friday with no Friday entry →
+        the SUT falls through the loop and returns "No quests today".
+        Same SUT, two new partitions; the conceptual move is *what the
+        assertion pins*, not the syntax of the stub.
 
     tests:
       - description: "FILL_IN_HERE was replaced with a real title"
@@ -673,7 +717,39 @@ steps:
                   "`assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`. "
                   "(The clock is frozen to a Thursday and that's the only Thursday entry in the canned quest list.)"
               )
-      - description: "Both tests pass"
+      - description: "Generation task — `test_friday_with_no_friday_quest_returns_no_quests_today` exists, constructs FrozenClock + StubQuestApiClient + DailyQuestService, and asserts == \"No quests today\""
+        command: |
+          import re
+          source = open('/tutorial/test_quest_service.py').read()
+          if 'def test_friday_with_no_friday_quest_returns_no_quests_today' not in source:
+              raise AssertionError(
+                  "Add a new test function named `test_friday_with_no_friday_quest_returns_no_quests_today`. "
+                  "It should construct a FrozenClock for a Friday (e.g. datetime(2026, 5, 1, 12, 0)), "
+                  "a StubQuestApiClient with NO Friday entry, a DailyQuestService, and assert "
+                  "`service.daily_quest_title(\"<some-user>\") == \"No quests today\"` with `==`."
+              )
+          body = source.split('def test_friday_with_no_friday_quest_returns_no_quests_today')[1].split('def ')[0]
+          if 'FrozenClock' not in body:
+              raise AssertionError("Your generation test should construct a FrozenClock so the wall clock is controlled.")
+          if 'StubQuestApiClient' not in body:
+              raise AssertionError("Your generation test should construct a StubQuestApiClient with the canned quest list.")
+          if 'DailyQuestService' not in body:
+              raise AssertionError("Your generation test should construct a DailyQuestService — that's the SUT.")
+          if not re.search(r"==\s*['\"]No quests today['\"]", body):
+              raise AssertionError(
+                  "Pin the assertion exactly with `==`: "
+                  "`assert service.daily_quest_title(\"<user>\") == \"No quests today\"`. "
+                  "Substring matching (`in`) is a weak oracle — Step 2's whole point is that the assertion shape matters."
+              )
+          # Sanity: there must be no Friday entry in the canned list — otherwise the
+          # SUT would return that title and the assertion would fail.
+          if re.search(r"['\"]Friday['\"]", body):
+              raise AssertionError(
+                  "Your canned quest list contains a Friday entry — but the partition we're testing is "
+                  "*Friday with NO Friday quest*. Remove the Friday entry so the SUT falls through to "
+                  "the `\"No quests today\"` branch."
+              )
+      - description: "All three tests pass (worked + faded + generation)"
         command: |
           import pytest, io, sys
           old = sys.stdout; sys.stdout = buf = io.StringIO()
@@ -686,8 +762,8 @@ steps:
           - title: "Strategic hint"
             text: "April 30, 2026 is a Thursday. The canned API list has exactly one Thursday entry. The SUT returns that entry's `title` field."
             condition: "code_missing: Battle the Lich King"
-          - title: "Almost-spoiler"
-            text: "The Thursday entry in the canned list is `{\"weekday\": \"Thursday\", \"title\": \"Battle the Lich King\"}`. Pin the title with `assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`."
+          - title: "Skeleton (you fill in the title)"
+            text: "Pin the assertion with `==` and the *exact* title from the matching canned entry:\n```python\nassert service.daily_quest_title(\"u456\") == \"___\"\n```\nThe matching canned entry is the one whose `weekday` field equals what `FrozenClock(datetime(2026, 4, 30, 12, 0))` returns. Use a calendar to confirm the weekday; copy the `title` field exactly (including capitalisation)."
             condition: "code_missing: Battle the Lich King"
 
     quiz:
@@ -706,9 +782,9 @@ steps:
             - "An object that throws exceptions on every call to detect missing error handling"
           correct_index: 1
           option_feedback:
-            0: "That's closer to a *Fake Object* (Meszaros p.551) — a working but lightweight implementation, like an in-memory database. A Stub doesn't 'work' in the usual sense; it just returns the canned answer it was given."
-            1: "Right. A Test Stub (Meszaros p.529) provides controlled indirect inputs — it answers the SUT's questions with values *you* chose, so the SUT's behavior under those inputs is what gets tested."
-            2: "That describes a *Test Spy* (Meszaros p.538), the topic of Step 3. A spy adds *call recording* on top of stub-like behavior — but a stub on its own doesn't track calls."
+            0: "That's closer to a *[Fake Object](http://xunitpatterns.com/Fake%20Object.html)* (Meszaros) — a working but lightweight implementation, like an in-memory database. A Stub doesn't 'work' in the usual sense; it just returns the canned answer it was given."
+            1: "Right. A [Test Stub](http://xunitpatterns.com/Test%20Stub.html) (Meszaros) provides controlled indirect inputs — it answers the SUT's questions with values *you* chose, so the SUT's behavior under those inputs is what gets tested."
+            2: "That describes a *[Test Spy](http://xunitpatterns.com/Test%20Spy.html)* (Meszaros), the topic of Step 3. A spy adds *call recording* on top of stub-like behavior — but a stub on its own doesn't track calls."
             3: "That's a specific *use* of a stub (the `side_effect=ConnectionError` pattern from Step 4), but it's not the defining role. The defining role is providing canned answers; raising exceptions is just one kind of canned answer."
           explanation: |
             Stub = canned answers. The SUT calls the stub; the stub returns
@@ -820,7 +896,7 @@ steps:
   #   Concept over syntax    — student writes ONE tuple. The lesson is "how much
   #                            of a call to pin."
   # --------------------------------------------------------------------------
-  - title: "Hand-Rolled Spy: Did the Ledger Actually Get the Gold?"
+  - title: "Hand-Rolled Spy: Verifying Indirect Outputs"
     instructions: |
       ### Why this matters
 
@@ -828,7 +904,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply the Test Spy role (Meszaros, p.538) by writing one in plain Python
+      - Apply the [Test Spy](http://xunitpatterns.com/Test%20Spy.html) role (Meszaros) by writing one in plain Python
       - Evaluate "Goldilocks" assertions that pin only what the spec demands
       - Analyze why fire-and-forget methods are invisible without a spy
 
@@ -838,11 +914,11 @@ steps:
       |---|---|---|
       | What the test asserts on | The SUT's **return value** | The recorded **calls** on the spy |
       | What the SUT looks like | A function that returns something | Often a method that returns `None` (fire-and-forget) |
-      | Verification kind | **State** verification (Meszaros, p.462) | **State** verification *of the spy* — Step 5 will introduce the third kind |
+      | Verification kind | **[State Verification](http://xunitpatterns.com/State%20Verification.html)** | **State** verification *of the spy* — Step 5 will introduce the third kind |
 
       The new collaborator is `RewardLedger` — its job is to credit gold to a user. The SUT calls `ledger.credit(user_id, gold)` and that's the *only* observable effect. The SUT itself returns nothing useful — the call to credit IS the contract. To verify it, we need a spy.
 
-      ### 📖 What is a Test Spy? (Meszaros, *xUnit Test Patterns*, p.538)
+      ### 📖 What is a [Test Spy](http://xunitpatterns.com/Test%20Spy.html)? (Meszaros, *xUnit Test Patterns*)
 
       A **Test Spy** behaves like a stub *and* records every call made to it. The test runs the SUT, then inspects the spy's recorded-call list. Same SUT/collaborator structure as Step 2; what changes is *what the test asserts on*.
 
@@ -873,11 +949,12 @@ steps:
 
       Same lesson as Testing Foundations Step 4: **assert on exactly what the spec says — no less, no more.** The spec for `complete_quest`: "credit the user the gold for the completed quest." That maps to a 2-tuple `(user_id, gold)`. Anything beyond that is over-specification; anything less is a Liar.
 
-      ⚙️ **Task** — three small moves:
+      ⚙️ **Task** — four moves:
 
       1. **Read** `test_complete_quest_LIAR_oracle`. The assertion is `assert len(spy.calls) >= 0` — it *always passes*, regardless of whether the SUT called the spy at all. **Add a Python comment** above the assertion explaining (in your own words) why this is a *Liar test* — use the phrase "Liar test" or "weak oracle". Don't change the assertion; the test stays a Liar so the lesson is preserved.
       2. **Read and run** `test_complete_quest_credits_correct_gold` — fully written, pins the exact 2-tuple. This is the Goldilocks shape.
       3. **Fill in the assertion** in `test_award_streak_bonus_5_days`. The streak-bonus rule: **10 gold per day, capped at 100**. The student passes `days=5`. Compute the gold; pin the call.
+      4. ✍️ **Write your own test — `test_award_streak_bonus_caps_at_100_for_long_streaks`.** Use `days=12` (above the cap). Wire up `SpyLedger` + `DailyQuestService` and pin `spy.calls == [("u3", 100)]`. No scaffold.
 
       <details markdown="1"><summary>📖 Why fire-and-forget methods need spies</summary>
 
@@ -993,7 +1070,7 @@ steps:
 
 
           class SpyLedger:
-              """A Test Spy (Meszaros, p.538) — records every credit() call."""
+              """A Test Spy (Meszaros, http://xunitpatterns.com/Test%20Spy.html) — records every credit() call."""
               def __init__(self):
                   self.calls = []
               def credit(self, user_id, gold):
@@ -1111,9 +1188,22 @@ steps:
                 service.award_streak_bonus("u2", 5)
                 # 5 days × 10 gold = 50 (well below the cap of 100).
                 assert spy.calls == [("u2", 50)]
+
+
+            # Generation task — student-written test for the cap partition.
+            def test_award_streak_bonus_caps_at_100_for_long_streaks():
+                spy = SpyLedger()
+                service = DailyQuestService(
+                    FrozenClock(datetime(2026, 4, 28, 12, 0)),
+                    StubQuestApiClient([]),
+                    spy,
+                )
+                service.award_streak_bonus("u3", 12)
+                # 12 days × 10 = 120, but the spec caps at 100.
+                assert spy.calls == [("u3", 100)]
           language: "python"
       explanation: |
-        Three moves in this step:
+        Four moves in this step:
           1. **Liar named**: a comment above `assert len(spy.calls) >= 0`
              explains why it always passes (the assertion is structurally
              trivial — len of any list is non-negative). The Liar stays in
@@ -1122,6 +1212,9 @@ steps:
              exactly what the spec mandates — one call with two arguments.
           3. **Faded filled in**: 5 days × 10 gold = 50 (under the 100-gold
              cap). The strong oracle pins the exact 2-tuple.
+          4. **Generation**: `days=12` → the cap clamps to 100. You wired
+             up the spy/service yourself — same shape as the worked
+             examples, but every line was your decision.
 
     tests:
       - description: "A comment above the Liar assertion explains why it's weak"
@@ -1146,7 +1239,27 @@ steps:
           # Look for the assertion pinning the 2-tuple ("u2", 50)
           assert re.search(r'spy\.calls\s*==\s*\[\s*\(\s*[\'\"]u2[\'\"]\s*,\s*50\s*\)\s*\]', body), \
               "The assertion should be `assert spy.calls == [(\"u2\", 50)]`. Compute from the spec: 5 days × 10 gold = 50, which is below the 100-gold cap."
-      - description: "All three tests pass"
+      - description: "Generation task — `test_award_streak_bonus_caps_at_100_for_long_streaks` exists, uses SpyLedger, and pins `spy.calls == [(<user>, 100)]`"
+        command: |
+          import re
+          source = open('/tutorial/test_quest_service.py').read()
+          if 'def test_award_streak_bonus_caps_at_100_for_long_streaks' not in source:
+              raise AssertionError(
+                  "Add `test_award_streak_bonus_caps_at_100_for_long_streaks`. "
+                  "Use `days=12` (above the cap), wire up SpyLedger + DailyQuestService, "
+                  "and pin `spy.calls == [(<user>, 100)]`."
+              )
+          body = source.split('def test_award_streak_bonus_caps_at_100_for_long_streaks')[1].split('def ')[0]
+          if 'SpyLedger' not in body:
+              raise AssertionError("Construct a `SpyLedger()` so the test can record the credit call.")
+          if not re.search(r'award_streak_bonus\([^)]*,\s*12\b', body):
+              raise AssertionError("Call `service.award_streak_bonus(<user>, 12)` — `days=12` is the partition above the cap.")
+          if not re.search(r"spy\.calls\s*==\s*\[\s*\(\s*['\"][^'\"]+['\"]\s*,\s*100\s*\)\s*\]", body):
+              raise AssertionError(
+                  "Pin the assertion exactly: `assert spy.calls == [(<user>, 100)]`. "
+                  "The cap is 100 — *not* 120. If you wrote 120, you missed the `min(...)` cap in the spec."
+              )
+      - description: "All four tests pass"
         command: |
           import pytest, io, sys
           old = sys.stdout; sys.stdout = buf = io.StringIO()
@@ -1159,19 +1272,19 @@ steps:
           - title: "Small nudge — streak bonus"
             text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
             condition: "code_missing: 50"
-          - title: "Almost-spoiler — skeleton (you fill in the numbers)"
+          - title: "Skeleton (fill the blanks; do not paste the answer)"
             text: |
-              Liar comment template:
+              Liar comment template (write *your own* explanation — naming **why** `len(...) >= 0` is structurally trivial):
               ```python
-              # Liar test / weak oracle — len(...) >= ___ is always true,
-              # so this passes regardless of behavior.
+              # ___ — len(...) >= 0 is always true for any list, so this assertion
+              # passes whether the SUT called the spy or not.
               ```
 
               Streak assertion skeleton:
               ```python
               assert spy.calls == [("___", ___)]
               ```
-              Compute the second value from the spec: *N days × M gold per day*, but never above the cap.
+              First blank: the user_id the test passed in. Second blank: compute from the spec — *days × gold-per-day, capped at 100*. Use `min(...)` mentally; do **not** run the SUT and copy the recorded call.
             condition: "code_missing: spy.calls == ["
 
     quiz:
@@ -1191,7 +1304,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Speed isn't the distinction. Spies and stubs are both lightweight in-memory objects. The difference is *what the test inspects after the SUT runs*."
-            1: "Right. A Spy (Meszaros, p.538) is a stub that *also records calls*. The test asserts on the recorded calls — that's what enables verification of fire-and-forget collaborator interactions."
+            1: "Right. A [Test Spy](http://xunitpatterns.com/Test%20Spy.html) (Meszaros) is a stub that *also records calls*. The test asserts on the recorded calls — that's what enables verification of fire-and-forget collaborator interactions."
             2: "That's a specific *use* of a stub or spy (set `side_effect` to an exception, as Step 4 will show). It's not the defining property — it's just one configurable behavior."
             3: "Test spies are absolutely test doubles, not runtime tools. The terminology comes from xUnit Test Patterns (Meszaros, 2007). Don't confuse \"spy\" in the testing sense with \"spyware\" in the security sense — they happen to share a metaphor but are unrelated concepts."
           explanation: |
@@ -1282,7 +1395,7 @@ steps:
   #   Concept over syntax    — student fills in ONE exception class. The lesson
   #                            is "what failure should the collaborator simulate?"
   # --------------------------------------------------------------------------
-  - title: "Meet `unittest.mock`: Same Roles, Less Typing"
+  - title: "Library Doubles with `unittest.mock`: Same Roles, Less Typing"
     instructions: |
       ### Why this matters
 
@@ -1323,12 +1436,13 @@ steps:
 
       When a teammate says "we mocked the API," you don't know which role they used until you read the test. The verb is loose; the noun is specific. **In this tutorial, we use the noun (Meszaros) form.** When you talk about your own tests, naming the *role* — "I stubbed the clock," "I spied on the ledger," "I added a mock for the gateway" — communicates more than "I mocked it."
 
-      ⚙️ **Task** — read four tests, fill in one slot:
+      ⚙️ **Task** — read four tests, fill in one, then write one:
 
       1. **Read `test_a_handrolled_stub`** — the Step 2 hand-rolled style for comparison.
       2. **Read `test_b_mock_return_value`** — same SUT, same role, generated by `Mock`. Confirm both pass and verify the *same* behavior.
       3. **Read `test_c_mock_as_spy`** — the *same* `Mock` class, now playing the **spy** role. Notice: nothing about `Mock` changes between Test B and Test C — only what the *test* does with it.
-      4. **Fill in `test_d_side_effect_simulates_api_failure`** — replace the placeholder exception class. Read `DailyQuestService.daily_quest_title` to find which exception it catches; use that class. The *concept*: a stub doesn't have to *return* — it can *raise*, simulating a real-world failure path.
+      4. **Fill in `test_d_side_effect_simulates_api_failure`** — replace the placeholder exception class. Read `DailyQuestService.daily_quest_title` to find which exception it catches; use that class.
+      5. ✍️ **Write `test_e_award_streak_bonus_with_mock_spy`.** Use `Mock()` (not `SpyLedger`) as the ledger; call `award_streak_bonus("u9", 7)`; assert `ledger.credit.assert_called_once_with("u9", 70)`. Same spy *role* as Step 3 — different *syntax*. Cementing role-vs-class is the whole point.
 
       ### 📖 `return_value` vs `side_effect` — concept-level contrast
 
@@ -1523,15 +1637,27 @@ steps:
                 api.fetch_quests.side_effect = ConnectionError
                 service = DailyQuestService(clock, api)
                 assert service.daily_quest_title("u1") == "No quests today"
+
+
+            # Generation task — Mock() playing the SPY role for award_streak_bonus.
+            def test_e_award_streak_bonus_with_mock_spy():
+                ledger = Mock()
+                service = DailyQuestService(
+                    FrozenClock(datetime(2026, 4, 28, 12, 0)),
+                    Mock(),       # api: dummy — not used by award_streak_bonus
+                    ledger,
+                )
+                service.award_streak_bonus("u9", 7)
+                ledger.credit.assert_called_once_with("u9", 70)
           language: "python"
       explanation: |
-        `daily_quest_title` has `try: ... except ConnectionError: return "No quests today"`.
-        Setting `side_effect = ConnectionError` makes `api.fetch_quests(...)` raise
-        that exception when called — driving the SUT down its error-handling branch.
+        Test D: `side_effect = ConnectionError` makes `api.fetch_quests(...)` raise
+        that exception, driving the SUT down its error-handling branch. `ValueError`
+        wouldn't match the SUT's `except ConnectionError:` clause.
 
-        Setting `side_effect = ValueError` would NOT match the SUT's `except` clause
-        — the exception would propagate up and the test would fail with an unexpected
-        ValueError. The class has to match the exception the SUT is prepared to catch.
+        Test E (generation): `Mock()` playing a **spy** — same role you wrote by hand
+        in Step 3, now generated. `assert_called_once_with("u9", 70)` is the framework
+        equivalent of `assert spy.calls == [("u9", 70)]`. Role-vs-class made literal.
 
     tests:
       - description: "test_d uses ConnectionError as side_effect (the exception the SUT catches)"
@@ -1572,7 +1698,33 @@ steps:
                   "use one of `assert_called_once_with`, `assert_called_with`, or `call_count == N`."
               )
 
-      - description: "All four tests pass"
+      - description: "Generation task — `test_e_award_streak_bonus_with_mock_spy` exists, uses `Mock()` (not SpyLedger), and asserts `ledger.credit.assert_called_once_with(\"u9\", 70)`"
+        command: |
+          import re
+          source = open('/tutorial/test_quest_service.py').read()
+          if 'def test_e_award_streak_bonus_with_mock_spy' not in source:
+              raise AssertionError(
+                  "Add `test_e_award_streak_bonus_with_mock_spy`. Use `Mock()` as the ledger, "
+                  "call `service.award_streak_bonus(\"u9\", 7)`, and assert "
+                  "`ledger.credit.assert_called_once_with(\"u9\", 70)`."
+              )
+          body = source.split('def test_e_award_streak_bonus_with_mock_spy')[1].split('def ')[0]
+          if 'SpyLedger' in body:
+              raise AssertionError(
+                  "Use `Mock()` for the ledger here, not `SpyLedger`. The whole point of this "
+                  "task is making `Mock()` play the spy role — same role as Step 3's hand-rolled "
+                  "spy, framework syntax instead."
+              )
+          if 'Mock()' not in body:
+              raise AssertionError("The ledger should be a `Mock()` — that's how the framework generates the spy.")
+          if not re.search(r"award_streak_bonus\([^)]*,\s*7\b", body):
+              raise AssertionError("Call `service.award_streak_bonus(\"u9\", 7)` (7 days).")
+          if not re.search(r"credit\.assert_called_once_with\(\s*['\"]u9['\"]\s*,\s*70\s*\)", body):
+              raise AssertionError(
+                  "Assert `ledger.credit.assert_called_once_with(\"u9\", 70)`. "
+                  "Spec: 7 days × 10 gold = 70 (under the cap)."
+              )
+      - description: "All five tests pass"
         command: |
           import pytest, io, sys
           old = sys.stdout; sys.stdout = buf = io.StringIO()
@@ -1585,8 +1737,13 @@ steps:
           - title: "Strategic hint"
             text: "The SUT does `try: quests = self._api.fetch_quests(user_id) except ConnectionError: return 'No quests today'`. So `side_effect = ConnectionError` will trigger the catch branch."
             condition: "code_contains: side_effect = ValueError"
-          - title: "Almost-spoiler"
-            text: "Replace `api.fetch_quests.side_effect = ValueError` with `api.fetch_quests.side_effect = ConnectionError`. That's it — one identifier change."
+          - title: "Skeleton (you fill in the exception class)"
+            text: |
+              Find the `try:` / `except ___:` block in `daily_quest_title` (in `quest_service.py`). Whatever class follows `except` is the same class that should follow `side_effect =`. Replace:
+              ```python
+              api.fetch_quests.side_effect = ___
+              ```
+              Use the class name *exactly* as it appears in the SUT's `except` clause — Python class identity is strict.
             condition: "code_contains: side_effect = ValueError"
 
     quiz:
@@ -1612,7 +1769,7 @@ steps:
             0: "This is the most common confusion in Python testing. The *class* is `Mock`, but the *role* is determined by how the test uses the object — not by the class name. Here, `api` is configured to return a canned value; that's a stub role."
             1: "Right. `return_value` configures a canned answer; the SUT receives that answer as indirect input. Same role as `StubQuestApiClient` from Step 2 — just generated by Mock instead of declared as a class. (Yes, Mock *also* records calls, but here the test never asserts on them. The role is determined by the test's intent.)"
             2: "Mock objects do auto-record calls, so the *capability* is there — but role is determined by what the test *uses*. This test only configures `return_value` and asserts on the SUT's return value (state verification). No call assertions are made on `api`, so its spy capability is unused — it's playing stub."
-            3: "A Fake (Meszaros, p.551) has a working but lightweight implementation — typically with internal state (an in-memory dict, for example). Mock has no internal logic; it just returns whatever you configured. So this isn't a Fake."
+            3: "A [Fake](http://xunitpatterns.com/Fake%20Object.html) (Meszaros) has a working but lightweight implementation — typically with internal state (an in-memory dict, for example). Mock has no internal logic; it just returns whatever you configured. So this isn't a Fake."
           explanation: |
             `Mock(return_value=X)` is the framework's way of writing what
             you wrote by hand as `class StubX: def method(self): return X`.
@@ -1731,7 +1888,7 @@ steps:
 
       - Apply the rule "patch where the SUT looks up the name" to pick the right `patch()` target
       - Evaluate when `autospec=True` is needed to defend against signature drift
-      - Analyze behavior verification (Meszaros, p.468) versus the state verification of Steps 2-3
+      - Analyze [behavior verification](http://xunitpatterns.com/Behavior%20Verification.html) (Meszaros) versus the [state verification](http://xunitpatterns.com/State%20Verification.html) of Steps 2-3
 
       🧭 **Bridge from Step 4.** Step 4 used Mocks at constructor parameters — `DailyQuestService(clock, api, ledger)` accepts the doubles directly. Sometimes that's not possible: the SUT might call a *module-level function* directly, with no constructor parameter to swap. Then we use `unittest.mock.patch()` — and confront the canonical Python pitfall: **where in the namespace does the patch belong?**
 
@@ -1791,15 +1948,15 @@ steps:
 
       Steps 2 and 3 used **state verification**: stubs feed inputs, the test asserts on the SUT's return value or on the spy's recorded list. The SUT's *internal call sequence* was incidental.
 
-      `test_celebrate_milestone_sends_push` (after you fix the patch target) is different. The SUT returns `None`. Nothing in its observable state changes. The *call itself* is the entire contract. We assert that `mock_send` was called once with specific arguments. That's **behavior verification** (Meszaros, p.468).
+      `test_celebrate_milestone_sends_push` (after you fix the patch target) is different. The SUT returns `None`. Nothing in its observable state changes. The *call itself* is the entire contract. We assert that `mock_send` was called once with specific arguments. That's **[behavior verification](http://xunitpatterns.com/Behavior%20Verification.html)** (Meszaros).
 
-      A `Mock` configured with call assertions is, in Meszaros' strict sense, a **Mock Object** (p.544). The role isn't "what class did you instantiate" — it's "what does the test verify, and how?"
+      A `Mock` configured with call assertions is, in Meszaros' strict sense, a **[Mock Object](http://xunitpatterns.com/Mock%20Object.html)**. The role isn't "what class did you instantiate" — it's "what does the test verify, and how?"
 
       | Role | What the test verifies | Verification kind |
       |---|---|---|
-      | Stub | The SUT's return value (driven by canned indirect inputs) | State |
-      | Spy | The recorded call list, after the fact | State (of the spy) |
-      | Mock Object | The interaction itself, often with strict expectations | **Behavior** |
+      | [Stub](http://xunitpatterns.com/Test%20Stub.html) | The SUT's return value (driven by canned indirect inputs) | [State](http://xunitpatterns.com/State%20Verification.html) |
+      | [Spy](http://xunitpatterns.com/Test%20Spy.html) | The recorded call list, after the fact | [State](http://xunitpatterns.com/State%20Verification.html) (of the spy) |
+      | [Mock Object](http://xunitpatterns.com/Mock%20Object.html) | The interaction itself, often with strict expectations | **[Behavior](http://xunitpatterns.com/Behavior%20Verification.html)** |
       </details>
 
       <details markdown="1"><summary>🌍 The same idea in another language</summary>
@@ -2034,8 +2191,13 @@ steps:
           - title: "Strategic hint"
             text: "Patch the namespace where the SUT will *resolve* the name at runtime. The SUT is `quest_service.celebrate_milestone`; the name `send_push` was imported INTO `quest_service`'s namespace. So the target string is `\"quest_service.send_push\"`."
             condition: "code_contains: patch(\"push_notifier.send_push\")"
-          - title: "Almost-spoiler"
-            text: "Replace `with patch(\"push_notifier.send_push\") as mock_send:` with `with patch(\"quest_service.send_push\") as mock_send:`. One string change."
+          - title: "Skeleton (you fill in the namespace)"
+            text: |
+              The patch target string has the form `\"<module>.<name>\"`. The `<name>` is `send_push`. The `<module>` is the *importing* module (the one whose namespace the SUT looks up the name in), not the *defining* module:
+              ```python
+              with patch(\"___.send_push\") as mock_send:
+              ```
+              Read `quest_service.py`'s top: `from push_notifier import send_push`. After that line, in *which* module's namespace does the name `send_push` live? That's your blank.
             condition: "code_contains: patch(\"push_notifier.send_push\")"
 
     quiz:
@@ -2090,24 +2252,25 @@ steps:
             immediately. Use it unless you have a reason not to.
 
         - question: |
-            **(Spaced review)** Match each Meszaros pattern to its book page:
+            What's the relationship between **[Test Double](http://xunitpatterns.com/Test%20Double.html)** (the umbrella name) and Stub / Spy / Mock / Fake / Dummy?
           type: single
           options:
-            - "Test Stub p.529, Test Spy p.538, Mock Object p.544"
-            - "Test Stub p.522, Test Spy p.529, Mock Object p.538"
-            - "All three on the same page (p.522)"
-            - "The book doesn't define them — Fowler does"
-          correct_index: 0
+            - "Test Double is a synonym for Mock — they refer to the same kind of object"
+            - "Test Double is the *umbrella* term (named after a stunt double in film); Dummy, Stub, Spy, Mock, and Fake are five specialized roles, each tagged for a different test-design need"
+            - "Test Double is just Meszaros' branding — modern Python uses 'mock' to cover all of them"
+            - "Test Double is the umbrella, but it only includes Stub, Spy, and Mock — Fake and Dummy are unrelated patterns"
+          correct_index: 1
           option_feedback:
-            0: "Right. *xUnit Test Patterns* (Meszaros, 2007): Test Stub p.529, Test Spy p.538, Mock Object p.544 — the canonical references. The umbrella pattern *Test Double* sits at p.522."
-            1: "Close, but the page numbers are shifted. Test Double (the umbrella) is at p.522; the three specific roles start at p.529 (Stub), p.538 (Spy), and p.544 (Mock Object)."
-            2: "All five double types each have their own dedicated section. The book is a pattern catalog — every pattern gets its own page."
-            3: "Fowler's *\"Mocks Aren't Stubs\"* article popularized the taxonomy, but the canonical *book-form* references are Meszaros'. Both are worth reading; Meszaros is the encyclopedia, Fowler is the essay."
+            0: "Test Double is the umbrella (replaces the real thing — like a stunt double in a film); Mock Object is one specific role *within* that umbrella. Conflating them is exactly the colloquial confusion this tutorial fights."
+            1: "Right. Meszaros' [Test Double](http://xunitpatterns.com/Test%20Double.html) is the umbrella; the five named roles ([Dummy](http://xunitpatterns.com/Dummy%20Object.html), [Stub](http://xunitpatterns.com/Test%20Stub.html), [Spy](http://xunitpatterns.com/Test%20Spy.html), [Mock](http://xunitpatterns.com/Mock%20Object.html), [Fake](http://xunitpatterns.com/Fake%20Object.html)) each address a different test-design problem."
+            2: "Test Double pre-dates `unittest.mock`'s rise (Meszaros 2007). The umbrella isn't a brand — it's a stable, language-agnostic taxonomy used in Java/Mockito, JS/Jest, C#/Moq, Ruby/RSpec."
+            3: "All five are subtypes of Test Double in Meszaros' taxonomy. [Fake](http://xunitpatterns.com/Fake%20Object.html) (in-memory implementations) and [Dummy](http://xunitpatterns.com/Dummy%20Object.html) (objects passed but never used) are explicit named patterns alongside Stub/Spy/Mock."
           explanation: |
-            Meszaros (2007) is the canonical reference. The page numbers come
-            up regularly in code reviews, design discussions, and Stack
-            Overflow answers — knowing them lets you point to the right
-            chapter when the team is debating which double to use.
+            **Test Double** is the umbrella — five specialized roles below it.
+            When you say "I added a mock," you're naming the *Mock Object* role
+            within the *Test Double* umbrella, not the umbrella itself. See
+            Meszaros' [Test Double](http://xunitpatterns.com/Test%20Double.html)
+            for the full taxonomy.
 
         - question: |
             **(Spaced review — Step 4)** A `Mock` is patched in for the SUT's collaborator. The test asserts `mock.method.assert_called_once_with("u1", 100)`. What **role** is this Mock playing?
@@ -2130,6 +2293,30 @@ steps:
             or read after-the-fact (spy style). For your day-to-day work:
             don't worry too much about which side of the line you're on —
             worry about whether the test actually verifies the contract.
+
+        - question: |
+            **(Spaced review — Steps 1 & 2)** In Step 1 you injected `clock=datetime.datetime` as a constructor parameter (Dependency Injection). In this step you patched `"quest_service.send_push"` via `unittest.mock.patch`. When is each technique the right choice?
+          type: single
+          options:
+            - "DI is always preferred — `patch()` is only for legacy code you can't modify"
+            - "DI is the right choice when the SUT *accepts* the collaborator as a parameter you control; `patch()` is the right choice when the SUT *imports* a module-level name and you can't reshape its signature without breaking other callers"
+            - "They're interchangeable — pick based on how much typing each one takes"
+            - "`patch()` is always preferred — DI requires more boilerplate"
+          correct_index: 1
+          option_feedback:
+            0: "DI isn't always available. If the SUT calls `send_push` (a module-level function imported at the top of the file), there's no parameter to inject — you'd have to reshape the SUT's signature. `patch()` exists exactly for that situation."
+            1: "Right. DI is the cleaner default: parameter-level seams are explicit, easy to reason about, and don't depend on Python's import machinery. `patch()` is the heavier tool for module-level names — useful, but it brings the where-to-patch trap (this whole step) along for the ride. Reach for DI first; fall back to `patch()` when DI isn't available."
+            2: "They have different trade-offs. DI makes the seam visible in the SUT's signature; `patch()` reaches into namespaces at runtime. The choice is structural, not stylistic."
+            3: "DI requires the SUT to accept the collaborator as a parameter — that's not boilerplate, it's the seam being visible. `patch()` is the workaround for cases where DI can't be used; preferring it universally is how teams end up with patch-strings scattered across their suites."
+          explanation: |
+            Two techniques for two situations:
+            **DI** when the SUT can take the collaborator as a parameter (Step 1's
+            `clock=datetime.datetime`). Cleanest, most testable.
+            **`patch()`** when the SUT imports the name at module level and you
+            can't change that without disrupting other callers (Step 5's
+            `quest_service.send_push`). Heavier, but works when DI doesn't.
+            The same role-vs-syntax distinction from Step 4 applies: stub/spy/mock
+            are *roles*; DI and `patch()` are *delivery vehicles* for those roles.
 
         - question: |
             **(Spaced review — Step 4 typo trap)** What's the **most reliable defense** against typos like `mock.assrt_called_once_with(...)` silently passing?
@@ -2255,16 +2442,15 @@ steps:
       You now have the **conceptual vocabulary** to read any test in any modern Python codebase and recognize what role each double is playing — even when the author called everything a "mock." That recognition transfers across languages.
 
       🔭 **Where this leads in the rest of the curriculum:**
-      - **[`solid.yml`](/SEBook/tools/solid-tutorial)** — *Dependency Inversion* makes doubles trivial: define an interface, have the SUT depend on it, swap implementations at test time. Most painful mocks are caused by skipped DIP.
-      - **[`observer-pattern.yml`](/SEBook/designpatterns/observer-tutorial)** — the Observer pattern is essentially a spy made into a permanent design feature.
-      - **TDD with doubles** — the next natural sequel: TDD where the SUT *has* collaborators from the start. Red phase becomes "decide what to double, then write the failing test."
+      - **[SOLID Tutorial](/SEBook/tools/solid-tutorial)** — *Dependency Inversion* makes doubles trivial: define an interface, have the SUT depend on it, swap implementations at test time. Most painful mocks are caused by skipped DIP.
+      - **[TDD](/SEBook/tools/tdd-tutorial)** — the next natural sequel: TDD where the SUT *has* collaborators from the start. Red phase becomes "decide what to double, then write the failing test."
 
       🪞 **Recalibrate.** Look back at Step 1 — the test that passed today and would have failed tomorrow. Your toolkit now has six things to do instead of "ship and pray":
 
       1. Recognize a flaky/slow/opaque collaborator (Step 1).
       2. Inject the collaborator as a parameter (Step 1).
-      3. Substitute a stub when you need to control input (Step 2, Meszaros p.529).
-      4. Substitute a spy when you need to verify a call (Step 3, p.538).
+      3. Substitute a [stub](http://xunitpatterns.com/Test%20Stub.html) when you need to control input (Step 2).
+      4. Substitute a [spy](http://xunitpatterns.com/Test%20Spy.html) when you need to verify a call (Step 3).
       5. Reach for `unittest.mock` when boilerplate gets tedious (Step 4) — but recognize the role you're playing.
       6. Use `patch()` carefully — *where the SUT looks the name up* — and prefer `autospec=True` (Step 5).
 
@@ -2471,11 +2657,20 @@ steps:
         well, and Meszaros covers it as the *Test Adapter* pattern (informally).
 
     tests:
-      - description: "Critique line in test_xp_clean.py is filled in"
+      - description: "Critique line in test_xp_clean.py is filled in with substantive content"
         command: |
+          import re
           source = open('/tutorial/test_xp_clean.py').read()
           assert 'FILL IN' not in source, \
-              "Replace both `___ FILL IN ___` placeholders in the docstring at the top of test_xp_clean.py with your one-line answer. The validator just needs SOME text — your judgment."
+              "Replace both `___ FILL IN ___` placeholders with your one-line answers."
+          critique = re.search(r'"""The over-mocked version mocked:\s*(.+?)\s*\nWhat that cost:\s*(.+?)\s*"""', source, re.DOTALL)
+          assert critique, \
+              "Keep the docstring shape — `The over-mocked version mocked: <answer>` then `What that cost: <answer>`. Don't restructure the surrounding docstring."
+          mocked, cost = critique.group(1).strip(), critique.group(2).strip()
+          assert len(mocked) >= 15, \
+              f"Your `mocked:` answer is too short ({len(mocked)} chars). Write a real one-line description of what was mocked."
+          assert len(cost) >= 15, \
+              f"Your `cost:` answer is too short ({len(cost)} chars). Write a real one-line description of what that mocking cost."
       - description: "scenarios.py has all five FILL_IN replaced"
         command: |
           source = open('/tutorial/scenarios.py').read()
@@ -2534,7 +2729,7 @@ steps:
           - title: "Small nudge — scenarios"
             text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter."
             condition: "code_missing: adapter"
-          - title: "Almost-spoiler — skeleton (the categories, in order)"
+          - title: "Skeleton — the rubric, with no answers attached"
             text: |
               You'll classify five scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
 
@@ -2564,7 +2759,7 @@ steps:
             - "Liar test — the assertions don't actually run"
           correct_index: 1
           option_feedback:
-            0: "This is over-mocking, not behavior verification. Behavior verification (Meszaros p.468) is *one* call against an architectural-boundary collaborator — not every internal helper. Mocking internals couples the test to implementation choreography rather than to the spec."
+            0: "This is over-mocking, not behavior verification. [Behavior verification](http://xunitpatterns.com/Behavior%20Verification.html) (Meszaros) is *one* call against an architectural-boundary collaborator — not every internal helper. Mocking internals couples the test to implementation choreography rather than to the spec."
             1: "Right. Mocks should sit at architectural boundaries (HTTP, DB, clock, notifier) — not at every internal helper. Mocking internals creates *brittle* tests: any refactor that preserves behavior but rearranges helpers breaks the test for the wrong reason. Same lesson as Testing Foundations Step 4 (\"behavior, not implementation\"), in mock-shaped clothing."
             2: "Solitary testing means \"isolate the SUT from external collaborators (DBs, clocks, networks).\" It does *not* mean \"mock every internal helper.\" Internal helpers belong to the SUT's own module — mocking them is over-mocking. Solitary doesn't endorse this."
             3: "Liar tests have weak oracles (`is not None`). The over-mocked test's assertions ARE running and are technically strong (`==` against a canned value). The problem is what they assert *about* — implementation details, not the spec."
@@ -2639,6 +2834,28 @@ steps:
             oracle strength are independent test-design dimensions, both
             decided when you *write the test*. Add \"choice of double\" as a
             third independent dimension.
+
+        - question: |
+            **(Spaced review — Step 3)** Step 3's `test_complete_quest_LIAR_oracle` was left in the file *intentionally* — `assert len(spy.calls) >= 0` passes regardless of behavior, and Step 3 asked you to comment on it rather than fix it. Why keep a known-broken test in the file?
+          type: single
+          options:
+            - "It shouldn't be kept — leaving broken tests in the suite is always wrong"
+            - "The Liar shape is recognizable; leaving it as a durable artifact trains the eye to spot the pattern in real codebases that are full of similar tests"
+            - "The Liar test technically passes, so it provides regression coverage for the SUT"
+            - "Refactoring it into a strong assertion would change what the test verifies"
+          correct_index: 1
+          option_feedback:
+            0: "In a real production suite, you'd fix or delete it. In a *teaching* file, the Liar serves as a **durable artifact** — students return to the file and re-encounter the bad pattern alongside the good ones. That recognition skill is exactly what's needed when reading a real codebase, where Liar tests are common."
+            1: "Right. Real-world codebases are full of Liar tests committed by tired engineers under deadline. The skill of *spotting* one on sight is what the Step 3 file builds. Pattern-recognition through durable bad-example artifacts is a deliberate pedagogical move — same family as showing students misspelled words alongside correct ones in language education."
+            2: "A test that always passes provides *no* regression coverage — that's the entire definition of a Liar. The fact that it never goes red is the bug, not a feature."
+            3: "True for *that* specific test (it would no longer be a Liar after refactor), but irrelevant to why we leave Liars in teaching files. The reason is pattern-recognition, not preservation of intent."
+          explanation: |
+            Most testing tutorials only show good tests. Real codebases have
+            both. Keeping a Liar in the file alongside a Goldilocks test
+            trains the eye to discriminate — a skill students need on day 1
+            of a real job, where most tests they read will be imperfect.
+            (Same reasoning behind Step 6's `test_xp_overmocked.py` — kept
+            in the file as a recognizable bad example, not deleted.)
 
         - question: |
             **(Spaced review — Step 5)** Why is `autospec=True` worth almost always reaching for when you patch a callable?

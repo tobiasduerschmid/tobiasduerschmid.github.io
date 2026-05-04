@@ -12,6 +12,29 @@ The full checklist (all 55 success criteria, project-specific gotchas, verificat
 
 If you discover a pre-existing AA violation in code adjacent to your change, surface it to the user — don't silently fix sweeping accessibility debt as part of an unrelated PR. Do fix violations you *introduced* in the same change.
 
+## Minimum font sizes — readable text is paragraph-size
+
+Anything the user is meant to **read or type** must render at **paragraph size or larger** (the on-screen size of the surrounding `<p>`, around 16–22 px depending on context). Form inputs, textareas, button labels, field labels, list items, table cells, code blocks, instructional prose, modal bodies, tooltip text, and toast/status messages all count as readable text.
+
+> ⚠️ **`rem` is a trap on this site.** The root rule sets `html { font-size: 62.5% }` so `1rem = 10px` here, *not* the usual 16 px. Body / `<p>` text actually renders at ~16-22 px because larger values are set further down. **`font-size: 1rem` will produce 10 px on this site — illegible.** New widget CSS should use one of:
+>
+> 1. **Inherit:** omit `font-size` and let the surrounding `<p>` context decide. This is the safest default for an include that may be dropped into multiple page templates.
+> 2. **`em` (relative to inherited size):** `0.9em` for hints, `1.2em` for sub-headings, `0.85em` for decorative pills. Scales with the surrounding context.
+> 3. **`font: inherit` on form controls:** browser defaults for `input` / `textarea` / `button` / `select` are *not* inherited from the parent — set `font: inherit` so typed content matches surrounding paragraph text.
+
+Concrete defaults unless you have a stated reason to deviate:
+
+- **Body / paragraph / form input / button / label / textarea / table cell:** inherit from surrounding `<p>` (or `font: inherit` on form controls). Never `0.7rem`–`1rem` (that's 7–10 px on this site).
+- **Secondary text (hints, captions, metadata, "last saved" timestamps):** `0.9em` minimum (≈90 % of the surrounding text).
+- **Decorative micro-labels (uppercase pills, single-letter chips):** `0.85em` minimum, and only when the text is short and high-contrast.
+- **Headings:** larger than body, never smaller. (`h3 ≥ 1.2em` of paragraph, `h2 ≥ 1.4em`, `h1 ≥ 1.7em`.)
+
+Do **not** use `font-size: 0.78rem` / `0.8rem` / `0.85rem` / `0.92rem` for content the user has to *read to perform a task*. Those sizes show up in copy-pasted "compact" widget CSS and they render at 7.8–9.2 px on this site, illegible especially in dark mode and on high-DPI laptop screens. If a label needs to be smaller for layout reasons, the layout is wrong, not the type. Resize the container or move the label, don't shrink the text.
+
+This rule applies anywhere CSS is written — `.css` / `.scss` files, inline `<style>` blocks in includes / layouts / pages, JS-injected stylesheets via template literals, and inline `style="font-size: …"` attributes. It applies to new components, edits to existing components, and JS-generated tooltips / toasts / popovers. WCAG 2.2 doesn't pin a numeric minimum but Success Criterion 1.4.4 (Resize Text) and 1.4.12 (Text Spacing) effectively assume sane base sizes; this rule operationalizes that for the project.
+
+**Verify, don't assume.** After any CSS change that touches font sizes, open the page in the browser preview and read the affected text at normal zoom. If you have to lean in, the size is wrong.
+
 ## Project skills
 
 The project keeps a set of detailed, evidence-based playbooks in [`.agents/skills/`](./.agents/skills/). Claude Code auto-loads these via its skill mechanism, but other agents must read them explicitly when their triggers apply. **Before starting work that matches a trigger below, read the corresponding `SKILL.md` in full.**

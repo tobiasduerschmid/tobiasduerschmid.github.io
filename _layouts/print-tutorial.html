@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -146,6 +147,7 @@
       color: #383848;
     }
 
+    .step-title code,
     .step-instructions code {
       background: #eaeaf4;
       color: #b03010;
@@ -768,7 +770,7 @@
   <div class="step">
     <div class="step-header">
       <span class="step-number">{{ forloop.index }}</span>
-      <h2 class="step-title">{{ step.title }}</h2>
+      <h2 class="step-title">{{ step.title | markdownify | remove: '<p>' | remove: '</p>' | strip }}</h2>
     </div>
 
     <div class="step-instructions">
@@ -925,6 +927,12 @@
         });
       }
 
+      function renderInlineSummaryMarkdown() {
+        if (window.SebookInlineMarkdown && typeof window.SebookInlineMarkdown.renderSummaries === 'function') {
+          window.SebookInlineMarkdown.renderSummaries(document);
+        }
+      }
+
       function renderUmlDiagrams() {
         if (window.UMLShared && typeof window.UMLShared.renderAll === 'function') {
           window.UMLShared.renderAll();
@@ -937,10 +945,12 @@
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
           makeScrollableCodeFocusable();
+          renderInlineSummaryMarkdown();
           renderUmlDiagrams();
         });
       } else {
         makeScrollableCodeFocusable();
+        renderInlineSummaryMarkdown();
         renderUmlDiagrams();
       }
     })();

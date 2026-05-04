@@ -71,6 +71,7 @@
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script>
   (function () {
     var els = {
@@ -101,6 +102,12 @@
     function escapeHtml(str) {
       var d = document.createElement('div'); d.textContent = str || '';
       return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderInlineMarkdown(str) {
+      return window.SebookInlineMarkdown
+        ? window.SebookInlineMarkdown.render(str || '')
+        : escapeHtml(str || '');
     }
 
     function renderNav(steps, currentStep, unlocked) {
@@ -143,7 +150,7 @@
 
     function renderContent(stepData) {
       if (!stepData) { els.stepContent.innerHTML = ''; return; }
-      els.stepContent.innerHTML = '<h2>' + escapeHtml(stepData.title || '') + '</h2>'
+      els.stepContent.innerHTML = '<h2>' + (stepData.titleHTML || renderInlineMarkdown(stepData.title || '')) + '</h2>'
         + '<div class="tvm-step-instructions">' + (stepData.instructionsHTML || '') + '</div>';
       els.stepContent.scrollTop = 0;
       // Render inline ```mermaid blocks via the shared SebookMermaid theme

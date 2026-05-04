@@ -660,6 +660,10 @@ disable_quiz: boolean                  # Skip all quizzes (lectures).
 ```yaml
 steps:
   - title: string                            # Required. Shown in nav.
+                                             # Inline Markdown is supported
+                                             # in the visible heading for code
+                                             # spans/emphasis; keep the plain
+                                             # text descriptive for nav labels.
     instructions: |                          # Required. Markdown.
       Multi-paragraph step instructions.
       Code blocks Rouge-highlighted.

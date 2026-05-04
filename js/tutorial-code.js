@@ -6017,6 +6017,7 @@
       steps: this.steps.map(function (step) {
         return {
           title: step.title || '',
+          titleHTML: self._renderInlineMarkdown(step.title || ''),
           instructionsHTML: self._stepInstructionsHTML(step),
         };
       }),
@@ -6041,6 +6042,7 @@
       stepIndex: this.currentStep,
       stepData: {
         title: step.title || '',
+        titleHTML: this._renderInlineMarkdown(step.title || ''),
         instructionsHTML: this._stepInstructionsHTML(step),
       },
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
@@ -8584,7 +8586,7 @@
 
     this._renderStepNav();
 
-    var html = '<h2>' + this._escapeHtml(step.title) + '</h2>';
+    var html = '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>';
     html += '<div class="tvm-step-instructions">' +
       this._stepInstructionsHTML(step) + '</div>';
     this.stepContentEl.innerHTML = html;
@@ -9050,13 +9052,33 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._stepInstructionsHTML = function (step) {
     if (!step) return '';
-    return this._autoAbbrHtml(step.instructionsHTML || this._renderMarkdown(step.instructions || ''));
+    var html = this._renderSummaryInlineMarkdown(step.instructionsHTML || this._renderMarkdown(step.instructions || ''));
+    return this._autoAbbrHtml(html);
   };
 
   TutorialCode.prototype._renderMarkdown = function (text) {
     if (!text) return '';
     return window.marked ? window.marked.parse(text)
       : text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n\n/g, '<br><br>');
+  };
+
+  TutorialCode.prototype._renderInlineMarkdown = function (text) {
+    if (window.SebookInlineMarkdown && typeof window.SebookInlineMarkdown.render === 'function') {
+      return window.SebookInlineMarkdown.render(text || '');
+    }
+    return this._escapeHtml(text || '');
+  };
+
+  TutorialCode.prototype._renderSummaryInlineMarkdown = function (html) {
+    if (!html || html.indexOf('<summary') === -1 ||
+        !window.SebookInlineMarkdown ||
+        typeof window.SebookInlineMarkdown.renderSummaries !== 'function') {
+      return html || '';
+    }
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    window.SebookInlineMarkdown.renderSummaries(wrapper);
+    return wrapper.innerHTML;
   };
 
   // Convert ```mermaid fences embedded in instruction markdown into rendered SVG.
