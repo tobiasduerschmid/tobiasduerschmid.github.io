@@ -1,7 +1,7 @@
 require 'kramdown'
 
 module MarkdownHighlighter
-  SKIP_OR_HIGHLIGHT = %r{<(script|code|pre|style)\b.*?>.*?</\1>|(<[^>]+?>)|==([^=\s][^=]*?[^=\s])==}mi.freeze
+  SKIP_OR_HIGHLIGHT = %r{<(script|code|pre|style)\b.*?>.*?</\1>|(<[^>]+?>)|==(\S(?:.*?\S)?)==}mi.freeze
 
   def self.render_inline_markdown(content)
     html = Kramdown::Document.new(content, input: 'GFM').to_html.strip

@@ -86,3 +86,42 @@ test.describe('Highlight Syntax Verification', () => {
     expect(relevantScript).not.toContain('<mark>');
   });
 });
+
+test.describe('Highlight Syntax on Blog Content with Inline HTML', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/blog/how-should-i-use-ai-as-a-college-student/');
+  });
+
+  test('blog content does not expose raw highlight delimiters', async ({ page }) => {
+    await expect(page.locator('.blog-post-content')).not.toContainText('==');
+  });
+
+  test('highlight wraps an emphasized question that contains generated abbreviation markup', async ({ page }) => {
+    const paragraph = page.locator('.blog-post-content p').filter({
+      hasText: 'Many of my students come to me with this wonderful question'
+    }).first();
+
+    await expect(paragraph).not.toContainText('==');
+
+    const mark = paragraph.locator('mark').filter({
+      hasText: 'How can I leverage AI as a tool'
+    });
+    await expect(mark).toBeVisible();
+    await expect(mark.locator('em')).toContainText('How can I leverage AI as a tool');
+    await expect(mark.locator('abbr[title="Artificial Intelligence"]')).toHaveText('AI');
+  });
+
+  test('highlight inside bold text can contain generated abbreviation markup', async ({ page }) => {
+    const paragraph = page.locator('.blog-post-content p').filter({
+      hasText: 'AI is an amplifier of technical skills, not an equalizer'
+    }).first();
+
+    await expect(paragraph).not.toContainText('==');
+
+    const mark = paragraph.locator('strong > mark').filter({
+      hasText: 'AI is an amplifier of technical skills, not an equalizer'
+    });
+    await expect(mark).toBeVisible();
+    await expect(mark.locator('abbr[title="Artificial Intelligence"]')).toHaveText('AI');
+  });
+});
