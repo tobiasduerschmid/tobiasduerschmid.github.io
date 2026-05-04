@@ -6,6 +6,21 @@ require 'cgi'
 
 module Jekyll
   class UMLStatic
+    FALLBACK_CAPTIONS = {
+      'class' => 'UML class diagram',
+      'sequence' => 'UML sequence diagram',
+      'state' => 'UML state diagram',
+      'component' => 'UML component diagram',
+      'deployment' => 'UML deployment diagram',
+      'usecase' => 'UML use case diagram',
+      'activity' => 'UML activity diagram',
+      'freeform' => 'Freeform diagram',
+      'gitgraph' => 'Git graph diagram',
+      'folder-tree' => 'Folder tree diagram',
+      'venn' => 'Venn diagram',
+      'er' => 'Entity-relationship diagram'
+    }.freeze
+
     class << self
       def setup
         @cache = {}
@@ -29,6 +44,43 @@ module Jekyll
         FileUtils.mkdir_p(@cache_dir)
       end
 
+      def normalize_type(type)
+        type.to_s.strip.downcase
+      end
+
+      def type_class(type)
+        normalize_type(type).gsub(/[^a-z0-9_-]/, '-')
+      end
+
+      def fallback_caption(type)
+        FALLBACK_CAPTIONS[normalize_type(type)] || 'ArchUML diagram'
+      end
+
+      def extract_caption(type, text)
+        lines = text.to_s.split("\n", -1)
+        caption = nil
+        explicit = false
+
+        lines.each_with_index do |line, idx|
+          trimmed = line.strip
+          next if trimmed.empty? || trimmed.match?(/^@startuml$/i) || trimmed.match?(/^layout\s+/i)
+
+          match = trimmed.match(/^(?:(?:\/\/|#|'|%%)\s*)?caption\s*:\s*(.+)$/i)
+          if match
+            caption = match[1].strip
+            lines.delete_at(idx)
+            explicit = true
+          end
+          break
+        end
+
+        {
+          text: lines.join("\n"),
+          caption: caption || fallback_caption(type),
+          explicit: explicit
+        }
+      end
+
       def process(content)
         setup if @cache.nil?
         
@@ -38,14 +90,16 @@ module Jekyll
         # Match <pre><code class="language-uml-(class|sequence|state|usecase|component|deployment|activity)">...</code></pre>
         content.scan(%r{<pre><code class="language-uml-([^"]+)">([\s\S]+?)</code></pre>}) do |type, text|
           raw_text = CGI.unescapeHTML(text.strip)
-          blocks << { type: type, text: raw_text, original: $& }
+          caption_info = extract_caption(type, raw_text)
+          blocks << { type: type, text: caption_info[:text], caption: caption_info[:caption], explicit_caption: caption_info[:explicit], original: $& }
         end
 
         # Match <div ... data-uml-type="type" data-uml-spec='spec' ...></div>
         # Using a more flexible regex for attributes
         content.scan(%r{<div[^>]*data-uml-type=(["'])(.*?)\1[^>]*data-uml-spec=(["'])([\s\S]*?)\3[^>]*>[\s\S]*?</div>}m) do |q1, type, q2, spec|
           raw_text = CGI.unescapeHTML(spec.strip)
-          blocks << { type: type, text: raw_text, original: $& }
+          caption_info = extract_caption(type, raw_text)
+          blocks << { type: type, text: caption_info[:text], caption: caption_info[:caption], explicit_caption: caption_info[:explicit], original: $& }
         end
 
         return content if blocks.empty?
@@ -86,11 +140,18 @@ module Jekyll
         blocks.each do |block|
           next unless block[:svg]
           
-          # Wrap in a container to maintain styling and allow dark-mode filter
+          # Wrap in a figure so static-rendered diagrams match the client path.
+          safe_type = type_class(block[:type])
+          escaped_caption = CGI.escapeHTML(block[:caption])
+          caption_class = 'sebook-figure__caption'
+          caption_class += ' sebook-figure__caption--auto' unless block[:explicit_caption]
           svg_wrapped = <<~HTML
-            <div class="uml-#{block[:type]}-diagram-container" data-uml-rendered="true">
-              #{block[:svg]}
-            </div>
+            <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
+              <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{escaped_caption}">
+                #{block[:svg]}
+              </div>
+              <figcaption class="#{caption_class}">#{escaped_caption}</figcaption>
+            </figure>
           HTML
           
           content.gsub!(block[:original], svg_wrapped)

@@ -7,9 +7,10 @@
 {% assign previousyear = currentyear %}
 {% assign co_authors = site.data.co_authors.authors %}
 {% assign show_a_rate = site.data.publications.show_a_rate %}
-{% assign a_rate_threashold = site.data.publications.a_rate_threashold %}
+{% assign a_rate_threshold = site.data.publications.a_rate_threshold | plus: 0 %}
 {% assign curDate = site.time | date: '%s' %}
 {% assign pDate = p.date | date: '%s' %}
+{% assign publication_acceptance_rate = p.a_rate | plus: 0 %}
 
 
 <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}" role="listitem">
@@ -24,7 +25,7 @@
           }}</a>{% else %}{{ a.name }}{% endif %}{% endif %}{% endfor %}{% if found == false %}{{ author }}{% endif %}{%
         if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
       <span class="author">{% if pDate > curDate %}To appear in {% endif %}{{ p.published }} {{ p.date | date: '%Y'
-        }} {% if show_a_rate == true and p.a_rate and a_rate_threashold > p.a_rate %} (acceptance rate: {{ p.a_rate
+        }} {% if show_a_rate == true and p.a_rate and a_rate_threshold > publication_acceptance_rate %} (acceptance rate: {{ p.a_rate
         }}%){% endif %}</span>
       {% if p.comment %}<br><span class="author"><b>{{ p.comment }}</b></span>{% endif %}<br>
     </p>

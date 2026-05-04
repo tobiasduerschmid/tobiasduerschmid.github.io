@@ -1,105 +1,136 @@
 {
-	"show" : true,
-	"max_days" : 1000,
-	"news" :
-	[ 
-	  { "date" : "2016-11-03 00:00:00",
-	    "text" : "I have been selected to present my research on a <a class='page-scroll' href='#publication-designPatternBuilder2016'>Design Pattern Builder</a> in the <a class='urllink' href='https://2016.splashcon.org/track/splash-2016-src#event-overview' rel='nofollow'>ACM Student Research Competition at SPLASH</a> in Amsterdam.",
-	  },	  
-	  { "date" : "2016-12-07 00:00:00",
-	    "text" : "I supported the Demo of &ldquo;BeCasso: Artistic Image Processing and Editing on Mobile Devices&rdquo; at the <a class='urllink' href='http://sa2016.siggraph.org/en/attendees/symposium-on-mobile-graphics-and-interactive-applications' rel='nofollow'>SIGGRAPH Asia 2016 Symposium on Mobile Graphics and Interactive Applications</a>. The demo received a <a class='urllink' href='https://sa2016.siggraph.org/en/attendees/award-winners' rel='nofollow'>Best Demo Award</a>.",
-	  },
-	  { "date" : "2017-05-20 00:00:00",
-	    "text" : "I fly to Buenos Aires to present our <a class='page-scroll' href='#publication-archstyle2017'>architectural styles for Android app product lines</a> at the <a class='urllink' href='http://mobilesoftconf.org/2017/' rel='nofollow'>MOBILESoft</a>, co-located with the International Conference on Software Engineering.",
-	  },
-	  { "date" : "2017-04-05 00:12:15",
-	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
-	    "icon" : "/img/src1.png"
-	  },
-	  { "date" : "2017-07-26 05:00:00",
-	    "text" : "I have finished my bachelor thesis <a class='page-scroll' href='#publication-ba2017'>'A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices'</a>."
-	  },
-	  { "date" : "2017-11-10 00:00:00",
-	    "text" : "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.<br>The current release is restricted to Germany, Australia, Canada, Sweden, and the Netherlands as well as devices that have at least 2 GB RAM, support OpenGL 3.1, and have at least Android 5 (Lollipop). Details of the project are on the <a href='pencilhatching.html'>Pencil Hatching project page</a>.",
-	  },
-	  { "date" : "2017-11-27 05:00:00",
-	    "text" : "I presented our paper on <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX</a> at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications. The <a class='urllink' href='https://www.slideshare.net/secret/GXmxjvJ2dIuXzs'>ProsumerFX presentation slides</a> are on SlideShare.",
-	  },
-	  { "date" : "2017-11-28 05:00:00",
-	    "text" : "We won the best paper award at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications for our paper <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX: Mobile Design of Image Stylization Components</a>.",
-	    "icon" : "/img/award_.jpg"
-	  },
-	  { "date" : "2018-01-31 00:00:00",
-	    "text" : "I have been admitted to the PhD in Software Engineering at CMU ISR. I look forward to working together with passionate and talented people.",
-	  },
-	  { "date" : "2018-04-20 00:00:00",
-	    "text" : "Our education paper <a class='page-scroll' href='#publication-teaching2018'>Teaching Image-Processing Programming for Mobile Devices: A Software Development Perspective</a> has been published on Eurographics.",
-	  },
-	  { "date" : "2018-07-21 00:00:00",
-	    "text" : "Our new concept on <a class='page-scroll' href='#publication-cop2018'>Cross-cutting Commentary</a> has been published at the International Workshop on Context-Oriented Programming.",
-	  },
-	  { "date" : "2018-09-16 00:00:00",
-	    "text" : "I started my PhD in Software Engineering at the Institute for Software Research at CMU."
-	  },
-	  { "date" : "2018-12-17 12:00:00",
-	    "text" : "Our vision paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" has been accepted to ICSE NIER. Additionally, our paper on <a class='page-scroll' href='#publication-seet2019'>Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices</a> has been accepted to ICSE SEET."
-	  },
-	  { "date" : "2019-05-24 12:00:00",
-	    "text" : "I will present our paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" at <a class='urllink' href='https://2019.icse-conferences.org/track/icse-2019-New-Ideas-and-Emerging-Results?track=ICSE%20New%20Ideas%20and%20Emerging%20Results#program' rel='nofollow'>ICSE NIER</a> on Friday in the session 16:00-17:20 in the Viger room. I look forward to interesting discussions about the concept. The slides will be uploaded after the presentation.",
-	  },
-	  { "date" : "2019-08-20 12:00:00",
-	    "text" : "This fall I will be a TA for the class 'Models of Software Systems' at CMU.",
-	  },
-	  { "date" : "2020-01-21 12:00:00",
-	    "text" : "This summer I will be doing a research internship at  <a class='urllink' href='https://www.jpl.nasa.gov/' rel='nofollow'>NASA JPL</a> in Pasadena. I am very excited about getting to know new perspectives on software engineering research and to maybe contribute to future space exploration.",
-	  },
-	  { "date" : "2020-06-12 12:00:00",
-	    "text" : "Fall 2020 I will be designing and co-teaching a class on design patterns, frameworks, and API design at CMU (17-625) together with Matt Bass.",
-	  },
-	  { "date" : "2020-07-30 12:00:00",
-	    "text" : "Our paper 'Synthesis-Based Resolution of Feature Interactions in Cyber-Physical Systems' got accepted to <a class='urllink' href='https://conf.researchr.org/home/ase-2020'>ASE 2020!</a>",
-	  },
-	  { "date" : "2021-12-12 12:00:00",
-	    "text" : "Our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://icsa-conferences.org/2022/'>ICSA 2022!</a>",
-	  },
-	  { "date" : "2022-02-17 12:00:00",
-	    "text" : "The artifact for our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has received the badges for OPEN RESEARCH OBJECT (ORO) and RESEARCH OBJECT REVIEWED (ROR) – REUSABLE. It can be found on <a class='urllink' href='https://doi.org/10.5281/zenodo.5834633'>Zenodo</a>.",
-	  },
-	  { "date" : "2022-02-19 12:00:00",
-	    "text" : "I will be presenting our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" virtually on Monday 14 March, 22:00 UTC and Tuesday 15 March, 18:00 UTC at <a class='urllink' href='https://icsa-conferences.org/2022/detailed-program/'>ICSA</a>.",
-	  },
-	  { "date" : "2022-03-13 10:00:00",
-	    "text" : "Watch the <a href='https://www.youtube.com/watch?v=sUfTNU5Jb-A'>ICSA paper presentation video on YouTube</a>.",
-	  },
-	  { "date" : "2023-05-13 10:00:00",
-	    "text" : "I will give a talk at ICRA in London on our past, current, and ongoing work on Architectural Model Inference From Code For ROS-Based Robotics Systems. Browse the <a href='https://www.slideshare.net/TobiasDrschmid1/architectural-model-inference-from-code-for-rosbased-robotics-systems'>Architectural Model Inference talk slides on SlideShare</a>.",
-	  },
-	  { "date" : "2023-10-10 10:00:00",
-	    "text" : "In Spring 2023, I will be an instructor for our newly developed course <a href='https://cmu-swdesign.github.io/'>17-423/723 Designing Large-scale Software Systems</a>.",
-	  },
-	  { "date" : "2023-10-19 10:00:00",
-	    "text" : "I will give a short lightning talk on our project <a href='rosinfer.html'>ROSInfer</a> at ROSCon.",
-	  },
-	  { "date" : "2023-12-15 12:00:00",
-	    "text" : "Our paper \"<a class='page-scroll' href='#publication-icse2024'>ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://conf.researchr.org/track/icse-2024/icse-2024-research-track'>ICSE 2024!</a>",
-	  },
-	  { "date" : "2024-04-10 12:00:00",
-	    "text" : "I will be presenting our paper \"<a class='page-scroll' href='#publication-icse2024'>ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems</a>\" at <a class='urllink' href='https://conf.researchr.org/program/icse-2024/program-icse-2024/'>ICSE</a> in Lisbon.",
-	  },
-	  { "date" : "2024-04-30 12:00:00",
-	    "text" : "I am on the Software Engineering Teaching Job Market! After co-creating and co-instructing <a class='page-scroll' href='#teaching'>two software engineering courses</a> at CMU I am looking for teaching-focused faculty positions in software engineering that start in Fall 2025. If you know anyone who is hiring teaching faculty in SE, please send me an <a  href='mailto:duerschmid@cmu.edu'>email</a>",
-	  },
-	  { "date" : "2025-03-20 12:00:00",
-	    "text" : "I accepted a position as Assistant Teaching Professor at UCLA. I am very excited to join a great department this Fall!"
-	  },
-	  { "date" : "2025-08-01 12:00:00",
-	    "text" : "I started working for UCLA! I am looking forward to teaching CS 35L Software Construction"
-	  },
-	  { "date" : "2025-10-01 12:00:00",
-	    "text" : "I have become the faculty advisor of UCLA's student club \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\""
-	  },
-	  { "date" : "2026-03-09 12:00:00",
-	    "text" : "<a class='urllink' href='https://careynachenberg.weebly.com/' rel='nofollow'>Carey Nachenberg</a> and I are developing a new course on 'Generative Software Development' at UCLA. The course will be offered for the first time in Winter 2027."
-	  },
-	]
+  "show": true,
+  "max_days": 1000,
+  "news": [
+    {
+      "date": "2016-11-03 00:00:00",
+      "text": "I have been selected to present my research on a <a class='page-scroll' href='#publication-designPatternBuilder2016'>Design Pattern Builder</a> in the <a class='urllink' href='https://2016.splashcon.org/track/splash-2016-src#event-overview' rel='nofollow'>ACM Student Research Competition at SPLASH</a> in Amsterdam."
+    },
+    {
+      "date": "2016-12-07 00:00:00",
+      "text": "I supported the Demo of &ldquo;BeCasso: Artistic Image Processing and Editing on Mobile Devices&rdquo; at the <a class='urllink' href='http://sa2016.siggraph.org/en/attendees/symposium-on-mobile-graphics-and-interactive-applications' rel='nofollow'>SIGGRAPH Asia 2016 Symposium on Mobile Graphics and Interactive Applications</a>. The demo received a <a class='urllink' href='https://sa2016.siggraph.org/en/attendees/award-winners' rel='nofollow'>Best Demo Award</a>."
+    },
+    {
+      "date": "2017-05-20 00:00:00",
+      "text": "I fly to Buenos Aires to present our <a class='page-scroll' href='#publication-archstyle2017'>architectural styles for Android app product lines</a> at the <a class='urllink' href='http://mobilesoftconf.org/2017/' rel='nofollow'>MOBILESoft</a>, co-located with the International Conference on Software Engineering."
+    },
+    {
+      "date": "2017-04-05 00:12:15",
+      "text": "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
+      "icon": "/img/src1.png"
+    },
+    {
+      "date": "2017-07-26 05:00:00",
+      "text": "I have finished my bachelor thesis <a class='page-scroll' href='#publication-ba2017'>'A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices'</a>."
+    },
+    {
+      "date": "2017-11-10 00:00:00",
+      "text": "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.<br>The current release is restricted to Germany, Australia, Canada, Sweden, and the Netherlands as well as devices that have at least 2 GB RAM, support OpenGL 3.1, and have at least Android 5 (Lollipop). Details of the project are on the <a href='pencilhatching.html'>Pencil Hatching project page</a>."
+    },
+    {
+      "date": "2017-11-27 05:00:00",
+      "text": "I presented our paper on <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX</a> at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications. The <a class='urllink' href='https://www.slideshare.net/secret/GXmxjvJ2dIuXzs'>ProsumerFX presentation slides</a> are on SlideShare."
+    },
+    {
+      "date": "2017-11-28 05:00:00",
+      "text": "We won the best paper award at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications for our paper <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX: Mobile Design of Image Stylization Components</a>.",
+      "icon": "/img/award_.jpg"
+    },
+    {
+      "date": "2018-01-31 00:00:00",
+      "text": "I have been admitted to the PhD in Software Engineering at CMU ISR. I look forward to working together with passionate and talented people."
+    },
+    {
+      "date": "2018-04-20 00:00:00",
+      "text": "Our education paper <a class='page-scroll' href='#publication-teaching2018'>Teaching Image-Processing Programming for Mobile Devices: A Software Development Perspective</a> has been published on Eurographics."
+    },
+    {
+      "date": "2018-07-21 00:00:00",
+      "text": "Our new concept on <a class='page-scroll' href='#publication-cop2018'>Cross-cutting Commentary</a> has been published at the International Workshop on Context-Oriented Programming."
+    },
+    {
+      "date": "2018-09-16 00:00:00",
+      "text": "I started my PhD in Software Engineering at the Institute for Software Research at CMU."
+    },
+    {
+      "date": "2018-12-17 12:00:00",
+      "text": "Our vision paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" has been accepted to ICSE NIER. Additionally, our paper on <a class='page-scroll' href='#publication-seet2019'>Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices</a> has been accepted to ICSE SEET."
+    },
+    {
+      "date": "2019-05-24 12:00:00",
+      "text": "I will present our paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" at <a class='urllink' href='https://2019.icse-conferences.org/track/icse-2019-New-Ideas-and-Emerging-Results?track=ICSE%20New%20Ideas%20and%20Emerging%20Results#program' rel='nofollow'>ICSE NIER</a> on Friday in the session 16:00-17:20 in the Viger room. I look forward to interesting discussions about the concept. The slides will be uploaded after the presentation."
+    },
+    {
+      "date": "2019-08-20 12:00:00",
+      "text": "This fall I will be a TA for the class 'Models of Software Systems' at CMU."
+    },
+    {
+      "date": "2020-01-21 12:00:00",
+      "text": "This summer I will be doing a research internship at  <a class='urllink' href='https://www.jpl.nasa.gov/' rel='nofollow'>NASA JPL</a> in Pasadena. I am very excited about getting to know new perspectives on software engineering research and to maybe contribute to future space exploration."
+    },
+    {
+      "date": "2020-06-12 12:00:00",
+      "text": "Fall 2020 I will be designing and co-teaching a class on design patterns, frameworks, and API design at CMU (17-625) together with Matt Bass."
+    },
+    {
+      "date": "2020-07-30 12:00:00",
+      "text": "Our paper 'Synthesis-Based Resolution of Feature Interactions in Cyber-Physical Systems' got accepted to <a class='urllink' href='https://conf.researchr.org/home/ase-2020'>ASE 2020!</a>"
+    },
+    {
+      "date": "2021-12-12 12:00:00",
+      "text": "Our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://icsa-conferences.org/2022/'>ICSA 2022!</a>"
+    },
+    {
+      "date": "2022-02-17 12:00:00",
+      "text": "The artifact for our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has received the badges for OPEN RESEARCH OBJECT (ORO) and RESEARCH OBJECT REVIEWED (ROR) – REUSABLE. It can be found on <a class='urllink' href='https://doi.org/10.5281/zenodo.5834633'>Zenodo</a>."
+    },
+    {
+      "date": "2022-02-19 12:00:00",
+      "text": "I will be presenting our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" virtually on Monday 14 March, 22:00 UTC and Tuesday 15 March, 18:00 UTC at <a class='urllink' href='https://icsa-conferences.org/2022/detailed-program/'>ICSA</a>."
+    },
+    {
+      "date": "2022-03-13 10:00:00",
+      "text": "Watch the <a href='https://www.youtube.com/watch?v=sUfTNU5Jb-A'>ICSA paper presentation video on YouTube</a>."
+    },
+    {
+      "date": "2023-05-13 10:00:00",
+      "text": "I will give a talk at ICRA in London on our past, current, and ongoing work on Architectural Model Inference From Code For ROS-Based Robotics Systems. Browse the <a href='https://www.slideshare.net/TobiasDrschmid1/architectural-model-inference-from-code-for-rosbased-robotics-systems'>Architectural Model Inference talk slides on SlideShare</a>."
+    },
+    {
+      "date": "2023-10-10 10:00:00",
+      "text": "In Spring 2023, I will be an instructor for our newly developed course <a href='https://cmu-swdesign.github.io/'>17-423/723 Designing Large-scale Software Systems</a>."
+    },
+    {
+      "date": "2023-10-19 10:00:00",
+      "text": "I will give a short lightning talk on our project <a href='rosinfer.html'>ROSInfer</a> at ROSCon."
+    },
+    {
+      "date": "2023-12-15 12:00:00",
+      "text": "Our paper \"<a class='page-scroll' href='#publication-icse2024'>ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://conf.researchr.org/track/icse-2024/icse-2024-research-track'>ICSE 2024!</a>"
+    },
+    {
+      "date": "2024-04-10 12:00:00",
+      "text": "I will be presenting our paper \"<a class='page-scroll' href='#publication-icse2024'>ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems</a>\" at <a class='urllink' href='https://conf.researchr.org/program/icse-2024/program-icse-2024/'>ICSE</a> in Lisbon."
+    },
+    {
+      "date": "2024-04-30 12:00:00",
+      "text": "I am on the Software Engineering Teaching Job Market! After co-creating and co-instructing <a class='page-scroll' href='#teaching'>two software engineering courses</a> at CMU I am looking for teaching-focused faculty positions in software engineering that start in Fall 2025. If you know anyone who is hiring teaching faculty in SE, please send me an <a  href='mailto:duerschmid@cmu.edu'>email</a>"
+    },
+    {
+      "date": "2025-03-20 12:00:00",
+      "text": "I accepted a position as Assistant Teaching Professor at UCLA. I am very excited to join a great department this Fall!"
+    },
+    {
+      "date": "2025-08-01 12:00:00",
+      "text": "I started working for UCLA! I am looking forward to teaching CS 35L Software Construction"
+    },
+    {
+      "date": "2025-10-01 12:00:00",
+      "text": "I have become the faculty advisor of UCLA's student club \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\""
+    },
+    {
+      "date": "2026-03-09 12:00:00",
+      "text": "<a class='urllink' href='https://careynachenberg.weebly.com/' rel='nofollow'>Carey Nachenberg</a> and I are developing a new course on 'Generative Software Development' at UCLA. The course will be offered for the first time in Winter 2027."
+    }
+  ]
 }

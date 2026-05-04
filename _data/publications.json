@@ -1,356 +1,483 @@
 {
-  "show" : true,
-  "a_rate_threshold" : "34",
-  "show_a_rate" : false,
-  "publications" :
-  [ 
-    { "key"       : "ba2017",
-      "featured"  : "false",
-      "thesis"    : "true",
-      "bibtex"    : "bib/2017-ba.bib",
-      "title"     : "A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices",
-      "date"      : "2017-07-26",
-      "authors"   : [ "me"],
-      "published" : "Bachelor Thesis, Hasso Plattner Institute at the University of Potsdam",
-      "caption"   : "With the continuous advances of mobile graphics hardware, high-quality image stylization, e.g., based on image filtering, stroke-based rendering, and neural style transfer, is becoming feasible and increasingly used in casual creativity apps. Nowadays, users want to create and distribute their own works and become a prosumer, i.e., being both consumer and producer. However, the creativity facilitated by contemporary mobile apps, is typically limited with respect to the usage and application of pre-defined visual styles, that ultimately does not include their design and composition – an inherent requirement of prosumers. This thesis presents the concept and implementation of a GPU-based mobile application that enables users to interactively design parameterizable image stylization effects on-device, by reusing building blocks of image processing effects and pipelines. The parameterization is supported by three levels of control: (1) convenience presets, (2) global parameters, and (3) local parameter adjustments using on-screen painting. Furthermore, the created visual styles are defined using a platform-independent document format and can be shared with other users via a web-based community platform. The presented app is evaluated with regard to variety and visual quality of the styles, run-time performance measures, memory consumption, and implementation complexity metrics to demonstrate the feasibility of the concept. The results show that the app supports the interactive combination of complex effects such as neural style transfer, watercolor filtering, oil paint filtering, and pencil hatching filtering to create unique high-quality effects. This approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Hence, it satisfies the needs for creative expression of both professionals and novice users, i.e., the general public.",
-      "thumbnail" : "/img/2017-ba.jpg",
-      "project"   : "pencilhatching",
-      "downloads" : [
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/318700866_A_Framework_for_Editing_and_Execution_of_Image_and_Video_Processing_Techniques_on_Mobile_Devices/links/59784431aca27203ecc221b1/A-Framework-for-Editing-and-Execution-of-Image-and-Video-Processing-Techniques-on-Mobile-Devices.pdf",
-        "desc"    : "Thesis (PDF)"
-      } ]
+  "show": true,
+  "a_rate_threshold": "34",
+  "show_a_rate": false,
+  "publications": [
+    {
+      "key": "ba2017",
+      "featured": "false",
+      "thesis": "true",
+      "bibtex": "bib/2017-ba.bib",
+      "title": "A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices",
+      "date": "2017-07-26",
+      "authors": [
+        "me"
+      ],
+      "published": "Bachelor Thesis, Hasso Plattner Institute at the University of Potsdam",
+      "caption": "With the continuous advances of mobile graphics hardware, high-quality image stylization, e.g., based on image filtering, stroke-based rendering, and neural style transfer, is becoming feasible and increasingly used in casual creativity apps. Nowadays, users want to create and distribute their own works and become a prosumer, i.e., being both consumer and producer. However, the creativity facilitated by contemporary mobile apps, is typically limited with respect to the usage and application of pre-defined visual styles, that ultimately does not include their design and composition – an inherent requirement of prosumers. This thesis presents the concept and implementation of a GPU-based mobile application that enables users to interactively design parameterizable image stylization effects on-device, by reusing building blocks of image processing effects and pipelines. The parameterization is supported by three levels of control: (1) convenience presets, (2) global parameters, and (3) local parameter adjustments using on-screen painting. Furthermore, the created visual styles are defined using a platform-independent document format and can be shared with other users via a web-based community platform. The presented app is evaluated with regard to variety and visual quality of the styles, run-time performance measures, memory consumption, and implementation complexity metrics to demonstrate the feasibility of the concept. The results show that the app supports the interactive combination of complex effects such as neural style transfer, watercolor filtering, oil paint filtering, and pencil hatching filtering to create unique high-quality effects. This approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Hence, it satisfies the needs for creative expression of both professionals and novice users, i.e., the general public.",
+      "thumbnail": "/img/2017-ba.jpg",
+      "project": "pencilhatching",
+      "downloads": [
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/318700866_A_Framework_for_Editing_and_Execution_of_Image_and_Video_Processing_Techniques_on_Mobile_Devices/links/59784431aca27203ecc221b1/A-Framework-for-Editing-and-Execution-of-Image-and-Video-Processing-Techniques-on-Mobile-Devices.pdf",
+          "desc": "Thesis (PDF)"
+        }
+      ]
     },
-
-    { "key"       : "mobileFab2016",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2016-mobilefab.bib",
-      "title"     : "Mobile Fabrication",      
-      "a_rate"    : "21",
-      "date"      : "2016-10-16",
-      "authors"   : [ "Thijs", "Bastian Kruck", "me", "TobiasNack", "PB"],
-      "published" : "UIST '16: Proceedings of the 29th Annual Symposium on User Interface Software and Technology",
-      "caption"   : "We present an exploration into the future of fabrication, in particular the vision of mobile fabrication, which we define as 'personal fabrication on the go'. We explore this vision with two surveys, two simple hardware prototypes, matching custom apps that provide users with access to a solution database, custom fabrication processes we designed specifically for these devices, and a user study conducted in situ on metro trains. Our findings suggest that mobile fabrication is a compelling next direction for personal fabrication. From our experience with the prototypes we derive hardware requirements to make mobile fabrication also technically feasible.",
-      "thumbnail" : "/img/2016-mobileFab.jpg",
-      "downloads" : [
-      { "href"    : "https://doi.org/10.1145/2984511.2984586",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N34009",
-        "desc"    : "Paper (PDF)"
-      }]
+    {
+      "key": "mobileFab2016",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2016-mobilefab.bib",
+      "title": "Mobile Fabrication",
+      "a_rate": "21",
+      "date": "2016-10-16",
+      "authors": [
+        "Thijs",
+        "Bastian Kruck",
+        "me",
+        "TobiasNack",
+        "PB"
+      ],
+      "published": "UIST '16: Proceedings of the 29th Annual Symposium on User Interface Software and Technology",
+      "caption": "We present an exploration into the future of fabrication, in particular the vision of mobile fabrication, which we define as 'personal fabrication on the go'. We explore this vision with two surveys, two simple hardware prototypes, matching custom apps that provide users with access to a solution database, custom fabrication processes we designed specifically for these devices, and a user study conducted in situ on metro trains. Our findings suggest that mobile fabrication is a compelling next direction for personal fabrication. From our experience with the prototypes we derive hardware requirements to make mobile fabrication also technically feasible.",
+      "thumbnail": "/img/2016-mobileFab.jpg",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1145/2984511.2984586",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N34009",
+          "desc": "Paper (PDF)"
+        }
+      ]
     },
-
-    { "key"       : "designPatternBuilder2016",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2016-designPatternBuilder.bib",
-      "title"     : "Design Pattern Builder - A Concept for Refinable Reusable Design Pattern Libraries",
-      "date"      : "2016-11-02",
-      "authors"   : [ "me"],
-      "published" : "SPLASH Companion '16: Companion Proceedings of the ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity",
-      "caption"   : "Reuse is one of the core principles in professional software engineering. Design patterns provide a reusable solution for common design problems. But their implementations are generally not reusable as they are often well tailored to a specific context. We introduce a concept, that facilitates the reuse of their implementations by defining an abstract design pattern definition that can be instantiated with specialized design decisions. This approach is a meta-level Builder constructing design patterns as first-class citizens. It simplifies the application of design patterns by providing a pattern library and still being able to adjust it to the concrete context.",
-      "thumbnail" : "/img/2016-designPatternBuilder.jpg",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1145/2984043.2998537",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N34008",
-        "desc"    : "Paper (PDF)"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/320508015_Poster_Design_Pattern_Builder/data/59e8e7f9aca272bc4255cae1/poster.pdf",
-        "desc"    : "Poster (PDF)"
-      }]
-      
+    {
+      "key": "designPatternBuilder2016",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2016-designPatternBuilder.bib",
+      "title": "Design Pattern Builder - A Concept for Refinable Reusable Design Pattern Libraries",
+      "date": "2016-11-02",
+      "authors": [
+        "me"
+      ],
+      "published": "SPLASH Companion '16: Companion Proceedings of the ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity",
+      "caption": "Reuse is one of the core principles in professional software engineering. Design patterns provide a reusable solution for common design problems. But their implementations are generally not reusable as they are often well tailored to a specific context. We introduce a concept, that facilitates the reuse of their implementations by defining an abstract design pattern definition that can be instantiated with specialized design decisions. This approach is a meta-level Builder constructing design patterns as first-class citizens. It simplifies the application of design patterns by providing a pattern library and still being able to adjust it to the concrete context.",
+      "thumbnail": "/img/2016-designPatternBuilder.jpg",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1145/2984043.2998537",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N34008",
+          "desc": "Paper (PDF)"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/320508015_Poster_Design_Pattern_Builder/data/59e8e7f9aca272bc4255cae1/poster.pdf",
+          "desc": "Poster (PDF)"
+        }
+      ]
     },
-
-    { "key"       : "stddp2016",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2016-stddp.bib",
-      "title"     : "Interactive Multi-scale Oil Paint Filtering on Mobile Devices",
-      "date"      : "2016-07-01",
-      "authors"   : [ "AS", "MT", "me", "JD", "SP" ],
-      "published" : "ACM SIGGRAPH Posters",
-      "caption"   : "This work presents an interactive mobile implementation of a filter that transforms images into an oil paint look. At this, a multi-scale approach that processes image pyramids is introduced that uses flow-based joint bilateral upsampling to achieve deliberate levels of abstraction at multiple scales and interactive frame rates. The approach facilitates the implementation of interactive tools that adjust the appearance of filtering effects at run-time, which is demonstrated by an on-screen painting interface for per-pixel parameterization that fosters the casual creativity of non-artists.",
-      "thumbnail" : "/img/2016-stddp.jpg",
-      "project"   : "AVA",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1145/2945078.2945120",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N34000",
-        "desc"    : "Paper (PDF)"
-      }	]
+    {
+      "key": "stddp2016",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2016-stddp.bib",
+      "title": "Interactive Multi-scale Oil Paint Filtering on Mobile Devices",
+      "date": "2016-07-01",
+      "authors": [
+        "AS",
+        "MT",
+        "me",
+        "JD",
+        "SP"
+      ],
+      "published": "ACM SIGGRAPH Posters",
+      "caption": "This work presents an interactive mobile implementation of a filter that transforms images into an oil paint look. At this, a multi-scale approach that processes image pyramids is introduced that uses flow-based joint bilateral upsampling to achieve deliberate levels of abstraction at multiple scales and interactive frame rates. The approach facilitates the implementation of interactive tools that adjust the appearance of filtering effects at run-time, which is demonstrated by an on-screen painting interface for per-pixel parameterization that fosters the casual creativity of non-artists.",
+      "thumbnail": "/img/2016-stddp.jpg",
+      "project": "AVA",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1145/2945078.2945120",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N34000",
+          "desc": "Paper (PDF)"
+        }
+      ]
     },
-   
-   { "key"       : "SDTKDP2016",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2016-sdtkdp.bib",
-      "title"     : "Interactive Image Filtering with Multiple Levels-of-Control on Mobile Devices",
-      "date"      : "2016-12-01",
-      "authors"   : [ "AS", "me", "MT", "MK", "JD", "SP" ],
-      "published" : "SA '16: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
-      "caption"   : "With the continuous development of mobile graphics hardware, interactive high-quality image stylization based on nonlinear filtering is becoming feasible and increasingly used in casual creativity apps. However, these apps often only serve high-level controls to parameterize image filters and generally lack support for low-level (artistic) control, thus automating art creation rather than assisting it. This work presents a GPU-based framework that enables users to parameterize image filters at three levels of control: (1) presets followed by (2) global parameter adjustments can be interactively refined by (3) complementary on-screen painting that operates within the filters' parameter spaces for local adjustments. The framework provides a modular XML-based effect scheme to effectively build complex image processing chains-using these interactive filters as building blocks-that can be efficiently processed on mobile devices. Thereby, global and local parameterizations are directed with higher-level algorithmic support to ease the interactive editing process, which is demonstrated by state-of-the-art stylization effects, such as oil paint filtering and watercolor rendering.",
-      "thumbnail" : "/img/2016-sdtkdp.jpg",
-      "project"   : "pencilhatching",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1145/2999508.2999521",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N34007",
-        "desc"    : "Paper (PDF)"
-      },
-      { "href"  : "https://drive.google.com/file/d/0ByqyK4WwkIzQb1F3dC10SUJfV28/view",
-        "desc"  : "Filter Results (Images / ZIP, 34 MiB)"
-      },
-      { "href"  : "https://www.youtube.com/watch?time_continue=1&v=KCVB4R1wiEc]",
-        "desc"  : "Video"
-      } ]
-   },
-
-
-   { "key"       : "CCR2017",
-      "featured"  : "true",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2017-ccr.bib",
-      "title"     : "Continuous Code Reviews: A Social Coding tool for Code Reviews inside the IDE",
-      "date"      : "2017-04-04",
-      "authors"   : [ "me"],
-      "published" : "Programming '17: Companion to the first International Conference on the Art, Science and Engineering of Programming",
-      "caption"   : "Code reviews play an important and successful role in modern software development. But usually they happen only once before new code is merged into the main branch. We present a concept which helps developers to continuously give feedback on their source code directly in the integrated development environment (IDE) by using the metaphor of social networks. This reduces context switches for developers, improves the software development process and allows to give feedback to developers of external libraries and frameworks.",
-      "comment"   : "1. Place in the ACM Student Research Competition",
-      "thumbnail" : "/img/2017-ccr.jpg",
-      "project"   : "CCR",
-      "image"     : "/img/2017-ccr_large.jpg",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1145/3079368.3079374",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N34006",
-        "desc"    : "Paper (PDF)"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/316090044_Continuous_Code_Reviews_Poster/data/58efaaab458515ff23a87955/poster.pdf",
-        "desc"    : "Poster (PDF)"
-      },
-      { "href"    : "https://www.slideshare.net/secret/r2ap1AiggpYfxH",
-        "desc"    : "Slides"
-      } ]
-   },
-   
-   { "key"       : "prosumerfx2017",
-      "featured"  : "true",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2017-dsstd.bib",
-      "title"     : "ProsumerFX: Mobile Design of Image Stylization Components",
-      "date"      : "2017-11-03",
-      "authors"   : [ "me", "MS", "AS", "MT", "JD" ],
-      "published" : "SA '17: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
-      "comment"   : "Best Paper Award", 
-      "caption"   : "With the continuous advances of mobile graphics hardware, high-quality image stylization—e.g., based on image filtering, stroke-based rendering, and neural style transfer—is becoming feasible and increasingly used in casual creativity apps. The creative expression facilitated by these mobile apps, however, is typically limited with respect to the usage and application of pre-defined visual styles, which ultimately do not include their design and composition—an inherent requirement of prosumers. We present ProsumerFX, a GPU-based app that enables users to interactively design parameterizable image stylization components on-device by reusing building blocks of image processing effects and pipelines. Furthermore, the presentation of the effects can be customized by modifying the icons, names, and order of parameters and presets. Thereby, the customized visual styles are defined as platform-independent effects and can be shared with other users via a web-based platform and database. Together with the presented mobile app, this system approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Thus, it satisfies the needs for creative expression of both professionals as well as the general public.",
-      "thumbnail" : "/img/2017-prosumerFX.jpg",
-      "project"   : " ",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1145/3132787.3139208",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N41057",
-        "desc"    : "Paper (PDF)"
-      },
-      { "href"    : "https://www.youtube.com/watch?v=yv8N1tIce84",
-        "desc"    : "Video"
-      },
-      { "href"    : "/files/ProsumerFX-suppmaterial.zip",
-        "desc"    : "Supplemental (ZIP)"
-      },
-      { "href"    : "http://www.tobiasduerschmid.de/pencilhatching.xml",
-        "desc"    : "Pencil Hatching XML"
-      },
-      { "href"    : "https://www.slideshare.net/secret/GXmxjvJ2dIuXzs",
-        "desc"    : "Slides"
-      }
-       ]
+    {
+      "key": "SDTKDP2016",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2016-sdtkdp.bib",
+      "title": "Interactive Image Filtering with Multiple Levels-of-Control on Mobile Devices",
+      "date": "2016-12-01",
+      "authors": [
+        "AS",
+        "me",
+        "MT",
+        "MK",
+        "JD",
+        "SP"
+      ],
+      "published": "SA '16: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
+      "caption": "With the continuous development of mobile graphics hardware, interactive high-quality image stylization based on nonlinear filtering is becoming feasible and increasingly used in casual creativity apps. However, these apps often only serve high-level controls to parameterize image filters and generally lack support for low-level (artistic) control, thus automating art creation rather than assisting it. This work presents a GPU-based framework that enables users to parameterize image filters at three levels of control: (1) presets followed by (2) global parameter adjustments can be interactively refined by (3) complementary on-screen painting that operates within the filters' parameter spaces for local adjustments. The framework provides a modular XML-based effect scheme to effectively build complex image processing chains-using these interactive filters as building blocks-that can be efficiently processed on mobile devices. Thereby, global and local parameterizations are directed with higher-level algorithmic support to ease the interactive editing process, which is demonstrated by state-of-the-art stylization effects, such as oil paint filtering and watercolor rendering.",
+      "thumbnail": "/img/2016-sdtkdp.jpg",
+      "project": "pencilhatching",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1145/2999508.2999521",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N34007",
+          "desc": "Paper (PDF)"
+        },
+        {
+          "href": "https://drive.google.com/file/d/0ByqyK4WwkIzQb1F3dC10SUJfV28/view",
+          "desc": "Filter Results (Images / ZIP, 34 MiB)"
+        },
+        {
+          "href": "https://www.youtube.com/watch?time_continue=1&v=KCVB4R1wiEc]",
+          "desc": "Video"
+        }
+      ]
     },
-
-   { "key"       : "archstyle2017",
-      "featured"  : "true",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2017-archstyle.bib",
-      "title"     : "Towards Architectural Styles for Android App Software Product Lines",
-      "date"      : "2017-05-20",
-      "authors"   : [ "me", "MT", "JD" ],
-      "published" : "MOBILESoft '17: Proceedings of the 4th International Conference on Mobile Software Engineering and Systems",
-      "caption"   : "Software product line development for Android apps is difficult due to an inflexible design of the Android framework. However, since mobile applications become more and more complex, increased code reuse and thus reduced time-to-market play an important role, which can be improved by software product lines. We propose five architectural styles for developing software product lines of Android apps: (1) activity extensions, (2) activity connectors, (3) dynamic preference entries, (4) decoupled definition of domain-specific behavior via configuration files, (5) feature model using Android resources. We demonstrate the benefits in an early case study using an image processing product line which enables more than 90% of code reuse.",
-      "thumbnail" : "/img/2017-archstyle.jpg",
-      "a_rate"    : "54",
-      "image"     : "/img/2017-archstyle_large.jpg",
-      "project"   : "AVA",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.1109/MOBILESoft.2017.12",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/314151334_Towards_Architectural_Styles_for_Android_App_Software_Product_Lines/links/59de9bc7a6fdcca0d3204f78/Towards-Architectural-Styles-for-Android-App-Software-Product-Lines.pdf",
-        "desc"    : "Paper (PDF)"
-      },
-      { "href"    : "https://www.slideshare.net/mobilesoftconf/towards-architectural-styles-for-android-app-software-product-lines-76902980",
-        "desc"    : "Slides"
-      }]
+    {
+      "key": "CCR2017",
+      "featured": "true",
+      "thesis": "false",
+      "bibtex": "bib/2017-ccr.bib",
+      "title": "Continuous Code Reviews: A Social Coding tool for Code Reviews inside the IDE",
+      "date": "2017-04-04",
+      "authors": [
+        "me"
+      ],
+      "published": "Programming '17: Companion to the first International Conference on the Art, Science and Engineering of Programming",
+      "caption": "Code reviews play an important and successful role in modern software development. But usually they happen only once before new code is merged into the main branch. We present a concept which helps developers to continuously give feedback on their source code directly in the integrated development environment (IDE) by using the metaphor of social networks. This reduces context switches for developers, improves the software development process and allows to give feedback to developers of external libraries and frameworks.",
+      "comment": "1. Place in the ACM Student Research Competition",
+      "thumbnail": "/img/2017-ccr.jpg",
+      "project": "CCR",
+      "image": "/img/2017-ccr_large.jpg",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1145/3079368.3079374",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N34006",
+          "desc": "Paper (PDF)"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/316090044_Continuous_Code_Reviews_Poster/data/58efaaab458515ff23a87955/poster.pdf",
+          "desc": "Poster (PDF)"
+        },
+        {
+          "href": "https://www.slideshare.net/secret/r2ap1AiggpYfxH",
+          "desc": "Slides"
+        }
+      ]
     },
-    { "key"       : "teaching2018",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2018-teaching.bib",
-      "title"     : "Teaching Image-Processing Programming for Mobile Devices: A Software Development Perspective",
-      "date"      : "2018-04-20",
-      "authors"   : [ "MT", "SP", "me", "AS", "JD"],
-      "published" : "EG '18: Eurographics Education Papers",
-      "caption"   : "In this paper we present a concept of a research course that teaches students in image processing as a building block of mobile applications. Our goal with this course is to teach theoretical foundations, practical skills in software development as well as scientific working principles to qualify graduates to start as fully-valued software developers or researchers. The course includes teaching and learning focused on the nature of small team research and development as encountered in the creative industries dealing with computer graphics, computer animation and game development. We discuss our curriculum design and issues in conducting undergraduate and graduate research that we have identified through four iterations of the course. Joint scientific demonstrations and publications of the students and their supervisors as well as quantitative and qualitative evaluation by students underline the success of the proposed concept. In particular, we observed that developing using a common software framework helps the students to jump start their course projects, while industry software processes such as branching coupled with a three-tier breakdown of project features helps them to structure and assess their progress.",
-      "thumbnail" : "/img/2018-teaching.jpg",
-      "image"     : "/img/2018-teaching_large.jpg",
-      "project"   : "AVA",
-      "downloads" : [
-      { "href"    : "https://dx.doi.org/10.2312/eged.20181002",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Matthias_Trapp/publication/324692909_Teaching_Image-Processing_Programming_for_Mobile_Devices_A_Software_Development_Perspective/links/5add89cf458515c60f5f6774/Teaching-Image-Processing-Programming-for-Mobile-Devices-A-Software-Development-Perspective.pdf",
-        "desc"    : "Paper (PDF)"
-      }]
+    {
+      "key": "prosumerfx2017",
+      "featured": "true",
+      "thesis": "false",
+      "bibtex": "bib/2017-dsstd.bib",
+      "title": "ProsumerFX: Mobile Design of Image Stylization Components",
+      "date": "2017-11-03",
+      "authors": [
+        "me",
+        "MS",
+        "AS",
+        "MT",
+        "JD"
+      ],
+      "published": "SA '17: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
+      "comment": "Best Paper Award",
+      "caption": "With the continuous advances of mobile graphics hardware, high-quality image stylization—e.g., based on image filtering, stroke-based rendering, and neural style transfer—is becoming feasible and increasingly used in casual creativity apps. The creative expression facilitated by these mobile apps, however, is typically limited with respect to the usage and application of pre-defined visual styles, which ultimately do not include their design and composition—an inherent requirement of prosumers. We present ProsumerFX, a GPU-based app that enables users to interactively design parameterizable image stylization components on-device by reusing building blocks of image processing effects and pipelines. Furthermore, the presentation of the effects can be customized by modifying the icons, names, and order of parameters and presets. Thereby, the customized visual styles are defined as platform-independent effects and can be shared with other users via a web-based platform and database. Together with the presented mobile app, this system approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Thus, it satisfies the needs for creative expression of both professionals as well as the general public.",
+      "thumbnail": "/img/2017-prosumerFX.jpg",
+      "project": " ",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1145/3132787.3139208",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N41057",
+          "desc": "Paper (PDF)"
+        },
+        {
+          "href": "https://www.youtube.com/watch?v=yv8N1tIce84",
+          "desc": "Video"
+        },
+        {
+          "href": "/files/ProsumerFX-suppmaterial.zip",
+          "desc": "Supplemental (ZIP)"
+        },
+        {
+          "href": "http://www.tobiasduerschmid.de/pencilhatching.xml",
+          "desc": "Pencil Hatching XML"
+        },
+        {
+          "href": "https://www.slideshare.net/secret/GXmxjvJ2dIuXzs",
+          "desc": "Slides"
+        }
+      ]
     },
-    { "key"       : "cop2018",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2018-cop.bib",
-      "title"     : "Cross-cutting Commentary - Narratives for Multi-party Mechanisms and Concerns",
-      "date"      : "2018-07-21",
-      "authors"   : [ "RH", "me", "pre", "MarcelTaeumel"],
-      "published" : "COP '18: International Workshop on Context-Oriented Programming",
-      "caption"   : "Cross-cutting concerns are an inherent property of the implementation of non-trivial software systems. Their study led to the development of advanced modularity constructs, usually supported by meta-level frameworks and programming language constructs, to improve comprehensibility. Because of their invasive nature, systems need to be refactored or rewritten to take advantage of these constructs. However, practical considerations such as organizational or economical constraints often do not allow for such reengineering efforts, leaving those systems without explicit representations of their cross-cutting concerns. <br> We propose a lightweight, non-invasive approach to explicate and document cross-cutting, multi-party concerns called <i>Cross-cutting Commentary</i>, or <i>Commentary</i> for short. Our proposal is based on the observation that comments are co-located with the individual semantic units they are about and with that scattered and tangled in the absence of advanced modularity constructs for cross-cutting concerns and the assumption that well-crafted, natural language explanations of system properties (their intents and the mechanisms they provide) largely improve comprehensibility. Commentaries are to help communicate narratives about system properties that involve multiple participants, both co-located in a single module or cross-cutting several of them, and allow for navigating to, from, and between them to explore the implementation artifacts involved. <br> Commentaries are inspired by the <i>layer</i> construct introduced with context-oriented programming (COP) to associate and manage (partial definitions of) system elements. In contrast to COP that contributes to both system comprehension during development and software composition at run-time, Commentaries for now focus on providing narratives for exploration activities. <br> In this work, we present our first attempt to provide Commentaries in Squeak/Smalltalk. We explain implementation details and discuss several application scenarios considering the documentation of basic mechanisms of this programming and runtime environment.",
-      "thumbnail" : "/img/2018-cop.jpg",
-      "image"     : "/img/2018-cop.jpg",
-	   "downloads" : [
-      { "href"    : "https://doi.org/10.1145/3242921.3242927",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/authorize?N669902",
-        "desc"    : "Paper (PDF)"
-      }]
+    {
+      "key": "archstyle2017",
+      "featured": "true",
+      "thesis": "false",
+      "bibtex": "bib/2017-archstyle.bib",
+      "title": "Towards Architectural Styles for Android App Software Product Lines",
+      "date": "2017-05-20",
+      "authors": [
+        "me",
+        "MT",
+        "JD"
+      ],
+      "published": "MOBILESoft '17: Proceedings of the 4th International Conference on Mobile Software Engineering and Systems",
+      "caption": "Software product line development for Android apps is difficult due to an inflexible design of the Android framework. However, since mobile applications become more and more complex, increased code reuse and thus reduced time-to-market play an important role, which can be improved by software product lines. We propose five architectural styles for developing software product lines of Android apps: (1) activity extensions, (2) activity connectors, (3) dynamic preference entries, (4) decoupled definition of domain-specific behavior via configuration files, (5) feature model using Android resources. We demonstrate the benefits in an early case study using an image processing product line which enables more than 90% of code reuse.",
+      "thumbnail": "/img/2017-archstyle.jpg",
+      "a_rate": "54",
+      "image": "/img/2017-archstyle_large.jpg",
+      "project": "AVA",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.1109/MOBILESoft.2017.12",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/314151334_Towards_Architectural_Styles_for_Android_App_Software_Product_Lines/links/59de9bc7a6fdcca0d3204f78/Towards-Architectural-Styles-for-Android-App-Software-Product-Lines.pdf",
+          "desc": "Paper (PDF)"
+        },
+        {
+          "href": "https://www.slideshare.net/mobilesoftconf/towards-architectural-styles-for-android-app-software-product-lines-76902980",
+          "desc": "Slides"
+        }
+      ]
     },
-    { "key"       : "nier2019",
-      "featured"  : "true",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2019-nier.bib",
-      "title"     : "Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class",
-      "date"      : "2019-05-26",
-      "authors"   : [ "me", "EK", "DG"],
-      "a_rate"    : "31",
-      "published" : "ICSE-NIER '19: ICSE New Ideas and Emerging Results",
-      "project"   : "TOD",
-      "caption"   : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-Oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve recurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software.",
-      "thumbnail" : "/img/2019-nier.PNG",
-	   "downloads" : [
-      { "href"    : "https://doi.org/10.1109/ICSE-NIER.2019.00036",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/330400619_Trade-off-Oriented_Development_Making_Quality_Attribute_Trade-offs_First-Class/links/5c3e227b92851c22a3771897",
-        "desc"    : "Preprint (PDF)"
-      }, 
-      { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/331586335_Trade-off-Oriented_Development_-_Making_Quality_Attribute_Trade-offs_First-Class/links/5c81931a92851c6950609314/Trade-off-Oriented-Development-Making-Quality-Attribute-Trade-offs-First-Class.pdf?_sg%5B0%5D=5JrIVVmqUcdxft5OzOgZUFkH1sA0KTvN8IqW5ds-6_EwK1qxmDmvbgAl03t0sbG8l14cSwESin7VHGyguY6Gdg.Iqo-IDJVdLNUgtduVEotMlMMThHf1J5h3qJLvEbAn6LXfk_aV7C1mBwNfJQg1d-JCErGi7_LSizXHUteCXBY-g&_sg%5B1%5D=YCsKfTitH6RJF75VpKETBWwlrEiLErIOcHSMWTjRmp3t6dYfZ1-BLTrE6SFGjg2lb0FbnXY4tMkXnIf62rCWn_XXpA8imlHeLko5NxOuMzjn.Iqo-IDJVdLNUgtduVEotMlMMThHf1J5h3qJLvEbAn6LXfk_aV7C1mBwNfJQg1d-JCErGi7_LSizXHUteCXBY-g",
-        "desc"    : "Poster (PDF)"
-      }, 
-      { "href"    : "https://www.slideshare.net/TobiasDrschmid1/tradeofforiented-development-making-quality-attribute-tradeoffs-firstclass",
-        "desc"    : "Slides"
-      }]
+    {
+      "key": "teaching2018",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2018-teaching.bib",
+      "title": "Teaching Image-Processing Programming for Mobile Devices: A Software Development Perspective",
+      "date": "2018-04-20",
+      "authors": [
+        "MT",
+        "SP",
+        "me",
+        "AS",
+        "JD"
+      ],
+      "published": "EG '18: Eurographics Education Papers",
+      "caption": "In this paper we present a concept of a research course that teaches students in image processing as a building block of mobile applications. Our goal with this course is to teach theoretical foundations, practical skills in software development as well as scientific working principles to qualify graduates to start as fully-valued software developers or researchers. The course includes teaching and learning focused on the nature of small team research and development as encountered in the creative industries dealing with computer graphics, computer animation and game development. We discuss our curriculum design and issues in conducting undergraduate and graduate research that we have identified through four iterations of the course. Joint scientific demonstrations and publications of the students and their supervisors as well as quantitative and qualitative evaluation by students underline the success of the proposed concept. In particular, we observed that developing using a common software framework helps the students to jump start their course projects, while industry software processes such as branching coupled with a three-tier breakdown of project features helps them to structure and assess their progress.",
+      "thumbnail": "/img/2018-teaching.jpg",
+      "image": "/img/2018-teaching_large.jpg",
+      "project": "AVA",
+      "downloads": [
+        {
+          "href": "https://dx.doi.org/10.2312/eged.20181002",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Matthias_Trapp/publication/324692909_Teaching_Image-Processing_Programming_for_Mobile_Devices_A_Software_Development_Perspective/links/5add89cf458515c60f5f6774/Teaching-Image-Processing-Programming-for-Mobile-Devices-A-Software-Development-Perspective.pdf",
+          "desc": "Paper (PDF)"
+        }
+      ]
     },
-    { "key"       : "seet2019",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2019-seet.bib",
-      "title"     : "Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices",
-      "date"      : "2019-05-25",
-      "a_rate"    : "24",
-      "authors"   : [ "chrisma", "JohannesHuegle", "me", "RalfTeusner"],
-      "published" : "ICSE-SEET '19: ICSE Software Engineering Education and Training",
-      "caption"   : "The attitudes of developers have a large impact on how software development projects are run and which development practices are employed. Recent agile methodologies have taken this into account, focusing on collaboration and highlighting the need for shared team values. In this research we investigate the attitudes towards Scrum agile practices and their usage of 42 students using surveys. Although attitudes did not evolve significantly over time, our analysis shows that the Scrum role significantly impacted participants’ views towards development practices. We find that using the version control system according to agile ideas was consistently rated most related to the values of the Agile Manifesto. Additionally, we investigate how common software development artifacts can be used to gain insights into team behavior and present the development data measurements we employed. We show that we can reliably detect well-defined agile practices, such as Test-Driven Development, in this data and that usage of these practices coincided with participants’ self-assessments.",
-      "thumbnail" : "/img/2019-seet.PNG",
-      "downloads" : [
-      { "href"    : "https://doi.org/10.1109/ICSE-SEET.2019.00025",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://www.researchgate.net/profile/Christoph_Matthies/publication/331544075_Attitudes_Beliefs_and_Development_Data_Concerning_Agile_Software_Development_Practices/links/5c7f9586458515831f880d65/Attitudes-Beliefs-and-Development-Data-Concerning-Agile-Software-Development-Practices.pdf?_sg%5B0%5D=Bqs-t-toB0Nd1ZEVTnccUeWgJTr_YkSsXdWtJ2N6tmLHeLQwRLVlXMnmVtAu49s-YZt56GrdCSAYxdnNOJ5Aww.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA&_sg%5B1%5D=5yOgacfRoaehVuZB31lyNeMndSlchMe73mx0RQ8GroVzv7y-XqVAre8-_HK1mvPXaHKVwauGMYGphp9FXMsOeSVSVC336D8_A6iaYe_DKsjX.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA",
-        "desc"    : "Preprint (PDF)"
-      }]
+    {
+      "key": "cop2018",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2018-cop.bib",
+      "title": "Cross-cutting Commentary - Narratives for Multi-party Mechanisms and Concerns",
+      "date": "2018-07-21",
+      "authors": [
+        "RH",
+        "me",
+        "pre",
+        "MarcelTaeumel"
+      ],
+      "published": "COP '18: International Workshop on Context-Oriented Programming",
+      "caption": "Cross-cutting concerns are an inherent property of the implementation of non-trivial software systems. Their study led to the development of advanced modularity constructs, usually supported by meta-level frameworks and programming language constructs, to improve comprehensibility. Because of their invasive nature, systems need to be refactored or rewritten to take advantage of these constructs. However, practical considerations such as organizational or economical constraints often do not allow for such reengineering efforts, leaving those systems without explicit representations of their cross-cutting concerns. <br> We propose a lightweight, non-invasive approach to explicate and document cross-cutting, multi-party concerns called <i>Cross-cutting Commentary</i>, or <i>Commentary</i> for short. Our proposal is based on the observation that comments are co-located with the individual semantic units they are about and with that scattered and tangled in the absence of advanced modularity constructs for cross-cutting concerns and the assumption that well-crafted, natural language explanations of system properties (their intents and the mechanisms they provide) largely improve comprehensibility. Commentaries are to help communicate narratives about system properties that involve multiple participants, both co-located in a single module or cross-cutting several of them, and allow for navigating to, from, and between them to explore the implementation artifacts involved. <br> Commentaries are inspired by the <i>layer</i> construct introduced with context-oriented programming (COP) to associate and manage (partial definitions of) system elements. In contrast to COP that contributes to both system comprehension during development and software composition at run-time, Commentaries for now focus on providing narratives for exploration activities. <br> In this work, we present our first attempt to provide Commentaries in Squeak/Smalltalk. We explain implementation details and discuss several application scenarios considering the documentation of basic mechanisms of this programming and runtime environment.",
+      "thumbnail": "/img/2018-cop.jpg",
+      "image": "/img/2018-cop.jpg",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1145/3242921.3242927",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/authorize?N669902",
+          "desc": "Paper (PDF)"
+        }
+      ]
     },
-    { "key"       : "ase2020",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2020-ase.bib",
-      "title"     : "Synthesis-Based Resolution of Feature Interactions in Cyber-Physical Systems",
-      "date"      : "2020-08-25",
-      "a_rate"    : "22.5",
-      "authors"   : [ "Ben", "me", "GabrielMoreno", "EK"],
-      "published" : "ASE '20: IEEE/ACM International Conference on Automated Software Engineering",
-      "caption"   : "The feature interaction problem arises when two or more independent features interact with each other in an undesirable manner. Feature interactions  remain a challenging and important problem in emerging domains of cyber-physical systems (CPS), such as intelligent vehicles, unmanned aerial vehicles (UAVs) and the Internet of Things (IoT), where the outcome of an unexpected interaction may result in a safety failure. Existing approaches to resolving feature interactions rely on priority lists or fixed strategies, but may not be effective in scenarios where none of the competing feature actions are satisfactory with respect to system requirements. This paper proposes a novel \emph{synthesis-based} approach to resolution, where a conflict among features is resolved by \emph{synthesizing} an action that best satisfies the specification of desirable system behaviors in the given environmental context. Unlike existing resolution methods, our approach is capable of producing a desirable system outcome even when none of the conflicting actions are satisfactory. The effectiveness of the proposed approach is demonstrated using a case study involving interactions among safety-critical features in an autonomous drone.",
-      "thumbnail" : "/img/2020-ase.PNG",
-      "downloads" : [
-      { "href"    : "https://doi.org/10.1145/3324884.3416630",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://dl.acm.org/doi/10.1145/3324884.3416630?cid=9965904813",
-        "desc"    : "Paper (PDF)"
-      }]
+    {
+      "key": "nier2019",
+      "featured": "true",
+      "thesis": "false",
+      "bibtex": "bib/2019-nier.bib",
+      "title": "Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class",
+      "date": "2019-05-26",
+      "authors": [
+        "me",
+        "EK",
+        "DG"
+      ],
+      "a_rate": "31",
+      "published": "ICSE-NIER '19: ICSE New Ideas and Emerging Results",
+      "project": "TOD",
+      "caption": "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-Oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve recurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software.",
+      "thumbnail": "/img/2019-nier.PNG",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1109/ICSE-NIER.2019.00036",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/330400619_Trade-off-Oriented_Development_Making_Quality_Attribute_Trade-offs_First-Class/links/5c3e227b92851c22a3771897",
+          "desc": "Preprint (PDF)"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/331586335_Trade-off-Oriented_Development_-_Making_Quality_Attribute_Trade-offs_First-Class/links/5c81931a92851c6950609314/Trade-off-Oriented-Development-Making-Quality-Attribute-Trade-offs-First-Class.pdf?_sg%5B0%5D=5JrIVVmqUcdxft5OzOgZUFkH1sA0KTvN8IqW5ds-6_EwK1qxmDmvbgAl03t0sbG8l14cSwESin7VHGyguY6Gdg.Iqo-IDJVdLNUgtduVEotMlMMThHf1J5h3qJLvEbAn6LXfk_aV7C1mBwNfJQg1d-JCErGi7_LSizXHUteCXBY-g&_sg%5B1%5D=YCsKfTitH6RJF75VpKETBWwlrEiLErIOcHSMWTjRmp3t6dYfZ1-BLTrE6SFGjg2lb0FbnXY4tMkXnIf62rCWn_XXpA8imlHeLko5NxOuMzjn.Iqo-IDJVdLNUgtduVEotMlMMThHf1J5h3qJLvEbAn6LXfk_aV7C1mBwNfJQg1d-JCErGi7_LSizXHUteCXBY-g",
+          "desc": "Poster (PDF)"
+        },
+        {
+          "href": "https://www.slideshare.net/TobiasDrschmid1/tradeofforiented-development-making-quality-attribute-tradeoffs-firstclass",
+          "desc": "Slides"
+        }
+      ]
     },
-    { "key"       : "icsa2022",
-      "featured"  : "false",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2022-icsa.bib",
-      "title"     : "ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems",
-      "date"      : "2022-03-15",
-      "a_rate"    : "20",
-      "project"   : "rosinfer",
-      "authors"   : [ "CT", "me", "BS", "DG", "CLG"],
-      "published" : "ICSA '22: 19th IEEE International Conference on Software Architecture",
-      "caption"   : "Robot systems are growing in importance and complexity. At the same time, it is becoming more important for them to be free of errors. Ecosystems for robot software, such as the Robot Operating System (ROS), provide libraries of reusable software components that can be configured and composed into larger systems. To support compositionality, ROS uses late binding and architecture configuration via “launch files” that describe how to initialize the components in a system. However, late binding often leads to systems failing silently due to misconfiguration, for example by misrouting or dropping messages entirely. In this paper we present ROSDiscover, which statically recovers the run-time architecture of ROS systems to find such architecture misconfiguration bugs. First, ROSDiscover constructs component level architectural models (ports, parameters) from source code. Second, architecture configuration files are analyzed to compose the system from these component models and derive the connections in the system. Finally, the reconstructed architecture is checked against architectural rules described in first-order logic to identify potential misconfigurations. We present an evaluation of ROSDiscover on real world, off-the-shelf robotic systems, measuring the accuracy, effectiveness, and practicality of our approach. To that end, we collected the first data set of architecture configuration bugs in ROS from popular open-source systems and measure how effective our approach is for detecting configuration bugs in that set.",
-      "thumbnail" : "/img/2022-icsa.png",
-      "downloads" : [
-      { "href"    : "https://doi.org/10.1109/ICSA53651.2022.00019",
-        "desc"    : "DOI"
-      },
-      { "href"    : "https://github.com/rosqual/rosdiscover",
-        "desc"    : "Tool"
-      },
-      { "href"    : "https://www.youtube.com/watch?v=sUfTNU5Jb-A",
-        "desc"    : "Talk"
-      },
-      { "href"    : "https://doi.org/10.5281/zenodo.5834633",
-        "desc"    : "Replication Package"
-      },
-      
-    ]
+    {
+      "key": "seet2019",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2019-seet.bib",
+      "title": "Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices",
+      "date": "2019-05-25",
+      "a_rate": "24",
+      "authors": [
+        "chrisma",
+        "JohannesHuegle",
+        "me",
+        "RalfTeusner"
+      ],
+      "published": "ICSE-SEET '19: ICSE Software Engineering Education and Training",
+      "caption": "The attitudes of developers have a large impact on how software development projects are run and which development practices are employed. Recent agile methodologies have taken this into account, focusing on collaboration and highlighting the need for shared team values. In this research we investigate the attitudes towards Scrum agile practices and their usage of 42 students using surveys. Although attitudes did not evolve significantly over time, our analysis shows that the Scrum role significantly impacted participants’ views towards development practices. We find that using the version control system according to agile ideas was consistently rated most related to the values of the Agile Manifesto. Additionally, we investigate how common software development artifacts can be used to gain insights into team behavior and present the development data measurements we employed. We show that we can reliably detect well-defined agile practices, such as Test-Driven Development, in this data and that usage of these practices coincided with participants’ self-assessments.",
+      "thumbnail": "/img/2019-seet.PNG",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1109/ICSE-SEET.2019.00025",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://www.researchgate.net/profile/Christoph_Matthies/publication/331544075_Attitudes_Beliefs_and_Development_Data_Concerning_Agile_Software_Development_Practices/links/5c7f9586458515831f880d65/Attitudes-Beliefs-and-Development-Data-Concerning-Agile-Software-Development-Practices.pdf?_sg%5B0%5D=Bqs-t-toB0Nd1ZEVTnccUeWgJTr_YkSsXdWtJ2N6tmLHeLQwRLVlXMnmVtAu49s-YZt56GrdCSAYxdnNOJ5Aww.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA&_sg%5B1%5D=5yOgacfRoaehVuZB31lyNeMndSlchMe73mx0RQ8GroVzv7y-XqVAre8-_HK1mvPXaHKVwauGMYGphp9FXMsOeSVSVC336D8_A6iaYe_DKsjX.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA",
+          "desc": "Preprint (PDF)"
+        }
+      ]
     },
-
-    { "key"       : "icse2024",
-      "featured"  : "true",
-      "thesis"    : "false",
-      "bibtex"    : "bib/2024-icse.bib",
-      "title"     : "ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems",
-      "date"      : "2024-04-15",
-      "a_rate"    : "21.2",
-      "project"   : "rosinfer",
-      "authors"   : [ "me", "CT", "DG", "CLG"],
-      "published" : "ICSE '24: 46th International Conference on Software Engineering",
-      "caption"   : "Robotics systems are complex, safety-critical systems that can consist of hundreds of software components that interact with each other dynamically during run time. Software components of robotics systems often exhibit reactive, periodic, and state-dependent behavior. Incorrect component composition can lead to unexpected behavior, such as components passively waiting for initiation messages that never arrive. Model-based software analysis is a common technique to identify incorrect behavioral composition by checking desired properties of given behavioral models that are based on component state machines. However, writing state machine models for hundreds of software components manually is a labor-intensive process. This motivates work on automated model inference. In this paper, we present an approach to infer behavioral models for systems based on the Robot Operating System (ROS) using static analysis by exploiting assumptions about the usage of the ROS API and ecosystem. Our approach is based on searching for common behavioral patterns that ROS developers use for implementing reactive, periodic, and state-dependent behavior using the ROS framework API.We evaluate our approach and our tool ROSInfer on five complex real-world ROS systems with a total of 532 components. For this purpose we manually created 155 models of components from the source code to be used as a ground truth and available data set for other researchers. ROSInfer can infer causal triggers for 87 % of component architectural behaviors in the 532 components.",
-      "thumbnail" : "/img/rosinfer.svg",
-      "downloads" : [
-      { "href"    : "https://github.com/rosqual/rosdiscover",
-        "desc"    : "Tool"
-      },
-      {
-        "href"    : "https://doi.org/10.1145/3597503.3639206",
-        "desc"    : "Paper (Open Access)"
-      }
-    ]
-  },
-  
+    {
+      "key": "ase2020",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2020-ase.bib",
+      "title": "Synthesis-Based Resolution of Feature Interactions in Cyber-Physical Systems",
+      "date": "2020-08-25",
+      "a_rate": "22.5",
+      "authors": [
+        "Ben",
+        "me",
+        "GabrielMoreno",
+        "EK"
+      ],
+      "published": "ASE '20: IEEE/ACM International Conference on Automated Software Engineering",
+      "caption": "The feature interaction problem arises when two or more independent features interact with each other in an undesirable manner. Feature interactions  remain a challenging and important problem in emerging domains of cyber-physical systems (CPS), such as intelligent vehicles, unmanned aerial vehicles (UAVs) and the Internet of Things (IoT), where the outcome of an unexpected interaction may result in a safety failure. Existing approaches to resolving feature interactions rely on priority lists or fixed strategies, but may not be effective in scenarios where none of the competing feature actions are satisfactory with respect to system requirements. This paper proposes a novel <em>synthesis-based</em> approach to resolution, where a conflict among features is resolved by <em>synthesizing</em> an action that best satisfies the specification of desirable system behaviors in the given environmental context. Unlike existing resolution methods, our approach is capable of producing a desirable system outcome even when none of the conflicting actions are satisfactory. The effectiveness of the proposed approach is demonstrated using a case study involving interactions among safety-critical features in an autonomous drone.",
+      "thumbnail": "/img/2020-ase.PNG",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1145/3324884.3416630",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://dl.acm.org/doi/10.1145/3324884.3416630?cid=9965904813",
+          "desc": "Paper (PDF)"
+        }
+      ]
+    },
+    {
+      "key": "icsa2022",
+      "featured": "false",
+      "thesis": "false",
+      "bibtex": "bib/2022-icsa.bib",
+      "title": "ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems",
+      "date": "2022-03-15",
+      "a_rate": "20",
+      "project": "rosinfer",
+      "authors": [
+        "CT",
+        "me",
+        "BS",
+        "DG",
+        "CLG"
+      ],
+      "published": "ICSA '22: 19th IEEE International Conference on Software Architecture",
+      "caption": "Robot systems are growing in importance and complexity. At the same time, it is becoming more important for them to be free of errors. Ecosystems for robot software, such as the Robot Operating System (ROS), provide libraries of reusable software components that can be configured and composed into larger systems. To support compositionality, ROS uses late binding and architecture configuration via “launch files” that describe how to initialize the components in a system. However, late binding often leads to systems failing silently due to misconfiguration, for example by misrouting or dropping messages entirely. In this paper we present ROSDiscover, which statically recovers the run-time architecture of ROS systems to find such architecture misconfiguration bugs. First, ROSDiscover constructs component level architectural models (ports, parameters) from source code. Second, architecture configuration files are analyzed to compose the system from these component models and derive the connections in the system. Finally, the reconstructed architecture is checked against architectural rules described in first-order logic to identify potential misconfigurations. We present an evaluation of ROSDiscover on real world, off-the-shelf robotic systems, measuring the accuracy, effectiveness, and practicality of our approach. To that end, we collected the first data set of architecture configuration bugs in ROS from popular open-source systems and measure how effective our approach is for detecting configuration bugs in that set.",
+      "thumbnail": "/img/2022-icsa.png",
+      "downloads": [
+        {
+          "href": "https://doi.org/10.1109/ICSA53651.2022.00019",
+          "desc": "DOI"
+        },
+        {
+          "href": "https://github.com/rosqual/rosdiscover",
+          "desc": "Tool"
+        },
+        {
+          "href": "https://www.youtube.com/watch?v=sUfTNU5Jb-A",
+          "desc": "Talk"
+        },
+        {
+          "href": "https://doi.org/10.5281/zenodo.5834633",
+          "desc": "Replication Package"
+        }
+      ]
+    },
+    {
+      "key": "icse2024",
+      "featured": "true",
+      "thesis": "false",
+      "bibtex": "bib/2024-icse.bib",
+      "title": "ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems",
+      "date": "2024-04-15",
+      "a_rate": "21.2",
+      "project": "rosinfer",
+      "authors": [
+        "me",
+        "CT",
+        "DG",
+        "CLG"
+      ],
+      "published": "ICSE '24: 46th International Conference on Software Engineering",
+      "caption": "Robotics systems are complex, safety-critical systems that can consist of hundreds of software components that interact with each other dynamically during run time. Software components of robotics systems often exhibit reactive, periodic, and state-dependent behavior. Incorrect component composition can lead to unexpected behavior, such as components passively waiting for initiation messages that never arrive. Model-based software analysis is a common technique to identify incorrect behavioral composition by checking desired properties of given behavioral models that are based on component state machines. However, writing state machine models for hundreds of software components manually is a labor-intensive process. This motivates work on automated model inference. In this paper, we present an approach to infer behavioral models for systems based on the Robot Operating System (ROS) using static analysis by exploiting assumptions about the usage of the ROS API and ecosystem. Our approach is based on searching for common behavioral patterns that ROS developers use for implementing reactive, periodic, and state-dependent behavior using the ROS framework API.We evaluate our approach and our tool ROSInfer on five complex real-world ROS systems with a total of 532 components. For this purpose we manually created 155 models of components from the source code to be used as a ground truth and available data set for other researchers. ROSInfer can infer causal triggers for 87 % of component architectural behaviors in the 532 components.",
+      "thumbnail": "/img/rosinfer.svg",
+      "downloads": [
+        {
+          "href": "https://github.com/rosqual/rosdiscover",
+          "desc": "Tool"
+        },
+        {
+          "href": "https://doi.org/10.1145/3597503.3639206",
+          "desc": "Paper (Open Access)"
+        }
+      ]
+    }
   ]
 }

@@ -31,11 +31,11 @@
       pre.setAttribute('tabindex', '0');
     });
 
-    // Scrollable tutorial step content (rendered by the tutorial JS) and
-    // the editor tab row both produce horizontal-overflow regions that axe
-    // flags as `scrollable-region-focusable`. Same fix.
+    // Scrollable tutorial step content (rendered by the tutorial JS), the
+    // editor tab row, and live Git graph regions can all produce overflow
+    // regions that axe flags as `scrollable-region-focusable`. Same fix.
     const otherScrollable = document.querySelectorAll(
-      '.tvm-step-content-wrap, .tvm-editor-tabs',
+      '.tvm-step-content-wrap, .tvm-editor-tabs, .tvm-git-graph-container',
     );
     otherScrollable.forEach((el) => {
       if (el.hasAttribute('tabindex')) return;
