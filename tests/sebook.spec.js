@@ -39,7 +39,7 @@ async function expectToggleRowVisible(page, toggleId, visible) {
 test.describe('SEBook Navigation Highlighting', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/SEBook/designpatterns.html');
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#navnav .navbar-nav a[href^="#"]').first()).toBeVisible();
   });
 
   test('clicking a navbar link highlights the category', async ({ page }) => {

@@ -415,12 +415,15 @@ test.describe('RegEx Tutorial: Basics', () => {
     const viz = page.locator(`#ex-${vizEx.id} .rt-viz`);
     await viz.locator('[data-a="play"]').first().click();
 
-    // Wait for auto-advance (1800ms interval per step)
-    await page.waitForTimeout(4000);
-
-    const text = await viz.locator('.rt-viz-counter').first().textContent();
-    const stepNum = parseInt(text.split('/')[0].trim());
-    expect(stepNum).toBeGreaterThan(1);
+    await expect
+      .poll(async () => {
+        const text = await viz.locator('.rt-viz-counter').first().textContent();
+        return parseInt(text.split('/')[0].trim(), 10);
+      }, {
+        timeout: 6_000,
+        message: 'Expected the visualizer play control to advance beyond the first step',
+      })
+      .toBeGreaterThan(1);
   });
 
   // ── Solution Verification ──────────────────────────────────────────────

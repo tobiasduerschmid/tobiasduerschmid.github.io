@@ -19,7 +19,7 @@ async function expectNavLinkActive(page, targetId) {
 test.describe('Blog Navigation Highlighting', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/blog/evidence-based-study-tips-for-college-students/');
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#navnav .navbar-nav a[href^="#"]').first()).toBeVisible();
   });
 
   test('clicking a navbar link highlights the matching blog section', async ({ page }) => {

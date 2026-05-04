@@ -56,18 +56,16 @@ async function selectEditMode(page, mode) {
 }
 
 async function dragLocatorCenter(page, locator, dx, dy) {
-  let box = null;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    try {
-      await locator.scrollIntoViewIfNeeded({ timeout: 2000 });
-      box = await locator.boundingBox({ timeout: 2000 });
-      if (box) break;
-    } catch (error) {
-      if (attempt === 3) throw error;
-    }
-    await page.waitForTimeout(100);
-  }
-  expect(box, 'drag target should have a bounding box').not.toBeNull();
+  await expect(locator).toBeVisible({ timeout: 2_000 });
+  await locator.scrollIntoViewIfNeeded({ timeout: 2_000 });
+  await expect
+    .poll(() => locator.boundingBox(), {
+      timeout: 2_000,
+      message: 'drag target should have a bounding box',
+    })
+    .not.toBeNull();
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('drag target should have a bounding box');
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
   await page.mouse.move(cx, cy);

@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
   answerQuizCorrectly,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -59,7 +60,7 @@ async function passCurrentStepTestsV86(page, timeout = 120_000) {
   });
   await page.evaluate(function () { return window._tutorial.applySolution(); });
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
 
 // =============================================================================
@@ -90,7 +91,7 @@ test.describe.serial('Advanced Git Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

@@ -7,34 +7,39 @@ const { test, expect } = require('@playwright/test');
  * Verifies that the site has correct meta tags for SEO and social sharing.
  */
 
+async function metaContent(page, selector) {
+  const locator = page.locator(selector).first();
+  await expect(locator).toHaveAttribute('content', /\S/);
+  return locator.getAttribute('content');
+}
+
 test.describe('SEO and Social Metadata', () => {
   test('home page has basic SEO tags', async ({ page }) => {
     await page.goto('/');
     
-    // Check for meta description
-    const description = page.locator('meta[name="description"]');
-    await expect(description).toHaveAttribute('content', /Tobias/);
+    const description = await metaContent(page, 'meta[name="description"]');
+    expect(description.trim().length, 'Home meta description should be descriptive').toBeGreaterThan(30);
     
-    // Check for Open Graph tags
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /(Home|Tobias)/);
+    const ogTitle = await metaContent(page, 'meta[property="og:title"]');
+    expect(ogTitle.trim().length, 'Open Graph title should be non-empty').toBeGreaterThan(3);
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'website');
     
-    // Check for Canonical URL
-    const canonical = page.locator('link[rel="canonical"]').first();
-    await expect(canonical).toHaveAttribute('href', /(tobiasduerschmid\.github\.io|localhost|127\.0\.0\.1)/);
+    const canonical = await page.locator('link[rel="canonical"]').first().getAttribute('href');
+    expect(() => new URL(canonical || '')).not.toThrow();
+    expect(new URL(canonical || '').pathname).toBe('/');
   });
 
   test('blog posts have specific meta tags', async ({ page }) => {
-    // Navigate to a specific blog post
     await page.goto('/blog/how-should-i-use-ai-as-a-college-student/');
+    const heading = (await page.locator('h1').first().innerText()).trim();
     
-    // Post title should be in og:title
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /AI/i);
+    const ogTitle = await metaContent(page, 'meta[property="og:title"]');
+    expect(ogTitle).toContain(heading);
+
+    const description = await metaContent(page, 'meta[name="description"]');
+    const ogDescription = await metaContent(page, 'meta[property="og:description"]');
+    expect(ogDescription).toBe(description);
     
-    // Should have og:description
-    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /AI/i);
-    
-    // Language attribute
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 });

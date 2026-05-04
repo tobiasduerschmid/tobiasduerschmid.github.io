@@ -251,11 +251,10 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       // modes, not just /404.html.
       await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
       // Several diagram libraries (fs-command-lab, git-graph) re-render their
-      // SVGs on dark-mode change via MutationObserver. Give them an extra
-      // beat beyond settleLoadedPage so the post-toggle fills are in place
-      // before we measure contrast.
+      // SVGs on dark-mode change via MutationObserver. Wait for multiple paint
+      // frames so post-toggle fills are in place before measuring contrast.
       await settleLoadedPage(page);
-      await page.waitForTimeout(800);
+      await waitForAnimationFrames(page, 6);
       const darkRaw = await page.evaluate(runDomAudit);
       const axeDark = await runAxeAudit(page);
       // Run the explicit-rules pass in dark mode too: `runAxeAudit` disables
@@ -267,7 +266,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       const explicitAxeDark = await runExplicitAxeRules(page);
       await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
       await settleLoadedPage(page);
-      await page.waitForTimeout(400);
+      await waitForAnimationFrames(page, 4);
       const darkMode = {
         findings: darkRaw.findings
           .filter((f) => f.criterion === '1.4.1' || f.criterion === '1.4.3' || f.criterion === '1.4.11')
@@ -390,8 +389,19 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
 async function settleLoadedPage(page) {
   await page.waitForLoadState('load', { timeout: 5_000 }).catch(() => {});
   await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
-  await page.waitForTimeout(750);
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await waitForAnimationFrames(page, 4);
+}
+
+async function waitForAnimationFrames(page, count = 2) {
+  await page.evaluate((frameCount) => new Promise((resolve) => {
+    let remaining = Math.max(1, frameCount);
+    function tick() {
+      remaining -= 1;
+      if (remaining <= 0) resolve();
+      else requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }), count);
 }
 
 /** Inject deterministic representatives of "post-runtime" UI states into

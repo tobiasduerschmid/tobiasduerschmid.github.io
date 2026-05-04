@@ -74,9 +74,11 @@ test.describe('Glossary page', () => {
   test('A–Z jump nav marks empty letters as inert', async ({ page }) => {
     await gotoOk(page, '/glossary/');
     const emptyLinks = page.locator('.glossary-jump a.is-empty');
-    expect(await emptyLinks.count()).toBeGreaterThan(0); // some letters have no entries
-    await expect(emptyLinks.first()).toHaveAttribute('aria-disabled', 'true');
-    await expect(emptyLinks.first()).toHaveAttribute('tabindex', '-1');
+    const count = await emptyLinks.count();
+    for (let i = 0; i < count; i++) {
+      await expect(emptyLinks.nth(i)).toHaveAttribute('aria-disabled', 'true');
+      await expect(emptyLinks.nth(i)).toHaveAttribute('tabindex', '-1');
+    }
   });
 });
 

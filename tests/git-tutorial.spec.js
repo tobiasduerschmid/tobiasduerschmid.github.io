@@ -5,6 +5,9 @@ const {
   passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
+  expectActiveStep,
+  expectStepCount,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -52,8 +55,8 @@ test.describe.serial('Git Tutorial', () => {
   test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
-    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
+    await expectStepCount(page, steps.length);
+    await expectActiveStep(page, 0);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
@@ -93,7 +96,7 @@ test.describe.serial('Git Tutorial', () => {
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
     await page.locator('.tvm-quiz-continue-btn').click();
-    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 
@@ -102,11 +105,11 @@ test.describe.serial('Git Tutorial', () => {
   test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
     await stepButtons.first().click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
     await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await page.locator('.tvm-btn-prev').click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
   });
 });
 
@@ -136,7 +139,7 @@ async function passCurrentStepTestsV86(page, timeout = 120_000) {
   });
   await page.evaluate(function () { return window._tutorial.applySolution(); });
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
 
 // =============================================================================
@@ -166,7 +169,7 @@ test.describe.serial('Git Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

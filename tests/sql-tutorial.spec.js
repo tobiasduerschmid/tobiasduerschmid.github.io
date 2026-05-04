@@ -5,6 +5,9 @@ const {
   passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
+  expectActiveStep,
+  expectStepCount,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -67,7 +70,7 @@ async function passCurrentStepTestsSQL(page, timeout = TEST_RUN_TIMEOUT) {
     });
   });
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
 
 // =============================================================================
@@ -92,8 +95,8 @@ test.describe.serial('SQL Tutorial', () => {
   test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
-    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
+    await expectStepCount(page, steps.length);
+    await expectActiveStep(page, 0);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
@@ -122,9 +125,9 @@ test.describe.serial('SQL Tutorial', () => {
     await setEditorContent(page, "SELECT 'hello' AS msg;");
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(300);
     await clickRun(page);
     await expect(page.locator('.tvm-sql-table-wrapper')).toBeVisible({ timeout: TEST_RUN_TIMEOUT });
+    await expect(page.locator('.tvm-sql-table-wrapper')).toContainText('hello');
   });
 
   test('clear button empties the output panel', async () => {
@@ -140,7 +143,6 @@ test.describe.serial('SQL Tutorial', () => {
     await setEditorContent(page, 'SELEC * FORM students;');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(300);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText(/error|Error|syntax|✗/i, { timeout: TEST_RUN_TIMEOUT });
@@ -168,7 +170,7 @@ test.describe.serial('SQL Tutorial', () => {
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
     await page.locator('.tvm-quiz-continue-btn').click();
-    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 
@@ -177,11 +179,11 @@ test.describe.serial('SQL Tutorial', () => {
   test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
     await stepButtons.first().click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
     await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await page.locator('.tvm-btn-prev').click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
   });
 });
 
@@ -212,7 +214,7 @@ test.describe.serial('SQL Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTestsSQL(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

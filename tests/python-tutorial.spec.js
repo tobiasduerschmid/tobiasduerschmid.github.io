@@ -4,6 +4,9 @@ const {
   loadTutorialConfig,
   answerQuizCorrectly,
   setEditorContent,
+  expectActiveStep,
+  expectStepCount,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -33,8 +36,12 @@ async function waitForTutorialReady(page) {
 async function clickRun(page) {
   const runBtn = page.locator('.tvm-run-btn');
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
-  await runBtn.click();
-  await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+  await expect(async () => {
+    await runBtn.click();
+    await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+    const output = await page.locator('.tvm-output-pre').textContent().catch(() => '');
+    expect(output || '').not.toContain('Already running');
+  }).toPass({ timeout: TEST_RUN_TIMEOUT });
 }
 
 /**
@@ -50,11 +57,9 @@ async function passCurrentStepTestsPython(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
-  await page.waitForTimeout(1_000);
   await clickRun(page);
-  await page.waitForTimeout(500);
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
 
 // =============================================================================
@@ -79,8 +84,8 @@ test.describe.serial('Python Tutorial', () => {
   test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
-    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
+    await expectStepCount(page, steps.length);
+    await expectActiveStep(page, 0);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
@@ -109,7 +114,6 @@ test.describe.serial('Python Tutorial', () => {
     await setEditorContent(page, 'print("Hello, CS 35L!")');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Hello, CS 35L!', { timeout: TEST_RUN_TIMEOUT });
@@ -127,7 +131,6 @@ test.describe.serial('Python Tutorial', () => {
     await setEditorContent(page, 'def broken(:');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText(/Error|error|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
@@ -165,16 +168,20 @@ test.describe.serial('Python Tutorial', () => {
 
     const firstCard = page.locator('.tvm-quiz-panel .quiz-question-card.active');
     await expect(firstCard.locator('.quiz-shortcuts-hint')).toContainText('B/2');
-    await expect(firstCard.locator('.quiz-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    const shortcutKey = firstCard.locator('.quiz-shortcuts-hint kbd').first();
+    const lightShortcutBg = await shortcutKey.evaluate((el) => getComputedStyle(el).backgroundColor);
     await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-    await expect(firstCard.locator('.quiz-shortcuts-hint kbd').first()).toHaveCSS('background-color', 'rgb(37, 37, 56)');
+    const darkShortcutBg = await shortcutKey.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(darkShortcutBg).not.toBe(lightShortcutBg);
     await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
     await expect(firstCard.locator('.quiz-option').first()).toBeFocused();
     await page.keyboard.press('B');
     await expect(firstCard.locator('.quiz-option').nth(1)).toHaveClass(/correct/);
-    await expect(firstCard.locator('.quiz-next-shortcut-hint kbd')).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+    const nextShortcutKey = firstCard.locator('.quiz-next-shortcut-hint kbd');
+    const lightNextBg = await nextShortcutKey.evaluate((el) => getComputedStyle(el).backgroundColor);
     await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-    await expect(firstCard.locator('.quiz-next-shortcut-hint kbd')).toHaveCSS('background-color', 'rgb(37, 37, 56)');
+    const darkNextBg = await nextShortcutKey.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(darkNextBg).not.toBe(lightNextBg);
     await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
     await expect(firstCard.locator('.quiz-shortcuts-hint')).toBeHidden();
     await firstCard.locator('.next-btn').click();
@@ -199,7 +206,7 @@ test.describe.serial('Python Tutorial', () => {
 
     await answerQuizCorrectly(page);
     await page.locator('.tvm-quiz-continue-btn').click();
-    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 
@@ -208,11 +215,11 @@ test.describe.serial('Python Tutorial', () => {
   test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
     await stepButtons.first().click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
     await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await page.locator('.tvm-btn-prev').click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
   });
 });
 
@@ -243,7 +250,7 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTestsPython(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

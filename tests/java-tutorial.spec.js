@@ -5,6 +5,9 @@ const {
   passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
+  expectActiveStep,
+  expectStepCount,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -75,8 +78,8 @@ test.describe.serial('Java Tutorial — structure', () => {
   test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
-    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
+    await expectStepCount(page, steps.length);
+    await expectActiveStep(page, 0);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
@@ -144,7 +147,6 @@ test.describe.serial('Java Tutorial — structure', () => {
     }`);
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Hello, Java!', { timeout: TEST_RUN_TIMEOUT });
@@ -178,7 +180,7 @@ test.describe.serial('Java Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

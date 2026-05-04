@@ -4,6 +4,9 @@ const {
   loadTutorialConfig,
   answerQuizCorrectly,
   setEditorContent,
+  expectActiveStep,
+  expectStepCount,
+  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 /**
@@ -38,7 +41,7 @@ async function waitForTutorialReady(page) {
 async function saveAndWaitForPreview(page) {
   await page.locator('.tvm-editor-container').click();
   await page.keyboard.press('Control+s');
-  await page.waitForTimeout(1_200);
+  await expect(page.frameLocator('.tvm-preview-frame').locator('body')).toBeVisible({ timeout: 5_000 });
 }
 
 /**
@@ -56,12 +59,11 @@ async function passCurrentStepTests(page, timeout = TEST_RUN_TIMEOUT) {
     if (!e.message.includes('context') && !e.message.includes('destroyed') && !e.message.includes('navigation')) {
       throw e;
     }
-    await page.waitForTimeout(2_000);
+    await expect(page.frameLocator('.tvm-preview-frame').locator('body')).toBeVisible({ timeout: 5_000 });
   }
   await saveAndWaitForPreview(page);
-  await page.waitForTimeout(2_000);
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
 
 // =============================================================================
@@ -86,8 +88,8 @@ test.describe.serial('React Tutorial', () => {
   test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
-    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
+    await expectStepCount(page, steps.length);
+    await expectActiveStep(page, 0);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
@@ -133,10 +135,15 @@ test.describe.serial('React Tutorial', () => {
   });
 
   test('refresh button rebuilds the preview', async () => {
+    const frameBody = page.frameLocator('.tvm-preview-frame').locator('body');
+    await frameBody.evaluate((body) => body.setAttribute('data-refresh-probe', 'stale'));
     await page.locator('.tvm-refresh-btn').click();
-    await page.waitForTimeout(1_500);
-    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
+    await expect
+      .poll(() => frameBody.evaluate((body) => body.getAttribute('data-refresh-probe') || ''), {
+        timeout: 5_000,
+        message: 'Expected refresh to rebuild the preview iframe document',
+      })
+      .toBe('');
   });
 
   test('editor content can be modified', async () => {
@@ -159,7 +166,7 @@ test.describe.serial('React Tutorial', () => {
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
     await page.locator('.tvm-quiz-continue-btn').click();
-    await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 
@@ -168,11 +175,11 @@ test.describe.serial('React Tutorial', () => {
   test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
     await stepButtons.first().click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
     await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+    await expectActiveStep(page, 1);
     await page.locator('.tvm-btn-prev').click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    await expectActiveStep(page, 0);
   });
 });
 
@@ -203,7 +210,7 @@ test.describe.serial('React Tutorial — step-by-step', () => {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
         await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
-        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+        await expectRenderedStepTests(page, step);
       });
     }
 

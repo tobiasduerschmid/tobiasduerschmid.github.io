@@ -1,6 +1,23 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+async function visiblePostCategories(page) {
+  return page.locator('.blog-post-item:visible').evaluateAll((posts) =>
+    posts.map((post) => post.getAttribute('data-category')).filter(Boolean),
+  );
+}
+
+async function expectOnlyCategoryVisible(page, category) {
+  await expect
+    .poll(async () => {
+      const categories = await visiblePostCategories(page);
+      return categories.length > 0 && categories.every((item) => item === category);
+    }, {
+      message: `Expected only ${category} posts to remain visible`,
+    })
+    .toBe(true);
+}
+
 /**
  * Tests: Blog category filtering
  *
@@ -18,37 +35,26 @@ test('blog category filter buttons are present', async ({ page }) => {
 test('clicking a category filter button filters posts correctly', async ({ page }) => {
   await page.goto('/blog/');
 
-  // Get initial visible post count
-  const allPosts = page.locator('.blog-post-card, .post-container article'); // Update selector based on actual site
+  const allPosts = page.locator('.blog-post-item');
   const initialCount = await allPosts.count();
+  expect(initialCount, 'Blog index should render posts before filtering').toBeGreaterThan(0);
 
-  // Find a category button that isn't "All"
   const categoryButtons = page.locator('.filter-btn[data-category]:not([data-category="all"])');
   const catBtnCount = await categoryButtons.count();
+  test.skip(catBtnCount === 0, 'No category-specific filter buttons are rendered');
 
-  if (catBtnCount > 0) {
-    const firstBtn = categoryButtons.first();
-    const categoryName = await firstBtn.getAttribute('data-category');
-    await firstBtn.click();
+  const firstBtn = categoryButtons.first();
+  const categoryName = await firstBtn.getAttribute('data-category');
+  expect(categoryName).toBeTruthy();
 
-    // Wait for any JS transitions
-    await page.waitForTimeout(500);
+  await firstBtn.click();
+  await expect(firstBtn).toHaveAttribute('aria-pressed', 'true');
+  expect(page.url()).toContain('/blog');
+  await expectOnlyCategoryVisible(page, categoryName);
 
-    // Some sites might use classes like .hidden or just change display
-    // Check that we don't have all posts visible if filtering
-    const visiblePosts = allPosts.filter({ hasText: '' }); // This is a bit generic, better if we know the 'hidden' class
-
-    // Better: check that at least one post is visible and no navigation occurred
-    expect(page.url()).toContain('/blog');
-
-    // Click "All" to reset
-    await page.locator('#cat-all').click();
-    await page.waitForTimeout(500);
-    const resetCount = await allPosts.count();
-    expect(resetCount).toBe(initialCount);
-  } else {
-    test.skip();
-  }
+  await page.locator('#cat-all').click();
+  await expect(page.locator('#cat-all')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.blog-post-item:visible')).toHaveCount(initialCount);
 });
 
 test('blog post pages render content', async ({ page }) => {
@@ -71,25 +77,17 @@ test('clicking a category badge on a post filters the list', async ({ page }) =>
 
   // Find the first category badge
   const categoryLink = page.locator('.category-link').first();
-  const categoryName = (await categoryLink.innerText()).trim();
+  const categoryHref = await categoryLink.getAttribute('href');
+  const categoryId = categoryHref?.replace(/^#cat-/, '');
+  expect(categoryId).toBeTruthy();
 
   // Click it
   await categoryLink.click();
 
-  // Wait for transitions
-  await page.waitForTimeout(500);
-
   // Verify the filter button for this category is now active
-  const filterBtn = page.locator(`.filter-btn.active`);
-  const activeCategory = (await filterBtn.innerText()).trim();
-  expect(activeCategory).toBe(categoryName);
-
-  // Verify only matching posts are visible
-  const visiblePosts = page.locator('.blog-post-item:not(.hidden)');
-  const postCategories = await visiblePosts.locator('.category-link').allInnerTexts();
-  for (const cat of postCategories) {
-    expect(cat.trim()).toBe(categoryName);
-  }
+  const filterBtn = page.locator(`.filter-btn[data-category="${categoryId}"]`);
+  await expect(filterBtn).toHaveAttribute('aria-pressed', 'true');
+  await expectOnlyCategoryVisible(page, categoryId);
 });
 
 test('blog index shows post titles linking to posts', async ({ page }) => {

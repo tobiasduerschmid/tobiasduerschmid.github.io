@@ -24,16 +24,72 @@ async function applySolution(page) {
 }
 
 /**
+ * Wait until Monaco has created at least one editor model.
+ */
+async function waitForEditorReady(page, timeout = 15_000) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0, { timeout });
+}
+
+/**
+ * Wait for the tutorial shell to finish booting.
+ */
+async function waitForTutorialReady(page, options = {}) {
+  const {
+    readySelector = '.tvm-output-panel',
+    bootTimeout = 60_000,
+    stepTimeout = 10_000,
+  } = options;
+
+  await page.waitForSelector(readySelector, { timeout: bootTimeout });
+  await page.waitForSelector('.tvm-step-btn', { timeout: stepTimeout });
+  await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: bootTimeout });
+}
+
+function stepButton(page, stepIndex) {
+  return page.getByRole('button', {
+    name: new RegExp(`^Step ${stepIndex + 1}:`),
+  });
+}
+
+async function expectActiveStep(page, stepIndex, options = {}) {
+  await expect(stepButton(page, stepIndex)).toHaveAttribute('aria-current', 'step', options);
+}
+
+async function clickStep(page, stepIndex) {
+  await stepButton(page, stepIndex).click();
+  await expectActiveStep(page, stepIndex);
+}
+
+async function currentStepIndex(page) {
+  const label = await page.locator('.tvm-step-btn[aria-current="step"]').getAttribute('aria-label');
+  const match = /^Step\s+(\d+):/.exec(label || '');
+  if (!match) throw new Error(`Could not read active tutorial step from aria-label: ${label || '<missing>'}`);
+  return Number(match[1]) - 1;
+}
+
+async function expectStepCount(page, expected) {
+  await expect(page.getByRole('button', { name: /^Step \d+:/ })).toHaveCount(expected);
+}
+
+async function runCurrentStepTests(page, timeout = 30_000) {
+  await page.getByRole('button', { name: /test my work/i }).click();
+  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
+}
+
+async function expectRenderedStepTests(page, step) {
+  const descriptions = (step.tests || []).map((item) => item.description);
+  await expect(page.locator('.tvm-test-item .tvm-test-desc')).toHaveText(descriptions);
+}
+
+/**
  * Apply the solution and pass all tests on the current step.
  * @param {import('@playwright/test').Page} page
  * @param {number} timeout — max wait for all-pass summary
  */
 async function passCurrentStepTests(page, timeout = 30_000) {
-  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-    { timeout: 15_000 });
+  await waitForEditorReady(page);
   await applySolution(page);
-  await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await runCurrentStepTests(page, timeout);
 }
 
 /**
@@ -98,12 +154,13 @@ async function answerQuizCorrectly(page) {
  * Unlock the next step: apply solution, pass tests, answer quiz, click continue.
  */
 async function unlockNextStep(page, testTimeout = 30_000) {
+  const beforeStep = await currentStepIndex(page);
   await passCurrentStepTests(page, testTimeout);
-  await page.locator('.tvm-btn-next').click();
+  await page.getByRole('button', { name: /next/i }).click();
   await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
   await answerQuizCorrectly(page);
-  await page.locator('.tvm-quiz-continue-btn').click();
-  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: /continue/i }).click();
+  await expectActiveStep(page, beforeStep + 1);
 }
 
 /**
@@ -121,6 +178,15 @@ async function setEditorContent(page, content) {
 module.exports = {
   loadTutorialConfig,
   applySolution,
+  waitForEditorReady,
+  waitForTutorialReady,
+  stepButton,
+  expectActiveStep,
+  clickStep,
+  currentStepIndex,
+  expectStepCount,
+  runCurrentStepTests,
+  expectRenderedStepTests,
   passCurrentStepTests,
   answerQuizCorrectly,
   unlockNextStep,

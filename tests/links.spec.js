@@ -4,8 +4,26 @@ const { test, expect } = require('@playwright/test');
 /**
  * Tests: Broken Links
  * 
- * Recursively scans internal links to ensure no 404s.
+ * Crawls a bounded set of internal pages and verifies discovered internal links
+ * do not return errors.
  */
+
+function normalizeInternalHref(href, baseUrl) {
+  if (
+    typeof href !== 'string' ||
+    href.startsWith('#') ||
+    href.startsWith('mailto:') ||
+    href.startsWith('tel:') ||
+    href.startsWith('javascript:')
+  ) {
+    return null;
+  }
+
+  const url = new URL(href, baseUrl);
+  const base = new URL(baseUrl);
+  if (url.origin !== base.origin || url.pathname.includes('/files/')) return null;
+  return `${url.pathname}${url.search}`;
+}
 
 test.describe('Broken Link Checker', () => {
   test('all internal links return 200 OK', async ({ page, request }) => {
@@ -13,7 +31,7 @@ test.describe('Broken Link Checker', () => {
     const toVisit = ['/'];
     const brokenLinks = [];
 
-    // Limit depth to avoid infinite loops if any
+    // Bound crawl size so the test stays useful in local feedback loops.
     let limit = 50;
 
     while (toVisit.length > 0 && limit > 0) {
@@ -22,34 +40,30 @@ test.describe('Broken Link Checker', () => {
       visited.add(currentPath);
       limit--;
 
-      await page.goto(currentPath);
+      const currentResponse = await page.goto(currentPath, { waitUntil: 'domcontentloaded' });
+      if (!currentResponse || currentResponse.status() >= 400) {
+        brokenLinks.push(`${currentPath} - Status: ${currentResponse ? currentResponse.status() : 'no response'}`);
+        continue;
+      }
+      await page.waitForLoadState('load', { timeout: 5_000 }).catch(() => {});
       
-      // Get all links on the current page
+      const baseUrl = page.url();
       const links = await page.locator('a[href]').evaluateAll((anchors) =>
-        anchors
-          .map((a) => a.getAttribute('href'))
-          .filter((href) => 
-            typeof href === 'string' &&
-            !href.startsWith('http') && 
-            !href.startsWith('mailto:') && 
-            !href.startsWith('#') &&
-            !href.includes('/files/')
-          )
+        anchors.map((a) => a.getAttribute('href')).filter(Boolean)
       );
 
       for (const href of links) {
-        if (!href) continue;
-        // Resolve path
-        const resolvedPath = new URL(href, page.url()).pathname;
+        const resolvedPath = normalizeInternalHref(href, baseUrl);
+        if (!resolvedPath) continue;
+
+        const response = await request.get(resolvedPath);
+        if (response.status() >= 400) {
+          brokenLinks.push(`${resolvedPath} (from ${currentPath}) - Status: ${response.status()}`);
+          continue;
+        }
+
         if (!visited.has(resolvedPath) && !toVisit.includes(resolvedPath)) {
-          // Check if it's broken
-          const response = await request.get(resolvedPath);
-          if (response.status() >= 400) {
-            brokenLinks.push(`${resolvedPath} (from ${currentPath}) - Status: ${response.status()}`);
-          } else if (resolvedPath.startsWith('/') && resolvedPath.length > 1) {
-             // In a real crawler we might add it to toVisit, but let's keep it scoped to 1 level for speed
-             // or just check the status for now to avoid long test runs.
-          }
+          toVisit.push(resolvedPath);
         }
       }
     }
