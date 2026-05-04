@@ -83,6 +83,7 @@
 html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container {
   --uml-stroke: #7aa0ce;
   --uml-text: #e6edf3;
+  --uml-secondary-line: #9fb5cc;
   --uml-header-fill: #2a3a52;
 }
 html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container svg {

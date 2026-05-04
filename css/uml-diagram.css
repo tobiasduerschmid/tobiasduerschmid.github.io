@@ -50,6 +50,7 @@ pre:has(> code.language-folder-tree),
   --uml-fill: #fff;
   --uml-header-fill: #d0ddef;
   --uml-line: #444;
+  --uml-secondary-line: #657484;
   --uml-bg: transparent;
   overflow-x: auto;
   padding: 12px 0;
