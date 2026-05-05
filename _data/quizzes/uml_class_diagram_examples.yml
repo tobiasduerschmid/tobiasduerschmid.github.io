@@ -236,8 +236,6 @@ questions:
     type: single
     question: >
       How is an **abstract class** indicated in UML?
-
-      <div data-uml-type="class" data-uml-spec="abstract class Vehicle {&#10;  {abstract} +move(): void&#10;}&#10;class Car {&#10;  +move(): void&#10;}&#10;Car --|> Vehicle"></div>
     options:
       - "By underlining the class name."
       - "By italicizing the class name or adding {abstract}."
@@ -251,7 +249,10 @@ questions:
         `<<interface>>` marks an interface. An abstract class is still a class and can be marked abstract without becoming an interface.
       3: |
         `#` is protected visibility for members. It does not mark a class as abstract.
-    explanation: "**An abstract class is shown by italicizing the class name or adding `{abstract}` — not by using `<<interface>>`, which is reserved for interfaces.** An abstract class is indicated by **italicizing** the class name or annotating it with `{abstract}`. Abstract operations (methods without implementation) are also italicized. The `<<interface>>` stereotype is used for interfaces, not abstract classes."
+    explanation: >
+      **An abstract class is shown by italicizing the class name or adding `{abstract}` — not by using `<<interface>>`, which is reserved for interfaces.** An abstract class is indicated by **italicizing** the class name or annotating it with `{abstract}`. Abstract operations (methods without implementation) are also italicized. The `<<interface>>` stereotype is used for interfaces, not abstract classes.
+
+      <div data-uml-type="class" data-uml-spec="abstract class Vehicle {&#10;  {abstract} +move(): void&#10;}&#10;class Car {&#10;  +move(): void&#10;}&#10;Car --|> Vehicle"></div>
 
   - id: 12
     type: multiple
