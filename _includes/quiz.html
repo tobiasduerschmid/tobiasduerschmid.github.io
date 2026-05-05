@@ -861,7 +861,16 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     function revealOptionFeedback(card, idx) {
       const fb = card.querySelector('.option-feedback[data-for-index="' + idx + '"]');
-      if (fb) fb.classList.remove('is-hidden');
+      if (!fb) return;
+      fb.classList.remove('is-hidden');
+      // The option-feedback element is `role="note"` — not a live region —
+      // so a CSS visibility change is silent for screen readers. The
+      // misconception explanation tied to the *specific* wrong answer the
+      // student picked is the most pedagogically valuable feedback we
+      // produce, so push it through the polite announcer right after
+      // "Incorrect…" so it's announced as part of the same beat.
+      const txt = (fb.textContent || '').trim();
+      if (txt) setTimeout(function () { announce(txt); }, 80);
     }
 
     function validateSingleChoice(option, card) {
@@ -869,13 +878,25 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const explanation = card.querySelector('.quiz-explanation');
       const isCorrect = option.dataset.correct === option.dataset.index;
 
-      options.forEach(opt => opt.setAttribute('disabled', 'true'));
+      // Native `disabled` makes the button untabbable but isn't reliably
+      // announced for buttons whose ARIA role is overridden (radio /
+      // checkbox). Setting `aria-disabled` too ensures AT users hear
+      // "dimmed" / "unavailable" once the answer is locked in.
+      options.forEach(opt => {
+        opt.setAttribute('disabled', 'true');
+        opt.setAttribute('aria-disabled', 'true');
+      });
 
       if (isCorrect) {
         option.classList.add('correct');
         score++;
       } else {
         option.classList.add('incorrect');
+        // Mark the wrongly-chosen option as invalid (3.3.1 Error
+        // Identification). NVDA / VoiceOver announce "invalid entry" /
+        // "invalid data" when navigating into it, helping the student
+        // locate the answer they got wrong inside a long option list.
+        option.setAttribute('aria-invalid', 'true');
         const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
         if (correctOption) correctOption.classList.add('correct');
         revealOptionFeedback(card, option.dataset.index);
@@ -908,7 +929,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const optionalSet = new Set(optionalIndices);
       const allowedSet = new Set(correctIndices.concat(optionalIndices));
 
-      options.forEach(opt => opt.setAttribute('disabled', 'true'));
+      // See validateSingleChoice for rationale on aria-disabled / aria-invalid.
+      options.forEach(opt => {
+        opt.setAttribute('disabled', 'true');
+        opt.setAttribute('aria-disabled', 'true');
+      });
       submitBtn.classList.add('hidden');
 
       const isAnswerCorrect = isAcceptedMultipleAnswer(selectedIndices, correctIndices, optionalIndices);
@@ -924,6 +949,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
             opt.classList.add('correct');
           } else if (commissionErr) {
             opt.classList.add('incorrect');
+            opt.setAttribute('aria-invalid', 'true');
           }
           if (commissionErr || omissionErr) {
             revealOptionFeedback(card, opt.dataset.index);
@@ -985,6 +1011,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       options.forEach(opt => {
         opt.classList.remove('correct', 'incorrect', 'selected');
         opt.removeAttribute('disabled');
+        opt.removeAttribute('aria-disabled');
+        opt.removeAttribute('aria-invalid');
         if (opt.hasAttribute('aria-checked')) opt.setAttribute('aria-checked', 'false');
       });
       card.querySelectorAll('.option-feedback').forEach(el => el.classList.add('is-hidden'));

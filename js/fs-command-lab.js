@@ -563,32 +563,20 @@
     btn.appendChild(cmdEl);
     action.appendChild(btn);
 
-    // Interactive tree (screen only — hidden in print). Marked as a region
-    // with role="img" so screen readers announce the verbal description we
-    // generate from the tree spec via UMLAutoDescribe (see js/uml-auto-
-    // describe.js). The TreeAnimator already manages an aria-live region
-    // that announces changed rows on each transition.
+    // The tree wrapper is sighted-only: a visualization of the same
+    // state that the <details> element below describes in text. Hide
+    // the whole subtree from AT so screen readers don't navigate into
+    // the rendered SVG and read commit-text-by-commit-text. The
+    // TreeAnimator's own row-level announcer ("Changed rows: docs/")
+    // remains audible because aria-live regions still announce even
+    // when their ancestor is aria-hidden — that's an intentional
+    // exception in the AOM.
     var treeWrap = document.createElement('div');
     treeWrap.className = 'fs-command-lab__tree';
-    treeWrap.setAttribute('role', 'img');
+    treeWrap.setAttribute('aria-hidden', 'true');
     action.appendChild(treeWrap);
 
     var animator = TreeAnimator(treeWrap);
-
-    // Compute and apply the structural aria-label for the current tree.
-    // Uses window.UMLAutoDescribe.describe('folder-tree', spec) when
-    // available; falls back to a generic label so we never end up with no
-    // text alternative. Called every time the state changes so the
-    // announcement reflects the current tree.
-    function ariaTreeLabel(state) {
-      var text = buildTreeText(state || {});
-      var ad = window.UMLAutoDescribe;
-      if (ad && typeof ad.describe === 'function') {
-        try { return ad.describe('folder-tree', text); } catch (_) { /* fall through */ }
-      }
-      return 'Filesystem command animation tree.';
-    }
-    treeWrap.setAttribute('aria-label', ariaTreeLabel(spec.before));
 
     // Output lives inside the tree wrapper, after the slots, so it sits
     // flush against the tree (no flex gap between them) and stays within
@@ -626,22 +614,40 @@
     printPair.appendChild(makePrintCell('Before', spec.before));
     printPair.appendChild(makePrintCell('After', spec.after));
 
-    // Polite aria-live region for command-level announcements ("Applied
-    // mkdir docs", "Reverted: mkdir docs"). The TreeAnimator's own live
-    // region announces the row-level delta ("Changed rows: docs/").
-    var announcer = document.createElement('div');
-    announcer.className = 'sr-only fs-command-lab__announcer';
-    announcer.setAttribute('role', 'status');
-    announcer.setAttribute('aria-live', 'polite');
-    announcer.setAttribute('aria-atomic', 'true');
-    container.appendChild(announcer);
+    // The card is a labeled group, not an image. Sighted users get the
+    // tree visualization; AT users get a polite aria-live region that
+    // announces row-level deltas ("Changed rows: docs/") on every
+    // transition (managed by TreeAnimator above) plus a sighted-or-AT
+    // <details> element with the full structural breakdown.
+    container.setAttribute('role', 'group');
+    container.setAttribute('aria-label', 'Filesystem command demo: ' + spec.command);
+
+    var detailsEl = document.createElement('details');
+    detailsEl.className = 'fs-command-lab__details';
+    var detailsSummary = document.createElement('summary');
+    detailsSummary.textContent = 'Full tree details (text)';
+    detailsEl.appendChild(detailsSummary);
+    var detailsBody = document.createElement('div');
+    detailsBody.className = 'fs-command-lab__details-body';
+    detailsEl.appendChild(detailsBody);
+    container.appendChild(detailsEl);
+
+    function refreshDetails(state) {
+      var text = buildTreeText(state || {});
+      var ad = window.UMLAutoDescribe;
+      if (ad && typeof ad.describe === 'function') {
+        try { detailsBody.textContent = ad.describe('folder-tree', text); return; } catch (_) { /* fall through */ }
+      }
+      detailsBody.textContent = '';
+    }
+    refreshDetails(spec.before);
 
     var applied = false;
-    function update(announce) {
+    function update() {
       var state = applied ? spec.after : spec.before;
       animator.render(buildTreeText(state));
       renderOutputInto(output, state, applied);
-      treeWrap.setAttribute('aria-label', ariaTreeLabel(state));
+      refreshDetails(state);
       // Burst the output box when it becomes visible after an action click.
       if (applied && output.classList.contains('fs-command-lab__output--visible')) {
         burstOutputBox(output);
@@ -651,20 +657,18 @@
         cmdEl.textContent = 'Undo ' + spec.command;
         btn.classList.add('fs-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'true');
-        if (announce) announcer.textContent = 'Applied: ' + spec.command + '.';
       } else {
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('fs-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'false');
-        if (announce) announcer.textContent = 'Reverted: ' + spec.command + '. Back to before state.';
       }
     }
 
     btn.addEventListener('click', function () {
       treeWrap.style.minHeight = treeWrap.offsetHeight + 'px';
       applied = !applied;
-      update(true);
+      update();
       setTimeout(function () { treeWrap.style.minHeight = ''; }, 400);
     });
 
@@ -712,6 +716,10 @@
 
     var modal = document.createElement('div');
     modal.className = 'fs-command-lab-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Filesystem command demo' + (spec && spec.command ? ': ' + spec.command : ''));
+    modal.setAttribute('tabindex', '-1');
 
     var closeBtn = document.createElement('button');
     closeBtn.type = 'button';
@@ -723,13 +731,47 @@
     var cardHost = document.createElement('div');
     modal.appendChild(cardHost);
     overlay.appendChild(modal);
+
+    // Save previous focus for restoration on close. See WCAG 2.4.3 +
+    // sister implementation in js/git-command-lab.js.
+    var prevFocus = (document.activeElement instanceof HTMLElement) ? document.activeElement : null;
     document.body.appendChild(overlay);
+
+    var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), details > summary';
+    function getFocusable() {
+      var nodes = modal.querySelectorAll(FOCUSABLE);
+      var out = [];
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        if (n.getAttribute('aria-hidden') === 'true') continue;
+        if (n.offsetParent === null && n.tagName !== 'SUMMARY') continue;
+        out.push(n);
+      }
+      return out;
+    }
 
     function close() {
       overlay.remove();
       document.removeEventListener('keydown', onKey);
+      if (prevFocus && document.body.contains(prevFocus) && typeof prevFocus.focus === 'function') {
+        try { prevFocus.focus(); } catch (_) { /* ignore */ }
+      }
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    function onKey(e) {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      var focusable = getFocusable();
+      if (!focusable.length) { e.preventDefault(); modal.focus(); return; }
+      var first = focusable[0], last = focusable[focusable.length - 1];
+      var active = document.activeElement;
+      if (e.shiftKey && (active === first || active === modal || !modal.contains(active))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault(); first.focus();
+      }
+    }
+
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
     closeBtn.addEventListener('click', close);
     document.addEventListener('keydown', onKey);
@@ -738,6 +780,10 @@
       if (!window.UMLFolderTreeDiagram) { setTimeout(tryRender, 30); return; }
       if (spec.steps) makeMultiCard(cardHost, spec);
       else makeCard(cardHost, spec);
+      setTimeout(function () {
+        var btn = cardHost.querySelector('.fs-command-lab__btn');
+        if (btn) btn.focus(); else closeBtn.focus();
+      }, 0);
     }
     tryRender();
 

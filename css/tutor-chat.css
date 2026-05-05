@@ -193,9 +193,20 @@ html:not(.dark-mode) .tvm-tutor-msg.assistant pre { background: rgba(0,0,0,0.05)
   color: #d0d0e0;
   font-size: 0.88em;
   font-family: inherit;
-  outline: none;
 }
-.tvm-tutor-input:focus { border-color: #5080a0; }
+/* Replace the suppressed default outline with a visible focus ring
+   (WCAG 2.4.7 Focus Visible). Border-color shift alone is too subtle
+   on the dark chat background to satisfy "visible focus indicator"; the
+   box-shadow gives a 2px ring at the brand-blue color used elsewhere. */
+.tvm-tutor-input:focus {
+  outline: none;
+  border-color: #5080a0;
+  box-shadow: 0 0 0 2px rgba(80, 128, 160, 0.5);
+}
+.tvm-tutor-input:focus-visible {
+  outline: 2px solid #5080a0;
+  outline-offset: 1px;
+}
 .tvm-tutor-input:disabled { opacity: 0.5; }
 .tvm-tutor-send {
   background: #2774AE;

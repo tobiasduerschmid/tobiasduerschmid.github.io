@@ -41,6 +41,13 @@
     wordWrap: 'on',
     padding: { top: 8 },
     glyphMargin: true,
+    // Accessibility — see js/tutorial-code.js _monacoEditorOptions for the
+    // rationale. Without `ariaLabel`, NVDA / VoiceOver announce Monaco's
+    // hidden textarea as "edit"; the popout-specific suffix is added by
+    // each call site so the editor's pane / filename is part of the name.
+    ariaLabel: 'Code editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
+    accessibilitySupport: 'auto',
+    accessibilityPageSize: 25,
   };
 
   function languageForFile(fn, requested) {
@@ -145,7 +152,11 @@
         var lang = languageForFile(filename, language);
         var dark = document.documentElement.classList.contains('dark-mode');
         monacoModel = monaco.editor.createModel(content || '', lang);
-        var options = Object.assign({}, DEFAULT_OPTIONS, { model: monacoModel, theme: pickTheme(dark) });
+        var options = Object.assign({}, DEFAULT_OPTIONS, {
+          model: monacoModel,
+          theme: pickTheme(dark),
+          ariaLabel: filename + ', ' + (lang || 'code') + ' editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
+        });
         editor = monaco.editor.create(els.editor, options);
         wireFileEditing();
         wireRefactorings();

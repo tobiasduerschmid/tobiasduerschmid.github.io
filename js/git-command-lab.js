@@ -121,6 +121,13 @@
   function makeCard(container, spec) {
     container.innerHTML = '';
     container.classList.add('git-command-lab');
+    // Card is a labeled group, not an image. role="group" lets AT users
+    // navigate it as a unit while keeping its descendants (button,
+    // status, details) accessible — which is what we want, since the
+    // SVG graph is purely visual and the canonical text alternative
+    // lives in the sr-only status + details below.
+    container.setAttribute('role', 'group');
+    container.setAttribute('aria-label', 'Git command demo: ' + spec.command);
 
     // Two-column layout: caption (description + optional rebase-file) on the
     // left, action column (button + graph) on the right. The button lives
@@ -189,19 +196,19 @@
     var graphHost = document.createElement('div');
     graphHost.className = 'git-command-lab__graph';
     graphHost.setAttribute('data-state-label', 'Before');
-    // Opt this graph into GitGraph's live-a11y mode (see _liveA11y in
-    // js/git-graph.js): every render now updates a polite aria-live status
-    // region with a delta announcement ("commit X added", "HEAD moved to
-    // Y", "branch Z deleted", etc.) instead of leaving us with the bundle's
-    // bare "Git commit graph" aria-label.
+    // GitGraph's live-a11y mode (see _liveA11y in js/git-graph.js) computes
+    // a structural diff between consecutive states and announces it on a
+    // polite sr-only live region inside the host ("commit X added", "HEAD
+    // moved to Y", "branch Z deleted"). We keep that on — it's a much
+    // better delta narration than anything we'd hand-write on click.
     graphHost.setAttribute('data-git-graph-live', 'true');
-    graphHost.setAttribute('data-git-graph-label',
-      'Git command animation for `' + spec.command + '`');
+    graphHost.setAttribute('data-git-graph-label', 'Git command animation: ' + spec.command);
     graphs.appendChild(graphHost);
 
     var afterHost = document.createElement('div');
     afterHost.className = 'git-command-lab__graph-after';
     afterHost.setAttribute('data-state-label', 'After');
+    afterHost.setAttribute('aria-hidden', 'true');
     var afterState = buildState(spec.after);
     afterHost.innerHTML = GitGraph.renderWorkbench(afterState) + GitGraph.renderToSVG(afterState);
     graphs.appendChild(afterHost);
@@ -216,56 +223,54 @@
     // never grows the workbench's min-height pin (a new zone acquiring
     // rows). See GitGraph.prototype.reserveForStates.
     graph.reserveForStates([beforeData, afterData]);
-    // Wrap render() so the host's aria-label always reflects the
-    // currently-rendered state. Belt-and-suspenders: GitGraph's own live
-    // a11y mode (enabled by data-git-graph-live above) already wires up a
-    // polite live region with delta announcements, but the host's own
-    // aria-label is what most accessibility tools read first. We
-    // re-derive it from the *exact* data passed to render(), and also
-    // assert it on the SVG and the rendered title element so any
-    // subsequent _applyAccessibility call inside the bundle can't put us
-    // back into a stale state.
-    function refreshGraphAria(data) {
-      try {
-        if (typeof GitGraph.describeData !== 'function' || !data) return;
-        var a11y = GitGraph.describeData(data) || {};
-        var label = a11y.description || a11y.label;
-        if (!label) return;
-        graphHost.setAttribute('role', 'img');
-        graphHost.setAttribute('aria-label', label);
-        var svg = graphHost.querySelector('svg');
-        if (svg) {
-          svg.setAttribute('aria-label', label);
-          svg.removeAttribute('aria-hidden');
-          var titleEl = svg.querySelector(':scope > title');
-          if (titleEl) titleEl.textContent = label;
-        }
-      } catch (_) { /* leave the bundle's label */ }
-    }
-    var origRender = graph.render.bind(graph);
-    graph.render = function (data) {
-      var result = origRender(data);
-      refreshGraphAria(data);
-      return result;
-    };
     graph.render(beforeData);
 
-    // Polite aria-live region scoped to this card. GitGraph's own live
-    // region (enabled by data-git-graph-live above) announces graph deltas
-    // ("commit X added", "HEAD moved", ...); this announcer adds the user
-    // intent — which command was applied or reverted — so a screen-reader
-    // user can tell a button press apart from background updates.
-    var announcer = document.createElement('div');
-    announcer.className = 'sr-only git-command-lab__announcer';
-    announcer.setAttribute('role', 'status');
-    announcer.setAttribute('aria-live', 'polite');
-    announcer.setAttribute('aria-atomic', 'true');
-    container.appendChild(announcer);
+    // Sighted-affordance details element. GitGraph's _liveA11y mode
+    // (enabled via data-git-graph-live above) already maintains an
+    // sr-only status region inside graphHost that announces deltas
+    // ("commit X added", "HEAD moved to Y") on every render — that's
+    // the canonical AT channel and a much better delta narrator than
+    // anything we'd hand-write here. This <details> element duplicates
+    // the verbose breakdown *visibly* so a low-vision-but-not-AT user
+    // (or anyone curious) can drill in by clicking the disclosure. We
+    // intentionally do NOT wire another aria-live region: stacking
+    // polite announcements on top of GitGraph's would cross-talk.
+    var detailsEl = document.createElement('details');
+    detailsEl.className = 'git-command-lab__details';
+    var detailsSummary = document.createElement('summary');
+    detailsSummary.textContent = 'Full graph details (text)';
+    detailsEl.appendChild(detailsSummary);
+    var detailsBody = document.createElement('div');
+    detailsBody.className = 'git-command-lab__details-body';
+    detailsEl.appendChild(detailsBody);
+    container.appendChild(detailsEl);
+
+    function refreshDetails(data) {
+      var a11y = (typeof GitGraph.describeData === 'function')
+        ? (GitGraph.describeData(data) || {}) : {};
+      // Include every text-alternative GitGraph builds for the current
+      // state so the visible <details> element is a complete mirror of
+      // what _liveA11y mode writes to its sr-only summary / details /
+      // status nodes inside graphHost. Order: short overview at the top
+      // (so a low-vision user reading top-to-bottom sees the headline
+      // first), then the long structural breakdown. Empty fields are
+      // omitted to avoid rendering blank lines.
+      var lines = [];
+      if (a11y.overview)    lines.push(a11y.overview);
+      if (a11y.description && a11y.description !== a11y.overview) {
+        lines.push(a11y.description);
+      }
+      if (a11y.details) lines.push(a11y.details);
+      detailsBody.textContent = lines.join('\n\n');
+    }
+    refreshDetails(beforeData);
 
     var applied = false;
-    function update(announce) {
+    function update() {
+      var stateData;
       if (applied) {
-        graph.render(buildState(spec.after));
+        stateData = buildState(spec.after);
+        graph.render(stateData);
         // When a spec declares `undoCommand`, show that as the button label
         // (an actual git command that reverses the demo — e.g. `git restore
         // --staged foo` for `git add foo`). Without it, fall back to the
@@ -279,24 +284,20 @@
         }
         btn.classList.add('git-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'true');
-        if (announce) announcer.textContent = 'Applied: ' + spec.command + '.';
       } else {
-        graph.render(buildState(spec.before));
+        stateData = buildState(spec.before);
+        graph.render(stateData);
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('git-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'false');
-        if (announce) {
-          announcer.textContent = (spec.undoCommand
-            ? 'Reverted with ' + spec.undoCommand
-            : 'Reverted: ' + spec.command) + '. Back to before state.';
-        }
       }
+      refreshDetails(stateData);
     }
 
     btn.addEventListener('click', function () {
       applied = !applied;
-      update(true);
+      update();
     });
 
     var controller = {
@@ -354,8 +355,17 @@
     overlay.id = 'git-command-lab-modal';
     overlay.className = 'git-command-lab-modal-overlay';
 
+    // Modal needs role="dialog" + aria-modal="true" so screen readers
+    // announce it as a dialog and (in some browsers) restrict virtual-
+    // cursor navigation to its descendants. The accessible name comes
+    // from the rendered card's title via aria-labelledby once the card
+    // is mounted; until then the close button's label suffices.
     var modal = document.createElement('div');
     modal.className = 'git-command-lab-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Git command demo: ' + (spec && spec.command || ''));
+    modal.setAttribute('tabindex', '-1');
 
     var closeBtn = document.createElement('button');
     closeBtn.type = 'button';
@@ -367,13 +377,50 @@
     var cardHost = document.createElement('div');
     modal.appendChild(cardHost);
     overlay.appendChild(modal);
+
+    // Save the previously-focused element so we can restore on close
+    // (WCAG 2.4.3 Focus Order). Without this, AT users tab into the
+    // void after closing.
+    var prevFocus = (document.activeElement instanceof HTMLElement) ? document.activeElement : null;
     document.body.appendChild(overlay);
+
+    var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), details > summary';
+    function getFocusable() {
+      var nodes = modal.querySelectorAll(FOCUSABLE);
+      var out = [];
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        if (n.getAttribute('aria-hidden') === 'true') continue;
+        if (n.offsetParent === null && n.tagName !== 'SUMMARY') continue;
+        out.push(n);
+      }
+      return out;
+    }
 
     function close() {
       overlay.remove();
       document.removeEventListener('keydown', onKey);
+      if (prevFocus && document.body.contains(prevFocus) && typeof prevFocus.focus === 'function') {
+        try { prevFocus.focus(); } catch (_) { /* ignore */ }
+      }
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    // Keyboard handlers: Escape closes (WCAG 2.1.2 — provides a way out
+    // of the trap), Tab / Shift+Tab wraps focus inside the modal.
+    function onKey(e) {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      var focusable = getFocusable();
+      if (!focusable.length) { e.preventDefault(); modal.focus(); return; }
+      var first = focusable[0], last = focusable[focusable.length - 1];
+      var active = document.activeElement;
+      if (e.shiftKey && (active === first || active === modal || !modal.contains(active))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault(); first.focus();
+      }
+    }
+
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
     closeBtn.addEventListener('click', close);
     document.addEventListener('keydown', onKey);
@@ -381,6 +428,13 @@
     function tryRender() {
       if (!window.GitGraph) { setTimeout(tryRender, 30); return; }
       makeCard(cardHost, spec);
+      // Move focus into the modal once content is rendered. The lab
+      // card's primary control is the command button; focus it so the
+      // user can press Space/Enter immediately.
+      setTimeout(function () {
+        var btn = cardHost.querySelector('.git-command-lab__btn');
+        if (btn) btn.focus(); else closeBtn.focus();
+      }, 0);
     }
     tryRender();
 
