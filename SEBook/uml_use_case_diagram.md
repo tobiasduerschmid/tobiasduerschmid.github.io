@@ -60,7 +60,7 @@ An **association** is a line drawn from an actor to a use case, indicating that 
 
 Here is a use case diagram for an automatic train system (an unmanned people-mover like those found in airports):
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of an automatic Train System — a Passenger actor associates with the Ride use case; a Technician actor associates with the Repair use case." data-uml-spec='@startuml
 actor Passenger
 actor Technician
 usecase "Ride" as UC1
@@ -120,7 +120,7 @@ Use cases rarely exist in isolation. UML defines three types of relationships be
 
 A use case can **include** the behavior of another use case. This means the included behavior **always** occurs as part of the including use case. Think of it as mandatory sub-behavior that has been factored out because multiple use cases share it.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram showing the include relationship — both Purchase Item and Track Packages always <<include>> Login, factoring out shared mandatory behavior." data-uml-spec='@startuml
 actor Customer
 usecase "Purchase Item" as UC1
 usecase "Track Packages" as UC2
@@ -146,7 +146,7 @@ A use case extension encapsulates a **distinct flow of events** that is **not** 
 
 **Extension points (optional).** A base use case can declare specific named *points* inside its flow where extensions may plug in — the `<<extend>>` relationship can name which point it attaches to, and an optional `{condition}` note on a dashed comment line states when the extension fires. Ambler (G83) advises skipping extension points on diagrams unless the flow is genuinely ambiguous — the detail usually fits better inside the textual use case description than on the picture.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram showing the extend relationship — Log Debug Info <<extends>> Purchase Item, optionally adding behavior that is not part of the normal flow." data-uml-spec='@startuml
 actor Customer
 usecase "Purchase Item" as UC1
 usecase "Log Debug Info" as UC2
@@ -166,7 +166,7 @@ Reading this diagram: When a customer purchases an item, debug info **can** (opt
 
 Just like class generalization, a **specialized use case** can replace or enhance the behavior of a generalized use case. Generalization uses a **solid line with a hollow triangle arrowhead** pointing to the generalized (parent) use case.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram showing use case generalization — Synchronize Wirelessly and Synchronize Serially are both specialisations of the general Synchronize Data use case." data-uml-spec='@startuml
 usecase "Synchronize Data" as UC1
 usecase "Synchronize Wirelessly" as UC2
 usecase "Synchronize Serially" as UC3
@@ -207,7 +207,7 @@ Students often confuse `<<include>>` and `<<extend>>`. Here is a direct comparis
 
 Let's read a complete use case diagram that combines all the elements we have learned.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of My Library — a Customer actor performs Loan Book and Borrow Book; both <<include>> Check Identity to factor out the shared mandatory step." data-uml-spec='@startuml
 actor Customer
 usecase "Loan Book" as UC1
 usecase "Borrow Book" as UC2
@@ -244,7 +244,7 @@ These three examples show use case diagrams applied to modern platforms. Pay clo
 
 **Scenario:** A shared codebase has three types of actors: contributors who submit code, maintainers who review and merge, and an automated CI bot. CI checks are mandatory before merging — this is an `<<include>>`, not an `<<extend>>`.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of a GitHub Repository — a Contributor creates pull requests, a Maintainer reviews and merges them, and an automated CI Bot actor runs CI Checks; merging always <<include>>s Run CI Checks." data-uml-spec='@startuml
 actor Contributor
 actor Maintainer
 actor "CI Bot" as CI
@@ -282,7 +282,7 @@ UC3 ..> UC4 : <<include>>
 
 **Scenario:** Guests search and book; hosts list properties; payment is handled by an external service. Leaving a review is optional behavior that extends the booking flow — making this an `<<extend>>`.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of the Airbnb Platform — Guest searches and books, Host lists property, and an external Payment Service actor processes payment; Book Accommodation <<include>>s Process Payment, while Leave Review <<extend>>s Book Accommodation." data-uml-spec='@startuml
 actor Guest
 actor Host
 actor "Payment Service" as PS
@@ -320,7 +320,7 @@ UC4 ..> UC2 : <<extend>>
 
 **Scenario:** Students submit assignments and view grades; instructors grade and post announcements. Both roles require authentication for sensitive operations. Email notifications are optional — they extend the announcement flow.
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of a Learning Management System — Students submit assignments and view grades, Instructors grade submissions and post announcements; Submit Assignment and Grade Submission <<include>> Authenticate, while Send Email Notification <<extend>>s Post Announcement." data-uml-spec='@startuml
 actor Student
 actor Instructor
 usecase "Submit Assignment" as UC1

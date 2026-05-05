@@ -43,7 +43,7 @@ Messages are the communications between lifelines. They are drawn as horizontal 
 
 Let's look at the sequence of a user inserting a card into an ATM.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of a simple ATM card-insert flow — Customer inserts a card into the ATM, which verifies it with the Bank Server before prompting for a PIN." data-uml-spec='@startuml
 actor customer: Customer
 participant atm: ATM
 participant bank: Bank Server
@@ -76,7 +76,7 @@ Now that you understand the basic elements, let's add two important details that
 
 An **activation bar** (also called an execution specification) is a thin rectangle drawn on a lifeline. It represents the period during which a participant is **actively performing an action or behavior**---for example, executing a method. Activation bars can be nested across software lifelines and within a single lifeline (e.g., when an object calls one of its own methods). Human actors are usually shown as initiators or recipients, not as executing software behavior, so they normally do not need activation bars.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing nested activation bars — a Passenger requests a stop on the Station, which schedules and opens/closes the Train's doors; activation bars highlight when each participant is actively executing." data-uml-spec='@startuml
 actor passenger: Passenger
 participant station: Station
 participant train: Train
@@ -145,7 +145,7 @@ The `opt` fragment is equivalent to an `if` statement without an `else`. The mes
 
 **Scenario:** A customer is buying an item. *If* they have a loyalty account, they receive a discount.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing an opt fragment — Checkout always asks the Pricing Engine for the subtotal, but only requests applyDiscount() when the guard `[hasLoyaltyAccount == true]` is satisfied." data-uml-spec='@startuml
 participant checkout: Checkout System
 participant pricing: Pricing Engine
 checkout -> pricing: calculateTotal()
@@ -168,7 +168,7 @@ The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box 
 
 **Scenario:** Verifying a user's password.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing an alt fragment — depending on whether the password guard is correct, System and Database exchange a loginSuccess() or loginFailed() return message." data-uml-spec='@startuml
 participant system: System
 participant db: Database
 alt [password is correct]
@@ -190,7 +190,7 @@ The `loop` fragment represents a `for` or `while` loop. The messages inside the 
 
 **Scenario:** Pinging a server until it wakes up (maximum 3 times).
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing a loop fragment — the App pings the Server up to three times and waits for an ack(), modeling a bounded retry loop." data-uml-spec='@startuml
 participant app: App
 participant server: Server
 loop [up to 3 times]
@@ -215,7 +215,7 @@ To truly understand how these elements work, we must view them interacting in a 
 4.  *If* a window is open (ALT), it warns the user. *Else*, it locks it.
 5.  *Optionally* (OPT), if the user has SMS alerts on, it texts them.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of a Smart Home Alarm — armSystem() triggers a loop over each window with a nested alt (warn vs. lock) and an outer opt that sends an SMS only when smsEnabled is true." data-uml-spec='@startuml
 actor user: User
 participant hub: Alarm Hub
 participant sensors: Window Sensors
@@ -372,7 +372,7 @@ class Register {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing a `<<create>>` message — Register calls Sale.makePayment(), which constructs a new Payment lifeline (appearing mid-diagram) and then calls authorize() on it." data-uml-spec='@startuml
 participant register: Register
 participant sale: Sale
 participant payment: Payment
@@ -599,7 +599,7 @@ class A {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing a code-to-diagram mapping — A.makeNewSale() then a loop fragment of enterItem(itemID, quantity) calls returning description and total, finishing with endSale(); the `for` loop in code maps directly to the `loop` fragment." data-uml-spec='@startuml
 participant a: A
 participant b: B
 a -> b: makeNewSale()
@@ -622,7 +622,7 @@ The `for` loop in code maps directly to a `loop` fragment. The guard condition `
 
 Given this sequence diagram:
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing alt-fragment dispatch — A.doX(x) calls B.calculate() when `[x < 10]` and C.calculate() otherwise, mapping directly to a single if/else in code." data-uml-spec='@startuml
 participant a: A
 participant b: B
 participant c: C
@@ -781,7 +781,7 @@ class A {
 > <details>
 > <summary><i>Reveal Answer</i></summary>
 >
-> <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+> <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing the OrderProcessor solution — OrderProcessor checks Inventory.checkStock(); on inStock the alt branch reserves and confirms; otherwise it rejects the Order with &quot;Out of stock&quot;." data-uml-spec='@startuml
 > participant proc: OrderProcessor
 > participant inv: Inventory
 > participant order: Order
@@ -816,7 +816,7 @@ These examples show sequence diagrams for real systems. For each diagram, trace 
 
 **Scenario:** When you click "Sign in with Google", three systems exchange a precise sequence of messages. This diagram shows that flow — it illustrates how return messages carry data back and why the *ordering* of messages matters.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of a Google Sign-In OAuth2 flow — the Browser, AppBackend, and GoogleOAuth exchange redirects, the auth form, an authCode, an access token, and finally a session cookie." data-uml-spec='@startuml
 participant B: Browser
 participant A: AppBackend
 participant G: GoogleOAuth
@@ -855,7 +855,7 @@ deactivate A
 
 **Scenario:** When a user submits an order, the app charges their card and notifies the restaurant. But what if the payment fails? This diagram uses an `alt` fragment to model both the success and failure paths explicitly.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of a DoorDash food order — MobileApp submits an order to OrderService, which charges the PaymentGateway exactly once and then alts between notifying the Restaurant on approval and returning an error on decline." data-uml-spec='@startuml
 participant app: MobileApp
 participant os: OrderService
 participant pg: PaymentGateway
@@ -892,7 +892,7 @@ deactivate os
 
 **Scenario:** A developer pushes code, GitHub triggers a build, tests run, and deployment happens only if tests pass. This diagram uses `opt` for conditional deployment and a self-call for internal processing.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of a GitHub Actions CI/CD trigger — a Developer pushes; GitHub triggers BuildService which runs its own tests via a self-call; an opt fragment deploys to staging only if `[all tests passed]`, then GitHub always notifies the Developer." data-uml-spec='@startuml
 actor dev: Developer
 participant gh: GitHub
 participant build: BuildService
@@ -929,7 +929,7 @@ deactivate gh
 
 **Scenario:** When a rider requests a trip, the matching service offers the ride to drivers until one accepts. This diagram shows a `loop` fragment combined with an `alt` inside — the most powerful combination in sequence diagrams.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of Uber driver matching — RiderApp asks MatchingService for a ride; the service loops offerRide() until a DriverApp accepts; then NotificationService sends driverAssigned to the rider." data-uml-spec='@startuml
 participant rider: RiderApp
 participant match: MatchingService
 participant driver: DriverApp
@@ -962,7 +962,7 @@ deactivate match
 
 **Scenario:** When you send a Slack message, it is persisted, then broadcast to all subscribers of that channel. This diagram shows the fan-out delivery pattern using a `loop` fragment.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram of Slack message fan-out — sender SlackClient sends through a WebSocketGateway, which persists the message via MessageService, then broadcasts via NotificationService that loops async deliveries to each subscribed SlackClient before acking the sender." data-uml-spec='@startuml
 participant sender: SlackClient
 participant ws: WebSocketGateway
 participant msg: MessageService

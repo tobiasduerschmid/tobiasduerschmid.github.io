@@ -29,7 +29,7 @@ In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` tha
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Adapter pattern roles — a Client uses the Target interface; an Adapter realizes Target by translating each request() into a call on the wrapped Adaptee's specificRequest()." data-uml-spec='@startuml
 layout landscape
 class Client
 interface Target {
@@ -49,7 +49,7 @@ Adapter --> Adaptee : translates to
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Adapter example — a DuckSimulator expects the Duck interface; a TurkeyAdapter wraps a WildTurkey so it can be used wherever a Duck is required." data-uml-spec='@startuml
 layout landscape
 class DuckSimulator
 interface Duck {
@@ -77,7 +77,7 @@ TurkeyAdapter --> Turkey : wraps
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how quack() on the TurkeyAdapter translates to a single gobble() on the wrapped WildTurkey, and how fly() translates into a loop of five short turkey-flight bursts." data-uml-spec='@startuml
 participant simulator: DuckSimulator
 participant adapter: TurkeyAdapter
 participant turkey: WildTurkey

@@ -8,7 +8,7 @@ For decades, software development was dominated by the Waterfall model, a sequen
 
 In Waterfall, feedback from the customer only appears at the very end — after months or years of work:
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of the Waterfall lifecycle — Requirements → Design → Implementation → Testing → Maintenance, with a note marking Testing as the first time the customer sees working software." data-uml-spec='@startuml
 [*] --> Requirements
 Requirements --> Design : sign-off
 Design --> Implementation : sign-off

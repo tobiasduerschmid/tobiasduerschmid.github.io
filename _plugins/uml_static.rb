@@ -56,7 +56,7 @@ module Jekyll
         FALLBACK_CAPTIONS[normalize_type(type)] || 'ArchUML diagram'
       end
 
-      def extract_caption(type, text)
+      def extract_caption(type, text, attr_caption = nil)
         lines = text.to_s.split("\n", -1)
         caption = nil
         explicit = false
@@ -72,6 +72,14 @@ module Jekyll
             explicit = true
           end
           break
+        end
+
+        # `data-uml-caption` attribute on the wrapper div takes precedence over a
+        # `caption:` line inside the spec. Authors can keep the spec free of
+        # caption clutter and instead set the caption next to the diagram type.
+        if attr_caption && !attr_caption.strip.empty?
+          caption = attr_caption.strip
+          explicit = true
         end
 
         {
@@ -98,7 +106,12 @@ module Jekyll
         # Using a more flexible regex for attributes
         content.scan(%r{<div[^>]*data-uml-type=(["'])(.*?)\1[^>]*data-uml-spec=(["'])([\s\S]*?)\3[^>]*>[\s\S]*?</div>}m) do |q1, type, q2, spec|
           raw_text = CGI.unescapeHTML(spec.strip)
-          caption_info = extract_caption(type, raw_text)
+          # Pull an optional `data-uml-caption="..."` attribute off the wrapper
+          # div so authors can set the figure caption alongside the diagram type
+          # rather than inside the spec body.
+          attr_match = $&.match(/data-uml-caption=(["'])([\s\S]*?)\1/)
+          attr_caption = attr_match ? CGI.unescapeHTML(attr_match[2]) : nil
+          caption_info = extract_caption(type, raw_text, attr_caption)
           blocks << { type: type, text: caption_info[:text], caption: caption_info[:caption], explicit_caption: caption_info[:explicit], original: $& }
         end
 

@@ -55,7 +55,7 @@ The key insight is **composition over inheritance**: instead of locking each var
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Strategy pattern roles — a Context aggregates a Strategy interface and forwards work to interchangeable ConcreteStrategy implementations." data-uml-spec='@startuml
 layout horizontal
 class Context {
 	- strategy: Strategy
@@ -91,7 +91,7 @@ end note
 
 The classic SimUDuck example {% cite FreemanRobson2020 %} extracts the *fly* and *quack* behaviors out of the `Duck` hierarchy. Each duck *has-a* `FlyBehavior` and a `QuackBehavior`; the concrete strategy classes implement each variation. A `MallardDuck` flies with wings and quacks normally; a `RubberDuck` cannot fly (uses a null-object fly behavior) and squeaks instead. (The book itself names the no-op fly strategy `FlyNoWay`; we use `FlyNullObject` here to make its design role as a [Null Object](/SEBook/designpatterns/state.html#how-to-represent-a-state-in-which-the-object-is-never-doing-anything-either-at-initialization-time-or-as-a-final-state) explicit.)
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Strategy example — the SimUDuck design extracts FlyBehavior and QuackBehavior into Strategy hierarchies that Duck delegates to." data-uml-spec='@startuml
 layout landscape
 abstract class Duck {
 	- flyBehavior: FlyBehavior
@@ -133,7 +133,7 @@ end note
 
 This sequence shows runtime reconfiguration: a `ModelDuck` starts with a no-op fly behavior, the client swaps in a rocket-powered strategy via `setFlyBehavior`, and the next `performFly()` call now does something completely different — without changing the Duck class.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing runtime swapping of a Duck's FlyBehavior — the same performFly() call delegates first to FlyNullObject, then (after setFlyBehavior(rocket)) to FlyRocketPowered." data-uml-spec='@startuml
 participant client: Client
 participant duck: ModelDuck
 participant nullFly: FlyNullObject

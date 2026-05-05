@@ -30,7 +30,7 @@ The **Composite Pattern** introduces a common `Component` abstraction shared by 
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Composite pattern roles — a Client treats Component uniformly; Leaf and Composite both realize it; a Composite owns a list of child Components, enabling recursive trees." data-uml-spec='@startuml
 layout landscape
 abstract class Component {
 	+ operation(): void
@@ -57,7 +57,7 @@ Client --> Component : treats uniformly >
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Composite example — a Waitress traverses MenuComponents through the abstract print() operation; Menu (composite) holds a list of MenuComponent children; MenuItem (leaf) is at the bottom." data-uml-spec='@startuml
 layout landscape
 abstract class MenuComponent {
 	+ print(): void
@@ -82,7 +82,7 @@ Waitress --> MenuComponent : traverses
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how print() on the outer Menu recursively delegates to a nested dessert Menu and finally to a MenuItem leaf — the same print() call works at every level of the tree." data-uml-spec='@startuml
 actor waitress: Waitress
 participant allMenus: Menu
 participant dessertMenu: Menu

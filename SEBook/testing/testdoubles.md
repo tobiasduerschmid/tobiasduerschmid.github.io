@@ -10,7 +10,7 @@ A **test double** is any object that stands in for a real dependency during a te
 
 Gerard Meszaros's canonical taxonomy in *xUnit Test Patterns* (2007) {% cite meszaros2007xunit %} identifies five kinds of test double — *Dummy*, *Fake*, *Stub*, *Spy*, and *Mock*. The three this chapter focuses on (Stub, Spy, Mock) are the ones with the most subtle distinctions; *Dummies* (objects passed but never used — e.g. a parameter required by a signature you don't care about) and *Fakes* (working implementations with shortcuts unsuitable for production — e.g. an in-memory database) are simpler and worth knowing exist. The three core kinds differ along two axes: *which direction of data flow they control* (indirect input vs. indirect output) and *when verification happens* (after the fact vs. during execution).
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of the Test Double taxonomy — an abstract TestDouble has TestStub (controls indirect inputs), TestSpy (records indirect outputs), and MockObject (expects indirect outputs and verifies during execution) as subclasses." data-uml-spec='@startuml
 class TestDouble <<abstract>> {
   replaces a real dependency
 }

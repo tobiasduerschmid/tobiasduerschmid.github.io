@@ -23,7 +23,7 @@ The pattern involves four main participants:
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Builder pattern roles — a Director drives an abstract Builder through a fixed step sequence; a ConcreteBuilder accumulates the parts and produces the final Product." data-uml-spec='@startuml
 interface Builder {
     + BuildPartA()
     + BuildPartB()
@@ -46,7 +46,7 @@ ConcreteBuilder --> Product : creates
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Builder example — a Director drives an AbstractBuilder through build_day/add_hotel/add_tickets steps; PatternslandBuilder assembles those steps into a VacationPlanner product." data-uml-spec='@startuml
 interface AbstractBuilder {
     + build_day(date: str)
     + add_hotel(date: str, hotel_name: str)

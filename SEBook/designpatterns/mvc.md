@@ -33,7 +33,7 @@ To maintain consistency without introducing tight coupling, MVC relies heavily o
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the MVC roles — a Model notifies many Observer views; a View reads from the Model and delegates user input to a Controller; the Controller updates the Model." data-uml-spec='@startuml
 layout landscape
 class Model
 interface Observer {
@@ -55,7 +55,7 @@ Controller --> Model : updates
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete MVC example — a TaskController updates a TaskModel; the TaskView observes the Model and renders the task list; the View forwards user commands to the Controller." data-uml-spec='@startuml
 layout landscape
 class TaskModel {
     + addTask(task: String): void
@@ -80,7 +80,7 @@ TaskView --> TaskController : delegates commands
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how a user command flows from the TaskController to the TaskModel, which then notifies the TaskView via Observer-style update() so the view re-reads tasks and re-renders." data-uml-spec='@startuml
 actor user: User
 participant controller: TaskController
 participant model: TaskModel
