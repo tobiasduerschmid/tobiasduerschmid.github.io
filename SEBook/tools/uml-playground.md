@@ -665,6 +665,122 @@ html.dark-mode .uml-pg-splitter:focus-visible {
   stroke-dasharray: 5 4;
   vector-effect: non-scaling-stroke;
   cursor: move;
+  transition: fill 0.12s ease-out, stroke 0.12s ease-out, stroke-width 0.12s ease-out;
+}
+
+.uml-pg-edit-hitbox:hover {
+  fill: rgba(39, 116, 174, 0.10);
+  stroke: rgba(39, 116, 174, 0.95);
+}
+
+/* Smart-guide alignment lines shown while dragging — drawn in the edit layer
+   when the dragged element aligns with another's centre or edge. */
+.uml-pg-guide-line {
+  stroke: #ff6f00;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+html.dark-mode .uml-pg-guide-line {
+  stroke: #ffd34d;
+}
+
+/* Right-click context menu — uses the existing chooser look so users see one
+   consistent floating-menu pattern across the editor. */
+.uml-pg-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: #fff;
+  border: 1px solid #97afca;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.uml-pg-context-menu button {
+  font: inherit;
+  font-size: 0.92em;
+  padding: 6px 10px;
+  text-align: left;
+  background: #fff;
+  color: #1a3656;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uml-pg-context-menu button:hover,
+.uml-pg-context-menu button:focus-visible {
+  background: #eef4fb;
+  border-color: #2774AE;
+  outline: none;
+}
+
+.uml-pg-context-menu hr {
+  border: none;
+  border-top: 1px solid #d7e0ec;
+  margin: 4px 6px;
+}
+
+.uml-pg-context-menu button.is-danger {
+  color: #842622;
+}
+
+.uml-pg-context-menu button.is-danger:hover,
+.uml-pg-context-menu button.is-danger:focus-visible {
+  background: #fbe9e7;
+  border-color: #842622;
+}
+
+.uml-pg-context-menu .uml-pg-context-key {
+  margin-left: auto;
+  color: #6a7a93;
+  font-size: 0.86em;
+  font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
+}
+
+html.dark-mode .uml-pg-context-menu {
+  background: #18242f;
+  border-color: #5a7392;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+html.dark-mode .uml-pg-context-menu button {
+  background: #243347;
+  color: #e3eef9;
+}
+
+html.dark-mode .uml-pg-context-menu button:hover,
+html.dark-mode .uml-pg-context-menu button:focus-visible {
+  background: #2c3f57;
+  border-color: #7cc4ff;
+}
+
+html.dark-mode .uml-pg-context-menu hr {
+  border-top-color: #3a4a60;
+}
+
+html.dark-mode .uml-pg-context-menu button.is-danger {
+  color: #ffd6d1;
+}
+
+html.dark-mode .uml-pg-context-menu button.is-danger:hover {
+  background: #4a1d20;
+  border-color: #ff8a85;
+}
+
+html.dark-mode .uml-pg-context-menu .uml-pg-context-key {
+  color: #8aa3c2;
 }
 
 .uml-pg-edit-hitbox.is-selected {
@@ -1955,6 +2071,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       for (var k in selectedLayoutIds) delete selectedLayoutIds[k];
     }
     var dragState = null;
+    // Manual double-click tracking — survives the per-render closures of
+    // hitbox handlers because installVisualEditor() rebuilds the rect DOM
+    // on every state change, throwing away any per-rect lastClickAt vars.
+    var lastHitboxClick = { time: 0, itemId: null, x: 0, y: 0 };
 
     function normalizeLineEndings(text) {
       return (text || '').replace(/\r\n?/g, '\n');
@@ -3560,6 +3680,137 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       relationChooser = null;
     }
 
+    // ─── Right-click context menu ───
+    var contextMenu = null;
+    function closeContextMenu() {
+      if (contextMenu && contextMenu.parentNode) contextMenu.parentNode.removeChild(contextMenu);
+      contextMenu = null;
+      document.removeEventListener('pointerdown', dismissContextMenuOnOutside, true);
+      document.removeEventListener('keydown', dismissContextMenuOnEsc, true);
+    }
+    function dismissContextMenuOnOutside(ev) {
+      if (!contextMenu) return closeContextMenu();
+      if (!contextMenu.contains(ev.target)) closeContextMenu();
+    }
+    function dismissContextMenuOnEsc(ev) {
+      if (!contextMenu) return closeContextMenu();
+      if (ev.key === 'Escape') { ev.preventDefault(); closeContextMenu(); }
+      else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        var btns = Array.prototype.slice.call(contextMenu.querySelectorAll('button'));
+        var i = btns.indexOf(document.activeElement);
+        var next = ev.key === 'ArrowDown' ? (i + 1) % btns.length : (i - 1 + btns.length) % btns.length;
+        if (btns[next]) btns[next].focus();
+      }
+    }
+    /**
+     * Show a context menu at (clientX, clientY) with the given items.
+     * @param {number} clientX, clientY
+     * @param {Array<{label, kbd, onClick, danger, separator}>} items
+     */
+    function showContextMenu(clientX, clientY, items) {
+      closeContextMenu();
+      var box = document.createElement('div');
+      box.className = 'uml-pg-context-menu';
+      box.setAttribute('role', 'menu');
+      items.forEach(function (item) {
+        if (item.separator) {
+          box.appendChild(document.createElement('hr'));
+          return;
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('role', 'menuitem');
+        if (item.danger) btn.classList.add('is-danger');
+        btn.appendChild(document.createTextNode(item.label));
+        if (item.kbd) {
+          var kbd = document.createElement('span');
+          kbd.className = 'uml-pg-context-key';
+          kbd.textContent = item.kbd;
+          btn.appendChild(kbd);
+        }
+        btn.addEventListener('click', function () {
+          closeContextMenu();
+          item.onClick();
+        });
+        box.appendChild(btn);
+      });
+      document.body.appendChild(box);
+      var W = window.innerWidth, H = window.innerHeight;
+      var rect = box.getBoundingClientRect();
+      var x = Math.min(Math.max(clientX, 8), W - rect.width - 8);
+      var y = Math.min(Math.max(clientY, 8), H - rect.height - 8);
+      box.style.left = x + 'px';
+      box.style.top = y + 'px';
+      var firstBtn = box.querySelector('button');
+      if (firstBtn) firstBtn.focus();
+      setTimeout(function () {
+        document.addEventListener('pointerdown', dismissContextMenuOnOutside, true);
+        document.addEventListener('keydown', dismissContextMenuOnEsc, true);
+      }, 0);
+      contextMenu = box;
+    }
+
+    function buildElementContextMenu(item, clientX, clientY) {
+      var items = [
+        { label: 'Rename label', kbd: 'F2 / dbl-click', onClick: function () { startInlineRename(item); } },
+        { label: 'Edit properties', kbd: 'click', onClick: function () { setSelectedLayoutId(item.id, 'node'); /* props pane is already shown */ } },
+        { label: 'Duplicate', onClick: function () { duplicateElement(item.id); } },
+        { separator: true },
+        { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(item.id, 'node'); deleteSelected(); } }
+      ];
+      showContextMenu(clientX, clientY, items);
+    }
+
+    function buildRouteContextMenu(routeId, clientX, clientY) {
+      var items = [
+        { label: 'Edit relation', onClick: function () { setSelectedLayoutId(routeId, 'route'); } },
+        { separator: true },
+        { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(routeId, 'route'); deleteSelected(); } }
+      ];
+      showContextMenu(clientX, clientY, items);
+    }
+
+    function buildCanvasContextMenu(clientX, clientY) {
+      var items = [];
+      var els = elementSchemasFor(typeSelect.value).slice(0, 4);
+      els.forEach(function (spec) {
+        items.push({
+          label: 'New ' + spec.label + ' here',
+          onClick: function () {
+            var svg = output.querySelector('svg');
+            var pt = svgPoint(svg, clientX, clientY);
+            placeElementAt(spec, pt);
+          }
+        });
+      });
+      if (items.length) items.push({ separator: true });
+      items.push({ label: 'Select all', kbd: 'Cmd/Ctrl+A', onClick: selectAll });
+      items.push({ label: 'Reset zoom + pan', kbd: 'Cmd/Ctrl+0', onClick: zoomToFit });
+      showContextMenu(clientX, clientY, items);
+    }
+
+    function duplicateElement(id) {
+      snapshotForUndo();
+      var type = typeSelect.value;
+      var line = getDeclarationLine(textarea.value, type, id);
+      if (!line) return;
+      var newId = generateUniqueId(textarea.value, type, id + '_copy');
+      // Rewrite the id token in the line.
+      var idRe = new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+      var newLine = line.replace(idRe, newId);
+      // Offset position +30,+30 if the original had one.
+      var positions = readLayoutPositions(textarea.value);
+      if (positions[id]) positions[newId] = { x: positions[id].x + 30, y: positions[id].y + 30 };
+      var routes = readLayoutRoutes(textarea.value);
+      var clean = stripLayoutMetadata(textarea.value);
+      var lines = clean.split('\n');
+      lines.splice(findInsertPointForDeclaration(lines), 0, newLine);
+      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      renderDiagram();
+      selectAfterRender(newId, 'node');
+    }
+
     /**
      * Floating chooser of element types for the current diagram. Used when a
      * "+" handle drag lands on empty canvas — the user picks an element type
@@ -5107,6 +5358,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               setSelectedLayoutId(null);
             }
           });
+          seg.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            setSelectedLayoutId(route.id, 'route');
+            buildRouteContextMenu(route.id, event.clientX, event.clientY);
+          });
           layer.appendChild(seg);
           handleCount++;
         });
@@ -5138,6 +5395,31 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
       // Restore current pan + zoom on this newly-rendered SVG.
       applyViewTransform(svg);
+
+      // SVG-level contextmenu — show "New element here" / select-all on empty
+      // canvas. Hitbox/route handlers above stopPropagation so this only fires
+      // when the right-click missed every interactive element.
+      svg.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+        buildCanvasContextMenu(event.clientX, event.clientY);
+      });
+
+      // SVG-level dblclick — handles fragment-label editing for sequence diagrams.
+      // Hitbox dblclicks are caught by their own handlers and stop propagation.
+      svg.addEventListener('dblclick', function (ev) {
+        if (typeSelect.value !== 'sequence') return;
+        var t = ev.target;
+        if (!t || t.tagName.toLowerCase() !== 'text') return;
+        if (t.closest('.uml-pg-edit-layer')) return;
+        var content = (t.textContent || '').trim();
+        // Match `alt [condition]`, `opt [...]`, `loop [...]`, `par`, `break [...]`,
+        // and the `else [...]` separator inside alts.
+        var m = content.match(/^(alt|opt|loop|par|break|else)\b(?:\s*\[(.+?)\])?\s*$/i);
+        if (!m) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        startInlineFragmentEdit(t, m[1].toLowerCase(), m[2] || '');
+      });
 
       // Wheel-zoom: Cmd/Ctrl + wheel zooms; pinch-zoom on trackpads also works
       // because it reports as a wheel event with ctrlKey=true.
@@ -5235,14 +5517,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         rect.setAttribute('role', 'button');
         var aria = (item.axis === 'port' ? 'Port ' : item.axis === 'label' || item.axis === 'branch-label' ? 'Label ' : 'Element ');
         rect.setAttribute('aria-label', aria + (item.label || item.id) + ' — Enter to select, arrows to nudge, Delete to remove');
-        rect.addEventListener('dblclick', function (event) {
+        // The pointerdown handler below calls preventDefault() to suppress
+        // text-selection during drag, which per the Pointer Events spec
+        // prevents the browser from firing the compatibility click/dblclick
+        // events. Real user double-clicks therefore never reach this listener
+        // — only synthetic events do. We keep the listener for synthetic /
+        // accessibility paths AND track pointerdown timestamps below to
+        // recognise a real user double-click.
+        function triggerEditOnDoubleClick(clientX, clientY) {
           if (activeTool) return;
-          event.preventDefault();
-          event.stopPropagation();
           // Did the double-click land on a specific class-member text? If so,
           // edit that member inline instead of renaming the whole class.
           if (typeSelect.value === 'class') {
-            var memberText = findClassMemberTextAt(svg, item.id, event.clientX, event.clientY);
+            var memberText = findClassMemberTextAt(svg, item.id, clientX, clientY);
             if (memberText) {
               startInlineMemberEdit(item.id, memberText.index, memberText.textEl);
               return;
@@ -5251,7 +5538,26 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           // Resolve the latest item shape (label may have been edited).
           var live = findEditableElements(svg).find(function (e) { return e.id === item.id; }) || item;
           startInlineRename(live);
+        }
+        rect.addEventListener('dblclick', function (event) {
+          if (activeTool) return;
+          event.preventDefault();
+          event.stopPropagation();
+          triggerEditOnDoubleClick(event.clientX, event.clientY);
         });
+        rect.addEventListener('contextmenu', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          setSelectedLayoutId(item.id, 'node');
+          buildElementContextMenu(item, event.clientX, event.clientY);
+        });
+        // Manual double-click detection (see comment above). preventDefault
+        // on pointerdown suppresses the browser's click/dblclick events for
+        // this hitbox, so we simulate the double-click recognition window
+        // (500 ms, same target, no significant movement between clicks).
+        // State is hoisted to `lastHitboxClick` because the editor re-renders
+        // hitboxes after the first selection — a per-rect closure would be
+        // discarded between the two clicks.
         rect.addEventListener('pointerdown', function (event) {
           // In relation-tool mode, click → record source/target instead of drag.
           if (activeTool && activeTool.kind === 'relation') {
@@ -5267,6 +5573,23 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             event.preventDefault();
             event.stopPropagation();
             announce('Click an empty area to place. Click an existing element to select it instead — switch tools first.', true);
+            return;
+          }
+          // Recognise a real user double-click before falling into the
+          // drag-vs-click pointerdown path. Capture clientX/Y so the member-
+          // text hit test sees the same point the user actually clicked.
+          var now = Date.now();
+          var isDouble = (now - lastHitboxClick.time < 500)
+            && lastHitboxClick.itemId === item.id
+            && Math.abs(lastHitboxClick.x - event.clientX) < 6
+            && Math.abs(lastHitboxClick.y - event.clientY) < 6;
+          lastHitboxClick = { time: now, itemId: item.id, x: event.clientX, y: event.clientY };
+          if (isDouble) {
+            event.preventDefault();
+            event.stopPropagation();
+            // Reset so a third click starts a fresh window.
+            lastHitboxClick = { time: 0, itemId: null, x: 0, y: 0 };
+            triggerEditOnDoubleClick(event.clientX, event.clientY);
             return;
           }
           event.preventDefault();
@@ -5529,6 +5852,160 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var aft = t.match(afterIdRe);
       var trailing = aft && aft[1] ? ' ' + aft[1] : '';
       return keyword + ' ' + quotedLbl + ' as ' + id + trailing;
+    }
+
+    /**
+     * Inline-edit a sequence-diagram fragment label (the `alt [cond]` /
+     * `loop [cond]` / `else [cond]` text on the wrapper).
+     */
+    function startInlineFragmentEdit(textEl, kind, currentCond) {
+      cancelInlineRename();
+      var rect = textEl.getBoundingClientRect();
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'uml-pg-inline-input';
+      input.value = currentCond;
+      input.placeholder = ({
+        alt: 'condition',
+        opt: 'if condition',
+        loop: 'while condition',
+        break: 'if condition',
+        else: 'otherwise',
+        par: ''
+      })[kind] || 'condition';
+      input.setAttribute('aria-label', kind + ' fragment condition');
+      input.style.left = rect.left + 'px';
+      input.style.top = rect.top + 'px';
+      input.style.width = Math.max(rect.width + 80, 160) + 'px';
+      input.style.minHeight = Math.max(rect.height + 4, 24) + 'px';
+      document.body.appendChild(input);
+      input.focus();
+      input.select();
+      inlineRenameInput = input;
+
+      var originalText = textEl.textContent;
+      function preview() {
+        var v = input.value.trim();
+        textEl.textContent = v ? kind + ' [' + v + ']' : kind;
+      }
+      function commit() {
+        var newCond = input.value.trim();
+        cleanup();
+        snapshotForUndo();
+        // Find the matching source line and rewrite it.
+        var clean = stripLayoutMetadata(textarea.value);
+        var lines = clean.split('\n');
+        var pattern = new RegExp('^\\s*' + kind + '\\b(?:\\s*\\[.*?\\])?\\s*$', 'i');
+        // Look for the *closest* matching line by content — start with one that
+        // already has the same condition (preferred).
+        var idx = -1;
+        for (var i = 0; i < lines.length; i++) {
+          if (pattern.test(lines[i].trim()) &&
+              (currentCond ? lines[i].indexOf(currentCond) !== -1 : !/\[/.test(lines[i]))) {
+            idx = i; break;
+          }
+        }
+        if (idx === -1) {
+          // Fall back: any line of this kind.
+          for (var j = 0; j < lines.length; j++) {
+            if (pattern.test(lines[j].trim())) { idx = j; break; }
+          }
+        }
+        if (idx === -1) return;
+        // Preserve original indentation.
+        var indent = (lines[idx].match(/^\s*/) || [''])[0];
+        lines[idx] = indent + (newCond ? kind + ' [' + newCond + ']' : kind);
+        var positions = readLayoutPositions(textarea.value);
+        var routes = readLayoutRoutes(textarea.value);
+        textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+        renderDiagram();
+      }
+      function cancel() {
+        textEl.textContent = originalText;
+        cleanup();
+      }
+      function cleanup() {
+        input.removeEventListener('input', preview);
+        input.removeEventListener('keydown', onKey);
+        input.removeEventListener('blur', commit);
+        if (input.parentNode) input.parentNode.removeChild(input);
+        inlineRenameInput = null;
+      }
+      function onKey(ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+      }
+      input.addEventListener('input', preview);
+      input.addEventListener('keydown', onKey);
+      input.addEventListener('blur', commit);
+    }
+
+    /**
+     * Snap a git-graph branch label / HEAD to the nearest commit.
+     *
+     * @param {string} draggedId   The branch label id, of the form `branch:<name>`
+     *                             (a regular commit id triggers no snapping).
+     * @param {object} positions   Map of id → {x, y} from the drag.
+     * @returns {string|null}      Rewritten source if a snap happened.
+     */
+    function snapBranchLabelToCommit(draggedId, positions) {
+      var match = String(draggedId || '').match(/^branch:(.+)$/);
+      if (!match) return null;
+      var branchName = match[1];
+      var dragPos = positions[draggedId];
+      if (!dragPos) return null;
+
+      // Collect commit ids and their (final-position) coordinates.
+      var commits = [];
+      Object.keys(positions).forEach(function (id) {
+        if (id === draggedId) return;
+        if (/^branch:/.test(id)) return;
+        commits.push({ id: id, pos: positions[id] });
+      });
+      if (!commits.length) return null;
+
+      // Find nearest commit by Euclidean distance.
+      var nearest = null, bestDist = Infinity;
+      commits.forEach(function (c) {
+        var dx = dragPos.x - c.pos.x;
+        var dy = dragPos.y - c.pos.y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < bestDist) { bestDist = d; nearest = c.id; }
+      });
+      if (!nearest) return null;
+
+      // Rewrite the `branch <name>` declaration to `branch <name> from <nearest>:`
+      // (or `branch <name> at <nearest>:` — both forms are valid in ArchUML).
+      var clean = stripLayoutMetadata(textarea.value);
+      var lines = clean.split('\n');
+      var changed = false;
+      for (var i = 0; i < lines.length; i++) {
+        var t = lines[i].trim();
+        // Match `branch <name>...` (with optional ` from <commit>` / ` at <commit>` and trailing colon).
+        var m = t.match(/^branch\s+([^:\s]+)(?:\s+(?:from|at)\s+\S+)?\s*:?\s*$/i);
+        if (m && m[1] === branchName) {
+          lines[i] = 'branch ' + branchName + ' from ' + nearest + ':';
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) {
+        // Maybe it's a `head <branch>` — point HEAD at this commit instead.
+        for (var j = 0; j < lines.length; j++) {
+          var ht = lines[j].trim();
+          if (/^head\s+/i.test(ht)) {
+            lines[j] = 'head ' + nearest;
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (!changed) return null;
+      // Drop any explicit @pos for the branch label so the renderer re-anchors it.
+      var freshPositions = {};
+      Object.keys(positions).forEach(function (k) { if (k !== draggedId) freshPositions[k] = positions[k]; });
+      var routes = readLayoutRoutes(textarea.value);
+      return writePositionsIntoSource(lines.join('\n'), 'gitgraph', freshPositions, routes);
     }
 
     /**
@@ -5800,6 +6277,91 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function cssAttrEscape(s) { return String(s).replace(/(["\\])/g, '\\$1'); }
 
+    /**
+     * Draw alignment-guide lines while dragging — show vertical/horizontal
+     * dashed lines when the dragged element's centre or edge matches another's
+     * within ~4 px. Cleared on each move.
+     */
+    function drawSmartGuides(dragState, visualDx, visualDy) {
+      var svg = dragState.svg;
+      var layer = svg.querySelector('.uml-pg-edit-layer');
+      if (!layer) return;
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-guide-line')).forEach(function (g) { g.remove(); });
+      // Don't bother for ports / labels.
+      if (dragState.item.axis === 'port' || dragState.item.axis === 'label' || dragState.item.axis === 'branch-label') return;
+      var TOL = 4;
+      var movedBox = {
+        x: dragState.box.x + visualDx,
+        y: dragState.box.y + visualDy,
+        width: dragState.box.width,
+        height: dragState.box.height
+      };
+      var movedCx = movedBox.x + movedBox.width / 2;
+      var movedCy = movedBox.y + movedBox.height / 2;
+      var others = [];
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edit-hitbox')).forEach(function (rect) {
+        var id = rect.getAttribute('data-layout-id');
+        if (id === dragState.item.id) return;
+        if (selectedLayoutIds[id] === 'node') return; // skip group-moved siblings
+        var b = {
+          x: parseFloat(rect.getAttribute('x')),
+          y: parseFloat(rect.getAttribute('y')),
+          width: parseFloat(rect.getAttribute('width')),
+          height: parseFloat(rect.getAttribute('height'))
+        };
+        if (isNaN(b.x) || isNaN(b.y) || isNaN(b.width) || isNaN(b.height)) return;
+        others.push(b);
+      });
+      var ns = 'http://www.w3.org/2000/svg';
+      function addLine(x1, y1, x2, y2) {
+        var ln = document.createElementNS(ns, 'line');
+        ln.setAttribute('class', 'uml-pg-guide-line');
+        ln.setAttribute('x1', x1); ln.setAttribute('y1', y1);
+        ln.setAttribute('x2', x2); ln.setAttribute('y2', y2);
+        layer.appendChild(ln);
+      }
+      var svgRect = svg.viewBox.baseVal;
+      var svgW = svgRect && svgRect.width ? svgRect.width : 4000;
+      var svgH = svgRect && svgRect.height ? svgRect.height : 4000;
+      others.forEach(function (b) {
+        var bCx = b.x + b.width / 2;
+        var bCy = b.y + b.height / 2;
+        // Vertical guides (matching X centres / edges).
+        var movedXs = [movedBox.x, movedCx, movedBox.x + movedBox.width];
+        var bXs = [b.x, bCx, b.x + b.width];
+        for (var i = 0; i < movedXs.length; i++) {
+          for (var j = 0; j < bXs.length; j++) {
+            if (Math.abs(movedXs[i] - bXs[j]) <= TOL) {
+              var x = bXs[j];
+              var top = Math.min(movedBox.y, b.y) - 12;
+              var bot = Math.max(movedBox.y + movedBox.height, b.y + b.height) + 12;
+              addLine(x, top, x, bot);
+            }
+          }
+        }
+        // Horizontal guides.
+        var movedYs = [movedBox.y, movedCy, movedBox.y + movedBox.height];
+        var bYs = [b.y, bCy, b.y + b.height];
+        for (var k = 0; k < movedYs.length; k++) {
+          for (var m = 0; m < bYs.length; m++) {
+            if (Math.abs(movedYs[k] - bYs[m]) <= TOL) {
+              var y = bYs[m];
+              var left = Math.min(movedBox.x, b.x) - 12;
+              var right = Math.max(movedBox.x + movedBox.width, b.x + b.width) + 12;
+              addLine(left, y, right, y);
+            }
+          }
+        }
+      });
+    }
+    function clearSmartGuides() {
+      var svg = output.querySelector('svg');
+      if (!svg) return;
+      var layer = svg.querySelector('.uml-pg-edit-layer');
+      if (!layer) return;
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-guide-line')).forEach(function (g) { g.remove(); });
+    }
+
     function updateDrag(event, finish) {
       if (!dragState) return;
       var now = svgPoint(dragState.svg, event.clientX, event.clientY);
@@ -5872,6 +6434,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
       dragState.rect.setAttribute('x', dragState.box.x + visualDx);
       dragState.rect.setAttribute('y', dragState.box.y + visualDy);
+      // Smart guides: when the dragged element's centre / edge lines up with
+      // another's centre / edge within a small tolerance, draw a guide line.
+      drawSmartGuides(dragState, visualDx, visualDy);
       dragState.parts.forEach(function (part) {
         if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
           var cssT = 'translate(' + visualDx + 'px,' + visualDy + 'px)';
@@ -5931,6 +6496,23 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             return;
           }
         }
+        // Git-graph: branch label or HEAD pointer dragged → snap to nearest commit
+        // and rewrite the `branch X from <commit>` / `head X` line.
+        if (typeSelect.value === 'gitgraph' && dragState.item.axis === 'branch-label') {
+          var snapped = snapBranchLabelToCommit(dragState.item.id, dragState.positions);
+          if (snapped) {
+            textarea.value = snapped;
+            dragState.parts.forEach(function (part) {
+              if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
+                if (part.el.style) part.el.style.transform = part.styleTransform;
+              } else if (part.transform) part.el.setAttribute('transform', part.transform);
+              else part.el.removeAttribute('transform');
+            });
+            dragState = null;
+            renderDiagram();
+            return;
+          }
+        }
         textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions);
         dragState.parts.forEach(function (part) {
           if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
@@ -5948,6 +6530,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             });
           });
         }
+        clearSmartGuides();
         dragState = null;
         renderDiagram();
       }

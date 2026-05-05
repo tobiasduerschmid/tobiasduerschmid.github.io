@@ -95,7 +95,7 @@
       .join('\n');
   }
 
-  var V86_SNAPSHOT_CACHE_VERSION = 4;
+  var V86_SNAPSHOT_CACHE_VERSION = 5;
   var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
@@ -8413,13 +8413,6 @@
       return self._runStepSetupCommands(curStep, { timeout: 120000 });
     });
 
-    // Run post_fileload_setup AFTER all setup/solution commands so e.g.
-    // `bash build-git.sh` replays against the final VM state.
-    p = p.then(function () { return self._runPostFileloadSetup(curStep); });
-    p = p.then(function () { return self._refreshStepVisibleFiles(curStep); });
-    p = p.then(function () { return self._updateUserCmdListener(curStep); });
-    p = p.then(function () { return self._runStepDir(curStep); });
-
     // Quiesce the shell before snapshotting: a no-op silent command forces
     // one more prompt round-trip after the batched replay, guaranteeing the
     // serial output queue is drained to a clean PS1. Without this, the
@@ -8427,7 +8420,19 @@
     // and a later restore replays them as a half-typed command. Single
     // cheap round-trip.
     p = p.then(function () { return self._runSilent(':'); });
+    // Snapshot the clean post-setup baseline BEFORE running post_fileload_setup
+    // so it doesn't bake in the current `bash ../reproduce.sh` execution. A
+    // future fast-path reset restores this baseline and re-runs reproduce.sh
+    // on top, which is what makes "clear reproduce.sh + Reset" a true full
+    // restart and "delete a line + Reset" a real undo.
     p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
+
+    // Run post_fileload_setup AFTER the snapshot so e.g. `bash build-git.sh`
+    // replays against the final VM state for the user's view.
+    p = p.then(function () { return self._runPostFileloadSetup(curStep); });
+    p = p.then(function () { return self._refreshStepVisibleFiles(curStep); });
+    p = p.then(function () { return self._updateUserCmdListener(curStep); });
+    p = p.then(function () { return self._runStepDir(curStep); });
 
     // Reveal the tutorial
     p = p.then(function () {

@@ -639,8 +639,12 @@ info_nav_title: "Browser storage"
       </tr>
     </tbody>
   </table>
-  <button class="cookies-btn danger" data-clear-category="uml-playground" type="button">
-    <i class="fa fa-trash" aria-hidden="true"></i> Reset UML Playground state
+  <p class="cookies-prefix-note">
+    <em>Prefixes:</em>
+    <code>uml-pg-autosave-&lt;diagramType&gt;</code> &mdash; autosaved ArchUML draft for each diagram type (one row per type you&rsquo;ve edited &mdash; class, sequence, state, component, deployment, usecase, activity, er, venn, gitgraph &mdash; created lazily as you switch types).
+  </p>
+  <button class="cookies-btn danger" data-clear-category="uml-playground" data-clear-prefixes="uml-pg-autosave-" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Reset UML Playground state &amp; drafts
   </button>
 
   <h2>Where else does this site store data?</h2>
