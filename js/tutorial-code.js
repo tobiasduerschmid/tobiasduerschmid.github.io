@@ -8722,25 +8722,28 @@
         var setupBatch = tutorialShellBatch(step.setup_commands.map(function (c) { return String(c).trim(); }));
         p = p.then(function () { return self._runSilent(setupBatch); });
       }
-      // post_fileload_setup runs AFTER setup_commands. For git-playground this
-      // is where `bash build-git.sh` replays the just-synced script on top of
-      // the freshly-booted VM.
-      if (hasPostFileload) {
-        p = p.then(function () { return self._runPostFileloadSetup(step); });
-      }
+      // Cache the clean "entry state" BEFORE post_fileload_setup runs, so the
+      // snapshot represents the post-setup_commands baseline (no `bash
+      // ../reproduce.sh` baked in). Fast-path resets restore this baseline and
+      // re-run reproduce.sh on top \u2014 that's what makes "clear reproduce.sh +
+      // Reset" a true full restart and "delete a line + Reset" a real undo.
       var setupPromise = p.then(function () {
-        return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
-      }).then(function () {
-        return self._runStepDir(step);
-      }).then(function () {
         var cachePromise = Promise.resolve();
-        // Cache the clean "entry state" of this step so future Reset /
-        // autosave-restore operations can skip replay entirely. The snapshot
-        // is taken after setup/post-fileload and the final step_dir barrier.
         if (self._canCacheLiveStepEntrySnapshot(index)) {
           cachePromise = self._saveStepEntrySnapshot(index, { persist: false });
         }
         return cachePromise;
+      });
+      // post_fileload_setup runs AFTER the snapshot. For git-playground this
+      // is where `bash build-git.sh` replays the just-synced script on top of
+      // the freshly-booted VM for the user's view.
+      if (hasPostFileload) {
+        setupPromise = setupPromise.then(function () { return self._runPostFileloadSetup(step); });
+      }
+      setupPromise = setupPromise.then(function () {
+        return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      }).then(function () {
+        return self._runStepDir(step);
       }).then(function () {
         self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
@@ -10334,7 +10337,13 @@
    */
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
-    var cmd = '( cd ' + shellQuote(p) + ' && { GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + shellQuote(p + '/.git/gitgraph_state') + ' 2>/dev/null )';
+    // Mirrors the prompt-hook guard at _installGitGraphPromptHook: if .git/
+    // doesn't exist (e.g. user cleared reproduce.sh and reset), skip the
+    // dump entirely. The redirection target lives inside .git/, so without
+    // this guard the redirect fails silently and any stale state file
+    // disappears with the directory — _refreshGitGraph's read_file then
+    // rejects and the catch handler renders the empty graph.
+    var cmd = '( cd ' + shellQuote(p) + ' && [ -d .git ] && { GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + shellQuote(p + '/.git/gitgraph_state') + ' 2>/dev/null )';
     var self = this;
     // RPC path: daemon runs the dump, gitgraph_state is fresh when the
     // returned Promise resolves. The cmd's stdout is empty (everything is
@@ -10498,7 +10507,16 @@
         })
         .catch(function () {
           clearTimeout(safetyTimer);
-          if (generation === self._gitGraphRefreshGeneration) self._gitGraphRefreshing = false;
+          if (generation !== self._gitGraphRefreshGeneration) return;
+          self._gitGraphRefreshing = false;
+          // Common cause: .git/ doesn't exist (e.g. user cleared reproduce.sh
+          // and reset, so post_fileload_setup's `bash` was a no-op and never
+          // ran `git init`). Render an empty graph rather than leave the
+          // previous render on screen.
+          self._lastGitGraphStateText = '';
+          self._gitGraphStateDirty = false;
+          self._gitGraphRefreshPending = false;
+          self._renderGitGraphFromText('');
         });
       return;
     }
