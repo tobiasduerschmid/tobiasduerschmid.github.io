@@ -30,7 +30,7 @@ The primary interactions should be between the Context and its current State obj
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the State pattern roles — a Context delegates request() to its current State, and ConcreteStates trigger transitions by calling setState() back on the Context." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class Context {
 	- state: State
@@ -55,7 +55,7 @@ ConcreteStateB --> Context : transition via setState
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete State example — a GumballMachine delegates insertQuarter/turnCrank to NoQuarterState and HasQuarterState, which transition the machine between them." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class GumballMachine {
 	- state: State
@@ -79,7 +79,7 @@ HasQuarterState --> GumballMachine : releaseBall(), setState(...)
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how the same insertQuarter/turnCrank calls produce different behavior depending on the current State, with each ConcreteState transitioning the machine to the next state via setState." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor customer: Customer
 participant machine: GumballMachine
 participant noQuarter: NoQuarterState

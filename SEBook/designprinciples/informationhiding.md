@@ -285,7 +285,7 @@ class WalletService {
 
 The PayPal **decision** is duplicated across all three services. Each service authenticates to PayPal, calls a PayPal-specific function, and consumes a PayPal-specific result type. Visually, the dependencies look like this:
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the information-hiding violation — OrderService, RefundService, and WalletService all depend directly on the PayPal external API, leaking the choice of payment provider throughout the codebase." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 class OrderService {
     + checkout(order, paypal)
@@ -616,7 +616,7 @@ class WalletService {
 
 The **decision** to use PayPal is hidden in one module (`PayPalGateway`). Other services don't know that PayPal exists — they only know `PaymentGateway`. The class diagram below makes the new structure obvious:
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the information-hiding fix — services depend on a PaymentGateway interface; PayPalGateway is the only class that knows about the PayPal external API, isolating the provider decision in one place." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 class OrderService {
     + checkout(order, payment)

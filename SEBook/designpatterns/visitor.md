@@ -28,7 +28,7 @@ The key participants are:
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Visitor pattern roles — Element subclasses each accept(Visitor) and dispatch to the matching visitConcreteElementX method, so new ConcreteVisitors can add operations without modifying the element hierarchy." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Visitor {
     + visitConcreteElementA(ConcreteElementA)
     + visitConcreteElementB(ConcreteElementB)
@@ -64,7 +64,7 @@ Client --> ObjectStructure
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Visitor example — AssignmentNode and VariableRefNode accept a NodeVisitor; TypeCheckingVisitor and CodeGeneratingVisitor add new AST operations without changing the node classes." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface NodeVisitor {
     + visitAssignment(AssignmentNode)
     + visitVariableRef(VariableRefNode)

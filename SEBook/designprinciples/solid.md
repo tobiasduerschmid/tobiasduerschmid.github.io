@@ -54,7 +54,7 @@ When a class serves multiple actors, changes requested by one actor may silently
 
 * **The Employee Class (Actor Violation):** An `Employee` class contains `calculatePay()` (for Accounting), `reportHours()` (for HR), and `save()` (for DBAs). If Accounting tweaks the overtime algorithm, it might accidentally break the HR reports.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an SRP violation — a single Employee class exposes calculatePay/reportHours/save methods that serve three different actors (Accounting, HR, DBAs)." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Employee {
   + calculatePay()
   + reportHours()
@@ -70,7 +70,7 @@ end note
 
   **Fix:** Extract a plain `EmployeeData` structure and create three separate classes (`PayCalculator`, `HourReporter`, `EmployeeSaver`) that do not know about each other, eliminating merge conflicts and accidental duplication.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the SRP fix — the data is in a plain EmployeeData record, and PayCalculator, HourReporter, and EmployeeSaver each serve exactly one actor." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class EmployeeData
 class PayCalculator {
   + calculatePay()
@@ -114,7 +114,7 @@ Every time you modify existing, working code, you risk introducing regressions. 
 * **The Payment Processor Problem:**
   A `PaymentProcessor` class uses complex `switch` or `if/else` statements to handle different payment types. Adding PayPal requires modifying the existing method.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an OCP violation — a single PaymentProcessor class branches on payment type, so adding a new type forces modifying tested code." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class PaymentProcessor {
   + processPayment(type: String, amount: Double)
 }
@@ -157,7 +157,7 @@ To guarantee behavioral substitutability, subclasses must follow strict Design-b
 **Examples of Violations & Fixes:**
 * **The Square/Rectangle Problem:** If `Square` inherits from `Rectangle`, overriding `setWidth` to automatically change `height` breaks a client's expectation that a rectangle's dimensions mutate independently. Passing a `Square` where a `Rectangle` is expected causes area calculation assertions to fail.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an LSP violation — Square inherits from Rectangle, so overriding setWidth to also change height breaks clients that expect width and height to mutate independently." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Rectangle {
   + setWidth(w: int)
   + setHeight(h: int)
@@ -178,7 +178,7 @@ end note
 
   **Fix:** `Square` and `Rectangle` should be siblings implementing a common `Shape` interface — neither inherits the other, so neither can break the other's contract.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the LSP fix — Square and Rectangle become siblings realizing a Shape interface that exposes only getArea(), so neither subtype can break the other's contract." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Shape {
   + getArea() : int
 }
@@ -223,7 +223,7 @@ When a client depends on a bloated interface, it becomes artificially coupled to
 
 * **The File Server System:** A `FileServer` interface declares `uploadFile()`, `downloadFile()`, and `changePermissions()`. A `UserClient` only needs upload/download but is forced to depend on permissions.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an ISP violation — UserClient and AdminClient both depend on a fat FileServer interface, so UserClient is artificially coupled to changePermissions() it never calls." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface FileServer {
   + uploadFile()
   + downloadFile()
@@ -263,7 +263,7 @@ In traditional programming, high-level policy often directly calls low-level det
 
 * **The Button and Lamp Scenario:** A smart home `Button` directly turns a `Lamp` on or off.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a DIP violation — high-level Button depends directly on low-level Lamp, so Button cannot be reused to control any other device." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Button {
   + detectPress()
 }
@@ -281,7 +281,7 @@ end note
 
   **Fix:** Introduce a `Switchable` interface owned by the high-level module. `Button` depends on the abstraction; `Lamp` conforms to it — the dependency arrow now points away from the detail.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the DIP fix — a Switchable interface is owned by the high-level module; Button depends on Switchable; Lamp conforms to it, so the dependency arrow points away from the detail." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Switchable {
   + activate()
   + deactivate()
@@ -309,7 +309,7 @@ end note
 
 SOLID is not five independent rules — the principles interact. The diagram below shows how mastering one unlocks others: arrows point from the enabler to the payoff.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing how the SOLID principles reinforce each other — LSP, DIP, and SRP all enable OCP; ISP shrinks LSP's surface area." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component SRP
 component OCP
 component LSP

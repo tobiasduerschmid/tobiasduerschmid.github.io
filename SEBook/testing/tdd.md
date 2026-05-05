@@ -31,7 +31,7 @@ This structure manifests as the Red-Green-Refactor cycle:
 
 The three phases form a tight, repeating loop — the engine that drives every TDD session:
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of the TDD red-green-refactor cycle — Red writes a tiny failing test, Green writes the simplest code to pass it, Refactor cleans up, then the cycle repeats." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Red : start of cycle
 Red : write a tiny failing test
 Red --> Green : test fails
