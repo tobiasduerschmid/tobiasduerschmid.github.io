@@ -134,7 +134,7 @@
       html += hasPrev ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>' : '<span></span>';
       html += snap.hasTests ? '<button class="tvm-btn tvm-btn-test">✓ Test My Work</button>' : '<span></span>';
       html += hasNext
-        ? '<button class="tvm-btn tvm-btn-next"' + (snap.nextLocked ? ' disabled title="Pass all tests to continue"' : '') + '>Next →</button>'
+        ? '<button class="tvm-btn tvm-btn-next"' + (snap.nextLocked ? ' disabled aria-label="Next — locked: pass all tests to continue"' : '') + '>Next →</button>'
         : '<span></span>';
       els.stepControls.innerHTML = html;
 

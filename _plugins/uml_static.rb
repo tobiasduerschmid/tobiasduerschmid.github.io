@@ -94,7 +94,9 @@ module Jekyll
       # Batch-describe every diagram on the page in a single Node call. Source
       # of truth: `js/uml-auto-describe.js` (also shipped to the browser for
       # live tutorial diagrams), invoked via the `js/uml-describe-cli.js`
-      # shim. Returns a String->String map keyed by stringified index. On
+      # shim. Returns a Hash keyed by stringified index, where each value is
+      # `{ "brief" => String, "verbose" => { "summary" => String,
+      # "sections" => [{ "heading" => String, "items" => [String] }] } }`. On
       # failure (Node missing, parse error, etc.), returns an empty hash so
       # the caller can fall back to the plain type name.
       def auto_describe_batch(blocks)
@@ -119,6 +121,38 @@ module Jekyll
       rescue StandardError => e
         Jekyll.logger.warn 'UMLStatic:', "uml-describe-cli error: #{e.class}: #{e.message}"
         {}
+      end
+
+      # Render the verbose describer output as a sighted-on-demand <details>
+      # element. The same markup is also produced client-side by the browser
+      # describer in `js/uml-auto-describe.js` so live tutorial diagrams pick
+      # up the same drill-in. Empty / missing verbose payloads return ''.
+      def render_verbose_details(verbose, safe_type)
+        return '' unless verbose.is_a?(Hash)
+        sections = verbose['sections']
+        return '' unless sections.is_a?(Array) && !sections.empty?
+
+        parts = sections.map do |section|
+          heading = CGI.escapeHTML(section['heading'].to_s)
+          items = (section['items'] || []).map do |item|
+            "<li>#{CGI.escapeHTML(item.to_s)}</li>"
+          end.join
+          # Styled <p> rather than <h4> so the verbose drill-in doesn't
+          # introduce a fixed heading level inside <figure>; on pages whose
+          # outline hasn't reached <h3> (e.g. flashcards), an <h4> would
+          # skip a level (WCAG 2.4.6).
+          %(<section><p class="sebook-figure__verbose-heading">#{heading}</p><ul>#{items}</ul></section>)
+        end.join
+
+        summary_text = (verbose['summary'] || '').to_s
+        intro = summary_text.empty? ? '' : "<p>#{CGI.escapeHTML(summary_text)}</p>"
+
+        <<~HTML.strip
+          <details class="sebook-figure__verbose sebook-figure__verbose--#{safe_type}">
+            <summary>Detailed description</summary>
+            <div class="sebook-figure__verbose-body">#{intro}#{parts}</div>
+          </details>
+        HTML
       end
 
       def process(content)
@@ -191,14 +225,21 @@ module Jekyll
         # than per-block since Node startup dominates.
         descriptions = auto_describe_batch(blocks)
 
-        # 5. Replace blocks in content. The aria-label gets the auto-generated
-        # structural walk-through (always present, satisfies WCAG 2.2 §1.1.1);
-        # the visible <figcaption> renders only when the author supplied one.
+        # 5. Replace blocks in content. The aria-label gets the brief auto-
+        # generated structural walk-through (always present, satisfies WCAG
+        # 2.2 §1.1.1); the visible <figcaption> renders only when the author
+        # supplied one; a collapsed <details> with the verbose breakdown
+        # (every class member, every transition, etc.) is appended for
+        # sighted users who want to drill in.
         blocks.each_with_index do |block, idx|
           next unless block[:svg]
 
           safe_type = type_class(block[:type])
-          desc = descriptions[idx.to_s]
+          payload = descriptions[idx.to_s] || {}
+          brief = payload.is_a?(Hash) ? payload['brief'] : nil
+          verbose = payload.is_a?(Hash) ? payload['verbose'] : nil
+
+          desc = brief
           desc = "#{fallback_caption(block[:type])}." if desc.nil? || desc.empty?
           aria_label = CGI.escapeHTML(desc)
 
@@ -208,12 +249,15 @@ module Jekyll
                          ''
                        end
 
+          details_html = render_verbose_details(verbose, safe_type)
+
           svg_wrapped = <<~HTML
             <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
               <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{aria_label}">
                 #{block[:svg]}
               </div>
               #{figcaption}
+              #{details_html}
             </figure>
           HTML
 
