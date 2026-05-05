@@ -607,6 +607,20 @@
     html.dark-mode .uml-gitgraph-fallback-error { color: #b00000; }
     html.dark-mode .uml-gitgraph-fallback-empty { color: #555; }
     html.dark-mode .sebook-figure__caption { color: #444; }
+    /* uml-diagram.css flips .sebook-figure__verbose to a dark background in
+       dark mode but leaves the body text colour to be inherited. On the print
+       layout the body stays light (`color: #383848` on .step-instructions li,
+       etc.), so dark-on-dark drops to ~1.37:1. Pin verbose to light values. */
+    html.dark-mode .sebook-figure__verbose {
+      background: #fafbfc;
+      border-color: #d6dae0;
+    }
+    html.dark-mode .sebook-figure__verbose > summary { color: #364152; }
+    html.dark-mode .sebook-figure__verbose-body { border-top-color: #e6e9ee; }
+    html.dark-mode .sebook-figure__verbose-body h4,
+    html.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
+      color: #1f2937;
+    }
 
     @media screen and (max-width: 640px) {
       body {
@@ -653,7 +667,17 @@
       .starter-file pre code,
       .step-instructions .highlight code,
       .starter-file-content .highlight code,
-      .step-solution-commands code {
+      .step-solution-commands code,
+      /* Some authors embed `<pre>` blocks in step titles, headers, or
+         instructional prose outside the canonical containers above (e.g.
+         a `<mark>` wrapping highlighted code in an `<h2.step-title>`).
+         At 320 px those leak the document past viewport (WCAG 1.4.10). */
+      .step-header pre,
+      .step-header pre code,
+      .step-header pre span,
+      .step pre,
+      .step pre code,
+      .step pre span {
         max-width: 100%;
         white-space: pre-wrap;
         overflow-wrap: anywhere;

@@ -2152,7 +2152,7 @@ steps:
 
       ### The 2×2 grid that crystallizes the lesson
 
-      |                       | **Spec is loose**<br>("show the count") | **Spec is tight**<br>("show '3 items remaining'") |
+      | Assertion ↓ / Spec →  | **Spec is loose**<br>("show the count") | **Spec is tight**<br>("show '3 items remaining'") |
       | --------------------- | --------------------------------------- | ------------------------------------------------- |
       | **Loose assertion**   | ✓ aligned                               | ✗ misses regressions                              |
       | **Tight assertion**   | ✗ false alarms                          | ✓ aligned                                         |

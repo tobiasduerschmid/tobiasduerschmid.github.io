@@ -393,6 +393,69 @@ info_nav_title: "Keyboard shortcuts"
     </tbody>
   </table>
 
+  <h3 id="uml-playground">UML Playground &mdash; visual editor</h3>
+  <p class="shortcuts-note">Shortcuts active inside the visual editor on <a href="{{ '/SEBook/tools/uml-playground' | relative_url }}">/SEBook/tools/uml-playground</a> when <em>Visual edit</em> is checked.</p>
+  <table class="shortcuts-table">
+    <caption>Keyboard shortcuts for the UML Playground&rsquo;s visual editor.</caption>
+    <thead>
+      <tr><th scope="col">Keys</th><th scope="col">Action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Tab</kbd></td>
+        <td>Move focus through the palette buttons, hitboxes (movable elements), and edit handles.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Enter</kbd> or <kbd>Space</kbd></td>
+        <td>Activate the focused tool button, select the focused element, or, with a relation tool armed, mark the focused element as source / target.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td>
+        <td>Nudge the focused element by 10 px (or 1 px with <kbd>Shift</kbd>).</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Delete</kbd> or <kbd>Backspace</kbd></td>
+        <td>Delete the focused / selected element or relation (and remove all references to it from the source).</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F2</kbd></td>
+        <td>Focus the &ldquo;Identifier&rdquo; field in the Properties side-panel for the selected element.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Esc</kbd></td>
+        <td>Cancel the active tool, close the relation chooser popup, exit fullscreen mode, or deselect the current element.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>F</kbd></td>
+        <td>Toggle the playground&rsquo;s full-screen mode.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd>/<kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Z</kbd></td>
+        <td>Undo the last visual mutation (place, connect, rename, drag, group ops, props edits, deletes). Continuous bursts (a held arrow nudge, one drag) collapse into a single undo step.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd>/<kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Shift</kbd><span class="key-sep">+</span><kbd>Z</kbd> &nbsp;or&nbsp; <kbd>Cmd</kbd>/<kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>Y</kbd></td>
+        <td>Redo the last undone mutation.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd>/<kbd>Ctrl</kbd><span class="key-sep">+</span> click</td>
+        <td>Toggle the clicked element / relation in the multi-selection. <kbd>Shift</kbd><span class="key-sep">+</span>click also adds.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell"><kbd>Cmd</kbd>/<kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>A</kbd></td>
+        <td>Select every element and relation in the current diagram.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell">double-click</td>
+        <td>Inline-rename the focused element&rsquo;s visible label without opening the Properties side-panel. <kbd>Enter</kbd> commits, <kbd>Esc</kbd> cancels.</td>
+      </tr>
+      <tr>
+        <td class="shortcuts-keys-cell">drag empty canvas</td>
+        <td>Pan the diagram canvas. The pan offset is reset on the next page load.</td>
+      </tr>
+    </tbody>
+  </table>
+
   <h2 id="quizzes">Quizzes, flashcards &amp; Parsons problems</h2>
   <table class="shortcuts-table">
     <caption>Shortcuts for quizzes, SE Gym flashcards, and code-arrangement (Parsons) problems.</caption>

@@ -487,7 +487,7 @@
     h += '</div>';
     h += '<div class="rt-parsons-target" data-exid="' + ex.id + '">';
     h += '<span class="rt-delim">/</span>';
-    h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '" aria-label="Answer fragments"></span>';
+    h += '<span class="rt-parsons-drop" data-exid="' + ex.id + '" role="group" aria-label="Answer fragments"></span>';
     h += '<span class="rt-delim">/g</span>';
     h += '</div>';
     h += '<button type="button" class="rt-btn rt-btn-clear" data-exid="' + ex.id + '">Clear</button>';

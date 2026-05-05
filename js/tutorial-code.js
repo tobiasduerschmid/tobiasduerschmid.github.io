@@ -795,7 +795,7 @@
       this.root.classList.add('tvm-split-layout-three-col');
     }
 
-    var outputContainerHtml = '<div class="tvm-output-container" tabindex="0"><pre class="tvm-output-pre"></pre></div>';
+    var outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Program output"><pre class="tvm-output-pre"></pre></div>';
     var diagramContentHtml = '<div class="tvm-diagram-content" tabindex="0"></div>';
     var terminalHtml;
     if (this.config.useTerminal) {

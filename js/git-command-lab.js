@@ -542,7 +542,15 @@
         var label = a11y.description || a11y.label;
         if (!label) return;
         graphHost.setAttribute('role', 'img');
-        graphHost.setAttribute('aria-label', label);
+        // WCAG 2.5.3: the host is a focusable region with visible workbench
+        // text inside; the accessible name must contain that visible text.
+        // Append normalised text content to the descriptive label so axe's
+        // label-content-name-mismatch rule passes.
+        var visText = (graphHost.textContent || '').replace(/\s+/g, ' ').trim();
+        var fullLabel = visText && !label.toLowerCase().includes(visText.toLowerCase())
+          ? label + '. ' + visText
+          : label;
+        graphHost.setAttribute('aria-label', fullLabel);
         var svg = graphHost.querySelector('svg');
         if (svg) {
           svg.setAttribute('aria-label', label);

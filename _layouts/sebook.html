@@ -268,7 +268,14 @@
             #main-content {
               width: 100% !important;
               padding: 15px !important;
-              overflow-x: hidden;
+              /* WCAG 2.4.11: `overflow-x: hidden` makes the X-axis hidden but
+                 promotes overflow-y to `auto` per CSS Overflow spec, turning
+                 #main-content into a scroll container. The browser then
+                 scrolls THIS container on focus instead of the window, so
+                 Tab-focusing a deep link below the fold leaves the link
+                 outside the viewport. `overflow-x: clip` clips X without
+                 promoting Y — page-level scroll keeps working normally. */
+              overflow-x: clip;
               min-width: 0 !important;
             }
 
@@ -298,6 +305,14 @@
               display: block;
               max-width: 100%;
               overflow-x: auto;
+              /* Per CSS Overflow §3.3, setting only overflow-x to a non-
+                 visible/clip value computes overflow-y to `auto`, turning
+                 the table into a vertical scroll container that traps
+                 focus-scroll. Pinning overflow-y to `clip` keeps the X-axis
+                 scrollable for wide tables without making the table a
+                 vertical scroll container — so `link.focus()` inside a
+                 deep cell still scrolls the page (WCAG 2.4.11). */
+              overflow-y: clip;
             }
 
             #main-content img,

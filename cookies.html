@@ -603,6 +603,46 @@ info_nav_title: "Browser storage"
     <i class="fa fa-trash" aria-hidden="true"></i> Delete all standalone-tool data
   </button>
 
+  <h3>UML Playground pane sizes</h3>
+  <p>
+    Two keys remember how you've sized the editor and properties panes in the
+    <a href="{{ '/SEBook/tools/uml-playground' | relative_url }}">UML Playground</a>.
+    Drag the splitter handles between panes to resize; the new sizes are saved here.
+  </p>
+  <table class="storage-table" data-category="uml-playground">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="uml-pg-editor-size">
+        <td class="storage-key">uml-pg-editor-size</td>
+        <td>Width (in px) of the ArchUML source editor pane in the UML Playground.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="uml-pg-props-size">
+        <td class="storage-key">uml-pg-props-size</td>
+        <td>Width (in px) of the Properties side-panel in the UML Playground.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="uml-pg-help-dismissed">
+        <td class="storage-key">uml-pg-help-dismissed</td>
+        <td>Flag (<code>1</code>) recording that you've dismissed the &ldquo;Tips&rdquo; banner shown above the UML Playground canvas. The banner appears once per browser; this key prevents it from re-appearing.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="uml-playground" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Reset UML Playground state
+  </button>
+
   <h2>Where else does this site store data?</h2>
   <p>For full transparency, here is everything else the site touches that <em>could</em> be considered storage &mdash; with what's actually used:</p>
   <ul>

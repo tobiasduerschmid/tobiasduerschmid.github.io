@@ -1677,7 +1677,15 @@
 
     if (!this.container.hasAttribute('role')) this.container.setAttribute('role', 'region');
     if (!this.container.hasAttribute('aria-label') && !this.container.hasAttribute('aria-labelledby')) {
-      this.container.setAttribute('aria-label', this._liveLabel || 'Live Git graph');
+      // WCAG 2.5.3 (Label in Name): the host is a focusable region (we add
+      // tabindex="0" below for arrow-key scrolling) AND it contains visible
+      // workbench/graph text. The audit's label-content-name-mismatch check
+      // requires the accessible name to contain the visible text — so we
+      // append it to the descriptive base label rather than letting
+      // aria-label hide it.
+      var labelBase = this._liveLabel || 'Live Git graph';
+      var visText = (this.container.textContent || '').replace(/\s+/g, ' ').trim();
+      this.container.setAttribute('aria-label', visText ? labelBase + '. ' + visText : labelBase);
     }
     // axe `scrollable-region-focusable` (WCAG 2.1.1): the live graph container
     // wraps an SVG that frequently overflows in horizontal/vertical scroll on
