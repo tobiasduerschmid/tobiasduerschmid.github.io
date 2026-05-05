@@ -3894,12 +3894,37 @@
     });
   }
 
+  // List of CSS selectors for elements that can receive keyboard focus.
+  // Used by the modal focus trap below to find the first/last focusable
+  // descendant on every Tab so AT users can't escape the dialog. Excludes
+  // disabled, hidden, and tabindex=-1 elements via the `:not(...)` filters
+  // applied at query time.
+  var SBR_FOCUSABLE_SELECTOR =
+    'a[href], area[href], button, input, select, textarea, ' +
+    '[tabindex]:not([tabindex="-1"]), [contenteditable="true"], details > summary';
+
+  function sbrFocusableIn(root) {
+    if (!root) return [];
+    var nodes = root.querySelectorAll(SBR_FOCUSABLE_SELECTOR);
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.disabled) continue;
+      if (n.getAttribute('aria-hidden') === 'true') continue;
+      // offsetParent is null for display:none / detached nodes; that's a
+      // good cheap visibility check that doesn't require a forced layout.
+      if (n.offsetParent === null && n.tagName !== 'SUMMARY') continue;
+      out.push(n);
+    }
+    return out;
+  }
+
   function modalShell(title) {
     var titleId = 'sbr-title-' + Math.random().toString(36).slice(2, 8);
     var root = document.createElement('div');
     root.className = 'sbr-backdrop';
     root.innerHTML =
-      '<div class="sbr-modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
+      '<div class="sbr-modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '" tabindex="-1">' +
       '<div class="sbr-header">' +
       '<div class="sbr-title" id="' + titleId + '"></div>' +
       '<button type="button" class="sbr-icon-btn sbr-close" aria-label="Close">&times;</button>' +
@@ -3911,10 +3936,64 @@
       '</div>' +
       '</div>';
     root.querySelector('.sbr-title').textContent = title;
+
+    // Remember who had focus before the modal opened so we can put focus
+    // back there when it closes — required by WCAG 2.4.3 (Focus Order)
+    // for any modal-open / modal-close pair, and by 2.1.2 (No Keyboard
+    // Trap) for the trap to be a valid trap (a trap with no escape route
+    // is a violation; an Esc handler + focus restore is the escape).
+    var dialog = root.querySelector('.sbr-modal');
+    root._sbrPrevFocus = (document.activeElement instanceof HTMLElement) ? document.activeElement : null;
+
+    // Focus trap: on Tab / Shift+Tab, if focus is at the first / last
+    // focusable element of the dialog, wrap to the other end. WCAG 2.1.2
+    // requires that all keyboard focus stays within the dialog while it's
+    // open; this is the standard implementation.
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeModal(root);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = sbrFocusableIn(dialog);
+      if (!focusable.length) {
+        // Nothing focusable — keep focus on the dialog itself.
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      var active = document.activeElement;
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    root.addEventListener('keydown', onKeyDown);
+    root._sbrKeyHandler = onKeyDown;
+
     document.body.appendChild(root);
+
+    // Move focus into the dialog. Prefer the primary action so the user
+    // can hit Enter to confirm; if it's not yet meaningfully labeled
+    // (modalShell sets it to '' until the caller fills it in), fall
+    // back to the close button or the dialog itself.
+    setTimeout(function () {
+      var primary = root.querySelector('.sbr-primary');
+      var close = root.querySelector('.sbr-close');
+      if (primary && primary.textContent.trim()) primary.focus();
+      else if (close) close.focus();
+      else dialog.focus();
+    }, 0);
+
     return {
       root: root,
-      dialog: root.querySelector('.sbr-modal'),
+      dialog: dialog,
       body: root.querySelector('.sbr-body'),
       primary: root.querySelector('.sbr-primary'),
       cancel: root.querySelector('.sbr-cancel'),
@@ -3923,7 +4002,17 @@
   }
 
   function closeModal(root) {
-    if (root && root.parentNode) root.parentNode.removeChild(root);
+    if (!root) return;
+    var prev = root._sbrPrevFocus;
+    var handler = root._sbrKeyHandler;
+    if (handler) root.removeEventListener('keydown', handler);
+    if (root.parentNode) root.parentNode.removeChild(root);
+    // Restore focus to the element that had it before the modal opened —
+    // unless that element was removed from the DOM in the meantime, in
+    // which case silently fall back so we don't throw.
+    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
+      try { prev.focus(); } catch (_) { /* element may have lost focusability */ }
+    }
   }
 
   function previewText(plan) {

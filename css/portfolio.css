@@ -1655,3 +1655,72 @@ html.prm-reduce .unix-lab__confetti,
 html.prm-reduce [class*="confetti"] {
   display: none !important;
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Forced-colors mode (Windows High Contrast, GTK / KDE forced themes,
+   any user OS-level "use my colors" override)
+   WCAG 2.2 — 1.4.1 Use of Color, 1.4.11 Non-text Contrast
+   ──────────────────────────────────────────────────────────────────
+   When `@media (forced-colors: active)` matches, the browser replaces
+   most authored colors with system colors (CanvasText, Canvas, ButtonText,
+   ButtonFace, LinkText, VisitedText, Highlight, HighlightText, GrayText,
+   AccentColor). Decorative gradients / drop shadows / box-shadows are
+   removed. Some properties survive: `border-style`, `border-width`,
+   `outline-style`, `outline-width`, `text-decoration`. We rely on those
+   as our redundant non-color signal channel.
+
+   Fixes per concern below; see comments inline. */
+@media (forced-colors: active) {
+  /* 1.4.11 — Skip-link must remain a visible affordance even when our
+     authored yellow-on-black is replaced by Canvas-on-CanvasText. Force
+     a system-link appearance with an explicit outline so the chip
+     doesn't fade into the page background. */
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    background: ButtonFace;
+    color: ButtonText;
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* 1.4.1 / 1.4.11 — Quiz option correct vs. incorrect distinction. The
+     authored colors get replaced, leaving correct + incorrect visually
+     identical. The ::after pseudo-element holds ✓ / ✗ which DO survive,
+     but the option border becomes a flat CanvasText rectangle on both
+     states. Use border-style / border-width as a redundant channel:
+     dashed thick = correct, double = incorrect. */
+  .quiz-option.correct {
+    border-style: solid;
+    border-width: 3px;
+  }
+  .quiz-option.incorrect {
+    border-style: double;
+    border-width: 4px;
+  }
+  .quiz-option[aria-invalid="true"] {
+    /* The HTML-form invalid-input convention; supported by Firefox HCM. */
+    border-color: Mark;
+  }
+
+  /* 1.4.11 — Test-result panel pass/fail. Same redundant-channel trick. */
+  .tvm-test-summary.all-pass { border: 3px solid CanvasText; }
+  .tvm-test-summary.partial { border: 4px double CanvasText; }
+  .tvm-test-item.pass { border-left: 3px solid CanvasText; }
+  .tvm-test-item.fail { border-left: 4px double CanvasText; }
+
+  /* 1.4.11 — Focus rings. Most we already write as `outline: 2px …`,
+     which survives. But some places use `box-shadow` for the ring;
+     box-shadow does NOT render in forced-colors. Map the project's
+     custom focus selectors back onto `outline` so the indicator is
+     never invisible. */
+  *:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+
+  /* 1.4.11 — Diagram <figure> wrappers. The SVG inside renders with
+     system colors (browsers replace fill/stroke automatically). Make
+     sure the figure itself has a visible boundary so users with HCM see
+     the diagram as one grouped unit rather than a wall of mixed text. */
+  .sebook-figure { border: 1px solid CanvasText; padding: 4px; }
+}

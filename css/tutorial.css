@@ -2934,7 +2934,12 @@ html:not(.dark-mode) .tvm-right-tab.active {
   font-size: 0.9em;
   font-weight: 700;
   padding: 4px 6px;
-  outline: none;
+}
+/* Replace the suppressed default outline with a visible focus ring
+   (WCAG 2.4.7 Focus Visible). */
+.tvm-http-method-select:focus-visible {
+  outline: 2px solid #7ec8e3;
+  outline-offset: 1px;
 }
 
 .tvm-http-url-input {
@@ -2946,9 +2951,18 @@ html:not(.dark-mode) .tvm-right-tab.active {
   font-size: 0.9em;
   font-family: var(--tvm-font-mono);
   padding: 4px 8px;
-  outline: none;
 }
-.tvm-http-url-input:focus { border-color: #2774AE; }
+/* The border-color shift on :focus is too subtle on the dark URL bar to
+   satisfy WCAG 2.4.7 — add an explicit focus ring as well. */
+.tvm-http-url-input:focus {
+  outline: none;
+  border-color: #2774AE;
+  box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.45);
+}
+.tvm-http-url-input:focus-visible {
+  outline: 2px solid #2774AE;
+  outline-offset: 1px;
+}
 
 .tvm-http-send-btn {
   background: #2774AE;

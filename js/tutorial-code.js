@@ -4789,7 +4789,7 @@
   // ---------------------------------------------------------------------------
   // Monaco Editor
   // ---------------------------------------------------------------------------
-  TutorialCode.prototype._monacoEditorOptions = function () {
+  TutorialCode.prototype._monacoEditorOptions = function (paneAriaLabel) {
     var opts = {
       language: this.config.backend === 'pyodide' ? 'python' :
         this.config.backend === 'react' ? 'jsx' :
@@ -4813,6 +4813,30 @@
       // Reserve a wider line-decorations gutter when the git-gutter feature
       // is on so our 4px-wide bar with 4px margin always fits.
       lineDecorationsWidth: this.config.enableGitGutter ? 14 : 10,
+      // Accessibility:
+      //  * `ariaLabel` is Monaco's hidden textarea label — without it, NVDA /
+      //    VoiceOver announce the editor as just "edit" / "textbox". The
+      //    suffix tells AT users the editor IS accessible (Monaco auto-
+      //    detects screen readers but the detection is unreliable) and
+      //    documents the Esc-to-exit / Ctrl+F1-for-help conventions so
+      //    keyboard users aren't trapped on Tab.
+      //  * `accessibilitySupport: 'auto'` (Monaco default, explicit here)
+      //    swaps the canvas-painted lines for a textarea-backed view when
+      //    a screen reader is detected. `'on'` would force-enable but
+      //    degrade smooth scrolling / multi-cursor for sighted users.
+      //  * `accessibilityPageSize: 25` enlarges screen-reader page-up /
+      //    page-down jumps from the default 10 lines so navigation through
+      //    long files isn't molasses.
+      ariaLabel:
+        (paneAriaLabel ? paneAriaLabel + ', ' : '') +
+        (this.config.backend === 'pyodide' ? 'Python' :
+          this.config.backend === 'react' ? 'JSX' :
+            (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'JavaScript' :
+              this.config.backend === 'prolog' ? 'Prolog' :
+                this.config.backend === 'java' ? 'Java' : 'Shell') +
+        ' code editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
+      accessibilitySupport: 'auto',
+      accessibilityPageSize: 25,
     };
     if (this.debuggerEnabled) {
       opts.lineHeight = Math.max(24, Math.ceil(this.config.fontSize * 1.5));
@@ -4896,7 +4920,10 @@
 
   TutorialCode.prototype._initEditor = function () {
     var self = this;
-    var opts = this._monacoEditorOptions();
+    // Pane labels passed to Monaco so screen-reader users know which editor
+    // they're in when there's a left/right split (the right pane is
+    // typically tests, the left typically code).
+    var opts = this._monacoEditorOptions('Code pane');
     opts.value = '// Follow the tutorial steps on the left.\n';
     this.editor = monaco.editor.create(this.editorContainerEl, opts);
     this._attachEditorCommands(this.editor);
@@ -4908,7 +4935,7 @@
     });
 
     if (this.editorSplitSupported) {
-      var opts2 = this._monacoEditorOptions();
+      var opts2 = this._monacoEditorOptions('Tests pane');
       opts2.value = '';
       this.editor2 = monaco.editor.create(this.editorContainerElRight, opts2);
       this._attachEditorCommands(this.editor2);
@@ -9846,15 +9873,66 @@
   TutorialCode.prototype._showTestPanel = function (innerHtml) {
     var panel = this.stepContentEl.querySelector('.tvm-test-panel');
     if (!panel) {
+      // Visible panel: no longer a live region. With aria-live="polite"
+      // + aria-atomic="true" the whole results HTML (summary + every
+      // test description) was being read on each test run, which was
+      // overwhelming. The concise announcement now goes through
+      // _announceTestResult() to a separate sr-only live region; the
+      // visible panel is still readable on demand by AT users navigating
+      // into it.
       panel = document.createElement('div');
       panel.className = 'tvm-test-panel';
-      panel.setAttribute('role', 'status');
-      panel.setAttribute('aria-live', 'polite');
-      panel.setAttribute('aria-atomic', 'true');
       this.stepContentEl.appendChild(panel);
     }
     panel.innerHTML = innerHtml;
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  // Lazy-create a single per-tutorial polite sr-only live region that
+  // carries concise test announcements. Reused across runs and across
+  // both _renderTestResults and _renderStudentTestResults call sites.
+  TutorialCode.prototype._ensureTestAnnouncer = function () {
+    if (this._testAnnouncer && this._testAnnouncer.isConnected) return this._testAnnouncer;
+    var announcer = document.createElement('div');
+    announcer.className = 'sr-only tvm-test-announcer';
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    (this.root || document.body).appendChild(announcer);
+    this._testAnnouncer = announcer;
+    return announcer;
+  };
+
+  // Build a concise text-only announcement: "All N tests passed." for the
+  // happy path, "P of N tests passed. Failures: <first 3 failing test
+  // descriptions, joined by '; '> [and X more]." otherwise. Clamping at
+  // three avoids drowning the user in a long failure list — they can
+  // navigate into the visible panel for the full breakdown.
+  TutorialCode.prototype._announceTestResult = function (tests, results) {
+    var passed = 0;
+    var failingDescs = [];
+    for (var i = 0; i < tests.length; i++) {
+      if (results[i] === true) passed++;
+      else if (results[i] === false) failingDescs.push(tests[i].description || ('Test ' + (i + 1)));
+    }
+    var total = tests.length;
+    var msg;
+    if (failingDescs.length === 0 && passed === total) {
+      msg = 'All ' + total + (total === 1 ? ' test passed.' : ' tests passed.');
+    } else {
+      msg = passed + ' of ' + total + ' tests passed.';
+      if (failingDescs.length) {
+        var shown = failingDescs.slice(0, 3);
+        var rest = failingDescs.length - shown.length;
+        msg += ' Failures: ' + shown.join('; ') + (rest > 0 ? '; and ' + rest + ' more' : '') + '.';
+      }
+    }
+    var announcer = this._ensureTestAnnouncer();
+    // Clearing first ensures repeated identical-text runs are still
+    // announced (some screen readers suppress unchanged live-region text).
+    announcer.textContent = '';
+    var self = this;
+    setTimeout(function () { if (self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
   };
 
   TutorialCode.prototype._buildTestResultsHTML = function (tests, results) {
@@ -9879,6 +9957,7 @@
   TutorialCode.prototype._renderStudentTestResults = function (tests, results) {
     var html = this._buildTestResultsHTML(tests, results);
     this._showStudentTestPanel(html);
+    this._announceTestResult(tests, results);
   };
 
   TutorialCode.prototype._renderTestResults = function (tests, results) {
@@ -9887,6 +9966,7 @@
     var total = tests.length, allPass = passed === total;
     var html = this._buildTestResultsHTML(tests, results);
     this._showTestPanel(html);
+    this._announceTestResult(tests, results);
     if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
     if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
     if (allPass && this.requireTests) {
