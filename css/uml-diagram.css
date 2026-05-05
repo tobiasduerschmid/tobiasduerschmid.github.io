@@ -185,3 +185,95 @@ html.dark-mode .sebook-figure__caption {
 .sebook-figure__caption--auto {
   display: none;
 }
+
+/* Sighted-on-demand verbose breakdown — every class member, transition,
+   commit, etc. — collapsed by default. Same markup is emitted by the Ruby
+   plugin (static build) and the browser describer (live tutorials). Body
+   text inherits paragraph size; uppercase pill is the only element that
+   may shrink, and only to 0.85em per project rules. */
+.sebook-figure__verbose {
+  margin: 8px 4px 0;
+  border: 1px solid #d6dae0;
+  border-radius: 4px;
+  background: #fafbfc;
+}
+.sebook-figure__verbose > summary {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.92em;
+  font-weight: 600;
+  color: #364152;
+  list-style: revert;
+}
+.sebook-figure__verbose > summary:hover,
+.sebook-figure__verbose > summary:focus-visible {
+  background: #eef1f5;
+}
+.sebook-figure__verbose-body {
+  padding: 8px 14px 12px;
+  border-top: 1px solid #e6e9ee;
+}
+.sebook-figure__verbose-body p {
+  margin: 0 0 8px;
+}
+.sebook-figure__verbose-body section {
+  margin: 8px 0 0;
+}
+.sebook-figure__verbose-body h4 {
+  margin: 0 0 4px;
+  font-size: 1em;
+  font-weight: 600;
+  color: #1f2937;
+}
+.sebook-figure__verbose-body ul {
+  margin: 0 0 0 18px;
+  padding: 0;
+}
+.sebook-figure__verbose-body li {
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+html.dark-mode .sebook-figure__verbose {
+  border-color: #3a4250;
+  background: #1d232c;
+}
+html.dark-mode .sebook-figure__verbose > summary {
+  color: #d8dde6;
+}
+html.dark-mode .sebook-figure__verbose > summary:hover,
+html.dark-mode .sebook-figure__verbose > summary:focus-visible {
+  background: #2a3140;
+}
+html.dark-mode .sebook-figure__verbose-body {
+  border-top-color: #2c333f;
+}
+html.dark-mode .sebook-figure__verbose-body h4 {
+  color: #e6eaf2;
+}
+
+@media (forced-colors: active) {
+  .sebook-figure__verbose {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .sebook-figure__verbose > summary {
+    color: CanvasText;
+  }
+  .sebook-figure__verbose > summary:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+@media print {
+  /* Force the breakdown open in print, since the user can't click in print. */
+  .sebook-figure__verbose[open],
+  .sebook-figure__verbose {
+    background: transparent;
+    border-color: #999;
+  }
+  .sebook-figure__verbose:not([open]) > .sebook-figure__verbose-body {
+    display: block;
+  }
+}

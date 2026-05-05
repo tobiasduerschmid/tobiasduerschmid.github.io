@@ -484,6 +484,473 @@
     return head + ' with ' + counts + detail + '.';
   }
 
+  // ---------- verbose describers ----------
+  // The brief describers above produce a one-paragraph aria-label suitable
+  // for screen-reader announcement of the entire diagram in one swoop. The
+  // verbose variants below produce a structured walk-through that also lists
+  // every member, port, transition, commit, etc. — designed for rendering
+  // inside a sighted-on-demand <details> element next to the figure. Result
+  // shape: { summary: string, sections: [{ heading, items: [string] }] }.
+
+  function describeClassDiagramVerbose(spec) {
+    var classes = [], abstracts = [], interfaces = [];
+    var members = Object.create(null); // name -> { attributes: [], operations: [] }
+    var relationships = [];
+
+    function memberSlot(name) {
+      if (!members[name]) members[name] = { attributes: [], operations: [] };
+      return members[name];
+    }
+
+    // Single line-by-line walk. We track brace depth so an outer class body
+    // can contain `{abstract}`, `{static}`, etc. without confusing the
+    // matcher (a regex that uses `[^{}]*` for the body fails on those).
+    var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
+    var relRe = new RegExp(
+      '^(\\w+)\\s*(?:"([^"]*)"\\s+)?(' + arrowAlt + ')\\s+(?:"([^"]*)"\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+    );
+
+    var depth = 0;
+    var currentClass = null;
+    var currentBody = [];
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+
+      if (depth === 0) {
+        var m;
+        var declMatch = line.match(/^(abstract\s+class|class|interface)\s+(\w+)\s*(\{?)\s*$/);
+        if (declMatch) {
+          var kind = declMatch[1].toLowerCase();
+          var name = declMatch[2];
+          if (kind === 'abstract class' && abstracts.indexOf(name) < 0) abstracts.push(name);
+          else if (kind === 'class' && classes.indexOf(name) < 0) classes.push(name);
+          else if (kind === 'interface' && interfaces.indexOf(name) < 0) interfaces.push(name);
+          memberSlot(name);
+          if (declMatch[3] === '{') {
+            depth = 1;
+            currentClass = name;
+            currentBody = [];
+          }
+          return;
+        }
+        if ((m = line.match(relRe))) {
+          relationships.push({
+            from: m[1], fromMult: m[2], arrow: m[3],
+            toMult: m[4], to: m[5], label: m[6] && m[6].trim()
+          });
+          return;
+        }
+        return;
+      }
+
+      // Inside a class body: count braces to handle `{abstract}` etc.
+      var openCount = (line.match(/\{/g) || []).length;
+      var closeCount = (line.match(/\}/g) || []).length;
+      var endsBlock = false;
+      if (closeCount > openCount && depth + openCount - closeCount === 0) {
+        endsBlock = true;
+        // Strip the trailing class-closing brace (the rest belongs to the body).
+        line = line.replace(/\}\s*$/, '').trim();
+      }
+      depth += openCount - closeCount;
+      if (line) currentBody.push(line);
+      if (endsBlock || depth <= 0) {
+        parseClassBody(currentClass, currentBody.join('\n'), memberSlot);
+        depth = 0;
+        currentClass = null;
+        currentBody = [];
+      }
+    });
+
+    var summary = describeClassDiagram(stripDecorations(spec));
+    var sections = [];
+
+    function sectionForType(label, names) {
+      if (!names.length) return;
+      var items = names.map(function (n) {
+        var slot = members[n] || { attributes: [], operations: [] };
+        var lines = [n];
+        if (slot.attributes.length) {
+          lines.push('Attributes: ' + slot.attributes.join('; '));
+        } else {
+          lines.push('Attributes: none declared');
+        }
+        if (slot.operations.length) {
+          lines.push('Operations: ' + slot.operations.join('; '));
+        } else {
+          lines.push('Operations: none declared');
+        }
+        return lines.join(' — ');
+      });
+      sections.push({ heading: label, items: items });
+    }
+
+    sectionForType('Classes', classes);
+    sectionForType('Abstract classes', abstracts);
+    sectionForType('Interfaces', interfaces);
+
+    if (relationships.length) {
+      var relItems = relationships.map(describeClassRel).filter(Boolean);
+      if (relItems.length) sections.push({ heading: 'Relationships', items: relItems });
+    }
+
+    return { summary: summary, sections: sections };
+  }
+
+  // Parse a class body: each non-empty line is an attribute or operation.
+  // Visibility prefix (+, -, #, ~) and modifiers ({abstract}, {static}) are
+  // expanded into words.
+  function parseClassBody(className, body, slotFn) {
+    var slot = slotFn(className);
+    body.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      // Drop separator lines (e.g. `--`, `..`).
+      if (/^[-.]{2,}$/.test(line)) return;
+
+      var prefix = '';
+      var visMap = { '+': 'public', '-': 'private', '#': 'protected', '~': 'package' };
+      var first = line.charAt(0);
+      if (visMap[first]) {
+        prefix = visMap[first] + ' ';
+        line = line.slice(1).trim();
+      }
+
+      // Extract trailing modifiers like {abstract}, {static}.
+      var modifiers = [];
+      line = line.replace(/\{([^{}]+)\}/g, function (_, kw) {
+        modifiers.push(kw.trim());
+        return '';
+      }).trim();
+
+      if (!line) return;
+      var modSuffix = modifiers.length ? ' (' + modifiers.join(', ') + ')' : '';
+
+      // Operations include parentheses; attributes don't.
+      if (line.indexOf('(') >= 0) {
+        slot.operations.push(prefix + line + modSuffix);
+      } else {
+        slot.attributes.push(prefix + line + modSuffix);
+      }
+    });
+  }
+
+  function describeSequenceDiagramVerbose(spec) {
+    var participants = [], messages = [];
+    var lifeline = [];
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^(participant|actor)\s+(\w+)\s*(?::\s*(.+))?$/i))) {
+        var kind = m[1].toLowerCase();
+        var alias = m[2];
+        var label = (m[3] || '').trim() || alias;
+        participants.push(label);
+        lifeline.push({ kind: kind === 'actor' ? 'Actor' : 'Participant', name: label });
+      } else if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
+        messages.push({ from: m[1], arrow: m[2], to: m[3], text: m[4] && m[4].trim() });
+      } else if ((m = line.match(/^(activate|deactivate|create|destroy)\s+(\w+)/i))) {
+        lifeline.push({ kind: 'Lifecycle', name: m[1].toLowerCase() + ' ' + m[2] });
+      } else if ((m = line.match(/^(opt|alt|loop|par|critical|break|group)\b\s*(.*)$/i))) {
+        lifeline.push({ kind: 'Block', name: m[1] + (m[2] ? ' ' + m[2] : '') });
+      }
+    });
+
+    var summary = describeSequenceDiagram(stripDecorations(spec));
+    var sections = [];
+
+    if (participants.length) {
+      sections.push({ heading: 'Participants', items: participants });
+    }
+
+    if (messages.length) {
+      var msgItems = messages.map(function (m, i) {
+        var verb;
+        switch (m.arrow) {
+          case '-->': case '<<-': case '<--': verb = 'replies to'; break;
+          case '->>': verb = 'asynchronously messages'; break;
+          case '<-':  verb = 'is called by'; break;
+          default:    verb = 'calls';
+        }
+        var payload = m.text ? ' with "' + m.text + '"' : '';
+        return (i + 1) + '. ' + m.from + ' ' + verb + ' ' + m.to + payload;
+      });
+      sections.push({ heading: 'Messages', items: msgItems });
+    }
+
+    return { summary: summary, sections: sections };
+  }
+
+  function describeStateDiagramVerbose(spec) {
+    var states = [];
+    var seen = Object.create(null);
+    var transitions = [];
+
+    function record(name) {
+      if (seen[name] || name === '[*]') return;
+      seen[name] = true;
+      states.push(name);
+    }
+
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^state\s+(\w+)/))) {
+        record(m[1]);
+      } else if ((m = line.match(/^(\[\*\]|\w+)\s*-->\s*(\[\*\]|\w+)\s*(?::\s*(.+))?$/))) {
+        transitions.push({ from: m[1], to: m[2], label: m[3] && m[3].trim() });
+        record(m[1]); record(m[2]);
+      }
+    });
+
+    var summary = describeStateDiagram(stripDecorations(spec));
+    var sections = [];
+
+    if (states.length) sections.push({ heading: 'States', items: states });
+    if (transitions.length) {
+      var ts = transitions.map(function (t) {
+        var from = t.from === '[*]' ? 'the initial pseudostate' : t.from;
+        var to   = t.to   === '[*]' ? 'the final state'        : t.to;
+        var tail = t.label ? ' on ' + t.label : '';
+        return from + ' transitions to ' + to + tail;
+      });
+      sections.push({ heading: 'Transitions', items: ts });
+    }
+    return { summary: summary, sections: sections };
+  }
+
+  function describeComponentDiagramVerbose(spec) {
+    var components = [];
+    var info = Object.create(null);
+    var portOwner = Object.create(null);
+    var connections = [];
+    var current = null;
+
+    function ensure(name) {
+      if (!info[name]) info[name] = { in: [], out: [], provides: [], requires: [] };
+      return info[name];
+    }
+
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^component\s+"?(\w+)"?\s*(\{?)/))) {
+        if (components.indexOf(m[1]) < 0) components.push(m[1]);
+        ensure(m[1]);
+        current = m[2] === '{' ? m[1] : null;
+      } else if (line === '}') {
+        current = null;
+      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"\s+as\s+(\w+)/i))) {
+        var key = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
+        ensure(current)[key].push(m[2]);
+        portOwner[m[3]] = current;
+      } else if (current && (m = line.match(/^(portin|portout|provide|require)\s+"([^"]+)"/i))) {
+        var key2 = { portin: 'in', portout: 'out', provide: 'provides', require: 'requires' }[m[1].toLowerCase()];
+        ensure(current)[key2].push(m[2]);
+      } else if ((m = line.match(/^(\w+)\s+(-->|--|\.\.>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
+        var from = portOwner[m[1]] || m[1];
+        var to   = portOwner[m[3]] || m[3];
+        connections.push({ from: from, arrow: m[2], to: to, label: m[4] && m[4].trim() });
+      }
+    });
+
+    var summary = describeComponentDiagram(stripDecorations(spec));
+    var sections = [];
+
+    if (components.length) {
+      var compItems = components.map(function (c) {
+        var h = info[c] || { provides: [], requires: [], in: [], out: [] };
+        var bits = [];
+        if (h.provides.length) bits.push('provides ' + h.provides.join(', '));
+        if (h.requires.length) bits.push('requires ' + h.requires.join(', '));
+        if (h.in.length)       bits.push('incoming ports ' + h.in.join(', '));
+        if (h.out.length)      bits.push('outgoing ports ' + h.out.join(', '));
+        return bits.length ? c + ' — ' + bits.join('; ') : c;
+      });
+      sections.push({ heading: 'Components', items: compItems });
+    }
+
+    if (connections.length) {
+      var connItems = connections.map(function (c) {
+        var verb;
+        switch (c.arrow) {
+          case '..>': verb = 'depends on'; break;
+          case '-->': verb = 'connects to'; break;
+          default:    verb = 'is associated with';
+        }
+        var label = c.label ? ' labeled "' + c.label + '"' : '';
+        return c.from + ' ' + verb + ' ' + c.to + label;
+      });
+      sections.push({ heading: 'Connections', items: connItems });
+    }
+
+    return { summary: summary, sections: sections };
+  }
+
+  function describeUsecaseDiagramVerbose(spec) {
+    var actors = [], usecases = [];
+    var aliasMap = Object.create(null);
+    var relationships = [];
+
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^actor\s+"?([^"\n]+?)"?\s*(?:as\s+(\w+))?$/i))) {
+        var name = m[1].trim();
+        if (actors.indexOf(name) < 0) actors.push(name);
+      } else if ((m = line.match(/^usecase\s+"([^"]+)"\s*as\s+(\w+)/i))) {
+        if (usecases.indexOf(m[1]) < 0) usecases.push(m[1]);
+        aliasMap[m[2]] = m[1];
+      } else if ((m = line.match(/^(\w+)\s+(--|\.\.>|--\|>)\s+(\w+)\s*(?::\s*(.+))?$/))) {
+        relationships.push({ from: m[1], arrow: m[2], to: m[3], label: m[4] && m[4].trim() });
+      }
+    });
+
+    var summary = describeUsecaseDiagram(stripDecorations(spec));
+    var sections = [];
+
+    if (actors.length)   sections.push({ heading: 'Actors',    items: actors });
+    if (usecases.length) sections.push({ heading: 'Use cases', items: usecases });
+
+    if (relationships.length) {
+      var rels = relationships.map(function (r) {
+        function name(id) { return aliasMap[id] ? '"' + aliasMap[id] + '"' : id; }
+        if (r.label && /<<\s*include\s*>>/i.test(r.label)) return name(r.from) + ' includes ' + name(r.to);
+        if (r.label && /<<\s*extend\s*>>/i.test(r.label))  return name(r.from) + ' extends '  + name(r.to);
+        if (r.arrow === '--|>')                            return name(r.from) + ' specializes ' + name(r.to);
+        return name(r.from) + ' associates with ' + name(r.to);
+      });
+      sections.push({ heading: 'Relationships', items: rels });
+    }
+
+    return { summary: summary, sections: sections };
+  }
+
+  function describeActivityDiagramVerbose(spec) {
+    var nodes = [];
+    var seen = Object.create(null);
+    var re = /^\s*:([^;|\n]+);/gm;
+    var m;
+    while ((m = re.exec(spec))) {
+      var n = m[1].trim();
+      if (!seen[n]) { seen[n] = true; nodes.push(n); }
+    }
+    var summary = describeActivityDiagram(stripDecorations(spec));
+    var sections = [];
+    if (nodes.length) {
+      sections.push({
+        heading: 'Activities',
+        items: nodes.map(function (n, i) { return (i + 1) + '. ' + n; })
+      });
+    }
+    return { summary: summary, sections: sections };
+  }
+
+  function describeDeploymentDiagramVerbose(spec) {
+    var nodes = [], artifacts = [];
+    var seenN = Object.create(null), seenA = Object.create(null);
+    spec.replace(/^\s*node\s+"?([^"\n{]+?)"?\s*(?:\{|$)/gim, function (_, n) {
+      n = n.trim(); if (!seenN[n]) { seenN[n] = true; nodes.push(n); } return '';
+    });
+    spec.replace(/^\s*artifact\s+"?([^"\n]+?)"?\s*$/gim, function (_, n) {
+      n = n.trim(); if (!seenA[n]) { seenA[n] = true; artifacts.push(n); } return '';
+    });
+    var summary = describeDeploymentDiagram(stripDecorations(spec));
+    var sections = [];
+    if (nodes.length)     sections.push({ heading: 'Nodes',     items: nodes });
+    if (artifacts.length) sections.push({ heading: 'Artifacts', items: artifacts });
+    return { summary: summary, sections: sections };
+  }
+
+  function describeGitgraphDiagramVerbose(spec) {
+    var branches = [];
+    var byName = Object.create(null);
+    var head = null;
+    var current = null;
+
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^branch\s+(\w[\w./-]*)\s*(?:from\s+(\w+))?\s*:/i))) {
+        var br = { name: m[1], from: m[2] || null, commits: [] };
+        if (!byName[br.name]) {
+          branches.push(br);
+          byName[br.name] = br;
+        }
+        current = byName[br.name];
+      } else if ((m = line.match(/^head\s+(\w[\w./-]*)/i))) {
+        head = m[1];
+      } else if (current && (m = line.match(/^(\S+)\s*"([^"]*)"/))) {
+        current.commits.push({ id: m[1], msg: m[2] });
+      }
+    });
+
+    var summary = describeGitgraphDiagram(stripDecorations(spec));
+    var sections = [];
+
+    if (branches.length) {
+      var brItems = branches.map(function (b) {
+        var label = b.name + ' (' + pluralize(b.commits.length, 'commit', 'commits');
+        if (b.from) label += ', branched from ' + b.from;
+        label += ')';
+        return label;
+      });
+      sections.push({ heading: 'Branches', items: brItems });
+
+      branches.forEach(function (b) {
+        if (!b.commits.length) return;
+        var commitItems = b.commits.map(function (c) {
+          return c.id + ' — ' + (c.msg || '(no message)');
+        });
+        sections.push({ heading: 'Commits on ' + b.name, items: commitItems });
+      });
+    }
+
+    if (head) sections.push({ heading: 'HEAD', items: ['HEAD points to ' + head] });
+
+    return { summary: summary, sections: sections };
+  }
+
+  function describeFolderTreeDiagramVerbose(spec) {
+    var lines = spec.split('\n');
+    var indentUnit = 0;
+    var nonEmpty = [];
+    lines.forEach(function (raw) {
+      if (!raw.trim()) return;
+      nonEmpty.push(raw);
+      if (!indentUnit) {
+        var lead = raw.match(/^(\s*)/)[1].length;
+        if (lead > 0) indentUnit = lead;
+      }
+    });
+
+    var entries = [];
+    nonEmpty.forEach(function (raw) {
+      var lead = raw.match(/^(\s*)/)[1].length;
+      var depth = indentUnit > 0 ? Math.floor(lead / indentUnit) : 0;
+      var name = raw.trim()
+        .replace(/\s+(?:←|<-|#|\/\/)\s+.*$/, '')
+        .replace(/\s+#[\w]+(?:\s+\w+)?$/, '')
+        .trim();
+      if (!name) return;
+      var indent = '';
+      for (var i = 0; i < depth; i++) indent += ' ';
+      var kind = /\/$/.test(name) ? 'folder' : 'file';
+      entries.push(indent + name + ' (' + kind + ')');
+    });
+
+    var summary = describeFolderTreeDiagram(stripDecorations(spec));
+    var sections = [];
+    if (entries.length) sections.push({ heading: 'Entries', items: entries });
+    return { summary: summary, sections: sections };
+  }
+
   // ---------- dispatch ----------
 
   function describe(type, spec) {
@@ -508,6 +975,95 @@
     }
   }
 
+  // Verbose: returns { summary, sections: [{ heading, items: [string] }] }.
+  // Note: verbose describers do NOT pre-strip decorations because they want
+  // to walk the raw spec themselves (class bodies in particular).
+  function describeVerbose(type, spec) {
+    var t = String(type || '').toLowerCase();
+    var s = String(spec || '');
+    try {
+      switch (t) {
+        case 'class':       return describeClassDiagramVerbose(s);
+        case 'sequence':    return describeSequenceDiagramVerbose(s);
+        case 'state':       return describeStateDiagramVerbose(s);
+        case 'component':   return describeComponentDiagramVerbose(s);
+        case 'usecase':     return describeUsecaseDiagramVerbose(s);
+        case 'activity':    return describeActivityDiagramVerbose(s);
+        case 'deployment':  return describeDeploymentDiagramVerbose(s);
+        case 'gitgraph':    return describeGitgraphDiagramVerbose(s);
+        case 'folder-tree': return describeFolderTreeDiagramVerbose(s);
+        default:            return { summary: fallbackCaption(type) + '.', sections: [] };
+      }
+    } catch (e) {
+      if (window.console && console.warn) console.warn('UMLAutoDescribe verbose failed:', e);
+      return { summary: describe(type, spec), sections: [] };
+    }
+  }
+
+  // ---------- HTML rendering for the sighted-on-demand <details> ----------
+  // Identical structure to what `_plugins/uml_static.rb` emits at build time
+  // for static diagrams, so live + static diagrams expose the same drill-in.
+
+  function escapeHTML(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeTypeClass(type) {
+    return String(type || '').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  }
+
+  function buildVerboseDetailsHTML(verbose, type) {
+    if (!verbose || !verbose.sections || !verbose.sections.length) return '';
+    var safe = safeTypeClass(type);
+    var parts = verbose.sections.map(function (section) {
+      var heading = escapeHTML(section.heading);
+      var items = (section.items || []).map(function (item) {
+        return '<li>' + escapeHTML(item) + '</li>';
+      }).join('');
+      return '<section><h4>' + heading + '</h4><ul>' + items + '</ul></section>';
+    }).join('');
+    var intro = verbose.summary
+      ? '<p>' + escapeHTML(verbose.summary) + '</p>'
+      : '';
+    return '<details class="sebook-figure__verbose sebook-figure__verbose--' + safe + '" data-uml-verbose="true">' +
+           '<summary>Detailed description</summary>' +
+           '<div class="sebook-figure__verbose-body">' + intro + parts + '</div>' +
+           '</details>';
+  }
+
+  // Inject (or replace) a <details> sibling with the verbose breakdown next
+  // to a rendered figure. `figureOrSibling` is either the <figure> wrapper
+  // (preferred — we append inside it) or any element whose parent is the
+  // figure (we ascend). No-op when there's no verbose payload to show.
+  function attachVerboseDetails(target, type, spec) {
+    if (!target) return;
+    var verbose;
+    try { verbose = describeVerbose(type, spec); } catch (_) { return; }
+    var html = buildVerboseDetailsHTML(verbose, type);
+    if (!html) return;
+
+    var host = target;
+    while (host && host.tagName && host.tagName.toLowerCase() !== 'figure') {
+      host = host.parentElement;
+    }
+    if (!host) host = target.parentElement || target;
+
+    // Replace any prior auto-injected <details> so we don't pile up duplicates
+    // when a live diagram is re-rendered (tutorial step changes, etc.).
+    var existing = host.querySelector(':scope > details[data-uml-verbose="true"]');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var node = tmp.firstChild;
+    if (node) host.appendChild(node);
+  }
+
   // Apply description to a container element (and any inner SVG it contains).
   function applyDescription(el, type, spec) {
     if (!el) return;
@@ -516,6 +1072,7 @@
     el.setAttribute('aria-label', desc);
     var svg = el.tagName && el.tagName.toLowerCase() === 'svg' ? el : (el.querySelector && el.querySelector('svg'));
     if (svg) svg.setAttribute('aria-label', desc);
+    try { attachVerboseDetails(el, type, spec); } catch (_) { /* leave bundle's output */ }
   }
 
   // The bundle has two render paths and they don't share an aria hook:
@@ -616,6 +1173,10 @@
       // print-stylesheet pipelines from announcing it either.
       var autoCap = slot.querySelector('.sebook-figure__caption--auto');
       if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+
+      // Sighted-on-demand drill-in. Same markup the Ruby plugin emits for
+      // static diagrams, so live + static behave identically.
+      try { attachVerboseDetails(slot, s.type, s.spec); } catch (_) { /* leave bundle output */ }
     }
   }
 
@@ -665,5 +1226,9 @@
   }
 
   // Expose for direct callers (and for tests).
-  window.UMLAutoDescribe = { describe: describe, apply: applyDescription };
+  window.UMLAutoDescribe = {
+    describe: describe,
+    describeVerbose: describeVerbose,
+    apply: applyDescription
+  };
 })();
