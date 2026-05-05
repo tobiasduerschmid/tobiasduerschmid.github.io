@@ -155,12 +155,15 @@ html.dark-mode .uml-gitgraph-fallback-empty {
   color: #b0b8c4;
 }
 
-/* ── Diagram <figure> wrappers (WCAG 2.2 §1.1.1, WCAG 3 figures) ──
-   Mermaid + ArchUML render output is wrapped in <figure><figcaption> so
-   every diagram has a programmatic text alternative. Keep figure margins
-   modest so the diagram still feels inline with the surrounding prose, and
-   give the caption enough contrast to clear AA in both light and dark
-   modes (#444 on white = 9.7:1; #cfd4dc on #121212 = 11.6:1). */
+/* ── Diagram <figure> wrappers ──
+   Mermaid + ArchUML render output is wrapped in <figure>. The rendered SVG
+   carries `role="img"` and an auto-generated `aria-label` derived from the
+   diagram source — that is the WCAG 2.2 §1.1.1 (Non-text Content) text
+   alternative. The optional <figcaption> is reserved for *contextual*
+   author notes that the diagram itself doesn't show; it is omitted when no
+   caption is supplied. Margins stay modest so figures sit inline with
+   prose; caption color clears AA in both modes (#444 on white = 9.7:1;
+   #cfd4dc on #121212 = 11.6:1). */
 .sebook-figure {
   margin: 16px 0 22px;
   padding: 0;
@@ -174,16 +177,4 @@ html.dark-mode .uml-gitgraph-fallback-empty {
 }
 html.dark-mode .sebook-figure__caption {
   color: #cfd4dc;
-}
-/* Auto-generated fallback captions ("UML class diagram", "Mermaid flowchart")
-   are rendered slightly subdued so authors can spot which diagrams still
-   need a real description without the page looking inconsistent. They are
-   still ≥ 4.5:1 in both modes — #5a5a5a on white is 6.8:1; #b8bcc3 on
-   #121212 is 8.9:1. */
-.sebook-figure__caption--auto {
-  font-style: italic;
-  color: #5a5a5a;
-}
-html.dark-mode .sebook-figure__caption--auto {
-  color: #b8bcc3;
 }

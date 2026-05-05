@@ -79,6 +79,32 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 - **Prefer plain identifiers over `"Display Name" as Alias`.** The `"X" as Y` aliasing form has produced duplicate / stray boxes in component diagrams here (the display string leaks out as its own component). Use a single-word identifier directly (`component EventBus`) instead of aliasing. If you truly need a multi-word display label, verify it renders cleanly before committing.
 - **Avoid special characters in labels.** Symbols like `✗`, `✓`, em-dashes, and parentheses-heavy labels have caused layout issues. Spell the meaning out in words.
 
+## Accessibility — aria-label is auto-generated; figcaptions are *contextual only*
+
+Every rendered diagram is wrapped in a `<figure>`. The `_plugins/uml_static.rb` plugin walks the `@startuml` source and emits a verbal structural description as the `aria-label` on the `role="img"` SVG container — "UML class diagram with 6 classes (Customer, VIP, Guest, Order, LineItem, Product) and 1 interface (Billable). VIP extends Customer. Order implements Billable. Customer is associated with Order with multiplicity one to many. Order composes LineItem with multiplicity one to one or more." That auto-generated text is the WCAG 2.2 §1.1.1 (Non-text Content) text alternative — authors do **not** need to write a description that retells what's on the diagram.
+
+The visible `<figcaption>` is therefore reserved for *context the diagram itself doesn't carry* — pedagogical framing, the takeaway you want the reader to land on, why this design was chosen, references to related concepts. If you can't add a caption that does something the SVG and surrounding prose don't already do, leave it off (the plugin renders no figcaption at all when none is supplied).
+
+Set an author caption with `data-uml-caption="…"` on the wrapper `<div>`, or with a leading `caption: …` line in the `@startuml` spec — the attribute wins when both are present:
+
+```html
+<div class="uml-class-diagram-container"
+     data-uml-type="sequence"
+     data-uml-caption="The Façade hides 13 subsystem calls behind one method — that ratio is what makes the pattern earn its keep."
+     data-uml-spec='@startuml
+…
+@enduml'></div>
+```
+
+Good captions add value the diagram alone can't:
+- *"This is the same compound that powers MVC — Observer + Strategy + Composite."*
+- *"Why composition, not inheritance? Adding rocket-powered ducks would explode the hierarchy."*
+- *"The chain of filled diamonds models cascade-on-delete; SQL `ON DELETE CASCADE` is the database analog."*
+
+Bad captions (leave them off):
+- *"UML class diagram showing the Façade pattern roles — a Client delegates to a Façade that hides three Subsystem classes."* (Just retells the diagram. The aria-label already does this for screen readers; sighted readers see it directly.)
+- *"Sequence diagram of the OAuth flow."* (Type label only; aria-label already covers it.)
+
 ## Choosing between Freeform and something more specific
 
 Freeform is the "none of the above" escape hatch. Before reaching for it, check whether a formal type fits — a state machine is almost always better drawn with `language-uml-state` than with freeform boxes and arrows, because the renderer gives you proper states, transitions, and initial/final markers for free. Freeform earns its keep for:
