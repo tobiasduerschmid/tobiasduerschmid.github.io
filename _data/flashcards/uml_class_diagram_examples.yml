@@ -51,13 +51,12 @@ cards:
       Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.
 
   - id: 7
-    question: >
-      What relationship is represented in the diagram below, and when is it used?
-
-      <div data-uml-type="class" data-uml-spec="class Train {&#10;  # addStop(stop: Event): void&#10;}&#10;class Event&#10;Train ..> Event"></div>
+    question: "What does a **dashed arrow** (<span class='uml-sym' data-diagram='class' data-sym='..>'></span>) between two classes represent?"
     answer: "A **Dependency** — the weakest relationship. One class temporarily uses another."
     explanation: >
-      A dashed arrow with an open arrowhead (<span class='uml-sym' data-diagram='class' data-sym='..>'></span>) denotes a **Dependency**. It means a class uses another as a method parameter, local variable, return type, or thrown exception — but does not hold a permanent reference. It is the weakest of all class relationships.
+      Dependency means a class uses another as a method parameter, local variable, return type, or thrown exception — but does not hold a permanent reference. It is the weakest of all class relationships.
+
+      <div data-uml-type="class" data-uml-spec="class Train {&#10;  # addStop(stop: Event): void&#10;}&#10;class Event&#10;Train ..> Event"></div>
 
   - id: 8
     question: |
