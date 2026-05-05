@@ -8,6 +8,13 @@ const {
   expectStepCount,
   expectRenderedStepTests,
 } = require('./tutorial-helpers');
+const { a11yCheckpoint } = require('./a11y-helpers');
+
+// Feature key for `A11Y_INTERACTIVE_FEATURES`. With the flag enabled
+// (`A11Y_INTERACTIVE_CHECKS=1`) this spec runs an axe pass at every step's
+// post-solution state and at every quiz gate. With the env var omitted the
+// checkpoints below are no-ops.
+const A11Y_FEATURE = 'playwright-tutorial';
 
 /**
  * Tests: Playwright Tutorial — End-to-End Testing for React Apps (React backend
@@ -85,13 +92,17 @@ test.describe.serial('Playwright Tutorial', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
+  /** @type {import('@playwright/test').BrowserContext} */
+  let context;
+
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
+    context = await browser.newContext();
+    page = await context.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
-  test.afterAll(async () => { await page?.close(); });
+  test.afterAll(async () => { await context?.close(); });
 
   // --- Structure ---
 
@@ -165,13 +176,17 @@ test.describe.serial('Playwright Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
+  /** @type {import('@playwright/test').BrowserContext} */
+  let context;
+
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
+    context = await browser.newContext();
+    page = await context.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
-  test.afterAll(async () => { await page?.close(); });
+  test.afterAll(async () => { await context?.close(); });
 
   for (let i = 0; i < steps.length; i++) {
     const step   = steps[i];
@@ -184,6 +199,7 @@ test.describe.serial('Playwright Tutorial — step-by-step', () => {
         }
         await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
         await expectRenderedStepTests(page, step);
+        await a11yCheckpoint(page, `playwright tutorial — step ${i + 1} all tests passing`, { feature: A11Y_FEATURE, darkMode: true });
       });
     }
 
@@ -191,9 +207,11 @@ test.describe.serial('Playwright Tutorial — step-by-step', () => {
       test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
         await page.locator('.tvm-btn-next').click();
         await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
+        await a11yCheckpoint(page, `playwright tutorial — step ${i + 1} quiz gate (first question)`, { feature: A11Y_FEATURE, darkMode: true });
         await answerQuizCorrectly(page);
         await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
         await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
+        await a11yCheckpoint(page, `playwright tutorial — step ${i + 1} quiz results`, { feature: A11Y_FEATURE, darkMode: true });
         await page.locator('.tvm-quiz-continue-btn').click();
         await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
       });

@@ -5,6 +5,29 @@
 (function () {
   'use strict';
 
+  const SCROLLABLE_REGION_SELECTOR = [
+    '.highlight > pre',
+    '.highlighter-rouge .highlight pre',
+    'pre.highlight',
+    '.tvm-step-content-wrap',
+    '.tvm-editor-tabs',
+    '.tvm-git-graph-container',
+    '.tvm-output-container',
+    '.tvm-diagram-content',
+    '.git-command-lab__rebase-file',
+  ].join(', ');
+
+  const MEASURED_SCROLLABLE_SELECTOR = [
+    '.highlight > pre',
+    '.highlighter-rouge .highlight pre',
+    'pre.highlight',
+    '.git-command-lab__rebase-file',
+  ].join(', ');
+
+  function isScrollable(el) {
+    return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
+  }
+
   function makeScrollableCodeBlocksFocusable() {
     // Rouge renders <div class="highlight"><pre>...</pre></div> for fenced
     // code. When the pre overflows horizontally, keyboard-only users can't
@@ -22,25 +45,13 @@
     // are intentionally hidden from AT (e.g. tab-panel back-faces, alternate
     // language tabs) and a focusable element inside aria-hidden is itself a
     // WCAG 4.1.2 violation.
-    const blocks = document.querySelectorAll('.highlight > pre, .highlighter-rouge .highlight pre, pre.highlight');
+    const blocks = document.querySelectorAll(SCROLLABLE_REGION_SELECTOR);
     blocks.forEach((pre) => {
       if (pre.hasAttribute('tabindex')) return;
       if (pre.closest('[aria-hidden="true"]')) return;
       if (pre.closest('.inline-language-panel')) return;
-      if (pre.scrollWidth <= pre.clientWidth && pre.scrollHeight <= pre.clientHeight) return;
+      if (pre.matches(MEASURED_SCROLLABLE_SELECTOR) && !isScrollable(pre)) return;
       pre.setAttribute('tabindex', '0');
-    });
-
-    // Scrollable tutorial step content (rendered by the tutorial JS), the
-    // editor tab row, and live Git graph regions can all produce overflow
-    // regions that axe flags as `scrollable-region-focusable`. Same fix.
-    const otherScrollable = document.querySelectorAll(
-      '.tvm-step-content-wrap, .tvm-editor-tabs, .tvm-git-graph-container',
-    );
-    otherScrollable.forEach((el) => {
-      if (el.hasAttribute('tabindex')) return;
-      if (el.closest('[aria-hidden="true"]')) return;
-      el.setAttribute('tabindex', '0');
     });
   }
 
@@ -101,17 +112,48 @@
   // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and
   // Rouge code blocks inside dynamically-rendered content are inserted
   // AFTER DOMContentLoaded by the tutorial JS. Re-run the patch a few times
-  // post-load to catch them — but don't keep a long-lived MutationObserver
-  // wired to document.body, since the tutorial's init burst fires hundreds
-  // of mutations and the constant querySelectorAll(...) sweep adds up.
+  // post-load, then keep one throttled observer for later step transitions.
   function scheduleLatePasses() {
     [200, 800, 2500, 6000].forEach((ms) => setTimeout(run, ms));
   }
 
+  function installDynamicScrollableRegionObserver() {
+    if (!document.body || window.__sebookScrollableA11yObserverInstalled) return;
+    window.__sebookScrollableA11yObserverInstalled = true;
+
+    let scheduled = false;
+    const schedule = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => {
+        scheduled = false;
+        try { makeScrollableCodeBlocksFocusable(); } catch (e) { /* non-fatal */ }
+      });
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          if (node.matches?.(SCROLLABLE_REGION_SELECTOR) || node.querySelector?.(SCROLLABLE_REGION_SELECTOR)) {
+            schedule();
+            return;
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { run(); scheduleLatePasses(); }, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      run();
+      scheduleLatePasses();
+      installDynamicScrollableRegionObserver();
+    }, { once: true });
   } else {
     run();
     scheduleLatePasses();
+    installDynamicScrollableRegionObserver();
   }
 })();

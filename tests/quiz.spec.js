@@ -1,5 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { a11yCheckpoint } = require('./a11y-helpers');
+
+const A11Y_FEATURE = 'quiz';
 
 function parseIndices(value) {
   if (!value) return [];
@@ -86,7 +89,8 @@ test.describe('Interactive Quiz Verification', () => {
     const mcq = activeCard(page);
     await expect(mcq).toHaveAttribute('data-type', 'multiple');
     await expect(mcq).toContainText('Select all that apply');
-    
+    await a11yCheckpoint(page, 'quiz — multiple-choice card unanswered', { feature: A11Y_FEATURE, darkMode: true });
+
     const submitBtn = mcq.locator('.submit-answer-btn');
     await expect(submitBtn).toBeVisible();
     await expect(submitBtn).toBeDisabled();
@@ -101,19 +105,22 @@ test.describe('Interactive Quiz Verification', () => {
     }
 
     await submitBtn.click();
-    
+
     await expect(submitBtn).toBeHidden();
     await expect(mcq.locator('.quiz-explanation')).toBeVisible();
     await expect(mcq.locator('.quiz-option.selected.correct')).toHaveCount(required.length);
+    await a11yCheckpoint(page, 'quiz — multiple-choice card answered (explanation visible)', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('Quiz initialization and basic flow', async ({ page }) => {
     await expect(page.locator('.quiz-header h2')).toHaveText('Review Quiz');
+    await a11yCheckpoint(page, 'quiz — initial question card', { feature: A11Y_FEATURE, darkMode: true });
 
     const firstCard = activeCard(page);
     await clickCorrectSingle(firstCard);
     await expect(firstCard.locator('.quiz-option.correct')).toHaveCount(1);
     await expect(firstCard.locator('.quiz-explanation')).toBeVisible();
+    await a11yCheckpoint(page, 'quiz — single-choice card answered correctly', { feature: A11Y_FEATURE, darkMode: true });
 
     await advanceAnsweredQuestion(page);
 
@@ -142,15 +149,17 @@ test.describe('Interactive Quiz Verification', () => {
 
     await expect(page.locator('.quiz-results')).toBeVisible();
     await expect(page.locator('.current-score')).toHaveText('4');
+    await a11yCheckpoint(page, 'quiz — results screen with review button', { feature: A11Y_FEATURE, darkMode: true });
 
     await expect(page.locator('.review-btn')).toBeVisible();
     await page.locator('.review-btn').click();
 
     // Verify we are back at Question 3 (the incorrect one)
     await expect(activeCard(page)).toHaveAttribute('data-question-index', missedQuestionIndex);
-    
+
     // Verify options are reset in review mode
     await expect(activeCard(page).locator('.quiz-option.incorrect')).toHaveCount(0);
+    await a11yCheckpoint(page, 'quiz — review mode restored card', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('Quiz restart functionality', async ({ page }) => {

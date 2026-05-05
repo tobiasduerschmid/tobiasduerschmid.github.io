@@ -146,6 +146,7 @@
     if (spec.rebaseFile) {
       var file = document.createElement('pre');
       file.className = 'git-command-lab__rebase-file';
+      makeScrollableRegionKeyboardReachable(file);
       var fileHeader = document.createElement('div');
       fileHeader.className = 'git-command-lab__rebase-file-header';
       fileHeader.textContent = '~/.git/rebase-merge/git-rebase-todo';
