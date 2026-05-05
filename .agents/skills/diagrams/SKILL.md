@@ -81,7 +81,14 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 
 ## Accessibility — aria-label is auto-generated; figcaptions are *contextual only*
 
-Every rendered diagram is wrapped in a `<figure>`. The `_plugins/uml_static.rb` plugin walks the `@startuml` source and emits a verbal structural description as the `aria-label` on the `role="img"` SVG container — "UML class diagram with 6 classes (Customer, VIP, Guest, Order, LineItem, Product) and 1 interface (Billable). VIP extends Customer. Order implements Billable. Customer is associated with Order with multiplicity one to many. Order composes LineItem with multiplicity one to one or more." That auto-generated text is the WCAG 2.2 §1.1.1 (Non-text Content) text alternative — authors do **not** need to write a description that retells what's on the diagram.
+Every rendered diagram is wrapped in a `<figure>`. Two parallel describers walk the `@startuml` source and emit a verbal structural description that gets set as the `aria-label` on the `role="img"` SVG container:
+
+- **Static production builds** — `_plugins/uml_static.rb` runs at Jekyll render time and bakes the description into the emitted HTML.
+- **Live client-rendered diagrams** (tutorials, popouts, SE Gym, dev-mode SEBook pages) — `js/uml-auto-describe.js` patches `UMLShared.applySvgAccessibility` so every re-render (including the live tutorial diagrams that update as the student types) gets the same description.
+
+Both produce the same output, e.g. *"UML class diagram with 6 classes (Customer, VIP, Guest, Order, LineItem, Product) and 1 interface (Billable). VIP extends Customer. Order implements Billable. Customer is associated with Order with multiplicity one to many. Order composes LineItem with multiplicity one to one or more."* That auto-generated text is the WCAG 2.2 §1.1.1 (Non-text Content) text alternative — authors do **not** need to write a description that retells what's on the diagram.
+
+If you change the describer, change *both* in lockstep — they ship as one feature.
 
 The visible `<figcaption>` is therefore reserved for *context the diagram itself doesn't carry* — pedagogical framing, the takeaway you want the reader to land on, why this design was chosen, references to related concepts. If you can't add a caption that does something the SVG and surrounding prose don't already do, leave it off (the plugin renders no figcaption at all when none is supplied).
 
