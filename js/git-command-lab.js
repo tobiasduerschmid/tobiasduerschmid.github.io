@@ -189,6 +189,14 @@
     var graphHost = document.createElement('div');
     graphHost.className = 'git-command-lab__graph';
     graphHost.setAttribute('data-state-label', 'Before');
+    // Opt this graph into GitGraph's live-a11y mode (see _liveA11y in
+    // js/git-graph.js): every render now updates a polite aria-live status
+    // region with a delta announcement ("commit X added", "HEAD moved to
+    // Y", "branch Z deleted", etc.) instead of leaving us with the bundle's
+    // bare "Git commit graph" aria-label.
+    graphHost.setAttribute('data-git-graph-live', 'true');
+    graphHost.setAttribute('data-git-graph-label',
+      'Git command animation for `' + spec.command + '`');
     graphs.appendChild(graphHost);
 
     var afterHost = document.createElement('div');
@@ -210,8 +218,20 @@
     graph.reserveForStates([beforeData, afterData]);
     graph.render(beforeData);
 
+    // Polite aria-live region scoped to this card. GitGraph's own live
+    // region (enabled by data-git-graph-live above) announces graph deltas
+    // ("commit X added", "HEAD moved", ...); this announcer adds the user
+    // intent — which command was applied or reverted — so a screen-reader
+    // user can tell a button press apart from background updates.
+    var announcer = document.createElement('div');
+    announcer.className = 'sr-only git-command-lab__announcer';
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    container.appendChild(announcer);
+
     var applied = false;
-    function update() {
+    function update(announce) {
       if (applied) {
         graph.render(buildState(spec.after));
         // When a spec declares `undoCommand`, show that as the button label
@@ -227,18 +247,24 @@
         }
         btn.classList.add('git-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'true');
+        if (announce) announcer.textContent = 'Applied: ' + spec.command + '.';
       } else {
         graph.render(buildState(spec.before));
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('git-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'false');
+        if (announce) {
+          announcer.textContent = (spec.undoCommand
+            ? 'Reverted with ' + spec.undoCommand
+            : 'Reverted: ' + spec.command) + '. Back to before state.';
+        }
       }
     }
 
     btn.addEventListener('click', function () {
       applied = !applied;
-      update();
+      update(true);
     });
 
     var controller = {
@@ -414,6 +440,10 @@
 
     var graphHost = document.createElement('div');
     graphHost.className = 'git-command-lab__graph';
+    // Same opt-in as the single-step card so each step's render fires a
+    // delta announcement on the polite live region.
+    graphHost.setAttribute('data-git-graph-live', 'true');
+    graphHost.setAttribute('data-git-graph-label', 'Multi-step git command animation');
     action.appendChild(graphHost);
 
     var graph = new GitGraph(graphHost);
@@ -517,8 +547,14 @@
       outputEl.textContent = stepOutput;
       outputEl.hidden = !stepOutput;
 
-      progressEl.textContent =
-        'Step\u00A0' + (isInitial ? 0 : stepIdx + 1) + '\u00A0of\u00A0' + steps.length;
+      // "Step X of N" plus, when we just moved forward into a step, the
+      // command that was applied \u2014 so the polite announcement on click
+      // tells a screen-reader user *what changed*. (GitGraph's own delta
+      // announcer is already wired up via data-git-graph-live above.)
+      var stepLabel = 'Step\u00A0' + (isInitial ? 0 : stepIdx + 1) + '\u00A0of\u00A0' + steps.length;
+      progressEl.textContent = (isInitial || !steps[stepIdx])
+        ? stepLabel + ' (initial state).'
+        : stepLabel + ': applied ' + steps[stepIdx].command + '.';
 
       if (isLast) {
         icon.textContent = '\u21BA';  // ↺

@@ -552,12 +552,32 @@
     btn.appendChild(cmdEl);
     action.appendChild(btn);
 
-    // Interactive tree (screen only — hidden in print).
+    // Interactive tree (screen only — hidden in print). Marked as a region
+    // with role="img" so screen readers announce the verbal description we
+    // generate from the tree spec via UMLAutoDescribe (see js/uml-auto-
+    // describe.js). The TreeAnimator already manages an aria-live region
+    // that announces changed rows on each transition.
     var treeWrap = document.createElement('div');
     treeWrap.className = 'fs-command-lab__tree';
+    treeWrap.setAttribute('role', 'img');
     action.appendChild(treeWrap);
 
     var animator = TreeAnimator(treeWrap);
+
+    // Compute and apply the structural aria-label for the current tree.
+    // Uses window.UMLAutoDescribe.describe('folder-tree', spec) when
+    // available; falls back to a generic label so we never end up with no
+    // text alternative. Called every time the state changes so the
+    // announcement reflects the current tree.
+    function ariaTreeLabel(state) {
+      var text = buildTreeText(state || {});
+      var ad = window.UMLAutoDescribe;
+      if (ad && typeof ad.describe === 'function') {
+        try { return ad.describe('folder-tree', text); } catch (_) { /* fall through */ }
+      }
+      return 'Filesystem command animation tree.';
+    }
+    treeWrap.setAttribute('aria-label', ariaTreeLabel(spec.before));
 
     // Output lives inside the tree wrapper, after the slots, so it sits
     // flush against the tree (no flex gap between them) and stays within
@@ -595,11 +615,22 @@
     printPair.appendChild(makePrintCell('Before', spec.before));
     printPair.appendChild(makePrintCell('After', spec.after));
 
+    // Polite aria-live region for command-level announcements ("Applied
+    // mkdir docs", "Reverted: mkdir docs"). The TreeAnimator's own live
+    // region announces the row-level delta ("Changed rows: docs/").
+    var announcer = document.createElement('div');
+    announcer.className = 'sr-only fs-command-lab__announcer';
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    container.appendChild(announcer);
+
     var applied = false;
-    function update() {
+    function update(announce) {
       var state = applied ? spec.after : spec.before;
       animator.render(buildTreeText(state));
       renderOutputInto(output, state, applied);
+      treeWrap.setAttribute('aria-label', ariaTreeLabel(state));
       // Burst the output box when it becomes visible after an action click.
       if (applied && output.classList.contains('fs-command-lab__output--visible')) {
         burstOutputBox(output);
@@ -609,18 +640,20 @@
         cmdEl.textContent = 'Undo ' + spec.command;
         btn.classList.add('fs-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'true');
+        if (announce) announcer.textContent = 'Applied: ' + spec.command + '.';
       } else {
         icon.textContent = '\u25B6';
         cmdEl.textContent = spec.command;
         btn.classList.remove('fs-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'false');
+        if (announce) announcer.textContent = 'Reverted: ' + spec.command + '. Back to before state.';
       }
     }
 
     btn.addEventListener('click', function () {
       treeWrap.style.minHeight = treeWrap.offsetHeight + 'px';
       applied = !applied;
-      update();
+      update(true);
       setTimeout(function () { treeWrap.style.minHeight = ''; }, 400);
     });
 
@@ -769,9 +802,20 @@
 
     var treeWrap = document.createElement('div');
     treeWrap.className = 'fs-command-lab__tree';
+    treeWrap.setAttribute('role', 'img');
     action.appendChild(treeWrap);
 
     var animator = TreeAnimator(treeWrap);
+
+    function ariaTreeLabel(state) {
+      var text = buildTreeText(state || {});
+      var ad = window.UMLAutoDescribe;
+      if (ad && typeof ad.describe === 'function') {
+        try { return ad.describe('folder-tree', text); } catch (_) { /* fall through */ }
+      }
+      return 'Filesystem command animation tree.';
+    }
+    treeWrap.setAttribute('aria-label', ariaTreeLabel(spec.initialState));
 
     // Output lives inside the tree wrapper, after the slots, so it sits
     // flush against the tree rather than being separated by flex gap.
@@ -843,8 +887,14 @@
 
       descEl.innerHTML = mdToHtml(effectiveDescs[stepIdx + 1]);
 
-      progressEl.textContent =
-        'Step\u00A0' + (isInitial ? 0 : stepIdx + 1) + '\u00A0of\u00A0' + steps.length;
+      // "Step X of N" plus the command that was just applied (when moving
+      // forward into a step) so the polite announcement on click tells a
+      // screen-reader user *what changed*. The TreeAnimator's own live
+      // region announces row-level deltas in addition.
+      var stepLabel = 'Step ' + (isInitial ? 0 : stepIdx + 1) + ' of ' + steps.length;
+      progressEl.textContent = (isInitial || !steps[stepIdx])
+        ? stepLabel + ' (initial state).'
+        : stepLabel + ': applied ' + steps[stepIdx].command + '.';
 
       if (isLast) {
         icon.textContent = '\u21BA';
@@ -860,6 +910,7 @@
 
       var state = isInitial ? spec.initialState : steps[stepIdx].state;
       animator.render(buildTreeText(state));
+      treeWrap.setAttribute('aria-label', ariaTreeLabel(state));
       renderOutputInto(output, state, !isInitial);
       // Burst the output box when a step with output/exit is reached.
       if (!isInitial && output.classList.contains('fs-command-lab__output--visible')) {
