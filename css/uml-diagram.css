@@ -158,12 +158,16 @@ html.dark-mode .uml-gitgraph-fallback-empty {
 /* ── Diagram <figure> wrappers ──
    Mermaid + ArchUML render output is wrapped in <figure>. The rendered SVG
    carries `role="img"` and an auto-generated `aria-label` derived from the
-   diagram source — that is the WCAG 2.2 §1.1.1 (Non-text Content) text
-   alternative. The optional <figcaption> is reserved for *contextual*
-   author notes that the diagram itself doesn't show; it is omitted when no
-   caption is supplied. Margins stay modest so figures sit inline with
-   prose; caption color clears AA in both modes (#444 on white = 9.7:1;
-   #cfd4dc on #121212 = 11.6:1). */
+   diagram source (see js/uml-auto-describe.js) — that is the WCAG 2.2
+   §1.1.1 (Non-text Content) text alternative. The visible <figcaption> is
+   reserved for *contextual* author notes the diagram itself doesn't show.
+
+   Auto-fallback figcaptions ("UML class diagram", "Mermaid sequence
+   diagram", etc. — emitted by both the ArchUML bundle and js/mermaid-
+   theme.js when the author didn't supply a caption) are hidden because
+   they just retell the diagram type and the SVG's aria-label already
+   covers them for screen readers. Authors who want a visible caption
+   supply one explicitly via `caption: …` and that path keeps rendering. */
 .sebook-figure {
   margin: 16px 0 22px;
   padding: 0;
@@ -177,4 +181,7 @@ html.dark-mode .uml-gitgraph-fallback-empty {
 }
 html.dark-mode .sebook-figure__caption {
   color: #cfd4dc;
+}
+.sebook-figure__caption--auto {
+  display: none;
 }
