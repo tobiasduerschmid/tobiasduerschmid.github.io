@@ -96,6 +96,31 @@ async function runAxe(page, { include, exclude, rules } = {}) {
   return builder.analyze();
 }
 
+async function settlePaint(page) {
+  if (page.isClosed()) return;
+  await page.evaluate(
+    () => new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    }),
+  );
+}
+
+// Dark-mode checkpoints flip the site theme class inside an already-rendered
+// interaction state. Several widgets animate background/color changes, and axe
+// can otherwise sample a mid-transition color pair that no user-facing stable
+// state has. Disable motion only while the synthetic theme flip is audited.
+async function installMotionGuard(page) {
+  return page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    `,
+  });
+}
+
 /**
  * Run an axe-core scan against the current page state and assert no WCAG 2.2
  * AA violations. Cheap no-op when interactive checks are disabled.
@@ -123,10 +148,12 @@ async function a11yCheckpoint(page, label, opts = {}) {
     const wasDark = await page.evaluate(
       () => document.documentElement.classList.contains('dark-mode'),
     );
-    if (!wasDark) {
-      await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-    }
+    const motionGuard = await installMotionGuard(page);
     try {
+      if (!wasDark) {
+        await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+      }
+      await settlePaint(page);
       const darkResult = await runAxe(page, {
         include: opts.include,
         exclude: opts.exclude,
@@ -139,8 +166,10 @@ async function a11yCheckpoint(page, label, opts = {}) {
       ).toHaveLength(0);
     } finally {
       if (!wasDark) {
-        await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
+        await page.evaluate(() => document.documentElement.classList.remove('dark-mode')).catch(() => {});
+        await settlePaint(page).catch(() => {});
       }
+      await motionGuard.evaluate((node) => node.remove()).catch(() => {});
     }
   }
 }

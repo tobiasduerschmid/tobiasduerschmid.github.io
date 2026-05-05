@@ -795,6 +795,8 @@
       this.root.classList.add('tvm-split-layout-three-col');
     }
 
+    var outputContainerHtml = '<div class="tvm-output-container" tabindex="0"><pre class="tvm-output-pre"></pre></div>';
+    var diagramContentHtml = '<div class="tvm-diagram-content" tabindex="0"></div>';
     var terminalHtml;
     if (this.config.useTerminal) {
       // Terminal (xterm-backed: v86 / webcontainer) is intentionally NOT
@@ -862,11 +864,11 @@
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
-        '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
+        outputContainerHtml +
         '</div>' +
         '<div class="tvm-uml-right-view" style="display:none">' +
         umlRightToolbar +
-        '<div class="tvm-diagram-content"></div>' +
+        diagramContentHtml +
         '</div>' +
         '</div>';
     } else {
@@ -888,7 +890,7 @@
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
-        '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>';
+        outputContainerHtml;
 
       var hasGitTerminal = this.gitGraphPath && this.config.backend !== 'v86';
       if (hasGitTerminal) {
@@ -956,7 +958,7 @@
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
-          '<div class="tvm-diagram-content"></div>' +
+          diagramContentHtml +
           '</div>'
         : '') +
       '<div class="tvm-http-splitter" style="display:none"></div>' +
@@ -995,7 +997,7 @@
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
-          '<div class="tvm-diagram-content"></div>' +
+          diagramContentHtml +
           '</div>'
         : '') +
       (useBottomLeftUml
@@ -1016,7 +1018,7 @@
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
           '</div>' +
-          '<div class="tvm-diagram-content"></div>' +
+          diagramContentHtml +
           '</div>'
         : '') +
       // Independent option: when output_position: bottom-left is set, the Output
@@ -1150,7 +1152,7 @@
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color" aria-label="Reset diagram accent colour to default">↻</button>' +
           '</div>' +
-          '<div class="tvm-diagram-content"></div>' +
+          diagramContentHtml +
           '</div>'
         : useBottomLeftOutput
         ? ''
@@ -4619,6 +4621,18 @@
     return fileOrder;
   };
 
+  TutorialCode.prototype._reactPreviewBaseCss = function (bodyBg, bodyColor) {
+    return '* { box-sizing: border-box; }\n' +
+      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' +
+      ' padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
+      '[data-bs-theme="dark"] .text-secondary { color: #9ca3af !important; }\n' +
+      '[data-bs-theme="dark"] .btn-outline-secondary { color: #cbd5e1; border-color: #94a3b8; }\n' +
+      '[data-bs-theme="dark"] .btn-outline-secondary:hover,\n' +
+      '[data-bs-theme="dark"] .btn-outline-secondary:focus { color: #0f172a; background-color: #cbd5e1; border-color: #cbd5e1; }\n' +
+      '[data-bs-theme="dark"] .btn-outline-secondary:disabled,\n' +
+      '[data-bs-theme="dark"] .btn-outline-secondary.disabled { color: #94a3b8; background-color: transparent; border-color: #64748b; }\n';
+  };
+
   /**
    * Hot-patch the live preview via postMessage instead of replacing srcdoc.
    * Falls back to a full rebuild if the frame isn't ready (Babel not loaded yet).
@@ -4654,9 +4668,7 @@
     var bodyBg = isDark ? '#1e1e1e' : '#fff';
     var bodyColor = isDark ? '#d4d4d4' : '#333';
     var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
-    var css = '* { box-sizing: border-box; }\n' +
-      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' +
-      ' padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
+    var css = this._reactPreviewBaseCss(bodyBg, bodyColor) +
       customStyles;
 
     var payload = { type: 'react-hot-reload', files: files, css: css, appAlias: appAlias };
@@ -4768,10 +4780,8 @@
       '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>\n' +
       '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
       '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
-      '<style id="__user-styles__">\n* { box-sizing: border-box; }\n' +
-      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
-      '       padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
-      '[data-bs-theme="dark"] .text-secondary { color: #9ca3af !important; }\n' +
+      '<style id="__user-styles__">\n' +
+      this._reactPreviewBaseCss(bodyBg, bodyColor) +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
       scripts + '\n</body>\n</html>';
   };

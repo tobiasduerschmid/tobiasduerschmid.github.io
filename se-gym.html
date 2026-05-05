@@ -116,7 +116,7 @@ layout: sebook
         <div id="difficult-gym-section" style="display: none;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c0392b; padding-bottom: 8px; margin-bottom: 15px;">
             <h2 class="difficult-heading" style="margin: 0; border-bottom: none; padding-bottom: 0;">Difficult Questions</h2>
-            <button id="start-hard-workout-btn" class="gym-btn primary" style="background-color: #c0392b;">Start Hard Workout</button>
+            <button id="start-hard-workout-btn" class="gym-btn danger">Start Hard Workout</button>
           </div>
           <div id="difficult-gym-container">
             <div class="gym-item difficult-gym-item" data-type="difficult" data-id="difficult">
@@ -828,6 +828,15 @@ layout: sebook
     .gym-btn.primary {
       background: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
+    }
+
+    .gym-btn.danger {
+      background: var(--color-error, #b81e2c);
+      color: #fff;
+    }
+
+    .gym-btn.danger:hover:not(:disabled) {
+      background: var(--color-error-hover, #94121e);
     }
 
     .gym-btn.primary:hover:not(:disabled) {
@@ -1866,6 +1875,16 @@ layout: sebook
       background: #444;
     }
 
+    html.dark-mode .gym-btn.danger {
+      background: var(--color-error, #ff8585);
+      color: #0a0a14;
+    }
+
+    html.dark-mode .gym-btn.danger:hover:not(:disabled) {
+      background: var(--color-error-hover, #ffa3a3);
+      color: #0a0a14;
+    }
+
     /* Parsons Dark Mode */
     html.dark-mode .parsons-label { color: #aaa; }
     html.dark-mode .parsons-bank { background: #1a1a1a; border-color: #444; }
@@ -1926,7 +1945,9 @@ layout: sebook
     }
 
     .pd-inactive {
-      opacity: 0.4;
+      /* Inactive groups are made inert/aria-hidden in JS. Keep their visual
+         colors at full strength; opacity lowers rendered text contrast and
+         creates false affordances for users with low vision. */
       pointer-events: none;
       user-select: none;
     }

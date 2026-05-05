@@ -92,13 +92,17 @@ test.describe.serial('Playwright Tutorial', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
+  /** @type {import('@playwright/test').BrowserContext} */
+  let context;
+
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
+    context = await browser.newContext();
+    page = await context.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
-  test.afterAll(async () => { await page?.close(); });
+  test.afterAll(async () => { await context?.close(); });
 
   // --- Structure ---
 
@@ -172,13 +176,17 @@ test.describe.serial('Playwright Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').Page} */
   let page;
 
+  /** @type {import('@playwright/test').BrowserContext} */
+  let context;
+
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
+    context = await browser.newContext();
+    page = await context.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
-  test.afterAll(async () => { await page?.close(); });
+  test.afterAll(async () => { await context?.close(); });
 
   for (let i = 0; i < steps.length; i++) {
     const step   = steps[i];

@@ -1031,7 +1031,7 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await page.reload();
 
     // The difficult count should show exactly 1 card (not duplicated)
-    const difficultCountText = await page.locator('#difficult-count').textContent();
-    expect(difficultCountText).toContain('1');
+    await expect(page.locator('#difficult-gym-section')).toBeVisible();
+    await expect(page.locator('#difficult-count')).toContainText('1');
   });
 });

@@ -215,13 +215,14 @@
   background-color: #f4f6f8;
   border: 1px solid var(--color-border, #d8dde2);
   border-radius: var(--radius-md, 8px);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   font-family: var(--font-mono, 'Fira Code', 'Cascadia Code', Menlo, monospace);
   font-size: 13.5px;
   line-height: 1.45;
 }
 .git-command-lab__rebase-file code {
-  overflow-x: auto;
+  overflow-x: visible;
 }
 .git-command-lab__rebase-file-header {
   padding: 6px 10px;
