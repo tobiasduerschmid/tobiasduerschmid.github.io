@@ -219,17 +219,19 @@
   }
 
   // Public: convert ```mermaid fenced code blocks under `rootEl` into rendered
-  // <figure><div class="mermaid"></div><figcaption></figcaption></figure>.
-  // Idempotent across re-renders because we replace the <pre> wrapper each
-  // time. Retries once if mermaid is still loading.
+  // <figure><div class="mermaid"></div>[<figcaption>]</figure>. Idempotent
+  // across re-renders because we replace the <pre> wrapper each time.
+  // Retries once if mermaid is still loading.
   //
   // Accessibility (WCAG 2.2 §1.1.1, WCAG 3 figure caption requirements):
   // every diagram is wrapped in a <figure> so it's announced as a figure by
-  // screen readers, and given an explicit text alternative. If the source
-  // begins with a `caption:` line (or `%% caption:`), that line becomes the
-  // <figcaption> AND the SVG's accessible name. Otherwise we fall back to a
-  // generic label like "Mermaid flowchart" so the diagram is at least named —
-  // authors should add real captions over time.
+  // screen readers, and given an aria-label as its text alternative. If the
+  // source begins with a `caption:` line (or `%% caption:`), that line becomes
+  // BOTH the visible <figcaption> and the SVG's aria-label. Otherwise we fall
+  // back to a generic label like "Mermaid flowchart" for aria-label only —
+  // we no longer render a *visible* fallback caption because it just retells
+  // the diagram type without adding pedagogical value (mirrors the ArchUML
+  // policy in js/uml-auto-describe.js).
   function render(rootEl) {
     if (!rootEl) return;
     var blocks = rootEl.querySelectorAll('pre > code.language-mermaid');
@@ -242,24 +244,24 @@
       var parsed = extractCaption(code.textContent);
       var caption = parsed.caption;
       var hasExplicitCaption = !!caption;
-      var displayedCaption = caption || guessMermaidLabel(parsed.source);
+      var ariaLabel = caption || guessMermaidLabel(parsed.source);
 
       var figure = document.createElement('figure');
       figure.className = 'sebook-figure sebook-figure--mermaid';
       var div = document.createElement('div');
       div.className = 'mermaid';
       div.setAttribute('role', 'img');
-      div.setAttribute('aria-label', displayedCaption);
+      div.setAttribute('aria-label', ariaLabel);
       div.textContent = parsed.source;
       figure.appendChild(div);
 
-      var figcaption = document.createElement('figcaption');
-      figcaption.className = 'sebook-figure__caption';
-      if (!hasExplicitCaption) {
-        figcaption.classList.add('sebook-figure__caption--auto');
+      // Visible figcaption only when the author explicitly supplied one.
+      if (hasExplicitCaption) {
+        var figcaption = document.createElement('figcaption');
+        figcaption.className = 'sebook-figure__caption';
+        figcaption.textContent = caption;
+        figure.appendChild(figcaption);
       }
-      figcaption.textContent = displayedCaption;
-      figure.appendChild(figcaption);
 
       pre.parentElement.replaceChild(figure, pre);
       divs.push(div);

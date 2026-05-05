@@ -404,17 +404,140 @@
     if (svg) svg.setAttribute('aria-label', desc);
   }
 
-  // Patch UMLShared.applySvgAccessibility once the bundle has loaded.
-  function tryPatch() {
-    if (!window.UMLShared || window.UMLShared.__umlAutoDescribePatched) return !!(window.UMLShared && window.UMLShared.__umlAutoDescribePatched);
+  // The bundle has two render paths and they don't share an aria hook:
+  //   1. UMLShared.renderAll() — used by SEBook pages, popouts, SE Gym. It
+  //      walks the DOM, calls a closure-scoped createArchUmlFigure() to wrap
+  //      each match in <figure>, sets aria-label from the spec's `caption:`
+  //      line or a hardcoded fallback ("UML class diagram"), and replaces
+  //      the original element with the figure. createArchUmlFigure is not
+  //      exported, so we can't patch it directly — we wrap renderAll and do
+  //      a snapshot/replay around it.
+  //   2. UMLShared.applySvgAccessibility(el, type, syntax) — used by the
+  //      live tutorial render path (js/tutorial-code.js calls it after each
+  //      re-render). We monkey-patch it directly.
+  // Both patches are needed; either alone leaves half the diagrams labeled
+  // with the bundle's bare type fallback.
+
+  // The fenced-code-block selectors the bundle uses (mirrored verbatim so
+  // we capture the same elements before they're replaced).
+  var DIAGRAM_SELECTORS = {
+    'class':       'pre > code.language-uml-class',
+    'sequence':    'pre > code.language-uml-sequence',
+    'state':       'pre > code.language-uml-state',
+    'component':   'pre > code.language-uml-component',
+    'deployment':  'pre > code.language-uml-deployment',
+    'usecase':     'pre > code.language-uml-usecase',
+    'activity':    'pre > code.language-uml-activity',
+    'freeform':    'pre > code.diagram-freeform, pre > code.language-freeform',
+    'gitgraph':    'pre > code.diagram-gitgraph, pre > code.language-gitgraph',
+    'folder-tree': 'pre > code.diagram-folder-tree, pre > code.language-folder-tree',
+    'venn':        'pre > code.diagram-venn, pre > code.language-venn',
+    'er':          'pre > code.diagram-er, pre > code.language-er'
+  };
+
+  // Snapshot every diagram about to be rendered. Tracks parent + child index
+  // because the bundle's createArchUmlFigure replaces each match with the
+  // figure at the same DOM position (replaceChild preserves position).
+  function collectSnapshots() {
+    var snapshots = [];
+
+    // Path A: <div data-uml-type="…" data-uml-spec="…">
+    var divs = document.querySelectorAll('[data-uml-type]');
+    for (var i = 0; i < divs.length; i++) {
+      var el = divs[i];
+      if (el.dataset && el.dataset.umlRendered) continue;
+      var type = el.getAttribute('data-uml-type');
+      var spec = el.getAttribute('data-uml-spec');
+      if (!type || !spec) continue;
+      var parent = el.parentElement;
+      if (!parent) continue;
+      snapshots.push({
+        parent: parent,
+        idx: Array.prototype.indexOf.call(parent.children, el),
+        type: type,
+        spec: spec
+      });
+    }
+
+    // Path B: <pre><code class="language-uml-X">…</code></pre>
+    Object.keys(DIAGRAM_SELECTORS).forEach(function (type) {
+      var codes = document.querySelectorAll(DIAGRAM_SELECTORS[type]);
+      for (var j = 0; j < codes.length; j++) {
+        var codeEl = codes[j];
+        var pre = codeEl.parentElement;
+        if (!pre || (pre.dataset && pre.dataset.umlRendered)) continue;
+        var preParent = pre.parentElement;
+        if (!preParent) continue;
+        snapshots.push({
+          parent: preParent,
+          idx: Array.prototype.indexOf.call(preParent.children, pre),
+          type: type,
+          spec: codeEl.textContent
+        });
+      }
+    });
+
+    return snapshots;
+  }
+
+  // After the bundle's renderAll has run, each snapshot's original element
+  // has been replaced — at the same DOM position — with a <figure>. Find
+  // it, override its aria-label with our verbal description, and drop the
+  // bundle's auto-fallback figcaption so it stops cluttering the page.
+  function applySnapshots(snapshots) {
+    for (var i = 0; i < snapshots.length; i++) {
+      var s = snapshots[i];
+      var slot = s.parent && s.parent.children && s.parent.children[s.idx];
+      if (!slot || !slot.classList || !slot.classList.contains('sebook-figure')) continue;
+
+      var desc = describe(s.type, s.spec);
+      if (!desc) continue;
+
+      var container = slot.querySelector('[role="img"]');
+      if (container) container.setAttribute('aria-label', desc);
+
+      // Drop the bundle's bare-type-label "UML class diagram" figcaption.
+      // CSS in css/uml-diagram.css also hides .sebook-figure__caption--auto
+      // as a backstop; removing the node here keeps screen readers /
+      // print-stylesheet pipelines from announcing it either.
+      var autoCap = slot.querySelector('.sebook-figure__caption--auto');
+      if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
+    }
+  }
+
+  function patchApplySvgAccessibility() {
+    if (!window.UMLShared) return false;
+    if (window.UMLShared.__umlAutoDescribeAccessibilityPatched) return true;
     var orig = window.UMLShared.applySvgAccessibility;
     if (typeof orig !== 'function') return false;
     window.UMLShared.applySvgAccessibility = function (el, type, syntax) {
       try { orig.call(this, el, type, syntax); } catch (_) { /* keep going */ }
       try { applyDescription(el, type, syntax); } catch (_) { /* leave bundle's label */ }
     };
-    window.UMLShared.__umlAutoDescribePatched = true;
+    window.UMLShared.__umlAutoDescribeAccessibilityPatched = true;
     return true;
+  }
+
+  function patchRenderAll() {
+    if (!window.UMLShared) return false;
+    if (window.UMLShared.__umlAutoDescribeRenderAllPatched) return true;
+    var orig = window.UMLShared.renderAll;
+    if (typeof orig !== 'function') return false;
+    window.UMLShared.renderAll = function () {
+      var snapshots;
+      try { snapshots = collectSnapshots(); } catch (_) { snapshots = []; }
+      var result = orig.apply(this, arguments);
+      try { applySnapshots(snapshots); } catch (_) { /* leave bundle's labels */ }
+      return result;
+    };
+    window.UMLShared.__umlAutoDescribeRenderAllPatched = true;
+    return true;
+  }
+
+  function tryPatch() {
+    var a = patchRenderAll();
+    var b = patchApplySvgAccessibility();
+    return a && b;
   }
 
   // Try immediately (in case bundle was loaded before us via defer ordering),
