@@ -88,6 +88,7 @@ For code stems specifically, the **cognitive-load budget** is set in `pedagogy.m
 ```yaml
 - id: 1                         # optional — used for analytics (PersonalGym)
   type: single                  # may be omitted (default)
+  difficulty: intermediate      # optional — basic | intermediate | advanced | expert
   question: |
     Markdown question text. Can include code blocks, lists, tables.
   options:
@@ -102,6 +103,8 @@ For code stems specifically, the **cognitive-load budget** is set in `pedagogy.m
   explanation: |
     General explanation, shown for both correct and incorrect outcomes.
 ```
+
+`difficulty` is optional and only applies to standalone SEBook + SEGym quizzes (not tutorial-step quizzes). Permitted values are `basic`, `intermediate`, `advanced`, `expert` (case-insensitive). The same field is supported on flashcards in `_data/flashcards/*.yml`. SEBook embeds always show the difficulty as a color-coded chip with text label; SEGym lets the learner toggle whether the chip shows during the question (the chip always shows on the explanation panel) and lets them check off levels to exclude from the next workout.
 
 ### `type: multiple`
 

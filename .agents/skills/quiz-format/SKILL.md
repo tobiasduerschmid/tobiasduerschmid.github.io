@@ -32,6 +32,8 @@ active: true                  # optional, default true; set false to hide from S
 questions:
   - id: 1                       # optional, used for analytics
     type: single                # 'single' (default), 'multiple', or 'parsons'
+    difficulty: intermediate    # OPTIONAL: basic | intermediate | advanced | expert
+                                # SEBook embeds always show; SEGym is user-toggleable
     question: "Markdown question text"
     options:
       - "Option A"
@@ -46,6 +48,8 @@ questions:
       2: "Misconception note for option 2"
     explanation: "General explanation, shown for both correct and wrong outcomes."
 ```
+
+`difficulty` is also supported on flashcards (`_data/flashcards/*.yml`). It is **not** used for tutorial-step quizzes (tutorial steps already gate on `min_score`).
 
 For tutorial quizzes the same block nests under each step's `quiz:` key inside `_data/tutorials/<name>.yml`, and may add `min_score: 0.8` (gating threshold) and `shuffle: true` (default).
 

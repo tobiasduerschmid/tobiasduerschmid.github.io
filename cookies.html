@@ -415,6 +415,18 @@ info_nav_title: "Browser storage"
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
+      <tr data-storage="cookie" data-key="se-gym-show-difficulty">
+        <td class="storage-key">se-gym-show-difficulty</td>
+        <td>Whether SE Gym shows each card&rsquo;s difficulty level (basic, intermediate, advanced, expert) before you answer. The difficulty is always shown on the explanation panel after you answer.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="cookie" data-key="se-gym-skip-difficulty">
+        <td class="storage-key">se-gym-skip-difficulty</td>
+        <td>JSON array of difficulty levels to exclude from the next workout (subset of <code>basic</code>, <code>intermediate</code>, <code>advanced</code>, <code>expert</code>). Cards without an assigned difficulty are always included.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
     </tbody>
   </table>
   <button class="cookies-btn danger" data-clear-category="gym-cookies" type="button">

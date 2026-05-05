@@ -6,8 +6,11 @@
   var TIMED_MODE_COOKIE = 'se-gym-timer-mode';
   var TIMED_TOTAL_MINUTES_COOKIE = 'se-gym-timer-total-minutes';
   var TIMED_SECONDS_PER_QUESTION_COOKIE = 'se-gym-timer-seconds-per-question';
+  var SHOW_DIFFICULTY_COOKIE = 'se-gym-show-difficulty';
+  var SKIP_DIFFICULTY_COOKIE = 'se-gym-skip-difficulty';
   var DEFAULT_TIMED_TOTAL_MINUTES = 20;
   var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
+  var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
 
   function setCookie(name, value, days) {
     var d = new Date();
@@ -131,6 +134,41 @@
     setCookie(PERF_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
   }
 
+  function isShowDifficulty() {
+    // Default: hidden during the question. Solution panels always show it.
+    return getCookie(SHOW_DIFFICULTY_COOKIE) === 'true';
+  }
+
+  function setShowDifficulty(value) {
+    setCookie(SHOW_DIFFICULTY_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
+  function normalizeDifficultyList(list) {
+    if (!Array.isArray(list)) return [];
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var v = String(list[i] || '').toLowerCase();
+      if (DIFFICULTY_LEVELS.indexOf(v) !== -1 && !seen[v]) {
+        seen[v] = true;
+        out.push(v);
+      }
+    }
+    return out;
+  }
+
+  function getSkippedDifficulties() {
+    var raw = getCookie(SKIP_DIFFICULTY_COOKIE);
+    if (!raw) return [];
+    try { return normalizeDifficultyList(JSON.parse(raw)); }
+    catch (e) { return []; }
+  }
+
+  function setSkippedDifficulties(list) {
+    var normalized = normalizeDifficultyList(list);
+    setCookie(SKIP_DIFFICULTY_COOKIE, JSON.stringify(normalized), COOKIE_DAYS);
+  }
+
   function hashQuestion(html) {
     // Strip HTML tags and normalize whitespace for stable hashing
     var clean = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -193,6 +231,11 @@
     setTimedPracticeSecondsPerQuestion: setTimedPracticeSecondsPerQuestion,
     isAnalyzePerformance: isAnalyzePerformance,
     setAnalyzePerformance: setAnalyzePerformance,
+    isShowDifficulty: isShowDifficulty,
+    setShowDifficulty: setShowDifficulty,
+    getSkippedDifficulties: getSkippedDifficulties,
+    setSkippedDifficulties: setSkippedDifficulties,
+    DIFFICULTY_LEVELS: DIFFICULTY_LEVELS,
     hashQuestion: hashQuestion,
     getStats: getStats,
     saveStats: saveStats,

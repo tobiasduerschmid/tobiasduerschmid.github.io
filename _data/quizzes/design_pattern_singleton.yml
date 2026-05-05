@@ -4,6 +4,7 @@ active: true
 questions:
   - id: 1
     type: single
+    difficulty: intermediate
     question: |
       POSA5 describes the Singleton as "a well-known pattern with a weak solution." What is the core reason for this criticism?
     options:
@@ -23,6 +24,7 @@ questions:
 
   - id: 2
     type: single
+    difficulty: advanced
     question: |
       Two threads simultaneously call `getInstance()` on a classic lazy Singleton. Both find `uniqueInstance == null` and both create a new instance. Which thread-safety approach eliminates this race condition with the **simplest** implementation and **no per-call synchronization overhead** — at the cost of not being lazy?
     options:
@@ -42,6 +44,7 @@ questions:
 
   - id: 3
     type: single
+    difficulty: expert
     question: |
       A system uses Singleton for a database connection pool. A new requirement: the system must support multi-tenant deployments with one pool per tenant. What is the fundamental problem?
     options:

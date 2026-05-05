@@ -221,6 +221,45 @@ info_nav_title: "My Settings"
      stretch full-width so the explanation can breathe. */
   .setting-row-full { grid-template-columns: 1fr; }
 
+  /* Skip-difficulty checkbox group (Bookmarks, gym, and progress). */
+  .settings-difficulty-fieldset {
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
+    padding: 8px 12px 10px;
+    margin: 0;
+  }
+  html.dark-mode .settings-difficulty-fieldset {
+    border-color: #555;
+  }
+  .settings-difficulty-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  .settings-difficulty-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+  }
+  .settings-difficulty-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: 0;
+    accent-color: var(--color-primary, #2774AE);
+    flex-shrink: 0;
+  }
+  .settings-difficulty-option:focus-within {
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
   @media (max-width: 680px) {
     .settings-page {
       padding: 0 12px 48px;
@@ -595,6 +634,64 @@ info_nav_title: "My Settings"
             </div>
           </div>
         </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Show difficulty during the question</p>
+            <p class="setting-description">
+              When on, each SE Gym card shows its difficulty level (basic,
+              intermediate, advanced, or expert) before you answer. The
+              difficulty is always shown on the explanation panel after you
+              answer. Uses the <code>se-gym-show-difficulty</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Show difficulty during question</span>
+                <input type="checkbox" id="setting-show-difficulty" data-setting="showDifficulty" data-status-target="setting-show-difficulty-status" aria-label="Show difficulty during question">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-show-difficulty-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Skip difficulty levels in the next workout</p>
+            <p class="setting-description">
+              Check the difficulty levels you do <em>not</em> want to test
+              right now. Cards at any checked level are excluded from the
+              workout the next time you press <em>Start Workout</em>. Cards
+              without an assigned difficulty are always included. Stored in
+              the <code>se-gym-skip-difficulty</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <fieldset class="settings-difficulty-fieldset">
+              <legend class="sr-only">Difficulty levels to skip</legend>
+              <div class="settings-difficulty-options">
+                <label class="settings-difficulty-option">
+                  <input type="checkbox" data-setting-difficulty="basic" data-setting="skipDifficulty">
+                  <span>Basic</span>
+                </label>
+                <label class="settings-difficulty-option">
+                  <input type="checkbox" data-setting-difficulty="intermediate" data-setting="skipDifficulty">
+                  <span>Intermediate</span>
+                </label>
+                <label class="settings-difficulty-option">
+                  <input type="checkbox" data-setting-difficulty="advanced" data-setting="skipDifficulty">
+                  <span>Advanced</span>
+                </label>
+                <label class="settings-difficulty-option">
+                  <input type="checkbox" data-setting-difficulty="expert" data-setting="skipDifficulty">
+                  <span>Expert</span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
       </div>
     </fieldset>
 
@@ -764,6 +861,31 @@ info_nav_title: "My Settings"
     return value === 'per-question' ? 'per-question' : 'total';
   }
 
+  var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
+
+  function readSkippedDifficulties() {
+    var raw = readCookie('se-gym-skip-difficulty');
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      var seen = {};
+      var out = [];
+      for (var i = 0; i < parsed.length; i++) {
+        var v = String(parsed[i] || '').toLowerCase();
+        if (DIFFICULTY_LEVELS.indexOf(v) !== -1 && !seen[v]) {
+          seen[v] = true;
+          out.push(v);
+        }
+      }
+      return out;
+    } catch (e) { return []; }
+  }
+
+  function writeSkippedDifficulties(list) {
+    writeCookie('se-gym-skip-difficulty', JSON.stringify(list));
+  }
+
   function boundedNumber(value, fallback, min, max) {
     var parsed = parseInt(value, 10);
     if (!isFinite(parsed)) parsed = fallback;
@@ -836,6 +958,12 @@ info_nav_title: "My Settings"
     setCheckbox('setting-se-gym', readCookie('se-gym-active') === 'true');
     setCheckbox('setting-timed-practice', readCookie('se-gym-timed-practice') === 'true');
     setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
+    setCheckbox('setting-show-difficulty', readCookie('se-gym-show-difficulty') === 'true');
+
+    var skippedDifficulties = readSkippedDifficulties();
+    document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {
+      cb.checked = skippedDifficulties.indexOf(cb.getAttribute('data-setting-difficulty')) !== -1;
+    });
 
     var timedMode = document.getElementById('setting-timed-mode');
     if (timedMode) timedMode.value = normalizeTimedMode(readCookie('se-gym-timer-mode'));
@@ -922,6 +1050,18 @@ info_nav_title: "My Settings"
     } else if (setting === 'performance') {
       writeCookie('analyze-performance', target.checked ? 'true' : 'false');
       announce('Performance tracking setting saved.');
+    } else if (setting === 'showDifficulty') {
+      writeCookie('se-gym-show-difficulty', target.checked ? 'true' : 'false');
+      announce('Difficulty visibility setting saved.');
+    } else if (setting === 'skipDifficulty') {
+      var picked = [];
+      document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {
+        if (cb.checked) picked.push(cb.getAttribute('data-setting-difficulty'));
+      });
+      writeSkippedDifficulties(picked);
+      announce(picked.length
+        ? 'Skipping ' + picked.join(', ') + ' in the next workout.'
+        : 'No difficulty levels are being skipped.');
     } else if (setting === 'reducedMotion') {
       if (target.value === 'reduce') writeLS('prefersReducedMotion', '1');
       else clearLS('prefersReducedMotion');

@@ -97,6 +97,44 @@ layout: sebook
             </div>
             <p id="timed-practice-note" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
+          <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
+            <span class="toggle-copy">
+              <span class="toggle-label">Show difficulty during question</span>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about difficulty visibility" aria-describedby="show-difficulty-tooltip">?</button>
+              <span id="show-difficulty-tooltip" role="tooltip" class="info-tooltip">When on, each question shows its difficulty level (basic, intermediate, advanced, expert) before you answer. The difficulty is always shown after you submit, on the explanation panel.</span>
+            </span>
+            <label class="switch">
+              <span class="sr-only">Toggle difficulty visibility during question</span>
+              <input type="checkbox" id="showDifficultyToggle" aria-label="Show difficulty during question">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <fieldset id="difficulty-filter-fieldset" class="difficulty-filter">
+            <legend>Skip difficulty levels</legend>
+            <p class="difficulty-filter-help">Cards whose difficulty matches a checked level are excluded from the next workout. Cards without a difficulty are always included.</p>
+            <div class="difficulty-filter-options">
+              <label class="difficulty-filter-option difficulty-filter-basic">
+                <input type="checkbox" data-difficulty="basic" class="difficulty-filter-checkbox">
+                <span class="difficulty-filter-swatch" aria-hidden="true"></span>
+                <span class="difficulty-filter-text">Basic</span>
+              </label>
+              <label class="difficulty-filter-option difficulty-filter-intermediate">
+                <input type="checkbox" data-difficulty="intermediate" class="difficulty-filter-checkbox">
+                <span class="difficulty-filter-swatch" aria-hidden="true"></span>
+                <span class="difficulty-filter-text">Intermediate</span>
+              </label>
+              <label class="difficulty-filter-option difficulty-filter-advanced">
+                <input type="checkbox" data-difficulty="advanced" class="difficulty-filter-checkbox">
+                <span class="difficulty-filter-swatch" aria-hidden="true"></span>
+                <span class="difficulty-filter-text">Advanced</span>
+              </label>
+              <label class="difficulty-filter-option difficulty-filter-expert">
+                <input type="checkbox" data-difficulty="expert" class="difficulty-filter-checkbox">
+                <span class="difficulty-filter-swatch" aria-hidden="true"></span>
+                <span class="difficulty-filter-text">Expert</span>
+              </label>
+            </div>
+          </fieldset>
           <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
             <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
             <div style="display: inline-flex; align-items: center; gap: 12px;">
@@ -349,7 +387,8 @@ layout: sebook
     explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
-    display: {{ q.display | default: "block" | jsonify }}
+    display: {{ q.display | default: "block" | jsonify }},
+    difficulty: {{ q.difficulty | downcase | jsonify }}
             }, {% endfor %}
           ]
         },
@@ -371,7 +410,8 @@ layout: sebook
     explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
-    display: {{ q.display | default: "block" | jsonify }}
+    display: {{ q.display | default: "block" | jsonify }},
+    difficulty: {{ q.difficulty | downcase | jsonify }}
             }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -386,7 +426,8 @@ layout: sebook
           {% for card in fcdata.cards %} {
         question: {{ card.question | markdownify | jsonify }},
         answer: {{ card.answer | markdownify | jsonify }},
-        explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+        explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
+        difficulty: {{ card.difficulty | downcase | jsonify }}
       }, {% endfor %}
           ]
     },
@@ -399,7 +440,8 @@ layout: sebook
           {% for gym_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[gym_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
       question: {{ card.question | markdownify | jsonify }},
       answer: {{ card.answer | markdownify | jsonify }},
-      explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+      explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
+      difficulty: {{ card.difficulty | downcase | jsonify }}
     }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -1064,6 +1106,152 @@ layout: sebook
       text-transform: uppercase;
       margin-bottom: 8px;
     }
+
+    /* Difficulty badge — same color tokens as the SEBook quiz/flashcards
+       includes (kept in lockstep with `_includes/quiz.html`).
+       Color-coded but always carries a text label so meaning never depends
+       on color alone (WCAG 1.4.1). */
+    .workout-quiz-card .quiz-difficulty,
+    .workout-flashcard .quiz-difficulty {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-left: 6px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      vertical-align: middle;
+    }
+    .workout-quiz-card .quiz-difficulty-prefix,
+    .workout-flashcard .quiz-difficulty-prefix {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.85;
+    }
+    .workout-quiz-card .quiz-difficulty.is-pre-answer,
+    .workout-flashcard .quiz-difficulty.is-pre-answer {
+      display: none;
+    }
+    .workout-quiz-card .quiz-difficulty-basic,
+    .workout-flashcard .quiz-difficulty-basic {
+      background: #e6f4ea; color: #14532d; border-color: #98c8a8;
+    }
+    .workout-quiz-card .quiz-difficulty-intermediate,
+    .workout-flashcard .quiz-difficulty-intermediate {
+      background: #e0ecf6; color: #173a5e; border-color: #97b8d6;
+    }
+    .workout-quiz-card .quiz-difficulty-advanced,
+    .workout-flashcard .quiz-difficulty-advanced {
+      background: #fdf0d8; color: #5a3500; border-color: #d6a35c;
+    }
+    .workout-quiz-card .quiz-difficulty-expert,
+    .workout-flashcard .quiz-difficulty-expert {
+      background: #fbe2e2; color: #5a0d10; border-color: #d29193;
+    }
+    html.dark-mode .workout-quiz-card .quiz-difficulty-basic,
+    html.dark-mode .workout-flashcard .quiz-difficulty-basic {
+      background: #1a3a2a; color: #b8f0c8; border-color: #2f6a4a;
+    }
+    html.dark-mode .workout-quiz-card .quiz-difficulty-intermediate,
+    html.dark-mode .workout-flashcard .quiz-difficulty-intermediate {
+      background: #15283f; color: #b8d6f3; border-color: #3d6a99;
+    }
+    html.dark-mode .workout-quiz-card .quiz-difficulty-advanced,
+    html.dark-mode .workout-flashcard .quiz-difficulty-advanced {
+      background: #3a2a08; color: #fbd99a; border-color: #886433;
+    }
+    html.dark-mode .workout-quiz-card .quiz-difficulty-expert,
+    html.dark-mode .workout-flashcard .quiz-difficulty-expert {
+      background: #3d1a1a; color: #ffc7c7; border-color: #8a3d3d;
+    }
+
+    /* Difficulty filter (workout selection) */
+    .difficulty-filter {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border: 1px solid #767676;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    .difficulty-filter legend {
+      padding: 0 6px;
+      font-weight: 700;
+      font-size: 0.95em;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .difficulty-filter-help {
+      margin: 4px 0 10px;
+      font-size: 0.9em;
+      color: #555;
+      line-height: 1.4;
+    }
+    .difficulty-filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+    }
+    .difficulty-filter-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #333;
+      border: 1px solid transparent;
+    }
+    .difficulty-filter-option input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      min-height: 18px;
+      margin: 0;
+      accent-color: var(--color-primary, #2774AE);
+      flex-shrink: 0;
+    }
+    .difficulty-filter-option:focus-within {
+      outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+      outline-offset: 2px;
+    }
+    .difficulty-filter-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid currentColor;
+      flex-shrink: 0;
+    }
+    .difficulty-filter-basic .difficulty-filter-swatch { background: #98c8a8; color: #14532d; }
+    .difficulty-filter-intermediate .difficulty-filter-swatch { background: #97b8d6; color: #173a5e; }
+    .difficulty-filter-advanced .difficulty-filter-swatch { background: #d6a35c; color: #5a3500; }
+    .difficulty-filter-expert .difficulty-filter-swatch { background: #d29193; color: #5a0d10; }
+    html.dark-mode .difficulty-filter {
+      background: #1f1f1f;
+      border-color: #555;
+    }
+    html.dark-mode .difficulty-filter legend {
+      color: #e0e0e0;
+    }
+    html.dark-mode .difficulty-filter-help {
+      color: #c8c8d8;
+    }
+    html.dark-mode .difficulty-filter-option {
+      color: #e0e0e0;
+    }
+    html.dark-mode .difficulty-filter-basic .difficulty-filter-swatch { background: #2f6a4a; color: #b8f0c8; }
+    html.dark-mode .difficulty-filter-intermediate .difficulty-filter-swatch { background: #3d6a99; color: #b8d6f3; }
+    html.dark-mode .difficulty-filter-advanced .difficulty-filter-swatch { background: #886433; color: #fbd99a; }
+    html.dark-mode .difficulty-filter-expert .difficulty-filter-swatch { background: #8a3d3d; color: #ffc7c7; }
 
     /* Workout Quiz Card */
     .workout-quiz-card {
@@ -2122,6 +2310,8 @@ layout: sebook
       var timedPracticeClockValue = document.getElementById('timed-practice-clock-value');
       var timedPracticeExtendBtn = document.getElementById('timed-practice-extend-btn');
       var timedPracticeStatus = document.getElementById('timed-practice-status');
+      var showDifficultyToggle = document.getElementById('showDifficultyToggle');
+      var difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
 
       // Workout state
       var workoutCards = [];
@@ -2413,11 +2603,20 @@ layout: sebook
           btn.setAttribute('aria-label', (inGym ? 'Remove ' : 'Add ') + name + (inGym ? ' from gym' : ' to gym'));
         });
 
+        var skippedDifficulties = PersonalGym.getSkippedDifficulties();
+        function passesDifficultyFilter(item) {
+          if (!skippedDifficulties.length) return true;
+          if (!item || !item.difficulty) return true;
+          return skippedDifficulties.indexOf(String(item.difficulty).toLowerCase()) === -1;
+        }
+
         // ---- Difficult Questions Gym ----
         var difficultCards = [];
         var hasDifficult = false;
         if (PersonalGym.isAnalyzePerformance()) {
-          difficultCards = getDifficultCards();
+          difficultCards = getDifficultCards().filter(function (dc) {
+            return passesDifficultyFilter(dc.data);
+          });
           hasDifficult = difficultCards.length > 0;
         }
 
@@ -2450,6 +2649,7 @@ layout: sebook
           var items = entry.type === 'quiz' ? data.questions : data.cards;
           var count = items.length;
           items.forEach(function (item) {
+            if (!passesDifficultyFilter(item)) return;
             if (!seenQuestions[item.question]) {
               seenQuestions[item.question] = true;
               totalCards++;
@@ -2622,6 +2822,28 @@ layout: sebook
           extendWorkoutTimer(60);
         });
       }
+
+      // ---- Show-difficulty toggle ----
+      if (showDifficultyToggle) {
+        showDifficultyToggle.checked = PersonalGym.isShowDifficulty();
+        showDifficultyToggle.addEventListener('change', function () {
+          PersonalGym.setShowDifficulty(showDifficultyToggle.checked);
+        });
+      }
+
+      // ---- Skip-difficulty filter checkboxes ----
+      var initialSkip = PersonalGym.getSkippedDifficulties();
+      difficultyFilterCheckboxes.forEach(function (cb) {
+        cb.checked = initialSkip.indexOf(cb.dataset.difficulty) !== -1;
+        cb.addEventListener('change', function () {
+          var picked = [];
+          difficultyFilterCheckboxes.forEach(function (other) {
+            if (other.checked) picked.push(other.dataset.difficulty);
+          });
+          PersonalGym.setSkippedDifficulties(picked);
+          refreshLibrary();
+        });
+      });
 
       // ---- Info button click toggle (for touch devices) ----
       document.querySelectorAll('.info-btn').forEach(function (infoBtn) {
@@ -2838,12 +3060,24 @@ layout: sebook
         var gym = PersonalGym.getGym();
         var cards = [];
         var seenQuestions = {};
+        var skipped = PersonalGym.getSkippedDifficulties();
+
+        // A card is excluded only if it has a difficulty AND that level is in
+        // the skip list. Cards without a difficulty are always included so the
+        // legacy content (no difficulty set) is unaffected.
+        function isAllowedDifficulty(data) {
+          if (!skipped.length) return true;
+          var d = data && data.difficulty;
+          if (!d) return true;
+          return skipped.indexOf(String(d).toLowerCase()) === -1;
+        }
 
         gym.forEach(function (entry) {
           if (entry.type === 'difficult') {
             // Add difficult questions
             var difficultCards = getDifficultCards();
             difficultCards.forEach(function (dc) {
+              if (!isAllowedDifficulty(dc.data)) return;
               if (!seenQuestions[dc.data.question]) {
                 seenQuestions[dc.data.question] = true;
                 cards.push({
@@ -2858,6 +3092,7 @@ layout: sebook
             var quizData = ALL_CARD_DATA.quizzes[entry.id];
             if (!quizData) return;
             quizData.questions.forEach(function (q) {
+              if (!isAllowedDifficulty(q)) return;
               if (!seenQuestions[q.question]) {
                 seenQuestions[q.question] = true;
                 cards.push({
@@ -2872,6 +3107,7 @@ layout: sebook
             var fcData = ALL_CARD_DATA.flashcards[entry.id];
             if (!fcData) return;
             fcData.cards.forEach(function (c) {
+              if (!isAllowedDifficulty(c)) return;
               if (!seenQuestions[c.question]) {
                 seenQuestions[c.question] = true;
                 cards.push({
@@ -3057,6 +3293,27 @@ layout: sebook
 
       // ---- QUIZ CARD RENDERING ----
 
+      function difficultyBadgeHtml(data) {
+        if (!data || !data.difficulty) return '';
+        var level = String(data.difficulty).toLowerCase();
+        var allowed = { basic: 1, intermediate: 1, advanced: 1, expert: 1 };
+        if (!allowed[level]) return '';
+        var label = level.charAt(0).toUpperCase() + level.slice(1);
+        // `is-pre-answer` makes the chip CSS-hidden until the explanation is
+        // revealed (when toggle is off). Removed when the answer is shown.
+        var preAnswerClass = PersonalGym.isShowDifficulty() ? '' : ' is-pre-answer';
+        return '<span class="quiz-difficulty quiz-difficulty-' + level + preAnswerClass +
+          '" data-difficulty="' + level + '" aria-label="Difficulty: ' + label + '">' +
+          '<span class="quiz-difficulty-prefix">Difficulty:</span> ' +
+          '<span class="quiz-difficulty-label">' + label + '</span>' +
+          '</span>';
+      }
+
+      function revealDifficulty(div) {
+        var chip = div.querySelector('.quiz-difficulty');
+        if (chip) chip.classList.remove('is-pre-answer');
+      }
+
       function renderQuizCard(card, workoutIndex) {
         var q = card.data;
         var type = q.type || 'single';
@@ -3081,7 +3338,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', type);
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>';
+        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var optionFeedback = q.option_feedback || {};
@@ -3169,6 +3426,7 @@ layout: sebook
               if (shortcutHint) shortcutHint.classList.add('hidden');
               correctAnswersEl.style.display = 'flex';
               explanationEl.classList.remove('hidden');
+              revealDifficulty(div);
               focusNextButton(div);
               if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
               explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3221,6 +3479,7 @@ layout: sebook
             if (shortcutHint) shortcutHint.classList.add('hidden');
             correctAnswersEl.style.display = 'flex';
             explanationEl.classList.remove('hidden');
+            revealDifficulty(div);
             focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
             explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3276,7 +3535,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', 'parsons');
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>';
+        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var isInline = display === 'inline';
@@ -3403,6 +3662,7 @@ layout: sebook
           if (ca) ca.style.display = 'flex';
           if (exp) {
             exp.classList.remove('hidden');
+            revealDifficulty(div);
             focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
             exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3473,7 +3733,7 @@ layout: sebook
         var div = document.createElement('div');
         div.className = 'workout-flashcard';
 
-        var sourceHtml = '<span class="workout-source-badge flashcard-badge">' + escapeHtml(card.source) + '</span>';
+        var sourceHtml = '<span class="workout-source-badge flashcard-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(c);
 
         div.innerHTML = sourceHtml +
           '<div class="flashcard-question">' + c.question + '</div>' +
@@ -3505,6 +3765,7 @@ layout: sebook
           showBtn.classList.add('hidden');
           assessBtns.classList.remove('hidden');
           if (shortcutHint) shortcutHint.classList.remove('hidden');
+          revealDifficulty(div);
           if (correctBtn && typeof correctBtn.focus === 'function') {
             try { correctBtn.focus({ preventScroll: true }); }
             catch (err) { correctBtn.focus(); }
