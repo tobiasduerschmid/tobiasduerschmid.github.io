@@ -137,7 +137,11 @@ module Jekyll
           items = (section['items'] || []).map do |item|
             "<li>#{CGI.escapeHTML(item.to_s)}</li>"
           end.join
-          %(<section><h4>#{heading}</h4><ul>#{items}</ul></section>)
+          # Styled <p> rather than <h4> so the verbose drill-in doesn't
+          # introduce a fixed heading level inside <figure>; on pages whose
+          # outline hasn't reached <h3> (e.g. flashcards), an <h4> would
+          # skip a level (WCAG 2.4.6).
+          %(<section><p class="sebook-figure__verbose-heading">#{heading}</p><ul>#{items}</ul></section>)
         end.join
 
         summary_text = (verbose['summary'] || '').to_s

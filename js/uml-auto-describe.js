@@ -154,21 +154,96 @@
 
   // ---------- sequence diagrams ----------
 
-  var SEQ_CONTROL = /^(activate|deactivate|create|destroy|opt|alt|else|end|loop|par|critical|break|ref|group|return)\b/i;
+  // Combined-fragment opening keywords (Mermaid/PlantUML/ArchUML share this set).
+  // `else` separates branches inside an open fragment; `end` closes one. Lifecycle
+  // verbs (`activate` etc.) and `ref`/`return` are non-message lines we drop.
+  var SEQ_FRAGMENT_OPEN = /^(opt|alt|loop|par|critical|break|group)\b\s*(.*)$/i;
+  var SEQ_FRAGMENT_ELSE = /^else\b\s*(.*)$/i;
+  var SEQ_FRAGMENT_END  = /^end\b/i;
+  var SEQ_LIFECYCLE     = /^(activate|deactivate|create|destroy|return|ref)\b/i;
 
-  function describeSequenceDiagram(spec) {
-    var participants = [], messages = [];
-    spec.split('\n').forEach(function (raw) {
+  function fragmentLabel(kind, rawLabel) {
+    var label = String(rawLabel || '').trim().replace(/^\[(.*)\]$/, '$1').trim();
+    var bracketed = label ? ' [' + label + ']' : '';
+    switch (kind) {
+      case 'alt':      return 'alt branch' + bracketed;
+      case 'opt':      return 'optional fragment' + bracketed;
+      case 'loop':     return 'loop' + bracketed;
+      case 'par':      return 'parallel branch' + bracketed;
+      case 'critical': return 'critical region' + bracketed;
+      case 'break':    return 'break' + bracketed;
+      case 'group':    return 'group' + bracketed;
+      default:         return kind + bracketed;
+    }
+  }
+
+  function fragmentSignature(stack) {
+    return stack.map(function (f) { return f.kind + ':' + f.label; }).join('|');
+  }
+
+  function fragmentPrefix(stack) {
+    if (!stack.length) return '';
+    return 'in ' + stack.map(function (f) {
+      return fragmentLabel(f.kind, f.label);
+    }).join(', within ');
+  }
+
+  // Shared parser: walks the sequence spec once, tracking the open fragment
+  // stack so each message carries its control-flow context. Both the brief
+  // describer and the verbose <details> drill-in use this so an `alt`/`else`
+  // pair no longer collapses into a flat list of messages.
+  function parseSequenceSpec(spec) {
+    var participants = [];
+    var messages = [];
+    var stack = [];
+    String(spec || '').split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
-      if (SEQ_CONTROL.test(line)) return;
       var m;
+      if ((m = line.match(SEQ_FRAGMENT_OPEN))) {
+        stack.push({ kind: m[1].toLowerCase(), label: (m[2] || '').trim() });
+        return;
+      }
+      if ((m = line.match(SEQ_FRAGMENT_ELSE))) {
+        if (stack.length) stack[stack.length - 1].label = (m[1] || '').trim();
+        return;
+      }
+      if (SEQ_FRAGMENT_END.test(line)) {
+        stack.pop();
+        return;
+      }
+      if (SEQ_LIFECYCLE.test(line)) return;
       if ((m = line.match(/^(participant|actor)\s+(\w+)\s*(?::\s*(.+))?$/i))) {
         participants.push((m[3] || '').trim() || m[2]);
-      } else if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
-        messages.push({ from: m[1], arrow: m[2], to: m[3], text: m[4] && m[4].trim() });
+        return;
+      }
+      if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
+        // Deep-copy frames so a later `else` that mutates the live stack
+        // doesn't retroactively rewrite this message's branch label.
+        var frozenPath = stack.map(function (f) { return { kind: f.kind, label: f.label }; });
+        messages.push({
+          from: m[1], arrow: m[2], to: m[3],
+          text: m[4] && m[4].trim(),
+          fragmentPath: frozenPath
+        });
       }
     });
+    return { participants: participants, messages: messages };
+  }
+
+  function messageVerb(arrow) {
+    switch (arrow) {
+      case '-->': case '<<-': case '<--': return 'replies to';
+      case '->>': return 'asynchronously messages';
+      case '<-':  return 'is called by';
+      default:    return 'calls';
+    }
+  }
+
+  function describeSequenceDiagram(spec) {
+    var parsed = parseSequenceSpec(spec);
+    var participants = parsed.participants;
+    var messages = parsed.messages;
 
     if (!participants.length && !messages.length) return 'UML sequence diagram.';
     var head = participants.length
@@ -176,16 +251,17 @@
       : 'UML sequence diagram';
     if (!messages.length) return head + '.';
 
+    var prevSig = '';
     var msgs = messages.map(function (m) {
-      var verb;
-      switch (m.arrow) {
-        case '-->': case '<<-': case '<--': verb = 'replies to'; break;
-        case '->>': verb = 'asynchronously messages'; break;
-        case '<-':  verb = 'is called by'; break;
-        default:    verb = 'calls';
-      }
       var payload = m.text ? ' with "' + m.text + '"' : '';
-      return m.from + ' ' + verb + ' ' + m.to + payload;
+      var body = m.from + ' ' + messageVerb(m.arrow) + ' ' + m.to + payload;
+      var sig = fragmentSignature(m.fragmentPath);
+      if (sig !== prevSig) {
+        prevSig = sig;
+        var prefix = fragmentPrefix(m.fragmentPath);
+        if (prefix) return prefix + ', ' + body;
+      }
+      return body;
     });
     return head + '. Messages: ' + msgs.join('; ') + '.';
   }
@@ -637,26 +713,9 @@
   }
 
   function describeSequenceDiagramVerbose(spec) {
-    var participants = [], messages = [];
-    var lifeline = [];
-    spec.split('\n').forEach(function (raw) {
-      var line = raw.trim();
-      if (!line) return;
-      var m;
-      if ((m = line.match(/^(participant|actor)\s+(\w+)\s*(?::\s*(.+))?$/i))) {
-        var kind = m[1].toLowerCase();
-        var alias = m[2];
-        var label = (m[3] || '').trim() || alias;
-        participants.push(label);
-        lifeline.push({ kind: kind === 'actor' ? 'Actor' : 'Participant', name: label });
-      } else if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
-        messages.push({ from: m[1], arrow: m[2], to: m[3], text: m[4] && m[4].trim() });
-      } else if ((m = line.match(/^(activate|deactivate|create|destroy)\s+(\w+)/i))) {
-        lifeline.push({ kind: 'Lifecycle', name: m[1].toLowerCase() + ' ' + m[2] });
-      } else if ((m = line.match(/^(opt|alt|loop|par|critical|break|group)\b\s*(.*)$/i))) {
-        lifeline.push({ kind: 'Block', name: m[1] + (m[2] ? ' ' + m[2] : '') });
-      }
-    });
+    var parsed = parseSequenceSpec(spec);
+    var participants = parsed.participants;
+    var messages = parsed.messages;
 
     var summary = describeSequenceDiagram(stripDecorations(spec));
     var sections = [];
@@ -665,17 +724,37 @@
       sections.push({ heading: 'Participants', items: participants });
     }
 
-    if (messages.length) {
-      var msgItems = messages.map(function (m, i) {
-        var verb;
-        switch (m.arrow) {
-          case '-->': case '<<-': case '<--': verb = 'replies to'; break;
-          case '->>': verb = 'asynchronously messages'; break;
-          case '<-':  verb = 'is called by'; break;
-          default:    verb = 'calls';
+    // Surface combined fragments separately so a screen-reader user can
+    // enumerate the control-flow blocks (alt branches, loops, parallels …)
+    // before walking the message list.
+    var fragmentItems = [];
+    var seenFragments = Object.create(null);
+    messages.forEach(function (m) {
+      m.fragmentPath.forEach(function (f) {
+        var key = fragmentLabel(f.kind, f.label);
+        if (!seenFragments[key]) {
+          seenFragments[key] = true;
+          fragmentItems.push(key);
         }
+      });
+    });
+    if (fragmentItems.length) {
+      sections.push({ heading: 'Combined fragments', items: fragmentItems });
+    }
+
+    if (messages.length) {
+      var prevSig = '';
+      var msgItems = messages.map(function (m, i) {
         var payload = m.text ? ' with "' + m.text + '"' : '';
-        return (i + 1) + '. ' + m.from + ' ' + verb + ' ' + m.to + payload;
+        var body = m.from + ' ' + messageVerb(m.arrow) + ' ' + m.to + payload;
+        var sig = fragmentSignature(m.fragmentPath);
+        var line = body;
+        if (sig !== prevSig) {
+          prevSig = sig;
+          var prefix = fragmentPrefix(m.fragmentPath);
+          if (prefix) line = prefix + ', ' + body;
+        }
+        return (i + 1) + '. ' + line;
       });
       sections.push({ heading: 'Messages', items: msgItems });
     }
@@ -1025,7 +1104,11 @@
       var items = (section.items || []).map(function (item) {
         return '<li>' + escapeHTML(item) + '</li>';
       }).join('');
-      return '<section><h4>' + heading + '</h4><ul>' + items + '</ul></section>';
+      // Use a styled paragraph rather than a heading element: the verbose
+      // <details> appears under a <figure> on pages where the surrounding
+      // outline can be h1/h2/h3 already, and a fixed-level heading here would
+      // skip levels (WCAG 2.4.6) on flashcards or other shallow contexts.
+      return '<section><p class="sebook-figure__verbose-heading">' + heading + '</p><ul>' + items + '</ul></section>';
     }).join('');
     var intro = verbose.summary
       ? '<p>' + escapeHTML(verbose.summary) + '</p>'

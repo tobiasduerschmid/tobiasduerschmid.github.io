@@ -219,7 +219,8 @@ html.dark-mode .sebook-figure__caption {
 .sebook-figure__verbose-body section {
   margin: 8px 0 0;
 }
-.sebook-figure__verbose-body h4 {
+.sebook-figure__verbose-body h4,
+.sebook-figure__verbose-body .sebook-figure__verbose-heading {
   margin: 0 0 4px;
   font-size: 1em;
   font-weight: 600;
@@ -248,7 +249,8 @@ html.dark-mode .sebook-figure__verbose > summary:focus-visible {
 html.dark-mode .sebook-figure__verbose-body {
   border-top-color: #2c333f;
 }
-html.dark-mode .sebook-figure__verbose-body h4 {
+html.dark-mode .sebook-figure__verbose-body h4,
+html.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
   color: #e6eaf2;
 }
 
