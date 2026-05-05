@@ -220,19 +220,33 @@
     // Wrap render() so the host's aria-label always reflects the
     // currently-rendered state. Belt-and-suspenders: GitGraph's own live
     // a11y mode (enabled by data-git-graph-live above) already wires up a
-    // polite live region with delta announcements, but if anything stops
-    // _liveA11y from kicking in (timing, override, etc.) the host still
-    // gets a fresh structural label every render.
+    // polite live region with delta announcements, but the host's own
+    // aria-label is what most accessibility tools read first. We
+    // re-derive it from the *exact* data passed to render(), and also
+    // assert it on the SVG and the rendered title element so any
+    // subsequent _applyAccessibility call inside the bundle can't put us
+    // back into a stale state.
+    function refreshGraphAria(data) {
+      try {
+        if (typeof GitGraph.describeData !== 'function' || !data) return;
+        var a11y = GitGraph.describeData(data) || {};
+        var label = a11y.description || a11y.label;
+        if (!label) return;
+        graphHost.setAttribute('role', 'img');
+        graphHost.setAttribute('aria-label', label);
+        var svg = graphHost.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('aria-label', label);
+          svg.removeAttribute('aria-hidden');
+          var titleEl = svg.querySelector(':scope > title');
+          if (titleEl) titleEl.textContent = label;
+        }
+      } catch (_) { /* leave the bundle's label */ }
+    }
     var origRender = graph.render.bind(graph);
     graph.render = function (data) {
       var result = origRender(data);
-      try {
-        if (typeof GitGraph.describeData === 'function') {
-          var a11y = GitGraph.describeData(data) || {};
-          graphHost.setAttribute('role', 'img');
-          if (a11y.description) graphHost.setAttribute('aria-label', a11y.description);
-        }
-      } catch (_) { /* leave the bundle's label */ }
+      refreshGraphAria(data);
       return result;
     };
     graph.render(beforeData);
@@ -466,18 +480,28 @@
     action.appendChild(graphHost);
 
     var graph = new GitGraph(graphHost);
-    // Same render() wrap as the single-step card: re-derives the host's
-    // aria-label from the rendered state on every render.
+    // Same render() wrap as the single-step card.
+    function refreshGraphAria(data) {
+      try {
+        if (typeof GitGraph.describeData !== 'function' || !data) return;
+        var a11y = GitGraph.describeData(data) || {};
+        var label = a11y.description || a11y.label;
+        if (!label) return;
+        graphHost.setAttribute('role', 'img');
+        graphHost.setAttribute('aria-label', label);
+        var svg = graphHost.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('aria-label', label);
+          svg.removeAttribute('aria-hidden');
+          var titleEl = svg.querySelector(':scope > title');
+          if (titleEl) titleEl.textContent = label;
+        }
+      } catch (_) { /* leave the bundle's label */ }
+    }
     var origRender = graph.render.bind(graph);
     graph.render = function (data) {
       var result = origRender(data);
-      try {
-        if (typeof GitGraph.describeData === 'function') {
-          var a11y = GitGraph.describeData(data) || {};
-          graphHost.setAttribute('role', 'img');
-          if (a11y.description) graphHost.setAttribute('aria-label', a11y.description);
-        }
-      } catch (_) { /* leave the bundle's label */ }
+      refreshGraphAria(data);
       return result;
     };
 
