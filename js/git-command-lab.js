@@ -216,6 +216,24 @@
     // never grows the workbench's min-height pin (a new zone acquiring
     // rows). See GitGraph.prototype.reserveForStates.
     graph.reserveForStates([beforeData, afterData]);
+    // Wrap render() so the host's aria-label always reflects the
+    // currently-rendered state. Belt-and-suspenders: GitGraph's own live
+    // a11y mode (enabled by data-git-graph-live above) already wires up a
+    // polite live region with delta announcements, but if anything stops
+    // _liveA11y from kicking in (timing, override, etc.) the host still
+    // gets a fresh structural label every render.
+    var origRender = graph.render.bind(graph);
+    graph.render = function (data) {
+      var result = origRender(data);
+      try {
+        if (typeof GitGraph.describeData === 'function') {
+          var a11y = GitGraph.describeData(data) || {};
+          graphHost.setAttribute('role', 'img');
+          if (a11y.description) graphHost.setAttribute('aria-label', a11y.description);
+        }
+      } catch (_) { /* leave the bundle's label */ }
+      return result;
+    };
     graph.render(beforeData);
 
     // Polite aria-live region scoped to this card. GitGraph's own live
@@ -447,6 +465,20 @@
     action.appendChild(graphHost);
 
     var graph = new GitGraph(graphHost);
+    // Same render() wrap as the single-step card: re-derives the host's
+    // aria-label from the rendered state on every render.
+    var origRender = graph.render.bind(graph);
+    graph.render = function (data) {
+      var result = origRender(data);
+      try {
+        if (typeof GitGraph.describeData === 'function') {
+          var a11y = GitGraph.describeData(data) || {};
+          graphHost.setAttribute('role', 'img');
+          if (a11y.description) graphHost.setAttribute('aria-label', a11y.description);
+        }
+      } catch (_) { /* leave the bundle's label */ }
+      return result;
+    };
 
     // ----- Command output panel (sits below the graph within the action column) -----
     var outputEl = document.createElement('pre');

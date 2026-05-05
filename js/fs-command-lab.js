@@ -349,6 +349,17 @@
       render: function (text) {
         if (!initialized) renderInitial(text);
         else renderTransition(text);
+        // Tightly couple the wrapper's aria-label to the rendered tree so
+        // it can never go stale: every time we render new tree text we
+        // re-derive the structural description from that exact text. Falls
+        // back to a generic label if the describer isn't loaded yet.
+        var ad = window.UMLAutoDescribe;
+        var label = 'Filesystem command animation tree.';
+        if (ad && typeof ad.describe === 'function') {
+          try { label = ad.describe('folder-tree', text); } catch (_) { /* fall through */ }
+        }
+        wrapper.setAttribute('role', 'img');
+        wrapper.setAttribute('aria-label', label);
       },
     };
   }
