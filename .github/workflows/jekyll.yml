@@ -121,6 +121,19 @@ jobs:
           WCAG_AUDIT_FULL_SWEEP: '1'
           CI: 'true'
 
+      # Interactive features (gym, quizzes, tutorials) only render some of
+      # their UI after a learner drives the page — the static URL sweep above
+      # cannot see those post-interaction states. The behavior tests for those
+      # features already reach every state, and the `A11Y_INTERACTIVE_CHECKS`
+      # flag asks them to run an axe pass at each one. Default off; turned on
+      # here so the full audit covers post-interaction screens too.
+      - name: Run interactive-state a11y sweep (gym, quizzes, tutorials)
+        run: npx playwright test tests/se-gym.spec.js tests/quiz.spec.js tests/git-tutorial.spec.js tests/git-advanced-tutorial.spec.js tests/python-tutorial.spec.js tests/java-tutorial.spec.js tests/c-tutorial.spec.js tests/nodejs-tutorial.spec.js tests/react-tutorial.spec.js tests/shell-tutorial.spec.js tests/sql-tutorial.spec.js tests/tdd-tutorial.spec.js tests/testing-foundations-tutorial.spec.js tests/playwright-tutorial.spec.js tests/prolog-tutorial.spec.js tests/makefile-tutorial.spec.js
+        env:
+          A11Y_INTERACTIVE_CHECKS: '1'
+          WCAG_AUDIT_FULL_SWEEP: '1'
+          CI: 'true'
+
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,11 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { a11yCheckpoint } = require('./a11y-helpers');
+
+// Feature key used by `A11Y_INTERACTIVE_FEATURES` to scope a targeted sweep
+// (e.g. `A11Y_INTERACTIVE_FEATURES=se-gym`). Without the env var or with
+// `A11Y_INTERACTIVE_CHECKS` unset, every `a11yCheckpoint` below is a no-op.
+const A11Y_FEATURE = 'se-gym';
 
 const GYM_URL = '/se-gym/';
 // A page with both a quiz and flashcard include
@@ -69,6 +75,7 @@ test.describe('SE Gym - Library View', () => {
     await expect(page.locator('#gym-entrance')).toBeVisible();
     await expect(page.locator('#gym-workout')).toBeHidden();
     await expect(page.locator('h1')).toContainText('SE Gym');
+    await a11yCheckpoint(page, 'gym entrance — inactive (default)', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('activate toggle is off by default and sections are dimmed', async ({ page }) => {
@@ -84,6 +91,7 @@ test.describe('SE Gym - Library View', () => {
     await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
     await expect(page.locator('#gym-controls-body')).not.toHaveClass(/pd-inactive/);
     await expect(page.locator('#gym-entrance-sections')).not.toHaveClass(/pd-inactive/);
+    await a11yCheckpoint(page, 'gym entrance — activated (controls visible)', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('activate toggle persists across page reload', async ({ page }) => {
@@ -311,6 +319,7 @@ test.describe('Personal Gym - Workout', () => {
 
     await expect(page.locator('#gym-workout')).toBeVisible();
     await expect(page.locator('#gym-entrance')).toBeHidden();
+    await a11yCheckpoint(page, 'gym workout — quiz card showing', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('workout shows progress bar', async ({ page, context }) => {
@@ -449,6 +458,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
     // Next button should be visible
     await expect(quizCard.locator('.next-btn')).toBeVisible();
+    await a11yCheckpoint(page, 'gym workout — quiz card with explanation revealed', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('quiz card answer shortcuts select visible options', async ({ page, context }) => {
@@ -543,6 +553,7 @@ test.describe('Personal Gym - Workout', () => {
 
     // Answer should be hidden initially
     await expect(flashcard.locator('.flashcard-answer-container')).toHaveClass(/hidden/);
+    await a11yCheckpoint(page, 'gym workout — flashcard front (answer hidden)', { feature: A11Y_FEATURE, darkMode: true });
 
     // Click "Show Answer"
     await flashcard.locator('.show-answer-btn').click();
@@ -554,6 +565,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(flashcard.locator('.assessment-buttons')).not.toHaveClass(/hidden/);
     await expect(flashcard.locator('.correct-btn')).toBeVisible();
     await expect(flashcard.locator('.incorrect-btn')).toBeVisible();
+    await a11yCheckpoint(page, 'gym workout — flashcard back (answer + assessment)', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('flashcard shortcuts assess revealed cards', async ({ page, context }) => {
@@ -602,6 +614,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-score')).toHaveText('1');
     await expect(page.locator('#workout-total')).toHaveText('1');
+    await a11yCheckpoint(page, 'gym workout — results screen', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('workout results: back to gym entrance works', async ({ page, context }) => {
@@ -758,6 +771,7 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
     await page.goto(GIT_PAGE_URL);
     const toggleBtn = page.locator('.se-gym-toggle').first();
     await expect(toggleBtn).toBeVisible();
+    await a11yCheckpoint(page, 'sebook page — gym toggle button visible', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('+ button toggles to check icon when clicked', async ({ page, context }) => {
@@ -845,6 +859,8 @@ test.describe('Personal Gym - Performance Tracking', () => {
   });
 
   test('difficult questions appear when stats exceed threshold', async ({ page, context }) => {
+    // Marker: this test renders the otherwise-hidden Difficult Questions
+    // section, which is the only way the audit can sweep it.
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(GYM_URL);
@@ -868,6 +884,7 @@ test.describe('Personal Gym - Performance Tracking', () => {
 
     await expect(page.locator('#difficult-gym-section')).toBeVisible();
     await expect(page.locator('.difficult-heading')).toContainText('Difficult Questions');
+    await a11yCheckpoint(page, 'gym entrance — difficult questions section visible', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('difficult gym can be added to workout', async ({ page, context }) => {
