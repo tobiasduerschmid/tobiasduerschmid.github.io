@@ -79,6 +79,29 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 - **Prefer plain identifiers over `"Display Name" as Alias`.** The `"X" as Y` aliasing form has produced duplicate / stray boxes in component diagrams here (the display string leaks out as its own component). Use a single-word identifier directly (`component EventBus`) instead of aliasing. If you truly need a multi-word display label, verify it renders cleanly before committing.
 - **Avoid special characters in labels.** Symbols like `✗`, `✓`, em-dashes, and parentheses-heavy labels have caused layout issues. Spell the meaning out in words.
 
+## Figure captions — set `data-uml-caption` on the wrapper div
+
+Every rendered diagram is wrapped in a `<figure>` with a `<figcaption>`. Without an author-supplied caption the renderer falls back to the diagram type ("UML class diagram", "UML sequence diagram", etc.) styled in italics — that fallback is a flag that the diagram is missing a real description, not a finished caption.
+
+Set a real caption with the `data-uml-caption` attribute on the wrapper `<div>` (see `_plugins/uml_static.rb`):
+
+```html
+<div class="uml-class-diagram-container"
+     data-uml-type="sequence"
+     data-uml-caption="UML sequence diagram showing how watchMovie() fans out to thirteen subsystem calls behind a single Façade method."
+     data-uml-spec='@startuml
+…
+@enduml'></div>
+```
+
+Caption rules:
+
+- Start with the **diagram type** in lowercase ("UML class diagram showing…", "UML state machine diagram of…", "UML sequence diagram showing…"). Following the type with "showing…" or "of…" gives the reader a one-sentence takeaway.
+- Name the **specific entities and relationships** that appear. "UML class diagram showing the Façade pattern" is too vague; "UML class diagram of the Façade pattern roles — a Client delegates to a Façade that hides three Subsystem classes" is concrete.
+- Keep it to **one sentence**. The caption is a takeaway, not a tour of the diagram.
+
+Authors can alternatively put a `caption: …` line at the top of the `@startuml` spec (just under any `layout` lines). The `data-uml-caption` attribute takes precedence when both are present, and is the preferred form because it keeps caption prose out of the diagram source.
+
 ## Choosing between Freeform and something more specific
 
 Freeform is the "none of the above" escape hatch. Before reaching for it, check whether a formal type fits — a state machine is almost always better drawn with `language-uml-state` than with freeform boxes and arrows, because the renderer gives you proper states, transitions, and initial/final markers for free. Freeform earns its keep for:

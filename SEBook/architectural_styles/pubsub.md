@@ -28,7 +28,7 @@ The true "rock star" of this architecture is not the components, but the connect
 
 The canonical topology looks like this — publishers on one side, the topic in the middle, subscribers on the other. Crucially, **no arrow ever crosses directly between a publisher and a subscriber**:
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of the publish-subscribe topology — Publishers send events to a Topic; the Topic notifies multiple Subscribers; Publishers and Subscribers never reference each other directly." data-uml-spec='@startuml
 component Publisher1
 component Publisher2
 component Topic

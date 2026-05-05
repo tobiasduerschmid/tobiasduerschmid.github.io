@@ -59,7 +59,7 @@ The key insight is that **absence of behavior is itself a kind of behavior**, an
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Null Object pattern roles — a Client holds an AbstractObject reference and calls request() uniformly, regardless of whether the collaborator is a RealObject or a NullObject that does nothing." data-uml-spec='@startuml
 layout horizontal
 class Client {
 	- collaborator: AbstractObject
@@ -94,7 +94,7 @@ end note
 
 Consider an audit-logging interface. A `BankTransfer` always tries to log every transaction, but in tests we want to suppress the log output, and for internal system transfers we deliberately omit logging. Instead of guarding every call site with `if (logger != null)`, we introduce a `SilentLogger` Null Object. The `BankTransfer` calls `logger.log(...)` uniformly; the `SilentLogger` simply drops every entry on the floor.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Null Object example — BankTransfer talks to an AuditLogger interface; FileAuditLogger writes real entries; SilentLogger silently drops them as the Null Object." data-uml-spec='@startuml
 layout horizontal
 class BankTransfer {
 	- logger: AuditLogger
@@ -128,7 +128,7 @@ end note
 
 This sequence shows that the call site looks identical regardless of which logger is wired in. The Null Object accepts the message and returns immediately — no exception, no special case, no work performed.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing identical log(...) calls from BankTransfer to FileAuditLogger and SilentLogger — the Null Object accepts the message and returns immediately, with no special case at the call site." data-uml-spec='@startuml
 participant client: BankTransfer
 participant real: FileAuditLogger
 participant nullLog: SilentLogger

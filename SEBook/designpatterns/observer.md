@@ -43,7 +43,7 @@ This creates a loosely coupled system: the *Subject* only knows that its *Observ
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Observer pattern roles — a Subject maintains a one-to-many list of Observers and calls update() on each when its state changes." data-uml-spec='@startuml
 layout horizontal
 interface Subject {
 	+ attach(observer: Observer): void
@@ -84,7 +84,7 @@ note left of ConcreteSubject.getState: return subjectState
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Observer example — a NewsChannel publishes posts to a list of Subscribers, with MobileApp and EmailDigest as concrete observers." data-uml-spec='@startuml
 layout horizontal
 class NewsChannel {
 	- _subscribers: list[Subscriber]
@@ -128,7 +128,7 @@ end note
 
 This pattern is fundamentally about runtime collaboration, so a sequence diagram is helpful here.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how publish_post() triggers _notify_subscribers(), which fans out update() calls to each subscribed observer (and how unfollow() excludes one from later notifications)." data-uml-spec='@startuml
 participant client: Client
 participant channel: NewsChannel
 participant app: MobileApp

@@ -22,7 +22,7 @@ The **Singleton Pattern** solves these issues by ensuring a class has only one i
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Singleton pattern roles — a Singleton class with a private constructor, a static uniqueInstance field, and a public static getInstance() that ClientA and ClientB share." data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Singleton {
@@ -39,7 +39,7 @@ ClientB --> Singleton : getInstance()
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Singleton example — a ChocolateBoiler exposes a static getInstance() so CandyMaker and CleaningCycle never accidentally create a second boiler with conflicting empty/boiled state." data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class ChocolateBoiler {
@@ -60,7 +60,7 @@ CleaningCycle --> ChocolateBoiler : uses
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how separate getInstance() calls from CandyMaker and CleaningCycle return the same ChocolateBoiler object, so subsequent fill() and drain() calls operate on shared state." data-uml-spec='@startuml
 participant maker: CandyMaker
 participant cleaner: CleaningCycle
 participant boiler: ChocolateBoiler

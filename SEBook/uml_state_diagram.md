@@ -3,7 +3,7 @@ title: "UML State Machine Diagrams"
 layout: sebook
 ---
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of an Order's lifecycle — Created → Paid → Shipped → Delivered, with side transitions to Cancelled and Refunded." data-uml-spec='@startuml
 [*] --> Created : Order Placed by Customer
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
@@ -72,7 +72,7 @@ States can have **internal activities** that execute at specific points during t
 - **`exit /`** --- An action that executes every time the state is exited.
 - **`do /`** --- An ongoing activity that runs while the object is in this state.
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram showing entry/do/exit internal activities — Idle and Processing states each declare actions that run on entry, while in the state, and on exit." data-uml-spec='@startuml
 [*] --> Idle : powerOn()
 Idle --> Processing : requestReceived / logRequest()
 Processing --> Idle : complete
@@ -115,7 +115,7 @@ To see how these pieces fit together, let's model the core power and combat syst
 
 When the suit is powered on, it enters an *Idle* state. If its sensors detect a threat, it shifts into *Combat Mode*, deploying repulsors. However, if the suit's arc reactor drops below 5% power, it must immediately override all systems and enter *Emergency Power* mode to preserve life support, regardless of whether a threat is present.
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of an exosuit — powerOn enters Idle; threat detection (with a system-check guard) moves to CombatMode; a low-power guard forces a transition to EmergencyPower regardless of combat status." data-uml-spec='@startuml
 [*] --> Idle : powerOn()
 Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
@@ -142,7 +142,7 @@ The exosuit above introduces the syntax. Now let's see state machines applied to
 
 **Scenario:** A track player has distinct states that determine how it responds to the same button press. Pressing play does nothing when you are *already* playing — but it transitions correctly from `Paused` or `Idle`. This context-dependence is exactly what state machines model.
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of a Spotify-style music player — Idle, Buffering, Playing, and Paused with context-dependent reactions to playButton/pauseButton/stopButton/skipTrack and a Buffering→Idle error path." data-uml-spec='@startuml
 [*] --> Idle : appLaunch()
 Idle --> Buffering : playTrack(trackId)
 Buffering --> Playing : bufferReady
@@ -166,7 +166,7 @@ Playing --> Idle : stopButton
 
 **Scenario:** A pull request moves through a well-defined set of states from creation to merge or closure. Guards prevent premature merging — merging broken code has real consequences in a real system.
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of a GitHub pull request lifecycle — Open, ChangesRequested, Approved, Merged, Closed; the same `reviewSubmitted` event branches on `[hasRejection]` vs `[allApproved]`, and merge requires `[ciPassed]`." data-uml-spec='@startuml
 [*] --> Open : createPR()
 Open --> ChangesRequested : reviewSubmitted [hasRejection]
 ChangesRequested --> Open : pushNewCommit
@@ -191,7 +191,7 @@ Closed --> [*]
 
 **Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — the diagram below shows the simplest case where the only cancellation path fires when the restaurant declines a freshly placed order. (A production system would also model customer-initiated cancellation from `Confirmed` and `Preparing`; we omit those arrows here to keep the happy path readable, but see the *Self-Correction* exercise below.)
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of a food-delivery order — Placed → Confirmed → Preparing → ReadyForPickup → InTransit → Delivered, with an early Cancelled path when the restaurant declines." data-uml-spec='@startuml
 [*] --> Placed : submitOrder()
 Placed --> Confirmed : restaurantAccepts()
 Placed --> Cancelled : restaurantDeclines() / refundPayment()

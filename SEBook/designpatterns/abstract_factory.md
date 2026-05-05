@@ -22,7 +22,7 @@ The design pattern involves these roles:
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Abstract Factory pattern roles — a Client depends on an AbstractFactory and abstract Products; ConcreteFactory1 and ConcreteFactory2 each produce their own coherent family of ProductA/ProductB variants." data-uml-spec='@startuml
 interface AbstractFactory {
     + CreateProductA(): AbstractProductA
     + CreateProductB(): AbstractProductB
@@ -62,7 +62,7 @@ ProductB2 ..|> AbstractProductB
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Abstract Factory example — a CheesePizza requests Dough, Sauce, and Cheese from a PizzaIngredientFactory; NYPizzaIngredientFactory produces ThinCrustDough, MarinaraSauce, and ReggianoCheese as one family." data-uml-spec='@startuml
 layout landscape
 interface PizzaIngredientFactory {
 	+ createDough(): Dough
@@ -92,7 +92,7 @@ NYPizzaIngredientFactory --> ReggianoCheese : creates
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how prepare() calls createDough, createSauce, and createCheese on the same NYPizzaIngredientFactory, guaranteeing the three returned ingredients form a consistent NY-style family." data-uml-spec='@startuml
 participant pizza: CheesePizza
 participant factory: NYPizzaIngredientFactory
 participant dough: ThinCrustDough

@@ -22,7 +22,7 @@ The objects (often called "colleagues") tell the Mediator when their state chang
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Mediator pattern roles — Colleagues only know the Mediator interface; a ConcreteMediator coordinates ColleagueA and ColleagueB so they never reference each other directly." data-uml-spec='@startuml
 layout landscape
 interface Mediator {
 	+ notify(sender: Colleague, event: String): void
@@ -43,7 +43,7 @@ ConcreteMediator --> ColleagueB : coordinates
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Mediator example — a SmartHomeHub mediates between AlarmClock, Calendar, CoffeeMaker, and Sprinkler; each device only knows the SmartHomeMediator, not the other devices." data-uml-spec='@startuml
 layout landscape
 interface SmartHomeMediator {
 	+ notify(sender: Object, event: String): void
@@ -71,7 +71,7 @@ SmartHomeHub --> Sprinkler : commands
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how an AlarmClock notifying the SmartHomeHub of &quot;alarmRang&quot; triggers the hub to query the Calendar and then conditionally brew coffee and skip the sprinkler — none of the devices talk to each other directly." data-uml-spec='@startuml
 participant alarm: AlarmClock
 participant hub: SmartHomeHub
 participant calendar: Calendar

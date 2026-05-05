@@ -3,7 +3,7 @@ title: "UML Component Diagrams"
 layout: sebook
 ---
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of a tiered web architecture — a WebApp talks to an APIGateway over HTTPS; the gateway forwards auth and data requests over gRPC to AuthService and DataService; DataService talks to a Database over SQL." data-uml-spec='@startuml
 component WebApp {
   portout "api" as wa_out
 }
@@ -65,7 +65,7 @@ A **component** is a modular, deployable, and replaceable part of a system that 
 
 In UML, a component is drawn as a rectangle with a small component icon (two small rectangles) in the upper-right corner. In our notation:
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram introducing the component shape — three plain components (Frontend, Backend, Database) drawn as rectangles with the small component icon." data-uml-spec='@startuml
 component Frontend
 component Backend
 component Database
@@ -87,7 +87,7 @@ Components interact through **interfaces**. UML distinguishes two types:
 
 **Required Interface (Socket) <span class="uml-sym" data-diagram="component" data-sym="require"></span>:** An interface that the component **needs from** another component to function. Drawn as a half-circle (socket/arc) connected to the component. "I need this service."
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing provided and required interfaces — OrderService provides IOrderAPI (lollipop) and requires IPayment and IInventory (sockets)." data-uml-spec='@startuml
 component OrderService {
   provide "IOrderAPI" as p1
   require "IPayment" as r1
@@ -104,7 +104,7 @@ A **port** is a named interaction point on a component's boundary. Ports organiz
 - **<span class="uml-sym" data-diagram="component" data-sym="portin"></span>** An incoming port (receives requests), usually placed on the left edge.
 - **<span class="uml-sym" data-diagram="component" data-sym="portout"></span>** An outgoing port (sends requests), usually placed on the right edge.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing ports — PaymentService has an incoming `processPayment` port and an outgoing `bankAPI` port, illustrating port direction on the component boundary." data-uml-spec='@startuml
 component PaymentService {
   portin "processPayment" as ps_in
   portout "bankAPI" as ps_out
@@ -139,7 +139,7 @@ Let's build a component diagram for an online bookstore, one piece at a time. Th
 
 An online bookstore might have: a web application, a catalog service, an order service, a payment service, and a database.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing the bookstore's components before they are wired together — WebApp, CatalogService, OrderService, PaymentService, and Database." data-uml-spec='@startuml
 component WebApp
 component CatalogService
 component OrderService
@@ -151,7 +151,7 @@ component Database
 
 Now we add the communication pathways. The web app sends HTTP requests to the catalog and order services. The order service calls the payment service. Both services query the database.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of the bookstore architecture — WebApp sends REST requests to CatalogService and OrderService; OrderService calls PaymentService over gRPC; both services query a shared Database over SQL." data-uml-spec='@startuml
 component WebApp {
   portout "catalog" as wa_cat
   portout "orders" as wa_ord
@@ -194,7 +194,7 @@ os_db --> db_in2 : SQL
 
 The ball-and-socket notation makes dependencies between components explicit. When one component's **required interface** (socket) connects to another component's **provided interface** (ball), this forms an **assembly connector**---the two pieces "snap together" like a ball fitting into a socket.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing an assembly connector — ShoppingCart's IPayment socket snaps into PaymentGateway's IPayment ball, illustrating ball-and-socket loose coupling." data-uml-spec='@startuml
 component ShoppingCart {
   require "IPayment" as r1
 }
@@ -242,7 +242,7 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 
 Like class diagrams, component diagrams can show **dependency** relationships using dashed arrows. A dependency means one component *uses* another but does not have a strong structural coupling.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing dependency arrows — OrderService has dashed-arrow dependencies on Logger and MetricsCollector for cross-cutting concerns rather than core architectural connections." data-uml-spec='@startuml
 component OrderService
 component Logger
 component MetricsCollector
@@ -264,7 +264,7 @@ These three examples show component diagrams for well-known architectures. Notic
 
 **Scenario:** When you open Netflix and press play, your browser hits an API gateway that routes requests to three specialized backend services. This diagram shows the high-level communication structure of that system.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of a Netflix-style streaming architecture — a WebClient hits an APIGateway hub over HTTPS; the gateway fans out gRPC calls to AuthService, ContentService, and RecommendationEngine." data-uml-spec='@startuml
 component "WebClient" {
   portout "api" as wc_out
 }
@@ -302,7 +302,7 @@ gw_rec --> re_in : gRPC
 
 **Scenario:** A mobile app communicates through an API gateway to the `OrderService`. The `OrderService` depends on an internal `PaymentService` through a formal `IPayment` interface — enabling the payment provider to be swapped without touching `OrderService`.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of an e-commerce microservices backend — a MobileApp talks to an APIGateway, which forwards REST calls to OrderService; OrderService requires the IPayment interface that PaymentService provides, and persists to OrderDB over SQL." data-uml-spec='@startuml
 component "MobileApp" {
   portout "gateway" as app_out
 }
@@ -340,7 +340,7 @@ os_req --> ps_prov
 
 **Scenario:** A developer pushes code; GitHub triggers a build; the build pushes an artifact and optionally deploys it. Slack notifications are a cross-cutting concern — modeled with a dependency (dashed arrow), not a port-based connector.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram of a GitHub Actions CI/CD pipeline — GitHub fires webhooks at BuildService, which pushes to ArtifactRegistry and triggers DeployService; SlackNotifier is shown as a dashed dependency for cross-cutting build-status notifications." data-uml-spec='@startuml
 component "GitHub" {
   portout "events" as gh_ev
 }

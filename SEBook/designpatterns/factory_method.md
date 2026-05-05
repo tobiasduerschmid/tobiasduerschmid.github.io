@@ -45,7 +45,7 @@ The structure involves four key roles (using GoF's names; the parenthesized name
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Factory Method pattern roles — an abstract Creator declares factoryMethod(); a ConcreteCreator subclass overrides it to instantiate a ConcreteProduct that realizes the Product interface." data-uml-spec='@startuml
 abstract class Creator {
     + {abstract} factoryMethod(): Product
     + operation(): void
@@ -69,7 +69,7 @@ end note
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Factory Method example — abstract PizzaStore defines the orderPizza template method; NYPizzaStore overrides createPizza to return an NYStyleCheesePizza." data-uml-spec='@startuml
 abstract class PizzaStore {
     + {abstract} createPizza(type: String): Pizza
     + orderPizza(type: String): Pizza
@@ -93,7 +93,7 @@ NYPizzaStore ..> NYStyleCheesePizza : <<create>>
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how orderPizza calls the subclass's createPizza factory method, then runs the fixed prepare/bake/cut/box template steps on the returned product." data-uml-spec='@startuml
 actor customer: Customer
 participant store: NYPizzaStore
 participant pizza: NYStyleCheesePizza
