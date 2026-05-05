@@ -69,7 +69,7 @@ Here is a taste of each diagram type. Each is covered in detail in its own chapt
 
 ### Class Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an online-store domain — Customer (with VIP and Guest subtypes) places Orders that realize a Billable interface and aggregate LineItems referencing Products." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -102,7 +102,7 @@ LineItem "*" -- "1" Product
 
 ### Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing a GET /book/42 request flowing from Client to LibraryServer to Database, with an alt fragment branching on whether the book was found." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant client: Client
 participant server: LibraryServer
 participant db: Database
@@ -122,7 +122,7 @@ deactivate server
 
 ### State Machine Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of an Order's lifecycle — Created → Paid → Shipped → Delivered, with side transitions to Cancelled and Refunded." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Created : Order Placed by Customer
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
@@ -136,7 +136,7 @@ Refunded --> [*]
 
 ### Use Case Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-caption="UML use case diagram of an Online Store — Customer can Place Order or Cancel Order; Admin can Manage Order and Update Products." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Customer
 actor Admin
 usecase "Place Order" as UC1

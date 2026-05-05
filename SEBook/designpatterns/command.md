@@ -50,7 +50,7 @@ Create a small object for each request. The invoker stores commands and calls th
 
 The diagram should show one idea: the invoker depends only on the `Command` interface; concrete commands decide which receiver work is done.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Command pattern roles — the Invoker depends only on the Command interface; ConcreteCommand and MacroCommand bind a Receiver to a specific operation; a Client wires receivers and commands together." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class Client
 class Invoker {
@@ -98,7 +98,7 @@ The remote-control example is useful because it demonstrates the pattern's full 
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Command example — a RemoteControl holds Command slots filled with LightOnCommand, LightOffCommand, or a NoCommand Null Object; each binds a Light receiver." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class RemoteControl {
     - onCommand: Command
@@ -147,7 +147,7 @@ end note
 
 The sequence diagram captures the runtime point that class diagrams cannot: `undo` is just another message to the last command object, not special knowledge inside the remote.
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how pressOn invokes execute() on a stored LightOnCommand, and how pressUndo later sends undo() to that same command — the RemoteControl never calls the Light directly." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor user: User
 participant remote: RemoteControl
 participant command: LightOnCommand

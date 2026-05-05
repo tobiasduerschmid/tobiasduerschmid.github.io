@@ -26,7 +26,7 @@ To achieve the systemic properties of the style, architects must enforce strict 
 
 The diagram below contrasts the four topologies. Solid arrows are *allowed* uses; dashed arrows annotated "✗" are the violations that turn a clean stack into a ball of mud.
 
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-caption="UML component diagram showing strict vs. relaxed layered style — strict downward calls between Presentation→Domain→DataAccess→Infrastructure are OK; a relaxed Presentation→DataAccess bridge is acceptable, but Domain→Presentation violates the golden rule and creates a cycle." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component Presentation
 component Domain
 component DataAccess

@@ -3,7 +3,7 @@ title: "UML Class Diagrams"
 layout: sebook
 ---
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an online-store domain — Customer (with VIP and Guest subtypes) places Orders that realize a Billable interface and aggregate LineItems referencing Products." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -66,7 +66,7 @@ To enforce *encapsulation*, UML uses symbols to define who can access attributes
 * `#` **Protected**: Accessible within the class and its subclasses.
 * `~` **Package/Default**: Accessible by any class in the same package.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing visibility modifiers — a User class with private username and email, protected id, and public login() and resetPassword() operations." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class User {
@@ -81,7 +81,7 @@ class User {
 ### 2.3 Interfaces
 An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces contain method signatures and usually do not declare attributes (the UML specification allows it, but I recommend not to use it)
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the interface notation — a single Payable interface with one processPayment() method signature and no attributes compartment." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 interface Payable {
@@ -106,7 +106,7 @@ Generalization connects a subclass to a superclass. It means the subclass inheri
 When a class agrees to implement the methods defined in an interface, it "realizes" the interface.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> A dashed line with a hollow, closed arrow pointing to the interface.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing realization vs. generalization — Car realizes the Vehicle interface (dashed arrow); Sedan and SUV inherit from Car (solid arrows)." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Vehicle {
   + startEngine(): void
 }
@@ -126,7 +126,7 @@ SUV --|> Car
 A dependency indicates that one class *uses* another, but does not hold a permanent reference to it. For example, a class might use another class as a method parameter, local variable, or return type. Dependency is the weakest relationship in a class diagram.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> A **dashed line** with an open arrowhead.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a dependency — Train depends on ButtonPressedEvent because it uses it as a parameter type, but does not store a permanent reference." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Train {
@@ -141,7 +141,7 @@ In this example, `Train` depends on `ButtonPressedEvent` because it uses it as a
 
 Here is another example where a class depends on an exception it throws:
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a dependency through an exception — ChecksumValidator depends on InvalidChecksumException because it throws it from validate()." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class ChecksumValidator {
   + execute(): bool
   + validate(): void
@@ -157,7 +157,7 @@ A basic structural relationship indicating that objects of one class are connect
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--"></span> A simple solid line.
 * You can also **name** associations and make them **directional** using an arrowhead to indicate navigability (which class holds a reference to the other).
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a named association with multiplicities — many Students are enrolled in one or more Courses." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Student {
@@ -180,7 +180,7 @@ Along association lines, we use numbers to define *how many* objects are involve
 | `*` or `0..*` | Zero to many |
 | `1..*` | One to many (at least one required) |
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a one-to-many multiplicity — exactly one Author writes one or more Books." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Author
@@ -199,7 +199,7 @@ Here are the four navigability combinations, each with an example:
 
 **Unidirectional (one arrowhead):** Only one class holds a reference.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a unidirectional association — Vote holds a reference to Politician, but Politician does not know about individual Votes." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Vote
@@ -211,7 +211,7 @@ Vote --> Politician
 
 **Bidirectional (arrowheads on both ends):** Both classes hold a reference to each other.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a bidirectional association — Employee and Boss each hold a reference to the other." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Employee
@@ -223,7 +223,7 @@ Employee <--> Boss
 
 **Non-navigable on one end (X on one side):** One class is explicitly prevented from navigating.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing one non-navigable end — an X on the Voter end means Vote does not hold a reference back to Voter." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Voter
@@ -235,7 +235,7 @@ In the full UML notation, an X on the `Voter` end means that the *opposite* life
 
 **Non-navigable on both ends (X on both sides):** Neither class holds a reference---the association is recorded only in the model, not in code.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing both ends non-navigable — Xs on both sides of Account x--x ClearTextPassword express the security rule that neither side stores a reference to the other." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Account
@@ -252,7 +252,7 @@ An X on both ends of `Account`<span class="uml-sym" data-diagram="class" data-sy
 A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist. Think of aggregation as a long-term, whole-part association.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> A solid line with an **empty diamond** at the "whole" end.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing aggregation — a University aggregates many Professors (hollow diamond on the whole end); Professors can exist independently of the University." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class University
@@ -266,7 +266,7 @@ A strict relationship where the parts *cannot* exist without the whole. If you d
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
 * Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing composition — a House is composed of one or more Rooms (filled diamond on the whole end); destroying the House destroys its Rooms." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class House
@@ -322,7 +322,7 @@ An **abstract class** is a class that cannot be instantiated directly---it serve
 
 An **abstract operation** is a method with no implementation, intended to be supplied by descendant classes. Abstract operations are shown by *italicizing* the operation name.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an abstract class — Shape declares an abstract draw() operation; concrete Rectangle inherits from Shape and provides the implementation." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class Shape {
   - color: int
   + setColor(r: int, g: int, b: int): void
@@ -344,7 +344,7 @@ In this example, `Shape` is abstract (it cannot be created directly) and declare
 
 **Static** (class-level) attributes and operations belong to the class itself rather than to individual instances. In UML, static members are shown **underlined**.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing static members — MathUtils with a static PI constant and a static abs() method (both underlined) plus an instance round() method." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class MathUtils {
@@ -403,7 +403,7 @@ class BaseSynchronizer {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a single class — BaseSynchronizer with one public synchronizationStarted() operation, derived from the equivalent Java/C++/Python/TypeScript code above." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class BaseSynchronizer {
@@ -485,7 +485,7 @@ class Student {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing an attribute as an association — Student holds a package-visibility `roster` field referring to Roster, drawn as a directed association from Student to Roster." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class Student {
@@ -589,7 +589,7 @@ class ChecksumValidator {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing a code-derived dependency — ChecksumValidator throws and catches InvalidChecksumException, but does not store a reference to it." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class ChecksumValidator {
@@ -658,7 +658,7 @@ class MotherBoard {
   </div>
 </div>
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing composition derived from inner classes — a MotherBoard owns exactly two IDEBus parts whose lifetimes are tied to the motherboard." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
 class MotherBoard {
@@ -684,7 +684,7 @@ The private part type plus owned fields indicate composition: the `IDEBus` insta
 > <details>
 > <summary><i>Reveal Answer</i></summary>
 >
-> <div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Division solution — the dynamic List<Employee> is modeled as aggregation, while the fixed-size Employee[10] array is a plain association with multiplicity 10." data-uml-spec='@startuml
+> <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 > layout horizontal
 > layout landscape
 > class Division {
@@ -706,7 +706,7 @@ The private part type plus owned fields indicate composition: the `IDEBus` insta
 
 Let's read the architectural blueprint for a simplified E-Commerce system.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of an e-commerce system — Customer (with VIP and Guest subtypes) places Orders that realize Billable; Orders are composed of LineItems, each referencing a single Product." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -754,7 +754,7 @@ The following examples apply everything from this chapter to systems you interac
 
 **Scenario:** An analysis-level domain model for a music streaming service. The goal is to capture *what things are* and *how they relate* — not implementation details like database schemas or network calls.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a Spotify domain model — User (with FreeUser and PremiumUser subtypes) owns Playlists by composition; Playlists aggregate Tracks; each Track is performed by one or more Artists." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class User {
   + search(query: String): list
   + createPlaylist(name: String): Playlist
@@ -794,7 +794,7 @@ Track "*" -- "1..*" Artist : performedBy
 
 **Scenario:** A design-level diagram (note the visibility modifiers) showing how GitHub's code review system could be modeled internally. Notice how an interface creates a formal contract between components.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a GitHub pull-request design model — PullRequest realizes the Mergeable interface, is composed by Repository, composes its Reviews, and depends temporarily on CICheck." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Mergeable {
   + canMerge(): bool
   + merge(): void
@@ -838,7 +838,7 @@ PullRequest ..> CICheck
 
 **Scenario:** The domain model for a food delivery platform. This example is excellent for practicing multiplicity — every `0..1`, `1`, and `*` encodes a real business rule the engineering team must enforce.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of an Uber Eats domain — Customers place Orders composed of OrderItems; each item references a MenuItem offered by a Restaurant; an Order is at most assigned to one Driver." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Customer {
   - name: String
   - address: String
@@ -883,7 +883,7 @@ Driver "0..1" -- "0..1" Order : delivers
 
 **Scenario:** Netflix serves two fundamentally different types of content — movies (watched once) and TV shows (composed of seasons and episodes). This diagram shows how inheritance and composition work together to model a content catalog.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a Netflix content catalog — abstract Content has Movie and abstract TVShow subclasses; TVShow is composed of Seasons composed of Episodes; Content is classified by Genre." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class Content {
   # title: String
   # rating: String
@@ -924,7 +924,7 @@ Content "*" -- "1..*" Genre : classifiedBy
 
 **Scenario:** A shopping cart needs to support multiple payment methods (credit card, PayPal, crypto) and let users switch between them at runtime. This is the [**Strategy design pattern**](/SEBook/designpatterns/strategy.html) — and a class diagram is the canonical way to document it.
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of the Strategy pattern applied to payment processing — a ShoppingCart references the PaymentStrategy interface, which is realized by CreditCardPayment, PayPalPayment, and CryptoPayment so the strategy can be swapped at runtime." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface PaymentStrategy {
   + pay(amount: float): bool
   + refund(amount: float): bool

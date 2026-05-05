@@ -70,7 +70,7 @@ A page is easier to restyle (swap CSS file) than to rewrite. A page is easier to
 
 From the lecture's motivating example, the fix for the Monopoly tangle is to split into two distinct layers:
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing separation of concerns — three Presentation classes (TerminalUI, WebUI, Casino3DUI) call into a single Game application class that owns Board and Player domain classes; the application layer has no idea which UI exists." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout portrait
 class TerminalUI <<presentation>>
 class WebUI <<presentation>>
@@ -196,7 +196,7 @@ The Model does not know who is rendering it. The View does not know where the da
 
 Classical enterprise systems separate by layer:
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a layered architecture — PresentationLayer uses BusinessLogicLayer, which uses DataAccessLayer, which reads and writes the Database; each layer has a single concern." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout portrait
 class PresentationLayer <<layer>>
 class BusinessLogicLayer <<layer>>

@@ -47,7 +47,7 @@ The framework follows a specific rhythm of time-boxed events:
 
 The sprint is a closed feedback loop: every event feeds the next, and the retrospective loops the team back into the next planning session.
 
-<div class="uml-class-diagram-container" data-uml-type="state" data-uml-caption="UML state machine diagram of a Scrum sprint cycle — SprintPlanning → Development (with a DailyStandup loop) → SprintReview → SprintRetrospective → next SprintPlanning, capturing the closed feedback loop." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> SprintPlanning : sprint begins
 SprintPlanning : define goal and select items
 SprintPlanning --> Development : sprint backlog ready

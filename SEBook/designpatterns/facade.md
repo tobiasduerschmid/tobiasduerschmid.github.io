@@ -19,7 +19,7 @@ In the Home Theater example, we create a `HomeTheaterFaçade`. Instead of the cl
 
 ## UML Role Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram showing the Façade pattern roles — a Client delegates to a Façade that hides three Subsystem classes." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class Client
 class Façade {
@@ -42,7 +42,7 @@ Façade --> SubsystemC
 
 ## UML Example Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-caption="UML class diagram of a concrete Façade — HomeTheaterFaçade exposes watchMovie/endMovie/listenToCd to MovieNightClient while owning eight home-theater subsystems." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class MovieNightClient
 class HomeTheaterFaçade {
@@ -74,7 +74,7 @@ HomeTheaterFaçade --> PopcornPopper
 
 ## Sequence Diagram
 
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-caption="UML sequence diagram showing how a single watchMovie() call on the Façade fans out to thirteen subsystem calls (popper, lights, screen, projector, amplifier, DVD)." data-uml-spec='@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant client: MovieNightClient
 participant facade: HomeTheaterFaçade
 participant popper: PopcornPopper
