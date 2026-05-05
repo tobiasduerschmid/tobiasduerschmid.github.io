@@ -372,6 +372,118 @@
     return 'UML deployment diagram with ' + items.join(' and ') + '.';
   }
 
+  // ---------- gitgraph (commit DAG) ----------
+  // Spec syntax (see ArchUML REFERENCE):
+  //   branch main:
+  //     A "Initial commit"
+  //     B "Add auth"
+  //   branch feature from B:
+  //     α "Start OAuth"
+  //   head main
+
+  function describeGitgraphDiagram(spec) {
+    var branches = [];
+    var byName = Object.create(null);
+    var totalCommits = 0;
+    var head = null;
+    var current = null;
+
+    spec.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m;
+      if ((m = line.match(/^branch\s+(\w[\w./-]*)\s*(?:from\s+(\w+))?\s*:/i))) {
+        var br = { name: m[1], from: m[2] || null, commits: [] };
+        if (!byName[br.name]) {
+          branches.push(br);
+          byName[br.name] = br;
+        }
+        current = byName[br.name];
+      } else if ((m = line.match(/^head\s+(\w[\w./-]*)/i))) {
+        head = m[1];
+      } else if (current && (m = line.match(/^(\S+)\s*"([^"]*)"/))) {
+        current.commits.push({ id: m[1], msg: m[2] });
+        totalCommits += 1;
+      }
+    });
+
+    if (!branches.length && !head) return 'Git commit graph.';
+
+    var head_part = head ? 'HEAD on ' + head : '';
+    var branch_part = branches.length
+      ? pluralize(branches.length, 'branch', 'branches') + ' (' +
+        branches.map(function (b) {
+          var summary = b.name + ' with ' + pluralize(b.commits.length, 'commit', 'commits');
+          if (b.from) summary += ', branched from ' + b.from;
+          if (b.commits.length) {
+            var msgs = b.commits.slice(0, 4).map(function (c) { return '"' + c.msg + '"'; });
+            if (b.commits.length > 4) msgs.push('and ' + (b.commits.length - 4) + ' more');
+            summary += ': ' + msgs.join(', ');
+          }
+          return summary;
+        }).join('; ') + ')'
+      : '';
+
+    var head_summary = head_part ? '. ' + head_part + '.' : '.';
+    if (!branch_part) return 'Git commit graph' + head_summary;
+    return 'Git commit graph with ' + pluralize(totalCommits, 'commit', 'commits') + ' across ' + branch_part + head_summary;
+  }
+
+  // ---------- folder-tree ----------
+  // Indentation-based; trailing '/' marks a folder, otherwise a file.
+
+  function describeFolderTreeDiagram(spec) {
+    var lines = spec.split('\n');
+    var indentUnit = 0;
+    var nonEmpty = [];
+    lines.forEach(function (raw) {
+      if (!raw.trim()) return;
+      nonEmpty.push(raw);
+      if (!indentUnit) {
+        var lead = raw.match(/^(\s*)/)[1].length;
+        if (lead > 0) indentUnit = lead;
+      }
+    });
+    if (!nonEmpty.length) return 'Folder tree diagram.';
+
+    var folders = 0, files = 0;
+    var rootName = null;
+    var topLevel = [];
+    nonEmpty.forEach(function (raw, i) {
+      var lead = raw.match(/^(\s*)/)[1].length;
+      var depth = indentUnit > 0 ? Math.floor(lead / indentUnit) : 0;
+      // Strip annotations (← note, # note, // note) and color tags (#aabbcc, named).
+      var name = raw.trim()
+        .replace(/\s+(?:←|<-|#|\/\/)\s+.*$/, '')
+        .replace(/\s+#[\w]+(?:\s+\w+)?$/, '')
+        .trim();
+      if (!name) return;
+      if (depth === 0 && rootName === null) {
+        rootName = name;
+        if (/\/$/.test(name)) folders += 1; else files += 1;
+        return;
+      }
+      if (/\/$/.test(name)) {
+        folders += 1;
+        if (depth === 1) topLevel.push(name);
+      } else {
+        files += 1;
+        if (depth === 1) topLevel.push(name);
+      }
+    });
+
+    var head = 'Folder tree';
+    if (rootName) head += ' rooted at ' + rootName;
+    var counts = pluralize(folders, 'folder', 'folders') + ' and ' + pluralize(files, 'file', 'files');
+    var detail = '';
+    if (topLevel.length) {
+      var shown = topLevel.slice(0, 6);
+      var rest = topLevel.length > shown.length ? ' and ' + (topLevel.length - shown.length) + ' more' : '';
+      detail = '. Top-level entries: ' + shown.join(', ') + rest;
+    }
+    return head + ' with ' + counts + detail + '.';
+  }
+
   // ---------- dispatch ----------
 
   function describe(type, spec) {
@@ -379,14 +491,16 @@
     var s = stripDecorations(spec);
     try {
       switch (t) {
-        case 'class':      return describeClassDiagram(s);
-        case 'sequence':   return describeSequenceDiagram(s);
-        case 'state':      return describeStateDiagram(s);
-        case 'component':  return describeComponentDiagram(s);
-        case 'usecase':    return describeUsecaseDiagram(s);
-        case 'activity':   return describeActivityDiagram(s);
-        case 'deployment': return describeDeploymentDiagram(s);
-        default:           return fallbackCaption(type) + '.';
+        case 'class':       return describeClassDiagram(s);
+        case 'sequence':    return describeSequenceDiagram(s);
+        case 'state':       return describeStateDiagram(s);
+        case 'component':   return describeComponentDiagram(s);
+        case 'usecase':     return describeUsecaseDiagram(s);
+        case 'activity':    return describeActivityDiagram(s);
+        case 'deployment':  return describeDeploymentDiagram(s);
+        case 'gitgraph':    return describeGitgraphDiagram(s);
+        case 'folder-tree': return describeFolderTreeDiagram(s);
+        default:            return fallbackCaption(type) + '.';
       }
     } catch (e) {
       if (window.console && console.warn) console.warn('UMLAutoDescribe failed:', e);
