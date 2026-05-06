@@ -14,16 +14,11 @@ cards:
     explanation: "POSA5 calls it 'a well-known pattern with a weak solution.' The literature discussing Singleton's issues dwarfs the original GoF description."
   - id: 3
     difficulty: advanced
-    question: "Name three thread-safety approaches for Singleton in Java."
-    answer: "(1) Synchronized `getInstance()` (simple, slow), (2) Eager instantiation in static field (fast, may waste memory), (3) Double-checked locking with `volatile` (efficient, complex)."
-    explanation: "The classic lazy singleton is not thread-safe. Each approach trades off simplicity, performance, and memory. Java's enum approach is considered the safest."
-  - id: 4
-    difficulty: intermediate
     question: "What is 'Singleitis'?"
     answer: "The tendency to overuse Singleton for easy global access, creating high coupling and unclear dependencies — a form of the 'Hammer and Nail' syndrome."
     explanation: "Using Singleton just for convenience rather than a genuine 'exactly one instance' constraint leads to a hard-to-maintain design where dependencies are invisible."
-  - id: 5
-    difficulty: expert
+  - id: 4
+    difficulty: basic
     question: "When is Singleton acceptable in modern code?"
     answer: "When controlling a true infrastructure resource where DI is unavailable and testability of consuming code is not a concern. In all other cases, prefer DI with singleton scope."
     explanation: "A DI container can manage singleton *lifetime* (ensuring one instance) while keeping constructors injectable and dependencies explicit, avoiding the testability problem."
