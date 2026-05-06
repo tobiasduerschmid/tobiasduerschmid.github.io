@@ -3,6 +3,7 @@ description: "You are shown React/JSX code. Explain what it does and what it ren
 active: true
 cards:
   - id: 1
+    difficulty: basic
     question: |
       ```jsx
       function App() {
@@ -11,12 +12,14 @@ cards:
       ```
     answer: "A **React component** — a function that returns JSX. It renders an `<h1>` with blue text. The double braces in `style={{...}}` are: outer `{}` = JSX expression, inner `{}` = JavaScript object literal."
   - id: 2
+    difficulty: basic
     question: |
       ```jsx
       <ProductCard name="Laptop" price={999.99} />
       ```
     answer: "Renders the `ProductCard` component with two **props**: `name` (string `\"Laptop\"`) and `price` (number `999.99`). String props use quotes; all other types use `{}`."
   - id: 3
+    difficulty: intermediate
     question: |
       ```jsx
       function Card({ title, children }) {
@@ -25,54 +28,63 @@ cards:
       ```
     answer: "A **composable container** component. `title` is a regular prop. `children` is a special prop containing whatever JSX is nested between `<Card>` and `</Card>`. This enables composition over inheritance."
   - id: 4
+    difficulty: basic
     question: |
       ```jsx
       const [count, setCount] = React.useState(0);
       ```
     answer: "Declares a **state variable** `count` with initial value `0` and a **setter function** `setCount`. Calling `setCount(newValue)` triggers a re-render. The array destructuring extracts the pair returned by `useState`."
   - id: 5
+    difficulty: basic
     question: |
       ```jsx
       <button onClick={() => setCount(count + 1)}>+1</button>
       ```
     answer: "A button with a **click event handler**. When clicked, it calls `setCount(count + 1)` which updates state and triggers a re-render. Note: `onClick` (camelCase), not `onclick`."
   - id: 6
+    difficulty: intermediate
     question: |
       ```jsx
       {tasks.map(task => <li key={task.id}>{task.text}</li>)}
       ```
     answer: "Renders an array of `<li>` elements from the `tasks` data array using `.map()`. Each element has a **stable `key` prop** (`task.id`) that helps React's reconciler track which items changed."
   - id: 7
+    difficulty: basic
     question: |
       ```jsx
       {isLoggedIn ? <Dashboard /> : <LoginForm />}
       ```
     answer: "**Conditional rendering** using a ternary — renders `Dashboard` if `isLoggedIn` is true, `LoginForm` otherwise. This is one of two standard patterns (the other is `&&`)."
   - id: 8
+    difficulty: intermediate
     question: |
       ```jsx
       {unreadCount > 0 && <Badge count={unreadCount} />}
       ```
     answer: "**Short-circuit conditional rendering** — renders `Badge` ONLY when `unreadCount > 0`. When the left side is `false`, React renders nothing. Note: use `> 0`, not just `unreadCount &&`, to avoid rendering `0` as text."
   - id: 9
+    difficulty: intermediate
     question: |
       ```jsx
       setItems([...items, newItem]);
       ```
     answer: "Correctly adds `newItem` to state. Creates a **new array** with the spread operator (`...items` copies all existing items, then `newItem` is appended). You must create a new array — `items.push(newItem)` mutates in-place and React won't detect the change."
   - id: 10
+    difficulty: advanced
     question: |
       ```jsx
       <SearchBar value={text} onChange={setText} />
       ```
     answer: "Passes the state value `text` as a prop and the setter `setText` as a **callback prop**. This is **inverse data flow** — the child calls `onChange(newValue)` to notify the parent, which updates state and triggers re-render of both."
   - id: 11
+    difficulty: basic
     question: |
       ```jsx
       <img src={url} alt="logo" />
       ```
     answer: "A self-closing JSX tag for an image. In JSX, self-closing tags **must** include the `/>`  (unlike HTML where `<img>` is valid). `src={url}` passes a JS variable; `alt=\"logo\"` passes a string literal."
   - id: 12
+    difficulty: intermediate
     question: |
       ```jsx
       function Badge({ label, color }) {
@@ -86,6 +98,7 @@ cards:
     answer: "A **reusable component** that renders a colored badge. It destructures `label` and `color` from props. The `style` prop takes a JS object with camelCase properties (`borderRadius`, not `border-radius`)."
 
   - id: 13
+    difficulty: intermediate
     question: |
       ```jsx
       useEffect(() => {
@@ -95,6 +108,7 @@ cards:
     answer: "Runs a **side effect** once after the component first mounts. The empty array `[]` is the *dependency array* — it tells React 'don't re-run this when anything changes'. Common uses: fetching initial data, setting up subscriptions, updating `document.title`."
 
   - id: 14
+    difficulty: advanced
     question: |
       ```jsx
       useEffect(() => {
@@ -106,6 +120,7 @@ cards:
     answer: "Fetches user data on mount **and re-fetches whenever `userId` changes**. `userId` in the dependency array tells React: re-run this effect when `userId` takes a new value. Without listing `userId`, the effect would keep showing the first user's data even after the prop changes — a stale closure bug."
 
   - id: 15
+    difficulty: intermediate
     question: |
       ```jsx
       setCount(prev => prev + 1);
@@ -113,6 +128,7 @@ cards:
     answer: "The **functional update** form of `setState`. Instead of passing the next value directly, you pass a function. React calls that function with the *guaranteed latest* state value as `prev`. Use this whenever new state depends on old state — it prevents stale closure bugs where a batch of rapid updates could all read the same outdated value."
 
   - id: 16
+    difficulty: intermediate
     question: |
       ```jsx
       setItems(items.filter(item => item.id !== targetId));
@@ -120,6 +136,7 @@ cards:
     answer: "Removes the item with `id === targetId` from the `items` state array. `.filter()` returns a **new array** (never mutates the original), which is required — React detects changes by reference. All items where the condition is true are kept; the one matching `targetId` is excluded."
 
   - id: 17
+    difficulty: intermediate
     question: |
       ```jsx
       setUser({ ...user, name: 'Bob' });
@@ -127,6 +144,7 @@ cards:
     answer: "Updates the `name` field of the `user` state object while preserving all other fields. The spread `...user` copies every existing key into a new object, then `name: 'Bob'` overrides just that one key. **Never mutate the object directly** (`user.name = 'Bob'`) — that changes the same reference React already has, so it won't detect the change and won't re-render."
 
   - id: 18
+    difficulty: intermediate
     question: |
       ```jsx
       <input

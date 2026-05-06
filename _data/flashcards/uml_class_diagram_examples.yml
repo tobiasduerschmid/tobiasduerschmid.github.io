@@ -3,6 +3,7 @@ description: "Quick review of UML Class Diagram notation and relationships."
 active: true
 cards:
   - id: 1
+    difficulty: intermediate
     question: >
       What does the following symbol represent in a class diagram?
 
@@ -12,6 +13,7 @@ cards:
       A hollow diamond on the parent class indicates **Aggregation**, representing a 'part-of' relationship where the parts can exist independently of the whole.
 
   - id: 2
+    difficulty: basic
     question: "How do you denote a **Static Method** in UML Class Diagrams?"
     answer: "By underlining the method name."
     explanation: >
@@ -20,6 +22,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="class MathUtils {&#10;  {static} +abs(n: int) : int&#10;  +pi() : double&#10;}"></div>
 
   - id: 3
+    difficulty: intermediate
     question: >
       What is the difference between these two relationships?
 
@@ -29,6 +32,7 @@ cards:
       A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
 
   - id: 4
+    difficulty: basic
     question: "What is the difference between **Generalization** and **Realization** arrows?"
     answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
     explanation: >
@@ -37,6 +41,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="interface Flyable {&#10;  +fly(): void&#10;}&#10;class Bird {&#10;  +fly(): void&#10;}&#10;class Sparrow&#10;Bird ..|> Flyable&#10;Sparrow --|> Bird"></div>
 
   - id: 5
+    difficulty: basic
     question: "What do the four **visibility symbols** mean in UML?"
     answer: "`+` public, `-` private, `#` protected, `~` package."
     explanation: >
@@ -45,12 +50,14 @@ cards:
       <div data-uml-type="class" data-uml-spec="class Example {&#10;  +publicAttr: String&#10;  -privateAttr: int&#10;  #protectedAttr: bool&#10;  ~packageAttr: float&#10;}"></div>
 
   - id: 6
+    difficulty: basic
     question: "What does the multiplicity `1..*` mean on an association?"
     answer: "**One or more** — at least one instance is required."
     explanation: >
       Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.
 
   - id: 7
+    difficulty: advanced
     question: >
       What relationship is represented in the diagram below, and when is it used?
 
@@ -60,6 +67,7 @@ cards:
       A dashed arrow with an open arrowhead (<span class='uml-sym' data-diagram='class' data-sym='..>'></span>) denotes a **Dependency**. It means a class uses another as a method parameter, local variable, return type, or thrown exception — but does not hold a permanent reference. It is the weakest of all class relationships.
 
   - id: 8
+    difficulty: basic
     question: "How do you indicate an **abstract class** in UML?"
     answer: "By *italicizing* the class name, or adding `{abstract}`."
     explanation: >
@@ -68,12 +76,14 @@ cards:
       <div data-uml-type="class" data-uml-spec="abstract class Shape {&#10;  {abstract} +draw(): void&#10;}&#10;class Circle {&#10;  +draw(): void&#10;}&#10;Circle --|> Shape"></div>
 
   - id: 9
+    difficulty: advanced
     question: "List the class relationships from **weakest to strongest**."
     answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
     explanation: >
       **Dependency** (dashed arrow, temporary use) is weakest. **Association** (solid line, structural link) is stronger. **Aggregation** (hollow diamond, parts can exist alone) and **Composition** (filled diamond, parts die with whole) add ownership semantics. **Generalization** (hollow triangle, inheritance) and **Realization** (dashed hollow triangle, interface implementation) represent the strongest "is-a" relationships.
 
   - id: 10
+    difficulty: intermediate
     question: "What does a **navigable association** (<span class='uml-sym' data-diagram='class' data-sym='-->'></span>) indicate?"
     answer: "The class at the **tail** holds a reference to the class at the **arrowhead**. Only one direction is navigable."
     explanation: >

@@ -3,6 +3,7 @@ description: "Quick review of UML Sequence Diagram notation and fragments."
 active: true
 cards:
   - id: 1
+    difficulty: basic
     question: "What is the difference between a **synchronous** and an **asynchronous** message arrow?"
     answer: "Synchronous uses a **filled arrowhead**; asynchronous uses an **open (stick) arrowhead**."
     explanation: >
@@ -11,6 +12,7 @@ cards:
       <div data-uml-type="sequence" data-uml-spec="participant a: Caller&#10;participant b: Receiver&#10;a -> b: syncCall()&#10;activate b&#10;b --> a: response&#10;deactivate b&#10;a ->> b: asyncNotify()&#10;activate b&#10;deactivate b"></div>
 
   - id: 2
+    difficulty: basic
     question: "How is a **return message** drawn in a sequence diagram?"
     answer: "A **dashed line** with an open arrowhead."
     explanation: >
@@ -19,18 +21,21 @@ cards:
       <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Service&#10;a -> b: getData()&#10;activate b&#10;b --> a: result&#10;deactivate b"></div>
 
   - id: 3
+    difficulty: intermediate
     question: "What is the difference between an `opt` fragment and an `alt` fragment?"
     answer: "`opt` = if (no else). `alt` = if-else with multiple branches."
     explanation: >
       An **`opt`** fragment has a single guard condition — messages execute only if the guard is true (like an `if` without `else`). An **`alt`** fragment has two or more regions separated by dashed lines, each with its own guard — exactly one region executes (like `if-else` or `switch`).
 
   - id: 4
+    difficulty: basic
     question: "What does a **lifeline** represent, and how is it drawn?"
     answer: "A participant in the interaction — drawn as a **box** at the top with a **dashed vertical line** extending downward."
     explanation: >
       The box contains the participant's name (format: `objectName:ClassName` or `:ClassName`). The dashed vertical line represents the participant's existence over time. Time flows **top-to-bottom**.
 
   - id: 5
+    difficulty: basic
     question: "Name the combined fragment you would use to model a **for/while loop** in a sequence diagram."
     answer: "The **`loop`** fragment."
     explanation: >
@@ -39,18 +44,21 @@ cards:
       <div data-uml-type="sequence" data-uml-spec="participant a: App&#10;participant b: Server&#10;loop [1, 3]&#10;  a -> b: retry()&#10;  activate b&#10;  b --> a: ack()&#10;  deactivate b&#10;end"></div>
 
   - id: 6
+    difficulty: basic
     question: "What does an **activation bar** (execution specification) represent on a lifeline?"
     answer: "The period during which the object is **actively performing** an action or behavior."
     explanation: >
       Activation bars are thin rectangles on lifelines. They show when an object is processing a method call. They can be nested (when object A calls B which calls C, all three have overlapping activation bars). They help visualize which objects are busy at any point in time.
 
   - id: 7
+    difficulty: intermediate
     question: "What is the correct naming convention for lifelines in sequence diagrams?"
     answer: "`objectName : ClassName` (e.g., `myCart : ShoppingCart` or `: ShoppingCart` for anonymous instances)."
     explanation: >
       Sequence diagrams show interactions between specific **object instances**, not classes in general. If the object name is irrelevant, you can omit it and write just `: ClassName`. This distinguishes sequence diagrams from class diagrams, which model classes in general.
 
   - id: 8
+    difficulty: advanced
     question: "What is the `par` combined fragment used for?"
     answer: "To model messages that execute **in parallel** (concurrently)."
     explanation: >

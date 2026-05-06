@@ -3,6 +3,7 @@ description: "Test your ability to read and interpret UML Sequence Diagrams."
 active: true
 questions:
   - id: 1
+    difficulty: basic
     type: single
     question: >
       What type of message is represented by a **solid line with a filled (solid) arrowhead**?
@@ -24,6 +25,7 @@ questions:
     explanation: "**A solid line with a filled arrowhead is a synchronous message — the sender blocks until the receiver finishes processing.** A solid line with a **filled arrowhead** represents a **synchronous message**. The sender blocks and waits for the receiver to finish processing before continuing. An asynchronous message uses an **open (stick) arrowhead** instead."
 
   - id: 2
+    difficulty: basic
     type: single
     question: >
       What does the **dashed line** in the diagram below represent?
@@ -45,6 +47,7 @@ questions:
     explanation: "**A dashed line with an open arrowhead is a return message, carrying the response back to the caller.** A **dashed line with an open arrowhead** represents a **return message** — the response flowing back from a called method. Return messages are optional in sequence diagrams but are shown when the return value is important to understand the interaction."
 
   - id: 3
+    difficulty: basic
     type: single
     question: >
       Which combined fragment would you use to model an **if-else** decision in a sequence diagram?
@@ -66,6 +69,7 @@ questions:
     explanation: "**`alt` models if-else logic by selecting one of multiple guarded branches — `opt` handles a simple if-without-else.** The **`alt`** (alternatives) fragment models if-else logic. It contains two or more regions separated by dashed lines, each with a guard condition. Only one region executes. The **`opt`** fragment is for a simple if-without-else."
 
   - id: 4
+    difficulty: intermediate
     type: single
     question: >
       Look at this diagram. How many times could the `ping()` message be sent?
@@ -87,6 +91,7 @@ questions:
     explanation: "**`loop [1, 5]` means the enclosed messages execute between 1 and 5 times — the minimum and maximum iteration bounds.** The `loop [1, 5]` fragment specifies a **minimum of 1** and **maximum of 5** iterations. The messages inside will execute between 1 and 5 times depending on conditions at runtime."
 
   - id: 5
+    difficulty: intermediate
     type: multiple
     question: >
       Which of the following are **valid combined fragment types** in UML sequence diagrams? (Select all that apply.)
@@ -114,6 +119,7 @@ questions:
     explanation: "**`alt`, `opt`, `loop`, and `par` are valid UML combined fragments — there is no `if` or `try` fragment in UML.** The valid UML combined fragment operators include **`alt`**, **`opt`**, **`loop`**, and **`par`**. There is no `if` or `try` fragment in UML — conditional logic uses `alt`/`opt`, and exception-like behavior uses the `break` fragment."
 
   - id: 6
+    difficulty: intermediate
     type: single
     question: >
       What does the `opt` fragment in this diagram mean?
@@ -135,6 +141,7 @@ questions:
     explanation: "**`opt` is an if-without-else — the discount messages execute only if `hasPromoCode` is true, otherwise the entire fragment is skipped.** An **`opt` fragment** is equivalent to an `if` statement **without** an `else`. The enclosed messages execute only when the guard condition is true. If the guard is false, the entire fragment is skipped and execution continues after it."
 
   - id: 7
+    difficulty: basic
     type: single
     question: >
       In UML sequence diagrams, what does time represent?
@@ -154,6 +161,7 @@ questions:
     explanation: "**Time flows top-to-bottom along the vertical axis — messages higher in the diagram happen first.** In sequence diagrams, **time flows top-to-bottom** along the vertical axis. Messages higher in the diagram occur before messages lower in the diagram. The horizontal axis shows the different participants (lifelines)."
 
   - id: 8
+    difficulty: basic
     type: single
     question: >
       Which arrow style represents an **asynchronous message** where the sender does NOT wait for a response?
@@ -177,6 +185,7 @@ questions:
       <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()&#10;activate b&#10;deactivate b'></div>
 
   - id: 9
+    difficulty: basic
     type: single
     question: >
       What does an **activation bar** (thin rectangle on a lifeline) represent?
@@ -198,6 +207,7 @@ questions:
     explanation: "**An activation bar shows the period during which an object is actively executing — it can nest when one method call triggers another.** An **activation bar** (execution specification) shows the period during which an object is **actively processing** — executing a method, performing computation, or waiting for a sub-call to return. Activation bars can nest when one method calls another."
 
   - id: 10
+    difficulty: intermediate
     type: single
     question: >
       What is the correct lifeline label format for an unnamed instance of class `ShoppingCart`?
@@ -219,6 +229,7 @@ questions:
     explanation: "**An unnamed instance is written `: ClassName` with the colon — sequence diagrams model specific instances, not classes.** The standard UML format is `objectName : ClassName`. When the specific object name is irrelevant, you omit the name and write `: ShoppingCart` (with the colon). Sequence diagrams model interactions between **specific object instances**, not classes in general."
 
   - id: 11
+    difficulty: advanced
     type: single
     question: >
       Given this Java code, which sequence diagram element represents the `new Payment(amount)` call?
@@ -247,6 +258,7 @@ questions:
     explanation: "**`new Payment(amount)` becomes a create message — the Payment lifeline starts at the point of creation, not at the top of the diagram.** Constructor calls (`new`) in code become **create messages** in sequence diagrams. The new object's lifeline starts at the point in time when it is created (placed at that vertical position), rather than appearing at the top of the diagram like pre-existing objects."
 
   - id: 12
+    difficulty: advanced
     type: single
     question: >
       A sequence diagram and a class diagram are drawn for the same system. An arrow in the sequence diagram shows `order -> inventory: checkStock(itemId)`. What must be true in the class diagram?

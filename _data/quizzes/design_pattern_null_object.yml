@@ -3,6 +3,7 @@ description: "Test your understanding of the Null Object pattern's intent, its r
 active: true
 questions:
   - id: 1
+    difficulty: basic
     type: single
     question: |
       Which sentence most accurately captures the **intent** of the Null Object pattern (Woolf, 1998)?
@@ -22,6 +23,7 @@ questions:
     explanation: "**Null Object provides a surrogate that shares the interface but does nothing.** Woolf's exact words: *provide a surrogate for another object that shares the same interface but does nothing*. The Null Object encapsulates the implementation decisions of how to do nothing and hides those details from collaborators."
 
   - id: 2
+    difficulty: intermediate
     type: single
     question: |
       Consider this `BankTransfer` class:
@@ -56,6 +58,7 @@ questions:
     explanation: "**Null Object turns 'absence of behavior' into a real, polymorphic implementation of behavior — the call site stays uniform and the guard cannot be forgotten.** Once `logger` can never be null, the conditional disappears at every call site (current and future), and the design intent of 'no audit trail here' is encoded in a real type (`SilentLogger`) instead of an absent reference. This is the same reason `Optional<T>.empty()` beats raw nulls in modern APIs."
 
   - id: 3
+    difficulty: advanced
     type: single
     question: |
       A teammate proposes adding a `NoController` Null Object to a `Controller` interface that has 30 methods. Currently no view in the codebase actually needs a `NoController`. How should you respond?
@@ -75,6 +78,7 @@ questions:
     explanation: "**Without a present need, adding Null Object is speculative abstraction — exactly the over-engineering trap that the Applicability criteria are meant to prevent.** Woolf's Applicability is explicit: the pattern applies when *some collaborator instances should do nothing* and *the do-nothing behavior is reusable*. With no current users, neither condition holds. The cost (a 30-method class to maintain) is paid up front; the benefit (call-site simplification) is hypothetical. Wait until at least one real client needs it."
 
   - id: 4
+    difficulty: advanced
     type: single
     question: |
       A startup logs `"Audit logger: SilentLogger"` in production for six months before anyone notices that no audit trail has been written. The bug originated in a misconfigured DI binding that wired the test-only `SilentLogger` into the prod build. **Which Null Object liability does this story illustrate?**
@@ -94,6 +98,7 @@ questions:
     explanation: "**Null Object swallows operations silently — that is exactly what you want when 'do nothing' is a valid response, and exactly what you do not want when 'do nothing' hides a bug.** Mitigations: (1) name the class for what it actually does (`SilentLogger`, never `DefaultLogger`); (2) log at startup which collaborator was wired in (`'Audit logger: SilentLogger'` is conspicuous); (3) reserve Null Object for cases where do-nothing is a legitimate domain decision, not a fallback for 'we couldn't construct the real one.'"
 
   - id: 5
+    difficulty: intermediate
     type: single
     question: |
       A `RubberDuck` class is implemented with `flyBehavior = new FlyNullObject()`, where `FlyNullObject implements FlyBehavior` and its `fly()` method does nothing. **Which pattern compound does this illustrate?**
@@ -113,6 +118,7 @@ questions:
     explanation: "**`FlyNullObject` plays the Strategy role (it is a `FlyBehavior` the duck composes with) AND the Null Object role (its `fly()` does nothing) — that's a Null Strategy compound.** This is exactly the pattern compound called out by Woolf and *Head First Design Patterns*: when one of the ConcreteStrategies in a Strategy hierarchy consistently does nothing, that ConcreteStrategy *is* a Null Object. The same role-superimposition appears as **Null State** when a do-nothing State sits in a State hierarchy."
 
   - id: 6
+    difficulty: advanced
     type: single
     question: |
       The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why does Woolf's catalog say there is **no** Null Decorator?
@@ -132,6 +138,7 @@ questions:
     explanation: "**A Decorator's contract is to wrap a real object and forward calls — a Decorator with no wrappee has nothing to decorate, so the role itself doesn't make sense.** This is called out explicitly in the [Pattern Compounds](/SEBook/designpatterns.html#communicating-design-intent-and-context-tailoring) discussion. State and Strategy work because a 'do nothing' implementation is still a complete implementation of the state/strategy interface. A Decorator that wraps nothing isn't an empty decorator; it's just a Null Object impersonating the wrapped type directly."
 
   - id: 7
+    difficulty: advanced
     type: multiple
     question: |
       Which of the following are **valid reasons to apply** the Null Object pattern (per Woolf, 1998)? Select all that apply.
@@ -156,6 +163,7 @@ questions:
     explanation: "**Null Object's Applicability requires a real collaboration that needs a do-nothing variant, uniform call sites, reusable do-nothing behavior, and a single-class scope. Speculative replacement of `Optional` is not on the list.** The four valid reasons are direct quotes from Woolf's Applicability section. The `Optional`-replacement option is the modern misuse: when 'absence' carries meaning the client must handle (404, no match, opt-out), preserve that signal — don't bury it under a do-nothing surrogate."
 
   - id: 8
+    difficulty: intermediate
     type: single
     question: |
       A `LinkedTreeNode` returns `Collections.emptyIterator()` when asked for an iterator over its (non-existent) children. Which pattern compound is at play?
@@ -175,6 +183,7 @@ questions:
     explanation: "**`Collections.emptyIterator()` is the canonical Null Iterator: it implements `Iterator<T>` so clients can call `hasNext()` and `next()` uniformly, and `hasNext()` always returns `false`.** This is the example Gamma et al. use to introduce Null Object inside the Iterator pattern catalog entry. Clients iterate over leaves and composites with the same code; leaves never need a special case for 'no children to iterate over.'"
 
   - id: 9
+    difficulty: advanced
     type: single
     question: |
       Which of the following best describes how Null Object **differs from** the Special Case pattern (Fowler, *Patterns of Enterprise Application Architecture*)?
@@ -194,6 +203,7 @@ questions:
     explanation: "**Special Case is the broader pattern: any 'exceptional' instance handled uniformly through the same interface (e.g., `MissingCustomer` returning sensible defaults instead of throwing). Null Object is the special case where 'exceptional' means 'do nothing.'** Fowler's `MissingCustomer` might still answer questions sensibly (`name() = 'Unknown'`, `taxId() = 'N/A'`) — that's Special Case but not Null Object. A `SilentLogger` whose `log()` is a no-op is both Special Case *and* Null Object."
 
   - id: 10
+    difficulty: advanced
     type: single
     question: |
       A teammate proposes implementing `SilentLogger` as a parameterized class so the same Null Object can absorb log entries with configurable behavior — for example, `new SilentLogger("test")` vs `new SilentLogger("prod-fallback")`. **What design risk does this create?**
@@ -213,6 +223,7 @@ questions:
     explanation: "**A 'Null Object' whose behavior changes meaningfully based on parameters is no longer a Null Object — it is a Real Object with a `mode` field, which puts the conditional back inside the class.** Parameterized Null Objects are valid when the parameter only varies the trivial null-result return value (e.g., `new EmptyString()` vs `new EmptyList()`) — those are Flyweights with intrinsic do-nothing behavior. They become a problem when 'do nothing' starts to mean different things in different cases — at which point you should split into multiple Null Object classes (one per do-nothing semantic) or accept that the abstraction is wrong for your domain."
 
   - id: 11
+    difficulty: expert
     type: single
     question: |
       A senior developer points at this class and says *"this is technically a Null Object, but it's the wrong tool here":*
@@ -241,6 +252,7 @@ questions:
     explanation: "**Null Object is for cases where 'do nothing' is a valid domain response, not for swallowing meaningful absences.** *User not found* is information the caller must act on (return 404, prompt for re-login, retry with a different id). Returning a recursive do-nothing object turns a clear failure mode into mysterious downstream bugs ('why is the user's email always blank?'). The right tool here is `Optional[User]`, an exception, or a `MissingUser` Special Case that *announces* itself rather than impersonating a real user."
 
   - id: 12
+    difficulty: advanced
     type: multiple
     question: |
       Which of the following are **liabilities (downsides)** of the Null Object pattern that authors should weigh before adopting it? Select all that apply.

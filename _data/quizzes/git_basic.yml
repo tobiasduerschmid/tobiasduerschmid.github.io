@@ -3,6 +3,7 @@ description: "Test your knowledge of core version control concepts, Git architec
 active: true
 questions:
   - id: 1
+    difficulty: basic
     question: "Which of the following best describes the core difference between centralized and distributed version control systems (like Git)?"
     options:
       - "Distributed systems require a constant internet connection to the central server to make any changes."
@@ -23,6 +24,7 @@ questions:
     explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
 
   - id: 2
+    difficulty: basic
     question: "What are the three primary local states that a file can reside in within a standard Git workflow?"
     options:
       - "Untracked, Tracked, and Ignored"
@@ -43,6 +45,7 @@ questions:
     explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area (prepped for commit), and the Local Repository (committed history).** Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
 
   - id: 3
+    difficulty: basic
     question: "What does the command `git diff HEAD` compare?"
     options:
       - "The working directory to the staging area."
@@ -62,6 +65,7 @@ questions:
     explanation: "**`git diff HEAD` compares the current working directory (including staged changes) against the latest commit.** Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
 
   - id: 4
+    difficulty: basic
     question: "Which Git command should you NEVER use on a shared branch because it can permanently overwrite and destroy work pushed by other team members?"
     options:
       - "`git pull`"
@@ -82,6 +86,7 @@ questions:
     explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote branch history and can hide or orphan collaborators' commits.** Force-pushing makes the remote branch match your local history, which can remove teammates' commits from that branch and disrupt anyone who based work on them. Those commits may still be recoverable from another clone or reflog, but the shared branch has been rewritten."
 
   - id: 5
+    difficulty: intermediate
     type: multiple
     question: "Which of the following are advantages of a Distributed Version Control System (like Git) compared to a Centralized one? (Select all that apply)"
     options:
@@ -110,6 +115,7 @@ questions:
     explanation: "**Git's distributed model enables offline work and removes the single point of failure, making it ideal for large distributed teams — but it does not prevent merge conflicts.** In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
 
   - id: 6
+    difficulty: intermediate
     type: multiple
     question: "Which of the following represent the core local states (or areas) where files can reside in a standard Git architecture? (Select all that apply)"
     options:
@@ -135,6 +141,7 @@ questions:
     explanation: "**The three local areas are Working Directory, Staging Area, and Local Repository — the remote server and Detached HEAD are not file areas.** The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
 
   - id: 7
+    difficulty: intermediate
     type: multiple
     question: "Which of the following commands are primarily used to review changes, history, or differences in a Git repository? (Select all that apply)"
     options:
@@ -158,6 +165,7 @@ questions:
     explanation: "**`git log`, `git diff`, and `git show` are the review/inspection commands — `git push` uploads data and `git init` creates repos.** `git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
 
   - id: 8
+    difficulty: intermediate
     question: "A faulty commit was pushed to a shared 'main' branch last week and your teammates have already synced it. Why should you use `git revert` to fix this rather than `git reset --hard` followed by a force-push?"
     options:
       - "`git revert` automatically resolves any merge conflicts introduced by the bad commit."
@@ -177,6 +185,7 @@ questions:
     explanation: "**`git revert` is safe on shared branches because it adds a new undo commit without rewriting history, while `reset --hard` + force-push would destroy teammates' synced work.** `git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
 
   - id: 9
+    difficulty: intermediate
     question: "When integrating a feature branch into 'main', under what condition will Git perform a fast-forward merge rather than creating a three-way merge commit?"
     options:
       - "When the feature branch has been squashed into a single commit before merging."
@@ -196,6 +205,7 @@ questions:
     explanation: "**A fast-forward merge is only possible when the base branch has received no new commits since the feature branch was created, allowing Git to slide its pointer forward linearly.** A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
 
   - id: 10
+    difficulty: intermediate
     question: |
       **Arrange** the Git commands into the correct order to: create a feature branch, make changes, and integrate them back into main via a merge.
     type: parsons
@@ -216,6 +226,7 @@ questions:
     explanation: "**The correct order is: create the branch, stage changes, commit, switch back to main, then merge — force-push and init are distractors irrelevant to a local merge workflow.** The workflow is: create and switch to a feature branch (`switch -c`), stage changes (`add`), commit them, switch back to main, and merge the feature branch in. `git push -f` is dangerous on shared branches and is not part of a local merge workflow. `git init` creates a new repository — irrelevant here."
 
   - id: 11
+    difficulty: intermediate
     question: |
       **Arrange** the commands to undo a bad commit on a shared branch safely: first identify the commit, then revert it, then push the fix.
     type: parsons
@@ -232,6 +243,7 @@ questions:
     explanation: "**The correct order is log → revert → push: identify the bad commit, create a safe undo commit, then share it — reset --hard and force-push rewrite shared history and destroy teammates' work.** `git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. (On a busy shared branch, run `git pull` before `git push` to pick up any new commits first — otherwise the push may be rejected as non-fast-forward.) The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
 
   - id: 12
+    difficulty: basic
     question: |
       **Arrange** the commands to initialize a new repository and record an initial commit.
     type: parsons
@@ -248,6 +260,7 @@ questions:
     explanation: "**The correct order is init → add → commit: create the repository, stage all files, then record the first snapshot — clone copies an existing repo and push requires a remote to already exist.** `git init` creates the repository, `git add .` stages every file in the working directory, and `git commit` records the first snapshot. `git clone` copies an *existing* remote repo — it doesn't create one from scratch. `git push` requires a remote to already exist."
 
   - id: 13
+    difficulty: intermediate
     question: |
       **Arrange** the commands to register a remote called `origin` and push the `main` branch to it for the first time.
     type: parsons

@@ -3,6 +3,7 @@ description: "Recalling what you just learned is the best way to form lasting me
 active: true
 questions:
   - id: 1
+    difficulty: intermediate
     question: "A software development group realizes their newest feature is confusing users based on early behavioral data. They immediately halt their current plan to redesign the user interface. Which foundational philosophy of their framework does this best illustrate?"
     options:
       - "Rigorous upfront predictive planning"
@@ -27,6 +28,7 @@ questions:
     explanation: "**Halting the plan to respond to new user data illustrates the empirical pillar of adaptation — adjusting course as soon as inspection reveals something isn't working.** Scrum is founded on **empiricism**, and **adaptation** requires adjusting the process or product as soon as possible if aspects deviate outside acceptable limits."
 
   - id: 2
+    difficulty: intermediate
     question: "In an environment that prioritizes agility, the individuals actually building the product must possess a specific dynamic. Which description best captures how this group should operate?"
     options:
       - "A siloed group of specialists awaiting detailed instructions from a project manager."
@@ -47,6 +49,7 @@ questions:
     explanation: "**Scrum Teams must be cross-functional (all skills needed to deliver value) and self-managing (deciding internally who does what, when, and how) — not siloed or manager-directed.** Scrum Teams are **cross-functional** (possessing all necessary skills) and **self-managing** (deciding internally who does what, when, and how)."
 
   - id: 3
+    difficulty: basic
     question: "The development group is completely blocked because they lack access to a third-party API required for their current iteration. Who is primarily responsible for facilitating the resolution of this organizational bottleneck?"
     options:
       - "The Developers, by pausing all development until the issue resolves itself."
@@ -67,6 +70,7 @@ questions:
     explanation: "**Removing impediments to the team's progress is the Scrum Master's responsibility — not the Developers', the Product Owner's, or external stakeholders'.** The **Scrum Master** serves the team by causing the removal of **impediments** to their progress."
 
   - id: 4
+    difficulty: basic
     question: "To ensure the team is consistently tackling the most crucial problems first, someone must dictate the priority of upcoming work items. Who holds this responsibility?"
     options:
       - "The individual contributors writing the code."
@@ -91,6 +95,7 @@ questions:
     explanation: "**Ordering the Product Backlog to maximize value is the Product Owner's sole responsibility — the Scrum Master facilitates process, and Developers own technical decisions.** The **Product Owner** is the one who orders the work for a complex problem into a **Product Backlog** to maximize value."
 
   - id: 5
+    difficulty: intermediate
     question: "What condition must be strictly satisfied before a newly developed feature is officially considered a completed, verifiable stepping stone toward the ultimate product vision?"
     options:
       - "It must be formally approved and signed off by the Scrum Master."
@@ -111,6 +116,7 @@ questions:
     explanation: "**A feature is considered done only when it meets the team's agreed-upon Definition of Done — not when it is approved by a role, deployed, or presented in a slide deck.** The **Scrum Master** helps the team focus on creating high-value **Increments** that specifically meet the **Definition of Done** (the quality measures checklist)."
 
   - id: 6
+    difficulty: intermediate
     question: "What is the primary objective of the Daily Scrum?"
     options:
       - "To provide a daily status report to upper management."
@@ -134,6 +140,7 @@ questions:
     explanation: "**The Daily Scrum's purpose is to inspect progress toward the Sprint Goal and adapt the plan for the next day — it is not a status report for management or a backlog refinement session.** The **Daily Scrum** focuses on progress toward the **Sprint Goal** and produces an actionable plan for the next day of work."
 
   - id: 7
+    difficulty: basic
     question: "At the conclusion of a work cycle, the team gathers specifically to discuss how they can improve their internal collaboration and technical practices for the next cycle. Which event does this describe?"
     options:
       - "The Sprint Planning session."
@@ -154,6 +161,7 @@ questions:
     explanation: "**The Sprint Retrospective is for inspecting and improving the team's internal process — distinct from the Sprint Review which examines the product increment with stakeholders.** The **Sprint Retrospective** is an event for the team to inspect their process, reflect on it, and adjust for the next Sprint to continuously improve."
 
   - id: 8
+    difficulty: advanced
     question: "When a massive enterprise needs to coordinate dozens of teams working on the same vast product, they might adopt a 'team of teams' approach. According to common critiques, what is a potential drawback of this heavily synchronized model?"
     options:
       - "It completely eliminates the need for any overarching business goals."

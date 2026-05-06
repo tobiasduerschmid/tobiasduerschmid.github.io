@@ -3,71 +3,85 @@ description: "Test your ability to produce the exact Regular Expression metachar
 active: true
 cards:  
   - id: 1  
+    difficulty: basic
     question: "What metacharacter asserts the start of a string?"  
     answer: "`^` (Caret)"  
     explanation: "Placed at the very beginning of a pattern, it constrains the match to the start of the string."  
 
   - id: 2  
+    difficulty: basic
     question: "What metacharacter asserts the end of a string?"  
     answer: "`$` (Dollar sign)"  
     explanation: "Placed at the very end of a pattern, it constrains the match to the end of the string."  
 
   - id: 3  
+    difficulty: basic
     question: "What syntax is used to define a Character Class (matching any single character from a specified group)?"  
     answer: "`[...]` (Square brackets)"  
     explanation: "Wrapping characters in square brackets tells the engine to match exactly one of the characters found inside."  
 
   - id: 4  
+    difficulty: basic
     question: "What syntax is used inside a character class to act as a negation operator (matching any character NOT in the group)?"  
     answer: "`[^...]` (Caret immediately after the opening bracket)"  
     explanation: "If the caret is the very first character inside the brackets, it inverts the character class."  
 
   - id: 5  
+    difficulty: basic
     question: "What metacharacter is used to match any single digit?"
     answer: "`\\d`"  
     explanation: "This is the direct equivalent of the character class `[0-9]`."  
 
   - id: 6  
+    difficulty: basic
     question: "What meta character is used to match any 'word' character (alphanumeric plus underscore)?"  
     answer: "`\\w`"  
     explanation: "This is the direct equivalent of the character class `[a-zA-Z0-9_]`."  
 
   - id: 7  
+    difficulty: basic
     question: "What meta character is used to match any whitespace character (spaces, tabs, line breaks)?"  
     answer: "`\\s`"  
     explanation: "This quickly targets formatting and spacing characters."  
 
   - id: 8  
+    difficulty: basic
     question: "What metacharacter acts as a wildcard, matching any single character except a newline?"  
     answer: "`.` (Dot)"  
     explanation: "To match a literal dot, you would need to escape it (\\.)."  
 
   - id: 9  
+    difficulty: basic
     question: "What quantifier specifies that the preceding element should match '0 or more' times?"  
     answer: "`*` (Asterisk)"  
     explanation: "This allows the preceding character or group to be completely absent or repeat infinitely."  
 
   - id: 10  
+    difficulty: basic
     question: "What quantifier specifies that the preceding element should match '1 or more' times?"  
     answer: "`+` (Plus sign)"  
     explanation: "This guarantees the character or group appears at least once, but allows it to repeat infinitely."  
 
   - id: 11  
+    difficulty: basic
     question: "What quantifier specifies that the preceding element should match '0 or 1' time?"  
     answer: "`?` (Question mark)"  
     explanation: "This essentially makes the preceding character, class, or group optional."  
 
   - id: 12  
+    difficulty: basic
     question: "What syntax is used to specify that the preceding element must repeat exactly n times?"  
     answer: "`{n}` (Curly braces with a number)"  
     explanation: "You can also specify a range of repetitions using `{n,m}`."  
 
   - id: 13
+    difficulty: basic
     question: "What syntax is used to create a group?"
     answer: "`(...)` (Parentheses)"
     explanation: "This groups tokens together as a single unit. You can apply quantifiers to the whole group and access the matched substring by index (e.g., `match[1]`)."
 
   - id: 14
+    difficulty: intermediate
     question: "What is the syntax used to create a Named Group?"
     answer: "`(?<name>pattern)` (or `(?P<name>pattern)` in Python)"
     explanation: "A named group lets you assign a meaningful label to the match, so you can access it by name (e.g., `match.groups.name`) instead of just a numbered index."

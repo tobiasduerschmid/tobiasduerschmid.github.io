@@ -3,6 +3,7 @@ description: "Given real-world application scenarios, choose the right network a
 active: true
 questions:
   - id: 1
+    difficulty: intermediate
     question: "You are building a **collaborative coding interview platform** where the candidate and the interviewer edit the same file at the same time, character by character. The candidate types `def foo():`, then immediately replaces it with `def bar():`. If those two edits arrive at the interviewer in the **wrong order**, the interviewer's screen ends up showing `def foo():` even though the candidate's screen shows `def bar():`. Which transport protocol should the editing channel use?"
     options:
       - "UDP — interactive editors need the lowest latency to feel responsive."
@@ -24,6 +25,7 @@ questions:
     explanation: "**TCP is required because every edit must arrive in the order it was typed.** Collaborative editors send each keystroke as a small `insert` or `delete` operation; if a `delete` arrives before its preceding `insert`, or never arrives at all, the two screens drift apart. TCP's ordering and retransmission guarantees rule this out, and the handshake/ACK overhead is negligible for tiny keystroke payloads — the same reason web apps and SSH (both TCP) handle their interactive workloads cleanly."
 
   - id: 2
+    difficulty: intermediate
     question: "You're building a **smart doorbell with a live camera feed**. When a visitor presses the button, the homeowner's phone displays the camera in real time so the homeowner can see who's there before deciding to answer. Which transport protocol should carry the **camera video stream**?"
     options:
       - "TCP — the homeowner needs to see every frame of the visitor."
@@ -44,6 +46,7 @@ questions:
     explanation: "**UDP is correct because a re-sent video frame arrives too late to be useful.** A dropped UDP packet causes a tiny visual glitch (often imperceptible — the next frame arrives within milliseconds), but TCP's retransmission would *pause the entire stream* to wait for a packet describing what the visitor was doing a moment ago — exactly when the homeowner needs the present view. Every live-video product (FaceTime, Zoom, real-time camera feeds) uses UDP-based protocols for this reason."
 
   - id: 3
+    difficulty: advanced
     question: "An indie team is building an **online multiplayer racing game**. Each player's car position and speed update **60 times per second** so all players see each other accurately on the track. The game also records **lap completion events**, awards **podium finishes**, and lets players spend earned currency on **car cosmetic upgrades** that persist between matches. What transport-protocol strategy fits best?"
     options:
       - "TCP for everything — losing a single position update would cause cars to teleport on screen."
@@ -64,6 +67,7 @@ questions:
     explanation: "**A hybrid is correct because position updates and progression events have opposite requirements.** Car positions arrive at 60 Hz with absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal. But a lost lap completion or purchase would corrupt persistent state — those need TCP's reliable, ordered delivery. This is the same hybrid pattern the SEBook describes for live online stock-trading platforms: UDP for the high-frequency snapshot stream of values that supersede each other, TCP for the events that must be recorded once and exactly once."
 
   - id: 4
+    difficulty: basic
     question: "You are building a **cloud file storage service** similar to Dropbox or Google Drive. A user clicks 'Upload' on a 200 MB folder of design files. The folder must arrive at the server **bit-for-bit identical** so that other devices syncing the same folder see the exact same files. Which transport protocol should carry the upload?"
     options:
       - "UDP — to maximize raw upload speed for large folders."
@@ -85,6 +89,7 @@ questions:
     explanation: "**TCP is required because the storage service's core invariant is byte-for-byte fidelity.** A single flipped bit in a `.psd` or `.docx` file can corrupt it silently — the user only discovers the damage when they reopen the file later. TCP's retransmission, ordering, and checksum guarantees prevent this. The handshake/ACK overhead is negligible compared to the size of the payload, which is why every major cloud-sync product uses TCP — typically over HTTPS."
 
   - id: 5
+    difficulty: intermediate
     question: "A startup is launching an **online concert ticketing platform**. Fans browse upcoming shows, **pay** with a credit card, and receive a unique QR-code ticket. The platform must prevent **two fans buying the same seat**, and it must keep an **immutable record** of every sale for tax and refunds. Should the backend be **client-server** or **peer-to-peer**?"
     options:
       - "Peer-to-peer — fans and venues can negotiate seats directly, avoiding platform fees."
@@ -105,6 +110,7 @@ questions:
     explanation: "**Client-server is required because the platform must serialize seat reservations, process payments, and own the audit trail.** A central server is the only place where seat inventory can be locked, transactions can be recorded once, and disputes can be resolved against an authoritative record. P2P would let two buyers commit to the same seat independently and would have nowhere to enforce payment finality. This is the same pattern any multi-sided marketplace (Uber, Airbnb, eBay) uses for the same reasons."
 
   - id: 6
+    difficulty: intermediate
     question: "A research consortium is designing a **distributed scientific data archive**: each participating university hosts a copy of selected genome datasets and serves them directly to other universities that request a copy. There must be **no single institution** that controls or can take down the archive, and the system should keep functioning even if **several universities go offline at once**. Which architecture fits these requirements best?"
     options:
       - "Client-server — running one central archive server is simpler to operate."
@@ -125,6 +131,7 @@ questions:
     explanation: "**Peer-to-peer is correct because decentralization is an explicit requirement, not just a preference.** Any central server (including just a central index) creates a single point of control and failure that the requirements forbid. True P2P systems use a Distributed Hash Table or similar peer-discovery mechanism so participants find each other without any central coordinator — the same idea behind BitTorrent's trackerless mode and IPFS. Each peer is both supplier and consumer, exactly the property the SEBook describes for P2P architectures."
 
   - id: 7
+    difficulty: basic
     question: "You are building a **walkie-talkie style voice app** for outdoor crews — a hiker holds the talk button, speaks for a few seconds, and any teammate within range hears the audio in real time. The audio must feel **immediate**, and a brief audio gap is far less disruptive than a hesitation in the middle of a sentence. Which transport protocol should carry the voice audio?"
     options:
       - "TCP — losing voice packets degrades the listener's understanding."
@@ -145,6 +152,7 @@ questions:
     explanation: "**UDP is correct because in real-time voice, a re-sent packet arrives too late to be useful.** TCP's retransmission would stall the audio waiting for a packet describing a moment the listener has already passed — producing audible jitter exactly when the speaker is mid-word. A dropped UDP packet creates a sub-millisecond gap that is largely imperceptible. This is why every real-time voice product (FaceTime audio, Discord voice, push-to-talk apps) uses UDP, often via RTP or WebRTC."
 
   - id: 8
+    difficulty: basic
     question: "A smart-home product ships a phone app that **refreshes every 5 seconds** to show the current state of the user's connected devices — lights on/off, thermostat temperature, door-lock status. The phone app sends a request to the company's **central hub server**, which responds with the latest readings collected from devices in the home. Which architecture pattern is this?"
     options:
       - "Peer-to-peer — both the phone and the smart devices send and receive data, so they are peers."
@@ -165,6 +173,7 @@ questions:
     explanation: "**Client-server is correct — polling is just a frequency choice within client-server.** The phone (client) initiates each request; the central hub (server) responds — the textbook definition of client-server. The 5-second interval changes only *how often* requests happen, not who initiates or where the authoritative state lives. The same shape applies to most dashboard-style apps that poll a backend for the latest data."
 
   - id: 9
+    difficulty: intermediate
     type: multiple
     question: "For which of the following would **TCP** be the better choice over UDP? (Select all that apply)"
     options:

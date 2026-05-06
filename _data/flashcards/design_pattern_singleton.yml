@@ -18,7 +18,7 @@ cards:
     answer: "The tendency to overuse Singleton for easy global access, creating high coupling and unclear dependencies — a form of the 'Hammer and Nail' syndrome."
     explanation: "Using Singleton just for convenience rather than a genuine 'exactly one instance' constraint leads to a hard-to-maintain design where dependencies are invisible."
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "When is Singleton acceptable in modern code?"
     answer: "When controlling a true infrastructure resource where DI is unavailable and testability of consuming code is not a concern. In all other cases, prefer DI with singleton scope."
     explanation: "A DI container can manage singleton *lifetime* (ensuring one instance) while keeping constructors injectable and dependencies explicit, avoiding the testability problem."

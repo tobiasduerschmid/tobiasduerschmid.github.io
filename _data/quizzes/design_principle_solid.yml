@@ -3,6 +3,7 @@ description: "Test your ability to apply and evaluate the five SOLID principles 
 active: true
 questions:
   - id: 1
+    difficulty: intermediate
     type: single
     question: |
       Which of the following best captures Robert C. Martin's **modern** formulation of the Single Responsibility Principle (SRP)?
@@ -25,6 +26,7 @@ questions:
     explanation: "Martin's refined definition centers on **people, not grammar**. SRP is about actors — Accounting, HR, DBAs, compliance, etc. A class serving multiple actors will be pulled in conflicting directions, and a change requested by one actor may silently break another's feature. 'One method', 'no ands', and line-count rules are all folk-theoretic proxies that routinely misfire."
 
   - id: 2
+    difficulty: intermediate
     type: single
     question: |
       You review this class:
@@ -57,6 +59,7 @@ questions:
     explanation: "Three different actors (Accounting, Web, DBA) each request changes to `Invoice` for unrelated reasons. The canonical SRP refactor is to extract one class per actor around a shared data record. Visibility modifiers do not reduce the *axes of change*; inlining all three methods into one makes the tangle worse; treating SRP as 'one method per class' is the misconception the chapter explicitly debunks."
 
   - id: 3
+    difficulty: advanced
     type: single
     question: |
       A teammate refactors a 40-line `OrderValidator` class into three micro-classes: `OrderValidator`, `OrderAuditLogger`, and `OrderErrorFormatter`. In practice, all three change **only** when the order business rules change — and always together.
@@ -80,6 +83,7 @@ questions:
     explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them doubles maintenance cost with no benefit. This is the 'premature separation' trap. Martin's own guidance: wait for the second actor to appear before extracting."
 
   - id: 4
+    difficulty: intermediate
     type: single
     question: |
       Which argument for SRP is **strongest** from a team-productivity perspective?
@@ -102,6 +106,7 @@ questions:
     explanation: "The practical team-level payoff of SRP is **merge-conflict reduction and fault isolation**: when Finance requests a tax change, they edit a file that HR never touches, so HR's feature cannot be accidentally broken. The other options confuse SRP with unrelated stylistic rules (screen size, DI tooling, field count)."
 
   - id: 5
+    difficulty: advanced
     type: single
     question: |
       According to Liskov's Design-by-Contract formulation, a subclass method must:
@@ -124,6 +129,7 @@ questions:
     explanation: "The classic LSP rules: **preconditions may not be strengthened**, **postconditions may not be weakened**, **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent."
 
   - id: 6
+    difficulty: intermediate
     type: single
     question: |
       Consider this code:
@@ -157,6 +163,7 @@ questions:
     explanation: "The real problem is the **taxonomy**: `Ostrich` is-a bird but is-not-a flying thing. Segregating `FlyingBird` aligns the type hierarchy with behavior, eliminating the need for clients to defensive-check (which is itself an LSP symptom)."
 
   - id: 7
+    difficulty: advanced
     type: single
     question: |
       You are asked to review this subclass contract:
@@ -191,6 +198,7 @@ questions:
     explanation: "`Queue.enqueue` accepts any non-null `Object`; `StringQueue.enqueue` narrows that to `String`. A client holding a `Queue` reference that was in fact a `StringQueue` will throw at runtime on previously-legal calls — **strengthened precondition**, the most common LSP violation in practice. This is exactly why Java's `Stack extends Vector` is cited in the chapter as a legacy LSP mistake."
 
   - id: 8
+    difficulty: expert
     type: single
     question: |
       The chapter says a `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
@@ -213,6 +221,7 @@ questions:
     explanation: "The Square/Rectangle lesson is subtle: *self-consistency is not enough*. LSP is evaluated by the contracts that **clients of the parent** have implicitly written into their code (e.g., an area-assertion test that assumes setting width leaves height alone). Any subtype that surprises those clients — even if internally coherent — violates LSP. The fix is making `Square` and `Rectangle` siblings of a common `Shape` interface."
 
   - id: 9
+    difficulty: intermediate
     type: single
     question: |
       A `ShippingCostCalculator` uses a long `switch` on `carrier` (UPS, FedEx, USPS). Management wants to add DHL next week.
@@ -236,6 +245,7 @@ questions:
     explanation: "OCP = **open for extension, closed for modification**. Strategy/polymorphism lets you add a new `Carrier` without touching calculator code."
 
   - id: 10
+    difficulty: intermediate
     type: single
     question: |
       A `Printer` interface exposes `print()`, `scan()`, `fax()`, and `staple()`. A simple home printer class must implement all four but throws `UnsupportedOperationException` on `scan`, `fax`, and `staple`.
@@ -259,6 +269,7 @@ questions:
     explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces means clients depend only on what they need, and simple devices need only implement `Printable`. Treating SRP as a method-count rule is the misconception the chapter debunks; DIP is about the direction of dependencies, not interface size."
 
   - id: 11
+    difficulty: advanced
     type: single
     question: |
       Which scenario shows the **correct** application of the Dependency Inversion Principle?
@@ -281,6 +292,7 @@ questions:
     explanation: "DIP requires that **the high-level module owns the abstraction**. When business logic declares the interface it needs and infrastructure conforms, the dependency direction runs from concrete to abstract — exactly what DIP prescribes."
 
   - id: 12
+    difficulty: expert
     type: single
     question: |
       The chapter argues SOLID principles **reinforce** each other. Which pairing below best captures a genuine dependency between two principles?

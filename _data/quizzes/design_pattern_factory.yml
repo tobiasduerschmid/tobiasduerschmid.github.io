@@ -3,6 +3,7 @@ description: "Test your understanding of creational patterns — when to use whi
 active: true
 questions:
   - id: 1
+    difficulty: intermediate
     type: single
     question: |
       A `PizzaStore` uses a parameterized factory method: `createPizza(String type)` with an if/else chain to decide which pizza to create. A new pizza type ("BBQ Chicken") must be added. What is the design problem?
@@ -22,6 +23,7 @@ questions:
     explanation: "**This violates the Open/Closed Principle because adding a new pizza type requires modifying the existing if/else chain rather than adding a new subclass.** A **parameterized factory method** uses conditional logic to decide which product to create. Every new product type requires modifying this conditional — violating the **Open/Closed Principle**. The true Factory Method pattern solves this by using **subclass override**: each concrete creator implements `createPizza()` to return its specific product. Adding a new pizza type means adding a new subclass, not changing existing code."
 
   - id: 2
+    difficulty: intermediate
     type: single
     question: |
       A system needs to create families of related UI components (Button, TextField, Checkbox) that must be visually consistent — all from the same theme (Material, iOS, Windows). Which pattern is most appropriate?
@@ -41,6 +43,7 @@ questions:
     explanation: "**Abstract Factory is correct here because it creates families of related components that must stay visually consistent within the same theme.** This is the classic **Abstract Factory** scenario: multiple product types (Button, TextField, Checkbox) that must belong to the same family (theme). Abstract Factory ensures that MaterialButton is always paired with MaterialTextField — preventing inconsistent combinations. Factory Method handles only one product type; Builder handles step-by-step construction."
 
   - id: 3
+    difficulty: advanced
     type: single
     question: |
       A common shorthand contrasts Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
@@ -60,6 +63,7 @@ questions:
     explanation: "**Factory Method relies on inheritance (subclass overrides a method) while Abstract Factory relies on object composition (client holds and calls a factory object).** This is a key structural distinction from the GoF. **Factory Method** uses **inheritance**: you extend a Creator class and override the factory method. **Abstract Factory** uses **object composition**: the client receives a factory object and calls its creation methods. Composition provides more runtime flexibility (factory objects can be swapped), while inheritance is simpler for single-product scenarios."
 
   - id: 4
+    difficulty: advanced
     type: single
     question: |
       An Abstract Factory interface has 12 creation methods (one per product type). A new product type must be added. What is the consequence?
@@ -79,6 +83,7 @@ questions:
     explanation: "**Adding a new product type to Abstract Factory forces a change to the interface and every concrete factory — the rigid interface drawback.** This is the **Rigid Interface drawback** — the fundamental asymmetry of Abstract Factory. Adding new **families** (a new concrete factory + products) is a pure addition. But adding new **product types** requires changing the interface and modifying **every** concrete factory. At 12+ product types, this ripple effect becomes a serious maintenance burden."
 
   - id: 5
+    difficulty: advanced
     type: single
     question: |
       Each method in a `PizzaIngredientFactory` — `createDough()`, `createSauce()`, `createCheese()` — is implemented differently by `NYPizzaIngredientFactory` and `ChicagoPizzaIngredientFactory`. What is the relationship between these creation methods and the Factory Method pattern?

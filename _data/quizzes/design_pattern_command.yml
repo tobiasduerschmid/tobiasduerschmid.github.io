@@ -3,6 +3,7 @@ description: "Test your understanding of Command roles, refactoring triggers, un
 active: true
 questions:
   - id: 1
+    difficulty: basic
     type: single
     question: |
       A toolbar button should be configurable with Save, Export, Print, or Upload behavior without changing the toolbar class. Which Command role does the toolbar play?
@@ -22,6 +23,7 @@ questions:
     explanation: "**The toolbar is the Invoker.** It stores a command and calls `execute()` when the user clicks, but it does not know which receiver or receiver method performs the work."
 
   - id: 2
+    difficulty: advanced
     type: single
     question: |
       A web controller has a 300-line `if/else` block dispatching action names to request handlers. Product now wants new actions loaded from configuration. Which refactoring is the best fit?
@@ -41,6 +43,7 @@ questions:
     explanation: "**Replace Conditional Dispatcher with Command fits because the code routes requests and now needs runtime flexibility.** Each action can become a command object stored in a map keyed by action name."
 
   - id: 3
+    difficulty: intermediate
     type: single
     question: |
       A `LightOnCommand` supports undo by calling `light.off()`. What must a `SetThermostatCommand` usually store to undo safely?
@@ -60,6 +63,7 @@ questions:
     explanation: "**It needs the previous temperature.** Some undo operations are simple inverse calls, but value-changing commands usually must capture old receiver state before they execute."
 
   - id: 4
+    difficulty: intermediate
     type: single
     question: |
       A "party mode" button turns on lights, starts music, and lowers blinds. The button should still look like one command to the remote. Which variation is this?
@@ -79,6 +83,7 @@ questions:
     explanation: "**This is a Macro Command.** It implements the same command interface while holding and executing a sequence of child commands."
 
   - id: 5
+    difficulty: basic
     type: single
     question: |
       When is Command probably over-engineering?
@@ -98,6 +103,7 @@ questions:
     explanation: "**A tiny stable conditional can stay simple.** Command adds indirection and extra types, so it should be introduced when the request lifecycle or evolution pressure justifies that cost."
 
   - id: 6
+    difficulty: basic
     type: single
     question: |
       In `LightOnCommand`, the command stores a `Light` object and calls `light.on()` in `execute()`. Which role does `Light` play?
@@ -117,6 +123,7 @@ questions:
     explanation: "**The light is the Receiver.** It owns the real operation. The command packages that operation so an invoker can trigger it without knowing the receiver API."
 
   - id: 7
+    difficulty: intermediate
     type: multiple
     question: |
       Which requirements are good evidence that Command may be worth introducing?
@@ -146,6 +153,7 @@ questions:
     explanation: "**Queuing, undo, and runtime action configuration are Command-shaped forces.** A private helper used in one stable place does not justify the pattern by itself."
 
   - id: 8
+    difficulty: intermediate
     type: single
     question: |
       A remote-control slot has not been configured yet, but the remote should still be able to call `execute()` without checking for `null`. What should the slot contain?
@@ -165,6 +173,7 @@ questions:
     explanation: "**A Null Command intentionally does nothing.** It lets invokers keep the same execution flow without repeated null checks."
 
   - id: 9
+    difficulty: advanced
     type: single
     question: |
       A job queue serializes work items to disk, restarts, then replays unfinished work. Which Command design decision matters most?
@@ -184,6 +193,7 @@ questions:
     explanation: "**Queued commands need self-contained request data or a durable reference to it.** Otherwise the queue can store the command object but not safely replay the work."
 
   - id: 10
+    difficulty: basic
     type: single
     question: |
       In a small script, a menu option only calls one function immediately and will never need undo, logging, queuing, or runtime reconfiguration. What is the most pragmatic choice?
@@ -203,6 +213,7 @@ questions:
     explanation: "**A direct call is clearer when the request has no lifecycle.** Command should pay for itself by solving a real coupling, extension, or lifecycle problem."
 
   - id: 11
+    difficulty: advanced
     type: parsons
     question: |
       Put the refactoring path from a conditional dispatcher toward Command in a reasonable order.

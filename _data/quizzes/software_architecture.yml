@@ -3,6 +3,7 @@ description: "Recalling what you just learned is the best way to form lasting me
 active: true
 questions:
   - id: 1
+    difficulty: advanced
     question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal choices governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
     options:
       - "The Structural Paradigm"
@@ -23,6 +24,7 @@ questions:
     explanation: "**The decision-based paradigm defines architecture as the set of principal design decisions, not just structural elements — championed by Taylor et al. as an alternative to the box-and-line view.** The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
 
   - id: 2
+    difficulty: basic
     question: "What formula did Perry and Wolf propose to define software architecture?"
     options:
       - "Architecture = {Components, Connectors, Style}"
@@ -43,6 +45,7 @@ questions:
     explanation: "**Perry and Wolf's 1992 formula defines architecture as Elements + Form + Rationale — not components/connectors (Bass) or modules/layers alone.** Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
 
   - id: 3
+    difficulty: intermediate
     question: "What is the key difference between 'Architectural Drift' and 'Architectural Erosion'?"
     options:
       - "Drift is intentional, while erosion is accidental."
@@ -63,6 +66,7 @@ questions:
     explanation: "**Drift adds decisions not in the plan without breaking it, while erosion explicitly violates the intended architectural rules — erosion is more damaging because it creates direct contradictions.** **Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
 
   - id: 4
+    difficulty: basic
     question: "Which term refers to the architecture as it is 'realized' in the source code and physical build artifacts?"
     options:
       - "Prescriptive Architecture"
@@ -83,6 +87,7 @@ questions:
     explanation: "**Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts — it describes what was built, not what was intended.** **Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
 
   - id: 5
+    difficulty: advanced
     question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
     options:
       - "The system becomes more flexible."
@@ -103,6 +108,7 @@ questions:
     explanation: "**When descriptive and prescriptive architectures diverge completely, the system loses conceptual integrity and accumulates technical debt until it becomes a 'Big Ball of Mud' — unmaintainable and unstructured.** Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
 
   - id: 6
+    difficulty: expert
     question: "In the context of the JackTrip project, what was identified as a primary driver of 'link overload smells' and erosion?"
     options:
       - "Using too many descriptive diagrams."

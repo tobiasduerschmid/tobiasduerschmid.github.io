@@ -4,12 +4,14 @@ active: true
 cards:
 
   - id: 1
+    difficulty: basic
     question: |
       **[Apply]** Two `String` variables `input` and `stored` may or may not point to the same object. Write a boolean expression that checks whether they contain the same characters, guaranteed to be correct regardless of how they were created.
     answer: "`input.equals(stored)`"
     explanation: "`.equals()` compares character content regardless of object identity. `==` would fail whenever `input` and `stored` are separate objects with identical content — for example, when `stored` came from a database query and `input` came from user input."
 
   - id: 2
+    difficulty: intermediate
     question: |
       **[Evaluate + Apply]** A HashMap lookup is crashing in production with a `NullPointerException`. The code is:
       ```java
@@ -21,6 +23,7 @@ cards:
     explanation: "`HashMap.get()` returns `null` for missing keys. Auto-unboxing `null` to `int` throws NPE. `getOrDefault(key, fallback)` returns the value if present, or the fallback safely — no null, no NPE. Alternatively: `grades.containsKey(studentId) ? grades.get(studentId) : 0`, but `getOrDefault` is more idiomatic."
 
   - id: 3
+    difficulty: intermediate
     question: |
       **[Create]** Design a `BankAccount` class that:
       - Stores `owner` (String) and `balance` (double) — neither directly accessible from outside
@@ -63,6 +66,7 @@ cards:
     explanation: "Private fields + validated methods = encapsulation. The `withdraw` boolean return avoids throwing an exception for an expected condition (insufficient funds isn't a programming error). `toString()` is annotated `@Override` — the compiler verifies we're overriding `Object.toString()`."
 
   - id: 4
+    difficulty: advanced
     question: |
       **[Evaluate + Create]** This class has a design problem. Identify it, then rewrite `GradeReport` so that changing the grading thresholds (A ≥ 90, B ≥ 80…) requires editing **only one method**:
       ```java
@@ -115,6 +119,7 @@ cards:
     explanation: "This is Parnas's information hiding principle in action. Three secrets are now hidden: grading policy (in `getLetterGrade`), data representation (no `getScores()` exposed), output format (in `formatReport`). Changing any of them touches exactly one method."
 
   - id: 5
+    difficulty: basic
     question: |
       **[Apply]** Define a `Drawable` interface with one method: `String draw()`. Then write a `Square` class that implements it — `draw()` returns `"Square(side=5.0)"`.
     answer: |
@@ -137,6 +142,7 @@ cards:
     explanation: "Interface methods are implicitly `public abstract`. The implementing class uses `implements` (not `extends`). Every method declared in the interface must be implemented — the compiler enforces this. `@Override` confirms the method matches the interface signature."
 
   - id: 6
+    difficulty: intermediate
     question: |
       **[Create]** Design an abstract class `Animal` with:
       - A `private String name` and a constructor
@@ -168,6 +174,7 @@ cards:
     explanation: "`super(name)` must be the first statement — it runs the parent constructor before any Dog-specific code. Because `name` is `private` in `Animal`, `Dog` cannot access it directly — it uses `getName()`. The `abstract` keyword on `makeSound()` forces every concrete subclass to provide an implementation."
 
   - id: 7
+    difficulty: basic
     question: |
       **[Apply]** Write a generic class `Box<T>` that holds one item of any type. Include a constructor, a `getItem()` method, and a `setItem()` method.
     answer: |
@@ -191,6 +198,7 @@ cards:
     explanation: "`<T>` is a type parameter — a placeholder filled in at the call site. The compiler uses it to insert correct types and casts, catching mismatches at compile time instead of runtime. `Box<int>` is illegal — use `Box<Integer>` since generics require object types (due to type erasure)."
 
   - id: 8
+    difficulty: expert
     question: |
       **[Apply + Analyze]** Write a generic static method `findMax` that takes two arguments of any type and returns the larger one. The type must be **constrained** to types that can be compared.
     answer: |
@@ -206,6 +214,7 @@ cards:
     explanation: "`<T extends Comparable<T>>` is a **bounded type parameter** — it restricts `T` to types that implement `Comparable`. This is the Java equivalent of C++20 concepts. Without the bound, the compiler would reject `a.compareTo(b)` because it can't guarantee `T` has that method. `String`, `Integer`, `Double` all implement `Comparable`."
 
   - id: 9
+    difficulty: advanced
     question: |
       **[Create]** Write a `WordCounter` class that takes a `String[]` in its constructor and provides:
       - `int getCount(String word)` — returns 0 for unknown words, no NPE
@@ -240,6 +249,7 @@ cards:
     explanation: "`HashMap<String, Integer>` maps each word to its frequency — O(1) insert and lookup. `HashSet<String>` tracks distinct words — O(1) add with automatic deduplication. `getOrDefault(word, 0)` avoids the NPE that `get()` followed by auto-unboxing would cause for missing keys."
 
   - id: 10
+    difficulty: advanced
     question: |
       **[Apply]** Define a checked exception `EnrollmentException` and a `Course.enroll(Student s)` method that throws it when the course is full (`capacity` exceeded). Write both the class definition and the calling code that handles the exception.
     answer: |
@@ -274,6 +284,7 @@ cards:
     explanation: "Extending `Exception` (not `RuntimeException`) makes it **checked** — callers must catch or re-throw it. The `throws EnrollmentException` in the method signature is part of the contract and required by the compiler. `super(message)` stores the message in `Exception`, making it available via `getMessage()`."
 
   - id: 11
+    difficulty: intermediate
     question: |
       **[Apply]** Write a `try-catch-finally` block that: opens a file (throws `IOException`), reads its content, and prints an error if it fails. The `finally` block should always print `"Done."`.
     answer: |
@@ -290,6 +301,7 @@ cards:
     explanation: "`catch (IOException e)` handles `IOException` and all its subclasses (e.g., `FileNotFoundException`). `finally` runs whether or not an exception was thrown — use it for cleanup (closing streams, releasing locks). Even if the `catch` block re-throws, `finally` still runs."
 
   - id: 12
+    difficulty: advanced
     question: |
       **[Evaluate + Apply]** You need to store course enrollments. Two options:
       - `List<Student>` with a manual duplicate check in `enroll()`
@@ -315,6 +327,7 @@ cards:
     explanation: "Choosing the right collection encodes intent. `Set` means 'unique elements' — the type enforces the invariant. `List` means 'ordered sequence with possible duplicates' — you must enforce uniqueness manually, which is fragile. `LinkedHashSet` adds insertion-order iteration over plain `HashSet`."
 
   - id: 13
+    difficulty: intermediate
     question: |
       **[Apply]** Write a method `printAll(List<String> items)` that iterates the list with an enhanced for-loop, printing each item. Then call it with an `ArrayList<String>` **and** a `LinkedList<String>`. Explain why both calls compile.
     answer: |
@@ -335,6 +348,7 @@ cards:
     explanation: "Declaring the parameter as `List<String>` (the interface) rather than `ArrayList<String>` (the concrete class) allows any `List` implementation to be passed. This is 'program to an interface, not an implementation.' The enhanced for-loop works on any `Iterable`, which both `ArrayList` and `LinkedList` implement through `List`."
 
   - id: 14
+    difficulty: advanced
     question: |
       **[Create]** You are building a course registration system. Design the method signature (interface method + throws) for an `Enrollable` interface that:
       - Adds a student (can fail if course is full or duplicate)
@@ -362,6 +376,7 @@ cards:
     explanation: "`enroll()` throws a checked exception because a full course is an external condition the caller should handle. `drop()` returns `boolean` because dropping a non-existent student is a non-exceptional expected case. `getRoster()` returns `ArrayList<String>` (names) rather than exposing `Student` objects — this hides the internal `Student` type from consumers of the interface."
 
   - id: 15
+    difficulty: advanced
     question: |
       **[Evaluate + Create]** A teammate wrote this accumulator. Find the performance issue, explain the root cause, and write the corrected version.
       ```java

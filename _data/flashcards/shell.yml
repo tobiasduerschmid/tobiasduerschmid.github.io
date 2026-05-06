@@ -3,83 +3,102 @@ description: "Which Shell command would you use for the following scenarios?"
 active: true
 cards: 
   - id: 1 
+    difficulty: basic
     question: "You need to see a list of all the files and folders in your current directory. What command do you use?" 
     answer: "`ls`" 
     explanation: "The `ls` command lists directory contents. You can also use flags like `ls -l` for a detailed list or `ls -a` to see hidden files." 
   - id: 2 
+    difficulty: basic
     question: "You are currently in your home directory and need to navigate into a folder named 'Documents'. Which command achieves this?" 
     answer: "`cd Documents`" 
     explanation: "The `cd` (change directory) command is used to change the current working directory in the command line operating system." 
   - id: 3 
+    difficulty: basic
     question: "You want to quickly view the entire contents of a small text file named 'config.txt' printed directly to your terminal screen." 
     answer: "`cat config.txt`" 
     explanation: "The `cat` (concatenate) command reads data from the file and gives its content as output. It is widely used to display file contents." 
   - id: 4 
+    difficulty: basic
     question: "You need to find every line containing the word 'ERROR' inside a massive log file called 'server.log'." 
     answer: "`grep 'ERROR' server.log`" 
     explanation: "`grep` searches for patterns in each file. It prints each line that matches the given pattern, making it invaluable for parsing logs." 
   - id: 5 
+    difficulty: basic
     question: "You wrote a new bash script named 'script.sh', but when you try to run it, you get a 'Permission denied' error. How do you make the file executable?" 
     answer: "`chmod +x script.sh`" 
     explanation: "The `chmod` command changes file modes or Access Control Lists. The `+x` flag specifically adds execute permissions to the file." 
   - id: 6 
+    difficulty: basic
     question: "You want to rename a file from 'draft_v1.txt' to 'final_version.txt' without creating a copy." 
     answer: "`mv draft_v1.txt final_version.txt`" 
     explanation: "The `mv` command is used to move files or directories, but it is also the standard command used to rename a file by moving it to a new name in the same directory." 
   - id: 7 
+    difficulty: basic
     question: "You are starting a new project and need to create a brand new, empty folder named 'src' in your current location." 
     answer: "`mkdir src`" 
     explanation: "`mkdir` stands for 'make directory'. It creates a new directory with the specified name, provided you have the correct permissions." 
   - id: 8 
+    difficulty: basic
     question: "You want to view the contents of a very long text file called 'manual.txt' one page at a time so you can scroll through it." 
     answer: "`less manual.txt`" 
     explanation: "The `less` command is a terminal pager program that allows viewing (but not editing) the contents of a text file one screen at a time, allowing both forward and backward navigation."
   - id: 9
+    difficulty: basic
     question: "You need to create an exact duplicate of a file named 'report.pdf' and save it as 'report_backup.pdf'."
     answer: "`cp report.pdf report_backup.pdf`"
     explanation: "The `cp` (copy) command is used to copy files or directories from one location to another."
   - id: 10
+    difficulty: basic
     question: "You have a temporary file called 'temp_data.csv' that you no longer need and want to permanently delete from your system."
     answer: "`rm temp_data.csv`"
     explanation: "The `rm` (remove) command deletes files or directories. Use with caution, as deleted files are generally not recoverable."
   - id: 11
+    difficulty: basic
     question: "You want to quickly print the phrase 'Hello World' to the terminal or pass that string into a pipeline."
     answer: "`echo 'Hello World'`"
     explanation: "The `echo` command outputs the strings it is being passed as arguments. It is commonly used in scripts to display messages or write data to a file using redirection."
   - id: 12
+    difficulty: basic
     question: "You want to know exactly how many lines are contained within a file named 'essay.txt'."
     answer: "`wc -l essay.txt`"
     explanation: "The `wc` (word count) command prints newline, word, and byte counts for a file. Adding the `-l` flag restricts the output to only the line count."
   - id: 13
+    difficulty: expert
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
     answer: "`sed 's/apple/orange/g'`"
     explanation: "The `sed` (stream editor) `s`: Stands for 'substitute'. `/`: The delimiter that separates the search and replacement terms. `apple`: The string you want to find. `orange`: The string you want to replace it with. `g`: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."
   - id: 15
+    difficulty: intermediate
     question: "You want to store today's date (formatted as YYYY-MM-DD) in a variable called `TODAY` so you can use it to name a backup file dynamically."
     answer: "`TODAY=$(date +%Y-%m-%d)`"
     explanation: "Command substitution `$(...)` executes the inner command in a subshell and replaces itself with the command's standard output. This is the standard way to capture the result of a command into a variable."
 
   - id: 16
+    difficulty: advanced
     question: "A variable `FILE` holds the value `my report.pdf`. Running `rm $FILE` fails with a 'No such file or directory' error for both 'my' and 'report.pdf'. How do you fix this?"
     answer: "`rm \"$FILE\"`"
     explanation: "Without quotes, the shell performs **word splitting** on the expanded variable, breaking `my report.pdf` into two separate arguments: `my` and `report.pdf`. Wrapping the variable in double quotes (`\"$FILE\"`) prevents word splitting and passes the entire value as a single argument."
 
   - id: 17
+    difficulty: intermediate
     question: "You are writing a script that requires exactly two arguments. How do you check how many arguments were passed to the script so you can print a usage error if the count is wrong?"
     answer: "`$#`"
     explanation: "`$#` expands to the total count of positional arguments passed to the script. A typical guard looks like: `if [ $# -ne 2 ]; then echo 'Usage: script.sh src dest'; exit 1; fi`. Other useful special variables: `$1`, `$2` (individual args), `$0` (script name), `$@` (all args)."
 
   - id: 18
+    difficulty: intermediate
     question: "You want to create a directory called 'build' and then immediately run `cmake ..` inside it, but only if the directory creation succeeded — all in a single command."
     answer: "`mkdir build && cd build && cmake ..`"
     explanation: "The `&&` (AND) operator runs the next command only if the previous one **succeeded** (exit code 0). If `mkdir` fails, neither `cd` nor `cmake` will execute. This is a concise alternative to a full `if/then/fi` block for simple success-guarded sequences."
 
   - id: 19
+    difficulty: advanced
     question: "At the start of a script, you need to change into `/deploy/target`. If that directory doesn't exist, the script must abort immediately — write a defensive one-liner."
     answer: "`cd /deploy/target || exit 1`"
     explanation: "The `||` (OR) operator runs the right-hand command only if the left-hand command **fails** (non-zero exit code). This is the standard idiom for aborting a script when a critical precondition is not met, without needing a full `if` statement."
 
   - id: 20
+    difficulty: intermediate
     question: "You want to delete all files ending in `.tmp` in the current directory using a single command, without listing each filename explicitly."
     answer: "`rm *.tmp`"
     explanation: "The `*` wildcard is a **glob pattern** — it is expanded by the shell itself (filename expansion) before `rm` runs. Globbing is entirely separate from regular expressions: in RegEx, `*` means 'zero or more of the preceding character', not 'match anything'."

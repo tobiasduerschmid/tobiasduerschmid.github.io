@@ -3,6 +3,7 @@ description: "Test your understanding of the Observer pattern's design decisions
 active: true
 questions:
   - id: 1
+    difficulty: advanced
     type: single
     question: |
       A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
@@ -22,6 +23,7 @@ questions:
     explanation: "**The Push model causes unnecessary data transfer because every observer receives the full data set on every update, even when they only need a small subset.** In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
 
   - id: 2
+    difficulty: intermediate
     type: single
     question: |
       A developer registers observers with a subject but never calls `detach()` when the observers are no longer needed. The application gradually slows down over time. What is this problem called?
@@ -41,6 +43,7 @@ questions:
     explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
 
   - id: 3
+    difficulty: advanced
     type: single
     question: |
       The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
@@ -60,6 +63,7 @@ questions:
     explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
 
   - id: 4
+    difficulty: intermediate
     type: single
     question: |
       A colleague says: "We only have one observer right now, so we don't need the Observer pattern — just call the method directly." When is this argument **most valid**?
@@ -79,6 +83,7 @@ questions:
     explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
 
   - id: 5
+    difficulty: intermediate
     type: single
     question: |
       In MVC, the Model acts as the Observer's Subject. The View registers as an Observer, and the Model calls `update()` on all views when its state changes. Which notification trigger approach is being used here?

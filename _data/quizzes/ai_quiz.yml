@@ -3,6 +3,7 @@ description: "Recalling what you just learned is the best way to form lasting me
 active: true
 questions:
   - id: 1
+    difficulty: basic
     question: "What is 'cognitive offloading'?"
     options:
       - "Using AI to generate entire essays to save time."
@@ -16,6 +17,7 @@ questions:
       3: "External tools do not increase biological memory capacity. They reduce what must be held or processed mentally by putting some of the work outside the mind."
     explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
+    difficulty: intermediate
     question: "According to research, who benefits more from using AI for technical tasks?"
     options:
       - "Absolute novices with no prior experience."
@@ -29,6 +31,7 @@ questions:
       3: "AI support is not equally useful in every learner's hands. People with stronger foundations are usually better able to ask precise questions, detect errors, and adapt the result."
     explanation: "**Skilled developers benefit most from AI because it amplifies their existing ability to direct and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
+    difficulty: basic
     question: "Which of these is an example of 'Beneficial Offloading' for a CS student?"
     options:
       - "Asking AI to solve the core algorithm of a homework assignment."
@@ -42,6 +45,7 @@ questions:
       3: "Copying code without understanding can create a false sense of fluency and hide defects. Beneficial offloading should leave the learner able to explain, test, and revise the result."
     explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
   - id: 4
+    difficulty: intermediate
     question: "What is the 'desirable difficulty' in the context of learning?"
     options:
       - "Any difficulty that makes a student want to give up."

@@ -4,6 +4,7 @@ active: true
 questions:
 
   - id: 1
+    difficulty: intermediate
     question: |
       **Arrange** the fragments to find which lines appear most often in `access.log` — showing the top 5 repeated entries with their counts.
     type: parsons
@@ -22,6 +23,7 @@ questions:
     explanation: "`sort` groups identical lines together so `uniq` can process them. `uniq -c` prefixes each unique line with its occurrence count. The second `sort -rn` reorders by that count, highest first. `head -5` takes the top 5. Using `cat` before `sort` is redundant — `sort` reads the file directly. `tail -5` would show the *least* repeated lines instead."
 
   - id: 2
+    difficulty: intermediate
     question: |
       **Arrange** the fragments to count how many *unique* lines containing `"error"` (case-insensitive) exist in `app.log`.
     type: parsons
@@ -40,6 +42,7 @@ questions:
     explanation: "`grep -i` filters lines matching `error` in any case. `sort` groups identical lines together — `uniq` only removes *adjacent* duplicates, so sorting first is required. `uniq` collapses the duplicates. `wc -l` counts the remaining unique lines. Dropping `-i` would miss `ERROR` or `Error`. Using `head` instead of `wc -l` would print lines rather than count them."
 
   - id: 3
+    difficulty: intermediate
     question: |
       **Arrange** the fragments to combine two log files and display every unique line in sorted order.
     type: parsons
@@ -56,6 +59,7 @@ questions:
     explanation: "`cat server.log error.log` concatenates both files into a single stream. `sort` groups identical lines adjacent to each other — required because `uniq` only collapses *adjacent* duplicates. `uniq` then removes the duplicates. Using `grep` with a filename instead of `cat` would filter rather than merge. `wc -l` would count lines instead of printing them."
 
   - id: 4
+    difficulty: advanced
     question: |
       **Arrange** the fragments to display only the non-comment, non-blank lines from `config.txt`, sorted alphabetically.
     type: parsons
@@ -72,6 +76,7 @@ questions:
     explanation: "`grep -v '^#'` removes lines that start with `#` (comments). `grep -v '^$'` removes blank lines (lines matching the empty-string anchor). `sort` alphabetically orders the remaining entries. The distractor `grep '^#'` would keep *only* comment lines — the opposite of the goal. `wc -l` would count rather than display the lines."
 
   - id: 5
+    difficulty: basic
     question: |
       **Arrange** the fragments to count how many `.txt` files are in the current directory.
     type: parsons

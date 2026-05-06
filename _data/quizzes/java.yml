@@ -4,6 +4,7 @@ active: true
 questions:
 
   - id: 1
+    difficulty: basic
     question: |
       Predict the output of this code:
       ```java
@@ -31,6 +32,7 @@ questions:
     explanation: "**`new String()` bypasses the intern pool, so `==` returns `false` (different references) while `.equals()` returns `true` (same content) — never use `==` to compare strings.** `new String(\"hello\")` forces Java to create a fresh object on the heap each time, bypassing the string intern pool. So `a` and `b` are different objects — `==` compares references and returns `false`. `.equals()` compares character content and returns `true`. The lesson: never use `==` to compare strings. Always use `.equals()`."
 
   - id: 2
+    difficulty: intermediate
     question: |
       What does this code print?
       ```java
@@ -58,6 +60,7 @@ questions:
     explanation: "**Java only caches Integer values from -128 to 127, so 200 creates two separate heap objects — `==` returns `false` but `.equals()` returns `true`.** Java maintains an Integer cache for values −128 to 127. Outside this range, autoboxing calls `Integer.valueOf(200)` which creates a new object each time. So `x` and `y` point to different objects — `==` returns `false`. `.equals()` compares the values and returns `true`. This is why you must always use `.equals()` for wrapper types, not `==`."
 
   - id: 3
+    difficulty: intermediate
     question: |
       What happens at runtime when this code executes?
       ```java
@@ -83,6 +86,7 @@ questions:
     explanation: "**Auto-unboxing calls `.intValue()` on the Integer, so assigning `null` to `int` throws NullPointerException — always check for null before unboxing.** Auto-unboxing is syntactic sugar for `.intValue()`. When `count` is `null`, calling `.intValue()` on it throws `NullPointerException`. This is a common production bug — it works fine in testing (where counts are small non-null numbers) and explodes in production when a database returns null. Always check for null before unboxing."
 
   - id: 4
+    difficulty: advanced
     question: |
       A teammate writes this in a hot loop:
       ```java
@@ -111,6 +115,7 @@ questions:
     explanation: "**Each `+=` on an `Integer` causes an unbox, add, and rebox — one heap allocation per iteration, creating enormous GC pressure that `int` avoids entirely.** `sum += i` expands to `sum = Integer.valueOf(sum.intValue() + i)` — two method calls and one object allocation per iteration. In a tight loop this creates enormous garbage-collector pressure. Use primitive `int` for accumulators, counters, and any variable that is never put into a generic container."
 
   - id: 5
+    difficulty: basic
     question: "In Java, what is the default access level when no access modifier is specified on a field or method?"
     options:
       - "private — only accessible within the class (same as C++ class default)"
@@ -130,6 +135,7 @@ questions:
     explanation: "**Unlike C++ where the default is `private`, Java's default is package-private — any class in the same package can access the member without an explicit modifier.** This is a key false friend from C++. In a C++ `class`, the default access is `private`. In Java, the default is **package-private** — any class in the same package can read or write the member without any access modifier. This is a common source of accidental data exposure when transitioning from C++. Always be explicit with Java access modifiers."
 
   - id: 6
+    difficulty: intermediate
     question: |
       A `GradeReport` class has `private ArrayList<Integer> scores` and exposes it like this:
       ```java
@@ -155,6 +161,7 @@ questions:
     explanation: "**Information hiding is NOT achieved because the return type `ArrayList<Integer>` exposes the storage decision — switching to `int[]` or a database would break every caller.** Encapsulation (private fields) and information hiding are orthogonal. The field is encapsulated, but the method signature exposes the *secret* — the choice of `ArrayList<Integer>`. When storage changes, every caller breaks. A properly hidden design exposes behavior instead: `getAverage()`, `getLetterGrade(int score)`, `formatReport()`. Callers never see how scores are stored."
 
   - id: 7
+    difficulty: basic
     question: |
       `Dog`, `Car`, and `Printer` each need a `serialize()` method. They share no fields or common behavior. Which Java construct is the right fit?
     options:
@@ -176,6 +183,7 @@ questions:
     explanation: "**An interface is correct here because the three classes are unrelated and share a behavioral contract only — an abstract class would be appropriate only if they also shared state or implementation.** Interfaces define contracts for unrelated classes that share behavior but no state. Abstract classes make sense when related classes share both fields and some concrete methods. `Dog`, `Car`, and `Printer` are completely unrelated — an interface is correct. This matches Java's own `java.io.Serializable`. If the three classes *also* shared a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
 
   - id: 8
+    difficulty: advanced
     question: "Why is `ArrayList<int>` illegal in Java, while `vector<int>` is valid in C++?"
     options:
       - "ArrayList only supports String and Object types"
@@ -196,6 +204,7 @@ questions:
     explanation: "**Java generics use type erasure and erase to `Object`, so primitives like `int` — which are not `Object` subtypes — cannot be used as type parameters; use `Integer` instead.** C++ templates generate separate code for each instantiation — `vector<int>` and `vector<string>` are distinct compiled types. Java uses type erasure: there is **one** compiled `ArrayList` class, and generic type parameters become `Object` after compilation. Since `int` is not a subtype of `Object`, it cannot be used as a type parameter. Wrap it with `Integer` (autoboxing handles the conversion automatically)."
 
   - id: 9
+    difficulty: expert
     question: |
       This code does not compile. Why?
       ```java
@@ -222,6 +231,7 @@ questions:
     explanation: "**Type erasure makes `List<String>` and `List<Integer>` identical at runtime, so the compiler rejects `instanceof List<String>` as a meaningless check.** After type erasure, the JVM cannot distinguish `List<String>` from `List<Integer>` — both are just `List`. So `instanceof List<String>` would be an unsound check, and the compiler rejects it. You can write `instanceof List<?>` (unbounded wildcard) to test whether something is *any* list, but you lose the type information."
 
   - id: 10
+    difficulty: intermediate
     question: |
       **[Technique Selection]** Match each task to the best collection:
       - **A:** Track which students have submitted homework (no duplicates, O(1) lookup by name)
@@ -246,6 +256,7 @@ questions:
     explanation: "**HashSet gives O(1) deduplication lookup, HashMap gives key-to-value mapping, and ArrayList gives ordered index access — each matches its task's requirement precisely.** `HashSet<String>` gives O(1) `contains()` and automatic deduplication. `HashMap<Integer, Double>` maps student IDs (keys) to grades (values). `ArrayList<Double>` maintains insertion order with O(1) index access. Using `ArrayList` for the submission tracker would require O(n) `contains()` checks and manual duplicate prevention."
 
   - id: 11
+    difficulty: intermediate
     question: |
       What is the bug in this code?
       ```java
@@ -272,6 +283,7 @@ questions:
     explanation: "**`HashMap.get()` returns `null` for missing keys, and auto-unboxing that `null` to `int` throws NullPointerException — use `getOrDefault()` or check `containsKey()` first.** `HashMap.get()` returns `null` when the key is not present. Auto-unboxing calls `.intValue()` on `null`, throwing `NullPointerException`. Fix: use `scores.getOrDefault(\"Bob\", 0)`, or check `scores.containsKey(\"Bob\")` before calling `get()`. This is one of the most common Java bugs in production code."
 
   - id: 12
+    difficulty: intermediate
     question: "Which exceptions does the Java compiler force you to explicitly catch or declare with `throws`?"
     options:
       - "All exceptions — Java always enforces handling"
@@ -292,6 +304,7 @@ questions:
     explanation: "**Java forces you to handle only checked exceptions (subclasses of `Exception` excluding `RuntimeException`) because they model recoverable external failures — unchecked exceptions model programming errors.** Java divides exceptions into checked (`IOException`, `SQLException` — compiler-enforced) and unchecked (`NullPointerException`, `IllegalArgumentException` — no enforcement). Checked exceptions model **recoverable external failures** where the caller must make a decision. Unchecked exceptions model **programming errors** that should not normally occur if code is correct."
 
   - id: 13
+    difficulty: advanced
     question: |
       In a Java constructor, where must `super(args)` appear, and what happens if you omit it?
     options:
@@ -313,6 +326,7 @@ questions:
     explanation: "**`super()` must be the first statement; if omitted Java inserts `super()` automatically, but if the parent has no no-arg constructor this causes a compile error.** Java requires `super()` or `this()` to be the first statement of any constructor. If you omit `super()`, Java inserts a no-arg `super()` call automatically. If the parent class has no no-arg constructor (because it only defines parameterized constructors), the implicit call fails and you get a compile error. In C++, you'd use initializer lists: `Car(args) : Vehicle(make, year) { }`."
 
   - id: 14
+    difficulty: intermediate
     question: |
       Given:
       ```java
@@ -339,6 +353,7 @@ questions:
     explanation: "**Java dispatches methods based on the runtime type, not the reference type — unlike C++ where you must explicitly mark methods `virtual` to get this behavior.** Java's method dispatch is **virtual by default** — unlike C++ where you must add the `virtual` keyword. The JVM looks at the actual object type (`Car`) at runtime, not the declared reference type (`Vehicle`). This is polymorphism: one line of code (`v.describe()`) calls the right implementation for each object in a heterogeneous collection. `@Override` confirms this intent at compile time."
 
   - id: 15
+    difficulty: expert
     question: |
       **Arrange** the lines to implement a generic `Pair<A, B>` class with a static `swap` method that returns a `Pair<B, A>`.
     type: parsons
@@ -360,6 +375,7 @@ questions:
     explanation: "**The static `swap` method must declare its own type parameters `<X, Y>` independent of the class's `<A, B>`, and return `Pair<Y, X>` to actually flip the types.** The class declares two type parameters `<A, B>`. The `swap` method introduces its own parameters `<X, Y>` (independent of the class's `A, B`) and returns `Pair<Y, X>` — types flipped. The distractor `Pair<X, Y>` as the return type doesn't actually swap anything. The raw `Pair` distractor loses all type safety. Direct field access `p.second` is illegal since fields are `private`."
 
   - id: 16
+    difficulty: intermediate
     question: |
       **Arrange** the lines to define a `Shape` interface and a `Circle` class that correctly implements it.
     type: parsons
@@ -383,6 +399,7 @@ questions:
     explanation: "**`Circle implements Shape` (not `extends`) is required; interface methods have no body, and `@Override` confirms the implementation matches the contract.** Interfaces use `implements`, not `extends` (that's for class inheritance). Interface method declarations have no body — just a signature and semicolon. The implementing class provides all methods. `@Override` is optional but strongly recommended — the compiler verifies you're overriding a real method, catching typos. The abstract class distractor would work but be the wrong choice for a pure contract with no shared state."
 
   - id: 17
+    difficulty: advanced
     question: |
       **Arrange** the lines to define a checked exception, declare it in a method, and handle it in calling code.
     type: parsons
@@ -406,6 +423,7 @@ questions:
     explanation: "**A checked exception must extend `Exception` (not `RuntimeException`) and the method must declare `throws`, forcing callers to handle it or propagate it.** Checked exceptions extend `Exception` (NOT `RuntimeException`). The `throws` declaration in the method signature is mandatory — callers that don't catch or re-throw it won't compile. The distractor extending `RuntimeException` would make it unchecked, removing compiler enforcement. Omitting `throws` from the signature is a compile error as soon as the method body contains `throw new InsufficientFundsException(...)`."
 
   - id: 18
+    difficulty: expert
     question: |
       **[Interleaving: Interfaces + Collections + OOP]** You're designing a `Course` class. It needs:
       - A way for other classes to enroll/drop students without knowing the internal storage

@@ -3,76 +3,91 @@ description: "Definitions, misconceptions, and the deeper 'why' behind each SOLI
 active: true
 cards:
   - id: 1
+    difficulty: basic
     question: "State the modern definition of the Single Responsibility Principle (SRP)."
     answer: "A module should be responsible to **one, and only one, actor** — a single stakeholder or group that requests changes to it."
     explanation: "Martin's refined framing replaces the older 'one reason to change' slogan. The word *actor* matters: it names a real person or team whose requests drive edits. Multiple actors sharing one module = conflicting edits + accidental regressions."
 
   - id: 2
+    difficulty: intermediate
     question: "Why is 'a class should only do one thing' a MISLEADING restatement of SRP?"
     answer: "It conflates the **function-level** advice ('a function should do one thing') with SRP, which operates at the **module level** and is about axes of change (actors), not about method count."
     explanation: "A class can correctly have many methods and fields as long as they all serve the same actor. SRP is violated by *who cares when it changes*, not by how many methods are listed."
 
   - id: 3
+    difficulty: intermediate
     question: "Give the canonical SRP-violating `Employee` example and its fix."
     answer: "`Employee` has `calculatePay()` (Accounting), `reportHours()` (HR), and `save()` (DBAs). **Fix:** extract a plain `EmployeeData` record and three service classes — `PayCalculator`, `HourReporter`, `EmployeeSaver` — each serving a single actor."
     explanation: "The three services do not know about each other. A change requested by Accounting now edits exactly one file, so HR's feature cannot silently break."
 
   - id: 4
+    difficulty: intermediate
     question: "How does SRP reduce merge conflicts on a multi-team codebase?"
     answer: "If each module answers to one actor, changes requested by different stakeholders naturally land in different files. Finance's pull request and HR's pull request stop touching the same class."
     explanation: "This is one of the most underrated practical payoffs of SRP. 'Conway's Law' cuts both ways: your class structure ends up mirroring your stakeholder structure, and that's exactly what you want."
 
   - id: 5
+    difficulty: advanced
     question: "When is splitting a class into two INCORRECT from an SRP perspective?"
     answer: "When both parts always change together, for the same reason, driven by the same actor. Then there is really **one** axis of change, and the split is artificial abstraction that doubles maintenance cost."
     explanation: "SRP is diagnosed by *who triggers the change*, not by line count, public-method count, or file count. If the 'two' concerns never move apart, they are one concern wearing two names."
 
   - id: 6
+    difficulty: basic
     question: "State the Liskov Substitution Principle in one sentence (informal form)."
     answer: "A subtype must be safely usable **anywhere** its parent type is expected, without surprising the client."
     explanation: "LSP is a *behavioral* requirement, not a structural one. Matching method signatures (what the compiler checks) is necessary but not sufficient — the subtype must also honor the parent's runtime contracts."
 
   - id: 7
+    difficulty: advanced
     question: "State Liskov's three Design-by-Contract rules for a subclass method."
     answer: "(1) **Preconditions may not be strengthened** — accept the same-or-wider inputs. (2) **Postconditions may not be weakened** — guarantee the same-or-stricter outputs. (3) **Invariants must be preserved** — parent-state properties remain true."
     explanation: "These three rules let a client reason about *any* subtype using only the parent's contract. Violate one and the client must special-case — that's the architectural pollution LSP is designed to prevent."
 
   - id: 8
+    difficulty: expert
     question: "Why does a self-consistent `Square` still violate LSP when substituted for `Rectangle`?"
     answer: "LSP is judged against the **client's expectations of the parent**. Clients of `Rectangle` assume width and height mutate independently; a `Square` that couples them (to maintain its own invariant) breaks that expectation even though it is internally correct."
     explanation: "This is the subtle lesson: LSP is not 'does the subclass make sense on its own?' but 'does every client written against the parent keep working?'"
 
   - id: 9
+    difficulty: advanced
     question: "What is the **Refused Bequest** smell, and how does it relate to LSP?"
     answer: "A subclass inherits a method it doesn't want and overrides it to do nothing or throw. It is the most common LSP violation because the subtype cannot honor the parent's contract for that method."
     explanation: "Classic example: `Ostrich extends Bird` overriding `fly()` to throw. Fix: split the hierarchy — e.g., extract `FlyingBird` — so only classes that can honor `fly()`'s contract are typed as flying."
 
   - id: 10
+    difficulty: advanced
     question: "Why did Java's `Stack extends Vector` become the textbook legacy LSP mistake?"
     answer: "`Vector` exposes random-access methods (`get(i)`, `insertElementAt`). A `Stack` inheriting these breaks strict LIFO behavior — clients can reach past the top, violating the invariant any stack client relies on."
     explanation: "This is the price of careless inheritance in a widely-used standard library: `Stack` objects leak the Vector API forever, and every serious Java shop prefers `Deque` today."
 
   - id: 11
+    difficulty: advanced
     question: "How does LSP **enable** the Open/Closed Principle?"
     answer: "If every subtype honors the parent's contract, a client can iterate polymorphically and accept new subtypes without modification. Safe substitution is what makes extension safe."
     explanation: "Put differently: OCP promises you can add subtypes without touching clients; LSP is what keeps that promise true at runtime. Violate LSP and OCP becomes a lie — clients start needing `instanceof` branches again."
 
   - id: 12
+    difficulty: intermediate
     question: "State the Open/Closed Principle and the #1 misconception about it."
     answer: "Software entities should be **open for extension, closed for modification**. Misconception: 'closed means the code can never change' — in fact, bug fixes still require modification; OCP is specifically about adding new *features* without touching tested code."
     explanation: "OCP is strategic, not dogmatic. Apply it where new variants are actually anticipated; elsewhere, attempting OCP yields 'abstraction hell' — layers of interfaces with a single implementation."
 
   - id: 13
+    difficulty: intermediate
     question: "State the Interface Segregation Principle and give a one-line example."
     answer: "Clients should not be forced to depend on methods they do not use. **Example:** a `FileServer` interface with `uploadFile`, `downloadFile`, and `changePermissions` should be split so that a `UserClient` needing only upload/download isn't coupled to admin-only permission changes."
     explanation: "ISP is about interface *cohesion from the client's perspective*. 'Fat' interfaces couple unrelated clients to each other through an irrelevant method set."
 
   - id: 14
+    difficulty: advanced
     question: "State the Dependency Inversion Principle and distinguish it from Dependency Injection."
     answer: "**DIP:** high-level modules and low-level modules both depend on abstractions; abstractions don't depend on details. **DI** is a code-level tactic (constructor/setter injection) used to implement DIP. Using a DI framework does not guarantee DIP."
     explanation: "The chapter is explicit: Spring's `@Autowired` can coexist with full DIP violation if the 'abstraction' is actually shaped by the database library. DIP is an architectural posture; DI is plumbing."
 
   - id: 15
+    difficulty: expert
     question: "What does 'interface ownership' mean in DIP, and why does it matter?"
     answer: "The **high-level client** must declare and own the abstraction, tailored to its own needs. If the interface is shaped to mirror a specific low-level library, the dependency hasn't truly been inverted — it's been renamed."
     explanation: "This is what prevents the 'fake DIP' where `OrderService` depends on `IMongoRepository` whose methods are just MongoDB operations with an `I` prefix. A real inverted interface speaks the business domain's language, not the infrastructure's."

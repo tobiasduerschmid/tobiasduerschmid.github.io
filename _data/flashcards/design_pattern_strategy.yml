@@ -3,62 +3,77 @@ description: "Key concepts, design decisions, and trade-offs of the Strategy des
 active: true
 cards:
   - id: 1
+    difficulty: basic
     question: "What is the *intent* of the Strategy pattern?"
     answer: "Define a family of algorithms, encapsulate each one as an object, and make them interchangeable at runtime. Strategy lets the algorithm vary independently from the clients that use it."
     explanation: "From the GoF book. The keyword is *interchangeable*: the Context can swap one algorithm for another without changing its own code or its clients' code."
   - id: 2
+    difficulty: intermediate
     question: "What problem does Strategy solve?"
     answer: "It replaces a `Context` class full of conditional algorithm-selection logic — or a deep inheritance hierarchy of algorithm variants — with a single `Context` that delegates to a swappable `Strategy` object."
     explanation: "Conditional logic and inheritance both *bake* the algorithm into the Context's class. Strategy externalizes the algorithm into its own object so it can vary independently."
   - id: 3
+    difficulty: intermediate
     question: "What core OO principle does Strategy embody?"
     answer: "**Composition over inheritance.** The Context *has-a* Strategy rather than *is-a* subclass that inherits the algorithm. This enables runtime reconfiguration that inheritance cannot."
     explanation: "Inheritance binds the algorithm at compile time and per-class. Composition binds it at runtime and per-object. A `ModelDuck` can switch from `FlyNullObject` to `FlyRocketPowered` without changing its class."
   - id: 4
+    difficulty: basic
     question: "What are the three roles in the Strategy pattern?"
     answer: "**Strategy** (the interface declaring the algorithm), **ConcreteStrategy** (each implementation of the algorithm), and **Context** (the class that holds a Strategy and delegates work to it)."
     explanation: "The Context only depends on the Strategy *interface*, never on a ConcreteStrategy. This is what makes the algorithm swappable."
   - id: 5
+    difficulty: advanced
     question: "How does Strategy differ from State? They have identical UML structures."
     answer: "**Strategy**: the *client* explicitly picks the implementation; strategies do not transition between each other. **State**: behavior changes *implicitly* via internal transitions; state objects switch the Context to a new state."
     explanation: "Heuristic: ask whose logic chooses the next implementation. If it's the client, Strategy. If it's the Context's own internal state machine, State."
   - id: 6
+    difficulty: advanced
     question: "How does Strategy differ from Template Method?"
     answer: "**Template Method** uses *inheritance* — the base class fixes an algorithm skeleton and subclasses override individual steps. **Strategy** uses *composition* — the entire algorithm is replaced via an external object."
     explanation: "Template Method: vary parts of an algorithm via subclassing. Strategy: vary the *whole* algorithm via object swapping. Strategy is more flexible at runtime; Template Method is simpler when only a few steps vary."
   - id: 7
+    difficulty: intermediate
     question: "What is a *Null Object Strategy*, and why is it useful?"
     answer: "A ConcreteStrategy whose implementation does nothing (e.g., `FlyNullObject`). It lets the Context call `strategy.algorithmInterface()` uniformly without null checks."
     explanation: "Without a null strategy, the Context needs `if (strategy != null)` everywhere. With one, the call site stays clean. RubberDuck uses `FlyNullObject` instead of overriding `fly()` to do nothing."
   - id: 8
+    difficulty: intermediate
     question: "Why are conditional `if`/`switch` statements selecting between algorithms a code smell that suggests Strategy?"
     answer: "Each branch represents a different algorithm hard-coded into the Context. Replacing the conditional with polymorphic Strategy objects makes adding new algorithms an *addition* rather than a *modification* of existing code (Open/Closed Principle)."
     explanation: "This is *polymorphism over conditions*, the same principle the State pattern embodies. The compiler enforces that every Strategy implements the required method — there's no risk of forgetting a case."
   - id: 9
+    difficulty: advanced
     question: "What is the main drawback of Strategy that makes it unsuitable when the choice should be hidden from clients?"
     answer: "**Clients must be aware of the different Strategies.** Because the client typically picks the ConcreteStrategy, it must understand how the strategies differ — which means strategy-specific details leak into client code."
     explanation: "If clients don't need to make this choice, a different pattern (Template Method, Factory Method, or even a single class) is usually a better fit."
   - id: 10
+    difficulty: intermediate
     question: "When should a Strategy be implemented as a Singleton or Flyweight?"
     answer: "When the Strategy is **stateless** — it carries behavior but no instance data. A single shared instance can serve all Contexts, saving memory."
     explanation: "Stateful strategies (e.g., a `RangeValidator(min=0, max=100)`) need one instance per configuration. Stateless ones (e.g., `Quack`, `MuteQuack`) can be Flyweights since they're indistinguishable at runtime."
   - id: 11
+    difficulty: expert
     question: "Two ways the Context can give the Strategy access to its data — what are they, and what's the trade-off?"
     answer: "**(1) Pass data as parameters** — Context passes everything the Strategy might need through the algorithm interface. Keeps them decoupled but may pass unused data. **(2) Pass the Context itself** — Strategy queries Context for what it needs. More flexible but couples Strategy to Context's interface."
     explanation: "GoF terminology: option (2) is 'taking the data to the Strategy.' Option (1) is sometimes called 'taking the Strategy to the data.'"
   - id: 12
+    difficulty: basic
     question: "Give three real-world examples of the Strategy pattern in everyday programming."
     answer: "Java's `Comparator<T>` for sorting; payment-method handlers (credit card, PayPal, bank transfer) sharing a `PaymentMethod` interface; pluggable validation rules (`RangeValidator`, `RegexValidator`) sharing a `Validator` interface."
     explanation: "Strategy is everywhere in standard libraries. Whenever you pass a function or callback to control how an operation behaves (sort comparator, hash function, retry policy), you're using Strategy."
   - id: 13
+    difficulty: advanced
     question: "Why does the SimUDuck example put `fly()` and `quack()` into Strategy interfaces instead of using `Flyable` and `Quackable` interfaces directly on each duck?"
     answer: "Plain interfaces force *every duck class* to re-implement `fly()` and `quack()`, destroying code reuse. With Strategy, duck behavior is composed — `MallardDuck` and `RedHeadDuck` can share `FlyWithWings` instead of duplicating the implementation."
     explanation: "This is the central insight of Head First Design Patterns Chapter 1: interfaces alone solve the inheritance problem but lose code reuse. Strategy solves both — different ducks can share the same FlyBehavior instance."
   - id: 14
+    difficulty: basic
     question: "Strategy is also known by what alternate name in the GoF catalog?"
     answer: "**Policy** — emphasizing that the Strategy encapsulates a *policy decision* (e.g., 'how should we break lines?', 'how should we authenticate?')."
     explanation: "The 'Policy' name is more common in security and infrastructure contexts (auth policy, retry policy, eviction policy). Same pattern, different connotation."
   - id: 15
+    difficulty: advanced
     question: "When should you NOT use Strategy?"
     answer: "When (a) there's only one algorithm, (b) variants will never change at runtime *and* clients don't care, (c) the algorithms are trivial one-liners that could just be lambdas, or (d) the choice is genuinely an internal state machine — that's State, not Strategy."
     explanation: "The Rule of Three applies: don't introduce Strategy until you have at least three concrete variants or a clear plan for runtime swapping. Speculative abstraction is over-engineering."

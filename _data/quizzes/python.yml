@@ -3,6 +3,7 @@ description: "Test your deeper understanding of Python's design choices, paradig
 active: true
 questions:
   - id: 1
+    difficulty: advanced
     question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"
     options:
       - "There is no practical difference — 'strong' and 'weak' typing are just academic labels"
@@ -23,6 +24,7 @@ questions:
     explanation: "**Python is strongly typed because it refuses implicit coercion between incompatible types (`\"5\" + 3` raises TypeError), while JavaScript's weak typing silently coerces and produces surprising results.** Dynamic typing = types are checked at runtime (not compile time). Strong typing = no implicit coercion between incompatible types. Python's `TypeError` on `\"5\" + 3` is a feature, not a limitation — it prevents an entire class of silent bugs that plague JavaScript code."
 
   - id: 2
+    difficulty: basic
     question: "In C++, `'A'` is a `char` and `\"Alice\"` is a `const char*` — they are fundamentally different types. A C++ student writes `name = 'Alice'` in Python and worries they've created a character array instead of a string. Are they right?"
     options:
       - "Yes — Python's single quotes create a character array, just like C++'s `char[]`"
@@ -42,6 +44,7 @@ questions:
     explanation: "**Python has no `char` type — both single and double quotes create identical `str` objects, so the choice is purely about avoiding backslash escaping.** Python has no `char` type — this is one of the cleanest simplifications over C++. `'Alice'` and `\"Alice\"` produce identical `str` objects. The practical benefit is that you can choose the quote style that avoids backslash escaping: use double quotes when the string contains an apostrophe (`\"It's easy\"`), and single quotes when it contains double quotes (`'<div class=\"box\">'`). PEP 8 accepts either style but recommends consistency."
 
   - id: 3
+    difficulty: basic
     question: "A C++ programmer writes `total = sum(scores) / len(scores)` and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
     options:
       - "Python's `sum()` always returns a float, even for integer lists"
@@ -62,6 +65,7 @@ questions:
     explanation: "**Python 3's `/` always returns a float — unlike C++ where `int / int` truncates — so use `//` for integer (floor) division.** This is one of the most common negative-transfer traps from C++. In C++, `int / int` gives an `int`. In Python 3, `/` ALWAYS gives a `float`. The `//` operator performs floor division and returns an `int` when both operands are `int`. This change was intentional in Python 3 to prevent a whole class of bugs where integer division silently truncated results."
 
   - id: 4
+    difficulty: intermediate
     question: "A student writes a function that opens a file, but forgets to close it. Their C++ instinct says 'this will leak the file handle.' Is this concern valid in Python, and what is the recommended solution?"
     options:
       - "Not valid — Python's garbage collector will always close the file immediately"
@@ -82,6 +86,7 @@ questions:
     explanation: "**The concern is valid because 'eventually' from the GC may be too late — the `with` statement is Python's RAII equivalent, guaranteeing cleanup even if an exception occurs.** Python's GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
 
   - id: 5
+    difficulty: intermediate
     question: "A student uses `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
     options:
       - "`re.findall()` is always better because it's faster for string searching"
@@ -102,6 +107,7 @@ questions:
     explanation: "**`re.findall()` is better when you need pattern matching like timestamps or IP addresses — `text.count()` is simpler and faster for literal string matching.** For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` shines when the target is a **pattern** — 'any sequence of digits', 'an IP address', 'a timestamp in HH:MM:SS format'. Use the simplest tool that works."
 
   - id: 6
+    difficulty: intermediate
     question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic in a pipeline like `python script.py > results.txt`?"
     options:
       - "It is not problematic — `print()` already separates output and errors"
@@ -122,6 +128,7 @@ questions:
     explanation: "**Sending everything to `print()` mixes diagnostic messages into stdout, contaminating the data file — use `file=sys.stderr` for diagnostics because `>` redirects only stdout.** UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` only redirects stdout. If errors go to stdout, they contaminate the data. This is why C++ has both `std::cout` and `std::cerr`, and Python has `file=sys.stderr`."
 
   - id: 7
+    difficulty: advanced
     question: |
       A student writes this list comprehension:
       ```python
@@ -147,6 +154,7 @@ questions:
     explanation: "**Replacing `[...]` with `(...)` creates a generator that produces values lazily one at a time, using constant memory instead of building a 500,000-element list upfront.** Replacing `[...]` with `(...)` creates a generator expression. It produces values lazily — one at a time — instead of building a 500,000-element list in memory. For large datasets or when you only need to iterate once (not store the full list), generators are dramatically more memory-efficient."
 
   - id: 8
+    difficulty: advanced
     question: |
       **Evaluate** this code. Is there a bug?
       ```python
@@ -173,6 +181,7 @@ questions:
     explanation: "**Mutable default arguments are created once when the function is defined, not per call — subsequent calls mutate the same list, so use `None` as the default and create a new list inside.** This is one of Python's most notorious gotchas. Mutable default arguments (`list`, `dict`, `set`) are shared across all calls. The fix: use `None` as the default and create a new list inside the function: `def add_item(item, items=None): if items is None: items = []; ...`"
 
   - id: 9
+    difficulty: intermediate
     question: |
       **Arrange** the lines to define a function that safely reads a file and returns the word count, using `with` for resource management.
     type: parsons
@@ -189,6 +198,7 @@ questions:
     explanation: "**`with open()` handles cleanup automatically so no `f.close()` is needed; `return total` belongs at function level after the loop, and `return len(f)` is invalid on a file object.** The function opens the file with `with` (so no manual `close()` needed), iterates line by line, and accumulates the word count. `return total` is at the function level (one indent), not inside the loop. `f.close()` is a distractor because `with` handles cleanup. `return len(f)` is wrong because file objects don't have a meaningful `len()`."
 
   - id: 10
+    difficulty: intermediate
     question: |
       **Arrange** the lines to create a list comprehension that filters and transforms data, then prints the result.
     type: parsons
