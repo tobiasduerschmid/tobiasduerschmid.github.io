@@ -2413,6 +2413,27 @@
     }
   };
 
+  // xterm 4's textarea-paste path drops Ctrl+V on Windows; route through the async clipboard API instead.
+  TutorialCode.prototype._handleClipboardPasteShortcut = function (term, ev) {
+    if (!term || !ev || ev.type !== 'keydown') return false;
+    if (!ev.ctrlKey || ev.metaKey || ev.altKey) return false;
+    if (ev.key !== 'v' && ev.key !== 'V') return false;
+    if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+      return false;
+    }
+    navigator.clipboard.readText().then(function (text) {
+      if (!text) return;
+      if (typeof term.paste === 'function') {
+        try { term.paste(text); return; } catch (e) { }
+      }
+      if (term._coreService && typeof term._coreService.triggerDataEvent === 'function') {
+        try { term._coreService.triggerDataEvent(text, true); } catch (e) { }
+      }
+    }).catch(function () { });
+    ev.preventDefault();
+    return true;
+  };
+
   TutorialCode.prototype._initTerminal = function () {
     var self = this;
     var isDark = this._isDarkMode();
@@ -2448,6 +2469,12 @@
         if (event.target && event.target.closest &&
             event.target.closest('button, a, input, select, textarea')) return;
         focusTerminal();
+      });
+    }
+    if (typeof this.term.attachCustomKeyEventHandler === 'function') {
+      this.term.attachCustomKeyEventHandler(function (ev) {
+        if (self._handleClipboardPasteShortcut(self.term, ev)) return false;
+        return true;
       });
     }
     // Sync terminal size to the backend whenever xterm reports a resize
@@ -10693,6 +10720,7 @@
     // event after we've handled it ourselves.
     if (typeof this.gitTerm.attachCustomKeyEventHandler === 'function') {
       this.gitTerm.attachCustomKeyEventHandler(function (ev) {
+        if (self._handleClipboardPasteShortcut(self.gitTerm, ev)) return false;
         if (ev.type !== 'keydown') return true;
         if (!ev.metaKey || ev.ctrlKey || ev.altKey) return true;
         // Preserve clipboard / select-all / find-in-page chords.
