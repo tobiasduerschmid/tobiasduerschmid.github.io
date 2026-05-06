@@ -3,7 +3,7 @@ description: "Quick review of UML Class Diagram notation and relationships."
 active: true
 cards:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: >
       What does the following symbol represent in a class diagram?
 
@@ -13,7 +13,7 @@ cards:
       A hollow diamond on the parent class indicates **Aggregation**, representing a 'part-of' relationship where the parts can exist independently of the whole.
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "How do you denote a **Static Method** in UML Class Diagrams?"
     answer: "By underlining the method name."
     explanation: >
@@ -32,7 +32,7 @@ cards:
       A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the difference between **Generalization** and **Realization** arrows?"
     answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
     explanation: >
@@ -41,7 +41,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="interface Flyable {&#10;  +fly(): void&#10;}&#10;class Bird {&#10;  +fly(): void&#10;}&#10;class Sparrow&#10;Bird ..|> Flyable&#10;Sparrow --|> Bird"></div>
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "What do the four **visibility symbols** mean in UML?"
     answer: "`+` public, `-` private, `#` protected, `~` package."
     explanation: >
@@ -57,7 +57,7 @@ cards:
       Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     question: >
       What relationship is represented in the diagram below, and when is it used?
 
