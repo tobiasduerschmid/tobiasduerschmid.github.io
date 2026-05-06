@@ -5,6 +5,8 @@ cards:
   - id: 1
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       score = 95
       gpa = 3.82
@@ -14,6 +16,8 @@ cards:
   - id: 2
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       7 / 2
       7 // 2
@@ -22,6 +26,8 @@ cards:
   - id: 3
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       x = "5" + 3
       ```
@@ -29,6 +35,8 @@ cards:
   - id: 4
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       squares = [x**2 for x in range(1, 6)]
       ```
@@ -36,6 +44,8 @@ cards:
   - id: 5
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       nums = [4, 8, 15, 16, 23, 42]
       big = [x for x in nums if x > 20]
@@ -44,6 +54,8 @@ cards:
   - id: 6
     difficulty: intermediate
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       with open("data.txt") as f:
           for line in f:
@@ -53,6 +65,8 @@ cards:
   - id: 7
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       for i, fruit in enumerate(["apple", "banana", "cherry"]):
           print(f"{i}: {fruit}")
@@ -61,6 +75,8 @@ cards:
   - id: 8
     difficulty: intermediate
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       import re
       codes = re.findall(r'\d+', "Error 404 and 500")
@@ -69,6 +85,8 @@ cards:
   - id: 9
     difficulty: intermediate
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       import re
       clean = re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)
@@ -77,6 +95,8 @@ cards:
   - id: 10
     difficulty: intermediate
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       import sys
       print("Error: file not found", file=sys.stderr)
@@ -86,6 +106,8 @@ cards:
   - id: 11
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       2 ** 8
       2 ^ 8
@@ -94,6 +116,8 @@ cards:
   - id: 12
     difficulty: basic
     question: |
+      You are shown Python code. Explain what it does and what it returns or prints.
+
       ```python
       import sys
       filename = sys.argv[1]

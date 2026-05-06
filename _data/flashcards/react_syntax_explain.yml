@@ -5,6 +5,8 @@ cards:
   - id: 1
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       function App() {
         return <h1 style={{color: '#2774AE'}}>Hello!</h1>;
@@ -14,6 +16,8 @@ cards:
   - id: 2
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       <ProductCard name="Laptop" price={999.99} />
       ```
@@ -21,6 +25,8 @@ cards:
   - id: 3
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       function Card({ title, children }) {
         return <div className="card"><h2>{title}</h2>{children}</div>;
@@ -30,6 +36,8 @@ cards:
   - id: 4
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       const [count, setCount] = React.useState(0);
       ```
@@ -37,6 +45,8 @@ cards:
   - id: 5
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       <button onClick={() => setCount(count + 1)}>+1</button>
       ```
@@ -44,6 +54,8 @@ cards:
   - id: 6
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       {tasks.map(task => <li key={task.id}>{task.text}</li>)}
       ```
@@ -51,6 +63,8 @@ cards:
   - id: 7
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       {isLoggedIn ? <Dashboard /> : <LoginForm />}
       ```
@@ -58,6 +72,8 @@ cards:
   - id: 8
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       {unreadCount > 0 && <Badge count={unreadCount} />}
       ```
@@ -65,6 +81,8 @@ cards:
   - id: 9
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       setItems([...items, newItem]);
       ```
@@ -72,6 +90,8 @@ cards:
   - id: 10
     difficulty: advanced
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       <SearchBar value={text} onChange={setText} />
       ```
@@ -79,6 +99,8 @@ cards:
   - id: 11
     difficulty: basic
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       <img src={url} alt="logo" />
       ```
@@ -86,6 +108,8 @@ cards:
   - id: 12
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       function Badge({ label, color }) {
         return (
@@ -100,6 +124,8 @@ cards:
   - id: 13
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       useEffect(() => {
         document.title = 'Hello!';
@@ -110,6 +136,8 @@ cards:
   - id: 14
     difficulty: advanced
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       useEffect(() => {
         fetch(`/api/users/${userId}`)
@@ -122,6 +150,8 @@ cards:
   - id: 15
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       setCount(prev => prev + 1);
       ```
@@ -130,6 +160,8 @@ cards:
   - id: 16
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       setItems(items.filter(item => item.id !== targetId));
       ```
@@ -138,6 +170,8 @@ cards:
   - id: 17
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       setUser({ ...user, name: 'Bob' });
       ```
@@ -146,6 +180,8 @@ cards:
   - id: 18
     difficulty: intermediate
     question: |
+      You are shown React/JSX code. Explain what it does and what it renders.
+
       ```jsx
       <input
         value={query}

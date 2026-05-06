@@ -5,6 +5,8 @@ cards:
   - id: 1
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       let count = 0;
       const MAX = 200;
@@ -13,6 +15,8 @@ cards:
   - id: 2
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       console.log(1 == "1");
       console.log(1 === "1");
@@ -21,6 +25,8 @@ cards:
   - id: 3
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const name = "Alice";
       console.log(`Hello, ${name}!`);
@@ -29,6 +35,8 @@ cards:
   - id: 4
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const double = n => n * 2;
       ```
@@ -36,6 +44,8 @@ cards:
   - id: 5
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const nums = [1, 2, 3, 4, 5];
       const evens = nums.filter(n => n % 2 === 0);
@@ -44,6 +54,8 @@ cards:
   - id: 6
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const sum = [1, 2, 3].reduce((acc, n) => acc + n, 0);
       ```
@@ -51,6 +63,8 @@ cards:
   - id: 7
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const { name, grade } = { name: "Alice", grade: 95 };
       ```
@@ -58,6 +72,8 @@ cards:
   - id: 8
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const [lat, lng] = [40.7, -74.0];
       ```
@@ -65,6 +81,8 @@ cards:
   - id: 9
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       setTimeout(() => console.log("B"), 0);
       console.log("A");
@@ -74,6 +92,8 @@ cards:
   - id: 10
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       async function getData() {
           const result = await fetch('/api/data');
@@ -84,6 +104,8 @@ cards:
   - id: 11
     difficulty: advanced
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const [a, b] = await Promise.all([fetchA(), fetchB()]);
       ```
@@ -91,6 +113,8 @@ cards:
   - id: 12
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const doubled = [1, 2, 3].map(n => n * 2);
       ```
@@ -99,6 +123,8 @@ cards:
   - id: 13
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       console.log("Hello from Node.js!");
       ```
@@ -107,6 +133,8 @@ cards:
   - id: 14
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const p = new Promise((resolve, reject) => {
           setTimeout(() => resolve("done!"), 100);
@@ -117,6 +145,8 @@ cards:
   - id: 15
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       async function getCount() {
           return 42;
@@ -128,6 +158,8 @@ cards:
   - id: 16
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const city = user?.address?.city;
       const port = config.port ?? 3000;
@@ -137,6 +169,8 @@ cards:
   - id: 17
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       let x;
       console.log(x);
@@ -148,6 +182,8 @@ cards:
   - id: 18
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const student = { name: "Alice", grade: 95 };
       console.log(student.name);
@@ -158,6 +194,8 @@ cards:
   - id: 19
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const obj = { name: "Bob", grade: 42 };
       const json = JSON.stringify(obj);
@@ -168,6 +206,8 @@ cards:
   - id: 20
     difficulty: intermediate
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       const students = [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }];
       const found = students.find(s => s.id === 2);
@@ -177,6 +217,8 @@ cards:
   - id: 21
     difficulty: basic
     question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
       ```javascript
       if (score >= 90) {
           console.log("A");

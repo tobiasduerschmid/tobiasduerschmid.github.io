@@ -74,18 +74,6 @@ cards:
     answer: "**Atomicity** protects against *partial writes* — a crash mid-transaction leaving half-applied state. **Consistency** protects against *invalid data* — constraint violations (negative balances, dangling foreign keys). **Isolation** protects against *concurrency anomalies* — lost updates, phantom reads, inconsistent snapshots. **Durability** protects against *losing acknowledged writes* to a power or process failure."
     explanation: "This failure-to-property mapping is often what a scenario question is really asking for. Practice it both directions: property → failure, and failure → property."
 
-  - id: 13
-    difficulty: advanced
-    question: "What is an **isolation level**, and why is only `SERIALIZABLE` the 'full' form of ACID isolation?"
-    answer: "An **isolation level** is a setting that controls how strictly the DBMS hides concurrent transactions from each other. Standard levels in order of strictness: `READ UNCOMMITTED`, `READ COMMITTED`, `REPEATABLE READ`, `SERIALIZABLE`. Only `SERIALIZABLE` gives the full 'equivalent to some serial order' guarantee; lower levels allow specific concurrent anomalies (dirty reads, non-repeatable reads, phantoms) in exchange for throughput."
-    explanation: "Real applications almost always pick something weaker than SERIALIZABLE for performance. Knowing *which* anomalies each level permits is how you reason about correctness in production."
-
-  - id: 14
-    difficulty: advanced
-    question: "How does a DBMS actually achieve **Durability**?"
-    answer: "Primarily with a **write-ahead log (WAL)**: before a transaction commits, its changes are flushed to an append-only log on stable storage (disk, SSD, or replicated log). The in-place data files may be updated lazily. If the DBMS crashes, it replays the WAL on restart to reconstruct the committed state."
-    explanation: "WAL is one of the oldest and most important ideas in database implementation (ARIES, Mohan et al., 1992). It trades a small extra write per transaction for the durability guarantee."
-
   - id: 15
     difficulty: intermediate
     question: "State the **three properties** named by the CAP theorem."
