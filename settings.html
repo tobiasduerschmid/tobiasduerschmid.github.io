@@ -659,33 +659,33 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
-            <p class="setting-name">Skip difficulty levels in the next workout</p>
+            <p class="setting-name">Difficulty levels to include in workouts</p>
             <p class="setting-description">
-              Check the difficulty levels you do <em>not</em> want to test
-              right now. Cards at any checked level are excluded from the
+              Check the difficulty levels you want to test. By default, all
+              four are included. Uncheck a level to drop it from the next
               workout the next time you press <em>Start Workout</em>. Cards
-              without an assigned difficulty are always included. Stored in
-              the <code>se-gym-skip-difficulty</code> cookie.
+              without an assigned difficulty are always included regardless.
+              Stored in the <code>se-gym-active-difficulties</code> cookie.
             </p>
           </div>
           <div class="setting-control">
             <fieldset class="settings-difficulty-fieldset">
-              <legend class="sr-only">Difficulty levels to skip</legend>
+              <legend class="sr-only">Difficulty levels to include</legend>
               <div class="settings-difficulty-options">
                 <label class="settings-difficulty-option">
-                  <input type="checkbox" data-setting-difficulty="basic" data-setting="skipDifficulty">
+                  <input type="checkbox" data-setting-difficulty="basic" data-setting="activeDifficulty" checked>
                   <span>Basic</span>
                 </label>
                 <label class="settings-difficulty-option">
-                  <input type="checkbox" data-setting-difficulty="intermediate" data-setting="skipDifficulty">
+                  <input type="checkbox" data-setting-difficulty="intermediate" data-setting="activeDifficulty" checked>
                   <span>Intermediate</span>
                 </label>
                 <label class="settings-difficulty-option">
-                  <input type="checkbox" data-setting-difficulty="advanced" data-setting="skipDifficulty">
+                  <input type="checkbox" data-setting-difficulty="advanced" data-setting="activeDifficulty" checked>
                   <span>Advanced</span>
                 </label>
                 <label class="settings-difficulty-option">
-                  <input type="checkbox" data-setting-difficulty="expert" data-setting="skipDifficulty">
+                  <input type="checkbox" data-setting-difficulty="expert" data-setting="activeDifficulty" checked>
                   <span>Expert</span>
                 </label>
               </div>
@@ -863,12 +863,12 @@ info_nav_title: "My Settings"
 
   var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
 
-  function readSkippedDifficulties() {
-    var raw = readCookie('se-gym-skip-difficulty');
-    if (!raw) return [];
+  function readActiveDifficulties() {
+    var raw = readCookie('se-gym-active-difficulties');
+    if (raw == null) return DIFFICULTY_LEVELS.slice();
     try {
       var parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) return DIFFICULTY_LEVELS.slice();
       var seen = {};
       var out = [];
       for (var i = 0; i < parsed.length; i++) {
@@ -879,11 +879,11 @@ info_nav_title: "My Settings"
         }
       }
       return out;
-    } catch (e) { return []; }
+    } catch (e) { return DIFFICULTY_LEVELS.slice(); }
   }
 
-  function writeSkippedDifficulties(list) {
-    writeCookie('se-gym-skip-difficulty', JSON.stringify(list));
+  function writeActiveDifficulties(list) {
+    writeCookie('se-gym-active-difficulties', JSON.stringify(list));
   }
 
   function boundedNumber(value, fallback, min, max) {
@@ -960,9 +960,9 @@ info_nav_title: "My Settings"
     setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
     setCheckbox('setting-show-difficulty', readCookie('se-gym-show-difficulty') === 'true');
 
-    var skippedDifficulties = readSkippedDifficulties();
+    var activeDifficulties = readActiveDifficulties();
     document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {
-      cb.checked = skippedDifficulties.indexOf(cb.getAttribute('data-setting-difficulty')) !== -1;
+      cb.checked = activeDifficulties.indexOf(cb.getAttribute('data-setting-difficulty')) !== -1;
     });
 
     var timedMode = document.getElementById('setting-timed-mode');
@@ -1053,15 +1053,17 @@ info_nav_title: "My Settings"
     } else if (setting === 'showDifficulty') {
       writeCookie('se-gym-show-difficulty', target.checked ? 'true' : 'false');
       announce('Difficulty visibility setting saved.');
-    } else if (setting === 'skipDifficulty') {
+    } else if (setting === 'activeDifficulty') {
       var picked = [];
       document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {
         if (cb.checked) picked.push(cb.getAttribute('data-setting-difficulty'));
       });
-      writeSkippedDifficulties(picked);
-      announce(picked.length
-        ? 'Skipping ' + picked.join(', ') + ' in the next workout.'
-        : 'No difficulty levels are being skipped.');
+      writeActiveDifficulties(picked);
+      announce(picked.length === DIFFICULTY_LEVELS.length
+        ? 'All difficulty levels are included in the next workout.'
+        : (picked.length
+          ? 'Including ' + picked.join(', ') + ' in the next workout. Untagged cards always run.'
+          : 'No tagged cards will run; only cards without a difficulty are included.'));
     } else if (setting === 'reducedMotion') {
       if (target.value === 'reduce') writeLS('prefersReducedMotion', '1');
       else clearLS('prefersReducedMotion');

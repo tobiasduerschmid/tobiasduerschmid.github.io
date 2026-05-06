@@ -110,26 +110,26 @@ layout: sebook
             </label>
           </div>
           <fieldset id="difficulty-filter-fieldset" class="difficulty-filter">
-            <legend>Skip difficulty levels</legend>
-            <p class="difficulty-filter-help">Cards whose difficulty matches a checked level are excluded from the next workout. Cards without a difficulty are always included.</p>
+            <legend>Include difficulty levels</legend>
+            <p class="difficulty-filter-help">Only cards whose difficulty matches a checked level are included in the next workout. Uncheck a level to drop it. Cards without an assigned difficulty are always included regardless of these settings.</p>
             <div class="difficulty-filter-options">
               <label class="difficulty-filter-option difficulty-filter-basic">
-                <input type="checkbox" data-difficulty="basic" class="difficulty-filter-checkbox">
+                <input type="checkbox" data-difficulty="basic" class="difficulty-filter-checkbox" checked>
                 <span class="difficulty-filter-swatch" aria-hidden="true"></span>
                 <span class="difficulty-filter-text">Basic</span>
               </label>
               <label class="difficulty-filter-option difficulty-filter-intermediate">
-                <input type="checkbox" data-difficulty="intermediate" class="difficulty-filter-checkbox">
+                <input type="checkbox" data-difficulty="intermediate" class="difficulty-filter-checkbox" checked>
                 <span class="difficulty-filter-swatch" aria-hidden="true"></span>
                 <span class="difficulty-filter-text">Intermediate</span>
               </label>
               <label class="difficulty-filter-option difficulty-filter-advanced">
-                <input type="checkbox" data-difficulty="advanced" class="difficulty-filter-checkbox">
+                <input type="checkbox" data-difficulty="advanced" class="difficulty-filter-checkbox" checked>
                 <span class="difficulty-filter-swatch" aria-hidden="true"></span>
                 <span class="difficulty-filter-text">Advanced</span>
               </label>
               <label class="difficulty-filter-option difficulty-filter-expert">
-                <input type="checkbox" data-difficulty="expert" class="difficulty-filter-checkbox">
+                <input type="checkbox" data-difficulty="expert" class="difficulty-filter-checkbox" checked>
                 <span class="difficulty-filter-swatch" aria-hidden="true"></span>
                 <span class="difficulty-filter-text">Expert</span>
               </label>
@@ -354,6 +354,10 @@ layout: sebook
             Score: <span id="workout-score">0</span>/<span id="workout-total">0</span>
           </div>
           <p id="workout-summary"></p>
+          <section id="workout-breakdown" class="workout-breakdown" aria-labelledby="workout-breakdown-heading">
+            <h3 id="workout-breakdown-heading" class="workout-breakdown-heading">Performance breakdown</h3>
+            <ul id="workout-breakdown-list" class="workout-breakdown-list"></ul>
+          </section>
           <div class="workout-results-actions">
             <button id="workout-restart-btn" class="gym-btn primary">Restart Workout</button>
             <button id="workout-review-btn" class="gym-btn secondary" style="display: none;">Review Incorrect</button>
@@ -1252,6 +1256,109 @@ layout: sebook
     html.dark-mode .difficulty-filter-intermediate .difficulty-filter-swatch { background: #3d6a99; color: #b8d6f3; }
     html.dark-mode .difficulty-filter-advanced .difficulty-filter-swatch { background: #886433; color: #fbd99a; }
     html.dark-mode .difficulty-filter-expert .difficulty-filter-swatch { background: #8a3d3d; color: #ffc7c7; }
+
+    /* Workout-results performance breakdown — overall row, then one row
+       per difficulty bucket that had ≥1 card. Each row shows a small
+       2-slice pie chart (correct / incorrect) and the textual stat so
+       meaning never depends on color alone (WCAG 1.4.1). */
+    .workout-breakdown {
+      margin: var(--sp-xl, 24px) auto 0;
+      padding: 14px 16px;
+      max-width: 520px;
+      text-align: left;
+      border: 1px solid var(--color-divider, #e1e4e8);
+      border-radius: var(--radius-md, 8px);
+      background: var(--color-surface-2, #f8f9fa);
+    }
+    .workout-breakdown-heading {
+      margin: 0 0 10px;
+      font-size: 1.05em;
+      color: var(--color-primary, #2774AE);
+      font-weight: 700;
+    }
+    .workout-breakdown-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .workout-breakdown-row {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .workout-breakdown-row.is-overall {
+      font-weight: 700;
+      background: rgba(39, 116, 174, 0.08);
+    }
+    .workout-breakdown-pie {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      /* Two-slice pie via conic-gradient: correct slice in level color,
+         remainder in neutral grey for "incorrect or unanswered". */
+      background: conic-gradient(var(--pie-correct, #1f7a3d) calc(var(--pie-pct, 0) * 1%),
+                                 var(--pie-rest, #c8ccd1) 0);
+      border: 1px solid var(--color-border, #c8ccd1);
+      flex-shrink: 0;
+    }
+    /* Per-level pie color matches the difficulty chip text color so the
+       pie reads as the same "tone" as the chip beside it. */
+    .workout-breakdown-row.level-basic { --pie-correct: #1f7a3d; }
+    .workout-breakdown-row.level-intermediate { --pie-correct: #2774AE; }
+    .workout-breakdown-row.level-advanced { --pie-correct: #b85b00; }
+    .workout-breakdown-row.level-expert { --pie-correct: #b81e2c; }
+    .workout-breakdown-row.level-untagged { --pie-correct: #555; }
+    .workout-breakdown-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95em;
+      color: var(--color-text, #1f2328);
+    }
+    .workout-breakdown-stat {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--color-text, #1f2328);
+    }
+    .workout-breakdown-row.is-empty .workout-breakdown-stat,
+    .workout-breakdown-row.is-empty .workout-breakdown-label {
+      color: #6a737d;
+      font-weight: 500;
+    }
+    html.dark-mode .workout-breakdown {
+      background: #252525;
+      border-color: #444;
+    }
+    html.dark-mode .workout-breakdown-heading {
+      color: #4da3ff;
+    }
+    html.dark-mode .workout-breakdown-row.is-overall {
+      background: rgba(77, 163, 255, 0.12);
+    }
+    html.dark-mode .workout-breakdown-label,
+    html.dark-mode .workout-breakdown-stat {
+      color: #e0e0e0;
+    }
+    html.dark-mode .workout-breakdown-row.is-empty .workout-breakdown-stat,
+    html.dark-mode .workout-breakdown-row.is-empty .workout-breakdown-label {
+      color: #b0b0b0;
+    }
+    html.dark-mode .workout-breakdown-pie {
+      border-color: #555;
+      background: conic-gradient(var(--pie-correct, #4fa34f) calc(var(--pie-pct, 0) * 1%),
+                                 var(--pie-rest, #555) 0);
+    }
+    html.dark-mode .workout-breakdown-row.level-basic { --pie-correct: #4fa34f; }
+    html.dark-mode .workout-breakdown-row.level-intermediate { --pie-correct: #5fa8d3; }
+    html.dark-mode .workout-breakdown-row.level-advanced { --pie-correct: #e0a35a; }
+    html.dark-mode .workout-breakdown-row.level-expert { --pie-correct: #ff8585; }
+    html.dark-mode .workout-breakdown-row.level-untagged { --pie-correct: #b0b0b0; }
 
     /* Workout Quiz Card */
     .workout-quiz-card {
@@ -2328,6 +2435,30 @@ layout: sebook
       var workoutEndedByTimer = false;
       var lastTimedPracticeDrawCount = 0;
 
+      // Per-difficulty tallies for the results breakdown. Each bucket is a
+      // {seen, correct} pair; "untagged" collects cards with no difficulty.
+      var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
+      var DIFFICULTY_LABELS = { basic: 'Basic', intermediate: 'Intermediate', advanced: 'Advanced', expert: 'Expert', untagged: 'Untagged' };
+      var workoutDifficultyStats = {};
+      function resetDifficultyStats() {
+        workoutDifficultyStats = { basic: { seen: 0, correct: 0 }, intermediate: { seen: 0, correct: 0 },
+          advanced: { seen: 0, correct: 0 }, expert: { seen: 0, correct: 0 }, untagged: { seen: 0, correct: 0 } };
+      }
+      resetDifficultyStats();
+      function difficultyBucketFor(card) {
+        var d = card && card.data && card.data.difficulty;
+        d = d ? String(d).toLowerCase() : '';
+        return DIFFICULTY_LEVELS.indexOf(d) !== -1 ? d : 'untagged';
+      }
+      function recordDifficultyResult(card, isCorrect) {
+        // Only count the first scoring of each card position so review-mode
+        // re-attempts don't double-tally. Skip during review.
+        if (workoutIsReview) return;
+        var bucket = workoutDifficultyStats[difficultyBucketFor(card)];
+        bucket.seen++;
+        if (isCorrect) bucket.correct++;
+      }
+
       function shuffleArray(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
@@ -2603,11 +2734,11 @@ layout: sebook
           btn.setAttribute('aria-label', (inGym ? 'Remove ' : 'Add ') + name + (inGym ? ' from gym' : ' to gym'));
         });
 
-        var skippedDifficulties = PersonalGym.getSkippedDifficulties();
+        var activeDifficulties = PersonalGym.getActiveDifficulties();
         function passesDifficultyFilter(item) {
-          if (!skippedDifficulties.length) return true;
+          // Untagged cards always pass — the filter targets tagged cards only.
           if (!item || !item.difficulty) return true;
-          return skippedDifficulties.indexOf(String(item.difficulty).toLowerCase()) === -1;
+          return activeDifficulties.indexOf(String(item.difficulty).toLowerCase()) !== -1;
         }
 
         // ---- Difficult Questions Gym ----
@@ -2831,16 +2962,16 @@ layout: sebook
         });
       }
 
-      // ---- Skip-difficulty filter checkboxes ----
-      var initialSkip = PersonalGym.getSkippedDifficulties();
+      // ---- Difficulty-filter checkboxes (checked = include this level) ----
+      var initialActive = PersonalGym.getActiveDifficulties();
       difficultyFilterCheckboxes.forEach(function (cb) {
-        cb.checked = initialSkip.indexOf(cb.dataset.difficulty) !== -1;
+        cb.checked = initialActive.indexOf(cb.dataset.difficulty) !== -1;
         cb.addEventListener('change', function () {
           var picked = [];
           difficultyFilterCheckboxes.forEach(function (other) {
             if (other.checked) picked.push(other.dataset.difficulty);
           });
-          PersonalGym.setSkippedDifficulties(picked);
+          PersonalGym.setActiveDifficulties(picked);
           refreshLibrary();
         });
       });
@@ -2890,6 +3021,7 @@ layout: sebook
         workoutReviewQueue = [];
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
+        resetDifficultyStats();
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
@@ -3060,16 +3192,15 @@ layout: sebook
         var gym = PersonalGym.getGym();
         var cards = [];
         var seenQuestions = {};
-        var skipped = PersonalGym.getSkippedDifficulties();
+        var active = PersonalGym.getActiveDifficulties();
 
-        // A card is excluded only if it has a difficulty AND that level is in
-        // the skip list. Cards without a difficulty are always included so the
-        // legacy content (no difficulty set) is unaffected.
+        // A tagged card runs only if its level is currently checked. Cards
+        // without a difficulty always run so legacy content (no difficulty
+        // set) stays in the workout regardless of these settings.
         function isAllowedDifficulty(data) {
-          if (!skipped.length) return true;
           var d = data && data.difficulty;
           if (!d) return true;
-          return skipped.indexOf(String(d).toLowerCase()) === -1;
+          return active.indexOf(String(d).toLowerCase()) !== -1;
         }
 
         gym.forEach(function (entry) {
@@ -3143,6 +3274,7 @@ layout: sebook
         workoutReviewQueue = [];
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
+        resetDifficultyStats();
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
@@ -3421,6 +3553,7 @@ layout: sebook
                 revealOptionFeedback(opt.dataset.index);
                 workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
               }
+              recordDifficultyResult(card, isCorrect);
               PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
               var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
               if (shortcutHint) shortcutHint.classList.add('hidden');
@@ -3474,6 +3607,7 @@ layout: sebook
               });
               workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
             }
+            recordDifficultyResult(card, isMultiCorrect);
             PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isMultiCorrect);
             var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
             if (shortcutHint) shortcutHint.classList.add('hidden');
@@ -3656,6 +3790,7 @@ layout: sebook
           if (isCorrect) workoutScore++;
           else workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
 
+          recordDifficultyResult(card, isCorrect);
           PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
           var ca = div.querySelector('.quiz-correct-answers');
           var exp = div.querySelector('.quiz-explanation');
@@ -3774,12 +3909,14 @@ layout: sebook
 
         correctBtn.addEventListener('click', function () {
           workoutScore++;
+          recordDifficultyResult(card, true);
           PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), true);
           nextWorkoutCard();
         });
 
         incorrectBtn.addEventListener('click', function () {
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+          recordDifficultyResult(card, false);
           PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), false);
           nextWorkoutCard();
         });
@@ -3882,6 +4019,7 @@ layout: sebook
         workoutResults.style.display = 'block';
         workoutProgress.style.width = '100%';
         workoutScoreEl.textContent = workoutScore;
+        renderWorkoutBreakdown();
         scrollToTop();
 
         if (workoutEndedByTimer) {
@@ -3901,6 +4039,52 @@ layout: sebook
         }
         focusWorkoutAction(workoutRestartBtn);
         spawnGymEmojis(workoutResults);
+      }
+
+      function renderWorkoutBreakdown() {
+        var listEl = document.getElementById('workout-breakdown-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        var totalSeen = workoutCards.length;
+        var totalCorrect = workoutScore;
+        listEl.appendChild(buildBreakdownRow('overall', 'Overall', totalCorrect, totalSeen, true));
+
+        // Render only buckets that had ≥1 card; untagged shows up only if
+        // the workout actually drew untagged cards.
+        var orderedBuckets = DIFFICULTY_LEVELS.concat(['untagged']);
+        orderedBuckets.forEach(function (key) {
+          var b = workoutDifficultyStats[key];
+          if (!b || b.seen === 0) return;
+          listEl.appendChild(buildBreakdownRow(key, DIFFICULTY_LABELS[key], b.correct, b.seen, false));
+        });
+      }
+
+      function buildBreakdownRow(level, label, correct, seen, isOverall) {
+        var li = document.createElement('li');
+        li.className = 'workout-breakdown-row level-' + level + (isOverall ? ' is-overall' : '') + (seen === 0 ? ' is-empty' : '');
+        var pct = seen > 0 ? Math.round((correct / seen) * 100) : 0;
+
+        var pie = document.createElement('div');
+        pie.className = 'workout-breakdown-pie';
+        pie.style.setProperty('--pie-pct', String(pct));
+        // Decorative — the textual stat carries the meaning. Hide from AT
+        // so the row reads as "Basic, 4 of 5 (80%)" not "Basic, image, …".
+        pie.setAttribute('role', 'img');
+        pie.setAttribute('aria-hidden', 'true');
+
+        var labelEl = document.createElement('span');
+        labelEl.className = 'workout-breakdown-label';
+        labelEl.textContent = label;
+
+        var statEl = document.createElement('span');
+        statEl.className = 'workout-breakdown-stat';
+        statEl.textContent = correct + ' / ' + seen + ' (' + pct + '%)';
+
+        li.appendChild(pie);
+        li.appendChild(labelEl);
+        li.appendChild(statEl);
+        return li;
       }
 
       function startReview() {
@@ -3924,6 +4108,7 @@ layout: sebook
         workoutReviewQueue = [];
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
+        resetDifficultyStats();
         workoutResults.style.display = 'none';
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
         startWorkoutTimer(workoutCards.length);

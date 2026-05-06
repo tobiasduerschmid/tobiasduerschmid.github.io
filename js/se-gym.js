@@ -7,7 +7,7 @@
   var TIMED_TOTAL_MINUTES_COOKIE = 'se-gym-timer-total-minutes';
   var TIMED_SECONDS_PER_QUESTION_COOKIE = 'se-gym-timer-seconds-per-question';
   var SHOW_DIFFICULTY_COOKIE = 'se-gym-show-difficulty';
-  var SKIP_DIFFICULTY_COOKIE = 'se-gym-skip-difficulty';
+  var ACTIVE_DIFFICULTIES_COOKIE = 'se-gym-active-difficulties';
   var DEFAULT_TIMED_TOTAL_MINUTES = 20;
   var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
   var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
@@ -157,16 +157,23 @@
     return out;
   }
 
-  function getSkippedDifficulties() {
-    var raw = getCookie(SKIP_DIFFICULTY_COOKIE);
-    if (!raw) return [];
-    try { return normalizeDifficultyList(JSON.parse(raw)); }
-    catch (e) { return []; }
+  // Returns the set of difficulty levels the user wants to test in the next
+  // workout. Default (cookie unset) = all four. Setting it to a subset is
+  // how learners narrow a workout to e.g. just "advanced + expert" cards.
+  // Cards without a difficulty are unaffected — those always run.
+  function getActiveDifficulties() {
+    var raw = getCookie(ACTIVE_DIFFICULTIES_COOKIE);
+    if (raw == null) return DIFFICULTY_LEVELS.slice();
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return DIFFICULTY_LEVELS.slice();
+      return normalizeDifficultyList(parsed);
+    } catch (e) { return DIFFICULTY_LEVELS.slice(); }
   }
 
-  function setSkippedDifficulties(list) {
+  function setActiveDifficulties(list) {
     var normalized = normalizeDifficultyList(list);
-    setCookie(SKIP_DIFFICULTY_COOKIE, JSON.stringify(normalized), COOKIE_DAYS);
+    setCookie(ACTIVE_DIFFICULTIES_COOKIE, JSON.stringify(normalized), COOKIE_DAYS);
   }
 
   function hashQuestion(html) {
@@ -233,8 +240,8 @@
     setAnalyzePerformance: setAnalyzePerformance,
     isShowDifficulty: isShowDifficulty,
     setShowDifficulty: setShowDifficulty,
-    getSkippedDifficulties: getSkippedDifficulties,
-    setSkippedDifficulties: setSkippedDifficulties,
+    getActiveDifficulties: getActiveDifficulties,
+    setActiveDifficulties: setActiveDifficulties,
     DIFFICULTY_LEVELS: DIFFICULTY_LEVELS,
     hashQuestion: hashQuestion,
     getStats: getStats,

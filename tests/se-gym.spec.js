@@ -752,6 +752,227 @@ test.describe('Personal Gym - Workout', () => {
   });
 });
 
+// ==================== DIFFICULTY LEVELS ====================
+
+test.describe('Personal Gym - Difficulty', () => {
+  // The Singleton quiz is the canonical fixture: 3 questions have a
+  // difficulty (intermediate, advanced, expert) and 2 have none. This lets
+  // us check that the "skip" filter excludes the marked levels while
+  // unmarked questions stay in regardless.
+  const SINGLETON_QUIZ_ID = 'design_pattern_singleton';
+
+  test.beforeEach(async ({ page }) => {
+    await clearState(page);
+  });
+
+  test('difficulty chip renders on the SEBook quiz embed when set', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/singleton.html');
+    // Quiz embed shows one question at a time (`.active`), but every card
+    // is in the DOM. Verify (a) the active card exists and (b) every card
+    // with a difficulty has a properly-labelled chip emitted.
+    await expect(page.locator('.quiz-question-card.active')).toHaveCount(1);
+    const chips = page.locator('.quiz-question-card[data-difficulty] .quiz-difficulty');
+    const count = await chips.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i++) {
+      await expect(chips.nth(i)).toHaveAttribute('aria-label', /Difficulty:/i);
+    }
+  });
+
+  test('difficulty chip is hidden during question by default and revealed on answer', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await page.goto(GYM_URL);
+    await page.locator('#max-cards').fill('20');
+    await page.locator('#start-workout-btn').click();
+
+    // Skip past any questions that lack a difficulty until we land on one
+    // that has it; that's the only case where the toggle is observable.
+    for (let i = 0; i < 5; i++) {
+      const card = page.locator('.workout-quiz-card').first();
+      await expect(card).toBeVisible();
+      const chip = card.locator('.quiz-difficulty');
+      const chipCount = await chip.count();
+      if (chipCount > 0) {
+        // Default toggle is OFF → chip is hidden until answered.
+        await expect(chip).toBeHidden();
+        const type = await card.getAttribute('data-type');
+        if (type === 'multiple') {
+          await card.locator('.quiz-option').first().click();
+          await card.locator('.submit-answer-btn').click();
+        } else {
+          await card.locator('.quiz-option').first().click();
+        }
+        await expect(chip).toBeVisible();
+        return;
+      }
+      // Card had no difficulty — answer and continue.
+      const type = await card.getAttribute('data-type');
+      if (type === 'multiple') {
+        await card.locator('.quiz-option').first().click();
+        await card.locator('.submit-answer-btn').click();
+      } else {
+        await card.locator('.quiz-option').first().click();
+      }
+      await card.locator('.next-btn').click();
+    }
+    throw new Error('No difficulty-tagged question encountered in the Singleton quiz');
+  });
+
+  test('show-difficulty toggle reveals the chip up front and persists', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#showDifficultyToggle + .slider').click();
+    await expect(page.locator('#showDifficultyToggle')).toBeChecked();
+
+    // Reload — the cookie must keep the toggle on.
+    await page.reload();
+    await expect(page.locator('#showDifficultyToggle')).toBeChecked();
+
+    await page.locator('#max-cards').fill('20');
+    await page.locator('#start-workout-btn').click();
+
+    // Walk to a difficulty-tagged card; chip should be visible from the start.
+    for (let i = 0; i < 5; i++) {
+      const card = page.locator('.workout-quiz-card').first();
+      await expect(card).toBeVisible();
+      const chip = card.locator('.quiz-difficulty');
+      if (await chip.count() > 0) {
+        await expect(chip).toBeVisible();
+        return;
+      }
+      const type = await card.getAttribute('data-type');
+      if (type === 'multiple') {
+        await card.locator('.quiz-option').first().click();
+        await card.locator('.submit-answer-btn').click();
+      } else {
+        await card.locator('.quiz-option').first().click();
+      }
+      await card.locator('.next-btn').click();
+    }
+    throw new Error('No difficulty-tagged question encountered in the Singleton quiz');
+  });
+
+  test('all difficulty checkboxes are checked by default', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+    for (const level of ['basic', 'intermediate', 'advanced', 'expert']) {
+      await expect(
+        page.locator(`.difficulty-filter-checkbox[data-difficulty="${level}"]`)
+      ).toBeChecked();
+    }
+  });
+
+  test('unchecking all four levels still includes questions with no assigned difficulty', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await page.goto(GYM_URL);
+
+    // Uncheck every level — questions WITH a difficulty should drop out;
+    // questions WITHOUT one should still appear.
+    for (const level of ['basic', 'intermediate', 'advanced', 'expert']) {
+      await page.locator(`.difficulty-filter-checkbox[data-difficulty="${level}"]`).uncheck();
+    }
+
+    // The Singleton quiz has 5 questions; 3 are tagged (intermediate,
+    // advanced, expert) and 2 are not. Summary should report 2 cards.
+    await expect(page.locator('#gym-summary')).toContainText('2 total cards');
+
+    await page.locator('#max-cards').fill('20');
+    await page.locator('#start-workout-btn').click();
+    await expect(page.locator('#workout-total')).toHaveText('2');
+
+    // Walk through both cards — none should display a difficulty chip
+    // pre-answer or post-answer (because they have no assigned level).
+    for (let i = 0; i < 2; i++) {
+      const card = page.locator('.workout-quiz-card').first();
+      await expect(card).toBeVisible();
+      await expect(card.locator('.quiz-difficulty')).toHaveCount(0);
+      const type = await card.getAttribute('data-type');
+      if (type === 'multiple') {
+        await card.locator('.quiz-option').first().click();
+        await card.locator('.submit-answer-btn').click();
+      } else {
+        await card.locator('.quiz-option').first().click();
+      }
+      await card.locator('.next-btn').click();
+    }
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+  });
+
+  test('unchecking a single level only excludes that level from the workout', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await page.goto(GYM_URL);
+
+    // Uncheck just "expert" — should leave 4 cards (2 untagged + intermediate + advanced).
+    await page.locator('.difficulty-filter-checkbox[data-difficulty="expert"]').uncheck();
+    await expect(page.locator('#gym-summary')).toContainText('4 total cards');
+
+    // Also uncheck "advanced" — should leave 3 cards (2 untagged + intermediate).
+    await page.locator('.difficulty-filter-checkbox[data-difficulty="advanced"]').uncheck();
+    await expect(page.locator('#gym-summary')).toContainText('3 total cards');
+
+    // Cookie persists across reloads — checked/unchecked state survives.
+    await page.reload();
+    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="expert"]')).not.toBeChecked();
+    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="advanced"]')).not.toBeChecked();
+    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="basic"]')).toBeChecked();
+    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="intermediate"]')).toBeChecked();
+  });
+
+  test('workout results show overall and per-difficulty breakdown with pie charts', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await page.goto(GYM_URL);
+    await page.locator('#max-cards').fill('20');
+    await page.locator('#start-workout-btn').click();
+
+    // Walk through every Singleton question, picking the first option
+    // (correct or not) so we get a mix of right/wrong.
+    while (await page.locator('.workout-quiz-card').count() > 0) {
+      const card = page.locator('.workout-quiz-card').first();
+      const type = await card.getAttribute('data-type');
+      if (type === 'multiple') {
+        await card.locator('.quiz-option').first().click();
+        await card.locator('.submit-answer-btn').click();
+      } else {
+        await card.locator('.quiz-option').first().click();
+      }
+      await card.locator('.next-btn').click();
+    }
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+    const breakdown = page.locator('#workout-breakdown');
+    await expect(breakdown).toBeVisible();
+
+    // Overall row always present.
+    const overallRow = breakdown.locator('.workout-breakdown-row.is-overall');
+    await expect(overallRow).toHaveCount(1);
+    await expect(overallRow.locator('.workout-breakdown-pie')).toBeVisible();
+    await expect(overallRow.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 5 \(\d+%\)/);
+
+    // Per-difficulty rows for the three tagged levels in the Singleton quiz.
+    for (const level of ['intermediate', 'advanced', 'expert']) {
+      const row = breakdown.locator(`.workout-breakdown-row.level-${level}`);
+      await expect(row).toHaveCount(1);
+      await expect(row.locator('.workout-breakdown-pie')).toBeVisible();
+      await expect(row.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 1 \(\d+%\)/);
+    }
+
+    // "Basic" had no cards in the Singleton quiz → not shown.
+    await expect(breakdown.locator('.workout-breakdown-row.level-basic')).toHaveCount(0);
+
+    // Untagged appears because 2 of 5 questions have no difficulty.
+    const untaggedRow = breakdown.locator('.workout-breakdown-row.level-untagged');
+    await expect(untaggedRow).toHaveCount(1);
+    await expect(untaggedRow.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 2 \(\d+%\)/);
+  });
+});
+
 // ==================== + BUTTON ON INCLUDES ====================
 
 test.describe('Personal Gym - Toggle Button on Includes', () => {
