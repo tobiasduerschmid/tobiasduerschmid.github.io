@@ -59,7 +59,8 @@ test.describe('GitGraph accessibility', () => {
 
     const host = page.locator('#host');
     await expect(host).toHaveAttribute('role', 'region');
-    await expect(host).toHaveAttribute('aria-label', 'Live Git graph');
+    await expect(host).toHaveAttribute('aria-label', /^Live Git graph\./);
+    await expect(host).toHaveAttribute('aria-label', /Second commit/);
 
     const svg = host.locator('svg');
     await expect(svg).toHaveAttribute('aria-hidden', 'true');

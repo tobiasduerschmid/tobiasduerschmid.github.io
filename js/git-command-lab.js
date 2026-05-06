@@ -122,10 +122,9 @@
     container.innerHTML = '';
     container.classList.add('git-command-lab');
     // Card is a labeled group, not an image. role="group" lets AT users
-    // navigate it as a unit while keeping its descendants (button,
-    // status, details) accessible — which is what we want, since the
-    // SVG graph is purely visual and the canonical text alternative
-    // lives in the sr-only status + details below.
+    // navigate it as a unit while keeping its descendants accessible; the
+    // SVG graph is purely visual and the canonical text alternative lives in
+    // GitGraph's sr-only status + details nodes inside the graph host.
     container.setAttribute('role', 'group');
     container.setAttribute('aria-label', 'Git command demo: ' + spec.command);
 
@@ -226,45 +225,9 @@
     graph.reserveForStates([beforeData, afterData]);
     graph.render(beforeData);
 
-    // Sighted-affordance details element. GitGraph's _liveA11y mode
-    // (enabled via data-git-graph-live above) already maintains an
-    // sr-only status region inside graphHost that announces deltas
-    // ("commit X added", "HEAD moved to Y") on every render — that's
-    // the canonical AT channel and a much better delta narrator than
-    // anything we'd hand-write here. This <details> element duplicates
-    // the verbose breakdown *visibly* so a low-vision-but-not-AT user
-    // (or anyone curious) can drill in by clicking the disclosure. We
-    // intentionally do NOT wire another aria-live region: stacking
-    // polite announcements on top of GitGraph's would cross-talk.
-    var detailsEl = document.createElement('details');
-    detailsEl.className = 'git-command-lab__details';
-    var detailsSummary = document.createElement('summary');
-    detailsSummary.textContent = 'Full graph details (text)';
-    detailsEl.appendChild(detailsSummary);
-    var detailsBody = document.createElement('div');
-    detailsBody.className = 'git-command-lab__details-body';
-    detailsEl.appendChild(detailsBody);
-    container.appendChild(detailsEl);
-
-    function refreshDetails(data) {
-      var a11y = (typeof GitGraph.describeData === 'function')
-        ? (GitGraph.describeData(data) || {}) : {};
-      // Include every text-alternative GitGraph builds for the current
-      // state so the visible <details> element is a complete mirror of
-      // what _liveA11y mode writes to its sr-only summary / details /
-      // status nodes inside graphHost. Order: short overview at the top
-      // (so a low-vision user reading top-to-bottom sees the headline
-      // first), then the long structural breakdown. Empty fields are
-      // omitted to avoid rendering blank lines.
-      var lines = [];
-      if (a11y.overview)    lines.push(a11y.overview);
-      if (a11y.description && a11y.description !== a11y.overview) {
-        lines.push(a11y.description);
-      }
-      if (a11y.details) lines.push(a11y.details);
-      detailsBody.textContent = lines.join('\n\n');
-    }
-    refreshDetails(beforeData);
+    // GitGraph's _liveA11y mode (enabled via data-git-graph-live above)
+    // maintains the graph overview, detailed text alternative, and live delta
+    // announcements in sr-only nodes inside graphHost.
 
     var applied = false;
     function update() {
@@ -293,7 +256,6 @@
         btn.classList.remove('git-command-lab__btn--undo');
         btn.setAttribute('aria-pressed', 'false');
       }
-      refreshDetails(stateData);
     }
 
     btn.addEventListener('click', function () {

@@ -58,15 +58,14 @@ steps:
 
     ### Habits from prior tools that mislead in Git
 
-    If you came to Git from SVN, Perforce, or a "save = commit" mental model in
-    a CS1 IDE, retire these instincts before they bite:
+    If you came to Git from a Google Docs "save = commit" mental model, or a GUI-build-in IDE, 
+    retire these instincts before they bite:
 
     | Bad instinct | Why Git breaks it | Right reflex |
     |---|---|---|
     | "`git pull` is always safe" | `git pull` is `git fetch` + `git merge`. If you have local commits and the remote moved, it silently creates a merge commit (or fails on conflicts). | `git pull --rebase` (or `git fetch` + inspect with `git log` before merging) |
     | "Force-push is fine on my own branch" | Other people may have based work on yours, or CI may have tagged commits. Force-push rewrites history, breaking everyone downstream. | `git push --force-with-lease` *and* coordinate before doing it on a shared branch — never on `main`. |
     | "Save = commit" (from auto-saving IDEs) | A commit is a *snapshot* with author + message; it lives forever. Filling history with `update`, `wip`, `oops` pollutes blame and bisect for the rest of the repo's life. | Commit *meaningful* units with descriptive messages. Use `git stash` for in-progress work. |
-    | "`push.default = matching`" (older Git) | The legacy default pushed every local branch that matched a remote name — easy to surprise teammates with half-finished branches. | Modern Git defaults to `simple` (only the current branch). Verify with `git config push.default`. |
     | "If something goes wrong, just delete the folder and re-clone" | Git is *designed* to recover from anything short of `rm -rf .git`. Deleting and re-cloning teaches you nothing — you'll hit the same bug next time. | `git reflog` is your safety net. Step 2 will show you. |
 
     The rest of this tutorial assumes you've internalized these. If any feel like brand-new ideas, slow down here before continuing.
@@ -98,7 +97,6 @@ steps:
     **Predict first:** what's inside the file `.git/refs/heads/main`? A commit list? A snapshot?
 
     ```bash
-    cd /tutorial/myproject
     cat .git/refs/heads/main
     cat .git/refs/heads/feature-divide
     cat .git/HEAD
@@ -143,7 +141,6 @@ steps:
     ```
   solution:
     commands:
-    - cd /tutorial/myproject
     - git switch --detach HEAD~1
     - git switch main
     explanation: |
@@ -426,32 +423,6 @@ steps:
       option_feedback:
         2: This answer confuses remote history with local reflog; force-pushing rewrites the *remote* branch but leaves your local `.git/logs/` (and its rescue path) untouched.
       explanation: Reflog lives in `.git/logs/`. Destroying `.git/` takes the reflog with it. A fresh `git clone` starts with an empty reflog of *that* clone. Default expiry is configurable via `gc.reflogExpire`. A `git push --force` rewrites the remote's *branch* but doesn't touch your local reflog — your local rescue path is still intact.
-    - question: Put these steps in the correct order to rescue an orphaned commit you just made in detached HEAD.
-      type: parsons
-      display: block
-      lines:
-      - 'git switch main      # leave detached HEAD'
-      - 'git reflog          # find the SHA of the orphaned commit'
-      - 'git branch rescued-work HEAD@{1}      # anchor it with a branch'
-      - 'git log rescued-work --oneline        # verify it is reachable again'
-      distractors:
-      - 'git log --all --oneline     # would NOT show the orphan'
-      - 'git checkout <orphan-sha>   # needs the SHA you just lost'
-      - 'git push origin rescued-work'
-      explanation: The canonical rescue recipe. Distractor 1 would fail silently — `log --all` cannot see orphans. Distractor 2 needs the SHA, which was lost when the terminal scrolled. Distractor 3 is a separate sharing concern — irrelevant to rescue.
-    - question: '**[Revisit Step 3 — preview]** In the next step you will see that commits are content-addressable and immutable. Given that, what does `git branch rescue <orphan-sha>` actually do to the commit object?'
-      options:
-      - It copies the commit into a new location
-      - It does **nothing** to the commit object — it only writes a 41-byte file (`.git/refs/heads/rescue`) containing the SHA. The commit itself never moves; it just becomes reachable again via the new ref
-      - It rewrites the commit's SHA so it becomes reachable
-      - It restores the commit from a backup
-      correct_index: 1
-      option_feedback:
-        0: This answer treats `git branch` as a copy operation; it only writes a 41-byte ref file — the commit object itself never moves.
-        2: This answer assumes Git mutates commits to make them reachable; SHAs are content-addressable and immutable, so any rewrite would be a *different* commit.
-        3: This answer invents a backup mechanism; the commit was never deleted, only unreferenced.
-      explanation: Same mechanic you learned in the previous step. Creating a branch is one `fwrite()` of 41 bytes. Rescue doesn't move commits; it makes them reachable. This is why rescue is instantaneous regardless of commit size — a concept the next step formalizes as Git's object model.
-# Pedagogy: PRIMM — Investigate (threshold concept: hash the bytes, prove the model)
 - title: Relative Commit Addresses & Git's Object Database
   view: git_graph
   instructions: |

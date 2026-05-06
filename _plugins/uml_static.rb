@@ -123,11 +123,11 @@ module Jekyll
         {}
       end
 
-      # Render the verbose describer output as a sighted-on-demand <details>
-      # element. The same markup is also produced client-side by the browser
+      # Render the verbose describer output as a screen-reader-only text block.
+      # The same markup is also produced client-side by the browser
       # describer in `js/uml-auto-describe.js` so live tutorial diagrams pick
-      # up the same drill-in. Empty / missing verbose payloads return ''.
-      def render_verbose_details(verbose, safe_type)
+      # up the same text alternative. Empty / missing verbose payloads return ''.
+      def render_verbose_description(verbose, safe_type)
         return '' unless verbose.is_a?(Hash)
         sections = verbose['sections']
         return '' unless sections.is_a?(Array) && !sections.empty?
@@ -137,7 +137,7 @@ module Jekyll
           items = (section['items'] || []).map do |item|
             "<li>#{CGI.escapeHTML(item.to_s)}</li>"
           end.join
-          # Styled <p> rather than <h4> so the verbose drill-in doesn't
+          # Styled <p> rather than <h4> so the verbose description doesn't
           # introduce a fixed heading level inside <figure>; on pages whose
           # outline hasn't reached <h3> (e.g. flashcards), an <h4> would
           # skip a level (WCAG 2.4.6).
@@ -148,10 +148,10 @@ module Jekyll
         intro = summary_text.empty? ? '' : "<p>#{CGI.escapeHTML(summary_text)}</p>"
 
         <<~HTML.strip
-          <details class="sebook-figure__verbose sebook-figure__verbose--#{safe_type}">
-            <summary>Detailed description</summary>
+          <div class="sebook-figure__verbose sebook-figure__verbose--#{safe_type}" data-uml-verbose="true">
+            <p class="sebook-figure__verbose-title">Detailed description</p>
             <div class="sebook-figure__verbose-body">#{intro}#{parts}</div>
-          </details>
+          </div>
         HTML
       end
 
@@ -228,9 +228,8 @@ module Jekyll
         # 5. Replace blocks in content. The aria-label gets the brief auto-
         # generated structural walk-through (always present, satisfies WCAG
         # 2.2 §1.1.1); the visible <figcaption> renders only when the author
-        # supplied one; a collapsed <details> with the verbose breakdown
-        # (every class member, every transition, etc.) is appended for
-        # sighted users who want to drill in.
+        # supplied one; a screen-reader-only verbose breakdown (every class
+        # member, every transition, etc.) is appended in the reading order.
         blocks.each_with_index do |block, idx|
           next unless block[:svg]
 
@@ -249,7 +248,7 @@ module Jekyll
                          ''
                        end
 
-          details_html = render_verbose_details(verbose, safe_type)
+          details_html = render_verbose_description(verbose, safe_type)
 
           svg_wrapped = <<~HTML
             <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">

@@ -3,8 +3,8 @@
 // a parallel Ruby implementation. Reads a JSON map `{idx: {type, spec}, …}` on
 // stdin and writes `{idx: { brief, verbose }, …}` on stdout, where `brief` is
 // the one-paragraph aria-label and `verbose` is the structured walk-through
-// (`{ summary, sections: [{ heading, items }] }`) used to populate a sighted-
-// on-demand <details> element. Errors go to stderr and the process exits
+// (`{ summary, sections: [{ heading, items }] }`) used to populate a screen-
+// reader-only description block. Errors go to stderr and the process exits
 // non-zero so the Ruby caller can fall back to a plain type name. The same
 // file backs the live tutorial diagrams via the browser, so any change to
 // the parser or output style automatically applies to both build paths.

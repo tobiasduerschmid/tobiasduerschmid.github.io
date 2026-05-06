@@ -190,8 +190,8 @@
 
   // Shared parser: walks the sequence spec once, tracking the open fragment
   // stack so each message carries its control-flow context. Both the brief
-  // describer and the verbose <details> drill-in use this so an `alt`/`else`
-  // pair no longer collapses into a flat list of messages.
+  // describer and the verbose screen-reader-only description use this so an
+  // `alt`/`else` pair no longer collapses into a flat list of messages.
   function parseSequenceSpec(spec) {
     var participants = [];
     var messages = [];
@@ -565,7 +565,7 @@
   // for screen-reader announcement of the entire diagram in one swoop. The
   // verbose variants below produce a structured walk-through that also lists
   // every member, port, transition, commit, etc. — designed for rendering
-  // inside a sighted-on-demand <details> element next to the figure. Result
+  // inside a screen-reader-only block next to the figure. Result
   // shape: { summary: string, sections: [{ heading, items: [string] }] }.
 
   function describeClassDiagramVerbose(spec) {
@@ -1079,9 +1079,9 @@
     }
   }
 
-  // ---------- HTML rendering for the sighted-on-demand <details> ----------
+  // ---------- HTML rendering for the screen-reader-only verbose description ----------
   // Identical structure to what `_plugins/uml_static.rb` emits at build time
-  // for static diagrams, so live + static diagrams expose the same drill-in.
+  // for static diagrams, so live + static diagrams expose the same text alternative.
 
   function escapeHTML(s) {
     return String(s == null ? '' : s)
@@ -1096,7 +1096,7 @@
     return String(type || '').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
   }
 
-  function buildVerboseDetailsHTML(verbose, type) {
+  function buildVerboseDescriptionHTML(verbose, type) {
     if (!verbose || !verbose.sections || !verbose.sections.length) return '';
     var safe = safeTypeClass(type);
     var parts = verbose.sections.map(function (section) {
@@ -1104,30 +1104,30 @@
       var items = (section.items || []).map(function (item) {
         return '<li>' + escapeHTML(item) + '</li>';
       }).join('');
-      // Use a styled paragraph rather than a heading element: the verbose
-      // <details> appears under a <figure> on pages where the surrounding
-      // outline can be h1/h2/h3 already, and a fixed-level heading here would
-      // skip levels (WCAG 2.4.6) on flashcards or other shallow contexts.
+      // Use a paragraph rather than a heading element: the verbose text appears
+      // under a <figure> on pages where the surrounding outline can be h1/h2/h3
+      // already, and a fixed-level heading here would skip levels (WCAG 2.4.6)
+      // on flashcards or other shallow contexts.
       return '<section><p class="sebook-figure__verbose-heading">' + heading + '</p><ul>' + items + '</ul></section>';
     }).join('');
     var intro = verbose.summary
       ? '<p>' + escapeHTML(verbose.summary) + '</p>'
       : '';
-    return '<details class="sebook-figure__verbose sebook-figure__verbose--' + safe + '" data-uml-verbose="true">' +
-           '<summary>Detailed description</summary>' +
+    return '<div class="sebook-figure__verbose sebook-figure__verbose--' + safe + '" data-uml-verbose="true">' +
+           '<p class="sebook-figure__verbose-title">Detailed description</p>' +
            '<div class="sebook-figure__verbose-body">' + intro + parts + '</div>' +
-           '</details>';
+           '</div>';
   }
 
-  // Inject (or replace) a <details> sibling with the verbose breakdown next
-  // to a rendered figure. `figureOrSibling` is either the <figure> wrapper
-  // (preferred — we append inside it) or any element whose parent is the
-  // figure (we ascend). No-op when there's no verbose payload to show.
-  function attachVerboseDetails(target, type, spec) {
+  // Inject (or replace) a screen-reader-only verbose breakdown next to a
+  // rendered figure. `target` is either the <figure> wrapper (preferred — we
+  // append inside it) or any element whose parent is the figure (we ascend).
+  // No-op when there's no verbose payload to expose.
+  function attachVerboseDescription(target, type, spec) {
     if (!target) return;
     var verbose;
     try { verbose = describeVerbose(type, spec); } catch (_) { return; }
-    var html = buildVerboseDetailsHTML(verbose, type);
+    var html = buildVerboseDescriptionHTML(verbose, type);
     if (!html) return;
 
     var host = target;
@@ -1136,9 +1136,9 @@
     }
     if (!host) host = target.parentElement || target;
 
-    // Replace any prior auto-injected <details> so we don't pile up duplicates
+    // Replace any prior auto-injected verbose block so we don't pile up duplicates
     // when a live diagram is re-rendered (tutorial step changes, etc.).
-    var existing = host.querySelector(':scope > details[data-uml-verbose="true"]');
+    var existing = host.querySelector(':scope > [data-uml-verbose="true"]');
     if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
 
     var tmp = document.createElement('div');
@@ -1155,7 +1155,7 @@
     el.setAttribute('aria-label', desc);
     var svg = el.tagName && el.tagName.toLowerCase() === 'svg' ? el : (el.querySelector && el.querySelector('svg'));
     if (svg) svg.setAttribute('aria-label', desc);
-    try { attachVerboseDetails(el, type, spec); } catch (_) { /* leave bundle's output */ }
+    try { attachVerboseDescription(el, type, spec); } catch (_) { /* leave bundle's output */ }
   }
 
   // The bundle has two render paths and they don't share an aria hook:
@@ -1257,9 +1257,9 @@
       var autoCap = slot.querySelector('.sebook-figure__caption--auto');
       if (autoCap && autoCap.parentNode) autoCap.parentNode.removeChild(autoCap);
 
-      // Sighted-on-demand drill-in. Same markup the Ruby plugin emits for
-      // static diagrams, so live + static behave identically.
-      try { attachVerboseDetails(slot, s.type, s.spec); } catch (_) { /* leave bundle output */ }
+      // Screen-reader-only verbose description. Same markup the Ruby plugin
+      // emits for static diagrams, so live + static behave identically.
+      try { attachVerboseDescription(slot, s.type, s.spec); } catch (_) { /* leave bundle output */ }
     }
   }
 
