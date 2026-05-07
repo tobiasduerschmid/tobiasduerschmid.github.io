@@ -25,6 +25,36 @@
     'transitionToState'
   ];
 
+  var UML_TYPE_LABELS = {
+    class: 'Class Diagram',
+    sequence: 'Sequence Diagram',
+    state: 'State Diagram',
+    component: 'Component Diagram',
+    deployment: 'Deployment Diagram',
+    usecase: 'Use Case Diagram',
+    activity: 'Activity Diagram'
+  };
+
+  var UML_RENDERER_GLOBALS = {
+    class: 'UMLClassDiagram',
+    sequence: 'UMLSequenceDiagram',
+    state: 'UMLStateDiagram',
+    component: 'UMLComponentDiagram',
+    deployment: 'UMLDeploymentDiagram',
+    usecase: 'UMLUseCaseDiagram',
+    activity: 'UMLActivityDiagram'
+  };
+
+  var UML_CONTAINER_CLASSES = {
+    class: 'uml-class-diagram-container',
+    sequence: 'uml-sequence-diagram-container',
+    state: 'uml-state-diagram-container',
+    component: 'uml-component-diagram-container',
+    deployment: 'uml-deployment-diagram-container',
+    usecase: 'uml-usecase-diagram-container',
+    activity: 'uml-activity-diagram-container'
+  };
+
   function UMLTutorialEditor(root, options) {
     this.root = typeof root === 'string' ? document.querySelector(root) : root;
     this.options = options || {};
@@ -42,6 +72,8 @@
     this.controlsEl = null;
     this.resultsEl = null;
     this._testAnnouncer = null;
+    this._clearDialog = null;
+    this._clearDialogPreviousFocus = null;
   }
 
   UMLTutorialEditor.prototype.start = function () {
@@ -231,9 +263,12 @@
     html += index > 0
       ? '<button class="tvm-btn tvm-btn-prev" title="Previous step">&larr; Previous</button>'
       : '<span></span>';
+    html += '<span class="tvm-step-actions">' +
+      '<button class="tvm-btn tvm-btn-clear-model" title="Remove all UML elements from this step" type="button">Remove All Elements</button>';
     html += this._stepHasTests(step)
       ? '<button class="tvm-btn tvm-btn-test" title="Check the UML diagram for this step">&#10003; Test My Work</button>'
-      : '<span></span>';
+      : '';
+    html += '</span>';
     html += index < this.steps.length - 1
       ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : ' title="Next step"') + '>Next &rarr;</button>'
       : '<span></span>';
@@ -242,6 +277,7 @@
     var prev = this.controlsEl.querySelector('.tvm-btn-prev');
     var next = this.controlsEl.querySelector('.tvm-btn-next');
     var test = this.controlsEl.querySelector('.tvm-btn-test');
+    var clear = this.controlsEl.querySelector('.tvm-btn-clear-model');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
       if (next.disabled) return;
@@ -249,6 +285,7 @@
       self.loadStep(index + 1);
     });
     if (test) test.addEventListener('click', function () { self.runTests(); });
+    if (clear) clear.addEventListener('click', function () { self.openClearStepDialog(clear); });
   };
 
   UMLTutorialEditor.prototype.loadStep = function (index) {
@@ -260,6 +297,7 @@
       this.instructionsEl.innerHTML = '<h2>' + escapeHtml(step.title || 'Step') + '</h2>' +
         '<div class="tvm-step-instructions">' + (step.instructionsHTML || step.instructions || '') + '</div>';
       if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
+      this.renderPreviousDiagrams(index);
     }
     if (this.contentWrapEl) {
       this.contentWrapEl.scrollTop = 0;
@@ -274,6 +312,62 @@
     document.dispatchEvent(new CustomEvent('tvm:stepchange', { detail: { stepIndex: index } }));
   };
 
+  UMLTutorialEditor.prototype.previousDiagramEntries = function (index) {
+    var entries = [];
+    var seenTypes = {};
+    for (var i = 0; i < index; i++) {
+      var step = this.steps[i] || {};
+      var type = step.uml_type || step.umlType;
+      if (!type || seenTypes[type] || !UML_RENDERER_GLOBALS[type]) continue;
+      seenTypes[type] = true;
+      var source = this.sourceForDiagramType(type);
+      if (!hasMeaningfulArchUml(source)) continue;
+      entries.push({
+        type: type,
+        title: step.title || umlTypeLabel(type),
+        source: source
+      });
+    }
+    return entries;
+  };
+
+  UMLTutorialEditor.prototype.renderPreviousDiagrams = function (index) {
+    if (!this.instructionsEl) return;
+    var entries = this.previousDiagramEntries(index);
+    if (!entries.length) return;
+    var section = document.createElement('section');
+    section.className = 'tvm-previous-diagrams';
+    var headingId = 'tvm-previous-diagrams-title-' + index;
+    section.setAttribute('aria-labelledby', headingId);
+    var heading = document.createElement('h3');
+    heading.id = headingId;
+    heading.textContent = 'Earlier Diagrams';
+    section.appendChild(heading);
+    var list = document.createElement('div');
+    list.className = 'tvm-previous-diagram-list';
+    var previews = [];
+    entries.forEach(function (entry) {
+      var article = document.createElement('article');
+      article.className = 'tvm-previous-diagram-card';
+      article.setAttribute('data-uml-preview-type', entry.type);
+      var title = document.createElement('h4');
+      title.className = 'tvm-previous-diagram-title';
+      title.textContent = umlTypeLabel(entry.type);
+      article.appendChild(title);
+      var preview = document.createElement('div');
+      preview.className = 'tvm-previous-diagram-render ' + (UML_CONTAINER_CLASSES[entry.type] || 'uml-class-diagram-container');
+      preview.setAttribute('aria-label', umlTypeLabel(entry.type) + ' created in a previous tutorial step');
+      article.appendChild(preview);
+      list.appendChild(article);
+      previews.push({ container: preview, type: entry.type, source: entry.source });
+    });
+    section.appendChild(list);
+    this.instructionsEl.appendChild(section);
+    previews.forEach(function (preview) {
+      renderStaticUmlPreview(preview.container, preview.type, preview.source);
+    });
+  };
+
   UMLTutorialEditor.prototype.resetCurrentDiagram = function () {
     var step = this.steps[this.currentStep] || {};
     var type = step.uml_type || (this.typeEl && this.typeEl.value) || 'class';
@@ -284,6 +378,101 @@
     }
     var reset = this.root.querySelector('#uml-pg-reset-example');
     if (reset) reset.click();
+  };
+
+  UMLTutorialEditor.prototype.currentStepDiagramType = function () {
+    var step = this.steps[this.currentStep] || {};
+    return step.uml_type || step.umlType || (this.typeEl && this.typeEl.value) || 'class';
+  };
+
+  UMLTutorialEditor.prototype.clearCurrentStepDiagram = function () {
+    var type = this.currentStepDiagramType();
+    var source = emptySource();
+    if (this.typeEl && this.typeEl.value !== type) {
+      this.typeEl.value = type;
+      this.typeEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (this.sourceEl) {
+      this.sourceEl.value = source;
+      this.sourceEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    try { localStorage.removeItem('uml-pg-' + type); } catch (e) {}
+    try { localStorage.setItem('uml-pg-autosave-' + type, source); } catch (e) {}
+    this._stepsPassed.delete(this.currentStep);
+    this.clearResults();
+  };
+
+  UMLTutorialEditor.prototype.ensureClearStepDialog = function () {
+    var self = this;
+    if (this._clearDialog && this._clearDialog.isConnected) return this._clearDialog;
+    var backdrop = document.createElement('div');
+    backdrop.className = 'tvm-clear-step-dialog-backdrop';
+    backdrop.hidden = true;
+    backdrop.innerHTML = [
+      '<div class="tvm-clear-step-dialog" role="dialog" aria-modal="true" aria-labelledby="tvm-clear-step-title" aria-describedby="tvm-clear-step-desc">',
+      '  <h2 id="tvm-clear-step-title">Remove all UML elements from this step?</h2>',
+      '  <p id="tvm-clear-step-desc">This clears the current step diagram and keeps diagrams from other steps saved.</p>',
+      '  <div class="tvm-clear-step-dialog-actions">',
+      '    <button class="tvm-btn tvm-btn-clear-cancel" type="button">Cancel</button>',
+      '    <button class="tvm-btn tvm-btn-clear-confirm" type="button">Remove Elements</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+    backdrop.addEventListener('click', function (event) {
+      if (event.target === backdrop) self.closeClearStepDialog();
+    });
+    backdrop.addEventListener('keydown', function (event) {
+      self.handleClearDialogKeydown(event);
+    });
+    var cancel = backdrop.querySelector('.tvm-btn-clear-cancel');
+    var confirm = backdrop.querySelector('.tvm-btn-clear-confirm');
+    if (cancel) cancel.addEventListener('click', function () { self.closeClearStepDialog(); });
+    if (confirm) {
+      confirm.addEventListener('click', function () {
+        self.clearCurrentStepDiagram();
+        self.closeClearStepDialog();
+      });
+    }
+    document.body.appendChild(backdrop);
+    this._clearDialog = backdrop;
+    return backdrop;
+  };
+
+  UMLTutorialEditor.prototype.openClearStepDialog = function (trigger) {
+    var dialog = this.ensureClearStepDialog();
+    this._clearDialogPreviousFocus = trigger || document.activeElement;
+    dialog.hidden = false;
+    var cancel = dialog.querySelector('.tvm-btn-clear-cancel');
+    if (cancel) cancel.focus();
+  };
+
+  UMLTutorialEditor.prototype.closeClearStepDialog = function () {
+    if (this._clearDialog) this._clearDialog.hidden = true;
+    var previous = this._clearDialogPreviousFocus;
+    this._clearDialogPreviousFocus = null;
+    if (previous && previous.isConnected && typeof previous.focus === 'function') previous.focus();
+  };
+
+  UMLTutorialEditor.prototype.handleClearDialogKeydown = function (event) {
+    if (!this._clearDialog || this._clearDialog.hidden) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeClearStepDialog();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    var focusable = Array.prototype.slice.call(this._clearDialog.querySelectorAll('button'))
+      .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+    if (!focusable.length) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   UMLTutorialEditor.prototype.currentSource = function () {
@@ -364,6 +553,13 @@
         });
         html += '</ul>';
       }
+      if (!ok && test.hints && test.hints.length) {
+        html += '<ul class="tvm-uml-test-hints">';
+        test.hints.forEach(function (hint) {
+          html += '<li><strong>Hint:</strong> ' + escapeHtml(hint) + '</li>';
+        });
+        html += '</ul>';
+      }
       html += '</li>';
     });
     html += '</ul></div>';
@@ -390,15 +586,22 @@
     var resultTests = [];
     tests.forEach(function (test) {
       var failures = [];
+      var hints = [];
       (test.assertions || []).forEach(function (assertion) {
         var result = evaluateAssertion(model, assertion, context);
-        if (!result.pass) failures.push(result.message);
+        if (!result.pass) {
+          failures.push(result.message);
+          toArray(result.hints || result.hint).forEach(function (hint) {
+            if (hint && hints.indexOf(hint) === -1) hints.push(hint);
+          });
+        }
       });
       var ok = failures.length === 0;
       results.push(ok);
       resultTests.push({
         description: test.description || 'UML check',
-        failures: failures
+        failures: failures,
+        hints: hints
       });
     });
     var allPass = results.length > 0 && results.every(function (result) { return result === true; });
@@ -428,6 +631,58 @@
 
   function normalize(text) {
     return cleanId(text).toLowerCase().replace(/[\s_-]+/g, '').replace(/[^\w.]/g, '');
+  }
+
+  function assertionNamingHint(assertion, fallback) {
+    return assertion.naming_hint || assertion.namingHint || assertion.name_hint || assertion.nameHint || fallback || '';
+  }
+
+  function failResult(message, hint) {
+    var result = { pass: false, message: message };
+    if (hint) result.hints = [hint];
+    return result;
+  }
+
+  function umlTypeLabel(type) {
+    return UML_TYPE_LABELS[type] || (String(type || '').charAt(0).toUpperCase() + String(type || '').slice(1) + ' Diagram');
+  }
+
+  function hasMeaningfulArchUml(source) {
+    var inLayout = false;
+    return String(source || '').split(/\r?\n/).some(function (line) {
+      var trimmed = line.trim();
+      if (!trimmed || trimmed.charAt(0) === "'") return false;
+      if (/^@layout\b/i.test(trimmed)) {
+        inLayout = true;
+        return false;
+      }
+      if (/^@endlayout\b/i.test(trimmed)) {
+        inLayout = false;
+        return false;
+      }
+      if (inLayout) return false;
+      if (/^@(startuml|enduml)\b/i.test(trimmed)) return false;
+      return true;
+    });
+  }
+
+  function emptySource() {
+    return '@startuml\n@enduml';
+  }
+
+  function renderStaticUmlPreview(container, type, source) {
+    var rendererName = UML_RENDERER_GLOBALS[type];
+    var renderer = rendererName && window[rendererName];
+    if (!renderer || typeof renderer.render !== 'function') {
+      container.innerHTML = '<p class="tvm-previous-diagram-placeholder">Saved ' + escapeHtml(umlTypeLabel(type).toLowerCase()) + ' preview is not ready yet.</p>';
+      return;
+    }
+    try {
+      renderer.render(container, source);
+      container.setAttribute('data-uml-rendered', 'true');
+    } catch (error) {
+      container.innerHTML = '<p class="tvm-previous-diagram-placeholder">This saved ' + escapeHtml(umlTypeLabel(type).toLowerCase()) + ' could not be rendered.</p>';
+    }
   }
 
   function parseArchUml(source) {
@@ -511,9 +766,12 @@
       var typeMatches = typeMatchesAny(el.type, expectedTypes);
       return idMatches && typeMatches;
     });
+    var namingCandidateExists = model.elements.some(function (el) {
+      return typeMatchesAny(el.type, expectedTypes);
+    });
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected ' + (expectedTypes.length ? describeExpectedValue(null, expectedTypes) : 'element') + ' ' + describeExpectedValue(id, idContains) + '.' };
+      : failResult('Expected ' + (expectedTypes.length ? describeExpectedValue(null, expectedTypes) : 'element') + ' ' + describeExpectedValue(id, idContains) + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function assertMember(model, assertion) {
@@ -527,9 +785,15 @@
         : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
       return valueMatches(member.owner, owner, ownerContains) && valueMatches(member.text, text, textContains, true) && abstractOk;
     });
+    var namingCandidateExists = model.members.some(function (member) {
+      var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
+        ? true
+        : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
+      return valueMatches(member.owner, owner, ownerContains) && abstractOk && !valueMatches(member.text, text, textContains, true);
+    });
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected member ' + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + '.' };
+      : failResult('Expected member ' + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function assertRelation(model, assertion, kind, context) {
@@ -549,6 +813,7 @@
     var labelMinLength = numericValue(assertion.label_min_length || assertion.labelMinLength);
     var optional = assertion.optional === true || assertion.optional === 'true';
     var candidateExists = false;
+    var namingCandidateExists = false;
     var found = model.relations.some(function (rel) {
       var forward = endpointsMatch(rel.from, rel.to, from, to, fromContains, toContains, fromExact, toExact);
       var semantic = semanticRelationEndpoints(rel);
@@ -569,47 +834,48 @@
       var candidateOk = (endpointOk || reverseOk) && typeOk;
       if (candidateOk) candidateExists = true;
       var labelLengthOk = !labelMinLength || String(rel.label || '').trim().length >= labelMinLength;
+      if (candidateOk && (!labelOk || !labelLengthOk)) namingCandidateExists = true;
       return candidateOk && labelOk && labelLengthOk;
     });
     return found
       ? { pass: true }
       : optional && !candidateExists
         ? { pass: true }
-        : { pass: false, message: 'Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.' };
+        : failResult('Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function assertSequence(model, assertion, context) {
     var check = normalize(assertion.check || assertion.rule || assertion.name);
-    if (check === 'playerobject') return assertSequencePlayerObject(model);
+    if (check === 'playerobject') return assertSequencePlayerObject(model, assertion);
     if (check === 'stateobjects') return assertSequenceStateObjects(model, context, assertion);
-    if (check === 'messagesbetweenplayerandstates') return assertSequenceMessagesBetweenPlayerAndStates(model, context);
-    if (check === 'statechangebetweenstatecalls') return assertSequenceStateChangeBetweenStateCalls(model, context);
-    if (check === 'calledmethodsexist') return assertSequenceCalledMethodsExist(model, context);
+    if (check === 'messagesbetweenplayerandstates') return assertSequenceMessagesBetweenPlayerAndStates(model, context, assertion);
+    if (check === 'statechangebetweenstatecalls') return assertSequenceStateChangeBetweenStateCalls(model, context, assertion);
+    if (check === 'calledmethodsexist') return assertSequenceCalledMethodsExist(model, context, assertion);
     return { pass: false, message: 'Unknown sequence assertion check: ' + (assertion.check || assertion.rule || assertion.name || '') };
   }
 
-  function assertSequencePlayerObject(model) {
+  function assertSequencePlayerObject(model, assertion) {
     return sequencePlayerParticipants(model).length
       ? { pass: true }
-      : { pass: false, message: 'Expected a Player object participant in the sequence diagram.' };
+      : failResult('Expected a Player object participant in the sequence diagram.', sequenceParticipants(model).length ? assertionNamingHint(assertion) : null);
   }
 
   function assertSequenceStateObjects(model, context, assertion) {
     var stateParticipants = sequenceStateParticipants(model, context);
     var min = numericValue(assertion.min || assertion.minimum || 2) || 2;
     if (stateParticipants.length < min) {
-      return { pass: false, message: 'Expected at least ' + min + ' concrete PlayerState object participants from the class diagram.' };
+      return failResult('Expected at least ' + min + ' concrete PlayerState object participants from the class diagram.', sequenceParticipants(model).length >= min ? assertionNamingHint(assertion) : null);
     }
     if (assertion.different_types !== false && assertion.differentTypes !== false) {
       var types = uniqueValues(stateParticipants.map(function (participant) { return participant.className; }));
       if (types.length < min) {
-        return { pass: false, message: 'Expected concrete PlayerState object participants of at least ' + min + ' different types.' };
+        return failResult('Expected concrete PlayerState object participants of at least ' + min + ' different types.', assertionNamingHint(assertion));
       }
     }
     return { pass: true };
   }
 
-  function assertSequenceMessagesBetweenPlayerAndStates(model, context) {
+  function assertSequenceMessagesBetweenPlayerAndStates(model, context, assertion) {
     var player = sequencePlayerParticipants(model)[0];
     if (!player) return { pass: false, message: 'Expected a Player object participant before checking state interactions.' };
     var stateParticipants = sequenceStateParticipants(model, context);
@@ -624,7 +890,7 @@
       : { pass: true };
   }
 
-  function assertSequenceStateChangeBetweenStateCalls(model, context) {
+  function assertSequenceStateChangeBetweenStateCalls(model, context, assertion) {
     var player = sequencePlayerParticipants(model)[0];
     if (!player) return { pass: false, message: 'Expected a Player object participant before checking state-change ordering.' };
     var stateParticipants = sequenceStateParticipants(model, context);
@@ -639,19 +905,21 @@
         stateCalls.push({ index: index, participant: stateParticipant });
       }
     });
+    var potentialNamedChange = false;
     for (var i = 0; i < stateCalls.length; i++) {
       for (var j = i + 1; j < stateCalls.length; j++) {
         if (normalize(stateCalls[i].participant.className) === normalize(stateCalls[j].participant.className)) continue;
         var hasChange = model.relations.slice(stateCalls[i].index + 1, stateCalls[j].index).some(function (rel) {
+          if (participantMatchesEndpoint(rel.to, player) && methodNameFromLabel(rel.label)) potentialNamedChange = true;
           return participantMatchesEndpoint(rel.to, player) && methodMatchesAliases(rel.label, changeAliases);
         });
         if (hasChange) return { pass: true };
       }
     }
-    return { pass: false, message: 'Expected a Player state-change method call between two turn calls to different state objects.' };
+    return failResult('Expected a Player state-change method call between two turn calls to different state objects.', potentialNamedChange ? assertionNamingHint(assertion) : null);
   }
 
-  function assertSequenceCalledMethodsExist(model, context) {
+  function assertSequenceCalledMethodsExist(model, context, assertion) {
     var classModel = context && typeof context.modelForType === 'function' ? context.modelForType('class') : { elements: [], members: [], relations: [] };
     var participants = sequenceParticipants(model);
     var failures = [];
@@ -668,7 +936,7 @@
       }
     });
     return failures.length
-      ? { pass: false, message: 'Expected sequence calls to exist in the class diagram: ' + failures.join(', ') + '.' }
+      ? failResult('Expected sequence calls to exist in the class diagram: ' + failures.join(', ') + '.', assertionNamingHint(assertion))
       : { pass: true };
   }
 
@@ -718,9 +986,10 @@
     var found = stateNameValues(model).some(function (name) {
       return exactValueMatches(name, expectedNames);
     });
+    var namingCandidateExists = stateNameValues(model).length > 0;
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected state matching the class-diagram "' + role + '" state name (' + expectedNames.join(' or ') + ').' };
+      : failResult('Expected state matching the class-diagram "' + role + '" state name (' + expectedNames.join(' or ') + ').', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function stateNameValues(model) {
@@ -924,7 +1193,9 @@
   function memberIsAbstract(member, model) {
     if (/\{abstract\}|\babstract\b/i.test(member.text)) return true;
     return model.elements.some(function (el) {
-      return normalize(el.type) === 'interface' && normalize(el.id) === normalize(member.owner);
+      var ownerMatches = exactValueMatches(member.owner, [el.id, el.label]);
+      var type = normalize(el.type);
+      return ownerMatches && (type === 'interface' || type === 'abstractclass');
     });
   }
 

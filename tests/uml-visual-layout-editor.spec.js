@@ -78,6 +78,9 @@ async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_
   await page.evaluate(({ index, source }) => {
     localStorage.removeItem('uml-pg-autosave-state');
     localStorage.removeItem('uml-pg-autosave-sequence');
+    localStorage.setItem('uml-pg-autosave-class', source);
+    const textarea = document.getElementById('uml-pg-input');
+    if (textarea) textarea.value = source;
     window._tutorial._stepsUnlocked.add(index);
     window._tutorial.loadStep(index);
     localStorage.setItem('uml-pg-autosave-class', source);
@@ -1088,15 +1091,15 @@ test.describe('UML playground visual editor', () => {
     await selectDiagram(page, 'sequence');
 
     await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="activate"]').click();
-    await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').press('Enter');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="user"]').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/activate user/);
 
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="lost"]').click();
-    await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').press('Enter');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="user"]').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/user ->o : lost/);
 
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="found"]').click();
-    await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').press('Enter');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="app"]').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/o-> app : found/);
   });
 
@@ -1131,6 +1134,43 @@ app --> user: response()
     await expect(page.locator('#uml-pg-input')).toHaveValue(/svc --> user: response\(\)/);
     await expect(page.locator('#uml-pg-input')).not.toHaveValue(/participant app: svc: OrderService/);
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="svc"]')).toHaveCount(1);
+  });
+
+  test('sequence call labels can be edited from properties and inline labels', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+actor user: User
+participant app: Application
+user -> app: request()
+app --> user: response()
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]')).toHaveCount(1);
+
+    await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]').evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await page.locator('#uml-pg-props-content').getByLabel('Label').fill('submitOrder()');
+    await page.locator('#uml-pg-props-content').getByLabel('Label').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/user -> app : submitOrder\(\)/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/request\(\)/);
+
+    await page.locator('#uml-pg-output svg text[data-layout-route-id="seqmsg:4"]').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('ok');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/app --> user : ok/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/response\(\)/);
   });
 
   test('class empty state can add model elements from the diagram and palette', async ({ page }) => {
@@ -2089,6 +2129,37 @@ A --> B : go
     }).toBeGreaterThan(Math.round(beforeBox.width + 60));
   });
 
+  test('UML tutorial instructions render diagrams created in previous steps', async ({ page }) => {
+    await openMonopolyTutorialStep(page, 1);
+
+    const classPreview = page.locator('.tvm-previous-diagram-card[data-uml-preview-type="class"]');
+    await expect(page.locator('.tvm-previous-diagrams')).toBeVisible();
+    await expect(page.locator('.tvm-previous-diagram-card')).toHaveCount(1);
+    await expect(classPreview).toContainText('Class Diagram');
+    await expect(classPreview.locator('svg')).toBeVisible();
+
+    const stateSource = `@startuml
+state NormalMode
+state PrisonState
+state BankruptcyMode
+NormalMode --> PrisonState : bad roll
+PrisonState --> NormalMode : fee paid
+NormalMode --> BankruptcyMode : cash gone
+@enduml`;
+    await setUmlSource(page, stateSource);
+    await page.evaluate((source) => {
+      localStorage.setItem('uml-pg-autosave-state', source);
+      window._tutorial._stepsUnlocked.add(2);
+      window._tutorial.loadStep(2);
+    }, stateSource);
+
+    const statePreview = page.locator('.tvm-previous-diagram-card[data-uml-preview-type="state"]');
+    await expect(page.locator('.tvm-previous-diagram-card')).toHaveCount(2);
+    await expect(classPreview.locator('svg')).toBeVisible();
+    await expect(statePreview).toContainText('State Diagram');
+    await expect(statePreview.locator('svg')).toBeVisible();
+  });
+
   test('UML tutorial accepts reversed generalization syntax for class relation assertions', async ({ page }) => {
     await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
     await page.waitForSelector('#uml-pg-output');
@@ -2137,6 +2208,45 @@ PlayerState <|.. BankruptcyMode
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
+  test('UML tutorial shows naming hints for vague class and operation names', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +doTurn(); +setState(state: PlayerState); }
+abstract class PlayerState { +duTurn(player: Player); }
+class RegularMode
+class PrisonState
+class BankruptcyMode
+Player o-- PlayerState : currentState
+RegularMode --|> PlayerState
+PrisonState --|> PlayerState
+BankruptcyMode --|> PlayerState
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Concrete state class names should expose their Monopoly role' })).toBeVisible();
+    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: "state abstraction's operation should name the turn behavior" })).toBeVisible();
+  });
+
+  test('UML tutorial does not show naming hints when matching elements are missing', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = '@startuml\n@enduml';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expect(page.locator('.tvm-uml-test-hints')).toHaveCount(0);
+  });
+
   test('UML tutorial rejects ownership diamonds on the state abstraction side', async ({ page }) => {
     await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
     await page.waitForSelector('#uml-pg-output');
@@ -2162,7 +2272,7 @@ PlayerState <|-- BankruptState
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
-  test('UML tutorial rejects a non-abstract PlayerState turn operation', async ({ page }) => {
+  test('UML tutorial accepts PlayerState turn operation declared on an abstract class', async ({ page }) => {
     await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
     await page.waitForSelector('#uml-pg-output');
 
@@ -2182,9 +2292,8 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*4 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Operations support the later sequence diagram');
-    await expect(page.locator('.tvm-btn-next')).toBeDisabled();
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 4 tests passed');
+    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
   test('UML tutorial rejects a concrete PlayerState class', async ({ page }) => {
@@ -2269,6 +2378,7 @@ NormalTurnState --> BankruptState : cash gone
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/0\s*\/\s*2 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'States reuse the concrete state class names' })).toHaveCount(1);
+    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'State nodes should reuse the concrete state class names' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
@@ -2287,6 +2397,7 @@ NormalMode --> BankruptcyMode : cash gone
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/1\s*\/\s*2 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('State transitions are labeled and consistent');
+    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Transition labels should describe the condition or event' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
@@ -2375,6 +2486,7 @@ player -> prison_state: teleport(player)
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*3 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence method calls exist in the class diagram');
+    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Read each arrow as a method call on the receiving lifeline' })).toBeVisible();
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
 });

@@ -593,6 +593,13 @@ backend: v86 | pyodide | webcontainer | react | uml-editor   # default: v86
 #                 The standard instruction panel renders on the left, the UML
 #                 editor renders on the right, and `tests[].assertions`
 #                 validate the ArchUML model for the current step's `uml_type`.
+#                 Later steps automatically show rendered previews of earlier
+#                 UML step drafts in the instruction panel (for example, a
+#                 state-diagram step shows the class diagram, and a sequence
+#                 step shows the class and state diagrams). The step footer
+#                 includes a confirmed "Remove All Elements" action that clears
+#                 the active step's diagram draft while leaving other diagram
+#                 types saved.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -687,7 +694,10 @@ steps:
     uml_type: class | sequence | state | component | deployment | usecase | activity
                                              # uml-editor backend only: selects
                                              # the editor diagram type for this
-                                             # step. Drafts autosave per type.
+                                             # step. Drafts autosave per type;
+                                             # later steps render earlier
+                                             # saved/current UML drafts below
+                                             # the instructions for reference.
     commands: [string]                       # Example commands shown to
                                              # student (display only).
 
@@ -711,13 +721,21 @@ steps:
                                              # labels, members, endpoints, or
                                              # message labels by normalized
                                              # case-insensitive substring.
+                                             # `naming_hint` adds a
+                                             # student-facing hint that is
+                                             # shown only when the assertion
+                                             # finds a same-kind candidate
+                                             # with non-matching naming
+                                             # (for example, a method on the
+                                             # right class with the wrong
+                                             # operation name).
                                              # `element_type_any` accepts
                                              # alternatives such as interface
                                              # or abstract class. `is_abstract`
                                              # on member assertions requires a
                                              # `{abstract}` operation or an
                                              # operation declared by an
-                                             # interface.
+                                             # interface or abstract class.
                                              # `relation_type_any` accepts
                                              # semantic types such as
                                              # aggregation or composition.
@@ -907,6 +925,9 @@ messages on the BroadcastChannel and re-renders accordingly.
   instruction chrome on the left and `_includes/uml-editor.html` as the
   right-side workspace editor. Step `tests[].assertions` inspect the current
   ArchUML source for elements, members, relations, transitions, and messages.
+  The step footer exposes a confirmed "Remove All Elements" action that
+  replaces the current step's active diagram draft with an empty ArchUML
+  document; it does not clear drafts saved for other diagram types.
 - **Backend workers** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `js/playwright-compat/runner.js` (in-browser Playwright for React),
@@ -965,10 +986,14 @@ keys. **If you change the persistence schema, also update**:
   For flexible naming, use `id_contains`, `text_contains_any`,
   `from_contains`, `label_contains_any`, or the corresponding camelCase
   variants; matching is normalized and case-insensitive. Element assertions
-  can accept multiple element types with `element_type_any`, and member
+  can accept multiple element types with `element_type_any`. Add
+  `naming_hint` to an assertion when a failing same-kind candidate should
+  produce a pedagogical naming nudge; the UML runner only shows that hint when
+  the model appears to contain a plausible candidate with a non-matching name
+  or label, not when the element is missing entirely. Member
   assertions can require abstract operations with `is_abstract: true` (an
-  interface member counts as abstract even without an explicit `{abstract}`
-  marker). Relation assertions can constrain semantic arrow type with
+  interface or abstract-class member counts as abstract even without an
+  explicit `{abstract}` marker). Relation assertions can constrain semantic arrow type with
   `relation_type`, `relation_type_any`, or camelCase variants, or map the
   matched target element's type to the required arrow type with
   `relation_type_for_target_type` (for example, `interface: realization` and

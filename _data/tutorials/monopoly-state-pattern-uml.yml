@@ -37,19 +37,24 @@ steps:
         assertions:
           - kind: class
             id: Player
+            naming_hint: "Use role-revealing class names. The context object should read as the player role, not as a generic game object."
           - kind: element
             id: PlayerState
             element_type_any:
               - abstract class
               - interface
+            naming_hint: "Name the state abstraction so it clearly reads as the player's state role; the concrete state classes should point back to that abstraction."
           - kind: class
             id_contains: normal
+            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
           - kind: class
             id_contains_any:
               - jail
               - prison
+            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
           - kind: class
             id_contains: bankrupt
+            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
       - description: "Operations support the later sequence diagram"
         assertions:
           - kind: member
@@ -66,6 +71,7 @@ steps:
               - makeMove
               - takeAction
               - performAction
+            naming_hint: "This operation should read like the player starting, taking, or doing a turn. Use a verb phrase you would also be comfortable calling in the sequence diagram."
           - kind: member
             owner: Player
             text_contains_any:
@@ -76,6 +82,7 @@ steps:
               - updateState
               - transitionState
               - transitionToState
+            naming_hint: "This operation should read like the player changing, updating, switching, or transitioning its current state."
           - kind: member
             owner: PlayerState
             is_abstract: true
@@ -91,6 +98,7 @@ steps:
               - makeMove
               - takeAction
               - performAction
+            naming_hint: "The state abstraction's operation should name the turn behavior that every concrete state implements; keep it aligned with the turn operation you plan to call later."
       - description: "Player owns or aggregates its current state"
         assertions:
           - kind: relation
@@ -107,6 +115,7 @@ steps:
             relation_type_for_target_type:
               abstract class: generalization
               interface: realization
+            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
           - kind: relation
             from_contains_any:
               - jail
@@ -115,12 +124,14 @@ steps:
             relation_type_for_target_type:
               abstract class: generalization
               interface: realization
+            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
           - kind: relation
             from_contains: bankrupt
             to: PlayerState
             relation_type_for_target_type:
               abstract class: generalization
               interface: realization
+            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
 
   # Pedagogy: Make — students create a behavioral model and label transition causes.
   - title: "State Diagram"
@@ -141,29 +152,36 @@ steps:
         assertions:
           - kind: state
             class_role: normal
+            naming_hint: "State nodes should reuse the concrete state class names from your class diagram, not a second set of shorter state-machine-only names."
           - kind: state
             class_role: jail
+            naming_hint: "State nodes should reuse the concrete state class names from your class diagram, not a second set of shorter state-machine-only names."
           - kind: state
             class_role: bankrupt
+            naming_hint: "State nodes should reuse the concrete state class names from your class diagram, not a second set of shorter state-machine-only names."
       - description: "State transitions are labeled and consistent"
         assertions:
           - kind: transition
             from_class_role: normal
             to_class_role: jail
             label_min_length: 4
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
           - kind: transition
             from_class_role: jail
             to_class_role: normal
             label_min_length: 4
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
           - kind: transition
             from_class_role: normal
             to_class_role: bankrupt
             label_min_length: 4
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
           - kind: transition
             from_class_role: jail
             to_class_role: bankrupt
             label_min_length: 4
             optional: true
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
 
   # Pedagogy: Make — students connect the static design to one runtime interaction.
   - title: "Sequence Diagram"
@@ -184,17 +202,21 @@ steps:
         assertions:
           - kind: sequence
             check: player_object
+            naming_hint: "Use a typed lifeline for the player object so the diagram can connect messages back to the Player class."
           - kind: sequence
             check: state_objects
             min: 2
             different_types: true
+            naming_hint: "Use typed lifelines for concrete state objects; the class side of each lifeline should reuse a concrete state class name from your class diagram."
       - description: "Player talks to each state and changes state between calls"
         assertions:
           - kind: sequence
             check: messages_between_player_and_states
           - kind: sequence
             check: state_change_between_state_calls
+            naming_hint: "The message between the two state calls should use the state-changing operation name from the class diagram."
       - description: "Sequence method calls exist in the class diagram"
         assertions:
           - kind: sequence
             check: called_methods_exist
+            naming_hint: "Read each arrow as a method call on the receiving lifeline. The message name should be an operation on that receiver's class or inherited state abstraction."

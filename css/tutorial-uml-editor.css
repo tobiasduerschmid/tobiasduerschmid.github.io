@@ -37,8 +37,209 @@
   color: inherit;
 }
 
+.tvm-uml-test-hints {
+  flex-basis: 100%;
+  margin: 6px 0 0 24px;
+  color: inherit;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn {
+  min-height: 2.4em;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn:focus-visible,
+.tvm-clear-step-dialog .tvm-btn:focus-visible {
+  outline: 3px solid #ffd100;
+  outline-offset: 2px;
+}
+
+.tvm-uml-editor-tutorial .tvm-btn-clear-model,
+.tvm-clear-step-dialog .tvm-btn-clear-confirm {
+  background: #a13a2e;
+  color: #fff;
+}
+
+.tvm-uml-editor-tutorial .tvm-btn-clear-model:hover,
+.tvm-clear-step-dialog .tvm-btn-clear-confirm:hover {
+  background: #842f26;
+}
+
+.tvm-clear-step-dialog-backdrop[hidden] {
+  display: none;
+}
+
+.tvm-clear-step-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1em;
+  background: rgba(5, 8, 14, 0.62);
+}
+
+.tvm-clear-step-dialog {
+  width: min(100%, 32em);
+  padding: 1.2em;
+  border: 1px solid #b9c5d6;
+  border-radius: 8px;
+  background: #fff;
+  color: #151827;
+  box-shadow: 0 18px 48px rgba(10, 20, 35, 0.32);
+}
+
+.tvm-clear-step-dialog h2 {
+  margin: 0 0 0.45em;
+  color: inherit;
+  font-size: 1.25em;
+  line-height: 1.25;
+}
+
+.tvm-clear-step-dialog p {
+  margin: 0;
+  color: #30384c;
+}
+
+.tvm-clear-step-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65em;
+  flex-wrap: wrap;
+  margin-top: 1.15em;
+}
+
+.tvm-clear-step-dialog .tvm-btn-clear-cancel {
+  border: 1px solid #8b98aa;
+  background: #f6f8fb;
+  color: #172033;
+}
+
+.tvm-clear-step-dialog .tvm-btn-clear-cancel:hover {
+  background: #e6edf5;
+}
+
+.tvm-previous-diagrams {
+  margin-top: 1.25em;
+  padding-top: 1em;
+  border-top: 1px solid #2a2a38;
+}
+
+.tvm-previous-diagrams h3 {
+  margin-top: 0;
+}
+
+.tvm-previous-diagram-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+}
+
+.tvm-previous-diagram-card {
+  border: 1px solid #2f3348;
+  border-radius: 6px;
+  background: #181824;
+  padding: 0.8em;
+}
+
+.tvm-previous-diagram-title {
+  margin: 0 0 0.55em;
+  color: #f1f3ff;
+  font-size: 1em;
+  line-height: 1.3;
+}
+
+.tvm-previous-diagram-render {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #343a52;
+  border-radius: 4px;
+  background: #101018;
+  padding: 0.45em;
+}
+
+.tvm-previous-diagram-render .sebook-figure {
+  margin: 0;
+}
+
+.tvm-previous-diagram-render svg {
+  max-width: 100%;
+}
+
+.tvm-previous-diagram-placeholder {
+  margin: 0;
+  color: #c3c8da;
+}
+
 html.dark-mode .tvm-uml-editor-tutorial .tvm-workspace {
   background: #101826;
+}
+
+html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model,
+html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-confirm {
+  background: #b94a3b;
+  color: #fff;
+}
+
+html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model:hover,
+html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-confirm:hover {
+  background: #d15645;
+}
+
+html.dark-mode .tvm-clear-step-dialog-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+html.dark-mode .tvm-clear-step-dialog {
+  border-color: #50627a;
+  background: #161e2c;
+  color: #f2f5fb;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.62);
+}
+
+html.dark-mode .tvm-clear-step-dialog p {
+  color: #d3d9e6;
+}
+
+html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-cancel {
+  border-color: #7f91aa;
+  background: #273449;
+  color: #f2f5fb;
+}
+
+html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-cancel:hover {
+  background: #32435d;
+}
+
+html:not(.dark-mode) .tvm-previous-diagrams {
+  border-top-color: #d0d0da;
+}
+
+html:not(.dark-mode) .tvm-previous-diagram-card {
+  background: #f7f8fb;
+  border-color: #c8d4e8;
+}
+
+html:not(.dark-mode) .tvm-previous-diagram-title {
+  color: #111120;
+}
+
+html:not(.dark-mode) .tvm-previous-diagram-render {
+  background: #ffffff;
+  border-color: #c8d4e8;
+}
+
+html:not(.dark-mode) .tvm-previous-diagram-placeholder {
+  color: #505060;
 }
 
 @media (max-width: 900px) {
@@ -95,4 +296,27 @@ html.dark-mode .tvm-uml-editor-tutorial .tvm-workspace {
     border-right: 0 !important;
     padding-right: 8px;
   }
+}
+
+/* Hide the disabled "Reset Selected" button in tutorial mode — it
+   only makes sense once the learner has manually moved a single element
+   and most of the time it sits disabled in the toolbar adding noise.
+   It reappears as soon as something is selected with a layout override. */
+.tvm-uml-editor-tutorial #uml-pg-reset-one:disabled {
+  display: none !important;
+}
+
+/* Subtle elevation on the toolbar/palette so they read as chrome
+   instead of competing with the canvas. */
+.tvm-uml-editor-tutorial #uml-playground-toolbar {
+  box-shadow: 0 1px 0 rgba(26, 54, 86, 0.05);
+}
+.tvm-uml-editor-tutorial #uml-pg-palette {
+  box-shadow: 0 1px 0 rgba(26, 54, 86, 0.04);
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-playground-toolbar {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-pg-palette {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
 }

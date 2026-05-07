@@ -122,15 +122,16 @@ Supported options:
 
   <div id="uml-pg-sequence-model" hidden role="region" aria-label="Sequence diagram model editor"></div>
 
-  <div id="uml-pg-help-banner" hidden role="region" aria-label="Visual editor tips">
+  <div id="uml-pg-help-banner" hidden role="region" aria-label="Visual editor tips" aria-keyshortcuts="Shift+?">
     <div class="uml-pg-help-text">
       <strong class="uml-pg-help-title">Quick tips</strong>
       <ul class="uml-pg-help-list">
         <li><span class="uml-pg-help-key" aria-hidden="true">Add</span> Click a palette tool, then click the canvas — or drag the tool onto it.</li>
         <li><span class="uml-pg-help-key" aria-hidden="true">Connect</span> Hover an element, then drag its <span class="uml-pg-help-plus" aria-hidden="true">+</span> onto another element.</li>
         <li><span class="uml-pg-help-key" aria-hidden="true">Edit</span> Double-click to rename. Click a relation to set its label, multiplicity, or navigability.</li>
-        <li><span class="uml-pg-help-key" aria-hidden="true">Move</span> Drag elements to reposition. Drag empty canvas to pan. <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click to multi-select.</li>
+        <li><span class="uml-pg-help-key" aria-hidden="true">Move</span> Drag to reposition. <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click multi-selects. Drag empty canvas to pan.</li>
       </ul>
+      <p class="uml-pg-help-footer">Press <kbd>?</kbd> any time to show or hide these tips · <kbd>F</kbd> for fullscreen · <kbd>Del</kbd> to remove · <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo</p>
     </div>
     <button id="uml-pg-help-dismiss" type="button" aria-label="Got it — dismiss tips">Got it</button>
   </div>
@@ -381,6 +382,20 @@ html.dark-mode #uml-pg-redo:focus-visible {
   border: 1px solid #c4ad6d;
   border-radius: 3px;
   color: #4a3b08;
+}
+
+.uml-pg-help-footer {
+  margin: 8px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(140, 110, 26, 0.32);
+  font-size: 0.92em;
+  color: #5d4a0e;
+  line-height: 1.6;
+}
+
+html.dark-mode .uml-pg-help-footer {
+  border-top-color: rgba(240, 227, 184, 0.28);
+  color: #d8c690;
 }
 
 .uml-pg-help-plus {
@@ -665,8 +680,28 @@ body.uml-pg-fullscreen-lock {
 
 #uml-pg-status {
   font-size: 0.9em;
-  color: #555;
+  color: #5a6678;
   margin-left: 4px;
+  font-style: italic;
+  flex-basis: 100%;
+  /* Drop the status hint to its own row beneath the controls so it reads
+     as helper copy rather than a phantom button at the end of the row. */
+  padding-top: 2px;
+  border-top: 1px dashed transparent;
+}
+
+#uml-pg-status:not(:empty) {
+  border-top-color: rgba(120, 140, 170, 0.18);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+html.dark-mode #uml-pg-status {
+  color: #a8b6cc;
+}
+
+html.dark-mode #uml-pg-status:not(:empty) {
+  border-top-color: rgba(140, 160, 190, 0.22);
 }
 
 #uml-pg-autosave {
@@ -2649,35 +2684,35 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
   var RELATION_SCHEMAS = {
     class: [
-      { id: 'gen',       label: 'Inherits',     glyph: '▷', op: '--|>', supports: { label: true } },
-      { id: 'real',      label: 'Realizes',     glyph: '▷', op: '..|>', supports: { label: true }, dashed: true },
-      { id: 'compose',   label: 'Composition',  glyph: '◆', op: '*--',  supports: { label: true, multiplicity: true, navigability: true } },
-      { id: 'aggregate', label: 'Aggregation',  glyph: '◇', op: 'o--',  supports: { label: true, multiplicity: true, navigability: true } },
-      { id: 'assoc',     label: 'Association',  glyph: '→', op: '-->',  supports: { label: true, multiplicity: true } },
+      { id: 'gen',       label: 'Inherits',     glyph: '─▷', op: '--|>', supports: { label: true } },
+      { id: 'real',      label: 'Realizes',     glyph: '··▷', op: '..|>', supports: { label: true }, dashed: true },
+      { id: 'compose',   label: 'Composition',  glyph: '◆─', op: '*--',  supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'aggregate', label: 'Aggregation',  glyph: '◇─', op: 'o--',  supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'assoc',     label: 'Association',  glyph: '─→', op: '-->',  supports: { label: true, multiplicity: true } },
       { id: 'biassoc',   label: 'Bidirect.',    glyph: '↔', op: '<-->', supports: { label: true, multiplicity: true } },
-      { id: 'plain',     label: 'Plain Line',   glyph: '─', op: '--',   supports: { label: true, multiplicity: true } },
-      { id: 'depend',    label: 'Dependency',   glyph: '⇢', op: '..>',  supports: { label: true, stereotype: true } }
+      { id: 'plain',     label: 'Plain Line',   glyph: '──', op: '--',   supports: { label: true, multiplicity: true } },
+      { id: 'depend',    label: 'Dependency',   glyph: '··→', op: '..>',  supports: { label: true, stereotype: true } }
     ],
     sequence: [
-      { id: 'sync',   label: 'Sync Call',  glyph: '→', op: '->',  supports: { label: true }, defaultLabel: 'message()' },
+      { id: 'sync',   label: 'Sync Call',  glyph: '─→', op: '->',  supports: { label: true }, defaultLabel: 'message()' },
       { id: 'async',  label: 'Async',      glyph: '↠', op: '->>', supports: { label: true }, defaultLabel: 'event()' },
-      { id: 'return', label: 'Return',     glyph: '⇢', op: '-->', supports: { label: true }, defaultLabel: 'response' },
+      { id: 'return', label: 'Return',     glyph: '··→', op: '-->', supports: { label: true }, defaultLabel: 'response' },
       { id: 'create', label: 'Create Call', glyph: '⊕', op: '-->', supports: { label: true }, defaultLabel: '<<create>>', sequenceCreate: true },
-      { id: 'lost',   label: 'Lost',       glyph: '●→', op: '->o', supports: { label: true }, defaultLabel: 'lost', sequenceSingle: 'lost' },
+      { id: 'lost',   label: 'Lost',       glyph: '→●', op: '->o', supports: { label: true }, defaultLabel: 'lost', sequenceSingle: 'lost' },
       { id: 'found',  label: 'Found',      glyph: '●→', op: 'o->', supports: { label: true }, defaultLabel: 'found', sequenceSingle: 'found' }
     ],
     state: [
       { id: 'transition', label: 'Transition', glyph: '→', op: '-->', supports: { label: true } }
     ],
     component: [
-      { id: 'arrow',  label: 'Connector',  glyph: '→', op: '-->', supports: { label: true } },
-      { id: 'plain',  label: 'Plain Line', glyph: '─', op: '--',  supports: { label: true } },
-      { id: 'depend', label: 'Dependency', glyph: '⇢', op: '..>', supports: { label: true } }
+      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true } },
+      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true } },
+      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true } }
     ],
     deployment: [
-      { id: 'arrow',  label: 'Connector',  glyph: '→', op: '-->', supports: { label: true } },
-      { id: 'plain',  label: 'Plain Line', glyph: '─', op: '--',  supports: { label: true } },
-      { id: 'depend', label: 'Dependency', glyph: '⇢', op: '..>', supports: { label: true } }
+      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true } },
+      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true } },
+      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true } }
     ],
     usecase: [
       { id: 'plain',   label: 'Association',  glyph: '─', op: '--',  supports: { label: true } },
@@ -3718,7 +3753,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function findEditableRoutes(svg) {
       if (!window.UMLShared || !window.UMLShared.collectEditableRoutes) return [];
-      return window.UMLShared.collectEditableRoutes(svg);
+      var routes = window.UMLShared.collectEditableRoutes(svg);
+      if ((typeSelect.value || '') === 'sequence') {
+        return routes.filter(function (route) {
+          return /^seqmsg:\d+$/.test(String(route.id || ''));
+        });
+      }
+      return routes;
     }
 
     function applyRoutePoints(route, points) {
@@ -6680,35 +6721,54 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       selectAfterRender(newId, 'node');
     }
 
+    function relationLineMatchForRouteId(routeId, type, lines, relationIndices) {
+      var result = { sourceId: null, targetId: null, lineIdx: -1, lineText: '' };
+      var id = String(routeId || '');
+      var sequenceMatch = type === 'sequence' ? id.match(/^seqmsg:(\d+)$/) : null;
+      if (sequenceMatch) {
+        var seqIdx = Number(sequenceMatch[1]);
+        if (lines[seqIdx] != null) {
+          result.lineIdx = seqIdx;
+          result.lineText = lines[seqIdx];
+          return result;
+        }
+      }
+
+      var routeMatch = id.match(/^edge:([^|]+)\|([^|]+)$/);
+      if (routeMatch) {
+        result.sourceId = routeMatch[1];
+        result.targetId = routeMatch[2];
+        for (var i = 0; i < lines.length; i++) {
+          if (lineMentionsId(lines[i], result.sourceId) && lineMentionsId(lines[i], result.targetId) &&
+              /[-.<=>|*ox]/.test(lines[i]) && !/^@/.test(lines[i].trim())) {
+            result.lineIdx = i;
+            result.lineText = lines[i];
+            return result;
+          }
+        }
+      }
+
+      var ordinalMatch = id.match(/^edge[-:_](\d+)$/);
+      if (ordinalMatch) {
+        var n = Number(ordinalMatch[1]);
+        var indices = relationIndices || relationLineIndices(lines.join('\n'), type);
+        if (indices[n] != null) {
+          result.lineIdx = indices[n];
+          result.lineText = lines[result.lineIdx];
+        }
+      }
+      return result;
+    }
+
     function relationInfoForRouteId(routeId) {
       var type = typeSelect.value;
       var id = String(routeId || '');
       var lines = stripLayoutMetadata(textarea.value).split('\n');
-      var sourceId = null, targetId = null, lineIdx = -1, lineText = '';
-      var routeMatch = id.match(/^edge:([^|]+)\|([^|]+)$/);
-      if (routeMatch) {
-        sourceId = routeMatch[1];
-        targetId = routeMatch[2];
-        for (var i = 0; i < lines.length; i++) {
-          if (lineMentionsId(lines[i], sourceId) && lineMentionsId(lines[i], targetId) &&
-              /[-.<=>|*ox]/.test(lines[i]) && !/^@/.test(lines[i].trim())) {
-            lineIdx = i;
-            lineText = lines[i];
-            break;
-          }
-        }
-      }
-      if (lineIdx === -1) {
-        var ordinalMatch = id.match(/^edge[-:_](\d+)$/);
-        if (ordinalMatch) {
-          var n = Number(ordinalMatch[1]);
-          var indices = relationLineIndices(textarea.value, type);
-          if (indices[n] != null) {
-            lineIdx = indices[n];
-            lineText = lines[lineIdx];
-          }
-        }
-      }
+      var match = relationLineMatchForRouteId(id, type, lines);
+      var sourceId = match.sourceId;
+      var targetId = match.targetId;
+      var lineIdx = match.lineIdx;
+      var lineText = match.lineText;
       var info = parseRelationLine(lineText);
       normalizeRelationInfoForType(info, type, lineText);
       if (info.source) sourceId = info.source;
@@ -6743,32 +6803,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var type = typeSelect.value;
       var id = String(selectedLayoutId || '');
       var lines = stripLayoutMetadata(textarea.value).split('\n');
-      var sourceId = null, targetId = null, lineIdx = -1, lineText = '';
-      // First try: explicit source|target encoding (used by some renderers).
-      var routeMatch = id.match(/^edge:([^|]+)\|([^|]+)$/);
-      if (routeMatch) {
-        sourceId = routeMatch[1]; targetId = routeMatch[2];
-        for (var i = 0; i < lines.length; i++) {
-          if (lineMentionsId(lines[i], sourceId) && lineMentionsId(lines[i], targetId) &&
-              /[-.<=>|*ox]/.test(lines[i]) && !/^@/.test(lines[i].trim())) {
-            lineIdx = i;
-            lineText = lines[i];
-            break;
-          }
-        }
-      }
-      // Fallback: ordinal match (route N ↔ Nth relation line in the source).
-      if (lineIdx === -1) {
-        var ordinalMatch = id.match(/^edge[-:_](\d+)$/);
-        if (ordinalMatch) {
-          var n = Number(ordinalMatch[1]);
-          var indices = relationLineIndices(textarea.value, type);
-          if (indices[n] != null) {
-            lineIdx = indices[n];
-            lineText = lines[lineIdx];
-          }
-        }
-      }
+      var match = relationLineMatchForRouteId(id, type, lines);
+      var sourceId = match.sourceId;
+      var targetId = match.targetId;
+      var lineIdx = match.lineIdx;
+      var lineText = match.lineText;
       // Parse to get source/target if we have a line.
       var preInfo = parseRelationLine(lineText);
       normalizeRelationInfoForType(preInfo, type, lineText);
@@ -7263,18 +7302,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       entries.forEach(function (e) {
         if (e.kind === 'route') {
           var id = String(e.id);
-          var idx = -1;
-          var rm = id.match(/^edge:([^|]+)\|([^|]+)$/);
-          if (rm) {
-            var src = rm[1], tgt = rm[2];
-            var lines = stripLayoutMetadata(textarea.value).split('\n');
-            for (var i = 0; i < lines.length; i++) {
-              if (lineMentionsId(lines[i], src) && lineMentionsId(lines[i], tgt) && /[-.<=>|*ox]/.test(lines[i]) && !/^@/.test(lines[i].trim())) { idx = i; break; }
-            }
-          } else {
-            var ord = id.match(/^edge[-:_](\d+)$/);
-            if (ord && rIndices[Number(ord[1])] != null) idx = rIndices[Number(ord[1])];
-          }
+          var lines = stripLayoutMetadata(textarea.value).split('\n');
+          var idx = relationLineMatchForRouteId(id, typeSelect.value, lines, rIndices).lineIdx;
           if (idx !== -1) routeIdxs.push(idx);
         } else {
           elementIds.push(e.id);
@@ -7433,6 +7462,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         var t = ev.target;
         if (!t || t.tagName.toLowerCase() !== 'text') return;
         if (t.closest('.uml-pg-edit-layer')) return;
+        var routeId = t.getAttribute('data-layout-route-id') ||
+          (t.closest('[data-layout-route-id]') ? t.closest('[data-layout-route-id]').getAttribute('data-layout-route-id') : '');
+        if (/^seqmsg:\d+$/.test(routeId || '')) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setSelectedLayoutId(routeId, 'route');
+          startInlineRelationEdit(routeId, t, ev.clientX, ev.clientY);
+          return;
+        }
         var content = (t.textContent || '').trim();
         // Match `alt [condition]`, `opt [...]`, `loop [...]`, `par`, `break [...]`,
         // and the `else [...]` separator inside alts.
@@ -9131,6 +9169,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       } else if ((key === 'f' || key === 'F') && inWrap && !inFormControl) {
         event.preventDefault();
         setFullscreen(!wrap.classList.contains('is-fullscreen'));
+      } else if (key === '?' && !inFormControl) {
+        // ? toggles the help banner — useful for getting tips back after
+        // dismissing them. Standard convention from GitHub, Gmail, Notion.
+        event.preventDefault();
+        if (helpBanner) {
+          var nowVisible = helpBanner.hidden;
+          setHelpBannerVisible(nowVisible);
+          if (persistenceEnabled) {
+            try {
+              if (nowVisible) localStorage.removeItem('uml-pg-help-dismissed');
+              else localStorage.setItem('uml-pg-help-dismissed', '1');
+            } catch (e) {}
+          }
+        }
       }
     });
 
