@@ -705,12 +705,46 @@ steps:
                                              # member, relation|transition|message.
                                              # Common fields: id/name,
                                              # owner, text/member, from, to,
-                                             # label_contains. Class
-                                             # generalization / realization
-                                             # arrows use UML semantics, so
-                                             # both `Child --|> Parent` and
-                                             # `Parent <|-- Child` satisfy
-                                             # from: Child / to: Parent.
+                                             # label_contains. `*_contains`,
+                                             # `*_contains_any`, and camelCase
+                                             # equivalents match identifiers,
+                                             # labels, members, endpoints, or
+                                             # message labels by normalized
+                                             # case-insensitive substring.
+                                             # `element_type_any` accepts
+                                             # alternatives such as interface
+                                             # or abstract class. `is_abstract`
+                                             # on member assertions requires a
+                                             # `{abstract}` operation or an
+                                             # operation declared by an
+                                             # interface.
+                                             # `relation_type_any` accepts
+                                             # semantic types such as
+                                             # aggregation or composition.
+                                             # `relation_type_for_target_type`
+                                             # maps target element types to
+                                             # required relation types, e.g.
+                                             # interface: realization and
+                                             # abstract class: generalization.
+                                             # State-diagram consistency can
+                                             # reference concrete class-diagram
+                                             # state names with `class_role`,
+                                             # `from_class_role`, and
+                                             # `to_class_role` (roles: normal,
+                                             # jail/prison, bankrupt). Use
+                                             # `label_min_length` for minimum
+                                             # relation/transition label
+                                             # length, and `optional: true`
+                                             # for a relation that only fails
+                                             # if it is present but malformed.
+                                             # Class generalization /
+                                             # realization and aggregation /
+                                             # composition arrows use UML
+                                             # semantics, so reversed textual
+                                             # spellings still satisfy the
+                                             # conceptual from/to endpoints
+                                             # when the arrowhead/diamond is
+                                             # on the correct UML end.
         hints:                               # Multi-layered, see §1.
           - text: "Layer 1 hint (orientation)"
           - text: "Layer 2 hint (strategy)"
@@ -921,9 +955,27 @@ keys. **If you change the persistence schema, also update**:
   checks against the current ArchUML source. Use `kind: element|class|state|
   participant`, `kind: member`, or `kind: relation|transition|message` with
   fields such as `id`, `owner`, `text`, `from`, `to`, and `label_contains`.
-  Generalization / realization assertions follow UML arrow semantics: both
+  For flexible naming, use `id_contains`, `text_contains_any`,
+  `from_contains`, `label_contains_any`, or the corresponding camelCase
+  variants; matching is normalized and case-insensitive. Element assertions
+  can accept multiple element types with `element_type_any`, and member
+  assertions can require abstract operations with `is_abstract: true` (an
+  interface member counts as abstract even without an explicit `{abstract}`
+  marker). Relation assertions can constrain semantic arrow type with
+  `relation_type`, `relation_type_any`, or camelCase variants, or map the
+  matched target element's type to the required arrow type with
+  `relation_type_for_target_type` (for example, `interface: realization` and
+  `abstract class: generalization`). State-machine assertions can stay
+  consistent with a prior class diagram by using `class_role`,
+  `from_class_role`, and `to_class_role`; roles currently resolve concrete
+  class names containing `normal`, `jail`/`prison`, or `bankrupt` from the
+  saved class-diagram draft. Relation assertions also support
+  `label_min_length` and `optional: true` for optional transitions that should
+  be checked only when present. Generalization / realization and
+  aggregation / composition assertions follow UML arrow semantics: both
   `Child --|> Parent` and `Parent <|-- Child` satisfy `from: Child` /
-  `to: Parent`.
+  `to: Parent`, and both `Whole o-- Part` and `Part --o Whole` satisfy
+  `from: Whole` / `to: Part`.
 
 Failure surfaces inline in `.tvm-test-panel` below the instructions
 (green/red/yellow), with all matching `hints[].condition` hints

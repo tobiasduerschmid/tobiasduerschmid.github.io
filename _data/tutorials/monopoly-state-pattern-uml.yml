@@ -28,10 +28,10 @@ steps:
       Draw a class diagram with:
 
       - `Player`
-      - a state abstraction such as `PlayerState`
+      - a state abstraction such as `PlayerState` as either an interface or an abstract class
       - concrete states for normal turns, jail, and bankruptcy
-      - operations for taking a turn and changing state
-      - relationships showing that `Player` delegates to its current state
+      - an abstract operation for taking a turn and an operation for changing state
+      - an aggregation or composition relationship showing that `Player` holds its current state
     tests:
       - description: "State-pattern classes are present"
         assertions:
@@ -39,34 +39,81 @@ steps:
             id: Player
           - kind: element
             id: PlayerState
+            element_type_any:
+              - abstract class
+              - interface
           - kind: class
-            id: NormalTurnState
+            id_contains: normal
           - kind: class
-            id: InJailState
+            id_contains_any:
+              - jail
+              - prison
           - kind: class
-            id: BankruptState
+            id_contains: bankrupt
       - description: "Operations support the later sequence diagram"
         assertions:
           - kind: member
             owner: Player
-            text: takeTurn
+            text_contains_any:
+              - takeTurn
+              - doTurn
+              - playTurn
+              - performTurn
+              - executeTurn
+              - processTurn
+              - handleTurn
+              - runTurn
+              - makeMove
+              - takeAction
+              - performAction
           - kind: member
             owner: Player
             text: setState
           - kind: member
             owner: PlayerState
-            text: takeTurn
+            is_abstract: true
+            text_contains_any:
+              - takeTurn
+              - doTurn
+              - playTurn
+              - performTurn
+              - executeTurn
+              - processTurn
+              - handleTurn
+              - runTurn
+              - makeMove
+              - takeAction
+              - performAction
+      - description: "Player owns or aggregates its current state"
+        assertions:
+          - kind: relation
+            from: Player
+            to: PlayerState
+            relation_type_any:
+              - aggregation
+              - composition
       - description: "Concrete states implement the state abstraction"
         assertions:
           - kind: relation
-            from: NormalTurnState
+            from_contains: normal
             to: PlayerState
+            relation_type_for_target_type:
+              abstract class: generalization
+              interface: realization
           - kind: relation
-            from: InJailState
+            from_contains_any:
+              - jail
+              - prison
             to: PlayerState
+            relation_type_for_target_type:
+              abstract class: generalization
+              interface: realization
           - kind: relation
-            from: BankruptState
+            from_contains: bankrupt
             to: PlayerState
+            relation_type_for_target_type:
+              abstract class: generalization
+              interface: realization
 
   # Pedagogy: Make — students create a behavioral model and label transition causes.
   - title: "State Diagram"
@@ -81,36 +128,35 @@ steps:
       - Model Monopoly player-state transitions
       - Label transitions with clear state-change conditions
 
-      Draw a state diagram with normal-turn, in-jail, and bankrupt states. Label each transition with the condition that causes it. Use names that correspond directly to the classes in your class diagram when possible.
+      Draw a state diagram with the same normal-turn, in-jail, and bankrupt state names you used for the concrete state classes in your class diagram. Label each transition with a clear condition.
     tests:
-      - description: "Core player states are present"
+      - description: "States reuse the concrete state class names"
         assertions:
           - kind: state
-            id: NormalTurnState
+            class_role: normal
           - kind: state
-            id: InJailState
+            class_role: jail
           - kind: state
-            id: BankruptState
-      - description: "Jail and release transitions are labeled"
+            class_role: bankrupt
+      - description: "State transitions are labeled and consistent"
         assertions:
           - kind: transition
-            from: NormalTurnState
-            to: InJailState
-            label_contains: jail
+            from_class_role: normal
+            to_class_role: jail
+            label_min_length: 4
           - kind: transition
-            from: InJailState
-            to: NormalTurnState
-            label_contains: double
-      - description: "Bankruptcy is terminal behavior"
-        assertions:
+            from_class_role: jail
+            to_class_role: normal
+            label_min_length: 4
           - kind: transition
-            from: NormalTurnState
-            to: BankruptState
-            label_contains: bankrupt
+            from_class_role: normal
+            to_class_role: bankrupt
+            label_min_length: 4
           - kind: transition
-            from: InJailState
-            to: BankruptState
-            label_contains: bankrupt
+            from_class_role: jail
+            to_class_role: bankrupt
+            label_min_length: 4
+            optional: true
 
   # Pedagogy: Make — students connect the static design to one runtime interaction.
   - title: "Sequence Diagram"
@@ -138,7 +184,18 @@ steps:
           - kind: message
             from: Player
             to: PlayerState
-            label_contains: takeTurn
+            label_contains_any:
+              - takeTurn
+              - doTurn
+              - playTurn
+              - performTurn
+              - executeTurn
+              - processTurn
+              - handleTurn
+              - runTurn
+              - makeMove
+              - takeAction
+              - performAction
       - description: "The interaction can change the player's state"
         assertions:
           - kind: message

@@ -46,3 +46,53 @@ html.dark-mode .tvm-uml-editor-tutorial .tvm-workspace {
     min-height: 520px;
   }
 }
+
+/* ─── Tutorial-mode UX overrides ───
+   Reduce cognitive load by hiding chrome that the tutorial drives
+   automatically (diagram type, layout, redundant resets) or that does
+   not belong inside a guided tutorial flow (Export UML, Copy ArchUML —
+   the global "Reset Current Step" button in the navbar replaces "Empty").
+   Visual edit is always on in tutorial mode and the toggle is moved out
+   of the way. */
+.tvm-uml-editor-tutorial .uml-pg-toolbar-group-type,
+.tvm-uml-editor-tutorial .uml-pg-toolbar-group-layout,
+.tvm-uml-editor-tutorial #uml-pg-edit,
+.tvm-uml-editor-tutorial label[for="uml-pg-edit"],
+.tvm-uml-editor-tutorial #uml-pg-reset-example,
+.tvm-uml-editor-tutorial #uml-pg-export-source,
+.tvm-uml-editor-tutorial #uml-pg-copy-source {
+  display: none !important;
+}
+
+/* When type/layout groups are hidden, the modes group is the first
+   visible group on the toolbar. Drop its left "border" hairline so the
+   toolbar starts cleanly. */
+.tvm-uml-editor-tutorial .uml-pg-toolbar-group-modes {
+  /* The Snap toggle is the only mode left visible — push it tight
+     against history without an extra separator on its right when the
+     row is narrow. */
+}
+
+/* In tutorial mode keep the props pane visible so learners discover
+   *where* per-element settings live, but show the empty-state hint
+   instead of a blank panel. */
+.tvm-uml-editor-tutorial #uml-pg-props-pane[hidden].is-empty {
+  display: flex !important;
+  /* Slightly narrower when empty — recover canvas space */
+  flex: 0 0 240px;
+}
+
+/* The split handle is unhelpful when the pane is in the empty state
+   (nothing meaningful to resize against). Keep it hidden. */
+.tvm-uml-editor-tutorial #uml-pg-split-props[hidden] {
+  display: none !important;
+}
+
+/* On narrower viewports, soften the toolbar hairlines (they look noisy
+   when groups stack onto multiple rows). */
+@media (max-width: 900px) {
+  .uml-pg-toolbar-group {
+    border-right: 0 !important;
+    padding-right: 8px;
+  }
+}

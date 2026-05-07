@@ -266,6 +266,16 @@
     return this.sourceEl ? this.sourceEl.value || '' : '';
   };
 
+  UMLTutorialEditor.prototype.sourceForDiagramType = function (type) {
+    type = type || (this.typeEl && this.typeEl.value) || 'class';
+    if (this.typeEl && this.typeEl.value === type) return this.currentSource();
+    try {
+      return localStorage.getItem('uml-pg-autosave-' + type) || '';
+    } catch (e) {
+      return '';
+    }
+  };
+
   UMLTutorialEditor.prototype.clearResults = function () {
     if (!this.instructionsEl) return;
     var panel = this.instructionsEl.querySelector('.tvm-test-panel');
@@ -340,12 +350,24 @@
     var step = this.steps[this.currentStep] || {};
     var tests = step.tests || [];
     var model = parseArchUml(this.currentSource());
+    var currentType = step.uml_type || (this.typeEl && this.typeEl.value) || 'class';
+    var self = this;
+    var parsedModels = {};
+    var context = {
+      currentType: currentType,
+      modelForType: function (type) {
+        type = type || currentType;
+        if (type === currentType) return model;
+        if (!parsedModels[type]) parsedModels[type] = parseArchUml(self.sourceForDiagramType(type));
+        return parsedModels[type];
+      }
+    };
     var results = [];
     var resultTests = [];
     tests.forEach(function (test) {
       var failures = [];
       (test.assertions || []).forEach(function (assertion) {
-        var result = evaluateAssertion(model, assertion);
+        var result = evaluateAssertion(model, assertion, context);
         if (!result.pass) failures.push(result.message);
       });
       var ok = failures.length === 0;
@@ -441,64 +463,280 @@
     model.members.push({ owner: cleanId(owner), text: text });
   }
 
-  function evaluateAssertion(model, assertion) {
+  function evaluateAssertion(model, assertion, context) {
     var kind = assertion.kind || assertion.type || 'element';
     if (kind === 'element' || kind === 'state' || kind === 'participant' || kind === 'class') {
-      return assertElement(model, assertion, kind);
+      return assertElement(model, assertion, kind, context);
     }
     if (kind === 'member') return assertMember(model, assertion);
-    if (kind === 'relation' || kind === 'transition' || kind === 'message') return assertRelation(model, assertion, kind);
+    if (kind === 'relation' || kind === 'transition' || kind === 'message') return assertRelation(model, assertion, kind, context);
     return { pass: false, message: 'Unknown assertion kind: ' + kind };
   }
 
-  function assertElement(model, assertion, kind) {
+  function assertElement(model, assertion, kind, context) {
+    var classRole = assertion.class_role || assertion.classRole;
+    if (kind === 'state' && classRole) return assertStateForClassRole(model, assertion, context, classRole);
     var id = assertion.id || assertion.name;
+    var idContains = containsValues(assertion, 'id').concat(containsValues(assertion, 'name'));
     var expectedType = assertion.element_type || assertion.elementType || (kind === 'element' ? assertion.uml_type : kind);
+    var expectedTypes = elementTypeValues(assertion);
+    if (expectedType) expectedTypes.push(expectedType);
     var found = model.elements.some(function (el) {
-      var idMatches = !id || normalize(el.id) === normalize(id) || normalize(el.label) === normalize(id);
-      var typeMatches = !expectedType || expectedType === 'element' || normalize(el.type).indexOf(normalize(expectedType)) !== -1;
+      var idMatches = valueMatches([el.id, el.label], id, idContains);
+      var typeMatches = typeMatchesAny(el.type, expectedTypes);
       return idMatches && typeMatches;
     });
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected ' + (expectedType || 'element') + ' "' + id + '".' };
+      : { pass: false, message: 'Expected ' + (expectedTypes.length ? describeExpectedValue(null, expectedTypes) : 'element') + ' ' + describeExpectedValue(id, idContains) + '.' };
   }
 
   function assertMember(model, assertion) {
     var owner = assertion.owner || assertion.class || assertion.element;
+    var ownerContains = containsValues(assertion, 'owner').concat(containsValues(assertion, 'class')).concat(containsValues(assertion, 'element'));
     var text = assertion.text || assertion.member || assertion.name;
+    var textContains = containsValues(assertion, 'text').concat(containsValues(assertion, 'member')).concat(containsValues(assertion, 'name'));
     var found = model.members.some(function (member) {
-      return normalize(member.owner) === normalize(owner) && normalize(member.text).indexOf(normalize(text)) !== -1;
+      var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
+        ? true
+        : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
+      return valueMatches(member.owner, owner, ownerContains) && valueMatches(member.text, text, textContains, true) && abstractOk;
     });
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected member "' + text + '" on "' + owner + '".' };
+      : { pass: false, message: 'Expected member ' + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + '.' };
   }
 
-  function assertRelation(model, assertion, kind) {
+  function assertRelation(model, assertion, kind, context) {
     var from = assertion.from || assertion.source;
     var to = assertion.to || assertion.target;
-    var label = assertion.label_contains || assertion.labelContains || assertion.label;
+    var fromContains = containsValues(assertion, 'from').concat(containsValues(assertion, 'source'));
+    var toContains = containsValues(assertion, 'to').concat(containsValues(assertion, 'target'));
+    var fromClassRole = assertion.from_class_role || assertion.fromClassRole || assertion.source_class_role || assertion.sourceClassRole;
+    var toClassRole = assertion.to_class_role || assertion.toClassRole || assertion.target_class_role || assertion.targetClassRole;
+    var fromExact = classRoleValues(context, fromClassRole);
+    var toExact = classRoleValues(context, toClassRole);
+    if (fromClassRole && !fromExact.length) return { pass: false, message: 'Expected class diagram to define a "' + fromClassRole + '" state class.' };
+    if (toClassRole && !toExact.length) return { pass: false, message: 'Expected class diagram to define a "' + toClassRole + '" state class.' };
+    var relationTypes = relationTypeValues(assertion).concat(conditionalRelationTypes(model, assertion, to, toContains));
+    var labelContains = containsValues(assertion, 'label');
+    if (assertion.label) labelContains.push(assertion.label);
+    var labelMinLength = numericValue(assertion.label_min_length || assertion.labelMinLength);
+    var optional = assertion.optional === true || assertion.optional === 'true';
+    var candidateExists = false;
     var found = model.relations.some(function (rel) {
-      var forward = endpointsMatch(rel.from, rel.to, from, to);
+      var forward = endpointsMatch(rel.from, rel.to, from, to, fromContains, toContains, fromExact, toExact);
       var semantic = semanticRelationEndpoints(rel);
       var semanticForward = semantic.some(function (edge) {
-        return endpointsMatch(edge.from, edge.to, from, to);
+        return endpointsMatch(edge.from, edge.to, from, to, fromContains, toContains, fromExact, toExact);
       });
-      var reverseOk = assertion.directed === false && (
-        endpointsMatch(rel.from, rel.to, to, from) ||
-        semantic.some(function (edge) { return endpointsMatch(edge.from, edge.to, to, from); })
-      );
-      var labelOk = !label || normalize(rel.label).indexOf(normalize(label)) !== -1;
-      return (forward || semanticForward || reverseOk) && labelOk;
+      var endpointOk = semantic.length ? semanticForward : forward;
+      var semanticReverse = semantic.some(function (edge) {
+        return endpointsMatch(edge.from, edge.to, to, from, toContains, fromContains, toExact, fromExact);
+      });
+      var reverseOk = assertion.directed === false && (semantic.length
+        ? semanticReverse
+        : endpointsMatch(rel.from, rel.to, to, from, toContains, fromContains, toExact, fromExact));
+      var typeOk = !relationTypes.length || relationTypes.some(function (expectedType) {
+        return normalize(relationSemanticType(rel)) === normalize(expectedType);
+      });
+      var labelOk = valueMatches(rel.label, null, labelContains);
+      var candidateOk = (endpointOk || reverseOk) && typeOk;
+      if (candidateOk) candidateExists = true;
+      var labelLengthOk = !labelMinLength || String(rel.label || '').trim().length >= labelMinLength;
+      return candidateOk && labelOk && labelLengthOk;
     });
     return found
       ? { pass: true }
-      : { pass: false, message: 'Expected ' + kind + ' from "' + from + '" to "' + to + '"' + (label ? ' labeled with "' + label + '"' : '') + '.' };
+      : optional && !candidateExists
+        ? { pass: true }
+        : { pass: false, message: 'Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.' };
   }
 
-  function endpointsMatch(actualFrom, actualTo, expectedFrom, expectedTo) {
-    return normalize(actualFrom) === normalize(expectedFrom) && normalize(actualTo) === normalize(expectedTo);
+  function endpointsMatch(actualFrom, actualTo, expectedFrom, expectedTo, expectedFromContains, expectedToContains, expectedFromExact, expectedToExact) {
+    return endpointMatches(actualFrom, expectedFrom, expectedFromContains, expectedFromExact) &&
+      endpointMatches(actualTo, expectedTo, expectedToContains, expectedToExact);
+  }
+
+  function endpointMatches(actual, expected, contains, exactValues) {
+    return valueMatches(actual, expected, contains) && (!exactValues || !exactValues.length || exactValueMatches(actual, exactValues));
+  }
+
+  function valueMatches(actualValues, expected, contains, allowSubstringExpected) {
+    var actualList = Array.isArray(actualValues) ? actualValues : [actualValues];
+    var containsList = Array.isArray(contains) ? contains : [];
+    if (!expected && !containsList.length) return true;
+    return actualList.some(function (actual) {
+      var normalizedActual = normalize(actual);
+      if (!normalizedActual) return false;
+      if (expected) {
+        var normalizedExpected = normalize(expected);
+        if (allowSubstringExpected ? normalizedActual.indexOf(normalizedExpected) !== -1 : normalizedActual === normalizedExpected) return true;
+      }
+      return containsList.some(function (token) {
+        var normalizedToken = normalize(token);
+        return normalizedToken && normalizedActual.indexOf(normalizedToken) !== -1;
+      });
+    });
+  }
+
+  function exactValueMatches(actualValues, expectedValues) {
+    var actualList = Array.isArray(actualValues) ? actualValues : [actualValues];
+    var expectedList = Array.isArray(expectedValues) ? expectedValues : [expectedValues];
+    return actualList.some(function (actual) {
+      var normalizedActual = normalize(actual);
+      return normalizedActual && expectedList.some(function (expected) {
+        return normalizedActual === normalize(expected);
+      });
+    });
+  }
+
+  function assertStateForClassRole(model, assertion, context, role) {
+    var expectedNames = classRoleValues(context, role);
+    if (!expectedNames.length) {
+      return { pass: false, message: 'Expected class diagram to define a "' + role + '" state class.' };
+    }
+    var found = stateNameValues(model).some(function (name) {
+      return exactValueMatches(name, expectedNames);
+    });
+    return found
+      ? { pass: true }
+      : { pass: false, message: 'Expected state matching the class-diagram "' + role + '" state name (' + expectedNames.join(' or ') + ').' };
+  }
+
+  function stateNameValues(model) {
+    var values = [];
+    model.elements.forEach(function (el) {
+      if (normalize(el.type) === 'state') {
+        values.push(el.id);
+        values.push(el.label);
+      }
+    });
+    model.relations.forEach(function (rel) {
+      values.push(rel.from);
+      values.push(rel.to);
+    });
+    return uniqueValues(values);
+  }
+
+  function classRoleValues(context, role) {
+    var el = classRoleElement(context, role);
+    return el ? uniqueValues([el.id, el.label]) : [];
+  }
+
+  function classRoleElement(context, role) {
+    if (!role || !context || typeof context.modelForType !== 'function') return null;
+    var classModel = context.modelForType('class');
+    var tokens = roleTokens(role);
+    if (!tokens.length) return null;
+    return classModel.elements.find(function (el) {
+      if (normalize(el.type).indexOf('class') === -1) return false;
+      return tokens.some(function (token) {
+        return normalize(el.id).indexOf(token) !== -1 || normalize(el.label).indexOf(token) !== -1;
+      });
+    }) || null;
+  }
+
+  function roleTokens(role) {
+    var normalizedRole = normalize(role);
+    if (normalizedRole === 'normal') return ['normal'];
+    if (normalizedRole === 'jail' || normalizedRole === 'prison' || normalizedRole === 'injail') return ['jail', 'prison'];
+    if (normalizedRole === 'bankrupt' || normalizedRole === 'bankruptcy') return ['bankrupt'];
+    return normalizedRole ? [normalizedRole] : [];
+  }
+
+  function uniqueValues(values) {
+    var seen = {};
+    var result = [];
+    values.forEach(function (value) {
+      value = cleanId(value);
+      var key = normalize(value);
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      result.push(value);
+    });
+    return result;
+  }
+
+  function numericValue(value) {
+    var number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : 0;
+  }
+
+  function typeMatchesAny(actualType, expectedTypes) {
+    if (!expectedTypes.length) return true;
+    return expectedTypes.some(function (expectedType) {
+      var actual = normalize(actualType);
+      var expected = normalize(expectedType);
+      return !expected || expected === 'element' || actual === expected || (expected === 'class' && actual.indexOf('class') !== -1);
+    });
+  }
+
+  function memberIsAbstract(member, model) {
+    if (/\{abstract\}|\babstract\b/i.test(member.text)) return true;
+    return model.elements.some(function (el) {
+      return normalize(el.type) === 'interface' && normalize(el.id) === normalize(member.owner);
+    });
+  }
+
+  function containsValues(assertion, field) {
+    var snake = field + '_contains';
+    var snakeAny = field + '_contains_any';
+    var camel = field + 'Contains';
+    var camelAny = field + 'ContainsAny';
+    return []
+      .concat(toArray(assertion[snake]))
+      .concat(toArray(assertion[snakeAny]))
+      .concat(toArray(assertion[camel]))
+      .concat(toArray(assertion[camelAny]));
+  }
+
+  function relationTypeValues(assertion) {
+    return []
+      .concat(toArray(assertion.relation_type))
+      .concat(toArray(assertion.relation_types))
+      .concat(toArray(assertion.relation_type_any))
+      .concat(toArray(assertion.relationType))
+      .concat(toArray(assertion.relationTypes))
+      .concat(toArray(assertion.relationTypeAny));
+  }
+
+  function elementTypeValues(assertion) {
+    return []
+      .concat(toArray(assertion.element_type_any))
+      .concat(toArray(assertion.element_types))
+      .concat(toArray(assertion.elementTypeAny))
+      .concat(toArray(assertion.elementTypes));
+  }
+
+  function conditionalRelationTypes(model, assertion, to, toContains) {
+    var byTarget = assertion.relation_type_for_target_type || assertion.relationTypeForTargetType;
+    if (!byTarget || typeof byTarget !== 'object') return [];
+    var matchingTarget = model.elements.find(function (el) {
+      return valueMatches([el.id, el.label], to, toContains);
+    });
+    if (!matchingTarget) return ['__missing_target_type__'];
+    var expected = [];
+    Object.keys(byTarget).forEach(function (targetType) {
+      if (normalize(matchingTarget.type) === normalize(targetType)) {
+        expected = expected.concat(toArray(byTarget[targetType]));
+      }
+    });
+    return expected.length ? expected : ['__unexpected_target_type__'];
+  }
+
+  function toArray(value) {
+    if (value == null) return [];
+    return Array.isArray(value) ? value : [value];
+  }
+
+  function describeExpectedValue(expected, contains, exactValues) {
+    var exactList = Array.isArray(exactValues) ? exactValues.filter(function (item) { return item != null && String(item).trim(); }) : [];
+    var containsList = Array.isArray(contains) ? contains.filter(function (item) { return item != null && String(item).trim(); }) : [];
+    if (expected) return '"' + expected + '"';
+    if (exactList.length) return 'matching ' + exactList.map(function (item) { return '"' + item + '"'; }).join(' or ');
+    if (!containsList.length) return 'any value';
+    return 'matching ' + containsList.map(function (item) { return '"' + item + '"'; }).join(' or ');
   }
 
   function semanticRelationEndpoints(rel) {
@@ -510,7 +748,24 @@
     //   Abstraction <|-- Concrete
     if (/\|>/.test(op)) edges.push({ from: rel.from, to: rel.to });
     if (/<\|/.test(op)) edges.push({ from: rel.to, to: rel.from });
+    // UML composition / aggregation diamonds sit at the owner/whole end.
+    // Normalize both spellings to owner -> part:
+    //   Whole o-- Part
+    //   Part --o Whole
+    if (/^[o*]/.test(op)) edges.push({ from: rel.from, to: rel.to });
+    if (/[o*]$/.test(op)) edges.push({ from: rel.to, to: rel.from });
     return edges;
+  }
+
+  function relationSemanticType(rel) {
+    var op = rel.op || '';
+    if (/\*/.test(op)) return 'composition';
+    if (/o/.test(op)) return 'aggregation';
+    if ((/\|>/.test(op) || /<\|/.test(op)) && /\./.test(op)) return 'realization';
+    if (/\|>/.test(op) || /<\|/.test(op)) return 'generalization';
+    if (/\.\.>/.test(op)) return 'dependency';
+    if (/--?>/.test(op) || /<--?/.test(op) || /--/.test(op)) return 'association';
+    return 'relation';
   }
 
   window.UMLTutorialEditor = UMLTutorialEditor;

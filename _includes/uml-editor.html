@@ -48,96 +48,117 @@ Supported options:
 
 <div id="uml-playground-wrap"{% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %} class="is-archuml-hidden"{% endif %}>
   <div id="uml-playground-toolbar">
-    <label for="uml-pg-type">Diagram type:</label>
-    <select id="uml-pg-type">
-      {% for uml_editor_type_raw in uml_editor_types %}
-        {% assign uml_editor_type = uml_editor_type_raw | strip %}
-        {% if uml_editor_type != "" %}
-          {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "gitgraph" %}Git Graph{% when "venn" %}Venn{% when "er" %}ER (Chen){% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
-          <option value="{{ uml_editor_type | escape }}"{% if uml_editor_type == uml_editor_default_type %} selected{% endif %}>{{ uml_editor_type_label | strip }}</option>
-        {% endif %}
-      {% endfor %}
-    </select>
-    <label id="uml-pg-layout-label" for="uml-pg-layout">Layout:</label>
-    <select id="uml-pg-layout">
-      <option value="auto">Auto</option>
-      <option value="square" selected>Square</option>
-      <option value="landscape">Landscape</option>
-      <option value="portrait">Portrait</option>
-    </select>
-    <label class="uml-pg-check" for="uml-pg-edit">
-      <input type="checkbox" id="uml-pg-edit" aria-label="Visual edit" checked>
-      Visual edit
-    </label>
-    <label class="uml-pg-check" for="uml-pg-snap">
-      <input type="checkbox" id="uml-pg-snap" aria-label="Snap to layout grid" checked>
-      Snap
-    </label>
-    <button id="uml-pg-undo" type="button" title="Undo (Cmd/Ctrl+Z)" aria-keyshortcuts="Control+Z" disabled>↶ Undo</button>
-    <button id="uml-pg-redo" type="button" title="Redo (Cmd/Ctrl+Shift+Z)" aria-keyshortcuts="Control+Shift+Z" disabled>↷ Redo</button>
-    <button id="uml-pg-reset-one" title="Reset selected layout override" disabled>Reset Selected</button>
-    <button id="uml-pg-reset-layout" title="Remove layout overrides">Reset Layout</button>
-    <button id="uml-pg-reset-example" title="{{ uml_editor_reset_title | escape }}" type="button">↺ {{ uml_editor_reset_label }}</button>
-    <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
-    <button id="uml-pg-export-source" title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
-    <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
-    <span class="uml-pg-zoom-group" role="group" aria-label="Zoom">
-      <button id="uml-pg-zoom-out" type="button" title="Zoom out (Cmd/Ctrl+−)" aria-keyshortcuts="Control+-" aria-label="Zoom out">−</button>
-      <button id="uml-pg-zoom-readout-btn" type="button" title="Reset zoom to 100% (Cmd/Ctrl+0)" aria-keyshortcuts="Control+0"><span id="uml-pg-zoom-readout">100%</span></button>
-      <button id="uml-pg-zoom-in" type="button" title="Zoom in (Cmd/Ctrl++)" aria-keyshortcuts="Control+=" aria-label="Zoom in">+</button>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-type">
+      <label for="uml-pg-type">Diagram type:</label>
+      <select id="uml-pg-type" aria-controls="uml-pg-input uml-pg-output uml-pg-palette uml-pg-sequence-model">
+        {% for uml_editor_type_raw in uml_editor_types %}
+          {% assign uml_editor_type = uml_editor_type_raw | strip %}
+          {% if uml_editor_type != "" %}
+            {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "gitgraph" %}Git Graph{% when "venn" %}Venn{% when "er" %}ER (Chen){% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
+            <option value="{{ uml_editor_type | escape }}"{% if uml_editor_type == uml_editor_default_type %} selected{% endif %}>{{ uml_editor_type_label | strip }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
     </span>
-    <button id="uml-pg-fullscreen" type="button" title="Toggle full-screen (F)" aria-pressed="false">⛶ Full screen</button>
-    <span id="uml-pg-autosave" aria-live="polite"></span>
-    <span id="uml-pg-status"></span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-layout">
+      <label id="uml-pg-layout-label" for="uml-pg-layout">Layout:</label>
+      <select id="uml-pg-layout" aria-controls="uml-pg-output">
+        <option value="auto">Auto</option>
+        <option value="square" selected>Square</option>
+        <option value="landscape">Landscape</option>
+        <option value="portrait">Portrait</option>
+      </select>
+    </span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-modes">
+      <label class="uml-pg-check" for="uml-pg-edit">
+        <input type="checkbox" id="uml-pg-edit" aria-label="Visual edit" aria-controls="uml-pg-palette uml-pg-output uml-pg-props-pane" checked>
+        Visual edit
+      </label>
+      <label class="uml-pg-check" for="uml-pg-snap">
+        <input type="checkbox" id="uml-pg-snap" aria-label="Snap to layout grid" aria-controls="uml-pg-output" checked>
+        Snap
+      </label>
+    </span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-history" role="group" aria-label="History">
+      <button id="uml-pg-undo" type="button" title="Undo (Cmd/Ctrl+Z)" aria-keyshortcuts="Control+Z" disabled>↶ Undo</button>
+      <button id="uml-pg-redo" type="button" title="Redo (Cmd/Ctrl+Shift+Z)" aria-keyshortcuts="Control+Shift+Z" disabled>↷ Redo</button>
+    </span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-reset" role="group" aria-label="Reset">
+      <button id="uml-pg-reset-one" title="Reset selected layout override" disabled>Reset Selected</button>
+      <button id="uml-pg-reset-layout" title="Remove layout overrides">Reset Layout</button>
+      <button id="uml-pg-reset-example" title="{{ uml_editor_reset_title | escape }}" type="button">↺ {{ uml_editor_reset_label }}</button>
+    </span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-export" role="group" aria-label="Export">
+      <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
+      <button id="uml-pg-export-source" title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
+      <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
+    </span>
+    <span class="uml-pg-toolbar-group uml-pg-toolbar-group-view" role="group" aria-label="View">
+      <span class="uml-pg-zoom-group" role="group" aria-label="Zoom">
+        <button id="uml-pg-zoom-out" type="button" title="Zoom out (Cmd/Ctrl+−)" aria-keyshortcuts="Control+-" aria-label="Zoom out">−</button>
+        <button id="uml-pg-zoom-readout-btn" type="button" title="Reset zoom to 100% (Cmd/Ctrl+0)" aria-keyshortcuts="Control+0"><span id="uml-pg-zoom-readout">100%</span></button>
+        <button id="uml-pg-zoom-in" type="button" title="Zoom in (Cmd/Ctrl++)" aria-keyshortcuts="Control+=" aria-label="Zoom in">+</button>
+      </span>
+      <button id="uml-pg-fullscreen" type="button" title="Toggle full-screen (F)" aria-pressed="false">⛶ Full screen</button>
+    </span>
+    <span id="uml-pg-autosave" role="status" aria-live="polite" aria-atomic="true"></span>
+    <span id="uml-pg-status" role="status" aria-live="polite" aria-atomic="true"></span>
   </div>
 
-  <div id="uml-pg-palette" hidden aria-label="Visual editor palette">
-    <div class="uml-pg-palette-row">
-      <span class="uml-pg-palette-label">+ Element:</span>
+  <div id="uml-pg-palette" hidden role="region" aria-label="Visual editor palette">
+    <div class="uml-pg-palette-row uml-pg-palette-row-elements">
+      <span class="uml-pg-palette-label">Elements</span>
       <span class="uml-pg-palette-buttons" id="uml-pg-palette-elements"></span>
     </div>
-    <div class="uml-pg-palette-row">
-      <span class="uml-pg-palette-label">+ Relation:</span>
+    <div class="uml-pg-palette-row uml-pg-palette-row-relations">
+      <span class="uml-pg-palette-label">Relations</span>
       <span class="uml-pg-palette-buttons" id="uml-pg-palette-relations"></span>
     </div>
     <div class="uml-pg-palette-row uml-pg-palette-status-row">
-      <span id="uml-pg-tool-status"></span>
+      <span id="uml-pg-tool-status" role="status" aria-live="polite" aria-atomic="true"></span>
       <button id="uml-pg-tool-cancel" type="button" hidden>Cancel</button>
     </div>
   </div>
 
-  <div id="uml-pg-sequence-model" hidden aria-label="Sequence diagram model editor"></div>
+  <div id="uml-pg-sequence-model" hidden role="region" aria-label="Sequence diagram model editor"></div>
 
   <div id="uml-pg-help-banner" hidden role="region" aria-label="Visual editor tips">
     <div class="uml-pg-help-text">
-      <strong>Tips:</strong>
-      Click a palette tool then click the canvas to place an element.
-      Drag a tool onto the canvas to drop one in place.
-      Hover an element and drag the <span class="uml-pg-help-plus" aria-hidden="true">+</span> handle to another element to connect them.
-      Click a relation to edit its label / multiplicity / navigability.
-      Double-click to rename.
-      <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click to add to selection.
-      Drag empty canvas to pan.
+      <strong class="uml-pg-help-title">Quick tips</strong>
+      <ul class="uml-pg-help-list">
+        <li><span class="uml-pg-help-key" aria-hidden="true">Add</span> Click a palette tool, then click the canvas — or drag the tool onto it.</li>
+        <li><span class="uml-pg-help-key" aria-hidden="true">Connect</span> Hover an element, then drag its <span class="uml-pg-help-plus" aria-hidden="true">+</span> onto another element.</li>
+        <li><span class="uml-pg-help-key" aria-hidden="true">Edit</span> Double-click to rename. Click a relation to set its label, multiplicity, or navigability.</li>
+        <li><span class="uml-pg-help-key" aria-hidden="true">Move</span> Drag elements to reposition. Drag empty canvas to pan. <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click to multi-select.</li>
+      </ul>
     </div>
     <button id="uml-pg-help-dismiss" type="button" aria-label="Got it — dismiss tips">Got it</button>
   </div>
 
   <div id="uml-playground-body">
-    <div id="uml-pg-editor-pane">
-      <textarea id="uml-pg-input" aria-label="ArchUML diagram source" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+    <div id="uml-pg-editor-pane" role="region" aria-labelledby="uml-pg-source-heading">
+      <h2 id="uml-pg-source-heading" class="uml-pg-sr-only">ArchUML source editor</h2>
+      <p id="uml-pg-source-help" class="uml-pg-sr-only">Edit ArchUML source. Changes render in the diagram preview.</p>
+      <textarea id="uml-pg-input" aria-label="ArchUML diagram source" aria-describedby="uml-pg-source-help" aria-controls="uml-pg-output" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
     </div>
     <div class="uml-pg-splitter" id="uml-pg-split-editor" role="separator" aria-orientation="vertical" aria-label="Resize editor pane" tabindex="0" aria-valuenow="40" aria-valuemin="20" aria-valuemax="80"></div>
-    <div id="uml-pg-preview-pane">
+    <div id="uml-pg-preview-pane" role="region" aria-labelledby="uml-pg-preview-heading" aria-describedby="uml-pg-preview-help">
+      <h2 id="uml-pg-preview-heading" class="uml-pg-sr-only">Diagram preview</h2>
+      <p id="uml-pg-preview-help" class="uml-pg-sr-only">Preview updates as you edit ArchUML. In visual edit mode, Tab reaches diagram items; Enter selects an item; arrow keys nudge selected elements; Delete removes selected items.</p>
       <div id="uml-pg-output" class="uml-class-diagram-container"></div>
-      <div id="uml-pg-error" style="display:none;"></div>
+      <div id="uml-pg-error" role="alert" aria-live="assertive" style="display:none;"></div>
     </div>
     <div class="uml-pg-splitter" id="uml-pg-split-props" role="separator" aria-orientation="vertical" aria-label="Resize properties pane" tabindex="0" aria-valuenow="280" aria-valuemin="200" aria-valuemax="600" hidden></div>
-    <aside id="uml-pg-props-pane" hidden aria-label="Properties of selected item">
+    <aside id="uml-pg-props-pane" hidden role="region" aria-labelledby="uml-pg-props-title" aria-live="polite">
       <div class="uml-pg-props-header">
         <h2 id="uml-pg-props-title">Properties</h2>
         <button id="uml-pg-props-delete" type="button" title="Delete selected (Del)">&#x2715; Delete</button>
       </div>
       <div id="uml-pg-props-content"></div>
+      <div id="uml-pg-props-empty" class="uml-pg-props-empty" aria-hidden="true">
+        <p class="uml-pg-props-empty-title">Nothing selected</p>
+        <p class="uml-pg-props-empty-hint">Click an element or relation in the canvas to edit its name, members, multiplicity, or other properties here.</p>
+      </div>
     </aside>
   </div>
 
@@ -151,26 +172,67 @@ Supported options:
   font-family: inherit;
 }
 
+.uml-pg-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 #uml-playground-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px 14px;
   padding: 8px 12px;
   background: #eef2f9;
   border-bottom: 1px solid #c8d4e8;
   flex-wrap: wrap;
+  row-gap: 6px;
 }
 
 #uml-playground-toolbar label {
-  font-size: 0.88em;
+  font-size: 1em;
   font-weight: 600;
   color: #445;
   margin: 0;
 }
 
+/* Visually group related controls. Groups are separated by a vertical
+   hairline in wide layouts so the toolbar reads as a small set of clusters
+   rather than a long row of indistinguishable buttons. */
+.uml-pg-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 12px;
+  border-right: 1px solid transparent;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.uml-pg-toolbar-group + .uml-pg-toolbar-group {
+  padding-left: 0;
+}
+@media (min-width: 900px) {
+  .uml-pg-toolbar-group:not(:last-of-type) {
+    border-right-color: #c8d4e8;
+  }
+}
+html.dark-mode .uml-pg-toolbar-group:not(:last-of-type) {
+  border-right-color: #2c3e57;
+}
+.uml-pg-toolbar-group:last-of-type {
+  padding-right: 0;
+}
+
 #uml-pg-type,
 #uml-pg-layout {
-  font-size: 0.88em;
+  font: inherit;
+  font-size: 1em;
   padding: 3px 8px;
   border: 1px solid #b0bdd4;
   border-radius: 4px;
@@ -179,7 +241,8 @@ Supported options:
 }
 
 #uml-pg-download {
-  font-size: 0.88em;
+  font: inherit;
+  font-size: 1em;
   padding: 3px 12px;
   background: #2774AE;
   color: #fff;
@@ -198,7 +261,8 @@ Supported options:
 #uml-pg-fullscreen,
 #uml-pg-undo,
 #uml-pg-redo {
-  font-size: 0.88em;
+  font: inherit;
+  font-size: 1em;
   padding: 3px 10px;
   background: #fff;
   color: #26415f;
@@ -255,11 +319,11 @@ html.dark-mode #uml-pg-redo:focus-visible {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #fff8e1;
   border-bottom: 1px solid #f0d590;
   color: #4a3b08;
-  font-size: 0.93em;
+  font-size: 1em;
 }
 
 #uml-pg-help-banner[hidden] {
@@ -268,12 +332,50 @@ html.dark-mode #uml-pg-redo:focus-visible {
 
 .uml-pg-help-text {
   flex: 1 1 auto;
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+.uml-pg-help-title {
+  display: block;
+  font-size: 1em;
+  margin-bottom: 6px;
+}
+
+.uml-pg-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22em), 1fr));
+  gap: 4px 18px;
+}
+
+.uml-pg-help-list li {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.uml-pg-help-key {
+  display: inline-block;
+  flex: 0 0 auto;
+  min-width: 4.2em;
+  padding: 1px 8px;
+  background: rgba(74, 59, 8, 0.12);
+  color: #3d3206;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .uml-pg-help-text kbd {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 0.95em;
   padding: 1px 6px;
   background: #fff;
   border: 1px solid #c4ad6d;
@@ -290,12 +392,17 @@ html.dark-mode #uml-pg-redo:focus-visible {
   border-radius: 50%;
   min-width: 1.2em;
   text-align: center;
-  font-size: 0.92em;
+  font-size: 0.95em;
+}
+
+html.dark-mode .uml-pg-help-key {
+  background: rgba(240, 227, 184, 0.16);
+  color: #f6ecc7;
 }
 
 #uml-pg-help-dismiss {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 5px 12px;
   background: #fff;
   color: #4a3b08;
@@ -355,7 +462,7 @@ html.dark-mode #uml-pg-help-dismiss:focus-visible {
 
 .uml-pg-zoom-group > button {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 3px 10px;
   background: #fff;
   color: #26415f;
@@ -434,7 +541,7 @@ html.dark-mode .uml-pg-zoom-group > button:focus-visible {
   position: fixed;
   z-index: 10000;
   font: inherit;
-  font-size: 0.95em;
+  font-size: 1em;
   padding: 4px 8px;
   border: 2px solid #2774AE;
   border-radius: 3px;
@@ -557,13 +664,13 @@ body.uml-pg-fullscreen-lock {
 }
 
 #uml-pg-status {
-  font-size: 0.8em;
+  font-size: 0.9em;
   color: #555;
   margin-left: 4px;
 }
 
 #uml-pg-autosave {
-  font-size: 0.85em;
+  font-size: 0.9em;
   color: #2a7a37;
   font-weight: 600;
   margin-left: 6px;
@@ -665,7 +772,7 @@ html.dark-mode .uml-pg-splitter:focus-visible {
   min-height: 420px;
   padding: 12px;
   font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 0.82em;
+  font-size: 1em;
   line-height: 1.55;
   border: none;
   outline: none;
@@ -835,15 +942,20 @@ html.dark-mode .uml-pg-modal-actions button:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
-  width: min(100%, 520px);
-  margin: 32px auto;
-  padding: 18px;
-  border: 1px solid #c8d4e8;
-  border-radius: 6px;
+  gap: 14px;
+  width: min(100%, 560px);
+  margin: 48px auto;
+  padding: 24px 22px;
+  border: 1.5px dashed #97afca;
+  border-radius: 10px;
   background: #f6f9fd;
   color: #1a3656;
   text-align: left;
+  box-shadow: 0 1px 2px rgba(26, 54, 86, 0.04);
+}
+
+.uml-pg-sequence-empty p {
+  font-size: 1.05em;
 }
 
 .uml-pg-sequence-empty p {
@@ -863,7 +975,7 @@ html.dark-mode .uml-pg-modal-actions button:hover {
 .uml-pg-sequence-empty button,
 .uml-pg-sequence-model button {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   min-height: 32px;
   padding: 6px 11px;
   border: 1px solid #97afca;
@@ -954,7 +1066,7 @@ html.dark-mode .uml-pg-guide-line {
 
 .uml-pg-context-menu button {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 6px 10px;
   text-align: left;
   background: #fff;
@@ -993,7 +1105,7 @@ html.dark-mode .uml-pg-guide-line {
 .uml-pg-context-menu .uml-pg-context-key {
   margin-left: auto;
   color: #6a7a93;
-  font-size: 0.86em;
+  font-size: 0.9em;
   font-family: 'Cascadia Code', 'Fira Mono', 'Menlo', 'Consolas', monospace;
 }
 
@@ -1123,7 +1235,7 @@ html.dark-mode .uml-pg-extend-line {
 }
 
 .uml-pg-relation-chooser-title {
-  font-size: 0.92em;
+  font-size: 1em;
   font-weight: 700;
   color: #1a3656;
   padding: 4px 8px 6px;
@@ -1133,7 +1245,7 @@ html.dark-mode .uml-pg-extend-line {
 
 .uml-pg-relation-chooser button {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   text-align: left;
   padding: 6px 10px;
   background: #fff;
@@ -1201,7 +1313,7 @@ html.dark-mode .uml-pg-relation-chooser button:focus-visible {
 
 #uml-pg-error {
   color: #c0392b;
-  font-size: 0.85em;
+  font-size: 1em;
   font-family: monospace;
   padding: 8px;
   background: #fdf0ee;
@@ -1346,7 +1458,7 @@ a.uml-pg-syntax-help-link:visited {
   border-radius: 4px;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 1em;
 }
 
 a.uml-pg-syntax-help-link:hover,
@@ -1450,8 +1562,8 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 #uml-pg-palette {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px 14px;
   background: #f6f9fd;
   border-bottom: 1px solid #c8d4e8;
 }
@@ -1459,17 +1571,27 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 .uml-pg-palette-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
   min-height: 28px;
 }
 
+/* Stronger label that makes scanning the palette easier:
+   small uppercase pill so the row reads "ELEMENTS · [Class] [Abstract] …" */
 .uml-pg-palette-label {
-  font-size: 0.92em;
-  font-weight: 600;
+  font-size: 0.82em;
+  font-weight: 700;
   color: #26415f;
   flex: 0 0 auto;
-  min-width: 90px;
+  min-width: 78px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 0 2px 4px;
+  border-left: 3px solid #2774AE;
+}
+
+.uml-pg-palette-row-relations .uml-pg-palette-label {
+  border-left-color: #6b8db0;
 }
 
 .uml-pg-palette-buttons {
@@ -1481,7 +1603,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-tool-btn {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 6px 11px;
   background: #fff;
   color: #1d3557;
@@ -1527,7 +1649,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 #uml-pg-tool-cancel {
   font: inherit;
-  font-size: 0.9em;
+  font-size: 1em;
   padding: 5px 12px;
   background: #fff;
   color: #1d3557;
@@ -1549,7 +1671,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 }
 
 .uml-pg-palette-status-row {
-  font-size: 0.92em;
+  font-size: 1em;
   color: #2c3f57;
 }
 
@@ -1625,7 +1747,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 .uml-pg-sequence-model textarea,
 .uml-pg-sequence-model select {
   font: inherit;
-  font-size: 0.95em;
+  font-size: 1em;
   min-height: 32px;
   padding: 5px 7px;
   border: 1px solid #97afca;
@@ -1705,6 +1827,52 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   gap: 10px;
 }
 
+/* Empty-state hint shown when the props pane is open with nothing selected.
+   The pane is hidden by default in standalone mode; tutorial mode keeps
+   it visible (see tutorial-uml-editor.css), so the hint becomes a
+   discoverability aid for learners. */
+.uml-pg-props-empty {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 12px;
+  border: 1px dashed #b6c5dc;
+  border-radius: 6px;
+  background: #fff;
+  color: #46627e;
+}
+
+#uml-pg-props-pane.is-empty .uml-pg-props-empty {
+  display: flex;
+}
+
+#uml-pg-props-pane.is-empty .uml-pg-props-header {
+  /* Suppress the "Properties / × Delete" header when nothing's selected;
+     the empty-state title takes its place. */
+  display: none;
+}
+
+.uml-pg-props-empty-title {
+  margin: 0;
+  font-weight: 700;
+  color: #1a3656;
+}
+
+.uml-pg-props-empty-hint {
+  margin: 0;
+  line-height: 1.45;
+}
+
+html.dark-mode .uml-pg-props-empty {
+  background: #1a2638;
+  border-color: #3a4a60;
+  color: #c0d0e0;
+}
+
+html.dark-mode .uml-pg-props-empty-title {
+  color: #d0e0f0;
+}
+
 .uml-pg-props-header {
   display: flex;
   align-items: center;
@@ -1722,7 +1890,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 #uml-pg-props-delete {
   font: inherit;
-  font-size: 0.9em;
+  font-size: 1em;
   padding: 4px 10px;
   background: #fff;
   color: #842622;
@@ -1755,7 +1923,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 }
 
 .uml-pg-prop-row > label {
-  font-size: 0.92em;
+  font-size: 1em;
   font-weight: 600;
   color: #26415f;
 }
@@ -1764,7 +1932,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 .uml-pg-prop-row select,
 .uml-pg-prop-row textarea {
   font: inherit;
-  font-size: 0.95em;
+  font-size: 1em;
   padding: 5px 7px;
   border: 1px solid #97afca;
   border-radius: 4px;
@@ -1793,7 +1961,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.95em;
+  font-size: 1em;
   color: #1a3656;
   cursor: pointer;
 }
@@ -1818,7 +1986,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 }
 
 .uml-pg-prop-fieldset > legend {
-  font-size: 0.92em;
+  font-size: 1em;
   font-weight: 700;
   color: #1a3656;
   padding: 0 4px;
@@ -1843,7 +2011,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-member > input[type="text"] {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 3px 6px;
   border: 1px solid #b6c5dc;
   border-radius: 3px;
@@ -1861,7 +2029,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-member-vis {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 3px 4px;
   border: 1px solid #b6c5dc;
   border-radius: 3px;
@@ -1871,7 +2039,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-member-remove {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   background: #fff;
   color: #842622;
   border: 1px solid #c39994;
@@ -1895,7 +2063,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  font-size: 0.88em;
+  font-size: 1em;
   color: #2c3f57;
   margin-top: 2px;
 }
@@ -1916,7 +2084,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 
 .uml-pg-add-member {
   font: inherit;
-  font-size: 0.92em;
+  font-size: 1em;
   padding: 5px 10px;
   background: #fff;
   color: #1a3656;
@@ -1939,7 +2107,7 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 }
 
 .uml-pg-prop-hint {
-  font-size: 0.86em;
+  font-size: 0.9em;
   color: #46627e;
   font-style: italic;
 }
@@ -2577,6 +2745,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     if (status) {
       status.setAttribute('role', 'status');
       status.setAttribute('aria-live', 'polite');
+      status.setAttribute('aria-atomic', 'true');
     }
     if (propsPane) {
       propsPane.setAttribute('role', 'region');
@@ -3534,7 +3703,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function syncRouteOverlays(layer, routeId, points) {
       if (!layer) return;
-      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox[data-route-id="' + routeId + '"]')).forEach(function (seg) {
+      Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox[data-route-id="' + cssAttrEscape(routeId) + '"]')).forEach(function (seg) {
         var idx = Number(seg.getAttribute('data-segment-index'));
         if (seg.getAttribute('data-locked-endpoints') === 'true' && points.length === 4 && idx === 0) {
           setRouteOverlaySegment(seg, points[1], points[2]);
@@ -3557,14 +3726,18 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function collectConnectedRoutes(svg, id) {
+      var item = arguments.length > 2 ? arguments[2] : null;
       return findEditableRoutes(svg).filter(function (route) {
-        return routeEndpointBelongsTo(route.source, id) || routeEndpointBelongsTo(route.target, id);
+        return routeEndpointBelongsToItem(route, 0, id, item) ||
+          routeEndpointBelongsToItem(route, route.points.length - 1, id, item);
       }).map(function (route) {
         return {
           route: route,
           points: clonePoints(route.points),
           source: route.source,
-          target: route.target
+          target: route.target,
+          sourceIds: routeEndpointBelongsToItem(route, 0, id, item) ? [id] : [],
+          targetIds: routeEndpointBelongsToItem(route, route.points.length - 1, id, item) ? [id] : []
         };
       });
     }
@@ -3575,19 +3748,82 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return (typeSelect.value || '') === 'component' && endpoint.indexOf(id + '.') === 0;
     }
 
-    function applyConnectedRouteDelta(routes, id, dx, dy) {
+    function routeEndpointTouchesItem(route, endpointIndex, item) {
+      if (!route || !route.points || !item || !item.box) return false;
+      var point = route.points[endpointIndex];
+      if (!point) return false;
+      var pad = Math.max(10, Math.min(item.box.width || 0, item.box.height || 0) * 0.18);
+      return containsPoint(item.box, point.x, point.y, pad);
+    }
+
+    function routeEndpointBelongsToItem(route, endpointIndex, id, item) {
+      var endpointName = endpointIndex === 0 ? route.source : route.target;
+      return routeEndpointBelongsTo(endpointName, id) || routeEndpointTouchesItem(route, endpointIndex, item);
+    }
+
+    function routeEntryKey(entry) {
+      if (!entry || !entry.route) return '';
+      if (entry.route.id) return entry.route.id;
+      return (entry.route.source || '') + '|' + (entry.route.target || '') + '|' + (entry.route.index || 0);
+    }
+
+    function mergeConnectedRouteEntries() {
+      var merged = {};
+      function addEntries(entries) {
+        (entries || []).forEach(function (entry) {
+          var key = routeEntryKey(entry);
+          if (!key) return;
+          if (!merged[key]) {
+            merged[key] = {
+              route: entry.route,
+              points: clonePoints(entry.points),
+              source: entry.source,
+              target: entry.target,
+              sourceIds: [],
+              targetIds: []
+            };
+          }
+          ['sourceIds', 'targetIds'].forEach(function (field) {
+            (entry[field] || []).forEach(function (id) {
+              if (merged[key][field].indexOf(id) === -1) merged[key][field].push(id);
+            });
+          });
+        });
+      }
+      for (var i = 0; i < arguments.length; i++) addEntries(arguments[i]);
+      return Object.keys(merged).map(function (key) { return merged[key]; });
+    }
+
+    function routeDeltaForEndpoint(endpoint, endpointIds, deltas) {
+      var ids = endpointIds || [];
+      for (var i = 0; i < ids.length; i++) {
+        if (deltas[ids[i]]) return deltas[ids[i]];
+      }
+      if (endpoint && deltas[endpoint]) return deltas[endpoint];
+      if ((typeSelect.value || '') === 'component' && endpoint) {
+        for (var id in deltas) {
+          if (Object.prototype.hasOwnProperty.call(deltas, id) && endpoint.indexOf(id + '.') === 0) return deltas[id];
+        }
+      }
+      return null;
+    }
+
+    function applyConnectedRouteDeltas(routes, deltas, layer) {
       (routes || []).forEach(function (entry) {
         var next = clonePoints(entry.points);
-        if (routeEndpointBelongsTo(entry.source, id) && next[0]) {
-          next[0].x += dx;
-          next[0].y += dy;
+        var sourceDelta = routeDeltaForEndpoint(entry.source, entry.sourceIds, deltas);
+        var targetDelta = routeDeltaForEndpoint(entry.target, entry.targetIds, deltas);
+        if (sourceDelta && next[0]) {
+          next[0].x += sourceDelta.x;
+          next[0].y += sourceDelta.y;
         }
-        if (routeEndpointBelongsTo(entry.target, id) && next[next.length - 1]) {
+        if (targetDelta && next[next.length - 1]) {
           var end = next.length - 1;
-          next[end].x += dx;
-          next[end].y += dy;
+          next[end].x += targetDelta.x;
+          next[end].y += targetDelta.y;
         }
         applyRoutePoints(entry.route, next);
+        syncRouteOverlays(layer, entry.route.id, next);
       });
     }
 
@@ -5530,6 +5766,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function clearPropsPane() {
       if (!propsPane) return;
       propsPane.hidden = true;
+      propsPane.classList.add('is-empty');
       var splitProps = document.getElementById('uml-pg-split-props');
       if (splitProps) splitProps.hidden = true;
       if (propsContent) propsContent.textContent = '';
@@ -5545,6 +5782,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       propsContent.textContent = '';
       propsPane.hidden = false;
+      propsPane.classList.remove('is-empty');
       var splitPropsEl = document.getElementById('uml-pg-split-props');
       if (splitPropsEl) splitPropsEl.hidden = false;
       if (propsDelete) propsDelete.hidden = false;
@@ -5577,7 +5815,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       inlineForm.style.alignItems = 'center';
       inlineForm.style.flexWrap = 'wrap';
       var lbl = document.createElement('label');
-      lbl.style.fontSize = '0.92em';
+      lbl.style.fontSize = '1em';
       lbl.style.fontWeight = '600';
       lbl.textContent = kind + ' [';
       var inp = document.createElement('input');
@@ -5593,7 +5831,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       inp.placeholder = placeholders[kind] || 'condition';
       inp.setAttribute('aria-label', kind + ' fragment condition');
       var lblClose = document.createElement('span');
-      lblClose.style.fontSize = '0.92em';
+      lblClose.style.fontSize = '1em';
       lblClose.textContent = ']';
       var ok = document.createElement('button');
       ok.type = 'button';
@@ -7416,18 +7654,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               item: ed,
               rect: layer.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(sid) + '"]'),
               parts: collectMoveParts(svg, ed.box, sid),
-              connectedRoutes: collectConnectedRoutes(svg, sid)
+              connectedRoutes: collectConnectedRoutes(svg, sid, ed)
             });
           });
           dragState = {
             svg: svg,
+            layer: layer,
             rect: rect,
             item: item,
             start: start,
             box: item.box,
             positions: allPositions,
             parts: collectMoveParts(svg, item.box, item.id),
-            connectedRoutes: collectConnectedRoutes(svg, item.id),
+            connectedRoutes: collectConnectedRoutes(svg, item.id, item),
             groupItems: groupItems.length > 1 ? groupItems : null
           };
           if (event.currentTarget && event.currentTarget.setPointerCapture) {
@@ -7590,6 +7829,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         replaceVirtualNoteText(id, newLabel);
         return;
       }
+      if (type === 'sequence') {
+        setSequenceLifelineHead(id, newLabel);
+        return;
+      }
       if (type === 'class' || type === 'state') {
         var nextId = identifierFromInlineLabel(newLabel);
         if (!nextId) return;
@@ -7607,6 +7850,49 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!newHead) return;
       var newLine = newHead + body;
       replaceLineForElementId(id, newLine);
+    }
+
+    function parseSequenceHeadText(text, fallbackId) {
+      var raw = String(text || '').trim();
+      if (!raw) return null;
+      if (raw.charAt(0) === ':') {
+        return { id: fallbackId, label: raw.replace(/^:\s*/, ': ') };
+      }
+      var colonIdx = raw.indexOf(':');
+      if (colonIdx !== -1) {
+        var idPart = raw.substring(0, colonIdx).trim();
+        var labelPart = raw.substring(colonIdx + 1).trim();
+        if (!idPart && labelPart) return { id: fallbackId, label: ': ' + labelPart.replace(/^:\s*/, '') };
+        if (idPart) {
+          var parsedId = identifierFromInlineLabel(idPart);
+          return { id: parsedId || fallbackId, label: labelPart || idPart };
+        }
+      }
+      return { id: fallbackId, label: raw };
+    }
+
+    function setSequenceLifelineHead(id, newHeadText) {
+      var line = getDeclarationLine(textarea.value, 'sequence', id);
+      if (line == null) return;
+      var parsed = parseSequenceHeadText(newHeadText, id);
+      if (!parsed || !parsed.id || !parsed.label) return;
+      var newId = parsed.id;
+      if (newId !== id && existingIds(textarea.value, 'sequence')[newId]) {
+        announce('"' + newId + '" is already used. Pick a different identifier.', true);
+        return;
+      }
+      var kind = /^actor\b/i.test(line.trim()) ? 'actor' : 'participant';
+      var schema = findElementSchema('sequence', kind);
+      if (!schema) return;
+      var newLine = buildElementLine(schema, newId, { label: parsed.label });
+      snapshotForUndo('rename-sequence:' + id);
+      var sourceText = replaceLineByMatch(textarea.value, 'sequence', function (candidate) {
+        return declarationIdForLine(candidate, 'sequence') === id;
+      }, newLine);
+      if (newId !== id) sourceText = renameReferencesInRelations(sourceText, id, newId);
+      textarea.value = sourceText;
+      renderDiagram();
+      selectAfterRender(newId, 'node');
     }
 
     function identifierFromInlineLabel(label) {
@@ -8318,7 +8604,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           part.el.setAttribute('transform', part.transform ? part.transform + ' ' + t : t);
         }
       });
-      applyConnectedRouteDelta(dragState.connectedRoutes, dragState.item.id, visualDx, visualDy);
 
       // Group move: apply the same visual delta to every other selected element.
       if (dragState.groupItems) {
@@ -8337,9 +8622,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               part.el.setAttribute('transform', part.transform ? part.transform + ' ' + t : t);
             }
           });
-          applyConnectedRouteDelta(g.connectedRoutes, g.item.id, visualDx, visualDy);
         });
       }
+
+      var movedDeltas = {};
+      movedDeltas[dragState.item.id] = { x: visualDx, y: visualDy };
+      var allConnectedRoutes = dragState.connectedRoutes || [];
+      if (dragState.groupItems) {
+        dragState.groupItems.forEach(function (g) {
+          movedDeltas[g.item.id] = { x: visualDx, y: visualDy };
+          allConnectedRoutes = mergeConnectedRouteEntries(allConnectedRoutes, g.connectedRoutes);
+        });
+      }
+      applyConnectedRouteDeltas(allConnectedRoutes, movedDeltas, dragState.layer);
 
       if (finish) {
         dragState.positions[dragState.item.id] = { x: nextX, y: nextY };
