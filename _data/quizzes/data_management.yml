@@ -3,7 +3,7 @@ description: "Test your ability to reason about ACID, CAP, and the RDBMS/NoSQL t
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A flight-booking service executes a transaction that (1) debits a passenger's credit card and (2) writes a "seat reserved" row. The server crashes between the two steps. On restart, the card shows a charge but no seat is reserved. **Which ACID property did the system fail to provide?**
@@ -22,7 +22,7 @@ questions:
     explanation: "Atomicity guarantees a transaction is indivisible: either every step of the transaction is applied, or none of them are. A half-applied state (debit ✓, reservation ✗) is the textbook symptom of missing atomicity. Durability is about changes that were *already committed* surviving a crash — here the transaction had not committed. Isolation is about *concurrent* interference, which this scenario doesn't involve."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Two customer-service agents click "apply \\$50 refund" on the same account at the same instant. Each reads the balance \\$100, subtracts 50, and writes back \\$50 — so one refund silently disappears. **Which ACID property would have prevented this lost update?**
@@ -79,7 +79,7 @@ questions:
     explanation: "The two 'Consistency' words refer to different things. ACID-C means committed transactions don't violate declared constraints. CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates to read replicas still honors ACID on the primary but can absolutely serve stale reads from a replica — failing CAP-C. Separating these two ideas is one of the most important conceptual moves in this chapter."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A DBMS acknowledges `COMMIT` to your application; half a second later the server loses power. On reboot, the change is **gone**. **Which ACID property did the system fail to provide?**
@@ -285,7 +285,7 @@ questions:
     explanation: "`student_id` alone would be unique only if each student were enrolled in exactly one course ever — not the case. What *is* unique is the combination: one row per (student, course, quarter). RDBMSs fully support **composite primary keys** for exactly this reason, and it is the idiomatic way to model a many-to-many join table. A surrogate auto-increment key is a valid secondary choice but doesn't express the natural uniqueness constraint — you'd still want a UNIQUE constraint on the triple."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A foreign key `Enrollment.course_id` points at `Course.course_id`. The DBMS rejects an `INSERT` into `Enrollment` where `course_id = "CS999"` because no such course exists. **What property is being enforced, and which ACID letter does this fall under?**

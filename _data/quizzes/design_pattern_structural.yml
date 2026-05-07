@@ -63,7 +63,7 @@ questions:
     explanation: "**This is the Transparent Composite trade-off — a runtime exception is thrown because leaves inherit child-management methods that are meaningless for them.** This is the **Transparent Composite** trade-off. By putting `add()`/`remove()` on the abstract `Component`, clients get a uniform interface (any component can be treated the same), but **leaves inherit methods that are semantically meaningless**. The leaf must handle this — typically by throwing `UnsupportedOperationException`. The **Safe Composite** alternative puts these methods only on `Composite`, preventing the call at compile time but requiring clients to downcast."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       All three patterns — Adapter, Facade, and Decorator — involve "wrapping" another object. What is the key distinction between them?

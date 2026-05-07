@@ -63,7 +63,7 @@ cards:
     answer: "`wc -l essay.txt`"
     explanation: "The `wc` (word count) command prints newline, word, and byte counts for a file. Adding the `-l` flag restricts the output to only the line count."
   - id: 13
-    difficulty: expert
+    difficulty: intermediate
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
     answer: "`sed 's/apple/orange/g'`"
     explanation: "The `sed` (stream editor) `s`: Stands for 'substitute'. `/`: The delimiter that separates the search and replacement terms. `apple`: The string you want to find. `orange`: The string you want to replace it with. `g`: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."

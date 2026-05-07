@@ -3,7 +3,7 @@ description: "Test your understanding of the Mediator pattern, its trade-offs, a
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       In a smart home, the AlarmClock, CoffeeMaker, Calendar, and Sprinkler coordinate via a SmartHomeHub (Mediator). The rule is: "When the alarm rings on a weekday, brew coffee and skip watering." If the team used Observer instead (CoffeeMaker observes AlarmClock directly), where would the "only on weekdays" rule live?
@@ -23,7 +23,7 @@ questions:
     explanation: "**With Observer, the CoffeeMaker would have to check the Calendar itself, creating the tight coupling that Mediator was designed to prevent.** With Observer, each observer **independently decides** how to react. The CoffeeMaker would need to check the Calendar itself to know if it's a weekday — meaning the CoffeeMaker now **depends on** the Calendar, creating exactly the tight coupling that the Mediator was meant to prevent. The Mediator **centralizes** this rule: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       What is the **core difference** between Observer and Mediator?

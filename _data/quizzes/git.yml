@@ -107,7 +107,7 @@ questions:
     explanation: "**`git stash` temporarily shelves uncommitted changes so you can switch contexts without making a messy commit.** `git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     question: "What happens when you enter a 'Detached HEAD' state in Git?"
     options:
       - "A merge conflict occurs that Git cannot resolve automatically."
@@ -146,7 +146,7 @@ questions:
     explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
   - id: 8
-    difficulty: expert
+    difficulty: intermediate
     question: "What is the primary purpose of Git Submodules?"
     options:
       - "To break a single, massive file into smaller, trackable pieces to improve performance."
@@ -293,7 +293,7 @@ questions:
     explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. Note that `git merge --squash` only **stages** the combined changes — you must follow it with `git commit` to actually create the squashed commit. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
 
   - id: 14
-    difficulty: intermediate
+    difficulty: advanced
     question: "A faulty commit was pushed to a shared 'main' branch last week and your teammates have already synced it. Why should you use `git revert` to fix this rather than `git reset --hard` followed by a force-push?"
     options:
       - "`git revert` automatically resolves any merge conflicts introduced by the bad commit."

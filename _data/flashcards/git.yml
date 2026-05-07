@@ -8,7 +8,7 @@ cards:
     answer: "`git stash`"
     explanation: "`git stash` temporarily shelves your staged and unstaged changes for tracked files. To include brand new, untracked files in the stash, you must use `git stash -u`."
   - id: 2
-    difficulty: advanced
+    difficulty: intermediate
     question: "You know a bug was introduced recently, but you aren't sure which commit caused it. How do you perform a binary search through your commit history to find the exact commit that broke the code?"
     answer: "`git bisect`"
     explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, making it highly efficient for tracking down regressions."

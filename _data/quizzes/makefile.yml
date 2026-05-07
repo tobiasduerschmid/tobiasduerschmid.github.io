@@ -63,9 +63,9 @@ questions:
         each rule invocation.
     explanation: "**`$@` represents the target name of the current rule.** `$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name."
   
-  - id: 4 
-    difficulty: basic
-    question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?" 
+  - id: 4
+    difficulty: intermediate
+    question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?"
     options: 
       - "To suppress `make` from echoing the command to the terminal." 
       - "To declare that the target is an action/command and not a physical file to be created." 

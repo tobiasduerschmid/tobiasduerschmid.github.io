@@ -83,7 +83,7 @@ questions:
     explanation: "**This is a Macro Command.** It implements the same command interface while holding and executing a sequence of child commands."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       When is Command probably over-engineering?
