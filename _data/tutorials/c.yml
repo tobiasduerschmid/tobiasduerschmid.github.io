@@ -30,6 +30,12 @@ steps:
 
       Think of C++ as a suit of high-tech armor: classes, `std::string`, templates — layers of protection built over decades. C is what's underneath: raw, exposed, powerful. Learning C means *voluntarily removing the armor* to understand what it was protecting you from. That's not a downgrade — it's an origin story. Every systems programming superhero (Linux kernel devs, embedded engineers, OS hackers) started right here.
 
+      ### Prerequisites — what we assume you know
+
+      We assume you've written non-trivial C++ — meaning you've used `std::cout`, `std::string`, `std::vector`, classes with constructors / destructors, references (`int&`), and `new` / `delete`. You should be comfortable reading a `for` loop, a function signature, and a header `#include`. **Templates, the STL beyond `<vector>` / `<string>`, RAII, and exceptions are *referenced* but not *required* — we'll mention what each loses when we drop them.** No prior C exposure required; in fact, prior C will make some sections feel slow.
+
+      Total time: **~120 min** for all 11 chapters at a deliberate pace. Each chapter is gated by working code + a knowledge check, so you can stop and resume between chapters without losing state.
+
       ### 🎯 You will learn to
 
       - Identify the C++ features that simply don't exist in C (references, namespaces, overloading, templates).
@@ -1003,8 +1009,17 @@ steps:
         - **Why `sizeof(dest) - 1`?** Reserve one byte for the null terminator. `sizeof` returns the total array size (8), so we copy at most 7 characters plus `'\0'`.
 
     tests:
-      - description: "Uses strcmp for string comparison (not ==)"
-        command: "cd /tutorial/c_project && grep -q 'strcmp' strings_lab.c"
+      - description: "Uses strcmp for string comparison (and removed the `lang == \"C\"` pointer comparison)"
+        command: |
+          cd /tutorial/c_project
+          # Positive: strcmp must appear
+          grep -q 'strcmp' strings_lab.c \
+            || { echo "Couldn't find strcmp. Replace `lang == \"C\"` with `strcmp(lang, \"C\") == 0`."; exit 1; }
+          # Negative: the broken `lang == "C"` pointer comparison must be GONE
+          if grep -qE 'lang[[:space:]]*==[[:space:]]*"C"' strings_lab.c; then
+            echo "`lang == \"C\"` is still in the file. That compares pointer addresses, not string contents. Replace it with strcmp(lang, \"C\") == 0."
+            exit 1
+          fi
         hints:
           - text: "Bug 1 is `if (lang == \"C\")` — that's a pointer comparison, not a string comparison. C doesn't have an overloaded `==` for strings."
             condition: "code_contains: lang == \"C\""
@@ -1134,6 +1149,51 @@ steps:
       | Inheritance | yes | yes | **no** |
 
       So when a C++ programmer writes `struct Point { double x, y; };`, they have a perfectly valid public-by-default C++ class. When you write the same line in C, you have a *passive data record* — no methods, no encapsulation, no `this`. Functions that operate on a `struct` live *outside it* and take a pointer to it as their first parameter. That convention is everything you'll do in this step.
+
+      ### Side-by-side: same idea in C++ and C
+
+      To lock in the paradigm shift, here's the *same* concept (a translatable point) written both ways. The C++ version uses methods; the C version uses standalone functions that take a pointer as their first argument:
+
+      ```cpp
+      // C++: data + methods bound together
+      struct Point {
+          double x, y;
+          void translate(double dx, double dy) {
+              x += dx; y += dy;
+          }
+          double magnitude() const {
+              return std::sqrt(x*x + y*y);
+          }
+      };
+
+      Point p{3, 4};
+      p.translate(1, 1);              // method call: p.translate(...)
+      double m = p.magnitude();
+      ```
+
+      ```c
+      // C: data and functions live separately, linked by convention
+      typedef struct {
+          double x, y;
+      } Point;
+
+      void point_translate(Point *p, double dx, double dy) {
+          p->x += dx; p->y += dy;
+      }
+      double point_magnitude(const Point *p) {
+          return sqrt(p->x * p->x + p->y * p->y);
+      }
+
+      Point p = {3, 4};
+      point_translate(&p, 1, 1);      // function call: point_translate(&p, ...)
+      double m = point_magnitude(&p);
+      ```
+
+      Three conventions to internalize from the C version:
+
+      1. **Module prefix on every function** — `point_translate`, `point_magnitude`. C has no namespaces, so the prefix is the namespace.
+      2. **First parameter is `Type *self`** — by convention. The function knows nothing about its receiver until you hand it one. Pass `&p` at the call site instead of writing `p.translate`.
+      3. **Use `const Type *self` for read-only access** — `point_magnitude` doesn't modify `p`, so its parameter is `const Point *`. This is C's best approximation of a C++ `const` method.
 
       ### Declaring and Using Structs
 
@@ -1338,6 +1398,20 @@ steps:
             2: "strcpy works fine with struct members syntactically — that's part of the danger. It compiles and runs; it just overflows when the source is too long."
             3: "Reverse of reality: strncpy may *not* null-terminate when src is at least as long as the limit. You have to add `'\\0'` yourself."
           explanation: "As we learned in the strings step, `strcpy` has no length limit and can overflow the destination buffer. `strncpy` copies at most `n` characters, making it safe for fixed-size char arrays like `name[50]`. But remember: `strncpy` may NOT null-terminate, so we add `'\\0'` manually."
+
+        - question: |
+            In C++, you'd write `p.translate(1, 1)`. The closest equivalent in idiomatic C is:
+          options:
+            - "p.translate(1, 1) — C supports method-call syntax on structs since C99"
+            - "translate(p, 1, 1) — pass the struct by value, modify the copy"
+            - "point_translate(&p, 1, 1) — module-prefixed function taking a `Point *` first argument"
+            - "p->translate(1, 1) — use the arrow operator to dispatch"
+          correct_index: 2
+          option_feedback:
+            0: "C99 added many things, but methods are not among them. Member-access syntax (`p.x`) only reaches *fields*, never functions."
+            1: "Passing by value would copy the struct and modify the copy — the caller's `p` stays unchanged. To translate the *original*, you need a pointer."
+            3: "`->` is for dereferencing struct *pointers* to access fields (`pp->x`). It's not method dispatch — there are no methods to dispatch to in C."
+          explanation: "The C convention is `prefix_action(&p, args...)`. The prefix (`point_`) substitutes for namespaces, the `&p` substitutes for the implicit `this`, and the function lives outside the struct. This pattern repeats for every C 'class-like' API you'll meet — `pthread_create`, `fopen`, `git_repository_open` all follow it."
 
   # --------------------------------------------------------------------------
   # STEP 7: Unions — One Memory, Multiple Interpretations
@@ -1604,6 +1678,29 @@ steps:
             2: "Reverse: strncpy *does* null-terminate (and fills the rest with `\\0`) when the source is shorter than the limit. The danger is the *long-source* case."
             3: "strncpy's behavior is fully specified by the C standard; it doesn't vary by compiler. Compilers vary on warnings, not on this semantics."
           explanation: "strncpy null-terminates ONLY if the source string is shorter than `n`. Since `\"hello\"` (5 chars) < 32, the remaining bytes are filled with `\\0`. But if the source were 32+ chars, no null terminator would be added. The safe habit is always `s[sizeof(s)-1] = '\\0'` after strncpy."
+
+        - question: |
+            A teammate writes `print_value` like this — *no `switch` on the tag*:
+
+            ```c
+            void print_value(const TaggedValue *val) {
+                printf("int: %d, double: %.2f, string: %s\n",
+                       val->i, val->d, val->s);
+            }
+            ```
+
+            What's the most accurate description of what this code does?
+          options:
+            - "It prints all three fields side-by-side, which is more informative than the tag-based version"
+            - "It compiles fine, but reads union members other than the last-written one — undefined behavior, garbage output for two of the three fields"
+            - "It refuses to compile because a union allows only one access at a time"
+            - "It works correctly only when the tag is set to TYPE_INT"
+          correct_index: 1
+          option_feedback:
+            0: "Reading union members you didn't write doesn't give 'all three values' — it reinterprets the same bytes through three types. Two of the three readings are nonsense."
+            2: "The compiler can't tell which member was last written — that's runtime state. It accepts the code; the bug is at run time, not compile time."
+            3: "The bug isn't tag-specific. Whatever the tag says, two of the three accesses still read bytes that were last written under a different type."
+          explanation: "Without the tag-based dispatch, `print_value` reads ALL three union members — but only one was ever validly written. The other two reads reinterpret raw bytes through the wrong type, which is undefined behavior. This is *exactly* what the tag is for: it tells you which member is currently meaningful, so you only read that one. Skipping the tag dispatch defeats the entire pattern."
 
   # --------------------------------------------------------------------------
   # STEP 8: Function Pointers — Callbacks in C
@@ -2182,6 +2279,47 @@ steps:
 
       Notice the pattern: `printf`, `scanf`, and `fgets` all have file-based counterparts — just add `f` and pass the `FILE*` as the first (or last) argument.
 
+      ### ✏️ Predict: how do you know you've reached end-of-file?
+
+      You're about to write a loop that reads every line from a file. The natural way to write it in many languages is `while (not at EOF) { read line; process line; }`. Most C tutorials warn against the equivalent `while (!feof(fp))` — but *why*?
+
+      Suppose `data.txt` contains exactly two lines:
+
+      ```
+      hello
+      world
+      ```
+
+      And you write:
+
+      ```c
+      while (!feof(fp)) {
+          fgets(line, sizeof(line), fp);
+          printf("got: %s", line);
+      }
+      ```
+
+      How many lines does the loop print? Pick one — commit before scrolling:
+
+      - (a) 2 — `feof` becomes true exactly when we've consumed both lines.
+      - (b) 3 — the last iteration prints `world` *twice* because `feof` doesn't trip until after a failing read.
+      - (c) Infinite loop — `feof` is only set by `fseek`, never by `fgets`.
+      - (d) 0 — `feof` returns true on the first iteration because the file is opened with the cursor past the end.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      The answer is **(b)**. `feof` returns true *only after* a read function has failed to read past the end. The loop:
+
+      1. Reads "hello\n", `feof` is still false → prints `got: hello`.
+      2. Reads "world\n", `feof` is still false (we haven't *tried* to read past EOF yet) → prints `got: world`.
+      3. `feof` is *still* false! Re-enters loop.
+      4. `fgets` fails (returns NULL), but `line` still contains "world\n" from the previous read. Prints `got: world` *again*.
+      5. *Now* `feof` is true → exits.
+
+      The fix that this tutorial's code uses: `while (fgets(line, sizeof(line), fp) != NULL)`. `fgets` returns NULL exactly when there's nothing more to read — no off-by-one, no stale buffer. **Rule: drive the loop by the read function's return value, not by `feof`.**
+
+      </details>
+
       ### The Resource Management Pattern
 
       C has no RAII (like C++ destructors) and no `with` statement (like Python). You must **manually close every file you open**. Forgetting `fclose()` can cause:
@@ -2724,6 +2862,20 @@ steps:
             - "new_node->next = tail;"
             - "head = new_node;"
           explanation: "Allocate a new node, set its value, set its next to NULL (it's the new tail). Link it to the current tail with `tail->next = new_node`, then update the tail pointer. `new_node->next = tail` would create a circular reference (wrong direction). `head = new_node` would lose the rest of the list."
+
+        - question: |
+            **[Evaluate]** Your `main()` keeps both a `head` and a `tail` pointer. A teammate proposes simplifying it to *only* a `head` pointer — every insertion would walk to the end of the list before linking the new node. For a list of *N* existing nodes, what's the cost of inserting *one* new node at the tail under each design?
+          options:
+            - "head+tail: O(1). head-only: O(1). Pointers are free, so the design choice doesn't matter."
+            - "head+tail: O(1). head-only: O(N). Without a tail pointer, every insertion walks the entire list."
+            - "head+tail: O(N). head-only: O(1). Maintaining the tail adds bookkeeping overhead per insert."
+            - "Both are O(log N) because linked lists have logarithmic access."
+          correct_index: 1
+          option_feedback:
+            0: "Pointer arithmetic *is* free; the cost is the *traversal*. Without a tail pointer, you'd visit each existing node before linking the new one."
+            2: "Maintaining `tail` is two assignments per insert (`tail->next = new; tail = new`) — that's O(1). The *traversal* in the head-only design is what dominates."
+            3: "Linked lists don't have logarithmic access at all — that's balanced trees. Linked lists give you O(1) at the head and O(N) anywhere else."
+          explanation: "With a tail pointer, each tail-insert is two pointer assignments — O(1). Without one, you walk the entire list to find the tail before linking — O(N) per insert, O(N²) for building a list of N nodes. This is the same cost analysis behind C++'s `std::list` (which also stores both endpoints) and Python's `collections.deque` (doubly-linked, both ends O(1))."
 
         - question: "**[Final Integration]** Which of the following C features have you used in the linked list program? (Select all that apply)"
           type: multiple

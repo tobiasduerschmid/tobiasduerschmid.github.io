@@ -28,6 +28,14 @@ steps:
 
       Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain — and you'll appreciate Make's design only after you've suffered through manual compilation. Let's feel that pain first.
 
+      ### Prerequisites
+
+      You should be comfortable reading C source code at the level of "a function that takes parameters and returns a value." You don't need to know what `static` does or how pointers work — the C in this tutorial is deliberately tiny. **If C is rusty, the [C for C++ Programmers tutorial](/SEBook/tools/c-tutorial) is a focused warm-up that complements this one.**
+
+      You also need shell basics: `cd`, `ls`, running an executable. No prior Make exposure required.
+
+      Total time: **~60 min** for all 7 chapters.
+
       ### 🎯 You will learn to
 
       - Apply `gcc` to compile a multi-file C project by hand
@@ -168,6 +176,20 @@ steps:
             1: "Library downloading is a package manager's job (apt, brew, vcpkg, conan). Make runs commands you've written; it doesn't fetch dependencies."
             3: "Make can run jobs in parallel (`make -j`), but that's a bonus. Even with `-j 1`, Make's superpower — timestamp-based skipping — still applies."
           explanation: "Make tracks file modification timestamps (and a dependency graph) to determine which targets are out of date. It only rebuilds what's actually needed."
+
+        - question: |
+            A teammate suggests "we don't need Make — I'll just write a shell alias `build='gcc main.c math.c io.c -o app'` and we'll all use it." What's the most important thing this *doesn't* solve?
+          options:
+            - "Aliases don't work in zsh, only bash"
+            - "Aliases can't pass arguments, so it can't compile other projects"
+            - "Aliases still recompile every file every time — they have no memory of what changed"
+            - "Aliases are slower than Makefiles by about 2× per invocation"
+          correct_index: 2
+          option_feedback:
+            0: "Aliases work in both bash and zsh. The shell isn't the issue."
+            1: "Aliases *can* pass arguments via shell expansion, and even if they couldn't, that's a feature gap — not the *core* problem Make exists to solve."
+            3: "Speed isn't the issue. Both invocations call `gcc` once. The difference is *what* gcc compiles — Make can skip files that didn't change; an alias can't."
+          explanation: "Aliases (and shell scripts, and IDE 'run' buttons) just save you typing. They don't track which files changed. The core capability Make adds is the *dependency graph + timestamp comparison* — and no amount of shell-level tooling reproduces that without re-implementing Make."
 
   # --------------------------------------------------------------------------
   # STEP 2: The Core Anatomy & The "Tab" Trap
@@ -840,11 +862,37 @@ steps:
       - Apply `touch` to simulate a file edit and observe selective recompilation
       - Evaluate when implicit header dependencies will silently sabotage a build
 
-      ### The Core Idea: Timestamp Comparison
+      ### The Core Idea: a Dependency Graph + Timestamps
 
-      Make's central trick is brutally simple: it compares the **last-modified timestamp** of each target against its prerequisites. If a prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips it.
+      Make's central trick is brutally simple: it builds a **dependency graph** from your rules, then walks the graph comparing the **last-modified timestamp** of each target against its prerequisites. If a prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips it.
 
-      This timestamp heuristic is what turns a 2-hour full rebuild into a 2-second incremental one.
+      For our 3-file project, the graph Make builds from your Makefile looks like:
+
+      ```mermaid
+      flowchart TD
+          app["app"] --> mainO["main.o"]
+          app --> mathO["math.o"]
+          app --> ioO["io.o"]
+          mainO --> mainC["main.c"]
+          mathO --> mathC["math.c"]
+          ioO --> ioC["io.c"]
+      ```
+
+      When you run `make`, Make starts at the top (`app`), walks down to the leaves (`.c` files), and rebuilds any node whose timestamp is older than at least one of its prerequisites. **Make is a graph algorithm, not a script.**
+
+      This timestamp-on-a-DAG heuristic is what turns a 2-hour full rebuild into a 2-second incremental one.
+
+      ### Your new best friend: `make -n` (dry run)
+
+      Before we run any `make` command for real, let's introduce **dry-run mode** — the single most useful Make flag for debugging build behavior:
+
+      ```bash
+      make -n          # show what `make` would do, without running anything
+      ```
+
+      `-n` (short for `--dry-run`) prints the recipe lines `make` *would* execute, but doesn't run them. It's read-only and risk-free. Use it whenever you're about to type `make` and aren't 100% sure what's about to happen — especially before destructive commands like `make clean install`.
+
+      A close cousin is `make --trace`, which runs the build for real but also prints *why* each command runs (e.g. "target X is older than prerequisite Y"). Both flags surface the otherwise-invisible reasoning Make is doing.
 
       ### Task 1: Check if up to date
 
@@ -893,9 +941,22 @@ steps:
 
       ### Task 4: Modify — try it on a different file
 
-      Now `touch main.c` and run `make`. Predict first: which files get recompiled this time? (Hint: the dependency graph hasn't changed — only which leaf was touched.) Run and confirm.
+      Now `touch main.c` and run `make`. Predict first: which files get recompiled this time? (Hint: the dependency graph hasn't changed — only which leaf was touched.) **Verify your prediction with `make -n` *before* running `make`** — it'll print the commands without executing them. Then run `make` for real and confirm `make -n`'s prediction matched what actually happened.
 
-      Then try `touch Makefile` and predict again. (Surprise: the Makefile itself isn't a prerequisite of any rule, so nothing rebuilds. The dependency graph is *only* what's written between colons.)
+      Then try `touch Makefile` and predict again, again checking with `make -n` first. (Surprise: the Makefile itself isn't a prerequisite of any rule, so nothing rebuilds. The dependency graph is *only* what's written between colons. `make -n` would print nothing.)
+
+      ### Task 5: Try `--trace` to see *why*
+
+      Reset to a known state, then re-run with `--trace`:
+
+      ```bash
+      touch math.c
+      make --trace
+      ```
+
+      Notice the extra lines like `Makefile:7: target 'math.o' does not exist` or `target 'app' is older than prerequisite 'math.o'`. `--trace` is what you reach for when `make` rebuilds something you didn't expect *and* you can't figure out which prerequisite tripped it. It prints the causal reason at every node.
+
+      **Habit to build:** when in doubt, `make -n` first. When `make -n` itself surprises you, escalate to `make --trace`. These two flags are your X-ray vision into the dependency graph — and you'll reach for them often once you start writing real Makefiles.
 
       <details markdown="1"><summary>⚠️ The classic dependency-tracking footgun: header-file changes</summary>
 
@@ -999,6 +1060,34 @@ steps:
             3: "That message appears for `make all` if a default `all:` target is *missing*. With a defined target like `app:`, Make's no-op message is 'is up to date'."
           explanation: "When all targets are newer than their prerequisites, Make prints `make: 'app' is up to date` and does nothing. This is the incremental build in action — skipping all work when nothing needs rebuilding."
 
+        - question: |
+            You're about to run `make install` on a project you're unfamiliar with. You want to see what it'll *do* before it actually does it. Which command answers that?
+          options:
+            - "`make --check install` — Make has a built-in safety mode for checking commands"
+            - "`make -n install` — print the recipe lines without executing them"
+            - "`make install --read-only` — runs in observe mode"
+            - "There's no way to preview; you have to run it and hope"
+          correct_index: 1
+          option_feedback:
+            0: "There's no `--check` flag. `-n` (or `--dry-run` / `--just-print`) is the actual flag."
+            2: "`--read-only` isn't a Make flag. The dry-run flag is `-n`."
+            3: "Make explicitly supports preview via `-n`. The whole point is to *not* have to hope."
+          explanation: "`make -n` (also spelled `--dry-run` or `--just-print`) prints the recipe Make *would* run without executing it. This is the safest way to check unfamiliar Makefiles before they touch your filesystem. Habit: when in doubt, `-n` first."
+
+        - question: |
+            You ran `make` and a target rebuilt that you didn't expect to. You want to know *why* — which prerequisite tripped the rebuild. Which flag tells you?
+          options:
+            - "`make -n` — dry-run shows everything"
+            - "`make --trace` — explains which prerequisite triggered each recipe"
+            - "`make --quiet` — suppresses noise so the cause is obvious"
+            - "Read the timestamps with `ls -l` and reason it out manually"
+          correct_index: 1
+          option_feedback:
+            0: "`-n` shows *what* would run, not *why*. Useful for prediction, but doesn't print the causal explanation."
+            2: "`--quiet` (or `-s`) hides the recipe lines as they run. That's the opposite of what you need for diagnosis."
+            3: "You can do this — and you'll need to occasionally — but `--trace` automates the reasoning Make is already doing internally. Cheaper than reasoning by hand."
+          explanation: "`make --trace` runs the build *and* prints the prerequisite that triggered each recipe (e.g. `target 'app' is older than prerequisite 'math.o'`). When `-n` shows you something surprising, escalate to `--trace` to get the causal reason."
+
         - question: "**[Interleaved: Revisit Step 3]** What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
           options:
             - "`${CC}`"
@@ -1064,6 +1153,45 @@ steps:
 
       Save and run `make clean` again. Even though a file named `clean` exists, Make ignores it and correctly removes your build files.
 
+      ### Task 4: Generalize — add an `all` phony target
+
+      One phony target is enough to learn the concept. Two is enough to *generalize* it: every real Makefile has multiple phony targets (`clean`, `all`, `test`, `install`, `run`). Conventionally they're declared together on a single `.PHONY:` line.
+
+      Add a second phony target `run` that builds *and* executes the program. The convention for phony targets that depend on real ones is to list the prerequisites on the rule line:
+
+      ```make
+      .PHONY: clean run
+      run: app
+      	./app
+      ```
+
+      Now `make run` will (1) build `app` if it's out of date — Make follows the prerequisite graph — and (2) execute it. That's the same `.PHONY` mechanism applied to a different command verb.
+
+      Don't forget to also delete the dummy `clean` file you created in Task 2 (`rm clean`) — otherwise it sticks around forever.
+
+      ### ⚠️ One recipe line, one shell — the `cd` trap
+
+      Before you write more complex recipes, lock in this rule: **each recipe line runs in its own fresh shell.** State doesn't survive across lines.
+
+      That means a recipe like this *doesn't* do what it looks like:
+
+      ```make
+      run: app
+      	cd build
+      	./app          # WRONG — `cd build` was in a different shell
+      ```
+
+      The first line `cd build` runs in shell A and exits. The second line `./app` starts shell B in the *original* working directory — `cd` from shell A had no effect on shell B. Your build-directory recipe will silently look for `./app` in the wrong place.
+
+      The fix is to chain commands with `&&` *inside one shell line*:
+
+      ```make
+      run: app
+      	cd build && ./app   # ✔ both commands share one shell
+      ```
+
+      You'll meet this trap the moment you start using subdirectories or environment variables (`CFLAGS=-O2; gcc ...` on two lines doesn't export the flag). Make has a `.ONESHELL:` directive that flips the model — but treat that as an advanced override; the standard mental model is "one recipe line = one shell".
+
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
 
@@ -1073,27 +1201,54 @@ steps:
     solution:
       files:
         - path: "make_project/Makefile"
-          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean run\nrun: app\n\t./app\n\nclean:\n\trm -f *.o app\n"
           language: "makefile"
+      commands:
+        - "rm -f /tutorial/make_project/clean"
       explanation: |
         - **Test 1:** `grep -q '\.PHONY:.*clean' Makefile` — `.PHONY: clean` must appear in the file (before or after the `clean:` rule).
-        - **Test 2:** `grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null` — the `clean` target must exist, `make clean` must succeed, and afterwards no `app` or `.o` files should remain.
+        - **Test 2:** `make clean` must succeed and remove `app` and `.o` files.
+        - **Test 3:** `.PHONY:.*run` — the second phony target must also be declared, demonstrating the generalization to multiple phony targets.
         - **The sabotage scenario:** If a file named `clean` exists in your project directory and `.PHONY` is absent, Make thinks `clean` is a real file target. Since `clean` has no prerequisites, Make sees it as always up-to-date and refuses to run the recipe (`make: 'clean' is up to date.`).
-        - **`.PHONY: clean`:** Tells Make that `clean` is a command name, not a filename. Make ignores any file on disk named `clean` and always runs the recipe. Always declare non-file targets (like `clean`, `test`, `all`) as `.PHONY`.
+        - **`.PHONY: clean run`:** Conventionally, all phony targets are declared on one `.PHONY:` line. Adding `run` shows that the same mechanism applies to *any* command-style target — `test`, `install`, `lint`, `docs`, you name it.
+        - **`run: app`:** Phony targets *can* depend on real ones. Make builds `app` first if it's out of date, then runs `./app`. This is why `make run` is "do whatever's needed to build, then execute" in one command.
         - **`rm -f *.o app`:** `-f` suppresses errors when files don't exist. Without it, `make clean` would fail if called when already clean.
 
     tests:
-      - description: "Added .PHONY: clean to Makefile"
-        command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
+      - description: "Added .PHONY declaration covering both `clean` and `run`"
+        command: |
+          cd /tutorial/make_project
+          grep -q '\.PHONY:.*clean' Makefile \
+            || { echo "Missing `.PHONY: clean` — Make needs to know clean is a command, not a file."; exit 1; }
+          grep -q '\.PHONY:.*run' Makefile \
+            || { echo "Add `run` to your `.PHONY:` line. Convention: one .PHONY: line listing every phony target — e.g. `.PHONY: clean run`."; exit 1; }
         hints:
           - title: "Layer 1 — orientation"
-            text: "Add a `.PHONY: clean` line just above the `clean:` rule. This declaration tells Make: 'don't look for a file named clean — run the recipe regardless.'"
+            text: "Add a `.PHONY: clean run` line. This single declaration immunizes both phony targets against same-named files on disk."
             condition: "code_missing: .PHONY"
           - title: "Layer 2 — strategy"
-            text: "Convention is one `.PHONY:` line listing every phony target. For now you only have one (clean), but as you add `all`, `test`, `install`, the line becomes: `.PHONY: clean all test install`."
-            condition: "code_contains: .PHONY"
+            text: "Conventionally a Makefile has *one* `.PHONY:` line listing every phony target: `.PHONY: clean run`. Some projects spread it across two lines instead — both are accepted by Make."
+            condition: "code_missing: run"
+      - description: "The `run` rule depends on `app` and executes `./app`"
+        command: |
+          cd /tutorial/make_project
+          # Find the run rule — must depend on app
+          grep -qE '^run:[[:space:]]*app' Makefile \
+            || { echo "The `run:` rule should depend on `app` so Make builds it first if needed."; exit 1; }
+          # The recipe should call ./app
+          if ! awk '/^run:/{flag=1; next} /^[a-zA-Z._]/{flag=0} flag' Makefile | grep -q '\./app'; then
+            echo "The `run:` recipe should call `./app`."
+            exit 1
+          fi
+        hints:
+          - title: "Layer 1 — orientation"
+            text: "The `run` target should build the program if needed, then execute it. In Make terms: depend on `app`, recipe is `./app`."
+            condition: "code_missing: run"
+          - title: "Layer 2 — strategy"
+            text: "Skeleton:\n```make\nrun: app\n\t./app\n```\nThe Tab before `./app` is non-negotiable (Step 2)."
+            condition: "code_missing: ./app"
       - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
-        command: "cd /tutorial/make_project && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
+        command: "cd /tutorial/make_project && rm -f clean && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
         hints:
           - title: "Layer 1 — orientation"
             text: "The `clean:` rule needs no prerequisites and one recipe line. The recipe should remove all `.o` files and the `app` binary."
@@ -1158,6 +1313,42 @@ steps:
             3: "Phony deps don't slow the produced binary — they slow the *build* (constant unnecessary rebuilding)."
           explanation: "Because a Phony target is NEVER up-to-date, any real file that depends on it will also be considered out-of-date every time. This forces constant, unnecessary recompilation."
 
+        - question: |
+            A teammate writes this rule, expecting it to build `app` inside the `build/` subdirectory:
+
+            ```make
+            run: app
+            	cd build
+            	./app
+            ```
+
+            They run `make run` and get `bash: ./app: No such file or directory`. What's wrong?
+          options:
+            - "Make is buggy — `cd` should work fine in recipes"
+            - "Each recipe line runs in its own fresh shell — `cd build` happens in shell A, `./app` runs in shell B starting from the original directory"
+            - "Make doesn't support shell built-ins like `cd`; only external commands"
+            - "The recipe needs `.ONESHELL:` to be added at the top of the Makefile"
+          correct_index: 1
+          option_feedback:
+            0: "Make's behavior here is by design (and POSIX-standard). The recipe model is one-line-one-shell, not one-script-one-shell."
+            2: "`cd` works in recipes — but only within the line where it appears. Make doesn't filter built-ins; it just spawns a new shell each line."
+            3: "`.ONESHELL:` *is* an escape hatch that fixes this case, but it's not the *standard* mental model. The conventional fix is `cd build && ./app` on one line."
+          explanation: "Each recipe line spawns a new shell. State (working directory, environment variables, shell variables) doesn't carry across lines. The conventional fix is to chain commands with `&&` on one line: `cd build && ./app`. `.ONESHELL:` does change the model globally for the Makefile, but most Makefiles in the wild assume the one-line-one-shell convention, so it's the model to internalize."
+
+        - question: |
+            Your Makefile has `.PHONY: clean` (single phony target). You decide to add `test` and `install` as phony targets too. Which of these is the **idiomatic** declaration?
+          options:
+            - "Three separate `.PHONY:` lines: one for each target"
+            - "One `.PHONY: clean test install` line listing all phony targets together"
+            - "Wrap them in a list: `.PHONY: [clean, test, install]`"
+            - "Phony targets can't be combined — each needs its own `.PHONY:` block"
+          correct_index: 1
+          option_feedback:
+            0: "Make accepts multiple `.PHONY:` lines, but the convention is one consolidated declaration. Spreading them out makes it harder to scan for which targets are phony."
+            2: "Make doesn't use list literals — `[...]` would be parsed as part of a target name. Phony targets are space-separated, like prerequisites."
+            3: "They absolutely can be combined. The whole point of one `.PHONY:` line is that you can list all phony targets at once."
+          explanation: "The conventional form is `.PHONY: clean test install` — space-separated, single line. As you add more phony targets (`run`, `lint`, `docs`, `format`...), you extend that one line rather than adding new declarations."
+
         - question: "**[Interleaved: Revisit Step 4]** In the pattern rule `%.o: %.c`, which automatic variable expands to the **target** (the `.o` file)?"
           options:
             - "`$<`"
@@ -1193,16 +1384,75 @@ steps:
       - Understand the **Incremental Build** magic via the Dependency Graph.
       - Use **.PHONY** to create reliable command shortcuts.
 
+      ### Your debugging toolkit
+
+      Most Make problems aren't *syntax* problems — they're *graph reasoning* problems ("why did this rebuild?", "why didn't this rebuild?", "why did `-j` break my build?"). These six flags are the X-ray machines that surface what Make is doing internally:
+
+      | Flag | What it does | Reach for it when… |
+      |---|---|---|
+      | `make -n` (or `--dry-run`) | Prints recipes without running them | About to run an unfamiliar / risky `make` command |
+      | `make --trace` | Runs and prints *which prerequisite* triggered each recipe | A target rebuilt and you don't know why |
+      | `make -p` | Dumps Make's internal database — every rule, variable, and pattern it knows about | Wondering "is there an implicit rule fighting mine?" |
+      | `make --warn-undefined-variables` | Warns when an undefined variable is referenced (typo catcher) | Tracking down a typo like `$(CFLAS)` instead of `$(CFLAGS)` |
+      | `make -j N` | Runs N recipes in parallel | Speeding up a clean rebuild on a multi-core machine |
+      | `make -j N --shuffle=random` | Parallel + randomized prerequisite order | Stress-testing for missing prerequisites — see below |
+
+      Memorize `-n` and `--trace` first; the rest you'll meet on demand.
+
+      ### The `--shuffle` stress test
+
+      Here's a deceptively important habit. After your Makefile *seems* to work, run:
+
+      ```bash
+      make clean && make -j4 --shuffle=random
+      ```
+
+      `--shuffle=random` randomizes the order in which Make picks prerequisites at each node. **A correct Makefile produces the same result regardless of order; an incorrect one — one with missing prerequisite declarations — produces failures that look random.** This is the cheapest way to surface "I forgot to declare that `app` depends on `lib.o`" bugs that hide silently when prerequisites happen to be processed in a lucky order. CI pipelines for serious build systems run this in their pre-merge checks for exactly this reason.
+
+      ### Going further: two ideas worth exploring
+
+      <details markdown="1"><summary>📖 Idea 1: Order-only prerequisites for build directories</summary>
+
+      Real projects don't dump `.o` files next to source files — they put them in a `build/` directory. The naive way to add a dir prerequisite causes Make to over-rebuild because directory timestamps update whenever a file is added. The fix is **order-only prerequisites** — listed *after* a `|` separator:
+
+      ```make
+      $(BUILD)/%.o: %.c | $(BUILD)
+      	$(CC) $(CFLAGS) -c $< -o $@
+
+      $(BUILD):
+      	mkdir -p $(BUILD)
+      ```
+
+      The `| $(BUILD)` says: "this directory must exist before the recipe runs, but don't rebuild me just because the directory's timestamp changed." This separates "must exist" from "must be newer." It's one of the highest-leverage tricks in real-world Makefiles.
+
+      </details>
+
+      <details markdown="1"><summary>📖 Idea 2: Auto-generated header dependencies (`-MMD`)</summary>
+
+      The footgun from Step 5 — header changes don't trigger rebuilds — is solved in the real world with auto-generated `.d` files. Two changes:
+
+      ```make
+      CFLAGS = -Wall -std=c11 -MMD -MP        # gcc emits .d files alongside .o
+
+      -include $(OBJS:.o=.d)                   # pull them in (- means: don't error if missing)
+      ```
+
+      The first time you compile, gcc's `-MMD` flag writes out a `.d` file per `.o` containing all the headers each `.c` includes. The `-include` line pulls those into the Makefile on subsequent runs. Now `make` *automatically* knows that `main.o` depends on `math.h` — no manual maintenance.
+
+      `-MP` adds phony targets for each header so deleting a header doesn't break the build. Both flags together are the production-grade way to handle C/C++ header dependencies.
+
+      </details>
+
       ### Final Pro-Tip: Recursive Make
       As your projects grow, you might be tempted to put a Makefile in every subdirectory and call `make -C subdir` from a top-level Makefile. This is known as **Recursive Make**.
-      
+
       > [!WARNING]
       > **Recursive Make is often considered harmful.** It breaks the global visibility of the dependency graph, which can lead to subtle bugs where files aren't recompiled when they should be. For larger projects, consider modern alternatives or a single, "non-recursive" top-level Makefile that includes sub-makefiles.
 
     solution:
       files:
         - path: "make_project/Makefile"
-          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean run\nrun: app\n\t./app\n\nclean:\n\trm -f *.o app\n"
           language: "makefile"
       commands:
         - "make clean"
@@ -1210,7 +1460,7 @@ steps:
       explanation: |
         This step is a review — the canonical solution shows the complete Makefile from Steps 1–6 in its final form. The tests below verify your work from previous steps is still intact.
 
-        - This Makefile demonstrates every concept from the tutorial in 10 lines:
+        - This Makefile demonstrates every concept from the tutorial in ~13 lines:
           - **Variables (`CC`, `CFLAGS`, `OBJS`):** DRY principle — change the compiler or flags in one place.
           - **`$(OBJS)` prerequisite:** Declarative dependency graph — Make knows which `.o` files `app` needs.
           - **`$^` and `$@`:** Automatic variables — no repetition of filenames in the link command.
@@ -1314,7 +1564,35 @@ steps:
           explanation: "This is the silent footgun from the Step 5 `<details>` callout. The Makefile only knows what you wrote on the prerequisites line — `main.o: main.c` doesn't mention `math.h`. So Make happily reports 'up to date' while your `.o` files are now built against a stale header. Real-world fix: `gcc -MMD` to auto-emit `.d` dependency files (Step 5 callout). Cultural fix: always run `make clean && make` after pulling header changes from a teammate."
 
         - question: |
-            **[Create — Parsons synthesis]** Reconstruct the final Makefile in correct order. The result should compile a 3-file C project (`main.c`, `math.c`, `io.c`) into `app` with incremental builds and a `clean` target. (Recipe lines have a literal Tab character — represented here as `\\t` for clarity.)
+            **[Analyze]** Your Makefile builds successfully under `make -j1` (serial), but `make -j8 --shuffle=random` sometimes fails with errors like `gcc: error: main.o: No such file or directory`. What's the most likely cause?
+          options:
+            - "Make has a known race condition with `-j` greater than 4"
+            - "`--shuffle` is broken in newer versions of Make and produces nondeterministic results"
+            - "Your dependency graph is incomplete — a prerequisite isn't declared, so under random order Make sometimes tries to link before all `.o` files exist"
+            - "Parallel builds aren't supposed to work for C projects; only Rust/Go support them safely"
+          correct_index: 2
+          option_feedback:
+            0: "Make's `-j` is reliable when the dependency graph is correct. Race-like failures are *symptoms* of incomplete prerequisites, not Make bugs."
+            1: "`--shuffle` is intentional and well-tested. The point is to expose YOUR bugs, not introduce new ones."
+            3: "Parallel C/C++ builds work fine when prerequisites are fully declared. `make -j8` is how every serious C codebase builds."
+          explanation: "When prerequisites are missing, the build *appears* to work in serial mode because Make happens to process targets in source order — which is often correct by accident. `--shuffle=random` randomizes the order, so any unlucky permutation surfaces the missing prerequisite. The fix is *not* to avoid `--shuffle` — it's to declare every prerequisite your recipes actually need. Real CI pipelines run with shuffle exactly to catch these bugs before merge."
+
+        - question: |
+            **[Apply — debugging toolkit]** You wrote `$(CFLAS)` (typo: missing `G`) instead of `$(CFLAGS)` somewhere in your Makefile. The build still runs but flags like `-Wall` are silently dropped. Which flag would catch this typo?
+          options:
+            - "`make -n`"
+            - "`make --warn-undefined-variables`"
+            - "`make -j 1`"
+            - "There's no flag — Make accepts undefined variables silently as the empty string and never complains"
+          correct_index: 1
+          option_feedback:
+            0: "`-n` shows what *would* run — and `$(CFLAS)` would expand to the empty string in the printed command, but no warning. You'd have to spot the missing `-Wall` yourself."
+            2: "`-j 1` controls parallelism, not variable validation."
+            3: "Make *does* expand undefined variables to empty by default — that's exactly the silent-failure problem. But it has an opt-in flag (`--warn-undefined-variables`) to flip that to a warning."
+          explanation: "`make --warn-undefined-variables` makes Make warn whenever you reference a variable that hasn't been defined. It's noisy by default (since Make's built-in rules reference many implicit variables), so you usually grep for warnings in *your own* code. But for hunting a stubborn typo bug, it's gold."
+
+        - question: |
+            **[Create — Parsons synthesis]** Reconstruct the final Makefile in correct order. The result should compile a 3-file C project (`main.c`, `math.c`, `io.c`) into `app` with incremental builds, a `clean` target, and a `run` phony target. (Recipe lines have a literal Tab character — represented here as `\\t` for clarity.)
           type: parsons
           lines:
             - "CC = gcc"
@@ -1324,11 +1602,13 @@ steps:
             - "\\t$(CC) $(CFLAGS) $^ -o $@"
             - "%.o: %.c"
             - "\\t$(CC) $(CFLAGS) -c $< -o $@"
-            - ".PHONY: clean"
+            - ".PHONY: clean run"
+            - "run: app"
+            - "\\t./app"
             - "clean:"
             - "\\trm -f *.o app"
           distractors:
             - "$(CC) $(CFLAGS) main.o math.o io.o -o app"
             - "main.o: main.c"
             - "all: app clean"
-          explanation: "Variables at top (`CC`, `CFLAGS`, `OBJS` — Step 3 + Step 4), then the link rule using `$(OBJS)` and `$^`/`$@` (Step 4), then the pattern rule (Step 4) replacing the three explicit `.o` rules, then `.PHONY: clean` (Step 6). The distractor `$(CC) $(CFLAGS) main.o math.o io.o -o app` re-introduces the filename repetition Step 4 eliminated. `main.o: main.c` is one of the explicit rules the pattern rule replaces. `all: app clean` would make `all` depend on a phony — the bug from question 2."
+          explanation: "Variables at top (`CC`, `CFLAGS`, `OBJS` — Steps 3 + 4), then the link rule using `$(OBJS)` and `$^`/`$@` (Step 4), then the pattern rule (Step 4) replacing the three explicit `.o` rules, then `.PHONY: clean run` covering both phony targets (Step 6 generalization), then the `run` and `clean` rules. The distractor `$(CC) $(CFLAGS) main.o math.o io.o -o app` re-introduces the filename repetition Step 4 eliminated. `main.o: main.c` is one of the explicit rules the pattern rule replaces. `all: app clean` would make `all` depend on a phony — the bug from question 2."

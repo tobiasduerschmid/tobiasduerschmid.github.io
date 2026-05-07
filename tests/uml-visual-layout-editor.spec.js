@@ -1523,6 +1523,33 @@ app --> user: second()
     expect(source).toContain('app -> app : message()');
   });
 
+  test('sequence call tools can create self-messages by dropping in the loop area', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User @pos(300, 0)
+participant app: Application @pos(500, 0)
+user -> app: first()
+@enduml`);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]').click();
+    const appBox = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
+    const firstRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]').boundingBox();
+    if (!appBox || !firstRouteBox) throw new Error('sequence lifeline and message handles should have boxes');
+    const start = {
+      x: appBox.x + appBox.width / 2,
+      y: firstRouteBox.y + firstRouteBox.height / 2 + 34,
+    };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x + 82, start.y + 46, { steps: 8 });
+    await page.mouse.up();
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('app -> app : message()');
+    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('app -> app : message()'));
+  });
+
   test('sequence messages can be reordered by dragging and from properties', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
@@ -1561,6 +1588,41 @@ db --> app: third()
     source = await page.locator('#uml-pg-input').inputValue();
     expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('db --> app: third()'));
     expect(source.indexOf('db --> app: third()')).toBeLessThan(source.indexOf('app -> db: second()'));
+  });
+
+  test('sequence self-messages reorder in the ArchUML source when dragged', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+participant db: Database
+user -> app: first()
+app -> app: self()
+app -> db: second()
+@enduml`);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]')).toHaveCount(1);
+
+    const move = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const boxFor = (selector) => svg.querySelector(selector).getBoundingClientRect();
+      const self = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]');
+      const second = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]');
+      return {
+        y: self.top + self.height / 2,
+        targetY: second.top + second.height / 2 + 36,
+      };
+    });
+    await dragLocatorCenter(
+      page,
+      page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]').first(),
+      0,
+      move.targetY - move.y
+    );
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source.indexOf('app -> db: second()')).toBeLessThan(source.indexOf('app -> app: self()'));
+    expect(source).not.toContain('edge "seqmsg:');
   });
 
   test('class empty state can add model elements from the diagram and palette', async ({ page }) => {

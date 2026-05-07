@@ -18,3 +18,4 @@ decks:
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
   - data_management
+  - security
