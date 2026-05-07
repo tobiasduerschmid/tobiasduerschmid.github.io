@@ -8,7 +8,7 @@ learning_objectives:
   - "Use UML labels to document concrete conditions for behavior changes."
 
 backend: uml-editor
-require_tests: true
+require_tests: false
 
 steps:
 

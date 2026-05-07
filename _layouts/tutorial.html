@@ -852,6 +852,7 @@
         function showTooltip(trigger) {
           var $trigger = jQuery(trigger);
           clearHideTimer($trigger);
+          clearShowTimer($trigger);
           $trigger.tooltip('show');
           window.setTimeout(function () {
             getTip($trigger)
@@ -865,13 +866,46 @@
           }, 0);
         }
 
+        // Hover-delay: avoid tooltip clutter when the cursor is just
+        // travelling across the toolbar. 600ms is the sweet spot — long
+        // enough that quick mouse passes don't fire, short enough that
+        // pausing on a button feels responsive. Keyboard focus still
+        // shows the tooltip immediately so screen-reader / keyboard
+        // users don't pay the delay tax.
+        var HOVER_SHOW_DELAY = 600;
+        function clearShowTimer($trigger) {
+          var timer = $trigger.data('a11yTooltipShowTimer');
+          if (timer) {
+            window.clearTimeout(timer);
+            $trigger.removeData('a11yTooltipShowTimer');
+          }
+        }
+        function scheduleShow(trigger) {
+          var $trigger = jQuery(trigger);
+          clearShowTimer($trigger);
+          var timer = window.setTimeout(function () {
+            $trigger.removeData('a11yTooltipShowTimer');
+            // Only show if the cursor is still on the trigger.
+            if ($trigger.is(':hover') || $trigger.is(':focus')) {
+              showTooltip(trigger);
+            }
+          }, HOVER_SHOW_DELAY);
+          $trigger.data('a11yTooltipShowTimer', timer);
+        }
+
         $triggers
           .off('.a11yTooltip')
-          .on('mouseenter.a11yTooltip focusin.a11yTooltip', function () {
+          .on('mouseenter.a11yTooltip', function () {
+            scheduleShow(this);
+          })
+          .on('focusin.a11yTooltip', function () {
+            // Keyboard / focus path: immediate, no delay.
             showTooltip(this);
           })
           .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
-            scheduleHide(jQuery(this));
+            var $trigger = jQuery(this);
+            clearShowTimer($trigger);
+            scheduleHide($trigger);
           });
 
         jQuery(document).on('keydown.a11yTooltip', function (event) {

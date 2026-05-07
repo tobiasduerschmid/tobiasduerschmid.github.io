@@ -722,13 +722,14 @@ steps:
                                              # message labels by normalized
                                              # case-insensitive substring.
                                              # `naming_hint` adds a
-                                             # student-facing hint that is
-                                             # shown only when the assertion
-                                             # finds a same-kind candidate
-                                             # with non-matching naming
-                                             # (for example, a method on the
-                                             # right class with the wrong
-                                             # operation name).
+                                             # student-facing hint to the
+                                             # shared tutorial Hints panel
+                                             # only when the assertion finds
+                                             # a same-kind candidate with
+                                             # non-matching naming (for
+                                             # example, a method on the right
+                                             # class with the wrong operation
+                                             # name).
                                              # `element_type_any` accepts
                                              # alternatives such as interface
                                              # or abstract class. `is_abstract`
@@ -988,9 +989,10 @@ keys. **If you change the persistence schema, also update**:
   variants; matching is normalized and case-insensitive. Element assertions
   can accept multiple element types with `element_type_any`. Add
   `naming_hint` to an assertion when a failing same-kind candidate should
-  produce a pedagogical naming nudge; the UML runner only shows that hint when
-  the model appears to contain a plausible candidate with a non-matching name
-  or label, not when the element is missing entirely. Member
+  produce a pedagogical naming nudge in the shared tutorial Hints panel; the
+  UML runner only passes that hint to the panel when the model appears to
+  contain a plausible candidate with a non-matching name or label, not when the
+  element is missing entirely. Member
   assertions can require abstract operations with `is_abstract: true` (an
   interface or abstract-class member counts as abstract even without an
   explicit `{abstract}` marker). Relation assertions can constrain semantic arrow type with

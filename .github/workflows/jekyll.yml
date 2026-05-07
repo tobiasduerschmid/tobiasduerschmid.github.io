@@ -63,6 +63,27 @@ jobs:
           ruby-version: '3.3.0'
           bundler-cache: true
 
+      # The Jekyll build's UMLStatic plugin (_plugins/uml_static.rb) shells
+      # out to js/ArchUML/uml_to_svg.js, which requires the `playwright`
+      # node module + a Chromium binary to pre-render every UML diagram on
+      # the site to inline SVG. Without it, the build still succeeds (the
+      # client-side bundle renders diagrams at view time), but every page
+      # logs "UMLStatic: Batch rendering failed: Cannot find module
+      # 'playwright'" and ships unrendered <pre><code class="language-uml-…">
+      # blocks. Installing the dependency restores static rendering, which
+      # is faster for users and required for printable PDFs.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci || npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Setup Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v4

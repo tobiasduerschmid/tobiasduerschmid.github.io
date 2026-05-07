@@ -30,7 +30,8 @@
   var TutorChat = {};
 
   TutorChat.onTestFailure = function (tutorial) {
-    var panel = tutorial.stepContentEl.querySelector('.tvm-test-panel');
+    var stepContent = tutorial.stepContentEl || tutorial.instructionsEl || tutorial.root;
+    var panel = stepContent && stepContent.querySelector('.tvm-test-panel');
     if (!panel) return;
 
     var prev = panel.querySelector('.tvm-tutor-chat');
@@ -56,13 +57,9 @@
     var step = tutorial.steps[tutorial.currentStep];
     var tests = step.tests || [];
     var results = tutorial._testResults || [];
-    var backend = tutorial.config.backend;
+    var backend = (tutorial.config && tutorial.config.backend) || tutorial.backend || '';
     var output = (tutorial.outputPre && tutorial.outputPre.textContent) || '';
     var hints = [];
-
-    // Get student code from all step files + active file
-    var studentCode = _getStudentCode(tutorial, step);
-    var solutionCode = _getSolutionCode(step);
 
     // Get failing test info
     var failingTests = [];
@@ -71,6 +68,14 @@
     });
 
     if (failingTests.length === 0) return hints;
+
+    if (backend === 'uml-editor') {
+      return _finalizeHints(_umlAssertionHints(tutorial, tests, results));
+    }
+
+    // Get student code from all step files + active file
+    var studentCode = _getStudentCode(tutorial, step);
+    var solutionCode = _getSolutionCode(step);
 
     // --- Hint generators (order = display order, generic first) ---
 
@@ -111,11 +116,55 @@
       });
     });
 
-    // Deduplicate by title
+    return _finalizeHints(hints);
+  }
+
+  function _umlAssertionHints(tutorial, tests, results) {
+    var records = tutorial._testHintRecords || [];
+    var hints = [];
+    tests.forEach(function (test, index) {
+      if (results[index] === true) return;
+      _toArray(records[index]).forEach(function (hint) {
+        var normalized = _normalizeHintRecord(hint, 'Naming nudge');
+        if (normalized) hints.push(normalized);
+      });
+      _toArray(test.hints).forEach(function (hint) {
+        var testHint = _normalizeHintRecord(hint, test.description || 'Hint');
+        if (testHint) hints.push(testHint);
+      });
+    });
+    return hints;
+  }
+
+  function _normalizeHintRecord(hint, fallbackTitle) {
+    if (!hint) return null;
+    if (typeof hint === 'string') {
+      return {
+        icon: '\uD83D\uDCA1',
+        title: fallbackTitle || 'Hint',
+        body: hint
+      };
+    }
+    var body = hint.body || hint.text || hint.message || '';
+    if (!body) return null;
+    return {
+      icon: hint.icon || '\uD83D\uDCA1',
+      title: hint.title || fallbackTitle || 'Hint',
+      body: body
+    };
+  }
+
+  function _toArray(value) {
+    if (value == null) return [];
+    return Array.isArray(value) ? value : [value];
+  }
+
+  function _finalizeHints(hints) {
     var seen = {};
     hints = hints.filter(function (h) {
-      if (seen[h.title]) return false;
-      seen[h.title] = true;
+      var key = h.title + '\n' + h.body;
+      if (seen[key]) return false;
+      seen[key] = true;
       return true;
     });
 
@@ -223,6 +272,11 @@
 
   function _getStudentCode(tutorial, step) {
     var code = '';
+    if (!tutorial.editorModels) {
+      if (typeof tutorial.currentSource === 'function') return tutorial.currentSource();
+      if (tutorial.sourceEl) return tutorial.sourceEl.value || '';
+      return '';
+    }
     var paths = (step.files || []).map(function (f) { return f.path; });
     if (tutorial.activeFileName && paths.indexOf(tutorial.activeFileName) === -1) {
       paths.push(tutorial.activeFileName);
@@ -344,14 +398,17 @@
     chatEl.className = 'tvm-tutor-chat collapsed';
 
     // Header
-    var header = document.createElement('div');
+    var header = document.createElement('button');
+    header.type = 'button';
     header.className = 'tvm-tutor-header';
+    header.setAttribute('aria-expanded', 'false');
     header.innerHTML =
-      '<span class="tvm-tutor-icon">\uD83D\uDCA1</span>' +
+      '<span class="tvm-tutor-icon" aria-hidden="true">\uD83D\uDCA1</span>' +
       '<span>Hints</span>' +
-      '<button class="tvm-tutor-toggle">\u25BC</button>';
+      '<span class="tvm-tutor-toggle" aria-hidden="true">\u25BC</span>';
     header.addEventListener('click', function () {
-      chatEl.classList.toggle('collapsed');
+      var collapsed = chatEl.classList.toggle('collapsed');
+      header.setAttribute('aria-expanded', String(!collapsed));
     });
     chatEl.appendChild(header);
 

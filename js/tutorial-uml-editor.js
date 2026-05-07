@@ -60,6 +60,7 @@
     this.options = options || {};
     this.steps = this.options.steps || [];
     this.currentStep = 0;
+    this.config = { backend: 'uml-editor' };
     this.requireTests = !!this.options.requireTests;
     this.instructorMode = !!this.options.instructorMode;
     this._stepsPassed = new Set();
@@ -71,6 +72,9 @@
     this.navEl = null;
     this.controlsEl = null;
     this.resultsEl = null;
+    this.stepContentEl = null;
+    this._testResults = [];
+    this._testHintRecords = [];
     this._testAnnouncer = null;
     this._clearDialog = null;
     this._clearDialogPreviousFocus = null;
@@ -81,6 +85,7 @@
     this.sourceEl = this.root.querySelector('#uml-pg-input');
     this.typeEl = this.root.querySelector('#uml-pg-type');
     this.instructionsEl = this.root.querySelector('.tvm-step-content');
+    this.stepContentEl = this.instructionsEl;
     this.contentWrapEl = this.root.querySelector('.tvm-step-content-wrap');
     this.navEl = this.root.querySelector('.tvm-step-nav');
     this.controlsEl = this.root.querySelector('.tvm-step-controls');
@@ -490,6 +495,9 @@
   };
 
   UMLTutorialEditor.prototype.clearResults = function () {
+    this._testResults = [];
+    this._testHintRecords = [];
+    if (window.TutorChat) window.TutorChat.onStepChange();
     if (!this.instructionsEl) return;
     var panel = this.instructionsEl.querySelector('.tvm-test-panel');
     if (panel) panel.remove();
@@ -553,13 +561,6 @@
         });
         html += '</ul>';
       }
-      if (!ok && test.hints && test.hints.length) {
-        html += '<ul class="tvm-uml-test-hints">';
-        test.hints.forEach(function (hint) {
-          html += '<li><strong>Hint:</strong> ' + escapeHtml(hint) + '</li>';
-        });
-        html += '</ul>';
-      }
       html += '</li>';
     });
     html += '</ul></div>';
@@ -584,6 +585,7 @@
     };
     var results = [];
     var resultTests = [];
+    var hintRecords = [];
     tests.forEach(function (test) {
       var failures = [];
       var hints = [];
@@ -592,19 +594,30 @@
         if (!result.pass) {
           failures.push(result.message);
           toArray(result.hints || result.hint).forEach(function (hint) {
-            if (hint && hints.indexOf(hint) === -1) hints.push(hint);
+            if (!hint) return;
+            var record = {
+              icon: '\uD83D\uDCA1',
+              title: 'Naming nudge',
+              text: hint
+            };
+            var duplicate = hints.some(function (existing) {
+              return existing.title === record.title && existing.text === record.text;
+            });
+            if (!duplicate) hints.push(record);
           });
         }
       });
       var ok = failures.length === 0;
       results.push(ok);
+      hintRecords.push(hints);
       resultTests.push({
         description: test.description || 'UML check',
-        failures: failures,
-        hints: hints
+        failures: failures
       });
     });
     var allPass = results.length > 0 && results.every(function (result) { return result === true; });
+    this._testResults = results;
+    this._testHintRecords = hintRecords;
     if (allPass) {
       this._stepsPassed.add(this.currentStep);
       this._stepsUnlocked.add(this.currentStep + 1);
@@ -617,6 +630,8 @@
     }
     this._showTestPanel(this._buildTestResultsHTML(resultTests, results));
     this._announceTestResult(resultTests, results);
+    if (!allPass && window.TutorChat) window.TutorChat.onTestFailure(this);
+    if (allPass && window.TutorChat) window.TutorChat.onTestPass();
   };
 
   function escapeHtml(text) {

@@ -94,6 +94,16 @@ async function setUmlSource(page, source) {
   }, source);
 }
 
+async function expectTutorHint(page, text) {
+  const panel = page.locator('.tvm-tutor-chat');
+  await expect(panel).toBeVisible();
+  const header = panel.getByRole('button', { name: 'Hints', exact: true });
+  if (await panel.evaluate((el) => el.classList.contains('collapsed'))) {
+    await header.click();
+  }
+  await expect(panel.locator('.tvm-tutor-hint').filter({ hasText: text })).toBeVisible();
+}
+
 async function dragLocatorCenter(page, locator, dx, dy) {
   await expect(locator).toHaveCount(1, { timeout: 2_000 });
   await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
@@ -1223,9 +1233,17 @@ app --> user: response()
     await selectDiagram(page, 'class');
 
     await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="note"]').click();
-    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Animal"]').press('Enter');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="Animal"]').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/note right of Animal: New note/);
-    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id^="note:"]')).toHaveCount(1);
+    const noteHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id^="note:"]');
+    await expect(noteHandle).toHaveCount(1);
+
+    const noteBefore = await noteHandle.boundingBox();
+    await dragLocatorCenter(page, noteHandle, 60, 35);
+    const noteAfter = await noteHandle.boundingBox();
+    if (!noteBefore || !noteAfter) throw new Error('note handle should have a box before and after dragging');
+    expect(noteAfter.x).toBeGreaterThan(noteBefore.x + 25);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "note:\d+" x=\d+ y=\d+/);
 
     await page.locator('.uml-pg-edit-hitbox[data-layout-id="Animal"]').evaluate((el) => {
       const r = el.getBoundingClientRect();
@@ -1628,6 +1646,79 @@ Parent <|-- Child
     const source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toContain('Parent --|> Child');
     expect(source).not.toContain('Parent <|-- Child');
+  });
+
+  test('selected class relations can edit multiplicities and navigability', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Customer
+class Order
+Customer -- Order : places
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('places') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+
+    await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('plain');
+
+    await page.locator('#uml-pg-props-content').getByLabel('Source multiplicity / cardinality').fill('1');
+    await page.locator('#uml-pg-props-content').getByLabel('Source multiplicity / cardinality').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" -- Order : places/);
+
+    await page.locator('#uml-pg-props-content').getByLabel('Target multiplicity / cardinality').fill('0..*');
+    await page.locator('#uml-pg-props-content').getByLabel('Target multiplicity / cardinality').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" -- "0\.\.\*" Order : places/);
+
+    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('bidirectional');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" <--> "0\.\.\*" Order : places/);
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('bidirectional');
+
+    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('nonnav');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" --x "0\.\.\*" Order : places/);
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('assoc');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('nonnav');
+  });
+
+  test('selected aggregation relations keep type while changing navigability', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Team
+class Player
+Team o-- Player : roster
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('roster') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+
+    await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
+
+    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('navigable');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Team o--> Player : roster/);
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('navigable');
+
+    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('bidirectional');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Team o<--> Player : roster/);
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('bidirectional');
   });
 
   test('selected relations can be rewired from the properties pane', async ({ page }) => {
@@ -2104,6 +2195,11 @@ A --> B : go
     await expect(workspace).toBeVisible();
     await expect(page.locator('.tvm-step-nav .tvm-step-btn')).toHaveCount(3);
     await expect(page.locator('.tvm-step-controls .tvm-btn-test')).toBeVisible();
+    await expect(page.locator('.tvm-step-controls .tvm-btn-clear-model')).toBeVisible();
+    await expect(page.locator('.tvm-step-controls .tvm-btn-next')).toBeVisible();
+    await expect(page.locator('#uml-pg-export-source')).toBeVisible();
+    await expect(page.locator('#uml-pg-copy-source')).toBeHidden();
+    await expect(page.locator('#uml-pg-editor-pane')).toBeHidden();
     await expect(splitter).toHaveAttribute('role', 'separator');
     await expect(page.locator('.uml-pg-syntax-help')).toHaveCount(0);
 
@@ -2114,7 +2210,23 @@ A --> B : go
 
     const beforeBox = await instructions.boundingBox();
     const splitterBox = await splitter.boundingBox();
+    const controlsBox = await page.locator('.tvm-step-controls-bar').boundingBox();
+    const controlButtonBoxes = await page.locator('.tvm-step-controls .tvm-btn').evaluateAll((buttons) => {
+      return buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+    });
     if (!beforeBox || !splitterBox) throw new Error('splitter and panel should have layout boxes');
+    if (!controlsBox) throw new Error('controls should have a layout box');
+    expect(Math.round(beforeBox.width)).toBeGreaterThanOrEqual(210);
+    expect(Math.round(beforeBox.width)).toBeLessThanOrEqual(260);
+    for (const box of controlButtonBoxes) {
+      expect(box.left).toBeGreaterThanOrEqual(controlsBox.x);
+      expect(box.right).toBeLessThanOrEqual(controlsBox.x + controlsBox.width + 1);
+      expect(box.top).toBeGreaterThanOrEqual(controlsBox.y);
+      expect(box.bottom).toBeLessThanOrEqual(controlsBox.y + controlsBox.height + 1);
+    }
 
     const x = splitterBox.x + splitterBox.width / 2;
     const y = splitterBox.y + splitterBox.height / 2;
@@ -2127,6 +2239,42 @@ A --> B : go
       const box = await instructions.boundingBox();
       return box ? Math.round(box.width) : 0;
     }).toBeGreaterThan(Math.round(beforeBox.width + 60));
+  });
+
+  test('UML tutorial removes all model elements after confirmation', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.removeItem('uml-pg-autosave-class');
+      localStorage.removeItem('uml-pg-autosave-state');
+      localStorage.removeItem('uml-pg-autosave-sequence');
+    });
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    await setUmlSource(page, `@startuml
+class Player
+class NormalTurnState
+Player --> NormalTurnState
+@enduml`);
+
+    const clearButton = page.getByRole('button', { name: 'Remove All Elements', exact: true });
+    await clearButton.click();
+    const dialog = page.getByRole('dialog', { name: /Remove all UML elements from this step/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(clearButton).toBeFocused();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/class Player/);
+
+    await clearButton.click();
+    await dialog.getByRole('button', { name: 'Remove Elements', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
+    await expect(page.locator('.tvm-test-panel')).toHaveCount(0);
+    await expect.poll(async () => {
+      return page.evaluate(() => localStorage.getItem('uml-pg-autosave-class'));
+    }).toBe('@startuml\n@enduml');
   });
 
   test('UML tutorial instructions render diagrams created in previous steps', async ({ page }) => {
@@ -2229,8 +2377,8 @@ BankruptcyMode --|> PlayerState
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
-    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Concrete state class names should expose their Monopoly role' })).toBeVisible();
-    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: "state abstraction's operation should name the turn behavior" })).toBeVisible();
+    await expectTutorHint(page, 'Concrete state class names should expose their Monopoly role');
+    await expectTutorHint(page, "state abstraction's operation should name the turn behavior");
   });
 
   test('UML tutorial does not show naming hints when matching elements are missing', async ({ page }) => {
@@ -2244,7 +2392,7 @@ BankruptcyMode --|> PlayerState
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
-    await expect(page.locator('.tvm-uml-test-hints')).toHaveCount(0);
+    await expect(page.locator('.tvm-tutor-chat')).toHaveCount(0);
   });
 
   test('UML tutorial rejects ownership diamonds on the state abstraction side', async ({ page }) => {
@@ -2378,7 +2526,7 @@ NormalTurnState --> BankruptState : cash gone
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/0\s*\/\s*2 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'States reuse the concrete state class names' })).toHaveCount(1);
-    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'State nodes should reuse the concrete state class names' })).toBeVisible();
+    await expectTutorHint(page, 'State nodes should reuse the concrete state class names');
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
@@ -2397,7 +2545,7 @@ NormalMode --> BankruptcyMode : cash gone
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/1\s*\/\s*2 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('State transitions are labeled and consistent');
-    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Transition labels should describe the condition or event' })).toBeVisible();
+    await expectTutorHint(page, 'Transition labels should describe the condition or event');
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
@@ -2486,7 +2634,7 @@ player -> prison_state: teleport(player)
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*3 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence method calls exist in the class diagram');
-    await expect(page.locator('.tvm-uml-test-hints').filter({ hasText: 'Read each arrow as a method call on the receiving lifeline' })).toBeVisible();
+    await expectTutorHint(page, 'Read each arrow as a method call on the receiving lifeline');
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
 });

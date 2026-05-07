@@ -1684,6 +1684,38 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
   text-align: center;
 }
 
+/* SVG-rendered UML icons in palette buttons. We size by em so the icon
+   tracks the button's font size, and use currentColor everywhere so the
+   icon picks up the button's text color in both modes (no separate dark
+   override needed). The icon-fill custom property defaults to white in
+   light mode and is flipped in dark mode for hollow shapes (triangles,
+   diamonds) to match the editor's surface. */
+.uml-pg-tool-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.uml-pg-tool-icon {
+  width: 1.9em;
+  height: 1.1em;
+  display: block;
+  overflow: visible;
+  --uml-pg-icon-fill: #fff;
+}
+
+html.dark-mode .uml-pg-tool-icon {
+  --uml-pg-icon-fill: #1a2030;
+}
+
+.uml-pg-tool-btn[aria-pressed="true"] .uml-pg-tool-icon {
+  /* When the tool is armed (button has accent background), hollow
+     shapes need a fill that contrasts with the accent — use the
+     accent's hover shade so the triangle/diamond reads. */
+  --uml-pg-icon-fill: #1a5a8a;
+}
+
 #uml-pg-tool-cancel {
   font: inherit;
   font-size: 1em;
@@ -2684,22 +2716,22 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
   var RELATION_SCHEMAS = {
     class: [
-      { id: 'gen',       label: 'Inherits',     glyph: '─▷', op: '--|>', supports: { label: true } },
-      { id: 'real',      label: 'Realizes',     glyph: '··▷', op: '..|>', supports: { label: true }, dashed: true },
-      { id: 'compose',   label: 'Composition',  glyph: '◆─', op: '*--',  supports: { label: true, multiplicity: true, navigability: true } },
-      { id: 'aggregate', label: 'Aggregation',  glyph: '◇─', op: 'o--',  supports: { label: true, multiplicity: true, navigability: true } },
-      { id: 'assoc',     label: 'Association',  glyph: '─→', op: '-->',  supports: { label: true, multiplicity: true } },
-      { id: 'biassoc',   label: 'Bidirect.',    glyph: '↔', op: '<-->', supports: { label: true, multiplicity: true } },
-      { id: 'plain',     label: 'Plain Line',   glyph: '──', op: '--',   supports: { label: true, multiplicity: true } },
-      { id: 'depend',    label: 'Dependency',   glyph: '··→', op: '..>',  supports: { label: true, stereotype: true } }
+      { id: 'gen',       label: 'Generalization', glyph: '─▷', op: '--|>', supports: { label: true } },
+      { id: 'real',      label: 'Realization',    glyph: '··▷', op: '..|>', supports: { label: true }, dashed: true },
+      { id: 'compose',   label: 'Composition',    glyph: '◆─', op: '*--',  supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'aggregate', label: 'Aggregation',    glyph: '◇─', op: 'o--',  supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'assoc',     label: 'Association',    glyph: '─→', op: '-->',  supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'biassoc',   label: 'Bidirectional',  glyph: '↔', op: '<-->', supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'plain',     label: 'Plain Assoc.',   glyph: '──', op: '--',   supports: { label: true, multiplicity: true, navigability: true } },
+      { id: 'depend',    label: 'Dependency',     glyph: '··→', op: '..>',  supports: { label: true, stereotype: true } }
     ],
     sequence: [
-      { id: 'sync',   label: 'Sync Call',  glyph: '─→', op: '->',  supports: { label: true }, defaultLabel: 'message()' },
-      { id: 'async',  label: 'Async',      glyph: '↠', op: '->>', supports: { label: true }, defaultLabel: 'event()' },
-      { id: 'return', label: 'Return',     glyph: '··→', op: '-->', supports: { label: true }, defaultLabel: 'response' },
-      { id: 'create', label: 'Create Call', glyph: '⊕', op: '-->', supports: { label: true }, defaultLabel: '<<create>>', sequenceCreate: true },
-      { id: 'lost',   label: 'Lost',       glyph: '→●', op: '->o', supports: { label: true }, defaultLabel: 'lost', sequenceSingle: 'lost' },
-      { id: 'found',  label: 'Found',      glyph: '●→', op: 'o->', supports: { label: true }, defaultLabel: 'found', sequenceSingle: 'found' }
+      { id: 'sync',   label: 'Synchronous',  glyph: '─→', op: '->',  supports: { label: true }, defaultLabel: 'message()' },
+      { id: 'async',  label: 'Asynchronous', glyph: '↠', op: '->>', supports: { label: true }, defaultLabel: 'event()' },
+      { id: 'return', label: 'Return',       glyph: '··→', op: '-->', supports: { label: true }, defaultLabel: 'response' },
+      { id: 'create', label: 'Create',       glyph: '⊕', op: '-->', supports: { label: true }, defaultLabel: '<<create>>', sequenceCreate: true },
+      { id: 'lost',   label: 'Lost',         glyph: '→●', op: '->o', supports: { label: true }, defaultLabel: 'lost', sequenceSingle: 'lost' },
+      { id: 'found',  label: 'Found',        glyph: '●→', op: 'o->', supports: { label: true }, defaultLabel: 'found', sequenceSingle: 'found' }
     ],
     state: [
       { id: 'transition', label: 'Transition', glyph: '→', op: '-->', supports: { label: true } }
@@ -4157,13 +4189,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (opts.navigability === 'navigable' && spec.id === 'aggregate') op = 'o-->';
       if (opts.navigability === 'bidirectional' && spec.id === 'aggregate') op = 'o<-->';
       if (opts.navigability === 'nonnav' && spec.id === 'aggregate') op = 'o--x';
-      if (opts.navigability === 'navigable' && spec.id === 'plain') op = '-->';
-      if (opts.navigability === 'bidirectional' && spec.id === 'plain') op = '<-->';
-      if (opts.navigability === 'nonnav' && spec.id === 'assoc') op = '--x';
+      if (/^(plain|assoc|biassoc)$/.test(spec.id || '')) {
+        if (opts.navigability === 'navigable') op = '-->';
+        if (opts.navigability === 'bidirectional') op = '<-->';
+        if (opts.navigability === 'nonnav') op = '--x';
+      }
 
       var src = formatRelationEndpointId(sourceId);
       var tgt = formatRelationEndpointId(targetId);
-      if (opts.sourceMult) src = '"' + escapeQuoted(opts.sourceMult) + '" ' + src;
+      if (opts.sourceMult) src = src + ' "' + escapeQuoted(opts.sourceMult) + '"';
       if (opts.targetMult) tgt = '"' + escapeQuoted(opts.targetMult) + '" ' + tgt;
 
       // For ER, the cardinality goes in quotes before the entity, like `Student "N" -- Borrows`.
@@ -4386,6 +4420,174 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       toolStatus.classList.toggle('is-active', !!isActive);
     }
 
+    /**
+     * Inline SVG icons for the palette buttons. Each icon renders the actual
+     * UML notation it produces (solid line + hollow triangle for inheritance,
+     * dashed line + hollow triangle for realization, filled diamond for
+     * composition, etc.) so the palette reads as a legend the learner can
+     * compare against the diagram. Uses currentColor so light + dark mode
+     * inherit the button text color automatically.
+     *
+     * Icons are 28×16px viewBox; CSS sizes them to ~1.4em width. Returns
+     * null when there's no SVG for this spec — caller falls back to the
+     * unicode glyph in spec.glyph.
+     */
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+    function svgEl(name, attrs) {
+      var el = document.createElementNS(SVG_NS, name);
+      if (attrs) for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+    function umlIconFrame() {
+      var svg = svgEl('svg', {
+        viewBox: '0 0 28 16',
+        'aria-hidden': 'true',
+        focusable: 'false',
+        class: 'uml-pg-tool-icon'
+      });
+      return svg;
+    }
+    /* Element icons: small UML-style box / circle / dashed-box / lined box.
+       Stroke uses currentColor so they invert cleanly in dark mode. */
+    function makeElementIcon(spec) {
+      var s = spec.id;
+      var svg = umlIconFrame();
+      if (s === 'class' || s === 'state' || s === 'component' || s === 'node' ||
+          s === 'entity' || s === 'action' || s === 'usecase' || s === 'system') {
+        // Class-style box: rectangle with header divider.
+        svg.appendChild(svgEl('rect', { x: 1, y: 2, width: 26, height: 12, rx: 1.5, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 1, y1: 7, x2: 27, y2: 7, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'abstract') {
+        // Dashed border to signal abstract.
+        svg.appendChild(svgEl('rect', { x: 1, y: 2, width: 26, height: 12, rx: 1.5, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-dasharray': '3 2' }));
+        svg.appendChild(svgEl('line', { x1: 1, y1: 7, x2: 27, y2: 7, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'interface' || s === 'provide') {
+        // Lollipop-style circle.
+        svg.appendChild(svgEl('circle', { cx: 14, cy: 8, r: 5, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'require') {
+        // Half-circle socket.
+        svg.appendChild(svgEl('path', { d: 'M 9 8 a 5 5 0 0 0 10 0', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'enum') {
+        svg.appendChild(svgEl('rect', { x: 1, y: 2, width: 26, height: 12, rx: 1.5, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 6, y1: 6, x2: 22, y2: 6, stroke: 'currentColor', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('line', { x1: 6, y1: 9, x2: 22, y2: 9, stroke: 'currentColor', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('line', { x1: 6, y1: 12, x2: 18, y2: 12, stroke: 'currentColor', 'stroke-width': 1 }));
+        return svg;
+      }
+      if (s === 'note-right' || (spec.isNote)) {
+        // Dog-ear note shape.
+        svg.appendChild(svgEl('path', { d: 'M 1 2 L 22 2 L 27 7 L 27 14 L 1 14 Z', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('path', { d: 'M 22 2 L 22 7 L 27 7', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'actor') {
+        // Stick figure: head + body.
+        svg.appendChild(svgEl('circle', { cx: 14, cy: 4, r: 2, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 14, y1: 6, x2: 14, y2: 12, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 10, y1: 9, x2: 18, y2: 9, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 14, y1: 12, x2: 11, y2: 15, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 14, y1: 12, x2: 17, y2: 15, stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'participant') {
+        svg.appendChild(svgEl('rect', { x: 1, y: 2, width: 26, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('line', { x1: 14, y1: 14, x2: 14, y2: 16, stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-dasharray': '1 2' }));
+        return svg;
+      }
+      if (s === 'initial') return (svg.appendChild(svgEl('circle', { cx: 14, cy: 8, r: 4, fill: 'currentColor' })), svg);
+      if (s === 'final') {
+        svg.appendChild(svgEl('circle', { cx: 14, cy: 8, r: 5, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('circle', { cx: 14, cy: 8, r: 2.5, fill: 'currentColor' }));
+        return svg;
+      }
+      if (s === 'choice' || s === 'decision') {
+        svg.appendChild(svgEl('polygon', { points: '14,2 24,8 14,14 4,8', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        return svg;
+      }
+      if (s === 'composite') {
+        svg.appendChild(svgEl('rect', { x: 1, y: 2, width: 26, height: 12, rx: 4, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }));
+        svg.appendChild(svgEl('rect', { x: 5, y: 5, width: 8, height: 6, rx: 1, fill: 'none', stroke: 'currentColor', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('rect', { x: 15, y: 5, width: 8, height: 6, rx: 1, fill: 'none', stroke: 'currentColor', 'stroke-width': 1 }));
+        return svg;
+      }
+      // No SVG icon — fall back to unicode glyph.
+      return null;
+    }
+    /* Relation icons: small UML connector. Uses currentColor for the line
+       and the arrow/diamond stroke. Filled shapes (composition, sync) also
+       use currentColor for fill. */
+    function umlLine(svg, x1, x2, dashed) {
+      var l = svgEl('line', { x1: x1, y1: 8, x2: x2, y2: 8, stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' });
+      if (dashed) l.setAttribute('stroke-dasharray', '3 2');
+      svg.appendChild(l);
+    }
+    function umlHollowTriangle(svg, atRight) {
+      // Hollow triangle pointing right at x=28 (or left at x=0 if !atRight).
+      var p = atRight ? '20,3 20,13 28,8' : '8,3 8,13 0,8';
+      svg.appendChild(svgEl('polygon', { points: p, fill: 'var(--uml-pg-icon-fill, #fff)', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linejoin': 'miter' }));
+    }
+    function umlDiamond(svg, filled) {
+      // Diamond at left edge.
+      svg.appendChild(svgEl('polygon', {
+        points: '0,8 5,4 10,8 5,12',
+        fill: filled ? 'currentColor' : 'var(--uml-pg-icon-fill, #fff)',
+        stroke: 'currentColor',
+        'stroke-width': 1.5,
+        'stroke-linejoin': 'miter'
+      }));
+    }
+    function umlOpenArrow(svg, atRight, atLeft) {
+      if (atRight) {
+        svg.appendChild(svgEl('polyline', { points: '22,3 28,8 22,13', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'miter' }));
+      }
+      if (atLeft) {
+        svg.appendChild(svgEl('polyline', { points: '6,3 0,8 6,13', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'miter' }));
+      }
+    }
+    function umlSolidArrow(svg) {
+      svg.appendChild(svgEl('polygon', { points: '20,4 28,8 20,12', fill: 'currentColor', stroke: 'currentColor', 'stroke-width': 1, 'stroke-linejoin': 'miter' }));
+    }
+    function makeRelationIcon(spec) {
+      var svg = umlIconFrame();
+      switch (spec.id) {
+        case 'gen':       umlLine(svg, 1, 20, false); umlHollowTriangle(svg, true); return svg;
+        case 'real':      umlLine(svg, 1, 20, true);  umlHollowTriangle(svg, true); return svg;
+        case 'compose':   umlDiamond(svg, true);  umlLine(svg, 10, 27, false); return svg;
+        case 'aggregate': umlDiamond(svg, false); umlLine(svg, 10, 27, false); return svg;
+        case 'assoc':     umlLine(svg, 1, 24, false); umlOpenArrow(svg, true, false); return svg;
+        case 'biassoc':   umlLine(svg, 5, 23, false); umlOpenArrow(svg, true, true); return svg;
+        case 'plain':     umlLine(svg, 1, 27, false); return svg;
+        case 'depend':    umlLine(svg, 1, 24, true);  umlOpenArrow(svg, true, false); return svg;
+        case 'sync':      umlLine(svg, 1, 22, false); umlSolidArrow(svg); return svg;
+        case 'async':     umlLine(svg, 1, 27, false); umlOpenArrow(svg, true, false); return svg;
+        case 'return':    umlLine(svg, 1, 27, true);  umlOpenArrow(svg, true, false); return svg;
+        case 'create':    umlLine(svg, 1, 22, true);  umlSolidArrow(svg); return svg;
+        case 'transition':
+        case 'flow':
+        case 'arrow':     umlLine(svg, 1, 24, false); umlOpenArrow(svg, true, false); return svg;
+        case 'include':
+        case 'extend':    umlLine(svg, 1, 24, true);  umlOpenArrow(svg, true, false); return svg;
+      }
+      return null;
+    }
+    function makeUmlPaletteIcon(kind, spec) {
+      var svg = kind === 'relation' ? makeRelationIcon(spec) : makeElementIcon(spec);
+      if (!svg) return null;
+      var wrap = document.createElement('span');
+      wrap.className = 'uml-pg-tool-icon-wrap';
+      wrap.setAttribute('aria-hidden', 'true');
+      wrap.appendChild(svg);
+      return wrap;
+    }
+
     function buildPaletteButton(spec, kind) {
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -4393,11 +4595,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       btn.setAttribute('aria-pressed', 'false');
       btn.setAttribute('data-tool-kind', kind);
       btn.setAttribute('data-tool-spec', spec.id);
-      var glyph = document.createElement('span');
-      glyph.className = 'uml-pg-tool-glyph';
-      glyph.setAttribute('aria-hidden', 'true');
-      glyph.textContent = spec.glyph || '';
-      btn.appendChild(glyph);
+      var icon = makeUmlPaletteIcon(kind, spec);
+      if (icon) {
+        btn.appendChild(icon);
+      } else {
+        var glyph = document.createElement('span');
+        glyph.className = 'uml-pg-tool-glyph';
+        glyph.setAttribute('aria-hidden', 'true');
+        glyph.textContent = spec.glyph || '';
+        btn.appendChild(glyph);
+      }
       btn.appendChild(document.createTextNode(spec.label));
       var aria = (kind === 'element' ? 'Add element: ' : 'Add relation: ') + spec.label;
       btn.setAttribute('aria-label', aria);
@@ -6783,7 +6990,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       // operator) and aren't declarations themselves.
       var lines = stripLayoutMetadata(text).split('\n');
       var out = [];
-      var connectorRe = /(?:^|\s)(?:<-->|<->|<-+|--?\|>?|\.\.\|>?|\.\.+>?|\*-+>?|\*<-+>?|o-+>?|o<-+>?|->>?|--+x?|==+|--+>|\.\.>|--?)/;
       for (var i = 0; i < lines.length; i++) {
         var t = lines[i].trim();
         if (!t || /^@/.test(t) || /^layout\s+/i.test(t)) continue;
@@ -6793,8 +6999,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           out.push(i);
           continue;
         }
-        // Must contain a connector + at least one whitespace
-        if (/\s+(?:--|\.\.|->|<-|<\|--|<\|\.\.|<--|<\.\.|==|--?\|>?|\.\.>|->>|<-->|\*-|o-)\S*\s+\S/.test(t)) out.push(i);
+        // Must contain a connector + endpoints. Use the same tolerant token
+        // parser as the properties pane so variants such as o<--> and *--x
+        // remain selectable even when the renderer exposes an ordinal route id.
+        if (parseTokenizedRelationLine(t.replace(/\s*:\s*.*$/, ''))) out.push(i);
       }
       return out;
     }
@@ -6890,6 +7098,116 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       propsContent.appendChild(hint);
     }
 
+    function tokenizeRelationParts(text) {
+      var tokens = [];
+      var re = /"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|(\S+)/g;
+      var m;
+      while ((m = re.exec(String(text || '')))) {
+        if (m[1] != null) {
+          tokens.push({ value: unquoteId('"' + m[1] + '"'), quoted: true });
+        } else if (m[2] != null) {
+          tokens.push({ value: m[2].replace(/\\'/g, "'").replace(/\\\\/g, '\\'), quoted: true });
+        } else {
+          tokens.push({ value: m[3], quoted: false });
+        }
+      }
+      return tokens;
+    }
+
+    function isRelationOperatorToken(token) {
+      var op = String(token && token.value || '').trim();
+      if (!op || token.quoted) return false;
+      if (op === '..') return true;
+      return /^[-.<=>|*ox]+$/.test(op) && /[-<=>|]/.test(op);
+    }
+
+    function relationTokenLooksLikeMultiplicity(token) {
+      if (!token) return false;
+      var value = String(token.value || '').trim();
+      if (!value) return false;
+      if (!token.quoted && /^\[[^\]]+\]$/.test(value)) return true;
+      return /^[*0-9nNmM.]+$/.test(value) || /\.\./.test(value);
+    }
+
+    function cleanRelationMultiplicityToken(token) {
+      var value = String(token && token.value || '').trim();
+      var bracket = !token.quoted && value.match(/^\[([^\]]+)\]$/);
+      return bracket ? bracket[1].trim() : value;
+    }
+
+    function joinRelationEndpointTokens(tokens) {
+      return (tokens || []).map(function (token) {
+        return String(token && token.value || '').trim();
+      }).filter(Boolean).join(' ').trim();
+    }
+
+    function parseRelationEndpointTokens(tokens, side) {
+      var result = { id: '', mult: '' };
+      var list = (tokens || []).filter(function (token) {
+        return token && String(token.value || '').trim();
+      });
+      if (!list.length) return result;
+
+      if (side === 'source' &&
+          list.length === 2 &&
+          list[0].quoted &&
+          relationTokenLooksLikeMultiplicity(list[0]) &&
+          !relationTokenLooksLikeMultiplicity(list[1])) {
+        // Tolerate lines written by older visual-editor builds:
+        // `"1" A -- B` instead of the renderer's `A "1" -- B`.
+        result.mult = cleanRelationMultiplicityToken(list[0]);
+        result.id = joinRelationEndpointTokens([list[1]]);
+        return result;
+      }
+
+      if (side === 'source' && list.length >= 2 &&
+          (list[list.length - 1].quoted || (!list[list.length - 1].quoted && /^\[[^\]]+\]$/.test(list[list.length - 1].value)))) {
+        result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
+        result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
+        return result;
+      }
+
+      if (side === 'target' && list.length >= 2 &&
+          (list[0].quoted || (!list[0].quoted && /^\[[^\]]+\]$/.test(list[0].value)))) {
+        result.mult = cleanRelationMultiplicityToken(list[0]);
+        result.id = joinRelationEndpointTokens(list.slice(1));
+        return result;
+      }
+
+      if (side === 'target' && list.length >= 2 &&
+          (list[list.length - 1].quoted || (!list[list.length - 1].quoted && /^\[[^\]]+\]$/.test(list[list.length - 1].value)))) {
+        result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
+        result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
+        return result;
+      }
+
+      result.id = joinRelationEndpointTokens(list);
+      return result;
+    }
+
+    function parseTokenizedRelationLine(text) {
+      var tokens = tokenizeRelationParts(text);
+      var opIdx = -1;
+      for (var i = 0; i < tokens.length; i++) {
+        if (isRelationOperatorToken(tokens[i])) { opIdx = i; break; }
+      }
+      if (opIdx <= 0 || opIdx >= tokens.length - 1) return null;
+      var source = parseRelationEndpointTokens(tokens.slice(0, opIdx), 'source');
+      var target = parseRelationEndpointTokens(tokens.slice(opIdx + 1), 'target');
+      if (!source.id || !target.id) return null;
+      return {
+        kind: guessRelationKind(tokens[opIdx].value),
+        label: '',
+        sourceMult: source.mult,
+        targetMult: target.mult,
+        navigability: '',
+        stereotype: '',
+        source: source.id,
+        target: target.id,
+        op: tokens[opIdx].value
+      };
+    }
+
     function parseRelationLine(line) {
       var info = { kind: '', label: '', sourceMult: '', targetMult: '', navigability: '', stereotype: '', source: '', target: '' };
       if (!line) return info;
@@ -6918,6 +7236,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         info.kind = 'found';
         info.op = 'o->';
         return finalizeParsedRelationInfo(info);
+      }
+      var tokenized = parseTokenizedRelationLine(t);
+      if (tokenized) {
+        tokenized.label = info.label;
+        tokenized.stereotype = info.stereotype;
+        return finalizeParsedRelationInfo(tokenized);
       }
       var quotedBoth = t.match(/^"((?:[^"\\]|\\.)*)"\s+([-.\|<>=*ox]+)\s+"((?:[^"\\]|\\.)*)"$/);
       if (quotedBoth) {
@@ -6964,7 +7288,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (/^(\*|o)-->$/.test(op)) return 'navigable';
       if (/^(\*|o)--x$/.test(op)) return 'nonnav';
       if (op === '<-->') return 'bidirectional';
+      if (op === '-->' || op === '<--') return 'navigable';
       if (op === '--x') return 'nonnav';
+      if (op === 'x--' || op === 'x--x') return 'nonnav';
       return '';
     }
 
@@ -6975,6 +7301,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         '<|..': { op: '..|>', kind: 'real' },
         '<--': { op: '-->', kind: 'assoc' },
         '<..': { op: '..>', kind: 'depend' },
+        'x--': { op: '--x', kind: 'assoc', navigability: 'nonnav' },
         '--*': { op: '*--', kind: 'compose' },
         '<--*': { op: '*-->', kind: 'compose', navigability: 'navigable' },
         '<-->*': { op: '*<-->', kind: 'compose', navigability: 'bidirectional' },
@@ -7026,9 +7353,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (t === '--|>') return 'gen';
       if (t === '..|>') return 'real';
       if (t.charAt(0) === '*') return 'compose';
-      if (t.charAt(0) === 'o' && t !== 'o-->' /* preserved */) return 'aggregate';
+      if (t.charAt(0) === 'o') return 'aggregate';
       if (t === '<-->') return 'biassoc';
       if (t === '-->') return 'assoc';
+      if (t === '--x' || t === 'x--' || t === 'x--x') return 'assoc';
       if (t === '..>') return 'depend';
       if (t === '--') return 'plain';
       if (t === '==') return 'total';
@@ -7056,8 +7384,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var lines = clean.split('\n');
       lines[lineIdx] = newLine;
       textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
-      renderDiagram();
       selectAfterRender(selectedLayoutId, 'route');
+      renderDiagram();
     }
 
     function relationEndpointOptions(info) {
@@ -7677,10 +8005,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             return;
           }
           event.preventDefault();
-          if (item.axis === 'note') {
-            setSelectedLayoutId(item.id, 'node');
-            return;
-          }
           var extend = event.metaKey || event.ctrlKey || event.shiftKey;
           if (extend) {
             // Toggle in selection — no drag.

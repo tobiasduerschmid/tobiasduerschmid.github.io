@@ -12,18 +12,26 @@
 
 .tvm-tutor-header {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
+  border: 0;
   background: #1a1a26;
   cursor: pointer;
   user-select: none;
   font-size: 0.9em;
   font-weight: 600;
+  font-family: inherit;
+  text-align: left;
   color: #b0b0c8;
   border-bottom: 1px solid #2a2a38;
 }
 .tvm-tutor-header:hover { background: #22222e; }
+.tvm-tutor-header:focus-visible {
+  outline: 2px solid #8bb8e8;
+  outline-offset: -2px;
+}
 .tvm-tutor-icon { font-size: 1.1em; }
 .tvm-tutor-toggle {
   margin-left: auto;
@@ -110,6 +118,9 @@ html:not(.dark-mode) .tvm-tutor-toggle:focus-visible {
   color: #34344a;
 }
 html:not(.dark-mode) .tvm-tutor-toggle:focus-visible {
+  outline-color: #005587;
+}
+html:not(.dark-mode) .tvm-tutor-header:focus-visible {
   outline-color: #005587;
 }
 

@@ -6,6 +6,10 @@
   background: #f8fbff;
 }
 
+.tvm-uml-editor-tutorial .tvm-instructions-panel {
+  flex: 0 0 220px;
+}
+
 .tvm-uml-editor-workspace {
   min-width: 0;
   min-height: 0;
@@ -37,12 +41,6 @@
   color: inherit;
 }
 
-.tvm-uml-test-hints {
-  flex-basis: 100%;
-  margin: 6px 0 0 24px;
-  color: inherit;
-}
-
 .tvm-uml-editor-tutorial .tvm-step-actions {
   display: flex;
   align-items: center;
@@ -54,6 +52,37 @@
 
 .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn {
   min-height: 2.4em;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls-bar {
+  padding: 0.5em;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls > span:empty {
+  display: none;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-actions,
+.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn {
+  width: 100%;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn {
+  padding-inline: 0.65em;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn:focus-visible,
@@ -195,6 +224,17 @@ html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-confirm:hover {
   background: #d15645;
 }
 
+html.dark-mode .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn.tvm-btn-clear-model {
+  background: #b94a3b;
+  color: #fff;
+}
+
+html.dark-mode .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn.tvm-btn-clear-model:hover,
+html.dark-mode .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn.tvm-btn-clear-model:focus-visible {
+  background: #d15645;
+  color: #fff;
+}
+
 html.dark-mode .tvm-clear-step-dialog-backdrop {
   background: rgba(0, 0, 0, 0.72);
 }
@@ -243,6 +283,10 @@ html:not(.dark-mode) .tvm-previous-diagram-placeholder {
 }
 
 @media (max-width: 900px) {
+  .tvm-uml-editor-tutorial .tvm-instructions-panel {
+    flex-basis: 220px;
+  }
+
   .tvm-uml-editor-workspace {
     min-height: 520px;
   }
@@ -251,16 +295,16 @@ html:not(.dark-mode) .tvm-previous-diagram-placeholder {
 /* ─── Tutorial-mode UX overrides ───
    Reduce cognitive load by hiding chrome that the tutorial drives
    automatically (diagram type, layout, redundant resets) or that does
-   not belong inside a guided tutorial flow (Export UML, Copy ArchUML —
-   the global "Reset Current Step" button in the navbar replaces "Empty").
-   Visual edit is always on in tutorial mode and the toggle is moved out
-   of the way. */
+   not belong inside a guided tutorial flow (Copy ArchUML — the global
+   "Reset Current Step" button in the navbar replaces "Empty"). Visual
+   edit is always on in tutorial mode and the toggle is moved out of the
+   way. Keep Export UML visible so students can download their encrypted
+   submission without exposing the ArchUML source pane. */
 .tvm-uml-editor-tutorial .uml-pg-toolbar-group-type,
 .tvm-uml-editor-tutorial .uml-pg-toolbar-group-layout,
 .tvm-uml-editor-tutorial #uml-pg-edit,
 .tvm-uml-editor-tutorial label[for="uml-pg-edit"],
 .tvm-uml-editor-tutorial #uml-pg-reset-example,
-.tvm-uml-editor-tutorial #uml-pg-export-source,
 .tvm-uml-editor-tutorial #uml-pg-copy-source {
   display: none !important;
 }
@@ -319,4 +363,65 @@ html.dark-mode .tvm-uml-editor-tutorial #uml-playground-toolbar {
 }
 html.dark-mode .tvm-uml-editor-tutorial #uml-pg-palette {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Theme alignment with the rest of the tutorial UI ───
+   The instructions panel, step-nav-bar, and step-controls-bar use a
+   neutral-gray palette (#f5f5f8 light, #141416 dark) with #d0d0da /
+   #2a2a2e dividers. Matching those here makes the editor feel like a
+   continuous panel inside the tutorial rather than a separate app. */
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-playground-wrap {
+  border-color: #d0d0da;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-playground-toolbar {
+  background: #f5f5f8;
+  border-bottom-color: #d0d0da;
+  color: #1a1a2e;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-palette {
+  background: #fafafc;
+  border-bottom-color: #d0d0da;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-help-banner {
+  background: #fffbe6;
+  border-bottom-color: #ead9a4;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-preview-pane {
+  background: #ffffff;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-props-pane {
+  background: #fafafc;
+  border-left-color: #d0d0da;
+}
+
+html.dark-mode .tvm-uml-editor-tutorial #uml-playground-wrap {
+  border-color: #2a2a2e;
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-playground-toolbar {
+  background: #141416;
+  border-bottom-color: #2a2a2e;
+  color: #e0e0e8;
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-pg-palette {
+  background: #18181b;
+  border-bottom-color: #2a2a2e;
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-pg-preview-pane {
+  background: #14141c;
+}
+html.dark-mode .tvm-uml-editor-tutorial #uml-pg-props-pane {
+  background: #18181b;
+  border-left-color: #2a2a2e;
+}
+
+/* The .tvm-btn-prev/.tvm-btn-next/.tvm-btn-test pill at the tutorial
+   footer uses #0078d4 / #1a7f3c. The editor's "Download SVG" is its
+   primary action — use the same blue so the eye reads it as
+   first-class. Scoped to tutorial mode so the standalone editor's
+   palette stays untouched. */
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-download {
+  background: #0078d4;
+}
+html:not(.dark-mode) .tvm-uml-editor-tutorial #uml-pg-download:hover {
+  background: #005fa3;
 }
