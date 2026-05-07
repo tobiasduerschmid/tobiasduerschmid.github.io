@@ -1052,6 +1052,7 @@ deactivate app
         && diagrams && /class\s+Application/.test(diagrams.classDiagram || ''));
     }, null, { timeout: 30000 });
     await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toBeVisible();
+    await popup.locator('.tvm-right-tab[data-panel="uml"]').click();
     await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toHaveClass(/active/);
     await expect(popup.locator('.tvm-uml-right-view')).toBeVisible();
     await expect(popup.locator('.tvm-diagram-content svg')).toBeVisible();
@@ -1529,25 +1530,31 @@ app --> user: second()
     await setUmlSource(page, `@startuml
 actor user: User @pos(300, 0)
 participant app: Application @pos(500, 0)
+participant db: Database @pos(700, 0)
 user -> app: first()
+app --> user: second()
 @enduml`);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]')).toHaveCount(1);
 
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]').click();
+    await expect(page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#uml-pg-output svg').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
     const appBox = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
-    const firstRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]').boundingBox();
-    if (!appBox || !firstRouteBox) throw new Error('sequence lifeline and message handles should have boxes');
+    const lastRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]').boundingBox();
+    if (!appBox || !lastRouteBox) throw new Error('sequence lifeline and message handles should have boxes');
     const start = {
       x: appBox.x + appBox.width / 2,
-      y: firstRouteBox.y + firstRouteBox.height / 2 + 34,
+      y: lastRouteBox.y + lastRouteBox.height / 2 + 28,
     };
     await page.mouse.move(start.x, start.y);
     await page.mouse.down();
-    await page.mouse.move(start.x + 82, start.y + 46, { steps: 8 });
+    await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
+    await page.mouse.move(start.x + 82, start.y + 44, { steps: 8 });
     await page.mouse.up();
 
     const source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toContain('app -> app : message()');
-    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('app -> app : message()'));
+    expect(source.indexOf('app --> user: second()')).toBeLessThan(source.indexOf('app -> app : message()'));
   });
 
   test('sequence messages can be reordered by dragging and from properties', async ({ page }) => {
@@ -1601,7 +1608,12 @@ user -> app: first()
 app -> app: self()
 app -> db: second()
 @enduml`);
-    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]')).toHaveCount(1);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return Boolean(svg && svg.textContent.includes('self()') && svg.textContent.includes('second()') &&
+        document.querySelector('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]'));
+    });
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]')).toHaveCount(3);
 
     const move = await page.evaluate(() => {
       const svg = document.querySelector('#uml-pg-output svg');

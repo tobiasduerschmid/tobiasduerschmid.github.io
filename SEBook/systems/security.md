@@ -5,7 +5,7 @@ layout: sebook
 
 <script src="/js/ArchUML/uml-bundle.js"></script>
 
-# Background and Motivation
+# Background & Motivation
 
 ## Why Security Matters
 
@@ -55,11 +55,9 @@ Different attacks violate different combinations of the three. Calling everythin
 | Stolen unencrypted laptop with PHI | ✓ | — | — |
 | Forged transaction inserted into a bank ledger | — | ✓ | — |
 
----
 
 **Quick Check.** Cover the table above. For each scenario, which CIA letter(s) apply, and *why*? Spaced retrieval — recalling without looking — is what builds durable memory; re-reading merely feels like it does.
 
----
 
 # Common Web Vulnerabilities
 
@@ -183,7 +181,7 @@ Defenses come in layers:
 * **Content Security Policy (a defense in depth).** A `Content-Security-Policy` HTTP header tells the browser *which sources of script it will execute* — typically, only the site's own origin and a small explicit allow-list. Even if attacker-supplied `<script>` slips through escaping, a strict CSP refuses to run it.
 * **Use HttpOnly cookies for session tokens.** A cookie with the `HttpOnly` flag is unreadable from JavaScript, so a successful XSS attack cannot directly *steal* the session token. (It can still abuse the session by issuing requests from the victim's browser — see the authentication section below.)
 
-# Cryptographic Foundations
+# Cryptography
 
 Modern security depends on a small set of cryptographic primitives. You will rarely implement them yourself — the rule is *don't roll your own crypto* — but you must understand what each one does and what it does *not* do, in order to use the libraries correctly.
 
@@ -413,11 +411,9 @@ A widely circulated photograph shows an emergency telephone whose buttons are bl
 
 The lesson generalizes: a defense that doesn't *match the actual threat model* and doesn't account for the *real attack surface* fails for both reasons. Always do the four-question pass on the *system as deployed*, not the system as drawn on the whiteboard.
 
----
 
 **Quick Check.** Pick a real application you use daily. Walk through the four questions: what is it defending, who attacks it, what is exposed, what defenses are in place? Where are the weakest links?
 
----
 
 # Summary
 
@@ -429,33 +425,8 @@ The lesson generalizes: a defense that doesn't *match the actual threat model* a
 * Three security design principles dominate application code: **Zero Trust** (validate every input, regardless of source), **Open Design** (security rests on key secrecy, not algorithm secrecy — public scrutiny improves designs), and **Principle of Least Privilege** (every component holds only the permissions its job requires, shrinking the blast radius of any compromise).
 * A **security plan** answers four questions: what are you defending (security model), who is attacking and why (threat model), where is the system exposed (attack surface), and what mechanisms prevent compromise (protection mechanisms). A defense built without a matching threat model fails — the foil-and-emergency-phone is the canonical illustration.
 
----
-
-# Further Reading and Practice
-
-## Further Reading
-
-* **Jerome H. Saltzer and Michael D. Schroeder.** *The Protection of Information in Computer Systems.* Proceedings of the IEEE, 63(9), 1278–1308, 1975. — *The original statement of the Principle of Least Privilege, Open Design, and the other classical security design principles. Still essential reading.*
-* **Ross Anderson.** *Security Engineering: A Guide to Building Dependable Distributed Systems.* 3rd edition, Wiley, 2020. (Free PDF at <https://www.cl.cam.ac.uk/~rja14/book.html>.) — *The standard graduate-level textbook on real-world security engineering; rich case studies across banking, healthcare, telecoms.*
-* **OWASP.** *OWASP Top 10 — Web Application Security Risks.* <https://owasp.org/www-project-top-ten/> — *Industry-standard list of the most common web vulnerabilities, updated every few years.*
-* **OWASP.** *Cheat Sheet Series.* <https://cheatsheetseries.owasp.org/> — *Concrete, language-specific guidance for SQLi, XSS, CSRF, authentication, and many more.*
-* **Mozilla Web Security Cheat Sheet.** <https://infosec.mozilla.org/guidelines/web_security> — *Practical defaults for HTTPS, headers, CSP, and cookie attributes.*
-* **NIST Special Publication 800-63B.** *Digital Identity Guidelines: Authentication and Lifecycle Management.* <https://pages.nist.gov/800-63-3/sp800-63b.html> — *The current authoritative guidance on password rules, MFA, and session management.*
-* **Rain Forest Puppy.** *NT Web Technology Vulnerabilities.* Phrack Magazine, vol. 8 issue 54, 1998. — *The first widely circulated public description of SQL injection.*
-
-## Reflection Questions
-
-1. For each of the three CIA attributes, describe one *plausible* violation that would be problematic for a course-project system you have built or worked on. Which CIA attribute is hardest to defend in your project, and why?
-2. A teammate proposes "we'll just sanitize SQL inputs by replacing single quotes with two single quotes". Explain why this is a strictly worse defense than parameterized queries.
-3. Explain in one paragraph why an `HttpOnly` flag on a session cookie does *not* fully neutralize XSS. What additional class of attack remains possible?
-4. You are designing a small e-commerce service composed of four backend components: a product catalog, a checkout flow, a notifications service, and a nightly batch report. Apply the Principle of Least Privilege: what database, file-system, and outbound-network permissions does each component need — and which should it *not* have?
-5. Walk through the four security-plan questions (security model, threat model, attack surface, protection mechanisms) for a hypothetical UCLA student-grades portal. What threat model warrants the strongest defenses, and why?
-6. *Open Design* says cryptographic algorithms should be public. *Complementary obscurity* says you should hide your framework versions and config. These sound contradictory. In one paragraph, reconcile them.
-
-## Practice
+# Quiz 
 
 {% include flashcards.html id="security" %}
 
 {% include quiz.html id="security" %}
-
-*Pedagogical tip: After reading this chapter, try to **explain** each concept aloud — to a study partner, a rubber duck, or your imaginary future self — before peeking at the answer. Effortful retrieval builds durable mental models; re-reading merely feels productive.*

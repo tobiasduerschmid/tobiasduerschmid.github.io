@@ -3772,7 +3772,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (layer) {
         Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edit-hitbox')).forEach(function (rect) {
           var rid = rect.getAttribute('data-layout-id');
-          rect.classList.toggle('is-selected', selectedLayoutIds[rid] === 'node');
+          var sel = selectedLayoutIds[rid];
+          rect.classList.toggle('is-selected', sel === 'node' || sel === 'fragment');
         });
         Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-edge-hitbox')).forEach(function (line) {
           var rid = line.getAttribute('data-layout-id');
@@ -4438,6 +4439,197 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return moveSequenceMessageBlockToLine(routeId, insertBefore);
     }
 
+    // ─── Sequence-fragment helpers ─────────────────────────────────────
+    // Fragments have id `frag:<openLineIdx>`. The open line is the line in the
+    // (cleaned) source that begins with `alt|opt|loop|par|break|critical|ref|neg`.
+    // The matching `end` is paired by depth.
+    var SEQUENCE_FRAGMENT_KINDS = ['alt', 'opt', 'loop', 'par', 'break', 'critical', 'ref', 'neg'];
+    var SEQUENCE_FRAGMENT_KIND_LABEL = {
+      alt: 'alt — alternative',
+      opt: 'opt — optional',
+      loop: 'loop — iterative',
+      par: 'par — parallel',
+      break: 'break — early exit',
+      critical: 'critical — atomic section',
+      ref: 'ref — reference to another interaction',
+      neg: 'neg — forbidden trace'
+    };
+
+    function sequenceFragmentRanges(text) {
+      var lines = stripLayoutMetadata(text).split('\n');
+      var stack = [];
+      var ranges = [];
+      var openRe = /^\s*(alt|opt|loop|par|break|critical|ref|neg)\b\s*(?:\[(.*?)\])?\s*$/i;
+      var elseRe = /^\s*else\b\s*(?:\[(.*?)\])?\s*$/i;
+      var endRe  = /^\s*end\s*$/i;
+      for (var i = 0; i < lines.length; i++) {
+        var raw = lines[i];
+        var openMatch = raw.match(openRe);
+        if (openMatch) {
+          stack.push({
+            id: 'frag:' + i,
+            startIdx: i,
+            kind: openMatch[1].toLowerCase(),
+            condition: (openMatch[2] || '').trim(),
+            branches: [],
+            endIdx: -1
+          });
+          continue;
+        }
+        var elseMatch = raw.match(elseRe);
+        if (elseMatch && stack.length) {
+          stack[stack.length - 1].branches.push({
+            lineIdx: i,
+            condition: (elseMatch[1] || '').trim()
+          });
+          continue;
+        }
+        if (endRe.test(raw) && stack.length) {
+          var done = stack.pop();
+          done.endIdx = i;
+          ranges.push(done);
+        }
+      }
+      return ranges;
+    }
+
+    function fragmentInfoForId(fragId, text) {
+      var ranges = sequenceFragmentRanges(text || textarea.value);
+      for (var i = 0; i < ranges.length; i++) {
+        if (ranges[i].id === fragId) return ranges[i];
+      }
+      return null;
+    }
+
+    function changeFragmentKind(fragId, newKind) {
+      newKind = String(newKind || '').toLowerCase().trim();
+      if (SEQUENCE_FRAGMENT_KINDS.indexOf(newKind) === -1) return;
+      var info = fragmentInfoForId(fragId);
+      if (!info || info.kind === newKind) return;
+      snapshotForUndo('frag-kind:' + fragId);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var indent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
+      // par doesn't take a guard at the opener line; everything else may.
+      var keepCond = info.condition;
+      lines[info.startIdx] = indent + newKind + (keepCond && newKind !== 'par' ? ' [' + keepCond + ']' : '');
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender(fragId, 'fragment');
+      renderDiagram();
+      announce('Changed fragment kind to ' + newKind + '.', false);
+    }
+
+    function changeFragmentCondition(fragId, newCondition) {
+      var info = fragmentInfoForId(fragId);
+      if (!info) return;
+      var trimmed = String(newCondition || '').trim();
+      if (info.condition === trimmed) return;
+      snapshotForUndo('frag-cond:' + fragId);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var indent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
+      lines[info.startIdx] = indent + info.kind + (trimmed ? ' [' + trimmed + ']' : '');
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender(fragId, 'fragment');
+      renderDiagram();
+    }
+
+    function changeFragmentBranchCondition(fragId, branchLineIdx, newCondition) {
+      var info = fragmentInfoForId(fragId);
+      if (!info) return;
+      var trimmed = String(newCondition || '').trim();
+      snapshotForUndo('frag-branch:' + fragId + ':' + branchLineIdx);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var indent = (lines[branchLineIdx].match(/^\s*/) || [''])[0];
+      lines[branchLineIdx] = indent + 'else' + (trimmed ? ' [' + trimmed + ']' : '');
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender(fragId, 'fragment');
+      renderDiagram();
+    }
+
+    function addFragmentElseBranch(fragId, condition) {
+      var info = fragmentInfoForId(fragId);
+      if (!info || info.endIdx === -1) return;
+      var trimmed = String(condition || '').trim();
+      snapshotForUndo('frag-else:' + fragId);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var openIndent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
+      lines.splice(info.endIdx, 0, openIndent + 'else' + (trimmed ? ' [' + trimmed + ']' : ''));
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender(fragId, 'fragment');
+      renderDiagram();
+      announce('Added else branch.', false);
+    }
+
+    /**
+     * Delete a fragment, keeping the messages inside but removing the wrapper
+     * (`open` / `else` / `end` lines). Inner messages are dedented by one level.
+     */
+    function unwrapFragment(fragId) {
+      var info = fragmentInfoForId(fragId);
+      if (!info || info.endIdx === -1) return;
+      snapshotForUndo('frag-unwrap:' + fragId);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var openIndent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
+      var dedent = '  '; // fragments always indent by 2
+      var dropLines = {};
+      dropLines[info.startIdx] = true;
+      dropLines[info.endIdx] = true;
+      info.branches.forEach(function (b) { dropLines[b.lineIdx] = true; });
+      var out = [];
+      for (var i = 0; i < lines.length; i++) {
+        if (dropLines[i]) continue;
+        if (i > info.startIdx && i < info.endIdx) {
+          var cur = lines[i];
+          if (cur.indexOf(openIndent + dedent) === 0) {
+            cur = openIndent + cur.substring((openIndent + dedent).length);
+          } else if (cur.indexOf(dedent) === 0) {
+            cur = cur.substring(dedent.length);
+          }
+          out.push(cur);
+        } else {
+          out.push(lines[i]);
+        }
+      }
+      textarea.value = writePositionsIntoSource(out.join('\n'), 'sequence', positions, routes);
+      setSelectedLayoutId(null);
+      renderDiagram();
+      announce('Removed fragment wrapper, kept inner messages.', false);
+    }
+
+    /**
+     * Find rendered fragments in the SVG by reading data-layout-fragment-id.
+     * Returns array of { id, labelBox, frameBox } where labelBox is the
+     * pentagon tab and frameBox is the full enclosing rectangle.
+     */
+    function findRenderedFragments(svg) {
+      if (!svg) return [];
+      var byId = {};
+      Array.prototype.slice.call(svg.querySelectorAll('[data-layout-fragment-id]')).forEach(function (el) {
+        if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) return;
+        var id = el.getAttribute('data-layout-fragment-id');
+        if (!id) return;
+        var bb = null;
+        try { bb = el.getBBox(); } catch (e) { bb = null; }
+        if (!bb) return;
+        if (!byId[id]) byId[id] = { id: id, frameBox: null, labelBox: null };
+        var tag = el.tagName.toLowerCase();
+        if (tag === 'rect') byId[id].frameBox = { x: bb.x, y: bb.y, width: bb.width, height: bb.height };
+        else if (tag === 'polygon') byId[id].labelBox = { x: bb.x, y: bb.y, width: bb.width, height: bb.height };
+      });
+      return Object.keys(byId).map(function (id) { return byId[id]; }).filter(function (f) {
+        return f.frameBox && f.labelBox;
+      });
+    }
+
     function isRelationLineFor(line, type, sourceId, targetId, op) {
       var t = line.trim();
       // Test plain `A op B` ignoring multiplicity quotes / labels.
@@ -4594,6 +4786,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         x: box.x + ((clientX - rect.left) / rect.width) * box.width,
         y: box.y + ((clientY - rect.top) / rect.height) * box.height
       };
+    }
+
+    function clientRectToEditorCanvasBox(svg, rect) {
+      var p1 = editorCanvasPoint(svg, rect.left, rect.top);
+      var p2 = editorCanvasPoint(svg, rect.right, rect.bottom);
+      var x = Math.min(p1.x, p2.x);
+      var y = Math.min(p1.y, p2.y);
+      return { x: x, y: y, width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y) };
     }
 
     function pointInsideElement(el, clientX, clientY) {
@@ -6061,7 +6261,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function findSequenceLifelineAtPoint(svg, clientX, clientY) {
       if (typeSelect.value !== 'sequence' || !svg) return null;
-      var pt = svgPoint(svg, clientX, clientY);
+      var pt = editorCanvasPoint(svg, clientX, clientY);
       var view = parseSvgViewBox(svg) || { x: 0, y: 0, width: 4000, height: 4000 };
       var candidates = findEditableElements(svg).filter(function (item) {
         return item && item.axis === 'x' && item.box;
@@ -6077,6 +6277,33 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           distance: inHead ? 0 : Math.abs(pt.x - centerX)
         };
       }).filter(Boolean);
+      candidates.sort(function (a, b) { return a.distance - b.distance; });
+      if (candidates.length) return candidates[0].item;
+
+      var modelById = {};
+      collectModelElements(textarea.value, typeSelect.value).forEach(function (model) {
+        if (model && model.axis === 'x') modelById[model.id] = model;
+      });
+      Array.prototype.slice.call(svg.querySelectorAll('.uml-pg-edit-hitbox[data-layout-id]')).forEach(function (rect) {
+        var id = rect.getAttribute('data-layout-id');
+        var model = modelById[id];
+        if (!model) return;
+        var clientBox = rect.getBoundingClientRect();
+        if (!clientBox || clientBox.width <= 0 || clientBox.height <= 0) return;
+        var svgClientBox = svg.getBoundingClientRect();
+        var centerX = clientBox.left + clientBox.width / 2;
+        var top = Math.min(clientBox.top - 24, svgClientBox.top - 12);
+        var bottom = Math.max(svgClientBox.bottom + 12, clientBox.bottom + 360);
+        var inHead = clientX >= clientBox.left - 12 && clientX <= clientBox.right + 12 &&
+          clientY >= clientBox.top - 12 && clientY <= clientBox.bottom + 12;
+        var nearLine = clientY >= top && clientY <= bottom && Math.abs(clientX - centerX) <= 36;
+        if (!inHead && !nearLine) return;
+        var box = clientRectToEditorCanvasBox(svg, clientBox);
+        candidates.push({
+          item: { id: id, label: model.label || id, axis: 'x', box: box },
+          distance: inHead ? 0 : Math.abs(clientX - centerX)
+        });
+      });
       candidates.sort(function (a, b) { return a.distance - b.distance; });
       return candidates.length ? candidates[0].item : null;
     }
@@ -6098,7 +6325,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (target) return target;
       var source = state.sourceItem;
       if (!source || !source.box) return null;
-      var pt = svgPoint(state.svg, clientX, clientY);
+      var pt = editorCanvasPoint(state.svg, clientX, clientY);
       var centerX = sequenceLifelineCenterX(source, state.svg);
       var view = parseSvgViewBox(state.svg) || { x: 0, y: 0, width: 4000, height: 4000 };
       var top = Math.min(source.box.y - 24, view.y - 12);
@@ -6119,7 +6346,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (hitbox && hitbox.classList) hitbox.classList.add('is-relation-source');
 
       var ns = 'http://www.w3.org/2000/svg';
-      var pt = svgPoint(svg, event.clientX, event.clientY);
+      var pt = editorCanvasPoint(svg, event.clientX, event.clientY);
       var originX = sequenceLifelineCenterX(item, svg);
       var line = document.createElementNS(ns, 'line');
       line.setAttribute('class', 'uml-pg-extend-line');
@@ -6151,7 +6378,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function updateSequenceMessageDrag(ev, finish) {
       if (!sequenceMessageDragState) return;
       var state = sequenceMessageDragState;
-      var pt = svgPoint(state.svg, ev.clientX, ev.clientY);
+      var pt = editorCanvasPoint(state.svg, ev.clientX, ev.clientY);
       var dx = ev.clientX - state.startClientX;
       var dy = ev.clientY - state.startClientY;
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) state.moved = true;
@@ -6421,9 +6648,80 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       if (selectedLayoutKind === 'route') {
         buildRelationProps();
+      } else if (selectedLayoutKind === 'fragment') {
+        buildFragmentProps();
       } else {
         buildElementProps();
       }
+    }
+
+    function buildFragmentProps() {
+      var id = String(selectedLayoutId || '');
+      var info = fragmentInfoForId(id);
+      if (!info) {
+        propsTitle.textContent = 'Fragment';
+        var miss = document.createElement('p');
+        miss.className = 'uml-pg-prop-hint';
+        miss.textContent = 'This fragment is no longer in the source.';
+        propsContent.appendChild(miss);
+        return;
+      }
+      propsTitle.textContent = 'Fragment — ' + info.kind;
+
+      propsContent.appendChild(field('Kind', selectInput(
+        SEQUENCE_FRAGMENT_KINDS.map(function (k) {
+          return { value: k, label: SEQUENCE_FRAGMENT_KIND_LABEL[k] || k };
+        }),
+        info.kind,
+        function (v) { changeFragmentKind(id, v); }
+      )));
+
+      // par doesn't take a guard at the opener line per UML 2.5.
+      if (info.kind !== 'par') {
+        propsContent.appendChild(field('Condition', textInput(info.condition, function (v) {
+          changeFragmentCondition(id, v);
+        })));
+      } else {
+        var hint = document.createElement('p');
+        hint.className = 'uml-pg-prop-hint';
+        hint.textContent = 'par fragments don\'t take a top-level guard. Each branch can carry its own condition below.';
+        propsContent.appendChild(hint);
+      }
+
+      // Branch (else) editor — alt and par benefit; show for any kind that has
+      // existing branches so you can edit them.
+      if (info.branches.length || info.kind === 'alt' || info.kind === 'par') {
+        var branchFs = document.createElement('fieldset');
+        branchFs.className = 'uml-pg-prop-fieldset';
+        var branchLeg = document.createElement('legend');
+        branchLeg.textContent = 'Branches';
+        branchFs.appendChild(branchLeg);
+        info.branches.forEach(function (br, idx) {
+          branchFs.appendChild(field('Branch ' + (idx + 2) + ' condition', textInput(br.condition, function (v) {
+            changeFragmentBranchCondition(id, br.lineIdx, v);
+          })));
+        });
+        var addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'uml-pg-add-member';
+        addBtn.textContent = 'Add branch';
+        addBtn.addEventListener('click', function () { addFragmentElseBranch(id, ''); });
+        branchFs.appendChild(addBtn);
+        propsContent.appendChild(branchFs);
+      }
+
+      var unwrapBtn = document.createElement('button');
+      unwrapBtn.type = 'button';
+      unwrapBtn.className = 'uml-pg-add-member';
+      unwrapBtn.style.marginTop = '8px';
+      unwrapBtn.textContent = 'Remove fragment (keep inner messages)';
+      unwrapBtn.addEventListener('click', function () { unwrapFragment(id); });
+      propsContent.appendChild(unwrapBtn);
+
+      var hint2 = document.createElement('p');
+      hint2.className = 'uml-pg-prop-hint';
+      hint2.textContent = 'Click a message inside to edit its source/target. Press Delete to remove the entire fragment block.';
+      propsContent.appendChild(hint2);
     }
 
     /**
@@ -8039,12 +8337,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       // first and avoid shifting issues), and id list for elements.
       var routeIdxs = [];
       var elementIds = [];
+      var fragmentIds = [];
       entries.forEach(function (e) {
         if (e.kind === 'route') {
           var id = String(e.id);
           var lines = stripLayoutMetadata(textarea.value).split('\n');
           var idx = relationLineMatchForRouteId(id, typeSelect.value, lines, rIndices).lineIdx;
           if (idx !== -1) routeIdxs.push(idx);
+        } else if (e.kind === 'fragment') {
+          fragmentIds.push(String(e.id));
         } else {
           elementIds.push(e.id);
         }
@@ -8054,6 +8355,22 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       routeIdxs.forEach(function (idx) {
         textarea.value = removeRelationLine(textarea.value, typeSelect.value, idx);
       });
+      // Drop fragments wholesale (opener + branches + end + nested content).
+      // Sort by source-line descending so earlier indices remain valid.
+      if (fragmentIds.length) {
+        var fragInfos = fragmentIds.map(function (fid) {
+          return fragmentInfoForId(fid);
+        }).filter(Boolean);
+        fragInfos.sort(function (a, b) { return b.startIdx - a.startIdx; });
+        fragInfos.forEach(function (info) {
+          var positions = readLayoutPositions(textarea.value);
+          var routes = readLayoutRoutes(textarea.value);
+          var lines = stripLayoutMetadata(textarea.value).split('\n');
+          if (info.endIdx === -1) return;
+          lines.splice(info.startIdx, info.endIdx - info.startIdx + 1);
+          textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+        });
+      }
       // Then drop elements (each call also strips relations referencing the id).
       elementIds.forEach(function (id) {
         textarea.value = removeElementFromSource(textarea.value, typeSelect.value, id);
@@ -8530,6 +8847,80 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           installExtendHandle(svg, layer, item, rect);
         }
       });
+
+      // ─── Fragment hitboxes (sequence diagrams only) ─────────────────
+      if (typeSelect.value === 'sequence') {
+        findRenderedFragments(svg).forEach(function (frag) {
+          var labelBox = frag.labelBox;
+          var hitbox = document.createElementNS(ns, 'rect');
+          hitbox.setAttribute('class', 'uml-pg-edit-hitbox is-label' +
+            (frag.id === selectedLayoutId && selectedLayoutKind === 'fragment' ? ' is-selected' : ''));
+          hitbox.setAttribute('data-layout-id', frag.id);
+          hitbox.setAttribute('data-layout-fragment-id', frag.id);
+          hitbox.setAttribute('x', labelBox.x);
+          hitbox.setAttribute('y', labelBox.y);
+          hitbox.setAttribute('width', labelBox.width);
+          hitbox.setAttribute('height', labelBox.height);
+          hitbox.setAttribute('aria-hidden', 'true');
+          var a11y = document.createElementNS(ns, 'rect');
+          a11y.setAttribute('class', 'uml-pg-edit-a11y-target');
+          a11y.setAttribute('data-layout-id', frag.id);
+          a11y.setAttribute('x', labelBox.x);
+          a11y.setAttribute('y', labelBox.y);
+          a11y.setAttribute('width', Math.max(labelBox.width, 36));
+          a11y.setAttribute('height', Math.max(labelBox.height, 24));
+          a11y.setAttribute('tabindex', '0');
+          a11y.setAttribute('role', 'button');
+          a11y.setAttribute('aria-label', 'Fragment ' + frag.id + ' — Enter to select, Delete to remove the fragment');
+          elementTargetLayer.appendChild(a11y);
+          function selectFragment(extend) {
+            setSelectedLayoutId(frag.id, 'fragment', extend ? { extend: true } : undefined);
+          }
+          function onPointerDown(event) {
+            if (activeTool) return;
+            event.preventDefault();
+            event.stopPropagation();
+            var extend = event.metaKey || event.ctrlKey || event.shiftKey;
+            selectFragment(extend);
+          }
+          function onContext(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            selectFragment(false);
+          }
+          function onKey(event) {
+            var k = event.key;
+            if (k === 'Enter' || k === ' ') {
+              event.preventDefault();
+              selectFragment(false);
+            } else if (k === 'Delete' || k === 'Backspace') {
+              event.preventDefault();
+              selectFragment(false);
+              deleteSelected();
+            } else if (k === 'Escape') {
+              event.preventDefault();
+              setSelectedLayoutId(null);
+            }
+          }
+          function onDblClick(event) {
+            if (activeTool) return;
+            event.preventDefault();
+            event.stopPropagation();
+            selectFragment(false);
+            // Give the props pane focus so the user can immediately tab into it.
+            var inp = propsContent && propsContent.querySelector('input, select, textarea');
+            if (inp) inp.focus();
+          }
+          hitbox.addEventListener('pointerdown', onPointerDown);
+          a11y.addEventListener('pointerdown', onPointerDown);
+          hitbox.addEventListener('contextmenu', onContext);
+          a11y.addEventListener('contextmenu', onContext);
+          hitbox.addEventListener('dblclick', onDblClick);
+          a11y.addEventListener('dblclick', onDblClick);
+          a11y.addEventListener('keydown', onKey);
+          elementVisualLayer.appendChild(hitbox);
+        });
+      }
 
       if (!editables.length) {
         status.textContent = 'No movable elements detected for this diagram yet.';
@@ -10091,6 +10482,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     var generatedPythonWorkspaceUrl = {{ '/uml-python-workspace.html' | relative_url | jsonify }};
+    var generatedPythonPayloadWindowNamePrefix = 'archuml-generated-python-payload:';
 
     function openGeneratedPythonWorkspace(python) {
       var workspaceUrl = new URL(generatedPythonWorkspaceUrl, window.location.href);
@@ -10113,7 +10505,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
       function sendPayload() {
         if (!workspaceWindow || workspaceWindow.closed || delivered) return;
-        workspaceWindow.postMessage(payload, window.location.origin);
+        try {
+          workspaceWindow.postMessage(payload, window.location.origin);
+        } catch (err) {}
+      }
+
+      function seedPayloadWindowName() {
+        if (!workspaceWindow || workspaceWindow.closed) return;
+        try {
+          workspaceWindow.name = generatedPythonPayloadWindowNamePrefix + JSON.stringify(payload);
+        } catch (err) {}
       }
 
       function onMessage(event) {
@@ -10132,11 +10533,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
 
       window.addEventListener('message', onMessage);
-      workspaceWindow = window.open(workspaceUrl.href, '_blank');
+      workspaceWindow = window.open('about:blank', '_blank');
       if (!workspaceWindow) {
         removeListener();
         throw new Error('Allow popups for this site to open the generated Python tutorial workspace.');
       }
+      seedPayloadWindowName();
+      workspaceWindow.location.href = workspaceUrl.href;
 
       var retryTimer = window.setInterval(function () {
         attempts += 1;

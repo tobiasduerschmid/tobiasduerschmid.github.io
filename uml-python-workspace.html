@@ -221,6 +221,7 @@ permalink: /uml-python-workspace.html
       var statusEl = document.getElementById('generated-python-status');
       var workspaceEl = document.getElementById('generated-python-workspace');
       var payloadStorageKey = 'archuml-generated-python-payload';
+      var payloadWindowNamePrefix = 'archuml-generated-python-payload:';
       var payloadReceived = false;
       var readyTimer = null;
 
@@ -245,28 +246,45 @@ permalink: /uml-python-workspace.html
       }
 
       function storePayloadForReload(payload) {
+        var serialized = JSON.stringify(payload);
+        var stored = false;
         try {
-          sessionStorage.setItem(payloadStorageKey, JSON.stringify(payload));
-          return true;
-        } catch (err) {
-          return false;
-        }
+          sessionStorage.setItem(payloadStorageKey, serialized);
+          stored = true;
+        } catch (err) {}
+        try {
+          window.name = payloadWindowNamePrefix + serialized;
+          stored = true;
+        } catch (err) {}
+        return stored;
       }
 
       function readStoredPayload() {
         try {
           var raw = sessionStorage.getItem(payloadStorageKey);
-          if (!raw) return null;
-          clearStoredPayload();
-          return JSON.parse(raw);
-        } catch (err) {
-          clearStoredPayload();
-          return null;
-        }
+          if (raw) {
+            clearStoredPayload();
+            return JSON.parse(raw);
+          }
+        } catch (err) {}
+        try {
+          if (String(window.name || '').indexOf(payloadWindowNamePrefix) === 0) {
+            var fromName = String(window.name).slice(payloadWindowNamePrefix.length);
+            clearStoredPayload();
+            return JSON.parse(fromName);
+          }
+        } catch (nameErr) {}
+        clearStoredPayload();
+        return null;
       }
 
       function clearStoredPayload() {
         try { sessionStorage.removeItem(payloadStorageKey); } catch (err) {}
+        try {
+          if (String(window.name || '').indexOf(payloadWindowNamePrefix) === 0) {
+            window.name = '';
+          }
+        } catch (err) {}
       }
 
       function registerIsolationWorkerThenReload(payload) {
@@ -363,7 +381,7 @@ permalink: /uml-python-workspace.html
           linter: true,
           uml_diagram: true,
           uml_position: 'right',
-          uml_default_view: true,
+          uml_default_view: false,
           uml_default_type: 'class',
           uml_class_layout: 'portrait',
           debugger: true,
@@ -379,6 +397,9 @@ permalink: /uml-python-workspace.html
 
         window.__archUmlGeneratedPythonTutorial = tutorial;
         window.__archUmlGeneratedPythonStartPromise = tutorial.start().then(function () {
+          if (tutorial._umlDiagramEnabled && typeof tutorial._refreshUMLDiagram === 'function') {
+            tutorial._refreshUMLDiagram();
+          }
           if (!workspaceEl.querySelector('.tvm-error')) setStatus('Ready');
         });
       }

@@ -682,8 +682,10 @@ info_nav_title: "Browser storage"
       reads and clears a legacy <code>prefersReducedMotion</code> entry to promote it into
       <code>localStorage</code>. The generated Python workspace may briefly store
       <code>archuml-generated-python-payload</code> in the popup tab so the code survives
-      the one-time cross-origin-isolation reload needed by the Python debugger; the
-      entry is removed as soon as the workspace starts.
+      the one-time cross-origin-isolation reload needed by the Python debugger. It
+      also receives or mirrors that same temporary payload in the popup window name
+      for browsers that detach opener storage during the isolation transition. Both
+      copies are removed as soon as the workspace starts.
     </li>
     <li>
       <strong><code>IndexedDB</code></strong> &mdash; v86 tutorials may store compressed VM

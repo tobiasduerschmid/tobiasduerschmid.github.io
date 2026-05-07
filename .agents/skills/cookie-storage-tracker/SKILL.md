@@ -141,7 +141,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `tutorial-debug-subsection-<id>-<name>` — debugger sub-panel collapse
 
 **Adjacent surfaces (currently documented as ephemeral / unused):**
-- `sessionStorage` — one-time migration of `prefersReducedMotion`, plus the generated Python workspace's short-lived `archuml-generated-python-payload` reload bridge; neither persists across visits
+- `sessionStorage` — one-time migration of `prefersReducedMotion`, plus the generated Python workspace's short-lived `archuml-generated-python-payload` reload bridge; the same generated-workspace bridge is seeded/mirrored briefly in `window.name`; neither persists across visits
 - IndexedDB, Cache API, File System Access, WebSQL — **not used**
 - Service Worker — `coi-serviceworker.js` is registered for COOP/COEP header injection on isolated tutorial workspaces and for the v86 VM asset cache; it stores no per-user data
 - `BroadcastChannel` — channel names `ttsync-<path>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only

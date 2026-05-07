@@ -890,9 +890,12 @@ Output/UML tab panel), and time-travel debugger enabled around the generated
 `archuml_generated.py` file. It does not use URL payloads or add persistent
 storage; it uses a short-lived `sessionStorage` key
 (`archuml-generated-python-payload`) only to bridge the one-time
-cross-origin-isolation reload, then removes it as soon as the workspace
-starts. Any detached panes it opens reuse the normal `ttsync-<path>`
-tutorial popout channel.
+cross-origin-isolation reload. The editor also seeds, and the workspace may
+mirror, the same temporary payload in `window.name` so the popup can boot when
+COOP detaches the opener during that transition, then removes both copies as
+soon as the workspace starts. Any
+detached panes it opens reuse the normal `ttsync-<path>` tutorial popout
+channel.
 
 ### 4.5 JavaScript runtime
 
