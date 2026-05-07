@@ -284,6 +284,50 @@ async function routeInfoFor(page, routeId) {
   }, routeId);
 }
 
+async function diagramTextsInsideHitboxes(page, ids) {
+  return page.evaluate((wantedIds) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg) return false;
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const ctm = svg.getScreenCTM();
+      if (!rect || !ctm) return null;
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(ctm.inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(ctm.inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(b.x - a.x),
+        height: Math.abs(b.y - a.y),
+      };
+    }
+    return wantedIds.every((id) => {
+      const hitbox = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+        .find((el) => el.getAttribute('data-layout-id') === id);
+      const text = Array.from(svg.querySelectorAll('text'))
+        .find((el) => (el.textContent || '').trim() === id);
+      if (!hitbox || !text) return false;
+      const hb = {
+        x: Number(hitbox.getAttribute('x')),
+        y: Number(hitbox.getAttribute('y')),
+        width: Number(hitbox.getAttribute('width')),
+        height: Number(hitbox.getAttribute('height')),
+      };
+      const tb = svgBox(text);
+      if (!tb) return false;
+      const cx = tb.x + tb.width / 2;
+      const cy = tb.y + tb.height / 2;
+      return cx >= hb.x - 2 && cx <= hb.x + hb.width + 2 &&
+        cy >= hb.y - 2 && cy <= hb.y + hb.height + 2;
+    });
+  }, ids);
+}
+
 async function statePseudoRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
@@ -1631,6 +1675,65 @@ app --> user: second()
 
     source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toContain('app -> app : message()');
+    const sequenceModel = page.locator('#uml-pg-sequence-model');
+    await expect(sequenceModel.locator('details.uml-pg-sequence-model-disclosure')).not.toHaveAttribute('open', '');
+    await expect(sequenceModel.locator('.uml-pg-sequence-model-actions')).toBeHidden();
+  });
+
+  test('sequence plus handle can draw a self-message back to the lifeline', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await page.locator('#uml-pg-editor-pane').evaluate((el) => {
+      el.style.flex = '0 0 180px';
+    });
+    await setUmlSource(page, `@startuml
+actor user: User @pos(300, 0)
+participant app: Application @pos(500, 0)
+user -> app: first()
+@enduml`);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]')).toHaveCount(1);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]').click();
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').scrollIntoViewIfNeeded();
+    const drag = await page.evaluate(() => {
+      const app = document.querySelector('.uml-pg-edit-hitbox[data-layout-id="app"]');
+      const route = document.querySelector('.uml-pg-edge-hitbox[data-route-id="seqmsg:3"]');
+      if (!app || !route) return null;
+      const appRect = app.getBoundingClientRect();
+      const routeRect = route.getBoundingClientRect();
+      const handleRects = Array.from(document.querySelectorAll('.uml-pg-extend-handle'))
+        .map((handle) => {
+          const rect = handle.getBoundingClientRect();
+          return {
+            width: rect.width,
+            height: rect.height,
+            cx: rect.left + rect.width / 2,
+            cy: rect.top + rect.height / 2,
+          };
+        })
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      const expected = {
+        x: appRect.right,
+        y: appRect.top + appRect.height / 2,
+      };
+      handleRects.sort((a, b) => Math.hypot(a.cx - expected.x, a.cy - expected.y) - Math.hypot(b.cx - expected.x, b.cy - expected.y));
+      const handle = handleRects[0];
+      if (!handle) return null;
+      return {
+        startX: handle.cx,
+        startY: handle.cy,
+        endX: appRect.left + appRect.width / 2,
+        endY: routeRect.top + routeRect.height / 2 + 56,
+      };
+    });
+    if (!drag) throw new Error('sequence plus handle drag points should be available');
+    await page.mouse.move(drag.startX, drag.startY);
+    await page.mouse.down();
+    await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
+    await page.mouse.move(drag.endX, drag.endY, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/app -> app : message\(\)/);
   });
 
   test('sequence messages can be reordered by dragging and from properties', async ({ page }) => {
@@ -1892,15 +1995,50 @@ app -> db: second()
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Collect Order"]')).toHaveCount(1);
   });
 
-  test('hidden-source UML editor exposes editable ArchUML model rows for fallback notation', async ({ page }) => {
+  test('hidden-source UML editor keeps editable advanced source rows collapsed until requested', async ({ page }) => {
     await page.goto(UML_EDITOR_URL);
     await page.waitForSelector('#uml-pg-edit');
     await page.selectOption('#uml-pg-type', 'er');
 
-    await expect(page.locator('#uml-pg-sequence-model')).toBeVisible();
+    const modelPanel = page.locator('#uml-pg-sequence-model');
+    const disclosure = modelPanel.locator('details.uml-pg-sequence-model-disclosure');
+    await expect(modelPanel).toBeVisible();
+    await expect(disclosure).toBeVisible();
+    await expect(disclosure).not.toHaveAttribute('open', '');
+    await expect(modelPanel.getByRole('button', { name: '+ Title' })).toBeHidden();
+
+    await disclosure.locator('summary').click();
     await page.locator('#uml-pg-sequence-model').getByRole('button', { name: '+ Title' }).click();
     await expect(page.locator('#uml-pg-input')).toHaveValue(/title Entity relationship diagram/);
     await expect(page.locator('#uml-pg-sequence-model input[aria-label="Title row 1"]')).toHaveValue('title Entity relationship diagram');
+  });
+
+  test('hidden-source UML editor keeps advanced source rows collapsed for every diagram type', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    const diagramTypes = [
+      'class',
+      'sequence',
+      'state',
+      'component',
+      'deployment',
+      'usecase',
+      'activity',
+      'freeform',
+      'gitgraph',
+      'folder-tree',
+      'venn',
+      'er',
+    ];
+
+    for (const type of diagramTypes) {
+      await page.selectOption('#uml-pg-type', type);
+      const modelPanel = page.locator('#uml-pg-sequence-model');
+      const disclosure = modelPanel.locator('details.uml-pg-sequence-model-disclosure');
+      await expect(disclosure, `${type} advanced rows disclosure`).toBeVisible();
+      await expect(disclosure, `${type} advanced rows disclosure`).not.toHaveAttribute('open', '');
+      await expect(disclosure.locator('.uml-pg-sequence-model-actions'), `${type} advanced row controls`).toBeHidden();
+    }
   });
 
   test('state initial transitions can be rewired to existing states from properties', async ({ page }) => {
@@ -2000,6 +2138,35 @@ Idle --> BankruptState : bankrupt
 
     await dragLocatorCenter(page, page.locator('.uml-pg-edit-a11y-target[data-layout-id="__initial__0"]'), 40, 20);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/node "__initial__0" x=/);
+  });
+
+  test('state node titles and notes stay attached while moving states', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await selectEditMode(page, 'nodes');
+    await setUmlSource(page, `@startuml
+[*] --> NormalState : v
+NormalState --> BankruptState : bankrupt
+note right of BankruptState : New note
+@enduml`);
+
+    const bankrupt = page.locator('.uml-pg-edit-hitbox[data-layout-id="BankruptState"]');
+    await expect(bankrupt).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="note:3"]')).toHaveCount(1);
+
+    const box = await bankrupt.boundingBox();
+    if (!box) throw new Error('BankruptState should have a hitbox');
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 110, startY + 70, { steps: 6 });
+
+    expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState'])).toBe(true);
+
+    await page.mouse.up();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "BankruptState" x=/);
+    expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState'])).toBe(true);
   });
 
   test('state transition labels edit in place as transitions', async ({ page }) => {
@@ -3192,6 +3359,107 @@ Alice -> Bob : hello
     expect(ids).toContain('Ship Order');
   });
 
+  test('activity nodes drag independently while flow endpoints stay attached', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'activity');
+    await selectEditMode(page, 'nodes');
+    await setUmlSource(page, `@startuml
+(*) --> NormalTurn
+NormalTurn --> BankruptTurn : 321321
+NormalTurn --> JailTurn : 321321
+JailTurn --> NormalTurn : 321321
+@enduml`);
+
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalTurn"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="BankruptTurn"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="JailTurn"]')).toHaveCount(1);
+
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalTurn"]'), 95, 45);
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "NormalTurn" x=/);
+    const attachment = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      if (!svg || !window.UMLShared) return { routeCount: 0, attached: false, labels: [], textInside: false };
+      function svgBox(el) {
+        const rect = el.getBoundingClientRect();
+        const ctm = svg.getScreenCTM();
+        if (!rect || !ctm) return null;
+        const pt = svg.createSVGPoint();
+        pt.x = rect.left;
+        pt.y = rect.top;
+        const a = pt.matrixTransform(ctm.inverse());
+        pt.x = rect.right;
+        pt.y = rect.bottom;
+        const b = pt.matrixTransform(ctm.inverse());
+        return {
+          x: Math.min(a.x, b.x),
+          y: Math.min(a.y, b.y),
+          width: Math.abs(b.x - a.x),
+          height: Math.abs(b.y - a.y),
+        };
+      }
+      const hitbox = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+        .find((el) => el.getAttribute('data-layout-id') === 'NormalTurn');
+      if (!hitbox) return { routeCount: 0, attached: false, labels: [], textInside: false };
+      const box = {
+        x: Number(hitbox.getAttribute('x')),
+        y: Number(hitbox.getAttribute('y')),
+        width: Number(hitbox.getAttribute('width')),
+        height: Number(hitbox.getAttribute('height')),
+      };
+      const pad = 18;
+      function touches(point) {
+        return point &&
+          point.x >= box.x - pad &&
+          point.x <= box.x + box.width + pad &&
+          point.y >= box.y - pad &&
+          point.y <= box.y + box.height + pad;
+      }
+      const routes = window.UMLShared.collectEditableRoutes(svg)
+        .filter((route) => route.source === 'NormalTurn' || route.target === 'NormalTurn');
+      const attached = routes.length === 4 && routes.every((route) => {
+        const first = route.points[0];
+        const last = route.points[route.points.length - 1];
+        return (route.source !== 'NormalTurn' || touches(first)) &&
+          (route.target !== 'NormalTurn' || touches(last));
+      });
+      const labels = Array.from(svg.querySelectorAll('text'))
+        .map((text) => (text.textContent || '').trim())
+        .filter((text) => text === '321321' || text === '[321321]');
+      const textInside = ['NormalTurn', 'BankruptTurn', 'JailTurn'].every((id) => {
+        const h = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+          .find((el) => el.getAttribute('data-layout-id') === id);
+        const t = Array.from(svg.querySelectorAll('text'))
+          .find((el) => (el.textContent || '').trim() === id);
+        if (!h || !t) return false;
+        const hb = {
+          x: Number(h.getAttribute('x')),
+          y: Number(h.getAttribute('y')),
+          width: Number(h.getAttribute('width')),
+          height: Number(h.getAttribute('height')),
+        };
+        const tb = svgBox(t);
+        if (!tb) return false;
+        const cx = tb.x + tb.width / 2;
+        const cy = tb.y + tb.height / 2;
+        return cx >= hb.x - 2 && cx <= hb.x + hb.width + 2 &&
+          cy >= hb.y - 2 && cy <= hb.y + hb.height + 2;
+      });
+      return {
+        routeCount: routes.length,
+        attached,
+        labels,
+        textInside,
+        ids: routes.map((route) => ({ id: route.id, source: route.source, target: route.target })),
+      };
+    });
+
+    expect(attachment.routeCount).toBe(4);
+    expect(attachment.attached).toBe(true);
+    expect(attachment.textInside).toBe(true);
+    expect(attachment.labels.filter((label) => label === '321321')).toHaveLength(3);
+  });
+
   test('UML tutorial uses the standard instruction chrome and a draggable splitter', async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem('uml-pg-help-dismissed'));
     await page.goto(MONOPOLY_TUTORIAL_URL);
@@ -3253,13 +3521,31 @@ Alice -> Bob : hello
     }).toBeGreaterThan(Math.round(beforeBox.width + 60));
   });
 
-  test('UML tutorial keeps the sequence model count screen-reader only', async ({ page }) => {
+  test('UML tutorial keeps sequence model rows collapsed until requested', async ({ page }) => {
     await openMonopolyTutorialStep(page, 2);
 
     const sequenceModel = page.locator('#uml-pg-sequence-model');
-    await expect(sequenceModel.locator('summary')).toHaveCount(0);
     await expect(sequenceModel.locator('.uml-pg-sr-only')).toContainText(/Sequence model: 0 lifelines, 0 timeline items/);
+    const disclosure = sequenceModel.locator('details.uml-pg-sequence-model-disclosure');
+    await expect(disclosure).toBeVisible();
+    await expect(disclosure).not.toHaveAttribute('open', '');
+    await expect(disclosure.locator('summary')).toContainText('Advanced sequence rows');
+    await expect(sequenceModel.locator('.uml-pg-sequence-model-actions')).toBeHidden();
+
+    await disclosure.locator('summary').click();
     await expect(sequenceModel.locator('.uml-pg-sequence-model-actions')).toBeVisible();
+  });
+
+  test('UML tutorial keeps generic advanced source rows collapsed on diagram steps', async ({ page }) => {
+    for (const stepIndex of [0, 1]) {
+      await openMonopolyTutorialStep(page, stepIndex);
+
+      const sequenceModel = page.locator('#uml-pg-sequence-model');
+      const disclosure = sequenceModel.locator('details.uml-pg-sequence-model-disclosure');
+      await expect(disclosure).toBeVisible();
+      await expect(disclosure).not.toHaveAttribute('open', '');
+      await expect(disclosure.locator('.uml-pg-sequence-model-row').first()).toBeHidden();
+    }
   });
 
   test('UML tutorial removes all model elements after confirmation', async ({ page }) => {

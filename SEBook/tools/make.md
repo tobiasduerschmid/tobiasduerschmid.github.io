@@ -361,8 +361,8 @@ A common student misconception: *"if anything changes, `make` recompiles everyth
 <script type="application/json">
 {
   "command": "make clean",
-  "description": "`clean` is **phony** (dashed border, ⌖ glyph). `make` doesn't compare timestamps for phony targets — it always runs the recipe. Here the recipe is `rm -f *.o app`. After it runs, `app`, `main.o`, `util.o` no longer exist on disk; they show as stale (red hatched stripe) because there's no file to compare against. Sources `main.c`/`util.c` are never touched.",
-  "topology": "app: main.o util.o\nmain.o: main.c\nutil.o: util.c\n.PHONY: clean",
+  "description": "`clean` is **phony** (dashed border, crosshair glyph). `make` doesn't compare timestamps for phony targets — it always runs the recipe. Here the recipe is `rm -f *.o app`. After it runs, `app`, `main.o`, `util.o` no longer exist on disk; they show as stale (red hatched stripe) because there's no file to compare against. Sources `main.c`/`util.c` are never touched.",
+  "topology": "app: main.o util.o\nmain.o: main.c\nutil.o: util.c\n.PHONY: clean\nclean:",
   "before": { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 } },
   "after":  { "mtime": { "main.c": 1, "util.c": 1 } },
   "undoCommand": "(restore from backup)"
@@ -395,7 +395,7 @@ Order-only is the answer to one of the most painful "why does my build keep redo
 {
   "title": "A full edit / build / clean / rebuild cycle",
   "description": "The full developer rhythm. We start fresh, edit a *header* (which has a wider blast radius than a single .c), rebuild, clean, and rebuild from scratch. Each step shows which files are touched and which are skipped.",
-  "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h\n.PHONY: clean",
+  "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h\n.PHONY: clean\nclean:",
   "initialState": {
     "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 }
   },

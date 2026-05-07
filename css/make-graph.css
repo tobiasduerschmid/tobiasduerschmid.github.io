@@ -28,8 +28,10 @@
   --mg-edge: #9aa0b4;
   --mg-edge-stale: #ff5454;
   --mg-node-bg: #161823;
-  --mg-node-border: #3a3e52;
-  --mg-node-source-fg: #9aa0b4;
+  /* Node border at 3.6:1 contrast vs node-bg #161823 — meets WCAG 1.4.11
+     for graphical objects. The earlier #3a3e52 was only 1.7:1. */
+  --mg-node-border: #6c728a;
+  --mg-node-source-fg: #b3b8c8;
   --mg-fresh: #4caf50;
   --mg-stale: #ff5454;
   --mg-phony: #e6a847;
@@ -101,15 +103,15 @@
   pointer-events: none;
   user-select: none;
 }
+/* Glyph is now a <g> of SVG primitives — children inherit `color` via
+   currentColor for both fill and stroke. */
 .tvm-make-dag-node-glyph {
-  font-size: 13px;
-  font-weight: 700;
   pointer-events: none;
   user-select: none;
 }
-.tvm-make-dag-node-fresh .tvm-make-dag-node-glyph { fill: var(--mg-fresh); }
-.tvm-make-dag-node-stale .tvm-make-dag-node-glyph { fill: var(--mg-stale); }
-.tvm-make-dag-node-phony .tvm-make-dag-node-glyph { fill: var(--mg-phony); }
+.tvm-make-dag-node-fresh .tvm-make-dag-node-glyph { color: var(--mg-fresh); }
+.tvm-make-dag-node-stale .tvm-make-dag-node-glyph { color: var(--mg-stale); }
+.tvm-make-dag-node-phony .tvm-make-dag-node-glyph { color: var(--mg-phony); }
 
 /* Phony — dashed outline replaces the solid rect border. */
 .tvm-make-dag-node-phony .tvm-make-dag-node-rect {
@@ -201,8 +203,10 @@ html:not(.dark-mode) .tvm-make-dag-legend {
   --mg-edge: #7d8294;
   --mg-edge-stale: #d83a3a;
   --mg-node-bg: #ffffff;
-  --mg-node-border: #c4c8d3;
-  --mg-node-source-fg: #6e7280;
+  /* Node border at 3.85:1 contrast vs node-bg #ffffff — meets WCAG 1.4.11
+     for graphical objects. The earlier #c4c8d3 was only 1.7:1. */
+  --mg-node-border: #7d8294;
+  --mg-node-source-fg: #5a5e6b;
   --mg-fresh: #1f9b3d;
   --mg-stale: #d83a3a;
   --mg-phony: #b8770b;

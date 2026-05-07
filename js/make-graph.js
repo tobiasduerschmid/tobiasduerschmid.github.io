@@ -604,21 +604,63 @@
         g.appendChild(stripe);
       }
 
-      // Status glyph on right (✓ for fresh, • for stale, dashed for phony).
-      var glyphX = nodeW - 14;
-      var glyphY = nodeH / 2 + 4;
-      var glyph = document.createElementNS(SVG_NS, 'text');
-      glyph.setAttribute('class', 'tvm-make-dag-node-glyph');
-      glyph.setAttribute('x', glyphX);
-      glyph.setAttribute('y', glyphY);
-      glyph.setAttribute('text-anchor', 'middle');
-      var glyphText = '';
-      if (node.isPhony) glyphText = '⌖';        // dashed-circle stand-in
-      else if (node.isSource) glyphText = '';
-      else if (node.isStale) glyphText = '●';   // pulse origin
-      else glyphText = '✓';
-      glyph.textContent = glyphText;
-      g.appendChild(glyph);
+      // Status glyph on right. Drawn from SVG primitives (not unicode text)
+      // because some fonts render ⌖ with a tall vertical extent that pokes
+      // past the rect's bottom edge and gets clipped. Hand-drawn shapes
+      // have predictable bounds and stay inside the node at every font.
+      //
+      // Two nested <g> elements: the outer one positions the icon (translate
+      // attribute), the inner one is the .tvm-make-dag-node-glyph that the
+      // pulse animation targets via CSS `transform`. If we put both
+      // responsibilities on a single <g>, the CSS keyframe `transform:
+      // scale(1)` clobbers the SVG `transform` attribute and the icon
+      // collapses to (0, 0) — the rect's top-left.
+      var glyphCx = nodeW - 14;
+      var glyphCy = nodeH / 2;
+      var glyphR  = 5;
+      if (!node.isSource) {
+        var glyphPos = document.createElementNS(SVG_NS, 'g');
+        glyphPos.setAttribute('transform', 'translate(' + glyphCx + ' ' + glyphCy + ')');
+        var glyph = document.createElementNS(SVG_NS, 'g');
+        glyph.setAttribute('class', 'tvm-make-dag-node-glyph');
+        glyphPos.appendChild(glyph);
+        if (node.isPhony) {
+          // Crosshair-in-dashed-circle: a tiny version of the gun-sight icon.
+          // (Local SVG vars are prefixed `g` to avoid shadowing `c` —
+          // `var c` here would hoist over the function-scoped container,
+          // breaking c.appendChild(wrapper) below.)
+          var gCircle = document.createElementNS(SVG_NS, 'circle');
+          gCircle.setAttribute('cx', 0); gCircle.setAttribute('cy', 0); gCircle.setAttribute('r', glyphR);
+          gCircle.setAttribute('fill', 'none'); gCircle.setAttribute('stroke', 'currentColor');
+          gCircle.setAttribute('stroke-width', '1.4'); gCircle.setAttribute('stroke-dasharray', '2 1.5');
+          glyph.appendChild(gCircle);
+          var gCross1 = document.createElementNS(SVG_NS, 'line');
+          gCross1.setAttribute('x1', -glyphR - 2); gCross1.setAttribute('y1', 0);
+          gCross1.setAttribute('x2',  glyphR + 2); gCross1.setAttribute('y2', 0);
+          gCross1.setAttribute('stroke', 'currentColor'); gCross1.setAttribute('stroke-width', '1.2');
+          glyph.appendChild(gCross1);
+          var gCross2 = document.createElementNS(SVG_NS, 'line');
+          gCross2.setAttribute('x1', 0); gCross2.setAttribute('y1', -glyphR - 2);
+          gCross2.setAttribute('x2', 0); gCross2.setAttribute('y2',  glyphR + 2);
+          gCross2.setAttribute('stroke', 'currentColor'); gCross2.setAttribute('stroke-width', '1.2');
+          glyph.appendChild(gCross2);
+        } else if (node.isStale) {
+          // Filled bullet — pulses via CSS on .tvm-make-dag-node-stale .glyph.
+          var gDot = document.createElementNS(SVG_NS, 'circle');
+          gDot.setAttribute('cx', 0); gDot.setAttribute('cy', 0); gDot.setAttribute('r', glyphR - 0.5);
+          gDot.setAttribute('fill', 'currentColor');
+          glyph.appendChild(gDot);
+        } else {
+          // Checkmark.
+          var gCheck = document.createElementNS(SVG_NS, 'path');
+          gCheck.setAttribute('d', 'M -4 0 L -1 3 L 4 -3');
+          gCheck.setAttribute('fill', 'none'); gCheck.setAttribute('stroke', 'currentColor');
+          gCheck.setAttribute('stroke-width', '1.8');
+          gCheck.setAttribute('stroke-linecap', 'round'); gCheck.setAttribute('stroke-linejoin', 'round');
+          glyph.appendChild(gCheck);
+        }
+        g.appendChild(glyphPos);
+      }
 
       // Label text (centered).
       var text = document.createElementNS(SVG_NS, 'text');
