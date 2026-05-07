@@ -583,12 +583,16 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | pyodide | webcontainer | react   # default: v86
+backend: v86 | pyodide | webcontainer | react | uml-editor   # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
 # pyodide       — Python in-browser, no shell. Required for `debugger: true`.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
+# uml-editor    — ArchUML visual editor workspace for diagramming tutorials.
+#                 The standard instruction panel renders on the left, the UML
+#                 editor renders on the right, and `tests[].assertions`
+#                 validate the ArchUML model for the current step's `uml_type`.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -680,6 +684,10 @@ steps:
 
     open_file: string                        # Which file to focus on load.
     view: editor | git_graph | uml           # Override default pane visible.
+    uml_type: class | sequence | state | component | deployment | usecase | activity
+                                             # uml-editor backend only: selects
+                                             # the editor diagram type for this
+                                             # step. Drafts autosave per type.
     commands: [string]                       # Example commands shown to
                                              # student (display only).
 
@@ -689,6 +697,20 @@ steps:
           # bash for v86: `test -f /tutorial/foo.py`
           # python for pyodide: `output = __run_capture('/tutorial/x.py');
           #   assert "expected" in output`
+        assertions:                          # uml-editor backend only:
+                                             # structural checks against the
+                                             # current ArchUML source. Each
+                                             # assertion has `kind`/`type`:
+                                             # element|class|state|participant,
+                                             # member, relation|transition|message.
+                                             # Common fields: id/name,
+                                             # owner, text/member, from, to,
+                                             # label_contains. Class
+                                             # generalization / realization
+                                             # arrows use UML semantics, so
+                                             # both `Child --|> Parent` and
+                                             # `Parent <|-- Child` satisfy
+                                             # from: Child / to: Parent.
         hints:                               # Multi-layered, see §1.
           - text: "Layer 1 hint (orientation)"
           - text: "Layer 2 hint (strategy)"
@@ -834,7 +856,16 @@ messages on the BroadcastChannel and re-renders accordingly.
   is reused by the main editor and popout editors. Empty breakpoint hitboxes
   also paint the shared hover-preview glyph so students can discover where
   breakpoints can be added; keep that math aligned with the glyph-offset CSS
-  variables in `js/debugger/debugger.css`.
+  variables in `js/debugger/debugger.css`. If a debugger tutorial loads in a
+  webview without cross-origin isolation / `SharedArrayBuffer`, `main.js`
+  still renders a fallback Debug tab and toolbar Debug button with reload /
+  full-browser guidance so the debugger affordance is discoverable instead of
+  silently disappearing.
+- **`js/tutorial-uml-editor.js`** — lightweight backend for UML-modeling
+  tutorials (`backend: uml-editor`). It reuses the standard tutorial
+  instruction chrome on the left and `_includes/uml-editor.html` as the
+  right-side workspace editor. Step `tests[].assertions` inspect the current
+  ArchUML source for elements, members, relations, transitions, and messages.
 - **Backend workers** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `js/playwright-compat/runner.js` (in-browser Playwright for React),
@@ -842,16 +873,17 @@ messages on the BroadcastChannel and re-renders accordingly.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | pyodide | webcontainer | react |
-|------------------------|-----|---------|--------------|-------|
-| Shell terminal         | ✅  | ❌      | ✅           | ❌    |
-| Compiled languages     | ✅  | ❌      | (npm only)   | ❌    |
-| `git`                  | ✅  | mocked  | ✅           | ❌    |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌    |
-| Live preview iframe    | ❌  | ❌      | ✅           | ✅    |
-| Playwright tests       | ❌  | ❌      | ❌           | ✅    |
-| `pytest`               | ❌  | ✅      | ❌           | ❌    |
-| Linter                 | ✅  | ✅      | ✅           | ✅    |
+| Feature                | v86 | pyodide | webcontainer | react | uml-editor |
+|------------------------|-----|---------|--------------|-------|------------|
+| Shell terminal         | ✅  | ❌      | ✅           | ❌    | ❌         |
+| Compiled languages     | ✅  | ❌      | (npm only)   | ❌    | ❌         |
+| `git`                  | ✅  | mocked  | ✅           | ❌    | ❌         |
+| Time-travel debugger   | ❌  | ✅      | ❌           | ❌    | ❌         |
+| Live preview iframe    | ❌  | ❌      | ✅           | ✅    | ❌         |
+| Playwright tests       | ❌  | ❌      | ❌           | ✅    | ❌         |
+| UML assertion tests    | ❌  | ❌      | ❌           | ❌    | ✅         |
+| `pytest`               | ❌  | ✅      | ❌           | ❌    | ❌         |
+| Linter                 | ✅  | ✅      | ✅           | ✅    | ❌         |
 
 If you add a backend, update this table.
 
@@ -885,6 +917,13 @@ keys. **If you change the persistence schema, also update**:
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.
+- **UML assertions** (`uml-editor`): `tests[].assertions` are structural
+  checks against the current ArchUML source. Use `kind: element|class|state|
+  participant`, `kind: member`, or `kind: relation|transition|message` with
+  fields such as `id`, `owner`, `text`, `from`, `to`, and `label_contains`.
+  Generalization / realization assertions follow UML arrow semantics: both
+  `Child --|> Parent` and `Parent <|-- Child` satisfy `from: Child` /
+  `to: Parent`.
 
 Failure surfaces inline in `.tvm-test-panel` below the instructions
 (green/red/yellow), with all matching `hints[].condition` hints

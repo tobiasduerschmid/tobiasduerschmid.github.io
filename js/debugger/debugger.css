@@ -65,6 +65,18 @@
   margin-right: 4px;
 }
 .tvm-debug-btn:hover { background: #FFB81C; color: #1A1A1A; }
+.tvm-debug-btn-unavailable {
+  background: #e5e7eb;
+  color: #1f2937;
+  border: 1px solid #6b7280;
+  font-size: 1.34em;
+}
+.tvm-debug-btn-unavailable:hover,
+.tvm-debug-btn-unavailable:focus-visible {
+  background: #dbeafe;
+  color: #0f172a;
+  border-color: #2563eb;
+}
 
 .tvm-debug-toolbar {
   display: inline-flex;
@@ -171,13 +183,23 @@
 
 /* ---- Reload-needed inline note (when crossOriginIsolated is false) ------ */
 .sebook-dbg-reload-note {
-  font-size: 11px;
-  color: #c0392b;
-  font-style: italic;
+  appearance: none;
+  min-height: 24px;
+  font: inherit;
+  font-size: 1.34em;
+  color: #8f2d24;
   margin-left: 8px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   background: rgba(192, 57, 43, 0.08);
-  border-radius: 3px;
+  border: 1px solid rgba(143, 45, 36, 0.65);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sebook-dbg-reload-note:hover,
+.sebook-dbg-reload-note:focus-visible {
+  background: rgba(192, 57, 43, 0.16);
+  color: #691f19;
+  border-color: #8f2d24;
 }
 
 /* ---- Breakpoint glyphs in Monaco gutter --------------------------------- */
@@ -644,6 +666,52 @@
   font-style: italic;
   padding: 4px 8px;
   font-size: 12px;
+}
+
+.tvm-debug-view-unavailable {
+  justify-content: center;
+  align-items: stretch;
+}
+
+.tvm-debug-unavailable {
+  max-width: 44em;
+  margin: 0 auto;
+  padding: 22px;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.23em;
+  line-height: 1.6;
+}
+
+.tvm-debug-unavailable h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+.tvm-debug-unavailable p {
+  margin: 0 0 16px;
+  color: #374151;
+  font-size: 1em;
+}
+
+.tvm-debug-reload-btn {
+  min-height: 32px;
+  padding: 6px 14px;
+  border: 1px solid #005587;
+  border-radius: 4px;
+  background: #005587;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tvm-debug-reload-btn:hover,
+.tvm-debug-reload-btn:focus-visible {
+  background: #003B5C;
+  border-color: #003B5C;
 }
 
 .tvm-debug-section-head {
@@ -1273,6 +1341,17 @@ html.dark-mode .tvm-instructions-panel.tvm-instructions-detached-debugger .tvm-d
 /* --- Debug button + step toolbar --- */
 html.dark-mode .tvm-debug-btn { background: #FFD100; color: #1A1A1A; }
 html.dark-mode .tvm-debug-btn:hover { background: #FFE066; color: #1A1A1A; }
+html.dark-mode .tvm-debug-btn-unavailable {
+  background: #334155;
+  color: #f8fafc;
+  border-color: #94a3b8;
+}
+html.dark-mode .tvm-debug-btn-unavailable:hover,
+html.dark-mode .tvm-debug-btn-unavailable:focus-visible {
+  background: #475569;
+  color: #fff;
+  border-color: #cbd5e1;
+}
 html.dark-mode .tvm-debug-toolbar {
   background: rgba(255, 209, 0, 0.14);
   border-color: rgba(255, 209, 0, 0.45);
@@ -1286,8 +1365,15 @@ html.dark-mode .tvm-debug-toolbar .tvm-debug-step:hover:not(:disabled) {
 html.dark-mode .tvm-debug-toolbar .tvm-debug-divider { background: rgba(255, 224, 102, 0.45); }
 html.dark-mode .tvm-debug-toolbar .tvm-debug-status { color: #FFE066; }
 html.dark-mode .sebook-dbg-reload-note {
-  color: #fca5a5;
+  color: #fecaca;
   background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(252, 165, 165, 0.7);
+}
+html.dark-mode .sebook-dbg-reload-note:hover,
+html.dark-mode .sebook-dbg-reload-note:focus-visible {
+  color: #fff;
+  background: rgba(248, 113, 113, 0.22);
+  border-color: #fecaca;
 }
 
 /* --- Breakpoint glyphs ---
@@ -1377,6 +1463,26 @@ html.dark-mode .tvm-debug-view {
 }
 html.dark-mode .tvm-debug-empty { color: #94a3b8; }
 html.dark-mode .tvm-debug-empty-row { color: #94a3b8; }
+html.dark-mode .tvm-debug-unavailable {
+  color: #e2e8f0;
+}
+html.dark-mode .tvm-debug-unavailable h2 {
+  color: #f8fafc;
+}
+html.dark-mode .tvm-debug-unavailable p {
+  color: #cbd5e1;
+}
+html.dark-mode .tvm-debug-reload-btn {
+  background: #FFD100;
+  border-color: #FFD100;
+  color: #1A1A1A;
+}
+html.dark-mode .tvm-debug-reload-btn:hover,
+html.dark-mode .tvm-debug-reload-btn:focus-visible {
+  background: #FFE066;
+  border-color: #FFE066;
+  color: #1A1A1A;
+}
 html.dark-mode .tvm-debug-section-head {
   background: #FFD100;
   color: #1A1A1A;

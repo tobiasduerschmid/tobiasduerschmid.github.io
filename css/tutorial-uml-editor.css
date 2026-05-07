@@ -1,0 +1,48 @@
+.tvm-uml-editor-tutorial .tvm-container {
+  visibility: visible;
+}
+
+.tvm-uml-editor-tutorial .tvm-workspace {
+  background: #f8fbff;
+}
+
+.tvm-uml-editor-workspace {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tvm-uml-editor-workspace #uml-playground-wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.tvm-uml-editor-workspace #uml-playground-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tvm-uml-editor-workspace #uml-pg-preview-pane {
+  min-height: 0;
+}
+
+.tvm-uml-test-failures {
+  flex-basis: 100%;
+  margin: 6px 0 0 24px;
+  color: inherit;
+}
+
+html.dark-mode .tvm-uml-editor-tutorial .tvm-workspace {
+  background: #101826;
+}
+
+@media (max-width: 900px) {
+  .tvm-uml-editor-workspace {
+    min-height: 520px;
+  }
+}

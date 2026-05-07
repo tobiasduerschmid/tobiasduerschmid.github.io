@@ -3181,7 +3181,7 @@ html:not(.dark-mode) .tvm-step-status {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 1em;
   font-weight: 600;
   font-family: inherit;
   transition: background 0.15s, transform 0.1s;

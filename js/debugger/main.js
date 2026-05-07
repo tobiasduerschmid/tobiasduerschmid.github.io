@@ -102,14 +102,23 @@
   function attach(tutorial) {
     if (!window.crossOriginIsolated) {
       // First load on a fresh debugger tutorial — service worker registered
-      // but headers don't take effect until reload. Tutorial usable; just no
-      // Debug button. The COI shim's auto-reload (in coi-serviceworker.js)
-      // typically handles this transparently.
-      injectReloadBanner(tutorial);
+      // but headers don't take effect until reload. Some embedded webviews
+      // never grant the isolation headers, so keep the debugger entry points
+      // visible and explain the limitation instead of silently hiding them.
+      installUnavailableDebuggerUI(tutorial, {
+        title: 'Debugger needs browser isolation',
+        body: 'This webview has not enabled the browser isolation required by the time-travel debugger yet. Reload this page once; if the message stays here, open the demo in a full browser preview.',
+        action: 'Reload to activate debugger'
+      });
       return;
     }
     if (!window.SharedArrayBuffer || !window.Atomics) {
       console.warn('[SEBookDebugger] SharedArrayBuffer/Atomics unavailable — debugger disabled');
+      installUnavailableDebuggerUI(tutorial, {
+        title: 'Debugger unavailable in this webview',
+        body: 'This webview does not expose SharedArrayBuffer and Atomics, which the time-travel debugger needs for stepping and rewinding. Open the demo in a full browser preview to use the debugger.',
+        action: 'Reload page'
+      });
       return;
     }
     if (tutorial._debuggerCtl) return;   // already attached
@@ -128,8 +137,123 @@
     tutorial._debuggerCtl.scheduleBreakpointRefresh();
   }
 
-  function injectReloadBanner(tutorial) {
-    // Show a small one-time hint near the editor toolbar that a reload is needed.
+  function installUnavailableDebuggerUI(tutorial, details) {
+    if (!tutorial || tutorial._debuggerUnavailableInstalled) return;
+    tutorial._debuggerUnavailableInstalled = true;
+
+    var activateDebugTab = installUnavailableDebuggerTab(tutorial, details);
+    installUnavailableDebugButton(tutorial, details, activateDebugTab);
+    injectReloadBanner(tutorial, details, activateDebugTab);
+  }
+
+  function installUnavailableDebuggerTab(tutorial, details) {
+    var instructionsPanel = tutorial.root && tutorial.root.querySelector('.tvm-instructions-panel');
+    if (!instructionsPanel) return null;
+
+    var tabBar = instructionsPanel.querySelector('.tvm-left-tab-bar');
+    if (!tabBar) {
+      tabBar = document.createElement('div');
+      tabBar.className = 'tvm-left-tab-bar';
+
+      var stepsTab = document.createElement('button');
+      stepsTab.type = 'button';
+      stepsTab.className = 'tvm-left-tab active';
+      stepsTab.setAttribute('data-panel', 'steps');
+      stepsTab.innerHTML = '<i class="fa fa-book-open" aria-hidden="true"></i> Steps';
+      tabBar.appendChild(stepsTab);
+      instructionsPanel.insertBefore(tabBar, instructionsPanel.firstChild);
+    }
+
+    var existing = tabBar.querySelector('.tvm-left-tab[data-panel="dbg-unavailable"], .tvm-left-tab[data-panel="dbg-combined"]');
+    if (existing) {
+      return function () { existing.click(); };
+    }
+
+    var debugTab = document.createElement('button');
+    debugTab.type = 'button';
+    debugTab.className = 'tvm-left-tab';
+    debugTab.setAttribute('data-panel', 'dbg-unavailable');
+    debugTab.innerHTML = '<i class="fa fa-bug" aria-hidden="true"></i> Debug';
+    tabBar.appendChild(debugTab);
+
+    var view = document.createElement('div');
+    view.className = 'tvm-debug-view tvm-debug-view-unavailable';
+    view.style.display = 'none';
+    view.dataset.panel = 'dbg-unavailable';
+    view.setAttribute('role', 'region');
+    view.setAttribute('aria-label', 'Debugger availability');
+
+    var box = document.createElement('div');
+    box.className = 'tvm-debug-unavailable';
+    var title = document.createElement('h2');
+    title.textContent = details.title;
+    var body = document.createElement('p');
+    body.textContent = details.body;
+    var reload = document.createElement('button');
+    reload.type = 'button';
+    reload.className = 'tvm-debug-reload-btn';
+    reload.textContent = details.action;
+    reload.addEventListener('click', function () { window.location.reload(); });
+    box.appendChild(title);
+    box.appendChild(body);
+    box.appendChild(reload);
+    view.appendChild(box);
+    instructionsPanel.appendChild(view);
+
+    function activate(panel) {
+      var tabs = tabBar.querySelectorAll('.tvm-left-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-panel') === panel);
+      }
+      var stepsView = instructionsPanel.querySelector('.tvm-steps-view');
+      if (stepsView) stepsView.style.display = panel === 'steps' ? 'flex' : 'none';
+      var debugViews = instructionsPanel.querySelectorAll('.tvm-debug-view');
+      for (var j = 0; j < debugViews.length; j++) {
+        debugViews[j].style.display = debugViews[j].dataset.panel === panel ? 'flex' : 'none';
+      }
+    }
+
+    var stepsTab = tabBar.querySelector('.tvm-left-tab[data-panel="steps"]');
+    if (stepsTab && !stepsTab.dataset.dbgUnavailableWired) {
+      stepsTab.dataset.dbgUnavailableWired = '1';
+      stepsTab.addEventListener('click', function () { activate('steps'); });
+    }
+    debugTab.addEventListener('click', function () { activate('dbg-unavailable'); });
+
+    var allTabs = tabBar.querySelectorAll('.tvm-left-tab');
+    for (var k = 0; k < allTabs.length; k++) {
+      if (allTabs[k] !== debugTab && !allTabs[k].dataset.dbgUnavailableHideWired) {
+        allTabs[k].dataset.dbgUnavailableHideWired = '1';
+        allTabs[k].addEventListener('click', function () {
+          debugTab.classList.remove('active');
+          view.style.display = 'none';
+        });
+      }
+    }
+
+    return function () { activate('dbg-unavailable'); };
+  }
+
+  function installUnavailableDebugButton(tutorial, details, activateDebugTab) {
+    var actions = tutorial.root && tutorial.root.querySelector('.tvm-output-actions');
+    if (!actions || actions.querySelector('.tvm-debug-btn')) return;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tvm-debug-btn tvm-debug-btn-unavailable';
+    btn.title = details.title;
+    btn.innerHTML = '<i class="fa fa-bug" aria-hidden="true"></i> Debug';
+    btn.addEventListener('click', function () {
+      if (activateDebugTab) activateDebugTab();
+    });
+
+    var runBtn = actions.querySelector('.tvm-run-btn');
+    if (runBtn) actions.insertBefore(btn, runBtn);
+    else actions.appendChild(btn);
+  }
+
+  function injectReloadBanner(tutorial, details) {
+    // Show a one-time action near the editor toolbar that a reload is needed.
     var hostFinder = function () {
       return tutorial.root && tutorial.root.querySelector('.tvm-output-actions');
     };
@@ -138,10 +262,13 @@
       var host = hostFinder();
       if (host) {
         clearInterval(t);
-        var note = document.createElement('span');
+        if (host.querySelector('.sebook-dbg-reload-note')) return;
+        var note = document.createElement('button');
+        note.type = 'button';
         note.className = 'sebook-dbg-reload-note';
-        note.title = 'The debugger needs cross-origin isolation. Reload the page once to activate it.';
-        note.textContent = 'Debugger: reload to activate';
+        note.title = details.title;
+        note.textContent = details.action;
+        note.addEventListener('click', function () { window.location.reload(); });
         host.appendChild(note);
       }
       if (++tries > 50) clearInterval(t);
