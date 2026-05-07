@@ -936,6 +936,14 @@ messages on the BroadcastChannel and re-renders accordingly.
   The step footer exposes a confirmed "Remove All Elements" action that
   replaces the current step's active diagram draft with an empty ArchUML
   document; it does not clear drafts saved for other diagram types.
+- **`_includes/uml-editor.html`** also owns UML editor export actions. The
+  "Generate Python" toolbar action reads the saved class-diagram and
+  sequence-diagram ArchUML drafts for the editor instance, generates a
+  `.py` file with classes, attributes, operations, and sequence-derived
+  method bodies, and preserves sequence features that do not map cleanly to
+  Python (guards, loops, `par`, `critical`, `ref`, `neg`, found/lost
+  messages, activation markers, notes, create/destroy) as helper calls or
+  structured comments instead of dropping them.
 - **Backend workers** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `js/playwright-compat/runner.js` (in-browser Playwright for React),

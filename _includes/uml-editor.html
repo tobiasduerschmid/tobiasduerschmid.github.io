@@ -5994,8 +5994,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return spec;
     }
 
-    function sequenceLifelineCenterX(item) {
-      return item && item.box ? item.box.x + item.box.width / 2 : 0;
+    function sequenceLifelineCenterX(item, svg) {
+      if (!item || !item.box) return 0;
+      if (svg && typeSelect.value === 'sequence') {
+        var xs = [];
+        findEditableRoutes(svg).forEach(function (route) {
+          if (!route || !route.points || !route.points.length) return;
+          if (route.source === item.id) xs.push(Number(route.points[0].x));
+          if (route.target === item.id) xs.push(Number(route.points[route.points.length - 1].x));
+        });
+        xs = xs.filter(function (x) { return Number.isFinite(x); }).sort(function (a, b) { return a - b; });
+        if (xs.length) return xs[Math.floor(xs.length / 2)];
+      }
+      return item.box.x + item.box.width / 2;
     }
 
     function findSequenceLifelineAtPoint(svg, clientX, clientY) {
@@ -6005,11 +6016,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var candidates = findEditableElements(svg).filter(function (item) {
         return item && item.axis === 'x' && item.box;
       }).map(function (item) {
-        var centerX = sequenceLifelineCenterX(item);
+        var centerX = sequenceLifelineCenterX(item, svg);
         var inHead = containsPoint(item.box, pt.x, pt.y, 12);
         var top = Math.min(item.box.y - 24, view.y - 12);
         var bottom = Math.max(view.y + view.height + 12, item.box.y + item.box.height + 360);
-        var nearLine = pt.y >= top && pt.y <= bottom && Math.abs(pt.x - centerX) <= 20;
+        var nearLine = pt.y >= top && pt.y <= bottom && Math.abs(pt.x - centerX) <= 36;
         if (!inHead && !nearLine) return null;
         return {
           item: item,
@@ -6041,7 +6052,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
       var ns = 'http://www.w3.org/2000/svg';
       var pt = svgPoint(svg, event.clientX, event.clientY);
-      var originX = sequenceLifelineCenterX(item);
+      var originX = sequenceLifelineCenterX(item, svg);
       var line = document.createElementNS(ns, 'line');
       line.setAttribute('class', 'uml-pg-extend-line');
       line.setAttribute('x1', originX);
@@ -6077,7 +6088,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var dy = ev.clientY - state.startClientY;
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) state.moved = true;
       var target = findSequenceLifelineAtPoint(state.svg, ev.clientX, ev.clientY);
-      var x2 = target ? sequenceLifelineCenterX(target) : pt.x;
+      var x2 = target ? sequenceLifelineCenterX(target, state.svg) : pt.x;
       if (target && target.id === state.sourceItem.id && state.moved) x2 += 54;
       state.line.setAttribute('x2', x2);
       state.line.setAttribute('y2', pt.y);
@@ -8151,6 +8162,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         // have their own handlers.
         var target = ev.target;
         var landedOnInteractive = false;
+        var landedOnEdgeHitbox = false;
         while (target && target !== svg) {
           if (target.classList && (
               target.classList.contains('uml-pg-edit-a11y-target') ||
@@ -8159,11 +8171,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               target.classList.contains('uml-pg-extend-handle') ||
               target.classList.contains('uml-pg-extend-handle-group'))) {
             landedOnInteractive = true;
+            landedOnEdgeHitbox = target.classList.contains('uml-pg-edge-hitbox');
             break;
           }
           target = target.parentNode;
         }
-        if (landedOnInteractive) return;
+        if (landedOnInteractive) {
+          if (landedOnEdgeHitbox && selectedSequenceMessageToolSpec()) {
+            var edgeCoveredLifeline = findSequenceLifelineAtPoint(svg, ev.clientX, ev.clientY);
+            if (edgeCoveredLifeline) {
+              startSequenceMessageDrag(svg, layer, edgeCoveredLifeline, null, ev);
+            }
+          }
+          return;
+        }
 
         if (selectedSequenceMessageToolSpec()) {
           var sourceLifeline = findSequenceLifelineAtPoint(svg, ev.clientX, ev.clientY);
@@ -9961,6 +9982,801 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    }
+
+    var PY_RESERVED_WORDS = {
+      False: true, None: true, True: true, and: true, as: true, assert: true,
+      async: true, await: true, break: true, class: true, continue: true,
+      def: true, del: true, elif: true, else: true, except: true, finally: true,
+      for: true, from: true, global: true, if: true, import: true, in: true,
+      is: true, lambda: true, nonlocal: true, not: true, or: true, pass: true,
+      raise: true, return: true, try: true, while: true, with: true, yield: true
+    };
+
+    function pythonIdentifier(raw, fallback) {
+      var value = String(raw || '').trim();
+      value = value.replace(/^:+\s*/, '').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
+      if (!value) value = fallback || 'value';
+      if (/^\d/.test(value)) value = '_' + value;
+      if (!/^[A-Za-z_]\w*$/.test(value)) value = fallback || 'value';
+      if (PY_RESERVED_WORDS[value]) value += '_';
+      return value;
+    }
+
+    function pythonClassName(raw) {
+      var name = pythonIdentifier(raw, 'GeneratedClass');
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    function cleanPythonText(text) {
+      return String(text || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function pythonString(value) {
+      return JSON.stringify(String(value == null ? '' : value));
+    }
+
+    function pythonComment(text) {
+      return '# ' + cleanPythonText(text || 'UML note');
+    }
+
+    function pythonType(umlType) {
+      var raw = cleanPythonText(umlType).replace(/^\{|\}$/g, '');
+      if (!raw) return '';
+      raw = raw.replace(/\[\]/g, '[]');
+      var lower = raw.toLowerCase();
+      var mapped = {
+        string: 'str',
+        str: 'str',
+        integer: 'int',
+        int: 'int',
+        long: 'int',
+        float: 'float',
+        double: 'float',
+        decimal: 'float',
+        boolean: 'bool',
+        bool: 'bool',
+        object: 'object',
+        any: 'object',
+        void: 'None',
+        none: 'None'
+      };
+      if (mapped[lower]) return mapped[lower];
+      var listMatch = raw.match(/^(?:List|list|Array|array|Sequence|sequence|Set|set)<(.+)>$/);
+      if (listMatch) return 'list[' + pythonType(listMatch[1]) + ']';
+      listMatch = raw.match(/^(.+)\[\]$/);
+      if (listMatch) return 'list[' + pythonType(listMatch[1]) + ']';
+      return pythonClassName(raw);
+    }
+
+    function stripUmlMemberDecorations(text) {
+      return String(text || '')
+        .replace(/^[+\-#~]\s*/, '')
+        .replace(/\{(?:abstract|static|classifier)\}/ig, ' ')
+        .replace(/\babstract\b/ig, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function splitUmlParams(raw) {
+      var params = [];
+      String(raw || '').split(',').forEach(function (part) {
+        var text = part.trim();
+        if (!text) return;
+        var defaultValue = '';
+        var eq = text.indexOf('=');
+        if (eq !== -1) {
+          defaultValue = text.slice(eq + 1).trim();
+          text = text.slice(0, eq).trim();
+        }
+        var name = '';
+        var type = '';
+        var colon = text.indexOf(':');
+        if (colon !== -1) {
+          name = text.slice(0, colon).trim();
+          type = text.slice(colon + 1).trim();
+        } else {
+          var pieces = text.split(/\s+/).filter(Boolean);
+          if (pieces.length > 1) {
+            name = pieces[pieces.length - 1];
+            type = pieces.slice(0, pieces.length - 1).join(' ');
+          } else {
+            name = text;
+          }
+        }
+        params.push({
+          name: pythonIdentifier(name, 'arg'),
+          type: pythonType(type),
+          defaultValue: defaultValue
+        });
+      });
+      return params;
+    }
+
+    function parseUmlMethod(text, fallbackName) {
+      var original = String(text || '');
+      var clean = stripUmlMemberDecorations(original);
+      var match = clean.match(/^(.+?)\s*\(([^)]*)\)\s*(?::\s*(.+))?$/);
+      if (!match) {
+        return {
+          name: pythonIdentifier(fallbackName || clean || 'operation', 'operation'),
+          params: [],
+          returnType: '',
+          original: original
+        };
+      }
+      var namePart = match[1].trim();
+      var namePieces = namePart.split(/\s+/).filter(Boolean);
+      var methodName = namePieces.length ? namePieces[namePieces.length - 1] : (fallbackName || 'operation');
+      var returnType = match[3] || (namePieces.length > 1 ? namePieces.slice(0, namePieces.length - 1).join(' ') : '');
+      return {
+        name: pythonIdentifier(methodName, fallbackName || 'operation'),
+        params: splitUmlParams(match[2]),
+        returnType: pythonType(returnType),
+        original: original
+      };
+    }
+
+    function parseUmlAttribute(text, fallbackName) {
+      var original = String(text || '');
+      var clean = stripUmlMemberDecorations(original);
+      var defaultValue = '';
+      var eq = clean.indexOf('=');
+      if (eq !== -1) {
+        defaultValue = clean.slice(eq + 1).trim();
+        clean = clean.slice(0, eq).trim();
+      }
+      var name = clean;
+      var type = '';
+      var colon = clean.indexOf(':');
+      if (colon !== -1) {
+        name = clean.slice(0, colon).trim();
+        type = clean.slice(colon + 1).trim();
+      } else {
+        var pieces = clean.split(/\s+/).filter(Boolean);
+        if (pieces.length > 1) {
+          type = pieces.slice(0, pieces.length - 1).join(' ');
+          name = pieces[pieces.length - 1];
+        }
+      }
+      return {
+        name: pythonIdentifier(name || fallbackName || 'field', 'field'),
+        type: pythonType(type),
+        defaultValue: defaultValue,
+        original: original
+      };
+    }
+
+    function parseSequenceCall(label, fallbackName) {
+      var raw = cleanPythonText(label || '');
+      raw = raw.replace(/^<<\s*create\s*>>$/i, '__init__');
+      var call = raw.match(/^([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?::\s*(.+))?$/);
+      if (call) {
+        return {
+          name: pythonIdentifier(call[1], fallbackName || 'operation'),
+          params: splitUmlParams(call[2]),
+          args: splitUmlParams(call[2]).map(function (param) { return param.name; }),
+          returnType: pythonType(call[3] || ''),
+          original: raw
+        };
+      }
+      var bare = raw.match(/^([A-Za-z_]\w*)$/);
+      if (bare) {
+        return { name: pythonIdentifier(bare[1], fallbackName || 'operation'), params: [], args: [], returnType: '', original: raw };
+      }
+      return {
+        name: pythonIdentifier('handle_' + raw, fallbackName || 'handle_message'),
+        params: [],
+        args: [],
+        returnType: '',
+        original: raw
+      };
+    }
+
+    function hasMeaningfulDiagramSource(source) {
+      var inLayout = false;
+      return normalizeLineEndings(source || '').split('\n').some(function (line) {
+        var t = line.trim();
+        if (!t || t.charAt(0) === "'") return false;
+        if (/^@layout\b/i.test(t)) { inLayout = true; return false; }
+        if (/^@endlayout\b/i.test(t)) { inLayout = false; return false; }
+        if (inLayout) return false;
+        if (/^@(startuml|enduml)\b/i.test(t) || /^layout\b/i.test(t)) return false;
+        return true;
+      });
+    }
+
+    function classDisplayName(name) {
+      return String(name || '').replace(/^"((?:[^"\\]|\\.)*)"$/, '$1').replace(/\\"/g, '"');
+    }
+
+    function createPythonClass(model, rawName, type) {
+      var className = pythonClassName(classDisplayName(rawName));
+      if (model.byName[className]) return model.byName[className];
+      var cls = {
+        rawName: classDisplayName(rawName),
+        name: className,
+        type: type || 'class',
+        attrs: [],
+        attrMap: {},
+        methods: [],
+        methodMap: {},
+        parents: [],
+        parentMap: {},
+        origin: 'class'
+      };
+      model.classes.push(cls);
+      model.byName[className] = cls;
+      model.rawToClass[String(rawName || '').toLowerCase()] = cls;
+      model.rawToClass[classDisplayName(rawName).toLowerCase()] = cls;
+      return cls;
+    }
+
+    function addPythonAttribute(cls, attr) {
+      var name = pythonIdentifier(attr && attr.name, 'field');
+      if (!name || cls.attrMap[name]) return cls.attrMap[name];
+      var normalized = {
+        name: name,
+        type: attr.type || '',
+        defaultValue: attr.defaultValue || '',
+        original: attr.original || name,
+        relation: !!attr.relation,
+        many: !!attr.many
+      };
+      cls.attrs.push(normalized);
+      cls.attrMap[name] = normalized;
+      return normalized;
+    }
+
+    function addPythonMethod(cls, method) {
+      var name = pythonIdentifier(method && method.name, 'operation');
+      var existing = cls.methodMap[name];
+      if (existing) {
+        if ((!existing.params || !existing.params.length) && method.params && method.params.length) existing.params = method.params;
+        if (!existing.returnType && method.returnType) existing.returnType = method.returnType;
+        existing.isAbstract = existing.isAbstract && method.isAbstract;
+        existing.fromSequence = existing.fromSequence || method.fromSequence;
+        return existing;
+      }
+      var normalized = {
+        name: name,
+        params: method.params || [],
+        returnType: method.returnType || '',
+        isStatic: !!method.isStatic,
+        isAbstract: !!method.isAbstract,
+        original: method.original || name + '()',
+        fromSequence: !!method.fromSequence,
+        body: []
+      };
+      cls.methods.push(normalized);
+      cls.methodMap[name] = normalized;
+      return normalized;
+    }
+
+    function findPythonClass(model, rawName) {
+      if (!rawName) return null;
+      var key = String(rawName).toLowerCase();
+      return model.rawToClass[key] || model.byName[pythonClassName(rawName)] || null;
+    }
+
+    function parsePythonClassModel(classSource) {
+      var model = { classes: [], byName: {}, rawToClass: {} };
+      var parsed = { classes: [], relationships: [] };
+      if (window.UMLClassDiagram && typeof window.UMLClassDiagram.parse === 'function') {
+        parsed = window.UMLClassDiagram.parse(stripLayoutMetadata(sourceWithScaffold(classSource)));
+      }
+      (parsed.classes || []).forEach(function (umlClass) {
+        var cls = createPythonClass(model, umlClass.name, umlClass.type || 'class');
+        (umlClass.attributes || []).forEach(function (attr) {
+          addPythonAttribute(cls, parseUmlAttribute(attr.text || attr.name));
+        });
+        (umlClass.methods || []).forEach(function (method) {
+          var parsedMethod = parseUmlMethod(method.text || method.name, method.name);
+          parsedMethod.isStatic = !!method.isStatic;
+          parsedMethod.isAbstract = !!method.isAbstract || cls.type === 'interface';
+          addPythonMethod(cls, parsedMethod);
+        });
+      });
+      (parsed.relationships || []).forEach(function (rel) {
+        var fromClass = findPythonClass(model, rel.from);
+        var toClass = findPythonClass(model, rel.to);
+        if (!fromClass || !toClass) return;
+        if (rel.type === 'generalization' || rel.type === 'realization') {
+          if (!fromClass.parentMap[toClass.name]) {
+            fromClass.parents.push(toClass.name);
+            fromClass.parentMap[toClass.name] = true;
+          }
+          return;
+        }
+        if (rel.type === 'composition' || rel.type === 'aggregation' || rel.type === 'association' || rel.type === 'navigable') {
+          var rawLabel = cleanPythonText(rel.label || '');
+          var attrName = rawLabel ? rawLabel.replace(/[<>]/g, '').split(/\s+/)[0] : toClass.name.charAt(0).toLowerCase() + toClass.name.slice(1);
+          var many = /\*|many|n|m/i.test(rel.toMult || rel.fromMult || '');
+          addPythonAttribute(fromClass, {
+            name: attrName,
+            type: many ? 'list[' + toClass.name + ']' : toClass.name,
+            relation: true,
+            many: many,
+            original: rel.label || rel.type + ' ' + toClass.name
+          });
+        }
+      });
+      return model;
+    }
+
+    function sequenceParticipantClassName(model, participant) {
+      if (!participant || participant.isActor) return '';
+      var label = classDisplayName(participant.label || participant.id || '');
+      var id = classDisplayName(participant.id || '');
+      var colon = label.lastIndexOf(':');
+      if (colon !== -1) label = label.slice(colon + 1).trim();
+      return (findPythonClass(model, label) || findPythonClass(model, id) || createPythonClass(model, label || id || 'Participant', 'class')).name;
+    }
+
+    function parsePythonSequenceModel(model, sequenceSource) {
+      var parsed = { participants: [], messages: [] };
+      if (window.UMLSequenceDiagram && typeof window.UMLSequenceDiagram.parse === 'function') {
+        parsed = window.UMLSequenceDiagram.parse(stripLayoutMetadata(sequenceSourceWithScaffold(sequenceSource)));
+      }
+      var participants = {};
+      (parsed.participants || []).forEach(function (participant) {
+        participants[participant.id] = {
+          id: participant.id,
+          label: participant.label || participant.id,
+          isActor: !!participant.isActor,
+          className: sequenceParticipantClassName(model, participant)
+        };
+      });
+      (parsed.messages || []).forEach(function (message) {
+        [message.from, message.to, message.target].forEach(function (id) {
+          if (!id || participants[id]) return;
+          participants[id] = {
+            id: id,
+            label: id,
+            isActor: false,
+            className: sequenceParticipantClassName(model, { id: id, label: id })
+          };
+        });
+      });
+      return { participants: participants, messages: parsed.messages || [] };
+    }
+
+    function methodFrameFor(stack, participantId) {
+      for (var i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].participantId === participantId) return stack[i];
+      }
+      return null;
+    }
+
+    function addFrameLine(frame, text) {
+      var entry = { indent: frame.indent || 0, text: text };
+      frame.body.push(entry);
+      return entry;
+    }
+
+    function ensureBlockBody(frame) {
+      var last = frame.body[frame.body.length - 1];
+      if (last && /:\s*(?:#.*)?$/.test(last.text) && last.indent === (frame.indent || 0) - 1) {
+        addFrameLine(frame, 'pass');
+      }
+    }
+
+    function openBlock(frame, text, fragmentType) {
+      addFrameLine(frame, text);
+      frame.indent = (frame.indent || 0) + 1;
+      if (fragmentType) frame.fragments.push(fragmentType);
+    }
+
+    function closeBlock(frame) {
+      ensureBlockBody(frame);
+      frame.indent = Math.max(0, (frame.indent || 0) - 1);
+      frame.fragments.pop();
+    }
+
+    function conditionCall(condition, fallback) {
+      return '_condition(' + pythonString(condition || fallback || 'condition') + ')';
+    }
+
+    function sequenceResponseValue(label) {
+      var clean = cleanPythonText(label || '');
+      return clean ? '_response(' + pythonString(clean) + ')' : 'None';
+    }
+
+    function sequenceResponseVariable(label) {
+      var clean = cleanPythonText(label || '');
+      if (!/^[A-Za-z_]\w*$/.test(clean)) return '';
+      return pythonIdentifier(clean, 'response');
+    }
+
+    function participantVariable(id) {
+      return pythonIdentifier(id, 'participant');
+    }
+
+    function expressionForArg(arg) {
+      if (!arg) return '';
+      if (/^[A-Za-z_]\w*$/.test(arg)) return pythonIdentifier(arg, 'arg');
+      return pythonString(arg);
+    }
+
+    function attributeForParticipant(cls, participant) {
+      if (!cls || !participant) return null;
+      for (var i = 0; i < cls.attrs.length; i++) {
+        var attr = cls.attrs[i];
+        if (attr.type === participant.className || attr.type === 'list[' + participant.className + ']') return attr;
+      }
+      return null;
+    }
+
+    function callTargetExpression(senderFrame, receiverParticipant, model) {
+      if (!receiverParticipant) return 'None';
+      if (senderFrame && senderFrame.participantId === receiverParticipant.id) return 'self';
+      if (senderFrame && senderFrame.className) {
+        var senderClass = model.byName[senderFrame.className];
+        var attr = attributeForParticipant(senderClass, receiverParticipant);
+        if (attr) return 'self.' + attr.name;
+      }
+      return participantVariable(receiverParticipant.id);
+    }
+
+    function emitFragmentStart(frame, message) {
+      var kind = message.fragType;
+      var label = cleanPythonText(message.condition || kind);
+      if (kind === 'alt' || kind === 'opt') {
+        openBlock(frame, 'if ' + conditionCall(label, kind) + ':', kind);
+      } else if (kind === 'loop') {
+        openBlock(frame, 'for _ in _loop(' + pythonString(label || 'loop') + '):', kind);
+      } else if (kind === 'par') {
+        openBlock(frame, 'with _parallel_branch(' + pythonString(label || 'parallel') + '):', kind);
+      } else if (kind === 'critical') {
+        openBlock(frame, 'with _critical_section(' + pythonString(label || 'critical') + '):', kind);
+      } else if (kind === 'ref') {
+        openBlock(frame, 'with _interaction_ref(' + pythonString(label || 'reference') + '):', kind);
+      } else if (kind === 'neg') {
+        openBlock(frame, 'if _forbidden_trace(' + pythonString(label || 'negative trace') + '):', kind);
+      } else if (kind === 'break') {
+        openBlock(frame, 'if ' + conditionCall(label, 'break') + ':', kind);
+      } else {
+        addFrameLine(frame, pythonComment('Unsupported sequence fragment: ' + kind + (label ? ' ' + label : '')));
+      }
+    }
+
+    function emitFragmentElse(frame, condition) {
+      ensureBlockBody(frame);
+      frame.indent = Math.max(0, (frame.indent || 0) - 1);
+      var active = frame.fragments[frame.fragments.length - 1] || 'alt';
+      var label = cleanPythonText(condition || '');
+      if (active === 'alt') {
+        addFrameLine(frame, label ? 'elif ' + conditionCall(label, 'alternative') + ':' : 'else:');
+      } else if (active === 'par') {
+        addFrameLine(frame, 'with _parallel_branch(' + pythonString(label || 'parallel branch') + '):');
+      } else {
+        addFrameLine(frame, 'else:');
+      }
+      frame.indent += 1;
+    }
+
+    function renderSequenceCallLine(senderFrame, receiverParticipant, call, message, model) {
+      var target = callTargetExpression(senderFrame, receiverParticipant, model);
+      var args = (call.args || []).map(expressionForArg).filter(Boolean).join(', ');
+      var line = target + '.' + call.name + '(' + args + ')';
+      if (message.msgType === 'async') line += '  # async message';
+      if (call.original && call.name.indexOf('handle_') === 0) line += '  # UML message: ' + call.original;
+      return line;
+    }
+
+    function lowerSequenceToPython(model, sequenceModel) {
+      var stack = [];
+      var scenario = { participantId: '__sequence__', className: '', methodName: 'run_sequence', body: [], indent: 0, fragments: [] };
+      var participants = sequenceModel.participants || {};
+
+      function activeFrameForSender(senderId) {
+        return methodFrameFor(stack, senderId) || (stack.length ? stack[stack.length - 1] : scenario);
+      }
+
+      function pushMethodFrame(participant, method, callerId, callEntry) {
+        if (!participant || !method) return;
+        stack.push({
+          participantId: participant.id,
+          className: participant.className,
+          methodName: method.name,
+          callerId: callerId || '',
+          body: method.body,
+          indent: 0,
+          fragments: [],
+          callEntry: callEntry || null
+        });
+      }
+
+      function popFrameForResponse(message) {
+        for (var i = stack.length - 1; i >= 0; i--) {
+          if (stack[i].participantId === message.from && (!message.to || stack[i].callerId === message.to || i === stack.length - 1)) {
+            return stack.splice(i, stack.length - i)[0];
+          }
+        }
+        return null;
+      }
+
+      (sequenceModel.messages || []).forEach(function (message) {
+        var frame = activeFrameForSender(message.from || message.target || '');
+        if (message.type === 'message') {
+          if (message.msgType === 'response' || message.isDashed) {
+            var returning = popFrameForResponse(message);
+            if (returning) {
+              if (returning.callEntry && message.label) {
+                var responseVar = sequenceResponseVariable(message.label);
+                if (responseVar) returning.callEntry.text = responseVar + ' = ' + returning.callEntry.text;
+                returning.callEntry.text += '  # response: ' + cleanPythonText(message.label);
+              }
+              addFrameLine(returning, 'return ' + sequenceResponseValue(message.label));
+            } else {
+              addFrameLine(frame, pythonComment('Response from ' + (message.from || '?') + ' to ' + (message.to || '?') + ': ' + (message.label || '')));
+            }
+            return;
+          }
+
+          var receiver = participants[message.to] || null;
+          var receiverClass = receiver && receiver.className ? model.byName[receiver.className] : null;
+          var call = parseSequenceCall(message.label, 'operation');
+          var senderFrame = activeFrameForSender(message.from);
+          var entry = addFrameLine(senderFrame, renderSequenceCallLine(senderFrame, receiver, call, message, model));
+          if (receiverClass) {
+            var method = addPythonMethod(receiverClass, {
+              name: call.name,
+              params: call.params,
+              returnType: call.returnType,
+              fromSequence: true,
+              original: call.original || message.label || call.name + '()'
+            });
+            if (!(senderFrame.participantId === receiver.id && senderFrame.methodName === method.name)) {
+              pushMethodFrame(receiver, method, message.from, entry);
+            }
+          }
+          return;
+        }
+
+        if (message.type === 'lost') {
+          addFrameLine(activeFrameForSender(message.from), pythonComment('Lost message from ' + (message.from || '?') + ': ' + (message.label || '')));
+        } else if (message.type === 'found') {
+          var foundFrame = participants[message.to] && participants[message.to].className
+            ? activeFrameForSender(message.to)
+            : scenario;
+          addFrameLine(foundFrame, pythonComment('Found message to ' + (message.to || '?') + ': ' + (message.label || '')));
+        } else if (message.type === 'create') {
+          var created = participants[message.target] || { id: message.target, className: pythonClassName(message.target) };
+          var cls = model.byName[created.className] || createPythonClass(model, created.className, 'class');
+          addFrameLine(activeFrameForSender(message.target), participantVariable(created.id) + ' = ' + cls.name + '()  # create lifeline');
+        } else if (message.type === 'destroy') {
+          addFrameLine(activeFrameForSender(message.target), pythonComment('Destroy lifeline ' + (message.target || '')));
+        } else if (message.type === 'activate') {
+          addFrameLine(activeFrameForSender(message.target), pythonComment('Activate ' + (message.target || '')));
+        } else if (message.type === 'deactivate') {
+          var deactivateFrame = methodFrameFor(stack, message.target) || activeFrameForSender(message.target);
+          addFrameLine(deactivateFrame, pythonComment('Deactivate ' + (message.target || '')));
+          if (stack.length && stack[stack.length - 1].participantId === message.target) stack.pop();
+        } else if (message.type === 'note') {
+          (message.lines || ['']).forEach(function (line) {
+            addFrameLine(activeFrameForSender(message.target), pythonComment('Note: ' + line));
+          });
+        } else if (message.type === 'fragment_start') {
+          emitFragmentStart(frame, message);
+        } else if (message.type === 'fragment_else') {
+          emitFragmentElse(frame, message.condition);
+        } else if (message.type === 'fragment_end') {
+          closeBlock(frame);
+        }
+      });
+
+      stack.forEach(function (frame) {
+        while (frame.indent > 0) closeBlock(frame);
+      });
+      while (scenario.indent > 0) closeBlock(scenario);
+      return scenario.body;
+    }
+
+    function sortedPythonClasses(model) {
+      var out = [];
+      var visiting = {};
+      var visited = {};
+      function visit(cls) {
+        if (!cls || visited[cls.name] || visiting[cls.name]) return;
+        visiting[cls.name] = true;
+        cls.parents.forEach(function (parentName) { visit(model.byName[parentName]); });
+        visiting[cls.name] = false;
+        visited[cls.name] = true;
+        out.push(cls);
+      }
+      model.classes.forEach(visit);
+      return out;
+    }
+
+    function renderPythonMethodSignature(method) {
+      var params = [];
+      if (!method.isStatic) params.push('self');
+      (method.params || []).forEach(function (param) {
+        var piece = param.name;
+        if (param.type) piece += ': ' + param.type;
+        if (param.defaultValue) piece += ' = ' + param.defaultValue;
+        params.push(piece);
+      });
+      var suffix = method.returnType ? ' -> ' + method.returnType : '';
+      return 'def ' + method.name + '(' + params.join(', ') + ')' + suffix + ':';
+    }
+
+    function renderPythonBody(lines, baseIndent) {
+      var out = [];
+      if (!lines || !lines.length) {
+        out.push(' '.repeat(baseIndent) + 'pass');
+        return out;
+      }
+      lines.forEach(function (entry) {
+        out.push(' '.repeat(baseIndent + (entry.indent || 0) * 4) + entry.text);
+      });
+      return out;
+    }
+
+    function renderPythonClass(cls) {
+      var lines = [];
+      var bases = cls.parents.slice();
+      if (cls.type === 'interface' || cls.type === 'abstract') {
+        if (!bases.length) bases.push('ABC');
+        else if (bases.indexOf('ABC') === -1 && bases.every(function (base) { return base !== 'ABC'; })) bases.push('ABC');
+      }
+      if (cls.type === 'enum') bases = ['Enum'];
+      lines.push('class ' + cls.name + (bases.length ? '(' + bases.join(', ') + ')' : '') + ':');
+
+      var wrote = false;
+      if (cls.attrs.length && !cls.methodMap.__init__) {
+        var params = ['self'];
+        cls.attrs.forEach(function (attr) {
+          var type = attr.type ? ': ' + attr.type + ' | None' : '';
+          params.push(attr.name + type + ' = None');
+        });
+        lines.push('    def __init__(' + params.join(', ') + ') -> None:');
+        cls.attrs.forEach(function (attr) {
+          if (attr.many || /^list\[/.test(attr.type || '')) {
+            lines.push('        self.' + attr.name + ' = ' + attr.name + ' if ' + attr.name + ' is not None else []');
+          } else {
+            lines.push('        self.' + attr.name + ' = ' + attr.name);
+          }
+        });
+        wrote = true;
+      }
+
+      cls.methods.forEach(function (method) {
+        if (wrote) lines.push('');
+        if (method.isStatic) lines.push('    @staticmethod');
+        if (method.isAbstract && !method.body.length) lines.push('    @abstractmethod');
+        lines.push('    ' + renderPythonMethodSignature(method));
+        if (method.body.length) {
+          renderPythonBody(method.body, 8).forEach(function (line) { lines.push(line); });
+        } else if (method.isAbstract) {
+          lines.push('        raise NotImplementedError');
+        } else {
+          lines.push('        pass');
+        }
+        wrote = true;
+      });
+
+      if (!wrote) lines.push('    pass');
+      return lines;
+    }
+
+    function isInstantiablePythonClass(cls) {
+      return !!cls && cls.type !== 'interface' && cls.type !== 'abstract' && cls.type !== 'enum';
+    }
+
+    function renderGeneratedPython(model, scenarioLines, participants) {
+      var lines = [
+        '# Generated from ArchUML class and sequence diagrams.',
+        '# Review TODO comments where UML intent cannot be translated into executable Python automatically.',
+        'from __future__ import annotations',
+        '',
+        'from abc import ABC, abstractmethod',
+        'from contextlib import contextmanager',
+        'from enum import Enum',
+        '',
+        '',
+        'def _condition(label: str) -> bool:',
+        '    """Placeholder for a UML guard condition."""',
+        '    return True',
+        '',
+        '',
+        'def _loop(label: str):',
+        '    """Placeholder for a UML loop fragment."""',
+        '    return range(1)',
+        '',
+        '',
+        'def _response(value: str):',
+        '    """Preserve a sequence-diagram response label as a value."""',
+        '    return value',
+        '',
+        '',
+        '@contextmanager',
+        'def _critical_section(label: str):',
+        '    """Placeholder for a UML critical fragment."""',
+        '    yield',
+        '',
+        '',
+        '@contextmanager',
+        'def _parallel_branch(label: str):',
+        '    """Placeholder for one branch of a UML par fragment."""',
+        '    yield',
+        '',
+        '',
+        '@contextmanager',
+        'def _interaction_ref(label: str):',
+        '    """Placeholder for a UML ref fragment."""',
+        '    yield',
+        '',
+        '',
+        'def _forbidden_trace(label: str) -> bool:',
+        '    """A UML neg fragment marks behavior that must not execute."""',
+        '    return False',
+        ''
+      ];
+      sortedPythonClasses(model).forEach(function (cls, index) {
+        if (index || lines[lines.length - 1] !== '') lines.push('');
+        renderPythonClass(cls).forEach(function (line) { lines.push(line); });
+        lines.push('');
+      });
+      if (scenarioLines && scenarioLines.length) {
+        lines.push('');
+        lines.push('def run_sequence() -> None:');
+        var seenVars = {};
+        Object.keys(participants || {}).forEach(function (id) {
+          var participant = participants[id];
+          if (!participant || participant.isActor || !participant.className) return;
+          var cls = model.byName[participant.className];
+          if (!isInstantiablePythonClass(cls)) return;
+          var varName = participantVariable(participant.id);
+          if (seenVars[varName]) return;
+          seenVars[varName] = true;
+          lines.push('    ' + varName + ' = ' + cls.name + '()');
+        });
+        Object.keys(participants || {}).forEach(function (id) {
+          var owner = participants[id];
+          if (!owner || owner.isActor || !owner.className || !seenVars[participantVariable(owner.id)]) return;
+          var ownerClass = model.byName[owner.className];
+          Object.keys(participants || {}).forEach(function (otherId) {
+            var other = participants[otherId];
+            if (!other || other === owner || other.isActor || !other.className || !seenVars[participantVariable(other.id)]) return;
+            var attr = attributeForParticipant(ownerClass, other);
+            if (attr) lines.push('    ' + participantVariable(owner.id) + '.' + attr.name + ' = ' + participantVariable(other.id));
+          });
+        });
+        renderPythonBody(scenarioLines, 4).forEach(function (line) { lines.push(line); });
+      }
+      return lines.join('\n').replace(/\n{4,}/g, '\n\n\n') + '\n';
+    }
+
+    function currentSourceForType(type) {
+      if (typeSelect.value === type) return textarea.value || '';
+      return loadAutosaved(type) || '';
+    }
+
+    function generatePythonFromDiagrams() {
+      var classSource = currentSourceForType('class');
+      var sequenceSource = currentSourceForType('sequence');
+      if (!hasMeaningfulDiagramSource(classSource) || !hasMeaningfulDiagramSource(sequenceSource)) {
+        throw new Error('Generate Python needs both a saved class diagram and a saved sequence diagram.');
+      }
+      var model = parsePythonClassModel(classSource);
+      var sequence = parsePythonSequenceModel(model, sequenceSource);
+      var scenarioLines = lowerSequenceToPython(model, sequence);
+      return renderGeneratedPython(model, scenarioLines, sequence.participants);
+    }
+
+    if (generatePythonBtn) {
+      generatePythonBtn.addEventListener('click', function () {
+        try {
+          var python = generatePythonFromDiagrams();
+          downloadTextFile('archuml-generated.py', python, 'text/x-python');
+          status.textContent = 'Generated Python file.';
+          setTimeout(function () { status.textContent = ''; }, 2000);
+        } catch (err) {
+          status.textContent = err.message || String(err);
+        }
+      });
     }
 
     async function encryptedUmlPayload(password) {

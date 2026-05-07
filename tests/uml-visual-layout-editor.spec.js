@@ -984,6 +984,52 @@ test.describe('UML playground visual editor', () => {
     });
   });
 
+  test('Python generation combines class structure and sequence behavior', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await setUmlSource(page, `@startuml
+class Application { +db: Database; +login(username: str, password: str): str }
+class Database { +queryUser(username: str): dict }
+Application --> Database : db
+@enduml`);
+
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+participant db: Database
+user -> app: login(username, password)
+activate app
+app -> db: queryUser(username)
+activate db
+db --> app: userData
+deactivate db
+alt [valid credentials]
+  app --> user: token
+else [invalid]
+  app --> user: error 401
+end
+deactivate app
+@enduml`);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#uml-pg-generate-python').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('archuml-generated.py');
+    const path = await download.path();
+    expect(path, 'download should produce a local Python file').not.toBeNull();
+    const pythonText = fs.readFileSync(path, 'utf8');
+
+    expect(pythonText).toContain('class Application:');
+    expect(pythonText).toContain('class Database:');
+    expect(pythonText).toContain('def login(self, username: str, password: str) -> str:');
+    expect(pythonText).toContain('userData = self.db.queryUser(username)  # response: userData');
+    expect(pythonText).toContain('if _condition("valid credentials"):');
+    expect(pythonText).toContain('elif _condition("invalid"):');
+    expect(pythonText).toContain('return _response("token")');
+    expect(pythonText).toContain('def run_sequence() -> None:');
+  });
+
   test('dark mode styles apply from the document element class', async ({ page }) => {
     await page.goto(PLAYGROUND_URL);
     await page.waitForSelector('#uml-pg-edit');
@@ -1249,6 +1295,7 @@ app --> user: second()
     });
     await page.mouse.move(betweenMessages.sourceX, betweenMessages.y);
     await page.mouse.down();
+    await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
     await page.mouse.move(betweenMessages.targetX, betweenMessages.y, { steps: 8 });
     await page.mouse.up();
 
@@ -1295,15 +1342,16 @@ db --> app: third()
       const first = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]');
       const third = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]');
       return {
-        x: third.left + third.width / 2,
         y: third.top + third.height / 2,
         targetY: first.top + first.height / 2 - 36,
       };
     });
-    await page.mouse.move(move.x, move.y);
-    await page.mouse.down();
-    await page.mouse.move(move.x, move.targetY, { steps: 8 });
-    await page.mouse.up();
+    await dragLocatorCenter(
+      page,
+      page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]').first(),
+      0,
+      move.targetY - move.y
+    );
 
     let source = await page.locator('#uml-pg-input').inputValue();
     expect(source.indexOf('db --> app: third()')).toBeLessThan(source.indexOf('user -> app: first()'));
