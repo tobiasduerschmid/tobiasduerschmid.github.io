@@ -18,3 +18,8 @@ How computers communicate across networks: the layered model (application / tran
 How software stores data reliably: why we use a **DBMS** at all, the **relational model** (tables, primary keys, foreign keys), **SQL** as a declarative query language, the four core **relational-algebra operations** (Join, Selection, Projection, Group-By), **transactions** and the **ACID** guarantees (Atomicity, Consistency, Isolation, Durability), and the **CAP theorem** that governs trade-offs in distributed databases. Also covers the **NoSQL** family of non-relational systems and when to pick one over an RDBMS.
 
 [Read the article](/SEBook/systems/data_management.html)
+
+# Security and Authentication
+How to reason about whether a system *is* secure and what *kind* of failure it is when it isn't: the **CIA triad** (Confidentiality, Integrity, Availability), the two most common web vulnerabilities (**SQL injection** and **cross-site scripting**), the **cryptographic primitives** every web app eventually leans on (symmetric and public-key encryption, digital signatures), **authentication** mechanisms (session cookies, JSON Web Tokens), and the design principles — **Zero Trust**, **Open Design**, **Principle of Least Privilege** — that shape secure systems. Closes with a four-question template for building a **security plan**.
+
+[Read the article](/SEBook/systems/security.html)

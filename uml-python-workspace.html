@@ -1,0 +1,434 @@
+---
+title: "Generated Python Tutorial"
+permalink: /uml-python-workspace.html
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generated Python Tutorial</title>
+  <script>
+    // Apply the opener's theme before paint. Tutorial popouts use the same
+    // `?dark=0|1` convention so detached windows do not flash the wrong theme.
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('dark') === '1') document.documentElement.classList.add('dark-mode');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font: 16px/1.5 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background: #0f1720;
+      color: #edf4fb;
+    }
+
+    html:not(.dark-mode) body {
+      background: #f6f8fb;
+      color: #162536;
+    }
+
+    .archuml-python-skip,
+    .archuml-python-skip:visited {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 2000;
+      min-height: 32px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      background: #ffd100;
+      color: #111;
+      font-weight: 700;
+      transform: translateY(-140%);
+      transition: transform 0.15s ease;
+    }
+
+    .archuml-python-skip:focus,
+    .archuml-python-skip:focus-visible {
+      transform: translateY(0);
+      outline: 3px solid #005587;
+      outline-offset: 2px;
+    }
+
+    html.dark-mode .archuml-python-skip:focus,
+    html.dark-mode .archuml-python-skip:focus-visible {
+      outline-color: #ffffff;
+    }
+
+    .archuml-python-header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 56px;
+      padding: 8px 18px;
+      background: #121c28;
+      border-bottom: 1px solid #35536f;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    html:not(.dark-mode) .archuml-python-header {
+      background: #ffffff;
+      border-bottom-color: #b8c7d6;
+      box-shadow: 0 2px 10px rgba(25, 55, 85, 0.12);
+    }
+
+    .archuml-python-title-group {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .archuml-python-title-group h1 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 1.2em;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1.25;
+    }
+
+    html:not(.dark-mode) .archuml-python-title-group h1 {
+      color: #10263a;
+    }
+
+    .archuml-python-context {
+      color: #b7cadc;
+      font-size: 0.95em;
+      line-height: 1.25;
+    }
+
+    html:not(.dark-mode) .archuml-python-context {
+      color: #51677c;
+    }
+
+    .archuml-python-status {
+      margin-left: auto;
+      color: #d9e7f4;
+      font-size: 0.95em;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: right;
+    }
+
+    html:not(.dark-mode) .archuml-python-status {
+      color: #26465f;
+    }
+
+    .archuml-python-status.error {
+      color: #ffb4b4;
+    }
+
+    html:not(.dark-mode) .archuml-python-status.error {
+      color: #a91919;
+    }
+
+    main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #generated-python-workspace {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .archuml-python-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #141414;
+      color: #d7e1eb;
+      text-align: center;
+      font-size: 1em;
+    }
+
+    html:not(.dark-mode) .archuml-python-empty {
+      background: #f2f5f8;
+      color: #23394f;
+    }
+
+    @media (max-width: 640px) {
+      .archuml-python-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .archuml-python-status {
+        margin-left: 0;
+        text-align: left;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .archuml-python-skip {
+        transition: none;
+      }
+    }
+  </style>
+
+</head>
+<body>
+  <a class="skip-link archuml-python-skip" href="#generated-python-workspace">Skip to generated Python workspace</a>
+  <header class="archuml-python-header" aria-labelledby="generated-python-title">
+    <div class="archuml-python-title-group">
+      <h1 id="generated-python-title">Generated Python Tutorial</h1>
+      <div class="archuml-python-context">ArchUML class and sequence diagram output</div>
+    </div>
+    <div class="archuml-python-status" id="generated-python-status" role="status" aria-live="polite">
+      Waiting for generated Python...
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div id="generated-python-workspace" aria-label="Generated Python tutorial workspace">
+      <div class="archuml-python-empty">Waiting for generated Python...</div>
+    </div>
+  </main>
+
+  <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" crossorigin="anonymous"></script>
+  <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
+  <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-auto-describe.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-popout-manager.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  <script>
+    (function () {
+      var statusEl = document.getElementById('generated-python-status');
+      var workspaceEl = document.getElementById('generated-python-workspace');
+      var payloadStorageKey = 'archuml-generated-python-payload';
+      var payloadReceived = false;
+      var readyTimer = null;
+
+      function setStatus(message, isError) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle('error', !!isError);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function announce(type, extra) {
+        if (!window.opener || window.opener.closed) return;
+        var message = Object.assign({ type: type }, extra || {});
+        window.opener.postMessage(message, window.location.origin);
+      }
+
+      function storePayloadForReload(payload) {
+        try {
+          sessionStorage.setItem(payloadStorageKey, JSON.stringify(payload));
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function readStoredPayload() {
+        try {
+          var raw = sessionStorage.getItem(payloadStorageKey);
+          if (!raw) return null;
+          clearStoredPayload();
+          return JSON.parse(raw);
+        } catch (err) {
+          clearStoredPayload();
+          return null;
+        }
+      }
+
+      function clearStoredPayload() {
+        try { sessionStorage.removeItem(payloadStorageKey); } catch (err) {}
+      }
+
+      function registerIsolationWorkerThenReload(payload) {
+        if (!storePayloadForReload(payload)) {
+          startTutorial(payload);
+          return;
+        }
+        setStatus('Preparing Python debugger...');
+        if (!('serviceWorker' in navigator)) {
+          startTutorial(payload);
+          return;
+        }
+
+        var reloaded = false;
+        function reloadOnce() {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        }
+
+        navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+        navigator.serviceWorker.register('{{ "/coi-serviceworker.js" | relative_url }}')
+          .then(function (reg) {
+            reg.update();
+            if (reg.installing) {
+              reg.installing.addEventListener('statechange', function () {
+                if (this.state === 'installed' || this.state === 'activated') reloadOnce();
+              });
+            } else if (reg.waiting || reg.active) {
+              reloadOnce();
+            }
+            window.setTimeout(reloadOnce, 4000);
+          })
+          .catch(function () {
+            startTutorial(payload);
+          });
+      }
+
+      function shouldReloadForIsolation() {
+        return !window.crossOriginIsolated
+          && 'serviceWorker' in navigator
+          && !navigator.serviceWorker.controller;
+      }
+
+      function bootPayload(payload, fromReload) {
+        if (!fromReload && shouldReloadForIsolation()) {
+          registerIsolationWorkerThenReload(payload);
+          return;
+        }
+        startTutorial(payload);
+      }
+
+      function startTutorial(payload) {
+        clearStoredPayload();
+        var filename = payload.filename || 'archuml_generated.py';
+        var code = String(payload.code || '');
+        if (!code.trim()) throw new Error('The generated Python payload was empty.');
+
+        payloadReceived = true;
+        window.__archUmlGeneratedPythonCode = code;
+        window.__archUmlGeneratedPythonFilename = filename;
+        announce('archuml-python-workspace-received');
+        setStatus('Loading Python runtime...');
+
+        var instructionsHTML = [
+          '<h2>Generated Python</h2>',
+          '<p><strong>' + escapeHtml(filename) + '</strong> was generated from the saved ArchUML class and sequence diagrams.</p>',
+          '<p>Sequence guards, loops, parallel branches, references, responses, notes, found and lost messages, creation, and destruction are preserved as executable helpers or structured comments where Python needs domain-specific intent.</p>',
+          '<p>The UML Diagram tab is inferred live from this Python file, so edits in Monaco can round-trip back into a fresh class or sequence view.</p>'
+        ].join('');
+
+        var tutorial = new TutorialCode(workspaceEl, {
+          backend: 'pyodide',
+          tutorialId: 'archuml-generated-python',
+          tutorialTitle: 'Generated Python Tutorial',
+          steps: [{
+            title: 'Generated Python',
+            instructionsHTML: instructionsHTML,
+            files: [{
+              path: filename,
+              language: 'python',
+              content: code,
+              pane: 'editor'
+            }],
+            open_file: filename,
+            run_file: filename
+          }],
+          requireTests: false,
+          autosaveType: null,
+          resetType: 'files',
+          instructorMode: false,
+          disableQuiz: true,
+          workerPath: '{{ "/js/pyodide-worker.js" | relative_url }}',
+          linter: true,
+          uml_diagram: true,
+          uml_position: 'right',
+          uml_default_view: true,
+          uml_default_type: 'class',
+          uml_class_layout: 'portrait',
+          debugger: true,
+          debuggerOptions: {},
+          run_label: 'Run',
+          outputHeight: '36%',
+          tabPopupUrl: '{{ "/tutorial-tab-popup.html" | relative_url }}',
+          instructionsPopupUrl: '{{ "/tutorial-instructions-popup.html" | relative_url }}',
+          panePopupUrl: '{{ "/tutorial-pane-popup.html" | relative_url }}',
+          outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
+          debuggerPopupUrl: '{{ "/tutorial-debugger-popup.html" | relative_url }}'
+        });
+
+        window.__archUmlGeneratedPythonTutorial = tutorial;
+        window.__archUmlGeneratedPythonStartPromise = tutorial.start().then(function () {
+          if (!workspaceEl.querySelector('.tvm-error')) setStatus('Ready');
+        });
+      }
+
+      function handleMessage(event) {
+        if (event.origin !== window.location.origin) return;
+        var data = event.data || {};
+        if (data.type !== 'archuml-generated-python') return;
+        if (payloadReceived) {
+          announce('archuml-python-workspace-received');
+          return;
+        }
+        try {
+          if (readyTimer) window.clearInterval(readyTimer);
+          bootPayload(data, false);
+        } catch (err) {
+          var message = err && err.message ? err.message : String(err);
+          setStatus(message, true);
+          announce('archuml-python-workspace-error', { message: message });
+        }
+      }
+
+      window.addEventListener('message', handleMessage);
+
+      var storedPayload = readStoredPayload();
+      if (storedPayload) {
+        payloadReceived = true;
+        window.setTimeout(function () {
+          try {
+            bootPayload(storedPayload, true);
+          } catch (err) {
+            setStatus(err && err.message ? err.message : String(err), true);
+          }
+        }, 0);
+        return;
+      }
+
+      function ready() {
+        if (payloadReceived) return;
+        announce('archuml-python-workspace-ready');
+      }
+
+      ready();
+      readyTimer = window.setInterval(ready, 500);
+      window.setTimeout(function () {
+        if (!payloadReceived) {
+          setStatus('Waiting for generated Python from the UML editor...');
+        }
+      }, 2500);
+    })();
+  </script>
+</body>
+</html>

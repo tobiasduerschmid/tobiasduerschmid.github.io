@@ -1,9 +1,8 @@
 /*
  * uml-auto-describe.js — verbal aria-label generator for ArchUML diagrams.
  *
- * Mirrors the server-side describer in `_plugins/uml_static.rb` so the live
- * (client-rendered) tutorials, popouts, and dev-mode SEBook pages get the
- * same WCAG 2.2 §1.1.1 text alternative as the static production build.
+ * Provides the WCAG 2.2 §1.1.1 text alternative for client-rendered
+ * diagrams across SEBook pages, tutorials, and popouts.
  *
  * The bundle in `js/ArchUML/uml-bundle.js` exposes
  * `window.UMLShared.applySvgAccessibility(el, type, syntax)` and calls it
@@ -1080,8 +1079,6 @@
   }
 
   // ---------- HTML rendering for the screen-reader-only verbose description ----------
-  // Identical structure to what `_plugins/uml_static.rb` emits at build time
-  // for static diagrams, so live + static diagrams expose the same text alternative.
 
   function escapeHTML(s) {
     return String(s == null ? '' : s)

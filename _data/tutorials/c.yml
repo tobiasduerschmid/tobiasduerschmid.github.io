@@ -591,9 +591,9 @@ steps:
     instructions: |
       ### Power Unlocked: Manual Memory Management
 
-      This is the big one. The power that separates C programmers from everyone else: **you control memory directly**. No garbage collector. No smart pointers. Just you and the heap. With great power comes great responsibility — and great bugs. When researchers tracked real CS2 students, they found that **74% created memory leaks**, **70% dereferenced dead pointers**, and **57% dereferenced null pointers** — and most of these errors were completely silent. No crash, no warning, just corrupted memory that manifests as mysterious bugs way later. Spooky.
+      This is the big one. The power that separates C programmers from everyone else: **you control memory directly**. No garbage collector. No smart pointers. Just you and the heap. With great power comes great responsibility — and great bugs.
 
-      This step teaches you the discipline that prevents these errors.
+      This step teaches you the discipline that prevents the silent memory bugs that have crashed real systems for decades. You'll meet the grim student-error stats at the boss fight in step 11 — for now, focus on building the schema that prevents them.
 
       ### 🎯 You will learn to
 
@@ -643,19 +643,6 @@ steps:
       3. **`malloc` can fail** — it returns `NULL` if there's no memory. Always check.
       4. **No constructors** — `malloc` just gives you raw bytes. You must initialize fields yourself.
 
-      <details markdown="1"><summary>📖 Style note: this tutorial follows K&R; the Linux kernel disagrees</summary>
-
-      You'll meet C codebases that *always* cast `malloc` (`(int*)malloc(...)`) and codebases that *never* cast. Both communities have logic on their side:
-
-      | Style | Argument | Used by |
-      |---|---|---|
-      | **No cast** *(this tutorial)* | The cast is redundant — `void*` converts implicitly. Worse, the cast can *mask* a forgotten `#include <stdlib.h>` (the compiler then assumes `malloc` returns `int`, and your cast silently hides the wrong-sized return). | K&R "The C Programming Language", FreeBSD, glibc, most modern style guides |
-      | **Always cast** | Makes the type explicit at the call site. Forces compatibility with C++ compilers (where the cast *is* required). Some safety-critical guides require it for code review readability. | Linux kernel, MISRA-C, some embedded firmware shops |
-
-      For this tutorial we follow K&R: no cast, plus `#include <stdlib.h>` at the top of every file that calls `malloc`. If you join a project later that uses the other style, follow that project's convention — don't fight it.
-
-      </details>
-
       ### The Pointer Lifecycle: A Mental Model
 
       Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
@@ -678,7 +665,7 @@ steps:
       | **Null** | Explicitly set to `NULL` | Compare (`p == NULL`), reassign |
       | **Dead** | Was freed — memory returned to OS | **Nothing!** Accessing a dead pointer is use-after-free |
 
-      The most dangerous transition is **Alive → Dead** (via `free()`), because the pointer variable *still holds the old address* — it just doesn't point to valid memory anymore. The pointer looks fine, but the memory behind it is gone. This is why 70% of students hit use-after-free bugs. **Pro tip:** set pointers to `NULL` immediately after freeing them.
+      The most dangerous transition is **Alive → Dead** (via `free()`), because the pointer variable *still holds the old address* — it just doesn't point to valid memory anymore. The pointer looks fine, but the memory behind it is gone. **Pro tip:** set pointers to `NULL` immediately after freeing them — it converts a future use-after-free (silent corruption) into a NULL-deref (loud crash you can debug).
 
       ### Task: Build a dynamic array
 
@@ -1392,6 +1379,30 @@ steps:
       ```
 
       At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. Reading a member you didn't last write to is undefined behavior — the Pokemon equivalent of "asking the Fire attack what its splash radius is."
+
+      ### ✏️ Predict before you read on
+
+      Suppose `union Value v;` and you do:
+
+      ```c
+      v.i = 42;          // write 4 bytes as int
+      printf("%f\n", v.d);  // read 8 bytes as double — what prints?
+      ```
+
+      Pick one — commit before you scroll:
+
+      - (a) `42.000000` — C converts the int to a double on read.
+      - (b) `0.000000` — the unwritten upper bytes are zero, so the double is well-defined.
+      - (c) An unpredictable garbage float — C reinterprets the raw bytes; the upper 4 bytes are whatever was on the stack.
+      - (d) Compile error — the compiler rejects mismatched member access.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed to a letter</summary>
+
+      The answer is **(c)**. C does **no conversion** between union members — it reinterprets the same bytes through whichever type you ask for. The lower 4 bytes hold the int `42`; the upper 4 bytes hold whatever was on the stack before `v` was declared. Read as a double, that bit pattern is meaningless.
+
+      Why does this matter? Because the union *itself* doesn't know which member is currently valid. There's no runtime check, no compiler warning. The discipline is on you — and that discipline is what the **tagged union** pattern below formalizes.
+
+      </details>
 
       ### Tagged Unions: The C Pattern for "Variant Types"
 
@@ -2385,7 +2396,7 @@ steps:
 
       Every origin story ends with a boss battle. This is yours.
 
-      You'll combine **every power you've unlocked** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. No scaffolding. No hints. No TODO comments telling you what to write. Just you and the compiler.
+      You'll combine **every power you've unlocked** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. The starter file gives you the function *signatures* (`node_create`, `list_print`, `list_free`) and a working `main()` that drives them. **The bodies are empty — that's your fight.** No TODO comments naming the lines. No partial implementations to nudge you. Just the contract and the compiler.
 
       **This is supposed to be hard.** If you get stuck, that doesn't mean you're not cut out for C — it means you're fighting the boss, not the tutorial. Go back and re-read the specific step that covers the concept you're struggling with. Every power you need is already in your toolkit. The challenge is wielding them all at once.
 

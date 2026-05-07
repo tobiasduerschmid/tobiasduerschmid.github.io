@@ -865,7 +865,7 @@ entry to a page in `site.html_pages` with matching `tutorial:` and
 card grid. **No manual list to maintain.** New tutorial → new YAML + new
 page-pair → automatic listing.
 
-### 4.4 Popout windows
+### 4.4 Popout and generated-workspace windows
 
 Six standalone `.html` files at the repo root, each a separate window that
 synchronizes with the main tutorial via `BroadcastChannel` (see
@@ -880,6 +880,19 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 
 Each popout listens for state-snapshot, state-update, and step-change
 messages on the BroadcastChannel and re-renders accordingly.
+
+`uml-python-workspace.html` is a separate generated-code workspace opened by
+the UML editor's "Generate Python" action. It receives a one-shot
+`postMessage` payload (`archuml-generated-python`) from the UML editor, then
+boots the standard `TutorialCode` runtime with the `pyodide` backend,
+Monaco, linter, live UML inference (`uml_diagram: true` in the right
+Output/UML tab panel), and time-travel debugger enabled around the generated
+`archuml_generated.py` file. It does not use URL payloads or add persistent
+storage; it uses a short-lived `sessionStorage` key
+(`archuml-generated-python-payload`) only to bridge the one-time
+cross-origin-isolation reload, then removes it as soon as the workspace
+starts. Any detached panes it opens reuse the normal `ttsync-<path>`
+tutorial popout channel.
 
 ### 4.5 JavaScript runtime
 
@@ -939,11 +952,13 @@ messages on the BroadcastChannel and re-renders accordingly.
 - **`_includes/uml-editor.html`** also owns UML editor export actions. The
   "Generate Python" toolbar action reads the saved class-diagram and
   sequence-diagram ArchUML drafts for the editor instance, generates a
-  `.py` file with classes, attributes, operations, and sequence-derived
-  method bodies, and preserves sequence features that do not map cleanly to
-  Python (guards, loops, `par`, `critical`, `ref`, `neg`, found/lost
-  messages, activation markers, notes, create/destroy) as helper calls or
-  structured comments instead of dropping them.
+  Python module with classes, attributes, operations, and sequence-derived
+  method bodies, opens `uml-python-workspace.html`, and hands the generated
+  code to that Pyodide tutorial workspace with `postMessage`. Sequence
+  features that do not map cleanly to Python (guards, loops, `par`,
+  `critical`, `ref`, `neg`, found/lost messages, activation markers, notes,
+  create/destroy) are preserved as helper calls or structured comments
+  instead of being dropped.
 - **Backend workers** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `js/playwright-compat/runner.js` (in-browser Playwright for React),
@@ -1027,9 +1042,10 @@ keys. **If you change the persistence schema, also update**:
   `kind: sequence` with `check:` values like `player_object`,
   `state_objects`, `messages_between_player_and_states`,
   `state_change_between_state_calls`, and `called_methods_exist`; the last
-  check verifies message labels against the receiver's class or inherited /
-  realized operations in the saved class diagram. Generalization / realization and
-  aggregation / composition assertions follow UML arrow semantics: both
+  check verifies call message labels against the receiver's class or inherited /
+  realized operations in the saved class diagram, while dashed return messages
+  are ignored because response values are not class operations. Generalization /
+  realization and aggregation / composition assertions follow UML arrow semantics: both
   `Child --|> Parent` and `Parent <|-- Child` satisfy `from: Child` /
   `to: Parent`, and both `Whole o-- Part` and `Part --o Whole` satisfy
   `from: Whole` / `to: Part`.

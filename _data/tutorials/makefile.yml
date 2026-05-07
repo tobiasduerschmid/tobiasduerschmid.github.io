@@ -601,9 +601,31 @@ steps:
 
       Each filename appears **twice** per rule. With 50 source files you'd have 50 nearly identical rules. There must be a better way.
 
+      ### ✏️ Predict before you read on
+
+      Make has three "automatic variables" that solve this. Their names use punctuation, not words. From the names alone, guess which one means what.
+
+      Given the rule `app: main.o math.o io.o`, what should each of these expand to *inside the recipe*?
+
+      - `$@` → ?
+      - `$<` → ?
+      - `$^` → ?
+
+      Pick from: `app` · `main.o` · `main.o math.o io.o` · `gcc`. Commit to a mapping (you can guess from the punctuation — `@` looks like a target, `<` looks like an arrow pointing into the rule, `^` looks like… something).
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      - `$@` → `app` — the **target** (mnemonic: `@` looks like the target reticule).
+      - `$<` → `main.o` — the **first prerequisite** (mnemonic: `<` is an arrow pointing into the rule from the left).
+      - `$^` → `main.o math.o io.o` — **all prerequisites** (mnemonic: think "caret" → "carry-all").
+
+      The most common bug: confusing `$<` with `$^` in compile-vs-link rules. In a per-file rule (`%.o: %.c`), you want `$<` (single source). In the link rule (`app: main.o math.o io.o`), you want `$^` (all objects). Hit the wrong one and you'll either re-compile every file at link time (`$^` in pattern rule) or link only the first object (`$<` in link rule).
+
+      </details>
+
       ### Automatic Variables
 
-      Make provides special variables that expand to parts of the *current* rule being evaluated:
+      Here's the table — match it against your guesses above:
 
       | Variable | Expands to |
       |----------|------------|
@@ -841,6 +863,25 @@ steps:
       touch math.c
       ```
 
+      ### ✏️ Predict before you run `make`
+
+      You're about to run `make`. Commit to a number, then run it.
+
+      How many `gcc` invocations will Make produce?
+
+      - (a) 0 — `touch` doesn't change content, so Make should skip everything.
+      - (b) 1 — only `math.c` → `math.o`.
+      - (c) 2 — `math.c` → `math.o` *and* the link step that produces `app`.
+      - (d) 4 — Make plays it safe and rebuilds the whole project.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      The answer is **(c)**. `math.c` is now newer than `math.o`, so Make recompiles it (1). That makes `math.o` newer than `app`, so Make also re-links (2). `main.c` and `io.c` are untouched, so their `.o` files stay valid and aren't recompiled.
+
+      The trap is (a): "but the content didn't change, so why rebuild?" Make doesn't *read* file contents — it compares timestamps. From its point of view, "you touched this file" and "you edited this file" look identical. This is a feature, not a bug: a content-aware Make would have to checksum every file every build, which would be slow. Modern build tools like Bazel *do* checksum, paying that cost in exchange for false-positive immunity.
+
+      </details>
+
       ### Task 3: Observe the magic
 
       Run `make` one more time:
@@ -849,6 +890,12 @@ steps:
       ```
 
       Look closely at the output! Make compiled `math.c` → `math.o` and then re-linked `app`. **It completely skipped `main.c` and `io.c`.** They were still up to date — so Make left them alone. In a massive codebase this is the difference between waiting seconds and waiting hours.
+
+      ### Task 4: Modify — try it on a different file
+
+      Now `touch main.c` and run `make`. Predict first: which files get recompiled this time? (Hint: the dependency graph hasn't changed — only which leaf was touched.) Run and confirm.
+
+      Then try `touch Makefile` and predict again. (Surprise: the Makefile itself isn't a prerequisite of any rule, so nothing rebuilds. The dependency graph is *only* what's written between colons.)
 
       <details markdown="1"><summary>⚠️ The classic dependency-tracking footgun: header-file changes</summary>
 
@@ -1197,3 +1244,91 @@ steps:
           grep -q '\.PHONY:.*clean' Makefile || { echo "Missing .PHONY: clean (Step 6)."; exit 1; }
       - description: "The full build still works (`make clean && make` produces an `app` binary)"
         command: "cd /tutorial/make_project && make clean >/dev/null 2>&1 && make >/dev/null 2>&1 && [ -f app ]"
+
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: |
+            **[Synthesis — Steps 3 + 4]** Your final Makefile uses `OBJS = main.o math.o io.o` and the pattern rule `%.o: %.c`. A teammate adds a new source file `parser.c` to the project. What is the **minimal** change to integrate it into the build?
+          options:
+            - "Add `parser.o` to the `OBJS` line — the pattern rule handles the rest"
+            - "Write a new explicit `parser.o: parser.c` rule and add it to OBJS"
+            - "Re-run `make clean` so Make discovers the new file automatically"
+            - "Add `parser.c` to the prerequisites of the `app:` rule directly"
+          correct_index: 0
+          option_feedback:
+            1: "That's what you'd do *without* the pattern rule. The whole point of `%.o: %.c` (Step 4) is that one rule handles every source file — explicit per-file rules are now redundant."
+            2: "`make clean` deletes build artifacts; it doesn't scan for source files. Make doesn't auto-discover anything — it builds exactly the dependency graph you write."
+            3: "Then `app` would depend on a `.c` file, and the link step (`$(CC) $(CFLAGS) $^ -o $@`) would try to link a `.c` file directly. The link step expects `.o` files; compilation goes through OBJS."
+          explanation: "Add `parser.o` to `OBJS` — that's it. The pattern rule `%.o: %.c` handles compilation, the `app:` rule sees `parser.o` as a prerequisite via `$(OBJS)`, and the automatic variable `$^` feeds it to the linker. This is what scalability looks like — the design from Step 4 pays off here."
+
+        - question: |
+            **[Step 5 + Step 6]** A teammate writes `app: clean $(OBJS)` so that `make app` always starts fresh. What goes wrong?
+          options:
+            - "Nothing — this is a smart way to ensure clean builds"
+            - "`app` will be re-linked on every single `make` invocation, even when nothing changed — the incremental-build benefit is gone"
+            - "Make refuses to mix phony and real prerequisites and emits an error"
+            - "The build only fails on the first run; subsequent runs are fine"
+          correct_index: 1
+          option_feedback:
+            0: "Defeats the purpose of Make. The whole tutorial has been about *avoiding* unnecessary rebuilds (Step 5)."
+            2: "Make happily mixes real and phony targets. The bug is silent and behavioral, not syntactic."
+            3: "It happens *every* run. Phony targets are never up-to-date, so the rule whose prerequisites include them is also never up-to-date."
+          explanation: "Phony targets (Step 6) are *never* considered up-to-date. A real target depending on a phony one inherits that property — so `app` is always considered stale, and Make re-links every time. This silently destroys the incremental-build property from Step 5. The right pattern: keep `clean` separate, run `make clean && make` when you actually want a fresh build."
+
+        - question: |
+            **[Step 2 + Step 4]** You write the following pattern rule and run `make`:
+
+            ```make
+            %.o: %.c
+                $(CC) $(CFLAGS) -c $< -o $@
+            ```
+
+            (Where the recipe line was indented in your editor with 4 spaces.) What error does Make emit?
+          options:
+            - "`pattern rule must use $@ and $<`"
+            - "`missing separator. Stop.`"
+            - "`No rule to make target '%.o'`"
+            - "`undefined automatic variable`"
+          correct_index: 1
+          option_feedback:
+            0: "There's no such error — `$@`/`$<` aren't required for pattern rules to parse."
+            2: "That's what you'd see if the *target* couldn't be matched, not for an indentation problem. The parser doesn't even get that far."
+            3: "Automatic variables don't need to be defined; they're built in. The error happens at parse time, before any variable evaluation."
+          explanation: "Pattern rules don't escape the Tab Trap. Make's parser identifies recipe lines by a literal Tab byte at column 0 — applies to every rule, simple or pattern, every time. The fix is the same as Step 2: replace the leading spaces with a Tab. Most editors silently auto-convert, which is why this trap stays dangerous even for advanced authors."
+
+        - question: |
+            **[Step 5 footgun]** Your project uses the final Makefile. You edit `math.h` (a header included by `main.c` and `math.c`) but don't touch any `.c` file. You run `make`. What happens?
+          options:
+            - "Make rebuilds `main.o` and `math.o` because they include `math.h`"
+            - "Make says `'app' is up to date` and skips everything — even though the header changed"
+            - "Make rebuilds the entire project to be safe"
+            - "Make refuses to build and warns about an untracked dependency"
+          correct_index: 1
+          option_feedback:
+            0: "That's what you'd *want*, but only if header dependencies were declared. The plain Makefile has `main.o: main.c` — no mention of `math.h`."
+            2: "Make never builds 'to be safe'. It builds exactly what its declared dependency graph says is out of date — and that graph never knew about the header."
+            3: "Make has no dependency-discovery features. Whatever isn't on the prerequisites line, it can't see."
+          explanation: "This is the silent footgun from the Step 5 `<details>` callout. The Makefile only knows what you wrote on the prerequisites line — `main.o: main.c` doesn't mention `math.h`. So Make happily reports 'up to date' while your `.o` files are now built against a stale header. Real-world fix: `gcc -MMD` to auto-emit `.d` dependency files (Step 5 callout). Cultural fix: always run `make clean && make` after pulling header changes from a teammate."
+
+        - question: |
+            **[Create — Parsons synthesis]** Reconstruct the final Makefile in correct order. The result should compile a 3-file C project (`main.c`, `math.c`, `io.c`) into `app` with incremental builds and a `clean` target. (Recipe lines have a literal Tab character — represented here as `\\t` for clarity.)
+          type: parsons
+          lines:
+            - "CC = gcc"
+            - "CFLAGS = -Wall -std=c11"
+            - "OBJS = main.o math.o io.o"
+            - "app: $(OBJS)"
+            - "\\t$(CC) $(CFLAGS) $^ -o $@"
+            - "%.o: %.c"
+            - "\\t$(CC) $(CFLAGS) -c $< -o $@"
+            - ".PHONY: clean"
+            - "clean:"
+            - "\\trm -f *.o app"
+          distractors:
+            - "$(CC) $(CFLAGS) main.o math.o io.o -o app"
+            - "main.o: main.c"
+            - "all: app clean"
+          explanation: "Variables at top (`CC`, `CFLAGS`, `OBJS` — Step 3 + Step 4), then the link rule using `$(OBJS)` and `$^`/`$@` (Step 4), then the pattern rule (Step 4) replacing the three explicit `.o` rules, then `.PHONY: clean` (Step 6). The distractor `$(CC) $(CFLAGS) main.o math.o io.o -o app` re-introduces the filename repetition Step 4 eliminated. `main.o: main.c` is one of the explicit rules the pattern rule replaces. `all: app clean` would make `all` depend on a phony — the bug from question 2."

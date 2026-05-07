@@ -5,6 +5,10 @@ Supported options:
 - default_type, default_layout
 - start: "example" or "empty"
 - persistence: "true" or "false" for localStorage-backed drafts and pane sizes
+- storage_key: optional scope string. When set, autosave keys become
+  "uml-pg-autosave-<storage_key>-<type>" instead of "uml-pg-autosave-<type>".
+  Use this on pages (like tutorials) that should not share drafts with
+  the global UML playground.
 - default_editor_size, default_props_size: optional pane widths in px
 - reset_label, reset_title
 - hide_archuml: "true" or "false" to hide the source pane and Copy ArchUML
@@ -16,6 +20,7 @@ Supported options:
 {% assign uml_editor_default_layout = include.default_layout | default: include.layout | default: "square" %}
 {% assign uml_editor_start = include.start | default: "example" %}
 {% assign uml_editor_persistence = include.persistence | default: "true" %}
+{% assign uml_editor_storage_key = include.storage_key | default: "" %}
 {% assign uml_editor_default_editor_size = include.default_editor_size | default: include.editor_size | default: "" %}
 {% assign uml_editor_default_props_size = include.default_props_size | default: include.props_size | default: "" %}
 {% assign uml_editor_reset_label = include.reset_label | default: "Example" %}
@@ -39,6 +44,7 @@ Supported options:
   "defaultType": "{{ uml_editor_default_type | escape }}",
   "defaultLayout": "{{ uml_editor_default_layout | escape }}",
   "start": "{{ uml_editor_start | escape }}",
+  "storageKey": "{{ uml_editor_storage_key | escape }}",
   "defaultEditorSize": {% if uml_editor_default_editor_size != "" %}{{ uml_editor_default_editor_size | plus: 0 }}{% else %}null{% endif %},
   "defaultPropsSize": {% if uml_editor_default_props_size != "" %}{{ uml_editor_default_props_size | plus: 0 }}{% else %}null{% endif %},
   "hideArchUml": {% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %}true{% else %}false{% endif %},
@@ -91,7 +97,7 @@ Supported options:
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-export" role="group" aria-label="Export">
       <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
       <button id="uml-pg-export-source" title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
-      <button id="uml-pg-generate-python" title="Generate a Python file from the saved class and sequence diagrams" type="button">Generate Python</button>
+      <button id="uml-pg-generate-python" title="Open generated Python in a runnable tutorial workspace" type="button">Generate Python</button>
       <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-view" role="group" aria-label="View">
@@ -2587,6 +2593,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       defaultType: 'class',
       defaultLayout: 'square',
       start: 'example',
+      storageKey: '',
       defaultEditorSize: null,
       defaultPropsSize: null,
       persistence: true
@@ -2934,7 +2941,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           continue;
         }
         var m;
-        if ((type === 'class' || type === 'state') && /^note\s+(left|right|top|bottom|over)\b/i.test(line)) {
+        if ((type === 'class' || type === 'state' || type === 'sequence') && /^note\s+(left|right|top|bottom|over)\b/i.test(line)) {
           var noteLine = line.match(/^note\s+(left|right|top|bottom|over)\s+(?:of\s+)?(\S+)\s*:\s*(.+)$/i);
           var noteLabel = noteLine ? noteLine[3].trim() : 'Note';
           if (!noteLine) {
@@ -3899,22 +3906,65 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return null;
     }
 
+    // When both endpoints of a route ride along with the same delta — a
+    // self-message anchored to one lifeline, a self-association on a single
+    // class, or a route whose source and target are both inside a group
+    // move — the entire path needs to shift uniformly so kinks and loop
+    // corners stay in their proper place relative to the moved node.
+    // Otherwise we shift only the matching endpoint(s).
+    function shiftRoutePoints(points, sourceDelta, targetDelta) {
+      var next = clonePoints(points);
+      if (!next.length) return next;
+      var bothMatchSameDelta = sourceDelta && targetDelta &&
+        sourceDelta.x === targetDelta.x && sourceDelta.y === targetDelta.y;
+      if (bothMatchSameDelta) {
+        for (var i = 0; i < next.length; i++) {
+          next[i].x += sourceDelta.x;
+          next[i].y += sourceDelta.y;
+        }
+        return next;
+      }
+      if (sourceDelta && next[0]) {
+        next[0].x += sourceDelta.x;
+        next[0].y += sourceDelta.y;
+      }
+      if (targetDelta && next[next.length - 1]) {
+        var end = next.length - 1;
+        next[end].x += targetDelta.x;
+        next[end].y += targetDelta.y;
+      }
+      return next;
+    }
+
     function applyConnectedRouteDeltas(routes, deltas, layer) {
       (routes || []).forEach(function (entry) {
-        var next = clonePoints(entry.points);
         var sourceDelta = routeDeltaForEndpoint(entry.source, entry.sourceIds, deltas);
         var targetDelta = routeDeltaForEndpoint(entry.target, entry.targetIds, deltas);
-        if (sourceDelta && next[0]) {
-          next[0].x += sourceDelta.x;
-          next[0].y += sourceDelta.y;
-        }
-        if (targetDelta && next[next.length - 1]) {
-          var end = next.length - 1;
-          next[end].x += targetDelta.x;
-          next[end].y += targetDelta.y;
-        }
+        if (!sourceDelta && !targetDelta) return;
+        var next = shiftRoutePoints(entry.points, sourceDelta, targetDelta);
         applyRoutePoints(entry.route, next);
         syncRouteOverlays(layer, entry.route.id, next);
+      });
+    }
+
+    // After a node is moved, persisted route overrides (the `edge "id"
+    // points="…"` lines in the source) still reference the pre-move
+    // endpoint coordinates. On the next render `applyLayoutRoutes` would
+    // override the renderer's freshly-computed endpoints with those stale
+    // points, snapping messages off their lifelines and associations off
+    // their classes. Shift the persisted points by the same deltas the
+    // live SVG just took on so the saved overrides stay attached to the
+    // moved nodes.
+    function shiftPersistedRouteEndpoints(routes, connectedRoutes, deltas) {
+      if (!routes || !connectedRoutes) return;
+      connectedRoutes.forEach(function (entry) {
+        if (!entry || !entry.route || !entry.route.id) return;
+        var stored = routes[entry.route.id];
+        if (!stored || !stored.points || stored.points.length < 2) return;
+        var sourceDelta = routeDeltaForEndpoint(entry.source, entry.sourceIds, deltas);
+        var targetDelta = routeDeltaForEndpoint(entry.target, entry.targetIds, deltas);
+        if (!sourceDelta && !targetDelta) return;
+        routes[entry.route.id] = { points: shiftRoutePoints(stored.points, sourceDelta, targetDelta) };
       });
     }
 
@@ -6042,6 +6092,24 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       sequenceMessageDragState = null;
     }
 
+    function findSequenceMessageDropTarget(state, clientX, clientY) {
+      if (!state || !state.svg) return null;
+      var target = findSequenceLifelineAtPoint(state.svg, clientX, clientY);
+      if (target) return target;
+      var source = state.sourceItem;
+      if (!source || !source.box) return null;
+      var pt = svgPoint(state.svg, clientX, clientY);
+      var centerX = sequenceLifelineCenterX(source, state.svg);
+      var view = parseSvgViewBox(state.svg) || { x: 0, y: 0, width: 4000, height: 4000 };
+      var top = Math.min(source.box.y - 24, view.y - 12);
+      var bottom = Math.max(view.y + view.height + 12, source.box.y + source.box.height + 360);
+      var loopReach = 120;
+      if (pt.y >= top && pt.y <= bottom && pt.x >= centerX - 12 && pt.x <= centerX + loopReach) {
+        return source;
+      }
+      return null;
+    }
+
     function startSequenceMessageDrag(svg, layer, item, hitbox, event) {
       var spec = selectedSequenceMessageToolSpec();
       if (!spec || !svg || !layer || !item) return false;
@@ -6076,7 +6144,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (event.currentTarget && event.currentTarget.setPointerCapture) {
         try { event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
       }
-      announce('Drag to the target lifeline. Release on the same lifeline for a self-message.', true);
+      announce('Drag to the target lifeline. Release on the same lifeline or just to its right for a self-message.', true);
       return true;
     }
 
@@ -6087,9 +6155,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var dx = ev.clientX - state.startClientX;
       var dy = ev.clientY - state.startClientY;
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) state.moved = true;
-      var target = findSequenceLifelineAtPoint(state.svg, ev.clientX, ev.clientY);
+      var target = findSequenceMessageDropTarget(state, ev.clientX, ev.clientY);
       var x2 = target ? sequenceLifelineCenterX(target, state.svg) : pt.x;
-      if (target && target.id === state.sourceItem.id && state.moved) x2 += 54;
+      if (target && target.id === state.sourceItem.id && state.moved) x2 = Math.max(x2 + 54, pt.x);
       state.line.setAttribute('x2', x2);
       state.line.setAttribute('y2', pt.y);
 
@@ -6147,7 +6215,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               // For these, we don't auto-connect — they have their own connect semantics.
               return;
             }
-            var opts = { id: newId, label: newId, position: place };
+            var opts = { id: newId, label: defaultElementLabelForPlacement(type, spec, newId), position: place };
             if (spec.isNote) opts.label = 'New note text';
             if (spec.isPort) opts.label = spec.portKind === 'portin' ? 'in' : 'out';
             textarea.value = addElementToSource(textarea.value, type, spec, opts);
@@ -7248,6 +7316,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (lines[seqIdx] != null) {
           result.lineIdx = seqIdx;
           result.lineText = lines[seqIdx];
+          return result;
+        }
+      }
+
+      var sourceLineMatch = id.match(/^rel:(\d+)$/);
+      if (sourceLineMatch) {
+        var relIdx = Number(sourceLineMatch[1]);
+        if (lines[relIdx] != null) {
+          result.lineIdx = relIdx;
+          result.lineText = lines[relIdx];
           return result;
         }
       }
@@ -9153,7 +9231,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!positions[id]) return;
       snapshotForUndo('nudge:' + id);
       positions[id] = { x: positions[id].x + dx, y: positions[id].y + dy };
-      textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions);
+      var routes = readLayoutRoutes(textarea.value);
+      var movedItem = editables.find(function (e) { return e.id === id; }) || null;
+      if (movedItem) {
+        var connectedRoutes = collectConnectedRoutes(svg, id, movedItem);
+        var nudgeDeltas = {};
+        nudgeDeltas[id] = { x: dx, y: dy };
+        shiftPersistedRouteEndpoints(routes, connectedRoutes, nudgeDeltas);
+      }
+      textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions, routes);
       pendingSelect = { id: id, kind: 'node' };
       renderDiagram();
       // Restore focus to the same hitbox after the re-render.
@@ -9425,7 +9511,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             return;
           }
         }
-        textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions);
+        var existingRoutes = readLayoutRoutes(textarea.value);
+        shiftPersistedRouteEndpoints(existingRoutes, allConnectedRoutes, movedDeltas);
+        textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions, existingRoutes);
         dragState.parts.forEach(function (part) {
           if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
             if (part.el.style) part.el.style.transform = part.styleTransform;
@@ -9447,6 +9535,22 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         renderDiagram();
       }
     }
+
+    // The storage_key include parameter lets pages (e.g. tutorials) namespace
+    // their drafts so they don't share autosaves with the global playground.
+    // Defined here, before the first loadAutosaved() call, so the closure has
+    // a real value and not a hoisted `undefined`.
+    var autosaveScope = String(EDITOR_CONFIG.storageKey || '').trim();
+    function autosaveKey(t) {
+      var type = t || typeSelect.value;
+      return autosaveScope
+        ? 'uml-pg-autosave-' + autosaveScope + '-' + type
+        : 'uml-pg-autosave-' + type;
+    }
+    // Expose so collaborators (tutorial-uml-editor.js) compute the same key.
+    window.UMLEditor = window.UMLEditor || {};
+    window.UMLEditor.autosaveKey = autosaveKey;
+    window.UMLEditor.storageScope = autosaveScope;
 
     // Load the configured starter text; persistent playground instances prefer
     // autosaved content so switching pages does not discard drafts.
@@ -9529,8 +9633,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       debounceTimer = setTimeout(renderDiagram, 250);
     }
 
-    // Switch diagram type — restore autosaved content for that type, or load
-    // the example if the user hadn't deviated from the previous type's example.
+    // Switch diagram type — restore autosaved content for that type, or fall
+    // back to the new type's starter. Never carry the previous type's source
+    // forward: keywords like `note as` are valid in multiple diagram types,
+    // so leftover lines silently re-render in the wrong context (e.g. a
+    // class-diagram note attaching itself to the next sequence participant).
     typeSelect.addEventListener('change', function () {
       var prev = currentType;
       currentType = typeSelect.value;
@@ -9542,7 +9649,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var saved = loadAutosaved(currentType);
       if (saved && saved.trim()) {
         textarea.value = saved;
-      } else if (matchesStarter(textarea.value, prev, layoutSelect.value)) {
+      } else {
         textarea.value = starterText(currentType, layoutSelect.value);
       }
       updateLayoutVisibility();
@@ -9612,7 +9719,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     // ─── Autosave ─────────────────────────────────────────────────────────
     // Persist the textarea per diagram-type, restore on load. We key by type
     // so each example has its own slot — switching types doesn't clobber.
-    function autosaveKey(t) { return 'uml-pg-autosave-' + (t || typeSelect.value); }
     var autosaveTimer = null;
     function scheduleAutosave() {
       if (!persistenceEnabled) return;
@@ -9984,6 +10090,67 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       URL.revokeObjectURL(url);
     }
 
+    var generatedPythonWorkspaceUrl = {{ '/uml-python-workspace.html' | relative_url | jsonify }};
+
+    function openGeneratedPythonWorkspace(python) {
+      var workspaceUrl = new URL(generatedPythonWorkspaceUrl, window.location.href);
+      workspaceUrl.searchParams.set('dark', document.documentElement.classList.contains('dark-mode') ? '1' : '0');
+
+      var workspaceWindow = null;
+      var delivered = false;
+      var attempts = 0;
+      var maxAttempts = 80;
+      var payload = {
+        type: 'archuml-generated-python',
+        filename: 'archuml_generated.py',
+        code: String(python || ''),
+        generatedAt: new Date().toISOString()
+      };
+
+      function removeListener() {
+        window.removeEventListener('message', onMessage);
+      }
+
+      function sendPayload() {
+        if (!workspaceWindow || workspaceWindow.closed || delivered) return;
+        workspaceWindow.postMessage(payload, window.location.origin);
+      }
+
+      function onMessage(event) {
+        if (event.origin !== window.location.origin || event.source !== workspaceWindow) return;
+        var data = event.data || {};
+        if (data.type === 'archuml-python-workspace-ready') {
+          sendPayload();
+        } else if (data.type === 'archuml-python-workspace-received') {
+          delivered = true;
+          removeListener();
+        } else if (data.type === 'archuml-python-workspace-error') {
+          delivered = true;
+          removeListener();
+          status.textContent = data.message || 'The generated Python workspace could not start.';
+        }
+      }
+
+      window.addEventListener('message', onMessage);
+      workspaceWindow = window.open(workspaceUrl.href, '_blank');
+      if (!workspaceWindow) {
+        removeListener();
+        throw new Error('Allow popups for this site to open the generated Python tutorial workspace.');
+      }
+
+      var retryTimer = window.setInterval(function () {
+        attempts += 1;
+        if (delivered || !workspaceWindow || workspaceWindow.closed || attempts >= maxAttempts) {
+          window.clearInterval(retryTimer);
+          if (!delivered) removeListener();
+          return;
+        }
+        sendPayload();
+      }, 250);
+
+      sendPayload();
+    }
+
     var PY_RESERVED_WORDS = {
       False: true, None: true, True: true, and: true, as: true, assert: true,
       async: true, await: true, break: true, class: true, continue: true,
@@ -10036,6 +10203,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         decimal: 'float',
         boolean: 'bool',
         bool: 'bool',
+        dict: 'dict',
+        dictionary: 'dict',
+        list: 'list',
+        set: 'set',
+        tuple: 'tuple',
         object: 'object',
         any: 'object',
         void: 'None',
@@ -10043,6 +10215,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       };
       if (mapped[lower]) return mapped[lower];
       var listMatch = raw.match(/^(?:List|list|Array|array|Sequence|sequence|Set|set)<(.+)>$/);
+      if (listMatch) return 'list[' + pythonType(listMatch[1]) + ']';
+      listMatch = raw.match(/^(?:List|list|Array|array|Sequence|sequence|Set|set)\[(.+)\]$/);
       if (listMatch) return 'list[' + pythonType(listMatch[1]) + ']';
       listMatch = raw.match(/^(.+)\[\]$/);
       if (listMatch) return 'list[' + pythonType(listMatch[1]) + ']';
@@ -10487,27 +10661,30 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         });
       }
 
-      function popFrameForResponse(message) {
+      function frameIndexForResponse(message) {
         for (var i = stack.length - 1; i >= 0; i--) {
           if (stack[i].participantId === message.from && (!message.to || stack[i].callerId === message.to || i === stack.length - 1)) {
-            return stack.splice(i, stack.length - i)[0];
+            return i;
           }
         }
-        return null;
+        return -1;
       }
 
       (sequenceModel.messages || []).forEach(function (message) {
         var frame = activeFrameForSender(message.from || message.target || '');
         if (message.type === 'message') {
           if (message.msgType === 'response' || message.isDashed) {
-            var returning = popFrameForResponse(message);
+            var responseFrameIndex = frameIndexForResponse(message);
+            var returning = responseFrameIndex >= 0 ? stack[responseFrameIndex] : null;
             if (returning) {
-              if (returning.callEntry && message.label) {
+              var responseInsideFragment = returning.fragments.length > 0;
+              if (returning.callEntry && message.label && !responseInsideFragment) {
                 var responseVar = sequenceResponseVariable(message.label);
                 if (responseVar) returning.callEntry.text = responseVar + ' = ' + returning.callEntry.text;
                 returning.callEntry.text += '  # response: ' + cleanPythonText(message.label);
               }
               addFrameLine(returning, 'return ' + sequenceResponseValue(message.label));
+              if (!responseInsideFragment) stack.splice(responseFrameIndex, stack.length - responseFrameIndex);
             } else {
               addFrameLine(frame, pythonComment('Response from ' + (message.from || '?') + ' to ' + (message.to || '?') + ': ' + (message.label || '')));
             }
@@ -10527,7 +10704,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               fromSequence: true,
               original: call.original || message.label || call.name + '()'
             });
-            if (!(senderFrame.participantId === receiver.id && senderFrame.methodName === method.name)) {
+            if (message.msgType !== 'async' && !(senderFrame.participantId === receiver.id && senderFrame.methodName === method.name)) {
               pushMethodFrame(receiver, method, message.from, entry);
             }
           }
@@ -10770,8 +10947,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       generatePythonBtn.addEventListener('click', function () {
         try {
           var python = generatePythonFromDiagrams();
-          downloadTextFile('archuml-generated.py', python, 'text/x-python');
-          status.textContent = 'Generated Python file.';
+          openGeneratedPythonWorkspace(python);
+          status.textContent = 'Opened generated Python tutorial workspace.';
           setTimeout(function () { status.textContent = ''; }, 2000);
         } catch (err) {
           status.textContent = err.message || String(err);

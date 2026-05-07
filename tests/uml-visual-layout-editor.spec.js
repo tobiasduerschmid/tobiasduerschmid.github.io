@@ -6,6 +6,14 @@ const { test, expect } = require('@playwright/test');
 const PLAYGROUND_URL = '/SEBook/tools/uml-playground';
 const UML_EDITOR_URL = '/SEBook/tools/uml-editor';
 
+// Tutorials namespace their UML drafts so the global UML playground autosave
+// can't bleed into them. Key shape matches the storage_key parameter that
+// _layouts/tutorial.html passes into the uml-editor include.
+const MONOPOLY_TUTORIAL_SLUG = 'monopoly-state-pattern-uml';
+function tutorialAutosaveKey(diagramType) {
+  return 'uml-pg-autosave-' + MONOPOLY_TUTORIAL_SLUG + '-' + diagramType;
+}
+
 const NODE_EDIT_TYPES = [
   'class',
   'sequence',
@@ -75,16 +83,22 @@ async function selectEditMode(page, mode) {
 async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_CLASS_ROLE_VARIATION_DIAGRAM) {
   await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
   await page.waitForSelector('#uml-pg-output');
-  await page.evaluate(({ index, source }) => {
-    localStorage.removeItem('uml-pg-autosave-state');
-    localStorage.removeItem('uml-pg-autosave-sequence');
-    localStorage.setItem('uml-pg-autosave-class', source);
+  await page.evaluate(({ index, source, classKey, stateKey, sequenceKey }) => {
+    localStorage.removeItem(stateKey);
+    localStorage.removeItem(sequenceKey);
+    localStorage.setItem(classKey, source);
     const textarea = document.getElementById('uml-pg-input');
     if (textarea) textarea.value = source;
     window._tutorial._stepsUnlocked.add(index);
     window._tutorial.loadStep(index);
-    localStorage.setItem('uml-pg-autosave-class', source);
-  }, { index: stepIndex, source: classSource });
+    localStorage.setItem(classKey, source);
+  }, {
+    index: stepIndex,
+    source: classSource,
+    classKey: tutorialAutosaveKey('class'),
+    stateKey: tutorialAutosaveKey('state'),
+    sequenceKey: tutorialAutosaveKey('sequence'),
+  });
 }
 
 async function setUmlSource(page, source) {
@@ -92,6 +106,16 @@ async function setUmlSource(page, source) {
     el.value = value;
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }, source);
+}
+
+async function openGeneratedPythonWorkspace(page) {
+  const popupPromise = page.waitForEvent('popup');
+  await page.locator('#uml-pg-generate-python').click();
+  const popup = await popupPromise;
+  await popup.waitForLoadState('domcontentloaded');
+  await popup.waitForFunction(() => Boolean(window.__archUmlGeneratedPythonCode), null, { timeout: 30000 });
+  const pythonText = await popup.evaluate(() => window.__archUmlGeneratedPythonCode);
+  return { popup, pythonText };
 }
 
 async function expectTutorHint(page, text) {
@@ -519,7 +543,6 @@ Dog --|> Animal
         route: extracted.layout.routes['edge-0'],
       };
     });
-
     expect(result.text).not.toContain('@layout');
     expect(result.text).not.toContain('@pos');
     expect(result.text).toContain('abstract class Animal {');
@@ -1012,13 +1035,26 @@ end
 deactivate app
 @enduml`);
 
-    const downloadPromise = page.waitForEvent('download');
-    await page.locator('#uml-pg-generate-python').click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe('archuml-generated.py');
-    const path = await download.path();
-    expect(path, 'download should produce a local Python file').not.toBeNull();
-    const pythonText = fs.readFileSync(path, 'utf8');
+    const { popup, pythonText } = await openGeneratedPythonWorkspace(page);
+
+    await popup.waitForFunction(() => {
+      return Boolean(window.__archUmlGeneratedPythonTutorial)
+        && window.__archUmlGeneratedPythonTutorial.config.backend === 'pyodide'
+        && window.__archUmlGeneratedPythonTutorial.debuggerEnabled === true;
+    }, null, { timeout: 30000 });
+    await expect(popup.locator('#generated-python-title')).toHaveText('Generated Python Tutorial');
+    await expect(popup.locator('.tvm-run-btn')).toBeVisible();
+    await expect(popup.locator('.tvm-output-panel')).toBeVisible();
+    await popup.waitForFunction(() => {
+      const tutorial = window.__archUmlGeneratedPythonTutorial;
+      const diagrams = tutorial && tutorial._umlLastDiagrams;
+      return Boolean(tutorial && tutorial._umlDiagramEnabled && tutorial._umlPositionRight
+        && diagrams && /class\s+Application/.test(diagrams.classDiagram || ''));
+    }, null, { timeout: 30000 });
+    await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toBeVisible();
+    await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toHaveClass(/active/);
+    await expect(popup.locator('.tvm-uml-right-view')).toBeVisible();
+    await expect(popup.locator('.tvm-diagram-content svg')).toBeVisible();
 
     expect(pythonText).toContain('class Application:');
     expect(pythonText).toContain('class Database:');
@@ -1028,6 +1064,90 @@ deactivate app
     expect(pythonText).toContain('elif _condition("invalid"):');
     expect(pythonText).toContain('return _response("token")');
     expect(pythonText).toContain('def run_sequence() -> None:');
+    await popup.close();
+  });
+
+  test('Python generation preserves sequence diagram constructs', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await setUmlSource(page, `@startuml
+class Controller { +service: Service; +worker: Worker; +orchestrate(): None; +audit(): str }
+class Service { +fetch(): str; +validate(): bool; +cleanup(): None }
+class Worker { +start(): None }
+Controller --> Service : service
+Controller --> Worker : worker
+@enduml`);
+
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant controller: Controller
+participant service: Service
+participant worker: Worker
+user -> controller: orchestrate()
+activate controller
+o-> controller: wake()
+note over controller
+  entry note
+end note
+controller -> controller: audit()
+controller --> controller: audited
+controller -> service: fetch()
+service --> controller: payload
+opt [has cache]
+  controller -> service: validate()
+  service --> controller: ok
+end
+loop [each item]
+  controller ->> worker: start()
+end
+par [primary]
+  controller -> service: validate()
+  service --> controller: primaryOk
+else [secondary]
+  controller -> service: validate()
+  service --> controller: secondaryOk
+end
+critical [single writer]
+  controller -> service: cleanup()
+  service --> controller: cleaned
+end
+ref [AuthHandshake]
+  controller -> service: validate()
+  service --> controller: authOk
+end
+neg [invalid state]
+  controller ->o: cannot deliver
+end
+break [fatal]
+  controller -> service: cleanup()
+  service --> controller: aborted
+end
+create worker
+destroy worker
+deactivate controller
+@enduml`);
+
+    const { popup, pythonText } = await openGeneratedPythonWorkspace(page);
+
+    expect(pythonText).toContain('# Found message to controller: wake()');
+    expect(pythonText).toContain('# Note: entry note');
+    expect(pythonText).toContain('audited = self.audit()  # response: audited');
+    expect(pythonText).toContain('payload = self.service.fetch()  # response: payload');
+    expect(pythonText).toContain('if _condition("has cache"):');
+    expect(pythonText).toContain('for _ in _loop("each item"):');
+    expect(pythonText).toContain('self.worker.start()  # async message');
+    expect(pythonText).toContain('with _parallel_branch("primary"):');
+    expect(pythonText).toContain('with _parallel_branch("secondary"):');
+    expect(pythonText).toContain('with _critical_section("single writer"):');
+    expect(pythonText).toContain('with _interaction_ref("AuthHandshake"):');
+    expect(pythonText).toContain('if _forbidden_trace("invalid state"):');
+    expect(pythonText).toContain('# Lost message from controller: cannot deliver');
+    expect(pythonText).toContain('if _condition("fatal"):');
+    expect(pythonText).toContain('worker = Worker()  # create lifeline');
+    expect(pythonText).toContain('# Destroy lifeline worker');
+    expect(pythonText).not.toContain('Unsupported sequence fragment');
+    await popup.close();
   });
 
   test('dark mode styles apply from the document element class', async ({ page }) => {
@@ -1170,6 +1290,84 @@ deactivate app
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="svc"]')).toHaveCount(1);
   });
 
+  test('sequence plus handle creates editable participants with valid default labels', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User @pos(260, 0)
+participant app: Application @pos(460, 0)
+user -> app: login()
+@enduml`);
+
+    const handle = page.getByRole('button', { name: /Extend a relation from app: Application/ });
+    await expect(handle).toBeVisible();
+    await handle.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const start = await handle.boundingBox();
+    const target = await page.locator('#uml-pg-output svg').evaluate((svg) => {
+      const svgRect = svg.getBoundingClientRect();
+      const previewRect = document.querySelector('#uml-pg-preview-pane')?.getBoundingClientRect() || svgRect;
+      const visible = {
+        left: Math.max(svgRect.left, previewRect.left, 0) + 24,
+        top: Math.max(svgRect.top, previewRect.top, 0) + 24,
+        right: Math.min(svgRect.right, previewRect.right, window.innerWidth) - 24,
+        bottom: Math.min(svgRect.bottom, previewRect.bottom, window.innerHeight) - 24,
+      };
+      const appRect = document.querySelector('.uml-pg-edit-hitbox[data-layout-id="app"]')?.getBoundingClientRect();
+      const blocked = Array.from(document.querySelectorAll('.uml-pg-edit-hitbox, .uml-pg-edit-a11y-target, .uml-pg-edge-hitbox'))
+        .map((el) => el.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      const clamp = (pt) => ({
+        x: Math.min(Math.max(pt.x, visible.left), visible.right),
+        y: Math.min(Math.max(pt.y, visible.top), visible.bottom),
+      });
+      const candidates = appRect ? [
+        { x: appRect.right + 180, y: appRect.top + appRect.height / 2 },
+        { x: appRect.right + 180, y: appRect.bottom + 120 },
+        { x: appRect.left + appRect.width / 2, y: appRect.bottom + 180 },
+        { x: visible.right, y: visible.top },
+        { x: visible.right, y: visible.bottom },
+      ].map(clamp) : [
+        { x: visible.right, y: visible.top },
+        { x: visible.right, y: visible.bottom },
+        { x: visible.left, y: visible.bottom },
+      ];
+      return candidates.find((pt) =>
+        pt.x >= visible.left && pt.x <= visible.right &&
+        pt.y >= visible.top && pt.y <= visible.bottom &&
+        !blocked.some((rect) =>
+          pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom
+        )) || { x: visible.right, y: visible.top };
+    });
+    if (!start) throw new Error('extend handle should have a box');
+    await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+    await page.mouse.down();
+    await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
+    await page.mouse.move(target.x, target.y, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(page.getByRole('menu', { name: 'Pick an element type to create' })).toBeVisible();
+    await page.getByRole('menuitem', { name: /Participant/ }).click();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/participant p: Participant/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/participant p: p\b/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="p"]')).toHaveCount(1);
+
+    await page.keyboard.press('Escape');
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="p"]').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('worker: Worker');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/participant worker: Worker/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="worker"]')).toHaveCount(1);
+  });
+
   test('sequence palette can add target markers and single-ended messages', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
@@ -1270,29 +1468,33 @@ app --> user: response()
   test('sequence call tools can be dragged between lifelines and onto themselves', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
+    await page.locator('#uml-pg-editor-pane').evaluate((el) => {
+      el.style.flex = '0 0 180px';
+    });
     await setUmlSource(page, `@startuml
-actor user: User
-participant app: Application
-participant db: Database
+actor user: User @pos(300, 0)
+participant app: Application @pos(500, 0)
+participant db: Database @pos(700, 0)
 user -> app: first()
 app --> user: second()
 @enduml`);
     await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]')).toHaveCount(1);
 
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]').click();
-    const betweenMessages = await page.evaluate(() => {
-      const svg = document.querySelector('#uml-pg-output svg');
-      const boxFor = (selector) => svg.querySelector(selector).getBoundingClientRect();
-      const user = boxFor('.uml-pg-edit-hitbox[data-layout-id="user"]');
-      const db = boxFor('.uml-pg-edit-hitbox[data-layout-id="db"]');
-      const first = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]');
-      const second = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]');
-      return {
-        sourceX: user.left + user.width / 2,
-        targetX: db.left + db.width / 2,
-        y: (first.top + first.height / 2 + second.top + second.height / 2) / 2,
-      };
-    });
+    await expect(page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#uml-pg-output svg').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const userBox = await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').boundingBox();
+    const appBox = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
+    const firstRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]').boundingBox();
+    const secondRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]').boundingBox();
+    if (!userBox || !appBox || !firstRouteBox || !secondRouteBox) {
+      throw new Error('sequence lifeline and message handles should have boxes');
+    }
+    const betweenMessages = {
+      sourceX: userBox.x + userBox.width / 2,
+      targetX: appBox.x + appBox.width / 2,
+      y: (firstRouteBox.y + firstRouteBox.height / 2 + secondRouteBox.y + secondRouteBox.height / 2) / 2,
+    };
     await page.mouse.move(betweenMessages.sourceX, betweenMessages.y);
     await page.mouse.down();
     await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
@@ -1300,20 +1502,18 @@ app --> user: second()
     await page.mouse.up();
 
     let source = await page.locator('#uml-pg-input').inputValue();
-    expect(source).toContain('user -> db : message()');
-    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('user -> db : message()'));
-    expect(source.indexOf('user -> db : message()')).toBeLessThan(source.indexOf('app --> user: second()'));
+    expect(source).toContain('user -> app : message()');
+    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('user -> app : message()'));
+    expect(source.indexOf('user -> app : message()')).toBeLessThan(source.indexOf('app --> user: second()'));
 
-    const selfDrop = await page.evaluate(() => {
-      const svg = document.querySelector('#uml-pg-output svg');
-      const app = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="app"]').getBoundingClientRect();
-      const last = svg.querySelector('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]').getBoundingClientRect();
-      return {
-        x: app.left + app.width / 2,
-        startY: last.top + last.height / 2 + 28,
-        endY: last.top + last.height / 2 + 68,
-      };
-    });
+    const selfAppBox = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
+    const lastRouteBox = await page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]').boundingBox();
+    if (!selfAppBox || !lastRouteBox) throw new Error('sequence self-message handles should have boxes');
+    const selfDrop = {
+      x: selfAppBox.x + selfAppBox.width / 2,
+      startY: lastRouteBox.y + lastRouteBox.height / 2 + 28,
+      endY: lastRouteBox.y + lastRouteBox.height / 2 + 68,
+    };
     await page.mouse.move(selfDrop.x, selfDrop.startY);
     await page.mouse.down();
     await page.mouse.move(selfDrop.x, selfDrop.endY, { steps: 8 });
@@ -1868,6 +2068,36 @@ Customer -- Order : places
     await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('nonnav');
   });
 
+  test('class relation properties resolve the selected relation after hierarchy routes', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player
+abstract class PlayerState
+class NormalTurnState
+NormalTurnState --|> PlayerState
+Player -- PlayerState : current
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForSelector('.uml-pg-edge-hitbox[data-layout-id="rel:5"]', { state: 'attached' });
+
+    await page.locator('.uml-pg-edge-hitbox[data-layout-id="rel:5"]').first().evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('plain');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Source multiplicity / cardinality')).toBeVisible();
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Target multiplicity / cardinality')).toBeVisible();
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toBeVisible();
+
+    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('navigable');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Player --> PlayerState : current/);
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('assoc');
+  });
+
   test('selected aggregation relations keep type while changing navigability', async ({ page }) => {
     await page.goto(UML_EDITOR_URL);
     await page.waitForSelector('#uml-pg-edit');
@@ -2132,6 +2362,205 @@ A --> B : go
     expect(alignment.y1Delta).toBeLessThan(0.5);
     expect(alignment.x2Delta).toBeLessThan(0.5);
     expect(alignment.y2Delta).toBeLessThan(0.5);
+  });
+
+  test('dragging a class re-attaches a persisted association route to its new edge', async ({ page }) => {
+    // Regression: previously, when a node was moved and a connected route had
+    // been dragged earlier (so it had explicit `points=` overrides), the
+    // saved overrides kept the old endpoint coordinates. After re-render,
+    // applyLayoutRoutes overrode the freshly-computed endpoints with the
+    // stale points, leaving the association detached from the moved class.
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.uncheck('#uml-pg-snap');
+    await selectEditMode(page, 'nodes');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Foo @pos(100, 100)
+class Bar @pos(400, 250)
+Foo --> Bar
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
+
+    // Build a route override whose endpoints actually touch each class so
+    // proximity-based detection picks them up as connected to Foo / Bar.
+    const setup = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const fooBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
+      const barBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
+      const fx = Number(fooBox.getAttribute('x'));
+      const fy = Number(fooBox.getAttribute('y'));
+      const fw = Number(fooBox.getAttribute('width'));
+      const fh = Number(fooBox.getAttribute('height'));
+      const bx = Number(barBox.getAttribute('x'));
+      const by = Number(barBox.getAttribute('y'));
+      const bh = Number(barBox.getAttribute('height'));
+      return {
+        fooRightEdge: { x: fx + fw, y: fy + fh / 2 },
+        barLeftEdge: { x: bx, y: by + bh / 2 },
+      };
+    });
+
+    const startPoints = [
+      `${setup.fooRightEdge.x},${setup.fooRightEdge.y}`,
+      `${setup.fooRightEdge.x + 60},${setup.fooRightEdge.y}`,
+      `${setup.fooRightEdge.x + 60},${setup.barLeftEdge.y}`,
+      `${setup.barLeftEdge.x},${setup.barLeftEdge.y}`,
+    ].join(' ');
+
+    await page.locator('#uml-pg-input').evaluate((el, points) => {
+      el.value = `@layout schema=1 renderer="archuml-visual-editor"
+edge "edge-0" points="${points}"
+@endlayout
+@startuml
+class Foo @pos(100, 100)
+class Bar @pos(400, 250)
+Foo --> Bar
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, startPoints);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      if (!svg) return false;
+      const routes = window.UMLShared.collectEditableRoutes(svg);
+      return routes.some((r) => r.id === 'edge-0');
+    });
+
+    // Drag Foo. After mouse.up, the source is rewritten and the diagram
+    // re-renders; the assertion runs against the post-render state.
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Foo"]'), 80, 35);
+
+    const after = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const fooBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
+      const barBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
+      const routes = window.UMLShared.collectEditableRoutes(svg);
+      const route = routes.find((r) => r.id === 'edge-0');
+      if (!fooBox || !barBox || !route) return null;
+      const f = {
+        x: Number(fooBox.getAttribute('x')),
+        y: Number(fooBox.getAttribute('y')),
+        w: Number(fooBox.getAttribute('width')),
+        h: Number(fooBox.getAttribute('height')),
+      };
+      const b = {
+        x: Number(barBox.getAttribute('x')),
+        y: Number(barBox.getAttribute('y')),
+        w: Number(barBox.getAttribute('width')),
+        h: Number(barBox.getAttribute('height')),
+      };
+      const first = route.points[0];
+      const last = route.points[route.points.length - 1];
+      const pad = 4;
+      const inFoo = (p) => p.x >= f.x - pad && p.x <= f.x + f.w + pad && p.y >= f.y - pad && p.y <= f.y + f.h + pad;
+      const inBar = (p) => p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad;
+      return {
+        firstTouchesFoo: inFoo(first),
+        lastTouchesBar: inBar(last),
+        first,
+        last,
+        foo: f,
+        bar: b,
+      };
+    });
+
+    expect(after, 'route + boxes should still be present after drag').not.toBeNull();
+    const debug = JSON.stringify(after);
+    expect(after.firstTouchesFoo, `firstTouchesFoo failed; ${debug}`).toBe(true);
+    expect(after.lastTouchesBar, `lastTouchesBar failed; ${debug}`).toBe(true);
+
+    // The persisted source should reflect the shifted endpoint.
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toMatch(/edge "edge-0" points="/);
+  });
+
+  test('dragging a sequence lifeline re-attaches a persisted message route', async ({ page }) => {
+    // Regression for the same bug applied to sequence diagrams: when a
+    // lifeline is moved horizontally and a previously-dragged message has
+    // a saved seqmsg route override, the persisted endpoints have to
+    // shift with the lifeline so the message line stays attached.
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await page.uncheck('#uml-pg-snap');
+    await selectEditMode(page, 'nodes');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+participant Alice
+participant Bob
+Alice -> Bob : hello
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Alice"]');
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Bob"]');
+
+    // Capture the message route's current rendered endpoints, then write
+    // them back as a persisted override. The override is identical to the
+    // current rendering, so without the bug fix it would be invisible —
+    // until a lifeline moves, at which point the stale override leaks.
+    const initial = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const routes = window.UMLShared.collectEditableRoutes(svg);
+      const msg = routes.find((r) => /^seqmsg:/.test(r.id || ''));
+      return msg ? { id: msg.id, points: msg.points.map((p) => ({ x: p.x, y: p.y })) } : null;
+    });
+    expect(initial, 'sequence message route should exist').not.toBeNull();
+
+    const msgPoints = initial.points.map((p) => `${p.x},${p.y}`).join(' ');
+    await page.locator('#uml-pg-input').evaluate((el, args) => {
+      el.value = `@layout schema=1 renderer="archuml-visual-editor"
+edge "${args.id}" points="${args.pts}"
+@endlayout
+@startuml
+participant Alice
+participant Bob
+Alice -> Bob : hello
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, { id: initial.id, pts: msgPoints });
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return svg && window.UMLShared.collectEditableRoutes(svg).some((r) => /^seqmsg:/.test(r.id || ''));
+    });
+
+    // Drag Alice (a lifeline — axis 'x', horizontal-only) by ~40 px right.
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Alice"]'), 40, 0);
+
+    const after = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const aliceBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Alice"]');
+      const bobBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bob"]');
+      const routes = window.UMLShared.collectEditableRoutes(svg);
+      const msg = routes.find((r) => /^seqmsg:/.test(r.id || ''));
+      if (!aliceBox || !bobBox || !msg) return null;
+      const aCx = Number(aliceBox.getAttribute('x')) + Number(aliceBox.getAttribute('width')) / 2;
+      const bCx = Number(bobBox.getAttribute('x')) + Number(bobBox.getAttribute('width')) / 2;
+      return {
+        aliceCenterX: aCx,
+        bobCenterX: bCx,
+        msgFirst: msg.points[0],
+        msgLast: msg.points[msg.points.length - 1],
+      };
+    });
+
+    expect(after, 'message and lifelines should be inspectable after drag').not.toBeNull();
+    // The message starts at Alice's lifeline center and ends at Bob's.
+    // (Either endpoint may be source — both arrangements are valid since the
+    // SVG line direction is determined by left-vs-right placement.)
+    const ax = after.aliceCenterX;
+    const bx = after.bobCenterX;
+    const fx = after.msgFirst.x;
+    const lx = after.msgLast.x;
+    const tol = 1.5;
+    const onAlice = (px) => Math.abs(px - ax) <= tol;
+    const onBob = (px) => Math.abs(px - bx) <= tol;
+    expect(
+      (onAlice(fx) && onBob(lx)) || (onAlice(lx) && onBob(fx)),
+      `message endpoints (${fx}, ${lx}) should sit on lifeline centers (${ax}, ${bx})`,
+    ).toBe(true);
   });
 
   test('reset selected returns a node to its auto-layout position while neighbors stay fixed', async ({ page }) => {
@@ -2422,11 +2851,14 @@ A --> B : go
   });
 
   test('UML tutorial removes all model elements after confirmation', async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.removeItem('uml-pg-autosave-class');
-      localStorage.removeItem('uml-pg-autosave-state');
-      localStorage.removeItem('uml-pg-autosave-sequence');
-    });
+    const classKey = tutorialAutosaveKey('class');
+    const stateKey = tutorialAutosaveKey('state');
+    const sequenceKey = tutorialAutosaveKey('sequence');
+    await page.addInitScript(({ classKey, stateKey, sequenceKey }) => {
+      localStorage.removeItem(classKey);
+      localStorage.removeItem(stateKey);
+      localStorage.removeItem(sequenceKey);
+    }, { classKey, stateKey, sequenceKey });
     await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
     await page.waitForSelector('#uml-pg-output');
 
@@ -2453,7 +2885,7 @@ Player --> NormalTurnState
     await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
     await expect(page.locator('.tvm-test-panel')).toHaveCount(0);
     await expect.poll(async () => {
-      return page.evaluate(() => localStorage.getItem('uml-pg-autosave-class'));
+      return page.evaluate((key) => localStorage.getItem(key), classKey);
     }).toBe('@startuml\n@enduml');
   });
 
@@ -2475,11 +2907,11 @@ PrisonState --> NormalMode : fee paid
 NormalMode --> BankruptcyMode : cash gone
 @enduml`;
     await setUmlSource(page, stateSource);
-    await page.evaluate((source) => {
-      localStorage.setItem('uml-pg-autosave-state', source);
+    await page.evaluate(({ source, key }) => {
+      localStorage.setItem(key, source);
       window._tutorial._stepsUnlocked.add(2);
       window._tutorial.loadStep(2);
-    }, stateSource);
+    }, { source: stateSource, key: tutorialAutosaveKey('state') });
 
     const statePreview = page.locator('.tvm-previous-diagram-card[data-uml-preview-type="state"]');
     await expect(page.locator('.tvm-previous-diagram-card')).toHaveCount(2);
@@ -2788,6 +3220,26 @@ player -> prison_state: do_turn(player)
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 3 tests passed');
+  });
+
+  test('UML tutorial sequence diagram ignores return labels when checking class operations', async ({ page }) => {
+    await openMonopolyTutorialStep(page, 2);
+
+    await setUmlSource(page, `@startuml
+participant player: Player
+participant normal_state: NormalMode
+participant prison_state: PrisonState
+player -> normal_state: do_turn(player)
+normal_state --> player: response
+normal_state -> player: change_state(prison_state)
+player --> normal_state: response
+player -> prison_state: do_turn(player)
+prison_state --> player: response
+@enduml`);
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 3 tests passed');
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toHaveCount(0);
   });
 
   test('UML tutorial sequence diagram rejects only one concrete state object', async ({ page }) => {

@@ -83,14 +83,9 @@ These are traps this renderer does **not** forgive. Hit one and the diagram ship
 
 Every rendered diagram is wrapped in a `<figure>`. The describer walks the `@startuml` source and emits a verbal structural description that gets set as the `aria-label` on the `role="img"` SVG container — e.g. *"UML class diagram with 6 classes (Customer, VIP, Guest, Order, LineItem, Product) and 1 interface (Billable). VIP extends Customer. Order implements Billable. Customer is associated with Order with multiplicity one to many. Order composes LineItem with multiplicity one to one or more."* That auto-generated text is the WCAG 2.2 §1.1.1 (Non-text Content) text alternative — authors do **not** need to write a description that retells what's on the diagram.
 
-**Single source of truth: [`js/uml-auto-describe.js`](../../../js/uml-auto-describe.js).** Two consumers share it:
+**Single source: [`js/uml-auto-describe.js`](../../../js/uml-auto-describe.js).** Loaded by every page that ships diagrams (SEBook, tutorials, popouts, SE Gym), it monkey-patches `UMLShared.applySvgAccessibility` so the `aria-label` and the screen-reader-only verbose description are set right after the bundle renders the SVG client-side.
 
-- **Live client-rendered diagrams** (tutorials, popouts, SE Gym, dev-mode SEBook pages) load the file directly and let it monkey-patch `UMLShared.applySvgAccessibility`.
-- **Static production builds** (`_plugins/uml_static.rb`) shell out to [`js/uml-describe-cli.js`](../../../js/uml-describe-cli.js), a tiny Node CLI that loads the same file and processes a JSON batch. The plugin already shells out to Node for SVG rendering, so adding a second batched call costs one extra `node` invocation per page that has diagrams.
-
-Edit `uml-auto-describe.js` and both build paths pick the change up — there's no Ruby parser to keep in sync.
-
-The visible `<figcaption>` is therefore reserved for *context the diagram itself doesn't carry* — pedagogical framing, the takeaway you want the reader to land on, why this design was chosen, references to related concepts. If you can't add a caption that does something the SVG and surrounding prose don't already do, leave it off (the plugin renders no figcaption at all when none is supplied).
+The visible `<figcaption>` is therefore reserved for *context the diagram itself doesn't carry* — pedagogical framing, the takeaway you want the reader to land on, why this design was chosen, references to related concepts. If you can't add a caption that does something the SVG and surrounding prose don't already do, leave it off (no figcaption is rendered when none is supplied).
 
 Set an author caption with `data-uml-caption="…"` on the wrapper `<div>`, or with a leading `caption: …` line in the `@startuml` spec — the attribute wins when both are present:
 

@@ -104,7 +104,13 @@ function allTargetUrls() {
   // can land on directly: the storage inventory at /cookies/, the keyboard
   // shortcut reference at /shortcuts/, the abbreviation glossary at /glossary/,
   // and the user preferences page at /settings/. Each is reachable from the footer.
-  const INFO_PAGE_URLS = new Set(['/cookies/', '/shortcuts/', '/glossary/', '/settings/']);
+  const INFO_PAGE_URLS = new Set([
+    '/cookies/',
+    '/shortcuts/',
+    '/glossary/',
+    '/settings/',
+    '/uml-python-workspace.html',
+  ]);
   const groups = {
     home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
     errorPages: urls.filter((url) => url === '/404.html'),

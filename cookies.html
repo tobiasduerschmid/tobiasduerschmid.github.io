@@ -651,9 +651,24 @@ info_nav_title: "Browser storage"
       </tr>
     </tbody>
   </table>
+  <table class="storage-table" data-category="uml-playground-dynamic" id="uml-dynamic-table">
+    <thead>
+      <tr>
+        <th class="col-key">Key (with prefix)</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody id="uml-dynamic-body">
+      <tr class="empty-row"><td colspan="4">Scanning your browser&hellip;</td></tr>
+    </tbody>
+  </table>
   <p class="cookies-prefix-note">
     <em>Prefixes:</em>
-    <code>uml-pg-autosave-&lt;diagramType&gt;</code> &mdash; autosaved ArchUML draft for each diagram type (one row per type you&rsquo;ve edited &mdash; class, sequence, state, component, deployment, usecase, activity, er, venn, gitgraph &mdash; created lazily as you switch types).
+    <code>uml-pg-autosave-&lt;diagramType&gt;</code> &mdash; autosaved ArchUML draft for each diagram type in the global UML Playground (one row per type you&rsquo;ve edited &mdash; class, sequence, state, component, deployment, usecase, activity, er, venn, gitgraph &mdash; created lazily as you switch types).
+    <br>
+    <code>uml-pg-autosave-&lt;tutorialId&gt;-&lt;diagramType&gt;</code> &mdash; autosaved ArchUML draft scoped to a specific UML tutorial, so each tutorial keeps its own drafts separate from the playground and from other tutorials.
   </p>
   <button class="cookies-btn danger" data-clear-category="uml-playground" data-clear-prefixes="uml-pg-autosave-" type="button">
     <i class="fa fa-trash" aria-hidden="true"></i> Reset UML Playground state &amp; drafts
@@ -665,7 +680,10 @@ info_nav_title: "Browser storage"
     <li>
       <strong><code>sessionStorage</code></strong> &mdash; not used persistently. A single one-time migration step
       reads and clears a legacy <code>prefersReducedMotion</code> entry to promote it into
-      <code>localStorage</code>; nothing else is written to <code>sessionStorage</code>.
+      <code>localStorage</code>. The generated Python workspace may briefly store
+      <code>archuml-generated-python-payload</code> in the popup tab so the code survives
+      the one-time cross-origin-isolation reload needed by the Python debugger; the
+      entry is removed as soon as the workspace starts.
     </li>
     <li>
       <strong><code>IndexedDB</code></strong> &mdash; v86 tutorials may store compressed VM
@@ -687,7 +705,8 @@ info_nav_title: "Browser storage"
     </li>
     <li>
       <strong>Service worker</strong> &mdash; tutorials that need cross-origin isolation
-      (e.g. WebContainers-backed exercises) and tutorials using the in-browser Linux VM
+      (for example, WebContainers-backed exercises, Python debugger workspaces, and
+      generated Python tutorial workspaces) and tutorials using the in-browser Linux VM
       register
       <a href="{{ '/coi-serviceworker.js' | relative_url }}"><code>coi-serviceworker.js</code></a>.
       It (a) injects <code>COOP</code> / <code>COEP</code> response headers so
@@ -697,8 +716,9 @@ info_nav_title: "Browser storage"
     </li>
     <li>
       <strong><code>BroadcastChannel</code></strong> &mdash; used as in-memory messaging between
-      the main tutorial window and detached editor / instructions / debugger / output / UML
-      pop-out windows (channel names <code>ttsync-&lt;path&gt;</code>, <code>uml-sync-&lt;path&gt;</code>).
+      the main tutorial window or generated Python workspace and detached editor /
+      instructions / debugger / output / UML pop-out windows (channel names
+      <code>ttsync-&lt;path&gt;</code>, <code>uml-sync-&lt;path&gt;</code>).
       Messages live only while at least one of the windows is open and are not written to disk.
       The browser-based Linux VM (v86) also uses a <code>v86-inbrowser-&lt;n&gt;</code> channel for
       its virtual networking; same lifetime, no persistence.
@@ -836,6 +856,9 @@ info_nav_title: "Browser storage"
   var TOOL_PREFIXES = [
     { prefix: 'spec-card-', label: 'Spec Card draft (e2e test design tool)' }
   ];
+  var UML_PREFIXES = [
+    { prefix: 'uml-pg-autosave-', label: 'Autosaved ArchUML draft from the UML Playground or a scoped UML tutorial' }
+  ];
 
   function describeKeyAgainst(key, prefixList) {
     for (var i = 0; i < prefixList.length; i++) {
@@ -851,6 +874,9 @@ info_nav_title: "Browser storage"
   }
   function describeToolKey(key) {
     return describeKeyAgainst(key, TOOL_PREFIXES);
+  }
+  function describeUmlKey(key) {
+    return describeKeyAgainst(key, UML_PREFIXES);
   }
 
   function renderPrefixedTable(bodyId, describeFn, emptyMessage) {
@@ -898,6 +924,10 @@ info_nav_title: "Browser storage"
     renderPrefixedTable('tool-dynamic-body', describeToolKey,
       'No standalone-tool data stored in your browser.');
   }
+  function renderDynamicUmlKeys() {
+    renderPrefixedTable('uml-dynamic-body', describeUmlKey,
+      'No UML diagram drafts stored in your browser.');
+  }
 
   // -------- Render everything --------
   function renderAll() {
@@ -905,6 +935,7 @@ info_nav_title: "Browser storage"
     for (var i = 0; i < rows.length; i++) renderRow(rows[i]);
     renderDynamicTutorialKeys();
     renderDynamicToolKeys();
+    renderDynamicUmlKeys();
   }
 
   // -------- Bulk delete --------

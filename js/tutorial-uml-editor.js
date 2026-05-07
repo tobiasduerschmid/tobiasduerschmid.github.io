@@ -376,7 +376,6 @@
   UMLTutorialEditor.prototype.resetCurrentDiagram = function () {
     var step = this.steps[this.currentStep] || {};
     var type = step.uml_type || (this.typeEl && this.typeEl.value) || 'class';
-    try { localStorage.removeItem('uml-pg-' + type); } catch (e) {}
     if (this.typeEl) {
       this.typeEl.value = type;
       this.typeEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -401,8 +400,7 @@
       this.sourceEl.value = source;
       this.sourceEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    try { localStorage.removeItem('uml-pg-' + type); } catch (e) {}
-    try { localStorage.setItem('uml-pg-autosave-' + type, source); } catch (e) {}
+    try { localStorage.setItem(autosaveKeyForType(type), source); } catch (e) {}
     this._stepsPassed.delete(this.currentStep);
     this.clearResults();
   };
@@ -488,7 +486,7 @@
     type = type || (this.typeEl && this.typeEl.value) || 'class';
     if (this.typeEl && this.typeEl.value === type) return this.currentSource();
     try {
-      return localStorage.getItem('uml-pg-autosave-' + type) || '';
+      return localStorage.getItem(autosaveKeyForType(type)) || '';
     } catch (e) {
       return '';
     }
@@ -683,6 +681,13 @@
 
   function emptySource() {
     return '@startuml\n@enduml';
+  }
+
+  function autosaveKeyForType(type) {
+    if (window.UMLEditor && typeof window.UMLEditor.autosaveKey === 'function') {
+      return window.UMLEditor.autosaveKey(type);
+    }
+    return 'uml-pg-autosave-' + type;
   }
 
   function renderStaticUmlPreview(container, type, source) {
@@ -940,6 +945,7 @@
     var participants = sequenceParticipants(model);
     var failures = [];
     model.relations.forEach(function (rel) {
+      if (isSequenceReturnRelation(rel)) return;
       var methodName = methodNameFromLabel(rel.label);
       if (!methodName) return;
       var receiver = participantForEndpoint(participants, rel.to);
@@ -954,6 +960,11 @@
     return failures.length
       ? failResult('Expected sequence calls to exist in the class diagram: ' + failures.join(', ') + '.', assertionNamingHint(assertion))
       : { pass: true };
+  }
+
+  function isSequenceReturnRelation(rel) {
+    var op = String(rel && rel.op || '').trim();
+    return op === '-->' || op === '<--';
   }
 
   function assertClassConsistency(model, assertion) {
