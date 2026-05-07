@@ -57,7 +57,7 @@ interface PlayerState { +do_turn(player: Player); }
 class NormalMode { +do_turn(player: Player); }
 class PrisonState { +do_turn(player: Player); }
 class BankruptcyMode { +do_turn(player: Player); }
-PlayerState --o Player : currentState
+PlayerState "1" --o Player : currentState
 PlayerState <|.. NormalMode
 PlayerState <|.. PrisonState
 PlayerState <|.. BankruptcyMode
@@ -1736,6 +1736,105 @@ app -> db: second()
     await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> New/);
   });
 
+  test('state initial transitions can be rewired to existing states from properties', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await page.locator('#uml-pg-input').fill('@startuml\nstate Idle\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]')).toHaveCount(1);
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="initial"]').click();
+    if (!(await page.locator('#uml-pg-input').inputValue()).includes('[*] -->')) {
+      await page.locator('#uml-pg-output svg').click({ position: { x: 20, y: 20 } });
+    }
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> New/);
+    await expect(page.locator('#uml-pg-props-title')).toContainText('Relation');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Source endpoint')).toContainText('Initial / final pseudostate');
+    await page.locator('#uml-pg-props-content').getByLabel('Target endpoint').selectOption('Idle');
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> Idle/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/\[\*\] --> New/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]')).toHaveCount(1);
+  });
+
+  test('state pseudostates are editable and transition handles align with rendered routes', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await page.locator('#uml-pg-input').fill(`@startuml
+[*] --> Idle : start
+Idle --> BankruptState : bankrupt
+@enduml`);
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    const initial = page.locator('.uml-pg-edit-hitbox[data-layout-id="__initial__0"]');
+    await expect(initial).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="edge-0"]')).toHaveCount(1);
+
+    const alignment = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      if (!svg) return { compared: 0, maxDelta: Infinity };
+
+      function routePoints(el) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'polyline') {
+          return String(el.getAttribute('points') || '').trim().split(/\s+/).map((part) => {
+            const [x, y] = part.split(',').map(Number);
+            return { x, y };
+          }).filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+        }
+        if (tag === 'line') {
+          return [
+            { x: Number(el.getAttribute('x1')), y: Number(el.getAttribute('y1')) },
+            { x: Number(el.getAttribute('x2')), y: Number(el.getAttribute('y2')) },
+          ];
+        }
+        return [];
+      }
+
+      function toSvgPoint(el, point) {
+        const svgCtm = svg.getScreenCTM();
+        const elCtm = el.getScreenCTM();
+        if (!svgCtm || !elCtm) return point;
+        const matrix = svgCtm.inverse().multiply(elCtm);
+        const pt = svg.createSVGPoint();
+        pt.x = point.x;
+        pt.y = point.y;
+        const next = pt.matrixTransform(matrix);
+        return { x: next.x, y: next.y };
+      }
+
+      let compared = 0;
+      let maxDelta = 0;
+      for (const handle of Array.from(svg.querySelectorAll('.uml-pg-edge-hitbox'))) {
+        const routeId = handle.getAttribute('data-route-id');
+        const segmentIndex = Number(handle.getAttribute('data-segment-index'));
+        const route = svg.querySelector('[data-layout-route-id="' + routeId + '"]');
+        if (!route || !Number.isFinite(segmentIndex)) continue;
+        const points = routePoints(route).map((point) => toSvgPoint(route, point));
+        if (!points[segmentIndex] || !points[segmentIndex + 1]) continue;
+        const handlePoints = [
+          { x: Number(handle.getAttribute('x1')), y: Number(handle.getAttribute('y1')) },
+          { x: Number(handle.getAttribute('x2')), y: Number(handle.getAttribute('y2')) },
+        ];
+        const deltas = [
+          Math.abs(handlePoints[0].x - points[segmentIndex].x),
+          Math.abs(handlePoints[0].y - points[segmentIndex].y),
+          Math.abs(handlePoints[1].x - points[segmentIndex + 1].x),
+          Math.abs(handlePoints[1].y - points[segmentIndex + 1].y),
+        ];
+        maxDelta = Math.max(maxDelta, ...deltas);
+        compared += 1;
+      }
+      return { compared, maxDelta };
+    });
+    expect(alignment.compared).toBeGreaterThan(0);
+    expect(alignment.maxDelta).toBeLessThan(1.5);
+
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-a11y-target[data-layout-id="__initial__0"]'), 40, 20);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "__initial__0" x=/);
+  });
+
   test('state transition labels edit in place as transitions', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'state');
@@ -1754,6 +1853,33 @@ app -> db: second()
     await page.locator('.uml-pg-inline-input').fill('newEvent');
     await page.locator('.uml-pg-inline-input').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/A --> B : newEvent/);
+  });
+
+  test('state names linked from the initial pseudostate can be renamed in place', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await page.locator('#uml-pg-input').fill('@startuml\n[*] --> Idle : start\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('Ready');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> Ready : start/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Ready"]')).toHaveCount(1);
+
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Ready"]').click();
+    await page.locator('#uml-pg-props-content').getByLabel('Identifier').fill('Running');
+    await page.locator('#uml-pg-props-content').getByLabel('Identifier').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> Running : start/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Running"]')).toHaveCount(1);
   });
 
   test('class diagram element overlays align with rendered boxes', async ({ page }) => {
@@ -3017,7 +3143,7 @@ abstract class PlayerState { + {abstract} takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState { +takeTurn(player: Player); }
 class BankruptState { +takeTurn(player: Player); }
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3041,10 +3167,34 @@ interface PlayerState { +do_turn(player: Player); }
 class normalBehavior { +do_turn(player: Player); }
 class PrisonState { +do_turn(player: Player); }
 class BankruptcyMode { +do_turn(player: Player); }
-PlayerState --o Player : currentState
+PlayerState "1" --o Player : currentState
 PlayerState <|.. normalBehavior
 PlayerState <|.. PrisonState
 PlayerState <|.. BankruptcyMode
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 5 tests passed');
+    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
+  });
+
+  test('UML tutorial accepts visual-editor aggregation spelling for the current state relation', async ({ page }) => {
+    await page.goto(MONOPOLY_TUTORIAL_URL);
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +doTurn(); +changeState(state: Playerstate); }
+abstract class Playerstate { + {abstract} doTurn(); }
+class NormalTurnState { +doTurn(); }
+class InJailState { +doTurn(); }
+class BankruptState { +doTurn(); }
+Playerstate "1" --o Player
+Playerstate <|-- NormalTurnState
+Playerstate <|-- InJailState
+Playerstate <|-- BankruptState
 @enduml`;
       el.dispatchEvent(new Event('input', { bubbles: true }));
     });
@@ -3065,7 +3215,7 @@ abstract class PlayerState { +duTurn(player: Player); }
 class RegularMode
 class PrisonState
 class BankruptcyMode
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 RegularMode --|> PlayerState
 PrisonState --|> PlayerState
 BankruptcyMode --|> PlayerState
@@ -3104,7 +3254,7 @@ abstract class PlayerState { + {abstract} takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState { +takeTurn(player: Player); }
 class BankruptState { +takeTurn(player: Player); }
-Player --o PlayerState : currentState
+Player --o "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3115,6 +3265,58 @@ PlayerState <|-- BankruptState
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player owns or aggregates its current state');
+    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
+  });
+
+  test('UML tutorial rejects state-change operations that do not accept PlayerState', async ({ page }) => {
+    await page.goto(MONOPOLY_TUTORIAL_URL);
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +takeTurn(); +setState(state: NormalTurnState); }
+abstract class PlayerState { + {abstract} takeTurn(player: Player); }
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
+Player o-- "1" PlayerState : currentState
+PlayerState <|-- NormalTurnState
+PlayerState <|-- InJailState
+PlayerState <|-- BankruptState
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Operations support the later sequence diagram');
+    await expect(page.locator('.tvm-test-item.fail')).toContainText('argument typed as');
+    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
+  });
+
+  test('UML tutorial rejects current-state relations without target multiplicity', async ({ page }) => {
+    await page.goto(MONOPOLY_TUTORIAL_URL);
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +takeTurn(); +setState(state: PlayerState); }
+abstract class PlayerState { + {abstract} takeTurn(player: Player); }
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
+Player o-- PlayerState : currentState
+PlayerState <|-- NormalTurnState
+PlayerState <|-- InJailState
+PlayerState <|-- BankruptState
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player owns or aggregates its current state');
+    await expect(page.locator('.tvm-test-item.fail')).toContainText('target multiplicity');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -3129,7 +3331,7 @@ abstract class PlayerState { +takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState { +takeTurn(player: Player); }
 class BankruptState { +takeTurn(player: Player); }
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3153,7 +3355,7 @@ abstract class PlayerState { +takeTurn(player: Player); }
 class NormalTurnState { +takeTurn; }
 class InJailState { +takeTurn; }
 class BankruptState { +takeTurn; }
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3179,7 +3381,7 @@ abstract class PlayerState { +takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState
 class BankruptState { +takeTurn(player: Player); }
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3205,7 +3407,7 @@ class PlayerState { + {abstract} takeTurn(player: Player); }
 class NormalTurnState
 class InJailState
 class BankruptState
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState
@@ -3230,7 +3432,7 @@ interface PlayerState { +takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState { +takeTurn(player: Player); }
 class BankruptState { +takeTurn(player: Player); }
-Player o-- PlayerState : currentState
+Player o-- "1" PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
 PlayerState <|-- BankruptState

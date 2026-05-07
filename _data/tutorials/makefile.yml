@@ -24,14 +24,68 @@ setup_commands:
   - 'sed -i "s/^exec //" /usr/bin/gcc'
   - 'printf "\nsleep 2\n" >> /usr/bin/gcc'
 
-# v86's 9p create_file uses the host clock for the inode mtime, which is
-# typically ahead of the VM clock — `make` then prints "File '...' has
-# modification time NN s in the future" warnings on every invocation.
-# Touch every project file to VM_now after the layout writes them so the
-# user's first `make` is clean. Subsequent Monaco saves are normalized
-# in-runtime by _syncFileToV86's post-write touch hook.
+# v86's 9p `create_file` uses the *host* clock for the inode mtime —
+# both for Monaco-driven file syncs AND for files that programs inside
+# the VM (like gcc) write through the same code path. Meanwhile the v86
+# kernel's `gettimeofday` returns the VM's RTC time, which is typically
+# 8+ days *behind* host time. The mismatch causes two visible bugs:
+#   1. `make` prints "File '<x>' has modification time NN s in the
+#      future" warnings on every invocation
+#   2. `touch main.c` doesn't make main.o appear stale, because main.o
+#      (compiled by gcc, written via 9p with host_now) is ALREADY
+#      "newer" than main.c (which got VM_now from the touch syscall)
+#
+# The fix: at tutorial start, read the largest file mtime in /tutorial
+# (which reflects the host's "now" because every file passed through 9p
+# write) and bump the VM clock to that + 60 seconds. Now VM_now is ahead
+# of host_now, so:
+#   - All existing files appear in the *past* relative to VM_now → no
+#     more "in the future" warnings
+#   - New 9p writes (Monaco saves, gcc output) get host_now mtime, still
+#     behind the ahead-running VM clock → also no warnings
+#   - User actions that use kernel time (`touch main.c`, `make`'s own
+#     internal time check) use VM_now, which is guaranteed to be later
+#     than every existing file → mtime relationships now match the
+#     user's intuition
 post_fileload_setup:
-  - 'touch /tutorial/make_project/* 2>/dev/null || true'
+  - |
+    # 1. Read host_now from the freshest 9p-written file (every file at this
+    #    point came from the host via emulator.create_file, so its mtime ≈
+    #    real-world wall-clock time on the host).
+    LATEST=$(find /tutorial -type f -printf "%T@\n" 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+    NEW=$(( ${LATEST:-0} + 60 ))
+
+    # 2. Try every common date(1) syntax. v86 images vary — coreutils
+    #    `date -s "@N"` works on most modern distros, busybox accepts a
+    #    looser ISO-ish form, and some BSD-derived shells need MMDDhhmmYY.
+    if [ "$NEW" -gt 60 ]; then
+      date -s "@$NEW" 2>/dev/null \
+        || date -u -s "@$NEW" 2>/dev/null \
+        || date -s "$(date -u -d @$NEW '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" 2>/dev/null \
+        || date -s "$(date -u -d @$NEW '+%Y.%m.%d-%H:%M:%S' 2>/dev/null)" 2>/dev/null \
+        || date "$(date -u -d @$NEW '+%m%d%H%M%Y.%S' 2>/dev/null)" 2>/dev/null \
+        || hwclock --set --date "$(date -u -d @$NEW '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" 2>/dev/null \
+        || true
+      hwclock --hctosys 2>/dev/null || true
+    fi
+
+    # 3. Touch existing project files to current VM time. Once Layer 1
+    #    succeeds, this matches host_now. If it failed, files at least share
+    #    one time domain (VM_now) so the four other layers can clamp
+    #    gcc-output files relative to a source reference.
+    touch /tutorial/make_project/* 2>/dev/null || true
+
+    # 4. Drop a probe file recording what time VM thinks it is. Lets the JS
+    #    side read it back via emulator.read_file('/tutorial/.makedag_probe')
+    #    and report skew to the developer console.
+    {
+      echo "vm_now=$(date +%s)"
+      echo "host_latest_seen=$LATEST"
+      echo "target_set=$NEW"
+      echo "skew=$(( $(date +%s) - LATEST ))"
+      echo "date_version=$(date --version 2>/dev/null | head -1 || echo 'busybox-or-bsd')"
+      echo "uname=$(uname -a)"
+    } > /tutorial/.makedag_probe 2>/dev/null || true
 
 steps:
   # --------------------------------------------------------------------------
@@ -39,6 +93,12 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: productive failure (Bjork) — feel the pain before learning the tool
   - title: "The Pain of Manual Compilation"
+    # step_dir: drop the user's interactive terminal directly into the project
+    # directory when this step opens. Saves the friction of `cd make_project`
+    # every time. Wired through TutorialCode._runStepDir → _runSilent (the same
+    # bash session as the user's terminal, so the cd persists for everything
+    # they type next). See js/tutorial-code.js step_dir handling.
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -59,10 +119,9 @@ steps:
 
       ### Task 1: Compile the project manually
 
-      We have a small C project with three files: `main.c`, `math.c`, and `io.c`. Let's compile them the hard way:
+      We have a small C project with three files: `main.c`, `math.c`, and `io.c` — your terminal is already inside `make_project/` (check the prompt). Let's compile them the hard way:
 
       ```bash
-      cd make_project
       gcc main.c math.c io.c -o app
       ```
 
@@ -146,7 +205,7 @@ steps:
           - title: "Layer 1 — orientation"
             text: "After fixing the syntax error, recompile by re-typing (or pressing Up arrow) the same gcc command. Notice that gcc happily reprocesses *every* file — even the two you didn't touch."
           - title: "Layer 2 — strategy"
-            text: "The exact command is: `cd make_project && gcc main.c math.c io.c -o app`. The `-o app` flag names the output binary."
+            text: "The exact command (your terminal is already in `/tutorial/make_project`) is: `gcc main.c math.c io.c -o app`. The `-o app` flag names the output binary."
             condition: "output_missing: app"
 
     quiz:
@@ -212,6 +271,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Run, then Investigate the cryptic Tab Trap error
   - title: "Your First Makefile & The Tab Trap"
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -393,6 +453,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Modify a working Makefile to remove duplication
   - title: "Don't Repeat Yourself (DRY) with Variables"
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -615,6 +676,7 @@ steps:
     # appear between app and the .c sources. Defaulting to the DAG view
     # makes the structural change visually obvious.
     view: make_dag
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -874,6 +936,7 @@ steps:
     # Default this step to the Make DAG view so students see the graph
     # update live as they touch files. They can flip back to Editor any time.
     view: make_dag
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -1140,6 +1203,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: mistake-based familiarization — sabotage `clean` to surface the .PHONY rationale
   - title: "The .PHONY Sabotage"
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 
@@ -1404,6 +1468,7 @@ steps:
     # Open with the full graph: app + run (phony) + clean (phony) + all .o + .c.
     # Synthesis at a glance.
     view: make_dag
+    step_dir: /tutorial/make_project
     instructions: |
       ### Why this matters
 

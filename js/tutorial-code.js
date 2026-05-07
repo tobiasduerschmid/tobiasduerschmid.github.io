@@ -10731,11 +10731,19 @@
     var statePath = p.replace(/\/$/, '') + '/.makedag_state';
     return (
       '( cd ' + _shellQuoteForMake(p) + ' 2>/dev/null && ' +
-      // Defensive normalization: if the prompt-hook missed (e.g. user
-      // switched to DAG view directly with no recent shell command), pull
-      // any future-mtime files back to VM_now before reading state.
+      // Defensive normalization (mirrors _normalizeMakeDagFileTimes). Runs
+      // *inside* the dump so even view-switches without a shell prompt see
+      // a clean graph.
       'NOW=$(date +%s); ' +
       'find . -type f -newermt "@$NOW" -exec touch {} + 2>/dev/null; ' +
+      // Source-relative clamp: pin object/binary mtimes to the OLDEST source
+      // mtime so the user's `touch main.c` reliably makes main.o appear stale.
+      'SRC_REF=$(find . -maxdepth 1 -type f \\( -name "*.c" -o -name "*.h" -o -name "Makefile" \\) ' +
+      '-printf "%T@ %p\\n" 2>/dev/null | sort -n | head -1 | cut -d" " -f2-); ' +
+      '[ -n "$SRC_REF" ] && find . -maxdepth 1 -type f ' +
+      '\\! -name "*.c" \\! -name "*.h" \\! -name "Makefile" ' +
+      '\\! -name ".makedag_*" \\! -name ".*" ' +
+      '-newer "$SRC_REF" -exec touch -r "$SRC_REF" {} + 2>/dev/null; ' +
       '{ ' +
       'echo "===FILES==="; ' +
       // -pn dumps the whole database without running anything; --no-builtin-rules
@@ -10846,13 +10854,74 @@
    *
    * Cheap: one `find` invocation that no-ops when nothing's in the future.
    */
+  /**
+   * Developer diagnostic — reads the probe file written by post_fileload_setup
+   * and dumps the v86 VM clock state to the browser console. Call from the
+   * console as `window._tutorial._debugMakeDag()` if you suspect the time-skew
+   * fixes aren't taking effect.
+   */
+  TutorialCode.prototype._debugMakeDag = function () {
+    if (this.config.backend !== 'v86' || !this.emulator) {
+      console.log('[make-dag] not a v86 tutorial, skipping');
+      return Promise.resolve();
+    }
+    var self = this;
+    return this.emulator.read_file('/.makedag_probe')
+      .then(function (buf) {
+        var text = new TextDecoder('utf-8').decode(buf);
+        console.log('[make-dag] probe (set at post_fileload_setup):\n' + text);
+      })
+      .catch(function () {
+        console.log('[make-dag] no probe file — post_fileload_setup did not run');
+      })
+      .then(function () {
+        // Also dump current state by running a fresh probe.
+        var p = self.makeDagPath || '/tutorial';
+        var cmd =
+          'echo "vm_now=$(date +%s)"; ' +
+          'echo "host_via_9p_file_mtime="; find ' + _shellQuoteForMake(p) +
+          ' -maxdepth 1 -type f -printf "  %f|%T@|%T+\\n" 2>/dev/null';
+        return self._runRPC(cmd).then(function (out) {
+          if (out && out.stdout) console.log('[make-dag] live state:\n' + out.stdout);
+        }).catch(function () {});
+      });
+  };
+
   TutorialCode.prototype._normalizeMakeDagFileTimes = function () {
     if (!this.makeDagPath) return Promise.resolve();
     if (this.config.backend !== 'v86') return Promise.resolve();
     if (!this.booted) return Promise.resolve();
     var p = this.makeDagPath;
-    var cmd = 'NOW=$(date +%s); find ' + _shellQuoteForMake(p) +
-      ' -type f -newermt "@$NOW" -exec touch {} + 2>/dev/null; true';
+    // Two-pronged normalization:
+    //
+    // (a) "in the future relative to VM_now" — covers the case where the
+    //     VM clock was successfully bumped to host time but new 9p writes
+    //     still drift slightly ahead.
+    //
+    // (b) "in a different time domain than the source files" — covers the
+    //     case where v86's RTC is stuck at year ~2526 and gcc-output files
+    //     end up centuries newer than the Monaco-edited sources. We use
+    //     the OLDEST source file as the reference (so the user's most
+    //     recent `touch main.c` doesn't pull main.o forward past it), then
+    //     touch any non-source file that's newer than that reference back
+    //     to match it.
+    //
+    // Both prongs are no-ops when nothing is wrong, so this is cheap to
+    // run on every shell prompt.
+    var cmd =
+      // Prong (a)
+      'NOW=$(date +%s); find ' + _shellQuoteForMake(p) +
+      ' -type f -newermt "@$NOW" -exec touch {} + 2>/dev/null; ' +
+      // Prong (b) — source-relative clamp
+      'SRC_REF=$(find ' + _shellQuoteForMake(p) +
+      ' -maxdepth 1 -type f \\( -name "*.c" -o -name "*.h" -o -name "Makefile" \\) ' +
+      '-printf "%T@ %p\\n" 2>/dev/null | sort -n | head -1 | cut -d" " -f2-); ' +
+      '[ -n "$SRC_REF" ] && find ' + _shellQuoteForMake(p) +
+      ' -maxdepth 1 -type f ' +
+      '\\! -name "*.c" \\! -name "*.h" \\! -name "Makefile" ' +
+      '\\! -name ".makedag_*" \\! -name ".*" ' +
+      '-newer "$SRC_REF" -exec touch -r "$SRC_REF" {} + 2>/dev/null; ' +
+      'true';
     return this._runSilent(cmd).catch(function () { /* tolerate */ });
   };
 

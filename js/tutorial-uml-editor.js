@@ -709,9 +709,13 @@
     var model = { elements: [], members: [], relations: [] };
     var lines = String(source || '').split(/\r?\n/);
     var current = null;
+    var inLayout = false;
     lines.forEach(function (raw) {
       var line = raw.trim();
-      if (!line || line === '@startuml' || line === '@enduml' || /^layout\b/i.test(line) || /^@layout\b/i.test(line) || /^@endlayout\b/i.test(line)) return;
+      if (!line || line === '@startuml' || line === '@enduml') return;
+      if (/^@layout\b/i.test(line)) { inLayout = true; return; }
+      if (/^@endlayout\b/i.test(line)) { inLayout = false; return; }
+      if (inLayout || /^layout\b/i.test(line)) return;
       if (current && line === '}') { current = null; return; }
 
       var m = line.match(/^(abstract\s+class|class|interface|enum)\s+(?:"([^"]+)"\s+as\s+)?([A-Za-z_][\w.]*)/i);
@@ -739,17 +743,149 @@
         return;
       }
 
-      m = line.match(/^(.+?)\s+([.<o*|]*[-.]+[->o*|]*|<-->|--|->>|->|-->)\s+(.+?)(?:\s*:\s*(.+))?$/);
-      if (m) {
-        model.relations.push({
-          from: cleanId(m[1]),
-          op: m[2],
-          to: cleanId(m[3]),
-          label: (m[4] || '').trim()
-        });
-      }
+      var relation = parseRelationLine(line);
+      if (relation) model.relations.push(relation);
     });
     return model;
+  }
+
+  function parseRelationLine(line) {
+    var split = splitRelationLabel(line);
+    var parsed = parseTokenizedRelationLine(split.body.trim());
+    if (!parsed) return null;
+    return {
+      from: cleanId(parsed.source),
+      sourceMult: cleanId(parsed.sourceMult || ''),
+      op: parsed.op,
+      targetMult: cleanId(parsed.targetMult || ''),
+      to: cleanId(parsed.target),
+      label: split.label
+    };
+  }
+
+  function tokenizeRelationParts(text) {
+    var tokens = [];
+    var re = /"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|(\S+)/g;
+    var match;
+    while ((match = re.exec(String(text || '')))) {
+      if (match[1] != null) {
+        tokens.push({ value: cleanId('"' + match[1] + '"'), quoted: true });
+      } else if (match[2] != null) {
+        tokens.push({ value: match[2].replace(/\\'/g, "'").replace(/\\\\/g, '\\'), quoted: true });
+      } else {
+        tokens.push({ value: match[3], quoted: false });
+      }
+    }
+    return tokens;
+  }
+
+  function isRelationOperatorToken(token) {
+    var op = String(token && token.value || '').trim();
+    if (!op || token.quoted) return false;
+    if (op === '..') return true;
+    return /^[-.<=>|*ox]+$/.test(op) && /[-<=>|]/.test(op);
+  }
+
+  function relationTokenLooksLikeMultiplicity(token) {
+    if (!token) return false;
+    var value = String(token.value || '').trim();
+    if (!value) return false;
+    if (!token.quoted && /^\[[^\]]+\]$/.test(value)) return true;
+    return /^[*0-9nNmM.]+$/.test(value) || /\.\./.test(value);
+  }
+
+  function cleanRelationMultiplicityToken(token) {
+    var value = String(token && token.value || '').trim();
+    var bracket = !token.quoted && value.match(/^\[([^\]]+)\]$/);
+    return bracket ? bracket[1].trim() : value;
+  }
+
+  function joinRelationEndpointTokens(tokens) {
+    return (tokens || []).map(function (token) {
+      return String(token && token.value || '').trim();
+    }).filter(Boolean).join(' ').trim();
+  }
+
+  function parseRelationEndpointTokens(tokens, side) {
+    var result = { id: '', mult: '' };
+    var list = (tokens || []).filter(function (token) {
+      return token && String(token.value || '').trim();
+    });
+    if (!list.length) return result;
+
+    if (side === 'source' &&
+        list.length === 2 &&
+        relationTokenLooksLikeMultiplicity(list[0]) &&
+        !relationTokenLooksLikeMultiplicity(list[1])) {
+      result.mult = cleanRelationMultiplicityToken(list[0]);
+      result.id = joinRelationEndpointTokens([list[1]]);
+      return result;
+    }
+
+    if (side === 'source' &&
+        list.length >= 2 &&
+        relationTokenLooksLikeMultiplicity(list[list.length - 1]) &&
+        !relationTokenLooksLikeMultiplicity(list[0])) {
+      result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
+      result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
+      return result;
+    }
+
+    if (side === 'target' &&
+        list.length >= 2 &&
+        relationTokenLooksLikeMultiplicity(list[0]) &&
+        !relationTokenLooksLikeMultiplicity(list[list.length - 1])) {
+      result.mult = cleanRelationMultiplicityToken(list[0]);
+      result.id = joinRelationEndpointTokens(list.slice(1));
+      return result;
+    }
+
+    if (side === 'target' &&
+        list.length >= 2 &&
+        relationTokenLooksLikeMultiplicity(list[list.length - 1]) &&
+        !relationTokenLooksLikeMultiplicity(list[0])) {
+      result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
+      result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
+      return result;
+    }
+
+    result.id = joinRelationEndpointTokens(list);
+    return result;
+  }
+
+  function parseTokenizedRelationLine(text) {
+    var tokens = tokenizeRelationParts(text);
+    var opIdx = -1;
+    for (var i = 0; i < tokens.length; i++) {
+      if (isRelationOperatorToken(tokens[i])) { opIdx = i; break; }
+    }
+    if (opIdx <= 0 || opIdx >= tokens.length - 1) return null;
+    var source = parseRelationEndpointTokens(tokens.slice(0, opIdx), 'source');
+    var target = parseRelationEndpointTokens(tokens.slice(opIdx + 1), 'target');
+    if (!source.id || !target.id) return null;
+    return {
+      source: source.id,
+      sourceMult: source.mult,
+      op: tokens[opIdx].value,
+      targetMult: target.mult,
+      target: target.id
+    };
+  }
+
+  function splitRelationLabel(line) {
+    var text = String(line || '');
+    var inQuote = false;
+    var escaped = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\') { escaped = true; continue; }
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === ':' && !inQuote) {
+        return { body: text.slice(0, i), label: text.slice(i + 1).trim() };
+      }
+    }
+    return { body: text, label: '' };
   }
 
   function addElement(model, type, id, label) {
@@ -800,15 +936,18 @@
     var ownerContains = containsValues(assertion, 'owner').concat(containsValues(assertion, 'class')).concat(containsValues(assertion, 'element'));
     var text = assertion.text || assertion.member || assertion.name;
     var textContains = containsValues(assertion, 'text').concat(containsValues(assertion, 'member')).concat(containsValues(assertion, 'name'));
-    var requiresArguments = assertionRequiresArgumentList(assertion);
+    var expectedArgumentTypes = argumentTypeValues(assertion);
+    var requiresArguments = assertionRequiresArgumentList(assertion) || expectedArgumentTypes.length > 0;
     var found = model.members.some(function (member) {
+      var signature = methodSignatureFromMember(member.text);
       var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
         ? true
         : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
       return valueMatches(member.owner, owner, ownerContains) &&
         valueMatches(member.text, text, textContains, true) &&
         abstractOk &&
-        (!requiresArguments || !!methodSignatureFromMember(member.text));
+        (!requiresArguments || !!signature) &&
+        (!expectedArgumentTypes.length || methodSignatureHasArgumentType(signature, expectedArgumentTypes));
     });
     var namingCandidateExists = model.members.some(function (member) {
       var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
@@ -816,9 +955,14 @@
         : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
       return valueMatches(member.owner, owner, ownerContains) && abstractOk && !valueMatches(member.text, text, textContains, true);
     });
+    var argumentCandidateExists = expectedArgumentTypes.length && model.members.some(function (member) {
+      return valueMatches(member.owner, owner, ownerContains) &&
+        valueMatches(member.text, text, textContains, true) &&
+        !!methodSignatureFromMember(member.text);
+    });
     return found
       ? { pass: true }
-      : failResult('Expected ' + (requiresArguments ? 'operation ' : 'member ') + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + (requiresArguments ? ' with an argument list, such as method() or method(arg).' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
+      : failResult('Expected ' + (requiresArguments ? 'operation ' : 'member ') + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + (requiresArguments ? ' with an argument list, such as method() or method(arg)' : '') + (expectedArgumentTypes.length ? ' and an argument typed as ' + describeExpectedValue(null, expectedArgumentTypes) : '') + '.', (namingCandidateExists || argumentCandidateExists) ? assertionNamingHint(assertion) : null);
   }
 
   function assertRelation(model, assertion, kind, context) {
@@ -836,37 +980,45 @@
     var labelContains = containsValues(assertion, 'label');
     if (assertion.label) labelContains.push(assertion.label);
     var labelMinLength = numericValue(assertion.label_min_length || assertion.labelMinLength);
+    var sourceMultiplicity = multiplicityValues(assertion, 'source');
+    var targetMultiplicity = multiplicityValues(assertion, 'target');
     var optional = assertion.optional === true || assertion.optional === 'true';
     var candidateExists = false;
     var namingCandidateExists = false;
     var found = model.relations.some(function (rel) {
       var forward = endpointsMatch(rel.from, rel.to, from, to, fromContains, toContains, fromExact, toExact);
       var semantic = semanticRelationEndpoints(rel);
-      var semanticForward = semantic.some(function (edge) {
-        return endpointsMatch(edge.from, edge.to, from, to, fromContains, toContains, fromExact, toExact);
-      });
-      var endpointOk = semantic.length ? semanticForward : forward;
-      var semanticReverse = semantic.some(function (edge) {
-        return endpointsMatch(edge.from, edge.to, to, from, toContains, fromContains, toExact, fromExact);
-      });
-      var reverseOk = assertion.directed === false && (semantic.length
-        ? semanticReverse
-        : endpointsMatch(rel.from, rel.to, to, from, toContains, fromContains, toExact, fromExact));
+      var matchedEdges = [];
+      if (semantic.length) {
+        semantic.forEach(function (edge) {
+          if (endpointsMatch(edge.from, edge.to, from, to, fromContains, toContains, fromExact, toExact)) matchedEdges.push(edge);
+          if (assertion.directed === false && endpointsMatch(edge.from, edge.to, to, from, toContains, fromContains, toExact, fromExact)) matchedEdges.push(edge);
+        });
+      } else {
+        if (forward) matchedEdges.push({ from: rel.from, to: rel.to });
+        if (assertion.directed === false && endpointsMatch(rel.from, rel.to, to, from, toContains, fromContains, toExact, fromExact)) {
+          matchedEdges.push({ from: rel.to, to: rel.from });
+        }
+      }
+      var endpointOk = matchedEdges.length > 0;
       var typeOk = !relationTypes.length || relationTypes.some(function (expectedType) {
         return normalize(relationSemanticType(rel)) === normalize(expectedType);
       });
       var labelOk = valueMatches(rel.label, null, labelContains);
-      var candidateOk = (endpointOk || reverseOk) && typeOk;
+      var candidateOk = endpointOk && typeOk;
       if (candidateOk) candidateExists = true;
       var labelLengthOk = !labelMinLength || String(rel.label || '').trim().length >= labelMinLength;
-      if (candidateOk && (!labelOk || !labelLengthOk)) namingCandidateExists = true;
-      return candidateOk && labelOk && labelLengthOk;
+      var multiplicityOk = !candidateOk || matchedEdges.some(function (edge) {
+        return relationEdgeMultiplicityMatches(rel, edge, sourceMultiplicity, targetMultiplicity);
+      });
+      if (candidateOk && (!labelOk || !labelLengthOk || !multiplicityOk)) namingCandidateExists = true;
+      return candidateOk && labelOk && labelLengthOk && multiplicityOk;
     });
     return found
       ? { pass: true }
       : optional && !candidateExists
         ? { pass: true }
-        : failResult('Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
+        : failResult('Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (sourceMultiplicity.length ? ' with source multiplicity ' + describeExpectedValue(null, sourceMultiplicity) : '') + (targetMultiplicity.length ? ' with target multiplicity ' + describeExpectedValue(null, targetMultiplicity) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function assertSequence(model, assertion, context) {
@@ -1437,6 +1589,32 @@
       .concat(toArray(assertion.relationTypeAny));
   }
 
+  function argumentTypeValues(assertion) {
+    return []
+      .concat(toArray(assertion.argument_type))
+      .concat(toArray(assertion.argument_types))
+      .concat(toArray(assertion.argument_type_any))
+      .concat(toArray(assertion.argumentType))
+      .concat(toArray(assertion.argumentTypes))
+      .concat(toArray(assertion.argumentTypeAny));
+  }
+
+  function multiplicityValues(assertion, side) {
+    var snake = side + '_multiplicity';
+    var snakePlural = side + '_multiplicities';
+    var snakeAny = side + '_multiplicity_any';
+    var camel = side + 'Multiplicity';
+    var camelPlural = side + 'Multiplicities';
+    var camelAny = side + 'MultiplicityAny';
+    return []
+      .concat(toArray(assertion[snake]))
+      .concat(toArray(assertion[snakePlural]))
+      .concat(toArray(assertion[snakeAny]))
+      .concat(toArray(assertion[camel]))
+      .concat(toArray(assertion[camelPlural]))
+      .concat(toArray(assertion[camelAny]));
+  }
+
   function elementTypeValues(assertion) {
     return []
       .concat(toArray(assertion.element_type_any))
@@ -1464,6 +1642,46 @@
   function toArray(value) {
     if (value == null) return [];
     return Array.isArray(value) ? value : [value];
+  }
+
+  function methodSignatureHasArgumentType(signature, expectedTypes) {
+    if (!signature || !signature.args || !signature.args.length) return false;
+    return signature.args.some(function (arg) {
+      return argumentTypeCandidates(arg).some(function (candidate) {
+        return exactValueMatches(candidate, expectedTypes);
+      });
+    });
+  }
+
+  function argumentTypeCandidates(argument) {
+    var text = String(argument || '').replace(/=.*/, '').trim();
+    if (!text) return [];
+    var candidates = [];
+    if (text.indexOf(':') !== -1) candidates.push(text.split(':').slice(1).join(':').trim());
+    var tokens = text.split(/\s+/).filter(Boolean).filter(function (token) {
+      return !/^(final|const|readonly|var|let)$/i.test(token);
+    });
+    if (tokens.length === 1) candidates.push(tokens[0]);
+    if (tokens.length > 1) candidates.push(tokens[0]);
+    return uniqueValues(candidates.map(function (candidate) {
+      return String(candidate || '').replace(/[?;,]+$/g, '').replace(/\[\]$/g, '').trim();
+    }));
+  }
+
+  function relationEdgeMultiplicityMatches(rel, edge, sourceMultiplicity, targetMultiplicity) {
+    var mult = relationMultiplicitiesForEdge(rel, edge);
+    return (!sourceMultiplicity.length || exactValueMatches(mult.source, sourceMultiplicity)) &&
+      (!targetMultiplicity.length || exactValueMatches(mult.target, targetMultiplicity));
+  }
+
+  function relationMultiplicitiesForEdge(rel, edge) {
+    if (exactValueMatches(edge.from, [rel.from]) && exactValueMatches(edge.to, [rel.to])) {
+      return { source: rel.sourceMult || '', target: rel.targetMult || '' };
+    }
+    if (exactValueMatches(edge.from, [rel.to]) && exactValueMatches(edge.to, [rel.from])) {
+      return { source: rel.targetMult || '', target: rel.sourceMult || '' };
+    }
+    return { source: '', target: '' };
   }
 
   function describeExpectedValue(expected, contains, exactValues) {

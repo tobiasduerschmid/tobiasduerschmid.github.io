@@ -30,9 +30,9 @@ steps:
       - `Player`
       - a state abstraction such as `PlayerState` as either an interface or an abstract class
       - concrete states for normal turns, jail, and bankruptcy
-      - an abstract operation for taking a turn and an operation for changing state
+      - an abstract operation for taking a turn and an operation for changing state that takes the state abstraction as its argument
       - concrete state classes that implement the abstract turn operation
-      - an aggregation or composition relationship showing that `Player` holds its current state
+      - an aggregation or composition relationship showing that `Player` holds exactly one current state
     tests:
       - description: "State-pattern classes are present"
         assertions:
@@ -77,6 +77,7 @@ steps:
           - kind: member
             owner: Player
             requires_arguments: true
+            argument_type: PlayerState
             text_contains_any:
               - setState
               - changeState
@@ -85,7 +86,7 @@ steps:
               - updateState
               - transitionState
               - transitionToState
-            naming_hint: "This operation should read like the player changing, updating, switching, or transitioning its current state."
+            naming_hint: "This operation should read like the player changing, updating, switching, or transitioning its current state, and it should accept the state abstraction type."
           - kind: member
             owner: PlayerState
             is_abstract: true
@@ -111,6 +112,10 @@ steps:
             relation_type_any:
               - aggregation
               - composition
+            target_multiplicity_any:
+              - "1"
+              - "1..1"
+            naming_hint: "The current-state relationship should show that the player has exactly one state object on the state-abstraction end."
       - description: "Concrete states implement the state abstraction"
         assertions:
           - kind: relation

@@ -2940,6 +2940,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var elements = [];
       var seen = {};
       var componentContext = null;
+      var stateInitialCount = 0;
+      var stateFinalCount = 0;
 
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
@@ -3005,10 +3007,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         } else if (type === 'state') {
           m = line.match(/^state\s+("[^"]+"|\S+)/i);
           if (m) addElement(elements, seen, m[1], m[1]);
-          m = line.match(/^(\S+)\s+[-.]+>+\s+(\S+)/);
-          if (m) {
-            if (m[1] !== '[*]') addElement(elements, seen, m[1], m[1]);
-            if (m[2] !== '[*]') addElement(elements, seen, m[2], m[2]);
+          var stateRel = parseRelationLine(line);
+          if (stateRel && stateRel.source && stateRel.target && /->/.test(stateRel.op || '')) {
+            if (stateRel.source === '[*]') {
+              addElement(elements, seen, '__initial__' + stateInitialCount, 'Initial pseudostate');
+              stateInitialCount++;
+            } else {
+              addElement(elements, seen, stateRel.source, stateRel.source);
+            }
+            if (stateRel.target === '[*]') {
+              addElement(elements, seen, '__final__' + stateFinalCount, 'Final pseudostate');
+              stateFinalCount++;
+            } else {
+              addElement(elements, seen, stateRel.target, stateRel.target);
+            }
           }
         } else if (type === 'component') {
           m = line.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
@@ -3795,6 +3807,82 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return (points || []).map(function (p) { return { x: Number(p.x), y: Number(p.y) }; });
     }
 
+    function pointsBox(points) {
+      var minX = Infinity;
+      var minY = Infinity;
+      var maxX = -Infinity;
+      var maxY = -Infinity;
+      (points || []).forEach(function (p) {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      });
+      if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+        return { x: 0, y: 0, width: 0, height: 0 };
+      }
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    function svgPointObject(svg, point) {
+      var pt = svg && svg.createSVGPoint ? svg.createSVGPoint() : null;
+      if (!pt) return { x: point.x, y: point.y };
+      pt.x = point.x;
+      pt.y = point.y;
+      return pt;
+    }
+
+    function elementToSvgMatrix(svg, el) {
+      if (!svg || !el || !svg.getScreenCTM || !el.getScreenCTM) return null;
+      try {
+        var svgCtm = svg.getScreenCTM();
+        var elCtm = el.getScreenCTM();
+        if (!svgCtm || !elCtm) return null;
+        return svgCtm.inverse().multiply(elCtm);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function routePointToEditorCanvas(svg, el, point) {
+      var matrix = elementToSvgMatrix(svg, el);
+      if (!matrix) return { x: point.x, y: point.y };
+      var next = svgPointObject(svg, point).matrixTransform(matrix);
+      return { x: next.x, y: next.y };
+    }
+
+    function editorCanvasPointToRoute(svg, el, point) {
+      var matrix = elementToSvgMatrix(svg, el);
+      if (!matrix) return { x: point.x, y: point.y };
+      try {
+        var next = svgPointObject(svg, point).matrixTransform(matrix.inverse());
+        return { x: next.x, y: next.y };
+      } catch (e) {
+        return { x: point.x, y: point.y };
+      }
+    }
+
+    function normalizeEditableRoute(svg, route) {
+      if (!route || !route.points) return route;
+      var localPoints = clonePoints(route.points);
+      var canvasPoints = localPoints.map(function (point) {
+        return routePointToEditorCanvas(svg, route.element, point);
+      });
+      route.localPoints = localPoints;
+      route.points = canvasPoints;
+      route.box = pointsBox(canvasPoints);
+      route._editorSvg = svg;
+      return route;
+    }
+
+    function routePointsForElementSpace(route, points) {
+      if (!route) return clonePoints(points);
+      var svg = route._editorSvg || (route.element && route.element.ownerSVGElement) || output.querySelector('svg');
+      return clonePoints(points).map(function (point) {
+        return editorCanvasPointToRoute(svg, route.element, point);
+      });
+    }
+
     function setRouteOverlaySegment(seg, p1, p2) {
       seg.setAttribute('x1', p1.x);
       seg.setAttribute('y1', p1.y);
@@ -3821,14 +3909,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if ((typeSelect.value || '') === 'sequence') {
         return routes.filter(function (route) {
           return /^seqmsg:\d+$/.test(String(route.id || ''));
-        });
+        }).map(function (route) { return normalizeEditableRoute(svg, route); });
       }
-      return routes;
+      return routes.map(function (route) { return normalizeEditableRoute(svg, route); });
     }
 
     function applyRoutePoints(route, points) {
       if (window.UMLShared && window.UMLShared.setRoutePointsForElement) {
-        route.element = window.UMLShared.setRoutePointsForElement(route.element, points) || route.element;
+        route.element = window.UMLShared.setRoutePointsForElement(route.element, routePointsForElementSpace(route, points)) || route.element;
+        route.points = clonePoints(points);
+        route.localPoints = routePointsForElementSpace(route, points);
       }
     }
 
@@ -4842,6 +4932,32 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return re.test(t) || t.indexOf('"' + id + '"') !== -1;
     }
 
+    function statePseudoInfoForId(id) {
+      var m = String(id || '').match(/^__(initial|final)__(\d+)$/);
+      if (!m) return null;
+      return {
+        kind: m[1],
+        ordinal: Number(m[2]),
+        label: m[1] === 'initial' ? 'Initial pseudostate' : 'Final pseudostate'
+      };
+    }
+
+    function statePseudoRelationLineIndex(text, id) {
+      var info = statePseudoInfoForId(id);
+      if (!info) return -1;
+      var lines = stripLayoutMetadata(text).split('\n');
+      var count = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var rel = parseRelationLine(lines[i]);
+        if (!rel || !rel.source || !rel.target) continue;
+        var matches = info.kind === 'initial' ? rel.source === '[*]' : rel.target === '[*]';
+        if (!matches) continue;
+        if (count === info.ordinal) return i;
+        count++;
+      }
+      return -1;
+    }
+
     function removeElementFromSource(text, type, id) {
       var positions = readLayoutPositions(text);
       var routes = readLayoutRoutes(text);
@@ -4856,6 +4972,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       });
       var clean = stripLayoutMetadata(text);
       var lines = clean.split('\n');
+      if (type === 'state' && statePseudoInfoForId(id)) {
+        var pseudoLineIdx = statePseudoRelationLineIndex(text, id);
+        if (pseudoLineIdx !== -1) {
+          var relIdxs = relationLineIndices(text, type);
+          var routeOrdinal = relIdxs.indexOf(pseudoLineIdx);
+          if (routeOrdinal !== -1) delete routes['edge-' + routeOrdinal];
+          lines.splice(pseudoLineIdx, 1);
+          return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+        }
+      }
       var keep = [];
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
@@ -5030,8 +5156,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return el;
     }
     function umlIconFrame() {
+      // viewBox padded on all sides so shapes drawn at x=0 / x=28 (diamond
+      // tips, arrowheads) keep visual breathing room from the button border
+      // — without this they look clipped at high zoom.
       var svg = svgEl('svg', {
-        viewBox: '0 0 28 16',
+        viewBox: '-2 -1 32 18',
         'aria-hidden': 'true',
         focusable: 'false',
         class: 'uml-pg-tool-icon'
@@ -5931,11 +6060,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       // State pseudostate placeholders.
       if (type === 'state' && spec.pseudo === 'initial') {
         textarea.value = appendRawLine(textarea.value, '[*] --> ' + (id = generateUniqueId(textarea.value, type, 'New')));
-        renderDiagram(); selectAfterRender(id, 'node'); return;
+        selectNewestRelationAfterRender(type);
+        renderDiagram();
+        announce('Added an initial transition. Use Target endpoint in Properties to rewire it to an existing state.', true);
+        return;
       }
       if (type === 'state' && spec.pseudo === 'final') {
         textarea.value = appendRawLine(textarea.value, (id = generateUniqueId(textarea.value, type, 'Last')) + ' --> [*]');
-        renderDiagram(); selectAfterRender(id, 'node'); return;
+        selectNewestRelationAfterRender(type);
+        renderDiagram();
+        announce('Added a final transition. Use Source endpoint in Properties to rewire it from an existing state.', true);
+        return;
       }
       if (type === 'activity' && spec.activityPseudo) {
         var actId = generateUniqueId(textarea.value, type, 'Step');
@@ -6028,6 +6163,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function selectAfterRender(id, kind) {
       pendingSelect = { id: id, kind: kind };
       // If render is synchronous, the selection is applied at the end of installVisualEditor.
+    }
+
+    function selectNewestRelationAfterRender(type) {
+      var indices = relationLineIndices(textarea.value, type);
+      if (!indices.length) return;
+      selectAfterRender('edge-' + (indices.length - 1), 'route');
     }
 
     // ─── Hover-to-extend "+" handle + relation chooser popup ───
@@ -6344,7 +6485,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function installExtendHandle(svg, layer, item, hitbox) {
       // Render a circular "+" handle on the right edge, centred vertically.
       var ns = 'http://www.w3.org/2000/svg';
-      var hx = item.box.x + item.box.width;
+      var compactOffset = Math.min(item.box.width || 0, item.box.height || 0) < 28 ? 14 : 0;
+      var hx = item.box.x + item.box.width + compactOffset;
       var hy = item.box.y + item.box.height / 2;
       var g = document.createElementNS(ns, 'g');
       g.setAttribute('class', 'uml-pg-extend-handle-group');
@@ -7197,6 +7339,18 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return;
       }
 
+      var statePseudoInfo = type === 'state' ? statePseudoInfoForId(id) : null;
+      if (statePseudoInfo) {
+        propsTitle.textContent = statePseudoInfo.label;
+        var pseudoHint = document.createElement('p');
+        pseudoHint.className = 'uml-pg-prop-hint';
+        pseudoHint.textContent = statePseudoInfo.kind === 'initial'
+          ? 'This pseudostate is defined by an outgoing transition. Select that transition to change its target endpoint.'
+          : 'This pseudostate is defined by an incoming transition. Select that transition to change its source endpoint.';
+        propsContent.appendChild(pseudoHint);
+        return;
+      }
+
       // Class — full editor (name, kind, stereotype, abstract, members)
       if (type === 'class' && schema) {
         var info = parseClassDeclaration(line || (schema.keyword + ' ' + id));
@@ -7799,7 +7953,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var sourceText = textarea.value;
       // Re-emit declaration with the new id, then rewrite references.
       var line = getDeclarationLine(sourceText, type, oldId);
-      if (line == null) return;
+      if (line == null) {
+        if (type !== 'state' || oldId === '[*]') return;
+        textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
+        renderDiagram();
+        selectAfterRender(newId, 'node');
+        return;
+      }
       var declId = declarationIdForLine(line, type);
       var renamed = line;
       // Substitute the declared identifier token. Be conservative — just swap the
@@ -8332,7 +8492,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         value = String(value || '').trim();
         if (!value || seen[value]) return;
         seen[value] = true;
-        var text = String(label || value).trim();
+        var text = value === '[*]' ? 'Initial / final pseudostate' : String(label || value).trim();
         out.push({
           value: value,
           label: text && text !== value ? value + ' - ' + text : value
@@ -10099,7 +10259,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
         if (finish) {
           var routes = readLayoutRoutes(textarea.value);
-          routes[dragState.route.id] = { points: nextPoints };
+          routes[dragState.route.id] = { points: routePointsForElementSpace(dragState.route, nextPoints) };
           var editables = findEditableElements(dragState.svg);
           textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, collectPositions(editables), routes);
           dragState = null;
@@ -10198,10 +10358,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           var reordered = reorderSequenceLifelines(dragState.item.id, dragState.positions);
           if (reordered) {
             textarea.value = reordered;
-            dragState.parts.forEach(function (part) {
-              if (part.transform) part.el.setAttribute('transform', part.transform);
-              else part.el.removeAttribute('transform');
-            });
+            clearSmartGuides();
             dragState = null;
             renderDiagram();
             return;
@@ -10213,12 +10370,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           var snapped = snapBranchLabelToCommit(dragState.item.id, dragState.positions);
           if (snapped) {
             textarea.value = snapped;
-            dragState.parts.forEach(function (part) {
-              if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
-                if (part.el.style) part.el.style.transform = part.styleTransform;
-              } else if (part.transform) part.el.setAttribute('transform', part.transform);
-              else part.el.removeAttribute('transform');
-            });
+            clearSmartGuides();
             dragState = null;
             renderDiagram();
             return;
@@ -10227,22 +10379,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         var existingRoutes = readLayoutRoutes(textarea.value);
         shiftPersistedRouteEndpoints(existingRoutes, allConnectedRoutes, movedDeltas);
         textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions, existingRoutes);
-        dragState.parts.forEach(function (part) {
-          if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
-            if (part.el.style) part.el.style.transform = part.styleTransform;
-          } else if (part.transform) part.el.setAttribute('transform', part.transform);
-          else part.el.removeAttribute('transform');
-        });
-        if (dragState.groupItems) {
-          dragState.groupItems.forEach(function (g) {
-            g.parts.forEach(function (part) {
-              if (part.el.classList && part.el.classList.contains('git-graph-label-g')) {
-                if (part.el.style) part.el.style.transform = part.styleTransform;
-              } else if (part.transform) part.el.setAttribute('transform', part.transform);
-              else part.el.removeAttribute('transform');
-            });
-          });
-        }
         clearSmartGuides();
         dragState = null;
         renderDiagram();
@@ -10275,7 +10411,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
     updateLayoutVisibility();
 
-    function renderDiagram() {
+    function renderDiagram(options) {
+      options = options || {};
       renderGeneration++;
       cancelVisualEditorInstall();
       var text = textarea.value.trim();
@@ -10312,7 +10449,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           }
           downloadBtn.disabled = false;
           status.textContent = '';
-          scheduleVisualEditorInstall();
+          if (options.deferVisualEditor) scheduleVisualEditorInstall();
+          else installVisualEditor();
           rebuildSequenceModelPanel();
           // Visual mutations all funnel through renderDiagram; autosave once
           // per render so localStorage tracks every visual change.
@@ -10345,7 +10483,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function scheduleRender() {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(renderDiagram, LIVE_RENDER_DEBOUNCE_MS);
+      debounceTimer = setTimeout(function () {
+        renderDiagram({ deferVisualEditor: true });
+      }, LIVE_RENDER_DEBOUNCE_MS);
     }
 
     function cancelVisualEditorInstall() {

@@ -734,6 +734,27 @@ steps:
                                              # `make_dag` requires a top-level
                                              # `make_dag:` config; opens the
                                              # live Make dependency graph.
+    step_dir: /absolute/path                 # v86 / webcontainer only. When
+                                             # this step opens, drop the user's
+                                             # interactive terminal into the
+                                             # specified directory (a `cd` is
+                                             # injected into the same bash
+                                             # session via _runSilent, so the
+                                             # PWD persists for everything the
+                                             # student types next). Used by
+                                             # multi-step build / Make tutorials
+                                             # where every step works in the
+                                             # same project directory and
+                                             # forcing the student to
+                                             # `cd <dir>` at every step is
+                                             # friction without learning value.
+                                             # Implementation:
+                                             # TutorialCode._runStepDir.
+                                             # NOTE: do NOT try to do this via
+                                             # a `cd` line in setup_commands —
+                                             # that batch runs in a subshell
+                                             # and the PWD does not propagate
+                                             # back to the user's terminal.
     uml_type: class | sequence | state | component | deployment | usecase | activity
                                              # uml-editor backend only: selects
                                              # the editor diagram type for this
@@ -788,9 +809,26 @@ steps:
                                              # so attributes with similar
                                              # names do not satisfy operation
                                              # checks.
+                                             # `argument_type` /
+                                             # `argument_type_any` on member
+                                             # assertions requires a parameter
+                                             # typed as that class/interface,
+                                             # accepting forms such as
+                                             # `state: PlayerState`,
+                                             # `PlayerState state`, or
+                                             # `PlayerState`.
                                              # `relation_type_any` accepts
                                              # semantic types such as
                                              # aggregation or composition.
+                                             # `source_multiplicity` /
+                                             # `target_multiplicity` and their
+                                             # `_any` variants check the
+                                             # semantic relation endpoints;
+                                             # aggregation/composition
+                                             # multiplicities follow the UML
+                                             # owner-to-part direction even
+                                             # when the textual spelling is
+                                             # reversed.
                                              # `relation_type_for_target_type`
                                              # maps target element types to
                                              # required relation types, e.g.
@@ -1085,11 +1123,22 @@ keys. **If you change the persistence schema, also update**:
   interface or abstract-class member counts as abstract even without an
   explicit `{abstract}` marker), and can require an actual operation signature
   with `requires_arguments: true` so `setState()` passes but an attribute like
-  `setState: PlayerState` does not. Relation assertions can constrain semantic arrow type with
+  `setState: PlayerState` does not. Use `argument_type` or
+  `argument_type_any` when a method parameter must be typed as a particular
+  class or interface; the checker accepts common UML forms such as
+  `state: PlayerState`, `PlayerState state`, or `PlayerState`. Relation assertions can constrain semantic arrow type with
   `relation_type`, `relation_type_any`, or camelCase variants, or map the
   matched target element's type to the required arrow type with
   `relation_type_for_target_type` (for example, `interface: realization` and
-  `abstract class: generalization`). State-machine assertions can stay
+  `abstract class: generalization`). They can also require endpoint
+  multiplicities with `source_multiplicity`, `target_multiplicity`, or their
+  `_any` / camelCase variants. Multiplicity checks use the semantic
+  assertion endpoints, so aggregation/composition multiplicities follow the
+  whole-to-part relationship even when the ArchUML line is written in the
+  reverse textual direction. Keep the tutorial checker aligned with the
+  visual UML editor's relation grammar so rendered-valid relationships do not
+  fail tutorial assertions because of quote placement or reversed textual
+  spelling. State-machine assertions can stay
   consistent with a prior class diagram by using `class_role`,
   `from_class_role`, and `to_class_role`; roles currently resolve concrete
   class names containing `normal`, `jail`/`prison`, or `bankrupt` from the
