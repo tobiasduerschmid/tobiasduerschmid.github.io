@@ -66,19 +66,33 @@ steps:
   # ===========================================================================
   - title: "The Debugging Process"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** Apply the 7-stage debugging cycle to a tiny off-by-one bug.
 
-      Debugging is a systematic, learnable process — not a vibe. Most engineers default to *tinkering* (edit, run, hope, repeat) and the bug eventually goes away without them learning what was wrong. The 7-stage cycle below replaces tinkering with a discipline you can repeat on any bug. Walking through it once on a tiny off-by-one anchors the cycle before you face anything harder.
+      ```mermaid
+      flowchart TD
+          A[1. Symptom — what's wrong?] --> B[2. Predict — what should the state be?]
+          B --> C[3. Evidence — collect data with the right tool]
+          C --> D[4. Hypothesis — one sentence cause]
+          D --> E[5. Localize — first wrong line]
+          E --> F[6. Fix — minimal change]
+          F --> G[7. Verify — rerun ALL tests]
+      ```
 
-      ### 🎯 You will learn to
+      **No edit happens until stage 6.** That's the central discipline.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
+
+      Debugging is a systematic, learnable process — not a vibe. Most engineers default to *tinkering* (edit, run, hope, repeat) and the bug eventually goes away without them learning what was wrong. The 7-stage cycle above replaces tinkering with a discipline you can repeat on any bug. Walking through it once on a tiny off-by-one anchors the cycle before you face anything harder.
+
+      You will learn to:
 
       - Apply the 7-stage hypothesis-driven cycle to a small failing test.
       - Distinguish *fault*, *error*, and *failure* — and trace one to the next.
       - Evaluate why the local-verification trap (only rerunning the failing test) hides regressions.
 
-      > 🎯 **Goal:** Apply the 7-stage debugging cycle to a tiny off-by-one bug.
+      </details>
 
-      ### 📖 Recap from lecture: the four phases of debugging
+      <details markdown="1"><summary>📖 Recap from lecture: the four phases of debugging</summary>
 
       Lecture 10 framed debugging as a **systematic process** with four phases:
 
@@ -87,7 +101,7 @@ steps:
       3. **Determining the root cause** of the bug
       4. **Implementing and verifying** a fix
 
-      Inside that frame, each phase has its own moves. The 7-stage cycle below is the *zoomed-in* version of those four phases — same process, more resolution. The four phases tell you *what* to do; the seven stages tell you *how*.
+      Inside that frame, each phase has its own moves. The 7-stage cycle is the *zoomed-in* version of those four phases — same process, more resolution. The four phases tell you *what* to do; the seven stages tell you *how*.
 
       | Lecture phase | This tutorial's stages |
       | --- | --- |
@@ -96,7 +110,9 @@ steps:
       | 3. Locate the faulty code | **Localize** |
       | 4. Implement & verify fix | **Fix** + **Verify** |
 
-      ### 🐞 Lecture vocabulary you should keep straight
+      </details>
+
+      <details markdown="1"><summary>🐞 Lecture vocabulary: fault vs error vs failure</summary>
 
       The lecture distinguished three terms that get sloppily blurred in everyday speech:
 
@@ -110,23 +126,7 @@ steps:
 
       A useful question the lecture leaves you with: *"How can we prevent this error from becoming a failure?"* — assertions and defensive checks are exactly that prevention. The bug you're about to fix demonstrates this chain end-to-end.
 
-      ### 🔄 The hypothesis-driven cycle (refines the lecture's 4 phases)
-
-      The process below is what the research calls a **hypothesis-driven debugging cycle**. It applies to every bug you'll ever fix.
-
-      If you currently *tinker* (edit, run, hope, repeat), that's the default everyone starts with — including most professional engineers under pressure. The cycle below is what replaces it. You aren't expected to internalize it *yet*; you'll practice it across the next seven steps.
-
-      ```mermaid
-      flowchart TD
-          A[1. Symptom — what's wrong?] --> B[2. Predict — what should the state be?]
-          B --> C[3. Evidence — collect data with the right tool]
-          C --> D[4. Hypothesis — one sentence cause]
-          D --> E[5. Localize — first wrong line]
-          E --> F[6. Fix — minimal change]
-          F --> G[7. Verify — rerun ALL tests]
-      ```
-
-      No edit happens until stage 6. That's the central discipline.
+      </details>
 
       <details markdown="1"><summary>📋 Reproducing the bug — what the lecture said about Step 1</summary>
 
@@ -194,8 +194,8 @@ steps:
       - path: "greet.py"
         language: "python"
         content: |
-          def greet(names):
-              parts = ["Hello"]
+          def greet(names: list[str]) -> str:
+              parts: list[str] = ["Hello"]
               for i in range(1, len(names)):
                   parts.append(names[i])
               return ", ".join(parts) + "!"
@@ -206,15 +206,15 @@ steps:
           from greet import greet
 
 
-          def test_three_names_all_appear():
+          def test_three_names_all_appear() -> None:
               assert greet(["Ada", "Linus", "Grace"]) == "Hello, Ada, Linus, Grace!"
 
 
-          def test_empty_list_just_says_hello():
+          def test_empty_list_just_says_hello() -> None:
               assert greet([]) == "Hello!"
 
 
-          def test_single_name_appears():
+          def test_single_name_appears() -> None:
               assert greet(["Solo"]) == "Hello, Solo!"
 
     open_file: "greet.py"
@@ -225,8 +225,8 @@ steps:
         - path: "greet.py"
           language: "python"
           content: |
-            def greet(names):
-                parts = ["Hello"]
+            def greet(names: list[str]) -> str:
+                parts: list[str] = ["Hello"]
                 for i in range(0, len(names)):
                     parts.append(names[i])
                 return ", ".join(parts) + "!"
@@ -357,18 +357,20 @@ steps:
   # ===========================================================================
   - title: "Debugger Tour"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** Build minimum tool fluency. Each section below pairs a **debugging question** with the **smallest tool move** that answers it. There's no bug to fix — `tour.py` runs correctly.
+
+      Click **Debug** (not Run) to start each section.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Tools subordinate to questions, not the other way around. If you learn debugger features as a feature menu, you'll forget them; if you learn each one as the answer to a specific debugging question, they stick. This step pairs six common questions with the smallest tool move that answers each — on correct code — so when a real bug forces the question, the move is already in your fingers.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply six debugger moves (breakpoint, hover, watch, conditional breakpoint, call stack, history scrubber) to answer specific questions.
       - Analyze which question each tool actually answers — and which it doesn't.
 
-      > 🎯 **Goal:** Build minimum tool fluency. Each section below pairs a **debugging question** with the **smallest tool move** that answers it. There's no bug to fix — `tour.py` runs correctly.
-
-      Click **Debug** (not Run) to start each section.
+      </details>
 
       ### 1. *"Where is execution right now?"* → Breakpoint
 
@@ -408,11 +410,13 @@ steps:
 
       This is the time-travel feature. You can move to any moment in the program's history without restarting. You'll drill it deliberately in the **Backward Tour** before Case 3.
 
-      ### 🪞 Reflect
+      <details markdown="1"><summary>🪞 Reflect</summary>
 
       Close the editor. From memory, list the six moves. For each, name the **debugging question** it answers. If you can't, that move isn't yet yours — flag it for revisit.
 
       Carry this forward: for any new debugger feature you encounter, name the question it answers. If you can't, you don't need it yet.
+
+      </details>
 
     files:
       - path: "tour.py"
@@ -420,24 +424,24 @@ steps:
         content: |
           # Tour program — no bug. Exercise the debugger UI here.
 
-          def compute_score(raw):
+          def compute_score(raw: list[int]) -> float:
               return sum(raw) / len(raw)
 
-          def process_scores(scores):
-              total = 0
+          def process_scores(scores: list[float]) -> float:
+              total: float = 0
               for score in scores:
                   total += score
               return total / len(scores)
 
-          def main():
-              raw = [
+          def main() -> float:
+              raw: list[tuple[str, list[int]]] = [
                   ("Ada", [95, 88, 92]),
                   ("Linus", [72, 81, 78]),
                   ("Grace", [98, 95, 91]),
                   ("Alan", [-3, 55, 70]),     # negative — used by §4
                   ("Margaret", [85, 89, 87]),
               ]
-              scores = []
+              scores: list[float] = []
               for name, raw_scores in raw:
                   score = compute_score(raw_scores)
                   scores.append(score)
@@ -521,19 +525,21 @@ steps:
   # ===========================================================================
   - title: "Case 1 — Maze Pathfinder (Boundary Bug)"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
+
+      > 📋 **Open `debugging_log.md` and fill each field as you work.** The first time, the log carries you stage by stage. Cases 2 and 3 fade this scaffolding — by Case 3 you'll name three of the stages yourself. Committing each stage to writing is the difference between *thinking* the cycle and *doing* the cycle.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Boundary bugs — off-by-one in `range`, slice indices, comparison operators, loop sentinels — are the most common shape of algorithmic bug, and they hide in plain sight because nine of ten test cases pass. This case forces the discipline you just learned (the 7-stage cycle) onto a recursive boundary bug, so the cycle has to handle a real call stack before you internalize it.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply the full 7-stage cycle to a recursive boundary bug, writing each stage in the debugging log.
       - Analyze recursive execution by walking the Call Stack tab to read frame-by-frame state.
       - Evaluate which of two adjacent `if` checks is the *first divergence* between intended and actual behavior.
 
-      > 🎯 **Goal:** A maze has a valid 10-step path from `S` to `G`, but the pathfinder returns `None` when called with `max_steps=10`. Find why.
-
-      > 📋 **Open `debugging_log.md` and fill each field as you work.** The first time, the log carries you stage by stage. Cases 2 and 3 fade this scaffolding — by Case 3 you'll name three of the stages yourself. Committing each stage to writing is the difference between *thinking* the cycle and *doing* the cycle.
+      </details>
 
       ### 📂 What you have
 
@@ -605,7 +611,7 @@ steps:
 
       Edit `_dfs` so the goal check runs **before** the cutoff check.
 
-      ### 🪞 Reflect — before you verify
+      <details markdown="1"><summary>🪞 Reflect — before you verify</summary>
 
       **Bug family:** Off-by-one boundaries hide in `range`, slice indices, comparison operators, loop sentinels, array bounds. Name one place in your own code where this exact shape could appear.
 
@@ -614,6 +620,8 @@ steps:
       *If it was Predict:* recursive code is hard to predict because you'd need to mentally simulate the whole call stack. The debugger's Call Stack tab is built for exactly that gap.
 
       *If it was Hypothesis:* the schema that helped was "which check does what when." That schema transfers to every boundary bug you'll meet.
+
+      </details>
 
       ### 8. Verify
 
@@ -626,7 +634,7 @@ steps:
           # Mazes used by the pathfinder case.
 
           # Shortest valid path from S to G is exactly 10 steps.
-          BATTERY_LIMIT_MAZE = [
+          BATTERY_LIMIT_MAZE: list[str] = [
               "#########",
               "#S..#..G#",
               "#.#.#.#.#",
@@ -637,7 +645,7 @@ steps:
           ]
 
           # Sanity maze whose shortest path is 2 steps.
-          TINY_MAZE = [
+          TINY_MAZE: list[str] = [
               "#####",
               "#S.G#",
               "#####",
@@ -648,7 +656,13 @@ steps:
         content: |
           """Depth-first maze pathfinder."""
 
-          def find_marker(maze, marker):
+          from collections.abc import Iterator
+
+          Position = tuple[int, int]
+          Maze = list[str]
+
+
+          def find_marker(maze: Maze, marker: str) -> Position:
               for row_index, row in enumerate(maze):
                   col_index = row.find(marker)
                   if col_index != -1:
@@ -656,12 +670,12 @@ steps:
               raise ValueError(f"marker {marker!r} not found")
 
 
-          def is_open(maze, position):
+          def is_open(maze: Maze, position: Position) -> bool:
               row, col = position
               return maze[row][col] != "#"
 
 
-          def neighbors(maze, position):
+          def neighbors(maze: Maze, position: Position) -> Iterator[Position]:
               """Yield neighbors in a deterministic order so traces are repeatable."""
               row, col = position
               for next_position in [
@@ -674,7 +688,7 @@ steps:
                       yield next_position
 
 
-          def find_path(maze, max_steps):
+          def find_path(maze: Maze, max_steps: int) -> list[Position] | None:
               """Return a path from S to G using at most max_steps moves.
 
               A path includes both the start and goal positions, so:
@@ -692,7 +706,14 @@ steps:
               )
 
 
-          def _dfs(maze, current, goal, max_steps, path, seen):
+          def _dfs(
+              maze: Maze,
+              current: Position,
+              goal: Position,
+              max_steps: int,
+              path: list[Position],
+              seen: set[Position],
+          ) -> list[Position] | None:
               steps_used = len(path) - 1
 
               # Stop searching when the path has used the available battery budget.
@@ -722,18 +743,18 @@ steps:
           from pathfinder import find_path
 
 
-          def test_tiny_maze_found_with_extra_budget():
+          def test_tiny_maze_found_with_extra_budget() -> None:
               path = find_path(TINY_MAZE, max_steps=3)
               assert path is not None
               assert len(path) - 1 == 2
 
 
-          def test_path_rejected_when_battery_too_small():
+          def test_path_rejected_when_battery_too_small() -> None:
               path = find_path(BATTERY_LIMIT_MAZE, max_steps=9)
               assert path is None
 
 
-          def test_path_found_when_battery_limit_is_exact():
+          def test_path_found_when_battery_limit_is_exact() -> None:
               path = find_path(BATTERY_LIMIT_MAZE, max_steps=10)
               assert path is not None, "A 10-step path exists and should be accepted."
               assert len(path) - 1 == 10
@@ -763,7 +784,13 @@ steps:
           content: |
             """Depth-first maze pathfinder — boundary bug fixed."""
 
-            def find_marker(maze, marker):
+            from collections.abc import Iterator
+
+            Position = tuple[int, int]
+            Maze = list[str]
+
+
+            def find_marker(maze: Maze, marker: str) -> Position:
                 for row_index, row in enumerate(maze):
                     col_index = row.find(marker)
                     if col_index != -1:
@@ -771,12 +798,12 @@ steps:
                 raise ValueError(f"marker {marker!r} not found")
 
 
-            def is_open(maze, position):
+            def is_open(maze: Maze, position: Position) -> bool:
                 row, col = position
                 return maze[row][col] != "#"
 
 
-            def neighbors(maze, position):
+            def neighbors(maze: Maze, position: Position) -> Iterator[Position]:
                 row, col = position
                 for next_position in [
                     (row, col + 1),
@@ -788,7 +815,7 @@ steps:
                         yield next_position
 
 
-            def find_path(maze, max_steps):
+            def find_path(maze: Maze, max_steps: int) -> list[Position] | None:
                 start = find_marker(maze, "S")
                 goal = find_marker(maze, "G")
                 return _dfs(
@@ -801,7 +828,14 @@ steps:
                 )
 
 
-            def _dfs(maze, current, goal, max_steps, path, seen):
+            def _dfs(
+                maze: Maze,
+                current: Position,
+                goal: Position,
+                max_steps: int,
+                path: list[Position],
+                seen: set[Position],
+            ) -> list[Position] | None:
                 steps_used = len(path) - 1
 
                 # Goal check FIRST — reaching the goal is terminal and valid
@@ -959,19 +993,21 @@ steps:
   # ===========================================================================
   - title: "Case 2 — Ledger Reconciliation (Data Representation Bug)"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
+
+      > 📋 **Keep filling `debugging_log.md`.** Fields are now name-only — refer to Case 1's log if you need the per-stage prompts. Writing forces commitment; commitment is what makes the cycle yours.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Data-representation bugs — hidden whitespace, mixed encodings, silent type coercions — are a different family from algorithmic bugs. The algorithm is correct; the data is carrying something invisible. The forward-stepping technique you used in Case 1 doesn't scale to 30 transactions, and your eyes won't catch a leading space. This case introduces two new moves (conditional breakpoints, `repr()`) that are nearly free once you know to reach for them.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply conditional breakpoints to filter a long input stream down to the suspicious case.
       - Analyze a value with `repr()` to surface invisible characters that `print()` hides.
       - Evaluate where a normalization fix belongs — at the load boundary, not at the consumer.
 
-      > 🎯 **Goal:** A campus debit-card system imports 30 transactions and one account is $36.00 wrong at month end. The technique you've used so far (single breakpoint + step) would force you to step through every transaction. Don't.
-
-      > 📋 **Keep filling `debugging_log.md`.** Fields are now name-only — refer to Case 1's log if you need the per-stage prompts. Writing forces commitment; commitment is what makes the cycle yours.
+      </details>
 
       > 🔀 **Before you start:** Case 1 had a bug you could trace by reading two `if` checks in one function. Is that true here? Spend 30 seconds predicting: what *kind* of thing is wrong, and what will the evidence-collection move look like?
       >
@@ -1061,11 +1097,13 @@ steps:
 
       The right fix is **the smallest change in the right place**.
 
-      ### 🪞 Reflect — before you verify
+      <details markdown="1"><summary>🪞 Reflect — before you verify</summary>
 
       **Bug family:** Hidden-character bugs hide in CSV imports, copy-pasted strings, JSON keys, environment variables, log lines, command-line args. Name one place where `repr()` would surface something `print()` hides.
 
       **What `repr()` changed:** Did it change the Evidence step for you (you saw the space you wouldn't have seen), the Localize step (it told you exactly which field), or both? Write one sentence explaining *why* `print()` would have missed it.
+
+      </details>
 
       ### 9. Verify
 
@@ -1084,7 +1122,7 @@ steps:
 
           logger = logging.getLogger(__name__)
 
-          VALID_KINDS = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
+          VALID_KINDS: set[str] = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
 
 
           @dataclass(frozen=True)
@@ -1095,13 +1133,13 @@ steps:
               amount_cents: int
 
 
-          def parse_money(text):
+          def parse_money(text: str) -> int:
               """Convert a dollars-and-cents string to integer cents."""
               return int(Decimal(text) * 100)
 
 
-          def load_transactions(path):
-              transactions = []
+          def load_transactions(path: str) -> list[Transaction]:
+              transactions: list[Transaction] = []
               with open(path, newline="", encoding="utf-8") as csv_file:
                   reader = csv.DictReader(csv_file)
                   for row in reader:
@@ -1116,7 +1154,7 @@ steps:
               return transactions
 
 
-          def apply_transaction(balances, tx):
+          def apply_transaction(balances: dict[str, int], tx: Transaction) -> None:
               before = balances.get(tx.account, 0)
 
               if tx.kind == "DEPOSIT":
@@ -1138,8 +1176,8 @@ steps:
               balances[tx.account] = after
 
 
-          def reconcile(transactions):
-              balances = {}
+          def reconcile(transactions: list[Transaction]) -> dict[str, int]:
+              balances: dict[str, int] = {}
               for tx in transactions:
                   apply_transaction(balances, tx)
               return balances
@@ -1185,7 +1223,7 @@ steps:
           from ledger import load_transactions, reconcile
 
 
-          def test_month_end_balances():
+          def test_month_end_balances() -> None:
               transactions = load_transactions('/tutorial/transactions.csv')
               balances = reconcile(transactions)
               assert balances == {
@@ -1196,7 +1234,7 @@ steps:
               }
 
 
-          def test_transaction_types_are_valid_after_loading():
+          def test_transaction_types_are_valid_after_loading() -> None:
               transactions = load_transactions('/tutorial/transactions.csv')
               kinds = {tx.kind for tx in transactions}
               assert kinds <= {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}, \
@@ -1234,7 +1272,7 @@ steps:
 
             logger = logging.getLogger(__name__)
 
-            VALID_KINDS = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
+            VALID_KINDS: set[str] = {"DEPOSIT", "WITHDRAWAL", "REFUND", "REVERSAL", "FEE"}
 
 
             @dataclass(frozen=True)
@@ -1245,12 +1283,12 @@ steps:
                 amount_cents: int
 
 
-            def parse_money(text):
+            def parse_money(text: str) -> int:
                 return int(Decimal(text) * 100)
 
 
-            def load_transactions(path):
-                transactions = []
+            def load_transactions(path: str) -> list[Transaction]:
+                transactions: list[Transaction] = []
                 with open(path, newline="", encoding="utf-8") as csv_file:
                     reader = csv.DictReader(csv_file)
                     for row in reader:
@@ -1265,7 +1303,7 @@ steps:
                 return transactions
 
 
-            def apply_transaction(balances, tx):
+            def apply_transaction(balances: dict[str, int], tx: Transaction) -> None:
                 before = balances.get(tx.account, 0)
 
                 if tx.kind == "DEPOSIT":
@@ -1284,8 +1322,8 @@ steps:
                 balances[tx.account] = after
 
 
-            def reconcile(transactions):
-                balances = {}
+            def reconcile(transactions: list[Transaction]) -> dict[str, int]:
+                balances: dict[str, int] = {}
                 for tx in transactions:
                     apply_transaction(balances, tx)
                 return balances
@@ -1306,7 +1344,7 @@ steps:
         Validate at load time:
 
         ```python
-        kind = row["type"].strip().upper()
+        kind: str = row["type"].strip().upper()
         if kind not in VALID_KINDS:
             raise ValueError(f"unknown transaction kind {kind!r} in row {row['id']}")
         ```
@@ -1468,19 +1506,21 @@ steps:
   # ===========================================================================
   - title: "Backward Tour — Time-Travel Drill"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** Drill the *backward* moves. Stepping forward through code is the default; rewinding from a final state to find when something *first* changed is a different motor pattern. There's no bug — `counter.py` runs correctly.
+
+      Click **Debug** to start.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Stepping forward is the default; rewinding from a known-wrong final state to find when it *first* appeared is a separate motor pattern that takes deliberate practice. Case 3 will demand exactly this move on a real bug — but learning the move during the bug hunt mixes two hard things at once. Drilling the four scrubber moves on correct code now isolates the skill so Case 3 can focus on the bug, not the tool.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply the four scrubber moves: anchor, single-tick rewind, jump-to-tick, scrub-until-predicate.
       - Analyze a recorded execution history by reading the Variables tab as you scrub.
       - Evaluate when backward localization beats forward stepping (symptom-far-from-cause bugs).
 
-      > 🎯 **Goal:** Drill the *backward* moves. Stepping forward through code is the default; rewinding from a final state to find when something *first* changed is a different motor pattern. There's no bug — `counter.py` runs correctly.
-
-      Click **Debug** to start.
+      </details>
 
       ### 1. *"What was the final state?"* → Run to completion, then anchor
 
@@ -1514,7 +1554,7 @@ steps:
 
       Drag the scrubber all the way to the right. The arrow gutter returns to its normal color — you're back at "live" execution. Edits will run from this point if you make any.
 
-      ### 🪞 Reflect
+      <details markdown="1"><summary>🪞 Reflect</summary>
 
       From memory, name the four scrubber moves:
 
@@ -1525,6 +1565,8 @@ steps:
 
       The shape is always: **anchor on a known state, walk backward to find when it first appeared.**
 
+      </details>
+
     files:
       - path: "counter.py"
         language: "python"
@@ -1534,7 +1576,12 @@ steps:
           # A tiny event-driven counter. Each event modifies `count`.
           # `history` records (event_name, count_after_event) for every step.
 
-          def apply_event(state, event):
+          from typing import Any
+
+          CounterState = dict[str, Any]
+
+
+          def apply_event(state: CounterState, event: str) -> None:
               if event == "inc":
                   state["count"] += 1
               elif event == "dec":
@@ -1550,9 +1597,9 @@ steps:
               state["history"].append((event, state["count"]))
 
 
-          def main():
-              state = {"count": 1, "history": []}
-              events = ["inc", "double", "neg", "double", "inc", "reset", "inc", "inc"]
+          def main() -> CounterState:
+              state: CounterState = {"count": 1, "history": []}
+              events: list[str] = ["inc", "double", "neg", "double", "inc", "reset", "inc", "inc"]
               for event in events:
                   apply_event(state, event)
               return state
@@ -1638,19 +1685,21 @@ steps:
   # ===========================================================================
   - title: "Case 3 — Course Waitlist (Temporal Bug)"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
+
+      > 📋 **`debugging_log.md` — three stages are now unlabeled.** Name them yourself before filling them in. Naming the stage you're in is the move that keeps the cycle from collapsing into tinkering.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Some bugs separate cause from symptom in *time*: a wrong decision happens early, the visible failure appears events later, and stepping forward forces you to inspect correct state for ages before anything looks wrong. This is what the time-travel debugger is built for — anchor on the wrong final state and rewind to the first divergence. Case 3 demands the backward-localization move you drilled in Step 5, on a real bug where forward stepping would waste the most attention.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply the anchor-and-rewind technique to find the first wrong state transition in an event stream.
       - Analyze a temporal bug whose symptom appears events after the cause.
       - Evaluate two correct fixes (`pop(0)` vs `deque.popleft()`) on intent, cost, and disruption.
 
-      > 🎯 **Goal:** A course-registration simulator processes 9 events and ends in a wrong state. The visible symptom appears *several events after* the event that caused it. Find the **first** bad state transition, not just the final wrong state.
-
-      > 📋 **`debugging_log.md` — three stages are now unlabeled.** Name them yourself before filling them in. Naming the stage you're in is the move that keeps the cycle from collapsing into tinkering.
+      </details>
 
       > 🔀 **Before you start:** In Cases 1 and 2, you could find the bug by reaching one specific line with a breakpoint. Will that work here? Spend 30 seconds predicting: what *kind* of thing might be wrong, and will a single well-placed breakpoint be enough to find it?
       >
@@ -1733,11 +1782,13 @@ steps:
 
       Criteria to weigh: communicates intent / asymptotic cost / disruption to surrounding code. There's no single right answer; the *justified* choice is what matters.
 
-      ### 🪞 Reflect — before you verify
+      <details markdown="1"><summary>🪞 Reflect — before you verify</summary>
 
       **Bug family:** Symptom-far-from-cause bugs hide in caches that go stale events ago, message queues processed out of order, undo/redo stacks, optimistic UI updates. Name one place where the wrong final state would have been easier to find by stepping *backward* than forward.
 
       **Did you try stepping forward first?** If so, at what point did you decide to switch direction? That decision point is worth naming — it's the diagnostic cue that says "this is a temporal bug."
+
+      </details>
 
       ### 8. Verify
 
@@ -1755,11 +1806,11 @@ steps:
           @dataclass
           class CourseState:
               capacity: int
-              enrolled: list = field(default_factory=list)
-              waitlist: list = field(default_factory=list)
+              enrolled: list[str] = field(default_factory=list)
+              waitlist: list[str] = field(default_factory=list)
 
               @property
-              def open_seats(self):
+              def open_seats(self) -> int:
                   return self.capacity - len(self.enrolled)
 
 
@@ -1768,17 +1819,17 @@ steps:
               step: int
               kind: str
               course: str
-              student: str = None
+              student: str | None = None
 
 
-          def initial_state():
+          def initial_state() -> dict[str, CourseState]:
               return {
                   "CS201": CourseState(capacity=2, enrolled=["Ava Chen", "Ben Ortiz"]),
                   "MATH220": CourseState(capacity=1, enrolled=["Iris Long"]),
               }
 
 
-          def sample_events():
+          def sample_events() -> list[Event]:
               """Reproducible event stream.
 
               CS201 policy: students should be admitted from the waitlist in FIFO order.
@@ -1796,7 +1847,7 @@ steps:
               ]
 
 
-          def apply_event(state, event):
+          def apply_event(state: dict[str, CourseState], event: Event) -> None:
               course = state[event.course]
               if event.kind == "join_waitlist":
                   _handle_join(course, event.student)
@@ -1806,7 +1857,7 @@ steps:
                   raise ValueError(f"unknown event kind {event.kind!r}")
 
 
-          def _handle_join(course, student):
+          def _handle_join(course: CourseState, student: str | None) -> None:
               if student in course.enrolled or student in course.waitlist:
                   raise ValueError(f"duplicate student in course state: {student}")
 
@@ -1816,7 +1867,7 @@ steps:
                   course.waitlist.append(student)
 
 
-          def _handle_drop(course_name, course, student):
+          def _handle_drop(course_name: str, course: CourseState, student: str | None) -> None:
               if student in course.enrolled:
                   course.enrolled.remove(student)
                   allocate_next(course_name, course)
@@ -1824,14 +1875,17 @@ steps:
                   course.waitlist.remove(student)
 
 
-          def allocate_next(course_name, course):
+          def allocate_next(course_name: str, course: CourseState) -> None:
               """Fill open seats from the waitlist."""
               while course.open_seats > 0 and course.waitlist:
                   next_student = course.waitlist.pop()
                   course.enrolled.append(next_student)
 
 
-          def run_events(events=None, state=None):
+          def run_events(
+              events: list[Event] | None = None,
+              state: dict[str, CourseState] | None = None,
+          ) -> dict[str, CourseState]:
               if state is None:
                   state = initial_state()
               if events is None:
@@ -1846,14 +1900,14 @@ steps:
           from waitlist import run_events
 
 
-          def test_cs201_waitlist_is_fifo():
+          def test_cs201_waitlist_is_fifo() -> None:
               state = run_events()
               cs201 = state["CS201"]
               assert cs201.enrolled == ["Mina Patel", "Theo Rios"]
               assert cs201.waitlist == ["Jules Kim", "Kai Morgan", "Sam Lee"]
 
 
-          def test_math220_single_waitlisted_student_gets_open_seat():
+          def test_math220_single_waitlisted_student_gets_open_seat() -> None:
               state = run_events()
               math220 = state["MATH220"]
               assert math220.enrolled == ["Noor Ali"]
@@ -1897,11 +1951,11 @@ steps:
             @dataclass
             class CourseState:
                 capacity: int
-                enrolled: list = field(default_factory=list)
-                waitlist: list = field(default_factory=list)
+                enrolled: list[str] = field(default_factory=list)
+                waitlist: list[str] = field(default_factory=list)
 
                 @property
-                def open_seats(self):
+                def open_seats(self) -> int:
                     return self.capacity - len(self.enrolled)
 
 
@@ -1910,17 +1964,17 @@ steps:
                 step: int
                 kind: str
                 course: str
-                student: str = None
+                student: str | None = None
 
 
-            def initial_state():
+            def initial_state() -> dict[str, CourseState]:
                 return {
                     "CS201": CourseState(capacity=2, enrolled=["Ava Chen", "Ben Ortiz"]),
                     "MATH220": CourseState(capacity=1, enrolled=["Iris Long"]),
                 }
 
 
-            def sample_events():
+            def sample_events() -> list[Event]:
                 return [
                     Event(1, "join_waitlist", "CS201", "Mina Patel"),
                     Event(2, "join_waitlist", "CS201", "Theo Rios"),
@@ -1934,7 +1988,7 @@ steps:
                 ]
 
 
-            def apply_event(state, event):
+            def apply_event(state: dict[str, CourseState], event: Event) -> None:
                 course = state[event.course]
                 if event.kind == "join_waitlist":
                     _handle_join(course, event.student)
@@ -1944,7 +1998,7 @@ steps:
                     raise ValueError(f"unknown event kind {event.kind!r}")
 
 
-            def _handle_join(course, student):
+            def _handle_join(course: CourseState, student: str | None) -> None:
                 if student in course.enrolled or student in course.waitlist:
                     raise ValueError(f"duplicate student in course state: {student}")
 
@@ -1954,7 +2008,7 @@ steps:
                     course.waitlist.append(student)
 
 
-            def _handle_drop(course_name, course, student):
+            def _handle_drop(course_name: str, course: CourseState, student: str | None) -> None:
                 if student in course.enrolled:
                     course.enrolled.remove(student)
                     allocate_next(course_name, course)
@@ -1962,14 +2016,17 @@ steps:
                     course.waitlist.remove(student)
 
 
-            def allocate_next(course_name, course):
+            def allocate_next(course_name: str, course: CourseState) -> None:
                 """Fill open seats from the waitlist (FIFO)."""
                 while course.open_seats > 0 and course.waitlist:
                     next_student = course.waitlist.pop(0)
                     course.enrolled.append(next_student)
 
 
-            def run_events(events=None, state=None):
+            def run_events(
+                events: list[Event] | None = None,
+                state: dict[str, CourseState] | None = None,
+            ) -> dict[str, CourseState]:
                 if state is None:
                     state = initial_state()
                 if events is None:
@@ -2163,17 +2220,19 @@ steps:
   # ===========================================================================
   - title: "Case 4 — Event-Driven Checkout (Sequence Diagram)"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** A checkout service correctly raises `OutOfStockError` for an out-of-stock cart, but the warehouse still receives a pick ticket. The bug is in event-bus wiring, not in any one method body. Use the **Sequence Diagram** panel — it makes the runtime call order visible.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       In event-driven and pub/sub systems, no single function body is wrong — the bug lives in *which handler subscribes to which topic*. Source-reading one file is genuinely insufficient because the code that produces the symptom is never directly called by the code that triggers it. The Sequence Diagram panel linearizes the runtime call order across files and makes wiring bugs visible at a glance, which is the only practical way to localize them.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Apply sequence-diagram reading to localize a wiring/protocol bug across an event bus.
       - Analyze the runtime call order to find the first arrow that violates the intended protocol.
       - Evaluate two candidate fixes by which one addresses the *cause* vs which only treats the symptom.
 
-      > 🎯 **Goal:** A checkout service correctly raises `OutOfStockError` for an out-of-stock cart, but the warehouse still receives a pick ticket. The bug is in event-bus wiring, not in any one method body. Use the **Sequence Diagram** panel — it makes the runtime call order visible.
+      </details>
 
       > 🔀 **Before you start:** In Cases 1–3, you could trace the bug by reaching the right function with a breakpoint. Will that approach work here — where the symptom is a side effect that "shouldn't" exist? Predict: what new kind of tool might be needed?
       >
@@ -2285,11 +2344,13 @@ steps:
 
       Change the topic for the fulfillment registration from `EventKind.PAYMENT_AUTHORIZED` to `EventKind.INVENTORY_RESERVED`. **One identifier.** Don't add defensive checks inside `prepare_pick_ticket` — the wiring is the right layer to fix.
 
-      ### 🪞 Reflect — before you verify
+      <details markdown="1"><summary>🪞 Reflect — before you verify</summary>
 
       **Bug family:** Wiring/protocol bugs hide in event buses, plugin systems, dependency injection containers, middleware pipelines, route tables, message queues, observer hooks. Name one place where the bug *could not* be found by reading any single function — only by tracing the runtime story.
 
       **Which file did you instinctively open first?** Was it `checkout_service.py`? If so, what made you realize that wasn't the right place — and what was the signal that pointed you to `workflow_config.py`?
+
+      </details>
 
       ### 11. Verify — and reread the diagram
 
@@ -2344,7 +2405,7 @@ steps:
           class CheckoutRequest:
               customer_id: str
               cart_id: str
-              items: tuple
+              items: tuple[LineItem, ...]
               coupon_code: str | None = None
 
 
@@ -2352,7 +2413,7 @@ steps:
           class OrderDraft:
               order_id: str
               customer_id: str
-              items: tuple
+              items: tuple[LineItem, ...]
               amount_cents: int
 
 
@@ -2367,7 +2428,7 @@ steps:
           class InventoryReservation:
               order_id: str
               reservation_id: str
-              items: tuple
+              items: tuple[LineItem, ...]
 
 
           @dataclass(frozen=True)
@@ -2400,10 +2461,10 @@ steps:
 
 
           class Catalog:
-              def __init__(self, prices_cents):
-                  self._prices_cents = dict(prices_cents)
+              def __init__(self, prices_cents: dict[str, int]) -> None:
+                  self._prices_cents: dict[str, int] = dict(prices_cents)
 
-              def price_items(self, items):
+              def price_items(self, items: tuple[LineItem, ...]) -> int:
                   total = 0
                   for item in items:
                       total += self._prices_cents[item.sku] * item.qty
@@ -2418,10 +2479,10 @@ steps:
           class PromotionEngine:
               """Discounts. Not the bug in this case — present to add realistic clutter."""
 
-              def __init__(self, coupons):
-                  self._coupons = dict(coupons)
+              def __init__(self, coupons: dict[str, int]) -> None:
+                  self._coupons: dict[str, int] = dict(coupons)
 
-              def apply_coupon(self, amount_cents, coupon_code):
+              def apply_coupon(self, amount_cents: int, coupon_code: str | None) -> int:
                   if not coupon_code:
                       return amount_cents
                   discount = self._coupons.get(coupon_code, 0)
@@ -2436,11 +2497,11 @@ steps:
 
 
           class PaymentGateway:
-              def __init__(self):
-                  self._next_number = 7000
-                  self.captured_authorizations = []
+              def __init__(self) -> None:
+                  self._next_number: int = 7000
+                  self.captured_authorizations: list[str] = []
 
-              def authorize(self, order_id, amount_cents):
+              def authorize(self, order_id: str, amount_cents: int) -> PaymentAuthorization:
                   self._next_number += 1
                   return PaymentAuthorization(
                       order_id=order_id,
@@ -2448,7 +2509,7 @@ steps:
                       amount_cents=amount_cents,
                   )
 
-              def capture(self, authorization):
+              def capture(self, authorization: PaymentAuthorization) -> None:
                   self.captured_authorizations.append(authorization.authorization_id)
 
       - path: "checkout_app/inventory.py"
@@ -2456,16 +2517,16 @@ steps:
         content: |
           from __future__ import annotations
 
-          from .models import InventoryReservation, OutOfStockError
+          from .models import InventoryReservation, LineItem, OutOfStockError
 
 
           class InventoryService:
-              def __init__(self, stock_by_sku):
-                  self._stock_by_sku = dict(stock_by_sku)
-                  self._reservation_number = 300
+              def __init__(self, stock_by_sku: dict[str, int]) -> None:
+                  self._stock_by_sku: dict[str, int] = dict(stock_by_sku)
+                  self._reservation_number: int = 300
 
-              def reserve(self, order_id, items):
-                  shortages = []
+              def reserve(self, order_id: str, items: tuple[LineItem, ...]) -> InventoryReservation:
+                  shortages: list[str] = []
                   for item in items:
                       available = self._stock_by_sku.get(item.sku, 0)
                       if available < item.qty:
@@ -2482,7 +2543,7 @@ steps:
                       items=items,
                   )
 
-              def snapshot(self):
+              def snapshot(self) -> dict[str, int]:
                   return dict(self._stock_by_sku)
 
       - path: "checkout_app/shipping.py"
@@ -2492,7 +2553,7 @@ steps:
 
           from dataclasses import dataclass
 
-          from .models import EventKind, InventoryReservation, PaymentAuthorization
+          from .models import DomainEvent, EventKind, InventoryReservation, PaymentAuthorization
 
 
           @dataclass(frozen=True)
@@ -2503,26 +2564,26 @@ steps:
 
 
           class ShippingQueue:
-              def __init__(self):
-                  self._tickets = []
+              def __init__(self) -> None:
+                  self._tickets: list[PickTicket] = []
 
-              def enqueue(self, ticket):
+              def enqueue(self, ticket: PickTicket) -> None:
                   self._tickets.append(ticket)
 
-              def pending_order_ids(self):
+              def pending_order_ids(self) -> list[str]:
                   return [ticket.order_id for ticket in self._tickets]
 
-              def tickets(self):
+              def tickets(self) -> list[PickTicket]:
                   return list(self._tickets)
 
 
           class FulfillmentScheduler:
               """Owns the side effect of placing an order on the warehouse pick queue."""
 
-              def __init__(self, queue):
-                  self._queue = queue
+              def __init__(self, queue: ShippingQueue) -> None:
+                  self._queue: ShippingQueue = queue
 
-              def prepare_pick_ticket(self, event):
+              def prepare_pick_ticket(self, event: DomainEvent) -> None:
                   payload = event.payload
                   if isinstance(payload, InventoryReservation):
                       note = f"reservation {payload.reservation_id} completed"
@@ -2540,18 +2601,20 @@ steps:
         content: |
           from __future__ import annotations
 
+          from .models import DomainEvent
+
 
           class CustomerNotifier:
-              def __init__(self):
-                  self.sent_messages = []
+              def __init__(self) -> None:
+                  self.sent_messages: list[str] = []
 
-              def send_payment_hold_email(self, event):
+              def send_payment_hold_email(self, event: DomainEvent) -> None:
                   self.sent_messages.append(f"Payment hold created for {event.order_id}")
 
-              def send_confirmation_email(self, event):
+              def send_confirmation_email(self, event: DomainEvent) -> None:
                   self.sent_messages.append(f"Confirmed {event.order_id}")
 
-              def send_rejection_email(self, event):
+              def send_rejection_email(self, event: DomainEvent) -> None:
                   self.sent_messages.append(f"Rejected {event.order_id}")
 
       - path: "checkout_app/audit.py"
@@ -2559,12 +2622,14 @@ steps:
         content: |
           from __future__ import annotations
 
+          from .models import DomainEvent
+
 
           class AuditTrail:
-              def __init__(self):
-                  self.entries = []
+              def __init__(self) -> None:
+                  self.entries: list[str] = []
 
-              def record(self, event):
+              def record(self, event: DomainEvent) -> None:
                   self.entries.append(f"{event.kind.value}:{event.order_id}")
 
       - path: "checkout_app/event_bus.py"
@@ -2575,7 +2640,7 @@ steps:
           from collections import defaultdict
           from dataclasses import dataclass
 
-          from .models import EventHandler, EventKind
+          from .models import DomainEvent, EventHandler, EventKind
 
 
           @dataclass(frozen=True)
@@ -2594,25 +2659,25 @@ steps:
               diagram than in the orchestrator source.
               """
 
-              def __init__(self):
-                  self._handlers_by_topic = defaultdict(list)
-                  self._recent_events = []
+              def __init__(self) -> None:
+                  self._handlers_by_topic: dict[EventKind, list[HandlerRegistration]] = defaultdict(list)
+                  self._recent_events: list[DomainEvent] = []
 
-              def install(self, registrations):
+              def install(self, registrations: list[HandlerRegistration]) -> None:
                   for registration in registrations:
                       if registration.enabled:
                           self._handlers_by_topic[registration.topic].append(registration)
 
-              def publish(self, event):
+              def publish(self, event: DomainEvent) -> None:
                   self._recent_events.append(event)
                   registrations = list(self._handlers_by_topic.get(event.kind, []))
                   for registration in registrations:
                       self._deliver(event, registration)
 
-              def _deliver(self, event, registration):
+              def _deliver(self, event: DomainEvent, registration: HandlerRegistration) -> None:
                   registration.handler(event)
 
-              def recent_event_kinds(self):
+              def recent_event_kinds(self) -> list[EventKind]:
                   return [event.kind for event in self._recent_events]
 
       - path: "checkout_app/workflow_config.py"
@@ -2620,8 +2685,11 @@ steps:
         content: |
           from __future__ import annotations
 
+          from .audit import AuditTrail
           from .event_bus import HandlerRegistration
           from .models import EventKind
+          from .notifications import CustomerNotifier
+          from .shipping import FulfillmentScheduler
 
 
           class WorkflowConfig:
@@ -2632,7 +2700,11 @@ steps:
               """
 
               @staticmethod
-              def registrations(audit, notifier, fulfillment):
+              def registrations(
+                  audit: AuditTrail,
+                  notifier: CustomerNotifier,
+                  fulfillment: FulfillmentScheduler,
+              ) -> list[HandlerRegistration]:
                   return [
                       HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, audit.record, "audit payment"),
                       HandlerRegistration(EventKind.INVENTORY_RESERVED, audit.record, "audit inventory"),
@@ -2649,27 +2721,40 @@ steps:
         content: |
           from __future__ import annotations
 
+          from .catalog import Catalog
+          from .event_bus import EventBus
+          from .inventory import InventoryService
           from .models import (
               CheckoutReceipt,
+              CheckoutRequest,
               DomainEvent,
               EventKind,
               OrderDraft,
               OutOfStockError,
           )
+          from .payment import PaymentGateway
+          from .promotions import PromotionEngine
 
 
           class CheckoutService:
               """Coordinates payment, inventory, event publication, and receipts."""
 
-              def __init__(self, catalog, promotions, payment_gateway, inventory, bus):
-                  self._catalog = catalog
-                  self._promotions = promotions
-                  self._payment_gateway = payment_gateway
-                  self._inventory = inventory
-                  self._bus = bus
-                  self._next_order_number = 1000
+              def __init__(
+                  self,
+                  catalog: Catalog,
+                  promotions: PromotionEngine,
+                  payment_gateway: PaymentGateway,
+                  inventory: InventoryService,
+                  bus: EventBus,
+              ) -> None:
+                  self._catalog: Catalog = catalog
+                  self._promotions: PromotionEngine = promotions
+                  self._payment_gateway: PaymentGateway = payment_gateway
+                  self._inventory: InventoryService = inventory
+                  self._bus: EventBus = bus
+                  self._next_order_number: int = 1000
 
-              def checkout(self, request):
+              def checkout(self, request: CheckoutRequest) -> CheckoutReceipt:
                   order = self._create_order_draft(request)
                   authorization = self._payment_gateway.authorize(order.order_id, order.amount_cents)
                   self._bus.publish(DomainEvent(EventKind.PAYMENT_AUTHORIZED, order.order_id, authorization))
@@ -2690,7 +2775,7 @@ steps:
                       reservation_id=reservation.reservation_id,
                   )
 
-              def _create_order_draft(self, request):
+              def _create_order_draft(self, request: CheckoutRequest) -> OrderDraft:
                   self._next_order_number += 1
                   amount = self._catalog.price_items(request.items)
                   amount = self._promotions.apply_coupon(amount, request.coupon_code)
@@ -2731,7 +2816,7 @@ steps:
               payment_gateway: PaymentGateway
 
 
-          def build_app(stock_by_sku=None):
+          def build_app(stock_by_sku: dict[str, int] | None = None) -> CheckoutApp:
               catalog = Catalog({"USB-CABLE": 1299, "LAPTOP-STAND": 4200, "NOISE-CANCEL-CASE": 1800})
               promotions = PromotionEngine({"TENOFF": 1000, "FREESHIP": 500})
               payment_gateway = PaymentGateway()
@@ -2815,7 +2900,7 @@ steps:
           from checkout_app.models import CheckoutRequest, LineItem, OutOfStockError
 
 
-          def test_out_of_stock_order_is_not_sent_to_warehouse():
+          def test_out_of_stock_order_is_not_sent_to_warehouse() -> None:
               app = build_app(stock_by_sku={"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 0})
               request = CheckoutRequest(
                   customer_id="student-42",
@@ -2830,7 +2915,7 @@ steps:
               assert app.shipping_queue.pending_order_ids() == []
 
 
-          def test_in_stock_order_is_confirmed_and_queued_once():
+          def test_in_stock_order_is_confirmed_and_queued_once() -> None:
               app = build_app(stock_by_sku={"USB-CABLE": 5, "LAPTOP-STAND": 3, "NOISE-CANCEL-CASE": 2})
               request = CheckoutRequest(
                   customer_id="student-42",
@@ -2854,15 +2939,22 @@ steps:
           content: |
             from __future__ import annotations
 
+            from .audit import AuditTrail
             from .event_bus import HandlerRegistration
             from .models import EventKind
+            from .notifications import CustomerNotifier
+            from .shipping import FulfillmentScheduler
 
 
             class WorkflowConfig:
                 """Centralized event wiring — fixed."""
 
                 @staticmethod
-                def registrations(audit, notifier, fulfillment):
+                def registrations(
+                    audit: AuditTrail,
+                    notifier: CustomerNotifier,
+                    fulfillment: FulfillmentScheduler,
+                ) -> list[HandlerRegistration]:
                     return [
                         HandlerRegistration(EventKind.PAYMENT_AUTHORIZED, audit.record, "audit payment"),
                         HandlerRegistration(EventKind.INVENTORY_RESERVED, audit.record, "audit inventory"),
@@ -3079,19 +3171,21 @@ steps:
   # ===========================================================================
   - title: "Triage Drill — Pick the Right Technique"
     instructions: |
-      ### Why this matters
+      > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families.
+
+      Try the drill from memory. Pass threshold: **0.85**. After the quiz, you'll see a recap of the cue→technique mapping for spaced retrieval next time.
+
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
       Knowing six debugger moves doesn't help if you reach for the wrong one first. Real bugs arrive without labels; the skill that separates a competent debugger from a thrashing one is reading the cue in a bug description and *picking* the right first move. This step interleaves the four bug families you've practiced so the discrimination is forced — and adds two ubiquitous moves the lecture covered (rubber duck, post-fix documentation) so they're in the toolkit.
 
-      ### 🎯 You will learn to
+      You will learn to:
 
       - Analyze a bug description and discriminate which family (boundary, data, temporal, wiring) it belongs to.
       - Evaluate which technique fits each cue — and articulate why neighboring techniques don't.
       - Apply rubber-duck debugging and post-fix documentation as standard moves in your workflow.
 
-      > 🎯 **Goal:** Match each scenario to the right *first move*. The point isn't speed; it's discriminating between bug families.
-
-      Try the drill from memory. Pass threshold: **0.85**. After the quiz, you'll see a recap of the cue→technique mapping for spaced retrieval next time.
+      </details>
 
       ### 🦆 Two debugging moves the lecture covered that you haven't drilled yet
 
@@ -3320,16 +3414,6 @@ steps:
   # ===========================================================================
   - title: "Transfer Challenge — You're On Your Own"
     instructions: |
-      ### Why this matters
-
-      Knowing the cycle on scaffolded examples is one thing; running it without prompts on unfamiliar code is the actual job. Transfer is what tells you whether the cycle has become *yours* or whether it lived only in the labels we put around each stage. This step removes the per-stage scaffolds — you name the stages, pick the technique, and write the log — so you can see for yourself what you've internalized.
-
-      ### 🎯 You will learn to
-
-      - Apply the full cycle on unfamiliar code without step-by-step prompts.
-      - Evaluate which case from this tutorial the new bug most resembles structurally — and defend the match.
-      - Analyze your own default debugging mode (tinkering / print / hypothesis-driven) and name when to override it.
-
       > 🎯 **Goal:** Find and fix a bug in unfamiliar code without step-by-step prompts. You pick the technique. You type the debugging log.
 
       *Compare to Cases 1–3: there, we numbered each stage of the cycle. Here, you do.*
@@ -3347,11 +3431,21 @@ steps:
 
       Open `debugging_log.md` and **fill each field as you work.**
 
-      ### 🚨 Resist the obvious
+      > 🚨 **Resist the obvious.** You may recognize the bug family — but verify with the debugger before assuming. Pattern-matching without evidence is the trap of Step 7's tinkering item.
 
-      You may recognize the bug family — but verify with the debugger before assuming. Pattern-matching without evidence is the trap of Step 7's tinkering item.
+      <details markdown="1"><summary>Why this matters & what you'll learn</summary>
 
-      ### 🔗 After fixing — before the quiz
+      Knowing the cycle on scaffolded examples is one thing; running it without prompts on unfamiliar code is the actual job. Transfer is what tells you whether the cycle has become *yours* or whether it lived only in the labels we put around each stage. This step removes the per-stage scaffolds — you name the stages, pick the technique, and write the log — so you can see for yourself what you've internalized.
+
+      You will learn to:
+
+      - Apply the full cycle on unfamiliar code without step-by-step prompts.
+      - Evaluate which case from this tutorial the new bug most resembles structurally — and defend the match.
+      - Analyze your own default debugging mode (tinkering / print / hypothesis-driven) and name when to override it.
+
+      </details>
+
+      <details markdown="1"><summary>🔗 After fixing — before the quiz</summary>
 
       The Transfer Challenge is intentionally in the same bug family as one of the four cases. Before reading the solution or the quiz:
 
@@ -3361,15 +3455,21 @@ steps:
 
       Commit to those sentences. Quiz Q1 asks you to defend the match.
 
-      ### 🌐 Far-transfer probe — while you debug
+      </details>
+
+      <details markdown="1"><summary>🌐 Far-transfer probe — while you debug</summary>
 
       Pick one codebase you've worked on recently. Where does external data enter (a file read, an API call, a form submission, a database query)? At that entry point: is normalization happening at the boundary, or are downstream consumers doing it — or not doing it at all? Spend 30 seconds answering for one entry point before you start the debugger.
 
-      ### Hint of last resort
+      </details>
+
+      <details markdown="1"><summary>Hint of last resort</summary>
 
       If you haven't found it *yet* after 10 minutes, the test output already tells you what `repr(...)` would tell you on a paused breakpoint. Re-read the failing assertion of `test_no_whitespace_in_result`.
 
-      ### 🪞 Self-check — after you fix it
+      </details>
+
+      <details markdown="1"><summary>🪞 Self-check — after you fix it</summary>
 
       Before this tutorial, which mode would you have defaulted to on this bug?
 
@@ -3379,6 +3479,8 @@ steps:
       - **Honestly not sure** — depends on the day and how stuck you felt.
 
       Name which one. That's the metacognitive skill: knowing your default mode is how you know when to override it.
+
+      </details>
 
     files:
       - path: "tagger.py"
@@ -3395,8 +3497,8 @@ steps:
           from collections import Counter
 
 
-          def top_tag(articles_path):
-              counts = Counter()
+          def top_tag(articles_path: str) -> str:
+              counts: Counter[str] = Counter()
               with open(articles_path) as f:
                   for line in f:
                       title, tag = line.split("|", 1)
@@ -3418,12 +3520,12 @@ steps:
           from tagger import top_tag
 
 
-          def test_python_is_most_common():
+          def test_python_is_most_common() -> None:
               # Three of five articles are tagged "python", so PYTHON should win.
               assert top_tag('/tutorial/articles.txt') == "PYTHON"
 
 
-          def test_no_whitespace_in_result():
+          def test_no_whitespace_in_result() -> None:
               result = top_tag('/tutorial/articles.txt')
               assert result == result.strip(), \
                   f"Result {result!r} contains whitespace — tags should be normalized at load time."
@@ -3464,8 +3566,8 @@ steps:
             from collections import Counter
 
 
-            def top_tag(articles_path):
-                counts = Counter()
+            def top_tag(articles_path: str) -> str:
+                counts: Counter[str] = Counter()
                 with open(articles_path) as f:
                     for line in f:
                         title, tag = line.split("|", 1)
@@ -3633,7 +3735,7 @@ steps:
         - question: |
             *(Spaced — Step 2's aliasing badge.)* Your code does:
             ```python
-            def add_to(items=[]):
+            def add_to(items: list[str] = []) -> list[str]:
                 items.append("x")
                 return items
 
