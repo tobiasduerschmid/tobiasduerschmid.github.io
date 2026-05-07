@@ -3,7 +3,7 @@ description: "Which Git command would you use for the following advanced scenari
 active: true
 cards:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. How do you temporarily save your current work without making a messy commit?"
     answer: "`git stash`"
     explanation: "`git stash` temporarily shelves your staged and unstaged changes for tracked files. To include brand new, untracked files in the stash, you must use `git stash -u`."

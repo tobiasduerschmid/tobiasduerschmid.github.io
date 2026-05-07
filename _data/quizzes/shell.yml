@@ -63,7 +63,7 @@ questions:
         whether loop variables remain visible after the loop.
     explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Bash does not use block-level scoping. Unless explicitly declared as `local` inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
   - id: 4
-    difficulty: expert
+    difficulty: intermediate
     question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
     options:
       - "Piping; it concatenates the outputs of both commands into a single, unified text stream."

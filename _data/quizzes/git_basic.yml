@@ -165,7 +165,7 @@ questions:
     explanation: "**`git log`, `git diff`, and `git show` are the review/inspection commands — `git push` uploads data and `git init` creates repos.** `git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     question: "A faulty commit was pushed to a shared 'main' branch last week and your teammates have already synced it. Why should you use `git revert` to fix this rather than `git reset --hard` followed by a force-push?"
     options:
       - "`git revert` automatically resolves any merge conflicts introduced by the bad commit."

@@ -39,7 +39,7 @@ cards:
     explanation: "`ls -S` sorts directory entries by file size (largest first); `head -5` keeps only the first 5 lines of that output."
 
   - id: 7
-    difficulty: expert
+    difficulty: intermediate
     question: "You want to replace every occurrence of `http://` with `https://` in `links.txt` and save the result to `links_secure.txt`."
     answer: "`sed 's|http://|https://|g' links.txt > links_secure.txt`"
     explanation: "Here we redirect `sed`'s stdout to a file instead of piping it onward, but `sed` reads from a file argument, transforms the stream, and writes to stdout — which the shell redirects with `>`."

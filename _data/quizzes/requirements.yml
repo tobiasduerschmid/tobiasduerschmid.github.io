@@ -66,7 +66,7 @@ questions:
     explanation: "**Specifying a 'graph database' is a design decision, not a user need — including it in the requirement prematurely constrains the engineering team from exploring better solutions.** Specifying a 'graph database' is a design decision. Including it in the requirement prematurely constrains the engineering team from exploring potentially better data persistence options."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "In a cross-functional Agile team, who is ideally suited to articulate the functional expectations of a new feature, and who should decide the underlying technical mechanics?"
     options:
       - "Software engineers define expectations; product managers dictate mechanics."
@@ -108,7 +108,7 @@ questions:
     explanation: "**'Embed a Redis store' is a solution-space statement because it names a specific technology — the other options describe required system behavior without dictating the implementation.** Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     question: "A development team originally built a search feature using a basic database query but later migrated to a dedicated indexing engine to handle typos more effectively. If their original specification was written perfectly, what happened to that specification during this technical migration?"
     options:
       - "It was completely rewritten to reflect the new indexing engine."
@@ -129,7 +129,7 @@ questions:
     explanation: "**A well-written requirement focused on the 'what' remains unchanged even when the implementation is completely replaced — it stayed valid through the migration because it never named a specific technology.** Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "A team needs to ensure their new banking portal can handle 10,000 simultaneous logins within two seconds without crashing. What is the recommended format for capturing this specific type of system characteristic?"
     options:
       - "A high-level user persona."

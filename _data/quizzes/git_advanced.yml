@@ -3,7 +3,7 @@ description: "Test your knowledge of advanced Git commands, debugging tools, and
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
     options:
       - "`git cherry-pick`"
@@ -63,7 +63,7 @@ questions:
     explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
   - id: 4
-    difficulty: expert
+    difficulty: intermediate
     question: "What is the primary purpose of Git Submodules?"
     options:
       - "To break a single, massive file into smaller, trackable pieces to improve performance."

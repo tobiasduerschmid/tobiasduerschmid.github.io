@@ -24,7 +24,7 @@ questions:
 
   - id: 3
     type: single
-    difficulty: basic
+    difficulty: intermediate
     question: |
       A system uses Singleton for a database connection pool. A new requirement: the system must support multi-tenant deployments with one pool per tenant. What is the fundamental problem?
     options:

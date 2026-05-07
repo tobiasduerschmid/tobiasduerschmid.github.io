@@ -3,7 +3,7 @@ description: "Test your understanding of design patterns at the Analyze and Eval
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A colleague proposes using the Observer pattern in a module that has exactly one dependent object which will never change. What is the best assessment of this decision?

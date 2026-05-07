@@ -8,7 +8,7 @@ cards:
     answer: "(1) Private constructor, (2) private static field holding the instance, (3) public static `getInstance()` method as sole access point."
     explanation: "The private constructor prevents external instantiation. The static field stores the single instance. The static method provides controlled access."
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     question: "Why is Singleton controversial in modern practice?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (harmful coupling). DI containers solve the first without introducing the second."
     explanation: "POSA5 calls it 'a well-known pattern with a weak solution.' The literature discussing Singleton's issues dwarfs the original GoF description."
