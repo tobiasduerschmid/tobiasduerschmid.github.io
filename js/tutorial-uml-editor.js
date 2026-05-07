@@ -1,6 +1,30 @@
 (function () {
   'use strict';
 
+  var TURN_METHOD_ALIASES = [
+    'takeTurn',
+    'doTurn',
+    'playTurn',
+    'performTurn',
+    'executeTurn',
+    'processTurn',
+    'handleTurn',
+    'runTurn',
+    'makeMove',
+    'takeAction',
+    'performAction'
+  ];
+
+  var STATE_CHANGE_METHOD_ALIASES = [
+    'setState',
+    'changeState',
+    'stateChange',
+    'switchState',
+    'updateState',
+    'transitionState',
+    'transitionToState'
+  ];
+
   function UMLTutorialEditor(root, options) {
     this.root = typeof root === 'string' ? document.querySelector(root) : root;
     this.options = options || {};
@@ -403,7 +427,7 @@
   }
 
   function normalize(text) {
-    return cleanId(text).toLowerCase().replace(/\s+/g, ' ').trim();
+    return cleanId(text).toLowerCase().replace(/[\s_-]+/g, '').replace(/[^\w.]/g, '');
   }
 
   function parseArchUml(source) {
@@ -432,7 +456,7 @@
       m = line.match(/^state\s+(?:"([^"]+)"\s+as\s+)?([A-Za-z_][\w.]*)/i);
       if (m) { addElement(model, 'state', m[2], m[1] || m[2]); return; }
 
-      m = line.match(/^(actor|participant|boundary|control|entity|database)\s+([A-Za-z_][\w.]*)(?:\s*:\s*(.+))?/i);
+      m = line.match(/^(actor|participant|boundary|control|entity|database)\s+([A-Za-z_][\w.]*)(?:\s*(?::|as)\s*(.+))?/i);
       if (m) { addElement(model, m[1].toLowerCase(), m[2], m[3] || m[2]); return; }
 
       if (current) {
@@ -470,6 +494,7 @@
     }
     if (kind === 'member') return assertMember(model, assertion);
     if (kind === 'relation' || kind === 'transition' || kind === 'message') return assertRelation(model, assertion, kind, context);
+    if (kind === 'sequence' || kind === 'sequence_consistency') return assertSequence(model, assertion, context);
     return { pass: false, message: 'Unknown assertion kind: ' + kind };
   }
 
@@ -551,6 +576,100 @@
       : optional && !candidateExists
         ? { pass: true }
         : { pass: false, message: 'Expected ' + kind + ' from ' + describeExpectedValue(from, fromContains, fromExact) + ' to ' + describeExpectedValue(to, toContains, toExact) + (relationTypes.length ? ' with type ' + describeExpectedValue(null, relationTypes) : '') + (labelContains.length ? ' labeled with ' + describeExpectedValue(null, labelContains) : '') + (labelMinLength ? ' with a label at least ' + labelMinLength + ' characters long' : '') + '.' };
+  }
+
+  function assertSequence(model, assertion, context) {
+    var check = normalize(assertion.check || assertion.rule || assertion.name);
+    if (check === 'playerobject') return assertSequencePlayerObject(model);
+    if (check === 'stateobjects') return assertSequenceStateObjects(model, context, assertion);
+    if (check === 'messagesbetweenplayerandstates') return assertSequenceMessagesBetweenPlayerAndStates(model, context);
+    if (check === 'statechangebetweenstatecalls') return assertSequenceStateChangeBetweenStateCalls(model, context);
+    if (check === 'calledmethodsexist') return assertSequenceCalledMethodsExist(model, context);
+    return { pass: false, message: 'Unknown sequence assertion check: ' + (assertion.check || assertion.rule || assertion.name || '') };
+  }
+
+  function assertSequencePlayerObject(model) {
+    return sequencePlayerParticipants(model).length
+      ? { pass: true }
+      : { pass: false, message: 'Expected a Player object participant in the sequence diagram.' };
+  }
+
+  function assertSequenceStateObjects(model, context, assertion) {
+    var stateParticipants = sequenceStateParticipants(model, context);
+    var min = numericValue(assertion.min || assertion.minimum || 2) || 2;
+    if (stateParticipants.length < min) {
+      return { pass: false, message: 'Expected at least ' + min + ' concrete PlayerState object participants from the class diagram.' };
+    }
+    if (assertion.different_types !== false && assertion.differentTypes !== false) {
+      var types = uniqueValues(stateParticipants.map(function (participant) { return participant.className; }));
+      if (types.length < min) {
+        return { pass: false, message: 'Expected concrete PlayerState object participants of at least ' + min + ' different types.' };
+      }
+    }
+    return { pass: true };
+  }
+
+  function assertSequenceMessagesBetweenPlayerAndStates(model, context) {
+    var player = sequencePlayerParticipants(model)[0];
+    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state interactions.' };
+    var stateParticipants = sequenceStateParticipants(model, context);
+    if (!stateParticipants.length) return { pass: false, message: 'Expected at least one concrete PlayerState object participant before checking state interactions.' };
+    var missing = stateParticipants.filter(function (stateParticipant) {
+      return !model.relations.some(function (rel) {
+        return relationBetweenParticipants(rel, player, stateParticipant);
+      });
+    });
+    return missing.length
+      ? { pass: false, message: 'Expected a message between the Player object and each concrete PlayerState object. Missing: ' + missing.map(function (p) { return p.id; }).join(', ') + '.' }
+      : { pass: true };
+  }
+
+  function assertSequenceStateChangeBetweenStateCalls(model, context) {
+    var player = sequencePlayerParticipants(model)[0];
+    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state-change ordering.' };
+    var stateParticipants = sequenceStateParticipants(model, context);
+    var turnAliases = toArray(context && context.turnAliases).concat(TURN_METHOD_ALIASES);
+    var changeAliases = toArray(context && context.stateChangeAliases).concat(STATE_CHANGE_METHOD_ALIASES);
+    var stateCalls = [];
+    model.relations.forEach(function (rel, index) {
+      var stateParticipant = stateParticipants.find(function (candidate) {
+        return relationBetweenParticipants(rel, player, candidate) && methodMatchesAliases(rel.label, turnAliases);
+      });
+      if (stateParticipant) {
+        stateCalls.push({ index: index, participant: stateParticipant });
+      }
+    });
+    for (var i = 0; i < stateCalls.length; i++) {
+      for (var j = i + 1; j < stateCalls.length; j++) {
+        if (normalize(stateCalls[i].participant.className) === normalize(stateCalls[j].participant.className)) continue;
+        var hasChange = model.relations.slice(stateCalls[i].index + 1, stateCalls[j].index).some(function (rel) {
+          return participantMatchesEndpoint(rel.to, player) && methodMatchesAliases(rel.label, changeAliases);
+        });
+        if (hasChange) return { pass: true };
+      }
+    }
+    return { pass: false, message: 'Expected a Player state-change method call between two turn calls to different state objects.' };
+  }
+
+  function assertSequenceCalledMethodsExist(model, context) {
+    var classModel = context && typeof context.modelForType === 'function' ? context.modelForType('class') : { elements: [], members: [], relations: [] };
+    var participants = sequenceParticipants(model);
+    var failures = [];
+    model.relations.forEach(function (rel) {
+      var methodName = methodNameFromLabel(rel.label);
+      if (!methodName) return;
+      var receiver = participantForEndpoint(participants, rel.to);
+      if (!receiver) {
+        failures.push('receiver "' + rel.to + '" is not shown as an object');
+        return;
+      }
+      if (!classModelHasMethod(classModel, receiver.className, methodName)) {
+        failures.push(receiver.className + '.' + methodName);
+      }
+    });
+    return failures.length
+      ? { pass: false, message: 'Expected sequence calls to exist in the class diagram: ' + failures.join(', ') + '.' }
+      : { pass: true };
   }
 
   function endpointsMatch(actualFrom, actualTo, expectedFrom, expectedTo, expectedFromContains, expectedToContains, expectedFromExact, expectedToExact) {
@@ -661,6 +780,136 @@
   function numericValue(value) {
     var number = Number(value);
     return Number.isFinite(number) && number > 0 ? number : 0;
+  }
+
+  function sequenceParticipants(model) {
+    var participants = [];
+    var byId = {};
+    model.elements.forEach(function (el) {
+      if (!isSequenceParticipantType(el.type)) return;
+      var participant = {
+        id: cleanId(el.id),
+        label: cleanId(el.label || el.id),
+        className: cleanId(el.label || el.id),
+        implicit: false
+      };
+      participants.push(participant);
+      byId[normalize(participant.id)] = participant;
+    });
+    model.relations.forEach(function (rel) {
+      [rel.from, rel.to].forEach(function (endpoint) {
+        var key = normalize(endpoint);
+        if (!key || byId[key]) return;
+        var participant = {
+          id: cleanId(endpoint),
+          label: cleanId(endpoint),
+          className: cleanId(endpoint),
+          implicit: true
+        };
+        participants.push(participant);
+        byId[key] = participant;
+      });
+    });
+    return participants;
+  }
+
+  function isSequenceParticipantType(type) {
+    return ['actor', 'participant', 'boundary', 'control', 'entity', 'database'].indexOf(normalize(type)) !== -1;
+  }
+
+  function sequencePlayerParticipants(model) {
+    return sequenceParticipants(model).filter(function (participant) {
+      return exactValueMatches([participant.className, participant.label], ['Player']) ||
+        (normalize(participant.id).indexOf('player') !== -1 && normalize(participant.className).indexOf('state') === -1);
+    });
+  }
+
+  function sequenceStateParticipants(model, context) {
+    var classNames = []
+      .concat(classRoleValues(context, 'normal'))
+      .concat(classRoleValues(context, 'jail'))
+      .concat(classRoleValues(context, 'bankrupt'));
+    return sequenceParticipants(model).filter(function (participant) {
+      return exactValueMatches([participant.className, participant.label, participant.id], classNames);
+    });
+  }
+
+  function relationBetweenParticipants(rel, left, right) {
+    return (participantMatchesEndpoint(rel.from, left) && participantMatchesEndpoint(rel.to, right)) ||
+      (participantMatchesEndpoint(rel.from, right) && participantMatchesEndpoint(rel.to, left));
+  }
+
+  function participantMatchesEndpoint(endpoint, participant) {
+    return !!participant && exactValueMatches(endpoint, [participant.id, participant.label, participant.className]);
+  }
+
+  function participantForEndpoint(participants, endpoint) {
+    return participants.find(function (participant) {
+      return participantMatchesEndpoint(endpoint, participant);
+    }) || null;
+  }
+
+  function methodMatchesAliases(label, aliases) {
+    var methodName = methodNameFromLabel(label);
+    return !!methodName && toArray(aliases).some(function (alias) {
+      return normalize(methodName) === normalize(alias);
+    });
+  }
+
+  function methodNameFromLabel(label) {
+    var text = String(label || '').trim();
+    if (!text) return '';
+    var match = text.match(/^([A-Za-z_]\w*)\s*(?:\(|$)/);
+    return match ? match[1] : '';
+  }
+
+  function methodNameFromMember(text) {
+    text = String(text || '').replace(/\{[^}]*\}/g, ' ').replace(/^[+\-#~]\s*/, '').trim();
+    var match = text.match(/^([A-Za-z_]\w*)\s*(?:\(|$)/);
+    return match ? match[1] : '';
+  }
+
+  function classModelHasMethod(classModel, className, methodName) {
+    return classMethodNamesForType(classModel, className, {}).some(function (candidate) {
+      return normalize(candidate) === normalize(methodName);
+    });
+  }
+
+  function classMethodNamesForType(classModel, className, visited) {
+    var element = classElementForName(classModel, className);
+    if (!element) return [];
+    var key = normalize(element.id);
+    if (visited[key]) return [];
+    visited[key] = true;
+    var names = classModel.members
+      .filter(function (member) {
+        return exactValueMatches(member.owner, [element.id, element.label]);
+      })
+      .map(function (member) { return methodNameFromMember(member.text); })
+      .filter(Boolean);
+    classParentTypes(classModel, element).forEach(function (parentName) {
+      names = names.concat(classMethodNamesForType(classModel, parentName, visited));
+    });
+    return uniqueValues(names);
+  }
+
+  function classElementForName(classModel, className) {
+    return classModel.elements.find(function (el) {
+      return exactValueMatches([el.id, el.label], [className]);
+    }) || null;
+  }
+
+  function classParentTypes(classModel, element) {
+    var parents = [];
+    classModel.relations.forEach(function (rel) {
+      semanticRelationEndpoints(rel).forEach(function (edge) {
+        if (exactValueMatches(edge.from, [element.id, element.label]) &&
+            (relationSemanticType(rel) === 'generalization' || relationSemanticType(rel) === 'realization')) {
+          parents.push(edge.to);
+        }
+      });
+    });
+    return uniqueValues(parents);
   }
 
   function typeMatchesAny(actualType, expectedTypes) {

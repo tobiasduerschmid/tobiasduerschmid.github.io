@@ -43,8 +43,8 @@ Dog ..|> Trainable
 @enduml`;
 
 const MONOPOLY_CLASS_ROLE_VARIATION_DIAGRAM = `@startuml
-class Player { +doTurn(); +setState(state: PlayerState); }
-interface PlayerState { +doTurn(player: Player); }
+class Player { +do_turn(); +change_state(state: PlayerState); }
+interface PlayerState { +do_turn(player: Player); }
 class NormalMode
 class PrisonState
 class BankruptcyMode
@@ -77,6 +77,7 @@ async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_
   await page.waitForSelector('#uml-pg-output');
   await page.evaluate(({ index, source }) => {
     localStorage.removeItem('uml-pg-autosave-state');
+    localStorage.removeItem('uml-pg-autosave-sequence');
     window._tutorial._stepsUnlocked.add(index);
     window._tutorial.loadStep(index);
     localStorage.setItem('uml-pg-autosave-class', source);
@@ -1490,6 +1491,77 @@ A --> B : calls
     expect(source).toContain(`edge "${expectedRouteId}" points="50,60 30,60 30,20 10,20"`);
   });
 
+  [
+    { label: 'aggregation', op: 'o--' },
+    { label: 'composition', op: '*--' },
+  ].forEach(({ label, op }) => {
+    test(`selected ${label} relations can be inverted and deleted`, async ({ page }) => {
+      const escapedOp = op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await page.goto(UML_EDITOR_URL);
+      await page.waitForSelector('#uml-pg-edit');
+      await page.check('#uml-pg-edit');
+      await page.locator('#uml-pg-input').evaluate((el, value) => {
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }, `@startuml
+class A
+class B
+A ${op} B : owns
+@enduml`);
+      await page.waitForFunction(() => {
+        const svg = document.querySelector('#uml-pg-output svg');
+        return !!svg && svg.textContent.includes('owns') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+      });
+
+      await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      });
+      await page.locator('#uml-pg-props-content').getByRole('button', { name: 'Invert direction' }).click();
+      await expect(page.locator('#uml-pg-input')).toHaveValue(new RegExp(`B ${escapedOp} A : owns`));
+
+      await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+      });
+      await expect(page.locator('#uml-pg-input')).not.toHaveValue(new RegExp(`\\b[AB] ${escapedOp} [AB] : owns`));
+    });
+  });
+
+  [
+    { label: 'aggregation', reverseOp: '--o', canonicalOp: 'o--' },
+    { label: 'composition', reverseOp: '--*', canonicalOp: '*--' },
+  ].forEach(({ label, reverseOp, canonicalOp }) => {
+    test(`target-side ${label} markers can be recognized and inverted`, async ({ page }) => {
+      const escapedCanonicalOp = canonicalOp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await page.goto(UML_EDITOR_URL);
+      await page.waitForSelector('#uml-pg-edit');
+      await page.check('#uml-pg-edit');
+      await page.locator('#uml-pg-input').evaluate((el, value) => {
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }, `@startuml
+class A
+class B
+A ${reverseOp} B : owns
+@enduml`);
+      await page.waitForFunction(() => {
+        const svg = document.querySelector('#uml-pg-output svg');
+        return !!svg && svg.textContent.includes('owns') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+      });
+
+      await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      });
+      await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue(label === 'aggregation' ? 'aggregate' : 'compose');
+      await page.locator('#uml-pg-props-content').getByRole('button', { name: 'Invert direction' }).click();
+      await expect(page.locator('#uml-pg-input')).toHaveValue(new RegExp(`A ${escapedCanonicalOp} B : owns`));
+
+      await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+      });
+      await expect(page.locator('#uml-pg-input')).not.toHaveValue(/\b[AB]\s+(?:o--|\*--|--o|--\*)\s+[AB]\s*:\s*owns/);
+    });
+  });
+
   test('left-arrow generalization syntax is parsed as an invertible generalization', async ({ page }) => {
     await page.goto(UML_EDITOR_URL);
     await page.waitForSelector('#uml-pg-edit');
@@ -2047,8 +2119,8 @@ PlayerState <|-- BankruptState
 
     await page.locator('#uml-pg-input').evaluate((el) => {
       el.value = `@startuml
-class Player { +doTurn(); +setState(state: PlayerState); }
-interface PlayerState { +doTurn(player: Player); }
+class Player { +do_turn(); +state_change(state: PlayerState); }
+interface PlayerState { +do_turn(player: Player); }
 class normalBehavior
 class PrisonState
 class BankruptcyMode
@@ -2237,17 +2309,72 @@ PrisonState --> BankruptcyMode : no
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
-  test('UML tutorial accepts turn-operation naming variations in sequence messages', async ({ page }) => {
+  test('UML tutorial sequence diagram accepts typed state objects and snake_case method calls', async ({ page }) => {
     await openMonopolyTutorialStep(page, 2);
 
     await setUmlSource(page, `@startuml
-participant Player
-participant PlayerState
-Player -> PlayerState: doTurn(player)
-PlayerState -> Player: setState(normalState)
+participant player: Player
+participant normal_state: NormalMode
+participant prison_state: PrisonState
+player -> normal_state: do_turn(player)
+normal_state -> player: change_state(prison_state)
+player -> prison_state: do_turn(player)
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 3 tests passed');
+  });
+
+  test('UML tutorial sequence diagram rejects only one concrete state object', async ({ page }) => {
+    await openMonopolyTutorialStep(page, 2);
+
+    await setUmlSource(page, `@startuml
+participant player: Player
+participant normal_state: NormalMode
+player -> normal_state: do_turn(player)
+normal_state -> player: change_state(normal_state)
+@enduml`);
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/1\s*\/\s*3 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player and concrete state objects are shown' })).toBeVisible();
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player talks to each state and changes state between calls' })).toBeVisible();
+    await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
+  });
+
+  test('UML tutorial sequence diagram rejects missing state-change call between state calls', async ({ page }) => {
+    await openMonopolyTutorialStep(page, 2);
+
+    await setUmlSource(page, `@startuml
+participant player: Player
+participant normal_state: NormalMode
+participant prison_state: PrisonState
+player -> normal_state: do_turn(player)
+player -> prison_state: do_turn(player)
+@enduml`);
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*3 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player talks to each state and changes state between calls');
+    await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
+  });
+
+  test('UML tutorial sequence diagram rejects method calls missing from the class diagram', async ({ page }) => {
+    await openMonopolyTutorialStep(page, 2);
+
+    await setUmlSource(page, `@startuml
+participant player: Player
+participant normal_state: NormalMode
+participant prison_state: PrisonState
+player -> normal_state: do_turn(player)
+normal_state -> player: change_state(prison_state)
+player -> prison_state: do_turn(player)
+player -> prison_state: teleport(player)
+@enduml`);
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*3 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence method calls exist in the class diagram');
+    await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
 });

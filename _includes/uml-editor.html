@@ -1577,13 +1577,15 @@ html.dark-mode a.uml-pg-syntax-help-link:focus-visible {
 }
 
 /* Stronger label that makes scanning the palette easier:
-   small uppercase pill so the row reads "ELEMENTS · [Class] [Abstract] …" */
+   small uppercase pill so the row reads "ELEMENTS · [Class] [Abstract] …".
+   At 0.85em this stays at the project's minimum size for decorative
+   micro-labels — short, uppercase, high-contrast. */
 .uml-pg-palette-label {
-  font-size: 0.82em;
+  font-size: 0.85em;
   font-weight: 700;
   color: #26415f;
   flex: 0 0 auto;
-  min-width: 78px;
+  min-width: 80px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 2px 0 2px 4px;
@@ -6914,15 +6916,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (midQ) { info.source = midQ[1]; info.op = midQ[2]; info.kind = guessRelationKind(midQ[2]); info.targetMult = midQ[3]; info.target = midQ[4]; return finalizeParsedRelationInfo(info); }
       var simple = t.match(/^(\S+)\s+([-.\|<>=*ox]+)\s+(\S+)$/);
       if (simple) { info.source = simple[1]; info.op = simple[2]; info.kind = guessRelationKind(simple[2]); info.target = simple[3]; }
-      finalizeParsedRelationInfo(info);
-      // Navigability detection
-      var op = simple ? simple[2] : (lastQ ? lastQ[3] : (midQ ? midQ[2] : ''));
-      if (/^(\*|o)<-->$/.test(op)) info.navigability = 'bidirectional';
-      else if (/^(\*|o)-->$/.test(op)) info.navigability = 'navigable';
-      else if (/^(\*|o)--x$/.test(op)) info.navigability = 'nonnav';
-      else if (op === '<-->') info.navigability = 'bidirectional';
-      else if (op === '--x') info.navigability = 'nonnav';
-      return info;
+      return finalizeParsedRelationInfo(info);
+    }
+
+    function relationNavigabilityFromOp(op) {
+      op = String(op || '').trim();
+      if (/^(\*|o)<-->$/.test(op)) return 'bidirectional';
+      if (/^(\*|o)-->$/.test(op)) return 'navigable';
+      if (/^(\*|o)--x$/.test(op)) return 'nonnav';
+      if (op === '<-->') return 'bidirectional';
+      if (op === '--x') return 'nonnav';
+      return '';
     }
 
     function finalizeParsedRelationInfo(info) {
@@ -6931,7 +6935,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         '<|--': { op: '--|>', kind: 'gen' },
         '<|..': { op: '..|>', kind: 'real' },
         '<--': { op: '-->', kind: 'assoc' },
-        '<..': { op: '..>', kind: 'depend' }
+        '<..': { op: '..>', kind: 'depend' },
+        '--*': { op: '*--', kind: 'compose' },
+        '<--*': { op: '*-->', kind: 'compose', navigability: 'navigable' },
+        '<-->*': { op: '*<-->', kind: 'compose', navigability: 'bidirectional' },
+        'x--*': { op: '*--x', kind: 'compose', navigability: 'nonnav' },
+        '--o': { op: 'o--', kind: 'aggregate' },
+        '<--o': { op: 'o-->', kind: 'aggregate', navigability: 'navigable' },
+        '<-->o': { op: 'o<-->', kind: 'aggregate', navigability: 'bidirectional' },
+        'x--o': { op: 'o--x', kind: 'aggregate', navigability: 'nonnav' }
       };
       var reverse = reverseOps[info.op || ''];
       if (reverse) {
@@ -6943,9 +6955,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         info.targetMult = oldSourceMult;
         info.op = reverse.op;
         info.kind = reverse.kind;
+        info.navigability = reverse.navigability || relationNavigabilityFromOp(info.op);
       } else if (!info.kind && info.op) {
         info.kind = guessRelationKind(info.op);
       }
+      if (!info.navigability) info.navigability = relationNavigabilityFromOp(info.op);
       return info;
     }
 

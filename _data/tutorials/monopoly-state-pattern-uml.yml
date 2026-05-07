@@ -68,7 +68,14 @@ steps:
               - performAction
           - kind: member
             owner: Player
-            text: setState
+            text_contains_any:
+              - setState
+              - changeState
+              - stateChange
+              - switchState
+              - updateState
+              - transitionState
+              - transitionToState
           - kind: member
             owner: PlayerState
             is_abstract: true
@@ -171,34 +178,23 @@ steps:
       - Show one typical State-pattern turn interaction
       - Keep operation names consistent across UML diagrams
 
-      Draw one typical interaction. A good version shows `Player` receiving `takeTurn`, delegating to its current `PlayerState`, and the state object either performing normal behavior or requesting a state change.
+      Draw one typical interaction. A good version shows a `Player` object calling at least two different concrete state objects, with a state-change call between those turn calls. Use method names that also appear in your class diagram.
     tests:
-      - description: "Participants line up with the class diagram"
+      - description: "Player and concrete state objects are shown"
         assertions:
-          - kind: participant
-            id: Player
-          - kind: participant
-            id: PlayerState
-      - description: "Player delegates turn behavior to the current state"
+          - kind: sequence
+            check: player_object
+          - kind: sequence
+            check: state_objects
+            min: 2
+            different_types: true
+      - description: "Player talks to each state and changes state between calls"
         assertions:
-          - kind: message
-            from: Player
-            to: PlayerState
-            label_contains_any:
-              - takeTurn
-              - doTurn
-              - playTurn
-              - performTurn
-              - executeTurn
-              - processTurn
-              - handleTurn
-              - runTurn
-              - makeMove
-              - takeAction
-              - performAction
-      - description: "The interaction can change the player's state"
+          - kind: sequence
+            check: messages_between_player_and_states
+          - kind: sequence
+            check: state_change_between_state_calls
+      - description: "Sequence method calls exist in the class diagram"
         assertions:
-          - kind: message
-            from: PlayerState
-            to: Player
-            label_contains: setState
+          - kind: sequence
+            check: called_methods_exist

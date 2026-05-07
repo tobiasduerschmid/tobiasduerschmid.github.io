@@ -737,6 +737,13 @@ steps:
                                              # length, and `optional: true`
                                              # for a relation that only fails
                                              # if it is present but malformed.
+                                             # Sequence-diagram consistency
+                                             # uses `kind: sequence` with
+                                             # checks such as player_object,
+                                             # state_objects,
+                                             # messages_between_player_and_states,
+                                             # state_change_between_state_calls,
+                                             # and called_methods_exist.
                                              # Class generalization /
                                              # realization and aggregation /
                                              # composition arrows use UML
@@ -971,7 +978,12 @@ keys. **If you change the persistence schema, also update**:
   class names containing `normal`, `jail`/`prison`, or `bankrupt` from the
   saved class-diagram draft. Relation assertions also support
   `label_min_length` and `optional: true` for optional transitions that should
-  be checked only when present. Generalization / realization and
+  be checked only when present. Sequence-diagram assertions use
+  `kind: sequence` with `check:` values like `player_object`,
+  `state_objects`, `messages_between_player_and_states`,
+  `state_change_between_state_calls`, and `called_methods_exist`; the last
+  check verifies message labels against the receiver's class or inherited /
+  realized operations in the saved class diagram. Generalization / realization and
   aggregation / composition assertions follow UML arrow semantics: both
   `Child --|> Parent` and `Parent <|-- Child` satisfy `from: Child` /
   `to: Parent`, and both `Whole o-- Part` and `Part --o Whole` satisfy
