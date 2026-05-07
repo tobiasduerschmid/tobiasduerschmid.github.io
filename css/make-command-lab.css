@@ -1,0 +1,330 @@
+/**
+ * MakeCommandLab — interactive before/after demo cards for `make` commands.
+ * Matches the visual language of git-command-lab.css; keeps WCAG 2.2 AA
+ * contrast in both light and dark mode and never relies on color alone
+ * (icon glyphs + diagonal-hatch stale stripe carry the meaning).
+ *
+ * The DAG renderer's CSS lives in tutorial.css under .tvm-make-dag-* —
+ * this file only styles the surrounding lab card chrome.
+ */
+
+/* Default (dark-mode) tokens for the lab — the page-level dark/light
+   selector below overrides these in light mode. */
+.make-command-lab {
+  --mcl-bg: #1d1f2a;
+  --mcl-fg: #e6e8f0;
+  --mcl-muted: #9aa0b4;
+  --mcl-border: #2f3346;
+  --mcl-card-bg: #161823;
+  --mcl-btn-bg: #2c303f;
+  --mcl-btn-bg-hover: #3a3e52;
+  --mcl-btn-fg: #f5f6fa;
+  --mcl-btn-undo-bg: #5a3030;
+  --mcl-btn-restart-bg: #305a48;
+  --mcl-focus-ring: #6db8ff;
+  --mcl-code-bg: rgba(255,255,255,0.06);
+  --mcl-code-fg: #e6e8f0;
+  --mcl-output-bg: #0f111a;
+  --mcl-output-fg: #cfd2dc;
+
+  display: block;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: var(--mcl-card-bg);
+  color: var(--mcl-fg);
+  border: 1px solid var(--mcl-border);
+  border-radius: 8px;
+}
+
+html:not(.dark-mode) .make-command-lab {
+  --mcl-bg: #fafbfc;
+  --mcl-fg: #1a1d29;
+  --mcl-muted: #5a5e6b;
+  --mcl-border: #d4d6dd;
+  --mcl-card-bg: #ffffff;
+  --mcl-btn-bg: #f0f2f6;
+  --mcl-btn-bg-hover: #e2e5ec;
+  --mcl-btn-fg: #1a1d29;
+  --mcl-btn-undo-bg: #fce4e4;
+  --mcl-btn-restart-bg: #e0f2e9;
+  --mcl-focus-ring: #0066cc;
+  --mcl-code-bg: rgba(0,0,0,0.05);
+  --mcl-code-fg: #b8770b;
+  --mcl-output-bg: #f5f6f8;
+  --mcl-output-fg: #1a1d29;
+}
+
+/* Layout — caption on the left, action column on the right; collapses to
+   a single column under ~720px so phones get vertical reading order:
+   description → button → graph. */
+.make-command-lab__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .make-command-lab__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.make-command-lab__caption {
+  min-width: 0;
+}
+.make-command-lab__desc {
+  /* Inherits paragraph size from the surrounding article so it stays
+     readable. (See CLAUDE.md "Minimum font sizes — readable text is
+     paragraph-size".) */
+  line-height: 1.5;
+  color: var(--mcl-fg);
+}
+.make-command-lab__desc p { margin: 0 0 0.6em 0; }
+.make-command-lab__desc p:last-child { margin-bottom: 0; }
+.make-command-lab__desc code {
+  background: var(--mcl-code-bg);
+  color: var(--mcl-code-fg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.make-command-lab__step-progress {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: var(--mcl-muted);
+  font-style: italic;
+}
+
+.make-command-lab__action {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.make-command-lab__btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Buttons — meet WCAG 2.5.5 (AAA target size 24x24 minimum, ≥ 44x44
+   recommended); padding gives ≥44px in both axes for the primary button. */
+.make-command-lab__btn,
+.make-command-lab__btn-back,
+.make-command-lab__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  min-height: 44px;
+  background: var(--mcl-btn-bg);
+  color: var(--mcl-btn-fg);
+  border: 1.5px solid var(--mcl-border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.make-command-lab__btn { font-weight: 600; }
+.make-command-lab__btn:hover:not(:disabled),
+.make-command-lab__btn-back:hover:not(:disabled),
+.make-command-lab__play:hover:not(:disabled) {
+  background: var(--mcl-btn-bg-hover);
+}
+.make-command-lab__btn:focus-visible,
+.make-command-lab__btn-back:focus-visible,
+.make-command-lab__play:focus-visible {
+  outline: 3px solid var(--mcl-focus-ring);
+  outline-offset: 2px;
+}
+.make-command-lab__btn:disabled,
+.make-command-lab__btn-back:disabled,
+.make-command-lab__play:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.make-command-lab__btn--undo {
+  background: var(--mcl-btn-undo-bg);
+}
+.make-command-lab__btn--restart {
+  background: var(--mcl-btn-restart-bg);
+}
+
+.make-command-lab__icon {
+  font-size: 1.1em;
+  line-height: 1;
+}
+.make-command-lab__cmd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.make-command-lab__play--on {
+  background: var(--mcl-btn-restart-bg);
+}
+
+/* Graph host — give it a clear "Before"/"After" label visually. */
+.make-command-lab__graphs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.make-command-lab__graph,
+.make-command-lab__graph-after {
+  position: relative;
+  background: var(--mcl-bg);
+  border: 1px solid var(--mcl-border);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 140px;
+}
+.make-command-lab__graph::before,
+.make-command-lab__graph-after::before {
+  content: attr(data-state-label);
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mcl-muted);
+  font-weight: 600;
+  background: var(--mcl-card-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.make-command-lab__graph:focus-visible {
+  outline: 3px solid var(--mcl-focus-ring);
+  outline-offset: 2px;
+}
+/* The "After" graph is hidden on screen (the interactive one swaps to
+   it), but revealed during printing so paper readers see both states. */
+.make-command-lab__graph-after { display: none; }
+
+/* The graph host's own renderer (.tvm-make-dag-container) emits its own
+   light styles in tutorial.css — but those are scoped to the tutorial
+   layout. We need the same look on a plain SEBook page, so re-declare
+   the bare minimum here. */
+.make-command-lab__graph .tvm-make-dag-canvas,
+.make-command-lab__graph-after .tvm-make-dag-canvas,
+.make-command-lab__print-graph .tvm-make-dag-canvas {
+  width: 100%;
+}
+.make-command-lab .tvm-make-dag-svg {
+  --mg-bg: var(--mcl-bg);
+  --mg-fg: var(--mcl-fg);
+  --mg-muted: var(--mcl-muted);
+  --mg-edge: var(--mcl-muted);
+  --mg-edge-stale: #d83a3a;
+  --mg-node-bg: var(--mcl-card-bg);
+  --mg-node-border: var(--mcl-border);
+  --mg-node-source-fg: var(--mcl-muted);
+  --mg-fresh: #1f9b3d;
+  --mg-stale: #d83a3a;
+  --mg-phony: #b8770b;
+  --mg-focus-ring: var(--mcl-focus-ring);
+}
+
+/* Static (non-interactive) variant — just a labelled graph. */
+.make-command-lab--static {
+  padding: 14px 16px;
+}
+.make-command-lab__graph--static {
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+}
+.make-command-lab__graph--static::before { display: none; }
+.make-command-lab__static-caption {
+  margin-top: 10px;
+  color: var(--mcl-muted);
+  font-size: 0.95em;
+  text-align: center;
+  font-style: italic;
+}
+.make-command-lab__static-caption p { margin: 0; }
+.make-command-lab__static-caption code {
+  background: var(--mcl-code-bg);
+  color: var(--mcl-code-fg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Live region — visually hidden but reachable to AT. */
+.make-command-lab__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Output panel — a real terminal-style block that shows command output. */
+.make-command-lab__output {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--mcl-output-bg);
+  color: var(--mcl-output-fg);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* Print: hide the interactive controls, show every step's static graph
+   in a column. The user gets a paper-friendly walkthrough. */
+.make-command-lab__print-steps { display: none; }
+@media print {
+  .make-command-lab__row { display: none; }
+  .make-command-lab__live { display: none; }
+  .make-command-lab__print-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .make-command-lab__print-step {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #999;
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .make-command-lab__print-step-label {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .make-command-lab__print-step-label code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .make-command-lab__print-step-desc { font-size: 0.95em; margin-bottom: 8px; }
+}
+
+/* Reduced motion — kill the pulsing glyph at the source; the lab card
+   chrome doesn't animate, so we don't need to suppress anything else. */
+@media (prefers-reduced-motion: reduce) {
+  .make-command-lab__btn,
+  .make-command-lab__btn-back,
+  .make-command-lab__play { transition: none; }
+}
+html.prm-reduce .make-command-lab__btn,
+html.prm-reduce .make-command-lab__btn-back,
+html.prm-reduce .make-command-lab__play { transition: none; }

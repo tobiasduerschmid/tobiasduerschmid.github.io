@@ -87,12 +87,19 @@
     var mtimes = parseMtimes(sections.MTIMES || '');
     var parsed = parseFilesSection(sections.FILES || '');
 
-    // Stamp phony + mtime + staleness onto each node.
+    // Stamp phony + real filesystem mtime + staleness onto each node.
+    //
+    // GNU Make's `make -p` output includes a synthetic "Last modified" value
+    // for targets that do not exist yet. That sentinel can be centuries in the
+    // future (for example 2514), which makes a missing build artifact look
+    // newer than its sources. The ===MTIMES=== section comes from `find` and
+    // therefore only contains files that actually exist; treat it as the
+    // source of truth and clear any parser mtime for absent targets.
     var nodesById = {};
     for (var i = 0; i < parsed.nodes.length; i++) {
       var n = parsed.nodes[i];
       n.isPhony = phonySet[n.id] === true;
-      if (mtimes[n.id] !== undefined) n.mtime = mtimes[n.id];
+      n.mtime = mtimes[n.id];
       nodesById[n.id] = n;
     }
     // Some prerequisites are leaf source files Make's database doesn't
@@ -341,6 +348,25 @@
         }
       }
     }
+
+    // Mark only the edges that explain why a target is stale. A target can be
+    // stale because one prerequisite changed; coloring every outgoing edge
+    // from that stale target falsely implies every prerequisite changed.
+    for (var ei = 0; ei < edges.length; ei++) {
+      var edge = edges[ei];
+      edge.isStale = false;
+      if (edge.kind === 'order-only') continue;
+      var from = nodesById[edge.from];
+      var to = nodesById[edge.to];
+      if (!from || from.isSource) continue;
+      if (from.isPhony || from.mtime === undefined) {
+        edge.isStale = true;
+      } else if (to && !to.isSource && to.isStale) {
+        edge.isStale = true;
+      } else if (to && to.mtime !== undefined && to.mtime > from.mtime) {
+        edge.isStale = true;
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -471,13 +497,20 @@
     svg.setAttribute('aria-label',
       'Dependency graph: ' + data.nodes.length + ' nodes, ' + data.edges.length + ' edges');
 
-    // Defs — arrow marker.
+    // Defs — arrow marker + diagonal hatch pattern for stale stripes
+    // (a non-color cue that pairs with the color so users with low color
+    // vision or in monochrome print can still tell stale from fresh).
     var defs = document.createElementNS(SVG_NS, 'defs');
     defs.innerHTML =
       '<marker id="tvm-mg-arrow" viewBox="0 0 10 10" refX="8" refY="5" ' +
       '  markerWidth="6" markerHeight="6" orient="auto-start-reverse">' +
       '  <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />' +
-      '</marker>';
+      '</marker>' +
+      '<pattern id="tvm-mg-stale-hatch" patternUnits="userSpaceOnUse" ' +
+      '  width="4" height="4" patternTransform="rotate(45)">' +
+      '  <rect width="4" height="4" class="tvm-mg-stale-hatch-bg" />' +
+      '  <line x1="0" y1="0" x2="0" y2="4" class="tvm-mg-stale-hatch-line" />' +
+      '</pattern>';
     svg.appendChild(defs);
 
     function nodeCenter(id) {
@@ -497,8 +530,7 @@
       var fromCenter = nodeCenter(edge.from);
       var toCenter = nodeCenter(edge.to);
       if (!fromCenter || !toCenter) continue;
-      var fromNode = nodesById[edge.from];
-      var stale = fromNode && fromNode.isStale;
+      var stale = edge.isStale === true;
       var orderOnly = edge.kind === 'order-only';
       // Start at bottom of from, end at top of to.
       var fx = fromCenter.x, fy = fromCenter.y + nodeH / 2;
@@ -551,21 +583,24 @@
       rect.setAttribute('ry', 6);
       g.appendChild(rect);
 
-      // State stripe on left edge. Inset by the corner radius so the stripe
-      // sits entirely within the rect's straight (non-curved) portion;
-      // otherwise the rect's rounded corners curve away at top/bottom and
-      // the stripe pokes out past the edge — which read as the stripe being
-      // "cut off" at the corners.
+      // State stripe on left edge. Drawn as a path that hugs the rect's
+      // rounded-corner geometry on the left so it fills the full node height
+      // without poking past the corner curves at top/bottom.
       if (!node.isSource) {
-        var stripeInset = 6;            // matches rect's rx/ry
-        var stripe = document.createElementNS(SVG_NS, 'rect');
+        var r = 6;                     // matches rect's rx/ry
+        var sw = 6;                    // visible stripe thickness (right edge)
+        var stripe = document.createElementNS(SVG_NS, 'path');
         stripe.setAttribute('class', 'tvm-make-dag-node-stripe');
-        stripe.setAttribute('x', 1);     // 1px inset on the left for visual breathing room
-        stripe.setAttribute('y', stripeInset);
-        stripe.setAttribute('width', 4);
-        stripe.setAttribute('height', nodeH - 2 * stripeInset);
-        stripe.setAttribute('rx', 1);
-        stripe.setAttribute('ry', 1);
+        // Path: rounded top-left → straight right edge → straight bottom-left → rounded back up.
+        var d = 'M ' + r + ' 0' +
+                ' L ' + sw + ' 0' +
+                ' L ' + sw + ' ' + nodeH +
+                ' L ' + r + ' ' + nodeH +
+                ' A ' + r + ' ' + r + ' 0 0 1 0 ' + (nodeH - r) +
+                ' L 0 ' + r +
+                ' A ' + r + ' ' + r + ' 0 0 1 ' + r + ' 0' +
+                ' Z';
+        stripe.setAttribute('d', d);
         g.appendChild(stripe);
       }
 
@@ -637,15 +672,17 @@
     wrapper.appendChild(svg);
     c.appendChild(wrapper);
 
-    // Legend.
+    // Legend. Each swatch pairs a color stripe with the same icon glyph
+    // shown inside the node so the state is conveyed by shape *and* color
+    // (WCAG 1.4.1 — colour is never the sole indicator).
     var legend = document.createElement('div');
     legend.className = 'tvm-make-dag-legend';
     legend.setAttribute('aria-label', 'Graph legend');
     legend.innerHTML =
-      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-fresh" aria-hidden="true"></span>up to date</span>' +
-      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-stale" aria-hidden="true"></span>stale (would rebuild)</span>' +
-      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-phony" aria-hidden="true"></span>phony target</span>' +
-      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-source" aria-hidden="true"></span>source file</span>';
+      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-fresh" aria-hidden="true">✓</span>up to date</span>' +
+      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-stale" aria-hidden="true">●</span>stale (would rebuild)</span>' +
+      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-phony" aria-hidden="true">⌖</span>phony target</span>' +
+      '<span class="tvm-make-dag-legend-item"><span class="tvm-make-dag-legend-swatch tvm-make-dag-legend-source" aria-hidden="true">_</span>source file</span>';
     c.appendChild(legend);
   };
 
@@ -660,8 +697,164 @@
     });
   };
 
+  // ---------------------------------------------------------------------------
+  // parseSpec — author-facing text format for embedding Make DAGs in pages
+  // (analogous to GitGraph.parseGitState). Reads almost like a real Makefile,
+  // so students see the same syntax they're learning. Sample:
+  //
+  //   # Targets and their prerequisites (Makefile syntax)
+  //   app: main.o io.o
+  //   main.o: main.c
+  //   io.o: io.c
+  //
+  //   # Phony targets (always considered stale)
+  //   .PHONY: clean run
+  //   run: app
+  //   clean:
+  //
+  //   # Order-only prerequisites — separated with `|`
+  //   io.o: io.c | build_dir
+  //
+  //   # Mtimes (any positive number; higher = newer file).
+  //   # Files without an mtime line that are NOT sources are treated as
+  //   # missing → stale.
+  //   @mtime main.c = 1
+  //   @mtime io.c = 1
+  //   @mtime main.o = 2
+  //   @mtime io.o = 2
+  //   @mtime app = 3
+  //
+  //   # Optional recipes (shown in the tooltip on hover).
+  //   @recipe app = gcc -o app main.o io.o
+  //
+  //   # Optional explicit source declaration (auto-detected otherwise).
+  //   # @source main.c io.c
+  //
+  //   # Optional explicit highlight — names a node to draw extra attention to.
+  //   # @highlight app
+  //
+  // Source detection: any name that appears as a prerequisite but never as
+  // a target on the LHS of `name:` AND has no recipe is automatically a
+  // source file. `@source` is only needed to override.
+  // ---------------------------------------------------------------------------
+  function parseSpec(text) {
+    var nodes = [];
+    var nodesById = {};
+    var edges = [];
+    var phonySet = {};
+    var explicitSource = {};
+    var mtimes = {};
+    var recipes = {};
+    var highlights = {};
+    var errors = [];
+
+    function getOrCreate(id, line) {
+      if (!nodesById[id]) {
+        var n = { id: id, isPhony: false, isSource: false, isStale: false, line: line || null };
+        nodesById[id] = n;
+        nodes.push(n);
+      }
+      return nodesById[id];
+    }
+
+    var lines = String(text || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i];
+      var line = raw.replace(/#.*$/, '').replace(/\s+$/, '');
+      if (!line.trim()) continue;
+      var lineNo = i + 1;
+
+      // @directive forms.
+      var dir = line.match(/^\s*@(\w+)\s*(.*)$/);
+      if (dir) {
+        var name = dir[1].toLowerCase();
+        var rest = dir[2].trim();
+        if (name === 'mtime') {
+          var m = rest.match(/^([^=\s]+)\s*=\s*(\S+)$/);
+          if (!m) { errors.push('Line ' + lineNo + ': @mtime needs `name = number`'); continue; }
+          var mt = parseFloat(m[2]);
+          if (isNaN(mt)) { errors.push('Line ' + lineNo + ': @mtime value must be a number'); continue; }
+          mtimes[m[1]] = mt;
+        } else if (name === 'recipe') {
+          var rm = rest.match(/^([^=\s]+)\s*=\s*(.*)$/);
+          if (!rm) { errors.push('Line ' + lineNo + ': @recipe needs `name = command`'); continue; }
+          recipes[rm[1]] = rm[2];
+        } else if (name === 'source') {
+          var srcs = rest.split(/\s+/);
+          for (var s = 0; s < srcs.length; s++) if (srcs[s]) explicitSource[srcs[s]] = true;
+        } else if (name === 'highlight') {
+          var hls = rest.split(/\s+/);
+          for (var hi = 0; hi < hls.length; hi++) if (hls[hi]) highlights[hls[hi]] = true;
+        } else {
+          errors.push('Line ' + lineNo + ': unknown @' + name);
+        }
+        continue;
+      }
+
+      // .PHONY: a b c
+      var phonyM = line.match(/^\s*\.PHONY\s*:\s*(.*)$/);
+      if (phonyM) {
+        var ph = phonyM[1].split(/\s+/);
+        for (var p = 0; p < ph.length; p++) if (ph[p]) phonySet[ph[p]] = true;
+        continue;
+      }
+
+      // target: prereqs [| order_only_prereqs]
+      var ruleM = line.match(/^\s*([^:#\s]+(?:\s+[^:#\s]+)*)\s*:\s*(.*)$/);
+      if (ruleM) {
+        var targets = ruleM[1].split(/\s+/);
+        var rhs = ruleM[2];
+        var orderOnly = [];
+        var prereqs = [];
+        var pipeIx = rhs.indexOf('|');
+        if (pipeIx >= 0) {
+          prereqs = rhs.slice(0, pipeIx).trim().split(/\s+/).filter(Boolean);
+          orderOnly = rhs.slice(pipeIx + 1).trim().split(/\s+/).filter(Boolean);
+        } else {
+          prereqs = rhs.trim().split(/\s+/).filter(Boolean);
+        }
+        for (var t = 0; t < targets.length; t++) {
+          var tn = getOrCreate(targets[t], lineNo);
+          tn._declared = true; // appears on LHS of a rule → it's a target, not a source
+          for (var pp = 0; pp < prereqs.length; pp++) {
+            getOrCreate(prereqs[pp], null);
+            edges.push({ from: targets[t], to: prereqs[pp], kind: 'normal' });
+          }
+          for (var oo = 0; oo < orderOnly.length; oo++) {
+            getOrCreate(orderOnly[oo], null);
+            edges.push({ from: targets[t], to: orderOnly[oo], kind: 'order-only' });
+          }
+        }
+        continue;
+      }
+
+      errors.push('Line ' + lineNo + ': unparseable: ' + line);
+    }
+
+    // Apply phony, source, mtime, recipe to nodes.
+    for (var ni = 0; ni < nodes.length; ni++) {
+      var n2 = nodes[ni];
+      if (phonySet[n2.id]) n2.isPhony = true;
+      if (explicitSource[n2.id]) n2.isSource = true;
+      // Auto-detect source: appears as prereq but never declared as a target,
+      // and not phony, and not given a recipe.
+      else if (!n2._declared && !phonySet[n2.id] && !recipes[n2.id]) n2.isSource = true;
+      if (mtimes[n2.id] !== undefined) n2.mtime = mtimes[n2.id];
+      if (recipes[n2.id]) n2.recipe = recipes[n2.id];
+      if (highlights[n2.id]) n2.highlight = true;
+      delete n2._declared;
+    }
+
+    var nById = {};
+    for (var nx = 0; nx < nodes.length; nx++) nById[nodes[nx].id] = nodes[nx];
+    computeStaleness(nodes, edges, nById);
+
+    return { nodes: nodes, edges: edges, errors: errors, makefilePresent: true };
+  }
+
   // Static API surface for the host.
   MakeGraph.parseMakeDb = parseMakeDb;
+  MakeGraph.parseSpec = parseSpec;
   MakeGraph._test = {
     parsePhony: parsePhony,
     parseMtimes: parseMtimes,

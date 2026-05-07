@@ -3,6 +3,11 @@ title: Makefiles & GNU Make
 layout: sebook
 ---
 
+<script src="/js/make-graph.js"></script>
+<script src="/js/make-command-lab.js"></script>
+<link rel="stylesheet" href="/css/make-graph.css">
+<link rel="stylesheet" href="/css/make-command-lab.css">
+
 ## Motivation
 
 Imagine you are building a small C program. It just has one file, `main.c`. To compile it, you simply open your terminal and type:
@@ -293,6 +298,137 @@ If you look closely at the arrows of the dependency graph above and focus on the
 3.  **The Chain Reaction:** When `make` detects that `sugar.txt` has changed (because you fixed the salty sugar), it travels along those two specific arrows. It forces the Chocolate Layers and Raspberry filling to be remade. Those updates then trigger the double-lined arrows `══▶`, forcing the Final Cake to be reassembled.
 
 Because no arrow carried the "sugar update" to the Buttercream, the Buttercream is completely ignored during the rebuild!
+
+## See it in action: how `make` decides what to rebuild
+
+The cake metaphor is helpful — but software engineers reason about *files*, *timestamps*, and *the dependency graph*. The five interactive demos below let you watch `make` make its decisions on a small C project. Each demo uses the same simple graph: `app` is built from `main.o` and `util.o`, which in turn come from `main.c` and `util.c`. Some demos add a shared header. Click the command to apply it; click again to undo. Multi-step demos have **Back** and **Auto-play** controls; you can also use ← → arrow keys when the demo has focus.
+
+A reading guide for each diagram (these conventions are the same ones the [interactive Makefile tutorial](/SEBook/tools/makefile-tutorial.html) uses):
+
+* **Solid green stripe + ✓ glyph** — the file is up to date.
+* **Diagonal-hatched red stripe + ● glyph (pulsing)** — the target is *stale*; `make` would rebuild it.
+* **Dashed border + ⌖ glyph** — the target is *phony* (not a file). `make` always runs it.
+* **Italic, no border** — the file is a *source*. `make` never rebuilds these; you (or your editor) do.
+* **Dashed edge** — an *order-only* prerequisite. The arrow says "must exist before me", not "rebuild me when newer."
+
+### Demo 1 — What `make` checks
+
+<div data-make-graph-spec aria-label="Sample dependency graph for a small C project — app depends on main.o and util.o, which depend on main.c and util.c respectively, all sharing shared.h.">
+<script type="application/json">
+{
+  "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h",
+  "state": { "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 } },
+  "caption": "A small C project. `app` is the final executable; `main.o`/`util.o` are intermediate object files; `main.c`/`util.c`/`shared.h` are sources. Every target's mtime is greater than its prerequisites' — so all targets are up to date."
+}
+</script>
+</div>
+
+When you run `make`, it walks this graph from the top. For each target, it asks one simple question: *is any of my prerequisites newer than me?* If yes, rebuild this target. If no, skip it. Phony targets bypass the comparison entirely (they're always considered "needs running"). That's the entire algorithm.
+
+### Demo 2 — Touching a source file → cascade of staleness
+
+<div data-make-command-lab-multi aria-label="Multi-step demo: editing main.c marks main.o and app stale; running make rebuilds only main.o and app, leaving util.o alone.">
+<script type="application/json">
+{
+  "title": "Touch main.c, then run make",
+  "description": "You edit `main.c`. Watch the cascade of staleness, then how `make` rebuilds *only* what changed. The two-step rhythm is the entire developer feedback loop: **edit → make**, every time.",
+  "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h",
+  "initialState": {
+    "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 }
+  },
+  "steps": [
+    {
+      "command": "touch main.c",
+      "description": "You saved `main.c` (or your editor did). Its mtime jumps to *newer* than `main.o`. **Notice:** `main.o` is now stale, and that staleness cascades up — `app` depends on `main.o`, so `app` is stale too. `util.c`, `util.o` are untouched.",
+      "state": { "mtime": { "main.c": 4 } }
+    },
+    {
+      "command": "make",
+      "description": "`make` walks the graph. It rebuilds `main.o` (its `.c` is newer), then re-links `app`. **`util.o` is left alone** — its prerequisites didn't change, so the work is skipped. *This is the whole reason `make` exists.*",
+      "state": { "mtime": { "main.o": 5, "app": 6 } },
+      "output": "gcc -c main.c -o main.o\ngcc -o app main.o util.o"
+    }
+  ]
+}
+</script>
+</div>
+
+A common student misconception: *"if anything changes, `make` recompiles everything."* That's not how it works — only nodes downstream of the change in the dependency graph are rebuilt. The graph is the contract that lets `make` skip work safely.
+
+### Demo 3 — Phony targets always run
+
+<div data-make-command-lab aria-label="Demo: make clean is a phony target; it ignores timestamps and always runs its recipe, deleting build artifacts and leaving the source files untouched.">
+<script type="application/json">
+{
+  "command": "make clean",
+  "description": "`clean` is **phony** (dashed border, ⌖ glyph). `make` doesn't compare timestamps for phony targets — it always runs the recipe. Here the recipe is `rm -f *.o app`. After it runs, `app`, `main.o`, `util.o` no longer exist on disk; they show as stale (red hatched stripe) because there's no file to compare against. Sources `main.c`/`util.c` are never touched.",
+  "topology": "app: main.o util.o\nmain.o: main.c\nutil.o: util.c\n.PHONY: clean",
+  "before": { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 } },
+  "after":  { "mtime": { "main.c": 1, "util.c": 1 } },
+  "undoCommand": "(restore from backup)"
+}
+</script>
+</div>
+
+The contrast that makes this concept stick: a non-phony target with no prerequisites would be considered "up to date as long as the file exists." The `.PHONY` declaration is what flips the switch. Common phony targets include `clean`, `install`, `test`, `run`, `dist`, `docs`. They're verbs (actions) rather than nouns (files).
+
+### Demo 4 — Order-only prerequisites
+
+<div data-make-command-lab aria-label="Demo: an order-only prerequisite (build directory) updates its mtime but does not mark app as stale, because order-only edges don't propagate staleness.">
+<script type="application/json">
+{
+  "command": "echo something > build/log",
+  "description": "An *order-only* prerequisite (after the `|` in the Makefile rule) tells `make`: \"this must **exist** before I run, but don't trigger a rebuild just because it has a newer mtime.\" The classic use is a build directory whose mtime updates every time a file is written into it — without order-only, every `.o` would be rebuilt every time. **Notice:** the `app → build` edge is **dashed**. After we touch `build`, its mtime is the newest in the graph — but `app` stays *up to date*. With a normal edge, `app` would be marked stale.",
+  "topology": "app: main.o util.o | build\nmain.o: main.c\nutil.o: util.c\nbuild:",
+  "before": { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3, "build": 1 } },
+  "after":  { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3, "build": 5 } }
+}
+</script>
+</div>
+
+Order-only is the answer to one of the most painful "why does my build keep redoing everything?" mysteries. It separates the two distinct ideas that students often conflate: *"X must come before Y"* vs. *"X being newer means Y is out of date."* The first is *ordering*, the second is *staleness propagation* — and Makefiles let you choose.
+
+### Demo 5 — Putting it together: edit → build → clean → rebuild
+
+<div data-make-command-lab-multi aria-label="Multi-step demo: a full development cycle — edit a header, build, clean, build from scratch — showing how each command interacts with the dependency graph.">
+<script type="application/json">
+{
+  "title": "A full edit / build / clean / rebuild cycle",
+  "description": "The full developer rhythm. We start fresh, edit a *header* (which has a wider blast radius than a single .c), rebuild, clean, and rebuild from scratch. Each step shows which files are touched and which are skipped.",
+  "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h\n.PHONY: clean",
+  "initialState": {
+    "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 }
+  },
+  "steps": [
+    {
+      "command": "touch shared.h",
+      "description": "You edited `shared.h`. **Both** `main.o` and `util.o` depend on it, so the staleness cascade is wider than Demo 2 — both objects flip stale, and `app` flips with them.",
+      "state": { "mtime": { "shared.h": 4 } }
+    },
+    {
+      "command": "make",
+      "description": "Two compiles + one link. Notice every target downstream of `shared.h` rebuilt — that's why minimizing what `shared.h` exposes (forward declarations, narrow includes) is a real perf win on large codebases.",
+      "state": { "mtime": { "main.o": 5, "util.o": 5, "app": 6 } },
+      "output": "gcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o app main.o util.o"
+    },
+    {
+      "command": "make clean",
+      "description": "`clean` is phony — runs unconditionally. The recipe deletes the build artifacts. They lose their mtimes (red hatched stripe).",
+      "state": { "mtime": { "main.o": null, "util.o": null, "app": null } },
+      "output": "rm -f *.o app"
+    },
+    {
+      "command": "make",
+      "description": "Cold rebuild. Every non-source target is missing → stale → rebuilt. This is what your CI pipeline does on every job.",
+      "state": { "mtime": { "main.o": 7, "util.o": 7, "app": 8 } },
+      "output": "gcc -c main.c -o main.o\ngcc -c util.c -o util.o\ngcc -o app main.o util.o"
+    }
+  ]
+}
+</script>
+</div>
+
+If you can predict, before clicking, what each step will change in the graph — you have a working mental model of `make`. (Editor headers cascade widely, phony targets always run, missing targets are stale.) That mental model is the single biggest payoff of learning Make: it transfers directly to every other build tool you'll meet later (Bazel, Gradle, Ninja, esbuild's incremental mode), because they all reduce to "what's stale, in topological order."
 
 ### A Recipe as a Makefile
 

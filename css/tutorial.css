@@ -1909,10 +1909,11 @@ html:not(.dark-mode) .tvm-git-graph-container {
 
 .tvm-make-dag-node-stripe {
   fill: var(--mg-fresh);
-  rx: 0;
 }
 .tvm-make-dag-node-fresh .tvm-make-dag-node-stripe { fill: var(--mg-fresh); }
-.tvm-make-dag-node-stale .tvm-make-dag-node-stripe { fill: var(--mg-stale); }
+/* Stale stripe uses the diagonal-hatch pattern so the state is visible by
+   *texture* as well as color (WCAG 1.4.1). */
+.tvm-make-dag-node-stale .tvm-make-dag-node-stripe { fill: url(#tvm-mg-stale-hatch); }
 
 .tvm-make-dag-node-label {
   fill: var(--mg-fg);
@@ -1984,17 +1985,28 @@ html:not(.dark-mode) .tvm-git-graph-container {
   gap: 6px;
 }
 .tvm-make-dag-legend-swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   background: var(--mg-node-bg);
   border: 1.5px solid var(--mg-node-border);
+  font-size: 0.85em;
+  line-height: 1;
+  font-weight: 700;
 }
-.tvm-make-dag-legend-swatch.tvm-make-dag-legend-fresh   { border-left: 4px solid var(--mg-fresh); }
-.tvm-make-dag-legend-swatch.tvm-make-dag-legend-stale   { border-left: 4px solid var(--mg-stale); }
-.tvm-make-dag-legend-swatch.tvm-make-dag-legend-phony   { border-style: dashed; border-color: var(--mg-phony); }
-.tvm-make-dag-legend-swatch.tvm-make-dag-legend-source  { background: transparent; border-color: transparent; border-bottom: 1.5px solid var(--mg-node-source-fg); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-fresh   { border-left: 4px solid var(--mg-fresh); color: var(--mg-fresh); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-stale   { border-left: 4px solid var(--mg-stale); color: var(--mg-stale); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-phony   { border-style: dashed; border-color: var(--mg-phony); color: var(--mg-phony); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-source  { background: transparent; border-color: transparent; border-bottom: 1.5px solid var(--mg-node-source-fg); color: var(--mg-node-source-fg); font-style: italic; }
+
+/* Diagonal-hatch pattern colors for the stale stripe — pairs with the red
+   fill so users with low color vision still see the "stale" state via
+   texture (WCAG 1.4.1 — color is never the only indicator). */
+.tvm-mg-stale-hatch-bg   { fill: var(--mg-stale); }
+.tvm-mg-stale-hatch-line { stroke: var(--mg-bg); stroke-width: 1.4; opacity: 0.55; }
 
 /* ── Make-DAG view-toggle button ── */
 .tvm-view-btn-make-dag svg { flex-shrink: 0; }

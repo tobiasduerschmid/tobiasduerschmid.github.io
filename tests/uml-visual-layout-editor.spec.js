@@ -271,10 +271,26 @@ async function statePseudoRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
     const routes = window.UMLShared.collectEditableRoutes(svg);
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y),
+      };
+    }
     const circles = Array.from(svg.querySelectorAll('circle'))
       .filter((el) => !el.closest('defs') && !el.closest('.uml-pg-edit-layer'))
       .map((el) => {
-        const b = el.getBBox();
+        const b = svgBox(el);
         return {
           x: b.x + b.width / 2,
           y: b.y + b.height / 2,
@@ -306,10 +322,26 @@ async function stateRegularRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
     const routes = window.UMLShared.collectEditableRoutes(svg);
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y),
+      };
+    }
     const circles = Array.from(svg.querySelectorAll('circle'))
       .filter((el) => !el.closest('defs') && !el.closest('.uml-pg-edit-layer'))
       .map((el) => {
-        const b = el.getBBox();
+        const b = svgBox(el);
         return {
           x: b.x + b.width / 2,
           y: b.y + b.height / 2,
@@ -408,6 +440,23 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
       return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
     }
 
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y),
+      };
+    }
+
     function dataBox(id, tagFilter) {
       let box = null;
       let side = null;
@@ -415,7 +464,7 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
         if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
         if (el.getAttribute('data-layout-id') !== id) continue;
         if (tagFilter && !tagFilter(el)) continue;
-        const b = el.getBBox();
+        const b = svgBox(el);
         box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
         side = el.getAttribute('data-port-side') || side;
       }
@@ -461,6 +510,23 @@ async function componentPortInfo(page, id) {
       return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
     }
 
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y),
+      };
+    }
+
     function dataBox(id, tagFilter) {
       let box = null;
       let side = null;
@@ -468,7 +534,7 @@ async function componentPortInfo(page, id) {
         if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
         if (el.getAttribute('data-layout-id') !== id) continue;
         if (tagFilter && !tagFilter(el)) continue;
-        const b = el.getBBox();
+        const b = svgBox(el);
         box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
         side = el.getAttribute('data-port-side') || side;
       }
@@ -2577,6 +2643,7 @@ A --> B : go
     await selectEditMode(page, 'nodes');
     await page.locator('#uml-pg-input').evaluate((el) => {
       el.value = `@startuml
+class Anchor @pos(0, 0)
 class Foo @pos(100, 100)
 class Bar @pos(400, 250)
 Foo --> Bar
@@ -2588,35 +2655,61 @@ Foo --> Bar
 
     // Build a route override whose endpoints actually touch each class so
     // proximity-based detection picks them up as connected to Foo / Bar.
-    const setup = await page.evaluate(() => {
-      const svg = document.querySelector('#uml-pg-output svg');
-      const fooBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
-      const barBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
-      const fx = Number(fooBox.getAttribute('x'));
-      const fy = Number(fooBox.getAttribute('y'));
-      const fw = Number(fooBox.getAttribute('width'));
-      const fh = Number(fooBox.getAttribute('height'));
-      const bx = Number(barBox.getAttribute('x'));
-      const by = Number(barBox.getAttribute('y'));
-      const bh = Number(barBox.getAttribute('height'));
-      return {
-        fooRightEdge: { x: fx + fw, y: fy + fh / 2 },
-        barLeftEdge: { x: bx, y: by + bh / 2 },
-      };
-    });
+    // The layout block itself can change the fitted SVG coordinate frame, so
+    // seed once, then normalize the saved points against that rendered frame.
+    async function routeOverrideForCurrentBoxes() {
+      return page.evaluate(() => {
+        const svg = document.querySelector('#uml-pg-output svg');
+        const fooBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
+        const barBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
+        const fx = Number(fooBox.getAttribute('x'));
+        const fy = Number(fooBox.getAttribute('y'));
+        const fw = Number(fooBox.getAttribute('width'));
+        const fh = Number(fooBox.getAttribute('height'));
+        const bx = Number(barBox.getAttribute('x'));
+        const by = Number(barBox.getAttribute('y'));
+        const bh = Number(barBox.getAttribute('height'));
+        return {
+          fooRightEdge: { x: fx + fw, y: fy + fh / 2 },
+          barLeftEdge: { x: bx, y: by + bh / 2 },
+        };
+      });
+    }
 
-    const startPoints = [
-      `${setup.fooRightEdge.x},${setup.fooRightEdge.y}`,
-      `${setup.fooRightEdge.x + 60},${setup.fooRightEdge.y}`,
-      `${setup.fooRightEdge.x + 60},${setup.barLeftEdge.y}`,
-      `${setup.barLeftEdge.x},${setup.barLeftEdge.y}`,
-    ].join(' ');
+    function routePointsForSetup(setup) {
+      return [
+        `${setup.fooRightEdge.x},${setup.fooRightEdge.y}`,
+        `${setup.fooRightEdge.x + 60},${setup.fooRightEdge.y}`,
+        `${setup.fooRightEdge.x + 60},${setup.barLeftEdge.y}`,
+        `${setup.barLeftEdge.x},${setup.barLeftEdge.y}`,
+      ].join(' ');
+    }
+
+    let startPoints = routePointsForSetup(await routeOverrideForCurrentBoxes());
 
     await page.locator('#uml-pg-input').evaluate((el, points) => {
       el.value = `@layout schema=1 renderer="archuml-visual-editor"
 edge "edge-0" points="${points}"
 @endlayout
 @startuml
+class Anchor @pos(0, 0)
+class Foo @pos(100, 100)
+class Bar @pos(400, 250)
+Foo --> Bar
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, startPoints);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && window.UMLShared.collectEditableRoutes(svg).some((r) => r.source === 'Foo' && r.target === 'Bar');
+    });
+    startPoints = routePointsForSetup(await routeOverrideForCurrentBoxes());
+    await page.locator('#uml-pg-input').evaluate((el, points) => {
+      el.value = `@layout schema=1 renderer="archuml-visual-editor"
+edge "edge-0" points="${points}"
+@endlayout
+@startuml
+class Anchor @pos(0, 0)
 class Foo @pos(100, 100)
 class Bar @pos(400, 250)
 Foo --> Bar
@@ -2627,19 +2720,25 @@ Foo --> Bar
       const svg = document.querySelector('#uml-pg-output svg');
       if (!svg) return false;
       const routes = window.UMLShared.collectEditableRoutes(svg);
-      return routes.some((r) => r.id === 'edge-0');
+      return routes.some((r) => r.source === 'Foo' && r.target === 'Bar');
     });
+    const renderedRouteId = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const routes = window.UMLShared.collectEditableRoutes(svg);
+      return routes.find((r) => r.source === 'Foo' && r.target === 'Bar')?.id || null;
+    });
+    expect(renderedRouteId).not.toBeNull();
 
     // Drag Foo. After mouse.up, the source is rewritten and the diagram
     // re-renders; the assertion runs against the post-render state.
     await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Foo"]'), 80, 35);
 
-    const after = await page.evaluate(() => {
+    const after = await page.evaluate((routeId) => {
       const svg = document.querySelector('#uml-pg-output svg');
       const fooBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Foo"]');
       const barBox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Bar"]');
       const routes = window.UMLShared.collectEditableRoutes(svg);
-      const route = routes.find((r) => r.id === 'edge-0');
+      const route = routes.find((r) => r.id === routeId);
       if (!fooBox || !barBox || !route) return null;
       const f = {
         x: Number(fooBox.getAttribute('x')),
@@ -2666,7 +2765,7 @@ Foo --> Bar
         foo: f,
         bar: b,
       };
-    });
+    }, renderedRouteId);
 
     expect(after, 'route + boxes should still be present after drag').not.toBeNull();
     const debug = JSON.stringify(after);

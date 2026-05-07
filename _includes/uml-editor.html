@@ -3128,6 +3128,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return cloneRoutes(window.UMLShared.extractLayoutMetadata(text).layout.routes);
     }
 
+    function layoutRouteStorageKey(routes, route) {
+      if (!route) return '';
+      var id = String(route.id || '');
+      if (id && routes && Object.prototype.hasOwnProperty.call(routes, id)) return id;
+      var index = route.index;
+      if (index !== undefined && index !== null && isFinite(Number(index))) {
+        var edgeKey = 'edge-' + Number(index);
+        if (routes && Object.prototype.hasOwnProperty.call(routes, edgeKey)) return edgeKey;
+        var numericKey = String(Number(index));
+        if (routes && Object.prototype.hasOwnProperty.call(routes, numericKey)) return numericKey;
+      }
+      return id;
+    }
+
     function routePointsToString(points) {
       if (window.UMLShared && window.UMLShared.layoutRoutePointsToString) {
         return window.UMLShared.layoutRoutePointsToString(points);
@@ -3824,65 +3838,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
     }
 
-    function svgPointObject(svg, point) {
-      var pt = svg && svg.createSVGPoint ? svg.createSVGPoint() : null;
-      if (!pt) return { x: point.x, y: point.y };
-      pt.x = point.x;
-      pt.y = point.y;
-      return pt;
-    }
-
-    function elementToSvgMatrix(svg, el) {
-      if (!svg || !el || !svg.getScreenCTM || !el.getScreenCTM) return null;
-      try {
-        var svgCtm = svg.getScreenCTM();
-        var elCtm = el.getScreenCTM();
-        if (!svgCtm || !elCtm) return null;
-        return svgCtm.inverse().multiply(elCtm);
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function routePointToEditorCanvas(svg, el, point) {
-      var matrix = elementToSvgMatrix(svg, el);
-      if (!matrix) return { x: point.x, y: point.y };
-      var next = svgPointObject(svg, point).matrixTransform(matrix);
-      return { x: next.x, y: next.y };
-    }
-
-    function editorCanvasPointToRoute(svg, el, point) {
-      var matrix = elementToSvgMatrix(svg, el);
-      if (!matrix) return { x: point.x, y: point.y };
-      try {
-        var next = svgPointObject(svg, point).matrixTransform(matrix.inverse());
-        return { x: next.x, y: next.y };
-      } catch (e) {
-        return { x: point.x, y: point.y };
-      }
-    }
-
-    function normalizeEditableRoute(svg, route) {
-      if (!route || !route.points) return route;
-      var localPoints = clonePoints(route.points);
-      var canvasPoints = localPoints.map(function (point) {
-        return routePointToEditorCanvas(svg, route.element, point);
-      });
-      route.localPoints = localPoints;
-      route.points = canvasPoints;
-      route.box = pointsBox(canvasPoints);
-      route._editorSvg = svg;
-      return route;
-    }
-
-    function routePointsForElementSpace(route, points) {
-      if (!route) return clonePoints(points);
-      var svg = route._editorSvg || (route.element && route.element.ownerSVGElement) || output.querySelector('svg');
-      return clonePoints(points).map(function (point) {
-        return editorCanvasPointToRoute(svg, route.element, point);
-      });
-    }
-
     function setRouteOverlaySegment(seg, p1, p2) {
       seg.setAttribute('x1', p1.x);
       seg.setAttribute('y1', p1.y);
@@ -3909,16 +3864,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if ((typeSelect.value || '') === 'sequence') {
         return routes.filter(function (route) {
           return /^seqmsg:\d+$/.test(String(route.id || ''));
-        }).map(function (route) { return normalizeEditableRoute(svg, route); });
+        });
       }
-      return routes.map(function (route) { return normalizeEditableRoute(svg, route); });
+      return routes;
     }
 
     function applyRoutePoints(route, points) {
       if (window.UMLShared && window.UMLShared.setRoutePointsForElement) {
-        route.element = window.UMLShared.setRoutePointsForElement(route.element, routePointsForElementSpace(route, points)) || route.element;
+        route.element = window.UMLShared.setRoutePointsForElement(route.element, points) || route.element;
         route.points = clonePoints(points);
-        route.localPoints = routePointsForElementSpace(route, points);
+        route.box = pointsBox(points);
       }
     }
 
@@ -4058,12 +4013,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!routes || !connectedRoutes) return;
       connectedRoutes.forEach(function (entry) {
         if (!entry || !entry.route || !entry.route.id) return;
-        var stored = routes[entry.route.id];
+        var routeKey = layoutRouteStorageKey(routes, entry.route);
+        var stored = routeKey ? routes[routeKey] : null;
         if (!stored || !stored.points || stored.points.length < 2) return;
         var sourceDelta = routeDeltaForEndpoint(entry.source, entry.sourceIds, deltas);
         var targetDelta = routeDeltaForEndpoint(entry.target, entry.targetIds, deltas);
         if (!sourceDelta && !targetDelta) return;
-        routes[entry.route.id] = { points: shiftRoutePoints(stored.points, sourceDelta, targetDelta) };
+        routes[routeKey] = { points: shiftRoutePoints(stored.points, sourceDelta, targetDelta) };
       });
     }
 
@@ -4115,6 +4071,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!item || item.axis !== 'port' || !item.parentBox) return { x: x, y: y };
       var box = item.parentBox;
       var inset = 8;
+      var switchMargin = inset;
       var minX = box.x + inset;
       var maxX = box.x + box.width - inset;
       var minY = box.y + inset;
@@ -4136,6 +4093,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         { side: 'top', x: clamp(x, minX, maxX), y: box.y, distance: Math.abs(y - box.y) },
         { side: 'bottom', x: clamp(x, minX, maxX), y: box.y + box.height, distance: Math.abs(y - (box.y + box.height)) }
       ];
+      if (item.portSide) {
+        var eligible = choices.filter(function (choice) {
+          if (choice.side === item.portSide) return true;
+          if (choice.side === 'left') return x <= box.x - switchMargin;
+          if (choice.side === 'right') return x >= box.x + box.width + switchMargin;
+          if (choice.side === 'top') return y <= box.y - switchMargin;
+          if (choice.side === 'bottom') return y >= box.y + box.height + switchMargin;
+          return false;
+        });
+        if (eligible.length) choices = eligible;
+      }
       choices.sort(function (a, b) {
         if (Math.abs(a.distance - b.distance) > 0.75) return a.distance - b.distance;
         if (a.side === item.portSide) return -1;
@@ -10259,7 +10227,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
         if (finish) {
           var routes = readLayoutRoutes(textarea.value);
-          routes[dragState.route.id] = { points: routePointsForElementSpace(dragState.route, nextPoints) };
+          var routeKey = layoutRouteStorageKey(routes, dragState.route) || dragState.route.id;
+          routes[routeKey] = { points: nextPoints };
           var editables = findEditableElements(dragState.svg);
           textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, collectPositions(editables), routes);
           dragState = null;
@@ -10886,7 +10855,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (!selectedLayoutId) return;
         if (selectedLayoutKind === 'route') {
           var routes = readLayoutRoutes(textarea.value);
-          delete routes[selectedLayoutId];
+          var selectedRoute = findEditableRoutes(output.querySelector('svg')).find(function (route) {
+            return route.id === selectedLayoutId;
+          });
+          var routeKey = layoutRouteStorageKey(routes, selectedRoute) || selectedLayoutId;
+          delete routes[routeKey];
+          if (routeKey !== selectedLayoutId) delete routes[selectedLayoutId];
           var editablesForRouteReset = findEditableElements(output.querySelector('svg'));
           textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, collectPositions(editablesForRouteReset), routes);
           setSelectedLayoutId(null);

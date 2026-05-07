@@ -37,6 +37,56 @@ async function newHarness(page, terminalReady) {
 }
 
 test.describe('v86 terminal background sync', () => {
+  test('syncs the v86 guest clock to the host before setup commands run', async ({ page }) => {
+    await page.setContent('<main><div id="tutorial-root"></div></main>');
+    await page.addScriptTag({ path: path.join(__dirname, '..', 'js', 'tutorial-code.js') });
+
+    const calls = await page.evaluate(async () => {
+      const realNow = Date.now;
+      Date.now = () => 1778123456789;
+      try {
+        const tutorial = new window.TutorialCode('#tutorial-root', {
+          backend: 'v86',
+          steps: [],
+        });
+        const runSilentCalls = [];
+        tutorial.term = { cols: 88, rows: 24 };
+        tutorial._runSilent = function (cmd) {
+          runSilentCalls.push(cmd);
+          return Promise.resolve();
+        };
+        await tutorial._setupFilesystem();
+        return runSilentCalls;
+      } finally {
+        Date.now = realNow;
+      }
+    });
+
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+    expect(calls[0]).toContain('date -u -s @1778123456');
+    expect(calls[0].indexOf('date -u -s @1778123456')).toBeLessThan(calls[0].indexOf('stty cols 88 rows 24'));
+  });
+
+  test('make DAG refresh does not rewrite source or artifact mtimes', async ({ page }) => {
+    await page.setContent('<main><div id="tutorial-root"></div></main>');
+    await page.addScriptTag({ path: path.join(__dirname, '..', 'js', 'tutorial-code.js') });
+
+    const dump = await page.evaluate(() => {
+      const tutorial = new window.TutorialCode('#tutorial-root', {
+        backend: 'v86',
+        steps: [],
+        makeDagPath: '/tutorial/make_project',
+      });
+      return tutorial._buildMakeDagDumpCommand();
+    });
+
+    expect(dump).toContain('make -pn --no-builtin-rules');
+    expect(dump).not.toContain('-newermt');
+    expect(dump).not.toContain('SRC_REF');
+    expect(dump).not.toContain('touch ');
+    expect(dump).not.toContain('touch\t');
+  });
+
   test('does not send git graph or gutter fallback commands through serial after prompt reveal', async ({ page }) => {
     await newHarness(page, true);
 

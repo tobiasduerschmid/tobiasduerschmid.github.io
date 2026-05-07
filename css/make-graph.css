@@ -1,0 +1,216 @@
+/**
+ * make-graph.css — renderer-specific styles for MakeGraph (js/make-graph.js).
+ *
+ * This file styles the SVG output and the legend the renderer emits.
+ * The chrome around it (panel header, refresh button) lives in tutorial.css
+ * because it's only used inside the tutorial layout.
+ *
+ * Loaded standalone by SEBook pages that embed Make-DAG diagrams (via
+ * make-command-lab and friends), and re-imported by tutorial.css for the
+ * tutorial layout — keep this self-contained and do not depend on
+ * tutorial-layout selectors.
+ *
+ * Color tokens (`--mg-*`) default to a dark-mode palette and are overridden
+ * for `html:not(.dark-mode)` further down. Both palettes meet WCAG 2.2 AA
+ * contrast for the relevant text/icon foregrounds (verified against the
+ * panel/card backgrounds used by the tutorial layout and the SEBook page).
+ */
+
+/* Default tokens (dark mode). The tutorial layout's `.tvm-make-dag-panel`
+   re-declares these in tutorial.css and the lab card's `.make-command-lab`
+   does the same in make-command-lab.css. Either ancestor's tokens win. */
+.tvm-make-dag-canvas,
+.tvm-make-dag-svg,
+.tvm-make-dag-legend {
+  --mg-bg: #1d1f2a;
+  --mg-fg: #e6e8f0;
+  --mg-muted: #9aa0b4;
+  --mg-edge: #9aa0b4;
+  --mg-edge-stale: #ff5454;
+  --mg-node-bg: #161823;
+  --mg-node-border: #3a3e52;
+  --mg-node-source-fg: #9aa0b4;
+  --mg-fresh: #4caf50;
+  --mg-stale: #ff5454;
+  --mg-phony: #e6a847;
+  --mg-focus-ring: #6db8ff;
+}
+
+/* ── Canvas + SVG host ──────────────────────────────────────────────── */
+.tvm-make-dag-canvas {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+}
+.tvm-make-dag-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  color: var(--mg-edge);
+}
+
+/* ── Edges ──────────────────────────────────────────────────────────── */
+.tvm-make-dag-edge {
+  fill: none;
+  stroke: var(--mg-edge);
+  stroke-width: 1.6;
+  transition: stroke 0.2s;
+}
+.tvm-make-dag-edge-order-only { stroke-dasharray: 4 3; }
+.tvm-make-dag-edge-stale {
+  stroke: var(--mg-edge-stale);
+  stroke-width: 2;
+}
+
+/* ── Nodes ──────────────────────────────────────────────────────────── */
+.tvm-make-dag-node { cursor: pointer; }
+.tvm-make-dag-node:focus-visible { outline: none; }
+.tvm-make-dag-node:focus-visible .tvm-make-dag-node-rect {
+  stroke: var(--mg-focus-ring);
+  stroke-width: 2.5;
+}
+
+.tvm-make-dag-node-rect {
+  fill: var(--mg-node-bg);
+  stroke: var(--mg-node-border);
+  stroke-width: 1.4;
+  transition: fill 0.2s, stroke 0.2s;
+}
+.tvm-make-dag-node:hover .tvm-make-dag-node-rect {
+  fill: color-mix(in srgb, var(--mg-node-bg) 80%, white 20%);
+}
+
+.tvm-make-dag-node-stripe { fill: var(--mg-fresh); }
+.tvm-make-dag-node-fresh .tvm-make-dag-node-stripe { fill: var(--mg-fresh); }
+/* Stale stripe uses the diagonal-hatch pattern (defined inline in the SVG
+   <defs>) so the state is visible by *texture* as well as color
+   (WCAG 1.4.1 — colour is never the only indicator). */
+.tvm-make-dag-node-stale .tvm-make-dag-node-stripe { fill: url(#tvm-mg-stale-hatch); }
+
+.tvm-make-dag-node-label {
+  fill: var(--mg-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+}
+.tvm-make-dag-node-glyph {
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+.tvm-make-dag-node-fresh .tvm-make-dag-node-glyph { fill: var(--mg-fresh); }
+.tvm-make-dag-node-stale .tvm-make-dag-node-glyph { fill: var(--mg-stale); }
+.tvm-make-dag-node-phony .tvm-make-dag-node-glyph { fill: var(--mg-phony); }
+
+/* Phony — dashed outline replaces the solid rect border. */
+.tvm-make-dag-node-phony .tvm-make-dag-node-rect {
+  stroke: var(--mg-phony);
+  stroke-dasharray: 4 3;
+  stroke-width: 1.6;
+}
+
+/* Source files — flat, no border, gray italic label. */
+.tvm-make-dag-node-source .tvm-make-dag-node-rect {
+  fill: transparent;
+  stroke: transparent;
+}
+.tvm-make-dag-node-source .tvm-make-dag-node-label {
+  fill: var(--mg-node-source-fg);
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Highlighted node — extra emphasis (e.g. for "currently being rebuilt"). */
+.tvm-make-dag-node-highlight .tvm-make-dag-node-rect {
+  stroke-width: 2.5;
+  stroke: var(--mg-focus-ring);
+}
+
+/* Stale pulse — gentle attention-getter on out-of-date targets. Only the
+   status glyph pulses, not the whole node, so the screen reader's announced
+   label stays stable. Disabled for users with reduced-motion preference. */
+.tvm-make-dag-node-stale .tvm-make-dag-node-glyph {
+  animation: tvm-mg-pulse 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes tvm-mg-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.18); }
+}
+
+/* Diagonal-hatch pattern colors for the stale stripe (the pattern itself
+   is defined in the SVG <defs> by the renderer). */
+.tvm-mg-stale-hatch-bg   { fill: var(--mg-stale); }
+.tvm-mg-stale-hatch-line { stroke: var(--mg-bg); stroke-width: 1.4; opacity: 0.55; }
+
+/* ── Legend ─────────────────────────────────────────────────────────── */
+.tvm-make-dag-legend {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 8px 12px;
+  margin-top: 14px;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid color-mix(in srgb, var(--mg-edge) 40%, transparent);
+  font-size: 0.92em;
+  color: var(--mg-fg);
+  border-radius: 4px;
+}
+.tvm-make-dag-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tvm-make-dag-legend-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--mg-node-bg);
+  border: 1.5px solid var(--mg-node-border);
+  font-size: 0.85em;
+  line-height: 1;
+  font-weight: 700;
+}
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-fresh   { border-left: 4px solid var(--mg-fresh); color: var(--mg-fresh); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-stale   { border-left: 4px solid var(--mg-stale); color: var(--mg-stale); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-phony   { border-style: dashed; border-color: var(--mg-phony); color: var(--mg-phony); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-source  { background: transparent; border-color: transparent; border-bottom: 1.5px solid var(--mg-node-source-fg); color: var(--mg-node-source-fg); font-style: italic; }
+
+/* ── Light mode tokens ──────────────────────────────────────────────── */
+html:not(.dark-mode) .tvm-make-dag-canvas,
+html:not(.dark-mode) .tvm-make-dag-svg,
+html:not(.dark-mode) .tvm-make-dag-legend {
+  --mg-bg: #fafbfc;
+  --mg-fg: #1a1a1a;
+  --mg-muted: #5a5e6b;
+  --mg-edge: #7d8294;
+  --mg-edge-stale: #d83a3a;
+  --mg-node-bg: #ffffff;
+  --mg-node-border: #c4c8d3;
+  --mg-node-source-fg: #6e7280;
+  --mg-fresh: #1f9b3d;
+  --mg-stale: #d83a3a;
+  --mg-phony: #b8770b;
+  --mg-focus-ring: #0066cc;
+}
+html:not(.dark-mode) .tvm-make-dag-legend {
+  background: rgba(0,0,0,0.04);
+}
+
+/* ── Reduced-motion (WCAG 2.2 SC 2.3.3) ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tvm-make-dag-node-stale .tvm-make-dag-node-glyph { animation: none; }
+  .tvm-make-dag-edge,
+  .tvm-make-dag-node-rect { transition: none; }
+}
+html.prm-reduce .tvm-make-dag-node-stale .tvm-make-dag-node-glyph { animation: none; }
