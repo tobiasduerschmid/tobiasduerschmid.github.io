@@ -14,7 +14,7 @@ Supported options:
 - hide_archuml: "true" or "false" to hide the source pane and Copy ArchUML
 - hide_syntax_help: "true" or "false" to hide the link to the ArchUML syntax reference
 {% endcomment %}
-{% assign uml_editor_types_param = include.types | default: "class,sequence,state,component,deployment,usecase,activity,gitgraph,venn,er" %}
+{% assign uml_editor_types_param = include.types | default: "class,sequence,state,component,deployment,usecase,activity,freeform,gitgraph,folder-tree,venn,er" %}
 {% assign uml_editor_types = uml_editor_types_param | split: "," %}
 {% assign uml_editor_default_type = include.default_type | default: "class" %}
 {% assign uml_editor_default_layout = include.default_layout | default: include.layout | default: "square" %}
@@ -60,7 +60,7 @@ Supported options:
         {% for uml_editor_type_raw in uml_editor_types %}
           {% assign uml_editor_type = uml_editor_type_raw | strip %}
           {% if uml_editor_type != "" %}
-            {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "gitgraph" %}Git Graph{% when "venn" %}Venn{% when "er" %}ER (Chen){% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
+            {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "freeform" %}Freeform{% when "gitgraph" %}Git Graph{% when "folder-tree" %}Folder Tree{% when "venn" %}Venn{% when "er" %}ER (Chen){% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
             <option value="{{ uml_editor_type | escape }}"{% if uml_editor_type == uml_editor_default_type %} selected{% endif %}>{{ uml_editor_type_label | strip }}</option>
           {% endif %}
         {% endfor %}
@@ -73,6 +73,10 @@ Supported options:
         <option value="square" selected>Square</option>
         <option value="landscape">Landscape</option>
         <option value="portrait">Portrait</option>
+        <option value="horizontal">Horizontal</option>
+        <option value="vertical">Vertical</option>
+        <option value="compact">Compact</option>
+        <option value="none">None</option>
       </select>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-modes">
@@ -127,7 +131,7 @@ Supported options:
     </div>
   </div>
 
-  <div id="uml-pg-sequence-model" hidden role="region" aria-label="Sequence diagram model editor"></div>
+  <div id="uml-pg-sequence-model" hidden role="region" aria-label="Diagram model editor"></div>
 
   <div id="uml-pg-help-banner" hidden role="region" aria-label="Visual editor tips" aria-keyshortcuts="Shift+?">
     <div class="uml-pg-help-text">
@@ -1810,6 +1814,10 @@ html.dark-mode .uml-pg-tool-icon {
   background: #f6f9fd;
 }
 
+.uml-pg-sequence-model-row.is-line-model-row {
+  grid-template-columns: minmax(7em, auto) minmax(16em, 1fr) auto auto auto;
+}
+
 .uml-pg-sequence-model-kind {
   font-weight: 700;
   color: #1a3656;
@@ -2494,6 +2502,18 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       '@enduml'
     ].join('\n'),
 
+    freeform: [
+      '@startuml',
+      'layout horizontal',
+      'box "Working Directory" as wd',
+      'box round "Stash\\nWIP changes" as stash',
+      'box note "Restored files" as restored',
+      'wd --> stash : git stash',
+      'stash --> restored : git stash pop',
+      'note bottom of wd : Edit files here',
+      '@enduml'
+    ].join('\n'),
+
     gitgraph: [
       '@startuml',
       'branch main:',
@@ -2513,6 +2533,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       '  J "Try aggressive inlining"',
       '',
       'head main',
+      '@enduml'
+    ].join('\n'),
+
+    'folder-tree': [
+      '@startuml',
+      'project-root/',
+      '  src/',
+      '    main.js',
+      '    utils.js',
+      '  tests/',
+      '    main.test.js',
+      '  README.md <- documentation',
+      '  package.json',
       '@enduml'
     ].join('\n'),
 
@@ -2572,6 +2605,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     deployment: function (container, text) { window.UMLDeploymentDiagram.render(container, text); },
     usecase: function (container, text) { window.UMLUseCaseDiagram.render(container, text); },
     activity: function (container, text) { window.UMLActivityDiagram.render(container, text); },
+    freeform: function (container, text) { window.UMLFreeformDiagram.render(container, text); },
     gitgraph: function (container, text) {
       if (window.UMLGitGraphDiagram && window.UMLGitGraphDiagram.render) {
         window.UMLGitGraphDiagram.render(container, text);
@@ -2587,6 +2621,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         window.UMLShared.renderAll();
       }
     },
+    'folder-tree': function (container, text) { window.UMLFolderTreeDiagram.render(container, text); },
     venn: function (container, text) { window.UMLVennDiagram.render(container, text); },
     er: function (container, text) { window.UMLERDiagram.render(container, text); },
   };
@@ -2624,7 +2659,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     deployment: 'UMLDeploymentDiagram',
     usecase: 'UMLUseCaseDiagram',
     activity: 'UMLActivityDiagram',
+    freeform: 'UMLFreeformDiagram',
     gitgraph: 'UMLGitGraphDiagram',
+    'folder-tree': 'UMLFolderTreeDiagram',
     venn: 'UMLVennDiagram',
     er: 'UMLERDiagram'
   };
@@ -2666,15 +2703,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
   var ELEMENT_SCHEMAS = {
     class: [
-      { id: 'class',     label: 'Class',     glyph: '▢', base: 'Class',     keyword: 'class',          supports: { stereotype: true, members: true, abstract: true, highlight: true } },
-      { id: 'abstract',  label: 'Abstract',  glyph: '■', base: 'Abstract',  keyword: 'abstract class', supports: { stereotype: true, members: true, highlight: true } },
-      { id: 'interface', label: 'Interface', glyph: '○', base: 'IFace',     keyword: 'interface',      supports: { stereotype: true, members: true, highlight: true } },
-      { id: 'enum',      label: 'Enum',      glyph: '≡', base: 'Enum',      keyword: 'enum',           supports: { stereotype: true, enumValues: true, highlight: true } },
+      { id: 'class',     label: 'Class',     glyph: '▢', base: 'Class',     keyword: 'class',          supports: { stereotype: true, members: true, abstract: true, highlight: true, texture: true } },
+      { id: 'abstract',  label: 'Abstract',  glyph: '■', base: 'Abstract',  keyword: 'abstract class', supports: { stereotype: true, members: true, highlight: true, texture: true } },
+      { id: 'interface', label: 'Interface', glyph: '○', base: 'IFace',     keyword: 'interface',      supports: { stereotype: true, members: true, highlight: true, texture: true } },
+      { id: 'enum',      label: 'Enum',      glyph: '≡', base: 'Enum',      keyword: 'enum',           supports: { stereotype: true, enumValues: true, highlight: true, texture: true } },
       NOTE_SCHEMA
     ],
     sequence: [
-      { id: 'actor',       label: 'Actor',       glyph: '☺', base: 'actor',  keyword: 'actor',       supports: { displayLabel: true, highlight: true } },
-      { id: 'participant', label: 'Participant', glyph: '▭', base: 'p',      keyword: 'participant', supports: { displayLabel: true, highlight: true } },
+      { id: 'actor',       label: 'Actor',       glyph: '☺', base: 'actor',  keyword: 'actor',       supports: { displayLabel: true, highlight: true, texture: true } },
+      { id: 'participant', label: 'Participant', glyph: '▭', base: 'p',      keyword: 'participant', supports: { displayLabel: true, highlight: true, texture: true } },
       { id: 'activate',    label: 'Activate',    glyph: '▮', base: 'activate', keyword: 'activate', supports: {}, sequenceControl: 'activate' },
       { id: 'deactivate',  label: 'Deactivate',  glyph: '▯', base: 'deactivate', keyword: 'deactivate', supports: {}, sequenceControl: 'deactivate' },
       { id: 'destroy',     label: 'Destroy',     glyph: '×', base: 'destroy', keyword: 'destroy', supports: {}, sequenceControl: 'destroy' },
@@ -2689,15 +2726,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       { id: 'neg', label: 'neg fragment', glyph: '¬', base: 'neg', keyword: 'neg', supports: {}, sequenceFragment: 'neg' }
     ],
     state: [
-      { id: 'state',     label: 'State',          glyph: '▢', base: 'State',  keyword: 'state', supports: { stereotype: true, highlight: true, subStates: true } },
-      { id: 'composite', label: 'Composite',      glyph: '⊞', base: 'Group',  keyword: 'state', supports: { stereotype: true, highlight: true, subStates: true }, isComposite: true },
+      { id: 'state',     label: 'State',          glyph: '▢', base: 'State',  keyword: 'state', supports: { stereotype: true, highlight: true, texture: true, subStates: true } },
+      { id: 'composite', label: 'Composite',      glyph: '⊞', base: 'Group',  keyword: 'state', supports: { stereotype: true, highlight: true, texture: true, subStates: true }, isComposite: true },
       { id: 'choice',    label: 'Choice <>',      glyph: '⬢', base: 'Choice', keyword: 'state', supports: {}, fixedStereotype: '<<choice>>' },
       { id: 'initial', label: 'Initial ●', glyph: '●', base: '__init', keyword: '',     supports: {}, pseudo: 'initial' },
       { id: 'final',   label: 'Final ◉',   glyph: '◉', base: '__final',keyword: '',     supports: {}, pseudo: 'final' },
       NOTE_SCHEMA
     ],
     component: [
-      { id: 'component', label: 'Component', glyph: '▢', base: 'Component', keyword: 'component', supports: { stereotype: true, dashed: true, ports: true, highlight: true } },
+      { id: 'component', label: 'Component', glyph: '▢', base: 'Component', keyword: 'component', supports: { stereotype: true, dashed: true, ports: true, highlight: true, texture: true } },
       { id: 'portin',    label: 'Port In',   glyph: '▶', base: 'in',  keyword: 'port',    supports: { displayLabel: true }, isPort: true,      portKind: 'portin' },
       { id: 'portout',   label: 'Port Out',  glyph: '◀', base: 'out', keyword: 'port',    supports: { displayLabel: true }, isPort: true,      portKind: 'portout' },
       { id: 'provide',   label: 'Provided I/F', glyph: '○', base: 'p_iface', keyword: 'provide', supports: { displayLabel: true }, isInterface: true, interfaceKind: 'provide' },
@@ -2705,9 +2742,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       NOTE_SCHEMA
     ],
     deployment: [
-      { id: 'node',      label: 'Node',      glyph: '□', base: 'Node',     keyword: 'node',      supports: { stereotype: true, highlight: true } },
-      { id: 'component', label: 'Component', glyph: '▢', base: 'Component',keyword: 'component', supports: { stereotype: true, highlight: true } },
-      { id: 'artifact',  label: 'Artifact',  glyph: '⧉', base: 'Artifact', keyword: 'artifact',  supports: { displayLabel: true, highlight: true } },
+      { id: 'node',      label: 'Node',      glyph: '□', base: 'Node',     keyword: 'node',      supports: { stereotype: true, highlight: true, texture: true } },
+      { id: 'component', label: 'Component', glyph: '▢', base: 'Component',keyword: 'component', supports: { stereotype: true, highlight: true, texture: true } },
+      { id: 'artifact',  label: 'Artifact',  glyph: '⧉', base: 'Artifact', keyword: 'artifact',  supports: { displayLabel: true, highlight: true, texture: true } },
       NOTE_SCHEMA
     ],
     usecase: [
@@ -2721,13 +2758,36 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       { id: 'initial',  label: 'Initial/Final ◉', glyph: '◉', base: '*',      keyword: '(*)',    supports: {}, activityPseudo: true },
       { id: 'decision', label: 'Decision (if)',   glyph: '⬥', base: 'Cond',   keyword: 'if',     supports: { displayLabel: true }, activityDecision: true },
       { id: 'fork',     label: 'Fork/Join',       glyph: '∥', base: 'Fork',   keyword: 'fork',   supports: {}, activityFork: true },
-      { id: 'lane',     label: 'Swimlane',        glyph: '|', base: 'Lane',   keyword: '||',     supports: { displayLabel: true }, activityLane: true }
+      { id: 'lane',     label: 'Swimlane',        glyph: '|', base: 'Lane',   keyword: '||',     supports: { displayLabel: true }, activityLane: true },
+      NOTE_SCHEMA
+    ],
+    freeform: [
+      { id: 'box',     label: 'Box',       glyph: '▢', base: 'Box',     keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'rect' },
+      { id: 'round',   label: 'Rounded',   glyph: '▢', base: 'Round',   keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'round' },
+      { id: 'pill',    label: 'Pill',      glyph: '▭', base: 'Pill',    keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'pill' },
+      { id: 'circle',  label: 'Circle',    glyph: '○', base: 'Circle',  keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'circle' },
+      { id: 'ellipse', label: 'Ellipse',   glyph: '⬭', base: 'Ellipse', keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'ellipse' },
+      { id: 'hex',     label: 'Hexagon',   glyph: '⬢', base: 'Hex',     keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'hex' },
+      { id: 'noteBox', label: 'Note box',  glyph: '✎', base: 'NoteBox', keyword: 'box', supports: { displayLabel: true, highlight: true, texture: true }, freeformShape: 'note' },
+      NOTE_SCHEMA
+    ],
+    venn: [
+      { id: 'set', label: 'Set', glyph: '○', base: 'Set', keyword: 'set', supports: { displayLabel: true, highlight: true } },
+      NOTE_SCHEMA
+    ],
+    gitgraph: [
+      { id: 'branch', label: 'Branch', glyph: '⑂', base: 'main', keyword: 'branch', supports: { displayLabel: true }, gitBranch: true },
+      { id: 'commit', label: 'Commit', glyph: '●', base: 'C', keyword: 'commit', supports: { displayLabel: true }, gitCommit: true }
+    ],
+    'folder-tree': [
+      { id: 'folder', label: 'Folder', glyph: '▸', base: 'folder', keyword: 'folder', supports: { displayLabel: true }, folderTreeKind: 'folder' },
+      { id: 'file', label: 'File', glyph: '□', base: 'file', keyword: 'file', supports: { displayLabel: true }, folderTreeKind: 'file' }
     ],
     er: [
-      { id: 'entity',       label: 'Entity',       glyph: '□', base: 'Entity',     keyword: 'entity',                   supports: { erAttributes: true, highlight: true } },
-      { id: 'weak',         label: 'Weak Entity',  glyph: '⧈', base: 'Weak',       keyword: 'weak entity',              supports: { erAttributes: true, highlight: true } },
-      { id: 'relationship', label: 'Relationship', glyph: '◈', base: 'Rel',        keyword: 'relationship',             supports: { erAttributes: true, highlight: true } },
-      { id: 'idrel',        label: 'ID Relation',  glyph: '⧖', base: 'IDRel',      keyword: 'identifying relationship', supports: { erAttributes: true, highlight: true } }
+      { id: 'entity',       label: 'Entity',       glyph: '□', base: 'Entity',     keyword: 'entity',                   supports: { erAttributes: true, highlight: true, texture: true } },
+      { id: 'weak',         label: 'Weak Entity',  glyph: '⧈', base: 'Weak',       keyword: 'weak entity',              supports: { erAttributes: true, highlight: true, texture: true } },
+      { id: 'relationship', label: 'Relationship', glyph: '◈', base: 'Rel',        keyword: 'relationship',             supports: { erAttributes: true, highlight: true, texture: true } },
+      { id: 'idrel',        label: 'ID Relation',  glyph: '⧖', base: 'IDRel',      keyword: 'identifying relationship', supports: { erAttributes: true, highlight: true, texture: true } }
     ]
   };
 
@@ -2754,14 +2814,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       { id: 'transition', label: 'Transition', glyph: '→', op: '-->', supports: { label: true } }
     ],
     component: [
-      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true } },
-      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true } },
-      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true } }
+      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true, dashed: true } },
+      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true, dashed: true } },
+      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true, dashed: true } }
     ],
     deployment: [
-      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true } },
-      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true } },
-      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true } }
+      { id: 'arrow',  label: 'Connector',  glyph: '─→', op: '-->', supports: { label: true, dashed: true } },
+      { id: 'plain',  label: 'Plain Line', glyph: '──', op: '--',  supports: { label: true, dashed: true } },
+      { id: 'depend', label: 'Dependency', glyph: '··→', op: '..>', supports: { label: true, dashed: true } }
     ],
     usecase: [
       { id: 'plain',   label: 'Association',  glyph: '─', op: '--',  supports: { label: true } },
@@ -2773,6 +2833,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     activity: [
       { id: 'flow', label: 'Flow', glyph: '→', op: '-->', supports: { label: true } }
     ],
+    freeform: [
+      { id: 'arrow', label: 'Arrow',          glyph: '→',  op: '-->',  supports: { label: true } },
+      { id: 'back',  label: 'Reverse Arrow',  glyph: '←',  op: '<--',  supports: { label: true } },
+      { id: 'both',  label: 'Two-way Arrow',  glyph: '↔',  op: '<->',  supports: { label: true } },
+      { id: 'plain', label: 'Plain Line',     glyph: '─',  op: '--',   supports: { label: true } },
+      { id: 'dash',  label: 'Dashed Arrow',   glyph: '··→', op: '..>', supports: { label: true } },
+      { id: 'thick', label: 'Thick Arrow',    glyph: '⇒',  op: '==>',  supports: { label: true } }
+    ],
     er: [
       { id: 'plain', label: 'Connection',     glyph: '─', op: '--', supports: { erCardinality: true } },
       { id: 'total', label: 'Total Particip.', glyph: '═', op: '==', supports: { erCardinality: true } }
@@ -2781,6 +2849,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
   function diagramSupportsCreation(type) {
     return Object.prototype.hasOwnProperty.call(ELEMENT_SCHEMAS, type);
+  }
+
+  function diagramSupportsAnchoredNotes(type) {
+    return /^(class|state|component|deployment|usecase|activity|freeform|venn)$/.test(String(type || ''));
   }
 
   function init() {
@@ -2871,8 +2943,22 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function normalizeLayoutMode(mode) {
       var value = (mode || '').toLowerCase();
-      if (value === 'square' || value === 'landscape' || value === 'portrait' || value === 'auto') return value;
+      if (value === 'lr') value = 'horizontal';
+      if (value === 'tb') value = 'vertical';
+      if (value === 'tight') value = 'compact';
+      if (value === 'square' || value === 'landscape' || value === 'portrait' || value === 'auto' ||
+          value === 'horizontal' || value === 'vertical' || value === 'compact' || value === 'none') {
+        return value;
+      }
       return null;
+    }
+
+    function isLayoutModeDirective(line) {
+      var trimmed = String(line || '').trim();
+      if (!/^layout\s+/i.test(trimmed)) return false;
+      if (/^layout\s+shadows\b/i.test(trimmed)) return false;
+      var body = trimmed.replace(/^layout\s+/i, '').trim().split(/\s+/)[0];
+      return !!normalizeLayoutMode(body);
     }
 
     function applyLayoutDirective(text, layoutMode) {
@@ -2880,7 +2966,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var lines = normalizedText.split('\n');
       var filtered = [];
       for (var i = 0; i < lines.length; i++) {
-        if (/^\s*layout\s+.+$/i.test(lines[i].trim())) continue;
+        if (isLayoutModeDirective(lines[i])) continue;
         filtered.push(lines[i]);
       }
 
@@ -2951,7 +3037,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           continue;
         }
         var m;
-        if ((type === 'class' || type === 'state' || type === 'sequence') && /^note\s+(left|right|top|bottom|over)\b/i.test(line)) {
+        if (type !== 'gitgraph' && type !== 'folder-tree' && type !== 'er' && /^note\s+(left|right|top|bottom|over)\b/i.test(line)) {
           var noteLine = line.match(/^note\s+(left|right|top|bottom|over)\s+(?:of\s+)?(\S+)\s*:\s*(.+)$/i);
           var noteLabel = noteLine ? noteLine[3].trim() : 'Note';
           if (!noteLine) {
@@ -3043,6 +3129,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             }
             continue;
           }
+          var topPort = parseComponentPortLine(line);
+          if (topPort && !componentContext) {
+            addElement(elements, seen, topPort.alias, topPort.label, 'port');
+            continue;
+          }
           if (componentContext) {
             var port = parseComponentPortLine(line);
             if (port) addElement(elements, seen, componentContext + '.' + port.alias, port.label, 'port');
@@ -3050,11 +3141,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         } else if (type === 'deployment') {
           m = line.match(/^node\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+          m = line.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+          m = line.match(/^artifact\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
         } else if (type === 'usecase') {
           m = line.match(/^actor\s+("[^"]+"|\S+)/i);
-          if (m) addElement(elements, seen, m[1], m[1]);
+          if (m) addElement(elements, seen, unquoteId(m[1]), unquoteId(m[1]));
           m = line.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
-          if (m) addElement(elements, seen, m[2] || m[1], m[1]);
+          if (m) addElement(elements, seen, m[2] || unquoteId(m[1]), unquoteId(m[1]));
+          m = line.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || unquoteId(m[1]), unquoteId(m[1]));
         } else if (type === 'activity') {
           // A line like `"Receive Order" --> "Validate Payment"` declares two
           // movable activity nodes. Capture every quoted token, not just the
@@ -3079,10 +3176,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           m = line.match(/^\s*(\S+)(?:\s+merge\s+\S+)?(?:\s+"((?:[^"\\]|\\.)*)")?\s*$/i);
           if (m && !/^(branch|head|@startuml|@enduml)\b/i.test(m[1])) addElement(elements, seen, m[1], m[1]);
         } else if (type === 'venn') {
-          m = line.match(/^set\s+(.+)$/i);
-          if (m) addElement(elements, seen, m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, ''), m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, ''));
+          m = line.match(/^set\s+(?:"([^"]+)"|(.+?))(?:\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*))?\s*$/i);
+          if (m) addElement(elements, seen, m[1] || m[2], m[1] || m[2]);
         } else if (type === 'er') {
-          m = line.match(/^(entity|relationship)\s+("[^"]+"|\S+)/i);
+          m = line.match(/^(entity|weak\s+entity|relationship|identifying\s+relationship)\s+("[^"]+"|\S+)/i);
           if (m) addElement(elements, seen, m[2], m[2]);
         }
       }
@@ -3193,16 +3290,24 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       if (type === 'component') {
         m = clean.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
-        return m ? unquoteId(m[2] || m[1]) : null;
+        if (m) return unquoteId(m[2] || m[1]);
+        m = clean.match(/^(?:portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\S+))(?:\s+as\s+(\S+))?/i);
+        return m ? unquoteId(m[3] || m[1] || m[2]) : null;
       }
       if (type === 'deployment') {
         m = clean.match(/^node\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        if (m) return unquoteId(m[2] || m[1]);
+        m = clean.match(/^component\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        if (m) return unquoteId(m[2] || m[1]);
+        m = clean.match(/^artifact\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'usecase') {
         m = clean.match(/^actor\s+("[^"]+"|\S+)/i);
         if (m) return unquoteId(m[1]);
         m = clean.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        if (m) return unquoteId(m[2] || m[1]);
+        m = clean.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'freeform') {
@@ -3210,7 +3315,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return m ? unquoteId(m[1]) : null;
       }
       if (type === 'er') {
-        m = clean.match(/^(entity|relationship)\s+("[^"]+"|\S+)/i);
+        m = clean.match(/^(entity|weak\s+entity|relationship|identifying\s+relationship)\s+("[^"]+"|\S+)/i);
         return m ? unquoteId(m[2]) : null;
       }
       if (type === 'gitgraph') {
@@ -3218,8 +3323,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return m && !/^(branch|head|@startuml|@enduml)\b/i.test(m[1]) ? unquoteId(m[1]) : null;
       }
       if (type === 'venn') {
-        m = clean.match(/^set\s+(.+)$/i);
-        return m ? unquoteId(m[1].replace(/\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*)\s*$/, '')) : null;
+        m = clean.match(/^set\s+(?:"([^"]+)"|(.+?))(?:\s+#(?:[0-9a-fA-F]{3,8}|[A-Za-z][A-Za-z0-9]*))?\s*$/i);
+        return m ? unquoteId(m[1] || m[2]) : null;
       }
       return null;
     }
@@ -3255,7 +3360,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function ignoresLayout(type) {
       var t = type || typeSelect.value;
-      return t === 'gitgraph' || t === 'venn';
+      return t === 'gitgraph' || t === 'venn' || t === 'folder-tree';
     }
 
     function updateLayoutVisibility() {
@@ -3642,8 +3747,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var existingPositions = readLayoutPositions(textarea.value);
       for (var i = 0; i < editables.length; i++) {
         var item = editables[i];
-        if ((item.axis === 'branch-label' || item.axis === 'label') &&
-            item.id !== selectedLayoutId && !existingPositions[item.id]) continue;
+        if ((item.axis === 'branch-label' || item.axis === 'label') && item.id !== selectedLayoutId) {
+          if (existingPositions[item.id]) {
+            positions[item.id] = {
+              x: existingPositions[item.id].x,
+              y: existingPositions[item.id].y
+            };
+          }
+          continue;
+        }
         positions[item.id] = {
           x: item.axis === 'x' || item.axis === 'port' ? item.box.x + item.box.width / 2 : item.box.x,
           y: item.axis === 'port' ? item.box.y + item.box.height / 2 : item.box.y
@@ -4071,7 +4183,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!item || item.axis !== 'port' || !item.parentBox) return { x: x, y: y };
       var box = item.parentBox;
       var inset = 8;
-      var switchMargin = inset;
       var minX = box.x + inset;
       var maxX = box.x + box.width - inset;
       var minY = box.y + inset;
@@ -4093,17 +4204,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         { side: 'top', x: clamp(x, minX, maxX), y: box.y, distance: Math.abs(y - box.y) },
         { side: 'bottom', x: clamp(x, minX, maxX), y: box.y + box.height, distance: Math.abs(y - (box.y + box.height)) }
       ];
-      if (item.portSide) {
-        var eligible = choices.filter(function (choice) {
-          if (choice.side === item.portSide) return true;
-          if (choice.side === 'left') return x <= box.x - switchMargin;
-          if (choice.side === 'right') return x >= box.x + box.width + switchMargin;
-          if (choice.side === 'top') return y <= box.y - switchMargin;
-          if (choice.side === 'bottom') return y >= box.y + box.height + switchMargin;
-          return false;
-        });
-        if (eligible.length) choices = eligible;
-      }
       choices.sort(function (a, b) {
         if (Math.abs(a.distance - b.distance) > 0.75) return a.distance - b.distance;
         if (a.side === item.portSide) return -1;
@@ -4236,12 +4336,25 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       } else if (spec.isInterface) {
         // provide/require "Label" as id
         line = spec.interfaceKind + ' "' + escapeQuoted(label) + '" as ' + id;
+      } else if (spec.freeformShape) {
+        line = 'box' + (spec.freeformShape && spec.freeformShape !== 'rect' ? ' ' + spec.freeformShape : '') +
+          ' "' + escapeQuoted(label).replace(/\n/g, '\\n') + '" as ' + id;
       } else if (spec.keyword === 'usecase') {
         line = 'usecase "' + escapeQuoted(label) + '" as ' + id;
       } else if (spec.keyword === 'rectangle') {
-        line = 'rectangle "' + escapeQuoted(label) + '" as ' + id + ' { }';
+        line = 'rectangle "' + escapeQuoted(label) + '" { }';
       } else if (spec.keyword === 'artifact') {
         line = 'artifact "' + escapeQuoted(label) + '" as ' + id;
+      } else if (spec.keyword === 'set') {
+        line = 'set ' + (/\s|"/.test(label) ? '"' + escapeQuoted(label) + '"' : label);
+      } else if (spec.gitBranch) {
+        line = 'branch ' + id + ':';
+      } else if (spec.gitCommit) {
+        line = '  ' + id + ' "' + escapeQuoted(label || 'Commit message') + '"';
+      } else if (spec.folderTreeKind === 'folder') {
+        line = String(label || id).replace(/\/+$/, '') + '/';
+      } else if (spec.folderTreeKind === 'file') {
+        line = String(label || id).replace(/\/+$/, '');
       } else if (spec.keyword === 'actor' && (typeSelect.value === 'sequence' || typeSelect.value === 'usecase')) {
         if (typeSelect.value === 'sequence') {
           line = 'actor ' + id + ': ' + label;
@@ -4267,6 +4380,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       if (line && opts.highlight) {
         line += ' #' + opts.highlight.replace(/^#/, '');
+      }
+      if (line && opts.texture) {
+        line += ' ' + opts.texture;
       }
 
       if (opts.abstract && spec.id === 'class') {
@@ -4342,6 +4458,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
 
       var line = src + ' ' + op + ' ' + tgt;
+      if ((typeSelect.value === 'component' || typeSelect.value === 'deployment') && opts.dashed) {
+        line += ' dashed';
+      }
       var stereo = opts.stereotype || spec.stereotype || '';
       if (stereo && label) line += ' : ' + stereo + ' ' + label;
       else if (stereo) line += ' : ' + stereo;
@@ -4729,13 +4848,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       clearSequenceMessageLayoutMetadata(positions, routes);
       var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
       var block = sequenceMessageBlockForLine(lines, meta.lineIdx);
-      console.log('DEBUG move: meta.lineIdx=' + meta.lineIdx + ' block=' + JSON.stringify(block) + ' boundaryLine=' + boundaryLine + ' frag=' + JSON.stringify({startIdx: frag.startIdx, endIdx: frag.endIdx, branches: frag.branches}) + ' totalLines=' + lines.length);
       // Splice out the moving block first, then adjust the boundary line if
       // it was AFTER the block (its index will have decreased by chunk length).
       var chunk = lines.splice(block.start, block.end - block.start + 1);
       var insertAt = boundaryLine;
       if (boundaryLine > block.end) insertAt -= chunk.length;
-      console.log('DEBUG move: chunk=' + JSON.stringify(chunk) + ' insertAt=' + insertAt);
       lines.splice.apply(lines, [insertAt, 0].concat(chunk));
       // Find new line index of the relation header within the inserted chunk.
       var routeOffset = meta.lineIdx - block.start;
@@ -5362,10 +5479,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             announce('Drop inside the diagram preview to place an element.', false);
             return;
           }
-          if ((typeSelect.value === 'class' || typeSelect.value === 'state') && ds.spec.isNote) {
+          if (diagramSupportsAnchoredNotes(typeSelect.value) && ds.spec.isNote) {
             setActiveTool('element', ds.spec);
             if (hit && handleHitboxClickForAnchoredNoteTool({ id: hit.id })) return;
-            announce('Drop the note on a ' + (typeSelect.value === 'class' ? 'class' : 'state') + ', or click one now.', true);
+            announce('Drop the note on a diagram element, or click one now.', true);
             return;
           }
           var pt = editorCanvasPoint(svg, event.clientX, event.clientY);
@@ -5436,7 +5553,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function supportsEmptyEditor(type) {
-      return type === 'sequence' || type === 'class' || type === 'state';
+      return diagramSupportsCreation(type);
     }
 
     function sequenceParticipantRecords(text) {
@@ -5459,16 +5576,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!spec) return false;
       var type = typeSelect.value;
       if (type === 'sequence') return sequenceElementCanAddWithoutCanvas(spec);
-      if (type === 'class') return !spec.isNote;
-      if (type === 'state') return !spec.isNote;
-      return false;
+      return !!diagramSupportsCreation(type) && !spec.isNote && !spec.sequenceControl && !spec.sequenceNote;
     }
 
     function addElementWithoutCanvas(spec) {
       var type = typeSelect.value;
       if (!elementCanAddWithoutCanvas(spec)) {
-        if (spec && spec.isNote && (type === 'class' || type === 'state')) {
-          announce('Add a ' + (type === 'class' ? 'class' : 'state') + ' first, then click it with the Note tool.', true);
+        if (spec && spec.isNote && diagramSupportsAnchoredNotes(type)) {
+          announce('Add an element first, then click it with the Note tool.', true);
         }
         return false;
       }
@@ -5631,6 +5746,38 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       empty.appendChild(panel);
     }
 
+    function installGenericEmptyEditor() {
+      var type = typeSelect.value;
+      if (type === 'sequence') {
+        installSequenceEmptyEditor();
+        return;
+      }
+      if (type === 'class' || type === 'state') {
+        installClassOrStateEmptyEditor();
+        return;
+      }
+      var empty = output.querySelector('.uml-empty-msg');
+      if (!empty || !diagramSupportsCreation(type)) return;
+      empty.textContent = '';
+      var panel = document.createElement('div');
+      panel.className = 'uml-pg-sequence-empty uml-pg-model-empty';
+      var text = document.createElement('p');
+      text.textContent = 'No model elements yet. Add an element to start this diagram.';
+      panel.appendChild(text);
+      var actions = document.createElement('div');
+      actions.className = 'uml-pg-sequence-empty-actions';
+      elementSchemasFor(type).filter(function (spec) {
+        return !spec.isNote && !spec.sequenceControl && !spec.sequenceNote;
+      }).slice(0, 6).forEach(function (spec) {
+        actions.appendChild(makeEmptyAction('+ ' + spec.label, function () {
+          addEmptyElement(type, spec.id);
+        }));
+      });
+      panel.appendChild(actions);
+      empty.appendChild(panel);
+      status.textContent = 'Add an element to start this diagram.';
+    }
+
     function sequenceLineKind(line) {
       var t = String(line || '').trim();
       if (/^actor\b/i.test(t)) return 'Actor';
@@ -5729,10 +5876,18 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function rebuildSequenceModelPanel() {
       if (!sequenceModel) return;
-      var show = !!(editToggle && editToggle.checked) && typeSelect.value === 'sequence';
+      var t = typeSelect.value;
+      var sourceRowsNeeded = !!(EDITOR_CONFIG && EDITOR_CONFIG.hideArchUml);
+      var show = !!(editToggle && editToggle.checked) && (
+        t === 'sequence' || sourceRowsNeeded || t === 'gitgraph' || t === 'folder-tree' || t === 'venn'
+      );
       sequenceModel.hidden = !show;
       sequenceModel.textContent = '';
       if (!show) return;
+      if (t !== 'sequence') {
+        rebuildLineModelPanel(t);
+        return;
+      }
 
       var model = parseSequenceModel(textarea.value);
       var panel = document.createElement('div');
@@ -5865,6 +6020,309 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return row;
     }
 
+    function lineModelRows(type) {
+      var source = type === 'sequence' ? sequenceSourceWithScaffold(textarea.value) : sourceWithScaffold(textarea.value);
+      var lines = stripLayoutMetadata(source).split('\n');
+      var rows = [];
+      lines.forEach(function (line, index) {
+        var trimmed = line.trim();
+        if (!trimmed || trimmed === '@startuml' || trimmed === '@enduml') return;
+        if (/^layout\s+/i.test(trimmed)) return;
+        rows.push({
+          index: index,
+          kind: inferLineModelKind(type, line),
+          line: line
+        });
+      });
+      return { lines: lines, rows: rows };
+    }
+
+    function inferLineModelKind(type, line) {
+      var trimmed = String(line || '').trim();
+      if (type === 'gitgraph') {
+        if (/^branch\b/i.test(trimmed)) return 'Branch';
+        if (/^head\s+detached\b/i.test(trimmed)) return 'Detached HEAD';
+        if (/^head\b/i.test(trimmed)) return 'HEAD';
+        if (/^\S+\s+merge\b/i.test(trimmed)) return 'Merge commit';
+        return 'Commit';
+      }
+      if (type === 'folder-tree') {
+        var content = trimmed.replace(/\s+(?:←|<-|#|\/\/)\s+.+$/, '').trim();
+        return /\/$/.test(content) ? 'Folder' : 'File';
+      }
+      if (type === 'venn') {
+        if (/^title\b/i.test(trimmed)) return 'Title';
+        if (/^set\b/i.test(trimmed)) return 'Set';
+        if (/^(?:outside|none|\*)\s*:/i.test(trimmed)) return 'Outside';
+        if (/^note\b/i.test(trimmed)) return 'Note';
+        if (/:/.test(trimmed)) return 'Region';
+      }
+      if (/^title\b/i.test(trimmed)) return 'Title';
+      if (/^note\b/i.test(trimmed)) return 'Note';
+      if (/^layout\b/i.test(trimmed)) return 'Layout';
+      if (/^(?:abstract\s+class|class|interface|enum)\b/i.test(trimmed)) return 'Classifier';
+      if (/^state\b/i.test(trimmed)) return 'State';
+      if (/^component\b/i.test(trimmed)) return 'Component';
+      if (/^node\b/i.test(trimmed)) return 'Node';
+      if (/^artifact\b/i.test(trimmed)) return 'Artifact';
+      if (/^actor\b/i.test(trimmed)) return 'Actor';
+      if (/^usecase\b/i.test(trimmed)) return 'Use case';
+      if (/^rectangle\b/i.test(trimmed)) return 'Boundary';
+      if (/^(?:entity|weak\s+entity)\b/i.test(trimmed)) return 'Entity';
+      if (/^(?:relationship|identifying\s+relationship)\b/i.test(trimmed)) return 'Relationship';
+      if (parseTokenizedRelationLine(trimmed.replace(/\s*:\s*.*$/, ''))) return 'Relation';
+      return 'Model row';
+    }
+
+    function replaceLineModelRow(index, nextLine) {
+      var type = typeSelect.value;
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(sourceWithScaffold(textarea.value)).split('\n');
+      if (index < 0 || index >= lines.length) return;
+      snapshotForUndo('model-row:' + index);
+      lines[index] = nextLine;
+      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      renderDiagram();
+    }
+
+    function deleteLineModelRow(index) {
+      var type = typeSelect.value;
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(sourceWithScaffold(textarea.value)).split('\n');
+      if (index < 0 || index >= lines.length) return;
+      snapshotForUndo('model-row-delete');
+      lines.splice(index, 1);
+      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      renderDiagram();
+      announce('Deleted model row.', false);
+    }
+
+    function moveLineModelRow(index, delta) {
+      var type = typeSelect.value;
+      var model = lineModelRows(type);
+      var rowPositions = model.rows.map(function (row) { return row.index; });
+      var pos = rowPositions.indexOf(index);
+      if (pos === -1) return;
+      var nextPos = pos + delta;
+      if (nextPos < 0 || nextPos >= rowPositions.length) return;
+      var swapIndex = rowPositions[nextPos];
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(sourceWithScaffold(textarea.value)).split('\n');
+      snapshotForUndo('model-row-move');
+      var tmp = lines[index];
+      lines[index] = lines[swapIndex];
+      lines[swapIndex] = tmp;
+      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      renderDiagram();
+      announce('Moved model row.', false);
+    }
+
+    function firstGitgraphBranchName(lines) {
+      for (var i = 0; i < lines.length; i++) {
+        var m = String(lines[i] || '').trim().match(/^branch\s+([^\s:]+)(?:\s+from\s+\S+)?\s*:?\s*$/i);
+        if (m) return m[1];
+      }
+      return '';
+    }
+
+    function addGitgraphBranchRow() {
+      snapshotForUndo('gitgraph-add-branch');
+      var source = sourceWithScaffold(textarea.value);
+      var id = uniqueGitgraphBranchName(source, firstGitgraphBranchName(stripLayoutMetadata(source).split('\n')) ? 'branch' : 'main');
+      textarea.value = appendRawLine(source, 'branch ' + id + ':');
+      renderDiagram();
+      announce('Added branch "' + id + '".', false);
+    }
+
+    function existingGitgraphBranchNames(text) {
+      var seen = {};
+      stripLayoutMetadata(text || '').split('\n').forEach(function (line) {
+        var m = String(line || '').trim().match(/^branch\s+([^\s:]+)(?:\s+(?:from|at)\s+\S+)?\s*:?\s*$/i);
+        if (m) seen[m[1]] = true;
+      });
+      return seen;
+    }
+
+    function uniqueGitgraphBranchName(text, base) {
+      var taken = existingGitgraphBranchNames(text);
+      var safe = String(base || 'branch').replace(/[^A-Za-z0-9_/-]/g, '') || 'branch';
+      if (!taken[safe]) return safe;
+      var i = 2;
+      while (taken[safe + i]) i++;
+      return safe + i;
+    }
+
+    function addGitgraphCommitRow() {
+      snapshotForUndo('gitgraph-add-commit');
+      var type = 'gitgraph';
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(sourceWithScaffold(textarea.value)).split('\n');
+      var branchName = firstGitgraphBranchName(lines);
+      var insertAt = findInsertPointForDeclaration(lines);
+      if (!branchName) {
+        branchName = 'main';
+        lines.splice(insertAt, 0, 'branch main:');
+        insertAt++;
+      } else {
+        var branchIdx = -1;
+        for (var i = 0; i < lines.length; i++) {
+          if (String(lines[i] || '').trim().match(/^branch\s+/i)) { branchIdx = i; break; }
+        }
+        insertAt = branchIdx + 1;
+        while (insertAt < lines.length &&
+               !/^branch\b/i.test(String(lines[insertAt] || '').trim()) &&
+               !/^head\b/i.test(String(lines[insertAt] || '').trim()) &&
+               String(lines[insertAt] || '').trim() !== '@enduml') {
+          insertAt++;
+        }
+      }
+      var id = generateUniqueId(lines.join('\n'), type, 'C');
+      lines.splice(insertAt, 0, '  ' + id + ' "Commit message"');
+      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      renderDiagram();
+      selectAfterRender(id, 'node');
+      announce('Added commit "' + id + '" to ' + branchName + '.', false);
+    }
+
+    function addLineModelPreset(type, preset) {
+      if (type === 'gitgraph') {
+        if (preset === 'branch') addGitgraphBranchRow();
+        else if (preset === 'commit') addGitgraphCommitRow();
+        else {
+          var source = sourceWithScaffold(textarea.value);
+          var branch = firstGitgraphBranchName(stripLayoutMetadata(source).split('\n')) || 'main';
+          if (!firstGitgraphBranchName(stripLayoutMetadata(source).split('\n'))) {
+            source = appendRawLine(source, 'branch main:');
+          }
+          snapshotForUndo('gitgraph-add-head');
+          textarea.value = appendRawLine(source, 'head ' + branch);
+          renderDiagram();
+        }
+        return;
+      }
+      snapshotForUndo('model-row-add');
+      if (type === 'folder-tree') {
+        textarea.value = appendRawLine(sourceWithScaffold(textarea.value), preset === 'folder' ? 'folder/' : 'file.txt');
+      } else if (type === 'venn') {
+        if (preset === 'set') textarea.value = appendRawLine(sourceWithScaffold(textarea.value), 'set Set');
+        else if (preset === 'outside') textarea.value = appendRawLine(sourceWithScaffold(textarea.value), 'outside : item');
+        else if (preset === 'title') textarea.value = appendRawLine(sourceWithScaffold(textarea.value), 'title Venn diagram');
+        else textarea.value = appendRawLine(sourceWithScaffold(textarea.value), 'Set : item');
+      } else if (type === 'er') {
+        textarea.value = appendRawLine(sourceWithScaffold(textarea.value), preset === 'title' ? 'title Entity relationship diagram' : "' model row");
+      } else {
+        textarea.value = appendRawLine(sourceWithScaffold(textarea.value), "' model row");
+      }
+      renderDiagram();
+    }
+
+    function rebuildLineModelPanel(type) {
+      var model = lineModelRows(type);
+      var panel = document.createElement('div');
+      panel.className = 'uml-pg-sequence-model';
+
+      var actions = document.createElement('div');
+      actions.className = 'uml-pg-sequence-model-actions';
+      var presets = [];
+      if (type === 'gitgraph') {
+        presets = [
+          { id: 'branch', label: '+ Branch' },
+          { id: 'commit', label: '+ Commit' },
+          { id: 'head', label: '+ HEAD' }
+        ];
+      } else if (type === 'folder-tree') {
+        presets = [
+          { id: 'folder', label: '+ Folder' },
+          { id: 'file', label: '+ File' }
+        ];
+      } else if (type === 'venn') {
+        presets = [
+          { id: 'set', label: '+ Set' },
+          { id: 'region', label: '+ Region' },
+          { id: 'outside', label: '+ Outside' },
+          { id: 'title', label: '+ Title' }
+        ];
+      } else if (type === 'er') {
+        presets = [
+          { id: 'title', label: '+ Title' },
+          { id: 'row', label: '+ Row' }
+        ];
+      } else {
+        presets = [
+          { id: 'row', label: '+ Row' }
+        ];
+      }
+      presets.forEach(function (preset) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = preset.label;
+        btn.addEventListener('click', function () { addLineModelPreset(type, preset.id); });
+        actions.appendChild(btn);
+      });
+      panel.appendChild(actions);
+
+      var section = document.createElement('div');
+      section.className = 'uml-pg-sequence-model-section';
+      var heading = document.createElement('div');
+      heading.className = 'uml-pg-sequence-model-heading';
+      heading.textContent = type === 'gitgraph' ? 'Git graph model' :
+        (type === 'folder-tree' ? 'Folder tree model' : (type === 'venn' ? 'Venn model' : 'ArchUML model rows'));
+      section.appendChild(heading);
+      if (!model.rows.length) {
+        var empty = document.createElement('p');
+        empty.className = 'uml-pg-sequence-model-empty';
+        empty.textContent = 'No model rows yet.';
+        section.appendChild(empty);
+      }
+      model.rows.forEach(function (record, idx) {
+        var row = document.createElement('div');
+        row.className = 'uml-pg-sequence-model-row is-line-model-row';
+        var kind = document.createElement('div');
+        kind.className = 'uml-pg-sequence-model-kind';
+        kind.textContent = record.kind;
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = record.line;
+        input.setAttribute('aria-label', record.kind + ' row ' + (idx + 1));
+        input.addEventListener('change', function () { replaceLineModelRow(record.index, input.value); });
+        input.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') { event.preventDefault(); replaceLineModelRow(record.index, input.value); }
+        });
+        var moveUp = document.createElement('button');
+        moveUp.type = 'button';
+        moveUp.className = 'uml-pg-sequence-model-delete';
+        moveUp.textContent = 'Up';
+        moveUp.disabled = idx === 0;
+        moveUp.setAttribute('aria-label', 'Move ' + record.kind.toLowerCase() + ' row ' + (idx + 1) + ' up');
+        moveUp.addEventListener('click', function () { moveLineModelRow(record.index, -1); });
+        var moveDown = document.createElement('button');
+        moveDown.type = 'button';
+        moveDown.className = 'uml-pg-sequence-model-delete';
+        moveDown.textContent = 'Down';
+        moveDown.disabled = idx === model.rows.length - 1;
+        moveDown.setAttribute('aria-label', 'Move ' + record.kind.toLowerCase() + ' row ' + (idx + 1) + ' down');
+        moveDown.addEventListener('click', function () { moveLineModelRow(record.index, 1); });
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'uml-pg-sequence-model-delete';
+        del.textContent = 'Delete';
+        del.setAttribute('aria-label', 'Delete ' + record.kind.toLowerCase() + ' row ' + (idx + 1));
+        del.addEventListener('click', function () { deleteLineModelRow(record.index); });
+        row.appendChild(kind);
+        row.appendChild(input);
+        row.appendChild(moveUp);
+        row.appendChild(moveDown);
+        row.appendChild(del);
+        section.appendChild(row);
+      });
+      panel.appendChild(section);
+      sequenceModel.appendChild(panel);
+    }
+
     function refreshActiveButtonStates() {
       if (!palette) return;
       Array.prototype.slice.call(palette.querySelectorAll('.uml-pg-tool-btn')).forEach(function (btn) {
@@ -5905,8 +6363,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (activeTool.kind === 'element') {
         if (typeSelect.value === 'sequence' && (spec.sequenceControl || spec.sequenceNote)) {
           announce('Click a lifeline to add ' + spec.label + '. Press Esc to cancel.', true);
-        } else if ((typeSelect.value === 'class' || typeSelect.value === 'state') && spec.isNote) {
-          announce('Click a ' + (typeSelect.value === 'class' ? 'class' : 'state') + ' to attach a note. Press Esc to cancel.', true);
+        } else if (diagramSupportsAnchoredNotes(typeSelect.value) && spec.isNote) {
+          announce('Click a diagram element to attach a note. Press Esc to cancel.', true);
         } else {
           announce('Click on the diagram to add a ' + spec.label + '. Press Esc to cancel.', true);
         }
@@ -5972,20 +6430,34 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function placeElementAt(spec, pt) {
       var type = typeSelect.value;
       if (type === 'sequence') textarea.value = sequenceSourceWithScaffold(textarea.value);
-      if (type === 'class' || type === 'state') textarea.value = sourceWithScaffold(textarea.value);
+      else textarea.value = sourceWithScaffold(textarea.value);
       if (type === 'sequence' && (spec.sequenceControl || spec.sequenceNote)) {
         setActiveTool('element', spec);
         announce('Click a lifeline to add ' + spec.label + '.', true);
         return;
       }
-      if ((type === 'class' || type === 'state') && spec.isNote) {
+      if (diagramSupportsAnchoredNotes(type) && spec.isNote) {
         setActiveTool('element', spec);
-        announce('Click a ' + (type === 'class' ? 'class' : 'state') + ' to attach a note. Press Esc to cancel.', true);
+        announce('Click a diagram element to attach a note. Press Esc to cancel.', true);
+        return;
+      }
+      var id = generateUniqueId(textarea.value, type, spec.base);
+      var opts = { id: id, label: defaultElementLabelForPlacement(type, spec, id), position: pt };
+      if (type === 'gitgraph' && spec.gitBranch) {
+        addGitgraphBranchRow();
+        return;
+      }
+      if (type === 'gitgraph' && spec.gitCommit) {
+        addGitgraphCommitRow();
+        return;
+      }
+      if (type === 'folder-tree' && spec.folderTreeKind) {
+        snapshotForUndo('folder-tree-add');
+        textarea.value = appendRawLine(textarea.value, buildElementLine(spec, id, opts));
+        renderDiagram();
         return;
       }
       snapshotForUndo();
-      var id = generateUniqueId(textarea.value, type, spec.base);
-      var opts = { id: id, label: defaultElementLabelForPlacement(type, spec, id), position: pt };
       // Sequence fragments insert a stub block at the end of the source.
       if (type === 'sequence' && spec.sequenceFragment) {
         var pair = sequenceDefaultPair();
@@ -6076,6 +6548,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           return;
         }
       }
+      if (type === 'deployment' && (spec.id === 'component' || spec.id === 'artifact')) {
+        var depHostId = findDeploymentNodeAtSvgPoint(pt);
+        if (depHostId) {
+          addDeploymentChildIntoNode(depHostId, spec, id);
+          renderDiagram();
+          selectAfterRender(depHostId, 'node');
+          return;
+        }
+        addDeploymentNodeWithChild(spec, id, pt);
+        return;
+      }
       textarea.value = addElementToSource(textarea.value, type, spec, opts);
       renderDiagram();
       selectAfterRender(id, 'node');
@@ -6118,6 +6601,50 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       replaceLineForElementId(componentId, newLine);
     }
 
+    function findDeploymentNodeAtSvgPoint(pt) {
+      var svg = output.querySelector('svg');
+      if (!svg) return null;
+      var editables = findEditableElements(svg);
+      for (var i = editables.length - 1; i >= 0; i--) {
+        var e = editables[i];
+        if (pt.x < e.box.x || pt.x > e.box.x + e.box.width ||
+            pt.y < e.box.y || pt.y > e.box.y + e.box.height) continue;
+        var line = getDeclarationLine(textarea.value, 'deployment', e.id);
+        if (line && /^node\b/i.test(line.trim())) return e.id;
+      }
+      return null;
+    }
+
+    function addDeploymentChildIntoNode(nodeId, spec, childId) {
+      snapshotForUndo('deployment-child:' + nodeId);
+      var line = getDeclarationLine(textarea.value, 'deployment', nodeId);
+      if (!line) return;
+      var body = parseBraceBody(line);
+      var pieces = body ? body.split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      pieces.push((spec.id === 'artifact' ? 'artifact ' : 'component ') + childId);
+      var newLine = setBraceBody(line, pieces.join('; '));
+      var sourceText = replaceBlockByMatch(textarea.value, 'deployment', function (candidate) {
+        return declarationIdForLine(candidate, 'deployment') === nodeId;
+      }, newLine);
+      textarea.value = sourceText;
+    }
+
+    function addDeploymentNodeWithChild(spec, childId, pt) {
+      snapshotForUndo('deployment-node-child');
+      var source = sourceWithScaffold(textarea.value);
+      var positions = readLayoutPositions(source);
+      var routes = readLayoutRoutes(source);
+      var nodeId = generateUniqueId(source, 'deployment', 'Node');
+      var childLine = (spec.id === 'artifact' ? 'artifact ' : 'component ') + childId;
+      var lines = stripLayoutMetadata(source).split('\n');
+      lines.splice(findInsertPointForDeclaration(lines), 0, 'node ' + nodeId + ' { ' + childLine + ' }');
+      if (pt) positions[nodeId] = { x: Math.round(pt.x), y: Math.round(pt.y) };
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'deployment', positions, routes);
+      selectAfterRender(nodeId, 'node');
+      renderDiagram();
+      announce('Added ' + spec.label + ' inside new node "' + nodeId + '".', false);
+    }
+
     function appendRawLine(text, line) {
       var positions = readLayoutPositions(text);
       var routes = readLayoutRoutes(text);
@@ -6136,7 +6663,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function selectNewestRelationAfterRender(type) {
       var indices = relationLineIndices(textarea.value, type);
       if (!indices.length) return;
-      selectAfterRender('edge-' + (indices.length - 1), 'route');
+      var lastSourceLine = indices[indices.length - 1];
+      var routeId;
+      if (type === 'sequence') {
+        routeId = 'seqmsg:' + lastSourceLine;
+      } else if (type === 'class' || type === 'freeform') {
+        routeId = 'rel:' + lastSourceLine;
+      } else {
+        routeId = 'edge-' + (indices.length - 1);
+      }
+      selectAfterRender(routeId, 'route');
     }
 
     // ─── Hover-to-extend "+" handle + relation chooser popup ───
@@ -6245,7 +6781,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var items = [];
       var els = elementSchemasFor(typeSelect.value).filter(function (spec) {
         if (typeSelect.value === 'sequence') return !spec.sequenceControl && !spec.sequenceNote;
-        if ((typeSelect.value === 'class' || typeSelect.value === 'state') && spec.isNote) return false;
+        if (diagramSupportsAnchoredNotes(typeSelect.value) && spec.isNote) return false;
         return true;
       }).slice(0, 4);
       els.forEach(function (spec) {
@@ -6253,7 +6789,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           label: 'New ' + spec.label + ' here',
           onClick: function () {
             var svg = output.querySelector('svg');
-            var pt = svgPoint(svg, clientX, clientY);
+            var pt = editorCanvasPoint(svg, clientX, clientY);
             placeElementAt(spec, pt);
           }
         });
@@ -6296,7 +6832,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var type = typeSelect.value;
       var els = elementSchemasFor(type).filter(function (spec) {
         if (type === 'sequence') return !spec.sequenceControl && !spec.sequenceNote;
-        if ((type === 'class' || type === 'state') && spec.isNote) return false;
+        if (diagramSupportsAnchoredNotes(type) && spec.isNote) return false;
         return true;
       });
       if (!els.length) { onPick(null); return; }
@@ -6371,6 +6907,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         btn.addEventListener('click', function () {
           textarea.value = addRelationToSource(textarea.value, type, spec, sourceId, targetId);
           closeRelationChooser();
+          setActiveTool(null);
+          selectNewestRelationAfterRender(type);
           announce('Added ' + spec.label + ' from "' + sourceId + '" to "' + targetId + '".', false);
           renderDiagram();
         });
@@ -6417,8 +6955,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return true;
       }
       textarea.value = addRelationToSource(textarea.value, typeSelect.value, spec, sourceId, targetId);
+      var createdType = typeSelect.value;
+      selectNewestRelationAfterRender(createdType);
       renderDiagram();
-      announce('Connected "' + sourceId + '" to "' + targetId + '" with ' + spec.label + '. Tool stays active - draw another relation or press Esc.', true);
+      announce('Connected "' + sourceId + '" to "' + targetId + '" with ' + spec.label + '. Tool stays active - add another relation or press Esc.', true);
       return true;
     }
 
@@ -6488,7 +7028,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         ev.preventDefault();
         ev.stopPropagation();
         circle.setPointerCapture(ev.pointerId);
-        var startPt = svgPoint(svg, ev.clientX, ev.clientY);
+        var startPt = editorCanvasPoint(svg, ev.clientX, ev.clientY);
         var line = document.createElementNS(ns, 'line');
         line.setAttribute('class', 'uml-pg-extend-line');
         line.setAttribute('x1', hx);
@@ -6621,12 +7161,29 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (target) return target;
       var source = state.sourceItem;
       if (!source || !source.box) return null;
+      var sourceClientBox = state.sourceHitbox && state.sourceHitbox.getBoundingClientRect
+        ? state.sourceHitbox.getBoundingClientRect()
+        : null;
+      if (!sourceClientBox || sourceClientBox.width <= 0 || sourceClientBox.height <= 0) {
+        var sourceHitbox = state.svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(source.id) + '"]');
+        sourceClientBox = sourceHitbox && sourceHitbox.getBoundingClientRect ? sourceHitbox.getBoundingClientRect() : null;
+      }
+      if (sourceClientBox && sourceClientBox.width > 0 && sourceClientBox.height > 0) {
+        var svgClientBox = state.svg.getBoundingClientRect();
+        var sourceClientCenterX = sourceClientBox.left + sourceClientBox.width / 2;
+        var sourceClientTop = Math.min(sourceClientBox.top - 24, svgClientBox.top - 12);
+        var sourceClientBottom = Math.max(svgClientBox.bottom + 12, sourceClientBox.bottom + 360);
+        if (clientY >= sourceClientTop && clientY <= sourceClientBottom &&
+            clientX >= sourceClientCenterX - 12 && clientX <= sourceClientCenterX + 180) {
+          return source;
+        }
+      }
       var pt = editorCanvasPoint(state.svg, clientX, clientY);
       var centerX = sequenceLifelineCenterX(source, state.svg);
       var view = parseSvgViewBox(state.svg) || { x: 0, y: 0, width: 4000, height: 4000 };
       var top = Math.min(source.box.y - 24, view.y - 12);
       var bottom = Math.max(view.y + view.height + 12, source.box.y + source.box.height + 360);
-      var loopReach = 120;
+      var loopReach = 180;
       if (pt.y >= top && pt.y <= bottom && pt.x >= centerX - 12 && pt.x <= centerX + loopReach) {
         return source;
       }
@@ -6704,7 +7261,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function updateExtendDrag(ev, finish) {
       if (!extendDragState) return;
-      var pt = svgPoint(extendDragState.svg, ev.clientX, ev.clientY);
+      var pt = editorCanvasPoint(extendDragState.svg, ev.clientX, ev.clientY);
       extendDragState.line.setAttribute('x2', pt.x);
       extendDragState.line.setAttribute('y2', pt.y);
       if (finish) {
@@ -6719,17 +7276,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           // Drop on empty canvas — offer to create a new element here, then
           // immediately follow up with the relation-type picker so the whole
           // gesture stays in flow.
-          var rect = svg.getBoundingClientRect();
-          if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
-            announce('Drop inside the canvas to create or connect.', false);
-            return;
-          }
           showElementChooser(clientX, clientY, sourceId, function (spec) {
             if (!spec) return;
             snapshotForUndo();
             var type = typeSelect.value;
             var newId = generateUniqueId(textarea.value, type, spec.base);
-            var place = svgPoint(svg, clientX, clientY);
+            var place = editorCanvasPoint(svg, clientX, clientY);
             // Special pseudo / structural elements: route through placeElementAt
             // so they get the right surrounding source manipulation (state pseudo,
             // activity decision blocks, etc.).
@@ -6781,9 +7333,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!activeTool || activeTool.kind !== 'element') return false;
       var type = typeSelect.value;
       var spec = activeTool.spec || {};
-      if ((type !== 'class' && type !== 'state') || !spec.isNote) return false;
+      if (!diagramSupportsAnchoredNotes(type) || !spec.isNote) return false;
       if (!item || item.axis === 'note' || /^note:/.test(String(item.id || ''))) {
-        announce('Click a ' + (type === 'class' ? 'class' : 'state') + ' to attach the note.', true);
+        announce('Click a diagram element to attach the note.', true);
         return true;
       }
       snapshotForUndo();
@@ -6832,7 +7384,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       pendingRelation = null;
       snapshotForUndo();
       textarea.value = addRelationToSource(textarea.value, typeSelect.value, spec, sourceId, targetId);
-      announce('Connected "' + sourceId + '" to "' + targetId + '". Tool stays active — pick another source or press Esc.', true);
+      var createdType = typeSelect.value;
+      setActiveTool(null);
+      selectNewestRelationAfterRender(createdType);
+      announce('Connected "' + sourceId + '" to "' + targetId + '". Edit the selected relation in Properties.', false);
       // Clear visual highlight
       var layer = output.querySelector('.uml-pg-edit-layer');
       if (layer) {
@@ -6849,7 +7404,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function parseClassDeclaration(line) {
       var t = line.trim();
-      var info = { kind: 'class', isAbstract: false, name: '', stereotype: '', highlight: '', members: [], rawAfter: '', body: '' };
+      var info = { kind: 'class', isAbstract: false, name: '', stereotype: '', highlight: '', texture: '', members: [], rawAfter: '', body: '' };
       var bodyMatch = t.match(/\{([\s\S]*)\}\s*$/);
       if (bodyMatch) {
         info.body = bodyMatch[1];
@@ -6866,10 +7421,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         info.stereotype = '<<' + stereo[1] + '>>';
         rest = rest.replace(/<<\s*[^>]+?\s*>>/, '');
       }
-      var hl = rest.match(/\s+#([A-Za-z0-9]+)/);
+      var hl = rest.match(/\s+#([A-Za-z0-9]+)(?:\s+(hatched|crosshatch|dotted|grid|striped))?/i);
       if (hl) {
         info.highlight = hl[1];
-        rest = rest.replace(/\s+#[A-Za-z0-9]+/, '');
+        info.texture = hl[2] || '';
+        rest = rest.replace(/\s+#[A-Za-z0-9]+(?:\s+(?:hatched|crosshatch|dotted|grid|striped))?/i, '');
+      } else {
+        var tex = rest.match(/\s+(hatched|crosshatch|dotted|grid|striped)\b/i);
+        if (tex) {
+          info.texture = tex[1].toLowerCase();
+          rest = rest.replace(/\s+(hatched|crosshatch|dotted|grid|striped)\b/i, '');
+        }
       }
       info.rawAfter = rest.trim();
       info.members = info.body.split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean).map(parseMemberLine);
@@ -6901,6 +7463,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var line = keyword + ' ' + (/[\s"<>]/.test(info.name) ? '"' + escapeQuoted(info.name) + '"' : info.name);
       if (info.stereotype) line += ' ' + info.stereotype;
       if (info.highlight) line += ' #' + String(info.highlight).replace(/^#/, '');
+      if (info.texture) line += ' ' + info.texture;
       if (info.rawAfter) line += ' ' + info.rawAfter;
       if (info.members && info.members.length) {
         var body = info.members.map(function (m) {
@@ -7291,8 +7854,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           else if (/^relationship\b/i.test(t)) schema = findElementSchema('er', 'relationship');
         } else if (type === 'activity') {
           schema = findElementSchema('activity', 'action');
+        } else if (type === 'freeform') {
+          var ffShape = (t.match(/^box(?:\s+([a-z]+))?\s+"/i) || [])[1] || 'rect';
+          schema = findElementSchema('freeform', ffShape === 'rect' ? 'box' : (ffShape === 'note' ? 'noteBox' : ffShape)) ||
+            findElementSchema('freeform', 'box');
+        } else if (type === 'venn') {
+          if (/^set\b/i.test(t)) schema = findElementSchema('venn', 'set');
         }
       }
+      if (!schema && type === 'activity') schema = findElementSchema('activity', 'action');
       propsTitle.textContent = (schema ? schema.label + ' — ' : 'Element — ') + id;
 
       if (/^note:\d+$/.test(String(id))) {
@@ -7319,6 +7889,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return;
       }
 
+      if (type === 'activity' && !line) {
+        propsContent.appendChild(field('Action text', textInput(id, function (v) {
+          renameActivityElement(id, v);
+        })));
+        var activityHint = document.createElement('p');
+        activityHint.className = 'uml-pg-prop-hint';
+        activityHint.textContent = 'This action is defined wherever its quoted text appears in the activity flow.';
+        propsContent.appendChild(activityHint);
+        return;
+      }
+
       // Class — full editor (name, kind, stereotype, abstract, members)
       if (type === 'class' && schema) {
         var info = parseClassDeclaration(line || (schema.keyword + ' ' + id));
@@ -7338,6 +7919,21 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           info.highlight = v.trim();
           replaceClassDeclaration(id, info);
         })));
+        propsContent.appendChild(field('Texture', selectInput(
+          [
+            { value: '', label: 'None' },
+            { value: 'hatched', label: 'Hatched' },
+            { value: 'crosshatch', label: 'Crosshatch' },
+            { value: 'dotted', label: 'Dotted' },
+            { value: 'grid', label: 'Grid' },
+            { value: 'striped', label: 'Striped' }
+          ],
+          info.texture || '',
+          function (v) {
+            info.texture = v;
+            replaceClassDeclaration(id, info);
+          }
+        )));
 
         var memFs = document.createElement('fieldset');
         memFs.className = 'uml-pg-prop-fieldset';
@@ -7437,11 +8033,27 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         }));
       }
       if (schema && schema.supports && schema.supports.highlight) {
-        var hlMatch = (line || '').match(/\s+#([A-Za-z0-9]+)/);
-        propsContent.appendChild(field('Highlight color (#hex or name)', textInput(hlMatch ? hlMatch[1] : '', function (v) {
+        propsContent.appendChild(field('Highlight color (#hex or name)', textInput(current.highlight || '', function (v) {
           current.highlight = v.trim();
           replaceGenericElement(id, schema, current);
         })));
+      }
+      if (schema && schema.supports && schema.supports.texture) {
+        propsContent.appendChild(field('Texture', selectInput(
+          [
+            { value: '', label: 'None' },
+            { value: 'hatched', label: 'Hatched' },
+            { value: 'crosshatch', label: 'Crosshatch' },
+            { value: 'dotted', label: 'Dotted' },
+            { value: 'grid', label: 'Grid' },
+            { value: 'striped', label: 'Striped' }
+          ],
+          current.texture || '',
+          function (v) {
+            current.texture = v;
+            replaceGenericElement(id, schema, current);
+          }
+        )));
       }
       // ─── Container children editors (composite state / component ports / ER attrs) ───
       if (type === 'state' && line) {
@@ -7617,6 +8229,86 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         propsContent.appendChild(compFs);
       }
 
+      if (type === 'deployment' && line && /^node\b/i.test(line.trim())) {
+        var depBody = parseBraceBody(line);
+        var parsedDep = parseDeploymentNodeBody(depBody);
+        var depFs = document.createElement('fieldset');
+        depFs.className = 'uml-pg-prop-fieldset';
+        var depLeg = document.createElement('legend');
+        depLeg.textContent = 'Node contents';
+        depFs.appendChild(depLeg);
+        var depList = document.createElement('div');
+        depList.className = 'uml-pg-member-list';
+        depFs.appendChild(depList);
+
+        function commitDeploymentNode() {
+          var newBody = buildDeploymentNodeBody(parsedDep);
+          var newLine = setBraceBody(line, newBody);
+          replaceLineForElementId(id, newLine);
+        }
+        function renderDeploymentChildren() {
+          depList.textContent = '';
+          parsedDep.children.forEach(function (child, idx) {
+            var row = document.createElement('div');
+            row.className = 'uml-pg-member';
+            var kindSel = document.createElement('select');
+            kindSel.className = 'uml-pg-member-vis';
+            kindSel.setAttribute('aria-label', 'Deployment child kind');
+            [['component', 'Component'], ['artifact', 'Artifact']].forEach(function (pair) {
+              var o = document.createElement('option');
+              o.value = pair[0];
+              o.textContent = pair[1];
+              if (pair[0] === child.kind) o.selected = true;
+              kindSel.appendChild(o);
+            });
+            kindSel.addEventListener('change', function () { child.kind = kindSel.value; commitDeploymentNode(); });
+            var nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = child.name || '';
+            nameInput.placeholder = 'Child name';
+            nameInput.setAttribute('aria-label', 'Deployment child ' + (idx + 1) + ' name');
+            nameInput.addEventListener('change', function () { child.name = nameInput.value.trim() || child.name; commitDeploymentNode(); });
+            var rmBtn = document.createElement('button');
+            rmBtn.type = 'button';
+            rmBtn.className = 'uml-pg-member-remove';
+            rmBtn.setAttribute('aria-label', 'Remove deployment child ' + (idx + 1));
+            rmBtn.textContent = '✕';
+            rmBtn.addEventListener('click', function () {
+              parsedDep.children.splice(idx, 1);
+              commitDeploymentNode();
+              renderDeploymentChildren();
+            });
+            row.appendChild(kindSel);
+            row.appendChild(nameInput);
+            row.appendChild(rmBtn);
+            depList.appendChild(row);
+          });
+        }
+        renderDeploymentChildren();
+        var depAddComponent = document.createElement('button');
+        depAddComponent.type = 'button';
+        depAddComponent.className = 'uml-pg-add-member';
+        depAddComponent.textContent = '+ Component';
+        depAddComponent.addEventListener('click', function () {
+          parsedDep.children.push({ kind: 'component', name: generateUniqueId(textarea.value, type, 'Component') });
+          commitDeploymentNode();
+          renderDeploymentChildren();
+        });
+        depFs.appendChild(depAddComponent);
+        var depAddArtifact = document.createElement('button');
+        depAddArtifact.type = 'button';
+        depAddArtifact.className = 'uml-pg-add-member';
+        depAddArtifact.textContent = '+ Artifact';
+        depAddArtifact.style.marginLeft = '6px';
+        depAddArtifact.addEventListener('click', function () {
+          parsedDep.children.push({ kind: 'artifact', name: generateUniqueId(textarea.value, type, 'Artifact') });
+          commitDeploymentNode();
+          renderDeploymentChildren();
+        });
+        depFs.appendChild(depAddArtifact);
+        propsContent.appendChild(depFs);
+      }
+
       if (type === 'er' && line && /^(entity|weak\s+entity|relationship|identifying\s+relationship)\b/i.test(line.trim())) {
         var erBody = parseBraceBody(line);
         var parsedEr = parseEntityBody(erBody);
@@ -7789,6 +8481,30 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return pieces.join('; ');
     }
 
+    function parseDeploymentNodeBody(body) {
+      var pieces = (body || '').split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var children = [];
+      var raw = [];
+      pieces.forEach(function (p) {
+        var m = p.match(/^(component|artifact)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?$/i);
+        if (m) {
+          children.push({ kind: m[1].toLowerCase(), name: unquoteId(m[3] || m[2]) });
+        } else {
+          raw.push(p);
+        }
+      });
+      return { children: children, raw: raw };
+    }
+
+    function buildDeploymentNodeBody(parsed) {
+      var pieces = parsed.children.map(function (child) {
+        var name = String(child.name || '').trim() || (child.kind === 'artifact' ? 'Artifact' : 'Component');
+        return (child.kind === 'artifact' ? 'artifact ' : 'component ') + formatRelationEndpointId(name);
+      });
+      pieces = pieces.concat(parsed.raw);
+      return pieces.join('; ');
+    }
+
     function parseEntityBody(body) {
       // Body = list of attributes, each prefixed with #, /, *, ~ or none.
       var pieces = (body || '').split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
@@ -7826,18 +8542,38 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function parseGenericElement(line, type) {
-      var info = { name: '', label: '', stereotype: '', dashed: false };
+      var info = { name: '', label: '', stereotype: '', dashed: false, highlight: '', texture: '' };
       if (!line) return info;
       var t = line.trim();
+      if (window.UMLShared && window.UMLShared.parseHighlightColor) {
+        var highlightInfo = window.UMLShared.parseHighlightColor(t);
+        if (highlightInfo && (highlightInfo.highlight || highlightInfo.texture)) {
+          t = highlightInfo.stripped;
+          info.highlight = highlightInfo.highlight || '';
+          info.texture = highlightInfo.texture || '';
+        }
+      }
       var st = t.match(/<<\s*([^>]+?)\s*>>/);
       if (st) info.stereotype = '<<' + st[1] + '>>';
+      var box = t.match(/^box(?:\s+([a-z]+))?\s+"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)/i);
+      if (box) {
+        info.shape = (box[1] || 'rect').toLowerCase();
+        info.label = box[2].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        info.name = box[3];
+        return info;
+      }
+      var set = t.match(/^set\s+(?:"([^"]+)"|(.+?))\s*$/i);
+      if (set) {
+        info.name = unquoteId(set[1] || set[2]);
+        info.label = info.name;
+        return info;
+      }
       var m = t.match(/^(actor|participant|state|node|component|usecase|artifact|entity|weak\s+entity|relationship|identifying\s+relationship|rectangle)\s+(.+)$/i);
       if (m) {
         var rest = m[2].trim();
         // pull body off
         rest = rest.replace(/\s*\{[\s\S]*\}\s*$/, '');
         rest = rest.replace(/\s*<<\s*[^>]+?\s*>>/, '');
-        rest = rest.replace(/\s+#[A-Za-z0-9]+\b/, '');
         rest = rest.replace(/\s+dashed\b/i, function () { info.dashed = true; return ''; });
         // Patterns: "Label" as id   |   id: Label   |   "Label"   |   id
         var qm = rest.match(/^"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)$/);
@@ -7875,10 +8611,22 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var type = typeSelect.value;
       var newId = (info.name || oldId).trim();
       var label = info.label || newId;
-      var declLine = buildElementLine(schema, newId, { label: label, stereotype: info.stereotype });
+      if (type === 'venn' && schema && schema.keyword === 'set') {
+        newId = String(label || newId).trim() || newId;
+      }
+      var declLine = buildElementLine(schema, newId, {
+        label: label,
+        stereotype: info.stereotype,
+        highlight: info.highlight,
+        texture: info.texture
+      });
+      var oldLine = getDeclarationLine(textarea.value, type, oldId);
+      if (oldLine && /\{/.test(oldLine) && declLine && /\{\s*\}/.test(declLine)) {
+        declLine = setBraceBody(declLine, parseBraceBody(oldLine));
+      }
       if (info.dashed && /\bcomponent\b/.test(declLine)) declLine = declLine.replace(/\s+dashed\b/i, '') + ' dashed';
       var sourceText = textarea.value;
-      sourceText = replaceLineByMatch(sourceText, type, function (line) {
+      sourceText = replaceBlockByMatch(sourceText, type, function (line) {
         return declarationIdForLine(line, type) === oldId;
       }, declLine);
       if (newId !== oldId && newId) sourceText = renameReferencesInRelations(sourceText, oldId, newId);
@@ -7909,6 +8657,47 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return writePositionsIntoSource(lines.join('\n'), typeSelect.value, positions, routes);
     }
 
+    function renameActivityElement(oldId, newLabel) {
+      var next = String(newLabel || '').trim();
+      if (!next || next === oldId) return;
+      var taken = collectModelElements(textarea.value, 'activity').some(function (item) {
+        return item && item.id === next && item.id !== oldId;
+      });
+      if (taken) {
+        announce('"' + next + '" is already used. Pick a different action label.', true);
+        return;
+      }
+      snapshotForUndo('activity-rename:' + oldId);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      if (positions[oldId]) {
+        positions[next] = positions[oldId];
+        delete positions[oldId];
+      }
+      Object.keys(routes || {}).forEach(function (routeId) {
+        var route = routes[routeId];
+        if (!route || !route.points) return;
+        var nextRouteId = routeId
+          .replace(new RegExp('(^|[|:])' + oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[|:])', 'g'), function (m, pre, post) {
+            return pre + next + post;
+          });
+        if (nextRouteId !== routeId) {
+          routes[nextRouteId] = route;
+          delete routes[routeId];
+        }
+      });
+      var clean = stripLayoutMetadata(textarea.value);
+      var escapedOld = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/"/g, '\\"');
+      var quotedOld = new RegExp('"'+ escapedOld + '"', 'g');
+      var lines = clean.split('\n').map(function (line) {
+        return line.replace(quotedOld, '"' + escapeQuoted(next) + '"');
+      });
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'activity', positions, routes);
+      renderDiagram();
+      selectAfterRender(next, 'node');
+      announce('Renamed action to "' + next + '".', false);
+    }
+
     function renameElement(oldId, newId) {
       if (!newId || newId === oldId) return;
       var type = typeSelect.value;
@@ -7922,6 +8711,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       // Re-emit declaration with the new id, then rewrite references.
       var line = getDeclarationLine(sourceText, type, oldId);
       if (line == null) {
+        if (type === 'activity') {
+          renameActivityElement(oldId, newId);
+          return;
+        }
         if (type !== 'state' || oldId === '[*]') return;
         textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
         renderDiagram();
@@ -8105,6 +8898,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           replaceRelationLine(lineIdx, info);
         })));
       }
+      if (multSpec.dashed) {
+        propsContent.appendChild(checkbox('Dashed connector', info.dashed, function (b) {
+          info.dashed = b;
+          replaceRelationLine(lineIdx, info);
+        }));
+      }
       if (lineIdx !== -1 && info.source && info.target) {
         var invertBtn = document.createElement('button');
         invertBtn.type = 'button';
@@ -8274,7 +9073,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function parseRelationLine(line) {
-      var info = { kind: '', label: '', sourceMult: '', targetMult: '', navigability: '', stereotype: '', source: '', target: '' };
+      var info = { kind: '', label: '', sourceMult: '', targetMult: '', navigability: '', stereotype: '', source: '', target: '', dashed: false };
       if (!line) return info;
       var t = line.trim();
       // Pull off label
@@ -8285,6 +9084,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (sm) { info.stereotype = '<<' + sm[1] + '>>'; info.label = sm[2].trim(); }
         else info.label = labRaw.trim();
         t = t.replace(/\s*:\s*.*$/, '');
+      }
+      if (/\s+dashed\s*$/i.test(t)) {
+        info.dashed = true;
+        t = t.replace(/\s+dashed\s*$/i, '');
       }
       var lost = t.match(/^(?:"((?:[^"\\]|\\.)*)"|(\S+))\s+->o\s*$/);
       if (lost) {
@@ -8405,6 +9208,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (type === 'activity' && (op === '-->' || info.kind === 'assoc')) info.kind = 'flow';
       if ((type === 'component' || type === 'deployment') && info.kind === 'assoc') info.kind = 'arrow';
       if (type === 'sequence' && op === '-->' && info.kind === 'assoc') info.kind = 'return';
+      if (type === 'freeform') {
+        if (op === '<--' || op === '<..' || op === '<==') info.kind = 'back';
+        else if (op === '<->' || op === '<..>' || op === '<==>') info.kind = 'both';
+        else if (op === '--') info.kind = 'plain';
+        else if (op === '..>' || op === '..') info.kind = 'dash';
+        else if (op === '==>' || op === '==') info.kind = 'thick';
+        else if (op === '-->' || info.kind === 'assoc') info.kind = 'arrow';
+      }
       if (type === 'usecase') {
         if (/^<<\s*include\s*>>$/i.test(info.stereotype || '')) info.kind = 'include';
         else if (/^<<\s*extend\s*>>$/i.test(info.stereotype || '')) info.kind = 'extend';
@@ -8441,7 +9252,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       snapshotForUndo('rel:' + lineIdx);
       var newLine = buildRelationLine(spec, info.source, info.target, {
         label: info.label, sourceMult: info.sourceMult, targetMult: info.targetMult,
-        navigability: info.navigability, stereotype: info.stereotype
+        navigability: info.navigability, stereotype: info.stereotype, dashed: info.dashed
       });
       var positions = readLayoutPositions(textarea.value);
       var routes = readLayoutRoutes(textarea.value);
@@ -8503,6 +9314,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         targetMult: info.targetMult,
         navigability: info.navigability,
         stereotype: info.stereotype,
+        dashed: info.dashed,
         source: info.source,
         target: info.target
       };
@@ -8539,7 +9351,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         sourceMult: nextInfo.sourceMult,
         targetMult: nextInfo.targetMult,
         navigability: nextInfo.navigability,
-        stereotype: nextInfo.stereotype
+        stereotype: nextInfo.stereotype,
+        dashed: nextInfo.dashed
       });
       textarea.value = writePositionsIntoSource(lines.join('\n'), typeSelect.value, positions, routes);
       selectAfterRender(nextRouteId, 'route');
@@ -8585,6 +9398,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         targetMult: meta.info.targetMult,
         navigability: meta.info.navigability,
         stereotype: meta.info.stereotype,
+        dashed: meta.info.dashed,
         source: meta.info.source,
         target: meta.info.target
       };
@@ -8621,7 +9435,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         sourceMult: info.sourceMult,
         targetMult: info.targetMult,
         navigability: info.navigability,
-        stereotype: info.stereotype
+        stereotype: info.stereotype,
+        dashed: info.dashed
       });
       textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
       selectAfterRender(nextRouteId, 'route');
@@ -8778,7 +9593,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
               return;
             }
             snapshotForUndo('drag:route:' + route.id);
-            var start = svgPoint(svg, event.clientX, event.clientY);
+            var start = editorCanvasPoint(svg, event.clientX, event.clientY);
             var segmentIndex = Number(event.currentTarget.getAttribute('data-segment-index'));
             var locked = event.currentTarget.getAttribute('data-locked-endpoints') === 'true';
             setSelectedLayoutId(route.id, 'route');
@@ -8945,6 +9760,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             break;
           }
           target = target.parentNode;
+        }
+        if (landedOnInteractive) {
+          if (activeTool && activeTool.kind === 'element' && landedOnEdgeHitbox) {
+            landedOnInteractive = false;
+          }
         }
         if (landedOnInteractive) {
           if (landedOnEdgeHitbox && selectedSequenceMessageToolSpec()) {
@@ -9144,7 +9964,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             setSelectedLayoutId(item.id, 'node');
           }
           snapshotForUndo('drag:elt:' + item.id);
-          var start = svgPoint(svg, event.clientX, event.clientY);
+          var start = editorCanvasPoint(svg, event.clientX, event.clientY);
           // Build group drag state if multiple selected.
           var allPositions = collectPositions(editables);
           var groupItems = [];
@@ -9415,6 +10235,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         renameElement(id, nextId);
         return;
       }
+      if (type === 'activity') {
+        renameActivityElement(id, newLabel);
+        return;
+      }
+      if (type === 'deployment' || type === 'er') {
+        var nextModelId = identifierFromInlineLabel(newLabel);
+        if (!nextModelId) return;
+        renameElement(id, nextModelId);
+        return;
+      }
+      if (type === 'venn') {
+        renameElement(id, newLabel);
+        return;
+      }
       var line = getDeclarationLine(textarea.value, type, id);
       if (line == null) return;
       var t = line.trim();
@@ -9550,12 +10384,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             // Plain `actor X` — rewrite as `actor "Label" as X`.
             return 'actor ' + quotedLbl + ' as ' + id;
           }
+          if (kw === 'rectangle') return 'rectangle ' + quotedLbl;
           return kw + ' ' + quotedLbl + ' as ' + id;
         }
       }
       // Deployment artifact: `artifact "Label" as id`
       if (type === 'deployment') {
         if (/^artifact\b/i.test(t)) return 'artifact ' + quotedLbl + ' as ' + id;
+      }
+      if (type === 'freeform') {
+        var mf = t.match(/^(box(?:\s+[a-z]+)?)\s+"(?:[^"\\]|\\.)*"\s+as\s+\S+(\s+.*)?$/i);
+        if (mf) return mf[1] + ' ' + quotedLbl + ' as ' + id + (mf[2] || '');
+      }
+      if (type === 'venn') {
+        return 'set ' + quotedLbl;
       }
       // Notes: `note as id "text"`
       if (/^note\s+as\b/i.test(t)) return 'note as ' + id + ' ' + quotedLbl;
@@ -10174,7 +11016,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function updateDrag(event, finish) {
       if (!dragState) return;
-      var now = svgPoint(dragState.svg, event.clientX, event.clientY);
+      var now = editorCanvasPoint(dragState.svg, event.clientX, event.clientY);
       if (dragState.kind === 'route') {
         var routeDx = now.x - dragState.start.x;
         var routeDy = now.y - dragState.start.y;
@@ -10333,18 +11175,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             return;
           }
         }
-        // Git-graph: branch label or HEAD pointer dragged → snap to nearest commit
-        // and rewrite the `branch X from <commit>` / `head X` line.
-        if (typeSelect.value === 'gitgraph' && dragState.item.axis === 'branch-label') {
-          var snapped = snapBranchLabelToCommit(dragState.item.id, dragState.positions);
-          if (snapped) {
-            textarea.value = snapped;
-            clearSmartGuides();
-            dragState = null;
-            renderDiagram();
-            return;
-          }
-        }
         var existingRoutes = readLayoutRoutes(textarea.value);
         shiftPersistedRouteEndpoints(existingRoutes, allConnectedRoutes, movedDeltas);
         textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, dragState.positions, existingRoutes);
@@ -10393,8 +11223,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (supportsEmptyEditor(type)) {
           textarea.value = type === 'sequence' ? sequenceSourceWithScaffold(textarea.value) : sourceWithScaffold(textarea.value);
           output.innerHTML = '<div class="uml-empty-msg"></div>';
-          if (type === 'sequence') installSequenceEmptyEditor();
-          else installClassOrStateEmptyEditor();
+          installGenericEmptyEditor();
           rebuildSequenceModelPanel();
         } else {
           status.textContent = '';
@@ -10413,7 +11242,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         renderer(output, text);
         var svg = output.querySelector('svg');
         if (svg) {
-          if (type === 'class' || type === 'sequence' || type === 'state') {
+          if (!ignoresLayout(type) && type !== 'folder-tree') {
             applyEditorCanvasBounds(svg);
           }
           downloadBtn.disabled = false;
@@ -10426,8 +11255,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           scheduleAutosave();
         } else if (supportsEmptyEditor(type) && output.querySelector('.uml-empty-msg')) {
           downloadBtn.disabled = true;
-          if (type === 'sequence') installSequenceEmptyEditor();
-          else installClassOrStateEmptyEditor();
+          installGenericEmptyEditor();
           rebuildSequenceModelPanel();
           scheduleAutosave();
         } else {
