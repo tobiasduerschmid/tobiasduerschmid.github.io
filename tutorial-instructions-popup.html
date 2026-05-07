@@ -127,12 +127,32 @@
       });
     }
 
+    function formatCooldown(seconds) {
+      var s = Math.max(0, Math.floor(seconds));
+      var m = Math.floor(s / 60);
+      var rem = s % 60;
+      return m + ':' + (rem < 10 ? '0' : '') + rem;
+    }
+
+    function buildTestButtonHTML(snap) {
+      var remaining = snap.cooldownRemaining || 0;
+      if (!snap.cooldownSeconds || remaining <= 0) {
+        return '<button class="tvm-btn tvm-btn-test">✓ Test My Work</button>';
+      }
+      var label = '⏱ Test My Work (' + formatCooldown(remaining) + ')';
+      var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
+      return '<span class="tvm-test-btn-group">'
+        + '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>'
+        + '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>'
+        + '</span>';
+    }
+
     function renderControls(snap) {
       var hasPrev = snap.currentStep > 0;
       var hasNext = snap.currentStep < (snap.steps || []).length - 1;
       var html = '';
       html += hasPrev ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>' : '<span></span>';
-      html += snap.hasTests ? '<button class="tvm-btn tvm-btn-test">✓ Test My Work</button>' : '<span></span>';
+      html += snap.hasTests ? buildTestButtonHTML(snap) : '<span></span>';
       html += hasNext
         ? '<button class="tvm-btn tvm-btn-next"' + (snap.nextLocked ? ' disabled aria-label="Next — locked: pass all tests to continue"' : '') + '>Next →</button>'
         : '<span></span>';
@@ -140,12 +160,36 @@
 
       var prev = els.stepControls.querySelector('.tvm-btn-prev');
       var next = els.stepControls.querySelector('.tvm-btn-next');
-      var test = els.stepControls.querySelector('.tvm-btn-test');
+      var test = els.stepControls.querySelector('.tvm-btn-test:not(.tvm-btn-test-cooldown)');
+      var sure = els.stepControls.querySelector('.tvm-btn-test-sure');
       if (prev) prev.addEventListener('click', function () { client.post('request-prev-step'); });
       if (next) next.addEventListener('click', function () {
         if (!next.disabled) client.post('request-next-step');
       });
       if (test) test.addEventListener('click', function () { client.post('request-run-tests'); });
+      if (sure) sure.addEventListener('click', function () { client.post('request-run-tests', { silent: true }); });
+    }
+
+    // Tick the cooldown countdown locally between authoritative ticks from
+    // main, so the visible label updates every second even if the broadcast
+    // is throttled. Main is the source of truth — its tick messages reset the
+    // local count; when remaining hits 0 we stop ticking and re-render.
+    var cooldownTimer = null;
+    function startCooldownTicker() {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(function () {
+        if (!snapshot || !snapshot.cooldownRemaining) {
+          clearInterval(cooldownTimer); cooldownTimer = null; return;
+        }
+        snapshot.cooldownRemaining = Math.max(0, snapshot.cooldownRemaining - 1);
+        var label = els.stepControls.querySelector('.tvm-btn-test-cooldown');
+        if (snapshot.cooldownRemaining <= 0) {
+          clearInterval(cooldownTimer); cooldownTimer = null;
+          renderControls(snapshot);
+        } else if (label) {
+          label.textContent = '⏱ Test My Work (' + formatCooldown(snapshot.cooldownRemaining) + ')';
+        }
+      }, 1000);
     }
 
     function renderContent(stepData) {
@@ -195,12 +239,15 @@
       // now-stale Next button that main then silently no-ops.
       if (typeof msg.hasTests === 'boolean') snapshot.hasTests = msg.hasTests;
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
+      if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
+      if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
       if (msg.stepData && Array.isArray(snapshot.steps)) {
         snapshot.steps[msg.stepIndex] = Object.assign({}, snapshot.steps[msg.stepIndex] || {}, msg.stepData);
       }
       // New step starts fresh — drop any cached test panel.
       snapshot.lastTestResultHTML = null;
       renderAll(snapshot);
+      if (snapshot.cooldownRemaining > 0) startCooldownTicker();
     }
 
     // ── Role-specific message routing ────────────────────────────────────
@@ -216,7 +263,21 @@
           if (snapshot) {
             if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
             if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
+            if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
+            if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
             renderAll(snapshot);
+            if (snapshot.cooldownRemaining > 0) startCooldownTicker();
+          }
+          break;
+        case 'cooldown-tick':
+          if (snapshot && typeof msg.remaining === 'number') {
+            snapshot.cooldownRemaining = msg.remaining;
+            var label = els.stepControls.querySelector('.tvm-btn-test-cooldown');
+            if (msg.remaining <= 0) {
+              renderControls(snapshot);
+            } else if (label) {
+              label.textContent = '⏱ Test My Work (' + formatCooldown(msg.remaining) + ')';
+            }
           }
           break;
         case 'test-started':

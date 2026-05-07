@@ -409,7 +409,7 @@
       case 'request-step-change': this._safeHook('onStepChangeRequest', msg.stepIndex); break;
       case 'request-prev-step': this._safeHook('onPrevStepRequest'); break;
       case 'request-next-step': this._safeHook('onNextStepRequest'); break;
-      case 'request-run-tests': this._safeHook('onRunTestsRequest'); break;
+      case 'request-run-tests': this._safeHook('onRunTestsRequest', { silent: !!msg.silent }); break;
       case 'request-save': this._safeHook('onSaveFileRequest', msg.filename); break;
       case 'quiz-passed': this._safeHook('onQuizPassedFromPopup', msg.stepIndex); break;
       case 'request-run': this._safeHook('onRunOutputRequest', msg.args || ''); break;

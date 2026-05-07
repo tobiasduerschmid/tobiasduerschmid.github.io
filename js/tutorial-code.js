@@ -275,6 +275,21 @@
     this._testResults = [];
     this._testCallbacks = [];
 
+    // Test cooldown — `cooldown_seconds` in YAML triggers a per-step waiting
+    // period after every "Test My Work" run before the visible test button can
+    // be clicked again. During cooldown the user can still re-run the tests
+    // via an "I'm sure" button that hides the result panel; if those silent
+    // tests pass, the next step still unlocks. The remaining time persists
+    // across reloads (localStorage) so refreshing can't bypass it. See
+    // _renderTestButton, _runTests({silent}), _startTestCooldown.
+    this._testCooldownSeconds = options.cooldownSeconds || 0;
+    this._testCooldownTimer = null;
+    this._testRunInFlight = false;
+    this._silentTestRun = false;
+    if (this._testCooldownSeconds > 0) {
+      this._testCooldownStorageKey = 'tutorial-cooldown-' + this.tutorialId;
+    }
+
     // Pyodide worker state
     this._worker = null;
     this._workerMsgId = 0;
@@ -6140,6 +6155,8 @@
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(this.steps[this.currentStep]),
       nextLocked: this._isNextStepLocked(),
+      cooldownSeconds: this._testCooldownSeconds || 0,
+      cooldownRemaining: this._cooldownRemaining(this.currentStep),
       steps: this.steps.map(function (step) {
         return {
           title: step.title || '',
@@ -6174,6 +6191,8 @@
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(step),
       nextLocked: this._isNextStepLocked(),
+      cooldownSeconds: this._testCooldownSeconds || 0,
+      cooldownRemaining: this._cooldownRemaining(this.currentStep),
       fileList: fileList,
     });
     // Detached pane popups need a fresh file list / contents whenever the
@@ -6196,6 +6215,8 @@
     this._popoutManager.broadcastNavState({
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       nextLocked: this._isNextStepLocked(),
+      cooldownSeconds: this._testCooldownSeconds || 0,
+      cooldownRemaining: this._cooldownRemaining(this.currentStep),
     });
   };
 
@@ -6402,7 +6423,7 @@
           if (self.autoSaveEnabled) self._autoSaveProgress();
           self.loadStep(self.currentStep + 1);
         },
-        onRunTestsRequest: function () { self._runTests(); },
+        onRunTestsRequest: function (opts) { self._runTests(opts || {}); },
         onQuizPassedFromPopup: function (stepIndex) {
           if (typeof stepIndex === 'number') self._completeQuiz(stepIndex);
         },
@@ -9078,7 +9099,7 @@
       ? '<button class="tvm-btn tvm-btn-prev" title="Previous step">\u2190 Previous</button>'
       : '<span></span>';
     html += this._stepHasTests(step)
-      ? '<button class="tvm-btn tvm-btn-test" title="Run the tests for this step">\u2713 Test My Work</button>'
+      ? this._buildTestButtonHTML(index)
       : '<span></span>';
     var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
       && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
@@ -9092,7 +9113,6 @@
 
     var prev = this.stepControlsEl.querySelector('.tvm-btn-prev');
     var next = this.stepControlsEl.querySelector('.tvm-btn-next');
-    var test = this.stepControlsEl.querySelector('.tvm-btn-test');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
       if (next.disabled) return;
@@ -9107,7 +9127,164 @@
         self.loadStep(index + 1);
       }
     });
-    if (test) test.addEventListener('click', function () { self._runTests(); });
+    this._wireTestButtons(this.stepControlsEl);
+    this._ensureCooldownTicker(index);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Test cooldown helpers
+  //
+  // When `cooldown_seconds` is set in the tutorial YAML, every "Test My Work"
+  // run starts a per-step cooldown. While it's active the visible Test button
+  // is replaced by a disabled timer-icon button counting down, plus a
+  // secondary "I'm sure" button that re-runs the tests silently \u2014 the result
+  // panel does not update, but a passing run still unlocks the next step.
+  // The cooldown end time persists in localStorage so reloading can't bypass
+  // the wait. Both this layout and the popout instructions panel share the
+  // same button HTML and behavior.
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._cooldownEnabled = function () {
+    return !!(this._testCooldownSeconds && this._testCooldownSeconds > 0);
+  };
+
+  TutorialCode.prototype._loadCooldownMap = function () {
+    if (!this._cooldownEnabled()) return {};
+    try {
+      var raw = localStorage.getItem(this._testCooldownStorageKey);
+      var parsed = raw ? JSON.parse(raw) : null;
+      if (!parsed || typeof parsed !== 'object') return {};
+      // Self-pruning load: drop any entry whose end timestamp is already in
+      // the past. Without this, closing the tab before a cooldown expires
+      // would leave the entry around forever, since the ticker that normally
+      // calls _clearTestCooldown can only run while the page is open.
+      var now = Date.now();
+      var clean = {};
+      var pruned = false;
+      for (var k in parsed) {
+        if (parsed.hasOwnProperty(k) && parsed[k] > now) clean[k] = parsed[k];
+        else if (parsed.hasOwnProperty(k)) pruned = true;
+      }
+      if (pruned) this._saveCooldownMap(clean);
+      return clean;
+    } catch (e) { return {}; }
+  };
+
+  TutorialCode.prototype._saveCooldownMap = function (map) {
+    if (!this._cooldownEnabled()) return;
+    try {
+      var hasAny = false;
+      for (var k in map) { if (map.hasOwnProperty(k)) { hasAny = true; break; } }
+      if (!hasAny) localStorage.removeItem(this._testCooldownStorageKey);
+      else localStorage.setItem(this._testCooldownStorageKey, JSON.stringify(map));
+    } catch (e) { /* quota / private mode \u2014 ignore */ }
+  };
+
+  TutorialCode.prototype._cooldownRemaining = function (index) {
+    if (!this._cooldownEnabled()) return 0;
+    var map = this._loadCooldownMap();
+    var endsAt = map[index];
+    if (!endsAt) return 0;
+    var remaining = Math.ceil((endsAt - Date.now()) / 1000);
+    return remaining > 0 ? remaining : 0;
+  };
+
+  TutorialCode.prototype._startTestCooldown = function (index) {
+    if (!this._cooldownEnabled()) return;
+    var map = this._loadCooldownMap();
+    map[index] = Date.now() + this._testCooldownSeconds * 1000;
+    this._saveCooldownMap(map);
+    this._refreshTestButton(index);
+    this._ensureCooldownTicker(index);
+    if (this._popoutManager) this._broadcastNavState();
+  };
+
+  TutorialCode.prototype._clearTestCooldown = function (index) {
+    if (!this._cooldownEnabled()) return;
+    var map = this._loadCooldownMap();
+    if (map[index]) {
+      delete map[index];
+      this._saveCooldownMap(map);
+    }
+  };
+
+  TutorialCode.prototype._formatCooldown = function (seconds) {
+    var s = Math.max(0, Math.floor(seconds));
+    var m = Math.floor(s / 60);
+    var rem = s % 60;
+    return m + ':' + (rem < 10 ? '0' : '') + rem;
+  };
+
+  TutorialCode.prototype._buildTestButtonHTML = function (index) {
+    var remaining = this._cooldownRemaining(index);
+    if (remaining <= 0) {
+      return '<button class="tvm-btn tvm-btn-test" title="Run the tests for this step">\u2713 Test My Work</button>';
+    }
+    var label = '\u23f1 Test My Work (' + this._formatCooldown(remaining) + ')';
+    var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
+    var html = '<span class="tvm-test-btn-group">';
+    html += '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>';
+    html += '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results \u2014 passes still unlock Next">I\u2019m sure</button>';
+    html += '</span>';
+    return html;
+  };
+
+  TutorialCode.prototype._wireTestButtons = function (containerEl) {
+    if (!containerEl) return;
+    var self = this;
+    var test = containerEl.querySelector('.tvm-btn-test:not(.tvm-btn-test-cooldown)');
+    if (test) {
+      test.addEventListener('click', function () { self._runTests(); });
+    }
+    var sure = containerEl.querySelector('.tvm-btn-test-sure');
+    if (sure) {
+      sure.addEventListener('click', function () { self._runTests({ silent: true }); });
+    }
+  };
+
+  TutorialCode.prototype._refreshTestButton = function (index) {
+    if (index == null) index = this.currentStep;
+    if (!this.stepControlsEl) return;
+    var step = this.steps[index];
+    if (!step || !this._stepHasTests(step)) return;
+    var existing = this.stepControlsEl.querySelector('.tvm-btn-test, .tvm-test-btn-group');
+    if (!existing) return;
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = this._buildTestButtonHTML(index);
+    var replacement = wrapper.firstChild;
+    existing.parentNode.replaceChild(replacement, existing);
+    this._wireTestButtons(this.stepControlsEl);
+  };
+
+  TutorialCode.prototype._ensureCooldownTicker = function (index) {
+    if (!this._cooldownEnabled()) return;
+    if (this._testCooldownTimer) {
+      clearInterval(this._testCooldownTimer);
+      this._testCooldownTimer = null;
+    }
+    var self = this;
+    if (this._cooldownRemaining(index) <= 0) return;
+    this._testCooldownTimer = setInterval(function () {
+      var remaining = self._cooldownRemaining(self.currentStep);
+      var label = self.stepControlsEl && self.stepControlsEl.querySelector('.tvm-btn-test-cooldown');
+      if (remaining <= 0) {
+        clearInterval(self._testCooldownTimer);
+        self._testCooldownTimer = null;
+        self._clearTestCooldown(self.currentStep);
+        self._refreshTestButton(self.currentStep);
+        if (self._popoutManager) self._broadcastNavState();
+        return;
+      }
+      if (label) label.textContent = '\u23f1 Test My Work (' + self._formatCooldown(remaining) + ')';
+      if (self._popoutManager) self._broadcastCooldownTick();
+    }, 1000);
+  };
+
+  TutorialCode.prototype._broadcastCooldownTick = function () {
+    if (!this._popoutManager) return;
+    this._popoutManager._post('cooldown-tick', {
+      stepIndex: this.currentStep,
+      remaining: this._cooldownRemaining(this.currentStep),
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -9362,8 +9539,20 @@
   // ---------------------------------------------------------------------------
   // Test Runner — dispatches per backend
   // ---------------------------------------------------------------------------
-  TutorialCode.prototype._runTests = function () {
-    if (this._popoutManager) this._popoutManager.broadcastTestStarted();
+  TutorialCode.prototype._runTests = function (opts) {
+    // Re-entrancy guard — a previous "I'm sure" run can fire again before its
+    // results return. Without this guard, the second run can replace the
+    // pending test buffer/state and produce ghost results in the panel.
+    if (this._testRunInFlight) return;
+    var step = this.steps[this.currentStep];
+    if (!step || !this._stepHasTests(step)) return;
+    var silent = !!(opts && opts.silent);
+    // Refuse a non-silent run while cooldown is still active (the disabled
+    // button can't be clicked, but a popout could still post 'request-run-tests').
+    if (!silent && this._cooldownEnabled() && this._cooldownRemaining(this.currentStep) > 0) return;
+    this._silentTestRun = silent;
+    this._testRunInFlight = true;
+    if (this._popoutManager && !silent) this._popoutManager.broadcastTestStarted();
     var backend = this.config.backend;
     if (backend === 'v86') this._runTestsV86();
     else if (backend === 'pyodide') this._runTestsPyodide();
@@ -9373,6 +9562,7 @@
     else if (backend === 'sql') this._runTestsSQL();
     else if (backend === 'prolog') this._runTestsProlog();
     else if (backend === 'java') this._runTestsJava();
+    else this._testRunInFlight = false;
   };
 
   // v86 test runner — marker-delimited output from the interactive shell.
@@ -9385,9 +9575,12 @@
     // Disable the test button while a run is in-flight.  Without this,
     // rapid clicks each do _muteCount++ but only the last run's callbacks
     // survive (the rest are overwritten), so _muteCount never returns to
-    // 0 and the terminal stays permanently muted.
+    // 0 and the terminal stays permanently muted. The "I'm sure" button is
+    // also disabled so a student can't double-click it during cooldown.
     var testBtn = this.stepControlsEl && this.stepControlsEl.querySelector('.tvm-btn-test');
+    var sureBtn = this.stepControlsEl && this.stepControlsEl.querySelector('.tvm-btn-test-sure');
     if (testBtn) testBtn.disabled = true;
+    if (sureBtn) sureBtn.disabled = true;
 
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var parts = [];
@@ -9402,13 +9595,18 @@
     this._testCallbacks = [
       function () { self._muteCount--; },
       function () { self._renderTestResults(tests, self._testResults); },
-      function () { if (testBtn) testBtn.disabled = false; },
+      // Cooldown re-renders the button group; only re-enable when not in cooldown.
+      function () {
+        if (sureBtn) sureBtn.disabled = false;
+        if (testBtn && !self._cooldownEnabled()) testBtn.disabled = false;
+      },
     ];
     var safetyTimer = setTimeout(function () {
       if (self._testListening) {
         self._testListening = false; self._testBuffer = ''; self._muteCount--;
         self._renderTestResults(tests, self._testResults);
-        if (testBtn) testBtn.disabled = false;
+        if (sureBtn) sureBtn.disabled = false;
+        if (testBtn && !self._cooldownEnabled()) testBtn.disabled = false;
       }
     }, 15000);
     this._testCallbacks.push(function () { clearTimeout(safetyTimer); });
@@ -9986,6 +10184,10 @@
   };
 
   TutorialCode.prototype._showTestPanel = function (innerHtml) {
+    // Silent runs (the cooldown "I'm sure" path) skip the visible panel —
+    // students get no feedback at all from those runs, only the silent
+    // unlock side effect when every assertion passes.
+    if (this._silentTestRun) return;
     var panel = this.stepContentEl.querySelector('.tvm-test-panel');
     if (!panel) {
       // Visible panel: no longer a live region. With aria-live="polite"
@@ -10079,11 +10281,16 @@
     this._testResults = results; // store for hint engine
     var passed = results.filter(function (r) { return r === true; }).length;
     var total = tests.length, allPass = passed === total;
+    var silent = this._silentTestRun;
+    this._testRunInFlight = false;
+
     var html = this._buildTestResultsHTML(tests, results);
-    this._showTestPanel(html);
-    this._announceTestResult(tests, results);
-    if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
-    if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
+    if (!silent) {
+      this._showTestPanel(html);
+      this._announceTestResult(tests, results);
+      if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
+      if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
+    }
     if (allPass && this.requireTests) {
       this._stepsPassed.add(this.currentStep);
       this._stepsUnlocked.add(this.currentStep + 1);
@@ -10093,14 +10300,25 @@
       if (this.autoSaveEnabled) this._autoSaveProgress();
     }
     if (this._popoutManager) {
-      this._popoutManager.broadcastTestResult({
-        resultsHTML: html,
-        results: results,
-        allPassed: allPass,
-        stepIndex: this.currentStep,
-      });
+      if (!silent) {
+        this._popoutManager.broadcastTestResult({
+          resultsHTML: html,
+          results: results,
+          allPassed: allPass,
+          stepIndex: this.currentStep,
+        });
+      }
       this._broadcastNavState();
     }
+    // Cooldown only applies to visible runs; silent "I'm sure" runs don't
+    // restart the timer (otherwise students could just spam the silent button
+    // and learn nothing — the wait stays anchored to the last visible test).
+    if (!silent && this._cooldownEnabled()) {
+      this._startTestCooldown(this.currentStep);
+    }
+    // Cleared last so _showTestPanel's silent-mode check above still sees the
+    // correct value; the next click sets it again before the renderer runs.
+    this._silentTestRun = false;
   };
 
   // ---------------------------------------------------------------------------

@@ -548,13 +548,14 @@ info_nav_title: "Browser storage"
     <em>Prefixes:</em>
     <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code &amp; current step &middot;
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
+    <code>tutorial-cooldown-&lt;id&gt;</code> &mdash; per-step "Test My Work" cooldown end times &middot;
     <code>tutorial-popout-state-&lt;path&gt;</code> &mdash; detached editor crash-recovery snapshot &middot;
     <code>tutorial-debug-bps-&lt;id&gt;</code> &mdash; debugger breakpoints &middot;
     <code>tutorial-debug-watchpoint-remove-choice-&lt;id&gt;</code> &mdash; remembered watchpoint removal choice &middot;
     <code>tutorial-debug-section-&lt;id&gt;-&lt;name&gt;</code> &amp;
     <code>tutorial-debug-subsection-&lt;id&gt;-&lt;name&gt;</code> &mdash; debugger panel collapse/expand state.
   </p>
-  <button class="cookies-btn danger" data-clear-category="tutorial-static" data-clear-prefixes="tutorial-progress-,tutorial-editor-split-,tutorial-popout-state-,tutorial-debug-bps-,tutorial-debug-watchpoint-remove-choice-,tutorial-debug-section-,tutorial-debug-subsection-" type="button">
+  <button class="cookies-btn danger" data-clear-category="tutorial-static" data-clear-prefixes="tutorial-progress-,tutorial-editor-split-,tutorial-cooldown-,tutorial-popout-state-,tutorial-debug-bps-,tutorial-debug-watchpoint-remove-choice-,tutorial-debug-section-,tutorial-debug-subsection-" type="button">
     <i class="fa fa-trash" aria-hidden="true"></i> Delete all tutorial state
   </button>
 
@@ -846,6 +847,7 @@ info_nav_title: "Browser storage"
   var DYNAMIC_PREFIXES = [
     { prefix: 'tutorial-progress-',                       label: 'Saved tutorial progress (code &amp; current step)' },
     { prefix: 'tutorial-editor-split-',                   label: 'Tutorial split-pane editor preference' },
+    { prefix: 'tutorial-cooldown-',                       label: '"Test My Work" cooldown end times (per step)' },
     { prefix: 'tutorial-popout-state-',                   label: 'Detached editor crash-recovery snapshot' },
     { prefix: 'tutorial-debug-bps-',                      label: 'Debugger breakpoints' },
     { prefix: 'tutorial-debug-watchpoint-remove-choice-', label: 'Watchpoint removal preference' },

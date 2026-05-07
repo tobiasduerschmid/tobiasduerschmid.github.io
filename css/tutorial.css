@@ -3546,6 +3546,45 @@ html:not(.dark-mode) .tvm-step-status {
   cursor: not-allowed;
 }
 
+/* Cooldown group — disabled "Test My Work" with countdown plus an
+   "I'm sure" silent-run fallback. Both share a row inside the step
+   controls bar so the timer label and the override button sit together. */
+.tvm-test-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tvm-btn-test.tvm-btn-test-cooldown {
+  background: #4b5563;
+  color: #fff;
+  cursor: not-allowed;
+  font-variant-numeric: tabular-nums;
+}
+.tvm-btn-test-sure {
+  background: #6b6b78;
+  color: #fff;
+  font-weight: 500;
+}
+.tvm-btn-test-sure:hover { background: #555560; }
+.tvm-btn-test-sure:disabled {
+  background: #3b3b46;
+  color: #c0c0c8;
+  cursor: not-allowed;
+}
+html:not(.dark-mode) .tvm-btn-test.tvm-btn-test-cooldown {
+  /* WCAG 1.4.3 — #595e6b on white clears 4.5:1 for the disabled label. */
+  background: #595e6b;
+}
+html:not(.dark-mode) .tvm-btn-test-sure {
+  /* WCAG 1.4.3 — #4a4f5c on white clears 4.5:1 for the override button. */
+  background: #4a4f5c;
+}
+html:not(.dark-mode) .tvm-btn-test-sure:hover { background: #383d49; }
+html:not(.dark-mode) .tvm-btn-test-sure:disabled {
+  background: #8a8f9a;
+  color: #fff;
+}
+
 .tvm-test-panel {
   margin-top: 20px;
   border-top: 1px solid #2a2a38;

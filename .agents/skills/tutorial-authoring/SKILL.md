@@ -612,6 +612,35 @@ require_tests: boolean                 # If true, student must pass each step's
                                        # This makes purely-quiz / summary /
                                        # reflection steps work inside an
                                        # otherwise test-gated tutorial.
+cooldown_seconds: integer              # Optional, default 0 (disabled). When
+                                       # > 0, every "Test My Work" run starts
+                                       # a per-step cooldown of this many
+                                       # seconds. While the cooldown is active
+                                       # the visible Test button is replaced
+                                       # by a disabled timer-icon countdown
+                                       # ("⏱ Test My Work (4:32)") and a
+                                       # secondary "I'm sure" button that
+                                       # re-runs the tests SILENTLY — no
+                                       # results panel, no announcer message,
+                                       # no TutorChat callback — but a passing
+                                       # silent run still unlocks the next
+                                       # step. Persisted across reloads via
+                                       # localStorage `tutorial-cooldown-<id>`
+                                       # (a `{stepIndex: endsAt}` JSON map),
+                                       # so refreshing can't bypass the wait.
+                                       # Works on every backend (v86, pyodide,
+                                       # webcontainer, react, browser, sql,
+                                       # prolog, java, uml-editor) plus the
+                                       # instructions popout. Implementation:
+                                       # _buildTestButtonHTML / _runTests /
+                                       # _renderTestResults in
+                                       # js/tutorial-code.js + the matching
+                                       # methods in js/tutorial-uml-editor.js.
+                                       # Use to slow down test-spamming on
+                                       # homework-style tutorials where
+                                       # thinking before retesting is the
+                                       # learning goal (e.g. UML modeling,
+                                       # design exercises).
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
 debugger: boolean                      # Time-travel debugger (pyodide only).
 debugger_options: { ... }              # Per-tutorial debugger config
@@ -1093,6 +1122,12 @@ keys. **If you change the persistence schema, also update**:
 `js/tutorial-code.js` (the storage code), the SE Gym import/export UI in
 `se-gym.html`, the storage inventory at `/cookies/` (per
 `cookie-storage-tracker` skill), and this skill.
+
+A separate `tutorial-cooldown-<tutorialId>` localStorage key holds the
+"Test My Work" cooldown end timestamps when `cooldown_seconds:` is set
+on a tutorial. Shape: `{ "<stepIndex>": <unix-ms-end-time> }`. Stored
+under the same prefix family as other tutorial state so the global
+"Delete all tutorial state" button on `/cookies/` clears it.
 
 ### 4.8 Test execution
 

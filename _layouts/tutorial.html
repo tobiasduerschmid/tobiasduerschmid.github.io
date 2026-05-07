@@ -405,7 +405,8 @@
           tutorialId: '{{ page.tutorial }}',
           steps: config.steps,
           requireTests: config.require_tests || false,
-          instructorMode: instructorMode
+          instructorMode: instructorMode,
+          cooldownSeconds: config.cooldown_seconds || 0,
         });
         window._tutorial = umlTutorial;
         umlTutorial.start();
@@ -475,6 +476,11 @@
         // when the Run button is clicked, and rename the button to "Test"
         // automatically when a test file is the active file.
         pytest: !!config.pytest,
+        // `cooldown_seconds:` — number of seconds the visible "Test My Work"
+        // button stays locked after each run; an "I’m sure" silent fallback
+        // remains clickable but hides the result panel. Persists in localStorage
+        // so refreshing can't bypass the wait.
+        cooldownSeconds: config.cooldown_seconds || 0,
         // `playwright:` — React tutorial mode for Playwright-compatible
         // in-browser specs that can be copied to real @playwright/test later.
         playwright: config.playwright || null,

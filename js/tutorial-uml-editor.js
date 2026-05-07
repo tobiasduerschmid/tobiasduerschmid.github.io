@@ -63,6 +63,7 @@
     this.config = { backend: 'uml-editor' };
     this.requireTests = !!this.options.requireTests;
     this.instructorMode = !!this.options.instructorMode;
+    this.tutorialId = this.options.tutorialId || 'default';
     this._stepsPassed = new Set();
     this._stepsUnlocked = new Set([0]);
     this.sourceEl = null;
@@ -78,6 +79,15 @@
     this._testAnnouncer = null;
     this._clearDialog = null;
     this._clearDialogPreviousFocus = null;
+
+    // See tutorial-code.js for the matching state — cooldown gates the visible
+    // "Test My Work" button after every run, with an "I'm sure" silent fallback
+    // that still unlocks Next on a passing run.
+    this._testCooldownSeconds = this.options.cooldownSeconds || 0;
+    this._testCooldownStorageKey = this._testCooldownSeconds > 0
+      ? 'tutorial-cooldown-' + this.tutorialId : null;
+    this._testCooldownTimer = null;
+    this._silentTestRun = false;
   }
 
   UMLTutorialEditor.prototype.start = function () {
@@ -270,9 +280,7 @@
       : '<span></span>';
     html += '<span class="tvm-step-actions">' +
       '<button class="tvm-btn tvm-btn-clear-model" title="Remove all UML elements from this step" type="button">Remove All Elements</button>';
-    html += this._stepHasTests(step)
-      ? '<button class="tvm-btn tvm-btn-test" title="Check the UML diagram for this step">&#10003; Test My Work</button>'
-      : '';
+    html += this._stepHasTests(step) ? this._buildTestButtonHTML(index) : '';
     html += '</span>';
     html += index < this.steps.length - 1
       ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : ' title="Next step"') + '>Next &rarr;</button>'
@@ -281,7 +289,6 @@
 
     var prev = this.controlsEl.querySelector('.tvm-btn-prev');
     var next = this.controlsEl.querySelector('.tvm-btn-next');
-    var test = this.controlsEl.querySelector('.tvm-btn-test');
     var clear = this.controlsEl.querySelector('.tvm-btn-clear-model');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
@@ -289,8 +296,140 @@
       self._stepsUnlocked.add(index + 1);
       self.loadStep(index + 1);
     });
-    if (test) test.addEventListener('click', function () { self.runTests(); });
+    this._wireTestButtons(this.controlsEl);
     if (clear) clear.addEventListener('click', function () { self.openClearStepDialog(clear); });
+    this._ensureCooldownTicker(index);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Test cooldown helpers — same semantics as tutorial-code.js. See its
+  // comments for the design.
+  // ---------------------------------------------------------------------------
+  UMLTutorialEditor.prototype._cooldownEnabled = function () {
+    return !!(this._testCooldownSeconds && this._testCooldownSeconds > 0);
+  };
+
+  UMLTutorialEditor.prototype._loadCooldownMap = function () {
+    if (!this._cooldownEnabled()) return {};
+    try {
+      var raw = localStorage.getItem(this._testCooldownStorageKey);
+      var parsed = raw ? JSON.parse(raw) : null;
+      if (!parsed || typeof parsed !== 'object') return {};
+      // Self-pruning: drop entries whose end time is already past so closing
+      // the tab before expiry doesn't leave stale rows in localStorage.
+      var now = Date.now();
+      var clean = {};
+      var pruned = false;
+      for (var k in parsed) {
+        if (parsed.hasOwnProperty(k) && parsed[k] > now) clean[k] = parsed[k];
+        else if (parsed.hasOwnProperty(k)) pruned = true;
+      }
+      if (pruned) this._saveCooldownMap(clean);
+      return clean;
+    } catch (e) { return {}; }
+  };
+
+  UMLTutorialEditor.prototype._saveCooldownMap = function (map) {
+    if (!this._cooldownEnabled()) return;
+    try {
+      var hasAny = false;
+      for (var k in map) { if (map.hasOwnProperty(k)) { hasAny = true; break; } }
+      if (!hasAny) localStorage.removeItem(this._testCooldownStorageKey);
+      else localStorage.setItem(this._testCooldownStorageKey, JSON.stringify(map));
+    } catch (e) { /* ignore */ }
+  };
+
+  UMLTutorialEditor.prototype._cooldownRemaining = function (index) {
+    if (!this._cooldownEnabled()) return 0;
+    var map = this._loadCooldownMap();
+    var endsAt = map[index];
+    if (!endsAt) return 0;
+    var remaining = Math.ceil((endsAt - Date.now()) / 1000);
+    return remaining > 0 ? remaining : 0;
+  };
+
+  UMLTutorialEditor.prototype._startTestCooldown = function (index) {
+    if (!this._cooldownEnabled()) return;
+    var map = this._loadCooldownMap();
+    map[index] = Date.now() + this._testCooldownSeconds * 1000;
+    this._saveCooldownMap(map);
+    this._refreshTestButton(index);
+    this._ensureCooldownTicker(index);
+  };
+
+  UMLTutorialEditor.prototype._clearTestCooldown = function (index) {
+    if (!this._cooldownEnabled()) return;
+    var map = this._loadCooldownMap();
+    if (map[index]) {
+      delete map[index];
+      this._saveCooldownMap(map);
+    }
+  };
+
+  UMLTutorialEditor.prototype._formatCooldown = function (seconds) {
+    var s = Math.max(0, Math.floor(seconds));
+    var m = Math.floor(s / 60);
+    var rem = s % 60;
+    return m + ':' + (rem < 10 ? '0' : '') + rem;
+  };
+
+  UMLTutorialEditor.prototype._buildTestButtonHTML = function (index) {
+    var remaining = this._cooldownRemaining(index);
+    if (remaining <= 0) {
+      return '<button class="tvm-btn tvm-btn-test" title="Check the UML diagram for this step">&#10003; Test My Work</button>';
+    }
+    var label = '⏱ Test My Work (' + this._formatCooldown(remaining) + ')';
+    var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
+    var html = '<span class="tvm-test-btn-group">';
+    html += '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>';
+    html += '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>';
+    html += '</span>';
+    return html;
+  };
+
+  UMLTutorialEditor.prototype._wireTestButtons = function (containerEl) {
+    if (!containerEl) return;
+    var self = this;
+    var test = containerEl.querySelector('.tvm-btn-test:not(.tvm-btn-test-cooldown)');
+    if (test) test.addEventListener('click', function () { self.runTests({ silent: false }); });
+    var sure = containerEl.querySelector('.tvm-btn-test-sure');
+    if (sure) sure.addEventListener('click', function () { self.runTests({ silent: true }); });
+  };
+
+  UMLTutorialEditor.prototype._refreshTestButton = function (index) {
+    if (index == null) index = this.currentStep;
+    if (!this.controlsEl) return;
+    var step = this.steps[index];
+    if (!step || !this._stepHasTests(step)) return;
+    var existing = this.controlsEl.querySelector('.tvm-btn-test, .tvm-test-btn-group');
+    if (!existing) return;
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = this._buildTestButtonHTML(index);
+    var replacement = wrapper.firstChild;
+    existing.parentNode.replaceChild(replacement, existing);
+    this._wireTestButtons(this.controlsEl);
+  };
+
+  UMLTutorialEditor.prototype._ensureCooldownTicker = function (index) {
+    if (!this._cooldownEnabled()) return;
+    if (this._testCooldownTimer) {
+      clearInterval(this._testCooldownTimer);
+      this._testCooldownTimer = null;
+    }
+    var self = this;
+    if (this._cooldownRemaining(index) <= 0) return;
+    this._testCooldownTimer = setInterval(function () {
+      var remaining = self._cooldownRemaining(self.currentStep);
+      var label = self.controlsEl && self.controlsEl.querySelector('.tvm-btn-test-cooldown');
+      if (remaining <= 0) {
+        clearInterval(self._testCooldownTimer);
+        self._testCooldownTimer = null;
+        self._clearTestCooldown(self.currentStep);
+        self._refreshTestButton(self.currentStep);
+        return;
+      }
+      if (label) label.textContent = '⏱ Test My Work (' + self._formatCooldown(remaining) + ')';
+    }, 1000);
   };
 
   UMLTutorialEditor.prototype.loadStep = function (index) {
@@ -565,7 +704,10 @@
     return html;
   };
 
-  UMLTutorialEditor.prototype.runTests = function () {
+  UMLTutorialEditor.prototype.runTests = function (opts) {
+    var silent = !!(opts && opts.silent);
+    if (!silent && this._cooldownEnabled() && this._cooldownRemaining(this.currentStep) > 0) return;
+    this._silentTestRun = silent;
     var step = this.steps[this.currentStep] || {};
     var tests = step.tests || [];
     var model = parseArchUml(this.currentSource());
@@ -623,13 +765,18 @@
       this.renderControls(this.currentStep);
     }
     if (!tests.length) {
-      this._showTestPanel('<div class="tvm-test-results"><div class="tvm-test-summary all-pass">No tests for this step.</div></div>');
+      if (!silent) this._showTestPanel('<div class="tvm-test-results"><div class="tvm-test-summary all-pass">No tests for this step.</div></div>');
+      this._silentTestRun = false;
       return;
     }
-    this._showTestPanel(this._buildTestResultsHTML(resultTests, results));
-    this._announceTestResult(resultTests, results);
-    if (!allPass && window.TutorChat) window.TutorChat.onTestFailure(this);
-    if (allPass && window.TutorChat) window.TutorChat.onTestPass();
+    if (!silent) {
+      this._showTestPanel(this._buildTestResultsHTML(resultTests, results));
+      this._announceTestResult(resultTests, results);
+      if (!allPass && window.TutorChat) window.TutorChat.onTestFailure(this);
+      if (allPass && window.TutorChat) window.TutorChat.onTestPass();
+    }
+    if (!silent && this._cooldownEnabled()) this._startTestCooldown(this.currentStep);
+    this._silentTestRun = false;
   };
 
   function escapeHtml(text) {

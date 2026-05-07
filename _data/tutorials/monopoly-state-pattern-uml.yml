@@ -9,6 +9,10 @@ learning_objectives:
 
 backend: uml-editor
 require_tests: false
+# 5-minute cooldown on the visible "Test My Work" button — encourages students
+# to think before testing again. An "I'm sure" button stays clickable during
+# cooldown but hides results; passing silently still unlocks Next.
+cooldown_seconds: 300
 
 steps:
 
