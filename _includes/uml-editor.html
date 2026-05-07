@@ -91,6 +91,7 @@ Supported options:
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-export" role="group" aria-label="Export">
       <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
       <button id="uml-pg-export-source" title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
+      <button id="uml-pg-generate-python" title="Generate a Python file from the saved class and sequence diagrams" type="button">Generate Python</button>
       <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-view" role="group" aria-label="View">
@@ -259,6 +260,7 @@ html.dark-mode .uml-pg-toolbar-group:not(:last-of-type) {
 #uml-pg-reset-example,
 #uml-pg-copy-source,
 #uml-pg-export-source,
+#uml-pg-generate-python,
 #uml-pg-fullscreen,
 #uml-pg-undo,
 #uml-pg-redo {
@@ -653,7 +655,8 @@ body.uml-pg-fullscreen-lock {
 #uml-pg-reset-layout:hover,
 #uml-pg-reset-example:hover,
 #uml-pg-copy-source:hover,
-#uml-pg-export-source:hover {
+#uml-pg-export-source:hover,
+#uml-pg-generate-python:hover {
   background: #f5f8fc;
 }
 
@@ -1384,6 +1387,7 @@ html.dark-mode #uml-pg-reset-layout,
 html.dark-mode #uml-pg-reset-example,
 html.dark-mode #uml-pg-copy-source,
 html.dark-mode #uml-pg-export-source,
+html.dark-mode #uml-pg-generate-python,
 html.dark-mode #uml-pg-fullscreen {
   background: #243347;
   border-color: #3a4a60;
@@ -1395,6 +1399,7 @@ html.dark-mode #uml-pg-reset-layout:hover,
 html.dark-mode #uml-pg-reset-example:hover,
 html.dark-mode #uml-pg-copy-source:hover,
 html.dark-mode #uml-pg-export-source:hover,
+html.dark-mode #uml-pg-generate-python:hover,
 html.dark-mode #uml-pg-fullscreen:hover {
   background: #2c3f57;
 }
@@ -2781,6 +2786,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     var resetLayoutBtn = document.getElementById('uml-pg-reset-layout');
     var copySourceBtn = document.getElementById('uml-pg-copy-source');
     var exportSourceBtn = document.getElementById('uml-pg-export-source');
+    var generatePythonBtn = document.getElementById('uml-pg-generate-python');
     var status = document.getElementById('uml-pg-status');
     palette = document.getElementById('uml-pg-palette');
     paletteEls = document.getElementById('uml-pg-palette-elements');
@@ -2964,10 +2970,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             }
             addElement(elements, seen, id, sequenceDisplay(id, label), 'x');
           }
-          m = line.match(/^(\S+)\s*(?:[-.]+[>x]|<[-.]+)\s*(\S+)/);
+          m = line.match(/^(\S+)\s+->o(?:\s*:.*)?$/);
           if (m) {
             addElement(elements, seen, m[1], m[1], 'x');
-            addElement(elements, seen, m[2].replace(/:.*$/, ''), m[2].replace(/:.*$/, ''), 'x');
+            continue;
+          }
+          m = line.match(/^o->\s+(\S+)(?:\s*:.*)?$/);
+          if (m) {
+            addElement(elements, seen, m[1], m[1], 'x');
+            continue;
+          }
+          m = line.match(/^(\S+)\s+(--?>|--?>>|<--?|<<--?|->\s*\*|->x)\s+(\S+)/);
+          if (m) {
+            addElement(elements, seen, m[1], m[1], 'x');
+            addElement(elements, seen, m[3].replace(/:.*$/, ''), m[3].replace(/:.*$/, ''), 'x');
           }
           m = line.match(/^(?:activate|deactivate|destroy|create(?:\s+participant)?)\s+(\S+)/i);
           if (m) addElement(elements, seen, m[1], m[1], 'x');
@@ -4229,14 +4245,147 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var routes = readLayoutRoutes(text);
       var clean = stripLayoutMetadata(text);
       var lines = clean.split('\n');
-      var insertAt = findInsertPointForDeclaration(lines);
+      var requestedInsert = Number(opts.insertAtLine);
+      var insertAt = Number.isFinite(requestedInsert)
+        ? Math.max(0, Math.min(lines.length, Math.round(requestedInsert)))
+        : findInsertPointForDeclaration(lines);
       var line = buildRelationLine(spec, sourceId, targetId, opts);
+      if (type === 'sequence' && Number.isFinite(requestedInsert)) {
+        clearSequenceMessageLayoutMetadata(positions, routes);
+      }
       if (type === 'sequence' && spec.sequenceCreate) {
         lines.splice(insertAt, 0, 'create ' + targetId);
         insertAt++;
       }
       lines.splice(insertAt, 0, line);
       return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+    }
+
+    function clearSequenceMessageLayoutMetadata(positions, routes) {
+      Object.keys(routes || {}).forEach(function (key) {
+        if (/^seqmsg:/.test(key)) delete routes[key];
+      });
+      Object.keys(positions || {}).forEach(function (key) {
+        if (/^(?:label:)?seqmsg:/.test(key) || /^label:seqmsg:/.test(key)) delete positions[key];
+      });
+    }
+
+    function sequenceMessageLineIndices(lines) {
+      var out = [];
+      (lines || []).forEach(function (line, idx) {
+        if (/message$/i.test(sequenceLineKind(line))) out.push(idx);
+      });
+      return out;
+    }
+
+    function sequenceRouteLineIndex(routeId) {
+      var match = String(routeId || '').match(/^seqmsg:(\d+)$/);
+      return match ? Number(match[1]) : -1;
+    }
+
+    function sequenceRouteVisualY(route) {
+      if (route && route.points && route.points[0]) return Number(route.points[0].y);
+      if (route && route.box) return Number(route.box.y) + Number(route.box.height || 0) / 2;
+      return 0;
+    }
+
+    function sequenceInsertLineForY(svg, canvasY, excludeRouteId) {
+      var cleanLines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var candidates = findEditableRoutes(svg).filter(function (route) {
+        return /^seqmsg:\d+$/.test(String(route.id || '')) && route.id !== excludeRouteId;
+      }).map(function (route) {
+        return { lineIdx: sequenceRouteLineIndex(route.id), y: sequenceRouteVisualY(route) };
+      }).filter(function (entry) {
+        return entry.lineIdx >= 0 && entry.lineIdx < cleanLines.length;
+      }).sort(function (a, b) {
+        return a.y - b.y;
+      });
+
+      for (var i = 0; i < candidates.length; i++) {
+        if (canvasY < candidates[i].y) return candidates[i].lineIdx;
+      }
+      if (candidates.length) return candidates[candidates.length - 1].lineIdx + 1;
+      return findInsertPointForDeclaration(cleanLines);
+    }
+
+    function addSequenceRelationAtLine(spec, sourceId, targetId, insertAtLine) {
+      if (!spec || !sourceId || !targetId) return false;
+      snapshotForUndo('seq-add-message');
+      var cleanLines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var insertAt = Math.max(0, Math.min(cleanLines.length, Math.round(Number(insertAtLine))));
+      textarea.value = addRelationToSource(sequenceSourceWithScaffold(textarea.value), 'sequence', spec, sourceId, targetId, {
+        insertAtLine: insertAt
+      });
+      var selectedLineIdx = insertAt + (spec.sequenceCreate ? 1 : 0);
+      selectAfterRender('seqmsg:' + selectedLineIdx, 'route');
+      renderDiagram();
+      announce('Added ' + spec.label + ' message from "' + sourceId + '" to "' + targetId + '". Tool stays active - drag another message or press Esc.', true);
+      return true;
+    }
+
+    function addSequenceRelationAtY(svg, spec, sourceId, targetId, canvasY) {
+      return addSequenceRelationAtLine(spec, sourceId, targetId, sequenceInsertLineForY(svg, canvasY, null));
+    }
+
+    function sequenceMessageBlockForLine(lines, lineIdx) {
+      var start = lineIdx;
+      var end = lineIdx;
+      var info = parseRelationLine(lines[lineIdx] || '');
+      normalizeRelationInfoForType(info, 'sequence', lines[lineIdx] || '');
+      if (info && /^<<\s*create\s*>>$/i.test(info.label || '') && lineIdx > 0 && /^create\b/i.test(String(lines[lineIdx - 1] || '').trim())) {
+        start = lineIdx - 1;
+      }
+      return { start: start, end: end };
+    }
+
+    function moveSequenceMessageBlockToLine(routeId, insertBeforeLine) {
+      var meta = relationInfoForRouteId(routeId);
+      if (!meta || meta.lineIdx === -1) return false;
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      clearSequenceMessageLayoutMetadata(positions, routes);
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var block = sequenceMessageBlockForLine(lines, meta.lineIdx);
+      var insertAt = Math.max(0, Math.min(lines.length, Math.round(Number(insertBeforeLine))));
+      if (insertAt >= block.start && insertAt <= block.end + 1) return false;
+      snapshotForUndo('seq-reorder-message');
+      var chunk = lines.splice(block.start, block.end - block.start + 1);
+      if (insertAt > block.start) insertAt -= chunk.length;
+      lines.splice.apply(lines, [insertAt, 0].concat(chunk));
+      var routeOffset = meta.lineIdx - block.start;
+      var nextLineIdx = insertAt + routeOffset;
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender('seqmsg:' + nextLineIdx, 'route');
+      renderDiagram();
+      announce('Moved sequence message.', false);
+      return true;
+    }
+
+    function moveSequenceMessageToY(routeId, svg, canvasY) {
+      return moveSequenceMessageBlockToLine(routeId, sequenceInsertLineForY(svg, canvasY, routeId));
+    }
+
+    function moveSequenceMessageBy(routeId, delta) {
+      var meta = relationInfoForRouteId(routeId);
+      if (!meta || meta.lineIdx === -1) {
+        announce('Could not locate that message in the source.', false);
+        return false;
+      }
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var indices = sequenceMessageLineIndices(lines);
+      var pos = indices.indexOf(meta.lineIdx);
+      if (pos === -1) {
+        announce('Only sequence messages can be reordered.', false);
+        return false;
+      }
+      var targetPos = pos + delta;
+      if (targetPos < 0 || targetPos >= indices.length) {
+        announce(delta < 0 ? 'This message is already first.' : 'This message is already last.', false);
+        return false;
+      }
+      var targetBlock = sequenceMessageBlockForLine(lines, indices[targetPos]);
+      var insertBefore = delta < 0 ? targetBlock.start : targetBlock.end + 1;
+      return moveSequenceMessageBlockToLine(routeId, insertBefore);
     }
 
     function isRelationLineFor(line, type, sourceId, targetId, op) {
@@ -4684,10 +4833,25 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           placeElementAt(ds.spec, pt);
         } else {
           // Relation: drop on element → use as source, await target click.
+          if (typeSelect.value === 'sequence' && ds.spec && ds.spec.sequenceSingle) {
+            setActiveTool('relation', ds.spec);
+            if (!hit) {
+              announce('Drop ' + ds.spec.label + ' on a lifeline, or click a lifeline now. Esc to cancel.', true);
+              return;
+            }
+            addSequenceSingleMessage(ds.spec, hit.id);
+            return;
+          }
+          if (typeSelect.value === 'sequence' && ds.spec && !ds.spec.sequenceSingle && !hit) {
+            var lifeline = findSequenceLifelineAtPoint(svg, event.clientX, event.clientY);
+            if (lifeline) hit = { id: lifeline.id, hitbox: null };
+          }
           if (!hit) {
             // Activate connect-mode anyway and prompt to click a source.
             setActiveTool('relation', ds.spec);
-            announce('Click a source element for the ' + ds.spec.label + ' relation. Esc to cancel.', true);
+            announce(typeSelect.value === 'sequence'
+              ? 'Drag from a lifeline to add a ' + ds.spec.label + ' message. Esc to cancel.'
+              : 'Click a source element for the ' + ds.spec.label + ' relation. Esc to cancel.', true);
             return;
           }
           setActiveTool('relation', ds.spec);
@@ -4797,6 +4961,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       selectAfterRender(id, 'node');
       renderDiagram();
       announce('Added ' + schema.label + ' "' + id + '".', false);
+      return id;
+    }
+
+    function defaultElementLabelForPlacement(type, spec, id) {
+      if (type === 'sequence' && spec) {
+        if (spec.id === 'actor' || spec.keyword === 'actor') return 'Actor';
+        if (spec.id === 'participant' || spec.keyword === 'participant') return 'Participant';
+      }
       return id;
     }
 
@@ -5205,6 +5377,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         } else {
           announce('Click on the diagram to add a ' + spec.label + '. Press Esc to cancel.', true);
         }
+      } else if (typeSelect.value === 'sequence' && spec.sequenceSingle) {
+        announce('Click a lifeline to add a ' + spec.label + ' message. Press Esc to cancel.', true);
+      } else if (typeSelect.value === 'sequence') {
+        announce('Drag from one lifeline to another to add a ' + spec.label + ' message, or click source then target. Press Esc to cancel.', true);
       } else {
         announce('Click the source element for a ' + spec.label + ' relation. Press Esc to cancel.', true);
       }
@@ -5276,7 +5452,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       snapshotForUndo();
       var id = generateUniqueId(textarea.value, type, spec.base);
-      var opts = { id: id, label: id, position: pt };
+      var opts = { id: id, label: defaultElementLabelForPlacement(type, spec, id), position: pt };
       // Sequence fragments insert a stub block at the end of the source.
       if (type === 'sequence' && spec.sequenceFragment) {
         var pair = sequenceDefaultPair();
@@ -5347,6 +5523,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (spec.isNote) opts.label = 'New note text';
       if (spec.isPort) opts.label = spec.portKind === 'portin' ? 'in' : 'out';
       if (spec.isInterface) opts.label = spec.interfaceKind === 'provide' ? 'P_iface' : 'R_iface';
+      var clearToolAfterPlacement = type === 'sequence' && spec && (spec.id === 'actor' || spec.id === 'participant');
 
       // Ports / interfaces dropped onto a component go INSIDE that component's
       // `{ }` block — they live there in ArchUML and the renderer lays them out
@@ -5363,6 +5540,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       textarea.value = addElementToSource(textarea.value, type, spec, opts);
       renderDiagram();
       selectAfterRender(id, 'node');
+      if (clearToolAfterPlacement) setActiveTool(null);
     }
 
     /** Find the topmost component element under the given SVG-coord point. */
@@ -5419,6 +5597,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     // ─── Hover-to-extend "+" handle + relation chooser popup ───
     var relationChooser = null;
     var extendDragState = null;
+    var sequenceMessageDragState = null;
 
     function closeRelationChooser() {
       if (relationChooser && relationChooser.parentNode) relationChooser.parentNode.removeChild(relationChooser);
@@ -5685,6 +5864,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       }
       if (opts.snapshot !== false) snapshotForUndo();
       pendingRelation = null;
+      if (typeSelect.value === 'sequence' && spec.sequenceSingle) {
+        var endpointId = spec.sequenceSingle === 'found' ? targetId : sourceId;
+        textarea.value = addRelationToSource(textarea.value, 'sequence', spec, endpointId, endpointId);
+        renderDiagram();
+        announce('Added ' + spec.label + ' message ' + (spec.sequenceSingle === 'found' ? 'to' : 'from') + ' "' + endpointId + '". Tool stays active - add another message or press Esc.', true);
+        return true;
+      }
       textarea.value = addRelationToSource(textarea.value, typeSelect.value, spec, sourceId, targetId);
       renderDiagram();
       announce('Connected "' + sourceId + '" to "' + targetId + '" with ' + spec.label + '. Tool stays active - draw another relation or press Esc.', true);
@@ -5793,11 +5979,125 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var els = document.elementsFromPoint(clientX, clientY);
       for (var i = 0; i < els.length; i++) {
         var el = els[i];
-        if (el.classList && el.classList.contains('uml-pg-edit-hitbox')) {
+        if (el.classList &&
+            (el.classList.contains('uml-pg-edit-hitbox') ||
+             el.classList.contains('uml-pg-edit-a11y-target'))) {
           return { id: el.getAttribute('data-layout-id'), hitbox: el };
         }
       }
       return null;
+    }
+
+    function selectedSequenceMessageToolSpec() {
+      var spec = selectedRelationToolSpec();
+      if (typeSelect.value !== 'sequence' || !spec || spec.sequenceSingle) return null;
+      return spec;
+    }
+
+    function sequenceLifelineCenterX(item) {
+      return item && item.box ? item.box.x + item.box.width / 2 : 0;
+    }
+
+    function findSequenceLifelineAtPoint(svg, clientX, clientY) {
+      if (typeSelect.value !== 'sequence' || !svg) return null;
+      var pt = svgPoint(svg, clientX, clientY);
+      var view = parseSvgViewBox(svg) || { x: 0, y: 0, width: 4000, height: 4000 };
+      var candidates = findEditableElements(svg).filter(function (item) {
+        return item && item.axis === 'x' && item.box;
+      }).map(function (item) {
+        var centerX = sequenceLifelineCenterX(item);
+        var inHead = containsPoint(item.box, pt.x, pt.y, 12);
+        var top = Math.min(item.box.y - 24, view.y - 12);
+        var bottom = Math.max(view.y + view.height + 12, item.box.y + item.box.height + 360);
+        var nearLine = pt.y >= top && pt.y <= bottom && Math.abs(pt.x - centerX) <= 20;
+        if (!inHead && !nearLine) return null;
+        return {
+          item: item,
+          distance: inHead ? 0 : Math.abs(pt.x - centerX)
+        };
+      }).filter(Boolean);
+      candidates.sort(function (a, b) { return a.distance - b.distance; });
+      return candidates.length ? candidates[0].item : null;
+    }
+
+    function cancelSequenceMessageDrag() {
+      if (!sequenceMessageDragState) return;
+      if (sequenceMessageDragState.line && sequenceMessageDragState.line.parentNode) {
+        sequenceMessageDragState.line.parentNode.removeChild(sequenceMessageDragState.line);
+      }
+      if (sequenceMessageDragState.sourceHitbox && sequenceMessageDragState.sourceHitbox.classList) {
+        sequenceMessageDragState.sourceHitbox.classList.remove('is-relation-source');
+      }
+      sequenceMessageDragState = null;
+    }
+
+    function startSequenceMessageDrag(svg, layer, item, hitbox, event) {
+      var spec = selectedSequenceMessageToolSpec();
+      if (!spec || !svg || !layer || !item) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedLayoutId(item.id, 'node');
+      if (hitbox && hitbox.classList) hitbox.classList.add('is-relation-source');
+
+      var ns = 'http://www.w3.org/2000/svg';
+      var pt = svgPoint(svg, event.clientX, event.clientY);
+      var originX = sequenceLifelineCenterX(item);
+      var line = document.createElementNS(ns, 'line');
+      line.setAttribute('class', 'uml-pg-extend-line');
+      line.setAttribute('x1', originX);
+      line.setAttribute('y1', pt.y);
+      line.setAttribute('x2', pt.x);
+      line.setAttribute('y2', pt.y);
+      layer.appendChild(line);
+      sequenceMessageDragState = {
+        svg: svg,
+        layer: layer,
+        line: line,
+        spec: spec,
+        sourceItem: item,
+        sourceHitbox: hitbox || null,
+        originX: originX,
+        originY: pt.y,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        moved: false
+      };
+      if (event.currentTarget && event.currentTarget.setPointerCapture) {
+        try { event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
+      }
+      announce('Drag to the target lifeline. Release on the same lifeline for a self-message.', true);
+      return true;
+    }
+
+    function updateSequenceMessageDrag(ev, finish) {
+      if (!sequenceMessageDragState) return;
+      var state = sequenceMessageDragState;
+      var pt = svgPoint(state.svg, ev.clientX, ev.clientY);
+      var dx = ev.clientX - state.startClientX;
+      var dy = ev.clientY - state.startClientY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) state.moved = true;
+      var target = findSequenceLifelineAtPoint(state.svg, ev.clientX, ev.clientY);
+      var x2 = target ? sequenceLifelineCenterX(target) : pt.x;
+      if (target && target.id === state.sourceItem.id && state.moved) x2 += 54;
+      state.line.setAttribute('x2', x2);
+      state.line.setAttribute('y2', pt.y);
+
+      if (!finish) return;
+      if (state.line.parentNode) state.line.parentNode.removeChild(state.line);
+      if (state.sourceHitbox && state.sourceHitbox.classList) {
+        state.sourceHitbox.classList.remove('is-relation-source');
+      }
+      sequenceMessageDragState = null;
+
+      if (!state.moved) {
+        handleHitboxClickForRelation(state.sourceItem, state.sourceHitbox);
+        return;
+      }
+      if (!target) {
+        announce('Release on a lifeline to add the message. Press Esc to cancel.', true);
+        return;
+      }
+      addSequenceRelationAtY(state.svg, state.spec, state.sourceItem.id, target.id, pt.y);
     }
 
     function updateExtendDrag(ev, finish) {
@@ -5899,19 +6199,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return true;
     }
 
+    function addSequenceSingleMessage(spec, endpointId) {
+      if (!spec || !spec.sequenceSingle || !endpointId) return false;
+      snapshotForUndo();
+      textarea.value = addRelationToSource(textarea.value, 'sequence', spec, endpointId, endpointId);
+      renderDiagram();
+      announce('Added ' + spec.label + ' message ' + (spec.sequenceSingle === 'found' ? 'to' : 'from') + ' "' + endpointId + '". Tool stays active — pick another lifeline or press Esc.', true);
+      return true;
+    }
+
     function handleHitboxClickForRelation(item, hitbox) {
       if (!activeTool || activeTool.kind !== 'relation') return false;
       if (typeSelect.value === 'sequence' && activeTool.spec && activeTool.spec.sequenceSingle) {
-        snapshotForUndo();
-        if (activeTool.spec.sequenceSingle === 'lost') {
-          textarea.value = addRelationToSource(textarea.value, 'sequence', activeTool.spec, item.id, item.id);
-          announce('Added lost message from "' + item.id + '". Tool stays active — pick another lifeline or press Esc.', true);
-        } else {
-          textarea.value = addRelationToSource(textarea.value, 'sequence', activeTool.spec, item.id, item.id);
-          announce('Added found message to "' + item.id + '". Tool stays active — pick another lifeline or press Esc.', true);
-        }
-        renderDiagram();
-        return true;
+        return addSequenceSingleMessage(activeTool.spec, item.id);
       }
       if (!pendingRelation) {
         pendingRelation = { spec: activeTool.spec, sourceId: item.id };
@@ -7092,9 +7392,32 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         });
         propsContent.appendChild(invertBtn);
       }
+      if (type === 'sequence' && lineIdx !== -1 && /^seqmsg:\d+$/.test(id)) {
+        var orderFs = document.createElement('fieldset');
+        orderFs.className = 'uml-pg-prop-fieldset';
+        var orderLeg = document.createElement('legend');
+        orderLeg.textContent = 'Message order';
+        orderFs.appendChild(orderLeg);
+        var earlierBtn = document.createElement('button');
+        earlierBtn.type = 'button';
+        earlierBtn.className = 'uml-pg-add-member';
+        earlierBtn.textContent = 'Move earlier';
+        earlierBtn.addEventListener('click', function () { moveSequenceMessageBy(id, -1); });
+        var laterBtn = document.createElement('button');
+        laterBtn.type = 'button';
+        laterBtn.className = 'uml-pg-add-member';
+        laterBtn.textContent = 'Move later';
+        laterBtn.style.marginLeft = '6px';
+        laterBtn.addEventListener('click', function () { moveSequenceMessageBy(id, 1); });
+        orderFs.appendChild(earlierBtn);
+        orderFs.appendChild(laterBtn);
+        propsContent.appendChild(orderFs);
+      }
       var hint = document.createElement('p');
       hint.className = 'uml-pg-prop-hint';
-      hint.textContent = 'Drag a line segment to reroute, or press Delete to remove this relation.';
+      hint.textContent = type === 'sequence'
+        ? 'Drag a message line up or down to reorder it, or press Delete to remove it.'
+        : 'Drag a line segment to reroute, or press Delete to remove this relation.';
       propsContent.appendChild(hint);
     }
 
@@ -7842,6 +8165,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         }
         if (landedOnInteractive) return;
 
+        if (selectedSequenceMessageToolSpec()) {
+          var sourceLifeline = findSequenceLifelineAtPoint(svg, ev.clientX, ev.clientY);
+          if (sourceLifeline) {
+            startSequenceMessageDrag(svg, layer, sourceLifeline, null, ev);
+            return;
+          }
+        }
+
         // Empty canvas: begin a click-vs-pan gesture. We commit to one or the
         // other on pointermove (>5 px → pan) or pointerup (no movement → click).
         ev.preventDefault();
@@ -7965,10 +8296,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         addHitboxListener('pointerdown', function (event) {
           // In relation-tool mode, click → record source/target instead of drag.
           if (activeTool && activeTool.kind === 'relation') {
-            event.preventDefault();
-            event.stopPropagation();
-            setSelectedLayoutId(item.id, 'node');
-            handleHitboxClickForRelation(item, rect);
+            if (selectedSequenceMessageToolSpec()) {
+              startSequenceMessageDrag(svg, layer, item, rect, event);
+            } else {
+              event.preventDefault();
+              event.stopPropagation();
+              setSelectedLayoutId(item.id, 'node');
+              handleHitboxClickForRelation(item, rect);
+            }
             return;
           }
           // In element-tool mode, click on hitbox is ignored — the user wants
@@ -8902,6 +9237,19 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (dragState.kind === 'route') {
         var routeDx = now.x - dragState.start.x;
         var routeDy = now.y - dragState.start.y;
+        if (typeSelect.value === 'sequence' && /^seqmsg:\d+$/.test(String(dragState.route.id || ''))) {
+          var shiftedPoints = dragState.points.map(function (point) {
+            return { x: point.x, y: point.y + routeDy };
+          });
+          applyRoutePoints(dragState.route, shiftedPoints);
+          syncRouteOverlays(dragState.layer, dragState.route.id, shiftedPoints);
+          if (finish) {
+            var moved = moveSequenceMessageToY(dragState.route.id, dragState.svg, now.y);
+            dragState = null;
+            if (!moved) renderDiagram();
+          }
+          return;
+        }
         var nextPoints = clonePoints(dragState.points);
         var si = dragState.segmentIndex;
         var a = dragState.points[si];
@@ -9200,12 +9548,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     document.addEventListener('pointermove', function (event) {
       if (dragState) updateDrag(event, false);
+      if (sequenceMessageDragState) updateSequenceMessageDrag(event, false);
       if (extendDragState) updateExtendDrag(event, false);
       if (paletteDragState) updatePaletteDrag(event, false);
     });
 
     document.addEventListener('pointerup', function (event) {
       if (dragState) updateDrag(event, true);
+      if (sequenceMessageDragState) updateSequenceMessageDrag(event, true);
       if (extendDragState) updateExtendDrag(event, true);
       if (paletteDragState) updatePaletteDrag(event, true);
     });
@@ -9214,6 +9564,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       editToggle.addEventListener('change', function () {
         if (!editToggle.checked) {
           dragState = null;
+          cancelSequenceMessageDrag();
           setSelectedLayoutId(null);
           setActiveTool(null);
           clearEditLayer();
@@ -9227,6 +9578,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     if (toolCancel) {
       toolCancel.addEventListener('click', function () {
+        cancelSequenceMessageDrag();
         setActiveTool(null);
         announce('Cancelled.', false);
       });
@@ -9474,7 +9826,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return;
       }
       if (key === 'Escape') {
-        if (activeTool) {
+        if (sequenceMessageDragState) {
+          event.preventDefault();
+          cancelSequenceMessageDrag();
+          announce('Cancelled.', false);
+        } else if (activeTool) {
           event.preventDefault();
           setActiveTool(null);
           announce('Cancelled.', false);

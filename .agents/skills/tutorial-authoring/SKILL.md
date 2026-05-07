@@ -712,7 +712,8 @@ steps:
                                              # current ArchUML source. Each
                                              # assertion has `kind`/`type`:
                                              # element|class|state|participant,
-                                             # member, relation|transition|message.
+                                             # member, relation|transition|message,
+                                             # or class_consistency.
                                              # Common fields: id/name,
                                              # owner, text/member, from, to,
                                              # label_contains. `*_contains`,
@@ -756,6 +757,12 @@ steps:
                                              # length, and `optional: true`
                                              # for a relation that only fails
                                              # if it is present but malformed.
+                                             # Class-diagram consistency uses
+                                             # `kind: class_consistency` with
+                                             # `check: abstract_methods_implemented`
+                                             # to require every concrete
+                                             # subclass to implement inherited
+                                             # abstract/interface operations.
                                              # Sequence-diagram consistency
                                              # uses `kind: sequence` with
                                              # checks such as player_object,
@@ -982,7 +989,10 @@ keys. **If you change the persistence schema, also update**:
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.
 - **UML assertions** (`uml-editor`): `tests[].assertions` are structural
   checks against the current ArchUML source. Use `kind: element|class|state|
-  participant`, `kind: member`, or `kind: relation|transition|message` with
+  participant`, `kind: member`, `kind: relation|transition|message`, or
+  `kind: class_consistency` with
+  `check: abstract_methods_implemented` to require concrete subclasses to
+  implement inherited abstract/interface operations. Other assertions use
   fields such as `id`, `owner`, `text`, `from`, `to`, and `label_contains`.
   For flexible naming, use `id_contains`, `text_contains_any`,
   `from_contains`, `label_contains_any`, or the corresponding camelCase

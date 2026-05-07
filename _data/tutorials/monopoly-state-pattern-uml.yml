@@ -8,7 +8,7 @@ learning_objectives:
   - "Use UML labels to document concrete conditions for behavior changes."
 
 backend: uml-editor
-require_tests: false
+require_tests: true
 
 steps:
 
@@ -31,6 +31,7 @@ steps:
       - a state abstraction such as `PlayerState` as either an interface or an abstract class
       - concrete states for normal turns, jail, and bankruptcy
       - an abstract operation for taking a turn and an operation for changing state
+      - concrete state classes that implement the abstract turn operation
       - an aggregation or composition relationship showing that `Player` holds its current state
     tests:
       - description: "State-pattern classes are present"
@@ -132,6 +133,11 @@ steps:
               abstract class: generalization
               interface: realization
             naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
+      - description: "Concrete states implement abstract operations"
+        assertions:
+          - kind: class_consistency
+            check: abstract_methods_implemented
+            naming_hint: "Each concrete state class should include operations matching the abstract state behavior it promises to implement."
 
   # Pedagogy: Make — students create a behavioral model and label transition causes.
   - title: "State Diagram"

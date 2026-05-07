@@ -45,9 +45,9 @@ Dog ..|> Trainable
 const MONOPOLY_CLASS_ROLE_VARIATION_DIAGRAM = `@startuml
 class Player { +do_turn(); +change_state(state: PlayerState); }
 interface PlayerState { +do_turn(player: Player); }
-class NormalMode
-class PrisonState
-class BankruptcyMode
+class NormalMode { +do_turn(player: Player); }
+class PrisonState { +do_turn(player: Player); }
+class BankruptcyMode { +do_turn(player: Player); }
 PlayerState --o Player : currentState
 PlayerState <|.. NormalMode
 PlayerState <|.. PrisonState
@@ -1096,6 +1096,34 @@ test.describe('UML playground visual editor', () => {
     await expect(page.locator('#uml-pg-input')).toHaveValue(/actor actor: Actor/);
   });
 
+  test('sequence canvas adds editable participants with valid default labels', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="participant"]').click();
+    await expect(page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="participant"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#uml-pg-output svg').click({ position: { x: 24, y: 24 }, force: true });
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/participant p: Participant/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/participant p: p\b/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="p"]')).toHaveCount(1);
+
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="p"]').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('svc: Service');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/participant svc: Service/);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/user -> app: login/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="svc"]')).toHaveCount(1);
+  });
+
   test('sequence palette can add target markers and single-ended messages', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
@@ -1111,6 +1139,16 @@ test.describe('UML playground visual editor', () => {
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="found"]').click();
     await page.locator('.uml-pg-edit-a11y-target[data-layout-id="app"]').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/o-> app : found/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="o"]')).toHaveCount(0);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="lost"]').click();
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="app"]').click({ force: true });
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/app ->o : lost/);
+
+    const foundTool = page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="found"]');
+    const userTarget = page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]');
+    await foundTool.dragTo(userTarget);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/o-> user : found/);
   });
 
   test('renaming sequence heads parses instance and class labels', async ({ page }) => {
@@ -1181,6 +1219,100 @@ app --> user: response()
     await page.locator('.uml-pg-inline-input').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/app --> user : ok/);
     await expect(page.locator('#uml-pg-input')).not.toHaveValue(/response\(\)/);
+  });
+
+  test('sequence call tools can be dragged between lifelines and onto themselves', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+participant db: Database
+user -> app: first()
+app --> user: second()
+@enduml`);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]')).toHaveCount(1);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="sync"]').click();
+    const betweenMessages = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const boxFor = (selector) => svg.querySelector(selector).getBoundingClientRect();
+      const user = boxFor('.uml-pg-edit-hitbox[data-layout-id="user"]');
+      const db = boxFor('.uml-pg-edit-hitbox[data-layout-id="db"]');
+      const first = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]');
+      const second = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:5"]');
+      return {
+        sourceX: user.left + user.width / 2,
+        targetX: db.left + db.width / 2,
+        y: (first.top + first.height / 2 + second.top + second.height / 2) / 2,
+      };
+    });
+    await page.mouse.move(betweenMessages.sourceX, betweenMessages.y);
+    await page.mouse.down();
+    await page.mouse.move(betweenMessages.targetX, betweenMessages.y, { steps: 8 });
+    await page.mouse.up();
+
+    let source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('user -> db : message()');
+    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('user -> db : message()'));
+    expect(source.indexOf('user -> db : message()')).toBeLessThan(source.indexOf('app --> user: second()'));
+
+    const selfDrop = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const app = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="app"]').getBoundingClientRect();
+      const last = svg.querySelector('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]').getBoundingClientRect();
+      return {
+        x: app.left + app.width / 2,
+        startY: last.top + last.height / 2 + 28,
+        endY: last.top + last.height / 2 + 68,
+      };
+    });
+    await page.mouse.move(selfDrop.x, selfDrop.startY);
+    await page.mouse.down();
+    await page.mouse.move(selfDrop.x, selfDrop.endY, { steps: 8 });
+    await page.mouse.up();
+
+    source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('app -> app : message()');
+  });
+
+  test('sequence messages can be reordered by dragging and from properties', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+participant db: Database
+user -> app: first()
+app -> db: second()
+db --> app: third()
+@enduml`);
+    await expect(page.locator('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]')).toHaveCount(1);
+
+    const move = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const boxFor = (selector) => svg.querySelector(selector).getBoundingClientRect();
+      const first = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:4"]');
+      const third = boxFor('.uml-pg-edge-hitbox[data-route-id="seqmsg:6"]');
+      return {
+        x: third.left + third.width / 2,
+        y: third.top + third.height / 2,
+        targetY: first.top + first.height / 2 - 36,
+      };
+    });
+    await page.mouse.move(move.x, move.y);
+    await page.mouse.down();
+    await page.mouse.move(move.x, move.targetY, { steps: 8 });
+    await page.mouse.up();
+
+    let source = await page.locator('#uml-pg-input').inputValue();
+    expect(source.indexOf('db --> app: third()')).toBeLessThan(source.indexOf('user -> app: first()'));
+    expect(source).not.toContain('edge "seqmsg:');
+
+    await page.getByRole('button', { name: 'Move later' }).click();
+    source = await page.locator('#uml-pg-input').inputValue();
+    expect(source.indexOf('user -> app: first()')).toBeLessThan(source.indexOf('db --> app: third()'));
+    expect(source.indexOf('db --> app: third()')).toBeLessThan(source.indexOf('app -> db: second()'));
   });
 
   test('class empty state can add model elements from the diagram and palette', async ({ page }) => {
@@ -2316,9 +2448,9 @@ NormalMode --> BankruptcyMode : cash gone
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
 abstract class PlayerState { + {abstract} takeTurn(player: Player); }
-class NormalTurnState
-class InJailState
-class BankruptState
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
 Player o-- PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
@@ -2328,7 +2460,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 4 tests passed');
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 5 tests passed');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -2340,9 +2472,9 @@ PlayerState <|-- BankruptState
       el.value = `@startuml
 class Player { +do_turn(); +state_change(state: PlayerState); }
 interface PlayerState { +do_turn(player: Player); }
-class normalBehavior
-class PrisonState
-class BankruptcyMode
+class normalBehavior { +do_turn(player: Player); }
+class PrisonState { +do_turn(player: Player); }
+class BankruptcyMode { +do_turn(player: Player); }
 PlayerState --o Player : currentState
 PlayerState <|.. normalBehavior
 PlayerState <|.. PrisonState
@@ -2352,7 +2484,7 @@ PlayerState <|.. BankruptcyMode
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 4 tests passed');
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 5 tests passed');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -2403,9 +2535,9 @@ BankruptcyMode --|> PlayerState
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
 abstract class PlayerState { + {abstract} takeTurn(player: Player); }
-class NormalTurnState
-class InJailState
-class BankruptState
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
 Player --o PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
@@ -2415,7 +2547,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*4 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player owns or aggregates its current state');
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
@@ -2428,9 +2560,9 @@ PlayerState <|-- BankruptState
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
 abstract class PlayerState { +takeTurn(player: Player); }
-class NormalTurnState
-class InJailState
-class BankruptState
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
 Player o-- PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
@@ -2440,8 +2572,34 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 4 tests passed');
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 5 tests passed');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
+  });
+
+  test('UML tutorial rejects concrete states that omit abstract operations', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +takeTurn(); +setState(state: PlayerState); }
+abstract class PlayerState { +takeTurn(player: Player); }
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState
+class BankruptState { +takeTurn(player: Player); }
+Player o-- PlayerState : currentState
+PlayerState <|-- NormalTurnState
+PlayerState <|-- InJailState
+PlayerState <|-- BankruptState
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Concrete states implement abstract operations');
+    await expect(page.locator('.tvm-test-item.fail')).toContainText('InJailState.takeTurn');
+    await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
 
   test('UML tutorial rejects a concrete PlayerState class', async ({ page }) => {
@@ -2464,7 +2622,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*4 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*5 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'State-pattern classes are present' })).toHaveCount(1);
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });
@@ -2477,9 +2635,9 @@ PlayerState <|-- BankruptState
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
 interface PlayerState { +takeTurn(player: Player); }
-class NormalTurnState
-class InJailState
-class BankruptState
+class NormalTurnState { +takeTurn(player: Player); }
+class InJailState { +takeTurn(player: Player); }
+class BankruptState { +takeTurn(player: Player); }
 Player o-- PlayerState : currentState
 PlayerState <|-- NormalTurnState
 PlayerState <|-- InJailState
@@ -2489,7 +2647,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*4 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Concrete states implement the state abstraction');
     await expect(page.locator('.tvm-btn-next')).toBeDisabled();
   });

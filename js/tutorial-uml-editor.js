@@ -765,6 +765,7 @@
     if (kind === 'member') return assertMember(model, assertion);
     if (kind === 'relation' || kind === 'transition' || kind === 'message') return assertRelation(model, assertion, kind, context);
     if (kind === 'sequence' || kind === 'sequence_consistency') return assertSequence(model, assertion, context);
+    if (kind === 'class_consistency' || kind === 'classConsistency') return assertClassConsistency(model, assertion);
     return { pass: false, message: 'Unknown assertion kind: ' + kind };
   }
 
@@ -952,6 +953,34 @@
     });
     return failures.length
       ? failResult('Expected sequence calls to exist in the class diagram: ' + failures.join(', ') + '.', assertionNamingHint(assertion))
+      : { pass: true };
+  }
+
+  function assertClassConsistency(model, assertion) {
+    var check = normalize(assertion.check || assertion.rule || assertion.name);
+    if (check === 'abstractmethodsimplemented') {
+      return assertAbstractMethodsImplemented(model, assertion);
+    }
+    return { pass: false, message: 'Unknown class consistency check: ' + (assertion.check || assertion.rule || assertion.name || '') };
+  }
+
+  function assertAbstractMethodsImplemented(model, assertion) {
+    var missing = [];
+    var namingCandidateExists = false;
+    model.elements.forEach(function (abstraction) {
+      if (!isAbstractElement(abstraction)) return;
+      var abstractMethods = abstractMethodNamesForElement(model, abstraction);
+      if (!abstractMethods.length) return;
+      concreteDescendantsOf(model, abstraction).forEach(function (concrete) {
+        abstractMethods.forEach(function (methodName) {
+          if (classHasConcreteMethod(model, concrete, methodName, {})) return;
+          missing.push(concrete.id + '.' + methodName);
+          if (classHasAnyDirectMethod(model, concrete)) namingCandidateExists = true;
+        });
+      });
+    });
+    return missing.length
+      ? failResult('Expected concrete subclasses to implement abstract methods: ' + missing.join(', ') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null)
       : { pass: true };
   }
 
@@ -1196,6 +1225,12 @@
     return uniqueValues(parents);
   }
 
+  function classParentElements(classModel, element) {
+    return classParentTypes(classModel, element).map(function (parentName) {
+      return classElementForName(classModel, parentName);
+    }).filter(Boolean);
+  }
+
   function typeMatchesAny(actualType, expectedTypes) {
     if (!expectedTypes.length) return true;
     return expectedTypes.some(function (expectedType) {
@@ -1211,6 +1246,61 @@
       var ownerMatches = exactValueMatches(member.owner, [el.id, el.label]);
       var type = normalize(el.type);
       return ownerMatches && (type === 'interface' || type === 'abstractclass');
+    });
+  }
+
+  function isAbstractElement(element) {
+    var type = normalize(element && element.type);
+    return type === 'interface' || type === 'abstractclass';
+  }
+
+  function isConcreteClassElement(element) {
+    return normalize(element && element.type) === 'class';
+  }
+
+  function abstractMethodNamesForElement(model, element) {
+    var names = model.members.filter(function (member) {
+      return exactValueMatches(member.owner, [element.id, element.label]) && memberIsAbstract(member, model);
+    }).map(function (member) {
+      return methodNameFromMember(member.text);
+    }).filter(Boolean);
+    return uniqueValues(names);
+  }
+
+  function concreteDescendantsOf(model, abstraction) {
+    return model.elements.filter(function (candidate) {
+      return isConcreteClassElement(candidate) && classInheritsFrom(model, candidate, abstraction, {});
+    });
+  }
+
+  function classInheritsFrom(model, child, ancestor, visited) {
+    var key = normalize(child && child.id);
+    if (!key || visited[key]) return false;
+    visited[key] = true;
+    return classParentElements(model, child).some(function (parent) {
+      return exactValueMatches([parent.id, parent.label], [ancestor.id, ancestor.label]) ||
+        classInheritsFrom(model, parent, ancestor, visited);
+    });
+  }
+
+  function classHasAnyDirectMethod(model, element) {
+    return model.members.some(function (member) {
+      return exactValueMatches(member.owner, [element.id, element.label]) && !!methodNameFromMember(member.text);
+    });
+  }
+
+  function classHasConcreteMethod(model, element, methodName, visited) {
+    var key = normalize(element && element.id);
+    if (!key || visited[key]) return false;
+    visited[key] = true;
+    var direct = model.members.some(function (member) {
+      return exactValueMatches(member.owner, [element.id, element.label]) &&
+        normalize(methodNameFromMember(member.text)) === normalize(methodName) &&
+        !memberIsAbstract(member, model);
+    });
+    if (direct) return true;
+    return classParentElements(model, element).some(function (parent) {
+      return !isAbstractElement(parent) && classHasConcreteMethod(model, parent, methodName, visited);
     });
   }
 
