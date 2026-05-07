@@ -14,6 +14,8 @@ topics:
     icon: null
     url: /SEBook/uml.html
     subtopics:
+      - name: UML Editor
+        url: /SEBook/tools/uml-editor.html
       - name: Use Case Diagrams
         url: /SEBook/uml_use_case_diagram.html
       - name: Class Diagrams

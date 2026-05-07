@@ -195,7 +195,32 @@
   <!-- Tutorial container — full viewport below navbar -->
   <main id="main-content" class="tutorial-page" tabindex="-1" aria-labelledby="tutorial-page-heading">
     <h1 id="tutorial-page-heading" class="sr-only">{{ tutorial_title }}</h1>
-    <div id="tutorial-container"></div>
+    {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
+    {% if tutorial_backend == 'uml-editor' %}
+      <div id="tutorial-container" class="tvm-root tvm-uml-editor-tutorial">
+        <div class="tvm-container tvm-uml-editor-container">
+          <div class="tvm-instructions-panel">
+            <div class="tvm-steps-view">
+              <div class="tvm-step-nav-bar">
+                <div class="tvm-step-nav"></div>
+                <button class="tvm-instructions-popout-btn" type="button" title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>
+              </div>
+              <div class="tvm-step-content-wrap scrollable-region-focus-target" tabindex="0">
+                <div class="tvm-step-content"></div>
+              </div>
+              <div class="tvm-quiz-panel" style="display:none"></div>
+              <div class="tvm-step-controls-bar"><div class="tvm-step-controls"></div></div>
+            </div>
+          </div>
+          <div class="tvm-hsplitter" title="Drag to resize"></div>
+          <section class="tvm-workspace tvm-uml-editor-workspace" aria-label="UML editor workspace">
+            {% include uml-editor.html types="class,sequence,state,component,deployment,usecase,activity" default_type="class" default_layout="square" start="empty" persistence="true" reset_label="Empty" reset_title="Discard your current diagram and return to an empty diagram" hide_archuml=true hide_syntax_help=true %}
+          </section>
+        </div>
+      </div>
+    {% else %}
+      <div id="tutorial-container"></div>
+    {% endif %}
   </main>
 
   <!-- Auto-save disable confirmation modal -->
@@ -255,6 +280,10 @@
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  {% if tutorial_backend == 'uml-editor' %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-uml-editor.css' | relative_url }}">
+  <script src="{{ '/js/tutorial-uml-editor.js' | relative_url }}"></script>
+  {% endif %}
   <script src="{{ '/js/tutor-chat.js' | relative_url }}"></script>
 
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
@@ -369,6 +398,18 @@
       var effectiveAutosaveType = urlAutosave !== null
         ? (urlAutosave === 'true' ? (configAutosaveType || 'files') : null)
         : configAutosaveType;
+
+      if ('{{ tutorial_backend }}' === 'uml-editor') {
+        var umlTutorial = new UMLTutorialEditor('#tutorial-container', {
+          tutorialId: '{{ page.tutorial }}',
+          steps: config.steps,
+          requireTests: config.require_tests || false,
+          instructorMode: instructorMode
+        });
+        window._tutorial = umlTutorial;
+        umlTutorial.start();
+        return;
+      }
 
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',

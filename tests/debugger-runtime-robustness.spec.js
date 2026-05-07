@@ -312,4 +312,32 @@ test.describe('debugger runtime robustness', () => {
       line: 13,
     });
   });
+
+  test('debugger chrome stays discoverable without cross-origin isolation', async ({ page }) => {
+    await page.setContent(`
+      <div class="tvm-root">
+        <div class="tvm-instructions-panel">
+          <div class="tvm-steps-view"><div class="tvm-step-nav-bar"></div></div>
+        </div>
+        <div class="tvm-output-actions">
+          <button class="tvm-run-btn" type="button">Run</button>
+        </div>
+      </div>
+    `);
+    await page.addScriptTag({ path: path.join(repoRoot, 'js/debugger/main.js') });
+
+    await page.evaluate(() => {
+      window.SEBookDebugger.attach({
+        root: document.querySelector('.tvm-root'),
+      });
+    });
+
+    await expect(page.locator('.tvm-left-tab[data-panel="dbg-unavailable"]')).toBeVisible();
+    await expect(page.locator('.tvm-debug-btn-unavailable')).toBeVisible();
+
+    await page.locator('.tvm-debug-btn-unavailable').click();
+    await expect(page.locator('.tvm-debug-view-unavailable')).toBeVisible();
+    await expect(page.getByRole('button', { name: /reload to activate debugger/i })).toBeVisible();
+    await expect(page.locator('.tvm-debug-view-unavailable')).toContainText('full browser preview');
+  });
 });

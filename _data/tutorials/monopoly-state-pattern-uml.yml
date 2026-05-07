@@ -1,0 +1,147 @@
+title: "Monopoly State Pattern UML"
+description: "Design Monopoly player behavior with the State pattern by drawing class, state machine, and sequence diagrams in the UML editor."
+
+learning_objectives:
+  - "Apply the State design pattern to a game-domain behavior problem."
+  - "Create class, state machine, and sequence diagrams that describe the same design consistently."
+  - "Evaluate whether sequence messages, state transitions, and class operations agree across diagrams."
+  - "Use UML labels to document concrete conditions for behavior changes."
+
+backend: uml-editor
+require_tests: true
+
+steps:
+
+  # Pedagogy: productive failure — students model first, then structural checks guide consistency.
+  - title: "Class Diagram"
+    uml_type: class
+    instructions: |
+      ### Why this matters
+
+      The State pattern replaces a growing pile of turn-condition `if` statements with a `PlayerState` abstraction and one class per behavior. Your class diagram should make that delegation visible.
+
+      ### 🎯 You will learn to
+
+      - Create the State-pattern roles for Monopoly player behavior
+      - Show the operations that the sequence diagram will later call
+
+      Draw a class diagram with:
+
+      - `Player`
+      - a state abstraction such as `PlayerState`
+      - concrete states for normal turns, jail, and bankruptcy
+      - operations for taking a turn and changing state
+      - relationships showing that `Player` delegates to its current state
+    tests:
+      - description: "State-pattern classes are present"
+        assertions:
+          - kind: class
+            id: Player
+          - kind: element
+            id: PlayerState
+          - kind: class
+            id: NormalTurnState
+          - kind: class
+            id: InJailState
+          - kind: class
+            id: BankruptState
+      - description: "Operations support the later sequence diagram"
+        assertions:
+          - kind: member
+            owner: Player
+            text: takeTurn
+          - kind: member
+            owner: Player
+            text: setState
+          - kind: member
+            owner: PlayerState
+            text: takeTurn
+      - description: "Concrete states implement the state abstraction"
+        assertions:
+          - kind: relation
+            from: NormalTurnState
+            to: PlayerState
+          - kind: relation
+            from: InJailState
+            to: PlayerState
+          - kind: relation
+            from: BankruptState
+            to: PlayerState
+
+  # Pedagogy: Make — students create a behavioral model and label transition causes.
+  - title: "State Diagram"
+    uml_type: state
+    instructions: |
+      ### Why this matters
+
+      A State-pattern design still needs a precise lifecycle: which condition moves a player from one state object to another? The state diagram records those rules without burying them in code.
+
+      ### 🎯 You will learn to
+
+      - Model Monopoly player-state transitions
+      - Label transitions with clear state-change conditions
+
+      Draw a state diagram with normal-turn, in-jail, and bankrupt states. Label each transition with the condition that causes it. Use names that correspond directly to the classes in your class diagram when possible.
+    tests:
+      - description: "Core player states are present"
+        assertions:
+          - kind: state
+            id: NormalTurnState
+          - kind: state
+            id: InJailState
+          - kind: state
+            id: BankruptState
+      - description: "Jail and release transitions are labeled"
+        assertions:
+          - kind: transition
+            from: NormalTurnState
+            to: InJailState
+            label_contains: jail
+          - kind: transition
+            from: InJailState
+            to: NormalTurnState
+            label_contains: double
+      - description: "Bankruptcy is terminal behavior"
+        assertions:
+          - kind: transition
+            from: NormalTurnState
+            to: BankruptState
+            label_contains: bankrupt
+          - kind: transition
+            from: InJailState
+            to: BankruptState
+            label_contains: bankrupt
+
+  # Pedagogy: Make — students connect the static design to one runtime interaction.
+  - title: "Sequence Diagram"
+    uml_type: sequence
+    instructions: |
+      ### Why this matters
+
+      The sequence diagram is the consistency check: the calls you show here should be operations from the class diagram, and the participating state object should correspond to a state from the state diagram.
+
+      ### 🎯 You will learn to
+
+      - Show one typical State-pattern turn interaction
+      - Keep operation names consistent across UML diagrams
+
+      Draw one typical interaction. A good version shows `Player` receiving `takeTurn`, delegating to its current `PlayerState`, and the state object either performing normal behavior or requesting a state change.
+    tests:
+      - description: "Participants line up with the class diagram"
+        assertions:
+          - kind: participant
+            id: Player
+          - kind: participant
+            id: PlayerState
+      - description: "Player delegates turn behavior to the current state"
+        assertions:
+          - kind: message
+            from: Player
+            to: PlayerState
+            label_contains: takeTurn
+      - description: "The interaction can change the player's state"
+        assertions:
+          - kind: message
+            from: PlayerState
+            to: Player
+            label_contains: setState

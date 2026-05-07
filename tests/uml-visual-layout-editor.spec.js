@@ -1,8 +1,10 @@
 // @ts-check
 const fs = require('fs');
+const { webcrypto } = require('crypto');
 const { test, expect } = require('@playwright/test');
 
 const PLAYGROUND_URL = '/SEBook/tools/uml-playground';
+const UML_EDITOR_URL = '/SEBook/tools/uml-editor';
 
 const NODE_EDIT_TYPES = [
   'class',
@@ -52,7 +54,10 @@ async function selectDiagram(page, type) {
 }
 
 async function selectEditMode(page, mode) {
-  await page.selectOption('#uml-pg-edit-mode', mode);
+  const modeSelect = page.locator('#uml-pg-edit-mode');
+  if (await modeSelect.count()) {
+    await modeSelect.selectOption(mode);
+  }
 }
 
 async function dragLocatorCenter(page, locator, dx, dy) {
@@ -72,6 +77,88 @@ async function dragLocatorCenter(page, locator, dx, dy) {
   await page.mouse.down();
   await page.mouse.move(cx + dx, cy + dy, { steps: 6 });
   await page.mouse.up();
+}
+
+async function previewPointOutsideSvg(page) {
+  return page.evaluate(() => {
+    const preview = document.querySelector('#uml-pg-preview-pane').getBoundingClientRect();
+    const svg = document.querySelector('#uml-pg-output svg')?.getBoundingClientRect();
+    const pad = 28;
+    const candidates = [
+      { x: preview.right - pad, y: preview.top + pad },
+      { x: preview.left + pad, y: preview.top + pad },
+      { x: preview.right - pad, y: preview.bottom - pad },
+      { x: preview.left + pad, y: preview.bottom - pad },
+    ];
+    const visibleCandidates = candidates.filter((pt) =>
+      pt.x >= 0 && pt.x <= window.innerWidth && pt.y >= 0 && pt.y <= window.innerHeight
+    );
+    const usableCandidates = visibleCandidates.length ? visibleCandidates : candidates;
+    if (!svg) return candidates[0];
+    return usableCandidates.find((pt) =>
+      pt.x < svg.left || pt.x > svg.right || pt.y < svg.top || pt.y > svg.bottom
+    ) || { x: preview.left + preview.width / 2, y: preview.top + preview.height / 2 };
+  });
+}
+
+async function previewBlankPoint(page) {
+  return page.evaluate(() => {
+    const preview = document.querySelector('#uml-pg-preview-pane').getBoundingClientRect();
+    const pad = 36;
+    const candidates = [
+      { x: preview.right - pad, y: preview.top + pad },
+      { x: preview.left + pad, y: preview.top + pad },
+      { x: preview.right - pad, y: preview.bottom - pad },
+      { x: preview.left + pad, y: preview.bottom - pad },
+      { x: preview.left + preview.width / 2, y: preview.top + preview.height / 2 },
+    ].filter((pt) => pt.x >= 0 && pt.x <= window.innerWidth && pt.y >= 0 && pt.y <= window.innerHeight);
+    const blocked = Array.from(document.querySelectorAll('.uml-pg-edit-hitbox, .uml-pg-edit-a11y-target'))
+      .map((el) => el.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+    return candidates.find((pt) => !blocked.some((rect) =>
+      pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom
+    )) || { x: preview.left + pad, y: preview.top + pad };
+  });
+}
+
+function parseSvgViewBox(svgText) {
+  const match = svgText.match(/\bviewBox="([^"]+)"/);
+  if (!match) throw new Error('downloaded SVG should include a viewBox');
+  const parts = match[1].trim().split(/[\s,]+/).map(Number);
+  if (parts.length < 4 || parts.some((n) => !Number.isFinite(n))) {
+    throw new Error(`invalid SVG viewBox: ${match[1]}`);
+  }
+  return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
+}
+
+async function decryptUmlPayload(payloadText, password) {
+  const payload = JSON.parse(payloadText);
+  const encoder = new TextEncoder();
+  const keyMaterial = await webcrypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  const key = await webcrypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: Buffer.from(payload.crypto.salt, 'base64'),
+      iterations: payload.crypto.iterations,
+      hash: payload.crypto.hash,
+    },
+    keyMaterial,
+    { name: payload.crypto.algorithm, length: payload.crypto.keyLength },
+    false,
+    ['decrypt'],
+  );
+  const plaintext = await webcrypto.subtle.decrypt(
+    { name: payload.crypto.algorithm, iv: Buffer.from(payload.crypto.iv, 'base64') },
+    key,
+    Buffer.from(payload.ciphertext, 'base64'),
+  );
+  return JSON.parse(new TextDecoder().decode(plaintext));
 }
 
 async function currentLayoutMetadata(page) {
@@ -707,6 +794,109 @@ head main
 });
 
 test.describe('UML playground visual editor', () => {
+  test('UML Editor starts empty and exposes only UML diagram types', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+
+    const options = await page.locator('#uml-pg-type option').evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute('value'))
+    );
+    expect(options).toEqual([
+      'class',
+      'sequence',
+      'state',
+      'component',
+      'deployment',
+      'usecase',
+      'activity',
+    ]);
+    await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
+    await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
+    await expect(page.locator('#uml-pg-reset-example')).toHaveText(/Empty/);
+    await expect(page.locator('link[href$="git-graph.css"]')).toHaveCount(0);
+
+    await page.selectOption('#uml-pg-type', 'sequence');
+    await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
+    await expect(page.locator('.uml-pg-sequence-empty')).toBeVisible();
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = '@startuml\nclass A\n@enduml';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const autosaved = await page.evaluate(() => localStorage.getItem('uml-pg-autosave-class'));
+    expect(autosaved).toBeNull();
+  });
+
+  test('live editor uses a roomy canvas while SVG export keeps tight bounds', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('.uml-pg-model-empty');
+
+    await page.locator('.uml-pg-model-empty').getByRole('button', { name: '+ Class' }).click();
+    await page.waitForSelector('#uml-pg-output svg');
+
+    const metrics = await page.evaluate(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      const hitbox = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="Class"]');
+      const viewBox = svg.viewBox.baseVal;
+      const box = hitbox.getBBox();
+      return {
+        viewBoxWidth: viewBox.width,
+        viewBoxHeight: viewBox.height,
+        hitboxWidth: box.width,
+        hitboxHeight: box.height,
+        exportViewBox: svg.getAttribute('data-uml-pg-export-viewbox'),
+      };
+    });
+
+    expect(metrics.viewBoxWidth).toBeGreaterThanOrEqual(960);
+    expect(metrics.viewBoxHeight).toBeGreaterThanOrEqual(620);
+    expect(metrics.hitboxWidth / metrics.viewBoxWidth).toBeLessThan(0.45);
+    expect(metrics.hitboxHeight / metrics.viewBoxHeight).toBeLessThan(0.45);
+    expect(metrics.exportViewBox).toMatch(/\S/);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#uml-pg-download').click();
+    const download = await downloadPromise;
+    const path = await download.path();
+    expect(path, 'download should produce a local SVG file').not.toBeNull();
+    const svgText = fs.readFileSync(path, 'utf8');
+    const exportedBox = parseSvgViewBox(svgText);
+
+    expect(exportedBox.width).toBeLessThan(metrics.viewBoxWidth);
+    expect(exportedBox.height).toBeLessThan(metrics.viewBoxHeight);
+    expect(svgText).not.toContain('data-uml-pg-export');
+    expect(svgText).not.toContain('data-uml-pg-editor-canvas');
+  });
+
+  test('UML export downloads encrypted source with the fixed course password', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    const source = '@startuml\nclass Player\n@enduml';
+    await page.locator('#uml-pg-input').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, source);
+
+    await expect(page.locator('#uml-pg-export-password')).toHaveCount(0);
+    await expect(page.locator('#uml-pg-export-modal')).toHaveCount(0);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#uml-pg-export-source').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('class.uml');
+    const path = await download.path();
+    expect(path, 'download should produce a local UML file').not.toBeNull();
+    const payloadText = fs.readFileSync(path, 'utf8');
+    const payload = JSON.parse(payloadText);
+    expect(payload.crypto.keyLength).toBe(128);
+
+    const decrypted = await decryptUmlPayload(payloadText, '4-amigos');
+    expect(decrypted).toEqual({
+      diagramType: 'class',
+      archuml: source,
+    });
+  });
+
   test('dark mode styles apply from the document element class', async ({ page }) => {
     await page.goto(PLAYGROUND_URL);
     await page.waitForSelector('#uml-pg-edit');
@@ -797,6 +987,153 @@ test.describe('UML playground visual editor', () => {
     for (const type of ROUTE_EDIT_TYPES) {
       expect(counts[type], `${type} should expose at least one editable route`).toBeGreaterThan(0);
     }
+  });
+
+  test('sequence empty state can add lifelines from the diagram and palette', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await expect(page.locator('.uml-pg-sequence-empty')).toBeVisible();
+    await page.locator('.uml-pg-sequence-empty').getByRole('button', { name: '+ Participant' }).click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="p"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/participant p: Participant/);
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+    await expect(page.locator('.uml-pg-sequence-empty')).toBeVisible();
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="actor"]').click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="actor"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/actor actor: Actor/);
+  });
+
+  test('sequence palette can add target markers and single-ended messages', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="activate"]').click();
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/activate user/);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="lost"]').click();
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/user ->o : lost/);
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="found"]').click();
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/o-> app : found/);
+  });
+
+  test('class empty state can add model elements from the diagram and palette', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
+    await page.locator('.uml-pg-model-empty').getByRole('button', { name: '+ Class' }).click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/class Class/);
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+    await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="interface"]').click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="IFace"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/interface IFace/);
+  });
+
+  test('element tools can place on the whole preview surface, not only inside the SVG box', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const point = await previewBlankPoint(page);
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="class"]').click();
+    await page.mouse.click(point.x, point.y);
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/class Class @pos\(/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class"]')).toHaveCount(1);
+  });
+
+  test('element tools can place across the preview after zooming out', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    await page.locator('#uml-pg-zoom-out').click();
+    await page.locator('#uml-pg-zoom-out').click();
+    const point = await previewBlankPoint(page);
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="class"]').click();
+    await page.mouse.click(point.x, point.y);
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/class Class @pos\(/);
+  });
+
+  test('class labels and notes edit with valid class-diagram source', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="note"]').click();
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Animal"]').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/note right of Animal: New note/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id^="note:"]')).toHaveCount(1);
+
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Animal"]').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('Mammal');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/abstract class Mammal/);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Dog --\|> Mammal/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/as Animal/);
+  });
+
+  test('state empty state can add states and start transitions', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
+    await page.locator('.uml-pg-model-empty').getByRole('button', { name: '+ State' }).click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="State"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/state State/);
+
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+    await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="initial"]').click();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="New"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\[\*\] --> New/);
+  });
+
+  test('state transition labels edit in place as transitions', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await page.locator('#uml-pg-input').fill('@startuml\nA --> B : oldEvent\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+      }));
+    });
+    await page.locator('.uml-pg-inline-input').fill('newEvent');
+    await page.locator('.uml-pg-inline-input').press('Enter');
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/A --> B : newEvent/);
   });
 
   test('class diagram element overlays align with rendered boxes', async ({ page }) => {
@@ -994,6 +1331,172 @@ test.describe('UML playground visual editor', () => {
     await page.locator('#uml-pg-reset-one').click();
     source = await page.locator('#uml-pg-input').inputValue();
     expect(source).not.toMatch(/edge "edge-\d+" points="/);
+  });
+
+  test('selected relations can be inverted from the properties pane', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    const baseSource = `@startuml
+class A
+class B
+A --> B : calls
+@enduml`;
+    await page.locator('#uml-pg-input').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, baseSource);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('calls') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+    const routeId = await page.locator('.uml-pg-edge-hitbox').first().getAttribute('data-layout-id');
+    expect(routeId).toBeTruthy();
+    const escapedRouteId = routeId.replace(/"/g, '\\"');
+
+    const sourceWithRoute = `@startuml
+@layout schema=1 renderer="archuml-visual-editor"
+edge "${escapedRouteId}" points="10,20 30,20 30,60 50,60"
+@endlayout
+class A
+class B
+A --> B : calls
+@enduml`;
+    await page.locator('#uml-pg-input').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, sourceWithRoute);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('calls') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+    const routeHandle = page.locator('.uml-pg-edge-hitbox').first();
+    await expect(routeHandle).toHaveCount(1);
+
+    await routeHandle.evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await page.locator('#uml-pg-props-content').getByRole('button', { name: 'Invert direction' }).click();
+
+    const expectedRouteId = routeId.replace(/^edge:([^|]+)\|([^|]+)$/, 'edge:$2|$1');
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('B --> A : calls');
+    expect(source).toContain(`edge "${expectedRouteId}" points="50,60 30,60 30,20 10,20"`);
+  });
+
+  test('left-arrow generalization syntax is parsed as an invertible generalization', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Parent
+class Child
+Parent <|-- Child
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('Parent') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+
+    await page.locator('.uml-pg-edge-hitbox').first().evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('gen');
+    await page.locator('#uml-pg-props-content').getByRole('button', { name: 'Invert direction' }).click();
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('Parent --|> Child');
+    expect(source).not.toContain('Parent <|-- Child');
+  });
+
+  test('selected relations can be rewired from the properties pane', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    const baseSource = `@startuml
+class A
+class B
+class C
+A --> B : calls
+@enduml`;
+    await page.locator('#uml-pg-input').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, baseSource);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('calls') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+    const routeId = await page.locator('.uml-pg-edge-hitbox').first().getAttribute('data-layout-id');
+    expect(routeId).toBeTruthy();
+    const escapedRouteId = routeId.replace(/"/g, '\\"');
+    const sourceWithRoute = `@startuml
+@layout schema=1 renderer="archuml-visual-editor"
+edge "${escapedRouteId}" points="10,20 30,20 30,60 50,60"
+@endlayout
+class A
+class B
+class C
+A --> B : calls
+@enduml`;
+    await page.locator('#uml-pg-input').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, sourceWithRoute);
+    await page.waitForFunction(() => {
+      const svg = document.querySelector('#uml-pg-output svg');
+      return !!svg && svg.textContent.includes('calls') && document.querySelectorAll('.uml-pg-edge-hitbox').length > 0;
+    });
+    const routeHandle = page.locator('.uml-pg-edge-hitbox').first();
+    await expect(routeHandle).toHaveCount(1);
+
+    await routeHandle.evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    await page.locator('#uml-pg-props-content').getByLabel('Target endpoint').selectOption('C');
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toContain('A --> C : calls');
+    expect(source).not.toContain('A --> B : calls');
+    expect(source).not.toContain('points="10,20 30,20 30,60 50,60"');
+  });
+
+  test('dragging an already selected relation tool connects without reopening the chooser', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.check('#uml-pg-edit');
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Animal @pos(80, 110)
+class Dog @pos(330, 110)
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Animal"]');
+    await page.waitForSelector('.uml-pg-edit-hitbox[data-layout-id="Dog"]');
+
+    const dependencyTool = page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="depend"]');
+    await dependencyTool.click();
+    await expect(dependencyTool).toHaveAttribute('aria-pressed', 'true');
+
+    const handle = page.getByRole('button', { name: 'Extend a relation from Animal', exact: true });
+    const target = page.locator('.uml-pg-edit-hitbox[data-layout-id="Dog"]');
+    await handle.hover({ force: true });
+    const handleBox = await handle.boundingBox();
+    const targetBox = await target.boundingBox();
+    if (!handleBox || !targetBox) throw new Error('relation drag handle and target should have boxes');
+
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(page.locator('.uml-pg-relation-chooser')).toHaveCount(0);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Animal \.\.> Dog/);
+    await expect(dependencyTool).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('dragging state-machine pseudo-state routes keeps endpoints anchored', async ({ page }) => {
@@ -1290,5 +1793,67 @@ test.describe('UML playground visual editor', () => {
     expect(ids).toContain('Process Order');
     expect(ids).toContain('Reject Order');
     expect(ids).toContain('Ship Order');
+  });
+
+  test('UML tutorial uses the standard instruction chrome and a draggable splitter', async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('uml-pg-help-dismissed'));
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    const instructions = page.locator('.tvm-instructions-panel');
+    const workspace = page.locator('.tvm-workspace.tvm-uml-editor-workspace');
+    const splitter = page.locator('.tvm-hsplitter');
+
+    await expect(instructions).toBeVisible();
+    await expect(workspace).toBeVisible();
+    await expect(page.locator('.tvm-step-nav .tvm-step-btn')).toHaveCount(3);
+    await expect(page.locator('.tvm-step-controls .tvm-btn-test')).toBeVisible();
+    await expect(splitter).toHaveAttribute('role', 'separator');
+    await expect(page.locator('.uml-pg-syntax-help')).toHaveCount(0);
+
+    const tips = page.locator('#uml-pg-help-banner');
+    await expect(tips).toBeVisible();
+    await page.getByRole('button', { name: /Got it/ }).click();
+    await expect(tips).toBeHidden();
+
+    const beforeBox = await instructions.boundingBox();
+    const splitterBox = await splitter.boundingBox();
+    if (!beforeBox || !splitterBox) throw new Error('splitter and panel should have layout boxes');
+
+    const x = splitterBox.x + splitterBox.width / 2;
+    const y = splitterBox.y + splitterBox.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 100, y, { steps: 6 });
+    await page.mouse.up();
+
+    await expect.poll(async () => {
+      const box = await instructions.boundingBox();
+      return box ? Math.round(box.width) : 0;
+    }).toBeGreaterThan(Math.round(beforeBox.width + 60));
+  });
+
+  test('UML tutorial accepts reversed generalization syntax for class relation assertions', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial');
+    await page.waitForSelector('#uml-pg-output');
+
+    await page.locator('#uml-pg-input').evaluate((el) => {
+      el.value = `@startuml
+class Player { +takeTurn(); +setState(state: PlayerState); }
+interface PlayerState { +takeTurn(player: Player); }
+class NormalTurnState
+class InJailState
+class BankruptState
+Player --> PlayerState : currentState
+PlayerState <|-- NormalTurnState
+PlayerState <|-- InJailState
+PlayerState <|-- BankruptState
+@enduml`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await page.getByRole('button', { name: /Test My Work/ }).click();
+    await expect(page.locator('.tvm-test-summary.all-pass')).toContainText('All 3 tests passed');
+    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 });

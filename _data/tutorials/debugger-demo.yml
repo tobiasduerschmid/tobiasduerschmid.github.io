@@ -20,7 +20,7 @@ debugger_options:
     - file: "stats_pipeline.py"
       line: 68
 
-require_tests: false
+require_tests: true
 autosave_type: files
 
 setup_commands:
@@ -155,3 +155,41 @@ steps:
           main()
 
     open_file: "stats_pipeline.py"
+    tests:
+      - description: "The full roster prints the expected summary"
+        command: |
+          import sys
+
+          old_argv = sys.argv[:]
+          sys.argv = ["stats_pipeline.py"]
+          try:
+              output = __run_capture("/tutorial/stats_pipeline.py")
+          finally:
+              sys.argv = old_argv
+
+          assert "Parameters: limit=None, curve=0.0" in output, "The default run should report no roster limit and no curve."
+          assert "Average: 82.40" in output, "The average should be computed from all five students."
+          for expected in ["A: ##", "B: #", "C: #", "D: #", "F:"]:
+              assert expected in output, f"Missing grade distribution bucket: {expected}"
+        hints:
+          - text: "Run the file without arguments first. The summary should include the parameters line, the average, and five grade buckets."
+          - text: "If the average is off, inspect where `scores.append(score)` happens and whether every roster entry reaches it."
+          - text: "Expected shape: `Parameters: limit=None, curve=0.0`, `Average: 82.40`, then buckets for A through F."
+      - description: "The parameters experiment limits the roster and applies the curve"
+        command: |
+          import sys
+
+          old_argv = sys.argv[:]
+          sys.argv = ["stats_pipeline.py", "3", "5"]
+          try:
+              output = __run_capture("/tutorial/stats_pipeline.py")
+          finally:
+              sys.argv = old_argv
+
+          assert "Parameters: limit=3, curve=5.0" in output, "The script should read both command-line arguments."
+          assert "Average: 92.78" in output, "The average should reflect the first three students with a five-point curve."
+          assert "A: ##" in output and "B: #" in output, "The curved three-student run should produce two A grades and one B grade."
+        hints:
+          - text: "This test simulates typing `3 5` in the args field before running the file."
+          - text: "Check `parse_parameters`: the first argument limits the roster, and the second becomes the curve."
+          - text: "For the first three students with a five-point curve, the distribution should include two A grades and one B grade."

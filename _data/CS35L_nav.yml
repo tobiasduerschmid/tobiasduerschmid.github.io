@@ -99,6 +99,8 @@ topics:
     icon: null
     url: /SEBook/uml.html
     subtopics:
+      - name: UML Editor
+        url: /SEBook/tools/uml-editor.html
       - name: Class Diagrams
         url: /SEBook/uml_class_diagram.html
       - name: "UML Class Diagram Tutorial (Python)"

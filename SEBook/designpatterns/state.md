@@ -10,6 +10,8 @@ The State pattern allows an object to change its behavior when its internal stat
 
 The pattern is also known as **Objects for States**. The original motivating example in GoF is a `TCPConnection` that switches behavior between `TCPEstablished`, `TCPListen`, and `TCPClosed` states — the same `Open()` request behaves entirely differently depending on which state the connection is currently in.
 
+> **Want modeling practice?** Try the [Monopoly State Pattern UML Tutorial](/SEBook/designpatterns/monopoly-state-pattern-uml-tutorial.html) — design the class, state machine, and sequence diagrams for Monopoly player turns using the State pattern.
+
 # Problem 
 
 The core problem the State pattern addresses is when an object's behavior **needs to change dramatically based on its internal state**, and this leads to code that is complex, difficult to maintain, and hard to extend.
