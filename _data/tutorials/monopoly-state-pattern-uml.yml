@@ -8,7 +8,7 @@ learning_objectives:
   - "Use UML labels to document concrete conditions for behavior changes."
 
 backend: uml-editor
-require_tests: true
+require_tests: false
 
 steps:
 
@@ -60,6 +60,7 @@ steps:
         assertions:
           - kind: member
             owner: Player
+            requires_arguments: true
             text_contains_any:
               - takeTurn
               - doTurn
@@ -75,6 +76,7 @@ steps:
             naming_hint: "This operation should read like the player starting, taking, or doing a turn. Use a verb phrase you would also be comfortable calling in the sequence diagram."
           - kind: member
             owner: Player
+            requires_arguments: true
             text_contains_any:
               - setState
               - changeState
@@ -87,6 +89,7 @@ steps:
           - kind: member
             owner: PlayerState
             is_abstract: true
+            requires_arguments: true
             text_contains_any:
               - takeTurn
               - doTurn
@@ -221,6 +224,16 @@ steps:
           - kind: sequence
             check: state_change_between_state_calls
             naming_hint: "The message between the two state calls should use the state-changing operation name from the class diagram."
+      - description: "State-change call passes the next state object"
+        assertions:
+          - kind: sequence
+            check: state_change_argument_is_next_state
+            naming_hint: "The state-changing call should pass the lifeline that receives the following turn call, for example setState(in_jail_state)."
+      - description: "Sequence calls use method-call labels"
+        assertions:
+          - kind: sequence
+            check: call_labels_have_argument_lists
+            naming_hint: "Write message labels as methodName(arguments), for example takeTurn(player) or setState(in_jail_state). The arrow already names the receiver, so do not prefix the label with self. or an object name."
       - description: "Sequence method calls exist in the class diagram"
         assertions:
           - kind: sequence

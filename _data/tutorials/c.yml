@@ -642,12 +642,68 @@ steps:
 
       **Key insight:** Stack memory is free and automatic — but it dies when the function returns. Heap memory survives function calls — but you must `free()` it yourself. Returning a pointer to a local stack variable is a classic bug: the memory is gone by the time the caller uses the pointer.
 
+      ### ✏️ Predict: returning the address of a local
+
+      Before reading on, predict what this program does:
+
+      ```c
+      int *make_seven(void) {
+          int x = 7;
+          return &x;          // <- returning the address of a local
+      }
+
+      int main(void) {
+          int *p = make_seven();
+          printf("%d\n", *p);
+          return 0;
+      }
+      ```
+
+      Pick one — commit before you scroll:
+
+      - (a) Always prints `7` — `x` is just an integer, the value gets returned with the pointer.
+      - (b) Compile error — gcc rejects `return &x` for a local.
+      - (c) *Sometimes* prints `7`, sometimes garbage, sometimes segfaults — undefined behavior. The stack frame holding `x` died when `make_seven` returned.
+      - (d) Always segfaults — the OS detects the stale pointer.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      The answer is **(c)**. When `make_seven` returns, its stack frame is reclaimed — `x` no longer exists in any meaningful sense. The pointer `p` now points at memory that *will* be reused by the next function call. On a quiet `main`, the bytes might still happen to read `7` (giving the illusion of correctness). Call another function before printing, and the bytes are different — segfault, garbage value, or worse, *plausible-looking-but-wrong* data.
+
+      With `gcc -Wall`, you'll likely see `warning: function returns address of local variable [-Wreturn-local-addr]`. **Heed the warning.** This is exactly what the Ownership Rule's first question prevents: *who allocates?* If the answer is "the function's stack frame," the lifetime ends at the return statement.
+
+      The fix is one of: (1) caller passes in a buffer (`void make_seven(int *out) { *out = 7; }`), (2) the function `malloc`s and returns the heap pointer (caller now must `free`), or (3) `x` is a `static` local (lives for the program's lifetime, but is shared — usually wrong).
+
+      </details>
+
+      ### 🔧 Tool callout: AddressSanitizer makes lifetime bugs *visible*
+
+      The dangling-pointer bug above is invisible at runtime by default — your program "works" until it doesn't. **AddressSanitizer** (built into `gcc` and `clang`) instruments every memory access at compile time and flags use-after-free, heap overflow, stack-use-after-return, and leaks the moment they happen.
+
+      ```bash
+      gcc -Wall -std=c11 -g -fsanitize=address memory_lab.c -o memory_lab
+      ./memory_lab
+      ```
+
+      For a clean program you'll see no extra output. For the dangling-pointer program above, AddressSanitizer prints a precise diagnostic naming the offending line. You'll meet this tool again in the boss fight (step 11) — **think of it as the X-ray vision that turns silent C bugs into loud ones.**
+
       ### Key Differences from C++
 
       1. **`malloc` returns `void*`** — in C, this implicitly converts to any pointer type (no cast needed). Don't add a cast; it hides bugs.
       2. **`malloc` does NOT initialize memory** — the bytes are garbage. Use `calloc()` if you need zeroed memory.
       3. **`malloc` can fail** — it returns `NULL` if there's no memory. Always check.
       4. **No constructors** — `malloc` just gives you raw bytes. You must initialize fields yourself.
+
+      ### 📋 The Ownership Rule: name it before you write it
+
+      C++ has destructors and `unique_ptr` to keep track of who owns what. C does not. The discipline that replaces it is *answering four questions about every pointer you write*. Before you allocate or pass a pointer in C, force yourself to commit to:
+
+      1. **Who allocates?** Which function calls `malloc`? (Often the only honest answer is "this one — right here.")
+      2. **Who frees?** Which function calls `free` on this pointer? (Must be exactly one, on every code path including errors.)
+      3. **Who borrows it?** Which functions read/write through this pointer *without* taking ownership? They must not free it.
+      4. **What's mutable?** Can the function modify the pointed-to data? If not, the parameter type should say `const T *`, not `T *`.
+
+      Most C bugs that aren't syntax errors come from skipping one of these questions. Make answering them a reflex.
 
       ### The Pointer Lifecycle: A Mental Model
 
@@ -914,6 +970,38 @@ steps:
       - **`+` on strings:** In C++, `str1 + str2` concatenates. In C, `+` on `char*` does **pointer arithmetic** — it moves the address, not concatenate. Use `strcat()`.
       - **`=` on strings:** In C++, `str1 = str2` copies. In C, `=` on `char[]` is **illegal** after declaration. Use `strcpy()` or `strncpy()`.
       - **No `.length()`:** C strings have no methods. Use `strlen()` — and it's O(n), not O(1).
+
+      ### ✏️ Predict: two ways to "make a string"
+
+      Both lines below look like reasonable ways to make a string named `cat`. But they have very different storage. Predict before you read on:
+
+      ```c
+      const char *literal = "cat";   // line A
+      char        array[] = "cat";   // line B
+
+      array[0]   = 'b';   // legal? what does `array` hold afterward?
+      literal[0] = 'b';   // legal? same question.
+      ```
+
+      Pick one — commit before you scroll:
+
+      - (a) Both lines work. `literal` and `array` are both `"bat"` afterward.
+      - (b) `array[0] = 'b'` works (`array` becomes `"bat"`); `literal[0] = 'b'` is undefined behavior — likely a segfault.
+      - (c) Both lines compile but produce undefined behavior — string literals are read-only.
+      - (d) `literal` and `array` are aliases for the same memory, so both succeed and end up `"bat"`.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      The answer is **(b)**.
+
+      - **`char array[] = "cat"`** allocates a *writable* 4-byte char array on the stack and copies the literal `"cat\0"` into it. `array` owns its bytes. Mutation is fine.
+      - **`const char *literal = "cat"`** stores the string literal in a *read-only* segment of the program's memory (often `.rodata`). `literal` is a pointer *into* that read-only memory. Writing through it is undefined behavior — usually a segfault on Linux/macOS.
+
+      The `const` on `const char *literal` is your safety net: the compiler refuses `literal[0] = 'b'`. Drop the `const` (`char *literal = "cat"`) and the compiler accepts it without warning, but the program will still crash at runtime — silent UB. **Always declare string-literal pointers as `const char *`.**
+
+      The deeper lesson: *two variables that look identical at the call site can have completely different lifetimes and write permissions.* C's "everything is bytes" simplicity stops at the storage class.
+
+      </details>
 
       ### The #1 Mistake: Using `==` to Compare Strings
 
@@ -1194,6 +1282,48 @@ steps:
       1. **Module prefix on every function** — `point_translate`, `point_magnitude`. C has no namespaces, so the prefix is the namespace.
       2. **First parameter is `Type *self`** — by convention. The function knows nothing about its receiver until you hand it one. Pass `&p` at the call site instead of writing `p.translate`.
       3. **Use `const Type *self` for read-only access** — `point_magnitude` doesn't modify `p`, so its parameter is `const Point *`. This is C's best approximation of a C++ `const` method.
+
+      ### ⚠️ Negative-transfer trap: struct assignment is *fieldwise*, not *deep*
+
+      In C++, you'd reach for a copy constructor to control what happens when one object is copied to another. C has no copy constructors. **Struct assignment in C is a literal byte-by-byte copy of the fields.** That's fine for value-type structs (like `Point` above) — but it's a trap for any struct that holds a pointer to heap memory.
+
+      Predict the output of this program. Commit before you scroll:
+
+      ```c
+      typedef struct {
+          char *data;     // points to heap memory
+      } Buffer;
+
+      int main(void) {
+          char text[] = "hello";
+          Buffer a = { text };    // a.data points at `text`
+          Buffer b = a;           // struct assignment
+
+          b.data[0] = 'y';        // mutate through b
+          printf("%s %s\n", a.data, b.data);
+          return 0;
+      }
+      ```
+
+      - (a) `hello hello` — assignment doesn't actually run; the compiler optimizes it away.
+      - (b) `hello yello` — `b` got an independent copy; mutating `b.data` doesn't affect `a`.
+      - (c) `yello yello` — `a` and `b` share the same `data` pointer; mutating one mutates the other.
+      - (d) Compile error — C forbids assigning between structs.
+
+      <details markdown="1"><summary>⚠️ Open after you've committed</summary>
+
+      The answer is **(c)**: `yello yello`. The line `Buffer b = a` copies the *one field* of `Buffer` — which is the pointer `data`, not what it points to. After the assignment, `a.data` and `b.data` are *aliases* for the same character array. Mutating through one is visible through the other.
+
+      This is the trap the Ownership Rule prevents. The four questions:
+
+      1. *Who allocates the bytes that `a.data` and `b.data` point at?* → The local array `text` in `main`.
+      2. *Who frees them?* → `text` lives on the stack; freed automatically when `main` returns. **But if `text` had been `malloc`ed, who frees it — `a` or `b`?**
+      3. *Who borrows?* → After `b = a`, you have *two* borrowers of the same memory.
+      4. *What's mutable?* → Both can mutate. Neither can tell the other "I'm mutating now."
+
+      In C++, a copy constructor would deep-copy the buffer. In C, you write that yourself: a `buffer_clone(const Buffer *src)` function that `malloc`s a new array and `memcpy`s the contents. C makes the work explicit because the compiler refuses to guess your ownership intent.
+
+      </details>
 
       ### Declaring and Using Structs
 
@@ -2620,6 +2750,23 @@ steps:
       echo "4 10 20 30 40" | ./linked_list
       ```
 
+      ### 🔬 Boss-level verification: run it under AddressSanitizer
+
+      You met AddressSanitizer in step 4 as the X-ray vision for memory bugs. The boss fight is *exactly* where to use it: linked-list code is the densest source of leaks, double-frees, and use-after-frees in real C programs. Once your basic version passes the tests, recompile with the sanitizer and run again:
+
+      ```bash
+      gcc -Wall -std=c11 -g -fsanitize=address linked_list.c -o linked_list
+      echo "4 10 20 30 40" | ./linked_list
+      ```
+
+      A correct implementation produces *no* extra output. If you see a wall of red text — congratulations, you've just found a real bug, with the offending line number underlined. Common things AddressSanitizer catches at this step:
+
+      - **Memory leak** — you forgot to `free` (or only freed the head, not the tail).
+      - **Use-after-free** — you read `curr->next` *after* `free(curr)`. The classic trap from the step prose.
+      - **Heap-buffer-overflow** — you wrote past `malloc`'d memory (rare for nodes; more likely if you allocate `n` ints and write `n+1`).
+
+      Pass under both gcc-with-warnings *and* AddressSanitizer and you've cleared the boss fight properly. **In real C code review, "it passes the tests" without "it passes the sanitizer" is not enough.**
+
     files:
       - path: "c_project/linked_list.c"
         content: |
@@ -2696,18 +2843,23 @@ steps:
             } Node;
 
             Node *node_create(int value) {
+                // Sub-goal: reserve storage for one node
                 Node *n = malloc(sizeof(Node));
+                // Sub-goal: validate the allocation
                 if (n == NULL) return NULL;
+                // Sub-goal: initialize every field (malloc gives garbage)
                 n->value = value;
                 n->next = NULL;
                 return n;
             }
 
             void list_print(const Node *head) {
+                // Sub-goal: walk from head until next-pointer is NULL
                 const Node *curr = head;
                 while (curr != NULL) {
                     printf("%d", curr->value);
                     if (curr->next != NULL) printf(" ");
+                    // Sub-goal: advance the cursor
                     curr = curr->next;
                 }
                 printf("\n");
@@ -2716,8 +2868,11 @@ steps:
             void list_free(Node *head) {
                 Node *curr = head;
                 while (curr != NULL) {
+                    // Sub-goal: SAVE next BEFORE freeing curr (avoid use-after-free)
                     Node *next = curr->next;
+                    // Sub-goal: release this node's storage
                     free(curr);
+                    // Sub-goal: advance using the saved pointer
                     curr = next;
                 }
             }
@@ -2735,13 +2890,15 @@ steps:
                     printf("Enter value: ");
                     scanf("%d", &val);
 
+                    // Sub-goal: allocate a new node for this value
                     Node *new_node = node_create(val);
                     if (new_node == NULL) {
                         fprintf(stderr, "malloc failed\n");
-                        list_free(head);
+                        list_free(head);   // clean up partial list before exit
                         return 1;
                     }
 
+                    // Sub-goal: link the new node at the tail (O(1) thanks to tail pointer)
                     if (head == NULL) {
                         head = new_node;
                         tail = new_node;
@@ -2753,6 +2910,7 @@ steps:
 
                 printf("List: ");
                 list_print(head);
+                // Sub-goal: release every node before exit (no leaks)
                 list_free(head);
 
                 return 0;

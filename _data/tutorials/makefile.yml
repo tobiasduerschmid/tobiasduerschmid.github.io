@@ -12,10 +12,26 @@ learning_objectives:
 require_tests: true
 autosave_type: none
 
+# Live dependency-graph pane. Renders the DAG `make -n` would walk —
+# targets, prerequisites, order-only edges, phony targets, staleness flags.
+# Refreshes automatically on Makefile save and after every shell command.
+# See js/make-graph.js for the renderer and the tutorial-authoring skill
+# for the schema reference.
+make_dag: /tutorial/make_project
+
 setup_commands:
   - 'mkdir -p /tutorial/make_project'
   - 'sed -i "s/^exec //" /usr/bin/gcc'
   - 'printf "\nsleep 2\n" >> /usr/bin/gcc'
+
+# v86's 9p create_file uses the host clock for the inode mtime, which is
+# typically ahead of the VM clock — `make` then prints "File '...' has
+# modification time NN s in the future" warnings on every invocation.
+# Touch every project file to VM_now after the layout writes them so the
+# user's first `make` is clean. Subsequent Monaco saves are normalized
+# in-runtime by _syncFileToV86's post-write touch hook.
+post_fileload_setup:
+  - 'touch /tutorial/make_project/* 2>/dev/null || true'
 
 steps:
   # --------------------------------------------------------------------------
@@ -595,6 +611,10 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Modify three near-identical rules into one pattern rule
   - title: "Smarter Rules: Automatic Variables & Patterns"
+    # The graph topology expands in this step: the .o intermediate nodes
+    # appear between app and the .c sources. Defaulting to the DAG view
+    # makes the structural change visually obvious.
+    view: make_dag
     instructions: |
       ### Why this matters
 
@@ -851,6 +871,9 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Predict, Run, Investigate Make's timestamp heuristic
   - title: "The Magic of Incremental Builds"
+    # Default this step to the Make DAG view so students see the graph
+    # update live as they touch files. They can flip back to Editor any time.
+    view: make_dag
     instructions: |
       ### Why this matters
 
@@ -879,6 +902,17 @@ steps:
       ```
 
       When you run `make`, Make starts at the top (`app`), walks down to the leaves (`.c` files), and rebuilds any node whose timestamp is older than at least one of its prerequisites. **Make is a graph algorithm, not a script.**
+
+      ### 📈 The graph on the right is *your* graph
+
+      Look at the **Make DAG** pane next to the editor — that's not a static diagram from this tutorial, that's the dependency graph computed live from *your current Makefile* in `/tutorial/make_project`. Every time you edit the Makefile or run a `make` / `touch` command, the graph re-renders:
+
+      - **Solid green ✓** — target is up to date
+      - **Pulsing red ●** — target is stale (`make` would rebuild it)
+      - **Dashed border** — phony target (always considered stale)
+      - **Dashed arrow** — order-only prerequisite
+
+      Click any node to jump to its rule in the Makefile. Use the **Editor / Make DAG** toggle at the top-right to flip between the two views.
 
       This timestamp-on-a-DAG heuristic is what turns a 2-hour full rebuild into a 2-second incremental one.
 
@@ -1367,6 +1401,9 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Make: synthesize the pieces and look at real-world Makefiles
   - title: "Mastering Make"
+    # Open with the full graph: app + run (phony) + clean (phony) + all .o + .c.
+    # Synthesis at a glance.
+    view: make_dag
     instructions: |
       ### Why this matters
 

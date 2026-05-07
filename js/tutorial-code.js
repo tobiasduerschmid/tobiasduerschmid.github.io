@@ -301,6 +301,17 @@
     this._gitGraphRefreshGeneration = 0;
     this._gitGraphHookInstalled = false;
     this._gitGraphHookMode = null;
+
+    // Make DAG state — enabled when YAML sets `make_dag: /path/to/dir`.
+    // Mirrors the git-graph lifecycle: a parallel SVG pane that visualizes
+    // the dependency graph Make would walk, refreshed on file save and
+    // shell-command completion. See js/make-graph.js for the renderer.
+    this.makeDagPath = options.makeDagPath || null;
+    this.makeDagOptions = options.makeDagOptions || {};
+    this._makeDag = null;
+    this._makeDagAutoRefreshTimer = null;
+    this._makeDagRefreshing = false;
+    this._lastMakeDagStateText = null;
     this._promptDetectBuf = '';
     this._promptRedrawTimer = null;
     this._backgroundSyncPauseCount = 0;
@@ -1033,7 +1044,24 @@
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
       '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
-      (this.gitGraphPath
+      (this.makeDagPath
+        ? '<div class="tvm-view-toggle">' +
+          '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
+          ' Editor</button>' +
+          '<button class="tvm-view-btn tvm-view-btn-make-dag" data-view="make_dag" title="Show the dependency graph (what `make -n` would walk)">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+          '<rect x="6" y="1" width="6" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+          '<rect x="2" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+          '<rect x="10" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+          '<rect x="2" y="12" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
+          '<path d="M9 4 V5.5 L4.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+          '<path d="M9 4 V5.5 L12.5 7" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+          '<path d="M4.5 10 V12" stroke="currentColor" stroke-width="1.2" fill="none"/>' +
+          '</svg>' +
+          ' Make DAG</button>' +
+          '</div>'
+        : (this.gitGraphPath
         ? '<div class="tvm-view-toggle">' +
           '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
           '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
@@ -1049,7 +1077,7 @@
           '</svg>' +
           ' Git Graph</button>' +
           '</div>'
-        : '') +
+        : '')) +
       '<div class="tvm-editor-panel' +
         (this.editorSplitSupported ? ' tvm-editor-split-supported' : '') +
         (this.editorSplitSupported && this._splitActive ? ' tvm-editor-split-active' : '') + '">' +
@@ -1122,6 +1150,17 @@
           // place as Output) — see the `hasGitTerminal` branch above.
           '</div>'
         : '') +
+      (this.makeDagPath
+        ? '<div class="tvm-make-dag-panel" style="display:none">' +
+          '<div class="tvm-make-dag-header">' +
+          '<span>Make DAG <small>(what <code>make -n</code> would walk)</small></span>' +
+          '<div class="tvm-make-dag-header-actions">' +
+          '<button class="tvm-make-dag-refresh" title="Refresh dependency graph">&#x21bb; Refresh</button>' +
+          '</div>' +
+          '</div>' +
+          '<div class="tvm-make-dag-container" aria-live="polite"></div>' +
+          '</div>'
+        : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
       // Workspace bottom-pane:
       //   - If Output was hoisted to bottom-left AND uml_position is 'right',
@@ -1174,6 +1213,8 @@
     this.editorContainerElRight = this.root.querySelector('.tvm-editor-container-right');
     this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
+    this.makeDagPanelEl = this.root.querySelector('.tvm-make-dag-panel');
+    this.makeDagContainerEl = this.root.querySelector('.tvm-make-dag-container');
     this._umlContainer = this._umlPositionRight
       // Right mode normally uses .tvm-uml-right-view (inside the right-tabbed
       // panel). When `output_position: bottom-left` is also set, the right
@@ -2641,6 +2682,18 @@
               self._pollWatchedFiles();
               if (self._currentView === 'git_graph' && !self._gitGraphRefreshing) {
                 self._maybeAutoRefreshGitGraph();
+              }
+              // make_dag: every prompt is also an opportunity to fix the
+              // v86 9p clock skew. Normalize any future-mtime files in the
+              // project (the syscall is a no-op when nothing's wrong),
+              // *then* refresh the graph if it's the active view. We do
+              // this regardless of view so `make` warnings stay quiet even
+              // when the user is in the editor pane.
+              if (self.makeDagPath) {
+                self._normalizeMakeDagFileTimes();
+                if (self._currentView === 'make_dag') {
+                  self._maybeAutoRefreshMakeDag();
+                }
               }
               // Git gutter: any user command may have moved HEAD (commit /
               // checkout / reset) or changed the working tree (checkout / mv
@@ -5066,7 +5119,15 @@
         }
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
-        saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
+        saveTimer = setTimeout(function () {
+          self._syncFileToBackend(filename);
+          // Make DAG refresh: if this file is the active Makefile (or a file
+          // referenced by it), the dependency graph may have changed.
+          // Cheap to re-run; gated on the pane being open.
+          if (self.makeDagPath && self._currentView === 'make_dag' && /\bMakefile\b/i.test(filename)) {
+            self._maybeAutoRefreshMakeDag();
+          }
+        }, 800);
         // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
         // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
@@ -7938,6 +7999,20 @@
           var res = self.emulator.fs9p.SearchPath('/' + filename);
           if (res && res.id !== -1) self.emulator.fs9p.inodes[res.id].mode = 0x81ED;
         }
+        // v86's 9p create_file sets the inode mtime from the host clock,
+        // which is typically *ahead* of the VM clock by hours-to-days. That
+        // makes `make` print "File 'Makefile' has modification time NN s in
+        // the future" warnings on every invocation. Normalize the just-
+        // written file's mtime to VM_now via a silent `touch`, but only
+        // for tutorials that opt into make_dag (we don't want to add a
+        // shell call for every save in unrelated tutorials).
+        if (self.makeDagPath && self._isMakeDagFile(filename)) {
+          self._runSilent('touch /tutorial/' + filename + ' 2>/dev/null')
+            .then(function () {
+              if (self._currentView === 'make_dag') self._maybeAutoRefreshMakeDag();
+            })
+            .catch(function () { /* tolerate */ });
+        }
       }).catch(function (err) {
         var dirname = filename.indexOf('/') !== -1
           ? filename.substring(0, filename.lastIndexOf('/'))
@@ -7947,6 +8022,21 @@
         return self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
           (needsChmod ? ' && chmod +x /tutorial/' + filename : ''));
       });
+  };
+
+  /**
+   * True if `filename` (relative to /tutorial) lives inside the make_dag
+   * directory. Used to gate post-save mtime normalization (see
+   * _syncFileToV86) so non-make tutorials aren't affected.
+   */
+  TutorialCode.prototype._isMakeDagFile = function (filename) {
+    if (!this.makeDagPath || !filename) return false;
+    var dir = this.makeDagPath
+      .replace(/^\/tutorial\/?/, '')
+      .replace(/^\//, '')
+      .replace(/\/$/, '');
+    if (!dir) return true;  // make_dag pointing at /tutorial itself
+    return filename === dir || filename.indexOf(dir + '/') === 0;
   };
 
   // ---------------------------------------------------------------------------
@@ -10097,11 +10187,13 @@
   TutorialCode.prototype._setView = function (view) {
     var editorPanel = this.root.querySelector('.tvm-editor-panel');
     var graphPanel = this.gitGraphPanelEl;
+    var dagPanel = this.makeDagPanelEl;
     if (!editorPanel) return;
 
     if (view === 'git_graph' && graphPanel) {
       editorPanel.style.display = 'none';
       graphPanel.style.display = 'flex';
+      if (dagPanel) dagPanel.style.display = 'none';
       // For pyodide tutorials, default the bottom panel to the Terminal tab
       // when the user enters graph view (their next action is almost always
       // to type a git command). Editor view leaves the tab as the user left
@@ -10117,9 +10209,23 @@
         self2._refreshGitGraph();
         setTimeout(function () { self2._refreshGitGraph(); }, 1500);
       }, 800);
+    } else if (view === 'make_dag' && dagPanel) {
+      editorPanel.style.display = 'none';
+      if (graphPanel) graphPanel.style.display = 'none';
+      dagPanel.style.display = 'flex';
+      // Show last cached graph immediately, then schedule a fresh dump.
+      this._lightRefreshMakeDag();
+      var selfM = this;
+      setTimeout(function () {
+        selfM._refreshMakeDag();
+        // Second pass to catch the case where the first dump landed before
+        // the prompt write completed (slow VMs).
+        setTimeout(function () { selfM._refreshMakeDag(); }, 1500);
+      }, 600);
     } else {
       editorPanel.style.display = '';
       if (graphPanel) graphPanel.style.display = 'none';
+      if (dagPanel) dagPanel.style.display = 'none';
       // Re-layout Monaco after showing
       if (this.editor) {
         var self = this;
@@ -10595,6 +10701,175 @@
         if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused() || self._gitGraphStateDirty) return;
         self._renderGitGraphFromState(state);
       }).catch(function () { /* repo not initialized yet — ignore */ });
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Make DAG refresh — analog of git graph but parses `make -pn` output.
+  // ---------------------------------------------------------------------------
+
+  function _shellQuoteForMake(s) {
+    // Reuse the same shell-quoting logic git_graph uses; falls back to
+    // single-quoting if no helper is available.
+    return "'" + String(s).replace(/'/g, "'\\''") + "'";
+  }
+
+  /**
+   * Build the dump command. Captures three sections separated by ===NAME===
+   * lines, matching what MakeGraph.parseMakeDb expects:
+   *
+   *   ===FILES===   Make's parsed dependency database (`make -pn`'s "# Files" block)
+   *   ===PHONY===   Lines from the Makefile starting with .PHONY
+   *   ===MTIMES===  filename|epoch_seconds, one per regular file in the dir
+   *
+   * If `make` itself errors out (no Makefile, syntax error, etc.), the
+   * FILES section will be empty and the renderer will show an empty-state
+   * message instead of a broken graph.
+   */
+  TutorialCode.prototype._buildMakeDagDumpCommand = function () {
+    var p = this.makeDagPath || '/tutorial';
+    var statePath = p.replace(/\/$/, '') + '/.makedag_state';
+    return (
+      '( cd ' + _shellQuoteForMake(p) + ' 2>/dev/null && ' +
+      // Defensive normalization: if the prompt-hook missed (e.g. user
+      // switched to DAG view directly with no recent shell command), pull
+      // any future-mtime files back to VM_now before reading state.
+      'NOW=$(date +%s); ' +
+      'find . -type f -newermt "@$NOW" -exec touch {} + 2>/dev/null; ' +
+      '{ ' +
+      'echo "===FILES==="; ' +
+      // -pn dumps the whole database without running anything; --no-builtin-rules
+      // strips the noise of GCC's implicit catalog so the graph stays focused.
+      // sed extracts only the "# Files" stanza (target-prereq listings).
+      'make -pn --no-builtin-rules 2>/dev/null | sed -n "/^# Files$/,/^# files hash-table stats:/p"; ' +
+      'echo "===PHONY==="; ' +
+      'grep -E "^\\.PHONY" Makefile 2>/dev/null; ' +
+      'echo "===MTIMES==="; ' +
+      'find . -maxdepth 1 -type f -printf "%f|%T@\\n" 2>/dev/null; ' +
+      '} > ' + _shellQuoteForMake(statePath) + ' 2>/dev/null ' +
+      ')'
+    );
+  };
+
+  /**
+   * Run the dump command in v86, then re-render. Equivalent of
+   * _refreshGitGraph for the Make pane.
+   */
+  TutorialCode.prototype._refreshMakeDag = function () {
+    if (!this.makeDagPath) return Promise.resolve();
+    if (this.config.backend !== 'v86') return Promise.resolve();
+    if (this._makeDagRefreshing) return Promise.resolve();
+    var self = this;
+    self._makeDagRefreshing = true;
+    var cmd = this._buildMakeDagDumpCommand();
+    var done = function () { self._makeDagRefreshing = false; };
+    return this._probeRPCDaemon().then(function (avail) {
+      var p = avail
+        ? self._runRPC(cmd)
+        : (self._canRunLegacyBackgroundSerial()
+            ? self._runSilent(cmd)
+            : Promise.resolve());
+      return p.then(function () {
+        done();
+        return self._lightRefreshMakeDag();
+      }, function () { done(); });
+    });
+  };
+
+  /**
+   * Read the cached state file (if any) and re-render without re-running
+   * the dump. Called from the view toggle and the auto-refresh hook to
+   * avoid the "blank pane on first open" flash.
+   */
+  TutorialCode.prototype._lightRefreshMakeDag = function () {
+    if (!this.makeDagPath || !window.MakeGraph || !this.makeDagContainerEl) return;
+    if (this.config.backend !== 'v86') return;
+    var self = this;
+    var statePath = this.makeDagPath.replace(/^\/tutorial/, '').replace(/\/$/, '') + '/.makedag_state';
+    if (this._lastMakeDagStateText) {
+      this._renderMakeDagFromText(this._lastMakeDagStateText);
+    }
+    if (!this.emulator || typeof this.emulator.read_file !== 'function') return;
+    this.emulator.read_file(statePath)
+      .then(function (buf) {
+        var text = new TextDecoder('utf-8').decode(buf);
+        self._lastMakeDagStateText = text;
+        self._renderMakeDagFromText(text);
+      })
+      .catch(function () {
+        // No state file yet — render empty placeholder.
+        if (!self._lastMakeDagStateText) self._renderMakeDagFromText('');
+      });
+  };
+
+  /**
+   * Parse + render. Wires node clicks to "open Makefile, jump to line".
+   */
+  TutorialCode.prototype._renderMakeDagFromText = function (text) {
+    if (!this.makeDagContainerEl || !window.MakeGraph) return;
+    var data = window.MakeGraph.parseMakeDb(text || '');
+    if (!this._makeDag) {
+      this._makeDag = new window.MakeGraph(this.makeDagContainerEl, {
+        dirLabel: this.makeDagPath || '',
+      });
+      var self = this;
+      this._makeDag.onNodeClick(function (detail) {
+        // Open the Makefile and jump to the rule's line, if known.
+        if (!detail || !detail.line) return;
+        var makefilePath = (self.makeDagPath || '/tutorial').replace(/\/$/, '') + '/Makefile';
+        try {
+          if (typeof self.openFile === 'function') self.openFile(makefilePath);
+          if (self.editor && self.editor.revealLineInCenter) {
+            self.editor.revealLineInCenter(detail.line);
+            self.editor.setPosition({ lineNumber: detail.line, column: 1 });
+          }
+          self._setView('editor');
+        } catch (e) { /* non-fatal */ }
+      });
+    }
+    this._makeDag.render(data);
+  };
+
+  /**
+   * Normalize the mtimes of any files in the make_dag directory whose
+   * mtime is in the future relative to VM_now. v86's 9p layer uses the
+   * *host* clock when writing files (Monaco saves AND gcc-produced object
+   * files in many setups), and the VM clock typically lags by hours-to-
+   * days. Without this normalization:
+   *   - `make` prints "modification time NN s in the future" warnings
+   *   - User actions like `touch main.c` fail to mark main.o as stale,
+   *     because main.o (compiled with future-mtime) still appears newer
+   *     than the freshly-touched main.c
+   * Running on every shell prompt guarantees the files behave like a
+   * normal local checkout: VM clock advances monotonically, and "newer
+   * than" relationships reflect what the user actually did.
+   *
+   * Cheap: one `find` invocation that no-ops when nothing's in the future.
+   */
+  TutorialCode.prototype._normalizeMakeDagFileTimes = function () {
+    if (!this.makeDagPath) return Promise.resolve();
+    if (this.config.backend !== 'v86') return Promise.resolve();
+    if (!this.booted) return Promise.resolve();
+    var p = this.makeDagPath;
+    var cmd = 'NOW=$(date +%s); find ' + _shellQuoteForMake(p) +
+      ' -type f -newermt "@$NOW" -exec touch {} + 2>/dev/null; true';
+    return this._runSilent(cmd).catch(function () { /* tolerate */ });
+  };
+
+  /**
+   * Auto-refresh hook — fires from the shell-prompt detector and from
+   * file-save signals so the graph reflects the *current* Makefile state
+   * within ~50ms of every change.
+   */
+  TutorialCode.prototype._maybeAutoRefreshMakeDag = function () {
+    if (!this.makeDagPath) return;
+    if (this._isBackgroundSyncPaused && this._isBackgroundSyncPaused()) return;
+    if (this._currentView === 'make_dag' && this.booted) {
+      var self = this;
+      clearTimeout(this._makeDagAutoRefreshTimer);
+      this._makeDagAutoRefreshTimer = setTimeout(function () {
+        self._refreshMakeDag();
+      }, 80);
     }
   };
 
