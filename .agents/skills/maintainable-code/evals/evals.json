@@ -1,0 +1,33 @@
+{
+  "skill_name": "maintainable-code",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "tempting-feature-addition",
+      "prompt": "I have this `TutorialService` class in our app (see attached file). I need to add a feature: when a user finishes a tutorial (their step equals the last step), we should send them a 'Congratulations!' email. The user's email is in `users.email` (separate `users` table, joinable on user_id). Implement this — write the new code and tell me where to put it.",
+      "expected_output": "The agent should NOT just bolt a `send_congrats_email()` method onto TutorialService. The agent should: (1) name the class's existing concerns (data access, validation, formatting, import/export, persistence — many of which are already SRP violations); (2) recognize that 'send congratulations' is a new concern that doesn't belong on TutorialService; (3) propose at minimum an EmailGateway interface (DIP — domain shouldn't import smtplib/SendGrid directly); (4) place the 'check completion + dispatch notification' logic in a place where its concern is clear (e.g., a TutorialCompletionNotifier, or as an event/observer hook on save_progress); (5) NOT directly call SMTP from inside TutorialService.save_progress; (6) ideally also flag the existing SRP issues with TutorialService rather than silently making it worse.",
+      "files": ["inputs/eval-1-tutorial-service.py"]
+    },
+    {
+      "id": 2,
+      "eval_name": "refactor-smelly-function",
+      "prompt": "Look at this `calculatePrice` function (attached). It's hard to maintain — every time we add a new item type or coupon, we end up editing this function in five places and someone forgets one. Refactor it. Tell me what code smells you see and what concrete refactorings (by name, from Fowler's catalog if applicable) you'd apply, then show me the refactored code.",
+      "expected_output": "The agent should explicitly NAME the smells: Long Method, Switch Statements (on type code), Long Parameter List, Primitive Obsession, Magic Numbers, Comments-explaining-what-code-does. The agent should propose, by Fowler's name: Replace Conditional with Polymorphism (or Replace Type Code with Subclasses/State/Strategy) for the item_type switch, Extract Function for the discount/tax/points calculations, Introduce Parameter Object for the long parameter list, Replace Magic Number with Symbolic Constant. The refactored code should: separate item-type pricing from discount/tax/points (different concerns); have one place where each item type's pricing lives; not repeat the type switch in multiple places; not have boolean comparisons against True/False; not have bare except: pass.",
+      "files": ["inputs/eval-2-calculate-price.py"]
+    },
+    {
+      "id": 3,
+      "eval_name": "design-notifications-system",
+      "prompt": "I want to add a notifications system to our web app. Users should get notifications about various events — tutorial completed, new comment on their post, weekly digest, password changed, etc. We'd like to support email and in-app notifications now, push notifications later, and SMS maybe. Design this for me — give me an architecture sketch with the major components, their responsibilities, and how they interact.",
+      "expected_output": "The agent should NOT immediately leap to 'use AWS SES + FCM + Twilio'. The agent should: (1) acknowledge unknowns and pick a risk-driven approach, asking what the actual scale/requirements are or making explicit assumptions; (2) propose a clear domain abstraction — a Notification or NotificationEvent type, plus a NotificationChannel/NotificationGateway interface (Dependency Inversion); (3) make the channel pluggable (OCP — adding push later is adding an implementation, not editing existing code); (4) separate concerns: event production (someone says 'this happened'), routing (which channels for which event for which user), delivery (the channel adapter), and user-preferences (which channels does this user accept); (5) consider quality attributes — at minimum modifiability (adding a channel) and reliability (what if a channel fails); (6) keep the domain layer free of vendor-specific code; (7) NOT generate hundreds of lines of speculative code with concrete implementations for things not yet needed.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "eval_name": "rename-and-clarify-contract",
+      "prompt": "Clean up this `process` function (attached). It works (the comments at the bottom show how it's used) but it's painful to read.",
+      "expected_output": "The agent should: (1) identify the function does TWO different things (mode 1 doubles numbers + optionally writes JSON; mode 2 uppercases strings) and split into two functions with intention-revealing names; (2) RENAME the cryptic parameters (d → data/items, t → mode/operation — though even better, eliminate `mode` by splitting the function; x → output_path); (3) REMOVE the ritual try/except blocks that swallow exceptions silently — they hide bugs and add no value (especially the bare 'except Exception: pass' around file writes); (4) recognize that the inner null/type-checks inside trusted code are defensive padding that should be at the boundary instead; (5) make side effects (file writes) explicit — possibly by separating the pure transformation from the I/O; (6) the result should be readable WITHOUT the bottom comment, because the names + structure carry the meaning.",
+      "files": ["inputs/eval-4-process-fn.py"]
+    }
+  ]
+}
