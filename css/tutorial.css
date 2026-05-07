@@ -1742,6 +1742,313 @@ html:not(.dark-mode) .tvm-git-graph-container {
 }
 /* .git-graph-empty and .git-graph-svg light-mode overrides live in git-graph.css */
 
+/* =====================================================================
+ *   Make DAG panel  (analog of Git Graph for Makefile-driven tutorials)
+ *   Enabled by `make_dag: /path/to/dir` in the tutorial YAML.
+ *   Renders the dependency graph that `make -n` would walk: targets,
+ *   prerequisites, order-only edges, phony targets, staleness flags.
+ *
+ *   Color tokens are themed via CSS custom properties so light/dark mode
+ *   inherit project paragraph backgrounds rather than hardcoded values.
+ * ===================================================================== */
+
+.tvm-make-dag-panel {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #1a1a2e;
+
+  /* Defaults — overridden in light mode below. */
+  --mg-bg: #1a1a2e;
+  --mg-fg: #e6e8ef;
+  --mg-muted: #aab1c0;
+  --mg-edge: #6f7790;
+  --mg-edge-stale: #ff6b6b;
+  --mg-node-bg: #232442;
+  --mg-node-border: #3d3f5c;
+  --mg-node-source-fg: #9aa0b3;
+  --mg-fresh: #4cd97b;
+  --mg-stale: #ff6b6b;
+  --mg-phony: #f0c674;
+  --mg-tooltip-bg: #1d1e34;
+  --mg-tooltip-fg: #f0f1f7;
+  --mg-focus-ring: #ffb627;
+}
+
+.tvm-make-dag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 36px;
+  flex-shrink: 0;
+  color: #d8d8e6;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.tvm-make-dag-header small {
+  font-weight: 400;
+  color: #9097a8;
+  margin-left: 4px;
+}
+.tvm-make-dag-header code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+  color: #f0c674;
+  background: rgba(255,255,255,0.06);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+.tvm-make-dag-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tvm-make-dag-refresh {
+  background: transparent;
+  border: 1px solid #5a5e75;
+  color: #c4c8d6;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tvm-make-dag-refresh:hover {
+  background: #2c2f47;
+  color: #fff;
+}
+.tvm-make-dag-refresh:focus-visible {
+  outline: 2px solid var(--mg-focus-ring);
+  outline-offset: 2px;
+}
+
+.tvm-make-dag-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 12px 12px;
+  background: var(--mg-bg);
+  color: var(--mg-fg);
+  position: relative;
+}
+
+.tvm-make-dag-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--mg-muted);
+  font-size: 14px;
+  padding: 20px;
+}
+.tvm-make-dag-empty code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--mg-phony);
+}
+
+.tvm-make-dag-canvas {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+}
+
+.tvm-make-dag-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  color: var(--mg-edge);
+}
+
+/* ── Edges ─────────────────────────────────────────────────────────── */
+.tvm-make-dag-edge {
+  fill: none;
+  stroke: var(--mg-edge);
+  stroke-width: 1.6;
+  transition: stroke 0.2s;
+}
+.tvm-make-dag-edge-order-only {
+  stroke-dasharray: 4 3;
+}
+.tvm-make-dag-edge-stale {
+  stroke: var(--mg-edge-stale);
+  stroke-width: 2;
+}
+
+/* ── Nodes ─────────────────────────────────────────────────────────── */
+.tvm-make-dag-node {
+  cursor: pointer;
+}
+.tvm-make-dag-node:focus-visible {
+  outline: none;  /* visual focus on the rect instead */
+}
+.tvm-make-dag-node:focus-visible .tvm-make-dag-node-rect {
+  stroke: var(--mg-focus-ring);
+  stroke-width: 2.5;
+}
+
+.tvm-make-dag-node-rect {
+  fill: var(--mg-node-bg);
+  stroke: var(--mg-node-border);
+  stroke-width: 1.4;
+  transition: fill 0.2s, stroke 0.2s;
+}
+.tvm-make-dag-node:hover .tvm-make-dag-node-rect {
+  fill: color-mix(in srgb, var(--mg-node-bg) 80%, white 20%);
+}
+
+.tvm-make-dag-node-stripe {
+  fill: var(--mg-fresh);
+  rx: 0;
+}
+.tvm-make-dag-node-fresh .tvm-make-dag-node-stripe { fill: var(--mg-fresh); }
+.tvm-make-dag-node-stale .tvm-make-dag-node-stripe { fill: var(--mg-stale); }
+
+.tvm-make-dag-node-label {
+  fill: var(--mg-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+}
+.tvm-make-dag-node-glyph {
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+.tvm-make-dag-node-fresh .tvm-make-dag-node-glyph { fill: var(--mg-fresh); }
+.tvm-make-dag-node-stale .tvm-make-dag-node-glyph { fill: var(--mg-stale); }
+.tvm-make-dag-node-phony .tvm-make-dag-node-glyph { fill: var(--mg-phony); }
+
+/* Phony — dashed outline replaces the solid rect border. */
+.tvm-make-dag-node-phony .tvm-make-dag-node-rect {
+  stroke: var(--mg-phony);
+  stroke-dasharray: 4 3;
+  stroke-width: 1.6;
+}
+
+/* Source files — flat, no border, gray label. */
+.tvm-make-dag-node-source .tvm-make-dag-node-rect {
+  fill: transparent;
+  stroke: transparent;
+}
+.tvm-make-dag-node-source .tvm-make-dag-node-label {
+  fill: var(--mg-node-source-fg);
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Stale pulse — gentle attention-getter on out-of-date targets. Only the
+ * status glyph pulses, not the whole node, so the screen reader's announced
+ * label stays stable. Animation is killed by the reduced-motion gate below. */
+.tvm-make-dag-node-stale .tvm-make-dag-node-glyph {
+  animation: tvm-mg-pulse 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes tvm-mg-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.18); }
+}
+
+/* ── Legend ────────────────────────────────────────────────────────── */
+.tvm-make-dag-legend {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 8px 12px;
+  margin-top: 14px;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid color-mix(in srgb, var(--mg-edge) 40%, transparent);
+  font-size: 12px;
+  color: var(--mg-muted);
+  border-radius: 4px;
+}
+.tvm-make-dag-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tvm-make-dag-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--mg-node-bg);
+  border: 1.5px solid var(--mg-node-border);
+}
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-fresh   { border-left: 4px solid var(--mg-fresh); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-stale   { border-left: 4px solid var(--mg-stale); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-phony   { border-style: dashed; border-color: var(--mg-phony); }
+.tvm-make-dag-legend-swatch.tvm-make-dag-legend-source  { background: transparent; border-color: transparent; border-bottom: 1.5px solid var(--mg-node-source-fg); }
+
+/* ── Make-DAG view-toggle button ── */
+.tvm-view-btn-make-dag svg { flex-shrink: 0; }
+
+/* ── Light mode overrides ── */
+html:not(.dark-mode) .tvm-make-dag-panel {
+  background: #fafbfc;
+  --mg-bg: #fafbfc;
+  --mg-fg: #1a1a1a;
+  --mg-muted: #5a5e6b;
+  --mg-edge: #7d8294;
+  --mg-edge-stale: #d83a3a;
+  --mg-node-bg: #ffffff;
+  --mg-node-border: #c4c8d3;
+  --mg-node-source-fg: #6e7280;
+  --mg-fresh: #1f9b3d;
+  --mg-stale: #d83a3a;
+  --mg-phony: #b8770b;
+  --mg-tooltip-bg: #fff;
+  --mg-tooltip-fg: #1a1a1a;
+  --mg-focus-ring: #0066cc;
+}
+html:not(.dark-mode) .tvm-make-dag-header {
+  background: #f0f1f3;
+  border-bottom-color: #d4d4d4;
+  color: #2a2c33;
+}
+html:not(.dark-mode) .tvm-make-dag-header small { color: #5a5e6b; }
+html:not(.dark-mode) .tvm-make-dag-header code {
+  background: rgba(0,0,0,0.05);
+  color: #b8770b;
+}
+html:not(.dark-mode) .tvm-make-dag-refresh {
+  border-color: #888c98;
+  color: #2a2c33;
+}
+html:not(.dark-mode) .tvm-make-dag-refresh:hover {
+  background: #e0e1e5;
+  color: #111;
+}
+html:not(.dark-mode) .tvm-make-dag-legend {
+  background: rgba(0,0,0,0.04);
+}
+
+/* ── Reduced-motion support (WCAG 2.2 SC 2.3.3) ── */
+@media (prefers-reduced-motion: reduce) {
+  .tvm-make-dag-node-stale .tvm-make-dag-node-glyph { animation: none; }
+  .tvm-make-dag-edge,
+  .tvm-make-dag-node-rect { transition: none; }
+}
+
+/* Honour the project's explicit `?reduce-motion=1` URL override (set on <html>). */
+html.prm-reduce .tvm-make-dag-node-stale .tvm-make-dag-node-glyph { animation: none; }
+
 /* ── UML Diagram panel ── */
 .tvm-uml-left-view,
 .tvm-uml-bottom-left-view,

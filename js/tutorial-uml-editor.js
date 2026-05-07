@@ -800,11 +800,15 @@
     var ownerContains = containsValues(assertion, 'owner').concat(containsValues(assertion, 'class')).concat(containsValues(assertion, 'element'));
     var text = assertion.text || assertion.member || assertion.name;
     var textContains = containsValues(assertion, 'text').concat(containsValues(assertion, 'member')).concat(containsValues(assertion, 'name'));
+    var requiresArguments = assertionRequiresArgumentList(assertion);
     var found = model.members.some(function (member) {
       var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
         ? true
         : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
-      return valueMatches(member.owner, owner, ownerContains) && valueMatches(member.text, text, textContains, true) && abstractOk;
+      return valueMatches(member.owner, owner, ownerContains) &&
+        valueMatches(member.text, text, textContains, true) &&
+        abstractOk &&
+        (!requiresArguments || !!methodSignatureFromMember(member.text));
     });
     var namingCandidateExists = model.members.some(function (member) {
       var abstractOk = assertion.is_abstract == null && assertion.isAbstract == null && assertion.abstract == null
@@ -814,7 +818,7 @@
     });
     return found
       ? { pass: true }
-      : failResult('Expected member ' + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
+      : failResult('Expected ' + (requiresArguments ? 'operation ' : 'member ') + describeExpectedValue(text, textContains) + ' on ' + describeExpectedValue(owner, ownerContains) + (assertion.is_abstract || assertion.isAbstract || assertion.abstract ? ' marked abstract' : '') + (requiresArguments ? ' with an argument list, such as method() or method(arg).' : '') + '.', namingCandidateExists ? assertionNamingHint(assertion) : null);
   }
 
   function assertRelation(model, assertion, kind, context) {
@@ -871,6 +875,8 @@
     if (check === 'stateobjects') return assertSequenceStateObjects(model, context, assertion);
     if (check === 'messagesbetweenplayerandstates') return assertSequenceMessagesBetweenPlayerAndStates(model, context, assertion);
     if (check === 'statechangebetweenstatecalls') return assertSequenceStateChangeBetweenStateCalls(model, context, assertion);
+    if (check === 'statechangeargumentisnextstate' || check === 'statechangepassesnextstateobject') return assertSequenceStateChangeArgumentIsNextState(model, context, assertion);
+    if (check === 'calllabelshaveargumentlists' || check === 'calllabelsuseoperationsyntax') return assertSequenceCallLabelsHaveArgumentLists(model, assertion);
     if (check === 'calledmethodsexist') return assertSequenceCalledMethodsExist(model, context, assertion);
     return { pass: false, message: 'Unknown sequence assertion check: ' + (assertion.check || assertion.rule || assertion.name || '') };
   }
@@ -938,6 +944,54 @@
       }
     }
     return failResult('Expected a Player state-change method call between two turn calls to different state objects.', potentialNamedChange ? assertionNamingHint(assertion) : null);
+  }
+
+  function assertSequenceStateChangeArgumentIsNextState(model, context, assertion) {
+    var player = sequencePlayerParticipants(model)[0];
+    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state-change arguments.' };
+    var stateParticipants = sequenceStateParticipants(model, context);
+    var turnAliases = toArray(context && context.turnAliases).concat(TURN_METHOD_ALIASES);
+    var changeAliases = toArray(context && context.stateChangeAliases).concat(STATE_CHANGE_METHOD_ALIASES);
+    var stateCalls = [];
+    model.relations.forEach(function (rel, index) {
+      var stateParticipant = stateParticipants.find(function (candidate) {
+        return participantMatchesEndpoint(rel.from, player) &&
+          participantMatchesEndpoint(rel.to, candidate) &&
+          methodMatchesAliases(rel.label, turnAliases);
+      });
+      if (stateParticipant) stateCalls.push({ index: index, participant: stateParticipant });
+    });
+    var sawStateChange = false;
+    var expectedTargets = [];
+    for (var i = 0; i < stateCalls.length; i++) {
+      for (var j = i + 1; j < stateCalls.length; j++) {
+        if (normalize(stateCalls[i].participant.className) === normalize(stateCalls[j].participant.className)) continue;
+        var nextState = stateCalls[j].participant;
+        expectedTargets.push(nextState.id);
+        var hasMatchingArgument = model.relations.slice(stateCalls[i].index + 1, stateCalls[j].index).some(function (rel) {
+          if (!participantMatchesEndpoint(rel.to, player) || !methodMatchesAliases(rel.label, changeAliases)) return false;
+          sawStateChange = true;
+          var call = methodCallFromLabel(rel.label);
+          return !!call && call.args.some(function (arg) {
+            return argumentMatchesParticipant(arg, nextState);
+          });
+        });
+        if (hasMatchingArgument) return { pass: true };
+      }
+    }
+    return failResult('Expected the state-change call to pass the object that receives the next turn call as an argument' + (expectedTargets.length ? ' (for example, ' + expectedTargets.join(' or ') + ').' : '.'), sawStateChange ? assertionNamingHint(assertion) : null);
+  }
+
+  function assertSequenceCallLabelsHaveArgumentLists(model, assertion) {
+    var invalid = [];
+    model.relations.forEach(function (rel) {
+      if (isSequenceReturnRelation(rel)) return;
+      var call = methodCallFromLabel(rel.label);
+      if (!call) invalid.push(sequenceRelationDescription(rel));
+    });
+    return invalid.length
+      ? failResult('Expected every non-return sequence message to be labeled as methodName(arguments) without a receiver prefix. Invalid messages: ' + invalid.join(', ') + '.', assertionNamingHint(assertion))
+      : { pass: true };
   }
 
   function assertSequenceCalledMethodsExist(model, context, assertion) {
@@ -1173,6 +1227,14 @@
     }) || null;
   }
 
+  function argumentMatchesParticipant(argument, participant) {
+    return exactValueMatches(cleanArgument(argument), [participant.id, participant.label, participant.className]);
+  }
+
+  function cleanArgument(argument) {
+    return String(argument || '').trim();
+  }
+
   function methodMatchesAliases(label, aliases) {
     var methodName = methodNameFromLabel(label);
     return !!methodName && toArray(aliases).some(function (alias) {
@@ -1181,16 +1243,54 @@
   }
 
   function methodNameFromLabel(label) {
+    var call = methodCallFromLabel(label);
+    return call ? call.name : '';
+  }
+
+  function methodCallFromLabel(label) {
     var text = String(label || '').trim();
-    if (!text) return '';
-    var match = text.match(/^([A-Za-z_]\w*)\s*(?:\(|$)/);
-    return match ? match[1] : '';
+    if (!text) return null;
+    var match = text.match(/^([A-Za-z_]\w*)\s*\((.*)\)\s*$/);
+    if (!match) return null;
+    return {
+      name: match[1],
+      args: splitArgumentList(match[2])
+    };
   }
 
   function methodNameFromMember(text) {
+    var signature = methodSignatureFromMember(text);
+    return signature ? signature.name : '';
+  }
+
+  function methodSignatureFromMember(text) {
     text = String(text || '').replace(/\{[^}]*\}/g, ' ').replace(/^[+\-#~]\s*/, '').trim();
-    var match = text.match(/^([A-Za-z_]\w*)\s*(?:\(|$)/);
-    return match ? match[1] : '';
+    var match = text.match(/^([A-Za-z_]\w*)\s*\((.*)\)/);
+    if (!match) return null;
+    return {
+      name: match[1],
+      args: splitArgumentList(match[2])
+    };
+  }
+
+  function splitArgumentList(text) {
+    text = String(text || '').trim();
+    if (!text) return [];
+    return text.split(',').map(function (arg) { return arg.trim(); }).filter(Boolean);
+  }
+
+  function sequenceRelationDescription(rel) {
+    var label = String(rel.label || '').trim();
+    return cleanId(rel.from) + ' -> ' + cleanId(rel.to) + (label ? ' : ' + label : ' : unlabeled');
+  }
+
+  function assertionRequiresArgumentList(assertion) {
+    return assertion.requires_arguments === true ||
+      assertion.requiresArguments === true ||
+      assertion.require_arguments === true ||
+      assertion.requireArguments === true ||
+      assertion.is_operation === true ||
+      assertion.isOperation === true;
   }
 
   function classModelHasMethod(classModel, className, methodName) {

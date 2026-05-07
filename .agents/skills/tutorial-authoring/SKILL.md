@@ -625,6 +625,46 @@ git_graph: /path/to/repo               # Path enabling visual commit graph.
 git_gutter: boolean                    # +/-/~ markers in Monaco gutter
                                        # vs. HEAD. Requires git_graph.
 git_setup: [string]                    # Git init commands (per-tutorial).
+make_dag: /path/to/dir                 # v86 only. Live SVG pane that visualises
+                                       # the dependency graph `make -n` would
+                                       # walk for the Makefile in <dir>.
+                                       # Refreshes on Makefile save and after
+                                       # every shell command (~80ms debounce).
+                                       # Renders:
+                                       #   - solid arrow target → prerequisite
+                                       #   - dashed arrow for order-only (`|`)
+                                       #     prerequisites
+                                       #   - red left stripe + pulsing glyph
+                                       #     on stale targets (= what
+                                       #     `make -n` would rebuild)
+                                       #   - dashed border + amber glyph on
+                                       #     `.PHONY` targets
+                                       #   - flat italic text for source files
+                                       # A view toggle (Editor / Make DAG)
+                                       # appears top-right of the workspace.
+                                       # Click any node to jump to its rule
+                                       # in the Makefile.
+                                       #
+                                       # Per-step `view: make_dag` defaults the
+                                       # workspace to the DAG when that step
+                                       # opens. Authors typically set it on the
+                                       # synthesis / incremental-build steps
+                                       # where the graph is most pedagogical.
+                                       #
+                                       # Implementation: js/make-graph.js
+                                       # (parser + renderer) and the
+                                       # `_refreshMakeDag` /
+                                       # `_renderMakeDagFromText` /
+                                       # `_maybeAutoRefreshMakeDag` methods on
+                                       # TutorialCode. The dump command
+                                       # captures `make -pn`'s "# Files" stanza
+                                       # plus PHONY declarations and source
+                                       # mtimes into <dir>/.makedag_state.
+make_dag_options: { ... }              # Reserved for future per-tutorial
+                                       # configuration (e.g. hide_targets_matching
+                                       # regex, custom layout direction). The
+                                       # MVP uses sensible defaults for all
+                                       # styling decisions.
 editor_split: boolean                  # Two-pane: tests left, code right.
 output_height: "40%" | "320px"         # Override output panel height.
 output_position: bottom-left           # Move output below instructions.
@@ -690,7 +730,10 @@ steps:
                                              # the print view.
 
     open_file: string                        # Which file to focus on load.
-    view: editor | git_graph | uml           # Override default pane visible.
+    view: editor | git_graph | uml | make_dag    # Override default pane visible.
+                                             # `make_dag` requires a top-level
+                                             # `make_dag:` config; opens the
+                                             # live Make dependency graph.
     uml_type: class | sequence | state | component | deployment | usecase | activity
                                              # uml-editor backend only: selects
                                              # the editor diagram type for this
@@ -738,6 +781,13 @@ steps:
                                              # `{abstract}` operation or an
                                              # operation declared by an
                                              # interface or abstract class.
+                                             # `requires_arguments: true`
+                                             # on member assertions requires
+                                             # an operation signature with
+                                             # parentheses, e.g. `method()`,
+                                             # so attributes with similar
+                                             # names do not satisfy operation
+                                             # checks.
                                              # `relation_type_any` accepts
                                              # semantic types such as
                                              # aggregation or composition.
@@ -769,6 +819,8 @@ steps:
                                              # state_objects,
                                              # messages_between_player_and_states,
                                              # state_change_between_state_calls,
+                                             # state_change_argument_is_next_state,
+                                             # call_labels_have_argument_lists,
                                              # and called_methods_exist.
                                              # Class generalization /
                                              # realization and aggregation /
@@ -1031,7 +1083,9 @@ keys. **If you change the persistence schema, also update**:
   element is missing entirely. Member
   assertions can require abstract operations with `is_abstract: true` (an
   interface or abstract-class member counts as abstract even without an
-  explicit `{abstract}` marker). Relation assertions can constrain semantic arrow type with
+  explicit `{abstract}` marker), and can require an actual operation signature
+  with `requires_arguments: true` so `setState()` passes but an attribute like
+  `setState: PlayerState` does not. Relation assertions can constrain semantic arrow type with
   `relation_type`, `relation_type_any`, or camelCase variants, or map the
   matched target element's type to the required arrow type with
   `relation_type_for_target_type` (for example, `interface: realization` and
@@ -1044,7 +1098,13 @@ keys. **If you change the persistence schema, also update**:
   be checked only when present. Sequence-diagram assertions use
   `kind: sequence` with `check:` values like `player_object`,
   `state_objects`, `messages_between_player_and_states`,
-  `state_change_between_state_calls`, and `called_methods_exist`; the last
+  `state_change_between_state_calls`, `state_change_argument_is_next_state`,
+  `call_labels_have_argument_lists`, and `called_methods_exist`;
+  `state_change_argument_is_next_state` requires the state-changing call
+  between two state turn calls to pass the lifeline receiving the next turn
+  call as an argument, and `call_labels_have_argument_lists` requires every
+  non-return call label to use plain `methodName(arguments)` syntax without a
+  receiver prefix such as `self.` or `state.`. The `called_methods_exist`
   check verifies call message labels against the receiver's class or inherited /
   realized operations in the saved class diagram, while dashed return messages
   are ignored because response values are not class operations. Generalization /

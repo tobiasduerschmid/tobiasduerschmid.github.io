@@ -2573,6 +2573,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     usecase: function (container, text) { window.UMLUseCaseDiagram.render(container, text); },
     activity: function (container, text) { window.UMLActivityDiagram.render(container, text); },
     gitgraph: function (container, text) {
+      if (window.UMLGitGraphDiagram && window.UMLGitGraphDiagram.render) {
+        window.UMLGitGraphDiagram.render(container, text);
+        return;
+      }
       var pre = document.createElement('pre');
       var code = document.createElement('code');
       code.className = 'diagram-gitgraph';
@@ -2620,6 +2624,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     deployment: 'UMLDeploymentDiagram',
     usecase: 'UMLUseCaseDiagram',
     activity: 'UMLActivityDiagram',
+    gitgraph: 'UMLGitGraphDiagram',
     venn: 'UMLVennDiagram',
     er: 'UMLERDiagram'
   };
@@ -2835,6 +2840,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     var debounceTimer = null;
+    var renderGeneration = 0;
+    var pendingVisualEditorInstall = null;
+    var LIVE_RENDER_DEBOUNCE_MS = 120;
     var currentType = supportedTypes.indexOf(typeSelect.value) >= 0 ? typeSelect.value : defaultType;
     typeSelect.value = currentType;
     var selectedLayoutId = null;
@@ -4606,6 +4614,190 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     /**
+     * Find the innermost fragment whose body contains the given source line.
+     * Returns { info, branchIdx } where branchIdx is 0 for the main branch and
+     * 1+ for else-branches. null if the line is not inside a fragment.
+     */
+    function fragmentForMessageLine(lineIdx) {
+      var ranges = sequenceFragmentRanges(textarea.value);
+      // Most-deeply-nested fragment wins — sort by startIdx descending.
+      var inside = ranges.filter(function (r) {
+        return lineIdx > r.startIdx && lineIdx < r.endIdx;
+      }).sort(function (a, b) { return b.startIdx - a.startIdx; });
+      if (!inside.length) return null;
+      var frag = inside[0];
+      // Determine which branch the line belongs to (counting else lines as
+      // separators). Branch 0 = before any else; branch 1 = after first else; ...
+      var branchIdx = 0;
+      for (var i = 0; i < frag.branches.length; i++) {
+        if (frag.branches[i].lineIdx < lineIdx) branchIdx++;
+        else break;
+      }
+      return { info: frag, branchIdx: branchIdx };
+    }
+
+    /**
+     * Move a sequence message into a specific branch of its enclosing fragment.
+     * The message is inserted as the LAST line of the chosen branch (just before
+     * the next else / end). If the target branch is its current branch, no-op.
+     */
+    function moveSequenceMessageToBranch(routeId, branchIdx) {
+      var meta = relationInfoForRouteId(routeId);
+      if (!meta || meta.lineIdx === -1) return false;
+      var ctx = fragmentForMessageLine(meta.lineIdx);
+      if (!ctx) {
+        announce('That message is not inside a fragment.', false);
+        return false;
+      }
+      var frag = ctx.info;
+      if (branchIdx < 0) branchIdx = 0;
+      var totalBranches = 1 + frag.branches.length;
+      if (branchIdx >= totalBranches) branchIdx = totalBranches - 1;
+      if (branchIdx === ctx.branchIdx) return false;
+
+      // Compute the line just before the next branch boundary (else / end).
+      var boundaryLine;
+      if (branchIdx === frag.branches.length) {
+        // Last branch — insert just before `end`.
+        boundaryLine = frag.endIdx;
+      } else {
+        // Insert just before the next else line for this branch.
+        boundaryLine = frag.branches[branchIdx].lineIdx;
+      }
+
+      snapshotForUndo('seq-msg-to-branch:' + routeId + ':' + branchIdx);
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      clearSequenceMessageLayoutMetadata(positions, routes);
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var block = sequenceMessageBlockForLine(lines, meta.lineIdx);
+      console.log('DEBUG move: meta.lineIdx=' + meta.lineIdx + ' block=' + JSON.stringify(block) + ' boundaryLine=' + boundaryLine + ' frag=' + JSON.stringify({startIdx: frag.startIdx, endIdx: frag.endIdx, branches: frag.branches}) + ' totalLines=' + lines.length);
+      // Splice out the moving block first, then adjust the boundary line if
+      // it was AFTER the block (its index will have decreased by chunk length).
+      var chunk = lines.splice(block.start, block.end - block.start + 1);
+      var insertAt = boundaryLine;
+      if (boundaryLine > block.end) insertAt -= chunk.length;
+      console.log('DEBUG move: chunk=' + JSON.stringify(chunk) + ' insertAt=' + insertAt);
+      lines.splice.apply(lines, [insertAt, 0].concat(chunk));
+      // Find new line index of the relation header within the inserted chunk.
+      var routeOffset = meta.lineIdx - block.start;
+      var nextLineIdx = insertAt + routeOffset;
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender('seqmsg:' + nextLineIdx, 'route');
+      renderDiagram();
+      announce('Moved message to branch ' + (branchIdx + 1) + '.', false);
+      return true;
+    }
+
+    /**
+     * Move a fragment block earlier or later within its sibling order. delta is
+     * -1 (earlier) or +1 (later). The block moves past the previous / next
+     * sibling — a top-level message, another fragment, or a note. Lifeline
+     * directives (activate/deactivate/create/destroy) are treated as part of
+     * the adjacent block they hug.
+     */
+    function moveFragmentBy(fragId, delta) {
+      var info = fragmentInfoForId(fragId);
+      if (!info || info.endIdx === -1) {
+        announce('Could not locate that fragment.', false);
+        return false;
+      }
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      var lines = stripLayoutMetadata(textarea.value).split('\n');
+      var blockStart = info.startIdx, blockEnd = info.endIdx;
+
+      // Find the line one position before / after the block to swap with. Skip
+      // blank lines so visual ordering matches user expectation.
+      function nextNonBlank(idx, dir) {
+        idx += dir;
+        while (idx >= 0 && idx < lines.length && lines[idx].trim() === '') idx += dir;
+        return idx;
+      }
+
+      if (delta < 0) {
+        var prevIdx = nextNonBlank(blockStart, -1);
+        if (prevIdx < 0) {
+          announce('Fragment is already first.', false);
+          return false;
+        }
+        // If the previous line is the END of an outer fragment, refuse — can't
+        // hop out of the parent fragment via reorder.
+        if (/^\s*end\s*$/i.test(lines[prevIdx])) {
+          announce('Fragment is already first inside its parent.', false);
+          return false;
+        }
+        // Prev line might be a fragment_end of a sibling fragment — find the
+        // matching opener and move the entire sibling block.
+        var prevBlockStart = prevIdx, prevBlockEnd = prevIdx;
+        if (/^\s*end\s*$/i.test(lines[prevIdx])) {
+          // (handled above)
+        } else if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[prevIdx])) {
+          // We landed on the sibling opener — keep as start, find its end.
+          var depth = 0;
+          for (var i = prevIdx; i < lines.length; i++) {
+            if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[i])) depth++;
+            if (/^\s*end\s*$/i.test(lines[i])) { depth--; if (!depth) { prevBlockEnd = i; break; } }
+          }
+        } else {
+          // Plain line — back up one since it's the END of the previous block.
+          // For most cases, the prev line is a single line (message/note/lifeline-event).
+          // For multi-line notes, walk back to find the `note ...` opener.
+          if (/^\s*end\s*note$/i.test(lines[prevIdx])) {
+            for (var nj = prevIdx - 1; nj >= 0; nj--) {
+              if (/^\s*note\s+(left|right|over)\b/i.test(lines[nj])) { prevBlockStart = nj; break; }
+            }
+          } else {
+            prevBlockStart = prevIdx;
+            prevBlockEnd = prevIdx;
+          }
+        }
+        snapshotForUndo('frag-move-up:' + fragId);
+        var fragChunk = lines.splice(blockStart, blockEnd - blockStart + 1);
+        lines.splice.apply(lines, [prevBlockStart, 0].concat(fragChunk));
+        textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+        selectAfterRender('frag:' + prevBlockStart, 'fragment');
+        renderDiagram();
+        announce('Moved fragment earlier.', false);
+        return true;
+      } else {
+        var nextIdx = nextNonBlank(blockEnd, +1);
+        if (nextIdx >= lines.length) {
+          announce('Fragment is already last.', false);
+          return false;
+        }
+        if (/^\s*else\b/i.test(lines[nextIdx]) || /^\s*end\s*$/i.test(lines[nextIdx])) {
+          announce('Fragment is already last inside its parent.', false);
+          return false;
+        }
+        var nextBlockStart = nextIdx, nextBlockEnd = nextIdx;
+        if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[nextIdx])) {
+          var d = 0;
+          for (var k = nextIdx; k < lines.length; k++) {
+            if (/^\s*(alt|opt|loop|par|break|critical|ref|neg)\b/i.test(lines[k])) d++;
+            if (/^\s*end\s*$/i.test(lines[k])) { d--; if (!d) { nextBlockEnd = k; break; } }
+          }
+        } else if (/^\s*note\s+(left|right|over)\b/i.test(lines[nextIdx]) && !/:/.test(lines[nextIdx])) {
+          for (var nk = nextIdx + 1; nk < lines.length; nk++) {
+            if (/^\s*end\s*note$/i.test(lines[nk])) { nextBlockEnd = nk; break; }
+          }
+        }
+        snapshotForUndo('frag-move-down:' + fragId);
+        var nextChunk = lines.splice(nextBlockStart, nextBlockEnd - nextBlockStart + 1);
+        // After splicing the next chunk out, `blockStart` / `blockEnd` are unchanged
+        // because the removed chunk is AFTER the fragment block. Insert the
+        // chunk before the fragment block start.
+        lines.splice.apply(lines, [blockStart, 0].concat(nextChunk));
+        var newFragStart = blockStart + nextChunk.length;
+        textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+        selectAfterRender('frag:' + newFragStart, 'fragment');
+        renderDiagram();
+        announce('Moved fragment later.', false);
+        return true;
+      }
+    }
+
+    /**
      * Find rendered fragments in the SVG by reading data-layout-fragment-id.
      * Returns array of { id, labelBox, frameBox } where labelBox is the
      * pentagon tab and frameBox is the full enclosing rectangle.
@@ -5150,10 +5342,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return type === 'sequence' || type === 'class' || type === 'state';
     }
 
-    function isSequenceEmptyRender() {
-      return typeSelect.value === 'sequence' && !!output.querySelector('.uml-empty-msg');
-    }
-
     function sequenceParticipantRecords(text) {
       return parseSequenceModel(text).participants;
     }
@@ -5446,19 +5634,17 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!sequenceModel) return;
       var show = !!(editToggle && editToggle.checked) && typeSelect.value === 'sequence';
       sequenceModel.hidden = !show;
-      var previousDetails = sequenceModel.querySelector('details');
-      var wasOpen = previousDetails ? previousDetails.open : null;
       sequenceModel.textContent = '';
       if (!show) return;
 
       var model = parseSequenceModel(textarea.value);
-      var details = document.createElement('details');
-      details.className = 'uml-pg-sequence-model';
-      details.open = wasOpen === null ? isSequenceEmptyRender() : wasOpen;
-      var summary = document.createElement('summary');
+      var panel = document.createElement('div');
+      panel.className = 'uml-pg-sequence-model';
+      var summary = document.createElement('p');
+      summary.className = 'uml-pg-sr-only';
       summary.textContent = 'Sequence model: ' + model.participants.length + ' lifeline' + (model.participants.length === 1 ? '' : 's') +
         ', ' + model.events.length + ' timeline item' + (model.events.length === 1 ? '' : 's');
-      details.appendChild(summary);
+      panel.appendChild(summary);
 
       var actions = document.createElement('div');
       actions.className = 'uml-pg-sequence-model-actions';
@@ -5472,7 +5658,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       addParticipant.addEventListener('click', function () { addSequenceParticipant('participant'); });
       actions.appendChild(addActor);
       actions.appendChild(addParticipant);
-      details.appendChild(actions);
+      panel.appendChild(actions);
 
       var partSection = document.createElement('div');
       partSection.className = 'uml-pg-sequence-model-section';
@@ -5489,7 +5675,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       model.participants.forEach(function (record, idx) {
         partSection.appendChild(buildSequenceParticipantRow(record, idx));
       });
-      details.appendChild(partSection);
+      panel.appendChild(partSection);
 
       var eventSection = document.createElement('div');
       eventSection.className = 'uml-pg-sequence-model-section';
@@ -5506,8 +5692,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       model.events.forEach(function (record, idx) {
         eventSection.appendChild(buildSequenceEventRow(record, idx));
       });
-      details.appendChild(eventSection);
-      sequenceModel.appendChild(details);
+      panel.appendChild(eventSection);
+      sequenceModel.appendChild(panel);
     }
 
     function buildSequenceParticipantRow(record, index) {
@@ -6710,6 +6896,28 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         propsContent.appendChild(branchFs);
       }
 
+      // Reorder controls — move the entire fragment block earlier or later
+      // among its siblings (top-level messages, sibling fragments, notes).
+      var orderFs = document.createElement('fieldset');
+      orderFs.className = 'uml-pg-prop-fieldset';
+      var orderLeg = document.createElement('legend');
+      orderLeg.textContent = 'Fragment order';
+      orderFs.appendChild(orderLeg);
+      var moveUpBtn = document.createElement('button');
+      moveUpBtn.type = 'button';
+      moveUpBtn.className = 'uml-pg-add-member';
+      moveUpBtn.textContent = 'Move earlier';
+      moveUpBtn.addEventListener('click', function () { moveFragmentBy(id, -1); });
+      var moveDownBtn = document.createElement('button');
+      moveDownBtn.type = 'button';
+      moveDownBtn.className = 'uml-pg-add-member';
+      moveDownBtn.textContent = 'Move later';
+      moveDownBtn.style.marginLeft = '6px';
+      moveDownBtn.addEventListener('click', function () { moveFragmentBy(id, 1); });
+      orderFs.appendChild(moveUpBtn);
+      orderFs.appendChild(moveDownBtn);
+      propsContent.appendChild(orderFs);
+
       var unwrapBtn = document.createElement('button');
       unwrapBtn.type = 'button';
       unwrapBtn.className = 'uml-pg-add-member';
@@ -6720,7 +6928,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
       var hint2 = document.createElement('p');
       hint2.className = 'uml-pg-prop-hint';
-      hint2.textContent = 'Click a message inside to edit its source/target. Press Delete to remove the entire fragment block.';
+      hint2.textContent = 'Double-click [condition] / [otherwise] on the canvas to edit in place. Click a message inside to edit its source, target, or branch. Press Delete to remove the entire fragment block.';
       propsContent.appendChild(hint2);
     }
 
@@ -7799,6 +8007,25 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         orderFs.appendChild(earlierBtn);
         orderFs.appendChild(laterBtn);
         propsContent.appendChild(orderFs);
+
+        // If the message is inside a fragment with multiple branches, expose a
+        // Branch picker so the user can move it between [condition] and
+        // [otherwise] (etc.) without dragging.
+        var fragCtx = fragmentForMessageLine(lineIdx);
+        if (fragCtx && fragCtx.info.branches.length) {
+          var branchOptions = [];
+          var headCondLabel = fragCtx.info.condition ? '[' + fragCtx.info.condition + ']' : '(no condition)';
+          branchOptions.push({ value: '0', label: '1: ' + fragCtx.info.kind + ' ' + headCondLabel });
+          fragCtx.info.branches.forEach(function (br, bIdx) {
+            var lbl = br.condition ? '[' + br.condition + ']' : '(no condition)';
+            branchOptions.push({ value: String(bIdx + 1), label: (bIdx + 2) + ': else ' + lbl });
+          });
+          propsContent.appendChild(field('Branch', selectInput(
+            branchOptions,
+            String(fragCtx.branchIdx),
+            function (v) { moveSequenceMessageToBranch(id, Number(v)); }
+          )));
+        }
       }
       var hint = document.createElement('p');
       hint.className = 'uml-pg-prop-hint';
@@ -8526,6 +8753,26 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           ev.stopPropagation();
           setSelectedLayoutId(routeId, 'route');
           startInlineRelationEdit(routeId, t, ev.clientX, ev.clientY);
+          return;
+        }
+        // Standalone `[condition]` / `[otherwise]` guard texts are tagged with
+        // data-layout-fragment-id (and a role telling us if it's the opener
+        // condition or a branch condition).
+        var fragId = t.getAttribute('data-layout-fragment-id');
+        var fragRole = t.getAttribute('data-layout-fragment-role');
+        var branchLine = t.getAttribute('data-layout-branch-line');
+        if (fragId && fragRole === 'condition') {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setSelectedLayoutId(fragId, 'fragment');
+          startInlineFragmentConditionEdit(t, fragId, null);
+          return;
+        }
+        if (fragId && fragRole === 'branch' && branchLine != null) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setSelectedLayoutId(fragId, 'fragment');
+          startInlineFragmentConditionEdit(t, fragId, Number(branchLine));
           return;
         }
         var content = (t.textContent || '').trim();
@@ -9300,6 +9547,74 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     /**
+     * Inline-edit a fragment guard text (`[condition]` on the opener, or
+     * `[otherwise]` on a branch). Routed through changeFragmentCondition /
+     * changeFragmentBranchCondition so the source rewrite is unambiguous.
+     */
+    function startInlineFragmentConditionEdit(textEl, fragId, branchLineIdx) {
+      cancelInlineRename();
+      var info = fragmentInfoForId(fragId);
+      if (!info) return;
+      var currentCond = '';
+      if (branchLineIdx == null) {
+        currentCond = info.condition || '';
+      } else {
+        var br = info.branches.find(function (b) { return b.lineIdx === branchLineIdx; });
+        currentCond = br ? br.condition || '' : '';
+      }
+      var rect = textEl.getBoundingClientRect();
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'uml-pg-inline-input';
+      input.value = currentCond;
+      input.placeholder = branchLineIdx == null ? 'condition' : 'otherwise';
+      input.setAttribute('aria-label', branchLineIdx == null
+        ? info.kind + ' fragment condition'
+        : 'fragment branch condition');
+      input.style.left = rect.left + 'px';
+      input.style.top = rect.top + 'px';
+      input.style.width = Math.max(rect.width + 80, 160) + 'px';
+      input.style.minHeight = Math.max(rect.height + 4, 24) + 'px';
+      document.body.appendChild(input);
+      input.focus();
+      input.select();
+      inlineRenameInput = input;
+
+      var originalText = textEl.textContent;
+      function preview() {
+        var v = input.value.trim();
+        textEl.textContent = v ? '[' + v + ']' : '';
+      }
+      function commit() {
+        var newCond = input.value.trim();
+        cleanup();
+        if (branchLineIdx == null) {
+          changeFragmentCondition(fragId, newCond);
+        } else {
+          changeFragmentBranchCondition(fragId, branchLineIdx, newCond);
+        }
+      }
+      function cancel() {
+        textEl.textContent = originalText;
+        cleanup();
+      }
+      function cleanup() {
+        input.removeEventListener('input', preview);
+        input.removeEventListener('keydown', onKey);
+        input.removeEventListener('blur', commit);
+        if (input.parentNode) input.parentNode.removeChild(input);
+        inlineRenameInput = null;
+      }
+      function onKey(ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+      }
+      input.addEventListener('input', preview);
+      input.addEventListener('keydown', onKey);
+      input.addEventListener('blur', commit);
+    }
+
+    /**
      * Snap a git-graph branch label / HEAD to the nearest commit.
      *
      * @param {string} draggedId   The branch label id, of the form `branch:<name>`
@@ -9742,7 +10057,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           applyRoutePoints(dragState.route, shiftedPoints);
           syncRouteOverlays(dragState.layer, dragState.route.id, shiftedPoints);
           if (finish) {
-            var moved = moveSequenceMessageToY(dragState.route.id, dragState.svg, now.y);
+            // No-movement clicks should not trigger a reorder. The drop-Y can
+            // land just below the route's own Y and snap the message past the
+            // next sibling, silently swapping their order on plain selection
+            // clicks.
+            var moved = false;
+            if (Math.abs(routeDy) > 4) {
+              moved = moveSequenceMessageToY(dragState.route.id, dragState.svg, now.y);
+            }
             dragState = null;
             if (!moved) renderDiagram();
           }
@@ -9954,6 +10276,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     updateLayoutVisibility();
 
     function renderDiagram() {
+      renderGeneration++;
+      cancelVisualEditorInstall();
       var text = textarea.value.trim();
       var type = typeSelect.value;
       errorBox.style.display = 'none';
@@ -9988,7 +10312,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
           }
           downloadBtn.disabled = false;
           status.textContent = '';
-          installVisualEditor();
+          scheduleVisualEditorInstall();
           rebuildSequenceModelPanel();
           // Visual mutations all funnel through renderDiagram; autosave once
           // per render so localStorage tracks every visual change.
@@ -10021,7 +10345,39 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function scheduleRender() {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(renderDiagram, 250);
+      debounceTimer = setTimeout(renderDiagram, LIVE_RENDER_DEBOUNCE_MS);
+    }
+
+    function cancelVisualEditorInstall() {
+      if (!pendingVisualEditorInstall) return;
+      if (pendingVisualEditorInstall.kind === 'idle' && window.cancelIdleCallback) {
+        window.cancelIdleCallback(pendingVisualEditorInstall.id);
+      } else {
+        clearTimeout(pendingVisualEditorInstall.id);
+      }
+      pendingVisualEditorInstall = null;
+    }
+
+    function scheduleVisualEditorInstall() {
+      cancelVisualEditorInstall();
+      if (!editToggle || !editToggle.checked) {
+        installVisualEditor();
+        return;
+      }
+      var generation = renderGeneration;
+      var run = function () {
+        pendingVisualEditorInstall = null;
+        if (generation !== renderGeneration) return;
+        installVisualEditor();
+      };
+      if (window.requestIdleCallback) {
+        pendingVisualEditorInstall = {
+          kind: 'idle',
+          id: window.requestIdleCallback(run, { timeout: 160 })
+        };
+      } else {
+        pendingVisualEditorInstall = { kind: 'timeout', id: setTimeout(run, 16) };
+      }
     }
 
     // Switch diagram type — restore autosaved content for that type, or fall
@@ -10081,6 +10437,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     if (editToggle) {
       editToggle.addEventListener('change', function () {
+        cancelVisualEditorInstall();
         if (!editToggle.checked) {
           dragState = null;
           cancelSequenceMessageDrag();
@@ -11499,7 +11856,6 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     // Initial render — wait only for the renderers this include instance exposes.
     function rendererReady(type) {
-      if (type === 'gitgraph') return !!(window.UMLShared && window.UMLShared.renderAll);
       var globalName = RENDERER_GLOBALS[type];
       return !!(globalName && window[globalName] && window.UMLShared);
     }

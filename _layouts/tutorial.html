@@ -271,6 +271,7 @@
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
   <script src="{{ '/js/git-graph.js' | relative_url }}"></script>
+  <script src="{{ '/js/make-graph.js' | relative_url }}"></script>
   <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}">
   <script src="{{ '/js/git-command-lab.js' | relative_url }}"></script>
   <link rel="stylesheet" href="{{ '/css/git-command-lab.css' | relative_url }}">
@@ -433,6 +434,11 @@
         gitGraphPath: config.git_graph || null,
         gitGraph: !!config.git_graph,
         gitSetupCommands: config.git_setup || [],
+        // make_dag: enables the live Make dependency-graph pane.
+        // Analog of git_graph but parses `make -pn` output. See js/make-graph.js
+        // and the tutorial-authoring skill for the schema.
+        makeDagPath: config.make_dag || null,
+        makeDagOptions: config.make_dag_options || {},
         // Editor IDE features (opt-in via YAML).
         //   linter: true        → live diagnostics in Monaco gutter (pyflakes)
         //   git_gutter: true    → +/-/~ markers next to changed lines
