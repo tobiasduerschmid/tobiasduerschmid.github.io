@@ -219,7 +219,7 @@ class Boss
 Employee <--> Boss
 @enduml'></div>
 
-`Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. A plain line with no arrowheads is also acceptable for bidirectional associations.
+`Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. Note that a plain line with no arrowheads on either end has **unspecified** navigability per UML 2.5 — not "bidirectional by default." If you mean both directions are navigable, draw arrowheads on both ends (as above) to make that explicit.
 
 **Non-navigable on one end (X on one side):** One class is explicitly prevented from navigating.
 
