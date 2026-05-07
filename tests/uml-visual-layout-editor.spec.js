@@ -67,13 +67,13 @@ PlayerState <|.. BankruptcyMode
 
 async function openPlayground(page) {
   await page.goto(PLAYGROUND_URL);
-  await page.waitForSelector('#uml-pg-output svg');
-  await page.check('#uml-pg-edit');
+  await expect(page.locator('#uml-pg-output svg')).toBeVisible();
+  await page.locator('#uml-pg-edit').check();
 }
 
 async function selectDiagram(page, type) {
   await page.selectOption('#uml-pg-type', type);
-  await page.waitForSelector('#uml-pg-output svg');
+  await expect(page.locator('#uml-pg-output svg')).toBeVisible();
 }
 
 async function selectEditMode(page, mode) {
@@ -85,7 +85,7 @@ async function selectEditMode(page, mode) {
 
 async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_CLASS_ROLE_VARIATION_DIAGRAM) {
   await page.goto(MONOPOLY_TUTORIAL_URL);
-  await page.waitForSelector('#uml-pg-output');
+  await expect(page.locator('#uml-pg-output')).toBeVisible();
   await page.evaluate(({ index, source, classKey, stateKey, sequenceKey }) => {
     localStorage.removeItem(stateKey);
     localStorage.removeItem(sequenceKey);
@@ -287,25 +287,7 @@ async function routeInfoFor(page, routeId) {
 async function diagramTextsInsideHitboxes(page, ids) {
   return page.evaluate((wantedIds) => {
     const svg = document.querySelector('#uml-pg-output svg');
-    if (!svg) return false;
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const ctm = svg.getScreenCTM();
-      if (!rect || !ctm) return null;
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(ctm.inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(ctm.inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(b.x - a.x),
-        height: Math.abs(b.y - a.y),
-      };
-    }
+    if (!svg || !window.UMLShared) return false;
     return wantedIds.every((id) => {
       const hitbox = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
         .find((el) => el.getAttribute('data-layout-id') === id);
@@ -318,7 +300,7 @@ async function diagramTextsInsideHitboxes(page, ids) {
         width: Number(hitbox.getAttribute('width')),
         height: Number(hitbox.getAttribute('height')),
       };
-      const tb = svgBox(text);
+      const tb = window.UMLShared.renderedSvgBox(svg, text);
       if (!tb) return false;
       const cx = tb.x + tb.width / 2;
       const cy = tb.y + tb.height / 2;
@@ -365,25 +347,6 @@ async function routedLabelDistances(page, label) {
     const labelEls = Array.from(svg.querySelectorAll('text[data-layout-route-id]'))
       .filter((el) => (el.textContent || '').trim() === wantedLabel);
 
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const ctm = svg.getScreenCTM();
-      if (!rect || !ctm) return null;
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(ctm.inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(ctm.inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
-    }
-
     function distanceToSegment(point, a, b) {
       const vx = b.x - a.x;
       const vy = b.y - a.y;
@@ -398,7 +361,7 @@ async function routedLabelDistances(page, label) {
     return labelEls.map((labelEl) => {
       const routeId = labelEl.getAttribute('data-layout-route-id');
       const route = routeById.get(routeId);
-      const box = svgBox(labelEl);
+      const box = window.UMLShared.renderedSvgBox(svg, labelEl);
       if (!route || !box) return null;
       const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
       let distance = Infinity;
@@ -428,19 +391,11 @@ async function routedArrowDistance(page, routeId) {
       .find((item) => item.id === wantedRouteId);
     const arrow = svg.querySelector('polygon[data-layout-route-id="' + wantedRouteId + '"][data-layout-kind="edge-arrow"]');
     if (!route || !arrow) return null;
-    const rect = arrow.getBoundingClientRect();
-    const ctm = svg.getScreenCTM();
-    if (!rect || !ctm || route.points.length < 2) return null;
-    const pt = svg.createSVGPoint();
-    pt.x = rect.left;
-    pt.y = rect.top;
-    const a = pt.matrixTransform(ctm.inverse());
-    pt.x = rect.right;
-    pt.y = rect.bottom;
-    const b = pt.matrixTransform(ctm.inverse());
+    const box = window.UMLShared.renderedSvgBox(svg, arrow);
+    if (!box || route.points.length < 2) return null;
     const center = {
-      x: (Math.min(a.x, b.x) + Math.max(a.x, b.x)) / 2,
-      y: (Math.min(a.y, b.y) + Math.max(a.y, b.y)) / 2,
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
     };
     const end = route.points[route.points.length - 1];
     return {
@@ -497,36 +452,75 @@ async function routeOverlaysMatchRoutes(page, routeIds) {
   }, routeIds);
 }
 
+async function routeEndpointsStayAttached(page, expectedRoutes) {
+  return page.evaluate((routeSpecs) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return { ok: false, reason: 'missing svg' };
+    const routes = window.UMLShared.collectEditableRoutes(svg);
+    function hitboxFor(id) {
+      const raw = String(id || '');
+      if (!raw) return null;
+      let el = svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + raw.replace(/(["\\])/g, '\\$1') + '"]');
+      if (el) return el;
+      if (raw === '__initial__' || raw === '[*]') {
+        el = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox[data-layout-id^="__initial__"]'))[0];
+      } else if (raw === '__final__') {
+        el = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox[data-layout-id^="__final__"]'))[0];
+      }
+      return el || null;
+    }
+    function hitboxRect(id) {
+      const el = hitboxFor(id);
+      if (!el) return null;
+      return {
+        x: Number(el.getAttribute('x')),
+        y: Number(el.getAttribute('y')),
+        width: Number(el.getAttribute('width')),
+        height: Number(el.getAttribute('height')),
+      };
+    }
+    function contains(box, point) {
+      if (!box || !point) return false;
+      const pad = Math.max(12, Math.min(box.width, box.height) * 0.25);
+      return point.x >= box.x - pad &&
+        point.x <= box.x + box.width + pad &&
+        point.y >= box.y - pad &&
+        point.y <= box.y + box.height + pad;
+    }
+    const specs = routeSpecs && routeSpecs.length
+      ? routeSpecs
+      : routes.map((route) => ({ source: route.source, target: route.target }));
+    for (const spec of specs) {
+      const route = routes.find((candidate) => candidate.source === spec.source && candidate.target === spec.target);
+      if (!route) return { ok: false, reason: 'missing route', spec, routes: routes.map((r) => ({ source: r.source, target: r.target, id: r.id })) };
+      const sourceBox = hitboxRect(spec.source);
+      const targetBox = hitboxRect(spec.target);
+      if (!sourceBox || !targetBox) return { ok: false, reason: 'missing hitbox', spec };
+      if (!contains(sourceBox, route.points[0])) return { ok: false, reason: 'source detached', spec, point: route.points[0], box: sourceBox };
+      const end = route.points[route.points.length - 1];
+      if (!contains(targetBox, end)) return { ok: false, reason: 'target detached', spec, point: end, box: targetBox };
+    }
+    return { ok: true };
+  }, expectedRoutes);
+}
+
 async function statePseudoRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return null;
     const routes = window.UMLShared.collectEditableRoutes(svg);
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
-    }
     const circles = Array.from(svg.querySelectorAll('circle'))
       .filter((el) => !el.closest('defs') && !el.closest('.uml-pg-edit-layer'))
       .map((el) => {
-        const b = svgBox(el);
+        const b = window.UMLShared.renderedSvgBox(svg, el);
+        if (!b) return null;
         return {
           x: b.x + b.width / 2,
           y: b.y + b.height / 2,
           r: Math.max(b.width, b.height) / 2,
         };
       })
+      .filter(Boolean)
       .filter((c) => c.r <= 14);
 
     function touchesPseudo(point) {
@@ -551,33 +545,20 @@ async function statePseudoRouteFor(page) {
 async function stateRegularRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return null;
     const routes = window.UMLShared.collectEditableRoutes(svg);
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
-    }
     const circles = Array.from(svg.querySelectorAll('circle'))
       .filter((el) => !el.closest('defs') && !el.closest('.uml-pg-edit-layer'))
       .map((el) => {
-        const b = svgBox(el);
+        const b = window.UMLShared.renderedSvgBox(svg, el);
+        if (!b) return null;
         return {
           x: b.x + b.width / 2,
           y: b.y + b.height / 2,
           r: Math.max(b.width, b.height) / 2,
         };
       })
+      .filter(Boolean)
       .filter((c) => c.r <= 14);
 
     function touchesPseudo(point) {
@@ -611,80 +592,25 @@ async function nodeHitboxBox(page, id) {
 async function renderedLayoutBox(page, id) {
   return page.evaluate((layoutId) => {
     const svg = document.querySelector('#uml-pg-output svg');
-    if (!svg) return null;
-    let parts = Array.from(svg.querySelectorAll('[data-layout-bounds-id]'))
-      .filter((el) => {
-        if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) return false;
-        return el.getAttribute('data-layout-bounds-id') === layoutId;
-      });
-    if (!parts.length) {
-      parts = Array.from(svg.querySelectorAll('[data-layout-id]')).filter((el) => {
-        if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) return false;
-        return el.getAttribute('data-layout-id') === layoutId;
-      });
-    }
-    if (!parts.length) return null;
-
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const pt1 = svg.createSVGPoint();
-      pt1.x = rect.left;
-      pt1.y = rect.top;
-      const pt2 = svg.createSVGPoint();
-      pt2.x = rect.right;
-      pt2.y = rect.bottom;
-      const ctm = svg.getScreenCTM().inverse();
-      const a = pt1.matrixTransform(ctm);
-      const b = pt2.matrixTransform(ctm);
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
-    }
-
-    return parts.map(svgBox).reduce((box, next) => {
-      if (!box) return next;
-      const x1 = Math.min(box.x, next.x);
-      const y1 = Math.min(box.y, next.y);
-      const x2 = Math.max(box.x + box.width, next.x + next.width);
-      const y2 = Math.max(box.y + box.height, next.y + next.height);
-      return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-    }, null);
+    if (!svg || !window.UMLShared) return null;
+    return window.UMLShared.renderedLayoutBox(svg, layoutId);
   }, id);
 }
 
 async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', targetId = 'Backend.b_in') {
   return page.evaluate(({ sourceId, targetId }) => {
     const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return null;
     const routes = window.UMLShared.collectEditableRoutes(svg);
     const route = routes.find((item) => item.source === sourceId && item.target === targetId);
 
-    function union(a, b) {
-      if (!a) return b;
-      const x1 = Math.min(a.x, b.x);
-      const y1 = Math.min(a.y, b.y);
-      const x2 = Math.max(a.x + a.width, b.x + b.width);
-      const y2 = Math.max(a.y + a.height, b.y + b.height);
+    function mergeBox(box, next) {
+      if (!box) return next;
+      const x1 = Math.min(box.x, next.x);
+      const y1 = Math.min(box.y, next.y);
+      const x2 = Math.max(box.x + box.width, next.x + next.width);
+      const y2 = Math.max(box.y + box.height, next.y + next.height);
       return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-    }
-
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
     }
 
     function dataBox(id, tagFilter) {
@@ -694,8 +620,8 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
         if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
         if (el.getAttribute('data-layout-id') !== id) continue;
         if (tagFilter && !tagFilter(el)) continue;
-        const b = svgBox(el);
-        box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
+        const next = window.UMLShared.renderedSvgBox(svg, el);
+        if (next) box = mergeBox(box, next);
         side = el.getAttribute('data-port-side') || side;
       }
       if (!box) return null;
@@ -729,32 +655,16 @@ async function componentConnectionInfo(page, sourceId = 'Frontend.f_out', target
 async function componentPortInfo(page, id) {
   return page.evaluate((layoutId) => {
     const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return null;
     const [componentId] = layoutId.split('.');
 
-    function union(a, b) {
-      if (!a) return b;
-      const x1 = Math.min(a.x, b.x);
-      const y1 = Math.min(a.y, b.y);
-      const x2 = Math.max(a.x + a.width, b.x + b.width);
-      const y2 = Math.max(a.y + a.height, b.y + b.height);
+    function mergeBox(box, next) {
+      if (!box) return next;
+      const x1 = Math.min(box.x, next.x);
+      const y1 = Math.min(box.y, next.y);
+      const x2 = Math.max(box.x + box.width, next.x + next.width);
+      const y2 = Math.max(box.y + box.height, next.y + next.height);
       return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-    }
-
-    function svgBox(el) {
-      const rect = el.getBoundingClientRect();
-      const pt = svg.createSVGPoint();
-      pt.x = rect.left;
-      pt.y = rect.top;
-      const a = pt.matrixTransform(svg.getScreenCTM().inverse());
-      pt.x = rect.right;
-      pt.y = rect.bottom;
-      const b = pt.matrixTransform(svg.getScreenCTM().inverse());
-      return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
-        width: Math.abs(a.x - b.x),
-        height: Math.abs(a.y - b.y),
-      };
     }
 
     function dataBox(id, tagFilter) {
@@ -764,8 +674,8 @@ async function componentPortInfo(page, id) {
         if (el.closest('defs') || el.closest('.uml-pg-edit-layer')) continue;
         if (el.getAttribute('data-layout-id') !== id) continue;
         if (tagFilter && !tagFilter(el)) continue;
-        const b = svgBox(el);
-        box = union(box, { x: b.x, y: b.y, width: b.width, height: b.height });
+        const next = window.UMLShared.renderedSvgBox(svg, el);
+        if (next) box = mergeBox(box, next);
         side = el.getAttribute('data-port-side') || side;
       }
       if (!box) return null;
@@ -812,6 +722,31 @@ function expectEndpointTouchesPort(endpoint, port) {
   expect(endpoint.y).toBeLessThanOrEqual(port.y + port.height + 2);
 }
 
+async function sourceLineIndices(page, patterns) {
+  const value = await page.locator('#uml-pg-input').inputValue();
+  const lines = value.split('\n').map((line) => line.trim());
+  return patterns.map((pattern) => lines.findIndex((line) => pattern.test(line)));
+}
+
+async function expectSourceLineOrder(page, patterns, message) {
+  await expect
+    .poll(async () => {
+      const indices = await sourceLineIndices(page, patterns);
+      return indices.every((index) => index >= 0) &&
+        indices.every((index, offset) => offset === 0 || index > indices[offset - 1]);
+    }, { timeout: 5_000, message })
+    .toBe(true);
+
+  const indices = await sourceLineIndices(page, patterns);
+  patterns.forEach((pattern, index) => {
+    expect(indices[index], `${message}: expected ${pattern}`).toBeGreaterThan(-1);
+    if (index > 0) {
+      expect(indices[index], `${message}: expected ${pattern} after ${patterns[index - 1]}`)
+        .toBeGreaterThan(indices[index - 1]);
+    }
+  });
+}
+
 test.describe('ArchUML visual layout metadata', () => {
   test('parses and strips node and edge overrides without disturbing diagram code', async ({ page }) => {
     await page.goto('/test-uml.html');
@@ -830,6 +765,14 @@ class Dog @pos(320, 140)
 Dog --|> Animal
 @enduml`;
 
+      const specialNames = window.UMLShared.extractLayoutMetadata(`@startuml
+@layout schema=1 renderer="archuml-visual-editor"
+node "hasOwnProperty" x=12 y=34
+node "__proto__" x=56 y=78
+@endlayout
+class hasOwnProperty
+class "__proto__"
+@enduml`);
       const extracted = window.UMLShared.extractLayoutMetadata(src);
       return {
         text: extracted.text,
@@ -838,6 +781,9 @@ Dog --|> Animal
         animal: extracted.layout.positions.Animal,
         dog: extracted.layout.positions.Dog,
         route: extracted.layout.routes['edge-0'],
+        specialKeys: Object.keys(specialNames.layout.positions).sort(),
+        hasOwnPropertyPosition: window.UMLShared.findLayoutPosition(specialNames.layout, 'hasOwnProperty'),
+        protoPosition: window.UMLShared.findLayoutPosition(specialNames.layout, '__proto__'),
       };
     });
     expect(result.text).not.toContain('@layout');
@@ -852,6 +798,9 @@ Dog --|> Animal
       { x: 30, y: 20 },
       { x: 30, y: 60 },
     ]);
+    expect(result.specialKeys).toEqual(expect.arrayContaining(['__proto__', 'hasOwnProperty']));
+    expect(result.hasOwnPropertyPosition).toEqual({ x: 12, y: 34 });
+    expect(result.protoPosition).toEqual({ x: 56, y: 78 });
   });
 
   test('normal renderers replay saved edge routes', async ({ page }) => {
@@ -910,20 +859,11 @@ f_out --> b_in : REST / JSON
 
       const svg = host.querySelector('svg');
       const label = svg.querySelector('[data-layout-kind="edge-label"][data-layout-id="label:edge-0"]');
-      const rect = label.getBoundingClientRect();
-      const pt1 = svg.createSVGPoint();
-      pt1.x = rect.left;
-      pt1.y = rect.top;
-      const pt2 = svg.createSVGPoint();
-      pt2.x = rect.right;
-      pt2.y = rect.bottom;
-      const ctm = svg.getScreenCTM().inverse();
-      const a = pt1.matrixTransform(ctm);
-      const b = pt2.matrixTransform(ctm);
+      const box = window.UMLShared.renderedLayoutBox(svg, 'label:edge-0');
       document.body.removeChild(host);
       return {
-        x: Math.min(a.x, b.x),
-        y: Math.min(a.y, b.y),
+        x: box ? box.x : null,
+        y: box ? box.y : null,
         text: label.textContent.replace(/\s+/g, ' ').trim(),
       };
     });
@@ -940,34 +880,7 @@ f_out --> b_in : REST / JSON
     const positions = await page.evaluate(() => {
       function layoutBox(container, id) {
         const svg = container.querySelector('svg');
-        const parts = Array.from(svg.querySelectorAll('[data-layout-id]')).filter((el) => el.getAttribute('data-layout-id') === id);
-        let box = null;
-        for (const el of parts) {
-          const rect = el.getBoundingClientRect();
-          const pt1 = svg.createSVGPoint();
-          pt1.x = rect.left;
-          pt1.y = rect.top;
-          const pt2 = svg.createSVGPoint();
-          pt2.x = rect.right;
-          pt2.y = rect.bottom;
-          const ctm = svg.getScreenCTM().inverse();
-          const a = pt1.matrixTransform(ctm);
-          const b = pt2.matrixTransform(ctm);
-          const next = {
-            x: Math.min(a.x, b.x),
-            y: Math.min(a.y, b.y),
-            width: Math.abs(a.x - b.x),
-            height: Math.abs(a.y - b.y),
-          };
-          if (!box) box = next;
-          else {
-            const x1 = Math.min(box.x, next.x);
-            const y1 = Math.min(box.y, next.y);
-            const x2 = Math.max(box.x + box.width, next.x + next.width);
-            const y2 = Math.max(box.y + box.height, next.y + next.height);
-            box = { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-          }
-        }
+        const box = window.UMLShared.renderedLayoutBox(svg, id);
         return box ? { x: Math.round(box.x), y: Math.round(box.y) } : null;
       }
 
@@ -1111,40 +1024,7 @@ head main
 
       function box(host, id) {
         const svg = host.querySelector('svg');
-        let parts = Array.from(svg.querySelectorAll('[data-layout-bounds-id]'))
-          .filter((el) => el.getAttribute('data-layout-bounds-id') === id);
-        if (!parts.length) {
-          parts = Array.from(svg.querySelectorAll('[data-layout-id]'))
-            .filter((el) => el.getAttribute('data-layout-id') === id);
-        }
-
-        function svgBox(el) {
-          const rect = el.getBoundingClientRect();
-          const pt1 = svg.createSVGPoint();
-          pt1.x = rect.left;
-          pt1.y = rect.top;
-          const pt2 = svg.createSVGPoint();
-          pt2.x = rect.right;
-          pt2.y = rect.bottom;
-          const ctm = svg.getScreenCTM().inverse();
-          const a = pt1.matrixTransform(ctm);
-          const b = pt2.matrixTransform(ctm);
-          return {
-            x: Math.min(a.x, b.x),
-            y: Math.min(a.y, b.y),
-            width: Math.abs(a.x - b.x),
-            height: Math.abs(a.y - b.y),
-          };
-        }
-
-        return parts.map(svgBox).reduce((acc, item) => {
-          if (!acc) return item;
-          const x1 = Math.min(acc.x, item.x);
-          const y1 = Math.min(acc.y, item.y);
-          const x2 = Math.max(acc.x + acc.width, item.x + item.width);
-          const y2 = Math.max(acc.y + acc.height, item.y + item.height);
-          return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-        }, null);
+        return window.UMLShared.renderedLayoutBox(svg, id);
       }
 
       const auto = render(source);
@@ -1748,17 +1628,13 @@ user -> app: third()
     await page.mouse.move(userHeadAfter.x + userHeadAfter.width / 2, secondMsgYAfter - 18);
     await page.mouse.down();
     await page.mouse.up();
-    await page.waitForTimeout(200);
 
     // The lost message must end up between user->app: first() and user->app: second().
-    const value = await page.locator('#uml-pg-input').inputValue();
-    const lines = value.split('\n').map((s) => s.trim());
-    const firstIdx = lines.findIndex((l) => /first\(\)/.test(l));
-    const lostIdx = lines.findIndex((l) => /^user\s+->o\b/.test(l));
-    const secondIdx = lines.findIndex((l) => /second\(\)/.test(l));
-    expect(firstIdx).toBeGreaterThan(-1);
-    expect(lostIdx).toBeGreaterThan(firstIdx);
-    expect(secondIdx).toBeGreaterThan(lostIdx);
+    await expectSourceLineOrder(page, [
+      /first\(\)/,
+      /^user\s+->o\b/,
+      /second\(\)/,
+    ], 'lost message should be inserted before the second call');
   });
 
   test('dragging from lifeline with found tool inserts message at drag-start Y', async ({ page }) => {
@@ -1790,17 +1666,13 @@ user -> app: third()
     await page.mouse.down();
     await page.mouse.move(startX + 80, startY, { steps: 6 });
     await page.mouse.up();
-    await page.waitForTimeout(200);
 
     // Found message arriving at app must end up between second() and third().
-    const value = await page.locator('#uml-pg-input').inputValue();
-    const lines = value.split('\n').map((s) => s.trim());
-    const secondIdx = lines.findIndex((l) => /second\(\)/.test(l));
-    const foundIdx = lines.findIndex((l) => /^o->\s+app\b/.test(l));
-    const thirdIdx = lines.findIndex((l) => /third\(\)/.test(l));
-    expect(secondIdx).toBeGreaterThan(-1);
-    expect(foundIdx).toBeGreaterThan(secondIdx);
-    expect(thirdIdx).toBeGreaterThan(foundIdx);
+    await expectSourceLineOrder(page, [
+      /second\(\)/,
+      /^o->\s+app\b/,
+      /third\(\)/,
+    ], 'found message should be inserted before the third call');
   });
 
   test('dropping a message below an alt fragment lands AFTER the fragment, not in last branch', async ({ page }) => {
@@ -1839,14 +1711,11 @@ end
     await page.mouse.down();
     await page.mouse.move(startX, dropY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(200);
 
-    const value = await page.locator('#uml-pg-input').inputValue();
-    const lines = value.split('\n').map((s) => s.trim());
-    const endIdx = lines.findIndex((l) => l === 'end');
-    const outsideIdx = lines.findIndex((l) => /outside\(\)/.test(l));
-    expect(endIdx).toBeGreaterThan(-1);
-    expect(outsideIdx).toBeGreaterThan(endIdx);
+    await expectSourceLineOrder(page, [
+      /^end$/,
+      /outside\(\)/,
+    ], 'dragged message should land after the fragment');
   });
 
   test('dragging a fragment label vertically reorders the fragment', async ({ page }) => {
@@ -1884,16 +1753,12 @@ user -> app: after()
     await page.mouse.down();
     await page.mouse.move(startX, targetY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(200);
 
-    const value = await page.locator('#uml-pg-input').inputValue();
-    const lines = value.split('\n').map((s) => s.trim());
-    const beforeIdx = lines.findIndex((l) => /before\(\)/.test(l));
-    const afterIdx = lines.findIndex((l) => /after\(\)/.test(l));
-    const altIdx = lines.findIndex((l) => /^alt\b/.test(l));
-    expect(beforeIdx).toBeGreaterThan(-1);
-    expect(afterIdx).toBeGreaterThan(-1);
-    expect(altIdx).toBeGreaterThan(afterIdx);
+    await expectSourceLineOrder(page, [
+      /before\(\)/,
+      /after\(\)/,
+      /^alt\b/,
+    ], 'dragged fragment should move after the trailing message');
   });
 
   test('renaming sequence heads parses instance and class labels', async ({ page }) => {
@@ -2538,6 +2403,47 @@ note right of BankruptState : New note
     expect(settledArrow.distance).toBeLessThan(28);
     expect(await routesAreOrthogonal(page, ['edge-0', 'edge-1'])).toBe(true);
     expect(await noteSitsBesideElement(page, 'note:3', 'BankruptState')).toBe(true);
+  });
+
+  test('state node tiny drags keep every transition attached and orthogonal', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await selectEditMode(page, 'nodes');
+    await setUmlSource(page, `@startuml
+[*] --> NormalState : start
+NormalState --> BankruptState : bank
+NormalState --> JailState : jail
+JailState --> NormalState : free
+@enduml`);
+
+    const normal = page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalState"]');
+    await expect(normal).toHaveCount(1);
+    await normal.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }));
+
+    const box = await normal.boundingBox();
+    if (!box) throw new Error('NormalState should have a hitbox');
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    const before = await routeEndpointsStayAttached(page, []);
+    expect(before).toEqual({ ok: true });
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    const routeIds = ['edge-0', 'edge-1', 'edge-2', 'edge-3'];
+    for (const [dx, dy] of [[2, 1], [5, 3], [8, 4], [11, 7], [14, 9]]) {
+      await page.mouse.move(startX + dx, startY + dy);
+      const attached = await routeEndpointsStayAttached(page, []);
+      expect(attached).toEqual({ ok: true });
+      expect(await routesAreOrthogonal(page, routeIds)).toBe(true);
+      expect(await routeOverlaysMatchRoutes(page, routeIds)).toBe(true);
+    }
+    await page.mouse.up();
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "NormalState" x=/);
+    const settled = await routeEndpointsStayAttached(page, []);
+    expect(settled).toEqual({ ok: true });
+    expect(await routesAreOrthogonal(page, routeIds)).toBe(true);
+    expect(await routeOverlaysMatchRoutes(page, routeIds)).toBe(true);
   });
 
   test('state group drag keeps every connector orthogonal on tiny movements', async ({ page }) => {
@@ -3883,6 +3789,14 @@ JailTurn --> NormalTurn : 321321
     const startY = box.y + box.height / 2;
     await page.mouse.move(startX, startY);
     await page.mouse.down();
+    for (const [dx, dy] of [[3, 1], [6, 3], [10, 5], [14, 8]]) {
+      await page.mouse.move(startX + dx, startY + dy);
+      const tinyAttachment = await activityAttachment();
+      expect(tinyAttachment.routeCount).toBe(4);
+      expect(tinyAttachment.attached).toBe(true);
+      expect(tinyAttachment.textInside).toBe(true);
+      expect(await routesAreOrthogonal(page, tinyAttachment.ids.map((route) => route.id))).toBe(true);
+    }
     await page.mouse.move(startX + 95, startY + 45, { steps: 6 });
 
     expect(Number(await normalTurn.getAttribute('x'))).toBeGreaterThan(beforeCanvasX + 35);
