@@ -46,7 +46,12 @@
 .tvm-make-dag-svg {
   display: block;
   max-width: 100%;
+  /* The viewBox preserves aspect ratio, so without an upper height bound
+     a full-width SVG of a 4-level DAG can grow to ~700px tall on desktop.
+     Cap to a comfortable figure size; users can still zoom the page. */
+  max-height: 360px;
   height: auto;
+  width: auto;
   color: var(--mg-edge);
 }
 
