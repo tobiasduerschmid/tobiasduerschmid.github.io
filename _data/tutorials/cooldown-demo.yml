@@ -1,0 +1,86 @@
+title: "Test Cooldown Demo"
+description: "A minimal one-step demo of the test cooldown feature: clicking 'Test My Work' locks the button for a few seconds with a live countdown, while an 'I'm sure' button runs the same tests silently — passes still unlock Next, but no result panel appears."
+
+# Demo / playground — not a real student-facing tutorial. Hides it from
+# the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
+backend: pyodide
+require_tests: true
+linter: true
+
+# Three seconds is short enough to actually wait through during a demo and
+# during the Playwright spec — long enough to see the countdown tick.
+cooldown_seconds: 3
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+  # Pedagogy: PRIMM — Predict (will the button lock?), Run, Investigate,
+  # Modify (try "I'm sure"), Make (re-run after wait).
+  - title: "The Test Cooldown"
+    instructions: |
+      ### Why this matters
+
+      Real homework benefits from *thinking* between test runs. A short
+      cooldown nudges students to read failure messages instead of mashing
+      the test button. The `I’m sure` override is there for the rare case
+      a student is confident the code works and is willing to skip the
+      visual feedback to advance.
+
+      ### 🎯 You will learn to
+
+      - Apply the cooldown gate by running the visible test and observing
+        the timer countdown
+      - Evaluate the `I’m sure` silent path: when does it advance the
+        tutorial without showing test results?
+
+      ### What to try
+
+      1. Click **Test My Work**. The starter code returns `None`, so the
+         test fails. The button is replaced by `⏱ Test My Work (0:03)`
+         and `I’m sure`.
+      2. While the timer runs, click `I’m sure`. The test panel is **not
+         updated** — silent runs hide their results. The Next button
+         stays locked because the test still fails.
+      3. Fix `answer()` in `main.py` to return `42`. Click `I’m sure`
+         again. The test panel still doesn't change, but Next unlocks
+         (the silent pass is the gate, the panel is just feedback).
+      4. Wait for the countdown to reach zero. The `⏱` button is replaced
+         by the normal `✓ Test My Work` again, and the `I’m sure` button
+         disappears.
+      5. Refresh the page mid-cooldown. The countdown picks up from where
+         it was — the end timestamp lives in `localStorage`, so reloading
+         can't bypass it.
+
+    files:
+      - path: /tutorial/main.py
+        language: python
+        content: |
+          def answer():
+              # TODO: replace `None` with the right number.
+              return None
+
+    tests:
+      - description: "answer() returns 42"
+        command: |
+          from main import answer
+          got = answer()
+          assert got == 42, "answer() returned " + repr(got) + ", expected 42"
+        hints:
+          - text: "Re-read the docstring — what literal value should `answer` return?"
+          - text: "Replace `None` with the integer the test expects."
+            condition: "code_contains: return None"
+
+    solution:
+      files:
+        - path: /tutorial/main.py
+          language: python
+          content: |
+            def answer():
+                return 42
+      explanation: |
+        The function literally just needs to return `42`. The point of
+        this demo isn't the code — it's experiencing the cooldown gate
+        and the `I’m sure` silent override around it.
