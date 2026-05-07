@@ -372,7 +372,7 @@ questions:
       - "    public static <X, Y> Pair<X, Y> swap(Pair<X, Y> p) {"
       - "    public Pair(T first, T second) { this.first = first; this.second = second; }"
       - "    public static Pair swap(Pair p) { return new Pair(p.second, p.first); }"
-    explanation: "**The static `swap` method must declare its own type parameters `<X, Y>` independent of the class's `<A, B>`, and return `Pair<Y, X>` to actually flip the types.** The class declares two type parameters `<A, B>`. The `swap` method introduces its own parameters `<X, Y>` (independent of the class's `A, B`) and returns `Pair<Y, X>` — types flipped. The distractor `Pair<X, Y>` as the return type doesn't actually swap anything. The raw `Pair` distractor loses all type safety. Direct field access `p.second` is illegal since fields are `private`."
+    explanation: "**The static `swap` method must declare its own type parameters `<X, Y>` independent of the class's `<A, B>`, and return `Pair<Y, X>` to actually flip the types.** The class declares two type parameters `<A, B>`. The `swap` method introduces its own parameters `<X, Y>` (independent of the class's `A, B`) and returns `Pair<Y, X>` — types flipped. The distractor `Pair<X, Y>` as the return type doesn't actually swap anything. The raw `Pair` distractor loses all type safety. (Java's `private` is class-scoped, so direct access to `p.second` from inside `Pair` itself would actually compile — but the accessor `getSecond()` is preferred for consistency with the surrounding code style.)"
 
   - id: 16
     difficulty: intermediate

@@ -353,7 +353,7 @@ steps:
           display: inline
           lines:
             - "printf(\"Player"
-            - " %s has %d/%d XP (%.1f%%%%)"
+            - " %s has %d/%d XP (%.1f%%)"
             - "\\n\","
             - "\"xX_SlayerKing_Xx\","
             - "42,"
@@ -363,7 +363,7 @@ steps:
           distractors:
             - "%f has %s"
             - "\"42\","
-          explanation: "`%s` matches the string `\"xX_SlayerKing_Xx\"`, `%d` matches ints `42` and `100`, `%.1f` matches the double `42.0`, and `%%%%` produces the literal `%%` which renders as `%`. The distractor `\"42\"` is wrong because `%d` expects an int, not a string."
+          explanation: "`%s` matches the string `\"xX_SlayerKing_Xx\"`, `%d` matches ints `42` and `100`, `%.1f` matches the double `42.0`, and `%%` is the printf escape that produces a single literal `%` in the output. The distractor `\"42\"` is wrong because `%d` expects an int, not a string."
 
         - question: "**[Interleaved: Revisit Step 1]** Which of the following C++ features does NOT exist in C?"
           options:

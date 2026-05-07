@@ -33,7 +33,7 @@ Because specifying every input-output relationship is costly (the **oracle probl
 
 *   **Monkey Testing:** This involves a "monkey" that **randomly triggers system events** (like UI clicks) to see if the system crashes or hits an undesirable state. While good for finding runtime errors, it cannot identify logic errors because it doesn't know what the correct output should be.
 *   **Metamorphic Testing:** This samples the input space and checks if **essential functional invariants** hold true. For example, in a search engine, searching for the same query twice should yield the same results regardless of the user profile.
-*   **Test-Driven Development (TDD):** In TDD, developers **write the test first**, implement the minimum code to pass it, and then refactor. This approach **guarantees testability** because code is never written without a corresponding test, leading to 100% unit test coverage and modular design.
+*   **Test-Driven Development (TDD):** In TDD, developers **write the test first**, implement the minimum code to pass it, and then refactor. Because every new line of production code is written in response to a failing test, the resulting design tends to be highly testable and modular. (TDD does *not* guarantee 100% coverage on its own — untested branches and edge cases still slip through unless the test list is itself exhaustive.)
 
 # Domain-Specific Testability
 The approach to testability varies significantly based on the **risk profile** of the domain.
