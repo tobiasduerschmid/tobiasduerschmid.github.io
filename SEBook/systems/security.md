@@ -98,10 +98,11 @@ SELECT * FROM Users WHERE Name = "Tobias" AND Pass = "" or ""=""
 
 ### Why SQL Injection Matters
 
-SQL injection has been described in print for almost three decades — the first public write-up appeared in *Phrack* magazine in 1998 — and it remains one of the most common web vulnerabilities found in the wild. The OWASP Top 10 listed *injection* (a category dominated by SQLi) as the **#1 web application security risk** continuously from 2003 through 2017, and it was still in the top 3 in 2021. A non-exhaustive timeline:
+SQL injection has been described in print for almost three decades — the first public write-up appeared in *Phrack* magazine in 1998 — and it remains one of the most common web vulnerabilities found in the wild. The OWASP Top 10 listed *injection* (a category dominated by SQLi) as the **#1 web application security risk** continuously from 2010 through 2017, and it was still in the top 3 in 2021. A non-exhaustive timeline:
 
 * **1998** — SQL injection is first described publicly (Phrack #54, Rain Forest Puppy).
-* **2003–2017** — OWASP ranks Injection as the #1 web-application security risk in every revision of its Top 10.
+* **2004–2007** — OWASP Top 10 lists Injection at A6 (2004) then A2 (2007).
+* **2010–2017** — OWASP ranks Injection as the #1 web-application security risk (A1) in every revision of its Top 10.
 * **2011** — A SQL-injection-driven breach of Sony PlayStation Network compromises personal data of ~77 million users.
 * **2023** — The MOVEit Transfer breach (CVE-2023-34362) — a SQLi vulnerability in a widely used file-transfer product — is exploited by the Cl0p ransomware group, affecting *thousands* of organizations and tens of millions of individuals.
 

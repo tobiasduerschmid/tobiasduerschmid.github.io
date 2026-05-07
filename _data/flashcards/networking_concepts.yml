@@ -50,7 +50,7 @@ cards:
   - id: 11
     difficulty: basic
     question: "Name at least three main **HTTP verbs** and what each does."
-    answer: "**GET** — retrieve a resource. **POST** — send data to create/update a resource. **PUT** — update an existing resource. **DELETE** — delete a resource. **HEAD** — retrieve only the headers of a resource (not the body)."
+    answer: "**GET** — retrieve a resource. **POST** — send data for processing, typically to create a new resource. **PUT** — create or replace the resource at a specific URI (idempotent). **DELETE** — delete a resource. **HEAD** — retrieve only the headers of a resource (not the body)."
 
   - id: 12
     difficulty: basic

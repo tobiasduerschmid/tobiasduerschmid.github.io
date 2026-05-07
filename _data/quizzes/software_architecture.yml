@@ -4,7 +4,7 @@ active: true
 questions:
   - id: 1
     difficulty: basic
-    question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal choices governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
+    question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal design decisions governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
     options:
       - "The Structural Paradigm"
       - "The Decision-Based Paradigm"
