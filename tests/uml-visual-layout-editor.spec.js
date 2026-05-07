@@ -328,6 +328,175 @@ async function diagramTextsInsideHitboxes(page, ids) {
   }, ids);
 }
 
+async function noteSitsBesideElement(page, noteId, elementId) {
+  return page.evaluate(({ noteId: wantedNoteId, elementId: wantedElementId }) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg) return false;
+    const note = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+      .find((el) => el.getAttribute('data-layout-id') === wantedNoteId);
+    const element = Array.from(svg.querySelectorAll('.uml-pg-edit-hitbox'))
+      .find((el) => el.getAttribute('data-layout-id') === wantedElementId);
+    if (!note || !element) return false;
+    const nb = {
+      x: Number(note.getAttribute('x')),
+      y: Number(note.getAttribute('y')),
+      width: Number(note.getAttribute('width')),
+      height: Number(note.getAttribute('height')),
+    };
+    const eb = {
+      x: Number(element.getAttribute('x')),
+      y: Number(element.getAttribute('y')),
+      width: Number(element.getAttribute('width')),
+      height: Number(element.getAttribute('height')),
+    };
+    const noteCy = nb.y + nb.height / 2;
+    const elementCy = eb.y + eb.height / 2;
+    return nb.x >= eb.x + eb.width - 2 &&
+      Math.abs(noteCy - elementCy) <= Math.max(70, (nb.height + eb.height) / 2 + 24);
+  }, { noteId, elementId });
+}
+
+async function routedLabelDistances(page, label) {
+  return page.evaluate((wantedLabel) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return [];
+    const routes = window.UMLShared.collectEditableRoutes(svg);
+    const routeById = new Map(routes.map((route) => [route.id, route]));
+    const labelEls = Array.from(svg.querySelectorAll('text[data-layout-route-id]'))
+      .filter((el) => (el.textContent || '').trim() === wantedLabel);
+
+    function svgBox(el) {
+      const rect = el.getBoundingClientRect();
+      const ctm = svg.getScreenCTM();
+      if (!rect || !ctm) return null;
+      const pt = svg.createSVGPoint();
+      pt.x = rect.left;
+      pt.y = rect.top;
+      const a = pt.matrixTransform(ctm.inverse());
+      pt.x = rect.right;
+      pt.y = rect.bottom;
+      const b = pt.matrixTransform(ctm.inverse());
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y),
+      };
+    }
+
+    function distanceToSegment(point, a, b) {
+      const vx = b.x - a.x;
+      const vy = b.y - a.y;
+      const lenSq = vx * vx + vy * vy;
+      const t = lenSq > 0
+        ? Math.max(0, Math.min(1, ((point.x - a.x) * vx + (point.y - a.y) * vy) / lenSq))
+        : 0;
+      const projected = { x: a.x + vx * t, y: a.y + vy * t };
+      return Math.hypot(point.x - projected.x, point.y - projected.y);
+    }
+
+    return labelEls.map((labelEl) => {
+      const routeId = labelEl.getAttribute('data-layout-route-id');
+      const route = routeById.get(routeId);
+      const box = svgBox(labelEl);
+      if (!route || !box) return null;
+      const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      let distance = Infinity;
+      for (let i = 0; i < route.points.length - 1; i += 1) {
+        distance = Math.min(distance, distanceToSegment(center, route.points[i], route.points[i + 1]));
+      }
+      return {
+        distance,
+        routeId,
+        labelX: center.x,
+        labelY: center.y,
+      };
+    }).filter(Boolean);
+  }, label);
+}
+
+async function routedLabelDistance(page, routeId, label) {
+  const entries = await routedLabelDistances(page, label);
+  return entries.find((entry) => entry.routeId === routeId) || null;
+}
+
+async function routedArrowDistance(page, routeId) {
+  return page.evaluate((wantedRouteId) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return null;
+    const route = window.UMLShared.collectEditableRoutes(svg)
+      .find((item) => item.id === wantedRouteId);
+    const arrow = svg.querySelector('polygon[data-layout-route-id="' + wantedRouteId + '"][data-layout-kind="edge-arrow"]');
+    if (!route || !arrow) return null;
+    const rect = arrow.getBoundingClientRect();
+    const ctm = svg.getScreenCTM();
+    if (!rect || !ctm || route.points.length < 2) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = rect.left;
+    pt.y = rect.top;
+    const a = pt.matrixTransform(ctm.inverse());
+    pt.x = rect.right;
+    pt.y = rect.bottom;
+    const b = pt.matrixTransform(ctm.inverse());
+    const center = {
+      x: (Math.min(a.x, b.x) + Math.max(a.x, b.x)) / 2,
+      y: (Math.min(a.y, b.y) + Math.max(a.y, b.y)) / 2,
+    };
+    const end = route.points[route.points.length - 1];
+    return {
+      distance: Math.hypot(center.x - end.x, center.y - end.y),
+      routeId: arrow.getAttribute('data-layout-route-id'),
+    };
+  }, routeId);
+}
+
+async function routesAreOrthogonal(page, routeIds) {
+  return page.evaluate((wantedRouteIds) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return false;
+    const wanted = new Set(wantedRouteIds || []);
+    const routes = window.UMLShared.collectEditableRoutes(svg)
+      .filter((route) => !wanted.size || wanted.has(route.id));
+    if (!routes.length) return false;
+    return routes.every((route) => {
+      if (!route.points || route.points.length < 2) return false;
+      for (let i = 0; i < route.points.length - 1; i += 1) {
+        const a = route.points[i];
+        const b = route.points[i + 1];
+        const horizontal = Math.abs(a.y - b.y) <= 1.5;
+        const vertical = Math.abs(a.x - b.x) <= 1.5;
+        if (!horizontal && !vertical) return false;
+      }
+      return true;
+    });
+  }, routeIds);
+}
+
+async function routeOverlaysMatchRoutes(page, routeIds) {
+  return page.evaluate((wantedRouteIds) => {
+    const svg = document.querySelector('#uml-pg-output svg');
+    if (!svg || !window.UMLShared) return false;
+    const wanted = new Set(wantedRouteIds || []);
+    const routeById = new Map(window.UMLShared.collectEditableRoutes(svg).map((route) => [route.id, route]));
+    const overlays = Array.from(svg.querySelectorAll('.uml-pg-edge-hitbox[data-route-id]'))
+      .filter((seg) => !wanted.size || wanted.has(seg.getAttribute('data-route-id')));
+    if (!overlays.length) return false;
+    return overlays.every((seg) => {
+      const routeId = seg.getAttribute('data-route-id');
+      const route = routeById.get(routeId);
+      const idx = Number(seg.getAttribute('data-segment-index'));
+      if (!route || !Number.isFinite(idx) || !route.points[idx] || !route.points[idx + 1]) return false;
+      const endpointDeltas = [
+        Math.abs(Number(seg.getAttribute('x1')) - route.points[idx].x),
+        Math.abs(Number(seg.getAttribute('y1')) - route.points[idx].y),
+        Math.abs(Number(seg.getAttribute('x2')) - route.points[idx + 1].x),
+        Math.abs(Number(seg.getAttribute('y2')) - route.points[idx + 1].y),
+      ];
+      return endpointDeltas.every((delta) => delta <= 1.5);
+    });
+  }, routeIds);
+}
+
 async function statePseudoRouteFor(page) {
   return page.evaluate(() => {
     const svg = document.querySelector('#uml-pg-output svg');
@@ -1545,6 +1714,188 @@ user -> app: login()
     await expect(page.locator('#uml-pg-input')).toHaveValue(/o-> user : found/);
   });
 
+  test('clicking lifeline body with lost tool inserts message at that Y', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: first()
+user -> app: second()
+user -> app: third()
+@enduml`);
+    await page.waitForSelector('[data-layout-id="seqmsg:4"]', { state: 'attached' });
+
+    // Find the y coordinate of the second message arrow.
+    const secondMsgY = await page.locator('[data-layout-id="seqmsg:4"]').first().evaluate((el) => {
+      return el.getBoundingClientRect().top;
+    });
+    expect(typeof secondMsgY).toBe('number');
+    const userHead = await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').boundingBox();
+    expect(userHead).not.toBeNull();
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="lost"]').click();
+    // Scroll the second message into view so the click lands inside the viewport.
+    await page.locator('[data-layout-id="seqmsg:4"]').first().evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+    });
+    const secondMsgYAfter = await page.locator('[data-layout-id="seqmsg:4"]').first().evaluate((el) => {
+      return el.getBoundingClientRect().top;
+    });
+    const userHeadAfter = await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').boundingBox();
+    expect(userHeadAfter).not.toBeNull();
+    // Click the lifeline at a Y slightly above the second message arrow.
+    await page.mouse.move(userHeadAfter.x + userHeadAfter.width / 2, secondMsgYAfter - 18);
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+
+    // The lost message must end up between user->app: first() and user->app: second().
+    const value = await page.locator('#uml-pg-input').inputValue();
+    const lines = value.split('\n').map((s) => s.trim());
+    const firstIdx = lines.findIndex((l) => /first\(\)/.test(l));
+    const lostIdx = lines.findIndex((l) => /^user\s+->o\b/.test(l));
+    const secondIdx = lines.findIndex((l) => /second\(\)/.test(l));
+    expect(firstIdx).toBeGreaterThan(-1);
+    expect(lostIdx).toBeGreaterThan(firstIdx);
+    expect(secondIdx).toBeGreaterThan(lostIdx);
+  });
+
+  test('dragging from lifeline with found tool inserts message at drag-start Y', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: first()
+user -> app: second()
+user -> app: third()
+@enduml`);
+    await page.waitForSelector('[data-layout-id="seqmsg:5"]', { state: 'attached' });
+
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="found"]').click();
+    await page.locator('[data-layout-id="seqmsg:5"]').first().evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+    });
+    const thirdMsgY = await page.locator('[data-layout-id="seqmsg:5"]').first().evaluate((el) => {
+      return el.getBoundingClientRect().top;
+    });
+    const appHead = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
+    expect(appHead).not.toBeNull();
+
+    // Drag from the app lifeline at a Y just above msg3 outward to empty space.
+    const startX = appHead.x + appHead.width / 2;
+    const startY = thirdMsgY - 18;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 80, startY, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+
+    // Found message arriving at app must end up between second() and third().
+    const value = await page.locator('#uml-pg-input').inputValue();
+    const lines = value.split('\n').map((s) => s.trim());
+    const secondIdx = lines.findIndex((l) => /second\(\)/.test(l));
+    const foundIdx = lines.findIndex((l) => /^o->\s+app\b/.test(l));
+    const thirdIdx = lines.findIndex((l) => /third\(\)/.test(l));
+    expect(secondIdx).toBeGreaterThan(-1);
+    expect(foundIdx).toBeGreaterThan(secondIdx);
+    expect(thirdIdx).toBeGreaterThan(foundIdx);
+  });
+
+  test('dropping a message below an alt fragment lands AFTER the fragment, not in last branch', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: outside()
+alt [a]
+  user -> app: branchA()
+else [b]
+  user -> app: branchB()
+end
+@enduml`);
+    await page.waitForSelector('rect[data-layout-fragment-id^="frag:"]', { state: 'attached' });
+
+    // Scroll the fragment into view so subsequent clicks land in the viewport.
+    await page.locator('rect[data-layout-fragment-id^="frag:"]').first().evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+    });
+    // Pick a drop point well below the fragment frame bottom.
+    const dropY = await page.locator('rect[data-layout-fragment-id^="frag:"]').first().evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.top + r.height + 50;
+    });
+
+    // Drag the "outside()" route handle vertically below the fragment.
+    const routeBox = await page.locator('line[data-layout-id="seqmsg:3"]').first().evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, width: Math.max(r.width, 8), height: Math.max(r.height, 8) };
+    });
+    const startX = routeBox.x + routeBox.width / 2;
+    const startY = routeBox.y;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX, dropY, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+
+    const value = await page.locator('#uml-pg-input').inputValue();
+    const lines = value.split('\n').map((s) => s.trim());
+    const endIdx = lines.findIndex((l) => l === 'end');
+    const outsideIdx = lines.findIndex((l) => /outside\(\)/.test(l));
+    expect(endIdx).toBeGreaterThan(-1);
+    expect(outsideIdx).toBeGreaterThan(endIdx);
+  });
+
+  test('dragging a fragment label vertically reorders the fragment', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: before()
+alt [check]
+  user -> app: inFragment()
+end
+user -> app: after()
+@enduml`);
+    // The default sequence diagram leaves stale frag:N IDs behind until the
+    // debounced re-render runs. Wait for the render to reflect our source —
+    // the only fragment should be the alt at line 4 (frag:4).
+    await page.waitForFunction(() => {
+      const ids = Array.from(document.querySelectorAll('[data-layout-fragment-id]'))
+        .map((el) => el.getAttribute('data-layout-fragment-id'));
+      return ids.length > 0 && ids.every((id) => id === 'frag:4');
+    }, null, { timeout: 5000 });
+
+    // Scroll the fragment label into view so the drag stays in the viewport.
+    await page.locator('.uml-pg-edit-hitbox.is-label[data-layout-fragment-id]').first().evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+    });
+    const labelBox = await page.locator('.uml-pg-edit-hitbox.is-label[data-layout-fragment-id]').first().boundingBox();
+    expect(labelBox).not.toBeNull();
+    const svgBottom = await page.locator('#uml-pg-output svg').evaluate((svg) => svg.getBoundingClientRect().bottom);
+    const startX = labelBox.x + labelBox.width / 2;
+    const startY = labelBox.y + labelBox.height / 2;
+    const targetY = Math.min(svgBottom - 20, startY + 300);
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX, targetY, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+
+    const value = await page.locator('#uml-pg-input').inputValue();
+    const lines = value.split('\n').map((s) => s.trim());
+    const beforeIdx = lines.findIndex((l) => /before\(\)/.test(l));
+    const afterIdx = lines.findIndex((l) => /after\(\)/.test(l));
+    const altIdx = lines.findIndex((l) => /^alt\b/.test(l));
+    expect(beforeIdx).toBeGreaterThan(-1);
+    expect(afterIdx).toBeGreaterThan(-1);
+    expect(altIdx).toBeGreaterThan(afterIdx);
+  });
+
   test('renaming sequence heads parses instance and class labels', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
@@ -2153,20 +2504,90 @@ note right of BankruptState : New note
     const bankrupt = page.locator('.uml-pg-edit-hitbox[data-layout-id="BankruptState"]');
     await expect(bankrupt).toHaveCount(1);
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="note:3"]')).toHaveCount(1);
+    await bankrupt.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }));
 
     const box = await bankrupt.boundingBox();
     if (!box) throw new Error('BankruptState should have a hitbox');
+    const beforeCanvasX = Number(await bankrupt.getAttribute('x'));
     const startX = box.x + box.width / 2;
     const startY = box.y + box.height / 2;
     await page.mouse.move(startX, startY);
     await page.mouse.down();
     await page.mouse.move(startX + 110, startY + 70, { steps: 6 });
 
+    expect(Number(await bankrupt.getAttribute('x'))).toBeGreaterThan(beforeCanvasX + 40);
     expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState'])).toBe(true);
+    const midDragLabel = await routedLabelDistance(page, 'edge-1', 'bankrupt');
+    expect(midDragLabel).not.toBeNull();
+    expect(midDragLabel.routeId).toBe('edge-1');
+    expect(midDragLabel.distance).toBeLessThan(90);
+    const midDragArrow = await routedArrowDistance(page, 'edge-1');
+    expect(midDragArrow).not.toBeNull();
+    expect(midDragArrow.routeId).toBe('edge-1');
+    expect(midDragArrow.distance).toBeLessThan(28);
+    expect(await routesAreOrthogonal(page, ['edge-0', 'edge-1'])).toBe(true);
 
     await page.mouse.up();
     await expect(page.locator('#uml-pg-input')).toHaveValue(/node "BankruptState" x=/);
     expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState'])).toBe(true);
+    const settledLabel = await routedLabelDistance(page, 'edge-1', 'bankrupt');
+    expect(settledLabel).not.toBeNull();
+    expect(settledLabel.distance).toBeLessThan(90);
+    const settledArrow = await routedArrowDistance(page, 'edge-1');
+    expect(settledArrow).not.toBeNull();
+    expect(settledArrow.distance).toBeLessThan(28);
+    expect(await routesAreOrthogonal(page, ['edge-0', 'edge-1'])).toBe(true);
+    expect(await noteSitsBesideElement(page, 'note:3', 'BankruptState')).toBe(true);
+  });
+
+  test('state group drag keeps every connector orthogonal on tiny movements', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'state');
+    await selectEditMode(page, 'nodes');
+    await setUmlSource(page, `@startuml
+[*] --> NormalState
+NormalState --> BankruptState : bank
+NormalState --> JailState : jail
+JailState --> NormalState : free
+@enduml`);
+
+    const normal = page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalState"]');
+    const bankrupt = page.locator('.uml-pg-edit-hitbox[data-layout-id="BankruptState"]');
+    const jail = page.locator('.uml-pg-edit-hitbox[data-layout-id="JailState"]');
+    await expect(normal).toHaveCount(1);
+    await expect(bankrupt).toHaveCount(1);
+    await expect(jail).toHaveCount(1);
+
+    await normal.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }));
+    await bankrupt.click({ modifiers: ['Shift'] });
+    await normal.click({ modifiers: ['Shift'] });
+    await jail.click({ modifiers: ['Shift'] });
+    await expect(page.locator('.uml-pg-edit-hitbox.is-selected')).toHaveCount(3);
+
+    const box = await normal.boundingBox();
+    if (!box) throw new Error('NormalState should have a hitbox');
+    const beforeX = Number(await normal.getAttribute('x'));
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 7, startY + 4, { steps: 2 });
+
+    expect(Number(await normal.getAttribute('x'))).toBeGreaterThan(beforeX);
+    expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState', 'JailState'])).toBe(true);
+    expect(await routesAreOrthogonal(page, ['edge-0', 'edge-1', 'edge-2', 'edge-3'])).toBe(true);
+    expect(await routeOverlaysMatchRoutes(page, ['edge-0', 'edge-1', 'edge-2', 'edge-3'])).toBe(true);
+    for (const label of ['bank', 'jail', 'free']) {
+      const entries = await routedLabelDistances(page, label);
+      expect(entries).toHaveLength(1);
+      expect(entries[0].distance).toBeLessThan(90);
+    }
+
+    await page.mouse.up();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "NormalState" x=/);
+    expect(await diagramTextsInsideHitboxes(page, ['NormalState', 'BankruptState', 'JailState'])).toBe(true);
+    expect(await routesAreOrthogonal(page, ['edge-0', 'edge-1', 'edge-2', 'edge-3'])).toBe(true);
+    expect(await routeOverlaysMatchRoutes(page, ['edge-0', 'edge-1', 'edge-2', 'edge-3'])).toBe(true);
   });
 
   test('state transition labels edit in place as transitions', async ({ page }) => {
@@ -3374,10 +3795,8 @@ JailTurn --> NormalTurn : 321321
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="BankruptTurn"]')).toHaveCount(1);
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="JailTurn"]')).toHaveCount(1);
 
-    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalTurn"]'), 95, 45);
-
-    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "NormalTurn" x=/);
-    const attachment = await page.evaluate(() => {
+    async function activityAttachment() {
+      return page.evaluate(() => {
       const svg = document.querySelector('#uml-pg-output svg');
       if (!svg || !window.UMLShared) return { routeCount: 0, attached: false, labels: [], textInside: false };
       function svgBox(el) {
@@ -3452,12 +3871,54 @@ JailTurn --> NormalTurn : 321321
         textInside,
         ids: routes.map((route) => ({ id: route.id, source: route.source, target: route.target })),
       };
-    });
+      });
+    }
 
+    const normalTurn = page.locator('.uml-pg-edit-hitbox[data-layout-id="NormalTurn"]');
+    await normalTurn.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }));
+    const beforeCanvasX = Number(await normalTurn.getAttribute('x'));
+    const box = await normalTurn.boundingBox();
+    if (!box) throw new Error('NormalTurn should have a hitbox');
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 95, startY + 45, { steps: 6 });
+
+    expect(Number(await normalTurn.getAttribute('x'))).toBeGreaterThan(beforeCanvasX + 35);
+    const midAttachment = await activityAttachment();
+    expect(midAttachment.routeCount).toBe(4);
+    expect(midAttachment.attached).toBe(true);
+    expect(midAttachment.textInside).toBe(true);
+    expect(midAttachment.labels.filter((label) => label === '321321')).toHaveLength(3);
+    const midLabels = await routedLabelDistances(page, '321321');
+    expect(midLabels).toHaveLength(3);
+    midLabels.forEach((entry) => expect(entry.distance).toBeLessThan(90));
+    for (const route of midAttachment.ids) {
+      const arrow = await routedArrowDistance(page, route.id);
+      expect(arrow).not.toBeNull();
+      expect(arrow.routeId).toBe(route.id);
+      expect(arrow.distance).toBeLessThan(32);
+    }
+    expect(await routesAreOrthogonal(page, midAttachment.ids.map((route) => route.id))).toBe(true);
+
+    await page.mouse.up();
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/node "NormalTurn" x=/);
+    const attachment = await activityAttachment();
     expect(attachment.routeCount).toBe(4);
     expect(attachment.attached).toBe(true);
     expect(attachment.textInside).toBe(true);
     expect(attachment.labels.filter((label) => label === '321321')).toHaveLength(3);
+    const settledLabels = await routedLabelDistances(page, '321321');
+    expect(settledLabels).toHaveLength(3);
+    settledLabels.forEach((entry) => expect(entry.distance).toBeLessThan(90));
+    for (const route of attachment.ids) {
+      const arrow = await routedArrowDistance(page, route.id);
+      expect(arrow).not.toBeNull();
+      expect(arrow.distance).toBeLessThan(32);
+    }
+    expect(await routesAreOrthogonal(page, attachment.ids.map((route) => route.id))).toBe(true);
   });
 
   test('UML tutorial uses the standard instruction chrome and a draggable splitter', async ({ page }) => {

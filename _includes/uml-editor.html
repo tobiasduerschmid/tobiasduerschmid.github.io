@@ -1265,6 +1265,19 @@ html.dark-mode .uml-pg-extend-line {
   stroke: #7cc4ff;
 }
 
+/* Drop-position indicator shown while dragging a fragment to a new vertical
+   slot. Drawn the full width of the SVG viewport. */
+.uml-pg-frag-drop-indicator {
+  stroke: #2774AE;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+html.dark-mode .uml-pg-frag-drop-indicator {
+  stroke: #7cc4ff;
+}
+
 /* Relation chooser popup */
 .uml-pg-relation-chooser {
   position: fixed;
@@ -3819,6 +3832,9 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       var existingPositions = readLayoutPositions(textarea.value);
       for (var i = 0; i < editables.length; i++) {
         var item = editables[i];
+        if (/^note:\d+$/.test(String(item.id || '')) && item.id !== selectedLayoutId && !existingPositions[item.id]) {
+          continue;
+        }
         if ((item.axis === 'branch-label' || item.axis === 'label') && item.id !== selectedLayoutId) {
           if (existingPositions[item.id]) {
             positions[item.id] = {
@@ -4217,12 +4233,41 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return null;
     }
 
+    function routeSegmentIsHorizontal(a, b) {
+      return Math.abs((a && a.y) - (b && b.y)) <= Math.abs((a && a.x) - (b && b.x));
+    }
+
+    function shiftRouteEndpointBend(points, atStart, delta) {
+      if (!delta || !points || points.length < 2) return;
+      var endpointIndex = atStart ? 0 : points.length - 1;
+      var bendIndex = atStart ? 1 : points.length - 2;
+      var originalEndpoint = points[endpointIndex];
+      var originalBend = points[bendIndex];
+      if (!originalEndpoint || !originalBend) return;
+      if (routeSegmentIsHorizontal(originalEndpoint, originalBend)) {
+        points[bendIndex].y += delta.y;
+      } else {
+        points[bendIndex].x += delta.x;
+      }
+    }
+
+    function shiftedTwoPointRoute(points, sourceDelta, targetDelta) {
+      var start = { x: points[0].x + (sourceDelta ? sourceDelta.x : 0), y: points[0].y + (sourceDelta ? sourceDelta.y : 0) };
+      var end = { x: points[1].x + (targetDelta ? targetDelta.x : 0), y: points[1].y + (targetDelta ? targetDelta.y : 0) };
+      if (Math.abs(start.x - end.x) < 0.5 || Math.abs(start.y - end.y) < 0.5) return [start, end];
+      if (routeSegmentIsHorizontal(points[0], points[1])) {
+        return [start, { x: end.x, y: start.y }, end];
+      }
+      return [start, { x: start.x, y: end.y }, end];
+    }
+
     // When both endpoints of a route ride along with the same delta — a
     // self-message anchored to one lifeline, a self-association on a single
     // class, or a route whose source and target are both inside a group
     // move — the entire path needs to shift uniformly so kinks and loop
     // corners stay in their proper place relative to the moved node.
-    // Otherwise we shift only the matching endpoint(s).
+    // Otherwise we shift only the matching endpoint(s), plus the adjacent
+    // bend point so orthogonal routes stay orthogonal during live dragging.
     function shiftRoutePoints(points, sourceDelta, targetDelta) {
       var next = clonePoints(points);
       if (!next.length) return next;
@@ -4235,11 +4280,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         }
         return next;
       }
+      if (next.length === 2 && (sourceDelta || targetDelta)) {
+        return shiftedTwoPointRoute(next, sourceDelta, targetDelta);
+      }
       if (sourceDelta && next[0]) {
+        shiftRouteEndpointBend(next, true, sourceDelta);
         next[0].x += sourceDelta.x;
         next[0].y += sourceDelta.y;
       }
       if (targetDelta && next[next.length - 1]) {
+        shiftRouteEndpointBend(next, false, targetDelta);
         var end = next.length - 1;
         next[end].x += targetDelta.x;
         next[end].y += targetDelta.y;
@@ -4794,15 +4844,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function moveSequenceMessageToY(routeId, svg, canvasY) {
-      var meta = relationInfoForRouteId(routeId);
-      var movingFragId = null;
-      if (meta && meta.lineIdx !== -1) {
-        // If the message is the sole content of a fragment branch, dragging it
-        // out should not be treated as collapsing into the same fragment — but
-        // we exclude no fragments here since the moving message itself is what
-        // we're repositioning, not the fragment.
-      }
-      return moveSequenceMessageBlockToLine(routeId, sequenceInsertLineForY(svg, canvasY, routeId, { excludeFragId: movingFragId }));
+      return moveSequenceMessageBlockToLine(routeId, sequenceInsertLineForY(svg, canvasY, routeId));
     }
 
     function moveSequenceMessageBy(routeId, delta) {
@@ -5174,6 +5216,37 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         announce('Moved fragment later.', false);
         return true;
       }
+    }
+
+    /**
+     * Move a fragment block (opener + branches + nested content + end) so that
+     * it lands BEFORE the given source line. No-op if that lands inside the
+     * fragment itself.
+     */
+    function moveSequenceFragmentToLine(fragId, insertBeforeLine) {
+      var info = fragmentInfoForId(fragId);
+      if (!info || info.endIdx === -1) return false;
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      clearSequenceMessageLayoutMetadata(positions, routes);
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var blockStart = info.startIdx;
+      var blockEnd = info.endIdx;
+      var insertAt = Math.max(0, Math.min(lines.length, Math.round(Number(insertBeforeLine))));
+      if (insertAt >= blockStart && insertAt <= blockEnd + 1) return false;
+      snapshotForUndo('frag-move:' + fragId);
+      var chunk = lines.splice(blockStart, blockEnd - blockStart + 1);
+      if (insertAt > blockStart) insertAt -= chunk.length;
+      lines.splice.apply(lines, [insertAt, 0].concat(chunk));
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender('frag:' + insertAt, 'fragment');
+      renderDiagram();
+      announce('Moved fragment.', false);
+      return true;
+    }
+
+    function moveSequenceFragmentToY(fragId, svg, canvasY) {
+      return moveSequenceFragmentToLine(fragId, sequenceInsertLineForY(svg, canvasY, null, { excludeFragId: fragId }));
     }
 
     /**
@@ -6928,6 +7001,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     var relationChooser = null;
     var extendDragState = null;
     var sequenceMessageDragState = null;
+    var fragmentDragState = null;
 
     function closeRelationChooser() {
       if (relationChooser && relationChooser.parentNode) relationChooser.parentNode.removeChild(relationChooser);
@@ -7402,6 +7476,77 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         sequenceMessageDragState.sourceHitbox.classList.remove('is-relation-source');
       }
       sequenceMessageDragState = null;
+    }
+
+    function cancelFragmentDrag() {
+      if (!fragmentDragState) return;
+      if (fragmentDragState.indicator && fragmentDragState.indicator.parentNode) {
+        fragmentDragState.indicator.parentNode.removeChild(fragmentDragState.indicator);
+      }
+      fragmentDragState = null;
+    }
+
+    function startFragmentDrag(svg, layer, frag, event, extend) {
+      if (!svg || !layer || !frag) return false;
+      var ns = 'http://www.w3.org/2000/svg';
+      var pt = editorCanvasPoint(svg, event.clientX, event.clientY);
+      fragmentDragState = {
+        svg: svg,
+        layer: layer,
+        frag: frag,
+        indicator: null,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startCanvasY: pt.y,
+        moved: false,
+        extend: !!extend
+      };
+      if (event.currentTarget && event.currentTarget.setPointerCapture) {
+        try { event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
+      }
+      return true;
+    }
+
+    function updateFragmentDrag(ev, finish) {
+      if (!fragmentDragState) return;
+      var state = fragmentDragState;
+      var dx = ev.clientX - state.startClientX;
+      var dy = ev.clientY - state.startClientY;
+      if (!state.moved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        state.moved = true;
+        var ns = 'http://www.w3.org/2000/svg';
+        var view = parseSvgViewBox(state.svg) || { x: 0, y: 0, width: 4000, height: 4000 };
+        var indicator = document.createElementNS(ns, 'line');
+        indicator.setAttribute('class', 'uml-pg-frag-drop-indicator');
+        indicator.setAttribute('x1', view.x + 8);
+        indicator.setAttribute('x2', view.x + view.width - 8);
+        indicator.setAttribute('y1', state.startCanvasY);
+        indicator.setAttribute('y2', state.startCanvasY);
+        state.layer.appendChild(indicator);
+        state.indicator = indicator;
+        announce('Drag the fragment "' + state.frag.id + '" to a new vertical position. Release to move. Esc to cancel.', true);
+      }
+      var pt = editorCanvasPoint(state.svg, ev.clientX, ev.clientY);
+      if (state.moved && state.indicator) {
+        state.indicator.setAttribute('y1', pt.y);
+        state.indicator.setAttribute('y2', pt.y);
+      }
+      if (!finish) return;
+
+      if (state.indicator && state.indicator.parentNode) {
+        state.indicator.parentNode.removeChild(state.indicator);
+      }
+      var fragId = state.frag.id;
+      var svg = state.svg;
+      var moved = state.moved;
+      var extend = state.extend;
+      fragmentDragState = null;
+
+      if (!moved) {
+        setSelectedLayoutId(fragId, 'fragment', extend ? { extend: true } : undefined);
+        return;
+      }
+      moveSequenceFragmentToY(fragId, svg, pt.y);
     }
 
     function findSequenceMessageDropTarget(state, clientX, clientY) {
@@ -10391,7 +10536,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             event.preventDefault();
             event.stopPropagation();
             var extend = event.metaKey || event.ctrlKey || event.shiftKey;
-            selectFragment(extend);
+            startFragmentDrag(svg, layer, frag, event, extend);
           }
           function onContext(event) {
             event.preventDefault();
@@ -11678,6 +11823,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (sequenceMessageDragState) updateSequenceMessageDrag(event, false);
       if (extendDragState) updateExtendDrag(event, false);
       if (paletteDragState) updatePaletteDrag(event, false);
+      if (fragmentDragState) updateFragmentDrag(event, false);
     });
 
     document.addEventListener('pointerup', function (event) {
@@ -11685,6 +11831,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (sequenceMessageDragState) updateSequenceMessageDrag(event, true);
       if (extendDragState) updateExtendDrag(event, true);
       if (paletteDragState) updatePaletteDrag(event, true);
+      if (fragmentDragState) updateFragmentDrag(event, true);
     });
 
     if (editToggle) {
@@ -11693,6 +11840,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (!editToggle.checked) {
           dragState = null;
           cancelSequenceMessageDrag();
+          cancelFragmentDrag();
           setSelectedLayoutId(null);
           setActiveTool(null);
           clearEditLayer();
@@ -11707,6 +11855,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     if (toolCancel) {
       toolCancel.addEventListener('click', function () {
         cancelSequenceMessageDrag();
+        cancelFragmentDrag();
         setActiveTool(null);
         announce('Cancelled.', false);
       });
@@ -11956,6 +12105,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         if (sequenceMessageDragState) {
           event.preventDefault();
           cancelSequenceMessageDrag();
+          announce('Cancelled.', false);
+        } else if (fragmentDragState) {
+          event.preventDefault();
+          cancelFragmentDrag();
           announce('Cancelled.', false);
         } else if (activeTool) {
           event.preventDefault();
