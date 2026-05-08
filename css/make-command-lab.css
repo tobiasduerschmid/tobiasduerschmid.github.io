@@ -49,7 +49,7 @@ html:not(.dark-mode) .make-command-lab {
   --mcl-btn-restart-bg: #e0f2e9;
   --mcl-focus-ring: #0066cc;
   --mcl-code-bg: rgba(0,0,0,0.05);
-  --mcl-code-fg: #b8770b;
+  --mcl-code-fg: #8a4f06; /* WCAG AA: ≥4.5:1 vs the rendered ~#f2f2f2 code background */
   --mcl-output-bg: #f5f6f8;
   --mcl-output-fg: #1a1d29;
 }
@@ -229,11 +229,109 @@ html:not(.dark-mode) .make-command-lab {
   --mg-edge-stale: #d83a3a;
   --mg-node-bg: var(--mcl-card-bg);
   --mg-node-border: var(--mcl-border);
-  --mg-node-source-fg: var(--mcl-muted);
+  /* Source-file label fg uses a stronger value than --mcl-muted (which is
+     tuned for hint/caption text) so the file names in the DAG read at
+     AAA contrast (~11:1) against the canvas. Per-mode below. */
+  --mg-node-source-fg: #d4d8e6;
   --mg-fresh: #1f9b3d;
   --mg-stale: #d83a3a;
   --mg-phony: #b8770b;
   --mg-focus-ring: var(--mcl-focus-ring);
+}
+html:not(.dark-mode) .make-command-lab .tvm-make-dag-svg {
+  /* Light-mode source-fg at ~10.9:1 vs canvas #fafbfc. */
+  --mg-node-source-fg: #34384a;
+}
+
+/* Tabbed view — Graph / Makefile. The tablist sits above the panels and
+   uses ARIA tab semantics (role=tablist, role=tab, role=tabpanel). The
+   styles intentionally mirror the existing graph "data-state-label" chip
+   so the visual language stays consistent with the rest of the lab. */
+.make-command-lab__tabs {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.make-command-lab__tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.make-command-lab__tab {
+  font: inherit;
+  padding: 6px 12px;
+  min-height: 36px;
+  background: transparent;
+  color: var(--mcl-fg);
+  border: 1.5px solid var(--mcl-border);
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+.make-command-lab__tab:hover {
+  background: var(--mcl-btn-bg-hover);
+}
+.make-command-lab__tab[aria-selected="true"] {
+  background: var(--mcl-btn-bg);
+  border-bottom-color: var(--mcl-btn-bg);
+}
+.make-command-lab__tab:focus-visible {
+  outline: 3px solid var(--mcl-focus-ring);
+  outline-offset: 2px;
+}
+
+.make-command-lab__tabpanel {
+  min-width: 0;
+}
+.make-command-lab__tabpanel[hidden] {
+  display: none;
+}
+
+/* Makefile source pane — terminal/code-block visual treatment, with a
+   visible focus ring so keyboard users know it's scrollable. Inherits
+   paragraph font-size from the surrounding article (per CLAUDE.md
+   "Minimum font sizes — readable text is paragraph-size"). */
+.make-command-lab__makefile {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--mcl-output-bg);
+  color: var(--mcl-output-fg);
+  border: 1px solid var(--mcl-border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  tab-size: 4;
+}
+.make-command-lab__makefile:focus-visible {
+  outline: 3px solid var(--mcl-focus-ring);
+  outline-offset: 2px;
+}
+.make-command-lab__makefile code {
+  font: inherit;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* Print: reveal both panels stacked so paper readers see graph + Makefile.
+   The interactive controls are hidden via .make-command-lab__row { display:none }
+   below; the print-steps section already takes care of the per-step graphs. */
+@media print {
+  .make-command-lab__tabpanel[hidden] {
+    display: block !important;
+  }
+  .make-command-lab__tablist {
+    display: none;
+  }
+  .make-command-lab__makefile {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 }
 
 /* Static (non-interactive) variant — just a labelled graph. */

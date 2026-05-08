@@ -493,6 +493,12 @@
     svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
+    // WCAG 2.5.8: each focusable <g> must render ≥ 24x24 CSS px. Pin a
+    // min-width that keeps the SVG-to-CSS scale at ≥ 24/nodeH so nodeH
+    // never shrinks below 24 CSS px even at 320 px viewports. The parent
+    // .tvm-make-dag-canvas has overflow-x: auto so the user can scroll.
+    var minScale = 24 / nodeH;
+    svg.style.minWidth = Math.ceil(width * minScale) + 'px';
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label',
       'Dependency graph: ' + data.nodes.length + ' nodes, ' + data.edges.length + ' edges');

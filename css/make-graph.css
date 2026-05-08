@@ -31,7 +31,9 @@
   /* Node border at 3.6:1 contrast vs node-bg #161823 — meets WCAG 1.4.11
      for graphical objects. The earlier #3a3e52 was only 1.7:1. */
   --mg-node-border: #6c728a;
-  --mg-node-source-fg: #b3b8c8;
+  /* Source-file label fg at ~11.5:1 vs canvas #1d1f2a — comfortably
+     exceeds WCAG AAA (7:1). Previously #b3b8c8 (~7.5:1). */
+  --mg-node-source-fg: #d4d8e6;
   --mg-fresh: #4caf50;
   --mg-stale: #ff5454;
   --mg-phony: #e6a847;
@@ -44,6 +46,10 @@
   min-height: 200px;
   display: flex;
   justify-content: center;
+  /* Allow horizontal scroll on narrow viewports so SVG nodes can keep
+     their WCAG 2.5.8 minimum 24x24 CSS-px target size (set via inline
+     min-width in js/make-graph.js based on viewBox geometry). */
+  overflow-x: auto;
 }
 .tvm-make-dag-svg {
   display: block;
@@ -206,7 +212,9 @@ html:not(.dark-mode) .tvm-make-dag-legend {
   /* Node border at 3.85:1 contrast vs node-bg #ffffff — meets WCAG 1.4.11
      for graphical objects. The earlier #c4c8d3 was only 1.7:1. */
   --mg-node-border: #7d8294;
-  --mg-node-source-fg: #5a5e6b;
+  /* Source-file label fg at ~10.9:1 vs canvas #fafbfc — comfortably
+     exceeds WCAG AAA (7:1). Previously #5a5e6b (~6.5:1). */
+  --mg-node-source-fg: #34384a;
   --mg-fresh: #1f9b3d;
   --mg-stale: #d83a3a;
   --mg-phony: #b8770b;

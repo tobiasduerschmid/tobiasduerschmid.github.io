@@ -138,19 +138,11 @@ The XKCD strip "Bobby Tables" — *Robert'); DROP TABLE Students;--* — capture
 
 ## Cross-Site Scripting (XSS)
 
-Suppose a social-media site renders user comments into the page like this (pseudo-HTML):
-
-```html
-<div class="comment">
-  <span class="author">Paul Eggert</span>
-  <span class="body">Facts</span>
-</div>
-```
-
+Suppose a social-media site renders user comments into the page.
 If the site renders the comment body by **concatenating it into the HTML document**, an attacker can post a comment whose body is:
 
 ```html
-<script>alert("USC IS BETTER!!!")</script>
+<script>alert("Running JavaScript in the Client")</script>
 ```
 
 When any other user's browser fetches the page, that `<script>` tag is part of the document, so the browser **executes it** — believing it came from the trusted site. The alert box is harmless theatre; the *real* danger is that the script can read the victim's cookies, session tokens, or DOM, and ship them off to an attacker-controlled server:

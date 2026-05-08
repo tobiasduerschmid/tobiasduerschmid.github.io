@@ -89,7 +89,7 @@ test.describe('Spec Card widget — persistence', () => {
   });
 
   test('all five fields round-trip through localStorage', async ({ page }) => {
-    const widget = page.getByRole('region', { name: /spec card/i }).first();
+    const widget = page.locator('.spec-card-widget').first();
     const values = {
       behavior: 'User can sign in',
       should_pass_when: 'CSS rename, button restyle',
@@ -98,7 +98,7 @@ test.describe('Spec Card widget — persistence', () => {
       oracle: 'User lands on /dashboard',
     };
 
-    await widget.getByLabel(/^✓ behavior$/i).fill(values.behavior);
+    await widget.getByLabel(/behavior/i).fill(values.behavior);
     await widget.getByLabel(/should pass when/i).fill(values.should_pass_when);
     await widget.getByLabel(/should fail when/i).fill(values.should_fail_when);
     await widget.getByLabel(/locator contract/i).fill(values.locator_contract);
@@ -166,7 +166,7 @@ test.describe('Spec Card widget — appearance', () => {
     await page.goto(TOOL_URL);
     await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
 
-    const widget = page.getByRole('region', { name: /spec card/i }).first();
+    const widget = page.locator('.spec-card-widget').first();
     const bg = await widget.evaluate((el) => getComputedStyle(el).backgroundColor);
     const fg = await widget.evaluate((el) => getComputedStyle(el).color);
 
@@ -179,7 +179,7 @@ test.describe('Spec Card widget — appearance', () => {
     await page.goto(TOOL_URL);
     await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
 
-    const widget = page.getByRole('region', { name: /spec card/i }).first();
+    const widget = page.locator('.spec-card-widget').first();
     const bg = await widget.evaluate((el) => getComputedStyle(el).backgroundColor);
     const fg = await widget.evaluate((el) => getComputedStyle(el).color);
 

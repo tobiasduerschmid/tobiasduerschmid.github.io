@@ -13,6 +13,8 @@ linter: true
 # during the Playwright spec — long enough to see the countdown tick.
 cooldown_seconds: 3
 
+# Pyodide writes editor files under /tutorial/; tests `from main import …`
+# need that directory on sys.path or the module isn't found.
 setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial')"
 
@@ -55,7 +57,7 @@ steps:
          can't bypass it.
 
     files:
-      - path: /tutorial/main.py
+      - path: "main.py"
         language: python
         content: |
           def answer():
@@ -65,6 +67,11 @@ steps:
     tests:
       - description: "answer() returns 42"
         command: |
+          # Drop any cached `main` so editing the file between runs is picked
+          # up. Without this, Python's import cache holds the previous body
+          # and `I’m sure` after a code edit looks like the test still fails.
+          import sys
+          sys.modules.pop('main', None)
           from main import answer
           got = answer()
           assert got == 42, "answer() returned " + repr(got) + ", expected 42"
@@ -75,7 +82,7 @@ steps:
 
     solution:
       files:
-        - path: /tutorial/main.py
+        - path: "main.py"
           language: python
           content: |
             def answer():
@@ -84,3 +91,28 @@ steps:
         The function literally just needs to return `42`. The point of
         this demo isn't the code — it's experiencing the cooldown gate
         and the `I’m sure` silent override around it.
+
+  # Pedagogy: spaced recall — name the moves the student just made,
+  # so the cooldown rule and the silent override land as one mental model.
+  - title: "What You Just Saw"
+    instructions: |
+      ### Why this matters
+
+      A short cooldown does for testing what a thoughtful pause does for
+      replying: it gives the failure feedback time to sink in. The
+      `I’m sure` override keeps the gate from being annoying when you
+      really do know better.
+
+      ### 🎯 You will learn to
+
+      - Recall the difference between the visible run and the silent override
+      - Evaluate when a cooldown helps vs hinders learning
+
+      ### Recap
+
+      - The **visible** run gives feedback **and** starts the cooldown.
+      - The **silent** run hides the result panel; if it passes, Next
+        unlocks anyway.
+      - The end timestamp lives in `localStorage`, so refreshing can't
+        bypass the wait — but the entry is auto-cleaned once the timer
+        expires.

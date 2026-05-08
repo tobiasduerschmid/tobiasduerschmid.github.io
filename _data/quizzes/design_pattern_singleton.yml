@@ -22,6 +22,25 @@ questions:
         SRP concerns can appear, but POSA5's critique here is more specific: Singleton mixes "there should be one instance" with "any code can reach it globally."
     explanation: "**Singleton conflates legitimate lifetime management with a harmful global access point, introducing hidden coupling and making tests harder to isolate.** The criticism targets the **solution**, not the problem. Ensuring a single instance is a legitimate need. But using a `static getInstance()` method as a global access point (1) creates hidden dependencies, (2) prevents ordinary constructor-based substitution with test doubles, and (3) tightly couples all consumers to a specific context. **DI containers** solve the lifetime problem without introducing global access."
 
+  - id: 2
+    type: single
+    question: |
+      Two threads simultaneously call `getInstance()` on a classic lazy Singleton. Both find `uniqueInstance == null` and both create a new instance. Which thread-safety approach eliminates this race condition with the **simplest** implementation and **no per-call synchronization overhead** — at the cost of not being lazy?
+    options:
+      - "Synchronize the entire `getInstance()` method"
+      - "Use eager instantiation (create the instance when the class is loaded)"
+      - "Use double-checked locking with `volatile`"
+      - "Use a global lock on all Singleton access"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Synchronizing `getInstance()` is simple and correct, but it pays synchronization cost on calls after the instance already exists. The question asks for the simple approach that avoids per-call synchronization by giving up laziness.
+      2: |
+        Double-checked locking can preserve laziness with `volatile`, but it is easier to get wrong and more complex than eager initialization. It is not the simplest answer in this prompt.
+      3: |
+        A broad global lock can serialize unrelated access and still adds locking complexity. The race is solved more simply by creating the instance during class initialization.
+    explanation: "**Eager instantiation eliminates the race condition without per-call synchronization by creating the instance at class-load time, at the cost of not being lazy.** **Eager instantiation** creates the instance when the class is loaded (in a static field initializer), eliminating the race condition; subsequent calls just return the already-created static field. The trade-off is that the instance is created even if it is never used. **Synchronized `getInstance()`** works but forces every call through synchronization. **Double-checked locking** preserves laziness with low overhead after initialization (typically a volatile read), but is significantly more complex to implement correctly."
+
   - id: 3
     type: single
     difficulty: intermediate
@@ -44,7 +63,6 @@ questions:
 
   - id: 4
     type: single
-    difficulty: intermediate
     question: |
       A developer argues: "Our `Logger` class uses the Singleton pattern, and it's fine — we never need to test it." What is wrong with this reasoning?
     options:
@@ -64,7 +82,7 @@ questions:
 
   - id: 5
     type: multiple
-    difficulty: advanced
+    difficulty: expert
     question: |
       Which of the following are legitimate reasons to **use** the Singleton pattern? (Select all that apply)
     options:

@@ -1768,7 +1768,8 @@ html:not(.dark-mode) .tvm-git-graph-container {
   --mg-edge-stale: #ff6b6b;
   --mg-node-bg: #232442;
   --mg-node-border: #3d3f5c;
-  --mg-node-source-fg: #9aa0b3;
+  /* Source-file label fg at ~10.5:1 vs panel bg #1a1a2e — exceeds AAA. */
+  --mg-node-source-fg: #d4d8e6;
   --mg-fresh: #4cd97b;
   --mg-stale: #ff6b6b;
   --mg-phony: #f0c674;
@@ -2021,7 +2022,8 @@ html:not(.dark-mode) .tvm-make-dag-panel {
   --mg-edge-stale: #d83a3a;
   --mg-node-bg: #ffffff;
   --mg-node-border: #c4c8d3;
-  --mg-node-source-fg: #6e7280;
+  /* Source-file label fg at ~10.9:1 vs panel bg #fafbfc — exceeds AAA. */
+  --mg-node-source-fg: #34384a;
   --mg-fresh: #1f9b3d;
   --mg-stale: #d83a3a;
   --mg-phony: #b8770b;

@@ -4088,7 +4088,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function clonePoints(points) {
-      return (points || []).map(function (p) { return { x: Number(p.x), y: Number(p.y) }; });
+      if (window.UMLShared && window.UMLShared.cloneRoutePoints) {
+        return window.UMLShared.cloneRoutePoints(points);
+      }
+      return (points || []).map(function (p) { return { x: Number(p.x) || 0, y: Number(p.y) || 0 }; });
     }
 
     function pointsBox(points) {
@@ -4233,68 +4236,11 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       return null;
     }
 
-    function routeSegmentIsHorizontal(a, b) {
-      return Math.abs((a && a.y) - (b && b.y)) <= Math.abs((a && a.x) - (b && b.x));
-    }
-
-    function shiftRouteEndpointBend(points, atStart, delta) {
-      if (!delta || !points || points.length < 2) return;
-      var endpointIndex = atStart ? 0 : points.length - 1;
-      var bendIndex = atStart ? 1 : points.length - 2;
-      var originalEndpoint = points[endpointIndex];
-      var originalBend = points[bendIndex];
-      if (!originalEndpoint || !originalBend) return;
-      if (routeSegmentIsHorizontal(originalEndpoint, originalBend)) {
-        points[bendIndex].y += delta.y;
-      } else {
-        points[bendIndex].x += delta.x;
-      }
-    }
-
-    function shiftedTwoPointRoute(points, sourceDelta, targetDelta) {
-      var start = { x: points[0].x + (sourceDelta ? sourceDelta.x : 0), y: points[0].y + (sourceDelta ? sourceDelta.y : 0) };
-      var end = { x: points[1].x + (targetDelta ? targetDelta.x : 0), y: points[1].y + (targetDelta ? targetDelta.y : 0) };
-      if (Math.abs(start.x - end.x) < 0.5 || Math.abs(start.y - end.y) < 0.5) return [start, end];
-      if (routeSegmentIsHorizontal(points[0], points[1])) {
-        return [start, { x: end.x, y: start.y }, end];
-      }
-      return [start, { x: start.x, y: end.y }, end];
-    }
-
-    // When both endpoints of a route ride along with the same delta — a
-    // self-message anchored to one lifeline, a self-association on a single
-    // class, or a route whose source and target are both inside a group
-    // move — the entire path needs to shift uniformly so kinks and loop
-    // corners stay in their proper place relative to the moved node.
-    // Otherwise we shift only the matching endpoint(s), plus the adjacent
-    // bend point so orthogonal routes stay orthogonal during live dragging.
     function shiftRoutePoints(points, sourceDelta, targetDelta) {
-      var next = clonePoints(points);
-      if (!next.length) return next;
-      var bothMatchSameDelta = sourceDelta && targetDelta &&
-        sourceDelta.x === targetDelta.x && sourceDelta.y === targetDelta.y;
-      if (bothMatchSameDelta) {
-        for (var i = 0; i < next.length; i++) {
-          next[i].x += sourceDelta.x;
-          next[i].y += sourceDelta.y;
-        }
-        return next;
+      if (window.UMLShared && window.UMLShared.shiftRoutePoints) {
+        return window.UMLShared.shiftRoutePoints(points, sourceDelta, targetDelta);
       }
-      if (next.length === 2 && (sourceDelta || targetDelta)) {
-        return shiftedTwoPointRoute(next, sourceDelta, targetDelta);
-      }
-      if (sourceDelta && next[0]) {
-        shiftRouteEndpointBend(next, true, sourceDelta);
-        next[0].x += sourceDelta.x;
-        next[0].y += sourceDelta.y;
-      }
-      if (targetDelta && next[next.length - 1]) {
-        shiftRouteEndpointBend(next, false, targetDelta);
-        var end = next.length - 1;
-        next[end].x += targetDelta.x;
-        next[end].y += targetDelta.y;
-      }
-      return next;
+      return clonePoints(points);
     }
 
     function applyConnectedRouteDeltas(routes, deltas, layer) {

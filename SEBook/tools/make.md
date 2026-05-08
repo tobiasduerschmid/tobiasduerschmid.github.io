@@ -333,6 +333,7 @@ When you run `make`, it walks this graph from the top. For each target, it asks 
   "title": "Touch main.c, then run make",
   "description": "You edit `main.c`. Watch the cascade of staleness, then how `make` rebuilds *only* what changed. The two-step rhythm is the entire developer feedback loop: **edit → make**, every time.",
   "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h",
+  "makefile": "app: main.o util.o\n\tgcc -o app main.o util.o\n\nmain.o: main.c shared.h\n\tgcc -c main.c -o main.o\n\nutil.o: util.c shared.h\n\tgcc -c util.c -o util.o\n",
   "initialState": {
     "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 }
   },
@@ -363,6 +364,7 @@ A common student misconception: *"if anything changes, `make` recompiles everyth
   "command": "make clean",
   "description": "`clean` is **phony** (dashed border, crosshair glyph). `make` doesn't compare timestamps for phony targets — it always runs the recipe. Here the recipe is `rm -f *.o app`. After it runs, `app`, `main.o`, `util.o` no longer exist on disk; they show as stale (red hatched stripe) because there's no file to compare against. Sources `main.c`/`util.c` are never touched.",
   "topology": "app: main.o util.o\nmain.o: main.c\nutil.o: util.c\n.PHONY: clean\nclean:",
+  "makefile": "app: main.o util.o\n\tgcc -o app main.o util.o\n\nmain.o: main.c\n\tgcc -c main.c -o main.o\n\nutil.o: util.c\n\tgcc -c util.c -o util.o\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n",
   "before": { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 } },
   "after":  { "mtime": { "main.c": 1, "util.c": 1 } },
   "undoCommand": "(restore from backup)"
@@ -380,6 +382,7 @@ The contrast that makes this concept stick: a non-phony target with no prerequis
   "command": "echo something > build/log",
   "description": "An *order-only* prerequisite (after the `|` in the Makefile rule) tells `make`: \"this must **exist** before I run, but don't trigger a rebuild just because it has a newer mtime.\" The classic use is a build directory whose mtime updates every time a file is written into it — without order-only, every `.o` would be rebuilt every time. **Notice:** the `app → build` edge is **dashed**. After we touch `build`, its mtime is the newest in the graph — but `app` stays *up to date*. With a normal edge, `app` would be marked stale.",
   "topology": "app: main.o util.o | build\nmain.o: main.c\nutil.o: util.c\nbuild:",
+  "makefile": "app: main.o util.o | build\n\tgcc -o app main.o util.o\n\nmain.o: main.c\n\tgcc -c main.c -o main.o\n\nutil.o: util.c\n\tgcc -c util.c -o util.o\n\nbuild:\n\tmkdir -p build\n",
   "before": { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3, "build": 1 } },
   "after":  { "mtime": { "main.c": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3, "build": 5 } }
 }
@@ -396,6 +399,7 @@ Order-only is the answer to one of the most painful "why does my build keep redo
   "title": "A full edit / build / clean / rebuild cycle",
   "description": "The full developer rhythm. We start fresh, edit a *header* (which has a wider blast radius than a single .c), rebuild, clean, and rebuild from scratch. Each step shows which files are touched and which are skipped.",
   "topology": "app: main.o util.o\nmain.o: main.c shared.h\nutil.o: util.c shared.h\n.PHONY: clean\nclean:",
+  "makefile": "app: main.o util.o\n\tgcc -o app main.o util.o\n\nmain.o: main.c shared.h\n\tgcc -c main.c -o main.o\n\nutil.o: util.c shared.h\n\tgcc -c util.c -o util.o\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n",
   "initialState": {
     "mtime": { "main.c": 1, "shared.h": 1, "util.c": 1, "main.o": 2, "util.o": 2, "app": 3 }
   },
