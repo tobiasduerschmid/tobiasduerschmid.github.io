@@ -342,6 +342,11 @@
       this.channel = new window.SEBookNodeChannel(this, this.t);
     } else if (backend === 'browser' && window.SEBookBrowserChannel) {
       this.channel = new window.SEBookBrowserChannel(this, this.t);
+    } else if (backend === 'v86' && this.t.debuggerKind === 'gdb' && window.SEBookGdbChannel) {
+      // C-tutorial GDB/MI channel. The vmIO interface adapts v86's
+      // single-byte serial0 listener into the chunk-or-byte API the
+      // channel expects; the parser tolerates either shape.
+      this.channel = new window.SEBookGdbChannel(this, this._makeV86Io());
     }
     if (this.channel && typeof this.channel.install === 'function') this.channel.install();
     this.attachWorkerListener();
@@ -382,6 +387,30 @@
       // late-bound state (e.g. activeFile) changed since construction.
       self.sync.replaceState(self._buildSyncState());
     });
+  };
+
+  // vmIO adapter used by SEBookGdbChannel. Translates the controller's
+  // generic write / onBytes / removeListener API into v86's serial-port
+  // primitives. Kept here (not in the channel) so the channel module
+  // stays unit-testable without v86 globals.
+  DebuggerController.prototype._makeV86Io = function () {
+    var t = this.t;
+    return {
+      write: function (text) {
+        if (t.emulator && t.emulator.serial0_send) t.emulator.serial0_send(text);
+      },
+      onBytes: function (cb) {
+        this._cb = cb;
+        if (t.emulator && t.emulator.add_listener) {
+          t.emulator.add_listener('serial0-output-byte', cb);
+        }
+      },
+      removeListener: function (cb) {
+        if (t.emulator && t.emulator.remove_listener) {
+          try { t.emulator.remove_listener('serial0-output-byte', cb); } catch (e) { /* ignore */ }
+        }
+      },
+    };
   };
 
   DebuggerController.prototype._installEditorAttachments = function () {
@@ -3101,6 +3130,10 @@
     if (this.channel) {
       // NodeChannel: bypasses debugInit/runDebug postMessage handshake.
       this.session.pendingStart = null;
+      // gdb channel also reads `executable` from the tutorial's
+      // debugger_options (YAML). For other channels this is ignored —
+      // extra cfg fields are harmless.
+      var dbgOpts = (this.t.debuggerOptions || this.t.config && this.t.config.debuggerOptions) || {};
       this.channel.startSession({
         filename: path,
         code: code,
@@ -3108,6 +3141,7 @@
         breakpoints: this.collectBreakpointsForRun(),
         watches: this.session.watches,
         args: this.session.args || [],
+        executable: dbgOpts.executable || null,
         options: this.opts,
         serverMode: !!(step && step.http_client),
         overrides: this.session.replayOverrides || [],

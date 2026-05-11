@@ -42,7 +42,9 @@
   if (typeof module === 'object' && module.exports) {
     module.exports = factory();
   } else {
-    root.GdbMiParser = factory().GdbMiParser;
+    var mod = factory();
+    root.SEBookGdbMiParser = mod;
+    root.GdbMiParser = mod.GdbMiParser;  // legacy alias for ad-hoc console use
   }
 }(typeof self !== 'undefined' ? self : this, function () {
 

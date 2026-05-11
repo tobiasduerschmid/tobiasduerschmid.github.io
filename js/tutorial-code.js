@@ -419,9 +419,13 @@
     // true, _buildUI() lazy-loads the debugger module after the base UI is
     // constructed.
     this.debuggerEnabled = !!options.debugger && (
-      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser'
+      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' ||
+      // `debugger: 'gdb'` opts a v86-backend C tutorial into the
+      // GDB/MI channel (real gdb in the VM, no time-travel scrubbing).
+      (backend === 'v86' && options.debugger === 'gdb')
     );
     this.debuggerOptions = options.debuggerOptions || {};
+    this.debuggerKind = (options.debugger === 'gdb') ? 'gdb' : (this.debuggerEnabled ? 'time-travel' : null);
   }
 
   // ---------------------------------------------------------------------------
@@ -4949,6 +4953,7 @@
     var self = this;
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
+    var needsGdbChannel = self.config.backend === 'v86' && self.debuggerKind === 'gdb';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -5008,6 +5013,17 @@
         p = p.then(function () {
           if (window.SEBookBrowserChannel) return null;
           return loadScriptOnce('/js/debugger/browser-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      // v86 C-tutorial path: load the GDB/MI parser + channel which speak
+      // to a real gdb running inside the Linux VM.
+      if (needsGdbChannel) {
+        p = p.then(function () {
+          if (window.SEBookGdbMiParser) return null;
+          return loadScriptOnce('/js/debugger/gdb-mi-parser.js?v=' + dbgAssetVersion);
+        }).then(function () {
+          if (window.SEBookGdbChannel) return null;
+          return loadScriptOnce('/js/debugger/gdb-channel.js?v=' + dbgAssetVersion);
         });
       }
       p.then(attach).catch(reject);

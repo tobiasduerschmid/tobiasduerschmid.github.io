@@ -43,7 +43,9 @@
     var parser = require('./gdb-mi-parser.js');
     module.exports = factory(parser);
   } else {
-    root.GdbChannel = factory({ GdbMiParser: root.GdbMiParser }).GdbChannel;
+    var parserMod = root.SEBookGdbMiParser || { GdbMiParser: root.GdbMiParser };
+    var mod = factory(parserMod);
+    root.SEBookGdbChannel = mod.GdbChannel;
   }
 }(typeof self !== 'undefined' ? self : this, function (parserMod) {
 

@@ -642,7 +642,18 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # learning goal (e.g. UML modeling,
                                        # design exercises).
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
-debugger: boolean                      # Time-travel debugger (pyodide only).
+debugger: boolean | "gdb"              # Debugger opt-in. Values:
+                                       #   true / false — time-travel debugger
+                                       #     (pyodide / browser / node backends).
+                                       #     Records snapshots for every line so
+                                       #     the learner can scrub forward and
+                                       #     back.
+                                       #   "gdb"         — real gdb running
+                                       #     inside the v86 Linux VM, driven via
+                                       #     GDB/MI3. Forward stepping only (no
+                                       #     time-travel). Requires the v86
+                                       #     image rebuilt with the `gdb`
+                                       #     package. C tutorials only.
                                        # Start semantics (all backends): the
                                        # session runs until the first forward
                                        # stop condition (code breakpoint /
@@ -660,8 +671,22 @@ debugger: boolean                      # Time-travel debugger (pyodide only).
                                        # breakpoint there (see
                                        # `debugger_options.initial_breakpoints`)
                                        # rather than relying on a default.
-debugger_options: { ... }              # Per-tutorial debugger config
-                                       # (snapshot caps, breakpoint behavior).
+debugger_options: { ... }              # Per-tutorial debugger config.
+                                       # Time-travel backends use snapshot
+                                       # caps + breakpoint-behavior fields.
+                                       # gdb backend uses:
+                                       #   executable: "./hello"
+                                       #     Path (in /tutorial) of the
+                                       #     already-compiled binary to debug.
+                                       #     The author is responsible for
+                                       #     compiling with debug info (the
+                                       #     TCC wrapper at /usr/bin/gcc emits
+                                       #     line info with `-g`; locals are
+                                       #     partial — TCC limitation, not a
+                                       #     bug to chase). Multi-file projects
+                                       #     work out of the box; gdb resolves
+                                       #     `-break-insert FILE:LINE` against
+                                       #     the DWARF.
 uml_diagram: boolean                   # Live UML class+sequence diagram pane.
 uml_position: left | right | below | bottom-left | bottom-right
 uml_class_layout: portrait | landscape
@@ -1111,11 +1136,19 @@ channel.
 | Compiled languages     | ✅  | ❌      | (npm only)   | ❌    | ❌         |
 | `git`                  | ✅  | mocked  | ✅           | ❌    | ❌         |
 | Time-travel debugger   | ❌  | ✅      | ❌           | ❌    | ❌         |
+| GDB/MI debugger        | ✅¹ | ❌      | ❌           | ❌    | ❌         |
 | Live preview iframe    | ❌  | ❌      | ✅           | ✅    | ❌         |
 | Playwright tests       | ❌  | ❌      | ❌           | ✅    | ❌         |
 | UML assertion tests    | ❌  | ❌      | ❌           | ❌    | ✅         |
 | `pytest`               | ❌  | ✅      | ❌           | ❌    | ❌         |
 | Linter                 | ✅  | ✅      | ✅           | ✅    | ❌         |
+
+¹ GDB/MI debugger requires `debugger: gdb` in the tutorial YAML and a v86
+image rebuilt with the `gdb` package (`vm/build-rootfs.sh`). Forward stepping
+only — no time-travel scrub, no watches, no live variable edits in MVP. The
+in-VM compiler is TCC; line stepping works but locals/args are partial
+because TCC's DWARF is incomplete (this is a tradeoff, not a bug — real GCC
+does not fit in the VM alongside gdb).
 
 If you add a backend, update this table.
 
