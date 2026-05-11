@@ -295,7 +295,7 @@ steps:
             text: "The signature is `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:`. Then inside the function, replace `datetime.now()` with `clock.now()`."
           - title: "Strategic hint"
             text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter with the default value; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
-          - title: "Skeleton (you fill in the blanks)"
+          - title: "Fill in the blanks"
             text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=___) -> bool:\n    today = clock.___().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nFill the two blanks. Hints: (1) the default for `clock` is the datetime *class* (it has a `.now()` classmethod) — *not* the module and not a function. (2) The body should use the parameter `clock`, not the imported module directly. Note the top-level `import datetime` (the module), so you can reference `datetime.datetime` as the default."
 
     quiz:
@@ -762,7 +762,7 @@ steps:
           - title: "Strategic hint"
             text: "April 30, 2026 is a Thursday. The canned API list has exactly one Thursday entry. The SUT returns that entry's `title` field."
             condition: "code_missing: Battle the Lich King"
-          - title: "Skeleton (you fill in the title)"
+          - title: "Fill in the title"
             text: "Pin the assertion with `==` and the *exact* title from the matching canned entry:\n```python\nassert service.daily_quest_title(\"u456\") == \"___\"\n```\nThe matching canned entry is the one whose `weekday` field equals what `FrozenClock(datetime(2026, 4, 30, 12, 0))` returns. Use a calendar to confirm the weekday; copy the `title` field exactly (including capitalisation)."
             condition: "code_missing: Battle the Lich King"
 
@@ -1272,7 +1272,7 @@ steps:
           - title: "Small nudge — streak bonus"
             text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
             condition: "code_missing: 50"
-          - title: "Skeleton (fill the blanks; do not paste the answer)"
+          - title: "Fill the blanks (do not paste the answer)"
             text: |
               Liar comment template (write *your own* explanation — naming **why** `len(...) >= 0` is structurally trivial):
               ```python
@@ -1737,7 +1737,7 @@ steps:
           - title: "Strategic hint"
             text: "The SUT does `try: quests = self._api.fetch_quests(user_id) except ConnectionError: return 'No quests today'`. So `side_effect = ConnectionError` will trigger the catch branch."
             condition: "code_contains: side_effect = ValueError"
-          - title: "Skeleton (you fill in the exception class)"
+          - title: "Fill in the exception class"
             text: |
               Find the `try:` / `except ___:` block in `daily_quest_title` (in `quest_service.py`). Whatever class follows `except` is the same class that should follow `side_effect =`. Replace:
               ```python
@@ -2191,7 +2191,7 @@ steps:
           - title: "Strategic hint"
             text: "Patch the namespace where the SUT will *resolve* the name at runtime. The SUT is `quest_service.celebrate_milestone`; the name `send_push` was imported INTO `quest_service`'s namespace. So the target string is `\"quest_service.send_push\"`."
             condition: "code_contains: patch(\"push_notifier.send_push\")"
-          - title: "Skeleton (you fill in the namespace)"
+          - title: "Fill in the namespace"
             text: |
               The patch target string has the form `\"<module>.<name>\"`. The `<name>` is `send_push`. The `<module>` is the *importing* module (the one whose namespace the SUT looks up the name in), not the *defining* module:
               ```python
@@ -2729,7 +2729,7 @@ steps:
           - title: "Small nudge — scenarios"
             text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter."
             condition: "code_missing: adapter"
-          - title: "Skeleton — the rubric, with no answers attached"
+          - title: "The rubric, with no answers attached"
             text: |
               You'll classify five scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
 

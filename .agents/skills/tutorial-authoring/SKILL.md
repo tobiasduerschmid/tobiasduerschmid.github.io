@@ -363,6 +363,17 @@ the answer. Conventions:
 - **Layer 3 — structural skeleton.** Show the *shape* of the solution with
   the interesting parts as `...` or named blanks. Never paste the literal
   solution.
+- **Title style — describe the *content*, not the layer.** "Orient",
+  "Strategy", "Skeleton", "Layer 1", "Layer 2", "Layer 3" (and parenthetical
+  variants like `Skeleton (you fill in the blanks)`) are author-side
+  *intent* labels and **must not appear in the visible `title:`**. Give each
+  hint a topical title that names the specific advice — `"Read the failing
+  line's expected vs actual"`, `"Value-equality on frozen dataclasses"`,
+  `"Fill the blank"` — so the student sees what the hint is *about*, not
+  which rung of the ladder it sits on. The escalation is communicated by
+  the order of hints in the list, not by their titles. If you find yourself
+  reaching for "Orient" / "Strategy" / "Skeleton" as a title, write down
+  what the hint actually says and use that instead.
 - Use `condition:` to make hints fire only when their trigger is true
   (e.g. `condition: "code_missing: range("` only fires when the student
   hasn't typed `range(`). Conditional hints feel like the tutorial is

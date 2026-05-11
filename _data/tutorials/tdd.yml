@@ -1230,14 +1230,14 @@ steps:
           assert code == 0, \
               f"All three tests should pass:\n{output}"
         hints:
-          - title: "Orient — read the failing line's *expected vs actual*"
+          - title: "Read the failing line's *expected vs actual*"
             text: |
               pytest's `assert` output shows both sides of the comparison.
               Before changing any code, write down — in your own words — what
               `report.events` *is* in the failing line and what the test
               *expected* it to be. The shape mismatch (one bare value vs. a
               tuple of `ScoringEvent`s) is usually the whole bug.
-          - title: "Strategy — `report.events` holds whole events, not raw dice"
+          - title: "`report.events` holds whole events, not raw dice"
             text: |
               Re-read the cycle-2 reveal. Each entry in `report.events` is a
               *whole* `ScoringEvent` value carrying all three pieces of
@@ -1248,7 +1248,7 @@ steps:
               can never match a correct implementation no matter what `score`
               does.
             condition: "code_contains: report.events == (1,"
-          - title: "Strategy — value-equality on frozen dataclasses"
+          - title: "Value-equality on frozen dataclasses"
             text: |
               `@dataclass(frozen=True)` gives `ScoringEvent` value-based
               equality — two `ScoringEvent` instances are `==` iff every
@@ -1257,7 +1257,7 @@ steps:
               `report.events == (ScoringEvent(<name>, <dice>, <damage>),)`.
               The three values come straight from the rules table at the
               top of the tutorial.
-          - title: "Skeleton — one-element tuple, trailing comma matters"
+          - title: "One-element tuple, trailing comma matters"
             text: |
               Shape of each cycle-2 / cycle-3 `events` assertion (fill the
               blanks from the rules table):
@@ -1310,7 +1310,7 @@ steps:
           assert (1,) in targets and (5,) in targets, \
               f"Cycle 3's smallest GREEN is two `if {param} == [...]:` branches *inside `score()` itself* — one for `[1]` and one for `[5]`. The checker walks `score`'s body for these comparisons, so branches placed elsewhere (e.g. on `BattleReport`) don't count. If you've already replaced the branches with a `for` / `dict` / `match`, that refactor belongs in cycle 4 — restore the two hardcoded `if` branches in `score` for now."
         hints:
-          - title: "Orient — which function does the checker walk?"
+          - title: "Which function does the checker walk?"
             text: |
               The checker imports `scorer.py` and walks the body of `score(dice)`
               itself, looking for two `if dice == [...]:` comparisons. Open
@@ -1318,7 +1318,7 @@ steps:
               logic actually lives there? If `score` immediately hands `dice`
               off to `BattleReport`, the checker sees zero branches in `score`
               even when the right `if` lines exist somewhere else in the file.
-          - title: "Strategy — separate the decider from the container"
+          - title: "Separate the decider from the container"
             text: |
               `BattleReport` is meant to be a passive value object — `events:
               tuple = ()` plus a derived `total_damage` that sums
@@ -1329,7 +1329,7 @@ steps:
               per-rule decisions back into `score(dice)`, and let each branch
               construct the right `BattleReport(events=...)` value.
             condition: "code_contains: self.dice"
-          - title: "Strategy — `for` / `dict` / `match` is cycle 4's job"
+          - title: "`for` / `dict` / `match` is cycle 4's job"
             text: |
               If you went straight to a `for die in dice:` loop (or a `dict`
               dispatch, or `match`/`case`), you've generalised on one too few
@@ -1339,7 +1339,7 @@ steps:
               smell to fix. Back the loop out and write the second `if`
               instead — the cycle-4 step is where it'll come back, justified.
             condition: "code_contains: for "
-          - title: "Skeleton — two top-level ifs, then a default return"
+          - title: "Two top-level ifs, then a default return"
             text: |
               Inside `score(dice)` (not on `BattleReport`), the body has the
               shape:
