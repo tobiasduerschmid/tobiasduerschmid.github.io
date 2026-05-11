@@ -267,6 +267,14 @@ class TimeTravelDebugger(bdb.Bdb):
     def dispatch_call(self, frame, arg):
         if self.botframe is None:
             self.botframe = frame.f_back
+            # Match gdb's default `run`: execute until the first breakpoint /
+            # watchpoint / exception-breakpoint hit (or end of program).
+            # bdb otherwise stops at every line because stopframe defaults to
+            # None (stop_here returns True for all frames). Setting continue
+            # mode now — once botframe is known — makes stop_here return False
+            # for user frames, so dispatch_line only blocks on _break_here.
+            # Snapshots are still taken on every line for time-travel scrubbing.
+            self.set_continue()
             return self.trace_dispatch
         if not self._is_user_frame(frame):
             return None

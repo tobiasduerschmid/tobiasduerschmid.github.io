@@ -643,6 +643,23 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # design exercises).
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
 debugger: boolean                      # Time-travel debugger (pyodide only).
+                                       # Start semantics (all backends): the
+                                       # session runs until the first forward
+                                       # stop condition (code breakpoint /
+                                       # watchpoint / exception breakpoint) is
+                                       # hit, or to completion if none exists.
+                                       # No synthetic pause at the first
+                                       # instruction — matches gdb's `run`,
+                                       # not `starti`. Snapshots are still
+                                       # recorded for the full run so
+                                       # time-travel scrubbing works whether
+                                       # the program paused or completed.
+                                       # If a tutorial wants a learner to land
+                                       # on the first line on Debug, the
+                                       # author should add an initial
+                                       # breakpoint there (see
+                                       # `debugger_options.initial_breakpoints`)
+                                       # rather than relying on a default.
 debugger_options: { ... }              # Per-tutorial debugger config
                                        # (snapshot caps, breakpoint behavior).
 uml_diagram: boolean                   # Live UML class+sequence diagram pane.

@@ -188,12 +188,8 @@ async function prepareDebuggerAtBreakpoint(page, breakpointLine) {
     ctl.startSession();
   }, { code: LISTCOMP_CODE, line: breakpointLine });
 
-  await page.waitForFunction(() => {
-    const ctl = window._tutorial && window._tutorial._debuggerCtl;
-    return ctl && ctl.paused && ctl.historyIdx >= 0;
-  }, null, { timeout: DEBUG_TIMEOUT });
-
-  await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+  // gdb-default semantics: startSession runs until the first breakpoint
+  // (or end of program); the first pause is the breakpoint itself, not line 1.
   await page.waitForFunction((line) => {
     const ctl = window._tutorial && window._tutorial._debuggerCtl;
     const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
@@ -219,12 +215,8 @@ async function prepareSingleFileDebuggerAtBreakpoint(page, filename, code, break
     ctl.startSession();
   }, { filename, code, line: breakpointLine });
 
-  await page.waitForFunction(() => {
-    const ctl = window._tutorial && window._tutorial._debuggerCtl;
-    return ctl && ctl.paused && ctl.historyIdx >= 0;
-  }, null, { timeout: DEBUG_TIMEOUT });
-
-  await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
+  // gdb-default semantics: first pause is at the breakpoint, no synthetic
+  // line-1 pause from the bdb step-mode default.
   await page.waitForFunction((line) => {
     const ctl = window._tutorial && window._tutorial._debuggerCtl;
     const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
@@ -874,35 +866,23 @@ test.describe.serial('Python debugger replay variable edits', () => {
       expect(finished.currentGlyphClasses).toEqual([]);
       expect(finished.currentDecorationLines).toEqual([]);
 
+      // gdb-default semantics: the fresh session runs until the persisted
+      // line-17 breakpoint and pauses there directly — no synthetic line-1
+      // stop. The previous-session breakpoint persists across the restart.
       await page.evaluate(() => window._tutorial._debuggerCtl.startSession());
       await page.waitForFunction(() => {
         const ctl = window._tutorial && window._tutorial._debuggerCtl;
         const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
-        return ctl && ctl.session && ctl.paused && snap && snap.line === 1;
+        return ctl && ctl.session && ctl.paused && snap && snap.line === 17 && /listcomp\.py$/.test(snap.file);
       }, null, { timeout: DEBUG_TIMEOUT });
 
       const firstPause = await debuggerState(page);
-      expect(firstPause.controller.historyLength).toBe(1);
-      expect(firstPause.sync.historyLength).toBe(1);
-      expect(firstPause.sync.line).toBe(1);
-      expect(firstPause.currentDecorationLines).toEqual([1]);
-      expect(firstPause.currentGlyphClasses).toEqual(['tvm-debug-current-glyph']);
-      expect(firstPause.breakpointGlyphLines).toEqual([17]);
-
-      await page.evaluate(() => window._tutorial._debuggerCtl.handleToolbarCmd('continue'));
-      await page.waitForFunction(() => {
-        const ctl = window._tutorial && window._tutorial._debuggerCtl;
-        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
-        return ctl && ctl.paused && snap && snap.line === 17 && /listcomp\.py$/.test(snap.file);
-      }, null, { timeout: DEBUG_TIMEOUT });
-
-      const secondBreakpoint = await debuggerState(page);
-      expect(secondBreakpoint.controller.line).toBe(17);
-      expect(secondBreakpoint.sync.line).toBe(17);
-      expect(secondBreakpoint.sync.historyLength).toBe(secondBreakpoint.controller.historyLength);
-      expect(secondBreakpoint.currentDecorationLines).toEqual([17]);
-      expect(secondBreakpoint.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-on-bp']);
-      expect(secondBreakpoint.breakpointGlyphLines).toEqual([]);
+      expect(firstPause.controller.line).toBe(17);
+      expect(firstPause.sync.line).toBe(17);
+      expect(firstPause.sync.historyLength).toBe(firstPause.controller.historyLength);
+      expect(firstPause.currentDecorationLines).toEqual([17]);
+      expect(firstPause.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-on-bp']);
+      expect(firstPause.breakpointGlyphLines).toEqual([]);
     } finally {
       await page.close();
     }
@@ -1893,6 +1873,91 @@ print("after")
       });
       expect(atFirstInstruction.historyIdx).toBe(0);
       expect(atFirstInstruction.status).toMatch(/first instruction/);
+    } finally {
+      await page.close();
+    }
+  });
+
+  // Spec: when a debug session starts, the program runs until the first
+  // forward stop condition (code breakpoint / watchpoint / exception
+  // breakpoint) is hit, or to completion if there are none. The synthetic
+  // line-1 pause from bdb's default step mode is suppressed.
+  //
+  // Partition coverage:
+  //   - "Code breakpoint downstream → first pause is the breakpoint" is
+  //     already covered by every test that uses
+  //     `prepareDebuggerAtBreakpoint` / `prepareSingleFileDebuggerAtBreakpoint`
+  //     (those helpers no longer issue an extra `continue`; the helper
+  //     change is itself the assertion).
+  //   - The two tests below probe the remaining partitions.
+
+  test('starting with no breakpoints runs the program to completion without user intervention', async ({ browser }) => {
+    // Under the old "stop at first instruction" default, bdb would pause
+    // at line 1 and wait for a `continue` command from the controller —
+    // which never comes — so `waitForDebugComplete` would time out. With
+    // the gdb-style default, the session runs through to completion on
+    // its own. The completion-state oracle is the strongest spec-pinning
+    // form available without reaching into internal pause counters.
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('callgraph.py', code, 'python');
+        tutorial._setActiveFile('callgraph.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.watchpoints = [];
+        ctl._exceptionBreakpoints = [];
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.startSession();
+      }, { code: CALLGRAPH_CODE });
+
+      await waitForDebugComplete(page);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('breakpoint set on the first user-code line still pauses at line 1 (boundary)', async ({ browser }) => {
+    // Boundary case: a user-set breakpoint exactly on line 1 must still
+    // pause. The breakpoint-overlap glyph is the load-bearing assertion —
+    // it would not be present if the pause came from the old step-mode
+    // default. Setup is inlined because the shared helper assumes the
+    // pause lands inside a non-module frame.
+    const page = await browser.newPage();
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await page.evaluate(async ({ code }) => {
+        const tutorial = window._tutorial;
+        tutorial.loadStep(5);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        tutorial.openFile('callgraph.py', code, 'python');
+        tutorial._setActiveFile('callgraph.py');
+
+        const ctl = tutorial._debuggerCtl;
+        ctl.breakpoints = new Map();
+        ctl.persistBreakpoints();
+        ctl.refreshBpDecorations();
+        ctl.toggleBreakpoint('callgraph.py', 1);
+        ctl.startSession();
+      }, { code: CALLGRAPH_CODE });
+
+      await page.waitForFunction(() => {
+        const ctl = window._tutorial && window._tutorial._debuggerCtl;
+        const snap = ctl && ctl.history && ctl.history[ctl.historyIdx];
+        return ctl && ctl.paused && snap && snap.line === 1 && /callgraph\.py$/.test(snap.file);
+      }, null, { timeout: DEBUG_TIMEOUT });
+
+      const state = await debuggerState(page);
+      expect(state.controller.line).toBe(1);
+      expect(state.currentGlyphClasses).toEqual(['tvm-debug-current-glyph-on-bp']);
     } finally {
       await page.close();
     }
