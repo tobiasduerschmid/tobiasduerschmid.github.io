@@ -1,0 +1,41 @@
+#!/bin/sh
+# tutorial-gdb - in-VM wrapper for tutorial debugging sessions.
+#
+# Spawned by tutorial-code.js when the user clicks Debug on a `debugger: gdb`
+# tutorial. Communicates with the JS-side `gdb-channel.js` over the user's
+# terminal (ttyS0) using GDB/MI3:
+#
+#   - Inferior stdout / stderr are routed back to the same terminal so the
+#     learner sees their program's output exactly where they expect it.
+#   - GDB/MI records (lines prefixed `^`, `*`, `=`, `+`, `~`, `@`, `&`) are
+#     interleaved on the terminal and demultiplexed by the JS-side parser.
+#
+# Arguments: <executable> [program-args...]
+#
+# This wrapper is deliberately thin: a future revision may route MI to a
+# separate virtio console (hvc1) and the inferior to ttyS0 so the two streams
+# never interleave. The current MVP relies on stream-record prefixes, which is
+# the contract gdb's MI documentation guarantees.
+
+set -u
+
+if [ -z "${1:-}" ]; then
+  echo "tutorial-gdb: missing executable argument" >&2
+  exit 2
+fi
+
+EXE=$1
+shift
+
+if [ ! -x "$EXE" ]; then
+  echo "tutorial-gdb: $EXE not found or not executable" >&2
+  exit 2
+fi
+
+# --interpreter=mi3   : structured records; the JS parser depends on MI3.
+# --quiet             : suppress the gdb banner the parser would otherwise
+#                       have to skip (it isn't an MI record, just noise).
+# -nx                 : ignore ~/.gdbinit so the learner's host config never
+#                       affects in-tutorial behaviour.
+# --args              : forward the remaining argv to the inferior.
+exec gdb --interpreter=mi3 --quiet -nx --args "$EXE" "$@"

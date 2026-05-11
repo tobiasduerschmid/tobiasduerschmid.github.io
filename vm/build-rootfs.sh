@@ -38,7 +38,8 @@ docker run --rm --platform linux/386 \
         less \
         file \
         tree \
-        musl-dev
+        musl-dev \
+        gdb
 
     # Alpine package/app-link details can vary; tutorials and tests use the
     # portable command name `awk`, so guarantee it exists when gawk is present.
@@ -87,6 +88,11 @@ docker run --rm --platform linux/386 \
     # See vm/overlay/gg-daemon for protocol details.
     cp /overlay/gg-daemon /usr/local/bin/gg-daemon
     chmod +x /usr/local/bin/gg-daemon
+
+    # tutorial-gdb: in-VM wrapper that launches gdb in MI3 mode for the
+    # JS-side time-travel debugger UI. Used by tutorials with `debugger: gdb`.
+    cp /overlay/tutorial-gdb /usr/local/bin/tutorial-gdb
+    chmod +x /usr/local/bin/tutorial-gdb
 
     # Hostname
     echo "tutorial" > /etc/hostname
