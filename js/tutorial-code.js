@@ -422,10 +422,17 @@
       backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' ||
       // `debugger: 'gdb'` opts a v86-backend C tutorial into the
       // GDB/MI channel (real gdb in the VM, no time-travel scrubbing).
-      (backend === 'v86' && options.debugger === 'gdb')
+      (backend === 'v86' && options.debugger === 'gdb') ||
+      // React tutorials: record-and-replay debugger via iframe-side
+      // tracer + Babel-plugin JSX instrumentation. See react-channel.js.
+      backend === 'react'
     );
     this.debuggerOptions = options.debuggerOptions || {};
-    this.debuggerKind = (options.debugger === 'gdb') ? 'gdb' : (this.debuggerEnabled ? 'time-travel' : null);
+    this.debuggerKind = (options.debugger === 'gdb')
+      ? 'gdb'
+      : (backend === 'react' && this.debuggerEnabled)
+        ? 'react'
+        : (this.debuggerEnabled ? 'time-travel' : null);
   }
 
   // ---------------------------------------------------------------------------
@@ -4810,7 +4817,13 @@
       content = content.replace(/\bApp\b/g, appAlias);
       // Escape </script> closing tags inside content to avoid breaking the outer tag
       content = content.split('<\/script>').join('<\\/script>');
-      return '<script type="text/babel">\n' + content + '\n<\/script>';
+      // In debugger mode, suppress Babel-standalone's auto-load of
+      // `text/babel` scripts so we can route them through the tracer's
+      // instrumented transform instead. A small bootstrap (injected
+      // below) discovers `text/x-jsx-ttd` blocks on load and evals them
+      // via __ttdReactTransform.
+      var scriptType = (self.debuggerKind === 'react') ? 'text/x-jsx-ttd' : 'text/babel';
+      return '<script type="' + scriptType + '">\n' + content + '\n<\/script>';
     }).join('\n');
 
     var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
@@ -4845,6 +4858,12 @@
       playwrightAgent +
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
+      // Debugger mode: the tracer adds `__ttd` + `__ttdReactTransform` to
+      // the iframe's globals. When NOT in debugger mode the file is
+      // omitted, so no extra bytes ship on regular React tutorials.
+      (this.debuggerKind === 'react'
+        ? '<script src="/js/debugger/react/tracer.js"><\/script>\n'
+        : '') +
       '<script>\n' +
       '/* Hot-reload: cache createRoot + listen for file patches from the tutorial host */\n' +
       '(function(){\n' +
@@ -4852,6 +4871,23 @@
       '    var _oCR=ReactDOM.createRoot.bind(ReactDOM);\n' +
       '    ReactDOM.createRoot=function(el){if(!window.__rr)window.__rr=_oCR(el);return window.__rr;};\n' +
       '  }\n' +
+      // Install the render/commit phase hook the channel relies on, but
+      // only if the tracer is present (no-op in non-debug runs).
+      '  if(typeof __ttdInstallReactHooks==="function"){__ttdInstallReactHooks(React,ReactDOM);}\n' +
+      // Debugger initial-load bootstrap: when text/x-jsx-ttd blocks are
+      // present, wait for Babel and __ttdReactTransform to be ready then
+      // transform-and-eval each. Babel-standalone\'s built-in
+      // auto-discovery only handles text/babel, so x-jsx-ttd never runs
+      // unless this loop runs.
+      '  function __ttd_initial_load(){\n' +
+      '    var blocks=document.querySelectorAll(\'script[type="text/x-jsx-ttd"]\');\n' +
+      '    if(!blocks.length||!window.Babel||typeof __ttdReactTransform!=="function"){return setTimeout(__ttd_initial_load,30);}\n' +
+      '    for(var i=0;i<blocks.length;i++){\n' +
+      '      try{(0,eval)(__ttdReactTransform(blocks[i].textContent,"init.jsx"));}\n' +
+      '      catch(err){console.error("[ttd] initial transform failed:",err);}\n' +
+      '    }\n' +
+      '  }\n' +
+      '  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",__ttd_initial_load);}else{__ttd_initial_load();}\n' +
       '  window.addEventListener("message",function(e){\n' +
       '    if(!e.data||e.data.type!=="react-hot-reload")return;\n' +
       '    if(!window.Babel)return;\n' +
@@ -4862,7 +4898,11 @@
       '    var rootEl=document.getElementById("root");\n' +
       '    try{\n' +
       '      for(var i=0;i<files.length;i++){\n' +
-      '        var t=Babel.transform(files[i],{presets:["react"],filename:"hot.jsx"}).code;\n' +
+      // Use the tracer\'s JSX-transform-plus-instrument pass when the
+      // debugger is running; otherwise plain JSX transform.
+      '        var t=(typeof __ttdReactTransform==="function")\n' +
+      '          ? __ttdReactTransform(files[i],"hot.jsx")\n' +
+      '          : Babel.transform(files[i],{presets:["react"],filename:"hot.jsx"}).code;\n' +
       '        (0,eval)(t);\n' +
       '      }\n' +
       '      if(window.__rr&&alias&&window[alias]){\n' +
@@ -4954,6 +4994,7 @@
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
     var needsGdbChannel = self.config.backend === 'v86' && self.debuggerKind === 'gdb';
+    var needsReactChannel = self.debuggerKind === 'react';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -5024,6 +5065,16 @@
         }).then(function () {
           if (window.SEBookGdbChannel) return null;
           return loadScriptOnce('/js/debugger/gdb-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      // React-tutorial path: the parent-side channel listens for trace
+      // events posted by the in-iframe tracer (the iframe loads
+      // /js/debugger/react/tracer.js itself, via the React preview HTML
+      // template which checks _reactDebuggerEnabled).
+      if (needsReactChannel) {
+        p = p.then(function () {
+          if (window.SEBookReactChannel) return null;
+          return loadScriptOnce('/js/debugger/react-channel.js?v=' + dbgAssetVersion);
         });
       }
       p.then(attach).catch(reject);

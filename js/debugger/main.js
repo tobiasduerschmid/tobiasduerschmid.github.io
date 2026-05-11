@@ -347,6 +347,11 @@
       // single-byte serial0 listener into the chunk-or-byte API the
       // channel expects; the parser tolerates either shape.
       this.channel = new window.SEBookGdbChannel(this, this._makeV86Io());
+    } else if (backend === 'react' && window.SEBookReactChannel) {
+      // React-tutorial record-and-replay channel. The iframe posts trace
+      // events via window.postMessage; the channel adapts them to
+      // onPaused / onDebugComplete.
+      this.channel = new window.SEBookReactChannel(this, this.t);
     }
     if (this.channel && typeof this.channel.install === 'function') this.channel.install();
     this.attachWorkerListener();

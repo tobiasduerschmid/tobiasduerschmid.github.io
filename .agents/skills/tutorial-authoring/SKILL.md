@@ -644,10 +644,18 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
 debugger: boolean | "gdb"              # Debugger opt-in. Values:
                                        #   true / false — time-travel debugger
-                                       #     (pyodide / browser / node backends).
-                                       #     Records snapshots for every line so
-                                       #     the learner can scrub forward and
-                                       #     back.
+                                       #     (pyodide / browser / node /
+                                       #     react backends). Records
+                                       #     snapshots for every line so the
+                                       #     learner can scrub forward and
+                                       #     back. On the react backend the
+                                       #     iframe-side tracer instruments
+                                       #     JSX via Babel + a custom plugin
+                                       #     and the record-and-replay UI
+                                       #     surfaces every committed render.
+                                       #     Live step is not available in
+                                       #     iframes (no SAB); commands map
+                                       #     to scrubbing through history.
                                        #   "gdb"         — real gdb running
                                        #     inside the v86 Linux VM, driven via
                                        #     GDB/MI3. Forward stepping only (no
@@ -1135,7 +1143,7 @@ channel.
 | Shell terminal         | ✅  | ❌      | ✅           | ❌    | ❌         |
 | Compiled languages     | ✅  | ❌      | (npm only)   | ❌    | ❌         |
 | `git`                  | ✅  | mocked  | ✅           | ❌    | ❌         |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌    | ❌         |
+| Time-travel debugger   | ❌  | ✅      | ❌           | ✅²   | ❌         |
 | GDB/MI debugger        | ✅¹ | ❌      | ❌           | ❌    | ❌         |
 | Live preview iframe    | ❌  | ❌      | ✅           | ✅    | ❌         |
 | Playwright tests       | ❌  | ❌      | ❌           | ✅    | ❌         |
@@ -1149,6 +1157,16 @@ only — no time-travel scrub, no watches, no live variable edits in MVP. The
 in-VM compiler is TCC; line stepping works but locals/args are partial
 because TCC's DWARF is incomplete (this is a tradeoff, not a bug — real GCC
 does not fit in the VM alongside gdb).
+
+² React time-travel debugger uses record-and-replay (not live step). The
+iframe-side tracer (`js/debugger/react/tracer.js`) wraps Babel-standalone
+with a custom plugin that inserts `__ttd.line(...)` before each statement;
+events post to the parent via `postMessage`. Step/continue commands map to
+scrubbing through the recorded history, not to suspending iframe execution
+— synchronous pause inside an iframe is unavailable (no SAB) and an
+`await`-based pause would break React's hook ordering rules. Opt in to
+seeing aborted-render events with `debugger_options.show_all_renders: true`
+(defaults to committed renders only).
 
 If you add a backend, update this table.
 

@@ -158,7 +158,7 @@
     breakpoints in MVP */ };
 
   ReactChannel.prototype._postToIframe = function (payload) {
-    var iframe = this.tutorial && this.tutorial._reactFrame;
+    var iframe = this.tutorial && this.tutorial._previewFrame;
     if (!iframe || !iframe.contentWindow) return;
     try {
       iframe.contentWindow.postMessage(
