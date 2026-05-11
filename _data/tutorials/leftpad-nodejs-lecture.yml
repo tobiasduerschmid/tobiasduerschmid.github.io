@@ -1,0 +1,660 @@
+title: "Left-Pad Refactoring Lecture"
+description: "A live walkthrough of the famous npm left-pad module — starting from the original 2016 source and a suite of contract tests, then replacing the whole module with one ES2017 built-in (`String.prototype.padStart`) and watching exactly one test break."
+
+# Demo / playground / lecture — not a real student-facing tutorial.
+# Hides this page from the auto-generated /SEBook/tutorials index.
+exclude_from_index: true
+
+backend: webcontainer
+
+instructor_mode: true
+disable_quiz: false
+
+# Lecture style — students don't need to pass anything to advance, but the
+# in-file test suite IS the gate that visualises the contract. The split
+# layout puts production code (leftpad.js) on the left and the test file
+# (leftpad.test.js — matches the *.test.js regex in _paneForFile) on the
+# right. Run executes `node leftpad.test.js`, which prints ✓ / ✗ per test.
+editor_split: true
+require_tests: false
+autosave_type: none
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — The Module That Broke the Internet
+  # Pedagogy: PRIMM — Predict (which tests pass?), Run, Investigate the
+  #           contract the tests encode.
+  # --------------------------------------------------------------------------
+  - title: "The Module That Broke the Internet"
+    key: original-leftpad
+    run_file: "leftpad.test.js"
+    instructions: |
+      ### Why this matters
+
+      In March 2016, a developer un-published an eleven-line npm package called `left-pad`. Within hours, Babel, React, and thousands of other projects stopped building — `npm install` couldn't resolve the transitive dependency. The incident kicked off years of debate about supply-chain risk, micro-dependencies, and what belongs in a standard library. This lecture replays the story by *reading the actual code*, running its tests, then replacing the whole module with one line of modern JavaScript.
+
+      ### 🎯 You will learn to
+
+      - Read a tiny but production-shipped JavaScript module and identify its contract
+      - Apply Node's built-in `assert` to encode a contract as runnable tests
+      - Evaluate what behaviors a test suite *actually* protects vs. assumes
+
+      ### The original `leftPad`
+
+      The pre-incident `left-pad` package was famously short — variations weighed in between 8 and 17 lines. The version below is the canonical one from before the optimisation patches. `leftPad(str, len, ch)` left-pads `str` with `ch` until it reaches length `len`:
+
+      ```javascript
+      function leftPad (str, len, ch) {
+        str = String(str);
+        var i = -1;
+        if (!ch && ch !== 0) ch = ' ';
+        len = len - str.length;
+        while (++i < len) {
+          str = ch + str;
+        }
+        return str;
+      }
+      ```
+
+      | Line | What it does |
+      |---|---|
+      | `str = String(str)` | Coerce non-string input (numbers, booleans) into a string — this matters in step 2 |
+      | `if (!ch && ch !== 0) ch = ' '` | Default pad character is a space; but `0` is allowed even though it's falsy |
+      | `len = len - str.length` | Reuse `len` as the number of pad characters still to prepend |
+      | `while (++i < len)` | Prepend `ch` once per missing character |
+
+      ### The contract — as tests
+
+      The test file on the **right** pane encodes the *main contract* using Node's built-in `node:assert`. Each `test(...)` block calls `leftPad` and asserts on the result. The runner prints `✓` or `✗` per test plus a `N passed, M failed` line at the end.
+
+      ### ✏️ Predict before you run
+
+      Look at the six tests in `leftpad.test.js`. Which of these is most likely to *behave differently* if we later replace `leftPad` with a built-in language feature?
+
+      - (a) `pads with spaces by default` — the default-`' '` case
+      - (b) `pads with a custom character` — the canonical happy path
+      - (c) `returns the string unchanged when length is already met` — the no-op case
+      - (d) `accepts a number as input (coerces to string)` — relies on `String(str)`
+
+      Commit to a letter, then click **▶ Run**.
+
+      <details>
+      <summary>Reveal (after committing)</summary>
+
+      **(d)** is the trap. The other five tests describe behavior any string-padding function would have — including a built-in. (d) leans on a JavaScript-specific coercion the original module performs explicitly (`str = String(str)`). A naive built-in replacement won't do this. We'll watch it break in step 2.
+      </details>
+
+      ### Task
+
+      1. Read `leftpad.js` (left pane) and `leftpad.test.js` (right pane).
+      2. Click **▶ Run** to execute `node leftpad.test.js`.
+      3. Confirm all six tests pass.
+
+    files:
+      - path: "leftpad.js"
+        content: |
+          // The original left-pad — the eleven-line module that broke the
+          // internet in March 2016. Reproduced here verbatim from the
+          // pre-incident package.
+          //
+          // Pads `str` on the LEFT with character `ch` until its total
+          // length is `len`. If `str` is already that long (or longer),
+          // it is returned unchanged.
+
+          function leftPad (str, len, ch) {
+            str = String(str);
+            var i = -1;
+            if (!ch && ch !== 0) ch = ' ';
+            len = len - str.length;
+            while (++i < len) {
+              str = ch + str;
+            }
+            return str;
+          }
+
+          module.exports = leftPad;
+        language: "javascript"
+
+      - path: "leftpad.test.js"
+        content: |
+          // Contract tests for the leftPad module.
+          //
+          // Each `test(name, fn)` call runs `fn()` and reports ✓ if it
+          // completes without throwing, ✗ otherwise. The body uses Node's
+          // built-in `node:assert` module (no third-party test framework
+          // required).
+          //
+          // Run with:  node leftpad.test.js
+
+          const assert = require('node:assert');
+          const leftPad = require('./leftpad');
+
+          let passed = 0;
+          let failed = 0;
+
+          function test(name, fn) {
+            try {
+              fn();
+              console.log('  ✓ ' + name);
+              passed++;
+            } catch (e) {
+              console.log('  ✗ ' + name);
+              console.log('    ' + e.message);
+              failed++;
+            }
+          }
+
+          console.log('Running leftPad contract tests:\n');
+
+          // --- The main contract -------------------------------------------
+
+          test('pads with spaces by default', () => {
+            assert.strictEqual(leftPad('abc', 5), '  abc');
+          });
+
+          test('pads with a custom character', () => {
+            assert.strictEqual(leftPad('abc', 5, '0'), '00abc');
+          });
+
+          test('returns the string unchanged when length is already met', () => {
+            assert.strictEqual(leftPad('hello', 5, '0'), 'hello');
+          });
+
+          test('returns the string unchanged when target length is shorter', () => {
+            assert.strictEqual(leftPad('hello', 3, '0'), 'hello');
+          });
+
+          test('handles single-character padding to a wider target', () => {
+            assert.strictEqual(leftPad('x', 4, '*'), '***x');
+          });
+
+          // --- The JS-specific coercion the original module performs -------
+          //
+          // The original leftPad starts with `str = String(str)`, so it
+          // accepts numbers and coerces them to a string. A naive
+          // replacement that calls `.padStart()` directly on `str` will
+          // break this test, because numbers do not have a .padStart()
+          // method. See step 2.
+
+          test('accepts a number as input (coerces to string)', () => {
+            assert.strictEqual(leftPad(7, 4, '0'), '0007');
+          });
+
+          console.log(`\n${passed} passed, ${failed} failed`);
+          process.exit(failed > 0 ? 1 : 0);
+        language: "javascript"
+
+    open_file: "leftpad.js"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            The original `leftPad` starts with `str = String(str)`. If you removed that line and called `leftPad(7, 4, '0')`, what would happen?
+          options:
+            - "It would return `'0007'` because JavaScript automatically calls `toString()` on `str.length` access"
+            - "It would return `'0' + 7` repeated until length 4 — the number is concatenated as a number, producing `'00007'`"
+            - "It would throw `TypeError: str.length is undefined` — numbers do not have a `.length` property, so `len - str.length` becomes `NaN` and the `while` loop never executes"
+            - "It would return `7` unchanged because numbers cannot be padded"
+          correct_index: 2
+          option_feedback:
+            0: "JavaScript only auto-coerces in operators (like `+`) — property access (`str.length`) does *not* trigger string coercion. Numbers have no `.length`."
+            1: "Inside the loop, `ch + str` *would* coerce, but the loop never runs because `len - undefined` is `NaN` and the `while` condition is false."
+            3: "JS doesn't short-circuit functions on type — it just produces garbage values (NaN, undefined) until an explicit type check or coercion."
+          explanation: |
+            `(7).length` is `undefined`, so `len - str.length` is `NaN`, and `++i < NaN` is always `false`. The function returns the original number unchanged — definitely *not* a padded string. The explicit `str = String(str)` line is what makes the "accepts a number" test pass.
+
+        - question: |
+            The test suite calls `assert.strictEqual(leftPad('hello', 3, '0'), 'hello')`. What contract does this *test* encode?
+          options:
+            - "`leftPad` must always return a string of exactly `len` characters"
+            - "`leftPad` must never *truncate* its input — when `len` is shorter than the input, the original string is returned unchanged"
+            - "`leftPad` must throw when `len` is shorter than the input"
+            - "`leftPad` must pad with empty space when `len` is shorter than the input"
+          correct_index: 1
+          option_feedback:
+            0: "If that were the contract, `leftPad('hello', 3, '0')` should return a 3-character string — but the assertion expects `'hello'` (5 chars). The contract permits longer results."
+            2: "The assertion expects a returned value, not a thrown exception. `assert.strictEqual` would fail if `leftPad` threw."
+            3: "Padding with empty space would mean appending zero characters — which is what 'unchanged' means in practice — but the test asserts the *original* string, not a deliberately padded one. The semantic difference matters when designing replacements."
+          explanation: |
+            The contract is *one-sided*: pad only when the input is shorter than the target length; otherwise return the input as-is. That's why `'hello'.padStart(3)` behaves identically — `padStart` follows the same "no-truncation" rule, which is part of why it's a valid replacement candidate.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — One Built-In Replaces Eleven Lines
+  # Pedagogy: PRIMM — Modify (replace the body); the surprise/run is the
+  #           single-test failure; investigate via the assertion message.
+  # --------------------------------------------------------------------------
+  - title: "One Built-In Replaces Eleven Lines: `String.prototype.padStart`"
+    key: padstart-naive
+    run_file: "leftpad.test.js"
+    instructions: |
+      ### Why this matters
+
+      The reason `left-pad` no longer needs to exist is **ES2017** (a.k.a. ES8). That language revision added `String.prototype.padStart(targetLength, padString)` and its sibling `padEnd` to the standard library. Node.js 8+ ships them. Two million npm dependents could replace the whole module with one method call — *if* they're willing to accept the spec-correct semantics that come with it.
+
+      ### 🎯 You will learn to
+
+      - Apply `String.prototype.padStart` to replace the body of `leftPad`
+      - Analyze which behaviors are preserved and which break under the swap
+      - Evaluate when "spec-correct" differs from "what the previous implementation actually did"
+
+      ### `String.prototype.padStart`
+
+      ```javascript
+      'abc'.padStart(5)        // '  abc'
+      'abc'.padStart(5, '0')   // '00abc'
+      'hello'.padStart(3)      // 'hello'  ← no truncation, matches leftPad
+      ```
+
+      Three reasons this is "the most efficient Node.js call that replaces left-pad":
+
+      1. **Zero dependencies** — it's part of the language runtime.
+      2. **Zero bytes shipped** — no `npm install`, no `require`.
+      3. **Implemented in V8 C++** — orders of magnitude faster than a `while` loop allocating new strings each iteration.
+
+      ### The naive swap
+
+      The temptation is to drop the body of `leftPad` and forward directly to the built-in:
+
+      ```javascript
+      function leftPad (str, len, ch) {
+        return str.padStart(len, ch);
+      }
+      ```
+
+      Two lines. The whole module.
+
+      ### ✏️ Predict before you run
+
+      How many of the six tests still pass?
+
+      - (a) **All six** — `padStart` is the standard library version of exactly this function.
+      - (b) **Five** — one test relies on a JS-specific behavior the built-in doesn't replicate.
+      - (c) **Four** — `padStart` has different default behavior for the pad character.
+      - (d) **Zero** — `padStart` truncates instead of preserving short strings.
+
+      Commit to a letter, then click **▶ Run** and read the output carefully.
+
+      <details>
+      <summary>Reveal (after running)</summary>
+
+      **(b)**. Five of the original six pass. The one that breaks is `accepts a number as input` — `leftPad(7, 4, '0')` throws `TypeError: str.padStart is not a function`, because `(7).padStart` is `undefined`. Numbers don't have the method; only strings do. The original module masked this with its first line, `str = String(str)`. The naive swap dropped that line — so the contract for non-string input is gone.
+      </details>
+
+      ### Task
+
+      1. Replace the body of `leftPad` in `leftpad.js` with `return str.padStart(len, ch);`
+      2. Click **▶ Run**. Five tests should pass, **one** should fail.
+      3. Read the failing test's name and error message. Confirm it's the number-coercion case.
+      4. Step 3 will fix it — but first, *understand* the break.
+
+    files:
+      - path: "leftpad.js"
+        content: |
+          // The original left-pad — soon to be replaced with one line.
+          //
+          // 🛠️ TASK: Replace the body of leftPad with:
+          //
+          //     return str.padStart(len, ch);
+          //
+          // Then click ▶ Run. Five tests pass, one fails.
+
+          function leftPad (str, len, ch) {
+            str = String(str);
+            var i = -1;
+            if (!ch && ch !== 0) ch = ' ';
+            len = len - str.length;
+            while (++i < len) {
+              str = ch + str;
+            }
+            return str;
+          }
+
+          module.exports = leftPad;
+        language: "javascript"
+
+      - path: "leftpad.test.js"
+        content: |
+          // Same contract tests as step 1 — unchanged. The point is to
+          // watch the test suite respond to a change in `leftpad.js`.
+
+          const assert = require('node:assert');
+          const leftPad = require('./leftpad');
+
+          let passed = 0;
+          let failed = 0;
+
+          function test(name, fn) {
+            try {
+              fn();
+              console.log('  ✓ ' + name);
+              passed++;
+            } catch (e) {
+              console.log('  ✗ ' + name);
+              console.log('    ' + e.message);
+              failed++;
+            }
+          }
+
+          console.log('Running leftPad contract tests:\n');
+
+          test('pads with spaces by default', () => {
+            assert.strictEqual(leftPad('abc', 5), '  abc');
+          });
+
+          test('pads with a custom character', () => {
+            assert.strictEqual(leftPad('abc', 5, '0'), '00abc');
+          });
+
+          test('returns the string unchanged when length is already met', () => {
+            assert.strictEqual(leftPad('hello', 5, '0'), 'hello');
+          });
+
+          test('returns the string unchanged when target length is shorter', () => {
+            assert.strictEqual(leftPad('hello', 3, '0'), 'hello');
+          });
+
+          test('handles single-character padding to a wider target', () => {
+            assert.strictEqual(leftPad('x', 4, '*'), '***x');
+          });
+
+          test('accepts a number as input (coerces to string)', () => {
+            assert.strictEqual(leftPad(7, 4, '0'), '0007');
+          });
+
+          console.log(`\n${passed} passed, ${failed} failed`);
+          process.exit(failed > 0 ? 1 : 0);
+        language: "javascript"
+
+    open_file: "leftpad.js"
+
+    solution:
+      files:
+        - path: "leftpad.js"
+          content: |
+            // Naive ES2017 replacement — drops the String() coercion.
+            // Five of six tests pass; the number-input test throws
+            // because (7).padStart is undefined.
+
+            function leftPad (str, len, ch) {
+              return str.padStart(len, ch);
+            }
+
+            module.exports = leftPad;
+          language: "javascript"
+      explanation: |
+        **Why five of six pass:** `String.prototype.padStart(targetLength, padString)` matches the original module's main contract — default pad is `' '`, no-truncation when already long enough, single-character padding to a wider target. The standard library was *designed* to absorb this use case.
+
+        **Why one breaks:** `(7).padStart` is `undefined`. Numbers do not inherit from `String.prototype`. The original module hid this by calling `String(str)` first; the naive swap discards that line. The failing test message reads roughly `TypeError: str.padStart is not a function` — the JS engine's polite way of saying "you called a string method on a number."
+
+        Step 3 restores the coercion in a way that keeps the one-liner spirit.
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Why does the naive replacement `return str.padStart(len, ch);` cause `leftPad(7, 4, '0')` to throw rather than return `'0007'`?
+          options:
+            - "`padStart` is not defined in the version of Node.js that ships with WebContainer"
+            - "Numbers do not inherit from `String.prototype`, so `(7).padStart` is `undefined` and calling `undefined(...)` throws `TypeError`"
+            - "`padStart` requires the target length to exceed the input's `toString()` length — `7` becomes `'7'` (length 1) and `1 < 4` triggers a runtime check that fails"
+            - "`padStart` always throws when the first argument is not literally a string literal — even `String(7).padStart(4)` would fail"
+          correct_index: 1
+          option_feedback:
+            0: "`padStart` is ES2017 — Node 8+ ships it, WebContainer runs Node 18+, so the method exists. The issue is *which prototype* it lives on."
+            2: "`padStart` accepts any string. There is no length-vs-target precondition that throws."
+            3: "`String(7).padStart(4)` works fine — `padStart` only requires the *receiver* to be a string (or a value coercible to one via the `String.prototype` method dispatch)."
+          explanation: |
+            JavaScript's method dispatch follows the prototype chain. `7.__proto__` is `Number.prototype`, which has no `padStart`. The expression `(7).padStart` evaluates to `undefined`, and `undefined('0')` throws `TypeError: str.padStart is not a function`. The fix (step 3) is to coerce to string first — `String(7)` has `padStart` via `String.prototype`.
+
+        - question: |
+            Five of the six original tests still pass after the naive swap. Which observation best explains why the standard-library replacement is a *legitimate* candidate even though one test breaks?
+          options:
+            - "Five out of six is good enough — production never receives non-string input anyway"
+            - "The remaining failure is purely about JS-specific coercion (`String(str)`) and is trivial to restore, while the harder semantics — default pad, no-truncation, character repetition — are correctly handled by the spec-compliant built-in"
+            - "The remaining failure is a bug in `node:assert`, not in `padStart`"
+            - "Tests are advisory; a refactor that breaks one of six can be accepted by overriding the test runner"
+          correct_index: 1
+          option_feedback:
+            0: "Assuming production inputs are always strings is exactly the kind of unwritten invariant that causes outages. The point of the contract test is to *make the invariant explicit* — it should keep passing through the refactor."
+            2: "`node:assert.strictEqual` is correctly reporting the thrown `TypeError`. The failure is real."
+            3: "Ignoring a failing test to ship a refactor is one of the most common ways to introduce regressions. The test is signaling a real behavioral gap."
+          explanation: |
+            The strength of a refactoring candidate is judged by *what it gets right by default*. `padStart` matches the hard parts (default pad character, no-truncation, repeated padding to fill the gap) with zero glue code. Only one behavior — implicit input coercion — needs to be added back. That's a one-line fix, which is exactly what step 3 demonstrates.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Restore the Contract in One Line
+  # Pedagogy: Make — the synthesis step. Tiny code change, big lesson:
+  #           a 17-line npm package now fits on one line of Node.
+  # --------------------------------------------------------------------------
+  - title: "Restore the Contract — `String(str).padStart(len, ch)`"
+    key: padstart-coerced
+    run_file: "leftpad.test.js"
+    instructions: |
+      ### Why this matters
+
+      The failing test in step 2 wasn't a flaw in `padStart` — it was a flaw in our refactor. The original module had two responsibilities: *coerce* the input to a string, and *pad* it. We replaced the second with a built-in but dropped the first. Re-adding the coercion takes one function call, brings every test back to green, and produces the punch line of the lecture: **the eleven-line module that broke the internet is now a one-liner**.
+
+      ### 🎯 You will learn to
+
+      - Apply `String(value)` as an explicit coercion idiom
+      - Synthesize a contract-preserving refactor that keeps the entire test suite green
+      - Evaluate the trade-off between micro-dependencies and standard-library evolution
+
+      ### The fix
+
+      ```javascript
+      function leftPad (str, len, ch) {
+        return String(str).padStart(len, ch);
+      }
+      ```
+
+      `String(value)` — called *without* `new` — is the standard explicit-coercion idiom. It is identical in result to the original module's `str = String(str)` line. With the coercion in place, `leftPad(7, 4, '0')` runs as `String(7).padStart(4, '0')` → `'7'.padStart(4, '0')` → `'0007'`. All six tests pass.
+
+      ### The before/after, side by side
+
+      ```javascript
+      // BEFORE — the famous eleven lines.
+      function leftPad (str, len, ch) {
+        str = String(str);
+        var i = -1;
+        if (!ch && ch !== 0) ch = ' ';
+        len = len - str.length;
+        while (++i < len) {
+          str = ch + str;
+        }
+        return str;
+      }
+
+      // AFTER — one line of ES2017.
+      function leftPad (str, len, ch) {
+        return String(str).padStart(len, ch);
+      }
+      ```
+
+      ### ✏️ Predict before you run
+
+      Does the one-line version *also* default the pad character to `' '` when `ch` is `undefined`?
+
+      - (a) No — `padStart(len, undefined)` pads with `'undefined'` repeated.
+      - (b) No — `padStart(len, undefined)` throws `TypeError`.
+      - (c) Yes — the spec for `padStart` says "if `padString` is undefined, use a single space."
+      - (d) Yes — but only because we still call `String(str)`, which secretly handles it.
+
+      Commit to a letter, then run.
+
+      <details>
+      <summary>Reveal (after running)</summary>
+
+      **(c)**. The ECMAScript spec for `String.prototype.padStart` explicitly defaults `padString` to `' '` when it's `undefined`. That's why the first test (`pads with spaces by default`) passes without us writing `if (!ch && ch !== 0) ch = ' '`. The built-in is doing the work the original module did manually. (a) is what you'd get if you *explicitly* passed `'undefined'`. (b) only happens with `null`-coerced edge cases far outside the contract.
+      </details>
+
+      ### The real-world lesson
+
+      - **The standard library evolves.** Three lines you write today may become one built-in five years from now. Watch the spec.
+      - **Micro-dependencies have a cost.** Every `npm install` is a supply-chain decision. If you can replace a dependency with a one-line built-in, you reduce maintenance, attack surface, and bundle size.
+      - **Read the spec, not just the docs.** `padStart`'s default-`' '` rule is in TC39; without it, the one-liner wouldn't preserve the contract.
+
+      ### Task
+
+      1. In `leftpad.js`, replace the body of `leftPad` with `return String(str).padStart(len, ch);`
+      2. Click **▶ Run**.
+      3. Confirm all six tests pass.
+      4. Look at `leftpad.js` once more — that's the *entire* module. Sit with that.
+
+    files:
+      - path: "leftpad.js"
+        content: |
+          // 🛠️ TASK: Replace the body of leftPad with:
+          //
+          //     return String(str).padStart(len, ch);
+          //
+          // Then click ▶ Run. All six tests should pass.
+
+          function leftPad (str, len, ch) {
+            return str.padStart(len, ch);  // still the naive swap — fix me!
+          }
+
+          module.exports = leftPad;
+        language: "javascript"
+
+      - path: "leftpad.test.js"
+        content: |
+          // Same contract tests as steps 1 and 2 — unchanged.
+          // The point is to watch the same suite confirm correctness
+          // across three different implementations.
+
+          const assert = require('node:assert');
+          const leftPad = require('./leftpad');
+
+          let passed = 0;
+          let failed = 0;
+
+          function test(name, fn) {
+            try {
+              fn();
+              console.log('  ✓ ' + name);
+              passed++;
+            } catch (e) {
+              console.log('  ✗ ' + name);
+              console.log('    ' + e.message);
+              failed++;
+            }
+          }
+
+          console.log('Running leftPad contract tests:\n');
+
+          test('pads with spaces by default', () => {
+            assert.strictEqual(leftPad('abc', 5), '  abc');
+          });
+
+          test('pads with a custom character', () => {
+            assert.strictEqual(leftPad('abc', 5, '0'), '00abc');
+          });
+
+          test('returns the string unchanged when length is already met', () => {
+            assert.strictEqual(leftPad('hello', 5, '0'), 'hello');
+          });
+
+          test('returns the string unchanged when target length is shorter', () => {
+            assert.strictEqual(leftPad('hello', 3, '0'), 'hello');
+          });
+
+          test('handles single-character padding to a wider target', () => {
+            assert.strictEqual(leftPad('x', 4, '*'), '***x');
+          });
+
+          test('accepts a number as input (coerces to string)', () => {
+            assert.strictEqual(leftPad(7, 4, '0'), '0007');
+          });
+
+          console.log(`\n${passed} passed, ${failed} failed`);
+          process.exit(failed > 0 ? 1 : 0);
+        language: "javascript"
+
+    open_file: "leftpad.js"
+
+    solution:
+      files:
+        - path: "leftpad.js"
+          content: |
+            // The eleven-line module that broke the internet, rewritten
+            // in one line of ES2017. Same contract, same tests, fewer
+            // moving parts.
+
+            function leftPad (str, len, ch) {
+              return String(str).padStart(len, ch);
+            }
+
+            module.exports = leftPad;
+          language: "javascript"
+      explanation: |
+        **Why this is correct:**
+
+        - **`String(str)`** — the explicit coercion idiom. Called *without* `new` (which would build a wrapper object). For any value of `str`, `String(str)` returns a primitive string: `String(7)` → `'7'`, `String(true)` → `'true'`, `String(null)` → `'null'`. This is exactly what the original module did on its first line.
+        - **`.padStart(len, ch)`** — the ES2017 built-in. Default `ch` is `' '` per spec, no truncation when already long enough, repeats `ch` as needed to fill the gap.
+        - **One line.** Sit with that for a moment.
+
+        The contract the tests encode is preserved end-to-end. The implementation moved from 11 lines of user code in 2016 to 1 line of language built-in in 2017. Three takeaways:
+
+        1. Watch the spec. New ECMAScript revisions ship every June; standard-library additions can eliminate whole packages.
+        2. Be skeptical of micro-dependencies. `npm install left-pad` was the right call in 2014 and the wrong call in 2017 — same code, different ecosystem.
+        3. Keep the tests. The test suite outlived three implementations. That's not a coincidence — that's *what tests are for*.
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Why does the lecture write `String(str)` instead of `new String(str)`?
+          options:
+            - "Stylistic preference — they produce identical values"
+            - "`new String(str)` returns a `String` wrapper *object*, not a primitive string — and `wrapperObj.padStart(...)` works, but `===` comparisons against primitives fail. The `String(...)` call (no `new`) returns a primitive"
+            - "`new String(str)` throws when `str` is a number"
+            - "`new String(str)` is deprecated and removed in modern Node.js"
+          correct_index: 1
+          option_feedback:
+            0: "They're *not* identical. `typeof String(7)` is `'string'`; `typeof new String(7)` is `'object'`. The assert comparisons in the test suite use `strictEqual` which would distinguish them."
+            2: "Both forms accept any input. The difference is what they *return*, not what they accept."
+            3: "It's a misfeature, not a removed feature — `new String()` still works, it just produces something almost no one wants."
+          explanation: |
+            `String(value)` (no `new`) is the canonical explicit-coercion idiom — it returns a primitive string. `new String(value)` is a constructor call that wraps the primitive in a boxed `String` object; that object has all the prototype methods but fails `===` against primitives and behaves surprisingly in boolean contexts (`new String('')` is *truthy*). Almost every JavaScript style guide recommends `String(value)` for this reason.
+
+        - question: |
+            *(Spaced review — step 1)* What does `leftPad('hello', 3, '0')` return under **all three** implementations the lecture walks through?
+          options:
+            - "An empty string"
+            - "`'hello'` (unchanged) — the no-truncation rule is part of the contract and is preserved by every implementation"
+            - "`'hel'` — truncated to the target length"
+            - "Throws an error — the input is longer than the target"
+          correct_index: 1
+          option_feedback:
+            0: "There's no return path in any implementation that produces an empty string for valid input."
+            2: "Truncation is *not* part of the contract — and indeed neither the original loop, `padStart`, nor the coerced one-liner truncates."
+            3: "The original loop, the naive padStart swap, and the coerced one-liner all return the input unchanged without throwing."
+          explanation: |
+            The "no truncation when already long enough" rule is a core part of the `leftPad` contract — and conveniently, `String.prototype.padStart` follows the same rule. That alignment is *why* `padStart` is a drop-in candidate at all. If `padStart` truncated, the standard library wouldn't be a viable replacement.
+
+        - question: |
+            *(Spaced review — step 2)* Five of the six tests passed under the naive `return str.padStart(len, ch)` swap. The lecture argues this still makes `padStart` a legitimate replacement candidate. Which of these is the *strongest* reason?
+          options:
+            - "Speed — V8's C++ implementation of `padStart` is faster than a JS `while` loop"
+            - "Zero dependencies — replacing the module removes a supply-chain risk like the 2016 npm incident"
+            - "The remaining failure is a single line of glue (`String(str)`) restoring a JS-specific coercion the original module performed; the harder semantics (default pad, no-truncation, character repetition) are correctly handled out of the box"
+            - "Lines of code — the new version is shorter, which is always better"
+          correct_index: 2
+          option_feedback:
+            0: "True, but speed alone doesn't justify breaking a contract. Speed *plus* correctness does."
+            1: "True, but a replacement that breaks behavior isn't a real replacement — supply-chain hygiene matters less if your code stops working."
+            3: "Brevity is a tiebreaker, not a primary criterion. A short function that doesn't work isn't an improvement."
+          explanation: |
+            The single failing test isolates one piece of glue. The *hard* parts of the contract — defaulting the pad character, not truncating, repeating the pad to fill the gap — are absorbed by the spec-compliant built-in for free. That's what makes `padStart` a true replacement: minimal glue, maximal correctness inherited from the standard library.
