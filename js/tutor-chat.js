@@ -303,28 +303,7 @@
 
     // Check for missing key constructs
     var constructs = [
-      { pattern: /\bdef\s+\w+/g, name: 'function definition', hint: 'You may need to define a function. Check the task instructions for what function name to use.' },
-      { pattern: /\bclass\s+\w+/g, name: 'class definition', hint: 'The solution uses a class. Have you defined one?' },
-      { pattern: /\bfor\s+/g, name: 'for loop', hint: 'Consider using a **for loop** to iterate over the data.' },
-      { pattern: /\bwhile\s+/g, name: 'while loop', hint: 'A **while loop** might help here.' },
-      { pattern: /\breturn\b/g, name: 'return statement', hint: 'Your function needs to **return** a value, not just print it.' },
-      { pattern: /\bimport\s+/g, name: 'import', hint: 'You may need to **import** a module. Check which modules the task mentions.' },
-      { pattern: /\.filter\s*\(/g, name: '.filter()', hint: 'Try using `.filter()` to select elements from the array.' },
-      { pattern: /\.map\s*\(/g, name: '.map()', hint: 'Try using `.map()` to transform each element.' },
-      { pattern: /\.reduce\s*\(/g, name: '.reduce()', hint: 'Try using `.reduce()` to combine values into one result.' },
-      { pattern: /=>\s*[{(]/g, name: 'arrow function', hint: 'The task asks for an **arrow function** (`=>`). Try converting your function declaration.' },
-      { pattern: /\bconsole\.log\b/g, name: 'console.log', hint: 'You need to print output with `console.log()`.' },
-      { pattern: /\bprint\s*\(/g, name: 'print()', hint: 'Use `print()` to display output.' },
-      { pattern: /f["']/g, name: 'f-string', hint: 'Use an **f-string** (`f"..."`) with `{variable}` to insert variable values into the string.' },
-      { pattern: /\$\{/g, name: 'template literal', hint: 'Use a **template literal** (backtick string) with `${variable}` for string interpolation.' },
-      { pattern: /===\s/g, name: 'strict equality (===)', hint: 'Use `===` instead of `==` for strict type checking.' },
-      { pattern: /\bconst\b/g, name: 'const declaration', hint: 'If a value never changes, declare it with `const` instead of `let`.' },
-      { pattern: /\.toFixed\s*\(/g, name: '.toFixed()', hint: 'Use `.toFixed()` to format a number to a specific number of decimal places.' },
-      { pattern: /:\.\d+f/g, name: 'format specifier (:.2f)', hint: 'Use `:.2f` inside f-string braces to format a number to 2 decimal places, e.g., `{gpa:.2f}`.' },
-      { pattern: /sys\.argv/g, name: 'sys.argv', hint: 'Use `sys.argv` to read command-line arguments. `sys.argv[1]` is the first argument.' },
-      { pattern: /sys\.stderr/g, name: 'sys.stderr', hint: 'Print error messages to `sys.stderr` using `print(..., file=sys.stderr)`.' },
-      { pattern: /sys\.exit/g, name: 'sys.exit()', hint: 'Use `sys.exit(1)` to exit with an error code when something goes wrong.' },
-    ];
+      ];
 
     constructs.forEach(function (c) {
       var inSolution = c.pattern.test(solutionCode);
