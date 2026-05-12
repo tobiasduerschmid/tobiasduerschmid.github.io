@@ -1289,12 +1289,49 @@
   // ===========================================================================
   // Debug button + toolbar (in editor toolbar, next to Run/Test)
   // ===========================================================================
+
+  // Lazily build a flex-row action host inside the v86 terminal header so the
+  // Debug button + step toolbar have somewhere to live on layouts that never
+  // built an output toolbar. Returns null when no terminal header is present.
+  DebuggerController.prototype._ensureV86DebugActionsHost = function () {
+    var header = this.t.root.querySelector('.tvm-terminal-header');
+    if (!header) return null;
+    var existing = header.querySelector('.tvm-debug-actions-host');
+    if (existing) return existing;
+    // Promote the header to a flex row so an `margin-left: auto` host slides
+    // to the right of the "Terminal" label.
+    if (window.getComputedStyle(header).display !== 'flex') {
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+    }
+    var host = document.createElement('div');
+    host.className = 'tvm-debug-actions-host';
+    host.style.display = 'flex';
+    host.style.alignItems = 'center';
+    host.style.gap = '6px';
+    host.style.marginLeft = 'auto';
+    header.appendChild(host);
+    return host;
+  };
+
   DebuggerController.prototype.installDebugButton = function () {
-    var actions = this.t.root.querySelector('.tvm-output-actions');
+    // Three layouts, three homes for the Debug button:
+    //   - pyodide / webcontainer / browser : build `.tvm-output-actions` next
+    //     to the Run button. Debug sits to its left.
+    //   - React (live-preview)             : build `.tvm-preview-actions`
+    //     (Refresh / Pop-out). Debug sits next to Refresh.
+    //   - v86                              : terminal-only layout has *no*
+    //     actions toolbar at all — the user normally types into the shell.
+    //     With `debugger: gdb` we need somewhere to put the Debug button, so
+    //     lazily inject `.tvm-debug-actions-host` into `.tvm-terminal-header`
+    //     and use that.
+    var actions = this.t.root.querySelector('.tvm-output-actions')
+              || this.t.root.querySelector('.tvm-preview-actions')
+              || this._ensureV86DebugActionsHost();
     if (!actions) return;
     var self = this;
 
-    // Debug button — sits next to Run.
+    // Debug button — sits next to Run (or next to Refresh, on React).
     this.debugBtn = document.createElement('button');
     this.debugBtn.className = 'tvm-debug-btn';
     this.debugBtn.title = 'Start debugger (F5)';
@@ -1310,12 +1347,15 @@
     this.debugPopoutBtn.style.marginLeft = '4px';
     this.debugPopoutBtn.addEventListener('click', function () { self.popoutDebugger(); });
 
-    // Insert just before the Run button (or at end if not found). Popout
-    // button sits adjacent to Debug.
-    var runBtn = actions.querySelector('.tvm-run-btn');
-    if (runBtn) {
-      actions.insertBefore(this.debugBtn, runBtn);
-      actions.insertBefore(this.debugPopoutBtn, runBtn);
+    // Insert just before the first anchor we recognise:
+    //   - `.tvm-run-btn`     : standard layout (Run is the natural neighbour).
+    //   - `.tvm-refresh-btn` : React preview layout (Refresh is the analogue).
+    // Falls back to appendChild when neither anchor is present.
+    var anchor = actions.querySelector('.tvm-run-btn')
+              || actions.querySelector('.tvm-refresh-btn');
+    if (anchor) {
+      actions.insertBefore(this.debugBtn, anchor);
+      actions.insertBefore(this.debugPopoutBtn, anchor);
     } else {
       actions.appendChild(this.debugBtn);
       actions.appendChild(this.debugPopoutBtn);
@@ -1410,7 +1450,9 @@
     }
     this.statusEl = this.stepToolbar.querySelector('.tvm-debug-status');
     this.stepToolbarHome = actions;
-    this.stepToolbarHeader = actions.closest && actions.closest('.tvm-output-header');
+    this.stepToolbarHeader = actions.closest && (
+      actions.closest('.tvm-output-header') || actions.closest('.tvm-preview-header')
+    );
     this.installResponsiveStepToolbar(actions);
 
     // Keyboard shortcuts
@@ -1452,10 +1494,18 @@
   };
 
   DebuggerController.prototype.updateResponsiveStepToolbar = function (actions) {
-    actions = actions || (this.t.root && this.t.root.querySelector('.tvm-output-actions'));
+    // Fall back to whichever container `installDebugButton` chose
+    // (`.tvm-output-actions` on the standard layout, `.tvm-preview-actions`
+    // on the React live-preview layout); see `installDebugButton`.
+    actions = actions || this.stepToolbarHome ||
+      (this.t.root && (this.t.root.querySelector('.tvm-output-actions')
+                    || this.t.root.querySelector('.tvm-preview-actions')));
     if (!actions || !this.stepToolbar) return;
     var toolbar = this.stepToolbar;
-    var header = (actions.closest && actions.closest('.tvm-output-header')) || this.stepToolbarHeader;
+    var header = (actions.closest && (
+                    actions.closest('.tvm-output-header')
+                 || actions.closest('.tvm-preview-header')
+                )) || this.stepToolbarHeader;
     if (toolbar.parentNode !== actions) {
       actions.appendChild(toolbar);
     }
