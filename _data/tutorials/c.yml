@@ -14,6 +14,13 @@ description: "Every systems programmer has an origin story. Yours starts here. S
 require_tests: true
 autosave_type: none
 
+# Opt this tutorial into the GDB/MI time-travel debugger (real gdb running
+# inside the v86 VM, talking GDB/MI3 over the serial console). The Debug
+# button in the toolbar starts a session against the current step's
+# `debugger_options.executable`. Each step declares its own binary because
+# every chapter in this tutorial compiles a differently-named executable.
+debugger: gdb
+
 setup_commands:
   - "mkdir -p /tutorial/c_project"
 
@@ -23,6 +30,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Predict before Run (the `\n` thought experiment + first compile)
   - title: "Origin Story — Shedding the C++ Armor"
+    debugger_options:
+      executable: /tutorial/c_project/hello
     instructions: |
       ### Chapter 1: Every hero starts by losing something.
 
@@ -203,6 +212,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — full cycle (Predict, Run, Investigate, Modify)
   - title: "Power #1 — printf: Speak to the Machine"
+    debugger_options:
+      executable: /tutorial/c_project/format_lab
     instructions: |
       ### Power Unlocked: Formatted Output
 
@@ -383,6 +394,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: mistake-based familiarization (bug-hunt the unsafe scanf)
   - title: "Power #2 — scanf: Listen (But Watch Your Back)"
+    debugger_options:
+      executable: /tutorial/c_project/input_lab
     instructions: |
       ### Power Unlocked: Reading Input (with great danger)
 
@@ -594,6 +607,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: worked example with fading (sub-goals scaffolded inside the lab file)
   - title: "Power #3 — malloc/free: Control Over Memory Itself"
+    debugger_options:
+      executable: /tutorial/c_project/memory_lab
     instructions: |
       ### Power Unlocked: Manual Memory Management
 
@@ -934,6 +949,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: mistake-based familiarization (bug-hunt three string traps)
   - title: "Power #4 — Strings: Bare-Knuckle Text Wrangling"
+    debugger_options:
+      executable: /tutorial/c_project/strings_lab
     instructions: |
       ### Power Unlocked: Raw String Manipulation
 
@@ -1207,6 +1224,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: negative-transfer callout (C++ → C: `struct` defaults differ)
   - title: "Power #5 — Structs: Build Your Own Data Types"
+    debugger_options:
+      executable: /tutorial/c_project/structs_lab
     instructions: |
       ### Power Unlocked: Custom Data Structures
 
@@ -1548,6 +1567,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: negative-transfer callout (C++ → C: this is *not* `std::variant`)
   - title: "Power #6 — Unions: Shape-Shifting Memory"
+    debugger_options:
+      executable: /tutorial/c_project/unions_lab
     instructions: |
       ### Power Unlocked: One Memory Location, Many Forms
 
@@ -1837,6 +1858,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: worked example with fading (study `compare_doubles`, then implement int variants)
   - title: "Power #7 — Function Pointers: Code That Rewires Itself"
+    debugger_options:
+      executable: /tutorial/c_project/funcptr_lab
     instructions: |
       ### Power Unlocked: Functions as Values
 
@@ -2092,6 +2115,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: productive failure (Bjork) — surface the decay/pass-by-value trap by debugging it
   - title: "Trial by Fire — Arrays, Pointers, and the Decay Trap"
+    debugger_options:
+      executable: /tutorial/c_project/arrays_lab
     instructions: |
       ### Every Hero Has a Weakness. This Is Yours.
 
@@ -2349,6 +2374,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Predict (the silent `"w"`-mode truncation footgun)
   - title: "Power #8 — File I/O: Read and Write the World"
+    debugger_options:
+      executable: /tutorial/c_project/fileio_lab
     instructions: |
       ### Power Unlocked: Persistent Storage
 
@@ -2659,6 +2686,8 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Predict + Make (capstone: trace 3 nodes by hand, then build from a blank slate)
   - title: "Final Boss — A Linked List in C"
+    debugger_options:
+      executable: /tutorial/c_project/linked_list
     instructions: |
       ### The Final Boss Fight
 

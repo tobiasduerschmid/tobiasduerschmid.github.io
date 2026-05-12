@@ -3136,9 +3136,14 @@
       // NodeChannel: bypasses debugInit/runDebug postMessage handshake.
       this.session.pendingStart = null;
       // gdb channel also reads `executable` from the tutorial's
-      // debugger_options (YAML). For other channels this is ignored —
+      // debugger_options (YAML). Per-step `debugger_options:` overrides the
+      // top-level value so a multi-binary tutorial (e.g. the C tutorial,
+      // where each chapter compiles a different binary) can target the
+      // right executable per chapter. For other channels this is ignored —
       // extra cfg fields are harmless.
-      var dbgOpts = (this.t.debuggerOptions || this.t.config && this.t.config.debuggerOptions) || {};
+      var tutDbgOpts = (this.t.debuggerOptions || this.t.config && this.t.config.debuggerOptions) || {};
+      var stepDbgOpts = (step && step.debugger_options) || {};
+      var dbgOpts = Object.assign({}, tutDbgOpts, stepDbgOpts);
       this.channel.startSession({
         filename: path,
         code: code,
