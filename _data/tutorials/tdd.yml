@@ -1229,6 +1229,50 @@ steps:
           print(output)
           assert code == 0, \
               f"All three tests should pass:\n{output}"
+        hints:
+          - title: "Read the failing line's *expected vs actual*"
+            text: |
+              pytest's `assert` output shows both sides of the comparison.
+              Before changing any code, write down — in your own words — what
+              `report.events` *is* in the failing line and what the test
+              *expected* it to be. The shape mismatch (one bare value vs. a
+              tuple of `ScoringEvent`s) is usually the whole bug.
+          - title: "`report.events` holds whole events, not raw dice"
+            text: |
+              Re-read the cycle-2 reveal. Each entry in `report.events` is a
+              *whole* `ScoringEvent` value carrying all three pieces of
+              information the rules table lists (name, dice that fired, damage)
+              — not the raw integer that rolled. If your test asserts
+              something like `report.events == (1,)`, you've collapsed a
+              three-field value down to a single number, and that comparison
+              can never match a correct implementation no matter what `score`
+              does.
+            condition: "code_contains: report.events == (1,"
+          - title: "Value-equality on frozen dataclasses"
+            text: |
+              `@dataclass(frozen=True)` gives `ScoringEvent` value-based
+              equality — two `ScoringEvent` instances are `==` iff every
+              field matches. That's why each test asserts against a
+              *constructed* event of the same shape on both sides:
+              `report.events == (ScoringEvent(<name>, <dice>, <damage>),)`.
+              The three values come straight from the rules table at the
+              top of the tutorial.
+          - title: "One-element tuple, trailing comma matters"
+            text: |
+              Shape of each cycle-2 / cycle-3 `events` assertion (fill the
+              blanks from the rules table):
+
+              ```python
+              def test_single_one_creates_dragon_flame_event():
+                  report = score([1])
+                  assert report.total_damage == ...
+                  assert report.events == (ScoringEvent(..., ..., ...),)
+              ```
+
+              The trailing comma matters — without it, Python parses the
+              outer parentheses as grouping, not a one-element tuple. Don't
+              paste from the worked example before you've tried filling the
+              blanks yourself.
 
       - description: "Implementation still has the second hardcoded branch (no premature refactor to loop)"
         command: |
@@ -1264,7 +1308,55 @@ steps:
 
           targets = list_eq_targets(score_fn, param)
           assert (1,) in targets and (5,) in targets, \
-              f"Cycle 3's smallest GREEN is to add a second `if {param} == [5]:` branch. The loop refactor belongs in cycle 4 — once a test exists that *requires* it. Restore both hardcoded branches for now."
+              f"Cycle 3's smallest GREEN is two `if {param} == [...]:` branches *inside `score()` itself* — one for `[1]` and one for `[5]`. The checker walks `score`'s body for these comparisons, so branches placed elsewhere (e.g. on `BattleReport`) don't count. If you've already replaced the branches with a `for` / `dict` / `match`, that refactor belongs in cycle 4 — restore the two hardcoded `if` branches in `score` for now."
+        hints:
+          - title: "Which function does the checker walk?"
+            text: |
+              The checker imports `scorer.py` and walks the body of `score(dice)`
+              itself, looking for two `if dice == [...]:` comparisons. Open
+              `scorer.py` and read just the body of `score` — what dispatch
+              logic actually lives there? If `score` immediately hands `dice`
+              off to `BattleReport`, the checker sees zero branches in `score`
+              even when the right `if` lines exist somewhere else in the file.
+          - title: "Separate the decider from the container"
+            text: |
+              `BattleReport` is meant to be a passive value object — `events:
+              tuple = ()` plus a derived `total_damage` that sums
+              `event.damage` for each event. Asking `BattleReport` "which
+              events does this dice list produce?" puts the dispatch in the
+              wrong class: the report ends up having to know every dragon-dice
+              rule, and re-derives everything on every read. Move the
+              per-rule decisions back into `score(dice)`, and let each branch
+              construct the right `BattleReport(events=...)` value.
+            condition: "code_contains: self.dice"
+          - title: "`for` / `dict` / `match` is cycle 4's job"
+            text: |
+              If you went straight to a `for die in dice:` loop (or a `dict`
+              dispatch, or `match`/`case`), you've generalised on one too few
+              data points. Cycle 4's test (`[1, 1]`) is what *earns* the loop
+              by making it the cheapest GREEN; until then, the duplication
+              between two hardcoded `if` branches is the lesson, not a code
+              smell to fix. Back the loop out and write the second `if`
+              instead — the cycle-4 step is where it'll come back, justified.
+            condition: "code_contains: for "
+          - title: "Two top-level ifs, then a default return"
+            text: |
+              Inside `score(dice)` (not on `BattleReport`), the body has the
+              shape:
+
+              ```python
+              def score(dice):
+                  if dice == ...:                      # the roll that fires Dragon Flame
+                      return BattleReport((ScoringEvent(...),))
+                  if dice == ...:                      # the roll that fires Lightning Spark
+                      return BattleReport((ScoringEvent(...),))
+                  return BattleReport()
+              ```
+
+              Each `...` is a value the rules table at the top of the
+              tutorial names. No `for`, no `dict`, no `match`. The
+              duplication between the two branches is the *point* of cycle 3
+              — cycle 4's test will earn the right to collapse it.
 
     # NO QUIZ — duplication is the lesson; cycle 4 will pay for it.
 

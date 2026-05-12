@@ -247,7 +247,7 @@ steps:
           - title: "Strategic hint"
             text: "Trace `greet([\"Ada\", \"Linus\", \"Grace\"])` by hand. What value of `i` does the first iteration use? What index *should* it use to include `\"Ada\"`?"
             condition: "code_contains: range(1, len"
-          - title: "Skeleton — fill the blank"
+          - title: "Fill the blank"
             text: "The `range(...)` call has a wrong start. Fix the shape: `range(___, len(names))` so the very first iteration sees index 0. Pick the integer that makes that true."
             condition: "code_contains: range(1, len"
 
@@ -880,7 +880,7 @@ steps:
             text: "Look at the order of the two checks at the top of `_dfs`. Which one runs first when `steps_used == max_steps` AND `current == goal`?"
           - title: "Strategic hint"
             text: "Trace by hand: when the recursion calls `_dfs(current=goal, ...)` after using all 10 steps, what is `steps_used`? Which check fires? Should reaching the goal be allowed even at the budget limit?"
-          - title: "Skeleton — name the order"
+          - title: "Name the order"
             text: "There are two early-exit checks at the top of `_dfs`: a *success* check (`current == goal`) and a *failure* check (`steps_used >= max_steps`). When both could fire on the same call, which one should win? Reorder so the winner runs first."
 
       - description: "Workaround guard — test file unchanged"
@@ -1364,7 +1364,7 @@ steps:
           - title: "Strategic hint"
             text: "Set a conditional breakpoint at the start of `apply_transaction` with `tx.account == \"ACCT-202\"`. When paused on T011, watch `repr(tx.kind)`. The `repr()` reveals what `print()` hides."
             condition: "code_missing: .strip()"
-          - title: "Skeleton — fill the boundary fix"
+          - title: "Fill the boundary fix"
             text: "In `load_transactions`, the line that builds `kind` is `kind=row[\"type\"].upper()`. Insert one method call between `row[\"type\"]` and `.upper()` that removes leading/trailing whitespace before normalization. Pick the method whose Python name means \"trim\"."
             condition: "code_missing: .strip()"
 
@@ -2058,7 +2058,7 @@ steps:
           - title: "Strategic hint"
             text: "Set a breakpoint on the `next_student = course.waitlist.pop()` line. When paused, watch `course.waitlist[0]` and `course.waitlist[-1]`. Step over. Which one became `next_student`? Which one *should* have, given FIFO policy?"
             condition: "code_contains: waitlist.pop()"
-          - title: "Skeleton — pick the index"
+          - title: "Pick the index"
             text: "`list.pop()` with no argument removes from the *end* (LIFO). FIFO needs an explicit positional argument that picks the *front* of the list. Add that argument to the `course.waitlist.pop()` call. (Or, idiomatically: `collections.deque` with `popleft()`.)"
             condition: "code_contains: waitlist.pop()"
 
@@ -2637,7 +2637,7 @@ steps:
           - title: "Strategic hint"
             text: "When you iterate `for line in f`, each `line` includes its trailing newline. After `line.split('|', 1)`, the trailing `\\n` ends up on `tag`. The fix belongs in the loader, *before* `tag.upper()`."
             condition: "code_missing: .strip()"
-          - title: "Skeleton — same pattern as Case 2"
+          - title: "Same pattern as Case 2"
             text: "The line `counts[tag.upper()] += 1` builds the dict key. `tag` ends with `\\n` here. Insert a method call between `tag` and `.upper()` that removes that newline (and any surrounding whitespace), like Case 2 did with the CSV row's `type` field."
             condition: "code_missing: .strip()"
 
