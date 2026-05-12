@@ -23,7 +23,7 @@ docker run --rm --platform linux/386 \
     alpine:3.19 sh -c '
     set -e
 
-    echo "[1/4] Installing packages..."
+    echo "[1/5] Installing packages..."
     apk add --no-cache \
         bash \
         coreutils \
@@ -36,7 +36,6 @@ docker run --rm --platform linux/386 \
         make \
         nano \
         less \
-        file \
         tree \
         musl-dev \
         gdb
@@ -70,7 +69,7 @@ docker run --rm --platform linux/386 \
     # Remove build-time GCC (huge), keep only TCC
     apk del gcc 2>&1 | tail -1
 
-    echo "[2/4] Configuring system..."
+    echo "[2/5] Configuring system..."
 
     # Custom init script (PID 1)
     cp /overlay/init /init
@@ -115,7 +114,7 @@ docker run --rm --platform linux/386 \
  Your files are in /tutorial
 MOTD
 
-    echo "[3/4] Installing kernel & network modules..."
+    echo "[3/5] Installing kernel & network modules..."
     apk add --no-cache linux-virt 2>/dev/null || true
     if [ -f /boot/vmlinuz-virt ]; then
         cp /boot/vmlinuz-virt /output/bzImage
@@ -136,7 +135,68 @@ MOTD
     fi
     rm -rf /tmp/keep_modules
 
-    echo "[4/4] Creating cpio archive..."
+    echo "[4/5] Slimming image (removing gdb incidental bloat)..."
+    # Adding the gdb package grew the compressed initramfs by ~21 MB.
+    # Most of that delta is bundled-but-unused infrastructure, not gdb
+    # itself. We remove it here:
+    #
+    #   - musl-dbg (~2.6 MB)   : debug info for musl libc. We step user
+    #                            code only, never into libc, so the
+    #                            symbols are dead weight.
+    #   - python3 stdlib       : gdb links libpython3.11.so so an embedded
+    #                            interpreter can run pretty-printers. We
+    #                            launch gdb with `set auto-load
+    #                            python-scripts off` (see overlay/tutorial-gdb)
+    #                            so it never sources any .py file — the
+    #                            stdlib + pyc cache (~40 MB uncompressed)
+    #                            is removed below. libpython.so itself
+    #                            stays because gdb ELF lists it as NEEDED;
+    #                            dropping it would require rebuilding gdb
+    #                            from source with --without-python.
+    #   - libmagic + magic.mgc : ~8.6 MB. The file(1) magic database. No
+    #                            tutorial calls file.
+    #   - /usr/lib/libc.a      : 6.4 MB static archive. TCC dynamic-links
+    #                            by default; no tutorial uses -static.
+    #   - /usr/lib/debug/      : 2.5 MB detached debug symbols for system
+    #                            binaries. Unused without the matching
+    #                            .gnu_debuglink workflow.
+    #   - gdbserver / gcore / gdb-add-index : never used (we never
+    #                            remote-debug, generate cores, or pre-index
+    #                            DWARF).
+    #
+    # Result: rebuild shrinks back close to the pre-gdb baseline.
+    apk del --no-scripts musl-dbg file libmagic 2>&1 | tail -1 || true
+    rm -rf /usr/lib/debug
+    rm -f  /usr/lib/libc.a
+    rm -rf /usr/share/doc /usr/share/man /usr/share/info /usr/share/locale
+    rm -f  /usr/bin/gdbserver /usr/bin/gcore /usr/bin/gdb-add-index
+    # gdb data files: keep syscalls/ (needed for `catch syscall`); drop the
+    # Python pretty-printer module + the vendor-specific system-gdbinit
+    # scripts (elinos / wrs-linux). Without these, gdb has nothing to load
+    # via its internal Python module, so it never touches libpython.
+    rm -rf /usr/share/gdb/python
+    rm -rf /usr/share/gdb/system-gdbinit
+    # Python: drop the entire stdlib + pyc cache. gdb only opens it when
+    # auto-load python-scripts is on, which tutorial-gdb disables. If a
+    # future tutorial needs gdb pretty-printers, revert this block and
+    # re-enable auto-load.
+    rm -rf /usr/lib/python3.11/__pycache__
+    rm -rf /usr/lib/python3.11/ensurepip
+    rm -rf /usr/lib/python3.11/distutils
+    rm -rf /usr/lib/python3.11/lib2to3
+    rm -rf /usr/lib/python3.11/pydoc_data
+    rm -rf /usr/lib/python3.11/idlelib
+    rm -rf /usr/lib/python3.11/turtledemo
+    rm -rf /usr/lib/python3.11/tkinter
+    rm -rf /usr/lib/python3.11/test
+    find  /usr/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+    # Strip gdb. --strip-all is safe: gdb does not need its own symbol
+    # table — only the inferior symbols (loaded from the user binary at
+    # runtime) matter.
+    strip --strip-all /usr/bin/gdb 2>/dev/null || true
+    echo "    /usr/bin/gdb after strip: $(du -sh /usr/bin/gdb | cut -f1)"
+
+    echo "[5/5] Creating cpio archive..."
 
     # Export the full container filesystem as a cpio initrd,
     # excluding Docker mount points and unnecessary directories
