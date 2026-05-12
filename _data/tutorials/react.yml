@@ -12,6 +12,15 @@ learning_objectives:
 
 backend: react
 
+# Opt this tutorial into the record-and-replay time-travel debugger
+# (iframe-side tracer + Babel-plugin JSX instrumentation; see
+# js/debugger/react/tracer.js and js/debugger/react-channel.js). The
+# Debug button records every state change as a snapshot the learner
+# can scrub through. The trace is filtered to React's committed
+# renders by default so Strict Mode's double-invocations stay hidden;
+# set `debugger_options.show_all_renders: true` to see them.
+debugger: true
+
 require_tests: true
 autosave_type: none
 
