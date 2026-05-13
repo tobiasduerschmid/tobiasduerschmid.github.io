@@ -135,9 +135,9 @@ layout: sebook
               </label>
             </div>
           </fieldset>
-          <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
-            <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
-            <div style="display: inline-flex; align-items: center; gap: 12px;">
+          <div class="controls-row toggle-row max-cards-row">
+            <label for="max-cards" class="toggle-label max-cards-label">Max cards:</label>
+            <div class="max-cards-controls">
               <input type="number" id="max-cards" value="50" min="0" max="9999" aria-describedby="max-cards-note">
               <button id="start-workout-btn" class="gym-btn primary" disabled>Start Workout</button>
             </div>
@@ -152,8 +152,8 @@ layout: sebook
 
         <!-- Difficult Questions Gym (shown only when analyze is on and there are difficult questions) -->
         <div id="difficult-gym-section" style="display: none;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c0392b; padding-bottom: 8px; margin-bottom: 15px;">
-            <h2 class="difficult-heading" style="margin: 0; border-bottom: none; padding-bottom: 0;">Difficult Questions</h2>
+          <div class="gym-section-header difficult-section-header">
+            <h2 class="difficult-heading">Difficult Questions</h2>
             <button id="start-hard-workout-btn" class="gym-btn danger">Start Hard Workout</button>
           </div>
           <div id="difficult-gym-container">
@@ -173,9 +173,8 @@ layout: sebook
           </div>
         </div>
 
-        <div id="your-gym-header"
-          style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e1e4e8; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px;">
-          <h2 style="margin: 0; border-bottom: none; padding-bottom: 0;">Your Gym</h2>
+        <div id="your-gym-header" class="gym-section-header">
+          <h2>Your Gym</h2>
           <button id="empty-gym-btn" class="gym-btn secondary" title="Empty your gym">Empty Gym</button>
         </div>
         <div id="gym-selected" style="margin-top: 12px;">
@@ -265,12 +264,11 @@ layout: sebook
       </div><!-- /#gym-entrance-sections -->
 
       <!-- ==================== TUTORIAL PROGRESS IMPORT/EXPORT ==================== -->
-      <div id="tutorial-progress-section"
-        style="border-top: 1px solid #e1e4e8; padding-top: 18px; margin-top: 30px;">
+      <div id="tutorial-progress-section">
         <h2 style="margin-top: 0;">Tutorial Progress</h2>
         <p class="gym-subtitle">Back up, transfer, or restore tutorial progress stored in this browser's local storage.
         </p>
-        <div class="controls-row" style="gap: 10px; flex-wrap: wrap;">
+        <div class="controls-row tutorial-progress-actions">
           <button id="download-tutorial-progress-btn" class="gym-btn secondary">
             <i class="fa-solid fa-download"></i> Download Tutorial Progress
           </button>
@@ -295,8 +293,8 @@ layout: sebook
         <p class="tutorial-io-modal-desc" id="tutorial-export-modal-desc">Check the tutorials whose progress you want to
           include in the exported JSON file.</p>
         <div class="tutorial-io-list" id="tutorial-export-list"></div>
-        <p class="tutorial-io-modal-desc" id="tutorial-export-empty-msg"
-          style="display:none; color:#666; font-style: italic;">
+        <p class="tutorial-io-modal-desc tutorial-export-empty-msg" id="tutorial-export-empty-msg"
+          style="display:none;">
           No tutorial progress found in this browser.
         </p>
         <div class="tutorial-io-modal-actions">
@@ -458,9 +456,17 @@ layout: sebook
   <style>
     #se-gym-app {
       max-width: 800px;
+      width: 100%;
       margin: 0 auto;
       padding: 20px;
       font-family: 'Inter', 'Helvetica Neue', sans-serif;
+      box-sizing: border-box;
+    }
+
+    #se-gym-app *,
+    #se-gym-app *::before,
+    #se-gym-app *::after {
+      box-sizing: border-box;
     }
 
     #se-gym-app h1 {
@@ -509,7 +515,7 @@ layout: sebook
     }
 
     .difficult-stat {
-      font-size: 0.8em;
+      font-size: 0.9em;
       /* WCAG 1.4.3: parent .difficult-gym-item bg is #fff5f5; on hover/.in-gym
          it darkens to #ffe0e0. #dc3545 → 4.23:1 / 3.66:1 (FAIL).
          #a02832 → 5.92:1 on #fff5f5, 4.96:1 on #ffe0e0 (PASS). Dark-mode
@@ -541,7 +547,7 @@ layout: sebook
       color: #fff;
       border: none;
       padding: 0;
-      font-size: 0.75em;
+      font-size: 1em;
       font-weight: 700;
       cursor: pointer;
       position: relative;
@@ -631,7 +637,7 @@ layout: sebook
       z-index: 201;
       box-shadow: var(--shadow-lg, 0 8px 32px rgba(0, 0, 0, 0.25));
       max-width: 360px;
-      width: 90%;
+      width: min(90vw, 360px);
       text-align: center;
     }
 
@@ -660,6 +666,10 @@ layout: sebook
     html.dark-mode .difficult-heading {
       color: #ff6b6b !important;
       border-bottom-color: #ff6b6b !important;
+    }
+
+    html.dark-mode .difficult-section-header {
+      border-bottom-color: #ff6b6b;
     }
 
     html.dark-mode .difficult-gym-item {
@@ -732,6 +742,7 @@ layout: sebook
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+      min-width: 0;
     }
 
     .toggle-copy {
@@ -739,6 +750,7 @@ layout: sebook
       align-items: center;
       gap: 6px;
       position: relative;
+      min-width: 0;
     }
 
     .controls-row label {
@@ -749,6 +761,7 @@ layout: sebook
 
     .controls-row input[type="number"] {
       width: 80px;
+      min-height: 38px;
       padding: 6px 10px;
       border: 1.5px solid #767676;
       border-radius: 6px;
@@ -768,6 +781,56 @@ layout: sebook
     .timed-practice-toggle-row {
       justify-content: space-between;
       margin-top: 10px;
+    }
+
+    .max-cards-row {
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .max-cards-label {
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .max-cards-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .gym-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 2px solid #e1e4e8;
+      padding-bottom: 8px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    .gym-section-header h2 {
+      margin: 0;
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
+    }
+
+    .difficult-section-header {
+      border-bottom-color: #c0392b;
+      margin-top: 0;
+    }
+
+    #tutorial-progress-section {
+      border-top: 1px solid #e1e4e8;
+      padding-top: 18px;
+      margin-top: 30px;
+    }
+
+    .tutorial-progress-actions {
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .timed-practice-panel {
@@ -867,6 +930,7 @@ layout: sebook
       border-radius: var(--radius-md, 8px);
       font-weight: 600;
       font-size: 0.95em;
+      min-height: 38px;
       cursor: pointer;
       transition: background 0.2s;
     }
@@ -926,13 +990,14 @@ layout: sebook
 
     .gym-item-info {
       flex: 1;
+      min-width: 0;
     }
 
     .gym-item-badge {
       display: inline-block;
       padding: 2px var(--sp-sm, 8px);
       border-radius: var(--radius-sm, 4px);
-      font-size: 0.75em;
+      font-size: 0.85em;
       font-weight: 700;
       text-transform: uppercase;
       margin-right: var(--sp-sm, 8px);
@@ -950,19 +1015,21 @@ layout: sebook
 
     .gym-item-title {
       font-size: 1em;
+      overflow-wrap: anywhere;
     }
 
     .gym-item-count {
-      font-size: 0.85em;
+      font-size: 0.9em;
       color: #555;
       margin-left: 4px;
     }
 
     .gym-item-desc {
       margin: 4px 0 0;
-      font-size: 0.85em;
+      font-size: 0.9em;
       color: #666;
       line-height: 1.4;
+      overflow-wrap: anywhere;
     }
 
     .gym-add-btn {
@@ -1105,7 +1172,7 @@ layout: sebook
       display: inline-block;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 0.75em;
+      font-size: 0.85em;
       font-weight: 700;
       text-transform: uppercase;
       margin-bottom: 8px;
@@ -1134,7 +1201,7 @@ layout: sebook
     .workout-flashcard .quiz-difficulty-prefix {
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
       opacity: 0.85;
     }
     .workout-quiz-card .quiz-difficulty.is-pre-answer,
@@ -1188,7 +1255,7 @@ layout: sebook
       font-size: 0.95em;
       color: #333;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
     }
     .difficulty-filter-help {
       margin: 4px 0 10px;
@@ -1403,6 +1470,7 @@ layout: sebook
       cursor: pointer;
       font-size: 0.95em;
       line-height: 1.25;
+      min-width: 0;
     }
 
     .workout-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
@@ -1505,6 +1573,12 @@ layout: sebook
       font-weight: 800;
       margin-right: 12px;
       color: #6a737d;
+      flex-shrink: 0;
+    }
+
+    .workout-quiz-card .option-content {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .workout-quiz-card .submit-answer-btn,
@@ -1520,6 +1594,7 @@ layout: sebook
       transition: background 0.2s;
       width: 100%;
       font-size: 0.95em;
+      min-height: 38px;
     }
 
     .workout-quiz-card .submit-answer-btn:disabled {
@@ -1576,22 +1651,90 @@ layout: sebook
       color: #666;
     }
 
+    #main-content #se-gym-app .workout-quiz-card .question-text code,
+    #main-content #se-gym-app .workout-quiz-card .option-content code,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-question code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-answer code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-explanation code {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text .highlighter-rouge,
+    #main-content #se-gym-app .workout-quiz-card .option-content .highlighter-rouge,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text .highlighter-rouge,
+    #main-content #se-gym-app .workout-flashcard .flashcard-question .highlighter-rouge,
+    #main-content #se-gym-app .workout-flashcard .flashcard-answer .highlighter-rouge,
+    #main-content #se-gym-app .workout-flashcard .flashcard-explanation .highlighter-rouge {
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      text-align: left;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text pre,
+    #main-content #se-gym-app .workout-quiz-card .option-content pre,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text pre,
+    #main-content #se-gym-app .workout-flashcard .flashcard-question pre,
+    #main-content #se-gym-app .workout-flashcard .flashcard-answer pre,
+    #main-content #se-gym-app .workout-flashcard .flashcard-explanation pre {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 8px 0 0;
+      border-color: #d0d7de;
+      background: #f6f8fa;
+      color: #24292f;
+      overflow-x: auto;
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: normal;
+      text-align: left;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text pre code,
+    #main-content #se-gym-app .workout-quiz-card .option-content pre code,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text pre code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-question pre code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-answer pre code,
+    #main-content #se-gym-app .workout-flashcard .flashcard-explanation pre code {
+      display: block;
+      min-width: max-content;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text pre code span,
+    #main-content #se-gym-app .workout-quiz-card .option-content pre code span,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text pre code span,
+    #main-content #se-gym-app .workout-flashcard .flashcard-question pre code span,
+    #main-content #se-gym-app .workout-flashcard .flashcard-answer pre code span,
+    #main-content #se-gym-app .workout-flashcard .flashcard-explanation pre code span {
+      white-space: inherit;
+    }
+
     /* ── Parsons Problem Styles ─────────────────────────────────────── */
     .parsons-container { margin-top: 12px; }
-    .parsons-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+    .parsons-label { font-size: 0.9em; color: #666; margin-bottom: 8px; }
     .parsons-bank, .parsons-target {
       min-height: 48px; padding: var(--sp-sm, 8px); border-radius: var(--radius-md, 8px);
       display: flex; flex-direction: column; gap: var(--sp-xs, 4px);
     }
     .parsons-bank { background: #f5f5f8; border: 1px dashed var(--color-border-strong, #6a737d); }
     .parsons-target { background: #f0f8f0; border: 2px dashed var(--color-success, #1f7a3d); }
-    .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.8em; }
+    .parsons-separator { text-align: center; padding: 6px; color: #555; font-size: 0.9em; }
     .parsons-line {
       display: inline-flex; align-items: center; gap: var(--sp-sm, 8px);
       padding: 6px 10px; background: var(--color-surface, #fff); border: 1px solid var(--color-border-strong, #767676);
       border-radius: var(--radius-sm, 4px);
       cursor: grab; font-size: 0.9em; transition: border-color 0.2s, background 0.2s;
-      user-select: none;
+      user-select: none; min-width: 0;
     }
     .parsons-line:hover { border-color: var(--color-primary, #2774AE); background: #e8f0ff; }
     .parsons-line.dragging { opacity: 0.4; }
@@ -1600,7 +1743,7 @@ layout: sebook
       white-space: pre; color: #333; background: transparent !important; 
       padding: 0 !important; border: none !important;
     }
-    .parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
+    .parsons-grip { color: #555; font-size: 0.9em; flex-shrink: 0; }
     .parsons-line.parsons-correct { border-color: var(--color-success, #1f7a3d); background: #e6ffed; }
     .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
     .parsons-line.parsons-correct::before,
@@ -1611,10 +1754,10 @@ layout: sebook
     }
     .parsons-line.parsons-correct::before { content: "✓"; }
     .parsons-line.parsons-incorrect::before { content: "✗"; }
-    .parsons-actions { display: flex; gap: var(--sp-sm, 8px); margin-top: var(--sp-md, 10px); }
+    .parsons-actions { display: flex; gap: var(--sp-sm, 8px); margin-top: var(--sp-md, 10px); flex-wrap: wrap; }
     .parsons-check-btn, .parsons-reset-btn {
       padding: var(--sp-sm, 6px) var(--sp-lg, 16px); border-radius: var(--radius-md, 8px); border: none; cursor: pointer;
-      font-size: 0.85em; font-weight: 600;
+      font-size: 0.95em; font-weight: 600; min-height: 38px;
     }
     .parsons-check-btn { background: var(--color-primary, #2774AE); color: var(--color-text-on-primary, white); }
     .parsons-check-btn:hover:not(:disabled) { background: var(--color-primary-hover, #1e5c8a); }
@@ -1653,8 +1796,10 @@ layout: sebook
       color: var(--color-text, #1a1a1a);
       min-height: 40px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
       justify-content: center;
+      gap: 10px;
     }
 
     .workout-flashcard .flashcard-question p,
@@ -1705,6 +1850,7 @@ layout: sebook
       cursor: pointer;
       transition: background 0.2s;
       font-size: 0.9em;
+      min-height: 38px;
     }
 
     .workout-flashcard .show-answer-btn:hover {
@@ -1779,7 +1925,7 @@ layout: sebook
     #se-gym-app .workout-result-shortcut-hint {
       margin: 12px 0 0;
       color: #555;
-      font-size: 0.86em;
+      font-size: 0.9em;
       line-height: 1.5;
       text-align: center;
     }
@@ -1827,7 +1973,7 @@ layout: sebook
       border-radius: 4px;
       background: #f6f8fa;
       color: #24292e;
-      font-size: 0.86em;
+      font-size: 0.9em;
       font-weight: 700;
     }
 
@@ -1902,8 +2048,10 @@ layout: sebook
       border-bottom-color: #444;
     }
 
-    html.dark-mode #your-gym-header {
+    html.dark-mode .gym-section-header,
+    html.dark-mode #tutorial-progress-section {
       border-bottom-color: #444;
+      border-top-color: #444;
     }
 
     html.dark-mode .gym-subtitle {
@@ -2116,6 +2264,17 @@ layout: sebook
       color: #FFD100;
     }
 
+    html.dark-mode #main-content #se-gym-app .workout-quiz-card .question-text pre,
+    html.dark-mode #main-content #se-gym-app .workout-quiz-card .option-content pre,
+    html.dark-mode #main-content #se-gym-app .workout-quiz-card .explanation-text pre,
+    html.dark-mode #main-content #se-gym-app .workout-flashcard .flashcard-question pre,
+    html.dark-mode #main-content #se-gym-app .workout-flashcard .flashcard-answer pre,
+    html.dark-mode #main-content #se-gym-app .workout-flashcard .flashcard-explanation pre {
+      background: #1f2328;
+      border-color: #555;
+      color: #e6edf3;
+    }
+
     html.dark-mode .workout-progress-bar {
       background: #333;
     }
@@ -2197,10 +2356,72 @@ layout: sebook
     html.dark-mode .parsons-reset-btn:hover:not(:disabled) { background: #444; }
     html.dark-mode .quiz-correct-answers code { background: #252525; color: #ffd54f; }
 
+    /* Touch-first hit areas for phones, tablets, and hybrid devices. */
+    @media (any-pointer: coarse) {
+      .gym-btn,
+      .workout-quiz-card .submit-answer-btn,
+      .workout-quiz-card .next-btn,
+      .workout-flashcard .show-answer-btn,
+      .parsons-check-btn,
+      .parsons-reset-btn,
+      .timed-practice-extend-btn {
+        min-height: 44px;
+      }
+
+      .controls-row input[type="number"],
+      .timed-practice-field input[type="number"] {
+        min-height: 44px;
+      }
+
+      .gym-add-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+      }
+
+      .info-btn {
+        width: 44px;
+        height: 44px;
+      }
+
+      #se-gym-app .switch {
+        width: 44px;
+        height: 44px;
+      }
+
+      #se-gym-app .switch .slider {
+        top: 10px;
+        bottom: 10px;
+      }
+
+      .difficulty-filter-option,
+      .timed-practice-mode-option,
+      .tutorial-io-item,
+      .workout-quiz-card .quiz-option,
+      .parsons-line {
+        min-height: 44px;
+      }
+
+      .difficulty-filter-option input[type="checkbox"],
+      .timed-practice-mode-option input,
+      .tutorial-io-item input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        min-height: 24px;
+      }
+    }
+
     /* Responsive adjustments */
     @media (max-width: 600px) {
       #se-gym-app {
-        padding: 15px;
+        padding: 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+      }
+
+      #gym-controls {
+        padding: 12px;
       }
 
       .controls-row:not(.toggle-row) {
@@ -2209,33 +2430,176 @@ layout: sebook
       }
 
       .toggle-row {
-        gap: 8px;
-        /* Slightly tighter gap on mobile */
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 8px 12px;
+      }
+
+      .toggle-copy {
+        align-items: flex-start;
       }
 
       .toggle-row .toggle-label {
-        font-size: 0.8em;
+        font-size: 1em;
       }
 
-      .toggle-row .switch {
-        transform: scale(0.85);
-        transform-origin: right center;
+      .info-tooltip {
+        left: 0;
+        width: min(78vw, 300px);
       }
 
-      .controls-row:not(.toggle-row) input[type="number"] {
+      .controls-row input[type="number"],
+      .timed-practice-field input[type="number"] {
         width: 100%;
       }
 
-      .toggle-row input[type="number"] {
-        width: 75px;
-        padding: 4px 8px;
-        font-size: 0.9em;
+      .max-cards-row {
+        grid-template-columns: 1fr;
       }
 
-      .toggle-row .gym-btn {
-        padding: 6px 12px;
-        font-size: 0.85em;
-        white-space: nowrap;
+      .max-cards-controls {
+        display: grid;
+        grid-template-columns: minmax(88px, 0.4fr) minmax(10rem, 1fr);
+        gap: 10px;
+        width: 100%;
+      }
+
+      .max-cards-controls .gym-btn {
+        white-space: normal;
+      }
+
+      .difficulty-filter {
+        padding: 10px;
+      }
+
+      .difficulty-filter-options {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .gym-section-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .gym-section-header .gym-btn {
+        width: 100%;
+      }
+
+      .gym-item {
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .gym-item-badge,
+      .gym-item-title,
+      .gym-item-count {
+        display: block;
+      }
+
+      .gym-item-badge {
+        width: fit-content;
+        margin-right: 0;
+        margin-bottom: 4px;
+      }
+
+      .gym-item-count {
+        margin-left: 0;
+        margin-top: 2px;
+      }
+
+      .gym-add-btn {
+        margin-left: 0;
+      }
+
+      .workout-header-row {
+        align-items: stretch;
+      }
+
+      .workout-header-row > * {
+        width: 100%;
+      }
+
+      .timed-practice-clock {
+        justify-content: space-between;
+      }
+
+      .workout-quiz-card,
+      .workout-flashcard {
+        padding: 14px;
+      }
+
+      .workout-quiz-card .quiz-option {
+        align-items: flex-start;
+        padding: 10px;
+      }
+
+      .workout-quiz-card .quiz-correct-answers {
+        flex-wrap: wrap;
+      }
+
+      .parsons-container:not(.parsons-inline) .parsons-line {
+        width: 100%;
+      }
+
+      .parsons-line code,
+      .parsons-container.parsons-inline .parsons-line code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .parsons-actions > button {
+        flex: 1 1 140px;
+      }
+
+      .workout-breakdown {
+        max-width: 100%;
+        padding: 12px;
+      }
+
+      .workout-breakdown-row {
+        grid-template-columns: 36px minmax(0, 1fr);
+      }
+
+      .workout-breakdown-stat {
+        grid-column: 2;
+      }
+
+      .workout-results-actions .gym-btn,
+      .tutorial-progress-actions .gym-btn,
+      .tutorial-io-modal-actions .gym-btn {
+        width: 100%;
+      }
+
+      .tutorial-io-modal-actions > span {
+        display: none;
+      }
+
+      .tutorial-io-item {
+        align-items: flex-start;
+      }
+
+      .tutorial-io-item-meta {
+        display: block;
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .max-cards-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .confirm-modal-btns {
+        flex-direction: column;
+      }
+
+      .confirm-modal-btns .gym-btn {
+        width: 100%;
       }
     }
 
@@ -2259,8 +2623,9 @@ layout: sebook
       z-index: 201;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
       max-width: 520px;
-      width: 92%;
-      max-height: 80vh;
+      width: min(92vw, 520px);
+      max-height: calc(100vh - 48px);
+      max-height: calc(100dvh - 48px);
       display: flex;
       flex-direction: column;
     }
@@ -2318,8 +2683,13 @@ layout: sebook
 
     .tutorial-io-item-meta {
       color: #777;
-      font-size: 0.85em;
+      font-size: 0.9em;
       margin-left: 4px;
+    }
+
+    .tutorial-export-empty-msg {
+      color: #666;
+      font-style: italic;
     }
 
     .tutorial-io-modal-actions {
@@ -2357,6 +2727,34 @@ layout: sebook
 
     html.dark-mode .tutorial-io-item-meta {
       color: #aaa;
+    }
+
+    html.dark-mode .tutorial-export-empty-msg {
+      color: #c8c8c8;
+    }
+
+    @media (max-width: 600px) {
+      .tutorial-io-modal-box {
+        width: calc(100vw - 24px);
+        padding: 18px;
+      }
+
+      .tutorial-io-item {
+        align-items: flex-start;
+      }
+
+      .tutorial-io-item-meta {
+        display: block;
+        margin-left: 0;
+      }
+
+      .tutorial-io-modal-actions .gym-btn {
+        width: 100%;
+      }
+
+      .tutorial-io-modal-actions > span {
+        display: none;
+      }
     }
   </style>
 

@@ -63,6 +63,26 @@ async function setCookie(context, name, value) {
   }]);
 }
 
+async function expectNoHorizontalScroll(page, stateName) {
+  const metrics = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  }));
+  expect(
+    metrics.scrollWidth,
+    `${stateName} should fit within the mobile viewport without horizontal page scrolling`,
+  ).toBeLessThanOrEqual(metrics.clientWidth + 1);
+}
+
+async function expectTapTarget(locator, label, minSize = 44) {
+  const box = await locator.boundingBox();
+  if (!box) {
+    throw new Error(`${label} should have a measurable visible tap target`);
+  }
+  expect(box.width, `${label} should be at least ${minSize}px wide`).toBeGreaterThanOrEqual(minSize - 0.5);
+  expect(box.height, `${label} should be at least ${minSize}px tall`).toBeGreaterThanOrEqual(minSize - 0.5);
+}
+
 // ==================== LIBRARY VIEW TESTS ====================
 
 test.describe('SE Gym - Library View', () => {
@@ -300,6 +320,101 @@ test.describe('SE Gym - Library View', () => {
 
     await expect(page.locator('#timed-practice-seconds-per-question')).toHaveAttribute('aria-invalid', 'false');
     await expect(page.locator('#timed-practice-note')).toContainText('0:02');
+  });
+});
+
+// ==================== MOBILE LAYOUT TESTS ====================
+
+test.describe('SE Gym - Mobile layout', () => {
+  test.use({
+    viewport: { width: 320, height: 760 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 2,
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await clearState(page);
+  });
+
+  test('library controls fit narrow touch screens with usable targets', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+
+    await expect(page.getByRole('heading', { name: 'SE Gym' })).toBeVisible();
+    await expectNoHorizontalScroll(page, 'SE Gym library');
+    await expectTapTarget(page.getByRole('button', { name: 'Start Workout' }), 'Start Workout button');
+    await expectTapTarget(page.getByRole('button', { name: /^Add .+ to gym$/i }).first(), 'quiz add button');
+    await expectTapTarget(page.getByRole('button', { name: /Info about personal gym/i }), 'personal gym info button');
+    await expectTapTarget(page.getByLabel('Toggle personal gym activation'), 'personal gym activation switch');
+    await expectTapTarget(page.getByRole('spinbutton', { name: /max cards/i }), 'max cards input');
+  });
+
+  test('workout cards fit narrow touch screens with usable answer targets', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+
+    await expect(page.getByRole('button', { name: /Back to Gym Entrance/i })).toBeVisible();
+    await expect(page.getByRole('radio').first()).toBeVisible();
+    await expectNoHorizontalScroll(page, 'SE Gym workout');
+    await expectTapTarget(page.getByRole('button', { name: /Back to Gym Entrance/i }), 'Back to Gym Entrance button');
+    await expectTapTarget(page.getByRole('radio').first(), 'first answer option');
+  });
+
+  test('flashcard code blocks stay readable on narrow touch screens', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'python_syntax_explain' }]));
+    await page.goto(GYM_URL);
+
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('12');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+
+    let foundExponentiationCard = false;
+    for (let i = 0; i < 12; i++) {
+      const question = page.locator('.workout-flashcard .flashcard-question');
+      await expect(question).toBeVisible();
+      const questionText = await question.textContent();
+      if (questionText && questionText.includes('2 ** 8')) {
+        foundExponentiationCard = true;
+        break;
+      }
+
+      await page.getByRole('button', { name: 'Show Answer' }).click();
+      await page.getByRole('button', { name: 'I got it wrong' }).click();
+    }
+
+    expect(foundExponentiationCard, 'expected the Python exponentiation flashcard to appear').toBeTruthy();
+
+    const codeBlock = page.locator('.workout-flashcard .flashcard-question pre').first();
+    await expect(codeBlock).toBeVisible();
+    await expect(codeBlock).toHaveCSS('white-space', 'pre');
+    await expect(codeBlock.locator('code')).toHaveCSS('white-space', 'pre');
+
+    const metrics = await codeBlock.evaluate((pre) => {
+      const question = pre.closest('.flashcard-question');
+      const card = pre.closest('.workout-flashcard');
+      const preBox = pre.getBoundingClientRect();
+      const cardBox = card.getBoundingClientRect();
+      const questionBox = question.getBoundingClientRect();
+      return {
+        preWidth: preBox.width,
+        preLeft: preBox.left,
+        preRight: preBox.right,
+        cardWidth: cardBox.width,
+        cardLeft: cardBox.left,
+        cardRight: cardBox.right,
+        questionWidth: questionBox.width,
+      };
+    });
+
+    expect(metrics.preWidth, 'code block should use the available flashcard width').toBeGreaterThan(metrics.questionWidth * 0.8);
+    expect(metrics.preLeft, 'code block should stay inside the flashcard').toBeGreaterThanOrEqual(metrics.cardLeft - 1);
+    expect(metrics.preRight, 'code block should stay inside the flashcard').toBeLessThanOrEqual(metrics.cardRight + 1);
+    await expectNoHorizontalScroll(page, 'SE Gym flashcard code block');
   });
 });
 
