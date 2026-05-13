@@ -109,6 +109,18 @@ layout: sebook
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
+            <span class="toggle-copy">
+              <span class="toggle-label">More confetti</span>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about more confetti" aria-describedby="more-confetti-tooltip">?</button>
+              <span id="more-confetti-tooltip" role="tooltip" class="info-tooltip">When on, a small burst of confetti fires after each correctly answered quiz question and each flashcard you mark as "I got it right" — not only at the end of the workout. Respects your reduced-motion preference. Off by default.</span>
+            </span>
+            <label class="switch">
+              <span class="sr-only">Toggle more confetti</span>
+              <input type="checkbox" id="moreConfettiToggle" aria-label="More confetti">
+              <span class="slider round"></span>
+            </label>
+          </div>
           <fieldset id="difficulty-filter-fieldset" class="difficulty-filter">
             <legend>Include difficulty levels</legend>
             <p class="difficulty-filter-help">Only cards whose difficulty matches a checked level are included in the next workout. Uncheck a level to drop it. Cards without an assigned difficulty are always included regardless of these settings.</p>
@@ -2418,6 +2430,7 @@ layout: sebook
       var timedPracticeExtendBtn = document.getElementById('timed-practice-extend-btn');
       var timedPracticeStatus = document.getElementById('timed-practice-status');
       var showDifficultyToggle = document.getElementById('showDifficultyToggle');
+      var moreConfettiToggle = document.getElementById('moreConfettiToggle');
       var difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
 
       // Workout state
@@ -2959,6 +2972,16 @@ layout: sebook
         showDifficultyToggle.checked = PersonalGym.isShowDifficulty();
         showDifficultyToggle.addEventListener('change', function () {
           PersonalGym.setShowDifficulty(showDifficultyToggle.checked);
+        });
+      }
+
+      // ---- More-confetti toggle (mirror of /settings/) ----
+      if (moreConfettiToggle) {
+        moreConfettiToggle.checked = /(?:^|; )more-confetti=true(?:;|$)/.test(document.cookie || '');
+        moreConfettiToggle.addEventListener('change', function () {
+          var on = moreConfettiToggle.checked;
+          document.cookie = 'more-confetti=' + (on ? 'true' : 'false') + '; max-age=31536000; path=/; SameSite=Lax';
+          document.documentElement.classList.toggle('more-confetti-enabled', on);
         });
       }
 
@@ -3545,6 +3568,7 @@ layout: sebook
               if (isCorrect) {
                 opt.classList.add('correct');
                 workoutScore++;
+                if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(opt);
               } else {
                 opt.classList.add('incorrect');
                 options.forEach(function (o) {
@@ -3590,6 +3614,7 @@ layout: sebook
             if (isMultiCorrect) {
               selectedOpts.forEach(function (o) { o.classList.add('correct'); });
               workoutScore++;
+              if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(div);
             } else {
               options.forEach(function (o) {
                 var idx = parseInt(o.dataset.index, 10);
@@ -3787,8 +3812,12 @@ layout: sebook
           div.querySelector('.parsons-check-btn').disabled = true;
           div.querySelector('.parsons-reset-btn').disabled = true;
 
-          if (isCorrect) workoutScore++;
-          else workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+          if (isCorrect) {
+            workoutScore++;
+            if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(div);
+          } else {
+            workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+          }
 
           recordDifficultyResult(card, isCorrect);
           PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
@@ -3909,6 +3938,7 @@ layout: sebook
 
         correctBtn.addEventListener('click', function () {
           workoutScore++;
+          if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(correctBtn);
           recordDifficultyResult(card, true);
           PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), true);
           nextWorkoutCard();

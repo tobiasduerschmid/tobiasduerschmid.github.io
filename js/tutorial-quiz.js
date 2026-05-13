@@ -396,7 +396,7 @@
       var ca = card.querySelector('.quiz-correct-answers');
       var ok = opt.dataset.correct === opt.dataset.index;
       optionsEls.forEach(function (o) { o.setAttribute('disabled', 'true'); });
-      if (ok) { opt.classList.add('correct'); score++; }
+      if (ok) { opt.classList.add('correct'); score++; if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(opt); }
       else {
         opt.classList.add('incorrect');
         var correct = null;
@@ -444,6 +444,7 @@
       if (isAcceptedMultiple(selI, corI, optI)) {
         sel.forEach(function (o) { o.classList.add('correct'); });
         score++;
+        if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
       } else {
         optionsEls.forEach(function (o) {
           var isSel = o.classList.contains('selected');
@@ -668,7 +669,10 @@
         btn.disabled = true;
         var resetBtn = card.querySelector('.parsons-reset-btn');
         if (resetBtn) resetBtn.disabled = true;
-        if (isCorrect) score++;
+        if (isCorrect) {
+          score++;
+          if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
+        }
         var ca = card.querySelector('.quiz-correct-answers');
         var exp = card.querySelector('.quiz-explanation');
         if (ca) ca.style.display = 'flex';

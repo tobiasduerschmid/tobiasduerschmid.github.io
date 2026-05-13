@@ -105,4 +105,14 @@
     document.body.appendChild(host);
     setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 1700);
   };
+
+  window.isMoreConfettiEnabled = function () {
+    return /(?:^|; )more-confetti=true(?:;|$)/.test(document.cookie || '');
+  };
+
+  window.spawnConfettiIfMore = function (anchor) {
+    if (!anchor) return;
+    if (!window.isMoreConfettiEnabled()) return;
+    window.spawnConfetti(anchor);
+  };
 }());

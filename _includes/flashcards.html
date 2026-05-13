@@ -620,6 +620,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     function handleAssessment(correct, card) {
       if (correct) {
         score++;
+        if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
       } else {
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
