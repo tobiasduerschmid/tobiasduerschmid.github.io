@@ -177,6 +177,27 @@ test.describe.serial('Testing Foundations Tutorial', () => {
   });
 });
 
+test.describe('Testing Foundations Tutorial — pytest toolbar', () => {
+  test.setTimeout(120_000);
+
+  test('toolbar Test runs both Step 4 pytest files', async ({ page }) => {
+    await page.goto(`${TUTORIAL_URL}?instructor-mode=true&autosave=false`);
+    await waitForTutorialReady(page);
+    await page.evaluate(() => {
+      const tutorial = window._tutorial;
+      tutorial._stepsUnlocked.add(3);
+      tutorial.loadStep(3);
+    });
+    await expectActiveStep(page, 3);
+
+    await page.getByRole('button', { name: /^▶ Test$/ }).click();
+    const output = page.locator('.tvm-output-pre');
+    await expect(output).toContainText('test_brittle_audit.py::test_add_track_updates_count', { timeout: TEST_RUN_TIMEOUT });
+    await expect(output).toContainText('test_loot_overspec.py::test_common_potion_has_correct_card', { timeout: TEST_RUN_TIMEOUT });
+    await expect(output).toContainText('Tests failed', { timeout: TEST_RUN_TIMEOUT });
+  });
+});
+
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
 // =============================================================================

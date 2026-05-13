@@ -27,7 +27,7 @@ sass:
 
 
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "https://tobiasduerschmid.github.io/" # the base hostname & protocol for your site
+url: "https://tobiasduerschmid.github.io" # the base hostname & protocol for your site
 
 google_site_verification: PsUhrtR2-1XWZ0diQcCbt0egBzKjidLDPTl5WB3s-2E # jekyll-seo-tag outputs this as a meta tag
 

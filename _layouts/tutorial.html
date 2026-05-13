@@ -474,7 +474,8 @@
         run_label: config.run_label || 'Run',
         // `pytest: true` — run test_*.py files via `pytest.main([path, "-v"])`
         // when the Run button is clicked, and rename the button to "Test"
-        // automatically when a test file is the active file.
+        // automatically when a test file is the active file. Steps may set
+        // `run_files: [...]` to run multiple pytest files from that button.
         pytest: !!config.pytest,
         // `cooldown_seconds:` — number of seconds the visible "Test My Work"
         // button stays locked after each run; an "I’m sure" silent fallback

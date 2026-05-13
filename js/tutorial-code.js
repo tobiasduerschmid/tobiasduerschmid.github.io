@@ -369,10 +369,10 @@
     this._outputPositionBottomLeft = options.output_position === 'bottom-left';
     // Optional override of the Run button label (e.g. "Test" for pytest-driven tutorials).
     this._runLabel = options.run_label || 'Run';
-    // Auto-pytest mode: when true and backend is pyodide, clicking Run on a
-    // file matching test_*.py / *_test.py invokes `pytest.main([path, "-v"])`
-    // instead of exec'ing the file as a script. The Run button also relabels
-    // itself to "Test" automatically when the active file is a test file.
+    // Auto-pytest mode: when true and backend is pyodide, clicking Run on
+    // pytest-named file(s) invokes `pytest.main([path, ...paths, "-v"])`
+    // instead of exec'ing a file as a script. A step can set `run_files` to
+    // run multiple pytest files. The Run button also relabels itself to "Test".
     this._pytestMode = !!options.pytest;
     this.playwrightConfig = options.playwright
       ? (typeof options.playwright === 'object' ? options.playwright : { enabled: true })
@@ -3886,12 +3886,12 @@
   };
 
   TutorialCode.prototype._runCurrentFile = function () {
-    if (!this.activeFileName) return;
     var backend = this.config.backend;
     var self = this;
     var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
-    var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
-    var filename = runFile;
+    var runFiles = this._stepRunFiles(step);
+    if (!this.activeFileName && !runFiles.length) return;
+    var filename = runFiles[0] || this.activeFileName;
 
     if (backend === 'browser') {
       var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
@@ -3990,13 +3990,20 @@
     }
 
     if (backend !== 'pyodide') return;
+    var pytestRunFiles = runFiles.length ? runFiles : [filename];
+    var runAsPytest = self._pytestMode && pytestRunFiles.length > 0 &&
+      pytestRunFiles.every(function (file) { return self._isPytestFile(file); });
     var path = '/tutorial/' + filename;
-    var runAsPytest = self._pytestMode && self._isPytestFile(filename);
 
     // Sync first, then run
-    this._syncFileToBackend(filename, function () {
+    var syncPromise = runAsPytest
+      ? self._syncFilesToBackend(Object.keys(self.editorModels || {}))
+      : self._syncFileToBackend(filename);
+
+    syncPromise.then(function () {
       self._clearOutput();
-      self._appendOutput('\u25b6 ' + filename + (runAsPytest ? ' (pytest)' : '') + '\n', 'info');
+      var runLabel = runAsPytest ? pytestRunFiles.join(', ') : filename;
+      self._appendOutput('\u25b6 ' + runLabel + (runAsPytest ? ' (pytest)' : '') + '\n', 'info');
 
       var runBtn = self.root.querySelector('.tvm-run-btn');
       var runningLabel = runAsPytest ? '\u23f3 Testing\u2026' : '\u23f3 Running\u2026';
@@ -4005,8 +4012,11 @@
       if (runAsPytest) {
         // Run pytest on the file directly. The pytest module-cache patch from
         // setup_commands ensures fresh source on every invocation.
-        var pyCode = 'import pytest; raise SystemExit(pytest.main([' +
-          JSON.stringify(path) + ', "-v"]))';
+        var pytestArgs = pytestRunFiles.map(function (file) {
+          return '/tutorial/' + self._normalizeRunFilename(file);
+        }).concat(['-v']);
+        var pyCode = 'import pytest; raise SystemExit(pytest.main(' +
+          JSON.stringify(pytestArgs) + '))';
         self._postWorker({ type: 'runCode', code: pyCode }, function (msg) {
           if (runBtn) {
             runBtn.disabled = false;
@@ -4040,6 +4050,8 @@
           self._appendOutput('\n\u2717 Exited with error\n', 'err');
         }
       });
+    }).catch(function () {
+      self._appendOutput('\n\u2717 Could not sync files before running\n', 'err');
     });
   };
 
@@ -4116,14 +4128,41 @@
     return /^test_.+\.py$/i.test(base) || /_test\.py$/i.test(base);
   };
 
+  TutorialCode.prototype._normalizeRunFilename = function (filename) {
+    return String(filename || '').replace(/^\/tutorial\/?/, '').replace(/^\/+/, '');
+  };
+
+  TutorialCode.prototype._stepRunFiles = function (step) {
+    var raw = [];
+    if (step && Array.isArray(step.run_files) && step.run_files.length) raw = step.run_files;
+    else if (step && step.run_file) raw = [step.run_file];
+    else if (this.activeFileName) raw = [this.activeFileName];
+    return raw.map(this._normalizeRunFilename).filter(function (file) { return !!file; });
+  };
+
+  TutorialCode.prototype._syncFilesToBackend = function (filenames) {
+    var self = this;
+    var unique = [];
+    (filenames || []).forEach(function (filename) {
+      var normalized = self._normalizeRunFilename(filename);
+      if (normalized && unique.indexOf(normalized) === -1) unique.push(normalized);
+    });
+    var chain = Promise.resolve();
+    unique.forEach(function (filename) {
+      chain = chain.then(function () { return self._syncFileToBackend(filename); });
+    });
+    return chain;
+  };
+
   // The effective label for the Run button \u2014 "Test" when pytest mode is on
-  // and the file that would actually run (run_file or activeFileName) is a
-  // test_*.py / *_test.py. Otherwise the configured `run_label` (default "Run").
+  // and the file(s) that would actually run (`run_files`, `run_file`, or
+  // activeFileName) are test_*.py / *_test.py. Otherwise the configured
+  // `run_label` (default "Run").
   TutorialCode.prototype._effectiveRunLabel = function () {
     if (this._pytestMode) {
       var step = this.steps && this.steps[this.currentStep >= 0 ? this.currentStep : 0];
-      var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
-      if (this._isPytestFile(runFile)) return 'Test';
+      var runFiles = this._stepRunFiles(step);
+      if (runFiles.length && runFiles.every(this._isPytestFile)) return 'Test';
     }
     return this._runLabel;
   };

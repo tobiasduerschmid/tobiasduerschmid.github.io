@@ -770,6 +770,24 @@ steps:
                                              # the print view.
 
     open_file: string                        # Which file to focus on load.
+    run_file: string                         # Which file the toolbar Run button
+                                             # executes. In Pyodide tutorials
+                                             # with top-level `pytest: true`, a
+                                             # pytest-named file (`test_*.py` or
+                                             # `*_test.py`) is run through
+                                             # `pytest.main([path, "-v"])` and
+                                             # the toolbar label changes to
+                                             # "Test".
+    run_files: [string]                      # Pyodide + `pytest: true` only:
+                                             # run all listed pytest files from
+                                             # the toolbar Test button. Use this
+                                             # when a step intentionally gives
+                                             # students multiple test files to
+                                             # read/run together. Keep
+                                             # `run_file` as the primary debug
+                                             # target if the tutorial debugger is
+                                             # enabled; `run_files` only changes
+                                             # the toolbar pytest run.
     view: editor | git_graph | uml | make_dag    # Override default pane visible.
                                              # `make_dag` requires a top-level
                                              # `make_dag:` config; opens the
@@ -1146,6 +1164,9 @@ under the same prefix family as other tutorial state so the global
 - **python** (pyodide): `command:` is Python with the helper
   `__run_capture('/path/to/script.py')` returning captured stdout. Use
   `assert <expected> in output, "<friendly fail message>"`.
+  Separately, the toolbar Run/Test button uses step `run_file` by default;
+  when a Pyodide pytest step needs that toolbar button to run multiple
+  student-facing pytest files, set `run_files: [...]`.
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.

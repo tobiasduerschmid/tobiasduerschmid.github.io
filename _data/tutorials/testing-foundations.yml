@@ -1527,6 +1527,9 @@ steps:
 
     open_file: "test_brittle_audit.py"
     run_file: "test_brittle_audit.py"
+    run_files:
+      - "test_brittle_audit.py"
+      - "test_loot_overspec.py"
 
     solution:
       files:

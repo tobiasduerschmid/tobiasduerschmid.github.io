@@ -2580,6 +2580,9 @@ steps:
 
     open_file: "test_xp_clean.py"
     run_file: "test_xp_clean.py"
+    run_files:
+      - "test_xp_overmocked.py"
+      - "test_xp_clean.py"
 
     solution:
       files:

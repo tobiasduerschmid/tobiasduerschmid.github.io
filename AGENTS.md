@@ -12,6 +12,14 @@ The full checklist (all 55 success criteria, project-specific gotchas, verificat
 
 If you discover a pre-existing AA violation in code adjacent to your change, surface it to the user — don't silently fix sweeping accessibility debt as part of an unrelated PR. Do fix violations you *introduced* in the same change.
 
+## Git submodules — fix them in place when they break a test
+
+This repository pulls in [`js/ArchUML`](./js/ArchUML/) as a git submodule. When a test, type-check, or audit run fails because of a bug in submodule code, **fix it in the submodule's working tree directly** — edit the file under `js/ArchUML/`, re-run the failing test until it passes, and leave the submodule's commit pointer for the user to commit/push when they review the change.
+
+Do **not** stop and ask the user to do the submodule fix themselves. The submodule files are checked out in this repo, the build serves them directly (`/js/ArchUML/uml-bundle.js`), and there is no separate test/CI loop that would catch the bug faster. Fixing in place is the only path to a green test run.
+
+Surface the fact that you touched the submodule in your end-of-turn summary so the user knows there are two repos to commit.
+
 ## Minimum font sizes — readable text is paragraph-size
 
 Anything the user is meant to **read or type** must render at **paragraph size or larger** (the on-screen size of the surrounding `<p>`, around 16–22 px depending on context). Form inputs, textareas, button labels, field labels, list items, table cells, code blocks, instructional prose, modal bodies, tooltip text, and toast/status messages all count as readable text.
