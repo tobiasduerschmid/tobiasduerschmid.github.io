@@ -37,6 +37,12 @@ steps:
     # as the user's terminal, so the cd persists for everything they type next).
     step_dir: /tutorial/make_project/step1
     instructions: |
+      ### Important Note On the terminal
+      The terminal will automatically, silently change directories for each step.
+      This means you don't have to worry about `cd`ing into the right directory — it's done for you.
+      But it also means when you start typing a command before you switch steps, the terminal will not save this even though it might look like it in the UI. 
+      You can copy & paste the beginning of a terminal command if you still need it when switching between steps.
+
       ### Why this matters
 
       Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain — and you'll appreciate Make's design only after you've suffered through manual compilation. Let's feel that pain first.
