@@ -12,3 +12,7 @@ layout: sebook
 # SOLID
  
 [Description](/SEBook/designprinciples/solid.html)
+
+# Design with Reuse
+
+[Description](/SEBook/designprinciples/reuse.html)

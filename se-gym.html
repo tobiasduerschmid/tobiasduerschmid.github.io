@@ -4460,6 +4460,7 @@ layout: sebook
         } else {
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
           workoutReviewBtn.style.display = 'inline-block';
+          if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         }
         if (workoutResultShortcutHint) {
           workoutResultShortcutHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> restarts the workout.';

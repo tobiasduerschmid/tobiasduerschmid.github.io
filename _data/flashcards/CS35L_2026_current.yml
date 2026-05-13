@@ -18,6 +18,7 @@ decks:
   - design_pattern_observer
   - networking_concepts
   - design_principle_solid
+  - design_with_reuse
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
   - data_management

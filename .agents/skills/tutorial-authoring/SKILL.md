@@ -665,9 +665,13 @@ git_graph: /path/to/repo               # Path enabling visual commit graph.
 git_gutter: boolean                    # +/-/~ markers in Monaco gutter
                                        # vs. HEAD. Requires git_graph.
 git_setup: [string]                    # Git init commands (per-tutorial).
-make_dag: /path/to/dir                 # v86 only. Live SVG pane that visualises
+make_dag: /path/to/dir | step_dir      # v86 only. Live SVG pane that visualises
                                        # the dependency graph `make -n` would
-                                       # walk for the Makefile in <dir>.
+                                       # walk for the Makefile in <dir>. Use the
+                                       # literal value `step_dir` to make the
+                                       # graph follow each step's `step_dir`,
+                                       # which is useful when every tutorial
+                                       # step runs in an isolated project dir.
                                        # Refreshes on Makefile save and after
                                        # every shell command (~80ms debounce).
                                        # Renders:
@@ -699,7 +703,8 @@ make_dag: /path/to/dir                 # v86 only. Live SVG pane that visualises
                                        # TutorialCode. The dump command
                                        # captures `make -pn`'s "# Files" stanza
                                        # plus PHONY declarations and source
-                                       # mtimes into <dir>/.makedag_state.
+                                       # mtimes into the active directory's
+                                       # .makedag_state file.
 make_dag_options: { ... }              # Reserved for future per-tutorial
                                        # configuration (e.g. hide_targets_matching
                                        # regex, custom layout direction). The
@@ -792,6 +797,57 @@ steps:
                                              # `make_dag` requires a top-level
                                              # `make_dag:` config; opens the
                                              # live Make dependency graph.
+    run_file: string                         # Which file the ▶ Run button
+                                             # executes. Defaults to the active
+                                             # editor file. For multi-file
+                                             # steps (e.g. webcontainer Node
+                                             # projects with a separate test
+                                             # file) set this to the entry
+                                             # point — e.g. `main.js`.
+    test_file: string                        # webcontainer (with browser-
+                                             # sandbox fallback) only. When
+                                             # set, an inline `✓ Test` button
+                                             # appears next to `▶ Run` in the
+                                             # output panel. Clicking it
+                                             # spawns `node <test_file>` and
+                                             # streams stdout/stderr to the
+                                             # same output panel as the Run
+                                             # button. The argv input is
+                                             # ignored during test runs.
+                                             # Useful for lectures with a
+                                             # driver + test pair, e.g.
+                                             # `run_file: main.js` +
+                                             # `test_file: __tests__/foo_test.js`.
+                                             # Independent of the gate-style
+                                             # ✓ Test My Work button (which
+                                             # uses the `tests:` block) — set
+                                             # only one to avoid two test
+                                             # buttons on screen.
+    has_args: boolean                        # pyodide / webcontainer / prolog
+                                             # only. Show a command-line argv
+                                             # field next to the Run button.
+                                             # Pyodide passes it as `sys.argv`,
+                                             # webcontainer appends it to the
+                                             # `node <run_file>` invocation as
+                                             # `process.argv.slice(2)`, prolog
+                                             # uses it as the goal query.
+    default_args: string                     # webcontainer only. Initial
+                                             # value the argv field shows on
+                                             # step load. Useful so the first
+                                             # ▶ Run still demonstrates
+                                             # something meaningful before the
+                                             # student types.
+    args_placeholder: string                 # webcontainer only. Placeholder
+                                             # text shown when the argv field
+                                             # is empty (default `argv...`).
+    args_title: string                       # webcontainer only. Tooltip /
+                                             # aria-label for the argv field
+                                             # (default
+                                             # `Command-line arguments
+                                             # (process.argv)`).
+    args_label: string                       # webcontainer only. Short label
+                                             # rendered before the argv input
+                                             # (default `argv:`).
     step_dir: /absolute/path                 # v86 / webcontainer only. When
                                              # this step opens, drop the user's
                                              # interactive terminal into the
@@ -801,11 +857,13 @@ steps:
                                              # PWD persists for everything the
                                              # student types next). Used by
                                              # multi-step build / Make tutorials
-                                             # where every step works in the
-                                             # same project directory and
-                                             # forcing the student to
-                                             # `cd <dir>` at every step is
-                                             # friction without learning value.
+                                             # where the terminal should stay in
+                                             # the active project directory. For
+                                             # tutorials that isolate steps in
+                                             # separate directories, set a unique
+                                             # `step_dir` per step and use
+                                             # top-level `make_dag: step_dir` if
+                                             # the Make DAG pane should follow.
                                              # Implementation:
                                              # TutorialCode._runStepDir.
                                              # NOTE: do NOT try to do this via

@@ -327,6 +327,7 @@
     this._makeDagAutoRefreshTimer = null;
     this._makeDagRefreshing = false;
     this._lastMakeDagStateText = null;
+    this._lastMakeDagStatePath = null;
     this._promptDetectBuf = '';
     this._promptRedrawTimer = null;
     this._backgroundSyncPauseCount = 0;
@@ -886,6 +887,7 @@
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
+        '<button class="tvm-test-run-btn" title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
@@ -912,6 +914,7 @@
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
+        '<button class="tvm-test-run-btn" title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
@@ -1580,9 +1583,11 @@
       this.outputPre = this.root.querySelector('.tvm-output-pre');
       this.outputPanel = this.root.querySelector('.tvm-output-panel');
       var runBtn = this.root.querySelector('.tvm-run-btn');
+      var testRunBtn = this.root.querySelector('.tvm-test-run-btn');
       var stopBtn = this.root.querySelector('.tvm-stop-btn');
       var clearBtn = this.root.querySelector('.tvm-clear-btn');
       if (runBtn) runBtn.addEventListener('click', function () { self._runCurrentFile(); });
+      if (testRunBtn) testRunBtn.addEventListener('click', function () { self._runTestFile(); });
       if (stopBtn) stopBtn.addEventListener('click', function () { self._stopExecution(); });
       if (clearBtn) clearBtn.addEventListener('click', function () { self._clearOutput(); });
 
@@ -3901,12 +3906,21 @@
       var stopBtn = self.root.querySelector('.tvm-stop-btn');
       if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
       if (stopBtn) { stopBtn.style.display = 'inline-block'; }
+      // Read argv from the visible args input (when has_args is set on the step)
+      // so the browser-sandbox fallback gets the same `process.argv` as the
+      // real WebContainer would.
+      var browserArgv = [];
+      var bArgsInp = self.root.querySelector('.tvm-args-input');
+      if (bArgsInp && bArgsInp.style.display !== 'none' && bArgsInp.value.trim() !== '') {
+        var bm = bArgsInp.value.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+        browserArgv = bm.map(function (s) { return s.replace(/^"|"$/g, ''); });
+      }
       self._runBrowserCode(code, function (text, kind) {
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
       }, function () {
         if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
         if (stopBtn) { stopBtn.style.display = 'none'; }
-      });
+      }, undefined, { argv: browserArgv, scriptPath: filename });
       return;
     }
 
@@ -4055,6 +4069,70 @@
     });
   };
 
+  // Inline Test button — runs `step.test_file` and streams output to the
+  // same output panel as the Run button. Only the webcontainer backend wires
+  // this up today, because that's the only backend that has a real Node
+  // process and a sensible spawn-a-different-file mental model.
+  TutorialCode.prototype._runTestFile = function () {
+    var self = this;
+    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var testFile = step && step.test_file;
+    if (!testFile) return;
+    var backend = this.config.backend;
+    var runBtn = this.root.querySelector('.tvm-run-btn');
+    var testBtn = this.root.querySelector('.tvm-test-run-btn');
+    var stopBtn = this.root.querySelector('.tvm-stop-btn');
+
+    if (backend === 'webcontainer') {
+      self._clearOutput();
+      self._appendOutput('▶ ' + testFile + '\n', 'info');
+      if (testBtn) { testBtn.disabled = true; testBtn.textContent = '⏳ Testing…'; }
+      if (runBtn) { runBtn.disabled = true; }
+      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
+      self._runWebContainerNodeFile(testFile, {
+        echoOutput: true,
+        skipArgsInput: true,
+      }).then(function (run) {
+        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
+        if (runBtn) { runBtn.disabled = false; }
+        if (stopBtn) { stopBtn.style.display = 'none'; }
+        if (run && run.exitCode === 0) {
+          self._appendOutput('\n✓ Test run finished\n', 'info');
+        } else {
+          self._appendOutput('\n✗ Test run finished with failures (exit ' +
+            (run && run.exitCode != null ? run.exitCode : '?') + ')\n', 'err');
+        }
+      }).catch(function (err) {
+        self._appendOutput(String(err && err.message || err) + '\n', 'err');
+        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
+        if (runBtn) { runBtn.disabled = false; }
+        if (stopBtn) { stopBtn.style.display = 'none'; }
+      });
+      return;
+    }
+
+    if (backend === 'browser') {
+      // Fallback path when WebContainer is unavailable. Run the test file
+      // directly via _runBrowserCode — the sandbox `require()` resolves
+      // `../left-pad.js` against the in-editor files, so the test file's
+      // own require call still works.
+      var bCode = this.editorModels[testFile] ? this.editorModels[testFile].model.getValue() : '';
+      self._clearOutput();
+      self._appendOutput('▶ ' + testFile + '\n', 'info');
+      if (testBtn) { testBtn.disabled = true; testBtn.textContent = '⏳ Testing…'; }
+      if (runBtn) { runBtn.disabled = true; }
+      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
+      self._runBrowserCode(bCode, function (text, kind) {
+        self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
+      }, function () {
+        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
+        if (runBtn) { runBtn.disabled = false; }
+        if (stopBtn) { stopBtn.style.display = 'none'; }
+      }, undefined, { argv: [], scriptPath: testFile });
+      return;
+    }
+  };
+
   TutorialCode.prototype._syncAllEditorFilesToWebContainer = function () {
     var self = this;
     var files = Object.keys(this.editorModels || {});
@@ -4073,10 +4151,23 @@
       try { this._webcontainerRunProcess.kill(); } catch (e) { }
       this._webcontainerRunProcess = null;
     }
+    // Read user-typed argv from the visible args input. Tests skip this so
+    // a stray Run-button arg can't leak into the Test pass-state.
+    var nodeArgs = [filename];
+    if (!opts.skipArgsInput && self.root) {
+      var argsInp = self.root.querySelector('.tvm-args-input');
+      if (argsInp && argsInp.style.display !== 'none' && argsInp.value.trim() !== '') {
+        var matches = argsInp.value.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+        var extra = matches.map(function (s) { return s.replace(/^"|"$/g, ''); });
+        nodeArgs = nodeArgs.concat(extra);
+      }
+    } else if (Array.isArray(opts.extraArgs) && opts.extraArgs.length) {
+      nodeArgs = nodeArgs.concat(opts.extraArgs);
+    }
     return this._syncAllEditorFilesToWebContainer()
       .then(function () { return self._ensureWebContainerNodeRuntime(); })
       .then(function () {
-        return self._webcontainer.spawn('node', [filename], { cwd: '/tutorial' });
+        return self._webcontainer.spawn('node', nodeArgs, { cwd: '/tutorial' });
       })
       .then(function (proc) {
         self._webcontainerRunProcess = proc;
@@ -4445,7 +4536,8 @@
     }
   };
 
-  TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone, timeoutOverride) {
+  TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone, timeoutOverride, opts) {
+    opts = opts || {};
     var self = this;
     if (this._jsFinish) {
       this._jsFinish();
@@ -4534,11 +4626,38 @@
 
       '  // Node.js globals\n' +
       '  var module = { exports: {} }; var exports = module.exports;\n' +
+      '  // process mock — argv is [node, scriptPath, ...userArgs] like real Node\n' +
+      '  var __argv = ' + JSON.stringify(opts.argv || []) + ';\n' +
+      '  var __scriptPath = ' + JSON.stringify(opts.scriptPath || '') + ';\n' +
+      '  var __exitCode = 0;\n' +
+      '  window.process = {\n' +
+      '    argv: ["node", __scriptPath].concat(__argv),\n' +
+      '    env: {},\n' +
+      '    platform: "browser",\n' +
+      '    version: "v18.0.0",\n' +
+      '    cwd: function() { return "/tutorial"; },\n' +
+      '    exit: function(c) { __exitCode = c|0; throw new Error("__PROCESS_EXIT__"); },\n' +
+      '    on: function() {},\n' +
+      '    stdout: { write: function(s) { __s("stdout", String(s)); } },\n' +
+      '    stderr: { write: function(s) { __s("stderr", String(s)); } },\n' +
+      '  };\n' +
       '  // Mock Node.js modules\n' +
       '  var __server_handler = null;\n' +
       '  var __jsFiles = ' + JSON.stringify(jsFiles) + ';\n' +
       '  var __fsFiles = ' + JSON.stringify(fsFiles) + ';\n' +
       '  var __moduleCache = {};\n' +
+      '  function __resolveRel(spec) {\n' +
+      '    // Resolve "./x" or "../x" against __jsFiles. The lecture project is\n' +
+      '    // flat with one __tests__/ subdirectory, so we strip the leading\n' +
+      '    // ./ or ../ and look up by basename + .js fallback.\n' +
+      '    var s = String(spec).replace(/^(\\.\\.\\/)+/, "").replace(/^\\.\\//, "");\n' +
+      '    if (__jsFiles.hasOwnProperty(s)) return s;\n' +
+      '    if (__jsFiles.hasOwnProperty(s + ".js")) return s + ".js";\n' +
+      '    var base = s.split("/").pop();\n' +
+      '    if (__jsFiles.hasOwnProperty(base)) return base;\n' +
+      '    if (__jsFiles.hasOwnProperty(base + ".js")) return base + ".js";\n' +
+      '    return null;\n' +
+      '  }\n' +
       '  function __matchRoute(pat, url) {\n' +
       '    if (!pat || pat === "*") return {};\n' +
       '    var pp = pat.split("/"), up = url.split("/");\n' +
@@ -4659,11 +4778,11 @@
       '        }\n' +
       '      };\n' +
       '    }\n' +
-      '    if (typeof m === "string" && m.indexOf("./") === 0) {\n' +
-      '      var mkey = m.replace(/^\\.\\//,"").replace(/\\.js$/,"");\n' +
+      '    if (typeof m === "string" && (m.indexOf("./") === 0 || m.indexOf("../") === 0 || m.indexOf("/") < 0)) {\n' +
+      '      var mkey = __resolveRel(m);\n' +
+      '      if (mkey === null) throw new Error("Cannot find module: " + m);\n' +
       '      if (__moduleCache.hasOwnProperty(mkey)) return __moduleCache[mkey];\n' +
-      '      var msrc = __jsFiles[mkey + ".js"] || __jsFiles[mkey];\n' +
-      '      if (msrc === undefined) throw new Error("Cannot find module: " + m);\n' +
+      '      var msrc = __jsFiles[mkey];\n' +
       '      var mod = { exports: {} };\n' +
       '      __moduleCache[mkey] = mod.exports;\n' +
       '      (new Function("require","module","exports", msrc))(window.require, mod, mod.exports);\n' +
@@ -4707,7 +4826,7 @@
       '})();';
 
     frame.srcdoc = '<!DOCTYPE html><html><head><script>' + sandboxScript + '<\/script></head><body><script>' +
-      'try{\n' + escaped + '\n}catch(e){console.error(e.stack||e.message);}\n' +
+      'try{\n' + escaped + '\n}catch(e){if(e&&e.message!=="__PROCESS_EXIT__")console.error(e.stack||e.message);}\n' +
       'parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"sync_done"},"*");\n' +
       'setTimeout(function(){parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"done"},"*");},' + sandboxTimeoutVal + ');' +
       '<\/script></body></html>';
@@ -8080,13 +8199,29 @@
    * affected.
    */
   TutorialCode.prototype._isMakeDagFile = function (filename) {
-    if (!this.makeDagPath || !filename) return false;
-    var dir = this.makeDagPath
+    var activePath = this._activeMakeDagPath();
+    if (!activePath || !filename) return false;
+    var dir = activePath
       .replace(/^\/tutorial\/?/, '')
       .replace(/^\//, '')
       .replace(/\/$/, '');
     if (!dir) return true;  // make_dag pointing at /tutorial itself
     return filename === dir || filename.indexOf(dir + '/') === 0;
+  };
+
+  /**
+   * Resolve the directory used by the Make DAG for the current step.
+   * `make_dag: step_dir` lets a tutorial keep one graph pane while each
+   * step runs in its own isolated project directory.
+   */
+  TutorialCode.prototype._activeMakeDagPath = function () {
+    if (!this.makeDagPath) return null;
+    if (this.makeDagPath === 'step_dir' || this.makeDagPath === '$step_dir') {
+      var idx = this.currentStep >= 0 ? this.currentStep : 0;
+      var step = this.steps && this.steps[idx];
+      return step && step.step_dir ? step.step_dir : null;
+    }
+    return this.makeDagPath;
   };
 
   // ---------------------------------------------------------------------------
@@ -8987,6 +9122,40 @@
       }
     }
 
+    // Same args input plumbing for the webcontainer Node backend so a step can
+    // expose a Run-button argv field (e.g. `node main.js 124 1 90093 9193`).
+    // The browser-sandbox fallback (when WebContainer can't boot) gets the
+    // same wiring so the lecture still looks the same — argv is parsed and
+    // injected into `process.argv` by the iframe shim.
+    if (this.config.backend === 'webcontainer' || this.config.backend === 'browser') {
+      var wcArgsInp = this.root.querySelector('.tvm-args-input');
+      var wcArgsLbl = this.root.querySelector('.tvm-args-label');
+      if (wcArgsInp) {
+        wcArgsInp.style.display = step.has_args ? 'inline-block' : 'none';
+        wcArgsInp.value = step.default_args || '';
+        wcArgsInp.placeholder = step.args_placeholder || 'argv...';
+        wcArgsInp.title = step.args_title || 'Command-line arguments (process.argv)';
+        wcArgsInp.setAttribute('aria-label', wcArgsInp.title);
+      }
+      if (wcArgsLbl) {
+        wcArgsLbl.style.display = step.has_args ? 'inline-block' : 'none';
+        wcArgsLbl.textContent = step.args_label || 'argv:';
+      }
+    }
+
+    // Show / hide the inline Test button (next to Run) whenever a step
+    // declares `test_file:`. Lectures with run_file + test_file get both
+    // buttons; everything else hides it.
+    var testRunBtn = this.root.querySelector('.tvm-test-run-btn');
+    if (testRunBtn) {
+      testRunBtn.style.display = step.test_file ? 'inline-block' : 'none';
+      testRunBtn.disabled = false;
+      testRunBtn.textContent = '✓ Test';
+      testRunBtn.title = step.test_file
+        ? 'Run ' + step.test_file
+        : 'Run the test file';
+    }
+
     // Clear output panel between steps
     if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java') this._clearOutput();
     // Rebuild React preview when a new step is loaded
@@ -9863,9 +10032,16 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
 
-    var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+    // `test_file` (per-step) overrides `run_file` for the Test button so the
+    // Run button and the Test button can drive different Node scripts — for
+    // example, Run = `node main.js`, Test = `node __tests__/leftpad_test.js`.
+    var testFile = (step && step.test_file) ? step.test_file : null;
+    var runFile = testFile || ((step && step.run_file) ? step.run_file : this.activeFileName);
     var filename = runFile || (step.files && step.files[0] && step.files[0].path) || '';
-    var source = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
+    // The "source" asserted against by `tests[].command` is always the
+    // editable artifact (run_file or active file), not the test runner itself.
+    var sourceFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+    var source = this.editorModels[sourceFile] ? this.editorModels[sourceFile].model.getValue() : '';
     var files = {};
     for (var key in this.editorModels) {
       if (this.editorModels.hasOwnProperty(key)) {
@@ -9878,6 +10054,7 @@
       serverTimeout: 1500,
       timeout: 3500,
       echoOutput: false,
+      skipArgsInput: true,
     }).then(function (run) {
       var output = run.output || '';
       var results = [];
@@ -10974,7 +11151,7 @@
    * message instead of a broken graph.
    */
   TutorialCode.prototype._buildMakeDagDumpCommand = function () {
-    var p = this.makeDagPath || '/tutorial';
+    var p = this._activeMakeDagPath() || '/tutorial';
     var statePath = p.replace(/\/$/, '') + '/.makedag_state';
     return (
       '( cd ' + _shellQuoteForMake(p) + ' 2>/dev/null && ' +
@@ -10999,6 +11176,7 @@
    */
   TutorialCode.prototype._refreshMakeDag = function () {
     if (!this.makeDagPath) return Promise.resolve();
+    if (!this._activeMakeDagPath()) return Promise.resolve();
     if (this.config.backend !== 'v86') return Promise.resolve();
     if (this._makeDagRefreshing) return Promise.resolve();
     var self = this;
@@ -11027,8 +11205,10 @@
     if (!this.makeDagPath || !window.MakeGraph || !this.makeDagContainerEl) return;
     if (this.config.backend !== 'v86') return;
     var self = this;
-    var statePath = this.makeDagPath.replace(/^\/tutorial/, '').replace(/\/$/, '') + '/.makedag_state';
-    if (this._lastMakeDagStateText) {
+    var activePath = this._activeMakeDagPath();
+    if (!activePath) return;
+    var statePath = activePath.replace(/^\/tutorial/, '').replace(/\/$/, '') + '/.makedag_state';
+    if (this._lastMakeDagStateText && this._lastMakeDagStatePath === activePath) {
       this._renderMakeDagFromText(this._lastMakeDagStateText);
     }
     if (!this.emulator || typeof this.emulator.read_file !== 'function') return;
@@ -11036,11 +11216,14 @@
       .then(function (buf) {
         var text = new TextDecoder('utf-8').decode(buf);
         self._lastMakeDagStateText = text;
+        self._lastMakeDagStatePath = activePath;
         self._renderMakeDagFromText(text);
       })
       .catch(function () {
         // No state file yet — render empty placeholder.
-        if (!self._lastMakeDagStateText) self._renderMakeDagFromText('');
+        if (!self._lastMakeDagStateText || self._lastMakeDagStatePath !== activePath) {
+          self._renderMakeDagFromText('');
+        }
       });
   };
 
@@ -11049,16 +11232,17 @@
    */
   TutorialCode.prototype._renderMakeDagFromText = function (text) {
     if (!this.makeDagContainerEl || !window.MakeGraph) return;
+    var activePath = this._activeMakeDagPath() || this.makeDagPath || '/tutorial';
     var data = window.MakeGraph.parseMakeDb(text || '');
     if (!this._makeDag) {
       this._makeDag = new window.MakeGraph(this.makeDagContainerEl, {
-        dirLabel: this.makeDagPath || '',
+        dirLabel: activePath || '',
       });
       var self = this;
       this._makeDag.onNodeClick(function (detail) {
         // Open the Makefile and jump to the rule's line, if known.
         if (!detail || !detail.line) return;
-        var makefilePath = (self.makeDagPath || '/tutorial').replace(/\/$/, '') + '/Makefile';
+        var makefilePath = (self._activeMakeDagPath() || '/tutorial').replace(/\/$/, '') + '/Makefile';
         try {
           if (typeof self.openFile === 'function') self.openFile(makefilePath);
           if (self.editor && self.editor.revealLineInCenter) {
@@ -11068,6 +11252,8 @@
           self._setView('editor');
         } catch (e) { /* non-fatal */ }
       });
+    } else {
+      this._makeDag.options.dirLabel = activePath || '';
     }
     this._makeDag.render(data);
   };
@@ -11085,7 +11271,7 @@
     var self = this;
     return Promise.resolve()
       .then(function () {
-        var p = self.makeDagPath || '/tutorial';
+        var p = self._activeMakeDagPath() || '/tutorial';
         var cmd =
           'echo "vm_now=$(date +%s)"; ' +
           'echo "host_via_9p_file_mtime="; find ' + _shellQuoteForMake(p) +
@@ -11103,6 +11289,7 @@
    */
   TutorialCode.prototype._maybeAutoRefreshMakeDag = function () {
     if (!this.makeDagPath) return;
+    if (!this._activeMakeDagPath()) return;
     if (this._isBackgroundSyncPaused && this._isBackgroundSyncPaused()) return;
     if (this._currentView === 'make_dag' && this.booted) {
       var self = this;

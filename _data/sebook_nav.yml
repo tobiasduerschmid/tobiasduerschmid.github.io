@@ -54,6 +54,8 @@ topics:
         url: /SEBook/designprinciples/informationhiding.html
       - name: SOLID
         url: /SEBook/designprinciples/solid.html
+      - name: Design with Reuse
+        url: /SEBook/designprinciples/reuse.html
 
   - name: Software Architecture
     icon: null

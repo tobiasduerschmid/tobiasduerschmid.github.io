@@ -12,15 +12,16 @@ learning_objectives:
 require_tests: true
 autosave_type: none
 
-# Live dependency-graph pane. Renders the DAG `make -n` would walk —
-# targets, prerequisites, order-only edges, phony targets, staleness flags.
-# Refreshes automatically on Makefile save and after every shell command.
+# Live dependency-graph pane. Renders the DAG `make -n` would walk for the
+# active step directory — targets, prerequisites, order-only edges, phony
+# targets, staleness flags. Refreshes automatically on Makefile save and
+# after every shell command.
 # See js/make-graph.js for the renderer and the tutorial-authoring skill
 # for the schema reference.
-make_dag: /tutorial/make_project
+make_dag: step_dir
 
 setup_commands:
-  - 'mkdir -p /tutorial/make_project'
+  - 'mkdir -p /tutorial/make_project/step1 /tutorial/make_project/step2 /tutorial/make_project/step3 /tutorial/make_project/step4 /tutorial/make_project/step5 /tutorial/make_project/step6 /tutorial/make_project/step7'
   - 'sed -i "s/^exec //" /usr/bin/gcc'
   - 'printf "\nsleep 2\n" >> /usr/bin/gcc'
 
@@ -30,12 +31,11 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: productive failure (Bjork) — feel the pain before learning the tool
   - title: "The Pain of Manual Compilation"
-    # step_dir: drop the user's interactive terminal directly into the project
-    # directory when this step opens. Saves the friction of `cd make_project`
-    # every time. Wired through TutorialCode._runStepDir → _runSilent (the same
-    # bash session as the user's terminal, so the cd persists for everything
-    # they type next). See js/tutorial-code.js step_dir handling.
-    step_dir: /tutorial/make_project
+    # step_dir: each step has its own project directory, and the user's
+    # interactive terminal is dropped into that directory when the step opens.
+    # Wired through TutorialCode._runStepDir → _runSilent (the same bash session
+    # as the user's terminal, so the cd persists for everything they type next).
+    step_dir: /tutorial/make_project/step1
     instructions: |
       ### Why this matters
 
@@ -56,7 +56,7 @@ steps:
 
       ### Task 1: Compile the project manually
 
-      We have a small C project with three files: `main.c`, `math.c`, and `io.c` — your terminal is already inside `make_project/` (check the prompt). Let's compile them the hard way:
+      We have a small C project with three files: `main.c`, `math.c`, and `io.c` — your terminal is already inside `make_project/step1/` (check the prompt). Let's compile them the hard way:
 
       ```bash
       gcc main.c math.c io.c -o app
@@ -80,7 +80,8 @@ steps:
       </details>
 
     files:
-      - path: "make_project/main.c"
+      - &makefile_main_c
+        path: "make_project/step1/main.c"
         content: |
           #include <stdio.h>
           int add(int a, int b);
@@ -92,13 +93,14 @@ steps:
               return 0;
           }
         language: "c"
-      - path: "make_project/math.c"
+      - path: "make_project/step1/math.c"
         content: |
           int add(int a, int b) {
               return a + b // BUG: missing semicolon
           }
         language: "c"
-      - path: "make_project/io.c"
+      - &makefile_io_c
+        path: "make_project/step1/io.c"
         content: |
           #include <stdio.h>
           void init_io() {
@@ -106,21 +108,21 @@ steps:
           }
         language: "c"
 
-    open_file: "make_project/math.c"
+    open_file: "make_project/step1/math.c"
 
     watch_files:
-      - "make_project/math.c"
+      - "make_project/step1/math.c"
 
     solution:
       files:
-        - path: "make_project/math.c"
+        - path: "make_project/step1/math.c"
           content: |
             int add(int a, int b) {
                 return a + b;   // Bug fixed: added the missing semicolon
             }
           language: "c"
       commands:
-        - "cd /tutorial/make_project/"
+        - "cd /tutorial/make_project/step1/"
         - "gcc main.c math.c io.c -o app"
       explanation: |
         - **Test 1:** `grep -q 'a + b;' math.c` — the semicolon must be present at the end of the `return` statement.
@@ -129,7 +131,7 @@ steps:
 
     tests:
       - description: "The syntax error in math.c is fixed"
-        command: "cd /tutorial/make_project && grep -q 'a + b;' math.c"
+        command: "cd /tutorial/make_project/step1 && grep -q 'a + b;' math.c"
         hints:
           - title: "Layer 1 — orientation"
             text: "Look at the gcc error message — it points at the line and column. C's `return` statement (like every other statement) needs a terminator. Which character?"
@@ -137,12 +139,12 @@ steps:
             text: "Open `math.c` in the editor. The `return a + b` line is missing a semicolon at the end. Add it, save, and re-run the gcc command."
             condition: "code_missing: a + b;"
       - description: "The project compiled successfully into an executable named 'app'"
-        command: "cd /tutorial/make_project && [ -f app ]"
+        command: "cd /tutorial/make_project/step1 && [ -f app ]"
         hints:
           - title: "Layer 1 — orientation"
             text: "After fixing the syntax error, recompile by re-typing (or pressing Up arrow) the same gcc command. Notice that gcc happily reprocesses *every* file — even the two you didn't touch."
           - title: "Layer 2 — strategy"
-            text: "The exact command (your terminal is already in `/tutorial/make_project`) is: `gcc main.c math.c io.c -o app`. The `-o app` flag names the output binary."
+            text: "The exact command (your terminal is already in `/tutorial/make_project/step1`) is: `gcc main.c math.c io.c -o app`. The `-o app` flag names the output binary."
             condition: "output_missing: app"
 
     quiz:
@@ -208,7 +210,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Run, then Investigate the cryptic Tab Trap error
   - title: "Your First Makefile & The Tab Trap"
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step2
     instructions: |
       ### Why this matters
 
@@ -269,28 +271,39 @@ steps:
       Run `cat -A Makefile` after — recipe lines starting with `^I` have a real Tab (`^I` is how `cat -A` displays the Tab character). Then run `make` again.
 
     setup_commands:
-      - "rm -f /tutorial/make_project/app"
+      - "rm -f /tutorial/make_project/step2/app"
 
     files:
-      - path: "make_project/Makefile"
+      - <<: *makefile_main_c
+        path: "make_project/step2/main.c"
+      - &makefile_fixed_math_c
+        path: "make_project/step2/math.c"
+        content: |
+          int add(int a, int b) {
+              return a + b;
+          }
+        language: "c"
+      - <<: *makefile_io_c
+        path: "make_project/step2/io.c"
+      - path: "make_project/step2/Makefile"
         content: |
           app: main.c math.c io.c
               gcc main.c math.c io.c -o app
         language: "makefile"
 
-    open_file: "make_project/Makefile"
+    open_file: "make_project/step2/Makefile"
 
     watch_files:
-      - "make_project/Makefile"
+      - "make_project/step2/Makefile"
 
     solution:
       files:
-        - path: "make_project/Makefile"
+        - path: "make_project/step2/Makefile"
           content: "app: main.c math.c io.c\n\tgcc main.c math.c io.c -o app\n"
           language: "makefile"
       commands:
-        - "sed -i 's/^    /\t/' Makefile"
-        - "make"
+        - "cd /tutorial/make_project/step2 && sed -i 's/^    /\t/' Makefile"
+        - "cd /tutorial/make_project/step2 && make"
       explanation: |
         - **Test 1:** `grep -qP '^\tgcc' Makefile` — the recipe line must start with a real Tab character (`\t`), not spaces. `grep -P` uses Perl-compatible regex where `\t` matches a literal Tab.
         - **Test 2:** `[ -f app ]` — Make must have run successfully and produced the `app` executable.
@@ -299,7 +312,7 @@ steps:
 
     tests:
       - description: "The recipe uses a Tab character, not spaces"
-        command: "cd /tutorial/make_project && grep -qP '^\\tgcc' Makefile"
+        command: "cd /tutorial/make_project/step2 && grep -qP '^\\tgcc' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "Make's parser looks for a literal Tab byte at the start of recipe lines. Spaces look identical on screen but trigger the cryptic `*** missing separator. Stop.` error. The fix has to put a real Tab there."
@@ -310,10 +323,10 @@ steps:
             text: "Run `cat -A Makefile` after the sed. Recipe lines should start with `^I` (that's how `cat -A` displays a Tab). If you see `        ` instead, the spaces weren't replaced."
             condition: "code_missing: \\tgcc"
       - description: "Make ran successfully and built 'app'"
-        command: "cd /tutorial/make_project && [ -f app ]"
+        command: "cd /tutorial/make_project/step2 && [ -f app ]"
         hints:
           - title: "Layer 1 — orientation"
-            text: "Run `make` from inside `make_project/`. With a working Makefile, it should print one line per command and produce an `app` binary."
+            text: "Run `make` from inside `make_project/step2/`. With a working Makefile, it should print one line per command and produce an `app` binary."
           - title: "Layer 2 — strategy"
             text: "If Make prints `*** missing separator`, the Tab isn't fixed yet. If it runs gcc but gcc errors, the previous step's syntax bug may have come back — re-check `math.c`."
             condition: "output_contains: separator"
@@ -390,7 +403,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: PRIMM — Modify a working Makefile to remove duplication
   - title: "Don't Repeat Yourself (DRY) with Variables"
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step3
     instructions: |
       ### Why this matters
 
@@ -451,10 +464,16 @@ steps:
       Now a compiler change is a one-line edit at the top of the file.
 
     setup_commands:
-      - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
+      - "rm -f /tutorial/make_project/step3/*.o /tutorial/make_project/step3/app"
 
     files:
-      - path: "make_project/Makefile"
+      - <<: *makefile_main_c
+        path: "make_project/step3/main.c"
+      - <<: *makefile_fixed_math_c
+        path: "make_project/step3/math.c"
+      - <<: *makefile_io_c
+        path: "make_project/step3/io.c"
+      - path: "make_project/step3/Makefile"
         content: |
           app: main.o math.o io.o
           	gcc -Wall -std=c11 main.o math.o io.o -o app
@@ -469,14 +488,14 @@ steps:
           	gcc -Wall -std=c11 -c io.c
         language: "makefile"
 
-    open_file: "make_project/Makefile"
+    open_file: "make_project/step3/Makefile"
 
     watch_files:
-      - "make_project/Makefile"
+      - "make_project/step3/Makefile"
 
     solution:
       files:
-        - path: "make_project/Makefile"
+        - path: "make_project/step3/Makefile"
           content: "CC = gcc\nCFLAGS = -Wall -std=c11\n\napp: main.o math.o io.o\n\t$(CC) $(CFLAGS) main.o math.o io.o -o app\n\nmain.o: main.c\n\t$(CC) $(CFLAGS) -c main.c\n\nmath.o: math.c\n\t$(CC) $(CFLAGS) -c math.c\n\nio.o: io.c\n\t$(CC) $(CFLAGS) -c io.c\n"
           language: "makefile"
       explanation: |
@@ -489,7 +508,7 @@ steps:
 
     tests:
       - description: "Defined CC variable"
-        command: "cd /tutorial/make_project && grep -q 'CC *=' Makefile"
+        command: "cd /tutorial/make_project/step3 && grep -q 'CC *=' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "Add a line at the top of the Makefile that names the compiler. The convention is `CC = gcc` (this is Make's standard variable name for the C compiler)."
@@ -497,14 +516,14 @@ steps:
             text: "Variables are written *before* any rules. The first three lines of the Makefile should be:\n```make\nCC = gcc\nCFLAGS = -Wall -std=c11\n\n```\nThen the rules follow."
             condition: "code_missing: CC ="
       - description: "Defined CFLAGS variable"
-        command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
+        command: "cd /tutorial/make_project/step3 && grep -q 'CFLAGS *=' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "After `CC = gcc`, add `CFLAGS = -Wall -std=c11` on the next line. CFLAGS is Make's standard name for compiler flags."
             condition: "code_missing: CFLAGS"
       - description: "Used $(CC) in every recipe and removed every hardcoded `gcc` from recipes"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step3
           # Positive: $(CC) appears at least 4 times (link + 3 .o rules)
           cc_count=$(grep -c '\$(CC)' Makefile)
           if [ "$cc_count" -lt 4 ]; then
@@ -518,7 +537,7 @@ steps:
           fi
       - description: "Used $(CFLAGS) in every recipe and removed every hardcoded `-Wall -std=c11` from recipes"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step3
           cflags_count=$(grep -c '\$(CFLAGS)' Makefile)
           if [ "$cflags_count" -lt 4 ]; then
             echo "Found only $cflags_count uses of \$(CFLAGS). Replace '-Wall -std=c11' with \$(CFLAGS) in all 4 recipes."
@@ -530,7 +549,7 @@ steps:
             exit 1
           fi
       - description: "Code still builds successfully"
-        command: "cd /tutorial/make_project && make && [ -f app ]"
+        command: "cd /tutorial/make_project/step3 && make && [ -f app ]"
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -613,7 +632,7 @@ steps:
     # appear between app and the .c sources. Defaulting to the DAG view
     # makes the structural change visually obvious.
     view: make_dag
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step4
     instructions: |
       ### Why this matters
 
@@ -707,10 +726,16 @@ steps:
       Your Makefile shrinks from 14 lines to 8 — and it handles **any** number of source files with zero changes to the rules.
 
     setup_commands:
-      - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
+      - "rm -f /tutorial/make_project/step4/*.o /tutorial/make_project/step4/app"
 
     files:
-      - path: "make_project/Makefile"
+      - <<: *makefile_main_c
+        path: "make_project/step4/main.c"
+      - <<: *makefile_fixed_math_c
+        path: "make_project/step4/math.c"
+      - <<: *makefile_io_c
+        path: "make_project/step4/io.c"
+      - path: "make_project/step4/Makefile"
         content: |
           CC = gcc
           CFLAGS = -Wall -std=c11
@@ -728,14 +753,14 @@ steps:
           	$(CC) $(CFLAGS) -c io.c
         language: "makefile"
 
-    open_file: "make_project/Makefile"
+    open_file: "make_project/step4/Makefile"
 
     watch_files:
-      - "make_project/Makefile"
+      - "make_project/step4/Makefile"
 
     solution:
       files:
-        - path: "make_project/Makefile"
+        - path: "make_project/step4/Makefile"
           content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n"
           language: "makefile"
       explanation: |
@@ -751,19 +776,19 @@ steps:
 
     tests:
       - description: "Defined OBJS variable"
-        command: "cd /tutorial/make_project && grep -q 'OBJS *=' Makefile"
+        command: "cd /tutorial/make_project/step4 && grep -q 'OBJS *=' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "Add an `OBJS = main.o math.o io.o` line near the top, after `CFLAGS`. This is the standard Make idiom: a variable holding the list of object files the executable depends on."
             condition: "code_missing: OBJS"
       - description: "Used $(OBJS) in the app rule"
-        command: "cd /tutorial/make_project && grep -q '\\$(OBJS)' Makefile"
+        command: "cd /tutorial/make_project/step4 && grep -q '\\$(OBJS)' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "Replace the explicit `main.o math.o io.o` in the `app:` rule with `$(OBJS)` so the rule reads from the variable."
             condition: "code_missing: $(OBJS)"
       - description: "Added a pattern rule (%.o: %.c)"
-        command: "cd /tutorial/make_project && grep -qP '%\\.o.*:.*%\\.c' Makefile"
+        command: "cd /tutorial/make_project/step4 && grep -qP '%\\.o.*:.*%\\.c' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "A pattern rule uses `%` as a wildcard. The line `%.o: %.c` tells Make: 'to build any `.o` file, use the matching `.c` file as input'. One rule replaces the three explicit ones."
@@ -771,20 +796,20 @@ steps:
             text: "Skeleton:\n```make\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n```\n`$<` is the first prerequisite (the `.c` file), `$@` is the target (the `.o` file). Don't forget the literal Tab before `$(CC)`."
             condition: "code_missing: %.o"
       - description: "Used an automatic variable ($<, $^, or $@) in a recipe"
-        command: "cd /tutorial/make_project && grep -qP '\\$[<^@]' Makefile"
+        command: "cd /tutorial/make_project/step4 && grep -qP '\\$[<^@]' Makefile"
         hints:
           - title: "Layer 1 — orientation"
             text: "Automatic variables let Make plug in the right filename without you naming it. `$@` = target name. `$<` = first prerequisite. `$^` = all prerequisites. Use them in the recipe, not in the rule header."
             condition: "code_missing: $@"
       - description: "Removed the explicit per-file .o rules (replaced by the pattern rule)"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step4
           if grep -qE '^(main|math|io)\.o[[:space:]]*:' Makefile; then
             echo "An explicit '.o' rule (main.o:, math.o:, or io.o:) is still in the Makefile. Delete the three explicit rules — the pattern rule '%.o: %.c' replaces them."
             exit 1
           fi
       - description: "Project still builds correctly"
-        command: "cd /tutorial/make_project && make && [ -f app ]"
+        command: "cd /tutorial/make_project/step4 && make && [ -f app ]"
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -873,7 +898,7 @@ steps:
     # Default this step to the Make DAG view so students see the graph
     # update live as they touch files. They can flip back to Editor any time.
     view: make_dag
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step5
     instructions: |
       ### Why this matters
 
@@ -905,7 +930,7 @@ steps:
 
       ### 📈 The graph on the right is *your* graph
 
-      Look at the **Make DAG** pane next to the editor — that's not a static diagram from this tutorial, that's the dependency graph computed live from *your current Makefile* in `/tutorial/make_project`. Every time you edit the Makefile or run a `make` / `touch` command, the graph re-renders:
+      Look at the **Make DAG** pane next to the editor — that's not a static diagram from this tutorial, that's the dependency graph computed live from *your current Makefile* in `/tutorial/make_project/step5`. Every time you edit the Makefile or run a `make` / `touch` command, the graph re-renders:
 
       - **Solid green ✓** — target is up to date
       - **Pulsing red ●** — target is stale (`make` would rebuild it)
@@ -1013,31 +1038,49 @@ steps:
       </details>
 
     setup_commands:
-      - "make -C /tutorial/make_project 2>/dev/null || true"
+      - "while [ ! -f /tutorial/make_project/step5/Makefile ] || [ ! -f /tutorial/make_project/step5/main.c ] || [ ! -f /tutorial/make_project/step5/math.c ] || [ ! -f /tutorial/make_project/step5/io.c ]; do sleep 0.1; done"
+      - "make -C /tutorial/make_project/step5 2>/dev/null || true"
       # Record main.o's baseline mtime so we can later assert it didn't change.
       # This catches "make clean && make" (full rebuild) where math.o is still
       # newer than main.o by gcc compile order — the existing -nt test alone
       # accepts that wrong solution.
-      - "stat -c %Y /tutorial/make_project/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo 0 > /tmp/.makefile_step5_main_o_baseline"
+      - "stat -c %Y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo 0 > /tmp/.makefile_step5_main_o_baseline"
+
+    files:
+      - <<: *makefile_main_c
+        path: "make_project/step5/main.c"
+      - <<: *makefile_fixed_math_c
+        path: "make_project/step5/math.c"
+      - <<: *makefile_io_c
+        path: "make_project/step5/io.c"
+      - path: "make_project/step5/Makefile"
+        content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n"
+        language: "makefile"
+
+    open_file: "make_project/step5/Makefile"
+
+    watch_files:
+      - "make_project/step5/Makefile"
 
     solution:
       commands:
-        - "make"
-        - "touch math.c"
-        - "make"
+        - "cd /tutorial/make_project/step5 && make"
+        - "stat -c %Y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline"
+        - "cd /tutorial/make_project/step5 && touch math.c"
+        - "cd /tutorial/make_project/step5 && make"
       explanation: |
         - **Test 1:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp.
-        - **Test 2:** `main.o`'s mtime must equal the baseline recorded in `setup_commands`. This catches the wrong solution `make clean && make` — that produces a *full* rebuild where math.o is still newer than main.o (by gcc compile order), but main.o's mtime has changed from the baseline.
+        - **Test 2:** `main.o`'s mtime must equal the baseline recorded before `math.c` is touched. This catches the wrong solution `make clean && make` — that produces a *full* rebuild where math.o is still newer than main.o (by gcc compile order), but main.o's mtime has changed from the baseline.
         - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
         - **`touch math.c`:** Updates `math.c`'s modification timestamp without changing its content. Make sees `math.c` is now newer than `math.o` and recompiles just that one file, then re-links `app`. `main.c` and `io.c` are untouched.
         - **Why this matters:** In a large project, this turns a potential hours-long full rebuild into a seconds-long incremental one.
 
     tests:
       - description: "math.c was touched and recompiled (math.o is newer than main.o)"
-        command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
+        command: "cd /tutorial/make_project/step5 && [ math.o -nt main.o ]"
       - description: "Make did NOT do a full rebuild — main.o is unchanged from the original build"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step5
           if [ ! -f /tmp/.makefile_step5_main_o_baseline ]; then
             echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
             exit 1
@@ -1140,7 +1183,7 @@ steps:
   # --------------------------------------------------------------------------
   # Pedagogy: mistake-based familiarization — sabotage `clean` to surface the .PHONY rationale
   - title: "The .PHONY Sabotage"
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step6
     instructions: |
       ### Why this matters
 
@@ -1228,18 +1271,32 @@ steps:
       You'll meet this trap the moment you start using subdirectories or environment variables (`CFLAGS=-O2; gcc ...` on two lines doesn't export the flag). Make has a `.ONESHELL:` directive that flips the model — but treat that as an advanced override; the standard mental model is "one recipe line = one shell".
 
     setup_commands:
-      - "make -C /tutorial/make_project 2>/dev/null || true"
+      - "while [ ! -f /tutorial/make_project/step6/Makefile ] || [ ! -f /tutorial/make_project/step6/main.c ] || [ ! -f /tutorial/make_project/step6/math.c ] || [ ! -f /tutorial/make_project/step6/io.c ]; do sleep 0.1; done"
+      - "make -C /tutorial/make_project/step6 2>/dev/null || true"
+
+    files:
+      - <<: *makefile_main_c
+        path: "make_project/step6/main.c"
+      - <<: *makefile_fixed_math_c
+        path: "make_project/step6/math.c"
+      - <<: *makefile_io_c
+        path: "make_project/step6/io.c"
+      - path: "make_project/step6/Makefile"
+        content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n"
+        language: "makefile"
+
+    open_file: "make_project/step6/Makefile"
 
     watch_files:
-      - "make_project/Makefile"
+      - "make_project/step6/Makefile"
 
     solution:
       files:
-        - path: "make_project/Makefile"
+        - path: "make_project/step6/Makefile"
           content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean run\nrun: app\n\t./app\n\nclean:\n\trm -f *.o app\n"
           language: "makefile"
       commands:
-        - "rm -f /tutorial/make_project/clean"
+        - "rm -f /tutorial/make_project/step6/clean"
       explanation: |
         - **Test 1:** `grep -q '\.PHONY:.*clean' Makefile` — `.PHONY: clean` must appear in the file (before or after the `clean:` rule).
         - **Test 2:** `make clean` must succeed and remove `app` and `.o` files.
@@ -1252,7 +1309,7 @@ steps:
     tests:
       - description: "Added .PHONY declaration covering both `clean` and `run`"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step6
           grep -q '\.PHONY:.*clean' Makefile \
             || { echo "Missing `.PHONY: clean` — Make needs to know clean is a command, not a file."; exit 1; }
           grep -q '\.PHONY:.*run' Makefile \
@@ -1266,7 +1323,7 @@ steps:
             condition: "code_missing: run"
       - description: "The `run` rule depends on `app` and executes `./app`"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step6
           # Find the run rule — must depend on app
           grep -qE '^run:[[:space:]]*app' Makefile \
             || { echo "The `run:` rule should depend on `app` so Make builds it first if needed."; exit 1; }
@@ -1283,7 +1340,7 @@ steps:
             text: "Skeleton:\n```make\nrun: app\n\t./app\n```\nThe Tab before `./app` is non-negotiable (Step 2)."
             condition: "code_missing: ./app"
       - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
-        command: "cd /tutorial/make_project && rm -f clean && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
+        command: "cd /tutorial/make_project/step6 && rm -f clean && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
         hints:
           - title: "Layer 1 — orientation"
             text: "The `clean:` rule needs no prerequisites and one recipe line. The recipe should remove all `.o` files and the `app` binary."
@@ -1405,7 +1462,7 @@ steps:
     # Open with the full graph: app + run (phony) + clean (phony) + all .o + .c.
     # Synthesis at a glance.
     view: make_dag
-    step_dir: /tutorial/make_project
+    step_dir: /tutorial/make_project/step7
     instructions: |
       ### Why this matters
 
@@ -1488,14 +1545,30 @@ steps:
       > [!WARNING]
       > **Recursive Make is often considered harmful.** It breaks the global visibility of the dependency graph, which can lead to subtle bugs where files aren't recompiled when they should be. For larger projects, consider modern alternatives or a single, "non-recursive" top-level Makefile that includes sub-makefiles.
 
+    files:
+      - <<: *makefile_main_c
+        path: "make_project/step7/main.c"
+      - <<: *makefile_fixed_math_c
+        path: "make_project/step7/math.c"
+      - <<: *makefile_io_c
+        path: "make_project/step7/io.c"
+      - path: "make_project/step7/Makefile"
+        content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean run\nrun: app\n\t./app\n\nclean:\n\trm -f *.o app\n"
+        language: "makefile"
+
+    open_file: "make_project/step7/Makefile"
+
+    watch_files:
+      - "make_project/step7/Makefile"
+
     solution:
       files:
-        - path: "make_project/Makefile"
+        - path: "make_project/step7/Makefile"
           content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean run\nrun: app\n\t./app\n\nclean:\n\trm -f *.o app\n"
           language: "makefile"
       commands:
-        - "make clean"
-        - "make"
+        - "cd /tutorial/make_project/step7 && make clean"
+        - "cd /tutorial/make_project/step7 && make"
       explanation: |
         This step is a review — the canonical solution shows the complete Makefile from Steps 1–6 in its final form. The tests below verify your work from previous steps is still intact.
 
@@ -1521,7 +1594,7 @@ steps:
     tests:
       - description: "Your Makefile contains every concept from the tutorial: variables, $(OBJS), pattern rule, automatic variable, .PHONY"
         command: |
-          cd /tutorial/make_project
+          cd /tutorial/make_project/step7
           # Variables (CC, CFLAGS) from Step 3
           grep -q 'CC *=' Makefile || { echo "Missing CC variable (Step 3 work seems lost)."; exit 1; }
           grep -q 'CFLAGS *=' Makefile || { echo "Missing CFLAGS variable (Step 3)."; exit 1; }
@@ -1532,7 +1605,7 @@ steps:
           # .PHONY clean from Step 6
           grep -q '\.PHONY:.*clean' Makefile || { echo "Missing .PHONY: clean (Step 6)."; exit 1; }
       - description: "The full build still works (`make clean && make` produces an `app` binary)"
-        command: "cd /tutorial/make_project && make clean >/dev/null 2>&1 && make >/dev/null 2>&1 && [ -f app ]"
+        command: "cd /tutorial/make_project/step7 && make clean >/dev/null 2>&1 && make >/dev/null 2>&1 && [ -f app ]"
 
     quiz:
       title: "Step 7 — Knowledge Check"

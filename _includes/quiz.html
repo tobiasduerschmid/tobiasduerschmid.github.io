@@ -1130,10 +1130,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const summary = resultsArea.querySelector('.score-summary');
       if (incorrectIndices.length === 0) {
         summary.textContent = "Perfect score! Come back later to improve your recall!";
-        if (typeof window.spawnConfetti === 'function') window.spawnConfetti(resultsArea);
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
+      if (typeof window.spawnConfetti === 'function') window.spawnConfetti(resultsArea);
       announce('Workout complete. Score ' + score + ' out of ' + cards.length + '.');
 
       if (incorrectIndices.length > 0) {
