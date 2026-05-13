@@ -964,6 +964,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       if (isCorrect) {
         option.classList.add('correct');
         score++;
+        if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(option);
       } else {
         option.classList.add('incorrect');
         // Mark the wrongly-chosen option as invalid (3.3.1 Error
@@ -1014,6 +1015,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       if (isAnswerCorrect) {
         selectedOptions.forEach(opt => opt.classList.add('correct'));
         score++;
+        if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
       } else {
         options.forEach(opt => {
           const isSelected = opt.classList.contains('selected');
@@ -1337,8 +1339,12 @@ Data source: _data/quizzes/{{ include.id }}.yml
         btn.disabled = true;
         card.querySelector('.parsons-reset-btn').disabled = true;
 
-        if (isCorrect) score++;
-        else incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+        if (isCorrect) {
+          score++;
+          if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
+        } else {
+          incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+        }
 
         // Track performance
         if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {

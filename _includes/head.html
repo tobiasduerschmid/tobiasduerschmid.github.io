@@ -7,9 +7,11 @@
     (function () {
       var nameEQ = "show-highlights=";
       var darkEQ = "dark-mode=";
+      var confettiEQ = "more-confetti=";
       var ca = document.cookie.split(';');
       var show = true;
       var dark = false;
+      var moreConfetti = false;
       for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == ' ') c = c.substring(1, c.length);
@@ -19,12 +21,18 @@
         if (c.indexOf(darkEQ) == 0) {
           dark = c.substring(darkEQ.length, c.length) === 'true';
         }
+        if (c.indexOf(confettiEQ) == 0) {
+          moreConfetti = c.substring(confettiEQ.length, c.length) === 'true';
+        }
       }
       if (!show) {
         document.documentElement.classList.add('highlights-disabled');
       }
       if (dark) {
         document.documentElement.classList.add('dark-mode');
+      }
+      if (moreConfetti) {
+        document.documentElement.classList.add('more-confetti-enabled');
       }
       try {
         if (localStorage.getItem('abbr-underlines') === 'false') {

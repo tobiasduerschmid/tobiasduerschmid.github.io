@@ -375,6 +375,30 @@ info_nav_title: "My Settings"
             </div>
           </div>
         </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">More confetti</p>
+            <p class="setting-description">
+              By default, confetti only celebrates a finished quiz or
+              flashcard workout. Turn this on to also get a small burst of
+              confetti after <em>each</em> correctly answered quiz question
+              and after each flashcard you mark as "I got it right" — in
+              SEBook, tutorials, and the personal gym. Off by default.
+              Respects your reduced-motion preference.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">More confetti</span>
+                <input type="checkbox" id="setting-more-confetti" data-setting="moreConfetti" data-status-target="setting-more-confetti-status" aria-label="More confetti">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-more-confetti-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
       </div>
     </fieldset>
 
@@ -984,6 +1008,10 @@ info_nav_title: "My Settings"
     setCheckbox('setting-abbr-underlines', abbrUnderlines);
     applyAbbrUnderlineMode(abbrUnderlines);
 
+    var moreConfetti = readCookie('more-confetti') === 'true';
+    setCheckbox('setting-more-confetti', moreConfetti);
+    document.documentElement.classList.toggle('more-confetti-enabled', moreConfetti);
+
     var volume = document.getElementById('setting-audio-volume');
     if (volume) {
       var savedVolume = parseFloat(readLS('cap_volume'));
@@ -1075,6 +1103,10 @@ info_nav_title: "My Settings"
       else writeLS('abbr-underlines', 'false');
       applyAbbrUnderlineMode(target.checked);
       announce('Abbreviation underline setting saved.');
+    } else if (setting === 'moreConfetti') {
+      writeCookie('more-confetti', target.checked ? 'true' : 'false');
+      document.documentElement.classList.toggle('more-confetti-enabled', target.checked);
+      announce(target.checked ? 'More confetti turned on.' : 'More confetti turned off.');
     } else if (setting === 'ttsVoice') {
       if (target.value) writeLS('tts-voice-name', target.value);
       else clearLS('tts-voice-name');
