@@ -408,17 +408,6 @@ a.author:visited {
 	border-radius: 0 !important;
 }
 
-#sidebar a {
-	border-radius: 0 !important;
-}
-
-#sidebar a:hover,
-#sidebar a:focus {
-	color: black;
-	background-color: #FFD100;
-	text-decoration: underline;
-}
-
 .label.top-right {
 	position: absolute;
 	right: 15px;
@@ -822,73 +811,6 @@ html.dark-mode .bibliography li {
 	color: #FFF !important;
 }
 
-/* Sidebar Dark Mode */
-html.dark-mode #sidebar {
-	background-color: #1e1e1e !important;
-}
-
-html.dark-mode .sebook-sidebar-nav {
-	background-color: #1e1e1e !important;
-	color: #e0e0e0 !important;
-}
-
-html.dark-mode .sebook-nav-link,
-html.dark-mode .sebook-nav-link:visited,
-html.dark-mode .sebook-nav-sublink,
-html.dark-mode .sebook-nav-sublink:visited,
-html.dark-mode .sebook-nav-itemlink,
-html.dark-mode .sebook-nav-itemlink:visited,
-html.dark-mode .sebook-nav-toggle {
-	color: #e0e0e0 !important;
-}
-
-html.dark-mode .sebook-nav-link:hover,
-html.dark-mode .sebook-nav-sublink:hover,
-html.dark-mode .sebook-nav-itemlink:hover,
-html.dark-mode .sebook-nav-toggle:hover {
-	background-color: #333 !important;
-}
-
-.sebook-nav-link:focus-visible,
-.sebook-nav-sublink:focus-visible,
-.sebook-nav-itemlink:focus-visible,
-.sebook-nav-toggle:focus-visible {
-	outline: 3px solid #2774AE !important;
-	outline-offset: -3px;
-	box-shadow: inset 0 0 0 2px #fff;
-}
-
-html.dark-mode .sebook-nav-link:focus-visible,
-html.dark-mode .sebook-nav-sublink:focus-visible,
-html.dark-mode .sebook-nav-itemlink:focus-visible,
-html.dark-mode .sebook-nav-toggle:focus-visible {
-	outline-color: #FFD100 !important;
-	box-shadow: inset 0 0 0 2px #000;
-}
-
-html.dark-mode .sebook-nav-sublist {
-	background-color: #252525 !important;
-}
-
-html.dark-mode .sebook-nav-itemlist {
-	background-color: #2a2a2a !important;
-}
-
-html.dark-mode .sebook-nav-item {
-	border-bottom-color: #333 !important;
-}
-
-html.dark-mode .sebook-nav-subitem {
-	border-bottom-color: #333 !important;
-}
-
-html.dark-mode .sebook-nav-link.current,
-html.dark-mode .sebook-nav-sublink.current,
-html.dark-mode .sebook-nav-itemlink.current {
-	background-color: #2774AE !important;
-	color: white !important;
-}
-
 html.dark-mode .action-box {
 	background-color: #005587;
 	border-left-color: #FFB81C;
@@ -936,53 +858,6 @@ html.dark-mode #bookmarkPageBtn {
 	border-color: #5fa8d3 !important;
 }
 
-/* Inline language tabs (Java / C++ / Python / TypeScript) shipped without
-   any styling, so they inherited the page's currentColor on a transparent
-   background — ~1.15:1 contrast in dark mode and ~3:1 in light mode (both
-   fail 1.4.3). Style them as a real tablist. */
-.inline-language-tabs {
-	display: inline-flex;
-	gap: var(--sp-xs, 4px);
-	padding: var(--sp-xs, 4px);
-	margin: var(--sp-sm, 8px) 0 0;
-	border: 1px solid var(--color-border, #d0d0d6);
-	border-radius: var(--radius-md, 8px);
-	background: var(--color-surface-2, #f6f7f9);
-}
-.inline-language-tabs button[role="tab"] {
-	border: 1px solid transparent;
-	background: transparent;
-	color: var(--color-text, #1a1a1a);
-	padding: var(--sp-xs, 4px) var(--sp-md, 12px);
-	border-radius: var(--radius-sm, 4px);
-	font-size: 0.92em;
-	font-weight: 500;
-	cursor: pointer;
-	min-height: 28px;
-}
-.inline-language-tabs button[role="tab"]:hover,
-.inline-language-tabs button[role="tab"]:focus-visible {
-	background: #e6e8ec;
-}
-.inline-language-tabs button[role="tab"][aria-selected="true"] {
-	background: var(--color-primary, #2774AE);
-	color: var(--color-text-on-primary, #fff);
-	border-color: var(--color-primary, #2774AE);
-}
-html.dark-mode .inline-language-tabs {
-	border-color: #3a3a4a;
-	background: #1f1f28;
-}
-html.dark-mode .inline-language-tabs button[role="tab"] {
-	color: #e6edf3;
-}
-html.dark-mode .inline-language-tabs button[role="tab"]:hover,
-html.dark-mode .inline-language-tabs button[role="tab"]:focus-visible {
-	background: #2a2a38;
-}
-html.dark-mode .inline-language-tabs button[role="tab"][aria-selected="true"] {
-	color: #0a0a14;
-}
 html.dark-mode .highlight .k,
 html.dark-mode .highlight .kd,
 html.dark-mode .highlight .kp,

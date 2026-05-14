@@ -3,38 +3,7 @@
 
 {% include head.html %}
 
-<style>
-h1 {
-  font-weight: bold;
-}
-
-h2 {
-  font-weight: bold;
-}
-h3 {
-  font-weight: bold;
-}
-h4 {
-  font-weight: bold;
-}
-
-.info-page-nav.navbar-fixed-top {
-  position: sticky;
-  top: 0;
-  left: auto;
-  right: auto;
-}
-
-@media (max-width: 360px) {
-  .info-page-nav .navbar-brand {
-    font-size: 16px;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-</style>
-
-<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+<body id="page-top" class="framework-layout" data-spy="scroll" data-target=".navbar-fixed-top">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     {% if page.info_nav %}
     {% include info_page_nav.html title=page.info_nav_title %}

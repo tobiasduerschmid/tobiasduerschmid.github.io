@@ -6,198 +6,7 @@
 
 {% include head.html %}
 
-<style>
-  h1 {
-    font-weight: bold;
-    color: var(--color-primary, #2774AE);
-    -webkit-text-stroke: 0;
-    letter-spacing: 0;
-  }
-
-  h2 {
-    font-weight: bold;
-    color: var(--color-primary, #2774AE);
-    -webkit-text-stroke: 0;
-    letter-spacing: 0;
-  }
-
-  h3 {
-    font-weight: bold;
-  }
-
-  h4 {
-    font-weight: bold;
-  }
-
-  .slider.round:before {
-    border-radius: 50%;
-  }
-
-  #sebook-content-wrapper {
-    background:
-      radial-gradient(circle at top right, rgba(139, 184, 232, 0.22), transparent 34%),
-      linear-gradient(180deg, #f7fbff, #ffffff);
-  }
-
-  #navnav.navbar {
-    background: #17324d;
-    border: 0;
-    border-bottom: 5px solid #FFD100;
-    box-shadow: 0 10px 26px rgba(0, 59, 92, 0.18);
-  }
-
-  #navnav .navbar-brand {
-    color: #ffffff;
-    font-weight: 700;
-    letter-spacing: 0;
-  }
-
-  #navnav .navbar-brand:hover,
-  #navnav .navbar-brand:focus {
-    color: #FFD100;
-  }
-
-  #navnav .navbar-nav > li > a {
-    border-radius: 999px;
-    color: #eef7ff;
-    font-weight: 600;
-    letter-spacing: 0;
-    margin: 8px 3px;
-  }
-
-  #navnav .navbar-nav > li > a:hover,
-  #navnav .navbar-nav > li > a:focus {
-    background: #FFD100;
-    color: #17324d;
-  }
-
-  #navnav .navbar-nav > li.active > a,
-  #navnav .navbar-nav > li.active > a:visited,
-  #navnav .navbar-nav > li.active > a:hover,
-  #navnav .navbar-nav > li.active > a:focus,
-  #navnav .navbar-nav > li > a.active,
-  #navnav .navbar-nav > li > a.active:visited,
-  #navnav .navbar-nav > li > a[aria-current="true"],
-  #navnav .navbar-nav > li > a[aria-current="true"]:visited {
-    background: #FFD100 !important;
-    color: #061d31 !important;
-    box-shadow: inset 0 -4px 0 #ffffff, 0 0 0 2px rgba(255, 255, 255, 0.18);
-    text-decoration: none;
-  }
-
-  #sidebar {
-    background: #f4f9fd;
-    border-right: 1px solid #c8d6e2;
-    box-shadow: 10px 0 28px rgba(0, 59, 92, 0.1);
-  }
-
-  #sidebar-toggle {
-    border: 2px solid #ffffff !important;
-    border-left: 0 !important;
-    box-shadow: 0 10px 22px rgba(0, 59, 92, 0.18);
-    font-weight: 700;
-  }
-
-  #main-content {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 253, 255, 0.98));
-    color: var(--color-text, #24292f);
-  }
-
-  #main-content h1,
-  #main-content h2 {
-    color: #17324d;
-    text-shadow: none;
-  }
-
-  #main-content section > h1::after,
-  #main-content section > h2::after {
-    content: '';
-    display: block;
-    width: 82px;
-    height: 5px;
-    margin-top: 8px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #2774AE 0%, #2774AE 72%, #FFD100 72%, #FFD100 100%);
-  }
-
-  #tts-read-btn {
-    font-size: 0.95em !important;
-  }
-
-  html.dark-mode #sebook-content-wrapper {
-    background:
-      radial-gradient(circle at top right, rgba(139, 184, 232, 0.16), transparent 34%),
-      linear-gradient(180deg, #0f1722, #111827);
-  }
-
-  html.dark-mode #navnav.navbar {
-    background: #0b1f33;
-    border-bottom-color: #FFD100;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
-  }
-
-  html.dark-mode #navnav .navbar-brand {
-    color: #ffffff;
-  }
-
-  html.dark-mode #navnav .navbar-brand:hover,
-  html.dark-mode #navnav .navbar-brand:focus {
-    color: #FFD100;
-  }
-
-  html.dark-mode #navnav .navbar-nav > li > a {
-    color: #e6f4ff;
-  }
-
-  html.dark-mode #navnav .navbar-nav > li > a:hover,
-  html.dark-mode #navnav .navbar-nav > li > a:focus {
-    background: #FFD100;
-    color: #061d31;
-  }
-
-  html.dark-mode #navnav .navbar-nav > li.active > a,
-  html.dark-mode #navnav .navbar-nav > li.active > a:visited,
-  html.dark-mode #navnav .navbar-nav > li.active > a:hover,
-  html.dark-mode #navnav .navbar-nav > li.active > a:focus,
-  html.dark-mode #navnav .navbar-nav > li > a.active,
-  html.dark-mode #navnav .navbar-nav > li > a.active:visited,
-  html.dark-mode #navnav .navbar-nav > li > a[aria-current="true"],
-  html.dark-mode #navnav .navbar-nav > li > a[aria-current="true"]:visited {
-    background: #FFD100 !important;
-    color: #061d31 !important;
-    box-shadow: inset 0 -4px 0 #ffffff, 0 0 0 2px rgba(255, 255, 255, 0.16);
-    text-decoration: none;
-  }
-
-  html.dark-mode #sidebar {
-    background: #101b28;
-    border-right-color: #31455d;
-    box-shadow: 10px 0 28px rgba(0, 0, 0, 0.36);
-  }
-
-  html.dark-mode #sidebar-toggle {
-    background: #2774AE !important;
-    border-color: #8BB8E8 !important;
-    color: #ffffff !important;
-  }
-
-  html.dark-mode #main-content {
-    background: linear-gradient(180deg, rgba(17, 24, 39, 0.97), rgba(15, 23, 34, 0.98));
-    color: #e5e7eb;
-  }
-
-  html.dark-mode #main-content h1,
-  html.dark-mode #main-content h2 {
-    color: #B9D9EB;
-  }
-
-  html.dark-mode #main-content section > h1::after,
-  html.dark-mode #main-content section > h2::after {
-    background: linear-gradient(90deg, #8BB8E8 0%, #8BB8E8 72%, #FFD100 72%, #FFD100 100%);
-  }
-</style>
-
-<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
+<body id="page-top" class="sebook-layout{% if page.url == '/se-gym/' %} se-gym-page{% endif %}" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <div class="post-content">
@@ -236,298 +45,25 @@
     </nav>
 
 
-    <div id="sebook-content-wrapper" style="display: flex; min-height: calc(100vh - 60px);">
+    <div id="sebook-content-wrapper">
       <!-- Mobile Sidebar Toggle -->
       <button id="sidebar-toggle" type="button"
-        aria-label="Menu: show table of contents" aria-expanded="false" aria-controls="sidebar"
-        style="display: none; position: fixed; top: 60px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        aria-label="Menu: show table of contents" aria-expanded="false" aria-controls="sidebar">
         <span aria-hidden="true">☰</span> Menu
       </button>
 
       <!-- Sidebar Navigation -->
-      <aside id="sidebar" aria-label="Table of contents" style="width: 260px; max-width: 80vw; overflow-y: auto; margin: 0; padding: 0;">
+      <aside id="sidebar" aria-label="Table of contents">
         {% include sebook_navbar_sidebar.html %}
       </aside>
 
       <!-- Main Content -->
-      <main id="main-content" tabindex="-1" style="flex: 1; padding: 20px;">
-        <style>
-          .intro-header {
-            margin-top: -70px;
-            margin-left: -20px;
-            margin-right: -20px;
-            margin-bottom: 20px;
-          }
-
-          .inline-language-switcher {
-            border: 1px solid var(--color-border-strong, #6a737d);
-            border-radius: var(--radius-md, 8px);
-            margin: 18px 0 24px;
-            overflow: hidden;
-            background: var(--color-surface, #fff);
-          }
-
-          .inline-language-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--sp-xs, 6px);
-            padding: var(--sp-sm, 8px);
-            border-bottom: 1px solid var(--color-border-strong, #6a737d);
-            background: var(--color-surface-2, #f6f8fa);
-          }
-
-          .inline-language-tabs button {
-            border: 1px solid transparent;
-            border-radius: var(--radius-sm, 4px);
-            background: transparent;
-            color: var(--color-text, #24292f);
-            font-weight: 600;
-            line-height: 1.2;
-            padding: 7px 11px;
-          }
-
-          .inline-language-tabs button:hover,
-          .inline-language-tabs button:focus {
-            border-color: var(--color-primary, #2774AE);
-            outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
-            outline-offset: var(--focus-offset, 2px);
-            box-shadow: 0 0 0 2px var(--color-surface, #fff);
-          }
-
-          .inline-language-tabs button:focus:not(:focus-visible) {
-            outline: none;
-            box-shadow: none;
-          }
-
-          .inline-language-tabs button[aria-selected="true"] {
-            background: var(--color-primary, #2774AE);
-            color: var(--color-text-on-primary, #fff);
-          }
-
-          .inline-language-panel {
-            display: none;
-            padding: 0 12px 12px;
-          }
-
-          .inline-language-panel.is-active {
-            display: block;
-          }
-
-          .inline-language-panel pre {
-            margin-top: 12px;
-            scroll-margin-top: 96px;
-          }
-
-          .inline-language-panel pre:focus,
-          #main-content pre[tabindex]:focus {
-            outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
-            outline-offset: 3px;
-            box-shadow: 0 0 0 2px var(--color-surface, #fff);
-          }
-
-          html.dark-mode .inline-language-switcher {
-            background: #111827;
-          }
-
-          html.dark-mode .inline-language-tabs {
-            background: #1f2937;
-          }
-
-          html.dark-mode .inline-language-tabs button {
-            color: #f9fafb;
-          }
-
-          html.dark-mode .inline-language-tabs button:hover,
-          html.dark-mode .inline-language-tabs button:focus {
-            border-color: var(--color-accent, #FFD100);
-            box-shadow: 0 0 0 2px #111827;
-          }
-
-          html.dark-mode .inline-language-panel pre:focus,
-          html.dark-mode #main-content pre[tabindex]:focus {
-            box-shadow: 0 0 0 2px #111827;
-          }
-
-          @media screen and (max-width: 640px) {
-            .inline-language-tabs button {
-              flex: 1 1 44%;
-            }
-          }
-
-          /* Ensure sidebar does not get too thin on mid-sized screens */
-          #sidebar {
-            flex-shrink: 0;
-            min-width: 220px;
-          }
-
-          /* Flex layout for navbar: brand shares row 1 with nav items, items wrap to row 2.
-             Bootstrap 3 floats brand left and nav right, but when nav is too wide to fit
-             alongside brand it drops to its own row — producing 3 rows instead of 2.
-             Replacing floats with flex fixes this at all desktop widths. */
-          @media (min-width: 768px) {
-            #navnav .container-fluid {
-              display: flex !important;
-              flex-wrap: wrap !important;
-              align-items: stretch !important;
-            }
-
-            #navnav .navbar-header {
-              float: none !important;
-              flex: 0 0 auto !important;
-              display: flex !important;
-              align-items: center !important;
-            }
-
-            #navnav .navbar-collapse {
-              flex: 1 1 0 !important;
-              display: flex !important;
-              padding: 0 !important;
-              border-top: none !important;
-              box-shadow: none !important;
-              overflow: visible !important;
-              align-items: center !important;
-            }
-
-            #navnav .navbar-nav {
-              float: none !important;
-              display: flex !important;
-              flex-wrap: wrap !important;
-              justify-content: flex-end !important;
-              align-items: center !important;
-              flex: 1 !important;
-              margin: 0 !important;
-            }
-
-            #navnav .navbar-nav > li {
-              float: none !important;
-            }
-
-            #navnav .navbar-nav > li > a {
-              padding-top: 5px !important;
-              padding-bottom: 5px !important;
-            }
-          }
-
-          /* Mobile responsive styles - Improved breakpoint */
-          @media screen and (max-width: 1100px) {
-            #sidebar-toggle {
-              display: block !important;
-            }
-
-            #sidebar {
-              position: fixed !important;
-              top: 80px !important;
-              left: -260px !important;
-              width: 260px !important;
-              min-width: 0 !important;
-              height: 100vh !important;
-              z-index: 999 !important;
-              transition: left 0.3s ease !important;
-              margin-top: 0 !important;
-            }
-
-            #sidebar.open {
-              left: 0 !important;
-            }
-
-            #main-content {
-              width: 100% !important;
-              padding: 15px !important;
-              /* WCAG 2.4.11: `overflow-x: hidden` makes the X-axis hidden but
-                 promotes overflow-y to `auto` per CSS Overflow spec, turning
-                 #main-content into a scroll container. The browser then
-                 scrolls THIS container on focus instead of the window, so
-                 Tab-focusing a deep link below the fold leaves the link
-                 outside the viewport. `overflow-x: clip` clips X without
-                 promoting Y — page-level scroll keeps working normally. */
-              overflow-x: clip;
-              min-width: 0 !important;
-            }
-
-            /* Prevent fixed Bootstrap container widths */
-            #main-content .container {
-              width: 100% !important;
-              padding-left: 10px !important;
-              padding-right: 10px !important;
-            }
-
-            .intro-header {
-              margin-top: 0 !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-              margin-bottom: 15px !important;
-            }
-
-            #main-content pre,
-            #main-content code,
-            #main-content .highlight pre {
-              max-width: 100%;
-              white-space: pre-wrap;
-              overflow-wrap: anywhere;
-            }
-
-            #main-content table {
-              display: block;
-              max-width: 100%;
-              overflow-x: auto;
-              /* Per CSS Overflow §3.3, setting only overflow-x to a non-
-                 visible/clip value computes overflow-y to `auto`, turning
-                 the table into a vertical scroll container that traps
-                 focus-scroll. Pinning overflow-y to `clip` keeps the X-axis
-                 scrollable for wide tables without making the table a
-                 vertical scroll container — so `link.focus()` inside a
-                 deep cell still scrolls the page (WCAG 2.4.11). */
-              overflow-y: clip;
-            }
-
-            #main-content img,
-            #main-content svg {
-              max-width: 100%;
-              height: auto;
-            }
-
-            #main-content .uml-class-diagram-container,
-            #main-content .uml-sequence-diagram-container,
-            #main-content .uml-state-diagram-container,
-            #main-content .uml-component-diagram-container,
-            #main-content .uml-deployment-diagram-container,
-            #main-content .uml-usecase-diagram-container,
-            #main-content .uml-activity-diagram-container {
-              max-width: 100%;
-              overflow-x: auto;
-              overflow-y: hidden;
-            }
-
-            #main-content .uml-class-diagram-container svg,
-            #main-content .uml-sequence-diagram-container svg,
-            #main-content .uml-state-diagram-container svg,
-            #main-content .uml-component-diagram-container svg,
-            #main-content .uml-deployment-diagram-container svg,
-            #main-content .uml-usecase-diagram-container svg,
-            #main-content .uml-activity-diagram-container svg {
-              width: 100% !important;
-              max-width: 100% !important;
-              overflow: hidden;
-            }
-
-            #main-content mjx-container {
-              display: inline-block !important;
-              max-width: 100% !important;
-              overflow-x: auto !important;
-              overflow-y: hidden !important;
-              vertical-align: middle;
-            }
-
-            #main-content mjx-container[display="true"] {
-              display: block !important;
-            }
-          }
-        </style>
+      <main id="main-content" tabindex="-1">
         {% include header_project.html title=page.title %}
 
         <!-- Toggles -->
         <div class="highlight-toggle-container" id="togglesContainer" style="display: none;">
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="toggle-control-row">
             <span class="toggle-label">Dark Mode</span>
             <label class="switch">
               <span class="sr-only">Toggle dark mode</span>
@@ -535,7 +71,7 @@
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
+          <div class="toggle-control-row is-spaced">
             <span class="toggle-label">Show Highlights</span>
             <label class="switch">
               <span class="sr-only">Toggle highlights</span>
@@ -543,7 +79,7 @@
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="toggle-control-row">
             <span class="toggle-label">Read Aloud</span>
             <label class="switch">
               <span class="sr-only">Toggle read aloud</span>
@@ -551,15 +87,15 @@
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div class="toggle-control-row">
             <button id="tts-read-btn" aria-label="Read Aloud: read page aloud using text-to-speech"
-              style="background:none; border:1px solid #2774AE; color:#2774AE; border-radius:6px; padding:4px 12px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">
-              <i class="fa fa-volume-up" style="margin-right:5px;" aria-hidden="true"></i>Read Aloud
+              type="button">
+              <i class="fa fa-volume-up tts-read-inline-icon" aria-hidden="true"></i>Read Aloud
             </button>
           </div>
           {% if site.bookmarks %}
-          <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none; align-items:center;">
-            <button id="bookmarkPageBtn" aria-label="Bookmark this page" style="background:none; border:none; cursor:pointer; padding:0 2px; font-size:1.3em; color:#2774AE; line-height:1; vertical-align:middle; min-width:34px; min-height:34px; display:inline-flex; align-items:center; justify-content:center;">
+          <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none;">
+            <button id="bookmarkPageBtn" aria-label="Bookmark this page" type="button">
               <i id="bookmarkIcon" class="fa-regular fa-bookmark" aria-hidden="true"></i>
             </button>
           </div>
@@ -882,74 +418,41 @@
   {% include footer.html %}
 
   <!-- Privacy / Cookie Notice -->
-  <div role="region" aria-label="Privacy notice" style="max-width: 860px; margin: 20px auto 0; padding: 0 20px; clear: both;">
+  <div class="privacy-notice-region" role="region" aria-label="Privacy notice">
     {% include cookie-notice.html %}
   </div>
 
   <!-- TTS control bar (shown while reading aloud) -->
-  <div id="tts-bar" role="region" aria-label="Text-to-speech controls"
-    style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:1050;
-           background:#1c1c2e; color:#fff; padding:8px 20px;
-           align-items:center; gap:8px; flex-wrap:wrap;
-           box-shadow:0 -2px 10px rgba(0,0,0,0.45);">
-    <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
+  <div id="tts-bar" class="tts-control-bar" role="region" aria-label="Text-to-speech controls">
+    <span class="tts-control-label">
       <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
-    <button id="tts-prev-heading" title="Previous heading" aria-label="Jump to previous heading"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#fff; border-radius:6px; width:34px; height:34px; cursor:pointer;
-             display:none; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+    <button id="tts-prev-heading" class="tts-control-button is-square tts-control-hidden" title="Previous heading" aria-label="Jump to previous heading">
       <i class="fa fa-step-backward" aria-hidden="true"></i>
     </button>
-    <button id="tts-back-10s" title="Back 10 seconds" aria-label="Back 10 seconds"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#fff; border-radius:6px; padding:4px 9px; cursor:pointer;
-             font-size:12px; font-weight:700; flex-shrink:0;">
+    <button id="tts-back-10s" class="tts-control-button" title="Back 10 seconds" aria-label="Back 10 seconds">
       <i class="fa fa-undo" aria-hidden="true"></i> 10s
     </button>
-    <button id="tts-playpause" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true"
-      style="background:transparent; border:2px solid #2774AE; color:#fff;
-             border-radius:50%; width:34px; height:34px; cursor:pointer;
-             display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
+    <button id="tts-playpause" class="tts-control-button is-primary" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true">
       <i class="fa fa-pause" aria-hidden="true"></i>
     </button>
-    <button id="tts-fwd-10s" title="Forward 10 seconds" aria-label="Forward 10 seconds"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#fff; border-radius:6px; padding:4px 9px; cursor:pointer;
-             font-size:12px; font-weight:700; flex-shrink:0;">
+    <button id="tts-fwd-10s" class="tts-control-button" title="Forward 10 seconds" aria-label="Forward 10 seconds">
       10s <i class="fa fa-redo" aria-hidden="true"></i>
     </button>
-    <button id="tts-next-heading" title="Next heading" aria-label="Jump to next heading"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#fff; border-radius:6px; width:34px; height:34px; cursor:pointer;
-             display:none; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+    <button id="tts-next-heading" class="tts-control-button is-square tts-control-hidden" title="Next heading" aria-label="Jump to next heading">
       <i class="fa fa-step-forward" aria-hidden="true"></i>
     </button>
-    <button id="tts-slower" title="Slower"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#ccc; border-radius:6px; padding:4px 11px; cursor:pointer;
-             font-size:13px; font-weight:700;">
+    <button id="tts-slower" class="tts-control-button" title="Slower">
       &#8722; Slower
     </button>
-    <span id="tts-rate"
-      style="font-size:13px; font-weight:700; color:#8bb8e8;
-             min-width:36px; text-align:center;">1.0x</span>
-    <button id="tts-faster" title="Faster"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#ccc; border-radius:6px; padding:4px 11px; cursor:pointer;
-             font-size:13px; font-weight:700;">
+    <span id="tts-rate" class="tts-control-rate">1.0x</span>
+    <button id="tts-faster" class="tts-control-button" title="Faster">
       + Faster
     </button>
-    <select id="tts-voice-select" title="Select voice" aria-label="Select the voice used for reading aloud"
-      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-             color:#fff; border-radius:6px; padding:4px 8px; cursor:pointer;
-             font-size:13px; max-width:170px; margin-left:4px;">
+    <select id="tts-voice-select" class="tts-control-select" title="Select voice" aria-label="Select the voice used for reading aloud">
       <option value="">Default voice</option>
     </select>
-    <button id="tts-stop" title="Stop reading"
-      style="background:rgba(200,50,50,0.18); border:1px solid rgba(220,80,80,0.45);
-             color:#f99; border-radius:6px; padding:4px 12px; cursor:pointer;
-             font-size:13px; font-weight:700; margin-left:auto;">
+    <button id="tts-stop" class="tts-control-button is-danger" title="Stop reading">
       <i class="fa fa-stop" aria-hidden="true"></i> Stop
     </button>
   </div>
@@ -1051,7 +554,7 @@
           }
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           if (!speaking && !paused) {
-            readBtn.innerHTML = '<i class="fa fa-volume-up" style="margin-right:5px;" aria-hidden="true"></i>Read Aloud';
+            readBtn.innerHTML = '<i class="fa fa-volume-up tts-read-inline-icon" aria-hidden="true"></i>Read Aloud';
             readBtn.style.color = '#2774AE';
             readBtn.style.borderColor = '#2774AE';
           }
@@ -1066,7 +569,7 @@
           var extracted = TTSPlayer.extract(content);
           if (!extracted.text) return;
 
-          readBtn.innerHTML = '<i class="fa fa-stop" style="margin-right:5px;" aria-hidden="true"></i>Stop Reading';
+          readBtn.innerHTML = '<i class="fa fa-stop tts-read-inline-icon" aria-hidden="true"></i>Stop Reading';
           readBtn.style.color = '#c0392b';
           readBtn.style.borderColor = '#c0392b';
           // Show heading-skip buttons only when the page actually has

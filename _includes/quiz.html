@@ -31,7 +31,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       <{{ quiz_heading_tag }}>{{ quiz_data.title }}</{{ quiz_heading_tag }}>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}"
-        aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
+        aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" data-placement="left" style="display: none;">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
       </button>
       {% endif %}
@@ -728,11 +728,16 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .quiz-title-row {
-    padding-right: 46px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-right: 0;
   }
 
   .quiz-title-row h2,
   .quiz-title-row h3 {
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
   }
 
@@ -750,9 +755,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
     font-size: 14px;
     transition: all 0.2s;
     padding: 0;
-    position: absolute;
-    top: 16px;
-    right: 16px;
+    position: static;
+    flex: 0 0 auto;
+    margin: 1px 0 0 auto;
   }
 
   .se-gym-toggle:hover {
