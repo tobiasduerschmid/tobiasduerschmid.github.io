@@ -4493,11 +4493,79 @@ layout: sebook
     }
 
     .pd-inactive {
-      /* Inactive groups are made inert/aria-hidden in JS. Keep their visual
-         colors at full strength; opacity lowers rendered text contrast and
-         creates false affordances for users with low vision. */
+      /* Inactive groups are made inert/aria-hidden in JS. Avoid opacity here:
+         muting colors keeps the disabled state visible without lowering text
+         contrast across the whole subtree. */
       pointer-events: none;
       user-select: none;
+    }
+
+    #gym-controls-body.pd-inactive {
+      filter: grayscale(1) saturate(0.3);
+    }
+
+    #gym-controls-body.pd-inactive .toggle-row:not(.max-cards-row),
+    #gym-controls-body.pd-inactive .difficulty-filter {
+      background: linear-gradient(180deg, #f7f8fa, #eef2f5);
+      border-color: #9aa6b2;
+      box-shadow: none;
+    }
+
+    #gym-controls-body.pd-inactive .toggle-icon {
+      background: #6b7280;
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter legend {
+      background: #f7f8fa;
+      color: #374151;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter-help,
+    #gym-controls-body.pd-inactive .gym-summary-text {
+      color: #4b5563;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter-option {
+      background: #f7f8fa;
+      border-color: #9aa6b2;
+      color: #333333;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive {
+      filter: grayscale(1) saturate(0.25);
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .toggle-row:not(.max-cards-row),
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter {
+      background: linear-gradient(180deg, #20252d, #171c23);
+      border-color: #687386;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .toggle-icon {
+      background: #8a94a3;
+      color: #06111d;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter legend {
+      background: #20252d;
+      color: #e6edf6;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter-help,
+    html.dark-mode #gym-controls-body.pd-inactive .gym-summary-text {
+      color: #cdd5df;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter-option {
+      background: #171c23;
+      border-color: #687386;
+      color: #e6edf6;
+      box-shadow: none;
     }
 
     /* Tutorial Progress Import/Export modal */
@@ -4699,7 +4767,7 @@ layout: sebook
 
       var libraryView = document.getElementById('gym-entrance');
       var workoutView = document.getElementById('gym-workout');
-      var startBtn = document.getElementById('start-workout-btn');
+      var startButtons = Array.prototype.slice.call(document.querySelectorAll('.gym-start-btn'));
       var maxCardsInput = document.getElementById('max-cards');
       var maxCardsNote = document.getElementById('max-cards-note');
       var gymSummary = document.getElementById('gym-summary');
@@ -4778,6 +4846,12 @@ layout: sebook
         var bucket = workoutDifficultyStats[difficultyBucketFor(card)];
         bucket.seen++;
         if (isCorrect) bucket.correct++;
+      }
+
+      function setStartButtonsDisabled(disabled) {
+        startButtons.forEach(function (button) {
+          button.disabled = disabled;
+        });
       }
 
       function shuffleArray(arr) {
@@ -5176,13 +5250,12 @@ layout: sebook
         var drawCount = Math.min(maxCards, totalCards);
         lastTimedPracticeDrawCount = drawCount;
         updateTimedPracticeEstimate(drawCount);
-        if (gym.length > 0 || (difficultInGym && hasDifficult)) {
+        if (hasAnything) {
           gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
-          startBtn.disabled = false;
         } else {
           gymSummary.textContent = '';
-          startBtn.disabled = true;
         }
+        setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0);
       }
 
       // ---- Difficult questions helper ----
@@ -5402,16 +5475,14 @@ layout: sebook
       function applyActiveState(isActive) {
         gymControlsBody.classList.toggle('pd-inactive', !isActive);
         gymLibrarySections.classList.toggle('pd-inactive', !isActive);
-        // The .pd-inactive class dims to opacity 0.4, which drops contrast
-        // below WCAG 1.4.3. Match the visual state semantically by making
-        // the dimmed sections inert (removed from focus + AT tree). The
-        // `inert` attribute also short-circuits the contrast check in the
-        // audit, since inert content is treated as not-perceivable.
+        // Match the disabled visual state semantically by making inactive
+        // sections inert (removed from focus + AT tree).
         if (!isActive) {
           gymControlsBody.setAttribute('inert', '');
           gymLibrarySections.setAttribute('inert', '');
           gymControlsBody.setAttribute('aria-hidden', 'true');
           gymLibrarySections.setAttribute('aria-hidden', 'true');
+          setStartButtonsDisabled(true);
         } else {
           gymControlsBody.removeAttribute('inert');
           gymLibrarySections.removeAttribute('inert');
@@ -5615,6 +5686,7 @@ layout: sebook
       }
 
       function startWorkout() {
+        if (!PersonalGym.isPersonalGymActive()) return;
         saveTimedPracticeSettingsFromInputs();
         workoutCards = buildWorkoutCards();
         if (workoutCards.length === 0) return;
@@ -6492,7 +6564,9 @@ layout: sebook
 
       // ==================== EVENT BINDINGS ====================
 
-      startBtn.addEventListener('click', startWorkout);
+      startButtons.forEach(function (button) {
+        button.addEventListener('click', startWorkout);
+      });
       backBtn.addEventListener('click', goBackToLibrary);
       workoutRestartBtn.addEventListener('click', restartWorkout);
       workoutReviewBtn.addEventListener('click', startReview);
