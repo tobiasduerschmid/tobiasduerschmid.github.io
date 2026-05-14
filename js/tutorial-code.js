@@ -416,11 +416,12 @@
     //   - webcontainer (Node.js, via in-process V8 inspector + JSON-over-stdio)
     //   - browser (in-page sandboxed JS, via acorn AST instrumentation +
     //     sibling iframe + SAB for sync pause)
+    //   - v86 Makefile tutorials (forward-only dry-run trace; no time travel)
     // When false, no debugger code is loaded — see js/debugger/main.js. When
     // true, _buildUI() lazy-loads the debugger module after the base UI is
     // constructed.
     this.debuggerEnabled = !!options.debugger && (
-      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser'
+      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' || backend === 'v86'
     );
     this.debuggerOptions = options.debuggerOptions || {};
   }
@@ -5159,7 +5160,7 @@
       wordWrap: 'on',
       padding: { top: 8 },
       // Glyph margin is the click-target column for breakpoints. Only enable
-      // when the time-travel debugger is opted in — otherwise an empty grey
+      // when a debugger is opted in — otherwise an empty grey
       // column would appear next to line numbers in non-debugger tutorials.
       glyphMargin: !!this.debuggerEnabled,
       // Reserve a wider line-decorations gutter when the git-gutter feature
@@ -5196,7 +5197,7 @@
     return opts;
   };
 
-  // Lazy-load the time-travel debugger module. Inserts <script> + <link> for
+  // Lazy-load the debugger module. Inserts <script> + <link> for
   // js/debugger/{main.js,debugger.css}, then awaits `window.SEBookDebugger`
   // global and calls its `attach(this)` hook. No-op when debuggerEnabled is
   // false — the `start()` chain skips this method entirely. See plan file at
@@ -5205,6 +5206,7 @@
     var self = this;
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
+    var needsMakeChannel = self.config.backend === 'v86';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -5264,6 +5266,12 @@
         p = p.then(function () {
           if (window.SEBookBrowserChannel) return null;
           return loadScriptOnce('/js/debugger/browser-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      if (needsMakeChannel) {
+        p = p.then(function () {
+          if (window.SEBookMakeChannel) return null;
+          return loadScriptOnce('/js/debugger/make-channel.js?v=' + dbgAssetVersion);
         });
       }
       p.then(attach).catch(reject);

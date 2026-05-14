@@ -131,6 +131,21 @@
     };
   }
 
+  function debuggerCapabilities(state) {
+    var c = state && state.capabilities || {};
+    var forwardOnly = !!c.forwardOnly;
+    return {
+      forwardOnly: forwardOnly,
+      reverse: c.reverse !== false && !forwardOnly,
+      history: c.history !== false && !forwardOnly,
+      watches: c.watches !== false && !forwardOnly,
+      watchpoints: c.watchpoints !== false && !forwardOnly,
+      exceptions: c.exceptions !== false && !forwardOnly,
+      variableEditing: c.variableEditing !== false && !forwardOnly,
+      breakpointConditions: c.breakpointConditions !== false && !forwardOnly,
+    };
+  }
+
   function watchpointRemovePreferenceKey(tutorialId) {
     return 'tutorial-debug-watchpoint-remove-choice-' + (tutorialId || 'default');
   }
@@ -270,19 +285,29 @@
   function renderToolbar(rootEl, state, dispatch, helpers) {
     if (!rootEl) return;
     helpers = defaultHelpers(helpers);
+    var caps = debuggerCapabilities(state);
+    var toolbarMode = caps.forwardOnly ? 'forward-only' : 'full';
+    if (rootEl.dataset.toolbarBuilt && rootEl.dataset.toolbarMode !== toolbarMode) {
+      rootEl.innerHTML = '';
+      delete rootEl.dataset.toolbarBuilt;
+    }
     if (!rootEl.dataset.toolbarBuilt) {
       rootEl.dataset.toolbarBuilt = '1';
+      rootEl.dataset.toolbarMode = toolbarMode;
       rootEl.classList.add('tvm-debug-toolbar');
+      var reverseControls = caps.reverse
+        ? '<span class="tvm-debug-divider"></span>' +
+          '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + debugToolbarIcon('back') + '</button>' +
+          '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + debugToolbarIcon('backContinue') + '</button>' +
+          '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + debugToolbarIcon('backOut') + '</button>'
+        : '';
       rootEl.innerHTML =
         '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
         '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + debugToolbarIcon('play') + '</button>' +
         '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + debugToolbarIcon('over') + '</button>' +
         '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + debugToolbarIcon('into') + '</button>' +
         '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + debugToolbarIcon('out') + '</button>' +
-        '<span class="tvm-debug-divider"></span>' +
-        '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + debugToolbarIcon('back') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + debugToolbarIcon('backContinue') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + debugToolbarIcon('backOut') + '</button>' +
+        reverseControls +
         '<span class="tvm-debug-divider"></span>' +
         '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + debugToolbarIcon('stop') + '</button>';
       var btns = rootEl.querySelectorAll('.tvm-debug-step');
@@ -303,8 +328,9 @@
       var b = btns[i];
       var cmd = b.getAttribute('data-cmd');
       // Reverse-time controls and Stop are always available during a session.
-      var alwaysOn = (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
-                      cmd === 'exceptionBack' || cmd === 'exceptionForward' || cmd === 'stop');
+      var alwaysOn = cmd === 'stop' ||
+        (caps.reverse && (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
+                      cmd === 'exceptionBack' || cmd === 'exceptionForward'));
       b.disabled = !alwaysOn && disabled;
     }
     var statusEl = rootEl.querySelector('.tvm-debug-status');
@@ -316,17 +342,25 @@
 
   // -- Combined view shell --------------------------------------------------
 
-  function buildCombinedShell(rootEl, helpers) {
-    if (!rootEl || rootEl.dataset.shellBuilt) return;
+  function buildCombinedShell(rootEl, helpers, state) {
+    var caps = debuggerCapabilities(state);
+    var shellMode = caps.forwardOnly ? 'forward-only' : 'full';
+    if (!rootEl) return;
+    if (rootEl.dataset.shellBuilt && rootEl.dataset.shellMode !== shellMode) {
+      rootEl.innerHTML = '';
+      delete rootEl.dataset.shellBuilt;
+    }
+    if (rootEl.dataset.shellBuilt) return;
     rootEl.dataset.shellBuilt = '1';
+    rootEl.dataset.shellMode = shellMode;
     var sections = [
       { key: 'stack',   label: 'Call Stack',  icon: 'fa-layer-group',        empty: 'Start debugging to see the call stack.' },
       { key: 'vars',    label: 'Variables',   icon: 'fa-list',               empty: 'Start debugging to see variables.' },
-      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
-      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: 'Add breakpoints or data watchpoints.' },
-      { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' },
+      caps.watches ? { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' } : null,
+      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: caps.watchpoints ? 'Add breakpoints or data watchpoints.' : 'Add Makefile breakpoints in the editor gutter.' },
+      caps.history ? { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' } : null,
     ];
-    rootEl.innerHTML = sections.map(function (s) {
+    rootEl.innerHTML = sections.filter(Boolean).map(function (s) {
       var collapsed = helpers.getSectionCollapsed(s.key);
       return '<section class="tvm-dbg-section' + (collapsed ? ' collapsed' : '') +
              '" data-section="' + s.key + '">' +
@@ -340,16 +374,19 @@
              '</div>' +
              '</section>';
     }).join('');
-    rootEl.addEventListener('click', function (e) {
-      var head = e.target && e.target.closest && e.target.closest('.tvm-dbg-section-head');
-      if (!head) return;
-      var section = head.parentElement;
-      if (!section) return;
-      var key = section.getAttribute('data-section');
-      var nowCollapsed = !section.classList.contains('collapsed');
-      section.classList.toggle('collapsed', nowCollapsed);
-      helpers.setSectionCollapsed(key, nowCollapsed);
-    });
+    if (!rootEl.dataset.shellClickWired) {
+      rootEl.dataset.shellClickWired = '1';
+      rootEl.addEventListener('click', function (e) {
+        var head = e.target && e.target.closest && e.target.closest('.tvm-dbg-section-head');
+        if (!head) return;
+        var section = head.parentElement;
+        if (!section) return;
+        var key = section.getAttribute('data-section');
+        var nowCollapsed = !section.classList.contains('collapsed');
+        section.classList.toggle('collapsed', nowCollapsed);
+        helpers.setSectionCollapsed(key, nowCollapsed);
+      });
+    }
   }
 
   function findSectionBody(rootEl, key) {
@@ -359,12 +396,13 @@
 
   function renderDebugView(rootEl, state, dispatch, helpers) {
     helpers = defaultHelpers(helpers);
-    buildCombinedShell(rootEl, helpers);
-    renderWatch(findSectionBody(rootEl, 'watch'), state, dispatch, helpers);
+    var caps = debuggerCapabilities(state);
+    buildCombinedShell(rootEl, helpers, state);
+    if (caps.watches) renderWatch(findSectionBody(rootEl, 'watch'), state, dispatch, helpers);
     renderBreakpoints(findSectionBody(rootEl, 'breakpoints'), state, dispatch, helpers);
     renderCallStack(findSectionBody(rootEl, 'stack'), state, dispatch, helpers);
     renderVariables(findSectionBody(rootEl, 'vars'), state, dispatch, helpers);
-    renderHistory(findSectionBody(rootEl, 'history'), state, dispatch, helpers);
+    if (caps.history) renderHistory(findSectionBody(rootEl, 'history'), state, dispatch, helpers);
   }
 
   // -- Variables ------------------------------------------------------------
@@ -438,7 +476,8 @@
     var rows = [];
     var seenOids = {};
     var keys = Object.keys(dict).sort();
-    var editable = helpers.isVarScopeEditable(snap, frameIdx, scope, state);
+    var editable = debuggerCapabilities(state).variableEditing &&
+      helpers.isVarScopeEditable(snap, frameIdx, scope, state);
     for (var i = 0; i < keys.length; i++) {
       var name = keys[i];
       var resolved = (dict[name] === UNCHANGED)
@@ -654,6 +693,10 @@
   function renderWatch(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    if (!debuggerCapabilities(state).watches) {
+      view.innerHTML = '';
+      return;
+    }
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -718,6 +761,7 @@
   function renderBreakpoints(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    var caps = debuggerCapabilities(state);
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -727,14 +771,17 @@
       var lines = Object.keys(breakpoints[path] || {}).map(function (n) { return +n; }).sort(function (a, b) { return a - b; });
       lines.forEach(function (line) {
         var info = breakpoints[path][line] || {};
-        var cond = info.condition
+        var cond = caps.breakpointConditions && info.condition
           ? '<span class="tvm-debug-manager-condition">when ' + helpers.escape(info.condition) + '</span>'
-          : (info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
-        var hits = info.hitCount
+          : (caps.breakpointConditions && info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
+        var hits = caps.breakpointConditions && info.hitCount
           ? '<span class="tvm-debug-manager-hitcount">after ' + info.hitCount + ' hits</span>'
           : '';
-        var err = info.condError
+        var err = caps.breakpointConditions && info.condError
           ? '<span class="tvm-debug-manager-error">' + helpers.escape(info.condError) + '</span>'
+          : '';
+        var editBtn = caps.breakpointConditions
+          ? '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>'
           : '';
         bpRows.push(
           '<div class="tvm-debug-manager-row tvm-debug-manager-code-row">' +
@@ -743,7 +790,7 @@
           '<span class="tvm-debug-manager-title">' + helpers.escape(helpers.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          editBtn +
           '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
@@ -813,10 +860,10 @@
       '<div class="tvm-debug-manager">' +
       renderBreakpointGroup('manager-code-breakpoints', 'Code Breakpoints',
         bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>', helpers) +
-      renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
-        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers) +
-      renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
-        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls, helpers) +
+      (caps.watchpoints ? renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
+        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers) : '') +
+      (caps.exceptions ? renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
+        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls, helpers) : '') +
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
@@ -991,6 +1038,10 @@
   function renderHistory(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    if (!debuggerCapabilities(state).history) {
+      view.innerHTML = '';
+      return;
+    }
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || state.history.length === 0) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to navigate execution history.</div>';

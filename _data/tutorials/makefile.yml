@@ -20,6 +20,10 @@ autosave_type: none
 # for the schema reference.
 make_dag: step_dir
 
+# Forward-only Make debugger: enables Monaco gutter breakpoints and the shared
+# debugger panel, but hides time-travel controls/features for this v86 backend.
+debugger: true
+
 setup_commands:
   - 'mkdir -p /tutorial/make_project/step1 /tutorial/make_project/step2 /tutorial/make_project/step3 /tutorial/make_project/step4 /tutorial/make_project/step5 /tutorial/make_project/step6 /tutorial/make_project/step7'
   - 'sed -i "s/^exec //" /usr/bin/gcc'

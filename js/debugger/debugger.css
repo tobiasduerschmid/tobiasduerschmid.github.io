@@ -65,6 +65,23 @@
   margin-right: 4px;
 }
 .tvm-debug-btn:hover { background: #FFB81C; color: #1A1A1A; }
+.tvm-debug-popout-btn {
+  background: transparent;
+  color: #7a5800;
+  border: 1px solid rgba(184, 134, 11, 0.55);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tvm-debug-popout-btn:hover,
+.tvm-debug-popout-btn:focus-visible {
+  background: rgba(255, 209, 0, 0.20);
+  border-color: rgba(184, 134, 11, 0.75);
+  color: #5C4308;
+}
 .tvm-debug-btn-unavailable {
   background: #e5e7eb;
   color: #1f2937;
@@ -179,6 +196,37 @@
   margin-left: 0;
   flex-wrap: wrap;
   row-gap: 4px;
+}
+
+.tvm-debug-panel-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #fffdf2;
+  border-bottom: 1px solid rgba(184, 134, 11, 0.35);
+}
+.tvm-debug-panel-controls .tvm-debug-btn {
+  font: inherit;
+  font-weight: 700;
+  margin-right: 0;
+  padding: 0.35em 0.75em;
+}
+.tvm-debug-panel-controls .tvm-debug-popout-btn {
+  font: inherit;
+  min-height: 2em;
+  min-width: 2em;
+}
+.tvm-debug-panel-controls .tvm-debug-toolbar {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-left: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.tvm-debug-panel-controls .tvm-debug-status {
+  font-size: 0.9em;
 }
 
 /* ---- Reload-needed inline note (when crossOriginIsolated is false) ------ */
@@ -1362,8 +1410,22 @@ html.dark-mode .tvm-debug-toolbar .tvm-debug-step:hover:not(:disabled) {
   border-color: rgba(255, 224, 102, 0.65);
   color: #FFEEB3;
 }
+html.dark-mode .tvm-debug-popout-btn {
+  color: #FFE066;
+  border-color: rgba(255, 209, 0, 0.45);
+}
+html.dark-mode .tvm-debug-popout-btn:hover,
+html.dark-mode .tvm-debug-popout-btn:focus-visible {
+  background: rgba(255, 209, 0, 0.16);
+  border-color: rgba(255, 224, 102, 0.65);
+  color: #FFEEB3;
+}
 html.dark-mode .tvm-debug-toolbar .tvm-debug-divider { background: rgba(255, 224, 102, 0.45); }
 html.dark-mode .tvm-debug-toolbar .tvm-debug-status { color: #FFE066; }
+html.dark-mode .tvm-debug-panel-controls {
+  background: #1f2937;
+  border-bottom-color: rgba(255, 224, 102, 0.28);
+}
 html.dark-mode .sebook-dbg-reload-note {
   color: #fecaca;
   background: rgba(248, 113, 113, 0.12);

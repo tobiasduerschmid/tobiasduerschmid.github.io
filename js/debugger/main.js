@@ -1,5 +1,5 @@
 /**
- * Time-travel debugger — main-thread module.
+ * Tutorial debugger — main-thread module.
  *
  * Loaded lazily by TutorialCode._loadDebuggerModule() only when the tutorial
  * YAML opts in via `debugger: true`. Exposes a single global:
@@ -7,7 +7,8 @@
  *   window.SEBookDebugger.attach(tutorialInstance)
  *   window.SEBookDebugger.onStepChange(tutorialInstance)
  *
- * Architecture (see plan: .claude/plans/what-would-be-options-temporal-ritchie.md):
+ * Pyodide time-travel architecture (see plan:
+ * .claude/plans/what-would-be-options-temporal-ritchie.md):
  *
  *   Main thread (this file)              Pyodide Worker
  *   ------------------------             ----------------
@@ -316,6 +317,25 @@
     this._panelOriginalFlex = '';
   }
 
+  DebuggerController.prototype.debuggerCapabilities = function () {
+    var backend = this.t && this.t.config && this.t.config.backend;
+    var makeForwardOnly = backend === 'v86';
+    return {
+      forwardOnly: makeForwardOnly,
+      reverse: !makeForwardOnly,
+      history: !makeForwardOnly,
+      watches: !makeForwardOnly,
+      watchpoints: !makeForwardOnly,
+      exceptions: !makeForwardOnly,
+      variableEditing: !makeForwardOnly,
+      breakpointConditions: !makeForwardOnly,
+    };
+  };
+
+  DebuggerController.prototype.isForwardOnlyDebugger = function () {
+    return !!this.debuggerCapabilities().forwardOnly;
+  };
+
   // ---- Lifecycle ------------------------------------------------------------
   DebuggerController.prototype.install = function () {
     this.loadConfiguredBreakpoints();
@@ -336,7 +356,9 @@
     // WebContainer's in-browser Node inspector does not reliably service CDP
     // pause/step commands.
     var backend = this.t.config && this.t.config.backend;
-    if (backend === 'webcontainer' && window.SEBookBrowserChannel) {
+    if (backend === 'v86' && window.SEBookMakeChannel) {
+      this.channel = new window.SEBookMakeChannel(this, this.t);
+    } else if (backend === 'webcontainer' && window.SEBookBrowserChannel) {
       this.channel = new window.SEBookBrowserChannel(this, this.t);
     } else if (backend === 'webcontainer' && window.SEBookNodeChannel) {
       this.channel = new window.SEBookNodeChannel(this, this.t);
@@ -414,7 +436,7 @@
         getActiveFile: function () { return self._activeFileForEditor(self.t.editor2); },
       }));
     }
-    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript'] });
+    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript', 'makefile'] });
     // Repaint when the tutorial's active file changes (Monaco's onDidChangeModel
     // already covers per-editor file swaps; this covers other state changes).
   };
@@ -433,6 +455,7 @@
       tutorialId: this.t.tutorialId,
       backend: this.t.config && this.t.config.backend,
       debuggerEnabled: true,
+      capabilities: this.debuggerCapabilities(),
       activeFile: this.t.activeFileName || null,
       paneForFile: {},
       filesAvailable: this.t.editorModels ? Object.keys(this.t.editorModels) : [],
@@ -563,6 +586,8 @@
   };
 
   DebuggerController.prototype.collectWatchExpressions = function () {
+    var caps = this.debuggerCapabilities();
+    if (!caps.watches && !caps.watchpoints && !caps.breakpointConditions) return [];
     var out = [];
     var seen = Object.create(null);
     function add(expr) {
@@ -1151,7 +1176,8 @@
       view.style.display = 'none';
       view.dataset.panel = v.panel;
       if (v.type === 'combined') {
-        view.innerHTML = self._buildCombinedViewShell();
+        view.innerHTML = '<div class="tvm-debug-panel-controls" data-debug-controls-host></div>' +
+          self._buildCombinedViewShell();
       } else {
         view.innerHTML = '<div class="tvm-debug-empty">' + (v.empty || '') + '</div>';
       }
@@ -1181,15 +1207,16 @@
   // their target.
   // Collapse state persists per-tutorial in localStorage.
   DebuggerController.prototype._buildCombinedViewShell = function () {
+    var caps = this.debuggerCapabilities();
     var sections = [
       { key: 'stack',   label: 'Call Stack',  icon: 'fa-layer-group',        empty: 'Start debugging to see the call stack.' },
       { key: 'vars',    label: 'Variables',   icon: 'fa-list',               empty: 'Start debugging to see variables.' },
-      { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' },
-      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: 'Add breakpoints or data watchpoints.' },
-      { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' },
+      caps.watches ? { key: 'watch',   label: 'Watch',       icon: 'fa-eye',                empty: 'Start debugging to see watches.' } : null,
+      { key: 'breakpoints', label: 'Breakpoints', icon: 'fa-circle-dot',     empty: caps.watchpoints ? 'Add breakpoints or data watchpoints.' : 'Add Makefile breakpoints in the editor gutter.' },
+      caps.history ? { key: 'history', label: 'History',     icon: 'fa-clock-rotate-left',  empty: 'Start debugging to navigate execution history.' } : null,
     ];
     var self = this;
-    return sections.map(function (s) {
+    return sections.filter(Boolean).map(function (s) {
       var collapsed = self._isSectionCollapsed(s.key);
       return '<section class="tvm-dbg-section' + (collapsed ? ' collapsed' : '') +
              '" data-section="' + s.key + '">' +
@@ -1257,14 +1284,17 @@
   // ===========================================================================
   DebuggerController.prototype.installDebugButton = function () {
     var actions = this.t.root.querySelector('.tvm-output-actions');
-    if (!actions) return;
+    var panelHost = this.t.root.querySelector('[data-debug-controls-host]');
+    var host = actions || panelHost;
+    if (!host) return;
     var self = this;
 
     // Debug button — sits next to Run.
     this.debugBtn = document.createElement('button');
     this.debugBtn.className = 'tvm-debug-btn';
     this.debugBtn.title = 'Start debugger (F5)';
-    this.debugBtn.innerHTML = '<i class="fa fa-bug"></i> Debug';
+    this.debugBtn.setAttribute('aria-label', 'Start debugger');
+    this.debugBtn.innerHTML = '<i class="fa fa-bug" aria-hidden="true"></i> ' + (actions ? 'Debug' : 'Start Debugging');
     this.debugBtn.addEventListener('click', function () { self.startSession(); });
 
     // Pop-out button: opens the debugger view in its own window. Sync bus
@@ -1272,19 +1302,20 @@
     this.debugPopoutBtn = document.createElement('button');
     this.debugPopoutBtn.className = 'tvm-debug-popout-btn';
     this.debugPopoutBtn.title = 'Open debugger in a separate window';
-    this.debugPopoutBtn.innerHTML = '<i class="fa fa-up-right-from-square"></i>';
+    this.debugPopoutBtn.setAttribute('aria-label', 'Open debugger in a separate window');
+    this.debugPopoutBtn.innerHTML = '<i class="fa fa-up-right-from-square" aria-hidden="true"></i>';
     this.debugPopoutBtn.style.marginLeft = '4px';
     this.debugPopoutBtn.addEventListener('click', function () { self.popoutDebugger(); });
 
     // Insert just before the Run button (or at end if not found). Popout
     // button sits adjacent to Debug.
-    var runBtn = actions.querySelector('.tvm-run-btn');
-    if (runBtn) {
+    var runBtn = actions && actions.querySelector('.tvm-run-btn');
+    if (actions && runBtn) {
       actions.insertBefore(this.debugBtn, runBtn);
       actions.insertBefore(this.debugPopoutBtn, runBtn);
     } else {
-      actions.appendChild(this.debugBtn);
-      actions.appendChild(this.debugPopoutBtn);
+      host.appendChild(this.debugBtn);
+      host.appendChild(this.debugPopoutBtn);
     }
 
     // Step toolbar — inserted after Run; hidden until session active.
@@ -1352,19 +1383,24 @@
       "<path d='M 18,7 H 7' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round'/>" +
       "<polygon points='7,7 12,3.5 12,10.5' fill='currentColor'/></svg>";
 
+    var caps = this.debuggerCapabilities();
+    var reverseControls = caps.reverse
+      ? '<span class="tvm-debug-divider"></span>' +
+        '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + svgBack + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + svgBackContinue + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + svgBackOut + '</button>'
+      : '';
+
     this.stepToolbar.innerHTML =
       '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
       '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + svgPlay + '</button>' +
       '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + svgOver + '</button>' +
       '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + svgInto + '</button>' +
       '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + svgOut + '</button>' +
-      '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + svgBack + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + svgBackContinue + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + svgBackOut + '</button>' +
+      reverseControls +
       '<span class="tvm-debug-divider"></span>' +
       '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + svgStop + '</button>';
-    actions.appendChild(this.stepToolbar);
+    host.appendChild(this.stepToolbar);
 
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
     for (var i = 0; i < btns.length; i++) {
@@ -1375,19 +1411,20 @@
       })(btns[i]);
     }
     this.statusEl = this.stepToolbar.querySelector('.tvm-debug-status');
-    this.stepToolbarHome = actions;
-    this.stepToolbarHeader = actions.closest && actions.closest('.tvm-output-header');
-    this.installResponsiveStepToolbar(actions);
+    this.stepToolbarHome = host;
+    this.stepToolbarHeader = actions && actions.closest && actions.closest('.tvm-output-header');
+    if (actions) this.installResponsiveStepToolbar(actions);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', function (e) {
       if (!self.session) return;
+      var caps = self.debuggerCapabilities();
       if (e.key === 'F5' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('continue'); }
-      else if (e.key === 'F5' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backContinue'); }
+      else if (caps.reverse && e.key === 'F5' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backContinue'); }
       else if (e.key === 'F5' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('stop'); }
       else if (e.key === 'F10' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('next'); }
-      else if (e.key === 'F10' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backOut'); }
-      else if (e.key === 'F10' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('back'); }
+      else if (caps.reverse && e.key === 'F10' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backOut'); }
+      else if (caps.reverse && e.key === 'F10' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('back'); }
       else if (e.key === 'F11' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('step'); }
       else if (e.key === 'F11' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('return'); }
     });
@@ -1448,6 +1485,13 @@
 
   DebuggerController.prototype.handleToolbarCmd = function (cmd) {
     if (!this.session) return;
+    var reverseCmd = cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' ||
+      cmd === 'backOut' || cmd === 'exceptionBack' || cmd === 'exceptionForward' ||
+      cmd === 'watchContinue';
+    if (reverseCmd && this.isForwardOnlyDebugger()) {
+      this.setStatus('time travel is disabled for this debugger');
+      return;
+    }
     if (cmd === 'back') {
       this.stepBack();
       return;
@@ -1956,6 +2000,7 @@
   };
 
   DebuggerController.prototype.hasForwardStopConditions = function () {
+    if (this.isForwardOnlyDebugger()) return this.hasCodeBreakpoints();
     return this.hasEnabledWatchpoints() || this.hasCodeBreakpoints() ||
       this.hasEnabledExceptionBreakpoints();
   };
@@ -2362,12 +2407,14 @@
 
   DebuggerController.prototype.disableStepButtons = function (disabled) {
     if (!this.stepToolbar) return;
+    var caps = this.debuggerCapabilities();
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
     for (var i = 0; i < btns.length; i++) {
       var cmd = btns[i].getAttribute('data-cmd');
       // Step Back & Stop are always available (back is UI-only; stop must work mid-block).
-      if (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
-          cmd === 'exceptionBack' || cmd === 'exceptionForward' || cmd === 'stop') continue;
+      if (cmd === 'stop') continue;
+      if (caps.reverse && (cmd === 'back' || cmd === 'backContinue' || cmd === 'backWatch' || cmd === 'backOut' ||
+          cmd === 'exceptionBack' || cmd === 'exceptionForward')) continue;
       btns[i].disabled = disabled;
     }
     this._publishSession();
@@ -2488,6 +2535,10 @@
   };
 
   DebuggerController.prototype.editBreakpointCondition = function (filename, line) {
+    if (!this.debuggerCapabilities().breakpointConditions) {
+      this.setStatus('conditional breakpoints are not available for this debugger');
+      return;
+    }
     var path = this.normalizeBreakpointPath(filename);
     line = this.normalizeBreakpointLine(line);
     if (!path || !line) return;
@@ -3028,10 +3079,16 @@
 
     var step = this.t.steps && this.t.steps[this.t.currentStep >= 0 ? this.t.currentStep : 0];
     var filename = (step && step.run_file) ? step.run_file : this.t.activeFileName;
+    if (backend === 'v86' && this.channel && this.channel.kind === 'make' &&
+        this.t && typeof this.t._activeMakeDagPath === 'function') {
+      var makeDir = this.t._activeMakeDagPath();
+      var makeRel = makeDir ? String(makeDir).replace(/^\/tutorial\//, '').replace(/^\/+/, '') + '/Makefile' : '';
+      if (makeRel && this.t.editorModels && this.t.editorModels[makeRel]) filename = makeRel;
+    }
     if (!filename) { this.setStatus('Open a file in the editor before debugging.'); return; }
     filename = String(filename).replace(/^\/tutorial\//, '').replace(/^\/+/, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
-    if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Switch to a Python file and try again.'); return; }
+    if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Switch to a file in the editor and try again.'); return; }
     var code = model.getValue();
     var path = this.normalizeBreakpointPath(filename);
     var files = this.collectDebugFiles();
@@ -3596,6 +3653,7 @@
   };
 
   DebuggerController.prototype.isVarScopeEditable = function (snap, frameIdx, scope) {
+    if (!this.debuggerCapabilities().variableEditing) return false;
     if (!this.session || !snap || !snap.stack) return false;
     if (snap.event !== 'line' && snap.event !== 'sync') return false;
     var frame = snap.stack[frameIdx];
@@ -3859,6 +3917,10 @@
   DebuggerController.prototype.renderWatch = function () {
     var view = this.viewEl('dbg-watch');
     if (!view) return;
+    if (!this.debuggerCapabilities().watches) {
+      view.innerHTML = '';
+      return;
+    }
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
     var watches = this.getNormalWatches();
     var rows = [];
@@ -3939,6 +4001,7 @@
   DebuggerController.prototype.renderBreakpointManager = function () {
     var view = this.viewEl('dbg-breakpoints');
     if (!view) return;
+    var caps = this.debuggerCapabilities();
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
     var bpRows = [];
     var self = this;
@@ -3946,14 +4009,17 @@
       var lines = Array.from(bps.keys()).sort(function (a, b) { return a - b; });
       lines.forEach(function (line) {
         var info = bps.get(line) || {};
-        var cond = info.condition
+        var cond = caps.breakpointConditions && info.condition
           ? '<span class="tvm-debug-manager-condition">when ' + self.escape(info.condition) + '</span>'
-          : (info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
-        var hits = info.hitCount
+          : (caps.breakpointConditions && info.hitCount ? '' : '<span class="tvm-debug-manager-muted">unconditional</span>');
+        var hits = caps.breakpointConditions && info.hitCount
           ? '<span class="tvm-debug-manager-hitcount">after ' + info.hitCount + ' hits</span>'
           : '';
-        var err = info.condError
+        var err = caps.breakpointConditions && info.condError
           ? '<span class="tvm-debug-manager-error">' + self.escape(info.condError) + '</span>'
+          : '';
+        var editBtn = caps.breakpointConditions
+          ? '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>'
           : '';
         bpRows.push(
           '<div class="tvm-debug-manager-row tvm-debug-manager-code-row">' +
@@ -3962,7 +4028,7 @@
           '<span class="tvm-debug-manager-title">' + self.escape(self.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          editBtn +
           '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
@@ -4030,10 +4096,10 @@
       '<div class="tvm-debug-manager">' +
       this.renderBreakpointManagerGroup('manager-code-breakpoints', 'Code Breakpoints',
         bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>') +
-      this.renderBreakpointManagerGroup('manager-data-watchpoints', 'Data Watchpoints',
-        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls) +
-      this.renderBreakpointManagerGroup('manager-exception-breakpoints', 'Exception Breakpoints',
-        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls) +
+      (caps.watchpoints ? this.renderBreakpointManagerGroup('manager-data-watchpoints', 'Data Watchpoints',
+        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls) : '') +
+      (caps.exceptions ? this.renderBreakpointManagerGroup('manager-exception-breakpoints', 'Exception Breakpoints',
+        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls) : '') +
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
@@ -4186,6 +4252,10 @@
   DebuggerController.prototype.renderHistory = function () {
     var view = this.viewEl('dbg-history');
     if (!view) return;
+    if (!this.debuggerCapabilities().history) {
+      view.innerHTML = '';
+      return;
+    }
     if (this.historyIdx < 0 || this.history.length === 0) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to navigate execution history.</div>';
       return;

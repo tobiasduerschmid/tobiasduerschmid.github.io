@@ -448,6 +448,61 @@
   var registeredHoverLangs = {};
   var hoverSyncs = [];
 
+  function hoverTokenForMakefile(monaco, model, position) {
+    if (!model || !model.getLineContent) return null;
+    var line = model.getLineContent(position.lineNumber) || '';
+    var column = position.column || 1;
+    var patterns = [
+      /\$\(([A-Za-z_][A-Za-z0-9_.-]*|[@<^?*+|%](?:[DF])?)\)/g,
+      /\$\{([A-Za-z_][A-Za-z0-9_.-]*|[@<^?*+|%](?:[DF])?)\}/g,
+      /\$[@<^?*+|%]/g,
+      /^\s*([A-Za-z_][A-Za-z0-9_.-]*)(?=\s*(?::=|\?=|\+=|=))/g,
+    ];
+    for (var p = 0; p < patterns.length; p++) {
+      var re = patterns[p];
+      re.lastIndex = 0;
+      var match;
+      while ((match = re.exec(line))) {
+        var raw = match[0];
+        var name = match[1] || raw;
+        var startColumn = match.index + 1;
+        var endColumn = startColumn + raw.length;
+        if (raw.charAt(0) !== '$' && match[1]) {
+          startColumn += raw.indexOf(match[1]);
+          endColumn = startColumn + match[1].length;
+          raw = match[1];
+        }
+        if (column < startColumn || column > endColumn) continue;
+        if (raw.charAt(0) === '$' && raw.charAt(1) !== '(' && raw.charAt(1) !== '{') {
+          name = raw;
+        }
+        return {
+          name: name,
+          label: raw,
+          range: new monaco.Range(position.lineNumber, startColumn, position.lineNumber, endColumn),
+        };
+      }
+    }
+    return null;
+  }
+
+  function hoverTokenForLanguage(lang, monaco, model, position) {
+    if (lang === 'makefile') return hoverTokenForMakefile(monaco, model, position);
+    var word = model.getWordAtPosition(position);
+    if (!word) return null;
+    return {
+      name: word.word,
+      label: word.word,
+      range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+    };
+  }
+
+  function markdownFenceForLanguage(lang) {
+    if (lang === 'javascript' || lang === 'typescript') return 'javascript';
+    if (lang === 'makefile') return 'makefile';
+    return 'python';
+  }
+
   function registerHoverProvider(monaco, sync, helpers) {
     if (!monaco || !sync) return;
     if (hoverSyncs.indexOf(sync) === -1) hoverSyncs.push(sync);
@@ -467,21 +522,21 @@
             }
           }
           if (!s) return null;
-          var word = model.getWordAtPosition(position);
-          if (!word) return null;
+          var token = hoverTokenForLanguage(lang, monaco, model, position);
+          if (!token) return null;
           var snap = s.history[s.historyIdx];
           if (!snap || !snap.stack || !snap.stack.length) return null;
           var frameIdx = s.selectedFrameIdx >= 0 ? s.selectedFrameIdx : (snap.stack.length - 1);
           var frame = snap.stack[frameIdx];
           if (!frame) return null;
-          var name = word.word;
+          var name = token.name;
           var resolved = resolveVar(s, snap, frameIdx, 'locals', name)
                       || resolveVar(s, snap, frameIdx, 'globals', name);
           if (!resolved) return null;
-          var md = '**`' + name + '`** _' + (resolved.type || resolved.kind || '') + '_\n\n' +
-                   '```python\n' + (resolved.repr || resolved.preview || '') + '\n```';
+          var md = '**`' + (token.label || name) + '`** _' + (resolved.type || resolved.kind || '') + '_\n\n' +
+                   '```' + markdownFenceForLanguage(lang) + '\n' + (resolved.repr || resolved.preview || '') + '\n```';
           return {
-            range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+            range: token.range,
             contents: [{ value: md }],
           };
         },

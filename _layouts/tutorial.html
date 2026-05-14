@@ -460,7 +460,8 @@
         outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
         editorSplit: config.editor_split || false,
         outputHeight: config.output_height || null,
-        // Time-travel debugger opt-in (pyodide tutorials only). When false,
+        // Debugger opt-in. Pyodide/browser tutorials use time travel; v86
+        // Makefile tutorials use a forward-only dry-run trace. When false,
         // no debugger code is loaded. See plan in
         // .claude/plans/what-would-be-options-temporal-ritchie.md
         debugger: config.debugger || false,

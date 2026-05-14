@@ -597,7 +597,9 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
 backend: v86 | pyodide | webcontainer | react | uml-editor   # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
-# pyodide       — Python in-browser, no shell. Required for `debugger: true`.
+#                 `debugger: true` enables the forward-only Makefile debugger
+#                 for Make DAG tutorials; it does not enable time travel.
+# pyodide       — Python in-browser, no shell. Supports time-travel debugger.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # uml-editor    — ArchUML visual editor workspace for diagramming tutorials.
@@ -653,7 +655,11 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # learning goal (e.g. UML modeling,
                                        # design exercises).
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
-debugger: boolean                      # Time-travel debugger (pyodide only).
+debugger: boolean                      # Debugger opt-in. Pyodide/browser JS
+                                       # use time travel; v86 Makefile
+                                       # tutorials use a forward-only dry-run
+                                       # trace with reverse/history/watchpoint
+                                       # features hidden.
 debugger_options: { ... }              # Per-tutorial debugger config
                                        # (snapshot caps, breakpoint behavior).
 uml_diagram: boolean                   # Live UML class+sequence diagram pane.
@@ -1079,7 +1085,9 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 
 - `tutorial-instructions-popup.html` — step instructions + quiz.
 - `tutorial-output-popup.html` — stdout / stderr / preview iframe.
-- `tutorial-debugger-popup.html` — time-travel debugger UI (pyodide).
+- `tutorial-debugger-popup.html` — debugger UI mirror. It renders the
+  time-travel controls for capable backends and the forward-only Makefile
+  controls for v86 Make tutorials.
 - `tutorial-pane-popup.html` — single editor pane (test or code file).
 - `tutorial-tab-popup.html` — single code file in Monaco.
 - `tutorial-graph-popup.html` — Git commit graph (SVG).
@@ -1138,8 +1146,17 @@ channel.
   popout lifecycle and IPC.
 - **`js/tutorial-refactorings.js`** — Monaco refactoring helpers
   (rename, extract, inline) used by the refactoring tutorials.
-- **`js/debugger/*.js`** — time-travel debugger: `sync.js`,
-  `ui-render.js`, `editor-attach.js`, `main.js`, `worker-extension.js`.
+- **`js/debugger/*.js`** — shared debugger UI and transport channels:
+  `sync.js`, `ui-render.js`, `editor-attach.js`, `main.js`,
+  `worker-extension.js`, browser / Node channels, and `make-channel.js` for
+  v86 Makefile dry-run traces. Makefile debugging is forward-only: it maps
+  `make --debug=b --dry-run` recipe commands back to Makefile rule/recipe
+  lines and hides reverse execution, history scrubbing, watches, data
+  watchpoints, exception breakpoints, and variable editing. While paused,
+  hovering Make variables such as `$(CC)`, `$@`, `$<`, and `$^` in Monaco
+  shows the current value from the dry-run trace. The Debug tab also hosts
+  the Start Debugging button and step toolbar when a tutorial layout does not
+  render the normal output action bar.
   Breakpoint gutter clicks use `editor-attach.js`'s shared hitbox helper,
   which centers the pointer target on the visible Monaco breakpoint dot and
   is reused by the main editor and popout editors. Empty breakpoint hitboxes
@@ -1181,6 +1198,7 @@ channel.
 | Compiled languages     | ✅  | ❌      | (npm only)   | ❌    | ❌         |
 | `git`                  | ✅  | mocked  | ✅           | ❌    | ❌         |
 | Time-travel debugger   | ❌  | ✅      | ❌           | ❌    | ❌         |
+| Forward Make debugger  | ✅  | ❌      | ❌           | ❌    | ❌         |
 | Live preview iframe    | ❌  | ❌      | ✅           | ✅    | ❌         |
 | Playwright tests       | ❌  | ❌      | ❌           | ✅    | ❌         |
 | UML assertion tests    | ❌  | ❌      | ❌           | ❌    | ✅         |
