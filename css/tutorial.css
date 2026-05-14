@@ -506,7 +506,11 @@ html:not(.dark-mode) .tvm-left-tab.active {
   width: 100%;
   border-collapse: collapse;
   margin: 14px 0;
-  font-size: 0.9em;
+  font-size: 1em;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: clip;
 }
 
 .tvm-step-instructions thead tr {
@@ -2636,7 +2640,7 @@ html:not(.dark-mode) .tvm-terminal-loading {
   background: #161618;
   color: #888;
   padding: 4px 14px;
-  font-size: 12px;
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3380,7 +3384,7 @@ html:not(.dark-mode) .tvm-http-empty-state {
    readers get the announcement via role="status" aria-live="polite".
    Color #c9d2dc on #141416 = 11.6:1; #2c3138 on #f5f6f8 = 12.5:1. */
 .tvm-step-status {
-  font-size: 12px;
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   color: #c9d2dc;
   margin-right: 10px;

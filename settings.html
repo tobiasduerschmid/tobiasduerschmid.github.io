@@ -11,6 +11,7 @@ info_nav_title: "My Settings"
     max-width: 920px;
     margin: 0 auto;
     padding: 0 20px 60px;
+    font-size: var(--font-size-readable-min, 16px);
   }
   .settings-page h1 { margin-top: 0.6em; }
   /* Section headings match the h2 pattern used on the sibling
@@ -152,11 +153,13 @@ info_nav_title: "My Settings"
   .settings-range-line input[type="range"] {
     flex: 1 1 auto;
     min-width: 120px;
+    min-height: 28px;
   }
   .settings-value {
     min-width: 52px;
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-size: 1em;
     color: #24292e;
   }
   html.dark-mode .settings-value { color: #e8e8e8; }
@@ -246,10 +249,10 @@ info_nav_title: "My Settings"
     cursor: pointer;
   }
   .settings-difficulty-option input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    min-height: 18px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
     margin: 0;
     accent-color: var(--color-primary, #2774AE);
     flex-shrink: 0;

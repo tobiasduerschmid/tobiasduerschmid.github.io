@@ -23,6 +23,16 @@ html.dark-mode .sr-only {
 	background-color: #111827;
 }
 
+#contact .form-horizontal .control-label,
+#contact .form-control-static {
+	font-size: var(--font-size-readable-min, 16px);
+	line-height: var(--line-height-body, 1.6);
+}
+
+#contact .form-horizontal .control-label {
+	font-weight: 700;
+}
+
 .carousel-control:focus-visible {
 	outline: 3px solid #FFD100 !important;
 	outline-offset: -5px;
@@ -110,6 +120,21 @@ header {
 
 header h1 {
 	font-size: 3em;
+}
+
+footer {
+	clear: both;
+	display: flow-root;
+	width: 100%;
+}
+
+footer > .col-md-12 {
+	float: none;
+	width: 100%;
+}
+
+footer a {
+	scroll-margin-block: 96px 32px;
 }
 
 footer div {

@@ -1958,6 +1958,15 @@ html.dark-mode .tts-control-rate {
     overflow-wrap: anywhere;
   }
 
+  body.sebook-layout:not(.se-gym-page) #main-content .highlighter-rouge code,
+  body.sebook-layout:not(.se-gym-page) #main-content .highlight code {
+    display: block;
+    max-width: 100%;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   body.sebook-layout #main-content table {
     display: block;
     max-width: 100%;
@@ -2012,7 +2021,7 @@ html.dark-mode .tts-control-rate {
   .info-page-nav .navbar-brand {
     padding-right: 10px;
     padding-left: 10px;
-    font-size: 1em !important;
+    font-size: var(--font-size-readable-min, 16px) !important;
   }
 
   body.sebook-combined-layout #main-content.container {
