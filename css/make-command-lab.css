@@ -426,3 +426,12 @@ html:not(.dark-mode) .make-command-lab .tvm-make-dag-svg {
 html.prm-reduce .make-command-lab__btn,
 html.prm-reduce .make-command-lab__btn-back,
 html.prm-reduce .make-command-lab__play { transition: none; }
+
+.make-command-lab :is(
+  p, li, button, summary, code, pre,
+  .make-command-lab__btn, .make-command-lab__cmd,
+  .make-command-lab__status, .make-command-lab__output,
+  .make-command-lab__step-progress, .make-command-lab__caption
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}

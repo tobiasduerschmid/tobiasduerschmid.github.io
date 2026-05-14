@@ -44,7 +44,7 @@ layout: sebook
     color: #fff;
     border: none;
     padding: 0;
-    font-size: 0.75em;
+    font-size: 0.95em;
     font-weight: 700;
     cursor: pointer;
     position: relative;

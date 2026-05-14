@@ -33,7 +33,7 @@
 
   var MONACO_VS = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs';
   var DEFAULT_OPTIONS = {
-    fontSize: 14,
+    fontSize: 16,
     minimap: { enabled: false },
     scrollBeyondLastLine: false,
     automaticLayout: true,

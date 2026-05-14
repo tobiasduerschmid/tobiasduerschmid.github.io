@@ -737,6 +737,15 @@ html.dark-mode .unix-lab__btn--reset:hover {
   background-color: rgba(241, 148, 138, 0.12);
 }
 
+.unix-lab :is(
+  p, li, button, label, input, textarea, select, code, pre,
+  .unix-lab__btn, .unix-lab__cmd, .unix-lab__panel,
+  .unix-lab__panel-body, .unix-lab__predict-input,
+  .unix-lab__output, .unix-lab__exit, .unix-lab__status
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
 /* ----- Print: show the revealed state (beforeprint forces reveal in JS) ----- */
 @media print {
   .unix-lab { break-inside: avoid; page-break-inside: avoid; }

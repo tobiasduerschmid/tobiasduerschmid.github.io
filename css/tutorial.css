@@ -71,12 +71,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .tutorial-help-menu-icon {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -106,7 +106,7 @@
   min-height: 32px;
   padding: 8px 14px;
   color: #003B5C;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
   text-decoration: none;
@@ -3716,6 +3716,17 @@ html:not(.dark-mode) .tvm-test-summary.partial {
   margin-left: 15px;
 }
 
+body.tutorial-layout #navnav .navbar-right > label.tutorial-nav-control,
+body.tutorial-layout #navnav .navbar-right > a.tutorial-nav-link,
+body.tutorial-layout #navnav .navbar-right > a.tutorial-nav-link:visited,
+body.tutorial-layout #navnav .navbar-right > button.tutorial-nav-button,
+body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
+  font-size: var(--font-size-readable-min, 16px) !important;
+  min-height: 44px;
+  padding: 8px 12px !important;
+  border-radius: var(--radius-md, 8px) !important;
+}
+
 /* ───────────────────────────────────────────
    Responsive
 ─────────────────────────────────────────── */
@@ -5019,20 +5030,20 @@ body.lecture-mode #navnav .navbar-right {
   min-height: 23px;
 }
 body.lecture-mode #navnav .navbar-brand {
-  font-size: 13px !important;
+  font-size: 16px !important;
   padding-left: 10px !important;
   line-height: 1.4;
 }
 body.lecture-mode #navnav .navbar-right {
   padding-right: 10px !important;
   gap: 10px !important;
-  font-size: 11px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode #navnav .navbar-right a,
 body.lecture-mode #navnav .navbar-right button,
 body.lecture-mode #navnav .navbar-right label,
 body.lecture-mode #navnav .tutorial-help-menu-toggle {
-  font-size: 11px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode #navnav .tutorial-help-menu-toggle {
   width: 28px;
@@ -5040,7 +5051,7 @@ body.lecture-mode #navnav .tutorial-help-menu-toggle {
   padding: 0;
 }
 body.lecture-mode #navnav .tutorial-help-menu-panel a {
-  font-size: 13px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode .tutorial-page {
   top: var(--tutorial-navbar-height, 23px) !important;
@@ -5193,4 +5204,36 @@ html.dark-mode .tvm-gg-modified {
 }
 html.dark-mode .tvm-gg-deleted {
   background: linear-gradient(to bottom, transparent 60%, #f14c4c 60%) !important;
+}
+
+/* Readability baseline for the tutorial workspace. Older tutorial chrome used
+   dense IDE-style 10-14px labels; keep readable text and controls at the same
+   paragraph-size floor as the rest of SEBook. */
+body.tutorial-layout,
+body.tutorial-layout .tvm-root {
+  font-size: var(--font-size-readable-min, 16px);
+  line-height: 1.55;
+}
+
+body.tutorial-layout .tvm-root :is(
+  p, li, td, th, label, input, textarea, select, button, summary, code, pre, kbd,
+  .tvm-left-tab, .tvm-right-tab, .tvm-tab, .tvm-file-tab, .tvm-step-btn,
+  .tvm-step-title, .tvm-step-meta, .tvm-view-btn, .tvm-editor-mode-btn,
+  .tvm-output-popout-btn, .tvm-editor-pane-popout-btn, .tvm-diagram-type-btn,
+  .tvm-diagram-zoom-label, .tvm-terminal, .tvm-output-panel, .tvm-file-tree,
+  .tvm-test-desc, .tvm-error p, .tvm-quiz-gate-header strong,
+  .tvm-quiz-gate-header p, .quiz-option, .question-text, .option-feedback,
+  .quiz-difficulty, .parsons-label, .parsons-separator, .parsons-line,
+  .tvm-http-meta, .tvm-http-empty-state, .tvm-popup-blocked-toast
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px)) !important;
+}
+
+body :is(
+  .tvm-btn, .tvm-file-tab, .tvm-editor-tabs, .tvm-diagram-type-btn,
+  .tvm-diagram-zoom-btn, .tvm-diagram-zoom-label, .tvm-diagram-color-btn,
+  .tvm-diagram-color-reset-btn, .tvm-step-content, .tvm-step-controls,
+  .tvm-quiz-panel, .tvm-debug-view
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px)) !important;
 }

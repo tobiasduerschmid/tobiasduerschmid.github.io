@@ -249,3 +249,11 @@ html:not(.dark-mode) .tvm-tutor-msg code { background: rgba(0,0,0,0.06); }
   .tvm-tutor-loading-dot { animation: none !important; }
   .tvm-tutor-header-chevron { transition: none !important; }
 }
+
+.tvm-tutor-chat :is(
+  p, li, button, textarea, input, code, pre,
+  .tvm-tutor-title, .tvm-tutor-subtitle, .tvm-tutor-status,
+  .tvm-tutor-msg, .tvm-tutor-input, .tvm-tutor-send
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}

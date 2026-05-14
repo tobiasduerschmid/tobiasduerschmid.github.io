@@ -16,6 +16,12 @@
   --sebook-blue-faint: #eef7ff;
   --sebook-gold: #FFD100;
   --sebook-gold-dark: #B38B00;
+  --sebook-button-bg: #ffffff;
+  --sebook-button-bg-hover: #eef7ff;
+  --sebook-button-text: #003B5C;
+  --sebook-button-border: #2774AE;
+  --sebook-button-primary-bg: #2774AE;
+  --sebook-button-primary-text: #ffffff;
   --sebook-surface: #ffffff;
   --sebook-surface-soft: #f7fbff;
   --sebook-surface-band: #eef6fc;
@@ -28,9 +34,15 @@ html.dark-mode {
   --sebook-navy-dark: #e6f4ff;
   --sebook-on-gold: #061d31;
   --sebook-blue: #8BB8E8;
-  --sebook-blue-dark: #4da3ff;
+  --sebook-blue-dark: #B9D9EB;
   --sebook-blue-soft: #2b4b68;
   --sebook-blue-faint: #132235;
+  --sebook-button-bg: #101b28;
+  --sebook-button-bg-hover: #17324d;
+  --sebook-button-text: #e6f4ff;
+  --sebook-button-border: #8BB8E8;
+  --sebook-button-primary-bg: #2774AE;
+  --sebook-button-primary-text: #ffffff;
   --sebook-surface: #111827;
   --sebook-surface-soft: #0f1722;
   --sebook-surface-band: #101b28;
@@ -44,8 +56,10 @@ body.sebook-layout,
 body.framework-layout,
 body.sebook-combined-layout,
 body.tutorial-layout {
+  font-size: var(--font-size-body, 17px);
+  line-height: var(--line-height-body, 1.6);
   background:
-    radial-gradient(circle at top right, rgba(139, 184, 232, 0.22), transparent 34%),
+    radial-gradient(circle at top right, rgba(185, 217, 235, 0.32), transparent 34%),
     linear-gradient(180deg, var(--sebook-surface-soft), var(--color-bg, #fdfdfd));
   color: var(--color-text, #111);
 }
@@ -57,7 +71,7 @@ html.dark-mode body.framework-layout,
 html.dark-mode body.sebook-combined-layout,
 html.dark-mode body.tutorial-layout {
   background:
-    radial-gradient(circle at top right, rgba(139, 184, 232, 0.16), transparent 34%),
+    radial-gradient(circle at top right, rgba(185, 217, 235, 0.13), transparent 34%),
     linear-gradient(180deg, #0f1722, #111827);
   color: var(--color-text, #e6edf3);
 }
@@ -183,6 +197,7 @@ body.sebook-combined-layout h2 {
   color: #17324d;
   font-weight: 800;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
   -webkit-text-stroke: 0;
 }
 
@@ -393,8 +408,8 @@ body.sebook-layout #sidebar {
 .sebook-sidebar-nav {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(139, 184, 232, 0.28), transparent 38%),
-    linear-gradient(180deg, #f4f9fd, #eaf4fb);
+    radial-gradient(circle at top left, rgba(185, 217, 235, 0.34), transparent 38%),
+    linear-gradient(180deg, #f7fbff, #e8f3fb);
   color: #17324d;
   padding: 0;
   margin: 0;
@@ -412,7 +427,7 @@ body.sebook-layout #sidebar {
 .sebook-nav-item,
 .sebook-nav-subitem {
   margin: 0;
-  border-bottom: 1px solid #d8e5ef;
+  border-bottom: 1px solid #c8ddec;
 }
 
 .sebook-nav-row,
@@ -420,6 +435,8 @@ body.sebook-layout #sidebar {
   display: flex;
   align-items: stretch;
   width: 100%;
+  position: relative;
+  isolation: isolate;
 }
 
 .sebook-nav-link,
@@ -433,6 +450,7 @@ body.sebook-layout #sidebar {
   border-left: 5px solid transparent;
   color: #17324d;
   cursor: pointer;
+  border-radius: 0 !important;
   font-weight: 700;
   text-decoration: none !important;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -493,7 +511,7 @@ body.sebook-layout #sidebar {
   margin: 0;
   padding: 8px 10px;
   border: 0;
-  border-left: 1px solid #d8e5ef;
+  border-left: 1px solid #c8ddec;
   background: transparent;
   color: #17324d;
   cursor: pointer;
@@ -502,24 +520,32 @@ body.sebook-layout #sidebar {
   justify-content: center;
   font: inherit;
   line-height: 1;
-  transition: transform 0.2s, background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.sebook-nav-toggle > span {
+  display: inline-block;
+  line-height: 1;
+  transition: transform 0.2s;
 }
 
 .sebook-nav-link:hover,
 .sebook-nav-toggle:hover {
-  background-color: #e6f2fb;
+  background-color: #dceefa;
+  color: #003B5C !important;
   text-decoration: none !important;
 }
 
 .sebook-nav-sublink:hover,
 .sebook-nav-subrow .sebook-nav-toggle:hover {
-  background-color: #dbeeff;
+  background-color: #d3e9f7;
+  color: #003B5C !important;
   text-decoration: none !important;
 }
 
 .sebook-nav-itemlink:hover {
-  background-color: #d6e7f4;
-  color: #17324d;
+  background-color: #cbe4f5;
+  color: #003B5C;
   text-decoration: none !important;
 }
 
@@ -527,7 +553,8 @@ body.sebook-layout #sidebar {
 .sebook-nav-link:focus-visible,
 .sebook-nav-sublink:focus-visible,
 .sebook-nav-itemlink:focus-visible {
-  background-color: #e6f2fb;
+  background-color: #dceefa;
+  color: #003B5C !important;
   outline: var(--focus-width, 3px) solid var(--focus-color, #005587);
   outline-offset: -3px;
 }
@@ -541,18 +568,25 @@ body.sebook-layout #sidebar {
 .sebook-nav-item.has-subtopics .sebook-nav-toggle[aria-expanded="true"],
 .sebook-nav-subitem.has-subitems .sebook-nav-toggle.open,
 .sebook-nav-subitem.has-subitems .sebook-nav-toggle[aria-expanded="true"] {
+  transform: none !important;
+}
+
+.sebook-nav-item.has-subtopics .sebook-nav-toggle.open > span,
+.sebook-nav-item.has-subtopics .sebook-nav-toggle[aria-expanded="true"] > span,
+.sebook-nav-subitem.has-subitems .sebook-nav-toggle.open > span,
+.sebook-nav-subitem.has-subitems .sebook-nav-toggle[aria-expanded="true"] > span {
   transform: rotate(90deg);
 }
 
 .sebook-nav-sublist {
   display: none;
-  background-color: #edf6fc;
-  box-shadow: inset 5px 0 0 rgba(39, 116, 174, 0.1);
+  background-color: #e9f4fb;
+  box-shadow: inset 5px 0 0 rgba(255, 209, 0, 0.68);
 }
 
 .sebook-nav-itemlist {
   display: none;
-  background-color: #e5f0f8;
+  background-color: #dfeefa;
 }
 
 .sebook-nav-item.has-subtopics.open > .sebook-nav-sublist,
@@ -570,6 +604,13 @@ body.sebook-layout #sidebar {
   text-decoration: none !important;
 }
 
+.sebook-nav-link.current + .sebook-nav-toggle,
+.sebook-nav-sublink.current + .sebook-nav-toggle {
+  background-color: var(--sebook-blue);
+  border-left-color: rgba(255, 255, 255, 0.34);
+  color: #ffffff !important;
+}
+
 .sebook-nav-link.current:visited,
 .sebook-nav-sublink.current:visited,
 .sebook-nav-itemlink.current:visited {
@@ -583,9 +624,42 @@ body.sebook-layout #sidebar {
 }
 
 .sebook-nav-link.current:hover,
+.sebook-nav-link.current:hover + .sebook-nav-toggle,
+.sebook-nav-link.current + .sebook-nav-toggle:hover,
 .sebook-nav-sublink.current:hover,
+.sebook-nav-sublink.current:hover + .sebook-nav-toggle,
+.sebook-nav-sublink.current + .sebook-nav-toggle:hover,
 .sebook-nav-itemlink.current:hover {
   background-color: var(--sebook-blue-dark);
+  color: #ffffff !important;
+}
+
+.sebook-nav-row:has(> .sebook-nav-link.current),
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) {
+  background: #2774AE !important;
+  box-shadow: inset 5px 0 0 var(--sebook-gold);
+}
+
+.sebook-nav-row:has(> .sebook-nav-link.current):hover,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current):hover {
+  background: #1e5c8a !important;
+}
+
+.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current,
+.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current + .sebook-nav-toggle,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current + .sebook-nav-toggle,
+.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current:hover,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current:hover,
+.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current + .sebook-nav-toggle:hover,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current + .sebook-nav-toggle:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current,
+.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current {
+  border-left-color: transparent;
 }
 
 html.dark-mode body.sebook-layout #sidebar {
@@ -602,8 +676,8 @@ html.dark-mode #sidebar-toggle {
 
 html.dark-mode .sebook-sidebar-nav {
   background:
-    radial-gradient(circle at top left, rgba(139, 184, 232, 0.14), transparent 38%),
-    linear-gradient(180deg, #101b28, #0f1722);
+    radial-gradient(circle at top left, rgba(185, 217, 235, 0.12), transparent 38%),
+    linear-gradient(180deg, #101b28, #0d1825);
   color: #e6f4ff;
 }
 
@@ -638,32 +712,32 @@ html.dark-mode .sebook-nav-toggle:hover,
 html.dark-mode .sebook-nav-link:focus-visible,
 html.dark-mode .sebook-nav-sublink:focus-visible,
 html.dark-mode .sebook-nav-itemlink:focus-visible {
-  background-color: #18314a !important;
+  background-color: #1b3d5c !important;
   color: #ffffff !important;
 }
 
 html.dark-mode .sebook-nav-sublist {
-  background-color: #0f1f30 !important;
-  box-shadow: inset 5px 0 0 rgba(139, 184, 232, 0.14);
+  background-color: #112338 !important;
+  box-shadow: inset 5px 0 0 rgba(255, 209, 0, 0.72);
 }
 
 html.dark-mode .sebook-nav-subrow {
-  background-color: #132235 !important;
+  background-color: #122841 !important;
 }
 
 html.dark-mode .sebook-nav-subitem:nth-child(even) .sebook-nav-subrow {
-  background-color: #102033 !important;
+  background-color: #10243a !important;
 }
 
 html.dark-mode .sebook-nav-sublink:hover,
 html.dark-mode .sebook-nav-subrow .sebook-nav-toggle:hover,
 html.dark-mode .sebook-nav-itemlink:hover {
-  background-color: #1d3954 !important;
+  background-color: #204968 !important;
   color: #ffffff !important;
 }
 
 html.dark-mode .sebook-nav-itemlist {
-  background-color: #0d1b2b !important;
+  background-color: #0f2033 !important;
 }
 
 html.dark-mode .sebook-nav-link.current,
@@ -675,10 +749,22 @@ html.dark-mode .sebook-nav-itemlink.current {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.18);
 }
 
+html.dark-mode .sebook-nav-link.current + .sebook-nav-toggle,
+html.dark-mode .sebook-nav-sublink.current + .sebook-nav-toggle {
+  background-color: #2774AE !important;
+  border-left-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff !important;
+}
+
 html.dark-mode .sebook-nav-link.current:hover,
+html.dark-mode .sebook-nav-link.current:hover + .sebook-nav-toggle,
+html.dark-mode .sebook-nav-link.current + .sebook-nav-toggle:hover,
 html.dark-mode .sebook-nav-sublink.current:hover,
+html.dark-mode .sebook-nav-sublink.current:hover + .sebook-nav-toggle,
+html.dark-mode .sebook-nav-sublink.current + .sebook-nav-toggle:hover,
 html.dark-mode .sebook-nav-itemlink.current:hover {
   background-color: #1F6EBD !important;
+  color: #ffffff !important;
 }
 
 html.dark-mode-transition #sidebar,
@@ -1072,24 +1158,245 @@ body.sebook-layout #tts-read-btn {
   vertical-align: middle;
 }
 
+/* Shared command buttons. Keep icon-only controls and answer options out of this rule. */
 .filter-btn,
 .btn.btn-default,
-.btn.btn-primary {
+.btn.btn-primary,
+.btn.btn-success,
+.btn.btn-info,
+.btn.btn-warning,
+.btn.btn-danger,
+.btn.btn-clipboard,
+.dmbutton,
+.settings-btn,
+.cookies-btn,
+.gym-btn,
+.submit-answer-btn,
+.next-btn,
+.restart-btn,
+.review-btn,
+.show-answer-btn,
+.parsons-check-btn,
+.parsons-reset-btn,
+.spec-card-btn,
+.tvm-btn,
+.sbr-btn,
+.tvm-debug-watch-add-btn,
+.tvm-debug-watchpoint-add-btn,
+.tvm-instructions-detached-placeholder .tvm-btn-reattach {
+  display: inline-flex;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.45em;
+  min-height: 44px;
+  padding: 9px 16px !important;
+  border: 2px solid var(--sebook-button-border, #2774AE) !important;
   border-radius: var(--radius-md, 8px) !important;
-  border: 1px solid var(--sebook-border) !important;
-  font-weight: 700;
-  box-shadow: var(--shadow-sm);
+  background: var(--sebook-button-bg, #ffffff) !important;
+  color: var(--sebook-button-text, #003B5C) !important;
+  box-shadow: 0 3px 8px rgba(0, 59, 92, 0.12);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750 !important;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none !important;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.filter-btn:hover,
+.filter-btn:focus,
+.btn.btn-default:hover,
+.btn.btn-default:focus,
+.btn.btn-clipboard:hover,
+.btn.btn-clipboard:focus,
+.dmbutton:hover,
+.dmbutton:focus,
+.settings-btn:hover,
+.settings-btn:focus,
+.cookies-btn:hover:not(:disabled),
+.gym-btn.secondary:hover:not(:disabled),
+.parsons-reset-btn:hover:not(:disabled),
+.spec-card-btn:hover:not(:disabled),
+.tvm-btn:hover:not(:disabled),
+.sbr-btn:hover:not(:disabled),
+.tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+  background: var(--sebook-button-bg-hover, #eef7ff) !important;
+  border-color: var(--sebook-blue-dark, #1e5c8a) !important;
+  color: var(--sebook-button-text, #003B5C) !important;
+  box-shadow: 0 5px 13px rgba(0, 59, 92, 0.16);
+  text-decoration: none !important;
 }
 
 .filter-btn.active,
-.btn.btn-primary {
-  background: var(--sebook-blue) !important;
-  border-color: var(--sebook-blue-dark) !important;
+.btn.btn-default.active,
+.btn.btn-primary,
+.btn.btn-success,
+.btn.btn-info,
+.cookies-btn:not(.danger),
+.gym-btn.primary,
+.submit-answer-btn,
+.next-btn,
+.restart-btn,
+.review-btn,
+.show-answer-btn,
+.parsons-check-btn,
+.spec-card-btn-primary,
+.sbr-primary,
+.tvm-debug-watch-add-btn,
+.tvm-debug-watchpoint-add-btn,
+.tvm-btn-prev,
+.tvm-btn-next,
+.tvm-btn-test {
+  background: var(--sebook-button-primary-bg, #2774AE) !important;
+  border-color: #005587 !important;
+  color: var(--sebook-button-primary-text, #ffffff) !important;
+  box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.32), 0 4px 10px rgba(0, 59, 92, 0.18);
+}
+
+.filter-btn.active::before {
+  content: none !important;
+  display: none !important;
+}
+
+.filter-btn.active:hover,
+.filter-btn.active:focus,
+.btn.btn-default.active:hover,
+.btn.btn-default.active:focus,
+.btn.btn-primary:hover,
+.btn.btn-primary:focus,
+.btn.btn-success:hover,
+.btn.btn-success:focus,
+.btn.btn-info:hover,
+.btn.btn-info:focus,
+.cookies-btn:hover:not(.danger):not(:disabled),
+.gym-btn.primary:hover:not(:disabled),
+.submit-answer-btn:hover:not(:disabled),
+.next-btn:hover:not(:disabled),
+.restart-btn:hover:not(:disabled),
+.review-btn:hover:not(:disabled),
+.show-answer-btn:hover:not(:disabled),
+.parsons-check-btn:hover:not(:disabled),
+.spec-card-btn-primary:hover:not(:disabled),
+.sbr-primary:hover:not(:disabled),
+.tvm-debug-watch-add-btn:hover:not(:disabled),
+.tvm-debug-watchpoint-add-btn:hover:not(:disabled),
+.tvm-btn-prev:hover:not(:disabled),
+.tvm-btn-next:hover:not(:disabled),
+.tvm-btn-test:hover:not(:disabled) {
+  background: #1e5c8a !important;
+  border-color: #003B5C !important;
   color: #ffffff !important;
 }
 
-.filter-btn.active {
-  box-shadow: inset 5px 0 0 var(--sebook-gold), var(--shadow-sm);
+.btn.btn-warning {
+  background: var(--sebook-gold, #FFD100) !important;
+  border-color: var(--sebook-gold-dark, #B38B00) !important;
+  color: var(--sebook-on-gold, #061d31) !important;
+}
+
+.btn.btn-warning:hover,
+.btn.btn-warning:focus {
+  background: #FFB81C !important;
+  border-color: #8a6d00 !important;
+  color: #061d31 !important;
+}
+
+.gym-btn.danger,
+.btn.btn-danger,
+.cookies-btn.danger,
+.spec-card-btn-danger {
+  background: var(--color-error, #b81e2c) !important;
+  border-color: #7a111d !important;
+  color: #ffffff !important;
+}
+
+.gym-btn.danger:hover:not(:disabled),
+.btn.btn-danger:hover,
+.btn.btn-danger:focus,
+.cookies-btn.danger:hover:not(:disabled),
+.spec-card-btn-danger:hover:not(:disabled) {
+  background: var(--color-error-hover, #94121e) !important;
+  border-color: #5f0b16 !important;
+  color: #ffffff !important;
+}
+
+.filter-btn:disabled,
+.btn:disabled,
+.cookies-btn:disabled,
+.gym-btn:disabled,
+.submit-answer-btn:disabled,
+.next-btn:disabled,
+.restart-btn:disabled,
+.review-btn:disabled,
+.show-answer-btn:disabled,
+.parsons-check-btn:disabled,
+.parsons-reset-btn:disabled,
+.spec-card-btn:disabled,
+.sbr-btn:disabled,
+.tvm-debug-watch-add-btn:disabled,
+.tvm-debug-watchpoint-add-btn:disabled,
+.tvm-btn:disabled {
+  background: #dbe7f1 !important;
+  border-color: #b9c9d8 !important;
+  color: #42617c !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+/* Shared tooltip treatment for Bootstrap tooltips and custom inline tooltips. */
+.tooltip {
+  font-family: inherit;
+  font-size: var(--font-size-readable-min, 16px) !important;
+  line-height: 1.4;
+  opacity: 1 !important;
+  z-index: 3000;
+}
+
+.tooltip.in {
+  opacity: 1 !important;
+}
+
+.tooltip-inner,
+[role="tooltip"].info-tooltip {
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 2px solid var(--sebook-gold, #FFD100);
+  border-radius: var(--radius-md, 8px);
+  background: #003B5C;
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(0, 59, 92, 0.26);
+  font: inherit;
+  font-size: var(--font-size-readable-min, 16px);
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.tooltip.top .tooltip-arrow,
+.tooltip.top-left .tooltip-arrow,
+.tooltip.top-right .tooltip-arrow {
+  border-top-color: #003B5C;
+}
+
+.tooltip.right .tooltip-arrow {
+  border-right-color: #003B5C;
+}
+
+.tooltip.bottom .tooltip-arrow,
+.tooltip.bottom-left .tooltip-arrow,
+.tooltip.bottom-right .tooltip-arrow {
+  border-bottom-color: #003B5C;
+}
+
+.tooltip.left .tooltip-arrow {
+  border-left-color: #003B5C;
+}
+
+[role="tooltip"].info-tooltip::after {
+  border-bottom-color: #003B5C;
 }
 
 .blog-post-item {
@@ -1334,23 +1641,195 @@ html.dark-mode .action-box {
 
 html.dark-mode .filter-btn,
 html.dark-mode .btn.btn-default,
-html.dark-mode .btn.btn-primary {
-  background: #111827 !important;
-  border-color: var(--sebook-border) !important;
-  color: #e6f4ff !important;
+html.dark-mode .btn.btn-primary,
+html.dark-mode .btn.btn-success,
+html.dark-mode .btn.btn-info,
+html.dark-mode .btn.btn-warning,
+html.dark-mode .btn.btn-danger,
+html.dark-mode .btn.btn-clipboard,
+html.dark-mode .dmbutton,
+html.dark-mode .settings-btn,
+html.dark-mode .cookies-btn,
+html.dark-mode .gym-btn,
+html.dark-mode .submit-answer-btn,
+html.dark-mode .next-btn,
+html.dark-mode .restart-btn,
+html.dark-mode .review-btn,
+html.dark-mode .show-answer-btn,
+html.dark-mode .parsons-check-btn,
+html.dark-mode .parsons-reset-btn,
+html.dark-mode .spec-card-btn,
+html.dark-mode .tvm-btn,
+html.dark-mode .sbr-btn,
+html.dark-mode .tvm-debug-watch-add-btn,
+html.dark-mode .tvm-debug-watchpoint-add-btn,
+html.dark-mode .tvm-instructions-detached-placeholder .tvm-btn-reattach {
+  background: var(--sebook-button-bg, #101b28) !important;
+  border-color: var(--sebook-button-border, #8BB8E8) !important;
+  color: var(--sebook-button-text, #e6f4ff) !important;
+  box-shadow: 0 4px 11px rgba(0, 0, 0, 0.32);
 }
 
 html.dark-mode .filter-btn:hover,
+html.dark-mode .filter-btn:focus,
 html.dark-mode .btn.btn-default:hover,
-html.dark-mode .btn.btn-primary:hover {
-  background: #18314a !important;
+html.dark-mode .btn.btn-default:focus,
+html.dark-mode .btn.btn-clipboard:hover,
+html.dark-mode .btn.btn-clipboard:focus,
+html.dark-mode .dmbutton:hover,
+html.dark-mode .dmbutton:focus,
+html.dark-mode .settings-btn:hover,
+html.dark-mode .settings-btn:focus,
+html.dark-mode .cookies-btn:hover:not(:disabled),
+html.dark-mode .gym-btn.secondary:hover:not(:disabled),
+html.dark-mode .parsons-reset-btn:hover:not(:disabled),
+html.dark-mode .spec-card-btn:hover:not(:disabled),
+html.dark-mode .tvm-btn:hover:not(:disabled),
+html.dark-mode .sbr-btn:hover:not(:disabled),
+html.dark-mode .tvm-instructions-detached-placeholder .tvm-btn-reattach:hover {
+  background: var(--sebook-button-bg-hover, #17324d) !important;
+  border-color: var(--sebook-gold, #FFD100) !important;
+  color: #ffffff !important;
 }
 
 html.dark-mode .filter-btn.active,
-html.dark-mode .btn.btn-primary {
+html.dark-mode .btn.btn-default.active,
+html.dark-mode .btn.btn-primary,
+html.dark-mode .btn.btn-success,
+html.dark-mode .btn.btn-info,
+html.dark-mode .cookies-btn:not(.danger),
+html.dark-mode .gym-btn.primary,
+html.dark-mode .submit-answer-btn,
+html.dark-mode .next-btn,
+html.dark-mode .restart-btn,
+html.dark-mode .review-btn,
+html.dark-mode .show-answer-btn,
+html.dark-mode .parsons-check-btn,
+html.dark-mode .spec-card-btn-primary,
+html.dark-mode .sbr-primary,
+html.dark-mode .tvm-debug-watch-add-btn,
+html.dark-mode .tvm-debug-watchpoint-add-btn,
+html.dark-mode .tvm-btn-prev,
+html.dark-mode .tvm-btn-next,
+html.dark-mode .tvm-btn-test {
   background: #2774AE !important;
   color: #ffffff !important;
   border-color: #8BB8E8 !important;
+}
+
+html.dark-mode .filter-btn.active:hover,
+html.dark-mode .filter-btn.active:focus,
+html.dark-mode .btn.btn-default.active:hover,
+html.dark-mode .btn.btn-default.active:focus,
+html.dark-mode .btn.btn-primary:hover,
+html.dark-mode .btn.btn-primary:focus,
+html.dark-mode .btn.btn-success:hover,
+html.dark-mode .btn.btn-success:focus,
+html.dark-mode .btn.btn-info:hover,
+html.dark-mode .btn.btn-info:focus,
+html.dark-mode .cookies-btn:hover:not(.danger):not(:disabled),
+html.dark-mode .gym-btn.primary:hover:not(:disabled),
+html.dark-mode .submit-answer-btn:hover:not(:disabled),
+html.dark-mode .next-btn:hover:not(:disabled),
+html.dark-mode .restart-btn:hover:not(:disabled),
+html.dark-mode .review-btn:hover:not(:disabled),
+html.dark-mode .show-answer-btn:hover:not(:disabled),
+html.dark-mode .parsons-check-btn:hover:not(:disabled),
+html.dark-mode .spec-card-btn-primary:hover:not(:disabled),
+html.dark-mode .sbr-primary:hover:not(:disabled),
+html.dark-mode .tvm-debug-watch-add-btn:hover:not(:disabled),
+html.dark-mode .tvm-debug-watchpoint-add-btn:hover:not(:disabled),
+html.dark-mode .tvm-btn-prev:hover:not(:disabled),
+html.dark-mode .tvm-btn-next:hover:not(:disabled),
+html.dark-mode .tvm-btn-test:hover:not(:disabled) {
+  background: #1e5c8a !important;
+  border-color: var(--sebook-gold, #FFD100) !important;
+  color: #ffffff !important;
+}
+
+html.dark-mode .btn.btn-warning {
+  background: #FFD100 !important;
+  border-color: #8BB8E8 !important;
+  color: #061d31 !important;
+}
+
+html.dark-mode .btn.btn-warning:hover,
+html.dark-mode .btn.btn-warning:focus {
+  background: #FFB81C !important;
+  border-color: #ffffff !important;
+  color: #061d31 !important;
+}
+
+html.dark-mode .gym-btn.danger,
+html.dark-mode .btn.btn-danger,
+html.dark-mode .cookies-btn.danger,
+html.dark-mode .spec-card-btn-danger {
+  background: #ff8585 !important;
+  border-color: #ffb3b3 !important;
+  color: #0a0a14 !important;
+}
+
+html.dark-mode .gym-btn.danger:hover:not(:disabled),
+html.dark-mode .btn.btn-danger:hover,
+html.dark-mode .btn.btn-danger:focus,
+html.dark-mode .cookies-btn.danger:hover:not(:disabled),
+html.dark-mode .spec-card-btn-danger:hover:not(:disabled) {
+  background: #ffa3a3 !important;
+  border-color: #FFD100 !important;
+  color: #0a0a14 !important;
+}
+
+html.dark-mode .filter-btn:disabled,
+html.dark-mode .btn:disabled,
+html.dark-mode .cookies-btn:disabled,
+html.dark-mode .gym-btn:disabled,
+html.dark-mode .submit-answer-btn:disabled,
+html.dark-mode .next-btn:disabled,
+html.dark-mode .restart-btn:disabled,
+html.dark-mode .review-btn:disabled,
+html.dark-mode .show-answer-btn:disabled,
+html.dark-mode .parsons-check-btn:disabled,
+html.dark-mode .parsons-reset-btn:disabled,
+html.dark-mode .spec-card-btn:disabled,
+html.dark-mode .sbr-btn:disabled,
+html.dark-mode .tvm-debug-watch-add-btn:disabled,
+html.dark-mode .tvm-debug-watchpoint-add-btn:disabled,
+html.dark-mode .tvm-btn:disabled {
+  background: #152334 !important;
+  border-color: #31455d !important;
+  color: #9fb3c8 !important;
+}
+
+html.dark-mode .tooltip-inner,
+html.dark-mode [role="tooltip"].info-tooltip {
+  background: #FFD100;
+  border-color: #8BB8E8;
+  color: #061d31;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
+}
+
+html.dark-mode .tooltip.top .tooltip-arrow,
+html.dark-mode .tooltip.top-left .tooltip-arrow,
+html.dark-mode .tooltip.top-right .tooltip-arrow {
+  border-top-color: #FFD100;
+}
+
+html.dark-mode .tooltip.right .tooltip-arrow {
+  border-right-color: #FFD100;
+}
+
+html.dark-mode .tooltip.bottom .tooltip-arrow,
+html.dark-mode .tooltip.bottom-left .tooltip-arrow,
+html.dark-mode .tooltip.bottom-right .tooltip-arrow {
+  border-bottom-color: #FFD100;
+}
+
+html.dark-mode .tooltip.left .tooltip-arrow {
+  border-left-color: #FFD100;
+}
+
+html.dark-mode [role="tooltip"].info-tooltip::after {
+  border-bottom-color: #FFD100;
 }
 
 html.dark-mode .autosave-confirm-panel {
@@ -1671,6 +2150,28 @@ html.dark-mode .tts-control-rate {
     display: inline-flex;
     align-items: center;
   }
+}
+
+/* Readability baseline.
+   Bootstrap and a few older widgets ship compact 10-15px defaults. Keep
+   task-facing copy and controls at paragraph size while letting larger
+   headings keep their hierarchy. */
+body.default-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block, .post-meta, .blog-post-info, .blog-post-excerpt, .filter-btn, .dmbutton, .toggle-label, .cookie-notice),
+body.blog-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block, .post-meta, .blog-post-info, .blog-post-excerpt, .filter-btn, .dmbutton, .toggle-label, .cookie-notice),
+body.framework-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block, .post-meta, .settings-note, .shortcuts-note, .shortcuts-page kbd),
+body.sebook-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block, .toggle-label, .blog-post-info, .blog-post-excerpt, .quiz-difficulty, .flashcards-container .quiz-difficulty, .option-feedback, .parsons-label, .parsons-separator, .quiz-option, .settings-note, .shortcuts-note, .shortcuts-page kbd),
+body.sebook-combined-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block),
+body.tutorial-layout :is(p, li, a, td, th, label, input, textarea, select, button, summary, figcaption, caption, .btn, .form-control, .dropdown-menu, .tooltip, .popover, .alert, .list-group, .breadcrumb, .pagination, .pager, .label, .badge, .help-block) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
+body.default-layout :is(small, .small),
+body.blog-layout :is(small, .small),
+body.framework-layout :is(small, .small),
+body.sebook-layout :is(small, .small),
+body.sebook-combined-layout :is(small, .small),
+body.tutorial-layout :is(small, .small) {
+  font-size: max(0.95em, var(--font-size-readable-min, 16px));
 }
 
 @media (prefers-reduced-motion: reduce) {

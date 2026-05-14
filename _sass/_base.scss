@@ -90,7 +90,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: $spacing-unit;
-    font-size: 15px; // Larger font size for better readability
+    font-size: 16px;
     line-height: $base-line-height;
 }
 
@@ -277,7 +277,7 @@ html.dark-mode details summary {
  */
 pre,
 code {
-    font-size: 15px;
+    font-size: 16px;
     border: 1px solid $grey-color-light;
     border-radius: 3px;
     background-color: #eef;

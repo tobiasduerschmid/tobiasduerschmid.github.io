@@ -1699,3 +1699,13 @@ html.dark-mode .tvm-debug-history-item.active .tvm-debug-history-loc { color: #1
 html.dark-mode .tvm-debug-history-i { color: #94a3b8; }
 html.dark-mode .tvm-debug-history-ev { color: #FFE066; }
 html.dark-mode .tvm-debug-history-loc { color: #f1f5f9; }
+
+.tvm-debug-view :is(
+  p, li, button, label, input, textarea, select, code, pre,
+  .tvm-debug-toolbar, .tvm-debug-status, .tvm-debug-panel,
+  .tvm-debug-section-head, .tvm-debug-frame, .tvm-debug-var-row,
+  .tvm-debug-watch-row, .tvm-debug-history-item, .tvm-debug-history-pos,
+  .tvm-debug-manager-panel
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}

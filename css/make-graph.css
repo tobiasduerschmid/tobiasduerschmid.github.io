@@ -231,3 +231,10 @@ html:not(.dark-mode) .tvm-make-dag-legend {
   .tvm-make-dag-node-rect { transition: none; }
 }
 html.prm-reduce .tvm-make-dag-node-stale .tvm-make-dag-node-glyph { animation: none; }
+
+.tvm-make-dag :is(
+  p, li, button, text, .tvm-make-dag-legend,
+  .tvm-make-dag-legend-swatch, .tvm-make-dag-status
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
