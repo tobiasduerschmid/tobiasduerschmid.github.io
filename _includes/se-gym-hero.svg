@@ -1,7 +1,6 @@
 {% assign hero_variant = include.variant | default: "main" %}
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="50 -20 700 665" class="se-gym-hero-svg se-gym-hero-svg-{{ hero_variant }}" data-gym-hero-svg aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <radialGradient id="spotlight-{{ hero_variant }}" cx=".5" cy=".05" r=".55"><stop offset="0" stop-color="#fff5c2" stop-opacity=".7"/><stop offset="1" stop-color="#fff5c2" stop-opacity="0"/></radialGradient>
     <linearGradient id="suit-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4393d2"/><stop offset=".55" stop-color="#1F6EBD"/><stop offset="1" stop-color="#0c4a87"/></linearGradient>
     <linearGradient id="cape-grad-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B8AD8"/><stop offset=".55" stop-color="#15538f"/><stop offset="1" stop-color="#001F38"/></linearGradient>
     <linearGradient id="cape-inner-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE470"/><stop offset="1" stop-color="#B38B00"/></linearGradient>
@@ -15,17 +14,6 @@
     <radialGradient id="brain-glow-{{ hero_variant }}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE470" stop-opacity=".55"/><stop offset=".55" stop-color="#FFD100" stop-opacity=".18"/><stop offset="1" stop-color="#FFD100" stop-opacity="0"/></radialGradient>
     <pattern id="knurl-{{ hero_variant }}" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)"><rect width="3" height="3" fill="#aab3be"/><line x1="0" y1="0" x2="0" y2="3" stroke="#5b6470" stroke-width=".6"/></pattern>
   </defs>
-  <ellipse class="se-gym-hero-spotlight" cx="400" cy="20" rx="420" ry="240" fill="url(#spotlight-{{ hero_variant }})"/>
-  <g class="se-gym-hero-code-cloud" fill="#1F6EBD" opacity=".22" font-family="'JetBrains Mono','Menlo','Consolas',monospace" font-weight="700">
-    <text x="90"  y="200" font-size="22" opacity=".5">&lt;/&gt;<animate attributeName="y" values="200;192;200" keyTimes="0;0.5;1" dur="4.2s" repeatCount="indefinite"/></text>
-    <text x="720" y="220" font-size="20" opacity=".45">{ }<animate attributeName="y" values="220;228;220" keyTimes="0;0.5;1" dur="5.1s" repeatCount="indefinite"/></text>
-    <text x="100" y="430" font-size="18" opacity=".4">01<animate attributeName="y" values="430;422;430" keyTimes="0;0.5;1" dur="3.8s" repeatCount="indefinite"/></text>
-    <text x="700" y="450" font-size="18" opacity=".4">if<animate attributeName="y" values="450;458;450" keyTimes="0;0.5;1" dur="4.5s" repeatCount="indefinite"/></text>
-    <text x="60"  y="540" font-size="16" opacity=".35">fn()<animate attributeName="y" values="540;532;540" keyTimes="0;0.5;1" dur="4.9s" repeatCount="indefinite"/></text>
-    <text x="690" y="540" font-size="16" opacity=".35">=&gt;<animate attributeName="y" values="540;548;540" keyTimes="0;0.5;1" dur="3.6s" repeatCount="indefinite"/></text>
-  </g>
-  <path class="se-gym-hero-orbit" d="M 220 380 a 180 180 0 0 1 360 0" fill="none" stroke="#a8c8e6" stroke-width="2" opacity=".6" stroke-dasharray="2 9"/>
-  <path class="se-gym-hero-orbit" d="M 270 360 a 130 130 0 0 1 260 0" fill="none" stroke="#a8c8e6" stroke-width="1.5" opacity=".5" stroke-dasharray="2 7"/>
   <g><animateTransform attributeName="transform" type="rotate" values="-1.6 400 268;2 400 268;-1.6 400 268" keyTimes="0;0.5;1" dur="1.7s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
     <path d="M 335 258 C 318 290, 308 360, 308 440 C 308 490, 312 525, 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 C 488 525, 492 490, 492 440 C 492 360, 482 290, 465 258 Z" fill="url(#cape-grad-{{ hero_variant }})"/>
     <path d="M 338 260 C 326 300, 320 380, 320 470 C 320 510, 324 540, 328 558 L 332 553 C 328 540, 326 510, 326 470 C 326 380, 332 300, 343 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
@@ -78,14 +66,14 @@
       <ellipse cx="0" cy="0" rx="58" ry="60" fill="url(#brain-glow-{{ hero_variant }})"><animate attributeName="opacity" values="0.85;0.35;0.85" keyTimes="0;0.5;1" dur="2.2s" repeatCount="indefinite"/></ellipse>
       <path d="M -40 -30 Q -40 -38, -32 -38 L 32 -38 Q 40 -38, 40 -30 L 40 6 Q 40 26, 22 40 Q 8 52, 0 52 Q -8 52, -22 40 Q -40 26, -40 6 Z" fill="url(#gold-radial-{{ hero_variant }})" stroke="#5a3f00" stroke-width="2.5" stroke-linejoin="round"/>
       <path d="M -33 -23 Q -33 -30, -26 -30 L 26 -30 Q 33 -30, 33 -23 L 33 4 Q 33 20, 20 32 Q 8 42, 0 42 Q -8 42, -20 32 Q -33 20, -33 4 Z" fill="none" stroke="#002F52" stroke-width="1.5"/>
-      <text x="0" y="10" text-anchor="middle" font-family="'Fraunces', Georgia, serif" font-weight="800" font-size="34" fill="#002F52" letter-spacing="-1">SE</text>
+      <text x="0" y="10" text-anchor="middle" font-family="'Fraunces', Georgia, serif" font-weight="800" font-size="34" fill="#002F52" stroke="#FFE470" stroke-width="2" paint-order="stroke fill" letter-spacing="-1">SE</text>
       <path d="M 26 -32 L 19 -22 L 24 -22 L 18 -10 L 26 -22 L 21 -22 Z" fill="#002F52" opacity=".85"/>
     </g>
     <ellipse cx="322" cy="278" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})"/>
     <ellipse cx="478" cy="278" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})"/>
     <ellipse cx="316" cy="266" rx="7" ry="14" fill="#4393d2" opacity=".55"/>
     <ellipse cx="484" cy="266" rx="7" ry="14" fill="#4393d2" opacity=".55"/>
-    <path d="M 388 240 L 412 240 L 414 264 L 386 264 Z" fill="url(#skin-{{ hero_variant }})"/>
+    <path d="M 386 232 L 414 232 L 414 264 L 386 264 Z" fill="url(#skin-{{ hero_variant }})"/>
     <path d="M 388 258 L 412 258" stroke="#7a4a2a" stroke-width="2" opacity=".4"/>
     <path d="M 388 264 Q 400 268, 412 264" stroke="#0a3e6f" stroke-width="2" fill="none" opacity=".55"/>
     <g><animateTransform attributeName="transform" type="translate" values="0 -1;0 2;0 -1" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>

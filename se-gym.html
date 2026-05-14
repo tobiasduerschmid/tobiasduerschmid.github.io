@@ -181,7 +181,7 @@ layout: sebook
           <p id="max-cards-note" class="gym-summary-text" role="status" aria-live="polite"></p>
           <p id="gym-summary" class="gym-summary-text"></p>
           <div class="gym-controls-start-row">
-            <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
+            <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" aria-label="Begin workout from controls" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
           </div>
         </div>
       </div>
@@ -560,6 +560,10 @@ layout: sebook
       margin: 0 auto;
     }
 
+    body.se-gym-page.se-gym-workout-active #sidebar-toggle {
+      display: none !important;
+    }
+
     .gym-entrance-visual {
       color: var(--gym-ucla-blue);
       overflow: visible;
@@ -593,24 +597,12 @@ layout: sebook
       filter: drop-shadow(0 14px 24px rgba(0, 47, 82, 0.16));
     }
 
-    html.dark-mode .se-gym-hero-svg {
+    html.dark-mode .post-content .se-gym-hero-svg,
+    html.dark-mode #gym-entrance .se-gym-hero-svg {
       filter:
-        drop-shadow(0 0 2px rgba(139, 184, 232, 0.86))
-        drop-shadow(0 0 14px rgba(127, 182, 240, 0.36))
-        drop-shadow(0 18px 32px rgba(0, 0, 0, 0.5));
-    }
-
-    html.dark-mode .se-gym-hero-spotlight {
-      opacity: 0.82;
-    }
-
-    html.dark-mode .se-gym-hero-code-cloud {
-      opacity: 0.34;
-    }
-
-    html.dark-mode .se-gym-hero-orbit {
-      stroke: #8BB8E8;
-      opacity: 0.64;
+        drop-shadow(0 0 2px rgba(139, 184, 232, 0.72))
+        drop-shadow(0 0 7px rgba(31, 110, 189, 0.34))
+        drop-shadow(0 16px 24px rgba(0, 0, 0, 0.52)) !important;
     }
 
     .gym-topic-hero-svg .gym-floor ellipse {
@@ -4190,6 +4182,25 @@ layout: sebook
         padding-right: max(12px, env(safe-area-inset-right));
       }
 
+      body.se-gym-page.se-gym-workout-active #main-content {
+        padding: 2px !important;
+      }
+
+      body.se-gym-page.se-gym-workout-active #main-content .container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      body.se-gym-page.se-gym-workout-active #se-gym-app {
+        padding: 2px;
+        padding-left: max(2px, env(safe-area-inset-left));
+        padding-right: max(2px, env(safe-area-inset-right));
+      }
+
+      body.se-gym-page.se-gym-workout-active #gym-workout {
+        padding-top: 0;
+      }
+
       #gym-controls {
         padding: 12px;
       }
@@ -4282,7 +4293,7 @@ layout: sebook
 
       .workout-header-row {
         align-items: stretch;
-        gap: 10px;
+        gap: 4px;
       }
 
       .workout-header-row > * {
@@ -4291,11 +4302,12 @@ layout: sebook
 
       #back-to-library-btn {
         justify-content: center;
+        padding: 4px 8px;
       }
 
       .workout-progress-bar {
-        height: 8px;
-        margin: 12px auto 14px;
+        height: 6px;
+        margin: 4px auto 6px;
       }
 
       .timed-practice-clock {
@@ -4304,8 +4316,12 @@ layout: sebook
 
       .workout-quiz-card,
       .workout-flashcard {
-        margin: 12px 0;
-        padding: 14px;
+        margin: 4px 0;
+        padding: 8px 6px 6px;
+      }
+
+      .workout-quiz-card::before {
+        height: 4px;
       }
 
       .workout-quiz-card {
@@ -4322,8 +4338,14 @@ layout: sebook
 
       .workout-quiz-card .quiz-card-meta {
         align-items: flex-start;
-        gap: 6px;
-        margin-bottom: 12px;
+        gap: 4px;
+        margin-bottom: 5px;
+      }
+
+      .workout-source-badge,
+      .workout-quiz-card .quiz-difficulty,
+      .workout-flashcard .quiz-difficulty {
+        padding: 3px 8px;
       }
 
       .workout-source-badge,
@@ -4335,20 +4357,25 @@ layout: sebook
 
       .workout-quiz-card .question-text {
         font-size: 1em;
-        line-height: 1.4;
-        margin-bottom: 14px;
-        padding-bottom: 14px;
+        line-height: 1.28;
+        margin-bottom: 6px;
+        padding: 6px 8px;
+        border-left-width: 4px;
       }
 
       #main-content #se-gym-app .workout-quiz-card .question-text .uml-folder-tree-diagram-container {
-        padding: 8px 0 4px;
+        padding: 4px 0 0;
+      }
+
+      .workout-quiz-card .quiz-options {
+        gap: 6px;
       }
 
       .workout-quiz-card .quiz-option {
         align-items: flex-start;
-        gap: 10px;
-        min-height: 56px;
-        padding: 10px;
+        gap: 6px;
+        min-height: 44px;
+        padding: 6px 8px;
       }
 
       .workout-quiz-card .option-label {
@@ -4364,11 +4391,40 @@ layout: sebook
       }
 
       .workout-quiz-card .option-content {
-        line-height: 1.42;
+        line-height: 1.28;
+        padding-top: 0;
       }
 
       .workout-quiz-card .option-feedback {
         margin-left: 0;
+      }
+
+      .workout-flashcard .flashcard-question {
+        min-height: 0;
+        margin-bottom: 6px;
+        gap: 6px;
+        line-height: 1.2;
+      }
+
+      .workout-flashcard .flashcard-answer-container {
+        margin-top: 6px;
+        padding: 8px;
+      }
+
+      .workout-flashcard .flashcard-answer {
+        margin-bottom: 6px;
+      }
+
+      .workout-flashcard .flashcard-actions {
+        margin-top: 8px;
+      }
+
+      #se-gym-app .quiz-shortcuts-hint,
+      #se-gym-app .quiz-next-shortcut-hint,
+      #se-gym-app .parsons-shortcuts-hint,
+      #se-gym-app .flashcard-shortcuts-hint {
+        margin-top: 6px;
+        line-height: 1.3;
       }
 
       .workout-quiz-card .quiz-action-row {
@@ -4450,12 +4506,12 @@ layout: sebook
     @media (max-width: 420px) {
       .workout-quiz-card,
       .workout-flashcard {
-        padding: 12px;
+        padding: 8px 6px 6px;
       }
 
       .workout-quiz-card .quiz-option {
-        gap: 8px;
-        padding: 10px 8px;
+        gap: 6px;
+        padding: 6px 8px;
       }
 
       .workout-quiz-card .option-label {
@@ -4488,7 +4544,7 @@ layout: sebook
       }
 
       .workout-quiz-card .quiz-option {
-        min-height: 52px;
+        min-height: 44px;
       }
     }
 
@@ -5450,6 +5506,7 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
 
@@ -5702,6 +5759,7 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
 
@@ -5845,6 +5903,35 @@ layout: sebook
         var app = document.getElementById('se-gym-app');
         var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
         window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+
+      function setWorkoutMode(isWorkout) {
+        document.body.classList.toggle('se-gym-workout-active', !!isWorkout);
+        var sidebar = document.getElementById('sidebar');
+        var sidebarToggle = document.getElementById('sidebar-toggle');
+        var mobileSidebar = window.matchMedia && window.matchMedia('(max-width: 1100px)').matches;
+        if (!mobileSidebar) return;
+        if (isWorkout) {
+          if (sidebar) {
+            sidebar.classList.remove('open');
+            sidebar.setAttribute('inert', '');
+            sidebar.setAttribute('aria-hidden', 'true');
+          }
+          if (sidebarToggle) {
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+            sidebarToggle.setAttribute('inert', '');
+            sidebarToggle.setAttribute('aria-hidden', 'true');
+          }
+        } else {
+          if (sidebarToggle) {
+            sidebarToggle.removeAttribute('inert');
+            sidebarToggle.removeAttribute('aria-hidden');
+          }
+          if (sidebar && !sidebar.classList.contains('open')) {
+            sidebar.setAttribute('inert', '');
+            sidebar.setAttribute('aria-hidden', 'true');
+          }
+        }
       }
 
       // ---- QUIZ CARD RENDERING ----
@@ -6552,6 +6639,7 @@ layout: sebook
         stopWorkoutTimer(true);
         workoutView.style.display = 'none';
         libraryView.style.display = '';
+        setWorkoutMode(false);
         refreshLibrary();
         scrollToTop();
       }
@@ -6830,6 +6918,7 @@ layout: sebook
       importModal.querySelector('.confirm-modal-backdrop').addEventListener('click', closeImportModal);
 
       // Initialize
+      setWorkoutMode(false);
       refreshLibrary();
 
     })();
