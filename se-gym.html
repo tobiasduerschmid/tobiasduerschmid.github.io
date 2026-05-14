@@ -23,24 +23,22 @@ layout: sebook
     <div id="gym-entrance">
       <p class="sr-only">SE Gym illustration: superheroes lift barbell weights shaped like version-control branches, testing checklists, UML diagrams, agile iteration loops, and programming tools.</p>
       <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true">
-        <svg class="gym-topic-hero-svg gym-topic-hero-svg-mobile gym-visual--mobile" viewBox="0 0 640 220" focusable="false">
+        <svg class="gym-topic-hero-svg gym-topic-hero-svg-mobile gym-visual--mobile" viewBox="0 0 640 285" focusable="false">
           <defs>
             <linearGradient id="gym-suit-mobile" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stop-color="var(--gym-ucla-blue-light)"></stop>
-              <stop offset="0.52" stop-color="var(--gym-ucla-blue)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-blue-dark)"></stop>
             </linearGradient>
             <linearGradient id="gym-cape-mobile" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stop-color="var(--gym-cape-stop-top)"></stop>
-              <stop offset="0.55" stop-color="var(--gym-cape)"></stop>
               <stop offset="1" stop-color="var(--gym-cape-stop-bottom)"></stop>
             </linearGradient>
-            <radialGradient id="gym-gold-mobile" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-gold-mobile" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#fff7b0"></stop>
               <stop offset="0.52" stop-color="var(--gym-ucla-gold)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-gold-dark)"></stop>
             </radialGradient>
-            <radialGradient id="gym-blue-plate-mobile" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-blue-plate-mobile" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#ffffff"></stop>
               <stop offset="0.55" stop-color="var(--gym-soft-blue)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-blue-light)"></stop>
@@ -58,7 +56,7 @@ layout: sebook
             <path class="backdrop-ring backdrop-ring-soft" d="M220 118a105 105 0 0 1 200 0"></path>
           </g>
           <g class="gym-floor" opacity="0.95">
-            <ellipse cx="318" cy="195" rx="180" ry="18"></ellipse>
+            <ellipse cx="318" cy="262" rx="180" ry="14"></ellipse>
           </g>
           <g class="gym-motion-ghost" transform="translate(0 13)">
             <rect x="163" y="62" width="314" height="7" rx="3.5"></rect>
@@ -166,12 +164,10 @@ layout: sebook
             <rect class="belt-buckle" x="313" y="179" width="14" height="11" rx="2"></rect>
             <circle class="skin-fill" cx="320" cy="70" r="18"></circle>
             <path class="neck" d="M312 91h16l3 14h-22z"></path>
-            <path class="hair" d="M298 67c2 -18 18 -29 35 -24 9 3 14 10 16 18 -9 -3 -18 -3 -28 1 -8 4 -16 7 -23 5z"></path>
-            <path class="hair-shadow" d="M300 69c9 -10 23 -15 37 -11 -12 6 -22 10 -37 11z"></path>
             <circle class="ear" cx="303" cy="72" r="3.8"></circle>
             <circle class="ear" cx="337" cy="72" r="3.8"></circle>
             <path class="skin-fill face-front" d="M304 69c0 -16 6 -27 16 -27s16 11 16 27c0 17 -6 28 -16 30s-16 -13 -16 -30z"></path>
-            <path class="hair hair-front" d="M304 65c5 -17 22 -25 38 -13 -8 -1 -16 1 -26 6 -5 3 -9 6 -12 7z"></path>
+            <path class="hair" d="M298 75 C 295 55, 305 42, 320 42 C 335 42, 345 55, 342 75 C 340 72, 337 68, 334 65 C 330 62, 325 60, 320 60 C 315 60, 309 62, 305 65 C 302 68, 300 72, 298 75 Z"></path>
             <circle class="cheek" cx="308" cy="80" r="2.6"></circle>
             <circle class="cheek" cx="332" cy="80" r="2.6"></circle>
             <ellipse class="eye-white" cx="313" cy="72" rx="2.8" ry="2.6"></ellipse>
@@ -183,6 +179,32 @@ layout: sebook
             <path class="brow" d="M306 68 q 5 -3 10 -1 M324 67 q 5 -2 10 1"></path>
             <path class="nose" d="M320 76l-2 5h4"></path>
             <path class="mouth" d="M310 84 q 10 9 20 0"></path>
+            <g class="leg leg-left">
+              <path class="leg-thigh" d="M306 205 L 296 232"></path>
+              <g transform="translate(296 232)">
+                <g class="leg-shin-pivot leg-shin-pivot-left">
+                  <path class="leg-shin" d="M0 0 L -10 22"></path>
+                  <g class="boot-group">
+                    <path class="boot-fill" d="M-22 16h28l-5 10H-21c-4 0 -5 -7 -1 -10z"></path>
+                    <path class="boot-highlight" d="M-16 21h14"></path>
+                    <path class="boot" d="M-19 22h21"></path>
+                  </g>
+                </g>
+              </g>
+            </g>
+            <g class="leg leg-right">
+              <path class="leg-thigh" d="M334 205 L 344 232"></path>
+              <g transform="translate(344 232)">
+                <g class="leg-shin-pivot leg-shin-pivot-right">
+                  <path class="leg-shin" d="M0 0 L 10 22"></path>
+                  <g class="boot-group">
+                    <path class="boot-fill" d="M-6 16h28c4 3 3 10 -1 10h-22z"></path>
+                    <path class="boot-highlight" d="M2 21h14"></path>
+                    <path class="boot" d="M-2 22h21"></path>
+                  </g>
+                </g>
+              </g>
+            </g>
           </g>
         </svg>
       </div>
@@ -197,15 +219,14 @@ layout: sebook
             </linearGradient>
             <linearGradient id="gym-cape-male" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stop-color="var(--gym-cape-stop-top)"></stop>
-              <stop offset="0.55" stop-color="var(--gym-cape)"></stop>
               <stop offset="1" stop-color="var(--gym-cape-stop-bottom)"></stop>
             </linearGradient>
-            <radialGradient id="gym-gold-male" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-gold-male" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#fff7b0"></stop>
               <stop offset="0.52" stop-color="var(--gym-ucla-gold)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-gold-dark)"></stop>
             </radialGradient>
-            <radialGradient id="gym-blue-plate-male" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-blue-plate-male" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#ffffff"></stop>
               <stop offset="0.55" stop-color="var(--gym-soft-blue)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-blue-light)"></stop>
@@ -323,13 +344,10 @@ layout: sebook
             <rect class="belt-buckle" x="132" y="216" width="16" height="14" rx="2"></rect>
             <circle class="skin-fill" cx="140" cy="103" r="22"></circle>
             <path class="neck" d="M130 127h20l5 16h-30z"></path>
-            <path class="hair" d="M119 98c1 -22 23 -36 42 -27 8 4 13 11 15 19 -10 -4 -21 -2 -33 4 -8 4 -16 6 -24 4z"></path>
-            <path class="hair-shadow" d="M122 101c9 -12 24 -17 38 -12 -12 6 -22 10 -38 12z"></path>
             <circle class="ear" cx="120" cy="105" r="4.6"></circle>
             <circle class="ear" cx="160" cy="105" r="4.6"></circle>
             <path class="skin-fill face-front" d="M121 101c0 -19 8 -31 19 -31s19 12 19 31c0 20 -8 32 -19 34s-19 -14 -19 -34z"></path>
-            <path class="hair hair-front" d="M119 97c6 -23 29 -34 50 -17 -11 -2 -22 0 -34 7 -7 4 -12 8 -16 10z"></path>
-            <path class="hair-shine" d="M128 83c8 -5 18 -6 27 -2"></path>
+            <path class="hair" d="M113 108 C 109 82, 120 62, 140 60 C 160 62, 171 82, 167 108 C 165 105, 162 100, 158 97 C 153 93, 146 91, 140 92 C 134 91, 127 93, 122 97 C 118 100, 115 105, 113 108 Z"></path>
             <circle class="cheek" cx="125" cy="116" r="3.4"></circle>
             <circle class="cheek" cx="155" cy="116" r="3.4"></circle>
             <ellipse class="eye-white" cx="133" cy="105" rx="3.2" ry="2.8"></ellipse>
@@ -375,12 +393,6 @@ layout: sebook
             <path class="gym-spark gym-spark-4" d="M268 195 l 4 0 M270 193 l 0 4"></path>
             <path class="gym-spark gym-spark-5" d="M40 285 l 4 0 M42 283 l 0 4"></path>
             <path class="gym-spark gym-spark-6" d="M240 285 l 4 0 M242 283 l 0 4"></path>
-          </g>
-          <g class="gym-motion-lines">
-            <path d="M75 48c-18 13 -24 32 -15 52"></path>
-            <path d="M205 48c18 13 24 32 15 52"></path>
-            <path d="M51 129c-13 10 -18 24 -12 39"></path>
-            <path d="M229 129c13 10 18 24 12 39"></path>
           </g>
         </svg>
       </aside>
@@ -682,15 +694,14 @@ layout: sebook
             </linearGradient>
             <linearGradient id="gym-cape-female" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stop-color="var(--gym-cape-stop-top)"></stop>
-              <stop offset="0.55" stop-color="var(--gym-cape)"></stop>
               <stop offset="1" stop-color="var(--gym-cape-stop-bottom)"></stop>
             </linearGradient>
-            <radialGradient id="gym-gold-female" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-gold-female" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#fff7b0"></stop>
               <stop offset="0.52" stop-color="var(--gym-ucla-gold)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-gold-dark)"></stop>
             </radialGradient>
-            <radialGradient id="gym-blue-plate-female" cx="0.38" cy="0.32" r="1.05">
+            <radialGradient id="gym-blue-plate-female" cx="0.45" cy="0.40" r="1.30">
               <stop offset="0" stop-color="#ffffff"></stop>
               <stop offset="0.55" stop-color="var(--gym-soft-blue)"></stop>
               <stop offset="1" stop-color="var(--gym-ucla-blue-light)"></stop>
@@ -808,26 +819,26 @@ layout: sebook
             <rect class="belt-buckle" x="132" y="213" width="16" height="14" rx="2"></rect>
             <circle class="skin-fill" cx="140" cy="103" r="21"></circle>
             <path class="neck" d="M130 127h20l5 16h-30z"></path>
-            <path class="hair hair-female" d="M118 101c-7 -29 19 -52 45 -38 17 9 22 32 15 58 -5 20 -2 40 8 59 -15 -4 -26 -17 -30 -37 -7 8 -25 8 -32 0 -4 20 -15 33 -30 37 10 -19 13 -39 8 -59 -2 -9 2 -17 16 -20z"></path>
-            <path class="hair-shadow" d="M120 99c11 -18 31 -24 45 -12 -14 2 -29 6 -45 12z"></path>
+            <path class="hair hair-female" d="M105 130 C 100 155, 102 180, 110 195 C 116 178, 120 158, 122 138 C 118 134, 110 132, 105 130 Z"></path>
+            <path class="hair hair-female" d="M175 130 C 180 155, 178 180, 170 195 C 164 178, 160 158, 158 138 C 162 134, 170 132, 175 130 Z"></path>
             <circle class="ear" cx="121" cy="105" r="4.4"></circle>
             <circle class="ear" cx="159" cy="105" r="4.4"></circle>
             <path class="skin-fill face-front" d="M122 101c0 -18 8 -30 18 -30s18 12 18 30c0 19 -8 31 -18 33s-18 -14 -18 -33z"></path>
-            <path class="hair-lock" d="M120 96c-9 14 -12 36 -7 59 7 -9 10 -22 10 -37 0 -8 -1 -16 -3 -22z"></path>
-            <path class="hair-lock" d="M160 96c9 14 12 36 7 59 -7 -9 -10 -22 -10 -37 0 -8 1 -16 3 -22z"></path>
-            <path class="hair hair-female hair-front" d="M120 96c8 -24 36 -33 53 -9 -13 -2 -25 0 -38 7 -6 3 -11 5 -15 2z"></path>
-            <path class="hair-shine" d="M129 80c8 -5 19 -6 28 -1"></path>
-            <circle class="cheek" cx="125" cy="116" r="3.2"></circle>
-            <circle class="cheek" cx="155" cy="116" r="3.2"></circle>
-            <ellipse class="eye-white" cx="133" cy="105" rx="3" ry="2.7"></ellipse>
-            <ellipse class="eye-white" cx="148" cy="105" rx="3" ry="2.7"></ellipse>
-            <circle class="eye" cx="133.5" cy="105.6" r="1.6"></circle>
-            <circle class="eye" cx="147.5" cy="105.6" r="1.6"></circle>
-            <circle class="eye-sparkle" cx="134.2" cy="104.6" r="0.8"></circle>
-            <circle class="eye-sparkle" cx="148.2" cy="104.6" r="0.8"></circle>
-            <path class="brow" d="M125 100 q 6 -3 12 -1 M143 99 q 6 -2 12 1"></path>
+            <path class="hair hair-female hair-front" d="M108 116 C 100 78, 116 50, 140 50 C 164 50, 180 78, 172 116 C 168 110, 162 102, 154 98 C 148 95, 144 96, 142 102 L 140 130 L 138 102 C 136 96, 132 95, 126 98 C 118 102, 112 110, 108 116 Z"></path>
+            <path class="hair-shine" d="M134 60 c 4 -2 10 -2 14 0" opacity="0.5"></path>
+            <circle class="cheek" cx="124" cy="117" r="3.4"></circle>
+            <circle class="cheek" cx="156" cy="117" r="3.4"></circle>
+            <ellipse class="eye-white" cx="133" cy="106" rx="3.2" ry="2.8"></ellipse>
+            <ellipse class="eye-white" cx="148" cy="106" rx="3.2" ry="2.8"></ellipse>
+            <circle class="eye" cx="133.5" cy="106.6" r="1.7"></circle>
+            <circle class="eye" cx="147.5" cy="106.6" r="1.7"></circle>
+            <circle class="eye-sparkle" cx="134.2" cy="105.6" r="0.8"></circle>
+            <circle class="eye-sparkle" cx="148.2" cy="105.6" r="0.8"></circle>
+            <path class="eye-lashes" d="M129 103 l -1 -2 M133 102 l 0 -2 M137 103 l 1 -2 M143 103 l -1 -2 M147 102 l 0 -2 M151 103 l 1 -2"></path>
+            <path class="brow" d="M126 100 q 6 -3 12 -1 M142 99 q 6 -2 12 1"></path>
             <path class="nose" d="M141 110l-2 7h4"></path>
-            <path class="mouth" d="M129 119 q 11 11 22 0"></path>
+            <path class="mouth" d="M129 120 q 11 11 22 0"></path>
+            <path class="lipstick" d="M128 121 q 12 11 24 0 q -12 4 -24 0 Z"></path>
             <g class="leg leg-left">
               <path class="leg-thigh" d="M124 278 L 109 300"></path>
               <g transform="translate(109 300)">
@@ -862,12 +873,6 @@ layout: sebook
             <path class="gym-spark gym-spark-4" d="M268 190 l 4 0 M270 188 l 0 4"></path>
             <path class="gym-spark gym-spark-5" d="M40 285 l 4 0 M42 283 l 0 4"></path>
             <path class="gym-spark gym-spark-6" d="M240 285 l 4 0 M242 283 l 0 4"></path>
-          </g>
-          <g class="gym-motion-lines">
-            <path d="M75 40c-18 13 -24 32 -15 52"></path>
-            <path d="M205 40c18 13 24 32 15 52"></path>
-            <path d="M51 119c-13 10 -18 24 -12 39"></path>
-            <path d="M229 119c13 10 18 24 12 39"></path>
           </g>
         </svg>
       </aside>
@@ -1214,15 +1219,18 @@ layout: sebook
     .gym-topic-hero-svg .topic-plate ellipse {
       fill: none;
       stroke: var(--gym-ink);
-      stroke-width: 3;
+      stroke-width: 4;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
+    .gym-topic-hero-svg .topic-plate .plate-bevel,
+    .gym-topic-hero-svg .topic-plate .plate-highlight {
+      stroke-width: 3;
+    }
+
     .gym-topic-hero-svg .topic-plate .plate-inner-ring {
-      fill: none !important;
-      stroke: rgba(23, 50, 77, 0.48);
-      stroke-width: 2.5;
+      display: none;
     }
 
     .gym-topic-hero-svg .topic-plate .plate-highlight {
@@ -1667,6 +1675,25 @@ layout: sebook
     .gym-topic-hero-svg .brow {
       stroke-width: 2.2;
       opacity: 0.78;
+    }
+
+    .gym-topic-hero-svg .eye-lashes {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      opacity: 0.85;
+    }
+
+    .gym-topic-hero-svg .lipstick {
+      fill: #d04a5e;
+      stroke: none;
+      opacity: 0.55;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .lipstick {
+      fill: #e85a72;
+      opacity: 0.6;
     }
 
     .gym-topic-hero-svg .gym-spark {
@@ -2932,27 +2959,39 @@ layout: sebook
     }
 
     .workout-progress-bar {
-      height: 4px;
-      background: #f0f2f5;
-      border-radius: 2px;
-      margin: 16px 0;
+      height: 10px;
+      background: #dbeeff;
+      border: 1px solid #bfd4e5;
+      border-radius: 999px;
+      margin: 18px auto;
+      max-width: 860px;
       overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 59, 92, 0.12);
     }
 
     .workout-progress-fill {
       height: 100%;
-      background: #2774AE;
+      background: linear-gradient(90deg, #2774AE 0 76%, #FFD100 76% 100%);
       transition: width 0.4s ease;
     }
 
+    #workout-card-area {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
     .workout-source-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
       font-size: 0.85em;
       font-weight: 700;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      line-height: 1.2;
+      margin: 0;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
     }
 
     /* Difficulty badge — same color tokens as the SEBook quiz/flashcards
@@ -2964,13 +3003,12 @@ layout: sebook
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 10px;
-      border-radius: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
       font-size: 0.85em;
       font-weight: 700;
-      line-height: 1.4;
-      margin-left: 6px;
-      margin-bottom: 8px;
+      line-height: 1.2;
+      margin: 0;
       border: 1px solid transparent;
       vertical-align: middle;
     }
@@ -3236,21 +3274,48 @@ layout: sebook
 
     /* Workout Quiz Card */
     .workout-quiz-card {
-      background: #ffffff;
-      border: 1px solid #e1e4e8;
-      border-radius: 12px;
-      padding: 12px;
-      margin: 12px 0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      position: relative;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.2) 0 88px, transparent 90px),
+        linear-gradient(180deg, #ffffff, #f7fbff);
+      border: 1.5px solid #8BB8E8;
+      border-radius: 8px;
+      padding: 18px;
+      margin: 18px 0;
+      box-shadow: 0 16px 34px rgba(0, 59, 92, 0.14);
       animation: fadeIn 0.4s ease;
     }
 
+    .workout-quiz-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(90deg, #2774AE 0 44%, #FFD100 44% 56%, #2774AE 56% 100%);
+    }
+
+    .workout-quiz-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .workout-quiz-card .quiz-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
     .workout-quiz-card .question-text {
-      font-size: 1.05em;
+      font-size: 1.08em;
       font-weight: 600;
-      margin-bottom: 8px;
-      line-height: 1.25;
-      color: #1a1a1a;
+      margin: 0 0 16px;
+      padding: 0 0 16px;
+      line-height: 1.35;
+      color: #17324d;
+      border-bottom: 1px solid #c8d6e2;
     }
 
     .workout-quiz-card .question-text p,
@@ -3262,33 +3327,39 @@ layout: sebook
     .workout-quiz-card .quiz-options {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px;
     }
 
     .workout-quiz-card .quiz-option {
       display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      border: 1.5px solid #767676;
-      border-radius: 6px;
-      background: white;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 52px;
+      padding: 10px 12px;
+      border: 1.5px solid #9db7cc;
+      border-radius: 8px;
+      background: #ffffff;
       text-align: left;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       cursor: pointer;
       font-size: 0.95em;
-      line-height: 1.25;
+      line-height: 1.35;
       min-width: 0;
+      width: 100%;
+      box-shadow: 0 5px 14px rgba(0, 59, 92, 0.06);
     }
 
     .workout-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
       border-color: #2774AE;
-      background: #f0f7ff;
+      background: #eef7ff;
+      box-shadow: 0 8px 20px rgba(0, 59, 92, 0.12);
+      transform: translateY(-1px);
     }
 
     .workout-quiz-card .quiz-option.selected {
       border-color: #2774AE;
       background: #eef6fc;
-      box-shadow: 0 0 0 1px #2774AE;
+      box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.18), 0 8px 20px rgba(0, 59, 92, 0.12);
     }
 
     .workout-quiz-card .quiz-option.correct {
@@ -3317,11 +3388,11 @@ layout: sebook
 
     /* Per-option clarification (hidden by default; revealed when wrongly answered) */
     .workout-quiz-card .option-feedback {
-      margin: 4px 0 8px 28px;
-      padding: 8px 10px;
+      margin: 2px 0 8px 50px;
+      padding: 10px 12px;
       border-left: 3px solid #d97706;
       background: #fff7ed;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 0.92em;
       line-height: 1.35;
       color: #7c2d12;
@@ -3346,11 +3417,11 @@ layout: sebook
 
     .workout-quiz-card .option-checkbox {
       display: none;
-      width: 14px;
-      height: 14px;
-      border: 1.5px solid #767676;
-      border-radius: 3px;
-      margin-right: 10px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #6b879d;
+      border-radius: 5px;
+      margin-top: 5px;
       flex-shrink: 0;
       transition: all 0.2s;
       background: white;
@@ -3368,67 +3439,95 @@ layout: sebook
     .workout-quiz-card .quiz-option.selected .option-checkbox::after {
       content: '';
       display: block;
-      width: 4px;
-      height: 8px;
+      width: 5px;
+      height: 10px;
       border: solid white;
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
-      margin: 0px 3px;
+      margin: 1px 5px;
     }
 
     .workout-quiz-card .option-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #dbeeff;
+      border: 1px solid #8BB8E8;
       font-weight: 800;
-      margin-right: 12px;
-      color: #6a737d;
+      color: #17324d;
       flex-shrink: 0;
+      line-height: 1;
+      box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.08);
     }
 
     .workout-quiz-card .option-content {
       min-width: 0;
       overflow-wrap: anywhere;
+      padding-top: 2px;
     }
 
     .workout-quiz-card .submit-answer-btn,
     .workout-quiz-card .next-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       background: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
       border: none;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: var(--radius-md, 8px);
-      font-weight: 600;
-      margin-top: var(--sp-md, 10px);
+      font-weight: 700;
+      margin-top: 14px;
+      margin-left: auto;
       cursor: pointer;
-      transition: background 0.2s;
-      width: 100%;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+      width: auto;
+      min-width: 170px;
+      max-width: 100%;
       font-size: 0.95em;
-      min-height: 38px;
+      min-height: 42px;
+      box-shadow: 0 7px 16px rgba(0, 59, 92, 0.18);
+    }
+
+    .workout-quiz-card .quiz-action-row {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .workout-quiz-card .submit-answer-btn:disabled {
       background: #a1c2db;
+      color: #17324d;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
     .workout-quiz-card .submit-answer-btn:hover:not(:disabled),
     .workout-quiz-card .next-btn:hover {
       background: var(--color-primary-hover, #1e5c8a);
+      transform: translateY(-1px);
     }
 
     .workout-quiz-card .quiz-explanation {
-      margin-top: var(--sp-md, 10px);
-      padding: var(--sp-md, 10px) var(--sp-lg, 15px);
-      background: var(--color-surface-2, #f8f9fa);
-      border-left: 3px solid var(--color-primary, #2774AE);
-      border-radius: var(--radius-sm, 4px);
-      font-size: 0.92em;
-      line-height: 1.35;
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: #eef7ff;
+      border: 1.5px solid #8BB8E8;
+      border-left: 5px solid #2774AE;
+      border-radius: 8px;
+      font-size: 0.95em;
+      line-height: 1.45;
+      color: #17324d;
     }
 
     .workout-quiz-card .explanation-title {
       font-weight: 700;
-      color: var(--color-primary, #2774AE);
+      color: #17324d;
       margin-bottom: var(--sp-sm, 8px);
-      font-size: 0.9em;
+      font-size: 0.95em;
       text-transform: uppercase;
     }
 
@@ -3438,17 +3537,23 @@ layout: sebook
       gap: 8px;
       margin-top: 10px;
       font-weight: 600;
-      color: #444;
+      color: #17324d;
+      flex-wrap: wrap;
     }
 
     .workout-quiz-card .correct-label-badge {
-      background: var(--color-primary, #2774AE);
-      color: var(--color-text-on-primary, white);
-      padding: 2px var(--sp-sm, 8px);
-      border-radius: var(--radius-sm, 4px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      background: #FFD100;
+      color: #061d31;
+      padding: 2px 8px;
+      border-radius: 999px;
       font-weight: 800;
       font-size: 0.85em;
-      display: inline-block;
+      border: 1px solid #b38b00;
     }
 
     .workout-quiz-card .optional-answer-note {
@@ -3467,6 +3572,16 @@ layout: sebook
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: break-word;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text img,
+    #main-content #se-gym-app .workout-quiz-card .question-text svg,
+    #main-content #se-gym-app .workout-quiz-card .option-content img,
+    #main-content #se-gym-app .workout-quiz-card .option-content svg,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text img,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text svg {
+      max-width: 100%;
+      height: auto;
     }
 
     #main-content #se-gym-app .workout-quiz-card .question-text .highlighter-rouge,
@@ -3563,6 +3678,10 @@ layout: sebook
     .parsons-line.parsons-incorrect::before { content: "✗"; }
     .parsons-actions { display: flex; gap: var(--sp-sm, 8px); margin-top: var(--sp-md, 10px); flex-wrap: wrap; }
     .parsons-check-btn, .parsons-reset-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: var(--sp-sm, 6px) var(--sp-lg, 16px); border-radius: var(--radius-md, 8px); border: none; cursor: pointer;
       font-size: 0.95em; font-weight: 600; min-height: 38px;
     }
@@ -3838,6 +3957,20 @@ layout: sebook
     @media (prefers-reduced-motion: reduce) {
       .gym-emoji-host  { display: none !important; }
       .gym-emoji-piece { animation: none !important; }
+      .workout-progress-fill,
+      .workout-quiz-card,
+      .workout-quiz-card .quiz-option,
+      .workout-quiz-card .submit-answer-btn,
+      .workout-quiz-card .next-btn {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      .workout-quiz-card .quiz-option:hover:not([disabled]),
+      .workout-quiz-card .submit-answer-btn:hover:not(:disabled),
+      .workout-quiz-card .next-btn:hover {
+        transform: none !important;
+      }
     }
 
     .hidden {
@@ -4017,29 +4150,80 @@ layout: sebook
       color: #ffb4a8;
     }
 
+    html.dark-mode .milestone-banner {
+      background:
+        radial-gradient(circle at 96% 0%, rgba(139, 184, 232, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #102d47, #0b2338);
+      color: #eaf6ff;
+      border-color: #8BB8E8;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(139, 184, 232, 0.18);
+    }
+
+    html.dark-mode .milestone-banner::before {
+      background: linear-gradient(90deg, #8BB8E8 0%, #8BB8E8 44%, #FFD100 44%, #FFD100 56%, #8BB8E8 56%, #8BB8E8 100%);
+    }
+
+    html.dark-mode .milestone-banner::after {
+      background: radial-gradient(circle, rgba(139, 184, 232, 0.24) 0 36%, rgba(139, 184, 232, 0.1) 37% 58%, transparent 59%);
+      border: 1px solid rgba(139, 184, 232, 0.18);
+    }
+
+    html.dark-mode .milestone-icon {
+      background: linear-gradient(145deg, #fff7b0, #FFD100 62%, #B38B00);
+      border-color: #d7ecff;
+      color: #061d31;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.2), 0 8px 18px rgba(0, 0, 0, 0.34);
+    }
+
+    html.dark-mode .milestone-text strong {
+      color: #fff6c2;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+    }
+
+    html.dark-mode .milestone-text span {
+      color: #d9ecff;
+    }
+
     html.dark-mode .milestone-banner.milestone-bronze {
-      background: linear-gradient(135deg, #3a2a10, #4a3520);
-      color: #d4a76a;
-      border-color: #7a5a2a;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(216, 155, 88, 0.2) 0 70px, transparent 72px),
+        linear-gradient(180deg, #2f2419, #1f1a15);
+      border-color: #d89b58;
+    }
+
+    html.dark-mode .milestone-banner.milestone-bronze .milestone-text strong {
+      color: #ffe2ba;
     }
 
     html.dark-mode .milestone-banner.milestone-silver {
-      background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-      color: #c0c0c0;
-      border-color: #666;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(215, 236, 255, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #263446, #172231);
+      border-color: #b8c6d4;
+    }
+
+    html.dark-mode .milestone-banner.milestone-silver .milestone-text strong {
+      color: #f0f6ff;
     }
 
     html.dark-mode .milestone-banner.milestone-gold {
-      background: linear-gradient(135deg, #3a3000, #4a3e10);
-      color: #ffd54f;
-      border-color: #8a7a20;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(255, 209, 0, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #342b08, #171d25);
+      border-color: #FFD100;
+    }
+
+    html.dark-mode .milestone-banner.milestone-gold .milestone-text strong,
+    html.dark-mode .milestone-banner.milestone-diamond .milestone-text strong {
+      color: #FFD100;
     }
 
     html.dark-mode .milestone-banner.milestone-diamond {
-      background: linear-gradient(135deg, #0a2a3a, #0d3350, #0a2a3a);
-      color: #4fc3f7;
-      border-color: #0288d1;
-      box-shadow: 0 0 12px rgba(79, 195, 247, 0.2);
+      background:
+        radial-gradient(circle at 96% 0%, rgba(139, 184, 232, 0.24) 0 70px, transparent 72px),
+        linear-gradient(180deg, #102f4d, #071d31);
+      border-color: #8BB8E8;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.22);
     }
 
     html.dark-mode #gym-controls {
@@ -4177,24 +4361,45 @@ layout: sebook
     }
 
     html.dark-mode .workout-quiz-card {
-      background: #1a1a1a;
-      border-color: #333;
-      color: #e0e0e0;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 88px, transparent 90px),
+        linear-gradient(180deg, #111f31, #0f1722);
+      border-color: #8BB8E8;
+      color: #e6f4ff;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.16);
+    }
+
+    html.dark-mode .workout-quiz-card::before {
+      background: linear-gradient(90deg, #8BB8E8 0 44%, #FFD100 44% 56%, #8BB8E8 56% 100%);
     }
 
     html.dark-mode .workout-quiz-card .question-text {
-      color: #ffffff;
+      color: #f0f7ff;
+      border-bottom-color: #31455d;
     }
 
     html.dark-mode .workout-quiz-card .quiz-option {
-      background: #252525;
-      border-color: #444;
-      color: #e0e0e0;
+      background: #172536;
+      border-color: #46566a;
+      color: #e6f4ff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
     }
 
     html.dark-mode .workout-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
-      border-color: #4da3ff;
-      background: #2c2c2c;
+      border-color: #8BB8E8;
+      background: #20344b;
+      box-shadow: 0 9px 22px rgba(0, 0, 0, 0.42);
+    }
+
+    html.dark-mode .workout-quiz-card .quiz-option.selected {
+      border-color: #8BB8E8;
+      background: #18314a;
+      box-shadow: 0 0 0 2px rgba(139, 184, 232, 0.24), 0 9px 22px rgba(0, 0, 0, 0.42);
+    }
+
+    html.dark-mode .workout-quiz-card .submit-answer-btn:disabled {
+      background: #46566a;
+      color: #d9ecff;
     }
 
     html.dark-mode .workout-quiz-card .quiz-option.correct {
@@ -4209,18 +4414,37 @@ layout: sebook
       color: #ffbaba;
     }
 
+    html.dark-mode .workout-quiz-card .option-label {
+      background: #0b1f33;
+      border-color: #8BB8E8;
+      color: #d9ecff;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.26);
+    }
+
+    html.dark-mode .workout-quiz-card .option-checkbox {
+      background: #0b1f33;
+      border-color: #8BB8E8;
+    }
+
     html.dark-mode .workout-quiz-card .quiz-explanation {
-      background: #252525;
-      border-left-color: #4da3ff;
-      color: #e0e0e0;
+      background: #14283f;
+      border-color: #8BB8E8;
+      border-left-color: #FFD100;
+      color: #e6f4ff;
     }
 
     html.dark-mode .workout-quiz-card .explanation-title {
-      color: #4da3ff;
+      color: #FFD100;
     }
 
     html.dark-mode .workout-quiz-card .quiz-correct-answers {
-      color: #d0d0d8;
+      color: #d9ecff;
+    }
+
+    html.dark-mode .workout-quiz-card .correct-label-badge {
+      background: #FFD100;
+      color: #061d31;
+      border-color: #fff6c2;
     }
 
     html.dark-mode .workout-quiz-card .optional-answer-note {
@@ -4258,11 +4482,12 @@ layout: sebook
     }
 
     html.dark-mode .workout-progress-bar {
-      background: #333;
+      background: #172536;
+      border-color: #46566a;
     }
 
     html.dark-mode .workout-progress-fill {
-      background: #4da3ff;
+      background: linear-gradient(90deg, #8BB8E8 0 76%, #FFD100 76% 100%);
     }
 
     html.dark-mode .workout-results-content {
@@ -4514,9 +4739,32 @@ layout: sebook
         padding: 14px;
       }
 
+      .workout-quiz-card .quiz-card-meta {
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .workout-quiz-card .question-text {
+        font-size: 1em;
+      }
+
       .workout-quiz-card .quiz-option {
         align-items: flex-start;
         padding: 10px;
+      }
+
+      .workout-quiz-card .option-label {
+        width: 28px;
+        height: 28px;
+      }
+
+      .workout-quiz-card .option-feedback {
+        margin-left: 0;
+      }
+
+      .workout-quiz-card .submit-answer-btn,
+      .workout-quiz-card .next-btn {
+        width: 100%;
       }
 
       .workout-quiz-card .quiz-correct-answers {
@@ -5860,7 +6108,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', type);
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
+        var sourceHtml = '<div class="quiz-card-meta"><span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q) + '</div>';
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var optionFeedback = q.option_feedback || {};
@@ -5891,7 +6139,7 @@ layout: sebook
         optionsHtml += '</div>';
 
         var submitHtml = type === 'multiple'
-          ? '<button class="submit-answer-btn" disabled aria-keyshortcuts="Enter">Submit Answer</button>'
+          ? '<div class="quiz-action-row"><button class="submit-answer-btn" disabled aria-keyshortcuts="Enter"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Submit Answer</span></button></div>'
           : '';
         var shortcutsHtml = buildAnswerShortcutHint(optionObjs.length, type === 'multiple');
 
@@ -5907,7 +6155,7 @@ layout: sebook
         var explanationHtml = '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
-          '<button class="next-btn">Next</button>' +
+          '<button class="next-btn"><span>Next</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>' +
           buildNextShortcutHint() +
           '</div>';
 
@@ -6061,7 +6309,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', 'parsons');
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
+        var sourceHtml = '<div class="quiz-card-meta"><span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q) + '</div>';
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var isInline = display === 'inline';
@@ -6096,8 +6344,8 @@ layout: sebook
           '<div class="parsons-separator"><span>' + sepText + '</span></div>' +
           '<div class="parsons-target"></div>' +
           '<div class="parsons-actions">' +
-          '<button class="parsons-check-btn">Check Order</button>' +
-          '<button class="parsons-reset-btn">Reset</button></div>' +
+          '<button class="parsons-check-btn"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Check Order</span></button>' +
+          '<button class="parsons-reset-btn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset</span></button></div>' +
           '</div>' +
           buildParsonsShortcutHint(items.length) +
           '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels">' +
@@ -6105,7 +6353,7 @@ layout: sebook
           '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
-          '<button class="next-btn">Next</button>' +
+          '<button class="next-btn"><span>Next</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>' +
           buildNextShortcutHint() + '</div>';
 
         div.innerHTML = html;
