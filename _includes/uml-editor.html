@@ -3596,10 +3596,15 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       rememberExportAttribute(svg, 'width');
       rememberExportAttribute(svg, 'height');
 
-      var left = Math.min(0, box.x - EDITOR_CANVAS_PADDING);
-      var top = Math.min(0, box.y - EDITOR_CANVAS_PADDING);
-      var contentRight = box.x + box.width + EDITOR_CANVAS_PADDING;
-      var contentBottom = box.y + box.height + EDITOR_CANVAS_PADDING;
+      var contentBox = safeBBox(svg.querySelector('g') || svg);
+      var contentLeft = contentBox ? Math.min(box.x, contentBox.x) : box.x;
+      var contentTop = contentBox ? Math.min(box.y, contentBox.y) : box.y;
+      var contentRightEdge = contentBox ? Math.max(box.x + box.width, contentBox.x + contentBox.width) : box.x + box.width;
+      var contentBottomEdge = contentBox ? Math.max(box.y + box.height, contentBox.y + contentBox.height) : box.y + box.height;
+      var left = Math.min(0, contentLeft - EDITOR_CANVAS_PADDING);
+      var top = Math.min(0, contentTop - EDITOR_CANVAS_PADDING);
+      var contentRight = contentRightEdge + EDITOR_CANVAS_PADDING;
+      var contentBottom = contentBottomEdge + EDITOR_CANVAS_PADDING;
       var right = Math.max(contentRight, left + EDITOR_CANVAS_MIN_WIDTH);
       var bottom = Math.max(contentBottom, top + EDITOR_CANVAS_MIN_HEIGHT);
       var canvas = {
@@ -7628,7 +7633,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         announce('Release on a lifeline to add the message. Press Esc to cancel.', true);
         return;
       }
-      addSequenceRelationAtY(state.svg, state.spec, state.sourceItem.id, target.id, pt.y);
+      addSequenceRelationAtY(state.svg, state.spec, state.sourceItem.id, target.id, state.originY);
     }
 
     function updateExtendDrag(ev, finish) {
@@ -11648,7 +11653,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         renderer(output, text);
         var svg = output.querySelector('svg');
         if (svg) {
-          if (!ignoresLayout(type) && type !== 'folder-tree') {
+          if ((!ignoresLayout(type) || type === 'gitgraph') && type !== 'folder-tree') {
             applyEditorCanvasBounds(svg);
           }
           downloadBtn.disabled = false;
@@ -11756,8 +11761,13 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       renderDiagram();
     });
 
-    textarea.addEventListener('input', function () {
-      scheduleRender();
+    textarea.addEventListener('input', function (event) {
+      if (event && event.isTrusted === false) {
+        clearTimeout(debounceTimer);
+        renderDiagram();
+      } else {
+        scheduleRender();
+      }
       scheduleAutosave();
     });
     if (previewPane) {

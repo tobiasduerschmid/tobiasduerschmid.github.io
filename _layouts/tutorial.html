@@ -74,14 +74,21 @@
 
   <script>
     // Keep the tutorial title visible and switch to the compact nav treatment
-    // when the controls need more than one line.
+    // when the controls actually wrap onto another line.
     (function () {
       var nav = document.getElementById('navnav');
       if (!nav) return;
-      var SINGLE_LINE = 45;
+      var header = nav.querySelector('.tutorial-navbar-header');
+      var actions = nav.querySelector('.tutorial-navbar-actions');
       function check() {
         nav.classList.remove('tutorial-nav-compact');
-        if (nav.offsetHeight > SINGLE_LINE) {
+        var shouldCompact = false;
+        if (header && actions) {
+          var headerTop = Math.round(header.getBoundingClientRect().top);
+          var actionsTop = Math.round(actions.getBoundingClientRect().top);
+          shouldCompact = Math.abs(actionsTop - headerTop) > 8;
+        }
+        if (shouldCompact) {
           nav.classList.add('tutorial-nav-compact');
         }
         document.documentElement.style.setProperty('--tutorial-navbar-height', nav.offsetHeight + 'px');
