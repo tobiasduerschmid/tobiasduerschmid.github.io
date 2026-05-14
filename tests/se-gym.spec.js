@@ -744,6 +744,7 @@ test.describe('Personal Gym - Workout', () => {
 
     await page.locator('#workout-back-btn').click();
     await expect(page.locator('#gym-entrance')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toHaveCSS('display', 'grid');
     await expect(page.locator('#gym-workout')).toBeHidden();
   });
 
@@ -807,6 +808,7 @@ test.describe('Personal Gym - Workout', () => {
 
     await page.locator('#back-to-library-btn').click();
     await expect(page.locator('#gym-entrance')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toHaveCSS('display', 'grid');
     await expect(page.locator('#gym-workout')).toBeHidden();
   });
 

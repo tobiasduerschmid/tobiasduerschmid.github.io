@@ -567,7 +567,7 @@ layout: sebook
                   weak areas.</p>
               </div>
               <button class="gym-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
-                title="Add to workout" aria-label="Add Difficult Questions to workout">
+                title="Add to gym" data-original-title="Add to gym" aria-label="Add Difficult Questions to gym">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
               </button>
             </div>
@@ -595,7 +595,7 @@ layout: sebook
               <span class="gym-item-count">({{ qdata.questions | size }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -614,7 +614,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -635,7 +635,7 @@ layout: sebook
               <span class="gym-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -654,7 +654,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -824,8 +824,7 @@ layout: sebook
             <circle class="ear" cx="121" cy="105" r="4.4"></circle>
             <circle class="ear" cx="159" cy="105" r="4.4"></circle>
             <path class="skin-fill face-front" d="M122 101c0 -18 8 -30 18 -30s18 12 18 30c0 19 -8 31 -18 33s-18 -14 -18 -33z"></path>
-            <path class="hair hair-female hair-front" d="M108 116 C 100 78, 116 50, 140 50 C 164 50, 180 78, 172 116 C 168 110, 162 102, 154 98 C 148 95, 144 96, 142 102 L 140 130 L 138 102 C 136 96, 132 95, 126 98 C 118 102, 112 110, 108 116 Z"></path>
-            <path class="hair-shine" d="M134 60 c 4 -2 10 -2 14 0" opacity="0.5"></path>
+            <path class="hair hair-female hair-front" d="M104 122 C 92 70, 118 42, 140 42 C 162 42, 188 70, 176 122 C 168 105, 156 98, 145 96 C 142 96, 140 97, 140 100 C 140 97, 138 96, 135 96 C 124 98, 112 105, 104 122 Z"></path>
             <circle class="cheek" cx="124" cy="117" r="3.4"></circle>
             <circle class="cheek" cx="156" cy="117" r="3.4"></circle>
             <ellipse class="eye-white" cx="133" cy="106" rx="3.2" ry="2.8"></ellipse>
@@ -1134,7 +1133,6 @@ layout: sebook
       width: 100%;
       height: auto;
       overflow: hidden;
-      filter: drop-shadow(0 14px 24px var(--gym-svg-shadow));
     }
 
     .gym-topic-hero-svg .gym-floor ellipse {
@@ -1199,19 +1197,11 @@ layout: sebook
     }
 
     .gym-topic-hero-svg .topic-plate {
-      filter: drop-shadow(0 5px 7px rgba(0, 47, 82, 0.28)) drop-shadow(0 -1px 1px rgba(255, 255, 255, 0.55));
+      filter: none;
     }
 
-    .gym-topic-hero-svg .plate-bevel {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.75);
-      stroke-width: 2.2;
-      stroke-linecap: round;
-      opacity: 0.7;
-    }
-
-    html.dark-mode .gym-topic-hero-svg .plate-bevel {
-      stroke: rgba(255, 255, 255, 0.45);
+    .gym-topic-hero-svg .topic-plate .plate-bevel {
+      display: none;
     }
 
     .gym-topic-hero-svg .topic-plate path,
@@ -3085,13 +3075,14 @@ layout: sebook
     }
     .difficulty-filter-options {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
       gap: 10px;
     }
     .difficulty-filter-option {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
       min-height: 42px;
       padding: 8px 10px;
       border-radius: 8px;
@@ -3133,6 +3124,11 @@ layout: sebook
       border: 2px solid currentColor;
       flex-shrink: 0;
       box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12);
+    }
+    .difficulty-filter-text {
+      min-width: 0;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
     }
     .difficulty-filter-basic .difficulty-filter-swatch { background: #B9D9EB; color: #173a5e; }
     .difficulty-filter-intermediate .difficulty-filter-swatch { background: #97b8d6; color: #173a5e; }
@@ -4007,9 +4003,7 @@ layout: sebook
 
     html.dark-mode .post-content .gym-topic-hero-svg,
     html.dark-mode #gym-entrance .gym-topic-hero-svg {
-      filter:
-        drop-shadow(0 0 18px rgba(120, 200, 255, 0.24))
-        drop-shadow(0 14px 24px rgba(0, 0, 0, 0.55)) !important;
+      filter: none !important;
     }
 
     html.dark-mode .gym-topic-hero-svg .suit-highlight {
@@ -4724,10 +4718,20 @@ layout: sebook
 
       .workout-header-row {
         align-items: stretch;
+        gap: 10px;
       }
 
       .workout-header-row > * {
         width: 100%;
+      }
+
+      #back-to-library-btn {
+        justify-content: center;
+      }
+
+      .workout-progress-bar {
+        height: 8px;
+        margin: 12px auto 14px;
       }
 
       .timed-practice-clock {
@@ -4736,39 +4740,88 @@ layout: sebook
 
       .workout-quiz-card,
       .workout-flashcard {
+        margin: 12px 0;
         padding: 14px;
       }
 
+      .workout-quiz-card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 64px, transparent 66px),
+          linear-gradient(180deg, #ffffff, #f7fbff);
+      }
+
+      html.dark-mode .workout-quiz-card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.14) 0 64px, transparent 66px),
+          linear-gradient(180deg, #111f31, #0f1722);
+      }
+
       .workout-quiz-card .quiz-card-meta {
+        align-items: flex-start;
         gap: 6px;
         margin-bottom: 12px;
       }
 
+      .workout-source-badge,
+      .workout-quiz-card .quiz-difficulty {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
       .workout-quiz-card .question-text {
         font-size: 1em;
+        line-height: 1.4;
+        margin-bottom: 14px;
+        padding-bottom: 14px;
+      }
+
+      #main-content #se-gym-app .workout-quiz-card .question-text .uml-folder-tree-diagram-container {
+        padding: 8px 0 4px;
       }
 
       .workout-quiz-card .quiz-option {
         align-items: flex-start;
+        gap: 10px;
+        min-height: 56px;
         padding: 10px;
       }
 
       .workout-quiz-card .option-label {
         width: 28px;
         height: 28px;
+        font-size: 0.9em;
+      }
+
+      .workout-quiz-card .option-checkbox {
+        width: 20px;
+        height: 20px;
+        margin-top: 4px;
+      }
+
+      .workout-quiz-card .option-content {
+        line-height: 1.42;
       }
 
       .workout-quiz-card .option-feedback {
         margin-left: 0;
       }
 
+      .workout-quiz-card .quiz-action-row {
+        display: block;
+      }
+
       .workout-quiz-card .submit-answer-btn,
       .workout-quiz-card .next-btn {
+        margin-left: 0;
+        min-width: 0;
         width: 100%;
       }
 
       .workout-quiz-card .quiz-correct-answers {
+        align-items: flex-start;
         flex-wrap: wrap;
+        line-height: 1.4;
       }
 
       .parsons-container:not(.parsons-inline) .parsons-line {
@@ -4784,6 +4837,17 @@ layout: sebook
 
       .parsons-actions > button {
         flex: 1 1 140px;
+        min-height: 44px;
+      }
+
+      .parsons-line {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .parsons-bank,
+      .parsons-target {
+        padding: 10px;
       }
 
       .workout-breakdown {
@@ -4824,12 +4888,47 @@ layout: sebook
         grid-template-columns: 1fr;
       }
 
+      .workout-quiz-card,
+      .workout-flashcard {
+        padding: 12px;
+      }
+
+      .workout-quiz-card .quiz-option {
+        gap: 8px;
+        padding: 10px 8px;
+      }
+
+      .workout-quiz-card .option-label {
+        width: 26px;
+        height: 26px;
+      }
+
+      .workout-quiz-card .option-checkbox {
+        width: 18px;
+        height: 18px;
+      }
+
+      .workout-quiz-card .quiz-difficulty-prefix {
+        display: none;
+      }
+
       .confirm-modal-btns {
         flex-direction: column;
       }
 
       .confirm-modal-btns .gym-btn {
         width: 100%;
+      }
+    }
+
+    @media (max-width: 360px) {
+      #se-gym-app {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+      }
+
+      .workout-quiz-card .quiz-option {
+        min-height: 52px;
       }
     }
 
@@ -5306,6 +5405,19 @@ layout: sebook
 
       // ==================== LIBRARY VIEW ====================
 
+      function refreshLibraryKeepingElementInView(element) {
+        if (!element || typeof element.getBoundingClientRect !== 'function') {
+          refreshLibrary();
+          return;
+        }
+        var beforeTop = element.getBoundingClientRect().top;
+        refreshLibrary();
+        if (!document.documentElement.contains(element)) return;
+        var afterTop = element.getBoundingClientRect().top;
+        var offset = afterTop - beforeTop;
+        if (Math.abs(offset) > 1) window.scrollBy(0, offset);
+      }
+
       function refreshLibrary() {
         // Show milestone banner based on total exercise attempts (all instances, not unique)
         var milestoneBanner = document.getElementById('milestone-banner');
@@ -5356,7 +5468,12 @@ layout: sebook
           var icon = btn.querySelector('i');
           icon.className = inGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
           icon.setAttribute('aria-hidden', 'true');
-          btn.title = inGym ? 'Remove from gym' : 'Add to gym';
+          var buttonTitle = inGym ? 'Remove from gym' : 'Add to gym';
+          btn.title = buttonTitle;
+          btn.setAttribute('data-original-title', buttonTitle);
+          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
+            try { window.jQuery(btn).tooltip('hide').attr('data-original-title', buttonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
+          }
           var title = item.querySelector('.gym-item-title');
           var name = title ? title.textContent.trim() : 'item';
           btn.setAttribute('aria-label', (inGym ? 'Remove ' : 'Add ') + name + (inGym ? ' from gym' : ' to gym'));
@@ -5387,8 +5504,13 @@ layout: sebook
           difficultAddBtn.classList.toggle('in-gym', difficultInGym);
           var dIcon = difficultAddBtn.querySelector('i');
           dIcon.className = difficultInGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          difficultAddBtn.title = difficultInGym ? 'Remove from workout' : 'Add to workout';
-          if (difficultInGym) {
+	          var difficultButtonTitle = difficultInGym ? 'Remove from gym' : 'Add to gym';
+	          difficultAddBtn.title = difficultButtonTitle;
+	          difficultAddBtn.setAttribute('data-original-title', difficultButtonTitle);
+	          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
+	            try { window.jQuery(difficultAddBtn).tooltip('hide').attr('data-original-title', difficultButtonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
+	          }
+	          if (difficultInGym) {
             totalCards += difficultCards.length;
           }
         } else {
@@ -5422,7 +5544,7 @@ layout: sebook
             '<strong class="gym-item-title">' + data.title + '</strong>' +
             '<span class="gym-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -5436,7 +5558,7 @@ layout: sebook
             '<strong class="gym-item-title">Difficult Questions</strong>' +
             '<span class="gym-item-count">(' + difficultCards.length + ' cards)</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from workout" aria-label="Remove Difficult Questions from workout">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove Difficult Questions from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -5450,7 +5572,6 @@ layout: sebook
           // Bind remove buttons in selected section
           gymSelectedDiv.querySelectorAll('.gym-remove-selected').forEach(function (btn) {
             btn.addEventListener('click', function () {
-              if (!window.confirm('Remove this item from your gym?')) return;
               PersonalGym.removeFromGym(btn.dataset.type, btn.dataset.id);
               refreshLibrary();
             });
@@ -5538,14 +5659,14 @@ layout: sebook
       allAddBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
           PersonalGym.toggleGym(btn.dataset.type, btn.dataset.id);
-          refreshLibrary();
+          refreshLibraryKeepingElementInView(btn);
         });
       });
 
       // Bind difficult gym add button
       difficultAddBtn.addEventListener('click', function () {
         PersonalGym.toggleGym('difficult', 'difficult');
-        refreshLibrary();
+        refreshLibraryKeepingElementInView(difficultAddBtn);
       });
 
       maxCardsInput.addEventListener('input', refreshLibrary);
@@ -6765,7 +6886,7 @@ layout: sebook
       function goBackToLibrary() {
         stopWorkoutTimer(true);
         workoutView.style.display = 'none';
-        libraryView.style.display = 'block';
+        libraryView.style.display = '';
         refreshLibrary();
         scrollToTop();
       }
