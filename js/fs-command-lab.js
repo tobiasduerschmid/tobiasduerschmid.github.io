@@ -617,24 +617,30 @@
     // The card is a labeled group, not an image. Sighted users get the
     // tree visualization; AT users get a polite aria-live region that
     // announces row-level deltas ("Changed rows: docs/") on every
-    // transition (managed by TreeAnimator above) plus a sighted-or-AT
-    // <details> element with the full structural breakdown.
+    // transition (managed by TreeAnimator above) plus a sr-only div
+    // with the full structural breakdown (mirrors git-graph.js).
     container.setAttribute('role', 'group');
     container.setAttribute('aria-label', 'Filesystem command demo: ' + spec.command);
 
-    var detailsEl = document.createElement('details');
-    detailsEl.className = 'fs-command-lab__details';
-    var detailsSummary = document.createElement('summary');
-    detailsSummary.textContent = 'Full tree details (text)';
-    detailsEl.appendChild(detailsSummary);
     var detailsBody = document.createElement('div');
-    detailsBody.className = 'fs-command-lab__details-body';
-    detailsEl.appendChild(detailsBody);
-    container.appendChild(detailsEl);
+    detailsBody.className = 'sr-only fs-command-lab__a11y-details';
+    container.appendChild(detailsBody);
 
     function refreshDetails(state) {
       var text = buildTreeText(state || {});
       var ad = window.UMLAutoDescribe;
+      if (ad && typeof ad.describeVerbose === 'function') {
+        try {
+          var v = ad.describeVerbose('folder-tree', text);
+          var parts = [v.summary];
+          (v.sections || []).forEach(function (s) {
+            parts.push(s.heading + ':');
+            (s.items || []).forEach(function (it) { parts.push(it); });
+          });
+          detailsBody.textContent = parts.join('\n');
+          return;
+        } catch (_) { /* fall through */ }
+      }
       if (ad && typeof ad.describe === 'function') {
         try { detailsBody.textContent = ad.describe('folder-tree', text); return; } catch (_) { /* fall through */ }
       }
@@ -737,7 +743,7 @@
     var prevFocus = (document.activeElement instanceof HTMLElement) ? document.activeElement : null;
     document.body.appendChild(overlay);
 
-    var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), details > summary';
+    var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     function getFocusable() {
       var nodes = modal.querySelectorAll(FOCUSABLE);
       var out = [];
