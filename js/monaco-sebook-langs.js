@@ -153,6 +153,121 @@
       },
     });
 
+    // ---- Makefile Monarch tokenizer ----
+    // Monaco's CDN ships a basic-languages Makefile pack, but it lazy-loads
+    // and colors entire recipe lines as 'string'. Registering our own
+    // tokenizer here guarantees the language is ready before any model uses
+    // it and gives us token names that map cleanly to the sebook themes.
+    monaco.languages.register({ id: 'makefile' });
+    monaco.languages.setLanguageConfiguration('makefile', {
+      comments: { lineComment: '#' },
+      brackets: [['(', ')'], ['{', '}']],
+      autoClosingPairs: [
+        { open: '(', close: ')' }, { open: '{', close: '}' },
+        { open: '"', close: '"' }, { open: "'", close: "'" },
+      ],
+      surroundingPairs: [
+        { open: '(', close: ')' }, { open: '{', close: '}' },
+        { open: '"', close: '"' }, { open: "'", close: "'" },
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('makefile', {
+      defaultToken: '',
+      directives: [
+        'include', 'sinclude', '-include',
+        'ifeq', 'ifneq', 'ifdef', 'ifndef',
+        'else', 'endif',
+        'define', 'endef',
+        'override', 'export', 'unexport',
+        'vpath', 'undefine', 'private',
+      ],
+      builtinFunctions: [
+        'subst', 'patsubst', 'strip', 'findstring', 'filter', 'filter-out',
+        'sort', 'word', 'words', 'wordlist', 'firstword', 'lastword',
+        'dir', 'notdir', 'suffix', 'basename', 'addsuffix', 'addprefix',
+        'join', 'wildcard', 'realpath', 'abspath',
+        'if', 'or', 'and', 'foreach', 'call', 'value', 'eval',
+        'origin', 'flavor', 'shell', 'error', 'warning', 'info',
+        'guile', 'file',
+      ],
+      tokenizer: {
+        root: [
+          // Recipe lines start with a real Tab — the Tab Trap is part of
+          // what the makefile tutorial teaches, so we colour the rest of
+          // the line via a dedicated state.
+          [/^\t/, { token: 'white', next: '@recipe' }],
+          [/#.*$/, 'comment'],
+          // Special targets (.PHONY, .SUFFIXES, …)
+          [/^(\.[A-Z_]+)(\s*)(:)/, ['tag', '', 'delimiter']],
+          // Directives (ifeq, include, define, …)
+          [/^\s*(ifeq|ifneq|ifdef|ifndef|else|endif|define|endef|override|export|unexport|include|-include|sinclude|vpath|undefine|private)\b/, 'keyword'],
+          // Variable assignment: NAME = … (and := ?= += !=)
+          [/^([A-Za-z_][\w.-]*)(\s*)([:+?!]?=)/, ['variable', '', 'operator']],
+          // Target: NAME : … (excluding := which is an assignment op)
+          [/^([\w%.\-\/]+)(\s*)(:)(?!=)/, ['type', '', 'delimiter']],
+          { include: '@common' },
+        ],
+
+        recipe: [
+          [/$/, { token: '', next: '@pop' }],
+          // Recipe modifiers: @ (silent), - (ignore errors), + (always run)
+          [/^[@\-+]+/, 'operator'],
+          [/#.*$/, 'comment'],
+          { include: '@common' },
+          [/\\./, 'string.escape'],
+          [/[^#"'$\\\n]+/, ''],
+        ],
+
+        common: [
+          // Automatic variables: $@ $< $^ $? $* $+ $| $%
+          [/\$[@<^?*+|%]/, 'variable.predefined'],
+          // $(@D), $(<F), … — directory/file modifiers on automatic vars
+          [/\$\([@<^?*+|%][DF]\)/, 'variable.predefined'],
+          // Escaped $$
+          [/\$\$/, 'string.escape'],
+          // $(VAR …) — function call or variable reference
+          [/\$\(/, { token: 'variable', next: '@varParen' }],
+          [/\$\{/, { token: 'variable', next: '@varBrace' }],
+          // $X — single-character variable reference
+          [/\$[A-Za-z_]/, 'variable'],
+          [/"/, { token: 'string', next: '@dstring' }],
+          [/'/, { token: 'string', next: '@sstring' }],
+        ],
+
+        varParen: [
+          [/\)/, { token: 'variable', next: '@pop' }],
+          [/[A-Za-z][\w.-]*/, {
+            cases: {
+              '@builtinFunctions': 'support.function',
+              '@default': 'variable',
+            },
+          }],
+          { include: '@common' },
+          [/\(/, { token: 'variable', next: '@varParen' }],
+          [/[^)$"'(]+/, ''],
+        ],
+
+        varBrace: [
+          [/\}/, { token: 'variable', next: '@pop' }],
+          [/[A-Za-z][\w.-]*/, 'variable'],
+          { include: '@common' },
+          [/[^}$"']+/, ''],
+        ],
+
+        dstring: [
+          [/"/, { token: 'string', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\$\(/, { token: 'variable', next: '@varParen' }],
+          [/[^"\\$]+/, 'string'],
+        ],
+
+        sstring: [
+          [/'/, { token: 'string', next: '@pop' }],
+          [/[^']+/, 'string'],
+        ],
+      },
+    });
+
     // ---- Python tokenizer (with f-string interpolation support) ----
     monaco.languages.setMonarchTokensProvider('python', {
       defaultToken: '',
@@ -399,6 +514,8 @@
         { token: 'delimiter.tag.jsx', foreground: '800000' },
         { token: 'attribute.name.jsx', foreground: 'e50000' },
         { token: 'attribute.value.jsx', foreground: '0451a5' },
+        { token: 'variable.predefined', foreground: '0070c1', fontStyle: 'bold' },
+        { token: 'support.function', foreground: '795e26' },
       ],
       colors: {},
     });
@@ -432,6 +549,8 @@
         { token: 'delimiter.tag.jsx', foreground: 'b5b5b5' },
         { token: 'attribute.name.jsx', foreground: 'd4eaff' },
         { token: 'attribute.value.jsx', foreground: 'ffb88c' },
+        { token: 'variable.predefined', foreground: 'c8b0ff', fontStyle: 'bold' },
+        { token: 'support.function', foreground: 'fff0a0' },
       ],
       colors: {
         'editor.background': '#050608',

@@ -2072,6 +2072,98 @@
       },
     });
 
+    // ---- Makefile Monarch tokenizer ----
+    monaco.languages.register({ id: 'makefile' });
+    monaco.languages.setLanguageConfiguration('makefile', {
+      comments: { lineComment: '#' },
+      brackets: [['(', ')'], ['{', '}']],
+      autoClosingPairs: [
+        { open: '(', close: ')' }, { open: '{', close: '}' },
+        { open: '"', close: '"' }, { open: "'", close: "'" },
+      ],
+      surroundingPairs: [
+        { open: '(', close: ')' }, { open: '{', close: '}' },
+        { open: '"', close: '"' }, { open: "'", close: "'" },
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('makefile', {
+      defaultToken: '',
+      directives: [
+        'include', 'sinclude', '-include',
+        'ifeq', 'ifneq', 'ifdef', 'ifndef',
+        'else', 'endif',
+        'define', 'endef',
+        'override', 'export', 'unexport',
+        'vpath', 'undefine', 'private',
+      ],
+      builtinFunctions: [
+        'subst', 'patsubst', 'strip', 'findstring', 'filter', 'filter-out',
+        'sort', 'word', 'words', 'wordlist', 'firstword', 'lastword',
+        'dir', 'notdir', 'suffix', 'basename', 'addsuffix', 'addprefix',
+        'join', 'wildcard', 'realpath', 'abspath',
+        'if', 'or', 'and', 'foreach', 'call', 'value', 'eval',
+        'origin', 'flavor', 'shell', 'error', 'warning', 'info',
+        'guile', 'file',
+      ],
+      tokenizer: {
+        root: [
+          [/^\t/, { token: 'white', next: '@recipe' }],
+          [/#.*$/, 'comment'],
+          [/^(\.[A-Z_]+)(\s*)(:)/, ['tag', '', 'delimiter']],
+          [/^\s*(ifeq|ifneq|ifdef|ifndef|else|endif|define|endef|override|export|unexport|include|-include|sinclude|vpath|undefine|private)\b/, 'keyword'],
+          [/^([A-Za-z_][\w.-]*)(\s*)([:+?!]?=)/, ['variable', '', 'operator']],
+          [/^([\w%.\-\/]+)(\s*)(:)(?!=)/, ['type', '', 'delimiter']],
+          { include: '@common' },
+        ],
+        recipe: [
+          [/$/, { token: '', next: '@pop' }],
+          [/^[@\-+]+/, 'operator'],
+          [/#.*$/, 'comment'],
+          { include: '@common' },
+          [/\\./, 'string.escape'],
+          [/[^#"'$\\\n]+/, ''],
+        ],
+        common: [
+          [/\$[@<^?*+|%]/, 'variable.predefined'],
+          [/\$\([@<^?*+|%][DF]\)/, 'variable.predefined'],
+          [/\$\$/, 'string.escape'],
+          [/\$\(/, { token: 'variable', next: '@varParen' }],
+          [/\$\{/, { token: 'variable', next: '@varBrace' }],
+          [/\$[A-Za-z_]/, 'variable'],
+          [/"/, { token: 'string', next: '@dstring' }],
+          [/'/, { token: 'string', next: '@sstring' }],
+        ],
+        varParen: [
+          [/\)/, { token: 'variable', next: '@pop' }],
+          [/[A-Za-z][\w.-]*/, {
+            cases: {
+              '@builtinFunctions': 'support.function',
+              '@default': 'variable',
+            },
+          }],
+          { include: '@common' },
+          [/\(/, { token: 'variable', next: '@varParen' }],
+          [/[^)$"'(]+/, ''],
+        ],
+        varBrace: [
+          [/\}/, { token: 'variable', next: '@pop' }],
+          [/[A-Za-z][\w.-]*/, 'variable'],
+          { include: '@common' },
+          [/[^}$"']+/, ''],
+        ],
+        dstring: [
+          [/"/, { token: 'string', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\$\(/, { token: 'variable', next: '@varParen' }],
+          [/[^"\\$]+/, 'string'],
+        ],
+        sstring: [
+          [/'/, { token: 'string', next: '@pop' }],
+          [/[^']+/, 'string'],
+        ],
+      },
+    });
+
     // ---- Python Monarch tokenizer with f-string interpolation support ----
     monaco.languages.setMonarchTokensProvider('python', {
       defaultToken: '',
@@ -2361,6 +2453,9 @@
         { token: 'delimiter.tag.jsx', foreground: '800000' },
         { token: 'attribute.name.jsx', foreground: 'e50000' },
         { token: 'attribute.value.jsx', foreground: '0451a5' },
+        // Makefile automatic vars ($@ $< $^) and built-in functions ($(shell), $(wildcard)).
+        { token: 'variable.predefined', foreground: '0070c1', fontStyle: 'bold' },
+        { token: 'support.function', foreground: '795e26' },
       ],
       colors: {},
     });
@@ -2401,6 +2496,9 @@
         { token: 'delimiter.tag.jsx',           foreground: 'b5b5b5' },
         { token: 'attribute.name.jsx',          foreground: 'd4eaff' },
         { token: 'attribute.value.jsx',         foreground: 'ffb88c' },
+        // Makefile automatic vars ($@ $< $^) and built-in functions ($(shell), $(wildcard)).
+        { token: 'variable.predefined',         foreground: 'c8b0ff', fontStyle: 'bold' },
+        { token: 'support.function',            foreground: 'fff0a0' },
       ],
       colors: {
         // Near-true-black background. Pushed all the way down to #050608 so
