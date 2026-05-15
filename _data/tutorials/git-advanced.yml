@@ -240,14 +240,14 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git log --oneline main         # find the old commit SHA'
-      - 'git switch --detach <old-sha>  # enter detached HEAD at it'
-      - 'cat calculator.py              # look around, read freely'
-      - 'git switch main                # return; no changes made'
+      - 'git log --oneline main'
+      - 'git switch --detach <old-sha>'
+      - 'cat calculator.py'
+      - 'git switch main'
       distractors:
-      - 'git reset --hard <old-sha>     # DANGER: rewinds main'
-      - 'git checkout <old-sha> .       # DANGER: overwrites working dir'
-      - 'git branch -f main <old-sha>   # DANGER: moves branch pointer'
+      - 'git reset --hard <old-sha>'
+      - 'git checkout <old-sha> .'
+      - 'git branch -f main <old-sha>'
       explanation: Detached HEAD is the safe inspection mode — HEAD anchored to the commit, no branch pointer moved. The distractors all *modify* state (main's pointer, working directory), which is the opposite of inspection.
     # Apply-level: students must reason from the "branches are 41-byte pointers"
     # concept to a quantitative scenario. Every wrong answer maps to a specific
@@ -656,16 +656,15 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'echo "hello world" | git hash-object --stdin         # in your main repo'
-      - '# note the SHA — call it SHA-A'
-      - 'cd /tmp && git init -q other && cd other             # fresh unrelated repo'
-      - 'echo "hello world" | git hash-object --stdin         # same bytes'
-      - '# output is IDENTICAL — call it SHA-B; SHA-A == SHA-B'
+      - 'sha_a=$(echo "hello world" | git hash-object --stdin)'
+      - 'cd /tmp && git init -q other && cd other'
+      - 'sha_b=$(echo "hello world" | git hash-object --stdin)'
+      - 'test "$sha_a" = "$sha_b"'
       distractors:
-      - 'git push origin main          # sharing has nothing to do with hashing'
-      - 'git config user.email alice   # author metadata is in commits, not blobs'
-      - 'git commit -m "hello"         # commit SHA includes parent/time; not the demo'
-      explanation: Content-addressability is a property of *bytes hashed*, independent of repo, branch, or user. Distractor 1 (push) is irrelevant — hashes are local. Distractor 2 (email) affects commit objects but not blob hashes. Distractor 3 (commit) creates a commit object whose SHA depends on parent + time + author — not the cleanest demo of blob deduplication.
+      - 'git push origin main'
+      - 'git config user.email alice'
+      - 'git commit -m "hello"'
+      explanation: Content-addressability is a property of *bytes hashed*, independent of repo, branch, or user. `git push origin main` is irrelevant — hashes are local. `git config user.email alice` affects commit objects but not blob hashes. `git commit -m "hello"` creates a commit object whose SHA depends on parent + time + author — not the cleanest demo of blob deduplication.
 # Pedagogy: PRIMM — Predict + Run (mistake-based familiarization with the "stash missed my new file" trap)
 - title: Saving Work Temporarily with git stash
   view: git_graph
@@ -1026,17 +1025,17 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git stash                       # save WIP, clean working tree'
-      - 'git switch -c hotfix-xyz        # dedicated branch for the hotfix'
-      - 'git commit -am "Hotfix: ..."    # fix + commit on the hotfix branch'
+      - 'git stash'
+      - 'git switch -c hotfix-xyz'
+      - 'git commit -am "Hotfix: ..."'
       - 'git switch main && git merge hotfix-xyz --no-edit'
-      - 'git branch -d hotfix-xyz        # clean up the merged hotfix branch'
-      - 'git stash pop                   # restore your WIP on main'
+      - 'git branch -d hotfix-xyz'
+      - 'git stash pop'
       distractors:
-      - 'git commit -m "WIP"             # pollutes history if pushed'
-      - 'git restore .                   # discards WIP permanently'
-      - 'git stash drop                  # would throw away the WIP'
-      - 'git push origin stash           # you cannot push a stash'
+      - 'git commit -m "WIP"'
+      - 'git restore .'
+      - 'git stash drop'
+      - 'git push origin stash'
       explanation: The canonical context-switch sequence. Each distractor is a common novice mistake — committing WIP pollutes shared history; `git restore` destroys work; dropping the stash before popping loses it; stashes are local-only (no push). Learn this six-line sequence as a unit.
 # Pedagogy: PRIMM — Predict (apply Step 3's object model to predict new-SHA outcome)
 - title: 'Cherry-Pick: Copy One Specific Commit'
@@ -1336,17 +1335,17 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git switch main                        # be on the target branch'
-      - 'git cherry-pick <sha>                  # CONFLICT reported'
-      - 'git status                             # see which files conflict'
-      - '# edit the conflicted file: remove <<<<<<<, =======, >>>>>>> markers'
-      - 'git add <file>                         # mark resolved'
-      - 'git cherry-pick --continue             # finalize with original message'
+      - 'git switch main'
+      - 'git cherry-pick <sha>'
+      - 'git status'
+      - 'edit <file> to remove <<<<<<<, =======, >>>>>>> markers'
+      - 'git add <file>'
+      - 'git cherry-pick --continue'
       distractors:
-      - 'git commit -m "resolve conflict"       # breaks the cherry-pick flow'
-      - 'git cherry-pick --force                # not a real flag'
-      - 'git merge --continue                   # wrong verb — not a merge'
-      - 'git reset --hard                       # would abort + discard'
+      - 'git commit -m "resolve conflict"'
+      - 'git cherry-pick --force'
+      - 'git merge --continue'
+      - 'git reset --hard'
       explanation: The post-conflict verb is `cherry-pick --continue`, not `commit`. The other distractors are common reflex mistakes — `--force` doesn't exist here; `merge --continue` is a different operation; `reset --hard` discards rather than finalizes. Use `--abort` to bail out cleanly.
 # Pedagogy: PRIMM — Investigate + negative-transfer callout (blame is for context, not accusation)
 - title: 'git blame: Who Last Changed This Line (and Why)?'
@@ -1625,15 +1624,15 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git blame -L 42,42 parser.py                 # find SHA of last change to line 42'
-      - '# copy the SHA from the first column'
-      - 'git show <that-sha>                          # read commit message + full diff'
-      - '# is the commit message a reformatter? If yes, try -w:'
-      - 'git blame -w -L 42,42 parser.py              # ignore whitespace-only commits'
+      - 'git blame -L 42,42 parser.py'
+      - 'copy <that-sha> from the first column'
+      - 'git show <that-sha>'
+      - 'if the commit is a reformatter, rerun blame with -w'
+      - 'git blame -w -L 42,42 parser.py'
       distractors:
-      - 'git log parser.py | grep 42    # slow, imprecise'
-      - 'git diff HEAD parser.py        # shows YOUR uncommitted edits, not authorship'
-      - 'git status parser.py           # unrelated to authorship'
+      - 'git log parser.py | grep 42'
+      - 'git diff HEAD parser.py'
+      - 'git status parser.py'
       explanation: The blame → show chain answers "why does this line exist?" The `-w` fallback defuses reformatter masking. The distractors are all plausible-looking commands that don't answer the authorship question — common cul-de-sacs when learners panic-grep instead of reaching for blame.
 # Pedagogy: PRIMM — Predict (estimate log₂(N) before running) + worked example with fading
 - title: 'git bisect: Binary Search for the Commit That Broke Things'
@@ -1983,16 +1982,15 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'grep -q "return x if x >= 0 else -x" calculator.py   # verify HEAD currently fails'
-      - 'git bisect start HEAD HEAD~100   # bad=HEAD, good=100 back'
+      - 'grep -q "return x if x >= 0 else -x" calculator.py'
+      - 'git bisect start HEAD HEAD~100'
       - 'git bisect run sh -c "grep -q ''return x if x >= 0 else -x'' calculator.py"'
-      - '# Git prints: "<sha> is the first bad commit"'
-      - 'git bisect reset                 # return HEAD to pre-bisect state'
+      - 'git bisect reset'
       distractors:
-      - 'git bisect stop                  # not a real subcommand'
-      - 'git bisect --force               # not a real flag'
-      - 'git reflog                       # unrelated to bisect workflow'
-      - 'git bisect run -- sh test.sh HEAD HEAD~100   # wrong arg order'
+      - 'git bisect stop'
+      - 'git bisect --force'
+      - 'git reflog'
+      - 'git bisect run -- sh test.sh HEAD HEAD~100'
       explanation: Bisect needs boundaries first (`start <bad> <good>`), *then* `run`. The `run` script's exit code (0 = good, nonzero = bad) drives the binary search — ~log₂(100) ≈ 7 iterations. `reset` is non-negotiable; skipping it leaves HEAD on a historical midpoint commit and your code "looks weird."
 # Pedagogy: PRIMM — Investigate + worked example with fading (rebase = cherry-pick a series)
 - title: 'Rebase: Integrate Changes Without a Merge Commit'
@@ -2284,17 +2282,17 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git switch feature                # be on the branch being rebased'
-      - 'git rebase main                   # replay feature commits onto latest main'
-      - 'git switch main                   # target the integration branch'
-      - 'git merge feature                 # fast-forward, no merge commit'
-      - 'git branch -d feature             # clean up the now-merged branch'
+      - 'git switch feature'
+      - 'git rebase main'
+      - 'git switch main'
+      - 'git merge feature'
+      - 'git branch -d feature'
       distractors:
-      - 'git push --force                  # DANGER on shared branches'
-      - 'git merge feature --no-ff         # would create a merge commit — not ff'
-      - 'git rebase feature                # backwards — rebases main onto feature'
-      - 'git reset --hard feature          # destroys main''s history'
-      explanation: The correct direction is "rebase the shorter branch onto the longer." Running `rebase feature` from main (distractor 3) does the opposite — rebases main onto feature, usually rewriting commits you didn't want to touch. `--no-ff` prevents fast-forward (that's the point of this strategy — a linear, no-merge-commit result). `--force` has no place in a local pre-PR workflow.
+      - 'git push --force'
+      - 'git merge feature --no-ff'
+      - 'git rebase feature'
+      - 'git reset --hard feature'
+      explanation: The correct direction is "rebase the shorter branch onto the longer." Running `rebase feature` from main does the opposite — rebases main onto feature, usually rewriting commits you didn't want to touch. `--no-ff` prevents fast-forward (that's the point of this strategy — a linear, no-merge-commit result). `--force` has no place in a local pre-PR workflow.
 # Pedagogy: PRIMM — Modify + Make (the second threshold step: reshape history with intent)
 - title: 'Interactive Rebase: Edit, Squash, Reorder, Drop'
   view: git_graph
@@ -2714,17 +2712,16 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git log --oneline -5               # inspect what we''re rewriting'
+      - 'git log --oneline -5'
       - 'GIT_SEQUENCE_EDITOR="sed -i ''2,4s/^pick/squash/''" git rebase -i HEAD~4'
-      - '# Git replays commit 1 as pick, squashes commits 2-4 into it'
       - 'git commit --amend -m "Refactor: cleanup notes in calculator.py"'
-      - 'git log --oneline -3               # verify: 4 commits became 1'
+      - 'git log --oneline -3'
       distractors:
-      - 'git push --force                   # DANGER: never on shared history'
-      - 'git rebase -i HEAD~4 --squash-all  # not a real flag'
-      - 'git reset --hard HEAD~4            # destroys commits without combining'
-      - 'git merge --squash HEAD~4          # wrong tool for intra-branch squash'
-      explanation: The canonical pre-PR cleanup. Distractor 1 is the cardinal rule broken. Distractor 2 is invented. Distractor 3 discards instead of squashing (no single commit preserves the combined patch). Distractor 4 (`merge --squash`) is for *branch-to-branch* collapse, not for cleaning up commits on the current branch.
+      - 'git push --force'
+      - 'git rebase -i HEAD~4 --squash-all'
+      - 'git reset --hard HEAD~4'
+      - 'git merge --squash HEAD~4'
+      explanation: The canonical pre-PR cleanup. `git push --force` breaks the cardinal rule. `git rebase -i HEAD~4 --squash-all` invents a flag. `git reset --hard HEAD~4` discards instead of squashing (no single commit preserves the combined patch). `git merge --squash HEAD~4` is for *branch-to-branch* collapse, not for cleaning up commits on the current branch.
 # Pedagogy: PRIMM — Predict + Investigate (parents-count prediction reveals bisect implications)
 - title: 'Squash Merge: Collapse a Feature Into a Single Commit'
   view: git_graph
@@ -2942,17 +2939,17 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git switch main                   # target branch'
-      - 'git merge --squash feature-stats  # stages combined diff; NO commit yet'
-      - 'git status                        # verify: staged changes, no commit'
+      - 'git switch main'
+      - 'git merge --squash feature-stats'
+      - 'git status'
       - 'git commit -m "Add statistics module (mean, variance, stddev)"'
-      - 'git branch -D feature-stats       # force-delete (not ff-merged in Git''s view)'
+      - 'git branch -D feature-stats'
       distractors:
-      - 'git merge feature-stats           # creates a merge commit — wrong strategy'
-      - 'git branch -d feature-stats       # refuses: the branch''s commits aren''t on main'
-      - 'git cherry-pick feature-stats     # only copies the tip commit, not combined'
-      - 'git push --force                  # unneeded and dangerous'
-      explanation: '`--squash` stages but does NOT commit — the extra `git commit` step is intentional so you write a fresh, whole-feature message. Use capital `-D` to delete: Git''s fast-forward definition says the feature branch is not merged (only a *new* combined commit landed on main), so lowercase `-d` refuses. Distractor 3 (`cherry-pick`) would only copy the *tip* commit''s patch, not the cumulative diff of the whole branch.'
+      - 'git merge feature-stats'
+      - 'git branch -d feature-stats'
+      - 'git cherry-pick feature-stats'
+      - 'git push --force'
+      explanation: '`--squash` stages but does NOT commit — the extra `git commit` step is intentional so you write a fresh, whole-feature message. Use capital `-D` to delete: Git''s fast-forward definition says the feature branch is not merged (only a *new* combined commit landed on main), so lowercase `-d` refuses. `git cherry-pick feature-stats` would only copy the *tip* commit''s patch, not the cumulative diff of the whole branch.'
 # Pedagogy: PRIMM — Predict + negative-transfer callout (reset --hard + force-push is the wrong reflex)
 - title: 'Revert: Safely Undo a Pushed Commit'
   view: git_graph
@@ -3182,15 +3179,15 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git log --oneline -5                   # find the bad SHA'
-      - 'git revert <bad-sha> --no-edit          # create the anti-matter commit'
-      - 'git log --oneline -3                   # verify: both bad + revert are there'
-      - 'git push                                # succeeds — no history rewrite'
+      - 'git log --oneline -5'
+      - 'git revert <bad-sha> --no-edit'
+      - 'git log --oneline -3'
+      - 'git push'
       distractors:
-      - 'git reset --hard <bad-sha>^            # rewrites main, breaks teammates'
-      - 'git push --force-with-lease            # overwrites remote'
-      - 'git rebase -i <bad-sha>^ drop          # rewrites downstream commits'
-      - 'rm -rf .git && git clone <url>         # "burning down the repo" antipattern'
+      - 'git reset --hard <bad-sha>^'
+      - 'git push --force-with-lease'
+      - 'git rebase -i <bad-sha>^ drop'
+      - 'rm -rf .git && git clone <url>'
       explanation: '**Revert-and-push** is the only sequence that leaves every existing SHA untouched. Each distractor rewrites history in some way — which is exactly the failure mode revert exists to avoid. Run the safe one often enough that it becomes reflex.'
 # Pedagogy: PRIMM — Predict + Investigate (the gitlink reveals submodules are pointers, not photocopies)
 - title: 'Git Submodules: Add & Clone'
@@ -3464,10 +3461,10 @@ steps:
       - 'git commit -m "Add math-utils submodule at v0.1.0"'
       - 'cd /tutorial && git clone --recursive myproject colleague-clone'
       distractors:
-      - 'git submodule init /tutorial/math-utils.git vendor/math-utils   # init alone does not fetch'
-      - 'git clone myproject colleague-clone                              # submodule folder empty'
-      - 'git submodule fetch /tutorial/math-utils.git                     # not a valid subcommand'
-      - 'git merge /tutorial/math-utils.git                               # confuses a nested repo with a branch'
+      - 'git submodule init /tutorial/math-utils.git vendor/math-utils'
+      - 'git clone myproject colleague-clone'
+      - 'git submodule fetch /tutorial/math-utils.git'
+      - 'git merge /tutorial/math-utils.git'
       explanation: '`git submodule add` combines clone + config in one step; `init` without `update` is half the story. Plain `git clone` creates an empty submodule folder. `git submodule fetch` is invented. `git merge` on a URL is a syntax error. Verb selection is what separates a working submodule workflow from a broken one.'
 # Pedagogy: PRIMM — Predict + Modify (the two-step dance: inner repo first, outer repo second)
 - title: 'Updating Submodules: Upstream Bumps & Resync'
@@ -3674,17 +3671,17 @@ steps:
       display: block
       lines:
       - 'cd /tutorial/myproject/vendor/math-utils'
-      - 'git fetch                                # pulls new commits into submodule'
-      - 'git checkout origin/HEAD                 # move submodule HEAD to new SHA'
-      - 'cd /tutorial/myproject                   # back to outer repo'
-      - 'git add vendor/math-utils                # stage the gitlink SHA change'
+      - 'git fetch'
+      - 'git checkout origin/HEAD'
+      - 'cd /tutorial/myproject'
+      - 'git add vendor/math-utils'
       - 'git commit -m "Bump math-utils to v0.2.0"'
       distractors:
-      - 'git pull                                # ambiguous in detached-HEAD submodule'
-      - 'git submodule update                    # resets TO pinned SHA — opposite of what we want'
-      - 'git commit -am "Bump"                   # would sweep in unrelated WD changes'
-      - 'git merge origin/HEAD                   # creates a merge commit inside submodule'
-      explanation: '`git submodule update` (distractor 2) is exactly the *wrong* verb here — it resets the submodule back to whatever the *outer* tree pins, erasing the new checkout. That''s the single most common submodule confusion, and getting the direction right is the heart of this step. `git pull` in detached HEAD is unreliable. `-am` would include unrelated changes. `merge` creates a commit structure we don''t want inside the submodule.'
+      - 'git pull'
+      - 'git submodule update'
+      - 'git commit -am "Bump"'
+      - 'git merge origin/HEAD'
+      explanation: '`git submodule update` is exactly the *wrong* verb here — it resets the submodule back to whatever the *outer* tree pins, erasing the new checkout. That''s the single most common submodule confusion, and getting the direction right is the heart of this step. `git pull` in detached HEAD is unreliable. `-am` would include unrelated changes. `merge` creates a commit structure we don''t want inside the submodule.'
 # Pedagogy: PRIMM — Investigate (status messages map directly to SHA-comparison outcomes)
 - title: 'Submodule Internals: What ''Content Changed'' Means'
   view: editor
@@ -4005,17 +4002,17 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'cd vendor/math-utils                       # (1) enter the submodule'
-      - 'git switch -c update-halve                 # (2) attach HEAD to a branch (NOT detached)'
-      - 'git commit -am "Add halve helper"          # (3) create the commit inside submodule'
-      - 'git push -u origin update-halve            # (4) publish the submodule SHA to its remote'
-      - 'cd ../..                                   # (5) return to outer repo'
-      - 'git add vendor/math-utils && git commit -m "Bump math-utils: add halve"  # (6) pin new SHA and push outer'
+      - 'cd vendor/math-utils'
+      - 'git switch -c update-halve'
+      - 'git commit -am "Add halve helper"'
+      - 'git push -u origin update-halve'
+      - 'cd ../..'
+      - 'git add vendor/math-utils && git commit -m "Bump math-utils: add halve"'
       distractors:
-      - 'git commit -am "..."          # BEFORE switching to a branch — detached HEAD, un-pushable'
-      - 'git submodule update --init --recursive   # resets inner HEAD, losing your new commit'
-      - 'git push --force origin update-halve      # unneeded; no history to overwrite'
-      - 'git rebase origin/main        # rewrites SHAs you just created; defeats (4)'
+      - 'git commit -am "..."'
+      - 'git submodule update --init --recursive'
+      - 'git push --force origin update-halve'
+      - 'git rebase origin/main'
       explanation: 'Each ceremony step preserves one invariant — branch-attached HEAD, commit-exists-in-submodule, SHA-on-remote, SHA-pinned-in-outer, outer-pushed. Each distractor breaks one. Committing first orphans the commit; `submodule update` resets it; `--force` is a shared-history violation; `rebase` rewrites the commits you just tried to publish. Knowing the invariants is the schema that makes the recipe stick.'
 # Pedagogy: productive failure (Bjork) — compose 5+ tools under pressure with no hand-holding
 - title: 'Capstone: On-Call Debugging Under Pressure'
@@ -4387,10 +4384,10 @@ steps:
       type: parsons
       display: block
       lines:
-      - 'git reflog      # find the pre-rebase SHA of `feature`'
-      - 'git reset --hard <pre-rebase-sha>      # undo your rebase locally'
-      - 'git pull        # merge Alice''s changes into your (unrebased) branch'
-      - 'git push        # succeeds — no history was rewritten'
+      - 'git reflog'
+      - 'git reset --hard <pre-rebase-sha>'
+      - 'git pull'
+      - 'git push'
       distractors:
       - 'git push --force'
       - 'git rebase --abort'
