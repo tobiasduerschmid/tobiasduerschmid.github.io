@@ -7,57 +7,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* ───────────────────────────────────────────
-   Tutorial navbar button hover/focus colours
-   The global a:hover rule sets a yellow (#FFD100) background, but the inline
-   color:#fff on these links prevents the text from turning black.
-   Force black text/icons so they remain legible on the yellow highlight.
-─────────────────────────────────────────── */
-html:not(.dark-mode) #autoSaveLabel:hover, html:not(.dark-mode) #autoSaveLabel:focus,
-html:not(.dark-mode) #resetStepBtn:hover,    html:not(.dark-mode) #resetStepBtn:focus,
-html:not(.dark-mode) #solutionBtn:hover,     html:not(.dark-mode) #solutionBtn:focus,
-html:not(.dark-mode) #printBtn:hover,        html:not(.dark-mode) #printBtn:focus,
-html:not(.dark-mode) #tts-read-btn:hover,   html:not(.dark-mode) #tts-read-btn:focus-visible,
-html:not(.dark-mode) .tutorial-help-menu-toggle:hover,
-html:not(.dark-mode) .tutorial-help-menu-toggle:focus {
-  color: #000 !important;
-}
-
-/* <button> and <label> don't inherit the global a:hover styles — match them explicitly */
-html:not(.dark-mode) #tts-read-btn:hover,
-html:not(.dark-mode) #tts-read-btn:focus-visible,
-html:not(.dark-mode) #autoSaveLabel:hover,
-html:not(.dark-mode) #autoSaveLabel:focus,
-html:not(.dark-mode) .tutorial-help-menu-toggle:hover,
-html:not(.dark-mode) .tutorial-help-menu-toggle:focus {
-  background-color: #FFD100 !important;
-  border-radius: 4px !important;
-}
-
-html.dark-mode #tts-read-btn:hover,
-html.dark-mode #tts-read-btn:focus-visible,
-html.dark-mode #autoSaveLabel:hover,
-html.dark-mode #autoSaveLabel:focus,
-html.dark-mode .tutorial-help-menu-toggle:hover,
-html.dark-mode .tutorial-help-menu-toggle:focus {
-  background-color: #005587 !important;
-  color: #fff !important;
-  border-radius: 4px !important;
-}
-
-/* Dark-mode resting state: the button uses inline `color:#2774AE` (UCLA blue),
-   which sits at ~3.74:1 against the dark page bg and fails 1.4.3. Override
-   with a brighter blue (matches the cookie-notice dark-mode accent). The
-   inline style's specificity forces !important here. */
-html.dark-mode #tts-read-btn {
-  color: #5fa8d3 !important;
-  border-color: #5fa8d3 !important;
-}
-
-#tts-read-btn {
-  color: #fff;
-}
-
-/* ───────────────────────────────────────────
    Dark mode toggle pill (in tutorial navbar)
 ─────────────────────────────────────────── */
 .tvm-dark-toggle-wrap {
@@ -122,12 +71,12 @@ html.dark-mode #tts-read-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .tutorial-help-menu-icon {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -157,7 +106,7 @@ html.dark-mode #tts-read-btn {
   min-height: 32px;
   padding: 8px 14px;
   color: #003B5C;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
   text-decoration: none;
@@ -557,7 +506,11 @@ html:not(.dark-mode) .tvm-left-tab.active {
   width: 100%;
   border-collapse: collapse;
   margin: 14px 0;
-  font-size: 0.9em;
+  font-size: 1em;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: clip;
 }
 
 .tvm-step-instructions thead tr {
@@ -2687,7 +2640,7 @@ html:not(.dark-mode) .tvm-terminal-loading {
   background: #161618;
   color: #888;
   padding: 4px 14px;
-  font-size: 12px;
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3431,7 +3384,7 @@ html:not(.dark-mode) .tvm-http-empty-state {
    readers get the announcement via role="status" aria-live="polite".
    Color #c9d2dc on #141416 = 11.6:1; #2c3138 on #f5f6f8 = 12.5:1. */
 .tvm-step-status {
-  font-size: 12px;
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   color: #c9d2dc;
   margin-right: 10px;
@@ -3749,10 +3702,33 @@ html:not(.dark-mode) .tvm-test-summary.partial {
 .tvm-error button:hover { background: #1a8ae6; }
 
 /* ───────────────────────────────────────────
-   Tutorial navbar: hide title when compact
+   Tutorial navbar: keep title visible when compact
 ─────────────────────────────────────────── */
 #navnav.tutorial-nav-compact .navbar-header {
+  display: flex !important;
+  flex: 1 1 100% !important;
+  min-width: 0;
+}
+
+#navnav.tutorial-nav-compact #seBookBtn {
   display: none !important;
+}
+
+#navnav.tutorial-nav-compact .tutorial-navbar-title {
+  max-width: 100%;
+  min-width: 0;
+  margin-left: 15px;
+}
+
+body.tutorial-layout #navnav .navbar-right > label.tutorial-nav-control,
+body.tutorial-layout #navnav .navbar-right > a.tutorial-nav-link,
+body.tutorial-layout #navnav .navbar-right > a.tutorial-nav-link:visited,
+body.tutorial-layout #navnav .navbar-right > button.tutorial-nav-button,
+body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
+  font-size: var(--font-size-readable-min, 16px) !important;
+  min-height: 44px;
+  padding: 8px 12px !important;
+  border-radius: var(--radius-md, 8px) !important;
 }
 
 /* ───────────────────────────────────────────
@@ -4220,28 +4196,46 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 
 /* ---- Quiz card (matches quiz.html structure) ---- */
 .tvm-quiz-panel .quiz-container {
-  background: #1c1c28;
-  border: 1px solid #5a5a78;
-  border-radius: 12px;
-  padding: 12px;
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 88px, transparent 90px),
+    linear-gradient(180deg, #111f31, #0f1722);
+  border: 1.5px solid #8BB8E8;
+  border-radius: 8px;
+  padding: 18px;
   margin: 0;
   font-family: 'Inter', sans-serif;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.16);
+}
+.tvm-quiz-panel .quiz-container::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(90deg, #8BB8E8 0 44%, #FFD100 44% 56%, #8BB8E8 56% 100%);
+}
+.tvm-quiz-panel .quiz-container > * {
+  position: relative;
+  z-index: 1;
 }
 .tvm-quiz-panel .quiz-header h3 {
   margin-top: 0;
-  color: #7ec8e3;
+  color: #FFD100;
   font-weight: 700;
 }
 .tvm-quiz-panel .quiz-progress-bar {
-  height: 4px;
-  background: #2a2a3a;
-  border-radius: 2px;
-  margin: 8px 0;
+  height: 10px;
+  background: #172536;
+  border: 1px solid #46566a;
+  border-radius: 999px;
+  margin: 12px 0 16px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 .tvm-quiz-panel .progress-fill {
   height: 100%;
-  background: #0078d4;
+  background: linear-gradient(90deg, #8BB8E8 0 76%, #FFD100 76% 100%);
   transition: width 0.4s ease;
 }
 
@@ -4250,11 +4244,13 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 .tvm-quiz-panel .quiz-question-card.active { display: block; }
 
 .tvm-quiz-panel .question-text {
-  font-size: 1.05em;
+  font-size: 1.08em;
   font-weight: 600;
-  margin-bottom: 8px;
-  line-height: 1.3;
-  color: #e0e0f0;
+  margin: 0 0 16px;
+  padding: 0 0 16px;
+  line-height: 1.35;
+  color: #f0f7ff;
+  border-bottom: 1px solid #31455d;
 }
 .tvm-quiz-panel .question-text p,
 .tvm-quiz-panel .option-content p,
@@ -4290,31 +4286,50 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 }
 
 /* Options */
-.tvm-quiz-panel .quiz-options { display: flex; flex-direction: column; gap: 4px; }
+.tvm-quiz-panel .quiz-options { display: flex; flex-direction: column; gap: 8px; }
 .tvm-quiz-panel .quiz-option {
   display: flex;
-  align-items: center;
-  padding: 6px 12px;
-  border: 1.5px solid #6a737d;
-  border-radius: 6px;
-  background: #22222e;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1.5px solid #46566a;
+  border-radius: 8px;
+  background: #172536;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
   font-size: 0.93em;
-  line-height: 1.3;
-  color: #c8c8d8;
+  line-height: 1.35;
+  color: #e6f4ff;
   font-family: inherit;
   width: 100%;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
+}
+.tvm-quiz-panel .option-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-top: 2px;
+}
+.tvm-quiz-panel .question-text img,
+.tvm-quiz-panel .question-text svg,
+.tvm-quiz-panel .option-content img,
+.tvm-quiz-panel .option-content svg,
+.tvm-quiz-panel .explanation-text img,
+.tvm-quiz-panel .explanation-text svg {
+  max-width: 100%;
+  height: auto;
 }
 .tvm-quiz-panel .quiz-option:hover:not([disabled]):not(.selected) {
-  border-color: #0078d4;
-  background: #1e2840;
+  border-color: #8BB8E8;
+  background: #20344b;
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.42);
+  transform: translateY(-1px);
 }
 .tvm-quiz-panel .quiz-option.selected {
-  border-color: #0078d4;
-  background: #1a2a40;
-  box-shadow: 0 0 0 1px #0078d4;
+  border-color: #8BB8E8;
+  background: #18314a;
+  box-shadow: 0 0 0 2px rgba(139, 184, 232, 0.24), 0 9px 22px rgba(0, 0, 0, 0.42);
 }
 .tvm-quiz-panel .quiz-option.correct {
   border-color: #4caf50;
@@ -4338,11 +4353,11 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 .tvm-quiz-panel .quiz-option.incorrect::after { content: "✗"; }
 /* Light-mode default — dark text on light amber */
 .tvm-quiz-panel .option-feedback {
-  margin: 4px 0 8px 28px;
-  padding: 8px 10px;
+  margin: 2px 0 8px 50px;
+  padding: 10px 12px;
   border-left: 3px solid #d97706;
   background: #fff7ed;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 0.9em;
   line-height: 1.4;
   color: #7c2d12;
@@ -4368,14 +4383,14 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 }
 .tvm-quiz-panel .option-checkbox {
   display: none;
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid #6a737d;
-  border-radius: 3px;
-  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #8BB8E8;
+  border-radius: 5px;
+  margin-top: 5px;
   flex-shrink: 0;
   transition: all 0.2s;
-  background: #22222e;
+  background: #0b1f33;
 }
 .tvm-quiz-panel [data-type="multiple"] .option-checkbox { display: block; }
 .tvm-quiz-panel .quiz-option.selected .option-checkbox {
@@ -4385,39 +4400,50 @@ html.dark-mode .tvm-quiz-panel .option-feedback code {
 .tvm-quiz-panel .quiz-option.selected .option-checkbox::after {
   content: '';
   display: block;
-  width: 4px;
-  height: 8px;
+  width: 5px;
+  height: 10px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
-  margin: 0px 3px;
+  margin: 1px 5px;
 }
 .tvm-quiz-panel .option-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #0b1f33;
+  border: 1px solid #8BB8E8;
   font-weight: 800;
-  margin-right: 12px;
   /* WCAG 1.4.3: #7090a0 on the dark panel bg #22222e was ~4.68:1 — marginal.
      #9aa6b5 lifts to ~5.7:1 while keeping the muted-blue label hue. Light-mode
      override sits at line ~3589. */
-  color: #9aa6b5;
+  color: #d9ecff;
   font-size: 0.88em;
   flex-shrink: 0;
+  line-height: 1;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.26);
 }
 
 /* Explanation */
 .tvm-quiz-panel .quiz-explanation {
-  margin-top: 10px;
-  padding: 10px 15px;
-  background: rgba(0, 120, 212, 0.08);
-  border-left: 3px solid #0078d4;
-  border-radius: 4px;
-  font-size: 0.91em;
-  line-height: 1.4;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #14283f;
+  border: 1.5px solid #8BB8E8;
+  border-left: 5px solid #FFD100;
+  border-radius: 8px;
+  font-size: 0.95em;
+  line-height: 1.45;
+  color: #e6f4ff;
 }
 .tvm-quiz-panel .explanation-title {
   font-weight: 700;
-  color: #7ec8e3;
+  color: #FFD100;
   margin-bottom: 6px;
-  font-size: 0.88em;
+  font-size: 0.95em;
   text-transform: uppercase;
 }
 .tvm-quiz-panel .explanation-text { color: #a8a8c0; }
@@ -4506,32 +4532,97 @@ html.dark-mode .tvm-quiz-panel .parsons-shortcut-label {
   color: #f0f0ff;
 }
 
+html.dark-mode .tvm-quiz-panel .quiz-container {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 88px, transparent 90px),
+    linear-gradient(180deg, #111f31, #0f1722) !important;
+  border-color: #8BB8E8 !important;
+  color: #e6f4ff !important;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.16) !important;
+}
+
+html.dark-mode .tvm-quiz-panel .question-text {
+  color: #f0f7ff !important;
+  border-bottom-color: #31455d;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-option {
+  background: #172536 !important;
+  border-color: #46566a !important;
+  color: #e6f4ff !important;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-option:hover:not([disabled]):not(.selected) {
+  border-color: #8BB8E8 !important;
+  background: #20344b !important;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-option.selected {
+  border-color: #8BB8E8 !important;
+  background: #18314a !important;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-option.correct {
+  border-color: #4fa34f !important;
+  background: rgba(26, 127, 60, 0.24) !important;
+  color: #b7f5b7 !important;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-option.incorrect {
+  border-color: #ff8585 !important;
+  background: rgba(184, 30, 44, 0.24) !important;
+  color: #ffd2d2 !important;
+}
+
+html.dark-mode .tvm-quiz-panel .option-label {
+  background: #0b1f33;
+  border-color: #8BB8E8;
+  color: #d9ecff !important;
+}
+
+html.dark-mode .tvm-quiz-panel .quiz-explanation {
+  background: #14283f !important;
+  border-color: #8BB8E8 !important;
+  border-left-color: #FFD100 !important;
+  color: #e6f4ff !important;
+}
+
 /* Buttons */
 .tvm-quiz-panel .submit-answer-btn,
 .tvm-quiz-panel .next-btn,
 .tvm-quiz-panel .restart-btn,
 .tvm-quiz-panel .tvm-quiz-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #0078d4;
   color: white;
   border: none;
-  padding: 7px 14px;
-  border-radius: 5px;
-  font-weight: 600;
-  margin-top: 10px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-top: 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
   width: 100%;
   font-size: 0.93em;
   font-family: inherit;
+  min-height: 42px;
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.28);
 }
 .tvm-quiz-panel .submit-answer-btn:disabled {
   background: #4b5563;
-  color: #fff;
+  color: #d9ecff;
   cursor: not-allowed;
+  box-shadow: none;
 }
 .tvm-quiz-panel .submit-answer-btn:hover:not(:disabled),
 .tvm-quiz-panel .next-btn:hover,
-.tvm-quiz-panel .restart-btn:hover { background: #005fa3; }
+.tvm-quiz-panel .restart-btn:hover {
+  background: #005fa3;
+  transform: translateY(-1px);
+}
 .tvm-quiz-panel .tvm-quiz-continue-btn { background: #1a7f3c; }
 .tvm-quiz-panel .tvm-quiz-continue-btn:hover { background: #187238; }
 
@@ -4544,17 +4635,24 @@ html.dark-mode .tvm-quiz-panel .parsons-shortcut-label {
   gap: 8px;
   margin-top: 10px;
   font-weight: 600;
-  color: #8888a0;
+  color: #d9ecff;
   font-size: 0.88em;
+  flex-wrap: wrap;
 }
 .tvm-quiz-panel .correct-labels { display: inline-flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .tvm-quiz-panel .correct-label-badge {
-  background: #0078d4;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  background: #FFD100;
+  color: #061d31;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 999px;
   font-weight: 800;
   font-size: 0.84em;
+  border: 1px solid #fff6c2;
 }
 .tvm-quiz-panel .optional-answer-note {
   margin-left: 8px;
@@ -4693,6 +4791,26 @@ html:not(.dark-mode) .parsons-reset-btn { background: #eee; color: #333; }
   letter-spacing: 0.02em;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .tvm-quiz-panel .quiz-question-card,
+  .tvm-quiz-panel .progress-fill,
+  .tvm-quiz-panel .quiz-option,
+  .tvm-quiz-panel .submit-answer-btn,
+  .tvm-quiz-panel .next-btn,
+  .tvm-quiz-panel .restart-btn,
+  .tvm-quiz-panel .tvm-quiz-continue-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .tvm-quiz-panel .quiz-option:hover:not([disabled]),
+  .tvm-quiz-panel .submit-answer-btn:hover:not(:disabled),
+  .tvm-quiz-panel .next-btn:hover,
+  .tvm-quiz-panel .restart-btn:hover {
+    transform: none !important;
+  }
+}
+
 /* ── Light mode overrides ── */
 html:not(.dark-mode) .tvm-quiz-panel {
   scrollbar-color: #b0b0c0 transparent;
@@ -4708,14 +4826,26 @@ html:not(.dark-mode) .tvm-quiz-gate-header strong { color: #111; }
 html:not(.dark-mode) .tvm-quiz-gate-header p { color: #666; }
 
 html:not(.dark-mode) .tvm-quiz-panel .quiz-container {
-  background: #ffffff;
-  border-color: #e1e4e8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.2) 0 88px, transparent 90px),
+    linear-gradient(180deg, #ffffff, #f7fbff);
+  border-color: #8BB8E8;
+  box-shadow: 0 16px 34px rgba(0, 59, 92, 0.14);
+}
+html:not(.dark-mode) .tvm-quiz-panel .quiz-container::before {
+  background: linear-gradient(90deg, #2774AE 0 44%, #FFD100 44% 56%, #2774AE 56% 100%);
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-header h3 { color: #2774AE; }
-html:not(.dark-mode) .tvm-quiz-panel .quiz-progress-bar { background: #f0f2f5; }
-html:not(.dark-mode) .tvm-quiz-panel .progress-fill { background: #2774AE; }
-html:not(.dark-mode) .tvm-quiz-panel .question-text { color: #1a1a1a; }
+html:not(.dark-mode) .tvm-quiz-panel .quiz-progress-bar {
+  background: #dbeeff;
+  border-color: #bfd4e5;
+  box-shadow: inset 0 1px 2px rgba(0, 59, 92, 0.12);
+}
+html:not(.dark-mode) .tvm-quiz-panel .progress-fill { background: linear-gradient(90deg, #2774AE 0 76%, #FFD100 76% 100%); }
+html:not(.dark-mode) .tvm-quiz-panel .question-text {
+  color: #17324d;
+  border-bottom-color: #c8d6e2;
+}
 html:not(.dark-mode) .tvm-quiz-panel .question-text code,
 html:not(.dark-mode) .tvm-quiz-panel .option-content code,
 html:not(.dark-mode) .tvm-quiz-panel .explanation-text code {
@@ -4734,17 +4864,19 @@ html:not(.dark-mode) .tvm-quiz-panel .explanation-text pre code {
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option {
   background: white;
-  border-color: #767676;
-  color: #1a1a1a;
+  border-color: #9db7cc;
+  color: #17324d;
+  box-shadow: 0 5px 14px rgba(0, 59, 92, 0.06);
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option:hover:not([disabled]):not(.selected) {
   border-color: #2774AE;
-  background: #f0f7ff;
+  background: #eef7ff;
+  box-shadow: 0 8px 20px rgba(0, 59, 92, 0.12);
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option.selected {
   border-color: #2774AE;
   background: #eef6fc;
-  box-shadow: 0 0 0 1px #2774AE;
+  box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.18), 0 8px 20px rgba(0, 59, 92, 0.12);
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option.correct {
   border-color: #1f7a35;
@@ -4756,19 +4888,26 @@ html:not(.dark-mode) .tvm-quiz-panel .quiz-option.incorrect {
   background: #ffeef0;
   color: #721c24;
 }
-html:not(.dark-mode) .tvm-quiz-panel .option-checkbox { background: white; border-color: #767676; }
+html:not(.dark-mode) .tvm-quiz-panel .option-checkbox { background: white; border-color: #6b879d; }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option.selected .option-checkbox {
   background: #2774AE;
   border-color: #2774AE;
 }
 /* WCAG 1.4.3: #6a737d on white was ~4.82:1 — bumped to #5a6573 (~5.9:1). */
-html:not(.dark-mode) .tvm-quiz-panel .option-label { color: #5a6573; }
+html:not(.dark-mode) .tvm-quiz-panel .option-label {
+  background: #dbeeff;
+  border-color: #8BB8E8;
+  color: #17324d;
+  box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.08);
+}
 html:not(.dark-mode) .tvm-quiz-panel .quiz-explanation {
-  background: #f8f9fa;
+  background: #eef7ff;
+  border-color: #8BB8E8;
   border-left-color: #2774AE;
+  color: #17324d;
 }
 html:not(.dark-mode) .tvm-quiz-panel .explanation-title { color: #2774AE; }
-html:not(.dark-mode) .tvm-quiz-panel .explanation-text { color: #444; }
+html:not(.dark-mode) .tvm-quiz-panel .explanation-text { color: #17324d; }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-shortcuts-hint,
 html:not(.dark-mode) .tvm-quiz-panel .quiz-next-shortcut-hint,
 html:not(.dark-mode) .tvm-quiz-panel .quiz-result-shortcut-hint,
@@ -4794,12 +4933,16 @@ html:not(.dark-mode) .tvm-quiz-panel .restart-btn { background: #2774AE; }
 html:not(.dark-mode) .tvm-quiz-panel .submit-answer-btn:hover:not(:disabled),
 html:not(.dark-mode) .tvm-quiz-panel .next-btn:hover,
 html:not(.dark-mode) .tvm-quiz-panel .restart-btn:hover { background: #1e5c8a; }
-html:not(.dark-mode) .tvm-quiz-panel .submit-answer-btn:disabled { background: #6c757d; color: #fff; }
+html:not(.dark-mode) .tvm-quiz-panel .submit-answer-btn:disabled { background: #a1c2db; color: #17324d; }
 html:not(.dark-mode) .tvm-quiz-panel .tvm-quiz-continue-btn { background: #1a7f3c; }
 html:not(.dark-mode) .tvm-quiz-panel .tvm-quiz-continue-btn:hover { background: #187238; }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-results h4 { color: #1a1a1a; }
-html:not(.dark-mode) .tvm-quiz-panel .quiz-correct-answers { color: #444; }
-html:not(.dark-mode) .tvm-quiz-panel .correct-label-badge { background: #2774AE; }
+html:not(.dark-mode) .tvm-quiz-panel .quiz-correct-answers { color: #17324d; }
+html:not(.dark-mode) .tvm-quiz-panel .correct-label-badge {
+  background: #FFD100;
+  color: #061d31;
+  border-color: #b38b00;
+}
 html:not(.dark-mode) .tvm-quiz-panel .score-display { color: #2774AE; }
 html:not(.dark-mode) .tvm-quiz-panel .score-summary { color: #555; }
 html:not(.dark-mode) .tvm-quiz-panel .tvm-quiz-threshold { color: #888; }
@@ -4891,20 +5034,20 @@ body.lecture-mode #navnav .navbar-right {
   min-height: 23px;
 }
 body.lecture-mode #navnav .navbar-brand {
-  font-size: 13px !important;
+  font-size: 16px !important;
   padding-left: 10px !important;
   line-height: 1.4;
 }
 body.lecture-mode #navnav .navbar-right {
   padding-right: 10px !important;
   gap: 10px !important;
-  font-size: 11px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode #navnav .navbar-right a,
 body.lecture-mode #navnav .navbar-right button,
 body.lecture-mode #navnav .navbar-right label,
 body.lecture-mode #navnav .tutorial-help-menu-toggle {
-  font-size: 11px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode #navnav .tutorial-help-menu-toggle {
   width: 28px;
@@ -4912,7 +5055,7 @@ body.lecture-mode #navnav .tutorial-help-menu-toggle {
   padding: 0;
 }
 body.lecture-mode #navnav .tutorial-help-menu-panel a {
-  font-size: 13px !important;
+  font-size: 16px !important;
 }
 body.lecture-mode .tutorial-page {
   top: var(--tutorial-navbar-height, 23px) !important;
@@ -5065,4 +5208,36 @@ html.dark-mode .tvm-gg-modified {
 }
 html.dark-mode .tvm-gg-deleted {
   background: linear-gradient(to bottom, transparent 60%, #f14c4c 60%) !important;
+}
+
+/* Readability baseline for the tutorial workspace. Older tutorial chrome used
+   dense IDE-style 10-14px labels; keep readable text and controls at the same
+   paragraph-size floor as the rest of SEBook. */
+body.tutorial-layout,
+body.tutorial-layout .tvm-root {
+  font-size: var(--font-size-readable-min, 16px);
+  line-height: 1.55;
+}
+
+body.tutorial-layout .tvm-root :is(
+  p, li, td, th, label, input, textarea, select, button, summary, code, pre, kbd,
+  .tvm-left-tab, .tvm-right-tab, .tvm-tab, .tvm-file-tab, .tvm-step-btn,
+  .tvm-step-title, .tvm-step-meta, .tvm-view-btn, .tvm-editor-mode-btn,
+  .tvm-output-popout-btn, .tvm-editor-pane-popout-btn, .tvm-diagram-type-btn,
+  .tvm-diagram-zoom-label, .tvm-terminal, .tvm-output-panel, .tvm-file-tree,
+  .tvm-test-desc, .tvm-error p, .tvm-quiz-gate-header strong,
+  .tvm-quiz-gate-header p, .quiz-option, .question-text, .option-feedback,
+  .quiz-difficulty, .parsons-label, .parsons-separator, .parsons-line,
+  .tvm-http-meta, .tvm-http-empty-state, .tvm-popup-blocked-toast
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px)) !important;
+}
+
+body :is(
+  .tvm-btn, .tvm-file-tab, .tvm-editor-tabs, .tvm-diagram-type-btn,
+  .tvm-diagram-zoom-btn, .tvm-diagram-zoom-label, .tvm-diagram-color-btn,
+  .tvm-diagram-color-reset-btn, .tvm-step-content, .tvm-step-controls,
+  .tvm-quiz-panel, .tvm-debug-view
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px)) !important;
 }

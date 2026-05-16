@@ -3,7 +3,44 @@ title: Design with Reuse
 layout: sebook
 ---
 
-# A Motivating Story: 11 Lines That Broke the Internet
+# Design with Reuse
+
+Software reuse means designing a solution so that useful parts can serve more than one context without being copied and re-edited by hand. Reuse is not just a matter of saving typing. Its real value is that shared behavior can be improved, tested, and documented in one place.
+
+Good reuse starts with a stable responsibility. A module that hides a clear decision, exposes a small interface, and depends on few accidental details is much easier to reuse than code that only happens to work in one screen, one assignment, or one data shape.
+
+## Why Reuse Matters
+
+Reuse helps a team when it reduces repeated reasoning, not merely repeated code.
+
+| Reuse goal | Design pressure |
+|---|---|
+| Avoid duplicated fixes | Put shared behavior behind one tested implementation. |
+| Support multiple clients | Keep the public interface small and explicit. |
+| Allow independent change | Hide implementation decisions that callers do not need. |
+| Preserve readability | Reuse concepts, not tangled convenience shortcuts. |
+
+Poor reuse has the opposite effect. A shared helper with too many parameters, hidden global state, or caller-specific branches becomes harder to change than two straightforward implementations. The goal is not to make everything generic. The goal is to recognize the parts of the design that are genuinely stable across contexts.
+
+## Reuse and Other Design Principles
+
+Design with reuse builds directly on the other design principles in this chapter:
+
+* [Separation of Concerns](/SEBook/designprinciples/soc.html) helps identify which part of the system is reusable and which part is specific to the current UI, workflow, or environment.
+* [Information Hiding](/SEBook/designprinciples/informationhiding.html) lets callers depend on what a component promises, not how it happens to work internally.
+* [SOLID](/SEBook/designprinciples/solid.html) gives object-oriented techniques for extension, substitution, and dependency control when reuse spans multiple implementations.
+
+## A Practical Test
+
+Before extracting reusable code, ask three questions:
+
+1. **What decision is this module hiding?** If the answer is vague, the abstraction is probably premature.
+2. **Who will depend on this interface?** Reuse across real clients is more trustworthy than reuse imagined for a hypothetical future.
+3. **What should be allowed to change later?** A reusable component should protect callers from likely internal change, not freeze the first implementation forever.
+
+The best reusable designs are boring at the boundary: clear names, small inputs, predictable outputs, and no surprising dependencies.
+
+## A Motivating Story: 11 Lines That Broke the Internet
 
 On March 22, 2016, a JavaScript developer named Azer Koçulu had a dispute with npm — over a trademark conflict with the messaging-app company Kik — and decided to unpublish all of his packages. One of them — **`left-pad`** — was 11 lines of code that prepended characters to the front of a string for alignment. It had on the order of **a few dozen GitHub stars** and around **one million downloads per week** at the time, because it sat transitively underneath React, Babel, and most modern web build pipelines.
 
@@ -13,7 +50,7 @@ Eleven lines. One unilateral decision. The entire JavaScript ecosystem brought t
 
 This story is not just a curiosity — it is a window into **Design with Reuse**, the practice of building new software mostly by composing existing modules. Reuse is one of the most powerful levers in modern software engineering, and one of the most dangerous if applied without judgment.
 
-# The Vision vs. The Reality of Reuse
+## The Vision vs. The Reality of Reuse
 
 The **vision** of reuse goes back to Malcolm Douglas McIlroy's famous 1968 NATO conference paper, *["Mass Produced Software Components"](https://www.cs.dartmouth.edu/~doug/components.txt)*. McIlroy imagined a future where software engineering would resemble hardware engineering: developers would shop in a catalog of pre-built, well-documented, highly compatible components and snap them together to build new systems.
 
@@ -39,7 +76,7 @@ end note
 
 Reuse, then, is not free. It is an engineering decision with **costs, benefits, and risks** that have to be weighed deliberately — and the right weighing depends on whether the code came from inside your own team or from a third party.
 
-# Two Kinds of Reuse: Internal vs. External
+## Two Kinds of Reuse: Internal vs. External
 
 | Kind                | Where the code comes from                                  | Examples                                            |
 |---------------------|------------------------------------------------------------|-----------------------------------------------------|
@@ -48,7 +85,7 @@ Reuse, then, is not free. It is an engineering decision with **costs, benefits, 
 
 These two cases demand **different design strategies**. With internal reuse you usually have access to the source, the original author, and the original test suite. With external reuse you have to treat the module as a partially-known black box that can change, disappear, or turn malicious.
 
-# Why Reuse At All? The Benefits
+## Why Reuse At All? The Benefits
 
 Done well, reuse delivers two big wins *(Barros-Justo et al., 2018)*:
 
@@ -59,9 +96,9 @@ That second point is the deeper one. A library with 50,000 users is, statistical
 
 > **A flagship "reuse done right" example.** Python's `requests` library has been maintained since 2011, has a friendlier API than the standard library's `http.client`, and is downloaded over 500 million times per month. A team that adopts `requests` instead of rolling their own HTTP client typically saves weeks of work — and inherits years of bug fixes around redirects, timeouts, retries, chunked encoding, certificate verification, and proxy handling that almost no in-house implementation would get right on the first try. *Most* of the cautionary tales in this chapter exist *because* most reuse succeeds — the success stories simply aren't memorable.
 
-# How to Design with External Reuse
+## How to Design with External Reuse
 
-## The Python Ecosystem: A Low-Entry-Barrier Reuse Culture
+### The Python Ecosystem: A Low-Entry-Barrier Reuse Culture
 
 Most modern languages ship a culture of external reuse. In Python:
 
@@ -75,7 +112,7 @@ response.json()             # {'current_user_url': 'https://api.github.com/user'
 
 One `pip install requests` and you have a battle-tested HTTP client. This is what the McIlroy vision looks like when it works. But every dependency you add is a long-term commitment — and that commitment has principles attached to it.
 
-## Design Principle 1: Keep Versions of Your Dependencies Fixed
+### Design Principle 1: Keep Versions of Your Dependencies Fixed
 
 In April 2023, the Python library `urllib3` released version 2.0.0 with an API-breaking change: the `_make_request` method no longer accepted a `chunked` keyword argument. The `requests` library used `urllib3` internally; the `docker` library used `requests`. Suddenly, code that hadn't been touched in months started failing with:
 
@@ -112,7 +149,7 @@ python_version = "3.9"
 
 Then `pipenv install` resolves *one* set of versions and `pipenv run <program>` runs against them. Anyone cloning the repo gets the exact same dependency tree.
 
-## Design Principle 2: Update Dependencies to Receive Security Patches
+### Design Principle 2: Update Dependencies to Receive Security Patches
 
 Pinning is necessary but not sufficient — because dependencies are not a one-time investment.
 
@@ -136,7 +173,7 @@ The takeaway is double-edged:
 
 So: **regularly check for security patches and bug fixes**, and be aware that an update might come bundled with API-breaking changes (see urllib3 above). The discipline is to update *intentionally*, on your own schedule, with a test suite that catches breakage early.
 
-## Design Principle 3: Strive for Fewer Package Dependencies
+### Design Principle 3: Strive for Fewer Package Dependencies
 
 Now back to `left-pad`. The package adds characters to the front of a string — 11 lines. Anyone could rewrite it from memory in two minutes. Yet by 2016, this trivial module sat under React, under Babel, under the build of essentially every major web application.
 
@@ -148,7 +185,7 @@ When the author unpublished it, all of those applications broke. The lesson is s
 
 There is a tension between this principle and Principle 2 (use well-maintained dependencies to inherit fixes). The resolution is: *prefer the smallest number of well-maintained dependencies that genuinely save you implementation effort.*
 
-## Design Principle 4: Prefer Well-Maintained, Popular Modules — But Fit Beats Popularity
+### Design Principle 4: Prefer Well-Maintained, Popular Modules — But Fit Beats Popularity
 
 Two more heuristics for choosing a candidate:
 
@@ -157,7 +194,7 @@ Two more heuristics for choosing a candidate:
 
 But popularity has a ceiling: **fit to your context is more important than popularity**. The most starred CSV parser on GitHub is useless if it cannot handle the 2 GB files your domain actually produces.
 
-## The Cost-Benefit Scale for External Reuse
+### The Cost-Benefit Scale for External Reuse
 
 When considering whether to take on an external dependency, weigh:
 
@@ -170,11 +207,11 @@ When considering whether to take on an external dependency, weigh:
 
 That last cost is sneaky: **relying heavily on reused code limits your changeability** once you need behavior the library does not offer. A small piece of glue is easy. A whole application built around a framework's worldview is hard to leave *(Xu et al., 2020)*.
 
-# How to Design with Internal Reuse
+## How to Design with Internal Reuse
 
 Internal reuse looks easier on the surface — you wrote the code, you can read it, you can ask the author at the next standup. But the most expensive internal-reuse failure in software history says otherwise.
 
-## The Ariane 5 Disaster
+### The Ariane 5 Disaster
 
 On June 4, 1996, the maiden flight of the European Space Agency's **Ariane 5** rocket lifted off — and self-destructed **37 seconds later**, taking roughly **$370 million** in payload with it.
 
@@ -190,7 +227,7 @@ The **[ESA Inquiry Board's Recommendation R5](https://www.esa.int/Newsroom/Press
 
 > *"Review all flight software (including embedded software), and in particular: Identify all implicit assumptions made by the code and its justification documents on the values of quantities provided by the equipment. Check these assumptions against the restrictions on use of the equipment."*
 
-## Design Principle 5: Identify Violated Assumptions
+### Design Principle 5: Identify Violated Assumptions
 
 Software that worked in one context might not work in another. Internal reuse therefore demands that you:
 
@@ -200,7 +237,7 @@ Software that worked in one context might not work in another. Internal reuse th
 
 NASA's empirical approach is a striking illustration: integration and system-level testing of spacecraft software is extremely hard to reproduce on Earth, so NASA has long preferred to reuse **flight-heritage software** — code that has already flown successfully on a prior mission, whose assumptions have been validated by the harshest real-world testing available.
 
-## The Cost-Benefit Scale for Internal Reuse
+### The Cost-Benefit Scale for Internal Reuse
 
 | Effort to **adapt** the reusable module (cost) | Effort **saved** by reusing it (benefit) |
 |------------------------------------------------|------------------------------------------|
@@ -208,7 +245,7 @@ NASA's empirical approach is a striking illustration: integration and system-lev
 | Effort to create / identify reusable modules   | Testing effort                           |
 |                                                | Free update propagation                  |
 
-# A Special Case: Libraries vs. Frameworks
+## A Special Case: Libraries vs. Frameworks
 
 A particularly important reuse decision is *what kind of thing* you are reusing. Libraries and frameworks look superficially similar — both bundle reusable code — but the **direction of control** differs:
 
@@ -241,11 +278,11 @@ This pattern is called the **Hollywood Principle**, or **Inversion of Control**:
 
 Why it matters for reuse: a framework **makes more decisions for you** and gives you **less flexibility**, but in exchange it **hides a lot of complexity** so you write less code. The trade-off: decisions to use a framework are **harder to reverse later**, because the framework shapes the structure of your whole application. Choosing Express, React, Spring, or Rails is closer to a marriage than a date.
 
-# Making Design Decisions Well
+## Making Design Decisions Well
 
 The lecture closes with a broader point: reuse decisions are *one kind* of design decision, and the same general design-thinking habits apply.
 
-## Habit 1: Think of Many Design Alternatives
+### Habit 1: Think of Many Design Alternatives
 
 In a classic study, researchers asked three teams to design the same system *(Petre, 2009)*:
 
@@ -259,7 +296,7 @@ In follow-up work, *Tofan et al. (2013)* found that simply prompting designers t
 
 Practical rule: when you have a "good" design, **try to think of a better one** — and a *different* one. The purpose of idea generation is to *broaden up*; you narrow down later in evaluation.
 
-## Habit 2: Delay Decisions That Need More Information
+### Habit 2: Delay Decisions That Need More Information
 
 Not every design decision has to be made today. If a decision is likely to change or depends on information you don't yet have:
 
@@ -268,13 +305,13 @@ Not every design decision has to be made today. If a decision is likely to chang
 
 This keeps your design flexible at exactly the points where it most needs to be flexible.
 
-## Habit 3: Solve Simpler Problems First (Divide and Conquer)
+### Habit 3: Solve Simpler Problems First (Divide and Conquer)
 
 When faced with *"design an interplanetary messaging system for people on Earth and Mars to communicate"*, an expert does not draw a Mars-aware design on the first pass. They solve **messaging on Earth** first, then extend the result to deal with networking over interplanetary distances and different definitions of a day.
 
 Caveat: be aware when the simpler problem is **so fundamentally different** that the solution does not generalize. Sometimes the easy version misleads you.
 
-## Habit 4: Use a Rational Decision Process
+### Habit 4: Use a Rational Decision Process
 
 *Tang, Aleti, Burge, and van Vliet (2008)* found that an explicit, four-step decision process produces measurably better designs — especially for early-career engineers:
 
@@ -285,7 +322,7 @@ Caveat: be aware when the simpler problem is **so fundamentally different** that
 
 This sounds obvious, and it is. But the research shows that simply *writing it down* leads to better outcomes than relying on intuition alone.
 
-## Habit 5: Document Decisions with a Design Doc
+### Habit 5: Document Decisions with a Design Doc
 
 At Google, Amazon, Microsoft, Kubernetes, Shopify, and many other organizations, developers write a short **Design Doc** before implementing a non-trivial system. The goals (per [Malte Ubl's industry empathy post](https://www.industrialempathy.com/posts/design-docs-at-google/)):
 
@@ -305,7 +342,7 @@ A typical Design Doc has four parts:
 
 > *"As software engineers our job is not to produce code per se, but rather to solve problems. Unstructured text … may be the better tool for solving problems early in a project lifecycle."* — Malte Ubl
 
-# Summary
+## Summary
 
 * **Reuse** = building new software by composing existing modules. The vision is a McIlroy-style component catalog; the reality is glue code over partial mismatches.
 * **Why reuse:** higher productivity and higher quality, because reused code has been tried and tested by others.
@@ -324,7 +361,7 @@ A typical Design Doc has four parts:
   * Use a rational, four-step decision process.
   * Document decisions in a Design Doc.
 
-# Further Reading
+## Further Reading
 
 * M. Douglas McIlroy. *"[Mass Produced Software Components](https://www.cs.dartmouth.edu/~doug/components.txt)"*. NATO Software Engineering Conference, 1968.
 * David Garlan, Robert Allen, John Ockerbloom. *"[Architectural Mismatch: Why Reuse Is Still So Hard](https://ieeexplore.ieee.org/document/5235971)"*. IEEE Software, 2009 (retrospective on the 1995 original).
@@ -338,11 +375,11 @@ A typical Design Doc has four parts:
 * Xu, An, Thung, et al. *"Why reinventing the wheels? An empirical study on library reuse and re-implementation"*. Empirical Software Engineering, 2020.
 * Malte Ubl. *"[Design Docs at Google](https://www.industrialempathy.com/posts/design-docs-at-google/)"*. Industrial Empathy blog.
 
-# Practice
+## Practice
 
 If these feel hard, that's the point — effortful retrieval is exactly what builds durable understanding. Come back tomorrow for the spacing benefit.
 
-## Reflection Questions
+### Reflection Questions
 
 1. You're starting a new web app and considering adding a 15-line CSV-parsing helper from a tiny GitHub repo with 8 stars. Walk through the design-with-reuse principles. Take the dependency, or write it yourself?
 2. Your team uses an internal library that was written three years ago for batch jobs. You want to reuse it in a new low-latency streaming service. Which of the five design principles applies most directly, and what concrete checks would you perform?
@@ -350,11 +387,11 @@ If these feel hard, that's the point — effortful retrieval is exactly what bui
 4. Re-read the Ariane 5 story. The 16-bit integer worked perfectly on Ariane 4 for years. Is this a *testing* failure, a *documentation* failure, a *reuse* failure, or all three? Defend your answer.
 5. **Design a dependency-management policy** for a new five-person startup that ships a Node.js web service. Write the policy as 5–7 short rules. Each rule must cite one of the five design principles from this chapter, and the policy as a whole must resolve the tension between Principle 2 (update often) and Principle 3 (fewer dependencies).
 
-## Knowledge Quiz
+### Knowledge Quiz
 
 {% include quiz.html id="design_with_reuse" %}
 
-## Retrieval Flashcards
+### Retrieval Flashcards
 
 {% include flashcards.html id="design_with_reuse" %}
 

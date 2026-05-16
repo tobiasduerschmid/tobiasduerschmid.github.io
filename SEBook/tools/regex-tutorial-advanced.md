@@ -111,6 +111,16 @@ layout: sebook
 /* ── Print-Only Answer ─────────────────────────────────────────── */
 .rt-print-answer { display: none; }
 
+.rt-exercise :is(
+  p, li, button, summary, input, textarea, code,
+  .rt-progress-label, .rt-text-label, .rt-tests-label, .rt-parsons-label,
+  .rt-fixer-label, .rt-test, .rt-test-label, .rt-error, .rt-btn, .rt-result,
+  .rt-hint, .rt-viz-row, .rt-viz-desc, .rt-viz-btn, .rt-viz-counter,
+  .rt-se-title, .rt-se-question, .rt-se-think, .rt-se-answer
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
 /* ── Dark Mode ─────────────────────────────────────────────────── */
 :root.dark-mode .rt-exercise { background: #1e1e1e; border-color: #444; color: #ddd; }
 :root.dark-mode .rt-exercise.rt-complete { border-left-color: #28a745; }

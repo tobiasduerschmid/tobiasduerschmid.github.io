@@ -13,8 +13,7 @@ layout: blog
               <span class="post-date">{{ page.date | date: "%B %d, %Y" }}</span>
               {% if page.category %}
               <span class="post-category">
-                <a href="/blog/#cat-{{ page.category | slugify }}" class="badge"
-                  style="font-weight: bold; color:black; background-color: #FFD100;">{{ page.category }}</a>
+                <a href="/blog/#cat-{{ page.category | slugify }}" class="badge blog-category-badge">{{ page.category }}</a>
               </span>
               {% endif %}
             </small>
@@ -24,7 +23,7 @@ layout: blog
 
         <!-- Toggles -->
         <div class="highlight-toggle-container" id="togglesContainer" style="display: none;">
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="toggle-control-row">
             <span class="toggle-label">Dark Mode</span>
             <label class="switch">
               <span class="sr-only">Toggle dark mode</span>
@@ -32,7 +31,7 @@ layout: blog
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
+          <div class="toggle-control-row is-spaced">
             <span class="toggle-label">Show Highlights</span>
             <label class="switch">
               <span class="sr-only">Toggle highlights</span>
@@ -40,7 +39,7 @@ layout: blog
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="toggle-control-row">
             <span class="toggle-label">Read Aloud</span>
             <label class="switch">
               <span class="sr-only">Toggle read aloud</span>
@@ -73,184 +72,12 @@ layout: blog
           {% endif %}
         </div>
         <footer class="blog-post-footer">
-          <a href="/blog/" class="btn btn-default btn-sm" style="margin-top: 20px;">← Back to Blog</a>
+          <a href="/blog/" class="btn btn-default btn-sm blog-back-link">← Back to Blog</a>
         </footer>
       </article>
     </div>
   </div>
 </section>
-
-<style>
-  .rounded-img {
-    max-width: 100%;
-    height: auto;
-    /* This adds the rounded corners */
-    border-radius: var(--radius-xl, 20px);
-    /* Optional: prevents image "bleed" if you add a border later */
-    overflow: hidden;
-  }
-
-  .blog-post-header {
-    margin-bottom: var(--sp-2xl, 30px);
-    border-bottom: 1px solid var(--color-border, #ddd);
-    padding-bottom: var(--sp-xl, 20px);
-  }
-
-  .blog-post-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 2.5em;
-    color: var(--color-primary, #2774AE);
-    -webkit-text-stroke: 0.5px black;
-  }
-
-  .blog-post-meta {
-    color: var(--color-text, black);
-    font-size: 0.95em;
-  }
-
-  .post-category {
-    margin-left: 15px;
-  }
-
-  .blog-post-content {
-    font-size: 1.05em;
-    line-height: 1.8;
-    color: var(--color-text, black);
-    margin: var(--sp-2xl, 30px) 0;
-  }
-
-  .blog-post-content h2 {
-
-    color: var(--color-primary, #2774AE);
-    -webkit-text-stroke: 0.5 px black;
-    margin-top: var(--sp-2xl, 30px);
-    margin-bottom: var(--sp-lg, 15px);
-    font-weight: bold;
-  }
-
-  .blog-post-header h1,
-  h2,
-  h3 {
-    font-weight: bold;
-    -webkit-text-stroke: 0.5 px black;
-  }
-
-  .blog-post-content h4 {
-    font-weight: bold;
-  }
-
-  .blog-post-content p {
-    margin-bottom: 15px;
-  }
-
-  .blog-post-content code {
-    background-color: var(--color-surface-3, #f5f5f5);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm, 4px);
-    font-family: var(--font-mono, monospace);
-  }
-
-  .blog-post-content pre {
-    background-color: var(--color-surface-3, #f5f5f5);
-    padding: var(--sp-lg, 15px);
-    border-radius: var(--radius-md, 8px);
-    overflow-x: auto;
-    max-width: 100%;
-  }
-
-  .blog-post-content img,
-  .blog-post-content video,
-  .blog-post-content svg {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .blog-post-content table {
-    display: block;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-
-  @media (max-width: 640px) {
-    .blog-post-container,
-    .blog-post-content,
-    .blog-post-content p,
-    .blog-post-content li,
-    .blog-post-content a,
-    .blog-post-content strong,
-    .blog-post-content em {
-      min-width: 0;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-      word-break: normal;
-    }
-
-    .blog-post-header h1 {
-      font-size: 2em;
-      line-height: 1.2;
-      overflow-wrap: anywhere;
-    }
-
-    .blog-post-content pre {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .blog-post-content code {
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-
-    .blog-post-footer .btn {
-      min-height: 24px;
-      display: inline-flex;
-      align-items: center;
-    }
-  }
-
-  .blog-post-footer {
-    border-top: 1px solid var(--color-border, #ddd);
-    padding-top: var(--sp-xl, 20px);
-    margin-top: var(--sp-3xl, 40px);
-  }
-
-  .blog-bibliography {
-    margin-top: var(--sp-3xl, 40px);
-  }
-
-  .blog-bibliography h3 {
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-
-  .blog-bibliography .bibliography {
-    list-style-type: none;
-    padding-left: 0;
-  }
-
-  .blog-bibliography .bibliography li {
-    margin-bottom: 10px;
-    line-height: 1.5;
-  }
-
-  .action-box {
-    background-color: var(--color-accent, #FFD100);
-    border-left: 10px solid var(--color-primary, #2774AE);
-    padding: var(--sp-sm, 5px) var(--sp-xl, 20px);
-    margin: var(--sp-xl, 20px) 0;
-    border-radius: var(--radius-xl, 20px);
-    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
-  }
-
-  /* Optional: This ensures the last item in your box doesn't create extra dead space at the bottom */
-  .action-box *:last-child {
-    margin-bottom: 0;
-  }
-
-  .slider.round:before {
-    border-radius: 50%;
-  }
-</style>
 
 <script>
   (function () {

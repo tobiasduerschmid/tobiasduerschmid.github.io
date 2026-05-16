@@ -531,6 +531,15 @@ html.dark-mode .git-command-lab__output {
   border-color: #21262d;
 }
 
+.git-command-lab :is(
+  p, li, button, summary, code, pre,
+  .git-command-lab__btn, .git-command-lab__cmd,
+  .git-command-lab__output, .git-command-lab__step-progress,
+  .git-command-lab__rebase-file
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
 @keyframes gcl-modal-fade {
   from { opacity: 0; }
   to   { opacity: 1; }

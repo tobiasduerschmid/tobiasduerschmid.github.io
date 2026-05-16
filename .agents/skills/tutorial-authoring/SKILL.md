@@ -623,6 +623,10 @@ require_tests: boolean                 # If true, student must pass each step's
                                        # This makes purely-quiz / summary /
                                        # reflection steps work inside an
                                        # otherwise test-gated tutorial.
+font_size: integer                     # Optional Monaco/editor font size in px.
+                                       # Defaults to 16 so code, terminal input,
+                                       # and editor popouts meet the site's
+                                       # paragraph-size readability baseline.
 cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # > 0, every "Test My Work" run starts
                                        # a per-step cooldown of this many

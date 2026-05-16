@@ -216,7 +216,7 @@
     html += '<div class="quiz-results hidden"><div class="results-content">'
       + '<h4>Knowledge Check Complete!</h4>'
       + '<div class="score-display">Your Score: <span class="current-score">0</span>'
-      + '<span style="font-size:0.55em;font-weight:400;"> / ' + questions.length + '</span></div>'
+      + '<span style="font-size:0.95em;font-weight:400;"> / ' + questions.length + '</span></div>'
       + '<p class="score-summary"></p><div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>'
       + '<div class="results-actions">'
       + (isFinalQuiz ? '' : '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>')

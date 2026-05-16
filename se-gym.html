@@ -1,6 +1,6 @@
 ---
 permalink: /se-gym/
-title: "SE Gym"
+title: "SE Gym – Lift Your Skills"
 layout: sebook
 ---
   {% if site.personal_gym %}
@@ -21,18 +21,39 @@ layout: sebook
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
-      <div id="milestone-banner" class="milestone-banner" style="display:none;"></div>
+      <p class="sr-only">SE Gym illustration: a friendly software-engineering superhero in UCLA blue and gold lifts a topic-loaded barbell overhead.</p>
+      <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true">
+        {% include se-gym-hero.svg variant="mobile" %}
+      </div>
+
+      <aside class="gym-entrance-visual gym-entrance-visual-left" aria-hidden="true">
+        {% include se-gym-hero.svg variant="left" %}
+      </aside>
+
+      <div class="gym-entrance-main">
+      <div id="milestone-banner" class="milestone-banner" role="status" aria-live="polite" style="display:none;"></div>
       <p class="gym-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
         own study gym by adding quizzes and flashcard sets, then start a workout to review shuffled cards.</p>
+      <div class="gym-start-row">
+        <button id="start-workout-btn" class="gym-btn primary gym-start-btn" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
+      </div>
+      <div class="gym-topic-strip" aria-hidden="true">
+        <span class="gym-topic-token topic-code"><i class="fa-solid fa-code"></i></span>
+        <span class="gym-topic-token topic-testing"><i class="fa-solid fa-check-double"></i></span>
+        <span class="gym-topic-token topic-design"><i class="fa-solid fa-diagram-project"></i></span>
+        <span class="gym-topic-token topic-process"><i class="fa-solid fa-rotate"></i></span>
+        <span class="gym-topic-token topic-data"><i class="fa-solid fa-database"></i></span>
+      </div>
 
       <!-- Workout Controls -->
       <div id="gym-controls">
         <div class="controls-row toggle-row" style="justify-content: space-between;">
-          <span class="toggle-copy">
-            <span class="toggle-label">Activate Personal Gym</span>
-            <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym" aria-describedby="personal-gym-tooltip">?</button>
+            <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-power-off"></i></span>
+              <span class="toggle-label">Activate Personal Gym</span>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about personal gym" aria-describedby="personal-gym-tooltip">?</button>
             <span id="personal-gym-tooltip" role="tooltip" class="info-tooltip">Allows
                 you to add flash cards and quizzes to your personal gym stored in a local cookie.</span>
           </span>
@@ -45,6 +66,7 @@ layout: sebook
         <div id="gym-controls-body">
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></span>
               <span class="toggle-label">Track Performance</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking" aria-describedby="performance-tracking-tooltip">?</button>
               <span
@@ -62,6 +84,7 @@ layout: sebook
           </div>
           <div class="controls-row toggle-row timed-practice-toggle-row">
             <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
               <span class="toggle-label">Timed Practice</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about timed practice" aria-describedby="timed-practice-tooltip">?</button>
               <span
@@ -99,6 +122,7 @@ layout: sebook
           </div>
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
               <span class="toggle-label">Show difficulty during question</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about difficulty visibility" aria-describedby="show-difficulty-tooltip">?</button>
               <span id="show-difficulty-tooltip" role="tooltip" class="info-tooltip">When on, each question shows its difficulty level (basic, intermediate, advanced, expert) before you answer. The difficulty is always shown after you submit, on the explanation panel.</span>
@@ -111,6 +135,7 @@ layout: sebook
           </div>
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
               <span class="toggle-label">More confetti</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about more confetti" aria-describedby="more-confetti-tooltip">?</button>
               <span id="more-confetti-tooltip" role="tooltip" class="info-tooltip">When on, a small burst of confetti fires after each correctly answered quiz question and each flashcard you mark as "I got it right" — not only at the end of the workout. Respects your reduced-motion preference. Off by default.</span>
@@ -151,11 +176,13 @@ layout: sebook
             <label for="max-cards" class="toggle-label max-cards-label">Max cards:</label>
             <div class="max-cards-controls">
               <input type="number" id="max-cards" value="50" min="0" max="9999" aria-describedby="max-cards-note">
-              <button id="start-workout-btn" class="gym-btn primary" disabled>Start Workout</button>
             </div>
           </div>
           <p id="max-cards-note" class="gym-summary-text" role="status" aria-live="polite"></p>
           <p id="gym-summary" class="gym-summary-text"></p>
+          <div class="gym-controls-start-row">
+            <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" aria-label="Begin workout from controls" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
+          </div>
         </div>
       </div>
 
@@ -165,7 +192,7 @@ layout: sebook
         <!-- Difficult Questions Gym (shown only when analyze is on and there are difficult questions) -->
         <div id="difficult-gym-section" style="display: none;">
           <div class="gym-section-header difficult-section-header">
-            <h2 class="difficult-heading">Difficult Questions</h2>
+            <h2 class="difficult-heading"><i class="fa-solid fa-triangle-exclamation section-heading-icon" aria-hidden="true"></i> Difficult Questions</h2>
             <button id="start-hard-workout-btn" class="gym-btn danger">Start Hard Workout</button>
           </div>
           <div id="difficult-gym-container">
@@ -178,7 +205,7 @@ layout: sebook
                   weak areas.</p>
               </div>
               <button class="gym-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
-                title="Add to workout" aria-label="Add Difficult Questions to workout">
+                title="Add to gym" data-original-title="Add to gym" aria-label="Add Difficult Questions to gym">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
               </button>
             </div>
@@ -186,14 +213,14 @@ layout: sebook
         </div>
 
         <div id="your-gym-header" class="gym-section-header">
-          <h2>Your Gym</h2>
+          <h2><i class="fa-solid fa-dumbbell section-heading-icon" aria-hidden="true"></i> Your Gym</h2>
           <button id="empty-gym-btn" class="gym-btn secondary" title="Empty your gym">Empty Gym</button>
         </div>
         <div id="gym-selected" style="margin-top: 12px;">
           <p class="empty-gym-msg">Your gym is empty. Add quizzes and flashcard sets below.</p>
         </div>
 
-        <h2>Available Quizzes</h2>
+        <h2><i class="fa-solid fa-list-check section-heading-icon" aria-hidden="true"></i> Available Quizzes</h2>
         <div id="available-quizzes">
           {% for quiz_entry in site.data.quizzes %}
           {% assign qid = quiz_entry[0] %}
@@ -206,7 +233,7 @@ layout: sebook
               <span class="gym-item-count">({{ qdata.questions | size }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -225,7 +252,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -233,7 +260,7 @@ layout: sebook
           {% endfor %}
         </div>
 
-        <h2>Available Flashcard Sets</h2>
+        <h2><i class="fa-solid fa-layer-group section-heading-icon" aria-hidden="true"></i> Available Flashcard Sets</h2>
         <div id="available-flashcards">
           {% for fc_entry in site.data.flashcards %}
           {% assign fcid = fc_entry[0] %}
@@ -246,7 +273,7 @@ layout: sebook
               <span class="gym-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -265,7 +292,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -277,7 +304,7 @@ layout: sebook
 
       <!-- ==================== TUTORIAL PROGRESS IMPORT/EXPORT ==================== -->
       <div id="tutorial-progress-section">
-        <h2 style="margin-top: 0;">Tutorial Progress</h2>
+        <h2 style="margin-top: 0;"><i class="fa-solid fa-file-arrow-up section-heading-icon" aria-hidden="true"></i> Tutorial Progress</h2>
         <p class="gym-subtitle">Back up, transfer, or restore tutorial progress stored in this browser's local storage.
         </p>
         <div class="controls-row tutorial-progress-actions">
@@ -294,6 +321,10 @@ layout: sebook
         <p id="tutorial-progress-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
 
+      </div>
+      <aside class="gym-entrance-visual gym-entrance-visual-right" aria-hidden="true">
+        {% include se-gym-hero.svg variant="right" %}
+      </aside>
     </div>
 
     <!-- ==================== TUTORIAL EXPORT MODAL ==================== -->
@@ -346,7 +377,7 @@ layout: sebook
           <span id="timed-practice-clock-value" class="timed-practice-clock-value">00:00</span>
           <button type="button" id="timed-practice-extend-btn" class="timed-practice-extend-btn">Add 1 minute</button>
         </div>
-        <button id="back-to-library-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left"></i> Back to
+        <button id="back-to-library-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to
           Gym Entrance</button>
       </div>
       <p id="timed-practice-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -369,9 +400,9 @@ layout: sebook
             <ul id="workout-breakdown-list" class="workout-breakdown-list"></ul>
           </section>
           <div class="workout-results-actions">
-            <button id="workout-restart-btn" class="gym-btn primary">Restart Workout</button>
-            <button id="workout-review-btn" class="gym-btn secondary" style="display: none;">Review Incorrect</button>
-            <button id="workout-back-btn" class="gym-btn secondary">Back to Gym Entrance</button>
+            <button id="workout-restart-btn" class="gym-btn primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Restart Workout</button>
+            <button id="workout-review-btn" class="gym-btn secondary" style="display: none;"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Review Incorrect</button>
+            <button id="workout-back-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Gym Entrance</button>
           </div>
           <p id="workout-result-shortcut-hint" class="workout-result-shortcut-hint hidden"></p>
         </div>
@@ -467,10 +498,10 @@ layout: sebook
   <!-- ==================== STYLES ==================== -->
   <style>
     #se-gym-app {
-      max-width: 800px;
+      max-width: min(100%, 1720px);
       width: 100%;
       margin: 0 auto;
-      padding: 20px;
+      padding: 12px 10px 20px;
       font-family: 'Inter', 'Helvetica Neue', sans-serif;
       box-sizing: border-box;
     }
@@ -494,6 +525,989 @@ layout: sebook
       margin-bottom: var(--sp-lg, 15px);
       border-bottom: 2px solid var(--color-divider, #e1e4e8);
       padding-bottom: var(--sp-sm, 8px);
+    }
+
+    #gym-entrance {
+      --gym-ucla-blue: #1F6EBD;
+      --gym-ucla-blue-dark: #002F52;
+      --gym-ucla-blue-light: #7FB6F0;
+      --gym-ucla-gold: #FFD100;
+      --gym-ucla-gold-dark: #B38B00;
+      --gym-ink: #17324d;
+      --gym-paper: #f7fbff;
+      --gym-soft-blue: #c9e6ff;
+      --gym-soft-gold: #fff3b8;
+      --gym-skin: #c77f54;
+      --gym-skin-shadow: #965c3c;
+      --gym-skin-light: #e7aa78;
+      --gym-hair: #202936;
+      --gym-hair-highlight: #4f769a;
+      --gym-outline: #062a43;
+      --gym-cape: #002F52;
+      --gym-cape-shadow: #001F38;
+      --gym-cape-stop-top: #3B8AD8;
+      --gym-cape-stop-bottom: #001F38;
+      --gym-svg-shadow: rgba(0, 47, 82, 0.22);
+    }
+
+    .gym-entrance-main {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    #gym-workout {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    body.se-gym-page.se-gym-workout-active #sidebar-toggle {
+      display: none !important;
+    }
+
+    .gym-entrance-visual {
+      color: var(--gym-ucla-blue);
+      overflow: visible;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .gym-entrance-visual-mobile {
+      display: block;
+      max-width: min(100%, 520px);
+      margin: -8px auto 12px;
+    }
+
+    .gym-entrance-visual-left,
+    .gym-entrance-visual-right {
+      display: none;
+    }
+
+    .gym-topic-hero-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .se-gym-hero-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      filter: drop-shadow(0 14px 24px rgba(0, 47, 82, 0.16));
+    }
+
+    html.dark-mode .post-content .se-gym-hero-svg,
+    html.dark-mode #gym-entrance .se-gym-hero-svg {
+      filter:
+        drop-shadow(0 0 2px rgba(139, 184, 232, 0.72))
+        drop-shadow(0 0 7px rgba(31, 110, 189, 0.34))
+        drop-shadow(0 16px 24px rgba(0, 0, 0, 0.52)) !important;
+    }
+
+    .gym-topic-hero-svg .gym-floor ellipse {
+      fill: rgba(39, 116, 174, 0.13);
+    }
+
+    .gym-topic-hero-svg .backdrop-ray {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .backdrop-ring {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .backdrop-ring-soft {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .gym-motion-ghost rect,
+    .gym-topic-hero-svg .gym-motion-ghost circle {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .gym-motion-ghost-top {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .gym-bar {
+      fill: var(--gym-ink);
+      filter: drop-shadow(0 3px 3px rgba(0, 47, 82, 0.28));
+    }
+
+    .gym-visual--male .gym-bar {
+      fill: url(#gym-bar-metal-male);
+    }
+
+    .gym-visual--female .gym-bar {
+      fill: url(#gym-bar-metal-female);
+    }
+
+    .gym-visual--mobile .gym-bar {
+      fill: url(#gym-bar-metal-mobile);
+    }
+
+    .gym-topic-hero-svg .gym-bar-highlight {
+      fill: rgba(255, 255, 255, 0.65);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .gym-bar-highlight {
+      fill: rgba(255, 255, 255, 0.42);
+    }
+
+    .gym-topic-hero-svg .gym-collar {
+      fill: var(--gym-ucla-gold);
+      stroke: var(--gym-ucla-gold-dark);
+      stroke-width: 2;
+    }
+
+    .gym-topic-hero-svg .topic-plate circle {
+      stroke: var(--gym-ink);
+      stroke-width: 4;
+    }
+
+    .gym-topic-hero-svg .topic-plate {
+      filter: none;
+    }
+
+    .gym-topic-hero-svg .topic-plate .plate-bevel {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .topic-plate path,
+    .gym-topic-hero-svg .topic-plate rect,
+    .gym-topic-hero-svg .topic-plate ellipse {
+      fill: none;
+      stroke: var(--gym-ink);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .topic-plate .plate-bevel,
+    .gym-topic-hero-svg .topic-plate .plate-highlight {
+      stroke-width: 3;
+    }
+
+    .gym-topic-hero-svg .topic-plate .plate-inner-ring {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .topic-plate .plate-highlight {
+      stroke: rgba(255, 255, 255, 0.78);
+      stroke-width: 3;
+      opacity: 0.85;
+    }
+
+    .gym-topic-hero-svg .topic-plate-git circle:first-child,
+    .gym-topic-hero-svg .topic-plate-uml circle:first-child {
+      fill: var(--gym-soft-blue);
+    }
+
+    .gym-visual--male .topic-plate-git circle:first-child,
+    .gym-visual--male .topic-plate-uml circle:first-child {
+      fill: url(#gym-blue-plate-male);
+    }
+
+    .gym-visual--female .topic-plate-git circle:first-child,
+    .gym-visual--female .topic-plate-uml circle:first-child {
+      fill: url(#gym-blue-plate-female);
+    }
+
+    .gym-visual--mobile .topic-plate-git circle:first-child,
+    .gym-visual--mobile .topic-plate-uml circle:first-child {
+      fill: url(#gym-blue-plate-mobile);
+    }
+
+    .gym-topic-hero-svg .topic-plate-testing circle:first-child,
+    .gym-topic-hero-svg .topic-plate-code circle:first-child {
+      fill: var(--gym-soft-gold);
+    }
+
+    .gym-visual--male .topic-plate-testing circle:first-child,
+    .gym-visual--male .topic-plate-code circle:first-child {
+      fill: url(#gym-gold-male);
+    }
+
+    .gym-visual--female .topic-plate-testing circle:first-child,
+    .gym-visual--female .topic-plate-code circle:first-child {
+      fill: url(#gym-gold-female);
+    }
+
+    .gym-visual--mobile .topic-plate-testing circle:first-child,
+    .gym-visual--mobile .topic-plate-code circle:first-child {
+      fill: url(#gym-gold-mobile);
+    }
+
+    .gym-topic-hero-svg .topic-plate-agile circle:first-child,
+    .gym-topic-hero-svg .topic-plate-data circle:first-child {
+      fill: #dff4f2;
+    }
+
+    .gym-topic-hero-svg .topic-plate-git circle:not(:first-child):not(.plate-inner-ring) {
+      fill: var(--gym-ucla-blue-dark);
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 1.4;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .topic-plate-git circle:not(:first-child):not(.plate-inner-ring) {
+      fill: var(--gym-ink);
+      stroke: var(--gym-ink);
+    }
+
+    .gym-topic-hero-svg .skin {
+      fill: none;
+      stroke: var(--gym-skin);
+      stroke-width: 17;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .arm-highlight {
+      fill: none;
+      stroke: rgba(255, 232, 191, 0.42);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .bicep {
+      fill: var(--gym-skin);
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.6;
+    }
+
+    .gym-topic-hero-svg .bicep-shine {
+      fill: rgba(255, 232, 191, 0.55);
+      stroke: none;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .bicep-shine {
+      fill: rgba(255, 232, 191, 0.32);
+    }
+
+    .gym-topic-hero-svg .hand-grip {
+      fill: var(--gym-skin);
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .hand-knuckles {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.3;
+      stroke-linecap: round;
+      opacity: 0.75;
+    }
+
+    .gym-topic-hero-svg .glove-cuff {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .hand,
+    .gym-topic-hero-svg .ear,
+    .gym-topic-hero-svg .skin-fill {
+      fill: var(--gym-skin);
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 2;
+    }
+
+    .gym-topic-hero-svg .face-front {
+      stroke-width: 2.2;
+    }
+
+    .gym-topic-hero-svg .cheek {
+      display: block;
+      fill: #ff8a8a;
+      stroke: none;
+      opacity: 0.42;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .cheek {
+      fill: #ff9aa6;
+      opacity: 0.36;
+    }
+
+    .gym-topic-hero-svg .chin {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .eye-sparkle {
+      fill: #ffffff;
+      stroke: none;
+    }
+
+    .gym-topic-hero-svg .suit {
+      fill: var(--gym-ucla-blue);
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 4.5;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 4px 5px rgba(0, 59, 92, 0.18));
+    }
+
+    .gym-visual--male .suit {
+      fill: url(#gym-suit-male);
+    }
+
+    .gym-visual--female .suit {
+      fill: url(#gym-suit-female);
+    }
+
+    .gym-visual--mobile .suit {
+      fill: url(#gym-suit-mobile);
+    }
+
+    .gym-topic-hero-svg .suit-highlight {
+      fill: rgba(139, 184, 232, 0.24);
+      stroke: none;
+    }
+
+    .gym-topic-hero-svg .abdomen-panel {
+      fill: var(--gym-ucla-blue);
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 2.2;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .abdomen-line {
+      fill: none;
+      stroke: rgba(0, 59, 92, 0.58);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: 0.72;
+    }
+
+    .gym-topic-hero-svg .hip-panel {
+      fill: var(--gym-ucla-blue-dark);
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 3;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .suit-side-panel {
+      fill: rgba(0, 59, 92, 0.38);
+      stroke: rgba(139, 184, 232, 0.28);
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .suit-gloss {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.28);
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: 0.82;
+    }
+
+    .gym-topic-hero-svg .shoulder-pad {
+      fill: var(--gym-ucla-gold);
+      stroke: var(--gym-outline);
+      stroke-width: 2;
+    }
+
+    .gym-topic-hero-svg .shoulder-cape {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.92;
+    }
+
+    .gym-topic-hero-svg .chest-shield {
+      fill: var(--gym-ucla-gold);
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 3;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .chest-bolt {
+      fill: var(--gym-ucla-blue-dark);
+      stroke: none;
+    }
+
+    .gym-topic-hero-svg .chest-mark {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .belt {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .gym-topic-hero-svg .belt-buckle {
+      fill: var(--gym-ucla-blue-dark);
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 2.4;
+    }
+
+    .gym-topic-hero-svg .cape {
+      fill: var(--gym-cape);
+      opacity: 0.95;
+      filter: drop-shadow(0 8px 8px rgba(0, 59, 92, 0.16));
+    }
+
+    .gym-visual--male .cape {
+      fill: url(#gym-cape-male);
+    }
+
+    .gym-visual--female .cape {
+      fill: url(#gym-cape-female);
+    }
+
+    .gym-visual--mobile .cape {
+      fill: url(#gym-cape-mobile);
+    }
+
+    .gym-topic-hero-svg .cape-right {
+      fill: var(--gym-cape-shadow);
+    }
+
+    .gym-topic-hero-svg .cape-clasp {
+      fill: var(--gym-ucla-gold);
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 2;
+    }
+
+    .gym-topic-hero-svg .cape-fold {
+      fill: none;
+      stroke: rgba(139, 184, 232, 0.32);
+      stroke-width: 4;
+      stroke-linecap: round;
+      opacity: 0.7;
+    }
+
+    .gym-topic-hero-svg .hair {
+      fill: var(--gym-hair);
+    }
+
+    .gym-topic-hero-svg .hair-shadow {
+      fill: rgba(0, 59, 92, 0.38);
+    }
+
+    .gym-topic-hero-svg .hair-female {
+      fill: var(--gym-hair);
+    }
+
+    .gym-topic-hero-svg .hair-front {
+      filter: drop-shadow(0 2px 1px rgba(0, 59, 92, 0.2));
+    }
+
+    .gym-topic-hero-svg .hair-lock {
+      fill: var(--gym-hair);
+      stroke: var(--gym-hair-highlight);
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .hair-shine {
+      fill: none;
+      stroke: rgba(139, 184, 232, 0.7);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: 0.72;
+    }
+
+    .gym-topic-hero-svg .neck {
+      fill: var(--gym-skin-shadow);
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 1.5;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .brow {
+      fill: none;
+      stroke: var(--gym-ink);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.68;
+    }
+
+    .gym-topic-hero-svg .eye {
+      fill: var(--gym-ink);
+      stroke: none;
+    }
+
+    .gym-topic-hero-svg .eye-white {
+      display: none;
+    }
+
+    .gym-topic-hero-svg .lash {
+      fill: none;
+      stroke: var(--gym-ink);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      opacity: 0.72;
+    }
+
+    .gym-topic-hero-svg .nose {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.52;
+    }
+
+    .gym-topic-hero-svg .leg,
+    .gym-topic-hero-svg .leg-thigh,
+    .gym-topic-hero-svg .leg-shin {
+      fill: none;
+      stroke: var(--gym-ucla-blue-dark);
+      stroke-width: 17;
+      stroke-linecap: round;
+    }
+
+    .gym-topic-hero-svg .pectoral-line {
+      fill: none;
+      stroke: rgba(0, 47, 82, 0.42);
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      opacity: 0.55;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .pectoral-line {
+      stroke: rgba(255, 255, 255, 0.32);
+    }
+
+    .gym-topic-hero-svg .lat-flare {
+      fill: none;
+      stroke: rgba(0, 47, 82, 0.38);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: 0.5;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .lat-flare {
+      stroke: rgba(255, 255, 255, 0.28);
+    }
+
+    .gym-topic-hero-svg .eye-white {
+      display: block;
+      fill: #ffffff;
+      stroke: var(--gym-ink);
+      stroke-width: 0.9;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .eye-white {
+      fill: #f5fbff;
+      stroke: rgba(0, 0, 0, 0.4);
+    }
+
+    .gym-topic-hero-svg .eye {
+      stroke: none;
+    }
+
+    .gym-topic-hero-svg .hero-mask {
+      fill: var(--gym-ucla-blue-dark);
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+      opacity: 0.95;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .hero-mask {
+      fill: #002F52;
+      stroke: var(--gym-ucla-gold);
+    }
+
+    .gym-topic-hero-svg .mouth {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.92;
+    }
+
+    .gym-topic-hero-svg .brow {
+      stroke-width: 2.2;
+      opacity: 0.78;
+    }
+
+    .gym-topic-hero-svg .eye-lashes {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      opacity: 0.85;
+    }
+
+    .gym-topic-hero-svg .lipstick {
+      fill: #d04a5e;
+      stroke: none;
+      opacity: 0.55;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .lipstick {
+      fill: #e85a72;
+      opacity: 0.6;
+    }
+
+    .gym-topic-hero-svg .gym-spark {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      opacity: 0.85;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .gym-spark {
+      stroke: var(--gym-ucla-gold);
+      opacity: 0.92;
+    }
+
+    .gym-topic-hero-svg .gym-spark-burst {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: gym-sparkle 1800ms ease-in-out infinite both;
+    }
+
+    .gym-visual--mobile .gym-spark-burst {
+      animation-delay: 120ms;
+    }
+
+    @keyframes gym-sparkle {
+      0%, 30%, 70%, 100% {
+        opacity: 0.4;
+        transform: scale(0.85);
+      }
+      45%, 60% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+
+    .gym-topic-hero-svg .face-detail {
+      fill: none;
+      stroke: var(--gym-skin-shadow);
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      opacity: 0.58;
+    }
+
+    .gym-topic-hero-svg .boot {
+      fill: none;
+      stroke: var(--gym-ucla-gold);
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .gym-topic-hero-svg .boot-fill {
+      fill: var(--gym-ucla-gold);
+      stroke: var(--gym-outline);
+      stroke-width: 2.4;
+      stroke-linejoin: round;
+    }
+
+    .gym-topic-hero-svg .boot-highlight {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.48);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .gym-topic-hero-svg .gym-motion-lines path {
+      fill: none;
+      stroke: var(--gym-ucla-gold-dark);
+      stroke-width: 4;
+      stroke-linecap: round;
+      opacity: 0.72;
+    }
+
+    .gym-lift-group {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: gym-topic-lift 1800ms linear infinite both;
+    }
+
+    .gym-lift-mobile {
+      animation-delay: 120ms;
+    }
+
+    .gym-hero-body .cape,
+    .gym-motion-lines,
+    .gym-motion-ghost {
+      transform-box: fill-box;
+      transform-origin: 50% 0%;
+    }
+
+    .gym-hero-body .cape-main {
+      animation: gym-cape-flow 1800ms ease-in-out infinite both;
+    }
+
+    .gym-hero-body .cape-trail-1 {
+      animation: gym-cape-flow 1800ms ease-in-out infinite both;
+      animation-delay: -120ms;
+      opacity: 0.55;
+    }
+
+    .gym-hero-body .cape-trail-2 {
+      animation: gym-cape-flow 1800ms ease-in-out infinite both;
+      animation-delay: -240ms;
+      opacity: 0.32;
+    }
+
+    .gym-visual--mobile .cape-main {
+      animation-delay: 120ms;
+    }
+
+    .gym-visual--mobile .cape-trail-1 {
+      animation-delay: 0ms;
+    }
+
+    .gym-topic-hero-svg .cape-trail {
+      filter: blur(0.6px);
+    }
+
+    .bicep {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .bicep-left {
+      animation: gym-bicep-flex-left 1800ms ease-in-out infinite both;
+    }
+
+    .bicep-right {
+      animation: gym-bicep-flex-right 1800ms ease-in-out infinite both;
+    }
+
+    .gym-visual--female .bicep-left,
+    .gym-visual--female .bicep-right {
+      animation-delay: 260ms;
+    }
+
+    .gym-visual--mobile .bicep-left,
+    .gym-visual--mobile .bicep-right {
+      animation-delay: 120ms;
+    }
+
+    .leg-shin-pivot {
+      transform-box: fill-box;
+      transform-origin: 0 0;
+    }
+
+    .leg-shin-pivot-left {
+      animation: gym-knee-bend-left 1800ms ease-in-out infinite both;
+    }
+
+    .leg-shin-pivot-right {
+      animation: gym-knee-bend-right 1800ms ease-in-out infinite both;
+    }
+
+    .gym-visual--female .leg-shin-pivot-left,
+    .gym-visual--female .leg-shin-pivot-right {
+      animation-delay: 260ms;
+    }
+
+    .gym-motion-lines {
+      animation: gym-lines-pulse 1800ms ease-in-out infinite both;
+    }
+
+    .gym-motion-ghost {
+      animation: none;
+    }
+
+    .gym-backdrop {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: gym-backdrop-breathe 3600ms ease-in-out infinite both;
+    }
+
+    .gym-visual--female .gym-motion-lines,
+    .gym-visual--female .gym-motion-ghost,
+    .gym-visual--female .gym-backdrop {
+      animation-delay: 260ms;
+    }
+
+    .gym-visual--mobile .gym-motion-lines,
+    .gym-visual--mobile .gym-motion-ghost,
+    .gym-visual--mobile .gym-backdrop {
+      animation-delay: 120ms;
+    }
+
+    @keyframes gym-topic-lift {
+      0% {
+        transform: translateY(8px) rotate(-0.5deg);
+        animation-timing-function: cubic-bezier(.32, 0, .67, 0);
+      }
+      12% {
+        transform: translateY(14px) rotate(-1deg);
+        animation-timing-function: cubic-bezier(.55, 0, .1, 1);
+      }
+      50% {
+        transform: translateY(-15px) rotate(0.6deg);
+        animation-timing-function: cubic-bezier(.4, 0, .6, 1);
+      }
+      62% {
+        transform: translateY(-12px) rotate(0.8deg);
+        animation-timing-function: cubic-bezier(.55, 0, .35, 1);
+      }
+      78% {
+        transform: translateY(10px) rotate(-0.3deg);
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+      }
+      88% {
+        transform: translateY(11px) rotate(-0.6deg);
+        animation-timing-function: cubic-bezier(.4, 0, .6, 1);
+      }
+      100% {
+        transform: translateY(8px) rotate(-0.5deg);
+      }
+    }
+
+    @keyframes gym-cape-flow {
+      0% {
+        transform: translateY(0) rotate(-1.5deg);
+      }
+      62% {
+        transform: translateY(6px) rotate(2.5deg);
+      }
+      100% {
+        transform: translateY(0) rotate(-1.5deg);
+      }
+    }
+
+    @keyframes gym-bicep-flex-left {
+      0%, 12% {
+        transform: scale(1, 1);
+      }
+      50% {
+        transform: scale(1, 1.32);
+      }
+      78%, 100% {
+        transform: scale(1, 1);
+      }
+    }
+
+    @keyframes gym-bicep-flex-right {
+      0%, 12% {
+        transform: scale(1, 1);
+      }
+      50% {
+        transform: scale(1, 1.32);
+      }
+      78%, 100% {
+        transform: scale(1, 1);
+      }
+    }
+
+    .gym-visual--mobile .bicep-left,
+    .gym-visual--mobile .bicep-right {
+      animation-name: gym-bicep-flex-mobile;
+    }
+
+    @keyframes gym-bicep-flex-mobile {
+      0%, 12% {
+        transform: scale(1, 1);
+      }
+      50% {
+        transform: scale(1, 1.18);
+      }
+      78%, 100% {
+        transform: scale(1, 1);
+      }
+    }
+
+    @keyframes gym-knee-bend-left {
+      0% {
+        transform: rotate(0deg);
+      }
+      12% {
+        transform: rotate(-8deg);
+      }
+      50% {
+        transform: rotate(2deg);
+      }
+      78%, 100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    @keyframes gym-knee-bend-right {
+      0% {
+        transform: rotate(0deg);
+      }
+      12% {
+        transform: rotate(8deg);
+      }
+      50% {
+        transform: rotate(-2deg);
+      }
+      78%, 100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    @keyframes gym-lines-pulse {
+      0%, 100% {
+        opacity: 0.42;
+        transform: translateY(8px);
+      }
+      45%, 62% {
+        opacity: 0.86;
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes gym-ghost-pulse {
+      0%, 100% {
+        opacity: 0.64;
+      }
+      45%, 62% {
+        opacity: 0.36;
+      }
+    }
+
+    @keyframes gym-backdrop-breathe {
+      0%, 100% {
+        opacity: 0.74;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+    }
+
+    @media (min-width: 1180px) {
+      #gym-entrance {
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) minmax(0, 760px) minmax(180px, 1fr);
+        gap: clamp(6px, 0.75vw, 12px);
+        align-items: start;
+      }
+
+      .gym-entrance-main {
+        max-width: 760px;
+        min-width: 0;
+      }
+
+      .gym-entrance-visual-mobile {
+        display: none;
+      }
+
+      .gym-entrance-visual-left,
+      .gym-entrance-visual-right {
+        display: block;
+        position: sticky;
+        top: 92px;
+        align-self: start;
+        padding-top: 8px;
+      }
     }
 
     /* Difficult Questions gym */
@@ -555,22 +1569,23 @@ layout: sebook
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: #555;
+      background: #2774AE;
       color: #fff;
-      border: none;
+      border: 2px solid #005587;
       padding: 0;
-      font-size: 1em;
+      font-size: 0.95em;
       font-weight: 700;
       cursor: pointer;
       position: relative;
       user-select: none;
       margin-left: 4px;
       flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 59, 92, 0.18);
     }
 
     .info-btn:hover,
     .info-btn:focus {
-      background: #555;
+      background: #005587;
       outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
       outline-offset: var(--focus-offset, 2px);
     }
@@ -620,7 +1635,9 @@ layout: sebook
     }
 
     html.dark-mode .info-btn {
-      background: #666;
+      background: #2774AE;
+      border-color: #8BB8E8;
+      color: #fff;
     }
 
     html.dark-mode .info-btn:hover,
@@ -694,59 +1711,212 @@ layout: sebook
     }
 
     .gym-subtitle {
-      color: #666;
-      margin-bottom: 20px;
+      color: #4b5563;
+      margin: 0 0 12px;
+      line-height: 1.55;
+      font-weight: 600;
+      text-wrap: pretty;
     }
 
-    .milestone-banner {
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-bottom: 16px;
-      font-weight: 600;
-      text-align: center;
-      font-size: 1.3em;
+    .gym-start-row {
+      display: flex;
+      justify-content: center;
+      margin: 6px auto 10px;
+    }
+
+    .gym-controls-start-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .gym-start-btn {
+      width: min(100%, 320px);
+      min-height: 52px;
+      border: 2px solid #8BB8E8;
+      font-weight: 800;
+      font-size: 1.08em;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      box-shadow: 0 12px 26px rgba(39, 116, 174, 0.28), inset 0 -4px 0 rgba(0, 47, 82, 0.2);
+    }
+
+    .gym-topic-strip {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
+      margin: 0 auto 18px;
+      padding: 8px 10px;
+      border: 1px solid rgba(39, 116, 174, 0.22);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 245, 252, 0.92));
+      box-shadow: 0 10px 22px rgba(0, 59, 92, 0.1);
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .gym-topic-token {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px solid #17324d;
+      color: #17324d;
+      background: #ffffff;
+      box-shadow: inset 0 -5px 0 rgba(0, 59, 92, 0.08), 0 4px 10px rgba(0, 59, 92, 0.13);
+      flex: 0 0 auto;
+    }
+
+    .gym-topic-token::after {
+      content: '';
+      position: absolute;
+      inset: 5px 7px auto 7px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      transform: rotate(-15deg);
+    }
+
+    .gym-topic-token i {
+      position: relative;
+      z-index: 1;
+      font-size: 1.05em;
+    }
+
+    .gym-topic-token.topic-code,
+    .gym-topic-token.topic-testing {
+      background: linear-gradient(145deg, #fff7b0, #FFD100 62%, #B38B00);
+    }
+
+    .gym-topic-token.topic-design,
+    .gym-topic-token.topic-data {
+      background: linear-gradient(145deg, #ffffff, #dbeeff 58%, #8BB8E8);
+    }
+
+    .gym-topic-token.topic-process {
+      background: linear-gradient(145deg, #ffffff 0 38%, #dbeeff 38% 72%, #8BB8E8 72% 100%);
+    }
+
+    .milestone-banner {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      font-weight: 600;
+      text-align: left;
+      font-size: 1.05em;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 14px;
+      border: 1.5px solid #2774AE;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 247, 255, 0.98));
+      box-shadow: 0 14px 30px rgba(0, 59, 92, 0.14);
+    }
+
+    .milestone-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, #2774AE 0%, #2774AE 44%, #FFD100 44%, #FFD100 56%, #2774AE 56%, #2774AE 100%);
+    }
+
+    .milestone-banner::after {
+      content: '';
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      right: -80px;
+      top: -90px;
+      border-radius: 50%;
+      background: rgba(255, 209, 0, 0.16);
+      pointer-events: none;
     }
 
     .milestone-banner.milestone-bronze {
-      background: linear-gradient(135deg, #fdf0e0, #f5deb3);
-      color: #7a4a0a;
-      border: 1px solid #d4a76a;
+      color: #543400;
+      border-color: #b8752b;
     }
 
     .milestone-banner.milestone-silver {
-      background: linear-gradient(135deg, #f0f0f0, #d8d8d8);
-      color: #3a3a3a;
-      border: 1px solid #b0b0b0;
+      color: #26323f;
+      border-color: #7d8b9a;
     }
 
     .milestone-banner.milestone-gold {
-      background: linear-gradient(135deg, #fff8e1, #ffe082);
-      color: #6d5200;
-      border: 1px solid #ffc107;
+      color: #3f3000;
+      border-color: #b38b00;
     }
 
     .milestone-banner.milestone-diamond {
-      background: linear-gradient(135deg, #e8f4fd, #b3e5fc, #e1f5fe);
-      color: #01579b;
-      border: 1px solid #4fc3f7;
-      box-shadow: 0 0 12px rgba(79, 195, 247, 0.3);
+      color: #003B5C;
+      border-color: #2774AE;
+      box-shadow: 0 16px 34px rgba(39, 116, 174, 0.22);
     }
 
     .milestone-icon {
-      font-size: 1.5em;
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fff7b0, #FFD100 62%, #B38B00);
+      border: 2px solid #17324d;
+      color: #17324d;
+      box-shadow: inset 0 -5px 0 rgba(0, 59, 92, 0.12), 0 6px 14px rgba(0, 59, 92, 0.16);
+      flex: 0 0 auto;
+      font-size: 1.2em;
+    }
+
+    .milestone-text {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .milestone-text strong {
+      color: #17324d;
+      font-size: 1.08em;
+      line-height: 1.25;
+    }
+
+    .milestone-text span {
+      color: #4b5563;
+      line-height: 1.35;
     }
 
     /* Controls */
     #gym-controls {
-      background: #f8f9fa;
-      border: 1px solid #767676;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(244, 249, 253, 0.99));
+      border: 1.5px solid #2774AE;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 22px;
+      box-shadow: 0 18px 38px rgba(0, 59, 92, 0.15);
+    }
+
+    #gym-controls::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, #2774AE 0%, #2774AE 44%, #FFD100 44%, #FFD100 56%, #2774AE 56%, #2774AE 100%);
     }
 
     .controls-row {
@@ -763,6 +1933,27 @@ layout: sebook
       gap: 6px;
       position: relative;
       min-width: 0;
+    }
+
+    #gym-controls .toggle-row:not(.max-cards-row) {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(237, 247, 255, 0.86));
+      border: 1px solid #c7d9ea;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #2774AE;
+      color: #ffffff;
+      box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.22);
+      flex: 0 0 auto;
     }
 
     .controls-row label {
@@ -810,6 +2001,11 @@ layout: sebook
       align-items: center;
       gap: 12px;
       min-width: 0;
+      max-width: 120px;
+    }
+
+    .max-cards-controls input[type="number"] {
+      width: 100%;
     }
 
     .gym-section-header {
@@ -821,6 +2017,22 @@ layout: sebook
       padding-bottom: 8px;
       margin-top: 30px;
       margin-bottom: 15px;
+    }
+
+    #gym-entrance h2 .section-heading-icon,
+    .gym-section-header h2 .section-heading-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75em;
+      height: 1.75em;
+      margin-right: 0.35em;
+      border-radius: 50%;
+      background: #2774AE;
+      color: #ffffff;
+      font-size: 0.68em;
+      vertical-align: middle;
+      box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.22);
     }
 
     .gym-section-header h2 {
@@ -937,19 +2149,25 @@ layout: sebook
 
     /* Buttons */
     .gym-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: var(--sp-sm, 8px) var(--sp-lg, 18px);
       border: none;
       border-radius: var(--radius-md, 8px);
       font-weight: 600;
       font-size: 0.95em;
+      line-height: 1.2;
       min-height: 38px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, box-shadow 0.2s;
     }
 
     .gym-btn.primary {
       background: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
+      box-shadow: 0 7px 16px rgba(0, 59, 92, 0.16);
     }
 
     .gym-btn.danger {
@@ -965,14 +2183,26 @@ layout: sebook
       background: var(--color-primary-hover, #1e5c8a);
     }
 
+    .gym-start-btn:hover:not(:disabled) {
+      box-shadow: 0 14px 30px rgba(39, 116, 174, 0.34), inset 0 -4px 0 rgba(0, 47, 82, 0.24);
+    }
+
     .gym-btn.primary:disabled {
       background: #a1c2db;
+      color: #17324d;
       cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .gym-start-btn:disabled {
+      border-color: #9db7cc;
+      box-shadow: none;
     }
 
     .gym-btn.secondary {
       background: var(--color-divider, #e1e4e8);
       color: #333;
+      border: 1px solid #c8d0d8;
     }
 
     .gym-btn.secondary:hover {
@@ -981,23 +2211,50 @@ layout: sebook
 
     /* Gym Items */
     .gym-item {
+      position: relative;
       display: flex;
       align-items: center;
-      padding: var(--sp-md, 12px) var(--sp-lg, 15px);
-      border: 1px solid var(--color-border-strong, #767676);
-      border-radius: var(--radius-md, 8px);
+      gap: 12px;
+      padding: 16px 14px 16px 18px;
+      border: 1px solid #afc1d1;
+      border-radius: 8px;
       margin-bottom: var(--sp-sm, 8px);
-      background: var(--color-surface, #fff);
-      transition: border-color 0.2s;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 254, 0.98));
+      box-shadow: 0 9px 20px rgba(0, 59, 92, 0.09);
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      overflow: hidden;
+    }
+
+    .gym-item::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: #2774AE;
+    }
+
+    .gym-item[data-type="flashcard"]::before {
+      background: #FFD100;
+    }
+
+    .gym-item[data-type="difficult"]::before {
+      background: #b81e2c;
     }
 
     .gym-item:hover {
       border-color: var(--color-primary, #2774AE);
+      box-shadow: 0 14px 26px rgba(0, 59, 92, 0.15);
+      transform: translateY(-1px);
     }
 
     .gym-item.in-gym {
-      border-color: var(--color-success, #1f7a3d);
-      background: #f0fff4;
+      border-color: #2774AE;
+      background: linear-gradient(180deg, #f8fbff, #eef7ff);
+    }
+
+    .gym-item.in-gym::before {
+      background: #FFD100;
     }
 
     .gym-item-info {
@@ -1006,27 +2263,34 @@ layout: sebook
     }
 
     .gym-item-badge {
-      display: inline-block;
-      padding: 2px var(--sp-sm, 8px);
-      border-radius: var(--radius-sm, 4px);
-      font-size: 0.85em;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.95em;
       font-weight: 700;
       text-transform: uppercase;
       margin-right: var(--sp-sm, 8px);
+      border: 1px solid transparent;
+      line-height: 1.2;
     }
 
     .quiz-badge {
       background: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
+      border-color: #17324d;
     }
 
     .flashcard-badge {
       background: var(--color-accent, #FFD100);
       color: var(--color-text-on-accent, #333);
+      border-color: #8a6a00;
     }
 
     .gym-item-title {
       font-size: 1em;
+      color: #17324d;
       overflow-wrap: anywhere;
     }
 
@@ -1045,31 +2309,34 @@ layout: sebook
     }
 
     .gym-add-btn {
-      background: none;
+      background: #ffffff;
       border: 2px solid var(--color-border-strong, #767676);
       border-radius: var(--radius-circle, 50%);
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #555;
       font-size: 16px;
-      transition: all 0.2s;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
       flex-shrink: 0;
       padding: 0;
-      margin-left: var(--sp-md, 12px);
+      margin-left: 0;
+      box-shadow: 0 3px 8px rgba(0, 59, 92, 0.1);
     }
 
     .gym-add-btn:hover {
       border-color: var(--color-primary, #2774AE);
       color: var(--color-primary, #2774AE);
+      background: #eef7ff;
+      box-shadow: 0 5px 12px rgba(39, 116, 174, 0.18);
     }
 
     .gym-add-btn.in-gym {
-      background: var(--color-success, #1f7a3d);
-      border-color: var(--color-success, #1f7a3d);
+      background: var(--color-primary, #2774AE);
+      border-color: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
     }
 
@@ -1079,12 +2346,28 @@ layout: sebook
     }
 
     .empty-gym-msg {
-      color: #555;
+      color: #4b5563;
       font-style: italic;
-      padding: 16px;
+      padding: 18px;
       text-align: center;
-      border: 1px dashed #ddd;
+      border: 1.5px dashed #9db7cc;
       border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #f4f9fd);
+    }
+
+    #available-quizzes,
+    #available-flashcards,
+    #gym-selected,
+    #difficult-gym-container {
+      display: grid;
+      gap: 12px;
+    }
+
+    #available-quizzes .gym-item,
+    #available-flashcards .gym-item,
+    #gym-selected .gym-item,
+    #difficult-gym-container .gym-item {
+      margin-bottom: 0;
     }
 
     /* Workout */
@@ -1098,6 +2381,8 @@ layout: sebook
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
+      max-width: 860px;
+      margin: 0 auto;
     }
 
     .timed-practice-clock {
@@ -1108,9 +2393,10 @@ layout: sebook
       padding: 8px 10px;
       border: 1px solid #2774AE;
       border-radius: 8px;
-      background: #eaf4fb;
+      background: linear-gradient(180deg, #f7fbff, #e6f3fb);
       color: #17324d;
       font-variant-numeric: tabular-nums;
+      box-shadow: 0 8px 18px rgba(0, 59, 92, 0.1);
     }
 
     .timed-practice-clock-label {
@@ -1167,27 +2453,39 @@ layout: sebook
     }
 
     .workout-progress-bar {
-      height: 4px;
-      background: #f0f2f5;
-      border-radius: 2px;
-      margin: 16px 0;
+      height: 12px;
+      background: #dbeeff;
+      border: 1px solid #bfd4e5;
+      border-radius: 999px;
+      margin: 18px auto;
+      max-width: 860px;
       overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 59, 92, 0.12);
     }
 
     .workout-progress-fill {
       height: 100%;
-      background: #2774AE;
+      background: linear-gradient(90deg, #2774AE 0 76%, #FFD100 76% 100%);
       transition: width 0.4s ease;
     }
 
+    #workout-card-area {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
     .workout-source-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.85em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.95em;
       font-weight: 700;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      line-height: 1.2;
+      margin: 0;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
     }
 
     /* Difficulty badge — same color tokens as the SEBook quiz/flashcards
@@ -1199,13 +2497,12 @@ layout: sebook
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 10px;
-      border-radius: 4px;
-      font-size: 0.85em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.95em;
       font-weight: 700;
-      line-height: 1.4;
-      margin-left: 6px;
-      margin-bottom: 8px;
+      line-height: 1.2;
+      margin: 0;
       border: 1px solid transparent;
       vertical-align: middle;
     }
@@ -1255,49 +2552,66 @@ layout: sebook
 
     /* Difficulty filter (workout selection) */
     .difficulty-filter {
+      position: relative;
       margin-top: 14px;
-      padding: 10px 12px;
-      border: 1px solid #767676;
+      padding: 16px 14px 14px;
+      border: 1.5px solid #9db7cc;
       border-radius: 8px;
-      background: #ffffff;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 253, 0.98));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
     }
     .difficulty-filter legend {
-      padding: 0 6px;
+      padding: 0 8px;
       font-weight: 700;
-      font-size: 0.95em;
-      color: #333;
+      font-size: 0.98em;
+      color: #17324d;
       text-transform: uppercase;
       letter-spacing: 0;
+      background: #ffffff;
+      border-radius: 999px;
     }
     .difficulty-filter-help {
-      margin: 4px 0 10px;
-      font-size: 0.9em;
-      color: #555;
+      margin: 2px 0 12px;
+      font-size: 0.92em;
+      color: #4b5563;
       line-height: 1.4;
     }
     .difficulty-filter-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+      gap: 10px;
     }
     .difficulty-filter-option {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 32px;
-      padding: 4px 10px;
-      border-radius: 6px;
+      min-width: 0;
+      min-height: 42px;
+      padding: 8px 10px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 0.95em;
-      font-weight: 600;
+      font-weight: 700;
       color: #333;
-      border: 1px solid transparent;
+      border: 1px solid #c8d6e2;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 59, 92, 0.07);
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .difficulty-filter-option:hover {
+      border-color: #2774AE;
+      box-shadow: 0 6px 14px rgba(0, 59, 92, 0.12);
+    }
+    .difficulty-filter-option:has(input:checked) {
+      background: #eef7ff;
+      border-color: #2774AE;
     }
     .difficulty-filter-option input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      min-width: 18px;
-      min-height: 18px;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
       margin: 0;
       accent-color: var(--color-primary, #2774AE);
       flex-shrink: 0;
@@ -1308,30 +2622,49 @@ layout: sebook
     }
     .difficulty-filter-swatch {
       display: inline-block;
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      border: 1px solid currentColor;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
       flex-shrink: 0;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12);
     }
-    .difficulty-filter-basic .difficulty-filter-swatch { background: #98c8a8; color: #14532d; }
+    .difficulty-filter-text {
+      min-width: 0;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    .difficulty-filter-basic .difficulty-filter-swatch { background: #B9D9EB; color: #173a5e; }
     .difficulty-filter-intermediate .difficulty-filter-swatch { background: #97b8d6; color: #173a5e; }
     .difficulty-filter-advanced .difficulty-filter-swatch { background: #d6a35c; color: #5a3500; }
     .difficulty-filter-expert .difficulty-filter-swatch { background: #d29193; color: #5a0d10; }
     html.dark-mode .difficulty-filter {
-      background: #1f1f1f;
-      border-color: #555;
+      background: linear-gradient(180deg, #202833, #171d25);
+      border-color: #46566a;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
     html.dark-mode .difficulty-filter legend {
-      color: #e0e0e0;
+      color: #e6f4ff;
+      background: #202833;
     }
     html.dark-mode .difficulty-filter-help {
       color: #c8c8d8;
     }
     html.dark-mode .difficulty-filter-option {
       color: #e0e0e0;
+      background: #111827;
+      border-color: #46566a;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.32);
     }
-    html.dark-mode .difficulty-filter-basic .difficulty-filter-swatch { background: #2f6a4a; color: #b8f0c8; }
+    html.dark-mode .difficulty-filter-option:hover {
+      border-color: #8BB8E8;
+      box-shadow: 0 7px 16px rgba(0, 0, 0, 0.42);
+    }
+    html.dark-mode .difficulty-filter-option:has(input:checked) {
+      background: #18314a;
+      border-color: #8BB8E8;
+    }
+    html.dark-mode .difficulty-filter-basic .difficulty-filter-swatch { background: #8BB8E8; color: #061d31; }
     html.dark-mode .difficulty-filter-intermediate .difficulty-filter-swatch { background: #3d6a99; color: #b8d6f3; }
     html.dark-mode .difficulty-filter-advanced .difficulty-filter-swatch { background: #886433; color: #fbd99a; }
     html.dark-mode .difficulty-filter-expert .difficulty-filter-swatch { background: #8a3d3d; color: #ffc7c7; }
@@ -1441,21 +2774,51 @@ layout: sebook
 
     /* Workout Quiz Card */
     .workout-quiz-card {
-      background: #ffffff;
-      border: 1px solid #e1e4e8;
-      border-radius: 12px;
-      padding: 12px;
-      margin: 12px 0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      position: relative;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.18) 0 88px, transparent 90px),
+        linear-gradient(180deg, #ffffff, #f6faff);
+      border: 1.5px solid #6fa4d4;
+      border-radius: 8px;
+      padding: 22px;
+      margin: 18px 0;
+      box-shadow: 0 18px 40px rgba(0, 59, 92, 0.16);
       animation: fadeIn 0.4s ease;
     }
 
+    .workout-quiz-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 6px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(90deg, #2774AE 0 44%, #FFD100 44% 56%, #2774AE 56% 100%);
+    }
+
+    .workout-quiz-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .workout-quiz-card .quiz-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
     .workout-quiz-card .question-text {
-      font-size: 1.05em;
+      font-size: 1.08em;
       font-weight: 600;
-      margin-bottom: 8px;
-      line-height: 1.25;
-      color: #1a1a1a;
+      margin: 0 0 16px;
+      padding: 14px 16px;
+      line-height: 1.35;
+      color: #17324d;
+      border: 1px solid #c8d6e2;
+      border-left: 5px solid #2774AE;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(238, 247, 255, 0.92), rgba(255, 255, 255, 0.72));
     }
 
     .workout-quiz-card .question-text p,
@@ -1467,44 +2830,50 @@ layout: sebook
     .workout-quiz-card .quiz-options {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px;
     }
 
     .workout-quiz-card .quiz-option {
       display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      border: 1.5px solid #767676;
-      border-radius: 6px;
-      background: white;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 58px;
+      padding: 12px 14px;
+      border: 1.5px solid #9ab4cc;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #fbfdff);
       text-align: left;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       cursor: pointer;
       font-size: 0.95em;
-      line-height: 1.25;
+      line-height: 1.35;
       min-width: 0;
+      width: 100%;
+      box-shadow: 0 5px 14px rgba(0, 59, 92, 0.06);
     }
 
     .workout-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
       border-color: #2774AE;
-      background: #f0f7ff;
+      background: linear-gradient(180deg, #f7fbff, #eef7ff);
+      box-shadow: 0 10px 24px rgba(0, 59, 92, 0.14);
+      transform: translateY(-1px);
     }
 
     .workout-quiz-card .quiz-option.selected {
       border-color: #2774AE;
-      background: #eef6fc;
-      box-shadow: 0 0 0 1px #2774AE;
+      background: linear-gradient(180deg, #eaf5ff, #f7fbff);
+      box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.18), 0 10px 24px rgba(0, 59, 92, 0.14);
     }
 
     .workout-quiz-card .quiz-option.correct {
       border-color: #1f7a35;
-      background: #e6ffed;
+      background: linear-gradient(180deg, #edfff3, #e6ffed);
       color: #155724;
     }
 
     .workout-quiz-card .quiz-option.incorrect {
       border-color: #dc3545;
-      background: #ffeef0;
+      background: linear-gradient(180deg, #fff7f8, #ffeef0);
       color: #721c24;
     }
 
@@ -1522,11 +2891,11 @@ layout: sebook
 
     /* Per-option clarification (hidden by default; revealed when wrongly answered) */
     .workout-quiz-card .option-feedback {
-      margin: 4px 0 8px 28px;
-      padding: 8px 10px;
+      margin: 2px 0 8px 50px;
+      padding: 10px 12px;
       border-left: 3px solid #d97706;
       background: #fff7ed;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 0.92em;
       line-height: 1.35;
       color: #7c2d12;
@@ -1551,11 +2920,11 @@ layout: sebook
 
     .workout-quiz-card .option-checkbox {
       display: none;
-      width: 14px;
-      height: 14px;
-      border: 1.5px solid #767676;
-      border-radius: 3px;
-      margin-right: 10px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #6b879d;
+      border-radius: 5px;
+      margin-top: 5px;
       flex-shrink: 0;
       transition: all 0.2s;
       background: white;
@@ -1573,67 +2942,96 @@ layout: sebook
     .workout-quiz-card .quiz-option.selected .option-checkbox::after {
       content: '';
       display: block;
-      width: 4px;
-      height: 8px;
+      width: 5px;
+      height: 10px;
       border: solid white;
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
-      margin: 0px 3px;
+      margin: 1px 5px;
     }
 
     .workout-quiz-card .option-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #f7fbff, #dbeeff);
+      border: 1px solid #8BB8E8;
       font-weight: 800;
-      margin-right: 12px;
-      color: #6a737d;
+      color: #17324d;
       flex-shrink: 0;
+      line-height: 1;
+      box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.08);
     }
 
     .workout-quiz-card .option-content {
       min-width: 0;
       overflow-wrap: anywhere;
+      padding-top: 2px;
     }
 
     .workout-quiz-card .submit-answer-btn,
     .workout-quiz-card .next-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       background: var(--color-primary, #2774AE);
       color: var(--color-text-on-primary, white);
       border: none;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: var(--radius-md, 8px);
-      font-weight: 600;
-      margin-top: var(--sp-md, 10px);
+      font-weight: 700;
+      margin-top: 14px;
+      margin-left: auto;
       cursor: pointer;
-      transition: background 0.2s;
-      width: 100%;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+      width: auto;
+      min-width: 170px;
+      max-width: 100%;
       font-size: 0.95em;
-      min-height: 38px;
+      min-height: 42px;
+      box-shadow: 0 7px 16px rgba(0, 59, 92, 0.18);
+    }
+
+    .workout-quiz-card .quiz-action-row {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .workout-quiz-card .submit-answer-btn:disabled {
       background: #a1c2db;
+      color: #17324d;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
     .workout-quiz-card .submit-answer-btn:hover:not(:disabled),
     .workout-quiz-card .next-btn:hover {
       background: var(--color-primary-hover, #1e5c8a);
+      transform: translateY(-1px);
     }
 
     .workout-quiz-card .quiz-explanation {
-      margin-top: var(--sp-md, 10px);
-      padding: var(--sp-md, 10px) var(--sp-lg, 15px);
-      background: var(--color-surface-2, #f8f9fa);
-      border-left: 3px solid var(--color-primary, #2774AE);
-      border-radius: var(--radius-sm, 4px);
-      font-size: 0.92em;
-      line-height: 1.35;
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #f8fbff, #eef7ff);
+      border: 1.5px solid #8BB8E8;
+      border-left: 5px solid #2774AE;
+      border-radius: 8px;
+      font-size: 0.95em;
+      line-height: 1.45;
+      color: #17324d;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
     }
 
     .workout-quiz-card .explanation-title {
       font-weight: 700;
-      color: var(--color-primary, #2774AE);
+      color: #17324d;
       margin-bottom: var(--sp-sm, 8px);
-      font-size: 0.9em;
+      font-size: 0.95em;
       text-transform: uppercase;
     }
 
@@ -1643,17 +3041,23 @@ layout: sebook
       gap: 8px;
       margin-top: 10px;
       font-weight: 600;
-      color: #444;
+      color: #17324d;
+      flex-wrap: wrap;
     }
 
     .workout-quiz-card .correct-label-badge {
-      background: var(--color-primary, #2774AE);
-      color: var(--color-text-on-primary, white);
-      padding: 2px var(--sp-sm, 8px);
-      border-radius: var(--radius-sm, 4px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      background: #FFD100;
+      color: #061d31;
+      padding: 2px 8px;
+      border-radius: 999px;
       font-weight: 800;
-      font-size: 0.85em;
-      display: inline-block;
+      font-size: 0.95em;
+      border: 1px solid #b38b00;
     }
 
     .workout-quiz-card .optional-answer-note {
@@ -1672,6 +3076,16 @@ layout: sebook
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: break-word;
+    }
+
+    #main-content #se-gym-app .workout-quiz-card .question-text img,
+    #main-content #se-gym-app .workout-quiz-card .question-text svg,
+    #main-content #se-gym-app .workout-quiz-card .option-content img,
+    #main-content #se-gym-app .workout-quiz-card .option-content svg,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text img,
+    #main-content #se-gym-app .workout-quiz-card .explanation-text svg {
+      max-width: 100%;
+      height: auto;
     }
 
     #main-content #se-gym-app .workout-quiz-card .question-text .highlighter-rouge,
@@ -1768,6 +3182,10 @@ layout: sebook
     .parsons-line.parsons-incorrect::before { content: "✗"; }
     .parsons-actions { display: flex; gap: var(--sp-sm, 8px); margin-top: var(--sp-md, 10px); flex-wrap: wrap; }
     .parsons-check-btn, .parsons-reset-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: var(--sp-sm, 6px) var(--sp-lg, 16px); border-radius: var(--radius-md, 8px); border: none; cursor: pointer;
       font-size: 0.95em; font-weight: 600; min-height: 38px;
     }
@@ -1784,7 +3202,7 @@ layout: sebook
     .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
     .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
     .quiz-correct-answers code {
-      font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
+      font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.95em;
       background: #f0f0f5; padding: 1px 4px; border-radius: 2px;
     }
 
@@ -2043,6 +3461,20 @@ layout: sebook
     @media (prefers-reduced-motion: reduce) {
       .gym-emoji-host  { display: none !important; }
       .gym-emoji-piece { animation: none !important; }
+      .workout-progress-fill,
+      .workout-quiz-card,
+      .workout-quiz-card .quiz-option,
+      .workout-quiz-card .submit-answer-btn,
+      .workout-quiz-card .next-btn {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      .workout-quiz-card .quiz-option:hover:not([disabled]),
+      .workout-quiz-card .submit-answer-btn:hover:not(:disabled),
+      .workout-quiz-card .next-btn:hover {
+        transform: none !important;
+      }
     }
 
     .hidden {
@@ -2052,6 +3484,129 @@ layout: sebook
     /* Dark Mode */
     html.dark-mode #se-gym-app {
       color: #e0e0e0;
+    }
+
+    html.dark-mode #gym-entrance {
+      --gym-ucla-blue: #2A82C5;
+      --gym-ucla-blue-dark: #0F4C7B;
+      --gym-ucla-blue-light: #6FB1E8;
+      --gym-ucla-gold: #FFD100;
+      --gym-ucla-gold-dark: #B38B00;
+      --gym-ink: #0c1d2e;
+      --gym-paper: #172534;
+      --gym-soft-blue: #c9e6ff;
+      --gym-soft-gold: #fff3b8;
+      --gym-skin: #c77f54;
+      --gym-skin-shadow: #8a5635;
+      --gym-skin-light: #e7aa78;
+      --gym-hair: #3a2818;
+      --gym-hair-highlight: #6b4730;
+      --gym-outline: #0c1d2e;
+      --gym-cape: #1a5b94;
+      --gym-cape-shadow: #0a2f54;
+      --gym-cape-stop-top: #3585c8;
+      --gym-cape-stop-bottom: #0a2f54;
+      --gym-svg-shadow: rgba(91, 168, 232, 0.28);
+    }
+
+    html.dark-mode .post-content .gym-topic-hero-svg,
+    html.dark-mode #gym-entrance .gym-topic-hero-svg {
+      filter: none !important;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .suit-highlight {
+      display: none;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .suit-side-panel {
+      fill: rgba(255, 255, 255, 0.06);
+      stroke: rgba(255, 255, 255, 0.18);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .suit-gloss {
+      stroke: rgba(255, 255, 255, 0.18);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .lat-flare,
+    html.dark-mode .gym-topic-hero-svg .pectoral-line {
+      stroke: rgba(255, 255, 255, 0.22);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .arm-highlight {
+      stroke: rgba(255, 220, 180, 0.25);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .skin,
+    html.dark-mode .gym-topic-hero-svg .hand,
+    html.dark-mode .gym-topic-hero-svg .ear,
+    html.dark-mode .gym-topic-hero-svg .skin-fill,
+    html.dark-mode .gym-topic-hero-svg .hand-grip {
+      fill: var(--gym-skin);
+      stroke: var(--gym-skin-shadow);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .topic-plate-agile circle:first-child,
+    html.dark-mode .gym-topic-hero-svg .topic-plate-data circle:first-child {
+      fill: #174f55;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .gym-floor ellipse {
+      fill: rgba(139, 184, 232, 0.16);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .abdomen-panel {
+      fill: var(--gym-ucla-blue);
+      stroke: rgba(255, 209, 0, 0.78);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .abdomen-line {
+      stroke: rgba(255, 255, 255, 0.48);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .hair,
+    html.dark-mode .gym-topic-hero-svg .hair-female,
+    html.dark-mode .gym-topic-hero-svg .hair-front,
+    html.dark-mode .gym-topic-hero-svg .hair-lock {
+      fill: #3a2818;
+    }
+
+    html.dark-mode .gym-topic-hero-svg .hair-shadow {
+      fill: rgba(0, 0, 0, 0.42);
+    }
+
+    html.dark-mode .gym-topic-hero-svg .hair-shine {
+      stroke: rgba(255, 220, 150, 0.45);
+    }
+
+
+    @media (prefers-reduced-motion: reduce) {
+      .gym-lift-group,
+      .gym-hero-body .cape,
+      .gym-hero-body .cape-main,
+      .gym-hero-body .cape-trail-1,
+      .gym-hero-body .cape-trail-2,
+      .leg-shin-pivot,
+      .leg-shin-pivot-left,
+      .leg-shin-pivot-right,
+      .gym-spark-burst,
+      .gym-motion-lines,
+      .gym-motion-ghost,
+      .gym-backdrop {
+        animation: none !important;
+      }
+
+      .gym-motion-ghost,
+      .gym-motion-lines {
+        opacity: 0.42;
+      }
+
+      .gym-item {
+        transition: none !important;
+      }
+
+      .gym-item:hover {
+        transform: none;
+      }
     }
 
     html.dark-mode #se-gym-app h1,
@@ -2067,7 +3622,26 @@ layout: sebook
     }
 
     html.dark-mode .gym-subtitle {
-      color: #aaa;
+      color: #d5dce8;
+    }
+
+    html.dark-mode .gym-topic-strip {
+      background: linear-gradient(180deg, rgba(24, 34, 48, 0.98), rgba(14, 22, 32, 0.98));
+      border-color: rgba(139, 184, 232, 0.48);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.38);
+    }
+
+    html.dark-mode .gym-topic-token {
+      border-color: #d7ecff;
+      color: #061d31;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.38);
+    }
+
+    html.dark-mode #gym-entrance h2 .section-heading-icon,
+    html.dark-mode .gym-section-header h2 .section-heading-icon {
+      background: #8BB8E8;
+      color: #061d31;
+      box-shadow: inset 0 -3px 0 rgba(0, 59, 92, 0.28);
     }
 
     html.dark-mode .gym-summary-text {
@@ -2078,34 +3652,97 @@ layout: sebook
       color: #ffb4a8;
     }
 
+    html.dark-mode .milestone-banner {
+      background:
+        radial-gradient(circle at 96% 0%, rgba(139, 184, 232, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #102d47, #0b2338);
+      color: #eaf6ff;
+      border-color: #8BB8E8;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(139, 184, 232, 0.18);
+    }
+
+    html.dark-mode .milestone-banner::before {
+      background: linear-gradient(90deg, #8BB8E8 0%, #8BB8E8 44%, #FFD100 44%, #FFD100 56%, #8BB8E8 56%, #8BB8E8 100%);
+    }
+
+    html.dark-mode .milestone-banner::after {
+      background: radial-gradient(circle, rgba(139, 184, 232, 0.24) 0 36%, rgba(139, 184, 232, 0.1) 37% 58%, transparent 59%);
+      border: 1px solid rgba(139, 184, 232, 0.18);
+    }
+
+    html.dark-mode .milestone-icon {
+      background: linear-gradient(145deg, #fff7b0, #FFD100 62%, #B38B00);
+      border-color: #d7ecff;
+      color: #061d31;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.2), 0 8px 18px rgba(0, 0, 0, 0.34);
+    }
+
+    html.dark-mode .milestone-text strong {
+      color: #fff6c2;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+    }
+
+    html.dark-mode .milestone-text span {
+      color: #d9ecff;
+    }
+
     html.dark-mode .milestone-banner.milestone-bronze {
-      background: linear-gradient(135deg, #3a2a10, #4a3520);
-      color: #d4a76a;
-      border-color: #7a5a2a;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(216, 155, 88, 0.2) 0 70px, transparent 72px),
+        linear-gradient(180deg, #2f2419, #1f1a15);
+      border-color: #d89b58;
+    }
+
+    html.dark-mode .milestone-banner.milestone-bronze .milestone-text strong {
+      color: #ffe2ba;
     }
 
     html.dark-mode .milestone-banner.milestone-silver {
-      background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-      color: #c0c0c0;
-      border-color: #666;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(215, 236, 255, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #263446, #172231);
+      border-color: #b8c6d4;
+    }
+
+    html.dark-mode .milestone-banner.milestone-silver .milestone-text strong {
+      color: #f0f6ff;
     }
 
     html.dark-mode .milestone-banner.milestone-gold {
-      background: linear-gradient(135deg, #3a3000, #4a3e10);
-      color: #ffd54f;
-      border-color: #8a7a20;
+      background:
+        radial-gradient(circle at 96% 0%, rgba(255, 209, 0, 0.18) 0 70px, transparent 72px),
+        linear-gradient(180deg, #342b08, #171d25);
+      border-color: #FFD100;
+    }
+
+    html.dark-mode .milestone-banner.milestone-gold .milestone-text strong,
+    html.dark-mode .milestone-banner.milestone-diamond .milestone-text strong {
+      color: #FFD100;
     }
 
     html.dark-mode .milestone-banner.milestone-diamond {
-      background: linear-gradient(135deg, #0a2a3a, #0d3350, #0a2a3a);
-      color: #4fc3f7;
-      border-color: #0288d1;
-      box-shadow: 0 0 12px rgba(79, 195, 247, 0.2);
+      background:
+        radial-gradient(circle at 96% 0%, rgba(139, 184, 232, 0.24) 0 70px, transparent 72px),
+        linear-gradient(180deg, #102f4d, #071d31);
+      border-color: #8BB8E8;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.22);
     }
 
     html.dark-mode #gym-controls {
-      background: #252525;
-      border-color: #737373;
+      background: linear-gradient(180deg, #202833, #171d25);
+      border-color: #8BB8E8;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.44);
+    }
+
+    html.dark-mode #gym-controls .toggle-row:not(.max-cards-row) {
+      background: linear-gradient(180deg, rgba(139, 184, 232, 0.1), rgba(17, 31, 49, 0.72));
+      border-color: rgba(139, 184, 232, 0.28);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    html.dark-mode .toggle-icon {
+      background: #8BB8E8;
+      color: #061d31;
     }
 
     html.dark-mode .controls-row label {
@@ -2179,18 +3816,39 @@ layout: sebook
     }
 
     html.dark-mode .gym-item {
-      background: #1a1a1a;
-      border-color: #333;
+      background: linear-gradient(180deg, #202833, #171d25);
+      border-color: #46566a;
       color: #e0e0e0;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.38);
     }
 
     html.dark-mode .gym-item:hover {
       border-color: #4da3ff;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.48);
+    }
+
+    html.dark-mode .gym-item-title {
+      color: #f0f7ff;
     }
 
     html.dark-mode .gym-item.in-gym {
-      border-color: #28a745;
-      background: #1a2e1a;
+      border-color: #B9D9EB;
+      background: linear-gradient(180deg, #114166, #08283f);
+      box-shadow: 0 0 0 1px rgba(185, 217, 235, 0.28), 0 16px 32px rgba(0, 0, 0, 0.54);
+    }
+
+    html.dark-mode .gym-item.in-gym::before {
+      background: #FFD100;
+      width: 7px;
+    }
+
+    html.dark-mode .gym-item.in-gym .gym-item-title {
+      color: #ffffff;
+    }
+
+    html.dark-mode .gym-item.in-gym .gym-item-desc,
+    html.dark-mode .gym-item.in-gym .gym-item-count {
+      color: #d9ecff;
     }
 
     html.dark-mode .gym-item-desc {
@@ -2202,55 +3860,125 @@ layout: sebook
     }
 
     html.dark-mode .empty-gym-msg {
-      color: #aaa;
-      border-color: #444;
+      color: #c8c8d8;
+      border-color: #46566a;
+      background: linear-gradient(180deg, #202833, #171d25);
+    }
+
+    html.dark-mode .gym-add-btn {
+      background: #111827;
+      border-color: #6b7d92;
+      color: #d5dce8;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.38);
+    }
+
+    html.dark-mode .gym-add-btn:hover {
+      background: #18314a;
+      border-color: #8BB8E8;
+      color: #B9D9EB;
+    }
+
+    html.dark-mode .gym-add-btn.in-gym {
+      background: #B9D9EB;
+      border-color: #e6f4ff;
+      color: #061d31;
+      box-shadow: 0 0 0 1px rgba(185, 217, 235, 0.22), 0 6px 14px rgba(0, 0, 0, 0.44);
+    }
+
+    html.dark-mode .gym-add-btn.in-gym:hover {
+      background: #ff8585;
+      border-color: #ffd3d0;
+      color: #0a0a14;
     }
 
     html.dark-mode .workout-quiz-card {
-      background: #1a1a1a;
-      border-color: #333;
-      color: #e0e0e0;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 88px, transparent 90px),
+        linear-gradient(180deg, #111f31, #0f1722);
+      border-color: #8BB8E8;
+      color: #e6f4ff;
+      box-shadow: 0 20px 42px rgba(0, 0, 0, 0.48), inset 0 0 0 1px rgba(139, 184, 232, 0.16);
+    }
+
+    html.dark-mode .workout-quiz-card::before {
+      background: linear-gradient(90deg, #8BB8E8 0 44%, #FFD100 44% 56%, #8BB8E8 56% 100%);
     }
 
     html.dark-mode .workout-quiz-card .question-text {
-      color: #ffffff;
+      color: #f0f7ff;
+      border-color: #31455d;
+      border-left-color: #FFD100;
+      background: linear-gradient(180deg, rgba(32, 52, 75, 0.88), rgba(20, 40, 63, 0.72));
     }
 
     html.dark-mode .workout-quiz-card .quiz-option {
-      background: #252525;
-      border-color: #444;
-      color: #e0e0e0;
+      background: linear-gradient(180deg, #172536, #132131);
+      border-color: #46566a;
+      color: #e6f4ff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
     }
 
     html.dark-mode .workout-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
-      border-color: #4da3ff;
-      background: #2c2c2c;
+      border-color: #8BB8E8;
+      background: linear-gradient(180deg, #20344b, #172b40);
+      box-shadow: 0 9px 22px rgba(0, 0, 0, 0.42);
+    }
+
+    html.dark-mode .workout-quiz-card .quiz-option.selected {
+      border-color: #8BB8E8;
+      background: linear-gradient(180deg, #1b3a58, #18314a);
+      box-shadow: 0 0 0 2px rgba(139, 184, 232, 0.24), 0 9px 22px rgba(0, 0, 0, 0.42);
+    }
+
+    html.dark-mode .workout-quiz-card .submit-answer-btn:disabled {
+      background: #46566a;
+      color: #d9ecff;
     }
 
     html.dark-mode .workout-quiz-card .quiz-option.correct {
       border-color: #28a745;
-      background: #1a3a2a;
+      background: linear-gradient(180deg, #214a34, #1a3a2a);
       color: #98fb98;
     }
 
     html.dark-mode .workout-quiz-card .quiz-option.incorrect {
       border-color: #dc3545;
-      background: #3d1a1a;
+      background: linear-gradient(180deg, #4b2020, #3d1a1a);
       color: #ffbaba;
     }
 
+    html.dark-mode .workout-quiz-card .option-label {
+      background: linear-gradient(145deg, #17314c, #0b1f33);
+      border-color: #8BB8E8;
+      color: #d9ecff;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.26);
+    }
+
+    html.dark-mode .workout-quiz-card .option-checkbox {
+      background: #0b1f33;
+      border-color: #8BB8E8;
+    }
+
     html.dark-mode .workout-quiz-card .quiz-explanation {
-      background: #252525;
-      border-left-color: #4da3ff;
-      color: #e0e0e0;
+      background: linear-gradient(180deg, #182f49, #14283f);
+      border-color: #8BB8E8;
+      border-left-color: #FFD100;
+      color: #e6f4ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     html.dark-mode .workout-quiz-card .explanation-title {
-      color: #4da3ff;
+      color: #FFD100;
     }
 
     html.dark-mode .workout-quiz-card .quiz-correct-answers {
-      color: #d0d0d8;
+      color: #d9ecff;
+    }
+
+    html.dark-mode .workout-quiz-card .correct-label-badge {
+      background: #FFD100;
+      color: #061d31;
+      border-color: #fff6c2;
     }
 
     html.dark-mode .workout-quiz-card .optional-answer-note {
@@ -2288,11 +4016,12 @@ layout: sebook
     }
 
     html.dark-mode .workout-progress-bar {
-      background: #333;
+      background: #172536;
+      border-color: #46566a;
     }
 
     html.dark-mode .workout-progress-fill {
-      background: #4da3ff;
+      background: linear-gradient(90deg, #8BB8E8 0 76%, #FFD100 76% 100%);
     }
 
     html.dark-mode .workout-results-content {
@@ -2335,10 +4064,31 @@ layout: sebook
     html.dark-mode .gym-btn.secondary {
       background: #333;
       color: #e0e0e0;
+      border-color: #555;
     }
 
     html.dark-mode .gym-btn.secondary:hover {
       background: #444;
+    }
+
+    html.dark-mode .gym-btn.primary {
+      box-shadow: 0 7px 16px rgba(0, 0, 0, 0.34);
+    }
+
+    html.dark-mode .gym-start-btn {
+      border-color: #8BB8E8;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.46), 0 0 18px rgba(139, 184, 232, 0.2), inset 0 -4px 0 rgba(0, 0, 0, 0.24);
+    }
+
+    html.dark-mode .gym-btn.primary:disabled {
+      background: #46566a;
+      color: #d9ecff;
+      box-shadow: none;
+    }
+
+    html.dark-mode .gym-start-btn:disabled {
+      border-color: #5d7188;
+      box-shadow: none;
     }
 
     html.dark-mode .gym-btn.danger {
@@ -2432,6 +4182,25 @@ layout: sebook
         padding-right: max(12px, env(safe-area-inset-right));
       }
 
+      body.se-gym-page.se-gym-workout-active #main-content {
+        padding: 2px !important;
+      }
+
+      body.se-gym-page.se-gym-workout-active #main-content .container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      body.se-gym-page.se-gym-workout-active #se-gym-app {
+        padding: 2px;
+        padding-left: max(2px, env(safe-area-inset-left));
+        padding-right: max(2px, env(safe-area-inset-right));
+      }
+
+      body.se-gym-page.se-gym-workout-active #gym-workout {
+        padding-top: 0;
+      }
+
       #gym-controls {
         padding: 12px;
       }
@@ -2471,14 +4240,9 @@ layout: sebook
       }
 
       .max-cards-controls {
-        display: grid;
-        grid-template-columns: minmax(88px, 0.4fr) minmax(10rem, 1fr);
-        gap: 10px;
+        display: block;
         width: 100%;
-      }
-
-      .max-cards-controls .gym-btn {
-        white-space: normal;
+        max-width: none;
       }
 
       .difficulty-filter {
@@ -2529,10 +4293,21 @@ layout: sebook
 
       .workout-header-row {
         align-items: stretch;
+        gap: 4px;
       }
 
       .workout-header-row > * {
         width: 100%;
+      }
+
+      #back-to-library-btn {
+        justify-content: center;
+        padding: 4px 8px;
+      }
+
+      .workout-progress-bar {
+        height: 6px;
+        margin: 4px auto 6px;
       }
 
       .timed-practice-clock {
@@ -2541,16 +4316,132 @@ layout: sebook
 
       .workout-quiz-card,
       .workout-flashcard {
-        padding: 14px;
+        margin: 4px 0;
+        padding: 8px 6px 6px;
+      }
+
+      .workout-quiz-card::before {
+        height: 4px;
+      }
+
+      .workout-quiz-card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 64px, transparent 66px),
+          linear-gradient(180deg, #ffffff, #f7fbff);
+      }
+
+      html.dark-mode .workout-quiz-card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.14) 0 64px, transparent 66px),
+          linear-gradient(180deg, #111f31, #0f1722);
+      }
+
+      .workout-quiz-card .quiz-card-meta {
+        align-items: flex-start;
+        gap: 4px;
+        margin-bottom: 5px;
+      }
+
+      .workout-source-badge,
+      .workout-quiz-card .quiz-difficulty,
+      .workout-flashcard .quiz-difficulty {
+        padding: 3px 8px;
+      }
+
+      .workout-source-badge,
+      .workout-quiz-card .quiz-difficulty {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .workout-quiz-card .question-text {
+        font-size: 1em;
+        line-height: 1.28;
+        margin-bottom: 6px;
+        padding: 6px 8px;
+        border-left-width: 4px;
+      }
+
+      #main-content #se-gym-app .workout-quiz-card .question-text .uml-folder-tree-diagram-container {
+        padding: 4px 0 0;
+      }
+
+      .workout-quiz-card .quiz-options {
+        gap: 6px;
       }
 
       .workout-quiz-card .quiz-option {
         align-items: flex-start;
-        padding: 10px;
+        gap: 6px;
+        min-height: 44px;
+        padding: 6px 8px;
+      }
+
+      .workout-quiz-card .option-label {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9em;
+      }
+
+      .workout-quiz-card .option-checkbox {
+        width: 20px;
+        height: 20px;
+        margin-top: 4px;
+      }
+
+      .workout-quiz-card .option-content {
+        line-height: 1.28;
+        padding-top: 0;
+      }
+
+      .workout-quiz-card .option-feedback {
+        margin-left: 0;
+      }
+
+      .workout-flashcard .flashcard-question {
+        min-height: 0;
+        margin-bottom: 6px;
+        gap: 6px;
+        line-height: 1.2;
+      }
+
+      .workout-flashcard .flashcard-answer-container {
+        margin-top: 6px;
+        padding: 8px;
+      }
+
+      .workout-flashcard .flashcard-answer {
+        margin-bottom: 6px;
+      }
+
+      .workout-flashcard .flashcard-actions {
+        margin-top: 8px;
+      }
+
+      #se-gym-app .quiz-shortcuts-hint,
+      #se-gym-app .quiz-next-shortcut-hint,
+      #se-gym-app .parsons-shortcuts-hint,
+      #se-gym-app .flashcard-shortcuts-hint {
+        margin-top: 6px;
+        line-height: 1.3;
+      }
+
+      .workout-quiz-card .quiz-action-row {
+        display: block;
+      }
+
+      .workout-quiz-card .submit-answer-btn,
+      .workout-quiz-card .next-btn {
+        margin-left: 0;
+        min-width: 0;
+        width: 100%;
       }
 
       .workout-quiz-card .quiz-correct-answers {
+        align-items: flex-start;
         flex-wrap: wrap;
+        line-height: 1.4;
       }
 
       .parsons-container:not(.parsons-inline) .parsons-line {
@@ -2566,6 +4457,17 @@ layout: sebook
 
       .parsons-actions > button {
         flex: 1 1 140px;
+        min-height: 44px;
+      }
+
+      .parsons-line {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .parsons-bank,
+      .parsons-target {
+        padding: 10px;
       }
 
       .workout-breakdown {
@@ -2602,8 +4504,28 @@ layout: sebook
     }
 
     @media (max-width: 420px) {
-      .max-cards-controls {
-        grid-template-columns: 1fr;
+      .workout-quiz-card,
+      .workout-flashcard {
+        padding: 8px 6px 6px;
+      }
+
+      .workout-quiz-card .quiz-option {
+        gap: 6px;
+        padding: 6px 8px;
+      }
+
+      .workout-quiz-card .option-label {
+        width: 26px;
+        height: 26px;
+      }
+
+      .workout-quiz-card .option-checkbox {
+        width: 18px;
+        height: 18px;
+      }
+
+      .workout-quiz-card .quiz-difficulty-prefix {
+        display: none;
       }
 
       .confirm-modal-btns {
@@ -2615,12 +4537,91 @@ layout: sebook
       }
     }
 
+    @media (max-width: 360px) {
+      #se-gym-app {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+      }
+
+      .workout-quiz-card .quiz-option {
+        min-height: 44px;
+      }
+    }
+
     .pd-inactive {
-      /* Inactive groups are made inert/aria-hidden in JS. Keep their visual
-         colors at full strength; opacity lowers rendered text contrast and
-         creates false affordances for users with low vision. */
+      /* Inactive groups are made inert/aria-hidden in JS. Avoid opacity here:
+         muting colors keeps the disabled state visible without lowering text
+         contrast across the whole subtree. */
       pointer-events: none;
       user-select: none;
+    }
+
+    #gym-controls-body.pd-inactive {
+      filter: grayscale(1) saturate(0.3);
+    }
+
+    #gym-controls-body.pd-inactive .toggle-row:not(.max-cards-row),
+    #gym-controls-body.pd-inactive .difficulty-filter {
+      background: linear-gradient(180deg, #f7f8fa, #eef2f5);
+      border-color: #9aa6b2;
+      box-shadow: none;
+    }
+
+    #gym-controls-body.pd-inactive .toggle-icon {
+      background: #6b7280;
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter legend {
+      background: #f7f8fa;
+      color: #374151;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter-help,
+    #gym-controls-body.pd-inactive .gym-summary-text {
+      color: #4b5563;
+    }
+
+    #gym-controls-body.pd-inactive .difficulty-filter-option {
+      background: #f7f8fa;
+      border-color: #9aa6b2;
+      color: #333333;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive {
+      filter: grayscale(1) saturate(0.25);
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .toggle-row:not(.max-cards-row),
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter {
+      background: linear-gradient(180deg, #20252d, #171c23);
+      border-color: #687386;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .toggle-icon {
+      background: #8a94a3;
+      color: #06111d;
+      box-shadow: none;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter legend {
+      background: #20252d;
+      color: #e6edf6;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter-help,
+    html.dark-mode #gym-controls-body.pd-inactive .gym-summary-text {
+      color: #cdd5df;
+    }
+
+    html.dark-mode #gym-controls-body.pd-inactive .difficulty-filter-option {
+      background: #171c23;
+      border-color: #687386;
+      color: #e6edf6;
+      box-shadow: none;
     }
 
     /* Tutorial Progress Import/Export modal */
@@ -2785,11 +4786,44 @@ layout: sebook
 
   <script>
     (function () {
+      function prefersReducedMotion() {
+        return (typeof window.__prefersReducedMotion === 'function')
+          ? window.__prefersReducedMotion()
+          : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      }
+
+      function syncHeroMotion() {
+        var reduce = prefersReducedMotion();
+        document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
+          if (reduce && typeof svg.pauseAnimations === 'function') {
+            if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
+            svg.pauseAnimations();
+          } else if (!reduce && typeof svg.unpauseAnimations === 'function') {
+            svg.unpauseAnimations();
+          }
+        });
+      }
+
+      syncHeroMotion();
+      if (window.matchMedia) {
+        var motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (motionQuery.addEventListener) motionQuery.addEventListener('change', syncHeroMotion);
+        else if (motionQuery.addListener) motionQuery.addListener(syncHeroMotion);
+      }
+      if (window.MutationObserver && document.documentElement) {
+        new MutationObserver(syncHeroMotion).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+    })();
+
+    (function () {
       if (!window.PersonalGym) return;
 
       var libraryView = document.getElementById('gym-entrance');
       var workoutView = document.getElementById('gym-workout');
-      var startBtn = document.getElementById('start-workout-btn');
+      var startButtons = Array.prototype.slice.call(document.querySelectorAll('.gym-start-btn'));
       var maxCardsInput = document.getElementById('max-cards');
       var maxCardsNote = document.getElementById('max-cards-note');
       var gymSummary = document.getElementById('gym-summary');
@@ -2868,6 +4902,12 @@ layout: sebook
         var bucket = workoutDifficultyStats[difficultyBucketFor(card)];
         bucket.seen++;
         if (isCorrect) bucket.correct++;
+      }
+
+      function setStartButtonsDisabled(disabled) {
+        startButtons.forEach(function (button) {
+          button.disabled = disabled;
+        });
       }
 
       function shuffleArray(arr) {
@@ -3088,10 +5128,30 @@ layout: sebook
 
       // ==================== LIBRARY VIEW ====================
 
+      function refreshLibraryKeepingElementInView(element) {
+        if (!element || typeof element.getBoundingClientRect !== 'function') {
+          refreshLibrary();
+          return;
+        }
+        var beforeTop = element.getBoundingClientRect().top;
+        refreshLibrary();
+        if (!document.documentElement.contains(element)) return;
+        var afterTop = element.getBoundingClientRect().top;
+        var offset = afterTop - beforeTop;
+        if (Math.abs(offset) > 1) window.scrollBy(0, offset);
+      }
+
       function refreshLibrary() {
         // Show milestone banner based on total exercise attempts (all instances, not unique)
         var milestoneBanner = document.getElementById('milestone-banner');
         milestoneBanner.className = 'milestone-banner';
+        function showMilestoneBanner(levelClass, icon, heading, detail) {
+          milestoneBanner.innerHTML =
+            '<span class="milestone-icon" aria-hidden="true">' + icon + '</span>' +
+            '<span class="milestone-text"><strong>' + heading + '</strong><span>' + detail + '</span></span>';
+          milestoneBanner.classList.add(levelClass);
+          milestoneBanner.style.display = 'flex';
+        }
         if (PersonalGym.isAnalyzePerformance()) {
           var stats = PersonalGym.getStats();
           var totalAnswered = 0;
@@ -3102,21 +5162,13 @@ layout: sebook
           var MILESTONE_SILVER = {{ site.gym_milestone_silver }};
           var MILESTONE_BRONZE = {{ site.gym_milestone_bronze }};
           if (totalAnswered >= MILESTONE_DIAMOND) {
-            milestoneBanner.innerHTML = '<span class="milestone-icon">&#128142;</span> Diamond milestone! You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Legendary Superhero! &#129464;';
-            milestoneBanner.classList.add('milestone-diamond');
-            milestoneBanner.style.display = 'flex';
+            showMilestoneBanner('milestone-diamond', '&#128142;', 'Diamond milestone', 'You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Legendary Superhero!');
           } else if (totalAnswered >= MILESTONE_GOLD) {
-            milestoneBanner.innerHTML = '<span class="milestone-icon">&#127942;</span> Gold milestone! You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Only one more level to go!';
-            milestoneBanner.classList.add('milestone-gold');
-            milestoneBanner.style.display = 'flex';
+            showMilestoneBanner('milestone-gold', '&#127942;', 'Gold milestone', 'You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Only one more level to go!');
           } else if (totalAnswered >= MILESTONE_SILVER) {
-            milestoneBanner.innerHTML = '<span class="milestone-icon">&#129352;</span> Silver milestone! You\'ve completed ' + MILESTONE_SILVER + '+ exercises. Keep pushing!';
-            milestoneBanner.classList.add('milestone-silver');
-            milestoneBanner.style.display = 'flex';
+            showMilestoneBanner('milestone-silver', '&#129352;', 'Silver milestone', 'You\'ve completed ' + MILESTONE_SILVER + '+ exercises. Keep pushing!');
           } else if (totalAnswered >= MILESTONE_BRONZE) {
-            milestoneBanner.innerHTML = '<span class="milestone-icon">&#129353;</span> Bronze milestone! You\'ve completed ' + MILESTONE_BRONZE + '+ exercises. Keep going!';
-            milestoneBanner.classList.add('milestone-bronze');
-            milestoneBanner.style.display = 'flex';
+            showMilestoneBanner('milestone-bronze', '&#129353;', 'Bronze milestone', 'You\'ve completed ' + MILESTONE_BRONZE + '+ exercises. Keep going!');
           } else {
             milestoneBanner.style.display = 'none';
           }
@@ -3139,7 +5191,12 @@ layout: sebook
           var icon = btn.querySelector('i');
           icon.className = inGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
           icon.setAttribute('aria-hidden', 'true');
-          btn.title = inGym ? 'Remove from gym' : 'Add to gym';
+          var buttonTitle = inGym ? 'Remove from gym' : 'Add to gym';
+          btn.title = buttonTitle;
+          btn.setAttribute('data-original-title', buttonTitle);
+          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
+            try { window.jQuery(btn).tooltip('hide').attr('data-original-title', buttonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
+          }
           var title = item.querySelector('.gym-item-title');
           var name = title ? title.textContent.trim() : 'item';
           btn.setAttribute('aria-label', (inGym ? 'Remove ' : 'Add ') + name + (inGym ? ' from gym' : ' to gym'));
@@ -3170,8 +5227,13 @@ layout: sebook
           difficultAddBtn.classList.toggle('in-gym', difficultInGym);
           var dIcon = difficultAddBtn.querySelector('i');
           dIcon.className = difficultInGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          difficultAddBtn.title = difficultInGym ? 'Remove from workout' : 'Add to workout';
-          if (difficultInGym) {
+	          var difficultButtonTitle = difficultInGym ? 'Remove from gym' : 'Add to gym';
+	          difficultAddBtn.title = difficultButtonTitle;
+	          difficultAddBtn.setAttribute('data-original-title', difficultButtonTitle);
+	          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
+	            try { window.jQuery(difficultAddBtn).tooltip('hide').attr('data-original-title', difficultButtonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
+	          }
+	          if (difficultInGym) {
             totalCards += difficultCards.length;
           }
         } else {
@@ -3205,7 +5267,7 @@ layout: sebook
             '<strong class="gym-item-title">' + data.title + '</strong>' +
             '<span class="gym-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -3219,7 +5281,7 @@ layout: sebook
             '<strong class="gym-item-title">Difficult Questions</strong>' +
             '<span class="gym-item-count">(' + difficultCards.length + ' cards)</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from workout" aria-label="Remove Difficult Questions from workout">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove Difficult Questions from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -3233,7 +5295,6 @@ layout: sebook
           // Bind remove buttons in selected section
           gymSelectedDiv.querySelectorAll('.gym-remove-selected').forEach(function (btn) {
             btn.addEventListener('click', function () {
-              if (!window.confirm('Remove this item from your gym?')) return;
               PersonalGym.removeFromGym(btn.dataset.type, btn.dataset.id);
               refreshLibrary();
             });
@@ -3245,13 +5306,12 @@ layout: sebook
         var drawCount = Math.min(maxCards, totalCards);
         lastTimedPracticeDrawCount = drawCount;
         updateTimedPracticeEstimate(drawCount);
-        if (gym.length > 0 || (difficultInGym && hasDifficult)) {
+        if (hasAnything) {
           gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
-          startBtn.disabled = false;
         } else {
           gymSummary.textContent = '';
-          startBtn.disabled = true;
         }
+        setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0);
       }
 
       // ---- Difficult questions helper ----
@@ -3321,14 +5381,14 @@ layout: sebook
       allAddBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
           PersonalGym.toggleGym(btn.dataset.type, btn.dataset.id);
-          refreshLibrary();
+          refreshLibraryKeepingElementInView(btn);
         });
       });
 
       // Bind difficult gym add button
       difficultAddBtn.addEventListener('click', function () {
         PersonalGym.toggleGym('difficult', 'difficult');
-        refreshLibrary();
+        refreshLibraryKeepingElementInView(difficultAddBtn);
       });
 
       maxCardsInput.addEventListener('input', refreshLibrary);
@@ -3446,6 +5506,7 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
 
@@ -3471,16 +5532,14 @@ layout: sebook
       function applyActiveState(isActive) {
         gymControlsBody.classList.toggle('pd-inactive', !isActive);
         gymLibrarySections.classList.toggle('pd-inactive', !isActive);
-        // The .pd-inactive class dims to opacity 0.4, which drops contrast
-        // below WCAG 1.4.3. Match the visual state semantically by making
-        // the dimmed sections inert (removed from focus + AT tree). The
-        // `inert` attribute also short-circuits the contrast check in the
-        // audit, since inert content is treated as not-perceivable.
+        // Match the disabled visual state semantically by making inactive
+        // sections inert (removed from focus + AT tree).
         if (!isActive) {
           gymControlsBody.setAttribute('inert', '');
           gymLibrarySections.setAttribute('inert', '');
           gymControlsBody.setAttribute('aria-hidden', 'true');
           gymLibrarySections.setAttribute('aria-hidden', 'true');
+          setStartButtonsDisabled(true);
         } else {
           gymControlsBody.removeAttribute('inert');
           gymLibrarySections.removeAttribute('inert');
@@ -3684,6 +5743,7 @@ layout: sebook
       }
 
       function startWorkout() {
+        if (!PersonalGym.isPersonalGymActive()) return;
         saveTimedPracticeSettingsFromInputs();
         workoutCards = buildWorkoutCards();
         if (workoutCards.length === 0) return;
@@ -3699,6 +5759,7 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
 
@@ -3844,6 +5905,35 @@ layout: sebook
         window.scrollTo({ top: y, behavior: 'smooth' });
       }
 
+      function setWorkoutMode(isWorkout) {
+        document.body.classList.toggle('se-gym-workout-active', !!isWorkout);
+        var sidebar = document.getElementById('sidebar');
+        var sidebarToggle = document.getElementById('sidebar-toggle');
+        var mobileSidebar = window.matchMedia && window.matchMedia('(max-width: 1100px)').matches;
+        if (!mobileSidebar) return;
+        if (isWorkout) {
+          if (sidebar) {
+            sidebar.classList.remove('open');
+            sidebar.setAttribute('inert', '');
+            sidebar.setAttribute('aria-hidden', 'true');
+          }
+          if (sidebarToggle) {
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+            sidebarToggle.setAttribute('inert', '');
+            sidebarToggle.setAttribute('aria-hidden', 'true');
+          }
+        } else {
+          if (sidebarToggle) {
+            sidebarToggle.removeAttribute('inert');
+            sidebarToggle.removeAttribute('aria-hidden');
+          }
+          if (sidebar && !sidebar.classList.contains('open')) {
+            sidebar.setAttribute('inert', '');
+            sidebar.setAttribute('aria-hidden', 'true');
+          }
+        }
+      }
+
       // ---- QUIZ CARD RENDERING ----
 
       function difficultyBadgeHtml(data) {
@@ -3891,7 +5981,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', type);
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
+        var sourceHtml = '<div class="quiz-card-meta"><span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q) + '</div>';
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var optionFeedback = q.option_feedback || {};
@@ -3922,7 +6012,7 @@ layout: sebook
         optionsHtml += '</div>';
 
         var submitHtml = type === 'multiple'
-          ? '<button class="submit-answer-btn" disabled aria-keyshortcuts="Enter">Submit Answer</button>'
+          ? '<div class="quiz-action-row"><button class="submit-answer-btn" disabled aria-keyshortcuts="Enter"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Submit Answer</span></button></div>'
           : '';
         var shortcutsHtml = buildAnswerShortcutHint(optionObjs.length, type === 'multiple');
 
@@ -3938,7 +6028,7 @@ layout: sebook
         var explanationHtml = '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
-          '<button class="next-btn">Next</button>' +
+          '<button class="next-btn"><span>Next</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>' +
           buildNextShortcutHint() +
           '</div>';
 
@@ -4092,7 +6182,7 @@ layout: sebook
         div.className = 'workout-quiz-card';
         div.setAttribute('data-type', 'parsons');
 
-        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q);
+        var sourceHtml = '<div class="quiz-card-meta"><span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q) + '</div>';
         var questionHtml = '<div class="question-text">' + q.question + '</div>';
 
         var isInline = display === 'inline';
@@ -4127,8 +6217,8 @@ layout: sebook
           '<div class="parsons-separator"><span>' + sepText + '</span></div>' +
           '<div class="parsons-target"></div>' +
           '<div class="parsons-actions">' +
-          '<button class="parsons-check-btn">Check Order</button>' +
-          '<button class="parsons-reset-btn">Reset</button></div>' +
+          '<button class="parsons-check-btn"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Check Order</span></button>' +
+          '<button class="parsons-reset-btn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset</span></button></div>' +
           '</div>' +
           buildParsonsShortcutHint(items.length) +
           '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels">' +
@@ -4136,7 +6226,7 @@ layout: sebook
           '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
           '<div class="explanation-text">' + q.explanation + '</div>' +
-          '<button class="next-btn">Next</button>' +
+          '<button class="next-btn"><span>Next</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>' +
           buildNextShortcutHint() + '</div>';
 
         div.innerHTML = html;
@@ -4548,7 +6638,8 @@ layout: sebook
       function goBackToLibrary() {
         stopWorkoutTimer(true);
         workoutView.style.display = 'none';
-        libraryView.style.display = 'block';
+        libraryView.style.display = '';
+        setWorkoutMode(false);
         refreshLibrary();
         scrollToTop();
       }
@@ -4561,7 +6652,9 @@ layout: sebook
 
       // ==================== EVENT BINDINGS ====================
 
-      startBtn.addEventListener('click', startWorkout);
+      startButtons.forEach(function (button) {
+        button.addEventListener('click', startWorkout);
+      });
       backBtn.addEventListener('click', goBackToLibrary);
       workoutRestartBtn.addEventListener('click', restartWorkout);
       workoutReviewBtn.addEventListener('click', startReview);
@@ -4825,6 +6918,7 @@ layout: sebook
       importModal.querySelector('.confirm-modal-backdrop').addEventListener('click', closeImportModal);
 
       // Initialize
+      setWorkoutMode(false);
       refreshLibrary();
 
     })();

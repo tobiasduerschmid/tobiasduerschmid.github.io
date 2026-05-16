@@ -158,7 +158,7 @@
       // failed: write error" → kernel panic; don't lower further without
       // also slimming the rootfs.
       memoryMB: options.memoryMB || 192,
-      fontSize: options.fontSize || 14,
+      fontSize: options.fontSize || 16,
       // Restore from a pre-booted snapshot (gzipped) if available, skipping
       // the kernel boot. Set useSnapshot: false to force a fresh boot.
       useSnapshot: options.useSnapshot !== false,
@@ -9195,7 +9195,7 @@
       if (plArgsLbl) {
         plArgsLbl.style.display = 'inline-block';
         plArgsLbl.textContent = '?-';
-        plArgsLbl.style.fontSize = '13px';
+        plArgsLbl.style.fontSize = '16px';
         plArgsLbl.style.fontWeight = '600';
       }
     }
@@ -12474,7 +12474,7 @@
       value: '{\n  "message": "Hello Server"\n}',
       language: 'json',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
-      fontSize: 12,
+      fontSize: 16,
       minimap: { enabled: false },
       lineNumbers: 'off',
       scrollBeyondLastLine: false,

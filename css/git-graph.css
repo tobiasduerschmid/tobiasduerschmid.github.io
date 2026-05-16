@@ -698,3 +698,11 @@ html.dark-mode .git-workbench-shelf {
     transition: none !important;
   }
 }
+
+:is([class^="git-graph-"], [class*=" git-graph-"], [class^="git-workbench-"], [class*=" git-workbench-"]) :is(
+  p, li, button, text, code, pre,
+  .git-graph-label, .git-workbench-zone-header, .git-workbench-row,
+  .git-workbench-stash-entry, .git-workbench-status
+) {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}

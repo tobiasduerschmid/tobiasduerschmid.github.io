@@ -23,6 +23,16 @@ html.dark-mode .sr-only {
 	background-color: #111827;
 }
 
+#contact .form-horizontal .control-label,
+#contact .form-control-static {
+	font-size: var(--font-size-readable-min, 16px);
+	line-height: var(--line-height-body, 1.6);
+}
+
+#contact .form-horizontal .control-label {
+	font-weight: 700;
+}
+
 .carousel-control:focus-visible {
 	outline: 3px solid #FFD100 !important;
 	outline-offset: -5px;
@@ -110,6 +120,21 @@ header {
 
 header h1 {
 	font-size: 3em;
+}
+
+footer {
+	clear: both;
+	display: flow-root;
+	width: 100%;
+}
+
+footer > .col-md-12 {
+	float: none;
+	width: 100%;
+}
+
+footer a {
+	scroll-margin-block: 96px 32px;
 }
 
 footer div {
@@ -312,21 +337,25 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 	margin: 5px;
 	padding: var(--sp-sm, 8px) var(--sp-lg, 16px);
 	font-size: 0.95em;
-	transition: all 0.3s ease;
-	border: 1px solid var(--color-border-strong, #767676);
+	transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+	border: 2px solid var(--color-primary, #2774AE);
 	background-color: var(--color-surface, #fff);
-	color: #333;
+	color: var(--color-primary-strong, #005587);
 	border-radius: var(--radius-md, 8px);
+	box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+	font-weight: 750;
 }
 
 .filter-btn:hover {
-	background-color: var(--color-surface-3, #f5f5f5);
+	background-color: #eef7ff;
+	border-color: var(--color-primary-strong, #005587);
+	color: var(--color-primary-strong, #005587);
 }
 
 .filter-btn.active {
-	background-color: var(--color-accent, #FFD100);
-	color: var(--color-text-on-accent, black);
-	border: 2px solid #8a6d00;
+	background-color: var(--color-primary, #2774AE);
+	color: var(--color-text-on-primary, #ffffff);
+	border-color: var(--color-primary-strong, #005587);
 }
 
 
@@ -403,20 +432,9 @@ a.author:visited {
 }
 
 .nav a {
-	font-size: 15px !important;
+	font-size: 17px !important;
 	font-weight: 500;
 	border-radius: 0 !important;
-}
-
-#sidebar a {
-	border-radius: 0 !important;
-}
-
-#sidebar a:hover,
-#sidebar a:focus {
-	color: black;
-	background-color: #FFD100;
-	text-decoration: underline;
 }
 
 .label.top-right {
@@ -495,14 +513,14 @@ a.thumbnail:visited {
 	color: #fff;
 	margin: 0px 25px 15px 25px;
 	padding: 0;
-	font-size: 15px;
+	font-size: 16px;
 	text-transform: uppercase;
 }
 
 .tpl6 .dmbutton {
 	display: inline-block;
 	margin: 0px 5px 0px 5px;
-	font-size: 13px;
+	font-size: 16px;
 }
 
 .tpl6 .bg {
@@ -535,7 +553,7 @@ a.thumbnail:visited {
 	letter-spacing: 0.85px;
 	padding-bottom: 0.5875rem;
 	padding-left: 1.25rem;
-	font-size: 1.55rem;
+	font-size: 16px;
 	cursor: pointer;
 	font-weight: normal;
 	line-height: normal;
@@ -822,73 +840,6 @@ html.dark-mode .bibliography li {
 	color: #FFF !important;
 }
 
-/* Sidebar Dark Mode */
-html.dark-mode #sidebar {
-	background-color: #1e1e1e !important;
-}
-
-html.dark-mode .sebook-sidebar-nav {
-	background-color: #1e1e1e !important;
-	color: #e0e0e0 !important;
-}
-
-html.dark-mode .sebook-nav-link,
-html.dark-mode .sebook-nav-link:visited,
-html.dark-mode .sebook-nav-sublink,
-html.dark-mode .sebook-nav-sublink:visited,
-html.dark-mode .sebook-nav-itemlink,
-html.dark-mode .sebook-nav-itemlink:visited,
-html.dark-mode .sebook-nav-toggle {
-	color: #e0e0e0 !important;
-}
-
-html.dark-mode .sebook-nav-link:hover,
-html.dark-mode .sebook-nav-sublink:hover,
-html.dark-mode .sebook-nav-itemlink:hover,
-html.dark-mode .sebook-nav-toggle:hover {
-	background-color: #333 !important;
-}
-
-.sebook-nav-link:focus-visible,
-.sebook-nav-sublink:focus-visible,
-.sebook-nav-itemlink:focus-visible,
-.sebook-nav-toggle:focus-visible {
-	outline: 3px solid #2774AE !important;
-	outline-offset: -3px;
-	box-shadow: inset 0 0 0 2px #fff;
-}
-
-html.dark-mode .sebook-nav-link:focus-visible,
-html.dark-mode .sebook-nav-sublink:focus-visible,
-html.dark-mode .sebook-nav-itemlink:focus-visible,
-html.dark-mode .sebook-nav-toggle:focus-visible {
-	outline-color: #FFD100 !important;
-	box-shadow: inset 0 0 0 2px #000;
-}
-
-html.dark-mode .sebook-nav-sublist {
-	background-color: #252525 !important;
-}
-
-html.dark-mode .sebook-nav-itemlist {
-	background-color: #2a2a2a !important;
-}
-
-html.dark-mode .sebook-nav-item {
-	border-bottom-color: #333 !important;
-}
-
-html.dark-mode .sebook-nav-subitem {
-	border-bottom-color: #333 !important;
-}
-
-html.dark-mode .sebook-nav-link.current,
-html.dark-mode .sebook-nav-sublink.current,
-html.dark-mode .sebook-nav-itemlink.current {
-	background-color: #2774AE !important;
-	color: white !important;
-}
-
 html.dark-mode .action-box {
 	background-color: #005587;
 	border-left-color: #FFB81C;
@@ -936,53 +887,6 @@ html.dark-mode #bookmarkPageBtn {
 	border-color: #5fa8d3 !important;
 }
 
-/* Inline language tabs (Java / C++ / Python / TypeScript) shipped without
-   any styling, so they inherited the page's currentColor on a transparent
-   background — ~1.15:1 contrast in dark mode and ~3:1 in light mode (both
-   fail 1.4.3). Style them as a real tablist. */
-.inline-language-tabs {
-	display: inline-flex;
-	gap: var(--sp-xs, 4px);
-	padding: var(--sp-xs, 4px);
-	margin: var(--sp-sm, 8px) 0 0;
-	border: 1px solid var(--color-border, #d0d0d6);
-	border-radius: var(--radius-md, 8px);
-	background: var(--color-surface-2, #f6f7f9);
-}
-.inline-language-tabs button[role="tab"] {
-	border: 1px solid transparent;
-	background: transparent;
-	color: var(--color-text, #1a1a1a);
-	padding: var(--sp-xs, 4px) var(--sp-md, 12px);
-	border-radius: var(--radius-sm, 4px);
-	font-size: 0.92em;
-	font-weight: 500;
-	cursor: pointer;
-	min-height: 28px;
-}
-.inline-language-tabs button[role="tab"]:hover,
-.inline-language-tabs button[role="tab"]:focus-visible {
-	background: #e6e8ec;
-}
-.inline-language-tabs button[role="tab"][aria-selected="true"] {
-	background: var(--color-primary, #2774AE);
-	color: var(--color-text-on-primary, #fff);
-	border-color: var(--color-primary, #2774AE);
-}
-html.dark-mode .inline-language-tabs {
-	border-color: #3a3a4a;
-	background: #1f1f28;
-}
-html.dark-mode .inline-language-tabs button[role="tab"] {
-	color: #e6edf3;
-}
-html.dark-mode .inline-language-tabs button[role="tab"]:hover,
-html.dark-mode .inline-language-tabs button[role="tab"]:focus-visible {
-	background: #2a2a38;
-}
-html.dark-mode .inline-language-tabs button[role="tab"][aria-selected="true"] {
-	color: #0a0a14;
-}
 html.dark-mode .highlight .k,
 html.dark-mode .highlight .kd,
 html.dark-mode .highlight .kp,
@@ -1196,19 +1100,21 @@ html.dark-mode .blog-post-excerpt-link:hover .blog-post-excerpt {
 }
 
 html.dark-mode .filter-btn {
-	background-color: #252525 !important;
-	border-color: #737373 !important;
-	color: #e0e0e0 !important;
+	background-color: #101b28 !important;
+	border-color: #8BB8E8 !important;
+	color: #e6f4ff !important;
 }
 
 html.dark-mode .filter-btn:hover {
-	background-color: #333 !important;
+	background-color: #17324d !important;
+	border-color: #FFD100 !important;
+	color: #ffffff !important;
 }
 
 html.dark-mode .filter-btn.active {
-	background-color: #FFD100 !important;
-	color: #000 !important;
-	border-color: #8a6d00 !important;
+	background-color: #2774AE !important;
+	color: #ffffff !important;
+	border-color: #8BB8E8 !important;
 }
 
 html.dark-mode .post-date,
@@ -1283,7 +1189,7 @@ html.dark-mode legend {
 }
 
 .toggle-label {
-	font-size: 0.85em;
+	font-size: 0.95em;
 	font-weight: 600;
 	color: #666;
 	text-transform: uppercase;
@@ -1546,7 +1452,7 @@ html.dark-mode .flashcard-explanation {
 
 /* Cookie / Privacy Notice */
 .cookie-notice {
-	font-size: 0.78em;
+	font-size: 1em;
 	color: #666;
 	background: var(--color-surface-2, #f8f9fa);
 	border: 1px solid var(--color-divider, #e1e4e8);
@@ -1584,7 +1490,7 @@ table.encapsulation-diagram td {
 	padding: 8px 4px;
 	text-align: center;
 	vertical-align: middle;
-	font-size: 0.85em;
+	font-size: 0.95em;
 }
 
 table.encapsulation-diagram thead th {
@@ -1594,7 +1500,7 @@ table.encapsulation-diagram thead th {
 
 table.encapsulation-diagram tbody td {
 	background-color: #f5f5f5;
-	font-size: 0.78em;
+	font-size: 0.95em;
 	color: #555;
 	border-top: none;
 	padding: 4px 4px;

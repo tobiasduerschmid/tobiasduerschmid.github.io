@@ -41,7 +41,10 @@
       $triggers.tooltip($.extend({
         trigger: 'manual',
         delay: 0,
-        container: 'body'
+        container: 'body',
+        html: false,
+        placement: 'auto',
+        viewport: { selector: 'body', padding: 8 }
       }, options || {}));
 
       function getTip($trigger) {

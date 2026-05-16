@@ -115,6 +115,9 @@
     --font-body: Helvetica, Arial, sans-serif;
     --font-mono: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono',
                  Menlo, monospace;
+    --font-size-body: 17px;
+    --font-size-readable-min: 16px;
+    --line-height-body: 1.6;
 }
 
 /*
@@ -124,14 +127,12 @@
  * single set of overrides updates the whole site.
  */
 html.dark-mode {
-    /* Brand — UCLA Blue at #2774AE drops to ~3.74:1 against the dark page
-       background and fails 1.4.3 for body text. Use a brighter blue for
-       links/accents.  #4da3ff is the variant already used by the cookie
-       notice, glossary, shortcuts, and other dark-mode accents — keep
-       parity with that so a mid-flight switch doesn't shift hues. */
-    --color-primary: #4da3ff;
-    --color-primary-hover: #8fc4e3;
-    --color-primary-strong: #5fa8d3;
+    /* Brand — UCLA Blue at #2774AE drops below AA when used as dark-mode
+       text, so dark mode uses the UCLA light-blue companion tones while
+       keeping gold as the focus/accent color. */
+    --color-primary: #8BB8E8;
+    --color-primary-hover: #B9D9EB;
+    --color-primary-strong: #8BB8E8;
 
     /* Semantic — green/red bumped to clear 4.5:1 on the darker surfaces */
     --color-success: #4fa34f;

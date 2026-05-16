@@ -84,11 +84,11 @@ browser — no install required — and saves your progress locally.
   /* Override sebook.html's global `h2 { -webkit-text-stroke: 1px black }`
      — at small sizes inside cards the stroke fattens the type and hurts
      legibility. Using bold + an explicit 1.25rem (20px) size satisfies
-     the "large text" threshold in WCAG, so the #2774AE-on-white ratio
+    the readable text threshold in WCAG, so the #2774AE-on-white ratio
      of ~5:1 passes SC 1.4.3 Contrast (Minimum) for AA. */
   .tutorial-card-title {
     margin: 0 0 10px;
-    font-size: 1.35rem;
+    font-size: 1.35em;
     line-height: 1.3;
     color: #2774AE;
     -webkit-text-stroke: 0;
