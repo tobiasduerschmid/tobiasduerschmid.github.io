@@ -1046,11 +1046,13 @@ steps:
     setup_commands:
       - "while [ ! -f /tutorial/make_project/step5/Makefile ] || [ ! -f /tutorial/make_project/step5/main.c ] || [ ! -f /tutorial/make_project/step5/math.c ] || [ ! -f /tutorial/make_project/step5/io.c ]; do sleep 0.1; done"
       - "make -C /tutorial/make_project/step5 2>/dev/null || true"
-      # Record main.o's baseline mtime so we can later assert it didn't change.
-      # This catches "make clean && make" (full rebuild) where math.o is still
-      # newer than main.o by gcc compile order — the existing -nt test alone
-      # accepts that wrong solution.
-      - "stat -c %Y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo 0 > /tmp/.makefile_step5_main_o_baseline"
+      # Record object-file baseline mtimes so the tests can distinguish
+      # incremental rebuilds from a full rebuild. Use %y instead of %Y so
+      # rapid rebuilds are compared with sub-second precision.
+      - "stat -c %y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_main_o_baseline"
+      - "stat -c %y /tutorial/make_project/step5/io.o > /tmp/.makefile_step5_io_o_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_io_o_baseline"
+      - "stat -c %y /tutorial/make_project/step5/Makefile > /tmp/.makefile_step5_makefile_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_makefile_baseline"
+      - "rm -f /tmp/.makefile_step5_commands"
 
     files:
       - <<: *makefile_main_c
@@ -1068,34 +1070,89 @@ steps:
     watch_files:
       - "make_project/step5/Makefile"
 
+    user_command_listener: "cat >> /tmp/.makefile_step5_commands"
+
     solution:
       commands:
         - "cd /tutorial/make_project/step5 && make"
-        - "stat -c %Y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline"
+        - "stat -c %y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline"
+        - "stat -c %y /tutorial/make_project/step5/io.o > /tmp/.makefile_step5_io_o_baseline"
+        - "stat -c %y /tutorial/make_project/step5/Makefile > /tmp/.makefile_step5_makefile_baseline"
         - "cd /tutorial/make_project/step5 && touch math.c"
         - "cd /tutorial/make_project/step5 && make"
+        - "cd /tutorial/make_project/step5 && touch main.c"
+        - "cd /tutorial/make_project/step5 && make -n"
+        - "cd /tutorial/make_project/step5 && make"
+        - "cd /tutorial/make_project/step5 && touch Makefile"
+        - "cd /tutorial/make_project/step5 && make -n"
+        - "cd /tutorial/make_project/step5 && make"
+        - "cd /tutorial/make_project/step5 && touch math.c"
+        - "cd /tutorial/make_project/step5 && make --trace"
+        - "printf '%s\n' 'make' 'touch math.c' 'make' 'touch main.c' 'make -n' 'make' 'touch Makefile' 'make -n' 'make' 'touch math.c' 'make --trace' > /tmp/.makefile_step5_commands"
       explanation: |
-        - **Test 1:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp.
-        - **Test 2:** `main.o`'s mtime must equal the baseline recorded before `math.c` is touched. This catches the wrong solution `make clean && make` — that produces a *full* rebuild where math.o is still newer than main.o (by gcc compile order), but main.o's mtime has changed from the baseline.
+        - **Test 1:** `main.o`'s mtime must differ from the original build. That proves the `touch main.c` experiment actually rebuilt `main.o`.
+        - **Test 2:** `Makefile`'s mtime must differ from the original build. That proves the Makefile experiment actually happened.
+        - **Test 3:** The command log must include both `make -n` and `make --trace`, because the step is teaching the dry-run and trace debugging habits, not just timestamp side effects.
+        - **Test 4:** `io.o`'s mtime must equal the baseline recorded before any `touch` commands. This catches the wrong solution `make clean && make` — that produces a full rebuild where math.o is still newer than main.o (by gcc compile order), but io.o's mtime has changed from the baseline.
         - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
         - **`touch math.c`:** Updates `math.c`'s modification timestamp without changing its content. Make sees `math.c` is now newer than `math.o` and recompiles just that one file, then re-links `app`. `main.c` and `io.c` are untouched.
         - **Why this matters:** In a large project, this turns a potential hours-long full rebuild into a seconds-long incremental one.
 
     tests:
-      - description: "math.c was touched and recompiled (math.o is newer than main.o)"
-        command: "cd /tutorial/make_project/step5 && [ math.o -nt main.o ]"
-      - description: "Make did NOT do a full rebuild — main.o is unchanged from the original build"
+      - description: "The main.c experiment ran — main.o changed from the original build"
         command: |
           cd /tutorial/make_project/step5
           if [ ! -f /tmp/.makefile_step5_main_o_baseline ]; then
             echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
             exit 1
           fi
-          current=$(stat -c %Y main.o)
+          current=$(stat -c %y main.o)
           baseline=$(cat /tmp/.makefile_step5_main_o_baseline)
-          if [ "$current" != "$baseline" ]; then
-            echo "main.o's mtime changed from $baseline to $current — that means main.o was recompiled."
-            echo "If you ran 'make clean && make' (full rebuild), undo that. The lesson is incremental: just touch math.c and run make, so ONLY math.o gets rebuilt."
+          if [ "$baseline" = "missing" ] || [ "$current" = "$baseline" ]; then
+            echo "main.o is still at its original build timestamp."
+            echo "Run the main.c experiment: touch main.c, check with make -n, then run make so main.o rebuilds."
+            exit 1
+          fi
+      - description: "The Makefile experiment ran — Makefile changed from the original timestamp"
+        command: |
+          cd /tutorial/make_project/step5
+          if [ ! -f /tmp/.makefile_step5_makefile_baseline ]; then
+            echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
+            exit 1
+          fi
+          current=$(stat -c %y Makefile)
+          baseline=$(cat /tmp/.makefile_step5_makefile_baseline)
+          if [ "$baseline" = "missing" ] || [ "$current" = "$baseline" ]; then
+            echo "Makefile is still at its original timestamp."
+            echo "Run the Makefile experiment: touch Makefile, check with make -n, then run make."
+            exit 1
+          fi
+      - description: "You used make -n and make --trace to inspect rebuild decisions"
+        command: |
+          if [ ! -f /tmp/.makefile_step5_commands ]; then
+            echo "No command log found. Run the terminal commands for this step before testing."
+            exit 1
+          fi
+          if ! grep -Eq '(^|[;&|[:space:]])make([[:space:]][^;&|]*)?(-n|--dry-run|--just-print)' /tmp/.makefile_step5_commands; then
+            echo "Run make -n (or --dry-run / --just-print) before the real rebuild so you can predict what Make will do."
+            exit 1
+          fi
+          if ! grep -Eq '(^|[;&|[:space:]])make([[:space:]][^;&|]*)?--trace' /tmp/.makefile_step5_commands; then
+            echo "Run make --trace after touching math.c so Make explains why it rebuilt each target."
+            exit 1
+          fi
+      - description: "Make did NOT do a full rebuild — io.o is unchanged from the original build"
+        command: |
+          cd /tutorial/make_project/step5
+          if [ ! -f /tmp/.makefile_step5_io_o_baseline ]; then
+            echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
+            exit 1
+          fi
+          current=$(stat -c %y io.o)
+          baseline=$(cat /tmp/.makefile_step5_io_o_baseline)
+          if [ "$baseline" = "missing" ] || [ "$current" != "$baseline" ]; then
+            echo "io.o's mtime changed from $baseline to $current — that means io.o was recompiled."
+            echo "If you ran 'make clean && make' (full rebuild), reset the step. The lesson is incremental: touch main.c rebuilds main.o, touch math.c rebuilds math.o, and io.o stays untouched."
             exit 1
           fi
 
