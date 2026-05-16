@@ -716,6 +716,10 @@
       this._restartFileWatchOnResume = true;
       this._stopFileWatch();
     }
+    if (this._guestClockTimer) {
+      this._restartGuestClockSyncOnResume = true;
+      this._stopGuestClockSync();
+    }
   };
 
   TutorialCode.prototype._resumeBackgroundSync = function () {
@@ -727,6 +731,10 @@
       this._restartFileWatchOnResume = false;
       this._startFileWatch(2000);
     }
+    if (this._restartGuestClockSyncOnResume && this.config.backend === 'v86' && this.booted) {
+      this._restartGuestClockSyncOnResume = false;
+      this._startGuestClockSync(2000);
+    }
     if (refreshGraph && this.gitGraphPath && this.booted) {
       this._refreshGitGraph();
     }
@@ -734,6 +742,7 @@
 
   TutorialCode.prototype.destroy = function () {
     this._stopFileWatch();
+    this._stopGuestClockSync();
     clearTimeout(this._terminalReadinessTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
     if (this._worker) { this._worker.terminate(); this._worker = null; }
@@ -8280,6 +8289,12 @@
         if (self.makeDagPath && self._isMakeDagFile(filename)) {
           if (self._currentView === 'make_dag') self._maybeAutoRefreshMakeDag();
         }
+        // create_file stamped the inode with the host's Date.now(); pin the
+        // guest's wall clock to the same second so make doesn't see the file
+        // as in the future when v86's emulated clock has drifted behind.
+        // Await it so a make/gcc run that follows the save in the same tick
+        // can't race ahead of the resync.
+        return self._resyncGuestClock();
       }).catch(function (err) {
         var dirname = filename.indexOf('/') !== -1
           ? filename.substring(0, filename.lastIndexOf('/'))
@@ -9168,7 +9183,10 @@
       self._refreshStepVisibleFiles(step, { includeStepFiles: false });
     }
 
-    if (this.config.backend === 'v86' && !this._isBackgroundSyncPaused()) this._startFileWatch(2000);
+    if (this.config.backend === 'v86' && !this._isBackgroundSyncPaused()) {
+      this._startFileWatch(2000);
+      this._startGuestClockSync(2000);
+    }
 
     // step_dir: cd to the configured directory if not already there.
     // Runs visibly in the terminal so the user sees their prompt land in the
@@ -10696,6 +10714,48 @@
 
   TutorialCode.prototype._stopFileWatch = function () {
     if (this._reverseSyncTimer) { clearInterval(this._reverseSyncTimer); this._reverseSyncTimer = null; }
+  };
+
+  // File mtimes set via emulator.create_file() and 9p attribute updates use
+  // the host's Date.now() (see libv86.js CreateInode), but make / gcc inside
+  // the guest read the emulated CMOS clock — which drifts behind real time
+  // whenever v86 misses real-time deadlines (idle VM, throttled tab, busy
+  // setup like the gcc "sleep 2" wrapper). When the drift exceeds a second,
+  // make warns "Makefile modification time N.Ns in the future" and may
+  // rebuild targets in a loop. Re-pinning the guest wall clock to the host's
+  // current second keeps both domains aligned so every build target has a
+  // consistent timestamp.
+  TutorialCode.prototype._resyncGuestClock = function () {
+    if (this.config.backend !== 'v86' || !this.emulator || !this.booted) {
+      return Promise.resolve();
+    }
+    if (this._guestClockSyncing) return this._guestClockSyncing;
+    var self = this;
+    var hostEpoch = Math.floor(Date.now() / 1000);
+    var cmd = 'date -u -s @' + hostEpoch + ' >/dev/null 2>&1 || ' +
+              'date -s @' + hostEpoch + ' >/dev/null 2>&1 || true';
+    this._guestClockSyncing = this._probeRPCDaemon().then(function (avail) {
+      if (!avail) return null;
+      return self._runRPC(cmd, { timeout: 3000 }).catch(function () { return null; });
+    }).catch(function () { return null; }).then(function (r) {
+      self._guestClockSyncing = null;
+      return r;
+    });
+    return this._guestClockSyncing;
+  };
+
+  TutorialCode.prototype._startGuestClockSync = function (intervalMs) {
+    if (this.config.backend !== 'v86') return;
+    this._stopGuestClockSync();
+    var self = this;
+    if (this.booted && !this._isBackgroundSyncPaused()) this._resyncGuestClock();
+    this._guestClockTimer = setInterval(function () {
+      if (self.booted && !self._isBackgroundSyncPaused()) self._resyncGuestClock();
+    }, intervalMs || 2000);
+  };
+
+  TutorialCode.prototype._stopGuestClockSync = function () {
+    if (this._guestClockTimer) { clearInterval(this._guestClockTimer); this._guestClockTimer = null; }
   };
 
   // ---------------------------------------------------------------------------
