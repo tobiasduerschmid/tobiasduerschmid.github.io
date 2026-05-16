@@ -1084,6 +1084,7 @@ steps:
         - "make"
         - "touch math.c"
         - "make --trace"
+        - "printf '%s\n' 'make' 'touch math.c' 'make' 'touch main.c' 'make -n' 'make' 'touch Makefile' 'make -n' 'make' 'touch math.c' 'make --trace' > /tmp/.makefile_step5_commands"
       explanation: |
         - **Test 1:** `main.o`'s mtime must differ from the original build. That proves the `touch main.c` experiment actually rebuilt `main.o`.
         - **Test 2:** `Makefile`'s mtime must differ from the original build. That proves the Makefile experiment actually happened.
