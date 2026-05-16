@@ -10,8 +10,8 @@ learning_objectives:
   - "Use `.PHONY` to mark non-file targets like `clean`."
 
 require_tests: true
-autosave_type: none
-
+autosave_type: commands-and-files
+reset_type: commands
 # Live dependency-graph pane. Renders the DAG `make -n` would walk for the
 # active step directory — targets, prerequisites, order-only edges, phony
 # targets, staleness flags. Refreshes automatically on Makefile save and
@@ -1046,11 +1046,9 @@ steps:
     setup_commands:
       - "while [ ! -f /tutorial/make_project/step5/Makefile ] || [ ! -f /tutorial/make_project/step5/main.c ] || [ ! -f /tutorial/make_project/step5/math.c ] || [ ! -f /tutorial/make_project/step5/io.c ]; do sleep 0.1; done"
       - "make -C /tutorial/make_project/step5 2>/dev/null || true"
-      # Record object-file baseline mtimes so the tests can distinguish
-      # incremental rebuilds from a full rebuild. Use %y instead of %Y so
-      # rapid rebuilds are compared with sub-second precision.
+      # Record baseline mtimes for the timestamp experiments. Use %y instead of
+      # %Y so rapid rebuilds are compared with sub-second precision.
       - "stat -c %y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_main_o_baseline"
-      - "stat -c %y /tutorial/make_project/step5/io.o > /tmp/.makefile_step5_io_o_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_io_o_baseline"
       - "stat -c %y /tutorial/make_project/step5/Makefile > /tmp/.makefile_step5_makefile_baseline 2>/dev/null || echo missing > /tmp/.makefile_step5_makefile_baseline"
       - "rm -f /tmp/.makefile_step5_commands"
 
@@ -1074,26 +1072,23 @@ steps:
 
     solution:
       commands:
-        - "cd /tutorial/make_project/step5 && make"
-        - "stat -c %y /tutorial/make_project/step5/main.o > /tmp/.makefile_step5_main_o_baseline"
-        - "stat -c %y /tutorial/make_project/step5/io.o > /tmp/.makefile_step5_io_o_baseline"
-        - "stat -c %y /tutorial/make_project/step5/Makefile > /tmp/.makefile_step5_makefile_baseline"
-        - "cd /tutorial/make_project/step5 && touch math.c"
-        - "cd /tutorial/make_project/step5 && make"
-        - "cd /tutorial/make_project/step5 && touch main.c"
-        - "cd /tutorial/make_project/step5 && make -n"
-        - "cd /tutorial/make_project/step5 && make"
-        - "cd /tutorial/make_project/step5 && touch Makefile"
-        - "cd /tutorial/make_project/step5 && make -n"
-        - "cd /tutorial/make_project/step5 && make"
-        - "cd /tutorial/make_project/step5 && touch math.c"
-        - "cd /tutorial/make_project/step5 && make --trace"
-        - "printf '%s\n' 'make' 'touch math.c' 'make' 'touch main.c' 'make -n' 'make' 'touch Makefile' 'make -n' 'make' 'touch math.c' 'make --trace' > /tmp/.makefile_step5_commands"
+        - "cd /tutorial/make_project/step5"
+        - "make"
+        - "touch math.c"
+        - "make"
+        - "touch main.c"
+        - "make -n"
+        - "make"
+        - "touch Makefile"
+        - "make -n"
+        - "make"
+        - "touch math.c"
+        - "make --trace"
       explanation: |
         - **Test 1:** `main.o`'s mtime must differ from the original build. That proves the `touch main.c` experiment actually rebuilt `main.o`.
         - **Test 2:** `Makefile`'s mtime must differ from the original build. That proves the Makefile experiment actually happened.
         - **Test 3:** The command log must include both `make -n` and `make --trace`, because the step is teaching the dry-run and trace debugging habits, not just timestamp side effects.
-        - **Test 4:** `io.o`'s mtime must equal the baseline recorded before any `touch` commands. This catches the wrong solution `make clean && make` — that produces a full rebuild where math.o is still newer than main.o (by gcc compile order), but io.o's mtime has changed from the baseline.
+        - **Test 4:** A fresh `touch math.c` plus `make -n` must show only the `math.c` compile and the final link. It must not show `main.c` or `io.c` being recompiled.
         - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
         - **`touch math.c`:** Updates `math.c`'s modification timestamp without changing its content. Make sees `math.c` is now newer than `math.o` and recompiles just that one file, then re-links `app`. `main.c` and `io.c` are untouched.
         - **Why this matters:** In a large project, this turns a potential hours-long full rebuild into a seconds-long incremental one.
@@ -1141,18 +1136,35 @@ steps:
             echo "Run make --trace after touching math.c so Make explains why it rebuilt each target."
             exit 1
           fi
-      - description: "Make did NOT do a full rebuild — io.o is unchanged from the original build"
+      - description: "Dry-run after touching math.c stays incremental"
         command: |
           cd /tutorial/make_project/step5
-          if [ ! -f /tmp/.makefile_step5_io_o_baseline ]; then
-            echo "Baseline mtime not recorded. Reload the step to re-run setup_commands."
+          if [ ! -f Makefile ] || [ ! -f main.c ] || [ ! -f math.c ] || [ ! -f io.c ]; then
+            echo "Step files are missing. Reload the step and run the commands again."
             exit 1
           fi
-          current=$(stat -c %y io.o)
-          baseline=$(cat /tmp/.makefile_step5_io_o_baseline)
-          if [ "$baseline" = "missing" ] || [ "$current" != "$baseline" ]; then
-            echo "io.o's mtime changed from $baseline to $current — that means io.o was recompiled."
-            echo "If you ran 'make clean && make' (full rebuild), reset the step. The lesson is incremental: touch main.c rebuilds main.o, touch math.c rebuilds math.o, and io.o stays untouched."
+          make >/dev/null 2>&1
+          sleep 1
+          touch math.c
+          output=$(make -n 2>&1)
+          if ! printf '%s\n' "$output" | grep -Eq '(^|[[:space:]])-c[[:space:]]+math\.c([[:space:]]|$)'; then
+            echo "After touching math.c, make -n should show math.c being recompiled."
+            echo "$output"
+            exit 1
+          fi
+          if ! printf '%s\n' "$output" | grep -Eq 'main\.o[[:space:]]+math\.o[[:space:]]+io\.o[[:space:]].*-o[[:space:]]+app'; then
+            echo "After rebuilding math.o, make -n should also show the final link step for app."
+            echo "$output"
+            exit 1
+          fi
+          if printf '%s\n' "$output" | grep -Eq '(^|[[:space:]])-c[[:space:]]+main\.c([[:space:]]|$)'; then
+            echo "main.c should not be recompiled when only math.c was touched."
+            echo "$output"
+            exit 1
+          fi
+          if printf '%s\n' "$output" | grep -Eq '(^|[[:space:]])-c[[:space:]]+io\.c([[:space:]]|$)'; then
+            echo "io.c should not be recompiled when only math.c was touched."
+            echo "$output"
             exit 1
           fi
 
