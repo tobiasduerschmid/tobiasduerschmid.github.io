@@ -1,0 +1,289 @@
+title: "Design with Reuse Quiz"
+description: "Test your ability to recognize, apply, and weigh design-with-reuse decisions in real software projects."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      Which of the following is **not** typically a benefit of software reuse?
+    options:
+      - "Reduced implementation effort and faster time-to-market"
+      - "Higher software quality, because the reused module has been tried and tested"
+      - "Easier propagation of upstream bug fixes and security patches"
+      - "Guaranteed compatibility between every pair of libraries in the ecosystem"
+    correct_index: 3
+    option_feedback:
+      0: |
+        Productivity is a documented benefit — implementation and testing time both shrink when you don't
+        rewrite from scratch.
+      1: |
+        Quality is a documented benefit — a library with many users has had more chances for bugs to be
+        surfaced and fixed than fresh code.
+      2: |
+        Inheriting fixes is real — when you update, you get security and stability work for free.
+    explanation: "McIlroy's *vision* of a catalog of perfectly compatible components is exactly that — a vision. Garlan, Allen, and Ockerbloom's 1995 paper *Architectural Mismatch* documents how real modules make undocumented assumptions about threading, ownership, lifecycle, and error handling that force glue code at every seam."
+
+  - id: 2
+    difficulty: basic
+    type: single
+    question: |
+      In the lecture's terminology, which scenario is **external reuse** rather than internal reuse?
+    options:
+      - "A team reuses a billing module written two years ago by another team in the same company"
+      - "A project depends on the `requests` package installed via pip from PyPI"
+      - "A NASA mission reuses flight software from a previous NASA mission"
+      - "An organization extracts shared utilities into an internal product line consumed by all of its products"
+    correct_index: 1
+    option_feedback:
+      0: |
+        This is *internal* reuse — the producer and consumer of the code are in the same organization.
+      2: |
+        Heritage reuse within NASA is internal — the same organization owns both the producing mission's
+        code and the consuming one.
+      3: |
+        A product line is the textbook internal-reuse arrangement — code shared across products inside
+        one organization.
+    explanation: "External reuse = the producer of the code is a third party (an open-source maintainer, a vendor, an unrelated company). Internal reuse = same developer / team / organization. The distinction matters because external reuse cannot easily access the original author or unit-test suite, must treat the module as a partially-known black box, and faces supply-chain risks that internal reuse usually doesn't."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      You install a Python package today with `pip install foo`. Six months from now, a colleague clones the repo and runs the same command. Their build fails because a transitive dependency just released a major version with API-breaking changes. Which design principle does this most directly violate?
+    options:
+      - "Strive for fewer dependencies"
+      - "Keep versions of your dependencies fixed (e.g., via lock files or Pipenv)"
+      - "Prefer well-maintained, popular modules"
+      - "Identify violated assumptions"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Fewer dependencies might have reduced the *blast radius*, but the immediate failure is that a
+        version that was implicitly current at install time has now changed underneath the project.
+      2: |
+        Popularity is irrelevant here — well-maintained packages still ship breaking changes on major
+        version bumps; the defense is pinning, not popularity.
+      3: |
+        That principle is about *internal* reuse — checking whether a module's internal assumptions hold
+        in a new context, not about transitive version drift.
+    explanation: "This is exactly the `urllib3` 2.0.0 / `requests` / `docker` situation from the chapter. A lock file (`Pipfile.lock`, `package-lock.json`, `Cargo.lock`, …) pins every direct *and* transitive dependency to specific versions, so a clone six months later resolves identically. Pinning is the defense against silent upstream drift."
+
+  - id: 4
+    difficulty: intermediate
+    type: single
+    question: |
+      The Heartbleed bug (CVE-2014-0160) sat in OpenSSL for two years before public disclosure, and was still on tens of thousands of devices five years after a patch was available. Which two principles does this story most directly support?
+    options:
+      - "(1) Strive for fewer dependencies, and (2) Identify violated assumptions"
+      - "(1) Reusable packages can introduce security vulnerabilities you did not write, and (2) Update dependencies regularly to receive patches"
+      - "(1) Keep versions of your dependencies fixed, and (2) Prefer popular modules"
+      - "(1) Solve simpler problems first, and (2) Document decisions in a Design Doc"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Heartbleed was not about trivial code or runtime assumptions — OpenSSL is hard, important code,
+        used everywhere. The lesson is about inherited vulnerabilities and slow patching.
+      2: |
+        Pinning is good, but the Heartbleed lesson is about *failing to update* — if you pin and never
+        update, you also never get the fix. Popularity is mostly orthogonal.
+      3: |
+        These are general design-decision habits, not the principles Heartbleed dramatizes.
+    explanation: "Heartbleed has two interlocking lessons: reusing a package means inheriting its bugs (so reuse is not a one-time investment), *and* the only way to clear those bugs is to actually apply upstream patches on a real cadence. The tension with Principle 1 (pin versions) is resolved by pinning *intentionally* and updating *intentionally* — never letting either happen by accident."
+
+  - id: 5
+    difficulty: intermediate
+    type: single
+    question: |
+      You're considering adding a 12-line npm dependency that capitalizes the first letter of each word in a string. The package has 7 GitHub stars and one maintainer with no commits in the last year. Which course of action best follows the chapter's principles?
+    options:
+      - "Add it — reuse is always better than reinventing the wheel"
+      - "Add it, but pin the version exactly to today's release"
+      - "Reimplement the 12 lines yourself, since the maintenance and supply-chain risks exceed the implementation cost"
+      - "Refuse the task — without a popular, well-maintained library, the feature cannot be built safely"
+    correct_index: 2
+    option_feedback:
+      0: |
+        The chapter explicitly contradicts this slogan — trivial code from unreliable sources is exactly
+        where reuse goes wrong. The left-pad incident is the canonical example.
+      1: |
+        Pinning helps against version drift, but does not help if the maintainer unpublishes, the
+        package is taken over by a malicious actor, or the package simply rots.
+      3: |
+        Refusing to build the feature is disproportionate. The feature can be implemented in-line in
+        twelve lines of straightforward code.
+    explanation: "This is the *left-pad* / *isArray* shape of decision. Principle 3 — strive for fewer dependencies — applies most strongly when the code is trivial *and* the source is unreliable. The implementation cost of twelve lines is far less than the long-tail cost of monitoring, auditing, and replacing an abandoned dependency."
+
+  - id: 6
+    difficulty: advanced
+    type: single
+    question: |
+      The Ariane 5 self-destruction 37 seconds into its maiden flight was caused by reusing the Inertial Reference System software from Ariane 4 without re-checking that a 16-bit integer was large enough for Ariane 5's higher horizontal velocity. The ESA inquiry's Recommendation R5 generalizes this into a single design principle. Which one?
+    options:
+      - "Always rewrite safety-critical software from scratch for each new vehicle"
+      - "Identify implicit assumptions in the reused code and check them against the new operating conditions"
+      - "Pin the version of all reused libraries to avoid silent upstream drift"
+      - "Use a framework rather than a library, so the framework can enforce safe assumptions"
+    correct_index: 1
+    option_feedback:
+      0: |
+        ESA explicitly did *not* conclude that reuse must be banned. The conclusion was to reuse with
+        deliberate verification of assumptions in the new context.
+      2: |
+        Pinning is a defense against external version drift. The Ariane 5 software was the same code
+        the team owned — pinning is not the lever here.
+      3: |
+        The library-vs-framework decision is orthogonal to the assumption-checking failure that caused
+        the loss.
+    explanation: "Software that worked in one context might not work in another. The R5 recommendation is *Identify Violated Assumptions* — read documentation and code to surface what the module assumes about its inputs, environment, and timing, then verify those assumptions hold under the new conditions. This is the central design principle for internal reuse."
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      Consider these two snippets:
+
+      ```js
+      // Snippet A — Axios
+      const response = await axios.get('/user?ID=12345');
+      ```
+      ```js
+      // Snippet B — Express
+      app.get('/', (req, res) => { res.send('Hello World!'); });
+      ```
+      Which statement about Snippet A vs. Snippet B is **correct**?
+    options:
+      - "Both follow the Hollywood Principle (Inversion of Control), because both pass data over HTTP"
+      - "Snippet A is a *library* call: your code decides when to invoke it. Snippet B uses a *framework*: the framework decides when to call your callback"
+      - "Snippet B is a library call because it uses an arrow function; Snippet A is a framework because it uses await"
+      - "Snippet B violates the Hollywood Principle — frameworks should never call user-supplied callbacks"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Inversion of Control is about who initiates the call, not about HTTP. Snippet A's caller is
+        in control; Snippet B's framework is.
+      2: |
+        `await` and arrow functions are language syntax, not architectural patterns. The difference is
+        the direction of control flow.
+      3: |
+        Calling user-supplied callbacks is *exactly* what frameworks do. That's the Hollywood Principle.
+    explanation: "A *library* is code you call (Snippet A: you call `axios.get` whenever you need it). A *framework* calls you (Snippet B: you register a handler, and Express invokes it when a matching HTTP request arrives — that's the Hollywood Principle, *Don't call us, we'll call you*). The reuse trade-off: frameworks hide more complexity but constrain your application's shape, and walking away from them later costs more."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      A team is choosing whether to rewrite an old internal `BatchScheduler` for use in a new low-latency streaming service. Which course of action best embodies the design principles in this chapter?
+    options:
+      - "Reuse it as-is — internal code is always safe to reuse because the team owns it"
+      - "Reuse it after explicitly identifying its implicit assumptions (e.g., latency tolerance, single-threaded execution, batch sizes) and verifying they still hold under streaming conditions; otherwise adapt or replace"
+      - "Always rewrite — old code is by definition outdated"
+      - "Adopt a popular external scheduling framework instead, since popularity is the strongest signal of fit"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Owning the code is not the same as being safe to reuse it. Ariane 5 dramatizes exactly this
+        failure: the team owned the SRI software.
+      2: |
+        This is the principle from the chapter — *Identify Violated Assumptions*. Different load,
+        different timing, different precision can each break a previously-correct module.
+      3: |
+        Rewriting old code by default discards the value of years of bug-fixing and validation.
+        Reuse-with-verification beats reflexive rewriting.
+    explanation: "The five steps for internal reuse compress to: (1) make assumptions explicit, (2) check them against the new context, (3) don't assume correctness — test in the new context. Batch and streaming differ on at least latency tolerance, concurrency, and back-pressure semantics; each is an assumption to verify before reuse."
+
+  - id: 9
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which of the following are documented **costs** of external reuse that a team should weigh before adding a dependency? Select all that apply.
+    options:
+      - "Integration effort to fit the module into your architecture"
+      - "Effort to monitor and apply security updates over time"
+      - "Limits on future changeability, because the system grows to depend on the library's worldview"
+      - "Increased CPU costs of running well-tested code over hand-written code"
+      - "Effort to find and evaluate the right module among many candidates"
+    correct_indices: [0, 1, 2, 4]
+    optional_indices: []
+    option_feedback:
+      3: |
+        Reused code is not, in general, slower than hand-written code — often it is faster because
+        popular libraries get aggressive optimization. Performance is not on the cost side of the
+        external-reuse scale in the chapter.
+    explanation: "The chapter's cost-benefit scale for external reuse names: integration effort, finding & evaluating the module, ongoing updating effort, and limits on changeability — counterbalanced by saved implementation effort, saved testing effort, and the benefit of update propagation."
+
+  - id: 10
+    difficulty: intermediate
+    type: single
+    question: |
+      In Petre's expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
+    options:
+      - "Producing more designs always produces a better outcome — the right number is unbounded"
+      - "Spending time generating alternatives broadens the search space, which on average produces better final designs — *especially* for less experienced designers"
+      - "Detailed design is wasted effort; teams should produce sketches only"
+      - "Team C's design was best because they had more time"
+    correct_index: 1
+    option_feedback:
+      0: |
+        The finding is about broadening the search, not about a monotonic relationship between count
+        and quality. Twenty bad sketches don't beat three good ones.
+      2: |
+        The study doesn't argue against detail; it argues against committing to the *first* design.
+        Detail is fine once alternatives have been generated.
+      3: |
+        The study controlled for time. The variable was the number of alternatives considered.
+    explanation: "Generate-then-evaluate. The purpose of generation is to broaden up; the purpose of evaluation is to narrow down. *Tofan et al. (2013)* extended this: just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The intuition: first ideas are typically a local maximum, and exploring alternatives helps you escape it."
+
+  - id: 11
+    difficulty: basic
+    type: single
+    question: |
+      Which of the following is **not** typically a section in a Design Doc as practiced at Google?
+    options:
+      - "Context & Scope — background facts the reader needs to understand the document"
+      - "Goals & Non-Goals — requirements, quality attributes, and what is out of scope"
+      - "Cost-Benefit Spreadsheet — line-by-line dollar amounts for every design alternative"
+      - "Alternatives — other designs considered, their trade-offs, and why this one was chosen"
+    correct_index: 2
+    option_feedback:
+      0: |
+        Context & Scope is the standard first section — it brings the reader up to speed.
+      1: |
+        Goals & Non-Goals is standard — explicit scope decisions are part of what makes Design Docs
+        useful.
+      3: |
+        The Alternatives section is the bookend — it motivates the chosen design by contrast with
+        rejected ones.
+    explanation: "Design Docs are *unstructured text* artifacts, not financial models. Their goal is early identification of design issues, consensus, knowledge transfer, and organizational memory — captured in prose, models, and trade-offs, not in line-item dollar figures."
+
+  - id: 12
+    difficulty: advanced
+    type: single
+    question: |
+      Your team is choosing between two CSV-parsing libraries:
+
+      - **Library X** has 50,000 GitHub stars, is downloaded 10M times/week, and is actively maintained — but does not stream rows from disk, so it loads the full file into memory.
+      - **Library Y** has 800 GitHub stars and one active maintainer, and *does* support streaming from disk.
+
+      Your service routinely parses 2 GB CSV files on memory-constrained containers.
+
+      Which principle most directly resolves the choice?
+    options:
+      - "Prefer well-maintained, popular modules — Library X"
+      - "Strive for fewer package dependencies — neither, write your own CSV parser"
+      - "Fit to your context is more important than popularity — Library Y, despite lower stars"
+      - "Identify violated assumptions — both libraries are equally good"
+    correct_index: 2
+    option_feedback:
+      0: |
+        Popularity is one heuristic, but it has a ceiling. The chapter explicitly warns: "fit to your
+        context is more important than popularity."
+      1: |
+        CSV parsing is not trivial code — it is a long tail of quoting, encoding, line-ending, and
+        escape-sequence edge cases. Reimplementing a serious parser is exactly the kind of work where
+        reuse is correct.
+      3: |
+        Both libraries have different assumptions about memory layout; the *Identify Violated
+        Assumptions* principle helps you notice the streaming issue, but the decision principle for
+        choosing between them is the fit-vs-popularity rule.
+    explanation: "Popular packages are usually safer defaults, but only when they fit your operating conditions. The 2 GB / memory-constrained context falsifies Library X's assumption that the file fits in memory; Library Y's lower popularity is a real cost, but a popular library that crashes your service has zero value."

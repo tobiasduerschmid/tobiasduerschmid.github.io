@@ -1,0 +1,123 @@
+title: "Design with Reuse Flashcards"
+description: "Key definitions, principles, cases, and trade-offs for designing software with reuse."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "What does *design with reuse* mean?"
+    answer: "Building new software mostly by **composing existing modules** rather than writing everything from scratch."
+    explanation: "Reuse is the dominant style of modern software development. The vision goes back to McIlroy's 1968 NATO paper, *Mass Produced Software Components*."
+
+  - id: 2
+    difficulty: basic
+    question: "Name the two big benefits of reuse."
+    answer: "(1) **Higher productivity / faster time-to-market** — implementation and testing time shrink. (2) **Higher software quality / fewer defects** — a widely-used module has been tried and tested by many other users, so most of its bugs have already been found and fixed."
+    explanation: "Empirically established by Barros-Justo et al.'s 2018 systematic mapping study of industrial reuse benefits."
+
+  - id: 3
+    difficulty: basic
+    question: "What is the difference between **internal** and **external** reuse?"
+    answer: "**Internal reuse** — the producer and consumer of the code are in the *same* developer, team, or organization (product lines, shared internal libraries). **External reuse** — the code comes from a *third party* (open-source packages, commercial off-the-shelf software, frameworks)."
+    explanation: "The distinction matters because external reuse must treat the module as a partially-known black box that can change, disappear, or even be weaponized — while internal reuse usually has access to the original author, source, and tests."
+
+  - id: 4
+    difficulty: intermediate
+    question: "What does *Architectural Mismatch* by Garlan, Allen, and Ockerbloom (1995/2009) say about reuse?"
+    answer: "Real-world modules are **only partially compatible**. They make countless undocumented assumptions about threading, ownership, lifecycle, and error handling, so integrating them requires substantial **glue code**. The McIlroy vision of snap-together components is closer to an aspiration than a reality."
+    explanation: "The 2009 retrospective is a sobering update: fourteen years later, the same mismatches still dominate the cost of integration. This is the reality side of the *vision vs. reality* framing."
+
+  - id: 5
+    difficulty: basic
+    question: "What does **Design Principle 1: Keep Versions of Your Dependencies Fixed** mean, and how do you do it?"
+    answer: "Pin every dependency (direct *and* transitive) to specific versions so that a clean install at any point in the future resolves identically. Tools: Pipenv `Pipfile.lock`, npm `package-lock.json`, pnpm/yarn lockfiles, Maven `pom.xml`, Cargo `Cargo.lock`."
+    explanation: "Defense against silent upstream drift. The `urllib3` 2.0.0 → `requests` → `docker` incident dramatized this: a transitive major-version release broke unrelated, untouched projects overnight."
+
+  - id: 6
+    difficulty: intermediate
+    question: "How does **Design Principle 2 (update for security patches)** interact with Principle 1 (pin versions)? Aren't they in tension?"
+    answer: "They are complementary. Pin so that updates happen **intentionally**, not by accident — but actively update on your own cadence so you receive security fixes and bug fixes. Without Principle 1 your build breaks at random. Without Principle 2 you become Heartbleed."
+    explanation: "Heartbleed (CVE-2014-0160) shipped in OpenSSL 1.0.1 in March 2012 and was patched April 7, 2014, but ~91,000 internet-connected devices were still unpatched five years later. Inheriting bug-fix infrastructure only pays out if you actually pull in the fixes."
+
+  - id: 7
+    difficulty: intermediate
+    question: "What is the lesson of the `left-pad` incident (March 2016)?"
+    answer: "**Strive for fewer package dependencies.** Trivial code (11 lines, prepends characters to a string) from an unreliable source can introduce huge supply-chain risk if you and your transitive consumers depend on it. When the author unpublished `left-pad`, build pipelines across the JavaScript ecosystem broke until npm took the unprecedented step of un-unpublishing it."
+    explanation: "Each new dependency is a risk: it can break, stop being maintained, be abandoned, be unpublished, or be silently weaponized (cf. the 2018 *eslint-scope* malicious-package incident). Reimplementing a few lines is often cheaper over the long run than carrying the dependency."
+
+  - id: 8
+    difficulty: intermediate
+    question: "Modules with higher **maintenance level** and **popularity** are better reuse candidates — but what beats popularity?"
+    answer: "**Fit to your context.** The most popular library is useless if it doesn't handle the inputs, scale, or constraints your domain actually requires."
+    explanation: "Example from the chapter: a CSV parser with 50,000 stars that loads the entire file into memory is the wrong choice for a service that routinely parses 2 GB files on memory-constrained containers, regardless of how popular it is."
+
+  - id: 9
+    difficulty: advanced
+    question: "List the items on each side of the cost-benefit scale for **external reuse**."
+    answer: "**Costs (effort to adapt):** integration effort (complexity, context fit), finding & evaluating the module, ongoing updating effort, and limits on future changeability. **Benefits (effort saved):** implementation effort, testing effort, and the benefit of free update propagation (including security patches)."
+    explanation: "The chapter frames the decision as a literal scale — list both sides and weigh. The 'limits on changeability' cost is the sneaky one: a small piece of glue is easy to leave; a whole application built on a framework's worldview is not."
+
+  - id: 10
+    difficulty: advanced
+    question: "Why did Ariane 5 self-destruct 37 seconds after launch on June 4, 1996?"
+    answer: "The Inertial Reference System software was reused **as-is from Ariane 4**, where it had run flawlessly for years. It stored horizontal velocity in a **16-bit integer** for performance reasons. Ariane 5 was bigger and faster: within seconds of launch, horizontal velocity exceeded what a 16-bit integer can hold, the conversion overflowed, both primary and backup SRIs faulted identically, and the rocket interpreted the resulting nonsense as a course deviation and self-destructed. Loss: roughly $370 million."
+    explanation: "The canonical internal-reuse failure. The code was correct in Ariane 4's context and incorrect in Ariane 5's context — an *implicit assumption* about velocity range was violated."
+
+  - id: 11
+    difficulty: intermediate
+    question: "What is **Design Principle 5: Identify Violated Assumptions**?"
+    answer: "Before reusing a module in a new context: (1) read documentation and code to surface what the module **assumes** about its inputs, environment, and timing; (2) check that the module was designed to operate reliably under the conditions you want; (3) don't *assume* the module is correct — *test* it in the new context."
+    explanation: "This is the ESA Ariane 501 Inquiry Board's Recommendation R5 generalized into a design principle. Software that worked in one context might not work in another, and the work of finding out is part of the cost of reuse."
+
+  - id: 12
+    difficulty: intermediate
+    question: "What is the difference between a **library** and a **framework**?"
+    answer: "**Library** — your code makes direct calls to the library's API; *your* code is in control (e.g., Axios: `const r = await axios.get(...)`). **Framework** — the framework calls *your* code via callbacks or lifecycle hooks; *the framework* is in control (e.g., Express: `app.get('/', (req, res) => ...)`). The framework pattern is called **Inversion of Control** or the **Hollywood Principle**: *'Don't call us, we'll call you.'*"
+    explanation: "Trade-off for reuse: a framework makes more decisions for you, hides more complexity, and lets you write less code — but it shapes your application's overall structure, so leaving it later is hard. Choosing Express, React, Spring, or Rails is closer to a marriage than a date."
+
+  - id: 13
+    difficulty: basic
+    question: "State the Hollywood Principle / Inversion of Control in one sentence."
+    answer: "*'Don't call us, we'll call you.'* — Frameworks make the high-level control-flow decisions; your code provides the callbacks the framework will invoke at the appropriate times."
+    explanation: "The phrase was popularized in the Mesa programming community in 1983 and the term *Inversion of Control* was articulated by Johnson and Foote in 1988 (*Designing Reusable Classes*)."
+
+  - id: 14
+    difficulty: intermediate
+    question: "What does *Petre (2009)* tell us about how many design alternatives to generate?"
+    answer: "Producing **more design options leads to better final designs**. In Petre's study, Team A produced 1 design, Team B produced 3, and Team C produced 5; expert reviewers ranked Team C's selected design highest. The reason is that broad search beats first-idea fixation."
+    explanation: "Tofan et al. (2013) extended this: just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The discipline is to **generate broadly, evaluate narrowly**."
+
+  - id: 15
+    difficulty: intermediate
+    question: "What are the four steps of the *rational decision process* (Tang et al., 2008)?"
+    answer: "(1) **Identify** your requirements — what matters? (2) **Generate** many design alternatives. (3) **Evaluate** how well each alternative meets the requirements. (4) **Consider trade-offs and make a decision.**"
+    explanation: "Tang et al. found that explicitly walking through these four steps measurably improves design quality, especially for early-career engineers. The act of writing it down externalizes reasoning that intuition alone usually skips."
+
+  - id: 16
+    difficulty: advanced
+    question: "Name the four standard parts of a Google-style **Design Doc**."
+    answer: "(1) **Context & Scope** — background facts the reader needs. (2) **Goals & Non-Goals** — requirements and quality attributes, plus what is explicitly out of scope. (3) **The Design** — models and descriptions (context diagram, data model, API, pseudo-code, constraints). (4) **Alternatives** — other designs considered, trade-offs, and why this one was chosen."
+    explanation: "Design Docs aim for early identification of issues (when changes are still cheap), consensus, knowledge transfer, and organizational memory. Practiced widely at Google, Amazon, Microsoft, Kubernetes, Shopify, and others."
+
+  - id: 17
+    difficulty: advanced
+    question: "Why is it valuable to **delay** some design decisions, and how do you keep track of them?"
+    answer: "Some decisions depend on information you don't yet have, or are likely to change. Design the system so it does **not** assume a solution for those decisions, and **keep a list** of delayed decisions and what information you need to resolve them. This keeps the design flexible at exactly the points where it most needs to be flexible."
+    explanation: "Premature commitment to a solution for a high-uncertainty decision means you usually have to rework once the information arrives. A delayed-decision list is the architectural equivalent of a TODO list with reasons attached."
+
+  - id: 18
+    difficulty: basic
+    question: "True or false: *Owning the code makes it safe to reuse without further checks.*"
+    answer: "**False.** Owning the code is no defense against the assumptions baked into it. Ariane 5 destroyed itself because the team reused code they fully owned — but the new operating context violated assumptions the original code had silently relied on."
+    explanation: "Internal reuse is *easier* than external reuse in many ways (access to source, author, tests) but it doesn't eliminate the need for *Identify Violated Assumptions*."
+
+  - id: 19
+    difficulty: intermediate
+    question: "When you face a complex design problem, what is the *Solve Simpler Problems First* habit?"
+    answer: "Solve a **simplified version** of the problem first, then extend the solution to the harder one. Example: design messaging *on Earth* before designing interplanetary messaging between Earth and Mars. Caveat: be alert when the simpler problem is so fundamentally different that the solution does not generalize."
+    explanation: "Divide-and-conquer applied to design. Experts routinely solve a stripped-down version of the problem to anchor their understanding, then layer in complexity."
+
+  - id: 20
+    difficulty: advanced
+    question: "Heartbleed and left-pad both illustrate that external reuse is **not a one-time investment**. Why?"
+    answer: "Once you depend on a module, you also depend on its **ongoing fate**: security vulnerabilities will be discovered (you must update — Heartbleed), maintainers may abandon or weaponize the package (you must monitor — left-pad, eslint-scope), important updates may bundle API-breaking changes (you must test — urllib3 2.0.0). Adopting a dependency is signing up for ongoing maintenance work."
+    explanation: "This is the deeper lesson behind all four external-reuse principles. The decision to take a dependency is a decision to maintain a relationship with that dependency for as long as your software lives."
