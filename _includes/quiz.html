@@ -24,6 +24,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% endif %}
 
 <div class="quiz-outer-wrap">
+{% assign _quiz_av_variant = include.id | slugify | append: "-qa" %}
+<aside class="quiz-avatar-side" aria-hidden="true" style="display:none">
+  {% include se-gym-hero.svg variant=_quiz_av_variant %}
+</aside>
 <div class="quiz-container" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}"
   role="region" aria-label="{{ quiz_data.title | escape }} quiz">
@@ -148,14 +152,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
     </div>
   </div>
 </div>
-{% assign _quiz_av_variant = include.id | slugify | append: "-qa" %}
-<aside class="quiz-avatar-side" aria-hidden="true" style="display:none">
-  {% include se-gym-hero.svg variant=_quiz_av_variant %}
-</aside>
+
 </div>
 
 <style>
-  /* Flex wrapper: quiz on the left, avatar character on the right */
+  /* Flex wrapper: avatar on the left (nav space), quiz on the right */
   .quiz-outer-wrap {
     display: flex;
     align-items: flex-start;
@@ -170,8 +171,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   .quiz-avatar-side {
-    width: 160px;
-    flex-shrink: 0;
+    flex: 0 1 180px;
+    min-width: 80px;
     position: sticky;
     top: 80px; /* clear fixed navbar */
   }
@@ -193,10 +194,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
     }
 
     .quiz-avatar-side {
-      width: 110px;
+      width: 100px;
       align-self: center;
       position: static;
-      order: -1;
     }
   }
 
