@@ -170,7 +170,7 @@ Because the script runs **in the trusted site's origin**, the same-origin policy
 
 Defenses come in layers:
 
-* **Output encoding (the primary fix).** Wherever user input is rendered into HTML, *escape* the metacharacters (`<` → `&lt;`, `>` → `&gt;`, `"` → `&quot;`, `&` → `&amp;`) so the browser sees them as text rather than as tag boundaries. Modern templating engines (React's JSX, Vue's `{{ }}`, Django templates, Jinja2 `{{ }}`) escape by default — bypassing them via `dangerouslySetInnerHTML`, `v-html`, `mark_safe`, or `{{ }}|safe` is where XSS bugs are reintroduced.
+* **Output encoding (the primary fix).** Wherever user input is rendered into HTML, *escape* the metacharacters (`<` → `&lt;`, `>` → `&gt;`, `"` → `&quot;`, `&` → `&amp;`) so the browser sees them as text rather than as tag boundaries. Modern templating engines (React's JSX, Vue's `{% raw %}{{ }}{% endraw %}`, Django templates, Jinja2 `{% raw %}{{ }}{% endraw %}`) escape by default — bypassing them via `dangerouslySetInnerHTML`, `v-html`, `mark_safe`, or `{% raw %}{{ }}{% endraw %}|safe` is where XSS bugs are reintroduced.
 * **Content Security Policy (a defense in depth).** A `Content-Security-Policy` HTTP header tells the browser *which sources of script it will execute* — typically, only the site's own origin and a small explicit allow-list. Even if attacker-supplied `<script>` slips through escaping, a strict CSP refuses to run it.
 * **Use HttpOnly cookies for session tokens.** A cookie with the `HttpOnly` flag is unreadable from JavaScript, so a successful XSS attack cannot directly *steal* the session token. (It can still abuse the session by issuing requests from the victim's browser — see the authentication section below.)
 
