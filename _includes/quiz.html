@@ -23,6 +23,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign all_questions = quiz_data.questions %}
 {% endif %}
 
+<div class="quiz-outer-wrap">
 <div class="quiz-container" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}"
   role="region" aria-label="{{ quiz_data.title | escape }} quiz">
@@ -147,8 +148,57 @@ Data source: _data/quizzes/{{ include.id }}.yml
     </div>
   </div>
 </div>
+<aside class="quiz-avatar-side" aria-hidden="true" style="display:none">
+  {% include se-gym-hero.svg variant="{{ include.id | slugify }}-qa" %}
+</aside>
+</div>
 
 <style>
+  /* Flex wrapper: quiz on the left, avatar character on the right */
+  .quiz-outer-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin: 18px 0;
+  }
+
+  .quiz-outer-wrap > .quiz-container {
+    flex: 1;
+    min-width: 0;
+    margin: 0; /* outer wrap provides vertical margin */
+  }
+
+  .quiz-avatar-side {
+    width: 160px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px; /* clear fixed navbar */
+  }
+
+  .quiz-avatar-side [data-gym-hero-svg] {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 10px 22px rgba(0, 47, 82, 0.22));
+  }
+
+  html.dark-mode .quiz-avatar-side [data-gym-hero-svg] {
+    filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.48));
+  }
+
+  @media (max-width: 700px) {
+    .quiz-outer-wrap {
+      flex-direction: column;
+    }
+
+    .quiz-avatar-side {
+      width: 110px;
+      align-self: center;
+      position: static;
+      order: -1;
+    }
+  }
+
   .quiz-container {
     background:
       radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.2) 0 88px, transparent 90px),
@@ -889,10 +939,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
   (function () {
     const quizId = "{{ include.id }}";
     const script = document.currentScript;
-    let container = script ? script.previousElementSibling : null;
-    while (container && (!container.classList || !container.classList.contains('quiz-container'))) {
-      container = container.previousElementSibling;
+    // Walk backwards to find the quiz-outer-wrap (the quiz-container is now
+    // nested inside it), then descend to the quiz-container itself.
+    let outerWrap = script ? script.previousElementSibling : null;
+    while (outerWrap && (!outerWrap.classList || !outerWrap.classList.contains('quiz-outer-wrap'))) {
+      outerWrap = outerWrap.previousElementSibling;
     }
+    let container = outerWrap ? outerWrap.querySelector('.quiz-container') : null;
     if (!container) return;
 
     const progressBar = container.querySelector('.progress-fill');
@@ -1601,6 +1654,30 @@ Data source: _data/quizzes/{{ include.id }}.yml
           toggleInGym(toggleBtn);
         });
       }
+    }
+
+    // Show the saved SE Gym avatar next to this quiz when one exists.
+    // HeroAvatar is loaded with `defer` in the SEBook layout, so it may not
+    // be available yet when this inline script runs — wait for `load` if so.
+    function initQuizAvatar() {
+      if (!window.HeroAvatar) return;
+      var state = HeroAvatar.loadAvatar();
+      if (!state) return;
+      var outerWrap = container.parentElement;
+      var side = outerWrap && outerWrap.classList.contains('quiz-outer-wrap')
+        ? outerWrap.querySelector('.quiz-avatar-side')
+        : null;
+      if (!side) return;
+      var svgEl = side.querySelector('[data-gym-hero-svg]');
+      if (!svgEl) return;
+      HeroAvatar.applyToSvg(svgEl, state);
+      side.style.display = '';
+    }
+
+    if (document.readyState === 'complete' || window.HeroAvatar) {
+      initQuizAvatar();
+    } else {
+      window.addEventListener('load', initQuizAvatar);
     }
 
   })();

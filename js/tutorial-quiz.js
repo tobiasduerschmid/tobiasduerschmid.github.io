@@ -222,6 +222,7 @@
       + (isFinalQuiz ? '' : '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>')
       + '<button class="restart-btn">Try Again</button></div>'
       + '<p class="quiz-result-shortcut-hint hidden"></p></div></div></div>';
+    html += '<div class="tvm-quiz-avatar-wrap" aria-hidden="true" style="display:none"></div>';
     return html;
   }
 
@@ -697,6 +698,28 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Quiz avatar — shows the saved SE Gym hero below the quiz when one exists.
+  // Clones the SVG from a <template id="quiz-avatar-tpl"> injected by the
+  // tutorial layout and popup HTML, then applies the avatar via HeroAvatar.
+  // ---------------------------------------------------------------------------
+  function _mountQuizAvatar(hostEl) {
+    if (!window.HeroAvatar) return;
+    var state = HeroAvatar.loadAvatar();
+    if (!state) return;
+    var tpl = document.getElementById('quiz-avatar-tpl');
+    if (!tpl || !tpl.content) return;
+    var wrap = hostEl && hostEl.querySelector('.tvm-quiz-avatar-wrap');
+    if (!wrap) return;
+    var clone = tpl.content.cloneNode(true);
+    wrap.innerHTML = '';
+    wrap.appendChild(clone);
+    var svgEl = wrap.querySelector('[data-gym-hero-svg]');
+    if (!svgEl) return;
+    HeroAvatar.applyToSvg(svgEl, state);
+    wrap.style.display = '';
+  }
+
+  // ---------------------------------------------------------------------------
   // mount = buildHTML + setInnerHTML + attach (the common entry point)
   // ---------------------------------------------------------------------------
   function mount(opts) {
@@ -717,6 +740,7 @@
       isFinalQuiz: !!opts.isFinalQuiz,
       onPass: opts.onPass,
     });
+    _mountQuizAvatar(hostEl);
   }
 
   window.SebookQuiz = {

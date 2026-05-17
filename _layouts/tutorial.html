@@ -918,6 +918,11 @@
        page, the index, blog, and every other layout that has room for it,
        and a direct link to /cookies/ is the single source of truth. -->
 
+  <!-- Avatar template used by SebookQuiz to show the user's saved SE Gym
+       hero below quiz questions when an avatar has been set. The <template>
+       content lives in a DocumentFragment (not rendered, no ID conflicts). -->
+  <template id="quiz-avatar-tpl">{% include se-gym-hero.svg variant="tquiz" %}</template>
+  <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
 
 </body>
 </html>
