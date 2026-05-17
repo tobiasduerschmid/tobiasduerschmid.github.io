@@ -5,10 +5,11 @@
   var SCHEMA_VERSION = 1;
 
   var ENUMS = {
-    hairStyle: ['short', 'long', 'curly', 'wavy', 'locs', 'braids', 'afro', 'bun', 'ponytail', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald'],
+    hairStyle: ['short', 'long', 'curly', 'wavy', 'locs', 'braids', 'afro', 'bun', 'ponytail', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald', 'fade', 'buzz', 'shoulder-length', 'center-part', 'shag', 'coils', 'twist-out', 'box-braids', 'low-bun', 'messy-bun', 'half-up'],
     eyebrowStyle: ['arched', 'straight', 'thick', 'thin', 'rounded', 'angular'],
     bodyType: ['petite', 'slim', 'lean', 'average', 'athletic', 'muscular', 'broad', 'tall', 'curvy', 'hourglass', 'pear', 'voluptuous', 'plus-size'],
-    accessory: ['none', 'glasses', 'visor', 'headband', 'spectacles', 'mask', 'monocle', 'eyepatch', 'earrings', 'beanie', 'crown', 'halo']
+    outfitStyle: ['super-suit', 'hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'lab-coat'],
+    accessory: ['none', 'glasses', 'visor', 'headband', 'spectacles', 'mask', 'monocle', 'eyepatch', 'earrings', 'beanie', 'crown', 'halo', 'baseball-cap', 'bucket-hat', 'headwrap', 'hijab', 'turban']
   };
 
   // Silhouette overlays per body type — combine to suggest feminine/masculine/athletic shapes
@@ -28,6 +29,7 @@
     'plus-size':   ['bust', 'hip']
   };
   var ALL_SILHOUETTE_FEATURES = ['bust', 'waist', 'hip', 'shoulder'];
+  var HAIR_COVERING_ACCESSORIES = { headwrap: true, hijab: true, turban: true };
 
   var DEFAULTS = {
     version: SCHEMA_VERSION,
@@ -40,6 +42,7 @@
     },
     body: { type: 'athletic' },
     outfit: {
+      style: 'super-suit',
       suit: '#1F6EBD',
       capeOuter: '#15538f',
       capeInner: '#FFD100',
@@ -73,6 +76,7 @@
       },
       body: { type: randomFrom(ENUMS.bodyType) },
       outfit: {
+        style: randomFrom(ENUMS.outfitStyle),
         suit: randomFrom(PALETTES.suit),
         capeOuter: randomFrom(PALETTES.cape),
         capeInner: randomFrom(PALETTES.capeInner),
@@ -120,6 +124,7 @@
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
     svg.style.setProperty('--hero-hair', state.appearance.hairColor);
     svg.style.setProperty('--hero-hair-light', lighten(state.appearance.hairColor, 0.35));
+    svg.style.setProperty('--hero-hair-dark', darken(state.appearance.hairColor, 0.35));
     svg.style.setProperty('--hero-eye', state.appearance.eyeColor);
     svg.style.setProperty('--hero-eyebrow', state.appearance.hairColor);
     svg.style.setProperty('--hero-suit-light', lighten(state.outfit.suit, 0.35));
@@ -133,8 +138,9 @@
 
     svg.setAttribute('data-hero-body', state.body.type);
 
-    setSlot(svg, 'hair', state.appearance.hairStyle);
+    setSlot(svg, 'hair', HAIR_COVERING_ACCESSORIES[state.outfit.accessory] ? 'bald' : state.appearance.hairStyle);
     setSlot(svg, 'eyebrow', state.appearance.eyebrowStyle);
+    setSlot(svg, 'outfit-style', state.outfit.style || DEFAULTS.outfit.style);
     setSlot(svg, 'accessory', state.outfit.accessory);
 
     // Silhouette overlays — show only those mapped to this body type
@@ -210,6 +216,7 @@
     if (!inEnum(a.hairStyle, 'hairStyle')) return { ok: false, error: 'Invalid hair style.' };
     if (!inEnum(a.eyebrowStyle, 'eyebrowStyle')) return { ok: false, error: 'Invalid eyebrow style.' };
     if (!inEnum(b.type, 'bodyType')) return { ok: false, error: 'Invalid body type.' };
+    if (o.style !== undefined && !inEnum(o.style, 'outfitStyle')) return { ok: false, error: 'Invalid outfit style.' };
     if (!isHex(o.suit)) return { ok: false, error: 'Invalid suit color.' };
     if (!isHex(o.capeOuter)) return { ok: false, error: 'Invalid cape outer color.' };
     if (!isHex(o.capeInner)) return { ok: false, error: 'Invalid cape inner color.' };
@@ -281,6 +288,7 @@
         },
         body: { type: bodyChoice ? bodyChoice.value : 'athletic' },
         outfit: {
+          style: $('hero-cust-outfit-style').value,
           suit: $('hero-cust-suit').value,
           capeOuter: $('hero-cust-cape-outer').value,
           capeInner: $('hero-cust-cape-inner').value,
@@ -298,6 +306,7 @@
       $('hero-cust-eyebrow').value = state.appearance.eyebrowStyle;
       var bodyInput = modal.querySelector('input[name="hero-cust-body"][value="' + state.body.type + '"]');
       if (bodyInput) bodyInput.checked = true;
+      $('hero-cust-outfit-style').value = state.outfit.style || DEFAULTS.outfit.style;
       $('hero-cust-suit').value = state.outfit.suit;
       $('hero-cust-cape-outer').value = state.outfit.capeOuter;
       $('hero-cust-cape-inner').value = state.outfit.capeInner;
@@ -325,6 +334,7 @@
       refreshPreview();
       setStatus('');
       modal.hidden = false;
+      document.body.classList.add('hero-cust-modal-open');
       modal.classList.add('hero-cust-open');
       var first = $('hero-cust-skin');
       if (first) first.focus();
@@ -332,8 +342,9 @@
 
     function closeModal() {
       modal.hidden = true;
+      document.body.classList.remove('hero-cust-modal-open');
       modal.classList.remove('hero-cust-open');
-      if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+      if (previousFocus && document.contains(previousFocus) && typeof previousFocus.focus === 'function') previousFocus.focus();
     }
 
     function onKeydown(e) {
@@ -456,6 +467,7 @@
     });
 
     $('hero-cust-cancel').addEventListener('click', closeModal);
+    $('hero-cust-close').addEventListener('click', closeModal);
     $('hero-cust-save').addEventListener('click', saveAndClose);
     $('hero-cust-randomize').addEventListener('click', doRandomize);
     $('hero-cust-reset').addEventListener('click', doReset);
