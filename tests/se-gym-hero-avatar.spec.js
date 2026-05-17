@@ -20,12 +20,13 @@ async function activatePersonalGym(page) {
 }
 
 async function clearAccessories(page) {
-  const checkboxes = page.locator('#hero-customizer-modal input[name="hero-cust-accessory"]');
-  const count = await checkboxes.count();
-  for (let i = 0; i < count; i++) {
-    const checkbox = checkboxes.nth(i);
-    if (await checkbox.isChecked()) await checkbox.uncheck();
-  }
+  await page.locator('#hero-customizer-modal input[name="hero-cust-accessory"]:checked').evaluateAll((checkboxes) => {
+    for (const checkbox of checkboxes) {
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
 }
 
 async function setColorInput(page, selector, value) {
@@ -147,8 +148,40 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     const modal = page.getByRole('dialog', { name: 'Customize your hero' });
     await expect(modal).toBeVisible();
-    await expect(page.getByLabel('Skin tone')).toBeFocused();
+    await expect(page.getByLabel('Hero type')).toBeFocused();
     await a11yCheckpoint(page, 'hero customizer open', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('Bruin mascot option replaces the human avatar and saves to page heroes', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const heroType = page.getByLabel('Hero type');
+    await expect(heroType).toHaveValue('human');
+    await heroType.selectOption('bruin');
+
+    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
+    await expect(preview).toHaveAttribute('data-hero-kind', 'bruin');
+    await expect(preview.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]')).toHaveAttribute('display', 'inline');
+    const humanLayerDisplays = await preview.locator('[data-hero-kind-layer="human"]').evaluateAll((layers) =>
+      layers.map((layer) => layer.getAttribute('display'))
+    );
+    expect(humanLayerDisplays.length).toBeGreaterThan(0);
+    expect(humanLayerDisplays.every((display) => display === 'none')).toBe(true);
+    await expect(page.getByLabel('Skin tone')).toHaveValue('#8b5a35');
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeHidden();
+
+    await expect.poll(async () => page.locator('#gym-entrance [data-gym-hero-svg]').evaluateAll((svgs) =>
+      svgs.length >= 2 && svgs.every((svg) => svg.getAttribute('data-hero-kind') === 'bruin')
+    ), {
+      message: 'saved bruin mascot should apply to every page hero',
+    }).toBe(true);
+
+    const savedKind = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-hero-avatar')).kind);
+    expect(savedKind).toBe('bruin');
   });
 
   test('Avatar color controls expose all presets and HSL sliders on mobile', async ({ page }) => {
