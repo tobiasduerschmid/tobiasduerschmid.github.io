@@ -216,7 +216,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
       const coveredHairAccessories = new Set(['draped-scarf', 'hijab']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
-      const everydayCampusOutfits = new Set(['hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'collared-shirt', 'kurta-top', 'cardigan']);
+      const everydayCampusOutfits = new Set(['hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan']);
       const costumeOutfits = new Set(['super-suit', 'captain-jacket']);
       const technicalOutfits = new Set(['lab-coat', 'utility-vest']);
       const naturalHairColors = new Set([
@@ -524,12 +524,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const styles = [
       'long',
       'long-layers',
+      'straight-long-layers',
       'long-straight',
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
+      'low-pony-bangs',
       'butterfly-layers',
       'wavy',
       'center-part',
@@ -542,12 +545,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const sidePanelStyles = new Set([
       'long',
       'long-layers',
+      'straight-long-layers',
       'long-straight',
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
+      'low-pony-bangs',
       'butterfly-layers',
       'wavy',
       'center-part',
@@ -860,6 +866,19 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
 
     await clearAccessories(page);
+    await page.getByLabel('Hair style').selectOption('straight-long-layers');
+    await page.getByLabel('Outfit style').selectOption('campus-blouse');
+    await page.getByLabel('Hair clips', { exact: true }).check();
+    await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="straight-long-layers"]'))
+      .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="hairline"][data-hero-option="straight-long-layers"]'))
+      .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="campus-blouse"]'))
+      .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="hair-clips"]'))
+      .toHaveAttribute('display', 'inline');
+
+    await clearAccessories(page);
     await page.getByLabel('Hair style').selectOption('long-straight');
     await page.getByLabel('Outfit style').selectOption('collared-shirt');
     await page.getByLabel('Draped scarf', { exact: true }).check();
@@ -908,8 +927,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
+      'straight-long-layers',
+      'low-pony-bangs',
       'butterfly-layers',
       'curly-bob',
       'voluminous-curls',
@@ -930,7 +952,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'sleek-low-pony',
       'claw-clip-updo',
     ];
-    const hairlineStyles = new Set(['wavy-lob', 'side-part-lob', 'soft-bangs', 'butterfly-layers', 'curly-layers', 'french-braid', 'braided-pony', 'space-buns', 'claw-clip-updo']);
+    const hairlineStyles = new Set(['straight-long-layers', 'wavy-lob', 'side-part-lob', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'french-braid', 'braided-pony', 'space-buns', 'claw-clip-updo']);
 
     for (const style of styles) {
       await hairStyle.selectOption(style);
@@ -985,7 +1007,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const headShape = page.getByLabel('Head shape');
-    const shapes = ['diamond', 'full-oval', 'tapered-oval', 'soft-round-jaw', 'soft-angular'];
+    const shapes = ['diamond', 'full-oval', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'soft-angular'];
 
     for (const shape of shapes) {
       await headShape.selectOption(shape);
@@ -1082,7 +1104,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const noseShape = page.getByLabel('Nose shape');
     const mouth = page.getByLabel('Mouth');
 
-    for (const value of ['almond', 'monolid', 'hooded', 'smiling', 'wide']) {
+    for (const value of ['almond', 'monolid', 'soft-monolid', 'hooded', 'smiling', 'wide']) {
       await eyeShape.selectOption(value);
       await expect(eyeShape).toHaveValue(value);
       await expect(preview.locator(`[data-hero-slot="eye-shape"][data-hero-option="${value}"]`))
@@ -1093,7 +1115,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       expect(irisDetailsAreClipped).toBe(true);
     }
 
-    for (const value of ['rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge']) {
+    for (const value of ['rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge', 'soft-low-bridge']) {
       await noseShape.selectOption(value);
       await expect(noseShape).toHaveValue(value);
       await expect(preview.locator(`[data-hero-slot="nose-shape"][data-hero-option="${value}"]`))
@@ -1313,6 +1335,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByLabel('Beanie', { exact: true }).check();
     await page.getByLabel('Hijab', { exact: true }).check();
     await page.getByLabel('Earrings', { exact: true }).check();
+    await page.getByLabel('Hair clips', { exact: true }).check();
     await page.getByLabel('Halo', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
@@ -1326,6 +1349,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'none');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="earrings"]'))
       .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="hair-clips"]'))
+      .toHaveAttribute('display', 'none');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="halo"]'))
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="long-layers"]'))
