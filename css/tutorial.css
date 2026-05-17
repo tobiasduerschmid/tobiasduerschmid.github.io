@@ -5241,3 +5241,24 @@ body :is(
 ) {
   font-size: max(1em, var(--font-size-readable-min, 16px)) !important;
 }
+
+/* ── Tutorial quiz avatar ─────────────────────────────────────────────────────
+   Decorative hero character shown below the quiz after the student has a
+   saved SE Gym avatar. Hidden by default; shown by _mountQuizAvatar() in
+   tutorial-quiz.js only when localStorage['se-gym-hero-avatar'] is present. */
+.tvm-quiz-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 20px;
+}
+
+.tvm-quiz-avatar-wrap [data-gym-hero-svg] {
+  display: block;
+  width: 160px;
+  height: auto;
+  filter: drop-shadow(0 10px 22px rgba(0, 47, 82, 0.22));
+}
+
+html.dark-mode .tvm-quiz-avatar-wrap [data-gym-hero-svg] {
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.48));
+}
