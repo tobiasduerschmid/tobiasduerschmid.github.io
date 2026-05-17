@@ -629,13 +629,15 @@
     var accessories = getAccessories(state.outfit);
     var compositedAccessories = getCompositedAccessories(accessories);
     var hidesHair = compositedAccessories.some(function (accessory) { return !!HAIR_COVERING_ACCESSORIES[accessory]; });
-    setSlot(svg, 'hair', hidesHair ? 'bald' : state.appearance.hairStyle);
+    var renderedHairStyle = hidesHair ? 'bald' : state.appearance.hairStyle;
+    setSlot(svg, 'hair', renderedHairStyle);
     setSlot(svg, 'eyebrow', state.appearance.eyebrowStyle);
     setSlot(svg, 'eye-shape', state.appearance.eyeShape || 'round');
     var headStyle = state.appearance.headStyle || 'default';
     setSlot(svg, 'head-shape', headStyle);
     setSlot(svg, 'face-clear', headStyle);
     setSlot(svg, 'head-features', headStyle);
+    setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
     setSlot(svg, 'nose-shape', state.appearance.noseShape || 'soft');
     setSlot(svg, 'face-feature', state.appearance.faceFeature || 'none');
     setSlot(svg, 'facial-hair', state.appearance.facialHair || 'none');

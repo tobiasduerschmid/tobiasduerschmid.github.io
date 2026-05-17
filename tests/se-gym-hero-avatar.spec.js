@@ -390,6 +390,47 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="face-clear"][data-hero-option="default"]'
     );
     await expect(faceLayer).toHaveAttribute('display', 'inline');
+    await expect(page.locator(
+      '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="hairline"][data-hero-option="long"]'
+    )).toHaveAttribute('display', 'inline');
+
+    const layerComposition = await page.locator('#hero-customizer-modal [data-gym-hero-svg]')
+      .evaluate((svg) => {
+        const hair = svg.querySelector('[data-hero-slot="hair"][data-hero-option="long"]');
+        const faceClear = svg.querySelector('[data-hero-slot="face-clear"][data-hero-option="default"]');
+        const hairline = svg.querySelector('[data-hero-slot="hairline"][data-hero-option="long"]');
+        const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
+        const skinGradient = svg.querySelector('linearGradient[id^="skin-"]');
+        return {
+          skinGradientUnits: skinGradient && skinGradient.getAttribute('gradientUnits'),
+          skinGradientY1: skinGradient && skinGradient.getAttribute('y1'),
+          skinGradientY2: skinGradient && skinGradient.getAttribute('y2'),
+          faceAfterHair: Boolean(
+            hair &&
+            faceClear &&
+            (hair.compareDocumentPosition(faceClear) & Node.DOCUMENT_POSITION_FOLLOWING)
+          ),
+          hairlineAfterFaceClear: Boolean(
+            faceClear &&
+            hairline &&
+            (faceClear.compareDocumentPosition(hairline) & Node.DOCUMENT_POSITION_FOLLOWING)
+          ),
+          eyebrowAfterHairline: Boolean(
+            hairline &&
+            eyebrow &&
+            (hairline.compareDocumentPosition(eyebrow) & Node.DOCUMENT_POSITION_FOLLOWING)
+          ),
+        };
+      });
+
+    expect(layerComposition).toEqual({
+      skinGradientUnits: 'userSpaceOnUse',
+      skinGradientY1: '82',
+      skinGradientY2: '270',
+      faceAfterHair: true,
+      hairlineAfterFaceClear: true,
+      eyebrowAfterHairline: true,
+    });
 
     const slotsAtCheeks = await page.locator('#hero-customizer-modal [data-gym-hero-svg]')
       .evaluate((svg) => {
@@ -895,6 +936,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="halo"]'))
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="long-layers"]'))
+      .toHaveAttribute('display', 'none');
+    await expect(preview.locator('[data-hero-slot="hairline"][data-hero-option="long-layers"]'))
       .toHaveAttribute('display', 'none');
 
     const faceAccessoryOrder = await preview.evaluate((svg) => {
