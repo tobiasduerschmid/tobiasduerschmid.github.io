@@ -382,7 +382,7 @@ layout: sebook
         <h3 id="hero-customizer-title" class="hero-cust-title">Customize your hero</h3>
         <p id="hero-customizer-desc" class="hero-cust-desc">
           Build a campus-ready hero with proportions, hair, headwear, color, and detail options. The preview updates
-          live; Save applies the look to the hero on this page.
+          live; Save applies the look to the heroes on this page.
         </p>
         <div class="hero-cust-layout">
           <div class="hero-cust-preview-pane">
@@ -408,6 +408,10 @@ layout: sebook
                   <optgroup label="Short styles">
                     <option value="short">Short crop</option>
                     <option value="textured-crop">Textured crop</option>
+                    <option value="straight-fringe">Straight fringe</option>
+                    <option value="side-parted-short">Side-parted short cut</option>
+                    <option value="soft-two-block">Soft two-block cut</option>
+                    <option value="slick-back">Slicked-back short cut</option>
                     <option value="pixie">Pixie cut</option>
                     <option value="fade">Fade</option>
                     <option value="buzz">Buzz cut</option>
@@ -418,8 +422,11 @@ layout: sebook
                   </optgroup>
                   <optgroup label="Medium and long styles">
                     <option value="bob">Bob</option>
+                    <option value="layered-bob">Layered bob</option>
                     <option value="shoulder-length">Shoulder length</option>
                     <option value="long-layers">Long layers</option>
+                    <option value="long-straight">Long straight hair</option>
+                    <option value="loose-waves">Loose waves</option>
                     <option value="center-part">Center part</option>
                     <option value="curtain-bangs">Curtain bangs</option>
                     <option value="side-swept">Side-swept</option>
@@ -430,17 +437,21 @@ layout: sebook
                   <optgroup label="Curls, coils, and natural texture">
                     <option value="curly">Curly</option>
                     <option value="curly-bob">Curly bob</option>
+                    <option value="voluminous-curls">Voluminous curls</option>
                     <option value="coils">Coils</option>
                     <option value="twist-out">Twist-out</option>
                     <option value="coily-puff">Coily puff</option>
                     <option value="double-puffs">Double puffs</option>
                     <option value="bantu-knots">Bantu knots</option>
                     <option value="afro">Afro</option>
+                    <option value="rounded-afro">Rounded afro</option>
                   </optgroup>
                   <optgroup label="Braids, locs, and tied styles">
                     <option value="locs">Long locs</option>
+                    <option value="loose-locs">Loose locs</option>
                     <option value="dreads-bun">Locs bun</option>
                     <option value="braids">Thick braids</option>
+                    <option value="long-braid">Long braid</option>
                     <option value="side-braid">Side braid</option>
                     <option value="braided-bun">Braided bun</option>
                     <option value="box-braids">Box braids</option>
@@ -449,6 +460,8 @@ layout: sebook
                     <option value="low-bun">Low bun</option>
                     <option value="messy-bun">Messy bun</option>
                     <option value="ponytail">Ponytail</option>
+                    <option value="high-pony">High ponytail</option>
+                    <option value="sleek-low-pony">Sleek low ponytail</option>
                     <option value="half-up">Half-up</option>
                     <option value="pigtails">Pigtails</option>
                     <option value="top-knot">Top knot</option>
@@ -463,6 +476,17 @@ layout: sebook
                 <input type="color" id="hero-cust-eye-color" value="#1f140c">
               </div>
               <div class="hero-cust-control">
+                <label for="hero-cust-eye-shape">Eye shape</label>
+                <select id="hero-cust-eye-shape">
+                  <option value="round">Round</option>
+                  <option value="almond">Almond</option>
+                  <option value="monolid">Monolid</option>
+                  <option value="hooded">Hooded</option>
+                  <option value="smiling">Smiling eyes</option>
+                  <option value="wide">Wide-set bright</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
                 <label for="hero-cust-eyebrow">Eyebrows</label>
                 <select id="hero-cust-eyebrow">
                   <option value="arched">Arched</option>
@@ -474,6 +498,52 @@ layout: sebook
                 </select>
               </div>
               <div class="hero-cust-control">
+                <label for="hero-cust-nose-shape">Nose shape</label>
+                <select id="hero-cust-nose-shape">
+                  <option value="soft">Soft bridge</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="broad">Broad</option>
+                  <option value="narrow">Narrow</option>
+                  <option value="button">Button</option>
+                  <option value="defined-bridge">Defined bridge</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
+                <label for="hero-cust-mouth-style">Mouth</label>
+                <select id="hero-cust-mouth-style">
+                  <option value="smile">Smile</option>
+                  <option value="soft-smile">Soft smile</option>
+                  <option value="grin">Grin</option>
+                  <option value="neutral">Neutral</option>
+                  <option value="full-lips">Full lips</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
+                <label for="hero-cust-facial-hair">Facial hair</label>
+                <select id="hero-cust-facial-hair">
+                  <option value="none">None</option>
+                  <option value="stubble">Light stubble</option>
+                  <option value="mustache">Mustache</option>
+                  <option value="soul-patch">Soul patch</option>
+                  <option value="goatee">Goatee</option>
+                  <option value="sideburns">Sideburns</option>
+                  <option value="chin-strap">Chin strap</option>
+                  <option value="short-beard">Short beard</option>
+                  <option value="trimmed-beard">Trimmed beard</option>
+                  <option value="full-beard">Full beard</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
+                <label for="hero-cust-face-feature">Facial details</label>
+                <select id="hero-cust-face-feature">
+                  <option value="none">None</option>
+                  <option value="freckles">Freckles</option>
+                  <option value="beauty-mark">Beauty mark</option>
+                  <option value="dimples">Dimples</option>
+                  <option value="cheek-lines">Cheek lines</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
                 <label for="hero-cust-head-style">Head shape</label>
                 <select id="hero-cust-head-style">
                   <optgroup label="Natural face shapes">
@@ -481,7 +551,9 @@ layout: sebook
                     <option value="soft-oval">Soft oval</option>
                     <option value="round">Round face</option>
                     <option value="full-cheeks">Full cheeks</option>
+                    <option value="full-oval">Full oval</option>
                     <option value="narrow">Narrow face</option>
+                    <option value="tapered-oval">Tapered oval</option>
                     <option value="oblong">Oblong face</option>
                   </optgroup>
                   <optgroup label="Jaw and cheekbone shapes">
@@ -489,6 +561,8 @@ layout: sebook
                     <option value="diamond">Defined cheekbones</option>
                     <option value="square">Square jaw</option>
                     <option value="soft-square">Soft square jaw</option>
+                    <option value="soft-round-jaw">Soft round jaw</option>
+                    <option value="soft-angular">Soft angular face</option>
                     <option value="broad">Broad face</option>
                   </optgroup>
                   <optgroup label="Additional shapes">
@@ -509,11 +583,15 @@ layout: sebook
                     <option value="petite-curved">Petite curved frame</option>
                     <option value="slim">Slender frame</option>
                     <option value="narrow-shoulders">Narrow-shouldered frame</option>
+                    <option value="compact-lean">Compact lean frame</option>
                     <option value="lean">Lean frame</option>
+                    <option value="medium-lean">Medium lean frame</option>
                     <option value="straight">Straight frame</option>
                     <option value="average">Medium frame</option>
                     <option value="soft">Soft frame</option>
+                    <option value="soft-medium">Soft medium frame</option>
                     <option value="tall">Tall frame</option>
+                    <option value="tall-lean">Tall lean frame</option>
                     <option value="tall-curved">Tall curved frame</option>
                   </optgroup>
                   <optgroup label="Athletic and strong builds">
@@ -523,11 +601,13 @@ layout: sebook
                     <option value="muscular">Strong build</option>
                     <option value="compact-strong">Compact strong build</option>
                     <option value="broad">Broad-shouldered build</option>
+                    <option value="broad-lean">Broad lean build</option>
                     <option value="stocky">Stocky build</option>
                   </optgroup>
                   <optgroup label="Curved and full frames">
                     <option value="curvy">Curved frame</option>
                     <option value="balanced-curved">Balanced curved frame</option>
+                    <option value="medium-curved">Medium curved frame</option>
                     <option value="rounded">Rounded frame</option>
                     <option value="soft-tapered">Soft tapered frame</option>
                     <option value="hourglass">Softly tapered frame</option>
@@ -556,6 +636,11 @@ layout: sebook
                   <option value="denim-jacket">Denim jacket</option>
                   <option value="windbreaker">Windbreaker</option>
                   <option value="lab-coat">Lab coat</option>
+                  <option value="collared-shirt">Button-up shirt</option>
+                  <option value="kurta-top">Kurta top</option>
+                  <option value="cardigan">Cardigan</option>
+                  <option value="captain-jacket">Captain jacket</option>
+                  <option value="utility-vest">Utility vest</option>
                 </select>
               </div>
               <div class="hero-cust-control">
@@ -571,16 +656,23 @@ layout: sebook
                 <div class="hero-cust-checkbox-group" role="group" aria-labelledby="hero-cust-accessories-label">
                   <label><input type="checkbox" name="hero-cust-accessory" value="glasses"> Glasses</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="rectangular-glasses"> Rectangular glasses</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="wireframe-glasses"> Wireframe glasses</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="round-rim-glasses"> Round-rim glasses</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="safety-goggles"> Safety goggles</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="spectacles"> Round spectacles</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="earrings"> Earrings</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="hoop-earrings"> Small hoop earrings</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="forehead-accent"> Forehead accent</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="headband"> Headband</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="beanie"> Beanie</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="baseball-cap"> Baseball cap</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="bucket-hat"> Bucket hat</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="headwrap"> Head wrap</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="draped-scarf"> Draped scarf</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="hijab"> Hijab</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="turban"> Turban</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="visor"> Visor</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="tech-visor"> Tech visor</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="mask"> Hero mask</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="monocle"> Monocle</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="eyepatch"> Eyepatch</label>
@@ -618,6 +710,9 @@ layout: sebook
               </button>
               <button type="button" id="hero-cust-reset" class="gym-btn secondary">
                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Reset
+              </button>
+              <button type="button" id="hero-cust-use-random" class="gym-btn secondary">
+                <i class="fa-solid fa-dice" aria-hidden="true"></i> Use random heroes
               </button>
               <button type="button" id="hero-cust-download" class="gym-btn secondary">
                 <i class="fa-solid fa-download" aria-hidden="true"></i> Download
@@ -931,7 +1026,7 @@ layout: sebook
       color: var(--color-text, #111111);
       border-radius: 12px;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
-      max-width: 1000px;
+      max-width: 1220px;
       width: 100%;
       max-height: calc(100vh - 2rem);
       overflow: auto;
@@ -985,7 +1080,7 @@ layout: sebook
     }
     .hero-cust-layout {
       display: grid;
-      grid-template-columns: minmax(220px, 320px) 1fr;
+      grid-template-columns: minmax(320px, 480px) minmax(0, 1fr);
       gap: 1.5rem;
       align-items: start;
     }
@@ -1003,7 +1098,7 @@ layout: sebook
     .hero-cust-preview {
       background: linear-gradient(180deg, #eaf2fb 0%, #d0e4f7 100%);
       border-radius: 10px;
-      padding: 0.5rem;
+      padding: 0.75rem;
       border: 1px solid var(--color-border, #d0d4da);
     }
     html.dark-mode .hero-cust-preview {
@@ -1011,11 +1106,12 @@ layout: sebook
       border-color: #3a4250;
     }
     .hero-cust-preview .se-gym-hero-svg {
-      max-height: 360px;
+      width: 100%;
+      max-height: min(62vh, 560px);
       filter: drop-shadow(0 6px 12px rgba(0, 47, 82, 0.18));
     }
     @media (max-height: 680px) {
-      .hero-cust-preview .se-gym-hero-svg { max-height: 260px; }
+      .hero-cust-preview .se-gym-hero-svg { max-height: min(48vh, 380px); }
     }
     @media (max-width: 720px) {
       .hero-cust-layout { grid-template-columns: 1fr; }
@@ -1023,7 +1119,7 @@ layout: sebook
         top: 0;
         padding-bottom: 0.5rem;
       }
-      .hero-cust-preview .se-gym-hero-svg { max-height: min(32vh, 220px); }
+      .hero-cust-preview .se-gym-hero-svg { max-height: min(42vh, 340px); }
     }
     .hero-cust-status {
       margin: 0.75rem 0 0 0;

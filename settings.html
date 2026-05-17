@@ -596,7 +596,8 @@ info_nav_title: "My Settings"
               Skin tone, head shape, body type, hair, headwear, eyes, eyebrows, outfit style
               and colors, accessories, and an optional emoji emblem are all customizable from the
               <em>Customize Hero</em> button on the SE Gym page. The choice is saved
-              in this browser as <code>se-gym-hero-avatar</code> in localStorage.
+              in this browser as <code>se-gym-hero-avatar</code> in localStorage. Without a saved
+              choice, the SE Gym page randomizes its heroes separately on each load.
               You can download or re-upload your avatar as a JSON file to move it
               between browsers.
             </p>
@@ -608,7 +609,7 @@ info_nav_title: "My Settings"
             </a>
             <button type="button" id="setting-hero-avatar-reset" class="gym-btn secondary"
               style="min-height:38px;margin-top:.4em;">
-              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Reset hero to default
+              <i class="fa-solid fa-dice" aria-hidden="true"></i> Use random heroes again
             </button>
             <p class="settings-note" id="setting-hero-avatar-status" role="status" aria-live="polite"></p>
           </div>
@@ -1181,8 +1182,8 @@ info_nav_title: "My Settings"
     resetHeroAvatar.addEventListener('click', function () {
       clearLS('se-gym-hero-avatar');
       var status = document.getElementById('setting-hero-avatar-status');
-      if (status) status.textContent = 'Hero avatar reset. The SE Gym page will randomize a new hero until you save a new customization.';
-      announce('Hero avatar reset.');
+      if (status) status.textContent = 'Saved hero removed. The SE Gym page will randomize its heroes separately until you save a new customization.';
+      announce('Saved hero removed.');
     });
   }
 
