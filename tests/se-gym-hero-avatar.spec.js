@@ -51,6 +51,38 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await a11yCheckpoint(page, 'hero customizer open', { feature: A11Y_FEATURE, darkMode: true });
   });
 
+  test('Hero preview stays visible while modal controls scroll', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const modalBox = page.locator('#hero-customizer-modal .hero-cust-box');
+    const previewPane = page.locator('#hero-customizer-modal .hero-cust-preview-pane');
+    await expect(previewPane).toBeVisible();
+
+    await modalBox.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    await expect.poll(async () => modalBox.evaluate((el) => el.scrollTop), {
+      message: 'modal should scroll to later controls while the preview remains available',
+    }).toBeGreaterThan(0);
+
+    const previewMetrics = await previewPane.evaluate((el) => {
+      const rect = el.getBoundingClientRect();
+      const modal = el.closest('.hero-cust-box').getBoundingClientRect();
+      return {
+        height: rect.height,
+        top: rect.top,
+        bottom: rect.bottom,
+        modalTop: modal.top,
+        modalBottom: modal.bottom,
+      };
+    });
+    expect(previewMetrics.height).toBeGreaterThan(0);
+    expect(previewMetrics.top).toBeGreaterThanOrEqual(previewMetrics.modalTop - 1);
+    expect(previewMetrics.bottom).toBeLessThanOrEqual(previewMetrics.modalBottom + 1);
+  });
+
   test('Escape closes the modal and returns focus to the trigger', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);

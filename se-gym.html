@@ -937,6 +937,7 @@ layout: sebook
       overflow: auto;
       padding: 1.5rem;
       border: 1px solid var(--color-border, #d0d4da);
+      scroll-padding-top: 1rem;
     }
     html.dark-mode .hero-cust-box {
       background: #1d2230;
@@ -988,9 +989,16 @@ layout: sebook
       gap: 1.5rem;
       align-items: start;
     }
-    @media (max-width: 720px) {
-      .hero-cust-layout { grid-template-columns: 1fr; }
-      .hero-cust-preview-pane { position: sticky; top: 0; background: inherit; z-index: 1; padding-bottom: 0.5rem; }
+    .hero-cust-preview-pane {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      align-self: start;
+      background: var(--color-bg, #ffffff);
+      padding-bottom: 0.75rem;
+    }
+    html.dark-mode .hero-cust-preview-pane {
+      background: #1d2230;
     }
     .hero-cust-preview {
       background: linear-gradient(180deg, #eaf2fb 0%, #d0e4f7 100%);
@@ -1005,6 +1013,17 @@ layout: sebook
     .hero-cust-preview .se-gym-hero-svg {
       max-height: 360px;
       filter: drop-shadow(0 6px 12px rgba(0, 47, 82, 0.18));
+    }
+    @media (max-height: 680px) {
+      .hero-cust-preview .se-gym-hero-svg { max-height: 260px; }
+    }
+    @media (max-width: 720px) {
+      .hero-cust-layout { grid-template-columns: 1fr; }
+      .hero-cust-preview-pane {
+        top: 0;
+        padding-bottom: 0.5rem;
+      }
+      .hero-cust-preview .se-gym-hero-svg { max-height: min(32vh, 220px); }
     }
     .hero-cust-status {
       margin: 0.75rem 0 0 0;
