@@ -523,15 +523,37 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const styles = [
       'long',
+      'long-layers',
       'long-straight',
       'loose-waves',
       'wavy-lob',
+      'side-part-lob',
+      'curtain-bangs',
+      'soft-bangs',
+      'butterfly-layers',
+      'wavy',
       'center-part',
       'shoulder-length',
+      'half-up',
       'locs',
       'box-braids',
       'ponytail',
     ];
+    const sidePanelStyles = new Set([
+      'long',
+      'long-layers',
+      'long-straight',
+      'loose-waves',
+      'wavy-lob',
+      'side-part-lob',
+      'curtain-bangs',
+      'soft-bangs',
+      'butterfly-layers',
+      'wavy',
+      'center-part',
+      'shoulder-length',
+      'half-up',
+    ]);
 
     for (const style of styles) {
       await hairStyle.selectOption(style);
@@ -563,6 +585,39 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           slot: 'hair-root',
           option: style,
         });
+      }
+
+      if (sidePanelStyles.has(style)) {
+        const filledBackHairSlots = await preview.evaluate((svg) => {
+          const points = [
+            { name: 'left crown volume', x: 350, y: 170 },
+            { name: 'right crown volume', x: 450, y: 170 },
+            { name: 'left hair behind head', x: 346, y: 205 },
+            { name: 'right hair behind head', x: 454, y: 205 },
+          ];
+          return points.map((point) => {
+            const svgPoint = svg.createSVGPoint();
+            svgPoint.x = point.x;
+            svgPoint.y = point.y;
+            const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+            const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+            const slot = element && element.closest('[data-hero-slot]');
+            return {
+              name: point.name,
+              slot: slot && slot.getAttribute('data-hero-slot'),
+              option: slot && slot.getAttribute('data-hero-option'),
+            };
+          });
+        });
+
+        for (const point of filledBackHairSlots) {
+          expect(point.option, `${style} should fill ${point.name}`).toBe(style);
+          if (point.name.includes('crown volume')) {
+            expect(['hair', 'hair-root', 'hairline'], `${style} should fill ${point.name} with a visible hair layer`).toContain(point.slot);
+          } else {
+            expect(point.slot, `${style} should fill ${point.name}`).toBe('hair');
+          }
+        }
       }
     }
   });
@@ -690,7 +745,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await setColorInput(page, '#hero-cust-hair-color', '#1a1a1a');
     await page.getByLabel('Hair style').selectOption('center-part');
     await page.getByLabel('Head shape').selectOption('oblong');
-    await page.getByLabel('Mouth style').selectOption('full-lips');
+    await page.getByLabel('Mouth').selectOption('full-lips');
     await page.getByLabel('Glasses', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
@@ -852,8 +907,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'long-straight',
       'loose-waves',
       'wavy-lob',
+      'side-part-lob',
       'curtain-bangs',
       'soft-bangs',
+      'butterfly-layers',
       'curly-bob',
       'voluminous-curls',
       'curly-layers',
@@ -863,15 +920,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'rounded-afro',
       'loose-locs',
       'long-braid',
+      'french-braid',
       'braided-pony',
       'side-braid',
       'braided-bun',
       'layered-bob',
       'high-pony',
+      'space-buns',
       'sleek-low-pony',
       'claw-clip-updo',
     ];
-    const hairlineStyles = new Set(['wavy-lob', 'soft-bangs', 'curly-layers', 'braided-pony', 'claw-clip-updo']);
+    const hairlineStyles = new Set(['wavy-lob', 'side-part-lob', 'soft-bangs', 'butterfly-layers', 'curly-layers', 'french-braid', 'braided-pony', 'space-buns', 'claw-clip-updo']);
 
     for (const style of styles) {
       await hairStyle.selectOption(style);
@@ -1034,14 +1093,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       expect(irisDetailsAreClipped).toBe(true);
     }
 
-    for (const value of ['rounded', 'broad', 'narrow', 'button', 'defined-bridge']) {
+    for (const value of ['rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge']) {
       await noseShape.selectOption(value);
       await expect(noseShape).toHaveValue(value);
       await expect(preview.locator(`[data-hero-slot="nose-shape"][data-hero-option="${value}"]`))
         .toHaveAttribute('display', 'inline');
     }
 
-    for (const value of ['soft-smile', 'grin', 'neutral', 'full-lips']) {
+    for (const value of ['soft-smile', 'grin', 'neutral', 'full-lips', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile']) {
       await mouth.selectOption(value);
       await expect(mouth).toHaveValue(value);
       await expect(preview.locator(`[data-hero-slot="mouth-style"][data-hero-option="${value}"]`))

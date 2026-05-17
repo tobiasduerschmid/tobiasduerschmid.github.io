@@ -6,11 +6,11 @@
 
   var ENUMS = {
     presentation: ['male', 'female'],
-    hairStyle: ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'long', 'long-layers', 'long-straight', 'loose-waves', 'wavy-lob', 'curtain-bangs', 'soft-bangs', 'curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'wavy', 'locs', 'loose-locs', 'braids', 'long-braid', 'braided-pony', 'side-braid', 'braided-bun', 'afro', 'rounded-afro', 'coily-puff', 'double-puffs', 'bantu-knots', 'bun', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'layered-bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald', 'fade', 'buzz', 'shoulder-length', 'center-part', 'shag', 'coils', 'twist-out', 'box-braids', 'low-bun', 'messy-bun', 'half-up'],
+    hairStyle: ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'long', 'long-layers', 'long-straight', 'loose-waves', 'wavy-lob', 'side-part-lob', 'curtain-bangs', 'soft-bangs', 'butterfly-layers', 'curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'wavy', 'locs', 'loose-locs', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'afro', 'rounded-afro', 'coily-puff', 'double-puffs', 'bantu-knots', 'bun', 'space-buns', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'layered-bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald', 'fade', 'buzz', 'shoulder-length', 'center-part', 'shag', 'coils', 'twist-out', 'box-braids', 'low-bun', 'messy-bun', 'half-up'],
     eyebrowStyle: ['arched', 'straight', 'thick', 'thin', 'rounded', 'angular'],
     eyeShape: ['round', 'almond', 'monolid', 'hooded', 'smiling', 'wide'],
-    noseShape: ['soft', 'rounded', 'broad', 'narrow', 'button', 'defined-bridge'],
-    mouthStyle: ['smile', 'soft-smile', 'grin', 'neutral', 'full-lips'],
+    noseShape: ['soft', 'rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge'],
+    mouthStyle: ['smile', 'soft-smile', 'grin', 'neutral', 'full-lips', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile'],
     blushStyle: ['natural', 'none'],
     headStyle: ['default', 'feminine', 'round', 'heart', 'oval', 'square', 'soft-oval', 'full-cheeks', 'narrow', 'oblong', 'diamond', 'soft-square', 'broad', 'full-oval', 'tapered-oval', 'soft-round-jaw', 'soft-angular'],
     facialHair: ['none', 'stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard'],
@@ -240,14 +240,14 @@
     weightedValue(['wireframe-glasses', 'hoop-earrings'], 4)
   ];
   var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'pixie', 'fade', 'buzz', 'undercut', 'pompadour'];
-  var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'wavy-lob', 'shoulder-length', 'long-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
+  var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
   var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
-  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'braids', 'long-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
+  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
   var FACIAL_HAIR_STYLES = ['none', 'stubble', 'mustache', 'goatee', 'short-beard', 'trimmed-beard'];
   var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'fade', 'buzz', 'undercut', 'pompadour'];
-  var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'wavy-lob', 'shoulder-length', 'long-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
+  var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
   var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
-  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'long-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
+  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
   var MASCULINE_FACE_ACCESSORIES = [
     weightedValue([], 34),
     weightedValue(['glasses'], 13),
@@ -277,8 +277,8 @@
       facialHairChance: 0.48,
       facialHairStyles: FACIAL_HAIR_STYLES,
       eyeShapes: ['round', 'almond', 'hooded', 'monolid'],
-      noseShapes: ['soft', 'rounded', 'broad', 'narrow', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 13,
@@ -294,8 +294,8 @@
       facialHairChance: 0.34,
       facialHairStyles: ['none', 'stubble', 'mustache', 'goatee', 'short-beard', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'hooded', 'smiling'],
-      noseShapes: ['soft', 'rounded', 'broad', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral', 'full-lips']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral', 'full-lips']
     },
     {
       weight: 10,
@@ -309,8 +309,8 @@
       facialHairChance: 0.42,
       facialHairStyles: ['none', 'stubble', 'mustache', 'short-beard', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'hooded'],
-      noseShapes: ['soft', 'rounded', 'broad', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 7,
@@ -327,8 +327,8 @@
       facialHairChance: 0.36,
       facialHairStyles: ['none', 'stubble', 'mustache', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'wide'],
-      noseShapes: ['soft', 'rounded', 'broad', 'narrow', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 10,
@@ -344,8 +344,8 @@
       facialHairChance: 0.28,
       facialHairStyles: ['none', 'stubble', 'mustache'],
       eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'smiling'],
-      noseShapes: ['soft', 'rounded', 'button', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     }
   ];
   var FEMALE_STYLE_RECIPES = [
@@ -357,8 +357,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'hooded', 'smiling', 'wide'],
-      noseShapes: ['soft', 'rounded', 'narrow', 'button', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'full-lips']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'narrow', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     },
     {
       weight: 14,
@@ -376,8 +376,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'smiling', 'wide'],
-      noseShapes: ['soft', 'rounded', 'broad', 'button'],
-      mouthStyles: ['smile', 'soft-smile', 'full-lips']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'button', 'soft-upturned'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     },
     {
       weight: 13,
@@ -394,8 +394,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'hooded', 'smiling'],
-      noseShapes: ['soft', 'rounded', 'broad', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral', 'full-lips']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral', 'full-lips']
     },
     {
       weight: 10,
@@ -409,8 +409,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'monolid', 'hooded'],
-      noseShapes: ['soft', 'rounded', 'broad', 'narrow'],
-      mouthStyles: ['smile', 'soft-smile', 'full-lips']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     },
     {
       weight: 7,
@@ -427,8 +427,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'wide'],
-      noseShapes: ['soft', 'rounded', 'broad', 'narrow', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 10,
@@ -446,8 +446,8 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'smiling'],
-      noseShapes: ['soft', 'rounded', 'button', 'defined-bridge'],
-      mouthStyles: ['smile', 'soft-smile', 'full-lips', 'neutral']
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge'],
+      mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips', 'neutral']
     }
   ];
 
@@ -836,9 +836,9 @@
       contourOpacity: darkSkin ? '0.58' : '0.18',
       subtleLineOpacity: darkSkin ? '0.66' : '0.24',
       hairDetailOpacity: darkSkin && darkHair ? '0.74' : '0.5',
-      faceHighlightOpacity: darkSkin ? '0.2' : '0.24',
-      faceAmbientOpacity: darkSkin ? '0.18' : '0.16',
-      faceShadowOpacity: darkSkin ? '0.26' : '0.16',
+      faceHighlightOpacity: darkSkin ? '0.2' : '0.14',
+      faceAmbientOpacity: darkSkin ? '0.18' : '0.1',
+      faceShadowOpacity: darkSkin ? '0.26' : '0.1',
       jawLineOpacity: darkSkin ? '0.46' : '0.22',
       neckShadowOpacity: darkSkin ? '0.52' : '0.28',
       neckHighlightOpacity: darkSkin ? '0.22' : '0.18',
