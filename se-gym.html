@@ -422,12 +422,14 @@ layout: sebook
                   <optgroup label="Medium and long styles">
                     <option value="bob">Bob</option>
                     <option value="layered-bob">Layered bob</option>
+                    <option value="wavy-lob">Wavy lob</option>
                     <option value="shoulder-length">Shoulder length</option>
                     <option value="long-layers">Long layers</option>
                     <option value="long-straight">Long straight hair</option>
                     <option value="loose-waves">Loose waves</option>
                     <option value="center-part">Center part</option>
                     <option value="curtain-bangs">Curtain bangs</option>
+                    <option value="soft-bangs">Soft bangs</option>
                     <option value="side-swept">Side-swept</option>
                     <option value="shag">Layered shag</option>
                     <option value="long">Long and flowing</option>
@@ -437,6 +439,7 @@ layout: sebook
                     <option value="curly">Curly</option>
                     <option value="curly-bob">Curly bob</option>
                     <option value="voluminous-curls">Voluminous curls</option>
+                    <option value="curly-layers">Curly layers</option>
                     <option value="coils">Coils</option>
                     <option value="twist-out">Twist-out</option>
                     <option value="coily-puff">Coily puff</option>
@@ -451,6 +454,7 @@ layout: sebook
                     <option value="dreads-bun">Locs bun</option>
                     <option value="braids">Thick braids</option>
                     <option value="long-braid">Long braid</option>
+                    <option value="braided-pony">Braided ponytail</option>
                     <option value="side-braid">Side braid</option>
                     <option value="braided-bun">Braided bun</option>
                     <option value="box-braids">Box braids</option>
@@ -461,6 +465,7 @@ layout: sebook
                     <option value="ponytail">Ponytail</option>
                     <option value="high-pony">High ponytail</option>
                     <option value="sleek-low-pony">Sleek low ponytail</option>
+                    <option value="claw-clip-updo">Claw-clip updo</option>
                     <option value="half-up">Half-up</option>
                     <option value="pigtails">Pigtails</option>
                     <option value="top-knot">Top knot</option>
@@ -580,6 +585,8 @@ layout: sebook
                   <optgroup label="Frame basics">
                     <option value="petite">Petite frame</option>
                     <option value="petite-curved">Petite curved frame</option>
+                    <option value="short-soft">Short soft frame</option>
+                    <option value="short-curved">Short curved frame</option>
                     <option value="slim">Slender frame</option>
                     <option value="narrow-shoulders">Narrow-shouldered frame</option>
                     <option value="compact-lean">Compact lean frame</option>
@@ -591,11 +598,13 @@ layout: sebook
                     <option value="soft-medium">Soft medium frame</option>
                     <option value="tall">Tall frame</option>
                     <option value="tall-lean">Tall lean frame</option>
+                    <option value="tall-soft">Tall soft frame</option>
                     <option value="tall-curved">Tall curved frame</option>
                   </optgroup>
                   <optgroup label="Athletic and strong builds">
                     <option value="athletic" selected>Athletic build</option>
                     <option value="athletic-curved">Athletic curved build</option>
+                    <option value="soft-athletic">Soft athletic build</option>
                     <option value="v-shape">Tapered athletic build</option>
                     <option value="muscular">Strong build</option>
                     <option value="compact-strong">Compact strong build</option>
@@ -608,6 +617,7 @@ layout: sebook
                     <option value="balanced-curved">Balanced curved frame</option>
                     <option value="medium-curved">Medium curved frame</option>
                     <option value="rounded">Rounded frame</option>
+                    <option value="medium-full">Medium full frame</option>
                     <option value="soft-tapered">Soft tapered frame</option>
                     <option value="hourglass">Softly tapered frame</option>
                     <option value="pear">Fuller-hip frame</option>
@@ -998,12 +1008,48 @@ layout: sebook
     .se-gym-hero-svg[data-hero-body] { transform-box: view-box; transform-origin: 400px 320px; }
     .se-gym-hero-svg[data-hero-body="petite"]    { transform: scale(0.92, 0.92); }
     .se-gym-hero-svg[data-hero-body="petite-curved"] { transform: scale(0.94, 0.94); }
+    .se-gym-hero-svg[data-hero-body="short-soft"] { transform: scale(0.94, 0.96); }
+    .se-gym-hero-svg[data-hero-body="short-curved"] { transform: scale(0.95, 0.96); }
     .se-gym-hero-svg[data-hero-body="tall"]      { transform: scale(1, 1.07); }
     .se-gym-hero-svg[data-hero-body="tall-curved"] { transform: scale(1, 1.06); }
+    .se-gym-hero-svg[data-hero-body="tall-soft"] { transform: scale(1, 1.06); }
     .se-gym-hero-svg[data-hero-body="lean"]      { transform: scale(0.97, 1.04); }
+    .se-gym-hero-svg [data-hero-slot="head-shape"],
+    .se-gym-hero-svg [data-hero-slot="face-clear"] {
+      filter:
+        drop-shadow(0 0 0.8px var(--hero-skin-highlight, rgba(255, 226, 185, 0.35)))
+        drop-shadow(0 1px 1px var(--hero-feature-shadow, rgba(0, 47, 82, 0.18)));
+    }
     .se-gym-hero-svg [data-hero-slot="hair"],
-    .se-gym-hero-svg [data-hero-slot="hairline"] {
-      filter: drop-shadow(0 1px 1px rgba(0, 47, 82, 0.22));
+    .se-gym-hero-svg [data-hero-slot="hairline"],
+    .se-gym-hero-svg [data-hero-slot="hair-root"] {
+      filter:
+        drop-shadow(0 0 1.2px var(--hero-hair-rim, rgba(255, 226, 185, 0.4)))
+        drop-shadow(0 1px 1px var(--hero-hair-shadow, rgba(0, 47, 82, 0.22)));
+    }
+    .se-gym-hero-svg [data-hero-slot="eyebrow"],
+    .se-gym-hero-svg [data-hero-slot="eye-shape"],
+    .se-gym-hero-svg [data-hero-slot="nose-shape"],
+    .se-gym-hero-svg [data-hero-slot="mouth-style"],
+    .se-gym-hero-svg [data-hero-slot="face-feature"],
+    .se-gym-hero-svg [data-hero-slot="facial-hair"],
+    .se-gym-hero-svg [data-hero-slot="accessory"] {
+      filter:
+        drop-shadow(0 0 0.45px var(--hero-feature-rim, rgba(255, 226, 185, 0.45)))
+        drop-shadow(0 0.8px 0.8px var(--hero-feature-shadow, rgba(0, 0, 0, 0.2)));
+    }
+    .se-gym-hero-svg [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
+    .se-gym-hero-svg [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] {
+      opacity: var(--hero-contour-opacity, .18);
+    }
+    .se-gym-hero-svg [data-hero-slot="hair"] path[stroke*="--hero-hair-rim"],
+    .se-gym-hero-svg [data-hero-slot="hairline"] path[stroke*="--hero-hair-rim"],
+    .se-gym-hero-svg [data-hero-slot="hair-root"] path[stroke*="--hero-hair-rim"] {
+      opacity: var(--hero-hair-detail-opacity, .5);
+    }
+    .se-gym-hero-svg [data-hero-slot="face-feature"] path[stroke*="--hero-face-line"],
+    .se-gym-hero-svg [data-hero-slot="face-feature"] circle[fill*="--hero-face-line"] {
+      opacity: var(--hero-subtle-line-opacity, .34);
     }
 
     /* ===== Hero customizer modal ===== */
