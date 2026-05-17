@@ -677,6 +677,7 @@
     if (defaultBuckle) {
       defaultBuckle.style.display = hasEmblem ? 'none' : '';
     }
+    svg.setAttribute('data-hero-avatar-ready', 'true');
   }
 
   function applyAvatarToScope(state, scope) {

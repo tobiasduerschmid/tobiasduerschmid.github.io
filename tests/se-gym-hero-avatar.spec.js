@@ -69,6 +69,32 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(btn).toBeVisible();
   });
 
+  test('Your Hero entry appears directly below the intro copy', async ({ page }) => {
+    await page.goto(GYM_URL);
+
+    const placement = await page.evaluate(() => {
+      const intro = Array.from(document.querySelectorAll('#gym-entrance .gym-subtitle'))
+        .find((node) => node.textContent.includes('own study gym by adding quizzes and flashcard sets'));
+      const heroSection = document.getElementById('hero-customizer-section');
+      const startRow = document.querySelector('#gym-entrance .gym-start-row');
+      return {
+        heroHeading: heroSection && heroSection.querySelector('h2') ? heroSection.querySelector('h2').textContent.trim() : '',
+        directlyAfterIntro: Boolean(intro && heroSection && intro.nextElementSibling === heroSection),
+        beforeStartButton: Boolean(
+          heroSection &&
+          startRow &&
+          (heroSection.compareDocumentPosition(startRow) & Node.DOCUMENT_POSITION_FOLLOWING)
+        ),
+      };
+    });
+
+    expect(placement).toEqual({
+      heroHeading: 'Your Hero',
+      directlyAfterIntro: true,
+      beforeStartButton: true,
+    });
+  });
+
   test('Clicking Customize opens the modal and moves focus to the first control', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -283,6 +309,36 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(signatures.length).toBeGreaterThanOrEqual(2);
     expect(new Set(signatures).size).toBeGreaterThan(1);
     expect(await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'))).toBeNull();
+  });
+
+  test('Hero SVGs are hidden until avatar customization is applied', async ({ page }) => {
+    await page.goto(GYM_URL);
+
+    const readiness = await page.locator('#gym-entrance [data-gym-hero-svg]').evaluateAll((svgs) =>
+      svgs.map((svg) => ({
+        ready: svg.getAttribute('data-hero-avatar-ready'),
+        opacity: getComputedStyle(svg).opacity,
+      }))
+    );
+    expect(readiness.length).toBeGreaterThanOrEqual(2);
+    for (const hero of readiness) {
+      expect(hero.ready).toBe('true');
+      expect(hero.opacity).toBe('1');
+    }
+
+    const preHydrationStyles = await page.evaluate(() => {
+      const original = document.querySelector('#gym-entrance [data-gym-hero-svg]');
+      const clone = original.cloneNode(true);
+      clone.removeAttribute('data-hero-avatar-ready');
+      document.body.appendChild(clone);
+      const hiddenOpacity = getComputedStyle(clone).opacity;
+      clone.setAttribute('data-hero-avatar-ready', 'true');
+      const readyOpacity = getComputedStyle(clone).opacity;
+      clone.remove();
+      return { hiddenOpacity, readyOpacity };
+    });
+
+    expect(preHydrationStyles).toEqual({ hiddenOpacity: '0', readyOpacity: '1' });
   });
 
   test('Escape closes the modal and returns focus to the trigger', async ({ page }) => {

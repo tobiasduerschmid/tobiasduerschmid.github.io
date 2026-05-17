@@ -38,6 +38,21 @@ layout: sebook
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
         own study gym by adding quizzes and flashcard sets, then start a workout to review shuffled cards.</p>
+      {% if site.gym_hero_animation %}
+      <!-- ==================== HERO CUSTOMIZER ENTRY ==================== -->
+      <div id="hero-customizer-section">
+        <h2 style="margin-top: 0;"><i class="fa-solid fa-user-pen section-heading-icon" aria-hidden="true"></i> Your Hero</h2>
+        <p class="gym-subtitle">Customize the SE Gym super-hero to look like you or like your favorite character.</p>
+        <div class="controls-row">
+          <button id="customize-hero-btn" class="gym-btn secondary" type="button" hidden>
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Customize Hero
+          </button>
+          <span id="customize-hero-disabled-note" class="gym-summary-text" aria-live="polite">
+            Activate the personal gym above to customize your hero.
+          </span>
+        </div>
+      </div>
+      {% endif %}
       <div class="gym-start-row">
         <button id="start-workout-btn" class="gym-btn primary gym-start-btn" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
       </div>
@@ -322,22 +337,6 @@ layout: sebook
         </div>
         <p id="tutorial-progress-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
-
-      {% if site.gym_hero_animation %}
-      <!-- ==================== HERO CUSTOMIZER ENTRY ==================== -->
-      <div id="hero-customizer-section">
-        <h2 style="margin-top: 0;"><i class="fa-solid fa-user-pen section-heading-icon" aria-hidden="true"></i> Your Hero</h2>
-        <p class="gym-subtitle">Customize the SE Gym super-hero so the character at the top of this page looks like you.</p>
-        <div class="controls-row">
-          <button id="customize-hero-btn" class="gym-btn secondary" type="button" hidden>
-            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Customize Hero
-          </button>
-          <span id="customize-hero-disabled-note" class="gym-summary-text" aria-live="polite">
-            Activate the personal gym above to customize your hero.
-          </span>
-        </div>
-      </div>
-      {% endif %}
 
       </div>
       {% if site.gym_hero_animation %}
@@ -978,7 +977,11 @@ layout: sebook
       width: 100%;
       height: auto;
       overflow: visible;
+      opacity: 0;
       filter: drop-shadow(0 14px 24px rgba(0, 47, 82, 0.16));
+    }
+    .se-gym-hero-svg[data-hero-avatar-ready="true"] {
+      opacity: 1;
     }
 
     html.dark-mode .post-content .se-gym-hero-svg,
