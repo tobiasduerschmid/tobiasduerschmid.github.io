@@ -5,8 +5,9 @@
   var SCHEMA_VERSION = 1;
 
   var ENUMS = {
+    heroKind: ['human', 'bruin'],
     presentation: ['male', 'female'],
-    hairStyle: ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'long', 'long-layers', 'straight-long-layers', 'long-straight', 'loose-waves', 'wavy-lob', 'side-part-lob', 'sleek-bob-bangs', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'wavy', 'locs', 'loose-locs', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'afro', 'rounded-afro', 'coily-puff', 'double-puffs', 'bantu-knots', 'bun', 'space-buns', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'layered-bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald', 'fade', 'buzz', 'shoulder-length', 'center-part', 'shag', 'coils', 'twist-out', 'box-braids', 'low-bun', 'messy-bun', 'half-up'],
+    hairStyle: ['short', 'textured-crop', 'textured-fringe', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'middle-part-flow', 'slick-back', 'long', 'long-layers', 'straight-long-layers', 'long-straight', 'loose-waves', 'wavy-lob', 'side-part-lob', 'sleek-bob-bangs', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'wolf-cut', 'curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'wavy', 'locs', 'loose-locs', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'knotless-braids', 'afro', 'rounded-afro', 'coily-puff', 'double-puffs', 'bantu-knots', 'bun', 'space-buns', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'pigtails', 'mohawk', 'undercut', 'top-knot', 'pixie', 'cornrows', 'bowl-cut', 'bob', 'layered-bob', 'pompadour', 'side-swept', 'dreads-bun', 'bald', 'fade', 'buzz', 'shoulder-length', 'center-part', 'shag', 'coils', 'two-strand-twists', 'twist-out', 'box-braids', 'low-bun', 'messy-bun', 'half-up'],
     eyebrowStyle: ['arched', 'straight', 'thick', 'thin', 'rounded', 'angular'],
     eyeShape: ['round', 'almond', 'monolid', 'soft-monolid', 'hooded', 'smiling', 'wide'],
     noseShape: ['soft', 'rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge', 'soft-low-bridge'],
@@ -16,8 +17,8 @@
     facialHair: ['none', 'stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard'],
     faceFeature: ['none', 'freckles', 'beauty-mark', 'dimples', 'cheek-lines'],
     bodyType: ['petite', 'petite-curved', 'short-soft', 'short-curved', 'slim', 'narrow-shoulders', 'compact-lean', 'lean', 'medium-lean', 'straight', 'average', 'soft', 'soft-medium', 'athletic', 'athletic-curved', 'soft-athletic', 'v-shape', 'muscular', 'compact-strong', 'broad', 'broad-lean', 'stocky', 'tall', 'tall-lean', 'tall-soft', 'tall-curved', 'curvy', 'balanced-curved', 'medium-curved', 'rounded', 'medium-full', 'soft-tapered', 'hourglass', 'pear', 'soft-full-hips', 'voluptuous', 'plus-size', 'balanced-full'],
-    outfitStyle: ['super-suit', 'hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'lab-coat', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan', 'captain-jacket', 'utility-vest'],
-    accessory: ['none', 'glasses', 'rectangular-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'visor', 'tech-visor', 'headband', 'spectacles', 'mask', 'monocle', 'eyepatch', 'earrings', 'hoop-earrings', 'hair-clips', 'forehead-accent', 'beanie', 'crown', 'halo', 'baseball-cap', 'bucket-hat', 'headwrap', 'draped-scarf', 'hijab', 'turban']
+    outfitStyle: ['super-suit', 'hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'lab-coat', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan', 'captain-jacket', 'utility-vest'],
+    accessory: ['none', 'glasses', 'rectangular-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'visor', 'tech-visor', 'headband', 'spectacles', 'mask', 'monocle', 'eyepatch', 'earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'chain-necklace', 'forehead-accent', 'beanie', 'crown', 'halo', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban']
   };
 
   // Silhouette overlays are used only for shoulder emphasis; torso geometry handles body contours.
@@ -64,12 +65,12 @@
   var ALL_SILHOUETTE_FEATURES = ['bust', 'waist', 'hip', 'shoulder'];
   var HAIR_COVERING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'forehead-accent', 'crown', 'halo'];
-  var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'visor'];
+  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'chain-necklace', 'forehead-accent', 'crown', 'halo'];
+  var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'visor'];
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'safety-goggles', 'round-rim-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
-  var HEAD_ACCESSORY_PRIORITY = ['hijab', 'headwrap', 'draped-scarf', 'turban', 'beanie', 'baseball-cap', 'bucket-hat', 'visor', 'crown', 'headband'];
+  var HEAD_ACCESSORY_PRIORITY = ['hijab', 'headwrap', 'draped-scarf', 'turban', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'visor', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'earrings'];
-  var DETAIL_ACCESSORY_PRIORITY = ['hair-clips', 'forehead-accent', 'halo'];
+  var DETAIL_ACCESSORY_PRIORITY = ['over-ear-headphones', 'wireless-earbuds', 'hair-clips', 'chain-necklace', 'forehead-accent', 'halo'];
 
   // Body-type → body-shape (SVG geometry override). Types not listed here use the default torso.
   // The shapes are full silhouette swaps so the body actually looks different, not just scaled.
@@ -110,6 +111,7 @@
 
   var DEFAULTS = {
     version: SCHEMA_VERSION,
+    kind: 'human',
     appearance: {
       skin: '#dfa07a',
       hairColor: '#1f140c',
@@ -144,6 +146,21 @@
     cape: ['#15538f', '#8f1515', '#15568f', '#558f15', '#558f15', '#8f8f15', '#5a158f', '#0f0f0f', '#5a5a5a', '#8f4a15', '#15568f', '#3a3a3a'],
     capeInner: ['#FFD100', '#FF8F00', '#FF1F1F', '#1FFF8F', '#8F1FFF', '#FFFFFF', '#0a0a0a', '#FFE470']
   };
+  var BRUIN_DEFAULTS = {
+    skin: '#8b5a35',
+    hairColor: '#3d2818',
+    eyeColor: '#1f140c',
+    bodyType: 'athletic',
+    outfitStyle: 'super-suit'
+  };
+  var COLOR_CONTROLS = [
+    { id: 'hero-cust-skin', palette: 'skin', swatchLabel: 'skin', paletteLabel: 'Preset swatches for skin', hslLabel: 'HSL sliders for skin' },
+    { id: 'hero-cust-hair-color', palette: 'hair', swatchLabel: 'hair', paletteLabel: 'Preset swatches for hair', hslLabel: 'HSL sliders for hair' },
+    { id: 'hero-cust-eye-color', palette: 'eye', swatchLabel: 'eyes', paletteLabel: 'Preset swatches for eyes', hslLabel: 'HSL sliders for eyes' },
+    { id: 'hero-cust-suit', palette: 'suit', swatchLabel: 'suit', paletteLabel: 'Preset swatches for suit', hslLabel: 'HSL sliders for suit' },
+    { id: 'hero-cust-cape-outer', palette: 'cape', swatchLabel: 'cape and headwear', paletteLabel: 'Preset swatches for cape and headwear', hslLabel: 'HSL sliders for cape and headwear' },
+    { id: 'hero-cust-cape-inner', palette: 'capeInner', swatchLabel: 'accent', paletteLabel: 'Preset swatches for accent', hslLabel: 'HSL sliders for accent' }
+  ];
 
   function randomFrom(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -195,6 +212,7 @@
   var SUIT_COLOR_WEIGHTS = weightedPalette(PALETTES.suit, [14, 10, 8, 2, 3, 5, 2, 4, 8, 11, 12, 12], 1);
   var CAPE_COLOR_WEIGHTS = weightedPalette(PALETTES.cape, [13, 5, 10, 5, 5, 2, 2, 9, 8, 4, 10, 9], 1);
   var ACCENT_COLOR_WEIGHTS = weightedPalette(PALETTES.capeInner, [10, 4, 3, 2, 2, 8, 4, 8], 1);
+  var BRUIN_FUR_WEIGHTS = weightedPalette(['#7a4e2f', '#8b5a35', '#6a4830', '#5c3a22', '#a06840'], [8, 10, 8, 6, 4], 2);
   var BODY_TYPE_WEIGHTS = []
     .concat(weightedValues(['average', 'athletic', 'lean', 'slim', 'straight', 'soft', 'medium-lean', 'soft-medium'], 9))
     .concat(weightedValues(['tall', 'curvy', 'broad', 'stocky', 'petite', 'rounded', 'v-shape', 'balanced-curved', 'medium-curved', 'short-soft', 'short-curved', 'tall-soft', 'soft-athletic', 'medium-full'], 4))
@@ -237,26 +255,35 @@
     weightedValue(['beanie'], 4),
     weightedValue(['baseball-cap'], 4),
     weightedValue(['bucket-hat'], 2),
+    weightedValue(['bandana'], 2),
+    weightedValue(['over-ear-headphones'], 5),
+    weightedValue(['wireless-earbuds'], 4),
+    weightedValue(['chain-necklace'], 4),
     weightedValue(['glasses', 'earrings'], 5),
     weightedValue(['wireframe-glasses', 'hoop-earrings'], 4),
-    weightedValue(['round-rim-glasses', 'hair-clips'], 4)
+    weightedValue(['round-rim-glasses', 'hair-clips'], 4),
+    weightedValue(['wireless-earbuds', 'chain-necklace'], 3)
   ];
-  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'pixie', 'fade', 'buzz', 'undercut', 'pompadour'];
-  var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
-  var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
-  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
+  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'textured-fringe', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'buzz', 'undercut', 'pompadour'];
+  var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'wolf-cut', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
+  var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
+  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
   var FACIAL_HAIR_STYLES = ['none', 'stubble', 'mustache', 'goatee', 'short-beard', 'trimmed-beard'];
-  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'slick-back', 'fade', 'buzz', 'undercut', 'pompadour'];
-  var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
-  var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
-  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'cornrows'];
+  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'textured-fringe', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'buzz', 'undercut', 'pompadour'];
+  var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'wolf-cut', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
+  var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
+  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
   var MASCULINE_FACE_ACCESSORIES = [
     weightedValue([], 34),
     weightedValue(['glasses'], 13),
     weightedValue(['rectangular-glasses'], 12),
     weightedValue(['wireframe-glasses'], 8),
     weightedValue(['baseball-cap'], 6),
-    weightedValue(['beanie'], 5)
+    weightedValue(['beanie'], 5),
+    weightedValue(['over-ear-headphones'], 6),
+    weightedValue(['wireless-earbuds'], 4),
+    weightedValue(['chain-necklace'], 4),
+    weightedValue(['bandana'], 3)
   ];
   var FEMININE_FACE_ACCESSORIES = [
     weightedValue([], 24),
@@ -267,6 +294,10 @@
     weightedValue(['wireframe-glasses'], 7),
     weightedValue(['glasses'], 6),
     weightedValue(['headband'], 5),
+    weightedValue(['over-ear-headphones'], 5),
+    weightedValue(['wireless-earbuds'], 4),
+    weightedValue(['chain-necklace'], 3),
+    weightedValue(['bandana'], 3),
     weightedValue(['glasses', 'earrings'], 5),
     weightedValue(['round-rim-glasses', 'hoop-earrings'], 4),
     weightedValue(['round-rim-glasses', 'hair-clips'], 5),
@@ -277,7 +308,7 @@
     {
       weight: 18,
       hairStyles: POLISHED_SHORT_HAIR_STYLES,
-      outfitStyles: ['hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'collared-shirt'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'collared-shirt'],
       accessories: MASCULINE_FACE_ACCESSORIES,
       facialHairChance: 0.48,
       facialHairStyles: FACIAL_HAIR_STYLES,
@@ -288,7 +319,7 @@
     {
       weight: 13,
       hairStyles: POLISHED_TEXTURED_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'dreads-bun']),
-      outfitStyles: ['hoodie', 'denim-jacket', 'windbreaker', 'kurta-top', 'cardigan', 'collared-shirt'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'kurta-top', 'cardigan', 'collared-shirt'],
       accessories: [
         weightedValue([], 26),
         weightedValue(['glasses'], 8),
@@ -305,7 +336,7 @@
     {
       weight: 10,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(POLISHED_BRAID_LOC_STYLES),
-      outfitStyles: ['kurta-top', 'collared-shirt', 'hoodie', 'denim-jacket', 'windbreaker'],
+      outfitStyles: ['kurta-top', 'collared-shirt', 'hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker'],
       accessories: [
         weightedValue(['turban'], 12),
         weightedValue(['turban', 'rectangular-glasses'], 5),
@@ -320,7 +351,7 @@
     {
       weight: 7,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'coils', 'twist-out']),
-      outfitStyles: ['lab-coat', 'collared-shirt', 'hoodie'],
+      outfitStyles: ['lab-coat', 'collared-shirt', 'hoodie', 'crewneck-sweatshirt'],
       accessories: [
         weightedValue(['safety-goggles'], 10),
         weightedValue(['wireframe-glasses'], 8),
@@ -338,7 +369,7 @@
     {
       weight: 10,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(['locs', 'loose-locs', 'shoulder-length', 'center-part']),
-      outfitStyles: ['cardigan', 'collared-shirt', 'varsity-jacket', 'kurta-top', 'denim-jacket'],
+      outfitStyles: ['cardigan', 'collared-shirt', 'striped-knit', 'varsity-jacket', 'kurta-top', 'denim-jacket', 'crewneck-sweatshirt'],
       accessories: [
         weightedValue([], 24),
         weightedValue(['round-rim-glasses'], 7),
@@ -357,7 +388,7 @@
     {
       weight: 17,
       hairStyles: POLISHED_FEMININE_HAIR_STYLES,
-      outfitStyles: ['cardigan', 'collared-shirt', 'campus-blouse', 'denim-jacket', 'varsity-jacket', 'kurta-top'],
+      outfitStyles: ['cardigan', 'collared-shirt', 'campus-blouse', 'striped-knit', 'denim-jacket', 'flannel-overshirt', 'varsity-jacket', 'kurta-top'],
       accessories: FEMININE_FACE_ACCESSORIES,
       facialHairChance: 0,
       facialHairStyles: ['none'],
@@ -368,7 +399,7 @@
     {
       weight: 14,
       hairStyles: POLISHED_TEXTURED_HAIR_STYLES,
-      outfitStyles: ['hoodie', 'cardigan', 'windbreaker', 'denim-jacket', 'collared-shirt', 'campus-blouse'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'cardigan', 'windbreaker', 'denim-jacket', 'flannel-overshirt', 'collared-shirt', 'campus-blouse'],
       accessories: [
         weightedValue([], 22),
         weightedValue(['earrings'], 8),
@@ -388,7 +419,7 @@
     {
       weight: 13,
       hairStyles: POLISHED_BRAID_LOC_STYLES.concat(['braids']),
-      outfitStyles: ['hoodie', 'denim-jacket', 'windbreaker', 'utility-vest', 'kurta-top', 'cardigan'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'utility-vest', 'kurta-top', 'cardigan'],
       accessories: [
         weightedValue([], 22),
         weightedValue(['earrings'], 7),
@@ -406,7 +437,7 @@
     {
       weight: 10,
       hairStyles: POLISHED_FEMININE_HAIR_STYLES.concat(POLISHED_TEXTURED_HAIR_STYLES).concat(POLISHED_BRAID_LOC_STYLES),
-      outfitStyles: ['kurta-top', 'cardigan', 'collared-shirt', 'campus-blouse', 'windbreaker'],
+      outfitStyles: ['kurta-top', 'cardigan', 'collared-shirt', 'campus-blouse', 'striped-knit', 'windbreaker'],
       accessories: [
         weightedValue(['draped-scarf'], 8),
         weightedValue(['hijab'], 8),
@@ -421,7 +452,7 @@
     {
       weight: 7,
       hairStyles: ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'soft-bangs', 'low-pony-bangs', 'claw-clip-updo', 'ponytail', 'half-up', 'locs', 'twist-out', 'curly-layers', 'coils'],
-      outfitStyles: ['lab-coat', 'collared-shirt', 'campus-blouse', 'cardigan'],
+      outfitStyles: ['lab-coat', 'collared-shirt', 'campus-blouse', 'cardigan', 'striped-knit'],
       accessories: [
         weightedValue(['safety-goggles'], 9),
         weightedValue(['wireframe-glasses'], 8),
@@ -439,7 +470,7 @@
     {
       weight: 10,
       hairStyles: POLISHED_FEMININE_HAIR_STYLES.concat(['locs', 'loose-locs']),
-      outfitStyles: ['cardigan', 'collared-shirt', 'campus-blouse', 'varsity-jacket', 'kurta-top', 'denim-jacket'],
+      outfitStyles: ['cardigan', 'collared-shirt', 'campus-blouse', 'striped-knit', 'varsity-jacket', 'kurta-top', 'denim-jacket'],
       accessories: [
         weightedValue([], 20),
         weightedValue(['round-rim-glasses'], 8),
@@ -458,7 +489,7 @@
     {
       weight: 11,
       hairStyles: ['straight-long-layers', 'sleek-bob-bangs', 'low-pony-bangs', 'long-straight', 'soft-bangs', 'center-part', 'side-part-lob', 'claw-clip-updo', 'half-up'],
-      outfitStyles: ['campus-blouse', 'cardigan', 'collared-shirt', 'denim-jacket', 'hoodie', 'varsity-jacket'],
+      outfitStyles: ['campus-blouse', 'cardigan', 'collared-shirt', 'striped-knit', 'denim-jacket', 'hoodie', 'crewneck-sweatshirt', 'varsity-jacket'],
       accessories: [
         weightedValue([], 18),
         weightedValue(['hair-clips'], 9),
@@ -478,7 +509,7 @@
     {
       weight: 8,
       hairStyles: ['straight-long-layers', 'long-straight', 'long-layers', 'loose-waves', 'side-braid', 'long-braid', 'low-bun', 'half-up'],
-      outfitStyles: ['kurta-top', 'campus-blouse', 'cardigan', 'collared-shirt', 'windbreaker'],
+      outfitStyles: ['kurta-top', 'campus-blouse', 'cardigan', 'collared-shirt', 'striped-knit', 'windbreaker'],
       accessories: [
         weightedValue([], 16),
         weightedValue(['earrings'], 7),
@@ -560,6 +591,10 @@
     return value === 'male' || value === 'female' ? value : null;
   }
 
+  function normalizeHeroKind(value) {
+    return value === 'bruin' ? 'bruin' : 'human';
+  }
+
   function randomPresentation() {
     return Math.random() < 0.5 ? 'male' : 'female';
   }
@@ -570,6 +605,7 @@
 
   function normalizeAvatar(obj) {
     if (!obj || !obj.outfit) return obj;
+    obj.kind = normalizeHeroKind(obj.kind);
     var accessories = getAccessories(obj.outfit);
     obj.outfit.accessories = accessories;
     obj.outfit.accessory = accessories[0] || 'none';
@@ -584,30 +620,32 @@
     return obj;
   }
 
-  function randomAvatar(presentation) {
+  function randomAvatar(presentation, kind) {
+    var heroKind = normalizeHeroKind(kind);
     var selectedPresentation = normalizePresentation(presentation) || randomPresentation();
     var recipe = randomRecipeForPresentation(selectedPresentation);
-    var accessories = randomAccessories(recipe);
+    var accessories = heroKind === 'bruin' ? [] : randomAccessories(recipe);
     return {
       version: SCHEMA_VERSION,
+      kind: heroKind,
       appearance: {
         presentation: selectedPresentation,
-        skin: randomSkinTone(),
-        hairColor: pickWeightedColor(HAIR_COLOR_WEIGHTS),
-        hairStyle: randomFrom(recipe.hairStyles),
-        eyeColor: pickWeightedColor(EYE_COLOR_WEIGHTS),
+        skin: heroKind === 'bruin' ? pickWeightedColor(BRUIN_FUR_WEIGHTS) : randomSkinTone(),
+        hairColor: heroKind === 'bruin' ? '#3d2818' : pickWeightedColor(HAIR_COLOR_WEIGHTS),
+        hairStyle: heroKind === 'bruin' ? 'bald' : randomFrom(recipe.hairStyles),
+        eyeColor: heroKind === 'bruin' ? '#1f140c' : pickWeightedColor(EYE_COLOR_WEIGHTS),
         eyebrowStyle: weightedFrom(weightedValues(['arched', 'straight', 'rounded'], 4).concat(weightedValues(['thick', 'thin', 'angular'], 2))),
         headStyle: weightedFrom(PRESENTATION_HEAD_STYLE_WEIGHTS[selectedPresentation] || HEAD_STYLE_WEIGHTS),
         eyeShape: randomFrom(recipe.eyeShapes),
         noseShape: randomFrom(recipe.noseShapes),
         mouthStyle: randomFrom(recipe.mouthStyles),
         blushStyle: weightedFrom([weightedValue('natural', 5), weightedValue('none', 1)]),
-        facialHair: randomFacialHair(recipe),
-        faceFeature: weightedFrom(FACE_FEATURE_WEIGHTS)
+        facialHair: heroKind === 'bruin' ? 'none' : randomFacialHair(recipe),
+        faceFeature: heroKind === 'bruin' ? 'none' : weightedFrom(FACE_FEATURE_WEIGHTS)
       },
-      body: { type: weightedFrom(PRESENTATION_BODY_WEIGHTS[selectedPresentation] || BODY_TYPE_WEIGHTS) },
+      body: { type: heroKind === 'bruin' ? 'athletic' : weightedFrom(PRESENTATION_BODY_WEIGHTS[selectedPresentation] || BODY_TYPE_WEIGHTS) },
       outfit: {
-        style: randomFrom(recipe.outfitStyles),
+        style: heroKind === 'bruin' ? 'super-suit' : randomFrom(recipe.outfitStyles),
         suit: pickWeightedColor(SUIT_COLOR_WEIGHTS),
         capeOuter: pickWeightedColor(CAPE_COLOR_WEIGHTS),
         capeInner: pickWeightedColor(ACCENT_COLOR_WEIGHTS),
@@ -656,6 +694,78 @@
     return '#' + [rgb.r, rgb.g, rgb.b].map(function (v) {
       return clampByte(v).toString(16).padStart(2, '0');
     }).join('');
+  }
+
+  function clampPercent(n) {
+    return Math.max(0, Math.min(100, Math.round(n)));
+  }
+
+  function normalizeHue(n) {
+    var h = Math.round(Number(n) || 0) % 360;
+    return h < 0 ? h + 360 : h;
+  }
+
+  function rgbToHsl(rgb) {
+    var r = rgb.r / 255;
+    var g = rgb.g / 255;
+    var b = rgb.b / 255;
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var h = 0;
+    var s = 0;
+    var l = (max + min) / 2;
+    var d = max - min;
+
+    if (d !== 0) {
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - b) / d) + (g < b ? 6 : 0);
+      else if (max === g) h = ((b - r) / d) + 2;
+      else h = ((r - g) / d) + 4;
+      h *= 60;
+    }
+
+    return {
+      h: normalizeHue(h),
+      s: clampPercent(s * 100),
+      l: clampPercent(l * 100)
+    };
+  }
+
+  function hslToRgb(h, s, l) {
+    var hue = normalizeHue(h) / 360;
+    var sat = clampPercent(s) / 100;
+    var light = clampPercent(l) / 100;
+
+    if (sat === 0) {
+      var gray = clampByte(light * 255);
+      return { r: gray, g: gray, b: gray };
+    }
+
+    function hueToRgb(p, q, t) {
+      var next = t;
+      if (next < 0) next += 1;
+      if (next > 1) next -= 1;
+      if (next < 1 / 6) return p + (q - p) * 6 * next;
+      if (next < 1 / 2) return q;
+      if (next < 2 / 3) return p + (q - p) * (2 / 3 - next) * 6;
+      return p;
+    }
+
+    var q = light < 0.5 ? light * (1 + sat) : light + sat - light * sat;
+    var p = 2 * light - q;
+    return {
+      r: clampByte(hueToRgb(p, q, hue + 1 / 3) * 255),
+      g: clampByte(hueToRgb(p, q, hue) * 255),
+      b: clampByte(hueToRgb(p, q, hue - 1 / 3) * 255)
+    };
+  }
+
+  function hexToHsl(hex) {
+    return rgbToHsl(hexToRgb(hex));
+  }
+
+  function hslToHex(hsl) {
+    return rgbToHex(hslToRgb(hsl.h, hsl.s, hsl.l));
   }
 
   function mix(hexA, hexB, amountB) {
@@ -918,7 +1028,17 @@
     }
   }
 
+  function setHeroKindLayers(svg, kind) {
+    var heroKind = normalizeHeroKind(kind);
+    var groups = svg.querySelectorAll('[data-hero-kind-layer]');
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      group.setAttribute('display', group.getAttribute('data-hero-kind-layer') === heroKind ? 'inline' : 'none');
+    }
+  }
+
   function applyToSvg(svg, state) {
+    var heroKind = normalizeHeroKind(state.kind);
     var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     svg.style.setProperty('--hero-skin-light', state.appearance.skin);
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
@@ -965,6 +1085,11 @@
     svg.style.setProperty('--hero-glasses-frame-dark', contrastTokens.glassesFrameDark);
     svg.style.setProperty('--hero-glasses-metal', contrastTokens.glassesMetal);
     svg.style.setProperty('--hero-lens-fill', contrastTokens.lensFill);
+    svg.style.setProperty('--hero-bruin-fur-light', lighten(state.appearance.skin, 0.28));
+    svg.style.setProperty('--hero-bruin-fur', state.appearance.skin);
+    svg.style.setProperty('--hero-bruin-fur-dark', darken(state.appearance.skin, 0.42));
+    svg.style.setProperty('--hero-bruin-muzzle', mix(lighten(state.appearance.skin, 0.42), '#f1c27d', 0.18));
+    svg.style.setProperty('--hero-bruin-line', firstContrastColorAgainstAll(['#1f140c', '#2a1609', '#f7ead7', '#ffffff'], [state.appearance.skin], 3));
     svg.style.setProperty('--hero-suit-light', lighten(state.outfit.suit, 0.35));
     svg.style.setProperty('--hero-suit', state.outfit.suit);
     svg.style.setProperty('--hero-suit-dark', darken(state.outfit.suit, 0.4));
@@ -974,7 +1099,9 @@
     svg.style.setProperty('--hero-cape-inner-light', lighten(state.outfit.capeInner, 0.4));
     svg.style.setProperty('--hero-cape-inner', state.outfit.capeInner);
 
-    svg.setAttribute('data-hero-body', state.body.type);
+    svg.setAttribute('data-hero-kind', heroKind);
+    svg.setAttribute('data-hero-body', heroKind === 'bruin' ? 'athletic' : state.body.type);
+    setHeroKindLayers(svg, heroKind);
 
     var accessories = getAccessories(state.outfit);
     var compositedAccessories = getCompositedAccessories(accessories);
@@ -1081,6 +1208,7 @@
     if (!a || typeof a !== 'object') return { ok: false, error: 'Missing appearance section.' };
     if (!b || typeof b !== 'object') return { ok: false, error: 'Missing body section.' };
     if (!o || typeof o !== 'object') return { ok: false, error: 'Missing outfit section.' };
+    if (obj.kind !== undefined && !inEnum(obj.kind, 'heroKind')) return { ok: false, error: 'Invalid hero type.' };
     if (!isHex(a.skin)) return { ok: false, error: 'Invalid skin color (expected #rrggbb).' };
     if (!isHex(a.hairColor)) return { ok: false, error: 'Invalid hair color.' };
     if (!isHex(a.eyeColor)) return { ok: false, error: 'Invalid eye color.' };
@@ -1167,6 +1295,214 @@
 
     function $(id) { return modal.querySelector('#' + id); }
 
+    function normalizedColorValue(input) {
+      return input && isHex(input.value) ? input.value.toLowerCase() : '#000000';
+    }
+
+    function rememberHsl(input, hsl, hex) {
+      input._heroHsl = {
+        h: normalizeHue(hsl.h),
+        s: clampPercent(hsl.s),
+        l: clampPercent(hsl.l)
+      };
+      input._heroHslHex = (hex || hslToHex(input._heroHsl)).toLowerCase();
+      return input._heroHsl;
+    }
+
+    function hslForInput(input, hex) {
+      var normalizedHex = (hex || normalizedColorValue(input)).toLowerCase();
+      if (input._heroHsl && input._heroHslHex === normalizedHex) return input._heroHsl;
+      return rememberHsl(input, hexToHsl(normalizedHex), normalizedHex);
+    }
+
+    function setText(el, text) {
+      if (el) el.textContent = text;
+    }
+
+    function formatHslValue(channel, value) {
+      return channel === 'hue' || channel === 'h' ? String(value) + ' deg' : String(value) + '%';
+    }
+
+    function setRangeValue(range, output, channel, value) {
+      if (!range) return;
+      range.value = String(value);
+      range.setAttribute('aria-valuetext', formatHslValue(channel, value));
+      setText(output, formatHslValue(channel, value));
+    }
+
+    function hslCss(h, s, l) {
+      return 'hsl(' + normalizeHue(h) + ', ' + clampPercent(s) + '%, ' + clampPercent(l) + '%)';
+    }
+
+    function applyRangeSpectrums(tool, hsl) {
+      if (!tool) return;
+      tool.hue.style.setProperty('--hero-cust-range-bg', [
+        'linear-gradient(90deg',
+        hslCss(0, hsl.s, hsl.l),
+        hslCss(60, hsl.s, hsl.l),
+        hslCss(120, hsl.s, hsl.l),
+        hslCss(180, hsl.s, hsl.l),
+        hslCss(240, hsl.s, hsl.l),
+        hslCss(300, hsl.s, hsl.l),
+        hslCss(360, hsl.s, hsl.l) + ')'
+      ].join(', '));
+      tool.saturation.style.setProperty('--hero-cust-range-bg',
+        'linear-gradient(90deg, ' + hslCss(hsl.h, 0, hsl.l) + ', ' + hslCss(hsl.h, 100, hsl.l) + ')');
+      tool.lightness.style.setProperty('--hero-cust-range-bg',
+        'linear-gradient(90deg, ' + hslCss(hsl.h, hsl.s, 0) + ', ' + hslCss(hsl.h, hsl.s, 50) + ', ' + hslCss(hsl.h, hsl.s, 100) + ')');
+    }
+
+    function syncColorTool(input) {
+      if (!input || !input._heroColorTool) return;
+      var tool = input._heroColorTool;
+      var hex = normalizedColorValue(input);
+      var hsl = hslForInput(input, hex);
+      setText(tool.valueText, hex.toUpperCase());
+      setRangeValue(tool.hue, tool.hueOutput, 'h', hsl.h);
+      setRangeValue(tool.saturation, tool.saturationOutput, 's', hsl.s);
+      setRangeValue(tool.lightness, tool.lightnessOutput, 'l', hsl.l);
+      applyRangeSpectrums(tool, hsl);
+      for (var i = 0; i < tool.swatches.length; i++) {
+        var swatch = tool.swatches[i];
+        swatch.setAttribute('aria-pressed', swatch.getAttribute('data-color') === hex ? 'true' : 'false');
+      }
+    }
+
+    function syncAllColorTools() {
+      for (var i = 0; i < COLOR_CONTROLS.length; i++) {
+        syncColorTool($(COLOR_CONTROLS[i].id));
+      }
+    }
+
+    function resetColorHslFromInput(input) {
+      if (!input) return;
+      rememberHsl(input, hexToHsl(normalizedColorValue(input)), normalizedColorValue(input));
+    }
+
+    function resetAllColorHslFromForm() {
+      for (var i = 0; i < COLOR_CONTROLS.length; i++) {
+        resetColorHslFromInput($(COLOR_CONTROLS[i].id));
+      }
+    }
+
+    function updateColorInput(input, hex, hsl) {
+      if (!input || !isHex(hex)) return;
+      input.value = hex.toLowerCase();
+      rememberHsl(input, hsl || hexToHsl(input.value), input.value);
+      syncColorTool(input);
+      refreshPreview();
+    }
+
+    function updateColorFromHsl(input) {
+      if (!input || !input._heroColorTool) return;
+      var tool = input._heroColorTool;
+      var nextHsl = {
+        h: Number(tool.hue.value),
+        s: Number(tool.saturation.value),
+        l: Number(tool.lightness.value)
+      };
+      updateColorInput(input, hslToHex(nextHsl), nextHsl);
+    }
+
+    function createHslRow(input, channel, label, min, max) {
+      var row = document.createElement('div');
+      row.className = 'hero-cust-hsl-row';
+
+      var labelEl = document.createElement('label');
+      var rangeId = input.id + '-' + channel;
+      var output = document.createElement('output');
+      output.id = rangeId + '-value';
+      output.setAttribute('for', rangeId);
+      labelEl.setAttribute('for', rangeId);
+      labelEl.appendChild(document.createTextNode(label + ' '));
+      labelEl.appendChild(output);
+
+      var range = document.createElement('input');
+      range.type = 'range';
+      range.id = rangeId;
+      range.min = String(min);
+      range.max = String(max);
+      range.step = '1';
+      range.addEventListener('input', function () { updateColorFromHsl(input); });
+      range.addEventListener('change', function () { updateColorFromHsl(input); });
+
+      row.appendChild(labelEl);
+      row.appendChild(range);
+      return { row: row, range: range, output: output };
+    }
+
+    function buildColorTools(config) {
+      var input = $(config.id);
+      if (!input || input._heroColorTool) return;
+
+      var tools = document.createElement('div');
+      tools.className = 'hero-cust-color-tools';
+      tools.setAttribute('data-hero-color-tools', config.id);
+
+      var valueText = document.createElement('span');
+      valueText.className = 'hero-cust-color-value';
+      tools.appendChild(valueText);
+
+      var palette = document.createElement('div');
+      palette.className = 'hero-cust-color-palette';
+      palette.setAttribute('role', 'group');
+      palette.setAttribute('aria-label', config.paletteLabel);
+
+      var swatches = [];
+      var colors = PALETTES[config.palette] || [];
+      var seenColors = {};
+      for (var i = 0; i < colors.length; i++) {
+        var color = colors[i].toLowerCase();
+        if (seenColors[color]) continue;
+        seenColors[color] = true;
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'hero-cust-color-swatch';
+        button.setAttribute('data-color', color);
+        button.setAttribute('aria-label', 'Use ' + config.swatchLabel + ' preset ' + color.toUpperCase());
+        button.setAttribute('aria-pressed', 'false');
+        button.style.setProperty('--hero-cust-swatch', color);
+        button.addEventListener('click', function () {
+          updateColorInput(input, this.getAttribute('data-color'));
+        });
+        palette.appendChild(button);
+        swatches.push(button);
+      }
+      tools.appendChild(palette);
+
+      var hslGroup = document.createElement('div');
+      hslGroup.className = 'hero-cust-hsl-controls';
+      hslGroup.setAttribute('role', 'group');
+      hslGroup.setAttribute('aria-label', config.hslLabel);
+
+      var hue = createHslRow(input, 'hue', 'Hue', 0, 359);
+      var saturation = createHslRow(input, 'saturation', 'Saturation', 0, 100);
+      var lightness = createHslRow(input, 'lightness', 'Lightness', 0, 100);
+      hslGroup.appendChild(hue.row);
+      hslGroup.appendChild(saturation.row);
+      hslGroup.appendChild(lightness.row);
+      tools.appendChild(hslGroup);
+
+      input._heroColorTool = {
+        valueText: valueText,
+        swatches: swatches,
+        hue: hue.range,
+        hueOutput: hue.output,
+        saturation: saturation.range,
+        saturationOutput: saturation.output,
+        lightness: lightness.range,
+        lightnessOutput: lightness.output
+      };
+      input.insertAdjacentElement('afterend', tools);
+      syncColorTool(input);
+    }
+
+    function initColorTools() {
+      for (var i = 0; i < COLOR_CONTROLS.length; i++) {
+        buildColorTools(COLOR_CONTROLS[i]);
+      }
+    }
+
     function readAccessoriesForm() {
       var selected = [];
       var checkboxes = modal.querySelectorAll('input[name="hero-cust-accessory"]:checked');
@@ -1189,6 +1525,7 @@
       var accessories = readAccessoriesForm();
       return {
         version: SCHEMA_VERSION,
+        kind: ($('hero-cust-kind') ? $('hero-cust-kind').value : 'human'),
         appearance: {
           skin: $('hero-cust-skin').value,
           hairColor: $('hero-cust-hair-color').value,
@@ -1217,6 +1554,7 @@
     }
 
     function writeForm(state) {
+      if ($('hero-cust-kind')) $('hero-cust-kind').value = normalizeHeroKind(state.kind);
       $('hero-cust-skin').value = state.appearance.skin;
       $('hero-cust-hair-color').value = state.appearance.hairColor;
       $('hero-cust-hair-style').value = state.appearance.hairStyle;
@@ -1237,6 +1575,22 @@
       $('hero-cust-cape-inner').value = state.outfit.capeInner;
       writeAccessoriesForm(state);
       $('hero-cust-emblem').value = state.outfit.emblem;
+      resetAllColorHslFromForm();
+      syncAllColorTools();
+    }
+
+    function applyBruinFormDefaults() {
+      if ($('hero-cust-skin')) updateColorInput($('hero-cust-skin'), BRUIN_DEFAULTS.skin);
+      if ($('hero-cust-hair-color')) updateColorInput($('hero-cust-hair-color'), BRUIN_DEFAULTS.hairColor);
+      if ($('hero-cust-eye-color')) updateColorInput($('hero-cust-eye-color'), BRUIN_DEFAULTS.eyeColor);
+      if ($('hero-cust-hair-style')) $('hero-cust-hair-style').value = 'bald';
+      if ($('hero-cust-facial-hair')) $('hero-cust-facial-hair').value = 'none';
+      if ($('hero-cust-face-feature')) $('hero-cust-face-feature').value = 'none';
+      var bodySelect = $('hero-cust-body-type');
+      if (bodySelect) bodySelect.value = BRUIN_DEFAULTS.bodyType;
+      if ($('hero-cust-outfit-style')) $('hero-cust-outfit-style').value = BRUIN_DEFAULTS.outfitStyle;
+      var checkboxes = modal.querySelectorAll('input[name="hero-cust-accessory"]');
+      for (var i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
     }
 
     function refreshPreview() {
@@ -1261,7 +1615,7 @@
       modal.hidden = false;
       document.body.classList.add('hero-cust-modal-open');
       modal.classList.add('hero-cust-open');
-      var first = $('hero-cust-skin');
+      var first = $('hero-cust-kind') || $('hero-cust-skin');
       if (first) first.focus();
     }
 
@@ -1307,7 +1661,8 @@
     }
 
     function doRandomize() {
-      var r = randomAvatar();
+      var current = readForm();
+      var r = randomAvatar(null, current.kind);
       writeForm(r);
       refreshPreview();
       setStatus('Randomized — press Save to keep it.');
@@ -1365,15 +1720,32 @@
 
     openBtn.addEventListener('click', openModal);
 
-    modal.querySelectorAll('input[type="color"], select').forEach(function (el) {
+    initColorTools();
+
+    modal.querySelectorAll('input[type="color"]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        resetColorHslFromInput(el);
+        syncColorTool(el);
+        refreshPreview();
+      });
+      el.addEventListener('change', function () {
+        resetColorHslFromInput(el);
+        syncColorTool(el);
+        refreshPreview();
+      });
+    });
+
+    modal.querySelectorAll('select').forEach(function (el) {
       el.addEventListener('input', refreshPreview);
       el.addEventListener('change', refreshPreview);
     });
 
-    var bodySelect = $('hero-cust-body-type');
-    if (bodySelect) {
-      bodySelect.addEventListener('input', refreshPreview);
-      bodySelect.addEventListener('change', refreshPreview);
+    var kindSelect = $('hero-cust-kind');
+    if (kindSelect) {
+      kindSelect.addEventListener('change', function () {
+        if (kindSelect.value === 'bruin') applyBruinFormDefaults();
+        refreshPreview();
+      });
     }
 
     modal.querySelectorAll('input[name="hero-cust-accessory"]').forEach(function (el) {

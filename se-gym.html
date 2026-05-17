@@ -394,6 +394,13 @@ layout: sebook
             <fieldset class="hero-cust-fieldset">
               <legend>Appearance</legend>
               <div class="hero-cust-control">
+                <label for="hero-cust-kind">Hero type</label>
+                <select id="hero-cust-kind">
+                  <option value="human">Human hero</option>
+                  <option value="bruin">Bruin mascot</option>
+                </select>
+              </div>
+              <div class="hero-cust-control">
                 <label for="hero-cust-skin">Skin tone</label>
                 <input type="color" id="hero-cust-skin" value="#dfa07a">
               </div>
@@ -407,9 +414,11 @@ layout: sebook
                   <optgroup label="Short styles">
                     <option value="short">Short crop</option>
                     <option value="textured-crop">Textured crop</option>
+                    <option value="textured-fringe">Textured fringe</option>
                     <option value="straight-fringe">Straight fringe</option>
                     <option value="side-parted-short">Side-parted short cut</option>
                     <option value="soft-two-block">Soft two-block cut</option>
+                    <option value="middle-part-flow">Middle-part flow</option>
                     <option value="slick-back">Slicked-back short cut</option>
                     <option value="pixie">Pixie cut</option>
                     <option value="fade">Fade</option>
@@ -425,6 +434,7 @@ layout: sebook
                     <option value="wavy-lob">Wavy lob</option>
                     <option value="side-part-lob">Side-part lob</option>
                     <option value="shoulder-length">Shoulder length</option>
+                    <option value="wolf-cut">Wolf cut layers</option>
                     <option value="long-layers">Long layers</option>
                     <option value="straight-long-layers">Straight long layers</option>
                     <option value="butterfly-layers">Butterfly layers</option>
@@ -446,6 +456,7 @@ layout: sebook
                     <option value="voluminous-curls">Voluminous curls</option>
                     <option value="curly-layers">Curly layers</option>
                     <option value="coils">Coils</option>
+                    <option value="two-strand-twists">Two-strand twists</option>
                     <option value="twist-out">Twist-out</option>
                     <option value="coily-puff">Coily puff</option>
                     <option value="double-puffs">Double puffs</option>
@@ -464,6 +475,7 @@ layout: sebook
                     <option value="side-braid">Side braid</option>
                     <option value="braided-bun">Braided bun</option>
                     <option value="box-braids">Box braids</option>
+                    <option value="knotless-braids">Knotless braids</option>
                     <option value="cornrows">Cornrows</option>
                     <option value="bun">High bun</option>
                     <option value="space-buns">Space buns</option>
@@ -665,8 +677,11 @@ layout: sebook
                 <select id="hero-cust-outfit-style">
                   <option value="super-suit">Super suit</option>
                   <option value="hoodie">Hoodie</option>
+                  <option value="crewneck-sweatshirt">Crewneck sweatshirt</option>
                   <option value="varsity-jacket">Varsity jacket</option>
                   <option value="denim-jacket">Denim jacket</option>
+                  <option value="flannel-overshirt">Flannel overshirt</option>
+                  <option value="striped-knit">Striped knit top</option>
                   <option value="windbreaker">Windbreaker</option>
                   <option value="lab-coat">Lab coat</option>
                   <option value="collared-shirt">Button-up shirt</option>
@@ -697,11 +712,15 @@ layout: sebook
                   <label><input type="checkbox" name="hero-cust-accessory" value="earrings"> Earrings</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="hoop-earrings"> Small hoop earrings</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="hair-clips"> Hair clips</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="over-ear-headphones"> Over-ear headphones</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="wireless-earbuds"> Wireless earbuds</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="chain-necklace"> Chain necklace</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="forehead-accent"> Forehead accent</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="headband"> Headband</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="beanie"> Beanie</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="baseball-cap"> Baseball cap</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="bucket-hat"> Bucket hat</label>
+                  <label><input type="checkbox" name="hero-cust-accessory" value="bandana"> Bandana</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="headwrap"> Head wrap</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="draped-scarf"> Draped scarf</label>
                   <label><input type="checkbox" name="hero-cust-accessory" value="hijab"> Hijab</label>
@@ -1192,10 +1211,20 @@ layout: sebook
     @media (max-width: 720px) {
       .hero-cust-layout { grid-template-columns: 1fr; }
       .hero-cust-preview-pane {
-        top: 0;
+        position: static;
         padding-bottom: 0.5rem;
       }
       .hero-cust-preview .se-gym-hero-svg { max-height: min(42vh, 340px); }
+      #se-gym-app .hero-cust-color-tools {
+        margin-left: 0;
+      }
+      #se-gym-app .hero-cust-hsl-row {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+      }
+      #se-gym-app .hero-cust-color-palette {
+        grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
+      }
     }
     .hero-cust-status {
       margin: 0.75rem 0 0 0;
@@ -1240,6 +1269,147 @@ layout: sebook
       background: transparent;
       cursor: pointer;
       font: inherit;
+    }
+    .hero-cust-color-tools {
+      display: grid;
+      gap: 0.5rem;
+      flex: 1 1 100%;
+      margin-left: calc(8em + 0.75rem);
+      min-width: 0;
+    }
+    .hero-cust-color-value {
+      justify-self: start;
+      border: 1px solid var(--color-border, #d0d4da);
+      border-radius: 6px;
+      padding: 0.18em 0.45em;
+      color: #333b45;
+      background: rgba(255, 255, 255, 0.72);
+      font: inherit;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .hero-cust-color-palette {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+      gap: 0.35rem;
+      width: 100%;
+    }
+    .hero-cust-color-swatch {
+      position: relative;
+      min-width: 34px;
+      min-height: 34px;
+      border: 2px solid #6f7b88;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+      background: var(--hero-cust-swatch, #ffffff);
+      font: inherit;
+    }
+    .hero-cust-color-swatch:hover {
+      border-color: #2774AE;
+      box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.18);
+    }
+    .hero-cust-color-swatch[aria-pressed="true"] {
+      border-color: #003B5C;
+      box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.34);
+    }
+    .hero-cust-color-swatch[aria-pressed="true"]::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0.5em;
+      height: 0.85em;
+      border: solid #ffffff;
+      border-width: 0 0.18em 0.18em 0;
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.86));
+      transform: translate(-50%, -58%) rotate(45deg);
+    }
+    .hero-cust-hsl-controls {
+      display: grid;
+      gap: 0.4rem;
+      width: 100%;
+    }
+    .hero-cust-hsl-row {
+      display: grid;
+      grid-template-columns: minmax(7em, 10em) minmax(0, 1fr);
+      gap: 0.65rem;
+      align-items: center;
+    }
+    .hero-cust-hsl-row label {
+      min-width: 0;
+      font-size: 0.95em;
+    }
+    .hero-cust-hsl-row input[type="range"] {
+      width: 100%;
+      min-height: 38px;
+      accent-color: var(--color-primary, #2774AE);
+      --hero-cust-range-bg: linear-gradient(90deg, #000000, #ffffff);
+      --hero-cust-range-border: rgba(31, 41, 55, 0.45);
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+    }
+    .hero-cust-hsl-row input[type="range"]::-webkit-slider-runnable-track {
+      height: 1em;
+      border: 1px solid var(--hero-cust-range-border);
+      border-radius: 999px;
+      background: var(--hero-cust-range-bg);
+    }
+    .hero-cust-hsl-row input[type="range"]::-moz-range-track {
+      height: 1em;
+      border: 1px solid var(--hero-cust-range-border);
+      border-radius: 999px;
+      background: var(--hero-cust-range-bg);
+    }
+    .hero-cust-hsl-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      margin-top: calc((1em - 24px) / 2);
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: #1f2933;
+      box-shadow: 0 0 0 1px rgba(31, 41, 55, 0.85), 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+    .hero-cust-hsl-row input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: #1f2933;
+      box-shadow: 0 0 0 1px rgba(31, 41, 55, 0.85), 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+    html.dark-mode .hero-cust-color-value {
+      background: #252c3b;
+      border-color: #3a4250;
+      color: #e9ecf2;
+    }
+    html.dark-mode .hero-cust-color-swatch {
+      border-color: #8d98a5;
+    }
+    html.dark-mode .hero-cust-color-swatch:hover {
+      border-color: #8BB8E8;
+      box-shadow: 0 0 0 2px rgba(139, 184, 232, 0.24);
+    }
+    html.dark-mode .hero-cust-color-swatch[aria-pressed="true"] {
+      border-color: #d7ecff;
+      box-shadow: 0 0 0 3px rgba(139, 184, 232, 0.38);
+    }
+    html.dark-mode .hero-cust-hsl-row input[type="range"] {
+      --hero-cust-range-border: rgba(230, 244, 255, 0.58);
+    }
+    html.dark-mode .hero-cust-hsl-row input[type="range"]::-webkit-slider-thumb {
+      border-color: #f2f7ff;
+      background: #111827;
+      box-shadow: 0 0 0 1px rgba(230, 244, 255, 0.86), 0 1px 4px rgba(0, 0, 0, 0.7);
+    }
+    html.dark-mode .hero-cust-hsl-row input[type="range"]::-moz-range-thumb {
+      border-color: #f2f7ff;
+      background: #111827;
+      box-shadow: 0 0 0 1px rgba(230, 244, 255, 0.86), 0 1px 4px rgba(0, 0, 0, 0.7);
     }
     .hero-cust-control select,
     .hero-cust-control input[type="text"] {

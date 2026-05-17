@@ -151,6 +151,71 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await a11yCheckpoint(page, 'hero customizer open', { feature: A11Y_FEATURE, darkMode: true });
   });
 
+  test('Avatar color controls expose all presets and HSL sliders on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const colorControls = [
+      { presetsLabel: 'Preset swatches for skin', hslLabel: 'HSL sliders for skin', presets: 12 },
+      { presetsLabel: 'Preset swatches for hair', hslLabel: 'HSL sliders for hair', presets: 15 },
+      { presetsLabel: 'Preset swatches for eyes', hslLabel: 'HSL sliders for eyes', presets: 8 },
+      { presetsLabel: 'Preset swatches for suit', hslLabel: 'HSL sliders for suit', presets: 12 },
+      { presetsLabel: 'Preset swatches for cape and headwear', hslLabel: 'HSL sliders for cape and headwear', presets: 10 },
+      { presetsLabel: 'Preset swatches for accent', hslLabel: 'HSL sliders for accent', presets: 8 },
+    ];
+
+    for (const control of colorControls) {
+      const presets = page.getByRole('group', { name: control.presetsLabel });
+      const hsl = page.getByRole('group', { name: control.hslLabel });
+
+      await expect(presets, `${control.presetsLabel} should be visible on mobile`).toBeVisible();
+      await expect(presets.getByRole('button')).toHaveCount(control.presets);
+      await expect(hsl.getByLabel(/^Hue /)).toBeVisible();
+      await expect(hsl.getByLabel(/^Saturation /)).toBeVisible();
+      await expect(hsl.getByLabel(/^Lightness /)).toBeVisible();
+      await expect(hsl.getByRole('slider')).toHaveCount(3);
+
+      const rangeBackgrounds = await hsl.locator('input[type="range"]').evaluateAll((ranges) =>
+        ranges.map((range) => getComputedStyle(range).getPropertyValue('--hero-cust-range-bg'))
+      );
+      expect(rangeBackgrounds.every((background) => background.includes('linear-gradient'))).toBe(true);
+    }
+
+    const hairPreset = page
+      .getByRole('group', { name: 'Preset swatches for hair' })
+      .getByRole('button', { name: 'Use hair preset #854A3A' });
+    await hairPreset.click();
+
+    await expect(page.getByLabel('Hair color', { exact: true })).toHaveValue('#854a3a');
+    await expect(hairPreset).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(async () => page.locator('#hero-customizer-modal [data-gym-hero-svg]').evaluate((svg) =>
+      getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
+    ), {
+      message: 'selected hair preset should update the avatar preview color',
+    }).toBe('#854a3a');
+
+    const hairHsl = page.getByRole('group', { name: 'HSL sliders for hair' });
+    const hue = hairHsl.getByLabel(/^Hue /);
+    const saturation = hairHsl.getByLabel(/^Saturation /);
+    const lightness = hairHsl.getByLabel(/^Lightness /);
+
+    await hue.fill('210');
+    await saturation.fill('70');
+    await lightness.fill('0');
+    await expect(page.getByLabel('Hair color', { exact: true })).toHaveValue('#000000');
+    await expect(hue).toHaveValue('210');
+    await expect(saturation).toHaveValue('70');
+    await expect(lightness).toHaveValue('0');
+
+    await lightness.fill('100');
+    await expect(page.getByLabel('Hair color', { exact: true })).toHaveValue('#ffffff');
+    await expect(hue).toHaveValue('210');
+    await expect(saturation).toHaveValue('70');
+    await expect(lightness).toHaveValue('100');
+  });
+
   test('Hero preview stays visible while modal controls scroll', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -216,7 +281,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
       const coveredHairAccessories = new Set(['draped-scarf', 'hijab']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
-      const everydayCampusOutfits = new Set(['hoodie', 'varsity-jacket', 'denim-jacket', 'windbreaker', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan']);
+      const everydayCampusOutfits = new Set(['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan']);
       const costumeOutfits = new Set(['super-suit', 'captain-jacket']);
       const technicalOutfits = new Set(['lab-coat', 'utility-vest']);
       const naturalHairColors = new Set([
@@ -529,6 +594,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'wolf-cut',
       'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
@@ -550,6 +616,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'wolf-cut',
       'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
@@ -668,6 +735,122 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         });
 
       expect(blockedFeatureHits, `${style} should not place hair over eyes, cheeks, or mouth`).toEqual([]);
+    }
+  });
+
+  test('Bantu knots sit on a connected hairline without exposing the scalp', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    await page.getByLabel('Head shape').selectOption('soft-oval');
+    await page.getByLabel('Hair style').selectOption('bantu-knots');
+
+    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
+    await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="bantu-knots"]'))
+      .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="hairline"][data-hero-option="bantu-knots"]'))
+      .toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-slot="hair-root"][data-hero-option="bantu-knots"]'))
+      .toHaveAttribute('display', 'inline');
+
+    const hairlineCoverage = await preview.evaluate((svg) => {
+      const points = [
+        { name: 'top forehead hairline', x: 400, y: 158 },
+        { name: 'left temple hairline', x: 360, y: 168 },
+        { name: 'right temple hairline', x: 440, y: 168 },
+        { name: 'center knot', x: 400, y: 106 },
+      ];
+
+      return points.map((point) => {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        return {
+          name: point.name,
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+        };
+      });
+    });
+
+    expect(hairlineCoverage).toEqual([
+      { name: 'top forehead hairline', slot: 'hairline', option: 'bantu-knots' },
+      { name: 'left temple hairline', slot: 'hair-root', option: 'bantu-knots' },
+      { name: 'right temple hairline', slot: 'hair-root', option: 'bantu-knots' },
+      { name: 'center knot', slot: 'hair', option: 'bantu-knots' },
+    ]);
+  });
+
+  test('Raised and tied hair options keep the scalp visually connected', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    await page.getByLabel('Head shape').selectOption('soft-oval');
+    const hairStyle = page.getByLabel('Hair style');
+    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
+    const styles = [
+      'coily-puff',
+      'double-puffs',
+      'bantu-knots',
+      'bun',
+      'space-buns',
+      'low-bun',
+      'messy-bun',
+      'claw-clip-updo',
+      'ponytail',
+      'high-pony',
+      'sleek-low-pony',
+      'pigtails',
+      'top-knot',
+    ];
+
+    for (const style of styles) {
+      await hairStyle.selectOption(style);
+      await expect(preview.locator(`[data-hero-slot="hairline"][data-hero-option="${style}"]`))
+        .toHaveAttribute('display', 'inline');
+      await expect(preview.locator(`[data-hero-slot="hair-root"][data-hero-option="${style}"]`))
+        .toHaveAttribute('display', 'inline');
+
+      const coverage = await preview.evaluate((svg) => {
+        const points = [
+          { name: 'top forehead hairline', x: 400, y: 158 },
+          { name: 'left temple root', x: 356, y: 178 },
+          { name: 'right temple root', x: 444, y: 178 },
+        ];
+        return points.map((point) => {
+          const svgPoint = svg.createSVGPoint();
+          svgPoint.x = point.x;
+          svgPoint.y = point.y;
+          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+          const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+          const slot = element && element.closest('[data-hero-slot]');
+          return {
+            name: point.name,
+            slot: slot && slot.getAttribute('data-hero-slot'),
+            option: slot && slot.getAttribute('data-hero-option'),
+          };
+        });
+      });
+
+      expect(coverage[0], `${style} should have visible hairline at the forehead`).toMatchObject({
+        slot: 'hairline',
+        option: style,
+      });
+      expect(coverage[1], `${style} should connect at the left temple`).toMatchObject({
+        slot: 'hair-root',
+        option: style,
+      });
+      expect(coverage[2], `${style} should connect at the right temple`).toMatchObject({
+        slot: 'hair-root',
+        option: style,
+      });
     }
   });
 
@@ -900,7 +1083,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         .toHaveAttribute('display', 'inline');
     }
 
-    for (const label of ['Round-rim glasses', 'Safety goggles', 'Tech visor']) {
+    for (const outfit of ['crewneck-sweatshirt', 'flannel-overshirt', 'striped-knit']) {
+      await page.getByLabel('Outfit style').selectOption(outfit);
+      await expect(preview.locator(`[data-hero-slot="outfit-style"][data-hero-option="${outfit}"]`))
+        .toHaveAttribute('display', 'inline');
+    }
+
+    for (const label of ['Round-rim glasses', 'Safety goggles', 'Tech visor', 'Over-ear headphones', 'Wireless earbuds', 'Chain necklace', 'Bandana']) {
       await clearAccessories(page);
       await page.getByLabel(label, { exact: true }).check();
       const checkedValue = await page.getByLabel(label, { exact: true }).inputValue();
@@ -918,15 +1107,18 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const hairStyle = page.getByLabel('Hair style');
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
       const styles = [
+      'textured-fringe',
       'straight-fringe',
       'side-parted-short',
       'soft-two-block',
+      'middle-part-flow',
       'slick-back',
       'long-layers',
       'long-straight',
       'loose-waves',
       'wavy-lob',
       'side-part-lob',
+      'wolf-cut',
       'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
@@ -936,6 +1128,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'curly-bob',
       'voluminous-curls',
       'curly-layers',
+      'coils',
+      'two-strand-twists',
+      'twist-out',
       'coily-puff',
       'double-puffs',
       'bantu-knots',
@@ -946,13 +1141,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'braided-pony',
       'side-braid',
       'braided-bun',
+      'knotless-braids',
       'layered-bob',
       'high-pony',
       'space-buns',
       'sleek-low-pony',
       'claw-clip-updo',
     ];
-    const hairlineStyles = new Set(['straight-long-layers', 'wavy-lob', 'side-part-lob', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'french-braid', 'braided-pony', 'space-buns', 'claw-clip-updo']);
+    const hairlineStyles = new Set(['textured-fringe', 'middle-part-flow', 'straight-long-layers', 'wavy-lob', 'side-part-lob', 'wolf-cut', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'french-braid', 'braided-pony', 'knotless-braids', 'space-buns', 'claw-clip-updo']);
 
     for (const style of styles) {
       await hairStyle.selectOption(style);
