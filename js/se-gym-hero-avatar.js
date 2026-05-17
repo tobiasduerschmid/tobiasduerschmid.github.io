@@ -11,6 +11,7 @@
     eyeShape: ['round', 'almond', 'monolid', 'hooded', 'smiling', 'wide'],
     noseShape: ['soft', 'rounded', 'broad', 'narrow', 'button', 'defined-bridge'],
     mouthStyle: ['smile', 'soft-smile', 'grin', 'neutral', 'full-lips'],
+    blushStyle: ['natural', 'none'],
     headStyle: ['default', 'feminine', 'round', 'heart', 'oval', 'square', 'soft-oval', 'full-cheeks', 'narrow', 'oblong', 'diamond', 'soft-square', 'broad', 'full-oval', 'tapered-oval', 'soft-round-jaw', 'soft-angular'],
     facialHair: ['none', 'stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard'],
     faceFeature: ['none', 'freckles', 'beauty-mark', 'dimples', 'cheek-lines'],
@@ -119,6 +120,7 @@
       eyeShape: 'round',
       noseShape: 'soft',
       mouthStyle: 'smile',
+      blushStyle: 'natural',
       facialHair: 'none',
       faceFeature: 'none'
     },
@@ -527,6 +529,7 @@
     if (obj.appearance && obj.appearance.eyeShape === undefined) obj.appearance.eyeShape = 'round';
     if (obj.appearance && obj.appearance.noseShape === undefined) obj.appearance.noseShape = 'soft';
     if (obj.appearance && obj.appearance.mouthStyle === undefined) obj.appearance.mouthStyle = 'smile';
+    if (obj.appearance && obj.appearance.blushStyle === undefined) obj.appearance.blushStyle = 'natural';
     if (obj.appearance && obj.appearance.facialHair === undefined) obj.appearance.facialHair = 'none';
     if (obj.appearance && obj.appearance.faceFeature === undefined) obj.appearance.faceFeature = 'none';
     if (obj.outfit.style === undefined) obj.outfit.style = DEFAULTS.outfit.style;
@@ -550,6 +553,7 @@
         eyeShape: randomFrom(recipe.eyeShapes),
         noseShape: randomFrom(recipe.noseShapes),
         mouthStyle: randomFrom(recipe.mouthStyles),
+        blushStyle: weightedFrom([weightedValue('natural', 5), weightedValue('none', 1)]),
         facialHair: randomFacialHair(recipe),
         faceFeature: weightedFrom(FACE_FEATURE_WEIGHTS)
       },
@@ -667,10 +671,21 @@
     return best;
   }
 
+  function skinRelativeAccent(base, accent, amount, maxRatio) {
+    var t = Math.max(0, Math.min(1, amount));
+    var result = mix(base, accent, t);
+    while (t > 0.06 && contrastRatio(result, base) > maxRatio) {
+      t -= 0.04;
+      result = mix(base, accent, t);
+    }
+    return result;
+  }
+
   function avatarContrastTokens(skin, hair) {
     var skinLum = relativeLuminance(skin);
     var hairLum = relativeLuminance(hair);
     var skinShadow = darken(skin, 0.22);
+    var skinMid = mix(skin, skinShadow, skinLum < 0.2 ? 0.36 : 0.28);
     var skinRamp = [skin, skinShadow];
     var darkSkin = skinLum < 0.24;
     var deepSkin = skinLum < 0.13;
@@ -754,31 +769,56 @@
       darkSkin ? [skin, hair] : [skin],
       3
     );
+    var cheek = darkSkin
+      ? skinRelativeAccent(skin, '#9a665d', deepSkin ? 0.32 : 0.28, 1.8)
+      : skinRelativeAccent(skin, '#e07a68', skinLum > 0.65 ? 0.34 : 0.28, 1.85);
     var mouthFill = darkSkin
-      ? firstContrastColorAgainstAll([mix(skin, '#b45d55', 0.72), '#9a665d', '#b56a62', '#c8796d'], skinRamp, 2.45)
+      ? skinRelativeAccent(skinShadow, '#5a2418', deepSkin ? 0.24 : 0.18, 1.75)
       : '#5a2418';
     var mouthLine = darkSkin
       ? firstContrastColorAgainstAll(['#f1c27d', '#e0a080', '#fff2b8', '#3a1408'], skinRamp, compactTarget)
       : '#3a1408';
     var lipFill = darkSkin
-      ? firstContrastColorAgainstAll([mix(skin, '#c86b62', 0.74), '#b56a62', '#c8796d', '#d89084'], skinRamp, 2.35)
-      : '#b44a4a';
-    var lipShadow = darkSkin ? mix(lipFill, skinShadow, 0.34) : '#8f3232';
+      ? skinRelativeAccent(skin, '#8f5148', deepSkin ? 0.42 : 0.36, 2.05)
+      : skinRelativeAccent(skin, '#b85a55', skinLum > 0.65 ? 0.42 : 0.34, 2.2);
+    var lipShadow = darkSkin ? mix(lipFill, skinShadow, 0.42) : mix(lipFill, '#7a2e2e', 0.42);
     var lipHighlight = darkSkin
-      ? firstContrastColorAgainstAll(['#f1b69a', '#ffd0bc', warmHighlight], [lipFill], 1.65)
-      : '#ffb0a0';
+      ? skinRelativeAccent(lipFill, warmHighlight, 0.3, 1.55)
+      : skinRelativeAccent(lipFill, '#ffd0bc', 0.34, 1.55);
     var eyebrow = contrastRatio(hair, skin) < 3
       ? firstContrastColorAgainstAll([hairRim, faceLine, lighten(hair, 0.58), mix(hair, '#f1c27d', 0.38), darken(hair, 0.5)], skinRamp, featureTarget)
       : hair;
+    var skinHighlightSoft = darkSkin
+      ? mix(skin, warmHighlight, deepSkin ? 0.34 : 0.28)
+      : mix(skin, '#fff2df', 0.28);
+    var skinAmbient = darkSkin
+      ? mix(skin, warmHighlight, 0.16)
+      : mix(skin, '#ffe6cc', 0.18);
+    var facePlaneShadow = darkSkin
+      ? mix(skinShadow, '#160c07', deepSkin ? 0.32 : 0.22)
+      : darken(skin, 0.24);
+    var jawLine = firstContrastColorAgainstAll(
+      darkSkin
+        ? [faceLine, '#b08a69', mix(skin, '#f1c27d', 0.68), '#f4d7b5']
+        : [darken(skin, 0.42), '#7a4a2a', darken(skin, 0.58)],
+      skinRamp,
+      darkSkin ? 2.8 : 2.35
+    );
 
     return {
+      skinMid: skinMid,
+      skinAmbient: skinAmbient,
+      skinShadow: skinShadow,
       skinHighlight: warmHighlight,
+      skinHighlightSoft: skinHighlightSoft,
       faceLine: faceLine,
       faceShadow: darkSkin ? mix(skinShadow, faceLine, 0.38) : darken(skin, 0.35),
+      facePlaneShadow: facePlaneShadow,
+      jawLine: jawLine,
       faceMark: faceMark,
       noseFill: darkSkin ? faceLine : faceLine,
       noseHighlight: darkSkin ? warmHighlight : '#fff1dc',
-      cheek: darkSkin ? mix(skin, '#d98978', 0.58) : '#e87b6a',
+      cheek: cheek,
       mouthFill: mouthFill,
       mouthLine: mouthLine,
       lipFill: lipFill,
@@ -792,10 +832,16 @@
       featureShadow: darkSkin ? 'rgba(0, 0, 0, 0.44)' : 'rgba(0, 47, 82, 0.18)',
       noseOpacity: darkSkin ? '0.92' : '0.35',
       nostrilOpacity: darkSkin ? '0.96' : '0.3',
-      cheekOpacity: darkSkin ? '0.56' : '0.35',
+      cheekOpacity: darkSkin ? '0.34' : '0.3',
       contourOpacity: darkSkin ? '0.58' : '0.18',
       subtleLineOpacity: darkSkin ? '0.66' : '0.24',
       hairDetailOpacity: darkSkin && darkHair ? '0.74' : '0.5',
+      faceHighlightOpacity: darkSkin ? '0.2' : '0.24',
+      faceAmbientOpacity: darkSkin ? '0.18' : '0.16',
+      faceShadowOpacity: darkSkin ? '0.26' : '0.16',
+      jawLineOpacity: darkSkin ? '0.46' : '0.22',
+      neckShadowOpacity: darkSkin ? '0.52' : '0.28',
+      neckHighlightOpacity: darkSkin ? '0.22' : '0.18',
       glassesFrame: glassesFrame,
       glassesFrameDark: glassesFrameDark,
       glassesMetal: metalFrame,
@@ -828,14 +874,20 @@
     var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     svg.style.setProperty('--hero-skin-light', state.appearance.skin);
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
+    svg.style.setProperty('--hero-skin-mid', contrastTokens.skinMid);
+    svg.style.setProperty('--hero-skin-ambient', contrastTokens.skinAmbient);
+    svg.style.setProperty('--hero-skin-shadow', contrastTokens.skinShadow);
     svg.style.setProperty('--hero-skin-highlight', contrastTokens.skinHighlight);
+    svg.style.setProperty('--hero-skin-highlight-soft', contrastTokens.skinHighlightSoft);
     svg.style.setProperty('--hero-face-line', contrastTokens.faceLine);
     svg.style.setProperty('--hero-face-shadow', contrastTokens.faceShadow);
+    svg.style.setProperty('--hero-face-plane-shadow', contrastTokens.facePlaneShadow);
+    svg.style.setProperty('--hero-jaw-line', contrastTokens.jawLine);
     svg.style.setProperty('--hero-face-mark', contrastTokens.faceMark);
     svg.style.setProperty('--hero-nose-fill', contrastTokens.noseFill);
     svg.style.setProperty('--hero-nose-highlight', contrastTokens.noseHighlight);
     svg.style.setProperty('--hero-cheek', contrastTokens.cheek);
-    svg.style.setProperty('--hero-cheek-opacity', contrastTokens.cheekOpacity);
+    svg.style.setProperty('--hero-cheek-opacity', state.appearance.blushStyle === 'none' ? '0' : contrastTokens.cheekOpacity);
     svg.style.setProperty('--hero-mouth-fill', contrastTokens.mouthFill);
     svg.style.setProperty('--hero-mouth-line', contrastTokens.mouthLine);
     svg.style.setProperty('--hero-lip-fill', contrastTokens.lipFill);
@@ -855,6 +907,12 @@
     svg.style.setProperty('--hero-nostril-opacity', contrastTokens.nostrilOpacity);
     svg.style.setProperty('--hero-contour-opacity', contrastTokens.contourOpacity);
     svg.style.setProperty('--hero-subtle-line-opacity', contrastTokens.subtleLineOpacity);
+    svg.style.setProperty('--hero-face-highlight-opacity', contrastTokens.faceHighlightOpacity);
+    svg.style.setProperty('--hero-face-ambient-opacity', contrastTokens.faceAmbientOpacity);
+    svg.style.setProperty('--hero-face-shadow-opacity', contrastTokens.faceShadowOpacity);
+    svg.style.setProperty('--hero-jaw-line-opacity', contrastTokens.jawLineOpacity);
+    svg.style.setProperty('--hero-neck-shadow-opacity', contrastTokens.neckShadowOpacity);
+    svg.style.setProperty('--hero-neck-highlight-opacity', contrastTokens.neckHighlightOpacity);
     svg.style.setProperty('--hero-glasses-frame', contrastTokens.glassesFrame);
     svg.style.setProperty('--hero-glasses-frame-dark', contrastTokens.glassesFrameDark);
     svg.style.setProperty('--hero-glasses-metal', contrastTokens.glassesMetal);
@@ -985,6 +1043,7 @@
     if (a.eyeShape !== undefined && !inEnum(a.eyeShape, 'eyeShape')) return { ok: false, error: 'Invalid eye shape.' };
     if (a.noseShape !== undefined && !inEnum(a.noseShape, 'noseShape')) return { ok: false, error: 'Invalid nose shape.' };
     if (a.mouthStyle !== undefined && !inEnum(a.mouthStyle, 'mouthStyle')) return { ok: false, error: 'Invalid mouth style.' };
+    if (a.blushStyle !== undefined && !inEnum(a.blushStyle, 'blushStyle')) return { ok: false, error: 'Invalid cheek tint.' };
     if (a.facialHair !== undefined && !inEnum(a.facialHair, 'facialHair')) return { ok: false, error: 'Invalid facial hair style.' };
     if (a.faceFeature !== undefined && !inEnum(a.faceFeature, 'faceFeature')) return { ok: false, error: 'Invalid facial feature.' };
     if (!inEnum(b.type, 'bodyType')) return { ok: false, error: 'Invalid body type.' };
@@ -1092,6 +1151,7 @@
           eyeShape: ($('hero-cust-eye-shape') ? $('hero-cust-eye-shape').value : 'round'),
           noseShape: ($('hero-cust-nose-shape') ? $('hero-cust-nose-shape').value : 'soft'),
           mouthStyle: ($('hero-cust-mouth-style') ? $('hero-cust-mouth-style').value : 'smile'),
+          blushStyle: ($('hero-cust-blush-style') ? $('hero-cust-blush-style').value : 'natural'),
           facialHair: ($('hero-cust-facial-hair') ? $('hero-cust-facial-hair').value : 'none'),
           faceFeature: ($('hero-cust-face-feature') ? $('hero-cust-face-feature').value : 'none')
         },
@@ -1118,6 +1178,7 @@
       if ($('hero-cust-eye-shape')) $('hero-cust-eye-shape').value = state.appearance.eyeShape || 'round';
       if ($('hero-cust-nose-shape')) $('hero-cust-nose-shape').value = state.appearance.noseShape || 'soft';
       if ($('hero-cust-mouth-style')) $('hero-cust-mouth-style').value = state.appearance.mouthStyle || 'smile';
+      if ($('hero-cust-blush-style')) $('hero-cust-blush-style').value = state.appearance.blushStyle || 'natural';
       if ($('hero-cust-facial-hair')) $('hero-cust-facial-hair').value = state.appearance.facialHair || 'none';
       if ($('hero-cust-face-feature')) $('hero-cust-face-feature').value = state.appearance.faceFeature || 'none';
       var bodySelect = $('hero-cust-body-type');

@@ -690,6 +690,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await setColorInput(page, '#hero-cust-hair-color', '#1a1a1a');
     await page.getByLabel('Hair style').selectOption('center-part');
     await page.getByLabel('Head shape').selectOption('oblong');
+    await page.getByLabel('Mouth style').selectOption('full-lips');
     await page.getByLabel('Glasses', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
@@ -704,39 +705,80 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
       const smileLine = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="smile"] path[stroke*="--hero-mouth-line"]');
+      const cheek = svg.querySelector('ellipse[fill*="--hero-cheek"]');
+      const lipFill = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[fill*="--hero-lip-fill"]');
+      const lipHighlight = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-lip-highlight"]');
+      const faceClear = svg.querySelector('[data-hero-slot="face-clear"][data-hero-option="oblong"]');
+      const facePolish = svg.querySelector('[data-hero-polish="face"]');
+      const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
       return {
         skin: styles.getPropertyValue('--hero-skin-light').trim(),
+        skinHighlightSoft: styles.getPropertyValue('--hero-skin-highlight-soft').trim(),
+        skinMid: styles.getPropertyValue('--hero-skin-mid').trim(),
+        facePlaneShadow: styles.getPropertyValue('--hero-face-plane-shadow').trim(),
+        jawLine: styles.getPropertyValue('--hero-jaw-line').trim(),
         hairLight: styles.getPropertyValue('--hero-hair-light').trim(),
         hairRim: styles.getPropertyValue('--hero-hair-rim').trim(),
         faceLine: styles.getPropertyValue('--hero-face-line').trim(),
         faceMark: styles.getPropertyValue('--hero-face-mark').trim(),
         mouthLine: styles.getPropertyValue('--hero-mouth-line').trim(),
         eyebrow: styles.getPropertyValue('--hero-eyebrow').trim(),
+        cheekFill: cheek ? getComputedStyle(cheek).fill.trim() : '',
+        cheekOpacity: cheek ? getComputedStyle(cheek).opacity.trim() : '',
+        lipFill: lipFill ? getComputedStyle(lipFill).fill.trim() : '',
+        lipHighlight: lipHighlight ? getComputedStyle(lipHighlight).stroke.trim() : '',
         glassesFrame: styles.getPropertyValue('--hero-glasses-frame').trim(),
         glassesFrameDark: styles.getPropertyValue('--hero-glasses-frame-dark').trim(),
         noseFill: nose ? getComputedStyle(nose).fill.trim() : '',
         noseOpacity: nose ? getComputedStyle(nose).opacity.trim() : '',
         contourOpacity: styles.getPropertyValue('--hero-contour-opacity').trim(),
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
+        faceHighlightOpacity: styles.getPropertyValue('--hero-face-highlight-opacity').trim(),
+        faceShadowOpacity: styles.getPropertyValue('--hero-face-shadow-opacity').trim(),
+        jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
+        neckShadowOpacity: styles.getPropertyValue('--hero-neck-shadow-opacity').trim(),
         smileLineStroke: smileLine ? getComputedStyle(smileLine).stroke.trim() : '',
         roundGlassesStroke: roundFrame ? getComputedStyle(roundFrame).stroke.trim() : '',
         gradientStop: gradientStop ? gradientStop.getAttribute('stop-color') : '',
+        polishAfterFaceClear: Boolean(
+          faceClear &&
+          facePolish &&
+          (faceClear.compareDocumentPosition(facePolish) & Node.DOCUMENT_POSITION_FOLLOWING)
+        ),
+        featuresAfterPolish: Boolean(
+          facePolish &&
+          eyebrow &&
+          (facePolish.compareDocumentPosition(eyebrow) & Node.DOCUMENT_POSITION_FOLLOWING)
+        ),
       };
     });
 
+    expect(tokens.polishAfterFaceClear).toBe(true);
+    expect(tokens.featuresAfterPolish).toBe(true);
+    expect(tokens.skinHighlightSoft.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
+    expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(contrastRatio(tokens.glassesFrame, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.glassesFrameDark, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.roundGlassesStroke, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.hairRim, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceMark, tokens.skin)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(tokens.cheekFill, tokens.skin)).toBeLessThanOrEqual(1.8);
+    expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.1);
+    expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
     expect(contrastRatio(tokens.mouthLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.smileLineStroke, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.eyebrow, tokens.skin)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(tokens.jawLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.9);
+    expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.4);
     expect(Number(tokens.contourOpacity)).toBeGreaterThanOrEqual(0.5);
     expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.7);
+    expect(Number(tokens.faceHighlightOpacity)).toBeGreaterThanOrEqual(0.18);
+    expect(Number(tokens.faceShadowOpacity)).toBeGreaterThanOrEqual(0.24);
+    expect(Number(tokens.jawLineOpacity)).toBeGreaterThanOrEqual(0.4);
+    expect(Number(tokens.neckShadowOpacity)).toBeGreaterThanOrEqual(0.5);
     expect(tokens.hairLight.toLowerCase()).not.toBe(tokens.hairRim.toLowerCase());
     expect(tokens.gradientStop).toContain('--hero-hair-light');
   });
@@ -906,6 +948,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const facialHair = page.getByLabel('Facial hair');
     const faceFeature = page.getByLabel('Facial details');
+    const cheekTint = page.getByLabel('Cheek tint');
 
     for (const value of [
       'stubble',
@@ -938,6 +981,29 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       await expect(preview.locator(`[data-hero-slot="face-feature"][data-hero-option="${value}"]`))
         .toHaveAttribute('display', 'inline');
     }
+
+    await cheekTint.selectOption('none');
+    await expect(cheekTint).toHaveValue('none');
+    const hiddenCheekOpacities = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
+      nodes.map((node) => Number(getComputedStyle(node).opacity))
+    );
+    expect(hiddenCheekOpacities.length).toBeGreaterThan(0);
+    expect(hiddenCheekOpacities.every((opacity) => opacity === 0)).toBe(true);
+
+    await faceFeature.selectOption('freckles');
+    await expect(preview.locator('[data-hero-slot="face-feature"][data-hero-option="freckles"]'))
+      .toHaveAttribute('display', 'inline');
+    const stillHiddenCheeks = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
+      nodes.every((node) => Number(getComputedStyle(node).opacity) === 0)
+    );
+    expect(stillHiddenCheeks).toBe(true);
+
+    await cheekTint.selectOption('natural');
+    await expect(cheekTint).toHaveValue('natural');
+    const visibleCheekOpacity = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
+      Math.max(...nodes.map((node) => Number(getComputedStyle(node).opacity)))
+    );
+    expect(visibleCheekOpacity).toBeGreaterThan(0);
 
     await facialHair.selectOption('none');
     await faceFeature.selectOption('none');
@@ -1317,6 +1383,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page.getByLabel('Hair style')).toHaveValue('ponytail');
     await expect(page.getByLabel('Body type')).toHaveValue('curvy');
     await expect(page.getByLabel('Facial details')).toHaveValue('freckles');
+    await expect(page.getByLabel('Cheek tint')).toHaveValue('natural');
     await expect(page.getByLabel('Rectangular glasses', { exact: true })).toBeChecked();
     await expect(page.getByLabel('Earrings', { exact: true })).toBeChecked();
     // Preview updated but not yet saved
