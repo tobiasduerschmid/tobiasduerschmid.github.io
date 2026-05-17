@@ -10,6 +10,7 @@ asset_version: "20260503-syntax-highlighting"
 personal_gym: true
 bookmarks: true
 tutorial_autosave: true
+gym_hero_animation: false
 
 # SE Gym milestone thresholds (cumulative questions answered)
 gym_milestone_bronze: 20

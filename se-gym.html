@@ -21,6 +21,7 @@ layout: sebook
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
+      {% if site.gym_hero_animation %}
       <p class="sr-only">SE Gym illustration: a friendly software-engineering superhero in UCLA blue and gold lifts a topic-loaded barbell overhead.</p>
       <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true">
         {% include se-gym-hero.svg variant="mobile" %}
@@ -29,6 +30,7 @@ layout: sebook
       <aside class="gym-entrance-visual gym-entrance-visual-left" aria-hidden="true">
         {% include se-gym-hero.svg variant="left" %}
       </aside>
+      {% endif %}
 
       <div class="gym-entrance-main">
       <div id="milestone-banner" class="milestone-banner" role="status" aria-live="polite" style="display:none;"></div>
@@ -322,9 +324,11 @@ layout: sebook
       </div>
 
       </div>
+      {% if site.gym_hero_animation %}
       <aside class="gym-entrance-visual gym-entrance-visual-right" aria-hidden="true">
         {% include se-gym-hero.svg variant="right" %}
       </aside>
+      {% endif %}
     </div>
 
     <!-- ==================== TUTORIAL EXPORT MODAL ==================== -->
