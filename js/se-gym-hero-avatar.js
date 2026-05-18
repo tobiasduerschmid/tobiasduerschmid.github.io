@@ -43,6 +43,7 @@
           choice('short', 'Short crop'),
           choice('textured-crop', 'Textured crop'),
           choice('wispy-crop', 'Wispy short crop'),
+          choice('tousled-wispy-fringe', 'Tousled wispy fringe'),
           choice('casual-messy-crop', 'Casual messy crop'),
           choice('textured-fringe', 'Textured fringe'),
           choice('straight-fringe', 'Straight fringe'),
@@ -179,6 +180,7 @@
           choice('broad', 'Broad'),
           choice('narrow', 'Narrow'),
           choice('straight-narrow', 'Straight narrow bridge'),
+          choice('slender-straight-soft-tip', 'Slender straight nose'),
           choice('prominent-straight', 'Prominent straight bridge'),
           choice('button', 'Button'),
           choice('defined-bridge', 'Defined bridge'),
@@ -249,6 +251,7 @@
           choice('square', 'Square jaw'),
           choice('soft-square', 'Soft square jaw'),
           choice('slim-square-jaw', 'Slim square jaw'),
+          choice('slender-soft-square', 'Slender soft-square jaw'),
           choice('long-tapered-jaw', 'Long tapered jaw'),
           choice('narrow-angular-jaw', 'Narrow angular jaw'),
           choice('soft-v-jaw', 'Soft V-shaped jaw'),
@@ -347,6 +350,7 @@
           choice('polo-shirt', 'Polo shirt'),
           choice('collared-shirt', 'Button-up shirt'),
           choice('oxford-shirt', 'Oxford button-up'),
+          choice('open-collar-shirt', 'Open-collar button-up'),
           choice('kurta-top', 'Kurta top'),
           choice('campus-blouse', 'Campus blouse'),
           choice('cardigan', 'Cardigan'),
@@ -617,7 +621,7 @@
     .concat(weightedValues(['petite', 'tall', 'broad', 'full-frame'], 5))
     .concat(weightedValues(['muscular', 'fuller-hip', 'plus-size'], 3));
   var HEAD_STYLE_WEIGHTS = []
-    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'oval', 'soft-square', 'slim-square-jaw', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
+    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'oval', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
     .concat(weightedValues(['heart', 'diamond', 'square', 'long-tapered-jaw', 'narrow-angular-jaw', 'broad', 'narrow', 'oblong', 'tapered-oval', 'gentle-taper', 'soft-angular', 'feminine'], 3));
   var PRESENTATION_BODY_WEIGHTS = {
     male: []
@@ -631,11 +635,11 @@
   };
   var PRESENTATION_HEAD_STYLE_WEIGHTS = {
     male: []
-      .concat(weightedValues(['default', 'soft-square', 'slim-square-jaw', 'full-straight-jaw', 'oval', 'soft-oval', 'broad', 'square', 'round', 'soft-angular'], 8))
+      .concat(weightedValues(['default', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'full-straight-jaw', 'oval', 'soft-oval', 'broad', 'square', 'round', 'soft-angular'], 8))
       .concat(weightedValues(['long-tapered-jaw', 'narrow-angular-jaw', 'full-cheeks', 'full-oval', 'narrow', 'oblong', 'diamond', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'heart'], 3)),
     female: []
       .concat(weightedValues(['soft-oval', 'round', 'full-cheeks', 'full-oval', 'heart', 'oval', 'soft-v-jaw', 'soft-round-jaw', 'tapered-oval', 'gentle-taper'], 8))
-      .concat(weightedValues(['default', 'diamond', 'soft-square', 'narrow', 'oblong', 'soft-angular', 'square', 'broad', 'feminine'], 3))
+      .concat(weightedValues(['default', 'diamond', 'soft-square', 'slender-soft-square', 'narrow', 'oblong', 'soft-angular', 'square', 'broad', 'feminine'], 3))
   };
   var FACE_FEATURE_WEIGHTS = []
     .concat(weightedValues(['none'], 15))
@@ -668,12 +672,12 @@
     weightedValue(['wireless-earbuds', 'chain-necklace'], 3),
     weightedValue(['wired-earbuds', 'campus-lanyard'], 2)
   ];
-  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
+  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
   var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'flipped-lob', 'wolf-cut', 'long-layers', 'straight-long-layers', 'long-center-part', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
   var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
   var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
   var FACIAL_HAIR_STYLES = ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'goatee', 'short-beard', 'trimmed-beard'];
-  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
+  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
   var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'flipped-lob', 'wolf-cut', 'long-layers', 'straight-long-layers', 'long-center-part', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
   var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
   var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
@@ -771,18 +775,18 @@
     {
       weight: 18,
       hairStyles: POLISHED_SHORT_HAIR_STYLES,
-      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'polo-shirt', 'collared-shirt', 'oxford-shirt', 'blazer'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer'],
       accessories: MASCULINE_FACE_ACCESSORIES,
       facialHairChance: 0.48,
       facialHairStyles: FACIAL_HAIR_STYLES,
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded', 'single-eyelid', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'prominent-straight', 'long-soft-bridge', 'soft-rounded-bridge', 'gentle-bridge', 'defined-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'long-soft-bridge', 'soft-rounded-bridge', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 13,
       hairStyles: POLISHED_TEXTURED_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'locs-bun']),
-      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'polo-shirt', 'kurta-top', 'cardigan', 'collared-shirt', 'oxford-shirt', 'blazer'],
+      outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'polo-shirt', 'kurta-top', 'cardigan', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer'],
       accessories: [
         weightedValue([], 26),
         weightedValue(['glasses'], 8),
@@ -807,7 +811,7 @@
     {
       weight: 10,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(POLISHED_BRAID_LOC_STYLES),
-      outfitStyles: ['kurta-top', 'polo-shirt', 'collared-shirt', 'oxford-shirt', 'blazer', 'hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker'],
+      outfitStyles: ['kurta-top', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer', 'hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker'],
       accessories: [
         weightedValue(['turban'], 12),
         weightedValue(['turban', 'rectangular-glasses'], 5),
@@ -821,13 +825,13 @@
       facialHairChance: 0.42,
       facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'short-beard', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'prominent-straight'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 7,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'coils', 'twist-out']),
-      outfitStyles: ['lab-coat', 'polo-shirt', 'collared-shirt', 'oxford-shirt', 'blazer', 'hoodie', 'crewneck-sweatshirt'],
+      outfitStyles: ['lab-coat', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer', 'hoodie', 'crewneck-sweatshirt'],
       accessories: [
         weightedValue(['safety-goggles'], 10),
         weightedValue(['wireframe-glasses'], 8),
@@ -846,13 +850,13 @@
       facialHairChance: 0.36,
       facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'single-eyelid', 'hooded', 'wide', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'prominent-straight', 'gentle-bridge', 'defined-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 10,
       hairStyles: POLISHED_SHORT_HAIR_STYLES.concat(['locs', 'loose-locs', 'shoulder-length', 'center-part', 'flipped-lob']),
-      outfitStyles: ['cardigan', 'polo-shirt', 'collared-shirt', 'oxford-shirt', 'blazer', 'striped-knit', 'varsity-jacket', 'kurta-top', 'denim-jacket', 'crewneck-sweatshirt'],
+      outfitStyles: ['cardigan', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer', 'striped-knit', 'varsity-jacket', 'kurta-top', 'denim-jacket', 'crewneck-sweatshirt'],
       accessories: [
         weightedValue([], 24),
         weightedValue(['round-rim-glasses'], 7),
@@ -871,7 +875,7 @@
       facialHairChance: 0.28,
       facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'single-eyelid', 'hooded', 'smiling', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'soft-rounded-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     }
   ];
@@ -2836,6 +2840,7 @@
       picker.setAttribute('aria-label', definition.label + ' preview choices');
       picker.setAttribute('data-hero-choice-picker', key);
       picker.setAttribute('data-preview-crop', definition.preview);
+      picker.setAttribute('data-preview-viewbox', previewViewBox(definition.preview));
 
       for (var g = 0; g < definition.groups.length; g++) {
         var group = definition.groups[g];

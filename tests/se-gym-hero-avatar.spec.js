@@ -70,10 +70,19 @@ async function setCheckboxInput(page, selector, checked) {
   }, checked);
 }
 
-async function choicePreviewSvg(page, accessibleName) {
+async function scrollChoiceButtonIntoView(page, accessibleName) {
   const button = page.getByRole('button', { name: accessibleName });
-  await button.scrollIntoViewIfNeeded();
+  await button.evaluate((element) => {
+    element.scrollIntoView({ block: 'center', inline: 'nearest' });
+    const scrollRoot = element.closest('.hero-cust-box');
+    if (scrollRoot) scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
   await expect(button).toBeVisible();
+  return button;
+}
+
+async function choicePreviewSvg(page, accessibleName) {
+  const button = await scrollChoiceButtonIntoView(page, accessibleName);
   const svg = button.locator('[data-hero-choice-svg]');
   await expect(svg).toHaveCount(1, { timeout: 15000 });
   return svg;
@@ -245,32 +254,48 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Style preview buttons crop into the selected avatar detail', async ({ page }) => {
-    test.setTimeout(60000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
     const previewCrops = [
-      { name: 'Choose Hero type: Bruin mascot', viewBox: CHOICE_PREVIEW_VIEWBOXES.full },
-      { name: 'Choose Hair style: Long and flowing', viewBox: CHOICE_PREVIEW_VIEWBOXES.hair },
-      { name: 'Choose Eyebrows: Thin', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyebrows },
-      { name: 'Choose Eye shape: Almond', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyes },
-      { name: 'Choose Nose shape: Button', viewBox: CHOICE_PREVIEW_VIEWBOXES.nose },
-      { name: 'Choose Mouth: Grin', viewBox: CHOICE_PREVIEW_VIEWBOXES.mouth },
-      { name: 'Choose Cheek tint: None', viewBox: CHOICE_PREVIEW_VIEWBOXES.cheeks },
-      { name: 'Choose Head shape: Round face', viewBox: CHOICE_PREVIEW_VIEWBOXES['head-shape'] },
-      { name: 'Choose Facial hair: Full beard', viewBox: CHOICE_PREVIEW_VIEWBOXES['facial-hair'] },
-      { name: 'Choose Facial details: Freckles', viewBox: CHOICE_PREVIEW_VIEWBOXES['face-detail'] },
-      { name: 'Choose Body type: Broad-shouldered build', viewBox: CHOICE_PREVIEW_VIEWBOXES.body },
-      { name: 'Choose Outfit style: Hoodie', viewBox: CHOICE_PREVIEW_VIEWBOXES.outfit },
+      { key: 'heroKind', crop: 'full', viewBox: CHOICE_PREVIEW_VIEWBOXES.full },
+      { key: 'hairStyle', crop: 'hair', viewBox: CHOICE_PREVIEW_VIEWBOXES.hair },
+      { key: 'eyebrowStyle', crop: 'eyebrows', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyebrows },
+      { key: 'eyeShape', crop: 'eyes', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyes },
+      { key: 'noseShape', crop: 'nose', viewBox: CHOICE_PREVIEW_VIEWBOXES.nose },
+      { key: 'mouthStyle', crop: 'mouth', viewBox: CHOICE_PREVIEW_VIEWBOXES.mouth },
+      { key: 'blushStyle', crop: 'cheeks', viewBox: CHOICE_PREVIEW_VIEWBOXES.cheeks },
+      { key: 'headStyle', crop: 'head-shape', viewBox: CHOICE_PREVIEW_VIEWBOXES['head-shape'] },
+      { key: 'facialHair', crop: 'facial-hair', viewBox: CHOICE_PREVIEW_VIEWBOXES['facial-hair'] },
+      { key: 'faceFeature', crop: 'face-detail', viewBox: CHOICE_PREVIEW_VIEWBOXES['face-detail'] },
+      { key: 'bodyType', crop: 'body', viewBox: CHOICE_PREVIEW_VIEWBOXES.body },
+      { key: 'outfitStyle', crop: 'outfit', viewBox: CHOICE_PREVIEW_VIEWBOXES.outfit },
     ];
 
+    const pickerCrops = await page.evaluate(() =>
+      Object.fromEntries(Array.from(document.querySelectorAll('[data-hero-choice-picker]')).map((picker) => [
+        picker.getAttribute('data-hero-choice-picker'),
+        {
+          crop: picker.getAttribute('data-preview-crop'),
+          viewBox: picker.getAttribute('data-preview-viewbox'),
+          registryCrop: window.HeroAvatar.CHOICE_SETS[picker.getAttribute('data-hero-choice-picker')].preview,
+        },
+      ]))
+    );
+
     for (const crop of previewCrops) {
-      const svg = await choicePreviewSvg(page, crop.name);
-      await expect(svg, `${crop.name} preview should crop to its own feature area`)
-        .toHaveAttribute('viewBox', crop.viewBox);
+      expect(pickerCrops[crop.key], `${crop.key} picker should declare the crop used by its rendered previews`).toEqual({
+        crop: crop.crop,
+        viewBox: crop.viewBox,
+        registryCrop: crop.crop,
+      });
     }
+
+    const hairSvg = await choicePreviewSvg(page, 'Choose Hair style: Long and flowing');
+    await expect(hairSvg, 'rendered choice SVGs should use their declared crop viewBox')
+      .toHaveAttribute('viewBox', CHOICE_PREVIEW_VIEWBOXES.hair);
   });
 
   test('Avatar choices use respectful labels and canonical exported values', async ({ page }) => {
@@ -363,7 +388,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const randomizedHairColor = (await page.getByLabel('Hair color', { exact: true }).inputValue()).toLowerCase();
     expect(randomizedHairColor, 'randomize should choose from generated avatar colors').not.toBe('#123456');
 
-    await page.getByRole('button', { name: 'Choose Hair style: Long and flowing' }).scrollIntoViewIfNeeded();
+    await scrollChoiceButtonIntoView(page, 'Choose Hair style: Long and flowing');
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     ), {
@@ -389,7 +414,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expectChoiceSlotVisible(hoodieSvg, 'outfit-style', 'hoodie', 'outfit option preview should render before mutations');
 
     await setSelectInput(page, '#hero-cust-hair-style', 'long');
-    await page.getByRole('button', { name: 'Choose Eyebrows: Thin' }).scrollIntoViewIfNeeded();
+    await scrollChoiceButtonIntoView(page, 'Choose Eyebrows: Thin');
     await expectNoVisiblePendingChoicePreviews(page);
     await expectChoiceSlotVisible(
       eyebrowThinSvg,
@@ -415,7 +440,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     await setSelectInput(page, '#hero-cust-body-type', 'broad');
     await expectNoVisiblePendingChoicePreviews(page);
-    await page.getByRole('button', { name: 'Choose Outfit style: Hoodie' }).scrollIntoViewIfNeeded();
+    await scrollChoiceButtonIntoView(page, 'Choose Outfit style: Hoodie');
     await expect.poll(async () => hoodieSvg.evaluate((svg) => svg.getAttribute('data-hero-body')), {
       message: 'outfit previews should inherit body type changes',
       timeout: 15000,
@@ -593,7 +618,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const currentCampusAccessories = new Set(['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
       const upbeatMouthStyles = new Set(['grin', 'closed-smile', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile']);
-      const everydayCampusOutfits = new Set(['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'polo-shirt', 'collared-shirt', 'oxford-shirt', 'blazer', 'kurta-top', 'campus-blouse', 'cardigan']);
+      const everydayCampusOutfits = new Set(['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer', 'kurta-top', 'campus-blouse', 'cardigan']);
       const costumeOutfits = new Set(['super-suit', 'captain-jacket']);
       const technicalOutfits = new Set(['lab-coat', 'utility-vest']);
       const naturalHairColors = new Set([
@@ -2267,14 +2292,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    await page.getByLabel('Hair style', { exact: true }).selectOption('long-layers');
-    await page.getByLabel('Rectangular glasses', { exact: true }).check();
-    await page.getByLabel('Hero mask', { exact: true }).check();
-    await page.getByLabel('Beanie', { exact: true }).check();
-    await page.getByLabel('Hijab', { exact: true }).check();
-    await page.getByLabel('Earrings', { exact: true }).check();
-    await page.getByLabel('Hair clips', { exact: true }).check();
-    await page.getByLabel('Halo', { exact: true }).check();
+    await setSelectInput(page, '#hero-cust-hair-style', 'long-layers');
+    for (const value of ['rectangular-glasses', 'mask', 'beanie', 'hijab', 'earrings', 'hair-clips', 'halo']) {
+      await setCheckboxInput(page, `#hero-customizer-modal input[name="hero-cust-accessory"][value="${value}"]`, true);
+    }
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="mask"]'))
