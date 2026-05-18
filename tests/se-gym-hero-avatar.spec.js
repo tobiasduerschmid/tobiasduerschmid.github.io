@@ -995,7 +995,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           { name: 'right cheek surface', x: 435, y: 200 },
         ];
 
-        const coverage = points.map((point) => {
+        return points.map((point) => {
           const svgPoint = svg.createSVGPoint();
           svgPoint.x = point.x;
           svgPoint.y = point.y;
@@ -1071,7 +1071,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       baseState.outfit.accessories = [];
 
       function pointHits(points) {
-        const coverage = points.map((point) => {
+        return points.map((point) => {
           const svgPoint = svg.createSVGPoint();
           svgPoint.x = point.x;
           svgPoint.y = point.y;
@@ -1726,12 +1726,26 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         .toHaveAttribute('display', 'inline');
     }
 
-    for (const value of ['round-rim-glasses', 'safety-goggles', 'tech-visor', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']) {
-      await clearAccessories(page);
-      await setCheckboxInput(page, `#hero-customizer-modal input[name="hero-cust-accessory"][value="${value}"]`, true);
-      await expect(preview.locator(`[data-hero-slot="accessory"][data-hero-option="${value}"]`))
-        .toHaveAttribute('display', 'inline');
-    }
+    const accessoryFailures = await page.evaluate((values) => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      const failures = [];
+
+      for (const value of values) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.outfit.accessory = value;
+        state.outfit.accessories = [value];
+        window.HeroAvatar.applyToSvg(svg, state);
+        const layer = svg.querySelector(`[data-hero-slot="accessory"][data-hero-option="${value}"]`);
+        if (!layer || layer.getAttribute('display') !== 'inline') {
+          failures.push({ value, display: layer && layer.getAttribute('display') });
+        }
+      }
+
+      return failures;
+    }, ['round-rim-glasses', 'safety-goggles', 'tech-visor', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
+
+    expect(accessoryFailures).toEqual([]);
   });
 
   test('Expanded natural hair styles update the preview', async ({ page }) => {
