@@ -48,12 +48,14 @@
           choice('textured-fringe', 'Textured fringe'),
           choice('straight-fringe', 'Straight fringe'),
           choice('side-parted-short', 'Side-parted short cut'),
+          choice('neat-side-swept-fringe', 'Neat side-swept fringe'),
           choice('thick-side-swept', 'Thick side-swept cut'),
           choice('ivy-league', 'Ivy League cut'),
           choice('soft-two-block', 'Soft two-block cut'),
           choice('middle-part-flow', 'Middle-part flow'),
           choice('slick-back', 'Slicked-back short cut'),
           choice('neat-straight-fringe', 'Neat straight fringe'),
+          choice('soft-rounded-fringe', 'Soft rounded fringe'),
           choice('pixie', 'Pixie cut'),
           choice('fade', 'Fade'),
           choice('crew-cut', 'Crew cut'),
@@ -178,6 +180,7 @@
           choice('soft', 'Soft bridge'),
           choice('rounded', 'Rounded'),
           choice('broad', 'Broad'),
+          choice('medium-broad-soft-tip', 'Medium broad soft-tip'),
           choice('narrow', 'Narrow'),
           choice('straight-narrow', 'Straight narrow bridge'),
           choice('slender-straight-soft-tip', 'Slender straight nose'),
@@ -240,6 +243,7 @@
           choice('round', 'Round face'),
           choice('full-cheeks', 'Full cheeks'),
           choice('full-oval', 'Full oval'),
+          choice('soft-full-cheek-jaw', 'Soft full-cheek jaw'),
           choice('narrow', 'Narrow face'),
           choice('tapered-oval', 'Tapered oval'),
           choice('gentle-taper', 'Gentle tapered face'),
@@ -277,6 +281,7 @@
           choice('clean-shaven', 'Clean-shaven'),
           choice('stubble', 'Light stubble'),
           choice('soft-mustache', 'Soft mustache'),
+          choice('fine-mustache-stubble', 'Fine mustache and stubble'),
           choice('mustache', 'Mustache'),
           choice('soul-patch', 'Soul patch'),
           choice('light-goatee', 'Light goatee'),
@@ -391,6 +396,7 @@
           choice('wireless-earbuds', 'Wireless earbuds'),
           choice('wired-earbuds', 'Wired earbuds'),
           choice('chain-necklace', 'Chain necklace'),
+          choice('delicate-pendant-necklace', 'Delicate pendant necklace'),
           choice('campus-lanyard', 'Campus lanyard'),
           choice('forehead-jewel', 'Forehead jewel')
         ]),
@@ -488,12 +494,12 @@
   var ALL_SILHOUETTE_FEATURES = ['bust', 'waist', 'hip', 'shoulder'];
   var HAIR_COVERING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'forehead-jewel', 'crown', 'halo'];
+  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'delicate-pendant-necklace', 'campus-lanyard', 'forehead-jewel', 'crown', 'halo'];
   var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'visor'];
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'headwrap', 'draped-scarf', 'turban', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'visor', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'earrings'];
-  var DETAIL_ACCESSORY_PRIORITY = ['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'campus-lanyard', 'forehead-jewel', 'halo'];
+  var DETAIL_ACCESSORY_PRIORITY = ['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'campus-lanyard', 'forehead-jewel', 'halo'];
 
   // Body-type → body-shape (SVG geometry override). Average uses the default torso.
   // These use distinct but natural profiles so picker previews read without looking caricatured.
@@ -621,7 +627,7 @@
     .concat(weightedValues(['petite', 'tall', 'broad', 'full-frame'], 5))
     .concat(weightedValues(['muscular', 'fuller-hip', 'plus-size'], 3));
   var HEAD_STYLE_WEIGHTS = []
-    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'oval', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
+    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'oval', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
     .concat(weightedValues(['heart', 'diamond', 'square', 'long-tapered-jaw', 'narrow-angular-jaw', 'broad', 'narrow', 'oblong', 'tapered-oval', 'gentle-taper', 'soft-angular', 'feminine'], 3));
   var PRESENTATION_BODY_WEIGHTS = {
     male: []
@@ -636,9 +642,9 @@
   var PRESENTATION_HEAD_STYLE_WEIGHTS = {
     male: []
       .concat(weightedValues(['default', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'full-straight-jaw', 'oval', 'soft-oval', 'broad', 'square', 'round', 'soft-angular'], 8))
-      .concat(weightedValues(['long-tapered-jaw', 'narrow-angular-jaw', 'full-cheeks', 'full-oval', 'narrow', 'oblong', 'diamond', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'heart'], 3)),
+      .concat(weightedValues(['long-tapered-jaw', 'narrow-angular-jaw', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'narrow', 'oblong', 'diamond', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'heart'], 3)),
     female: []
-      .concat(weightedValues(['soft-oval', 'round', 'full-cheeks', 'full-oval', 'heart', 'oval', 'soft-v-jaw', 'soft-round-jaw', 'tapered-oval', 'gentle-taper'], 8))
+      .concat(weightedValues(['soft-oval', 'round', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'heart', 'oval', 'soft-v-jaw', 'soft-round-jaw', 'tapered-oval', 'gentle-taper'], 8))
       .concat(weightedValues(['default', 'diamond', 'soft-square', 'slender-soft-square', 'narrow', 'oblong', 'soft-angular', 'square', 'broad', 'feminine'], 3))
   };
   var FACE_FEATURE_WEIGHTS = []
@@ -665,6 +671,7 @@
     weightedValue(['wireless-earbuds'], 4),
     weightedValue(['wired-earbuds'], 4),
     weightedValue(['chain-necklace'], 4),
+    weightedValue(['delicate-pendant-necklace'], 4),
     weightedValue(['campus-lanyard'], 4),
     weightedValue(['glasses', 'earrings'], 5),
     weightedValue(['wireframe-glasses', 'hoop-earrings'], 4),
@@ -672,12 +679,12 @@
     weightedValue(['wireless-earbuds', 'chain-necklace'], 3),
     weightedValue(['wired-earbuds', 'campus-lanyard'], 2)
   ];
-  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
+  var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'soft-rounded-fringe', 'side-parted-short', 'neat-side-swept-fringe', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
   var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'flipped-lob', 'wolf-cut', 'long-layers', 'straight-long-layers', 'long-center-part', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
   var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
   var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
-  var FACIAL_HAIR_STYLES = ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'goatee', 'short-beard', 'trimmed-beard'];
-  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'side-parted-short', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
+  var FACIAL_HAIR_STYLES = ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'light-goatee', 'goatee', 'short-beard', 'trimmed-beard'];
+  var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'wispy-crop', 'tousled-wispy-fringe', 'casual-messy-crop', 'textured-fringe', 'straight-fringe', 'neat-straight-fringe', 'soft-rounded-fringe', 'side-parted-short', 'neat-side-swept-fringe', 'thick-side-swept', 'ivy-league', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'crew-cut', 'buzz', 'undercut', 'pompadour'];
   var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'flipped-lob', 'wolf-cut', 'long-layers', 'straight-long-layers', 'long-center-part', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
   var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
   var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
@@ -744,6 +751,7 @@
     weightedValue(['over-ear-headphones'], 6),
     weightedValue(['wireless-earbuds'], 4),
     weightedValue(['chain-necklace'], 4),
+    weightedValue(['delicate-pendant-necklace'], 3),
     weightedValue(['wired-earbuds'], 4),
     weightedValue(['campus-lanyard'], 3),
     weightedValue(['bandana'], 3)
@@ -762,6 +770,7 @@
     weightedValue(['over-ear-headphones'], 5),
     weightedValue(['wireless-earbuds'], 4),
     weightedValue(['chain-necklace'], 3),
+    weightedValue(['delicate-pendant-necklace'], 4),
     weightedValue(['wired-earbuds'], 4),
     weightedValue(['campus-lanyard'], 3),
     weightedValue(['bandana'], 3),
@@ -780,7 +789,7 @@
       facialHairChance: 0.48,
       facialHairStyles: FACIAL_HAIR_STYLES,
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded', 'single-eyelid', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'long-soft-bridge', 'soft-rounded-bridge', 'gentle-bridge', 'defined-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'medium-broad-soft-tip', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'long-soft-bridge', 'soft-rounded-bridge', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
@@ -799,13 +808,14 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['chain-necklace'], 4),
+        weightedValue(['delicate-pendant-necklace'], 3),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 2)
       ],
       facialHairChance: 0.34,
-      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'goatee', 'short-beard', 'trimmed-beard'],
+      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'light-goatee', 'goatee', 'short-beard', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded', 'smiling', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'prominent-straight', 'gentle-bridge', 'defined-bridge', 'long-soft-bridge', 'soft-rounded-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'medium-broad-soft-tip', 'prominent-straight', 'gentle-bridge', 'defined-bridge', 'long-soft-bridge', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral', 'full-lips']
     },
     {
@@ -823,9 +833,9 @@
         weightedValue(['turban', 'campus-lanyard'], 2)
       ],
       facialHairChance: 0.42,
-      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'short-beard', 'trimmed-beard'],
+      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'light-goatee', 'short-beard', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'medium-broad-soft-tip', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
@@ -845,12 +855,13 @@
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['over-ear-headphones'], 2),
         weightedValue(['chain-necklace'], 2),
+        weightedValue(['delicate-pendant-necklace'], 2),
         weightedValue(['campus-lanyard'], 2)
       ],
       facialHairChance: 0.36,
-      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache', 'light-goatee', 'trimmed-beard'],
+      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'light-goatee', 'trimmed-beard'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'single-eyelid', 'hooded', 'wide', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'gentle-bridge', 'defined-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'broad', 'medium-broad-soft-tip', 'narrow', 'straight-narrow', 'slender-straight-soft-tip', 'prominent-straight', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     },
     {
@@ -869,13 +880,14 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 4),
         weightedValue(['chain-necklace'], 4),
+        weightedValue(['delicate-pendant-necklace'], 4),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 3)
       ],
       facialHairChance: 0.28,
-      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'mustache'],
+      facialHairStyles: ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'single-eyelid', 'hooded', 'smiling', 'clear-round'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'soft-rounded-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'slim-rounded-tip', 'medium-broad-soft-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'straight-narrow', 'slender-straight-soft-tip', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'neutral']
     }
   ];
@@ -888,7 +900,7 @@
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'hooded', 'smiling', 'wide', 'soft-single-eyelid'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'narrow', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'soft-low-bridge', 'soft-rounded-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'medium-broad-soft-tip', 'narrow', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'soft-low-bridge', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'full-lips']
     },
     {
@@ -909,13 +921,14 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['chain-necklace'], 3),
+        weightedValue(['delicate-pendant-necklace'], 3),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 2)
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['round', 'almond', 'soft-almond', 'smiling', 'wide'],
-      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'button', 'soft-upturned', 'soft-rounded-bridge'],
+      noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'medium-broad-soft-tip', 'button', 'soft-upturned', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin', 'full-lips']
     },
     {
@@ -933,6 +946,7 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['chain-necklace'], 3),
+        weightedValue(['delicate-pendant-necklace'], 3),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 2)
       ],
@@ -977,6 +991,7 @@
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['over-ear-headphones'], 2),
         weightedValue(['chain-necklace'], 2),
+        weightedValue(['delicate-pendant-necklace'], 2),
         weightedValue(['campus-lanyard'], 2)
       ],
       facialHairChance: 0,
@@ -1000,6 +1015,7 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['chain-necklace'], 3),
+        weightedValue(['delicate-pendant-necklace'], 3),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 2)
       ],
@@ -1027,13 +1043,14 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 4),
         weightedValue(['chain-necklace'], 3),
+        weightedValue(['delicate-pendant-necklace'], 4),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['bandana'], 2)
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
       eyeShapes: ['soft-single-eyelid', 'single-eyelid', 'almond', 'soft-almond', 'hooded', 'smiling'],
-      noseShapes: ['soft-low-bridge', 'soft', 'rounded-tip', 'button', 'gentle-bridge', 'soft-upturned', 'soft-rounded-bridge'],
+      noseShapes: ['soft-low-bridge', 'soft', 'rounded-tip', 'medium-broad-soft-tip', 'button', 'gentle-bridge', 'soft-upturned', 'soft-rounded-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'closed-smile', 'bright-smile', 'toothy-smile', 'cheerful-grin']
     },
     {
@@ -1052,6 +1069,7 @@
         weightedValue(['wireless-earbuds'], 4),
         weightedValue(['wired-earbuds'], 3),
         weightedValue(['chain-necklace'], 3),
+        weightedValue(['delicate-pendant-necklace'], 3),
         weightedValue(['campus-lanyard'], 3),
         weightedValue(['over-ear-headphones'], 2)
       ],

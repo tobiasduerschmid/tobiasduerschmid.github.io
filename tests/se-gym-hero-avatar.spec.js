@@ -615,7 +615,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
       const manualOnlyAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask', 'forehead-jewel', 'headwrap']);
       const coveredHairAccessories = new Set(['draped-scarf', 'hijab', 'headwrap']);
-      const currentCampusAccessories = new Set(['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
+      const currentCampusAccessories = new Set(['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'delicate-pendant-necklace', 'campus-lanyard', 'bandana']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
       const upbeatMouthStyles = new Set(['grin', 'closed-smile', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile']);
       const everydayCampusOutfits = new Set(['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'polo-shirt', 'collared-shirt', 'open-collar-shirt', 'oxford-shirt', 'blazer', 'kurta-top', 'campus-blouse', 'cardigan']);
@@ -771,7 +771,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.cleanShavenSamples).toBeGreaterThan(0);
     expect(summary.layeredAccessorySamples).toBeGreaterThan(0);
     expect(summary.currentCampusAccessorySamples).toBeGreaterThan(60);
-    expect(summary.currentCampusAccessoryVariety).toBe(6);
+    expect(summary.currentCampusAccessoryVariety).toBe(7);
     expect(summary.mouthVariety).toBeGreaterThanOrEqual(7);
     expect(summary.upbeatMouthSamples).toBeGreaterThan(360);
     expect(summary.neutralMouthSamples).toBeLessThan(40);
@@ -1768,7 +1768,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       }
 
       return failures;
-    }, ['round-rim-glasses', 'safety-goggles', 'tech-visor', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
+    }, ['round-rim-glasses', 'safety-goggles', 'tech-visor', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'delicate-pendant-necklace', 'campus-lanyard', 'bandana']);
 
     expect(accessoryFailures).toEqual([]);
   });
@@ -1783,7 +1783,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const styles = [
       'textured-fringe',
       'straight-fringe',
+      'soft-rounded-fringe',
       'side-parted-short',
+      'neat-side-swept-fringe',
       'soft-two-block',
       'middle-part-flow',
       'slick-back',
@@ -1822,7 +1824,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'sleek-low-pony',
       'claw-clip-updo',
     ];
-    const hairlineStyles = new Set(['textured-fringe', 'middle-part-flow', 'straight-long-layers', 'wavy-lob', 'side-part-lob', 'wolf-cut', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'french-braid', 'braided-pony', 'knotless-braids', 'space-buns', 'claw-clip-updo']);
+    const hairlineStyles = new Set(['textured-fringe', 'soft-rounded-fringe', 'neat-side-swept-fringe', 'middle-part-flow', 'straight-long-layers', 'wavy-lob', 'side-part-lob', 'wolf-cut', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'french-braid', 'braided-pony', 'knotless-braids', 'space-buns', 'claw-clip-updo']);
 
     const previewFailures = await page.evaluate(async ({ styles, hairlineStyles }) => {
       const select = document.querySelector('#hero-cust-hair-style');
@@ -1899,7 +1901,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const headShape = page.getByLabel('Head shape', { exact: true });
-    const shapes = ['diamond', 'full-oval', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'soft-angular'];
+    const shapes = ['diamond', 'full-oval', 'soft-full-cheek-jaw', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'soft-angular'];
 
     for (const shape of shapes) {
       await headShape.selectOption(shape);
@@ -1932,7 +1934,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return group && group.getAttribute('display') === 'inline';
       }
 
-      for (const value of ['stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard']) {
+      for (const value of ['stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard']) {
         const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
         state.appearance.facialHair = value;
         window.HeroAvatar.applyToSvg(svg, state);
@@ -2022,7 +2024,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         }
       }
 
-      for (const value of ['rounded', 'broad', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge', 'soft-low-bridge']) {
+      for (const value of ['rounded', 'broad', 'medium-broad-soft-tip', 'narrow', 'button', 'defined-bridge', 'rounded-tip', 'soft-upturned', 'gentle-bridge', 'soft-low-bridge']) {
         const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
         state.appearance.noseShape = value;
         window.HeroAvatar.applyToSvg(svg, state);
